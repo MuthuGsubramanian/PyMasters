@@ -12,10 +12,10 @@ st.sidebar.image('https://i.pinimg.com/originals/92/60/dd/9260dd459aa4566cfa25e8
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown('The Python Way')
-    st.text_area('This is a place to explore and develop oppertunities with python')
+    st.text('This is a place to explore and develop oppertunities with python')
 with col2:
     st.markdown('Python Projects')
-    st.text_area('This area is to analyze the python projects completed')
+    st.text('This area is to analyze the python projects completed')
 with col3:
     st.markdown('Future Projects')
-    st.text_area('This area is to discuss on the future projects')
+    st.text('This area is to discuss on the future projects')
