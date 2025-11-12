@@ -1,0 +1,21 @@
+[
+  {
+    "id": 301,
+    "lesson_id": 101,
+    "prompt": "Write a function `greet(name)` that returns `Hello, {name}!`.",
+    "starter_code": "def greet(name):\n    pass",
+    "solution_code": "def greet(name):\n    return f\"Hello, {name}!\"",
+    "unit_tests": [
+      {"input": "greet('Ada')", "expected": "Hello, Ada!"},
+      {"input": "greet('Linus')", "expected": "Hello, Linus!"}
+    ]
+  },
+  {
+    "id": 302,
+    "lesson_id": 201,
+    "prompt": "Using pandas, load the `sales.csv` file and return the number of rows.",
+    "starter_code": "import pandas as pd\n\ndef count_rows(path: str) -> int:\n    ...",
+    "solution_code": "import pandas as pd\n\ndef count_rows(path: str) -> int:\n    return len(pd.read_csv(path))",
+    "unit_tests": []
+  }
+]

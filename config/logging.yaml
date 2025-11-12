@@ -1,0 +1,17 @@
+version: 1
+formatters:
+  default:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: default
+loggers:
+  pymasters:
+    level: INFO
+    handlers: [console]
+    propagate: no
+root:
+  level: INFO
+  handlers: [console]
