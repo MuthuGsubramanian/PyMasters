@@ -4,6 +4,7 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.utils import helpers
+from utils.streamlit_helpers import rerun
 
 
 STATUS_LABELS = {
@@ -60,15 +61,15 @@ def render(*, db, user: dict[str, str]) -> None:
         if action_cols[0].button("Start", key=f"start-{module['id']}"):
             helpers.upsert_progress(progress_collection, user_id=user["id"], module_id=module["id"], status="in_progress")
             st.toast(f"Marked {module['title']} as in progress.")
-            st.experimental_rerun()
+            rerun()
         if action_cols[1].button("Completed", key=f"complete-{module['id']}"):
             helpers.upsert_progress(progress_collection, user_id=user["id"], module_id=module["id"], status="completed")
             st.toast(f"Marked {module['title']} as completed. 🎉")
-            st.experimental_rerun()
+            rerun()
         if action_cols[2].button("Reset", key=f"reset-{module['id']}"):
             helpers.upsert_progress(progress_collection, user_id=user["id"], module_id=module["id"], status="not_started")
             st.toast(f"Reset progress for {module['title']}")
-            st.experimental_rerun()
+            rerun()
 
         st.divider()
 

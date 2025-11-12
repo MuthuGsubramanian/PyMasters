@@ -4,6 +4,7 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.utils.auth import AuthManager
+from utils.streamlit_helpers import rerun
 
 
 def render(auth_manager: AuthManager) -> None:
@@ -28,7 +29,7 @@ def render(auth_manager: AuthManager) -> None:
 
         st.success(f"Welcome back, {user['name']}! Redirecting to your dashboard...")
         st.session_state["current_page"] = "Dashboard"
-        st.experimental_rerun()
+        rerun()
 
     st.divider()
     st.info("New to PyMasters? Jump over to the **Sign Up** page to create your free account.")

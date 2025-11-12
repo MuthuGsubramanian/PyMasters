@@ -5,6 +5,7 @@ import streamlit as st
 
 from services.auth_service import AuthService
 from utils.state import get_user, set_user
+from utils.streamlit_helpers import rerun
 
 
 def render_login(auth_service: AuthService) -> None:
@@ -27,7 +28,7 @@ def render_login(auth_service: AuthService) -> None:
                 )
             else:
                 set_user(user.model_dump())
-                st.experimental_rerun()
+                rerun()
 
     with signup_tab:
         with st.form("signup-form", clear_on_submit=False):
@@ -68,7 +69,7 @@ def render_login(auth_service: AuthService) -> None:
                 else:
                     set_user(user.model_dump())
                     st.success("Account created! You're now signed in.")
-                    st.experimental_rerun()
+                    rerun()
 
     st.caption("Test accounts use `pymasters` as the password. Create your own to explore.")
 

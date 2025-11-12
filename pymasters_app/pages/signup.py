@@ -4,6 +4,7 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.utils.auth import AuthManager
+from utils.streamlit_helpers import rerun
 
 
 def render(auth_manager: AuthManager) -> None:
@@ -33,7 +34,7 @@ def render(auth_manager: AuthManager) -> None:
 
         st.success(f"Welcome aboard, {user['name']}! Redirecting you to the dashboard...")
         st.session_state["current_page"] = "Dashboard"
-        st.experimental_rerun()
+        rerun()
 
     st.divider()
     st.info("Already have an account? Head to the **Login** page to sign in.")
