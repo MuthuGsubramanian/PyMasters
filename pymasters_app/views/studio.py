@@ -32,18 +32,31 @@ def _save_bytes(data: bytes, suffix: str) -> str:
 
 
 def render(*, user: dict[str, Any]) -> None:
-    st.subheader("Generative Studio")
-    st.caption("Create images and videos powered by Hugging Face models.")
+    st.markdown(
+        """
+        <div class="pm-section-title">Generative Studio</div>
+        <div class="pm-section-subtitle">Create cinematic visuals and rapid concept art with Hugging Face models tuned for ideation.</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     db = get_database()
 
+    st.markdown("<div class='pm-card' style='padding:2rem; margin-bottom:1.6rem;'>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <h3 style="margin-bottom:0.3rem;">Craft your next concept</h3>
+        <p style="color:var(--pm-text-muted); margin-bottom:1.2rem;">Describe what you want to see and the studio will render it with state-of-the-art diffusion or video synthesis models.</p>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.form("gen_form"):
-        col1, col2 = st.columns([0.7, 0.3])
+        col1, col2 = st.columns([0.68, 0.32], gap="large")
         with col1:
             prompt = st.text_area(
                 "Prompt",
                 value="A futuristic python robot teaching code in a neon-lit lab",
-                height=120,
+                height=140,
             )
         with col2:
             task = st.selectbox("Task", ["Image", "Video"], index=0)
@@ -52,8 +65,10 @@ def render(*, user: dict[str, Any]) -> None:
             else:
                 default_model = "damo-vilab/text-to-video-ms-1.7b"
             model = st.text_input("HF model", value=default_model)
+            guidance = st.slider("Guidance scale", 1.0, 20.0, 8.0, 0.5)
 
         submitted = st.form_submit_button("Generate", use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if submitted:
         if not prompt.strip():
@@ -82,6 +97,7 @@ def render(*, user: dict[str, Any]) -> None:
                     "task": task.lower(),
                     "model": model,
                     "prompt": prompt,
+                    "guidance_scale": guidance,
                     "mime_type": mime,
                     "file_path": file_path,
                     "created_at": datetime.utcnow(),
@@ -97,12 +113,29 @@ def render(*, user: dict[str, Any]) -> None:
     with st.expander("Recent generations", expanded=False):
         rows = (
             db["generations"]
-            .find({}, {"prompt": 1, "task": 1, "model": 1, "created_at": 1})
+            .find({}, {"prompt": 1, "task": 1, "model": 1, "created_at": 1, "guidance_scale": 1})
             .sort("created_at", -1)
             .limit(10)
         )
         for row in rows:
             st.markdown(
-                f"- {row.get('created_at'):%Y-%m-%d %H:%M} — {row.get('task')} — {row.get('model')} — `{row.get('prompt')[:60]}…`"
+                """
+                <div class="pm-card" style="padding:1rem 1.2rem; margin-bottom:0.8rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                    <div>
+                      <div style="font-weight:600;">{task}</div>
+                      <div style="color:var(--pm-text-muted); font-size:0.85rem;">{model}</div>
+                    </div>
+                    <div style="text-align:right; color:var(--pm-text-muted); font-size:0.8rem;">{created:%Y-%m-%d %H:%M}</div>
+                  </div>
+                  <div style="margin-top:0.6rem; color:var(--pm-text-muted); font-size:0.85rem;">{prompt}</div>
+                </div>
+                """.format(
+                    task=row.get("task", "image").title(),
+                    model=row.get("model", ""),
+                    prompt=row.get("prompt", "")[:120] + ("…" if len(row.get("prompt", "")) > 120 else ""),
+                    created=row.get("created_at"),
+                ),
+                unsafe_allow_html=True,
             )
 
