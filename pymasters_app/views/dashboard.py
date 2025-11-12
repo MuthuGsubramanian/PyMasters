@@ -1,4 +1,4 @@
-"""Dashboard page for authenticated users."""
+﻿"""Dashboard page for authenticated users."""
 from __future__ import annotations
 
 import streamlit as st
@@ -48,7 +48,7 @@ def render(*, db, user: dict[str, str]) -> None:
                             </div>
                         </div>
                         <div style="text-align:right;">
-                            <div style="color:#94a3b8; font-size:0.85rem;">{module['estimated_minutes']} min • {module['difficulty'].title()}</div>
+                            <div style="color:#94a3b8; font-size:0.85rem;">{module['estimated_minutes']} min - {module['difficulty'].title()}</div>
                             {render_status_chip(progress_map.get(module['id'], {'status': 'not_started'})['status'])}
                         </div>
                     </div>
@@ -64,8 +64,7 @@ def render(*, db, user: dict[str, str]) -> None:
             rerun()
         if action_cols[1].button("Completed", key=f"complete-{module['id']}"):
             helpers.upsert_progress(progress_collection, user_id=user["id"], module_id=module["id"], status="completed")
-            st.toast(f"Marked {module['title']} as completed. 🎉")
-            rerun()
+            st.toast(f"Marked {module['title']} as completed.")
         if action_cols[2].button("Reset", key=f"reset-{module['id']}"):
             helpers.upsert_progress(progress_collection, user_id=user["id"], module_id=module["id"], status="not_started")
             st.toast(f"Reset progress for {module['title']}")
@@ -79,3 +78,4 @@ def render_status_chip(status: str) -> str:
     return (
         f"<span style='display:inline-block; margin-top:0.5rem; padding:0.3rem 0.75rem; background:{color}; color:#0f172a; border-radius:999px; font-weight:600; font-size:0.8rem;'>{label}</span>"
     )
+

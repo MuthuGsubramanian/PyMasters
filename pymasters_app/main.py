@@ -4,8 +4,8 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.components.header import render_header
-from pymasters_app.pages import dashboard, login, profile, signup
-from pymasters_app.pages import studio, tutor
+from pymasters_app.views import dashboard, login, profile, signup
+from pymasters_app.views import studio, tutor
 from pymasters_app.utils.auth import AuthManager
 from pymasters_app.utils.db import get_database
 from utils.streamlit_helpers import rerun

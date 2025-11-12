@@ -9,7 +9,7 @@ from utils.streamlit_helpers import rerun
 
 def render(auth_manager: AuthManager) -> None:
     """Render signup form."""
-    st.write("## Create your account ✨")
+    st.write("## Create your account")
     st.caption("Set up your profile to track progress and unlock personalised recommendations.")
 
     with st.form("signup-form", clear_on_submit=False):

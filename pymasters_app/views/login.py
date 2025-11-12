@@ -9,7 +9,7 @@ from utils.streamlit_helpers import rerun
 
 def render(auth_manager: AuthManager) -> None:
     """Render the login form."""
-    st.write("## Welcome back 👋")
+    st.write("## Welcome back")
     st.caption("Sign in to access your personalised Python learning journey.")
 
     with st.form("login-form", clear_on_submit=False):

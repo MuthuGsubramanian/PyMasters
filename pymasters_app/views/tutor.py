@@ -72,11 +72,13 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
     sessions = db["tutor_sessions"]
 
     default_model = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    with st.sidebar:
-        st.markdown("#### Tutor Settings")
+    with st.expander("Tutor Settings", expanded=False):
         model = st.text_input("HF chat model", value=default_model)
-        temperature = st.slider("Creativity", 0.0, 1.5, 0.4, 0.1)
-        max_tokens = st.slider("Max new tokens", 64, 2048, 512, 64)
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            temperature = st.slider("Creativity", 0.0, 1.5, 0.4, 0.1)
+        with col_t2:
+            max_tokens = st.slider("Max new tokens", 64, 2048, 512, 64)
 
     # session state
     if "tutor_messages" not in st.session_state:
@@ -135,4 +137,3 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
         )
         for row in rows:
             st.markdown(f"- {row.get('created_at'):%Y-%m-%d %H:%M} — {row.get('model')}")
-

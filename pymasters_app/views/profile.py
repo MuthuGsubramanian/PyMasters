@@ -50,3 +50,4 @@ def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
 
     st.markdown("### Danger zone")
     st.info("Need to sign out? Use the **Sign out** button in the header to end your session.")
+
