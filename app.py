@@ -4,7 +4,6 @@ from __future__ import annotations
 import streamlit as st
 
 from components import render_recommendation_carousel
-from config.settings import settings
 from services import AuthService, ModuleService, ProgressService, RecommendationService
 from utils.auth import render_login
 from utils.state import get_user, init_session_state
@@ -34,6 +33,9 @@ st.markdown(
     <style>
     :root {
         color-scheme: dark;
+    }
+    div[data-testid="stSidebar"] {
+        display: none;
     }
     .stApp {
         background: radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.14), transparent 55%),
@@ -168,50 +170,60 @@ st.markdown(
     .hero-panel .stTabs {
         margin-top: 1rem;
     }
-    .data-strip {
+    .data-grid {
         margin-top: 2.5rem;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.35rem;
     }
-    .data-stat {
-        padding: 1.25rem 1.35rem;
+    .data-card,
+    .spotlight-card,
+    .pillar-card,
+    .ops-card {
+        position: relative;
+        padding: 1.6rem;
         border-radius: 22px;
         background: rgba(15, 23, 42, 0.82);
         border: 1px solid rgba(94, 234, 212, 0.2);
+        color: rgba(226, 232, 240, 0.9);
+        box-shadow: 0 24px 52px rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        min-height: 180px;
     }
-    .data-stat strong {
+    .data-card strong {
         display: block;
-        font-size: 1.8rem;
+        font-size: 2.1rem;
         color: #ecfeff;
     }
-    .data-stat span {
+    .data-card span {
         color: rgba(148, 163, 184, 0.85);
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
     }
-    .spotlights {
-        margin-top: 1.5rem;
+    .spotlights,
+    .pillar-grid,
+    .ops-grid {
+        margin-top: 1.75rem;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1.25rem;
+        gap: 1.35rem;
     }
-    .spotlight-card {
-        padding: 1.6rem;
-        border-radius: 20px;
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        color: rgba(226, 232, 240, 0.9);
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-        min-height: 180px;
-    }
-    .spotlight-card h3 {
+    .spotlight-card h3,
+    .pillar-card h3,
+    .ops-card h3 {
         margin: 0;
         color: #bae6fd;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+    }
+    .ops-card ul {
+        padding-left: 1.05rem;
+        margin: 0;
+        display: grid;
+        gap: 0.35rem;
     }
     .curriculum-filter {
         margin: 2.75rem 0 1.25rem;
@@ -240,6 +252,11 @@ st.markdown(
         flex-direction: column;
         gap: 0.9rem;
         min-height: 220px;
+        transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+    .module-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(56, 189, 248, 0.35);
     }
     .module-card h4 {
         margin: 0;
@@ -291,6 +308,10 @@ st.markdown(
         }
         .hero-actions .stButton>button {
             width: 100%;
+        }
+        .pillar-grid,
+        .ops-grid {
+            grid-template-columns: 1fr;
         }
     }
     </style>
@@ -360,21 +381,26 @@ with st.container():
     st.markdown("</section>", unsafe_allow_html=True)
 
 stats_html = f"""
-<section class='data-strip'>
-    <div class='data-stat'>
+<section class='data-grid'>
+    <div class='data-card'>
         <span>Learning paths</span>
         <strong>{module_count}</strong>
         <p>Modular sprints curated by senior mentors.</p>
     </div>
-    <div class='data-stat'>
-        <span>Avg. completion</span>
+    <div class='data-card'>
+        <span>Avg. sprint time</span>
         <strong>{average_minutes if average_minutes else '––'} min</strong>
-        <p>Time to ship a focused module.</p>
+        <p>Designed for production-friendly delivery windows.</p>
     </div>
-    <div class='data-stat'>
+    <div class='data-card'>
         <span>Live sessions</span>
         <strong>3 / week</strong>
         <p>Workshops, office hours, and code clinics.</p>
+    </div>
+    <div class='data-card'>
+        <span>Playbooks</span>
+        <strong>12</strong>
+        <p>Security-reviewed templates for service deployments.</p>
     </div>
 </section>
 """
@@ -383,7 +409,7 @@ st.markdown(stats_html, unsafe_allow_html=True)
 st.markdown("### Why teams choose PyMasters")
 st.caption("A modern delivery pipeline for Python learning, complete with analytics, coaching, and production-grade tooling.")
 
-spotlights = [
+platform_pillars = [
     (
         "Adaptive workspaces",
         "Spin up focused sandboxes with preloaded datasets, tests, and scaffolding tailored to each learning path.",
@@ -402,16 +428,50 @@ spotlights = [
     ),
 ]
 
-spotlight_html = "<div class='spotlights'>"
-for title, description in spotlights:
-    spotlight_html += (
-        "<div class='spotlight-card'>"
+pillar_html = "<div class='pillar-grid'>"
+for title, description in platform_pillars:
+    pillar_html += (
+        "<div class='pillar-card'>"
         f"<h3>{title}</h3>"
         f"<p>{description}</p>"
         "</div>"
     )
-spotlight_html += "</div>"
-st.markdown(spotlight_html, unsafe_allow_html=True)
+pillar_html += "</div>"
+st.markdown(pillar_html, unsafe_allow_html=True)
+
+st.markdown("### Built for production teams")
+st.caption("Operations-friendly guardrails keep security, observability, and governance front of mind.")
+
+ops_cards = [
+    (
+        "Secure by default",
+        "Role-based access, secrets management, and ephemeral sandboxes keep codebases isolated.",
+        ["SAML/SSO ready", "SOC2-aligned controls"],
+    ),
+    (
+        "Observability hooks",
+        "Export metrics to your preferred stack with traceable run histories and audit trails.",
+        ["Ship logs to Datadog", "Webhook automations"],
+    ),
+    (
+        "Enterprise rollout",
+        "Provision workspaces programmatically with Terraform-ready modules and CLI tooling.",
+        ["Immutable environments", "API-first provisioning"],
+    ),
+]
+
+ops_html = "<div class='ops-grid'>"
+for title, description, bullets in ops_cards:
+    list_html = "".join(f"<li>{bullet}</li>" for bullet in bullets)
+    ops_html += (
+        "<div class='ops-card'>"
+        f"<h3>{title}</h3>"
+        f"<p>{description}</p>"
+        f"<ul>{list_html}</ul>"
+        "</div>"
+    )
+ops_html += "</div>"
+st.markdown(ops_html, unsafe_allow_html=True)
 
 st.markdown("### Choose your next build cycle")
 st.caption("Filter by focus level to see where you and your team should invest the next sprint.")
@@ -480,10 +540,9 @@ else:
 st.markdown(
     """
     <div class='footer-note'>
-        PyMasters is deploy-ready for custom environments. Configure secrets, databases, and workers to power richer workflows.<br/>
-        Environment: <strong>{env}</strong>
+        PyMasters ships with a production-ready deployment playbook. Connect your identity provider, plug in your observability stack, and onboard teams in hours.
     </div>
-    """.format(env=settings.environment.capitalize()),
+    """,
     unsafe_allow_html=True,
 )
 
