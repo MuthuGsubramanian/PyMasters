@@ -65,14 +65,23 @@ SYSTEM_PROMPT = (
 
 
 def render(*, auth_manager, user: dict[str, Any]) -> None:
-    st.subheader("AI Python Tutor")
-    st.caption("Chat with a Python mentor powered by open models on Hugging Face.")
+    st.markdown(
+        """
+        <div class="pm-section-title">AI Python Tutor</div>
+        <div class="pm-section-subtitle">Ask questions, review concepts, and get actionable code suggestions from a friendly senior engineer.</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     db = get_database()
     sessions = db["tutor_sessions"]
 
     default_model = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    with st.expander("Tutor Settings", expanded=False):
+    with st.expander("Tutor settings", expanded=False):
+        st.markdown(
+            "<div style='color:var(--pm-text-muted); font-size:0.9rem; margin-bottom:0.6rem;'>Tune the model for more creative answers or concise explanations.</div>",
+            unsafe_allow_html=True,
+        )
         model = st.text_input("HF chat model", value=default_model)
         col_t1, col_t2 = st.columns(2)
         with col_t1:
@@ -136,4 +145,14 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
             .limit(10)
         )
         for row in rows:
-            st.markdown(f"- {row.get('created_at'):%Y-%m-%d %H:%M} — {row.get('model')}")
+            st.markdown(
+                f"""
+                <div class='pm-card' style='padding:1rem 1.2rem; margin-bottom:0.6rem;'>
+                  <div style='display:flex; justify-content:space-between; align-items:center;'>
+                    <span style='font-weight:600;'>{row.get('model')}</span>
+                    <span style='color:var(--pm-text-muted); font-size:0.85rem;'>{row.get('created_at'):%Y-%m-%d %H:%M}</span>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )

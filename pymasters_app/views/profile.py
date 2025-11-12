@@ -9,9 +9,22 @@ from utils.streamlit_helpers import rerun
 
 def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
     """Render the profile management view."""
-    st.write("## Profile")
-    st.caption("Update your personal information and security preferences.")
+    st.markdown(
+        """
+        <div class="pm-section-title">Profile</div>
+        <div class="pm-section-subtitle">Update your personal details, manage credentials, and keep your learning streaks safe.</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
+    st.markdown("<div class='pm-card' style='padding:2rem; margin-bottom:1.6rem;'>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <h3 style="margin-bottom:0.2rem;">Personal details</h3>
+        <p style="color:var(--pm-text-muted); margin-bottom:1.2rem;">We use this information to personalise your dashboard and communications.</p>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.form("profile-form"):
         name = st.text_input("Full name", value=user.get("name", ""))
         email = st.text_input("Email", value=user.get("email", ""))
@@ -27,7 +40,16 @@ def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
                 st.session_state["user"] = updated_user
             rerun()
 
-    st.markdown("### Change password")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='pm-card' style='padding:2rem; margin-bottom:1.6rem;'>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <h3 style="margin-bottom:0.2rem;">Change password</h3>
+        <p style="color:var(--pm-text-muted); margin-bottom:1.2rem;">Choose a strong passphrase and update it regularly to keep your workspace secure.</p>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.form("password-form", clear_on_submit=True):
         current_password = st.text_input("Current password", type="password")
         new_password = st.text_input("New password", type="password")
@@ -48,6 +70,15 @@ def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
             else:
                 st.success("Password updated successfully.")
 
-    st.markdown("### Danger zone")
-    st.info("Need to sign out? Use the **Sign out** button in the header to end your session.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div class="pm-surface">
+          <strong>Need a break?</strong>
+          <p style="margin:0.3rem 0 0; color:var(--pm-text-muted);">Use the <em>Sign out</em> button in the header to end your session and keep your account secure.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
