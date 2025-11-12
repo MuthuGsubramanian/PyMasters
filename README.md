@@ -38,3 +38,9 @@ data/seed/             # Seed data for learning modules and demo content
 ```
 pytest
 ```
+
+## MongoDB connection tips
+
+- Set `MONGODB_URI` and `MONGODB_DB` in `.env` (Atlas SRV URIs are supported).
+- If you see SSL/TLS handshake errors on Windows (e.g., `tlsv1 alert internal error`), the app now uses the `certifi` CA bundle for MongoDB connections by default.
+- In corporate networks with a custom root CA, set `MONGODB_TLS_CA_FILE` to the full path of your CA bundle file to override the default.

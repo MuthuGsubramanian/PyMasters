@@ -7,6 +7,7 @@ from typing import Any
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
+import certifi
 import streamlit as st
 
 load_dotenv()
@@ -31,7 +32,14 @@ def get_mongo_client() -> MongoClient:
             "Missing Mongo connection string. Set MONGODB_URI in .env or Streamlit secrets."
         )
 
-    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    # Use certifi CA bundle to avoid Windows/macOS trust store mismatches with Atlas
+    # Allow override via MONGODB_TLS_CA_FILE if a custom corporate CA is needed
+    ca_file = os.getenv("MONGODB_TLS_CA_FILE") or certifi.where()
+    client = MongoClient(
+        uri,
+        serverSelectionTimeoutMS=10000,
+        tlsCAFile=ca_file,
+    )
     try:
         client.admin.command("ping")
     except Exception as exc:
