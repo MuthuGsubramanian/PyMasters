@@ -35,11 +35,22 @@ class Settings(BaseSettings):
             "community_features": False,
         }
     )
+    mongodb_uri: Optional[str] = Field(
+        default=None,
+        env="mongodb_uri",
+        description="Optional MongoDB connection string for auxiliary services.",
+    )
+    mongodb_db: Optional[str] = Field(
+        default=None,
+        env="mongodb_db",
+        description="Optional MongoDB database name for auxiliary services.",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
 
