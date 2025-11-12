@@ -4,6 +4,7 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.utils.auth import AuthManager
+from utils.streamlit_helpers import rerun
 
 
 def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
@@ -24,7 +25,7 @@ def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
             st.success("Profile updated successfully.")
             if updated_user:
                 st.session_state["user"] = updated_user
-            st.experimental_rerun()
+            rerun()
 
     st.markdown("### Change password")
     with st.form("password-form", clear_on_submit=True):

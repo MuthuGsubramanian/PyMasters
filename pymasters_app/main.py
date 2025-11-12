@@ -8,6 +8,7 @@ from pymasters_app.components.sidebar import render_sidebar
 from pymasters_app.pages import dashboard, login, profile, signup
 from pymasters_app.utils.auth import AuthManager
 from pymasters_app.utils.db import get_database
+from utils.streamlit_helpers import rerun
 
 st.set_page_config(
     page_title="PyMasters · Learn Python the modern way",
@@ -63,7 +64,7 @@ if selected_page != st.session_state["current_page"]:
 if st.session_state["current_page"] == "Log out":
     auth_manager.logout()
     st.session_state["current_page"] = "Login"
-    st.experimental_rerun()
+    rerun()
 
 user = auth_manager.get_current_user()
 render_header(user=user, on_logout=auth_manager.logout)
