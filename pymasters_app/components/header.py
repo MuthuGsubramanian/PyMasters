@@ -25,135 +25,75 @@ def render_header(
     st.markdown(
         """
         <style>
-          .pm-toolbar-shell {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(18px);
-            background: rgba(6, 12, 24, 0.75);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-            margin: -1.4rem -2.5rem 1.6rem;
-            padding: 1.3rem 2.5rem 1.1rem;
-          }
-
-          .pm-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1.5rem;
-          }
-
-          .pm-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.9rem;
-          }
-
-          .pm-brand .pm-logo {
-            font-size: 1.75rem;
-            line-height: 1;
-          }
-
-          .pm-brand h3 {
-            margin: 0;
-            font-size: 1.55rem;
-          }
-
-          .pm-brand p {
-            margin: 0.1rem 0 0;
-            color: rgba(226, 232, 240, 0.65);
-          }
-
-          .pm-user-card {
-            text-align: right;
-          }
-
-          .pm-user-card .pm-user-name {
-            font-weight: 600;
-            font-size: 1rem;
-          }
-
-          .pm-user-card .pm-user-meta {
-            color: rgba(148, 163, 184, 0.85);
-            font-size: 0.82rem;
-          }
-
-          .pm-header-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: rgba(190, 242, 255, 0.9);
-            font-size: 0.9rem;
-          }
+        .pm-toolbar {position:sticky; top:0; z-index:50; backdrop-filter: blur(8px);
+            border-bottom:1px solid rgba(148,163,184,0.18); padding: 0.6rem 0;}
+        .pm-navwrap {display:flex; align-items:center; justify-content:space-between;}
+        .pm-brand {display:flex; align-items:center; gap:0.6rem;}
+        .pm-brand .logo {font-size:1.4rem}
+        .pm-brand .title {margin:0; line-height:1}
+        .pm-user {text-align:right;}
+        .pm-pills {display:flex; gap:0.4rem; flex-wrap:wrap;}
+        .pm-pill {border:1px solid rgba(148,163,184,0.28); background:rgba(2,6,23,0.6);
+            color:#e2e8f0; padding:0.35rem 0.85rem; border-radius:999px; font-weight:600;}
+        .pm-pill.active {background:#38bdf8; color:#0f172a; border-color:#38bdf8}
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='pm-toolbar-shell'>", unsafe_allow_html=True)
-    top_cols = st.columns([0.6, 0.4])
-    with top_cols[0]:
-        st.markdown(
-            """
-            <div class="pm-toolbar">
-              <div class="pm-brand">
-                <div class="pm-logo">🧠</div>
-                <div>
-                  <h3>PyMasters</h3>
-                  <p>AI-guided Python learning studio</p>
-                </div>
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with top_cols[1]:
-        if user:
-            st.markdown(
-                f"""
-                <div class="pm-user-card">
-                  <div class="pm-header-cta">Learning streak is live · Keep shipping ⚡</div>
-                  <div class="pm-user-name">{user['name']}</div>
-                  <div class="pm-user-meta">{user.get('role', 'learner').title()} · {datetime.utcnow():%b %d, %Y %H:%M UTC}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if on_logout:
-                st.button("Sign out", key="header-logout", on_click=on_logout)
-        else:
+    selected: Optional[str] = None
+    with st.container():
+        col1, col2 = st.columns([0.7, 0.3])
+        with col1:
             st.markdown(
                 """
-                <div class="pm-user-card" style="text-align:left;">
-                  <div class="pm-header-cta">New here?</div>
-                  <div style="font-weight:600; font-size:1rem;">Create your account in seconds</div>
-                  <div class="pm-user-meta">Personalised paths · Hands-on AI tutor</div>
+                <div class="pm-toolbar">
+                  <div class="pm-navwrap">
+                    <div class="pm-brand">
+                      <div class="logo">🧠</div>
+                      <div>
+                        <h3 class="title">PyMasters</h3>
+                        <div style="color:#64748b;">Adaptive Python learning studio</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-    st.markdown("</div>", unsafe_allow_html=True)
+        with col2:
+            if user:
+                st.markdown(
+                    f"""
+                    <div class="pm-user">
+                      <div style="font-weight:600;">{user['name']}</div>
+                      <div style="color:#64748b; font-size:0.85rem;">{user.get('role', 'learner').title()}</div>
+                      <div style="color:#94a3b8; font-size:0.75rem;">{datetime.utcnow():%b %d, %Y %H:%M UTC}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if on_logout:
+                    st.button("Sign out", key="header-logout", on_click=on_logout)
+            else:
+                st.info("Create an account or sign in to unlock personalized content.")
 
-    selected: Optional[str] = None
+    # Custom nav pills (buttons)
     if pages:
         page_list = list(pages)
-        try:
-            current_index = page_list.index(current_page) if current_page in page_list else 0
-        except ValueError:
-            current_index = 0
-        nav_key = "pm-nav-private" if user else "pm-nav-public"
-        with st.container():
-            selected_option = st.radio(
-                "Navigation",
-                options=page_list,
-                index=current_index,
-                horizontal=True,
-                key=nav_key,
-                label_visibility="collapsed",
-            )
-        if selected_option != current_page:
-            selected = selected_option
-
-    st.markdown("<hr class='pm-divider' />", unsafe_allow_html=True)
+        st.write("")
+        nav_cols = st.columns(len(page_list))
+        for i, page in enumerate(page_list):
+            is_active = page == current_page
+            label = f"{page}"
+            with nav_cols[i]:
+                if st.button(label, key=f"nav-{_slug(page)}", use_container_width=True):
+                    selected = page
+                # Render a hidden pill to let CSS apply active state (visual only)
+                st.markdown(
+                    f"<div class='pm-pills'><span class='pm-pill {'active' if is_active else ''}' style='display:none'>{label}</span></div>",
+                    unsafe_allow_html=True,
+                )
+    st.markdown("---")
     return selected
 
