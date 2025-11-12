@@ -6,6 +6,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from pymongo.errors import ServerSelectionTimeoutError
 import streamlit as st
 
 load_dotenv()
@@ -13,14 +14,30 @@ load_dotenv()
 
 @st.cache_resource(show_spinner=False)
 def get_mongo_client() -> MongoClient:
-    """Return a cached MongoDB client instance."""
+    """Return a cached MongoDB client instance with a quick connectivity check.
+
+    Reads from env or Streamlit secrets and pings the server to fail fast with
+    a helpful error when the cluster is unreachable.
+    """
     uri = os.getenv("MONGODB_URI")
     if not uri:
+        # Try Streamlit secrets if available (e.g., Streamlit Cloud)
+        try:
+            uri = st.secrets.get("MONGODB_URI", None)  # type: ignore[attr-defined]
+        except Exception:
+            uri = None
+    if not uri:
         raise RuntimeError(
-            "Missing Mongo connection string. Set the MONGODB_URI in your environment or .env file."
+            "Missing Mongo connection string. Set MONGODB_URI in .env or Streamlit secrets."
         )
 
-    client = MongoClient(uri)
+    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    try:
+        client.admin.command("ping")
+    except Exception as exc:
+        raise RuntimeError(
+            f"Unable to connect to MongoDB (check URI, credentials, and IP allowlist): {exc}"
+        ) from exc
     return client
 
 
