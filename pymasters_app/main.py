@@ -1,26 +1,29 @@
-"""PyMasters Streamlit application entrypoint."""
+"""PyMasters Streamlit application entrypoint (modern layout)."""
 from __future__ import annotations
 
 import streamlit as st
 
 from pymasters_app.components.header import render_header
-from pymasters_app.components.sidebar import render_sidebar
 from pymasters_app.pages import dashboard, login, profile, signup
+from pymasters_app.pages import studio, tutor
 from pymasters_app.utils.auth import AuthManager
 from pymasters_app.utils.db import get_database
 from utils.streamlit_helpers import rerun
+from pymasters_app.utils.bootstrap import ensure_collections
+
 
 st.set_page_config(
-    page_title="PyMasters · Learn Python the modern way",
-    page_icon="🐍",
+    page_title="PyMasters — Learn Python the modern way",
+    page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
-# Inject global styles for a modern UI.
+# Inject global styles for a modern UI and hide default sidebar.
 st.markdown(
     """
     <style>
+    [data-testid="stSidebar"] {display:none;}
     body {background-color:#020617;}
     .stApp {background:radial-gradient(circle at 15% 20%, rgba(56,189,248,0.15), transparent 55%),
             linear-gradient(140deg, #0b1220, #020617);} 
@@ -42,24 +45,27 @@ def _init_session_state() -> None:
 
 _init_session_state()
 db = get_database()
+ensure_collections(db)
 auth_manager = AuthManager(db)
 auth_manager.ensure_super_admin()
 user = auth_manager.get_current_user()
 
 public_pages = ("Login", "Sign Up")
-private_pages = ("Dashboard", "Profile", "Log out")
+private_pages = ("Dashboard", "AI Tutor", "Studio", "Profile", "Log out")
 
 if not user and st.session_state.get("current_page") not in public_pages:
     st.session_state["current_page"] = "Login"
 
-if user:
-    selected_page = render_sidebar(pages=private_pages, current_page=st.session_state["current_page"], user_name=user["name"])
-else:
-    selected_page = render_sidebar(pages=public_pages, current_page=st.session_state["current_page"], user_name=None)
-
-if selected_page != st.session_state["current_page"]:
+# Render header with top navigation (replaces sidebar)
+nav_pages = private_pages if user else public_pages
+selected_page = render_header(
+    user=user,
+    on_logout=auth_manager.logout,
+    pages=nav_pages,
+    current_page=st.session_state["current_page"],
+)
+if selected_page and selected_page != st.session_state["current_page"]:
     st.session_state["current_page"] = selected_page
-
 
 if st.session_state["current_page"] == "Log out":
     auth_manager.logout()
@@ -67,7 +73,6 @@ if st.session_state["current_page"] == "Log out":
     rerun()
 
 user = auth_manager.get_current_user()
-render_header(user=user, on_logout=auth_manager.logout)
 
 page = st.session_state["current_page"]
 
@@ -81,6 +86,18 @@ elif page == "Profile":
         login.render(auth_manager)
     else:
         profile.render(auth_manager=auth_manager, user=user)
+elif page == "AI Tutor":
+    if not user:
+        st.warning("Please sign in to continue.")
+        login.render(auth_manager)
+    else:
+        tutor.render(auth_manager=auth_manager, user=user)
+elif page == "Studio":
+    if not user:
+        st.warning("Please sign in to continue.")
+        login.render(auth_manager)
+    else:
+        studio.render(user=user)
 else:
     if not user:
         st.warning("Please sign in to continue.")

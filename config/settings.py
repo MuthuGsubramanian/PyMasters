@@ -45,6 +45,11 @@ class Settings(BaseSettings):
         env="mongodb_db",
         description="Optional MongoDB database name for auxiliary services.",
     )
+    huggingfacehub_api_token: Optional[str] = Field(
+        default=None,
+        env="HUGGINGFACEHUB_API_TOKEN",
+        description="API token for Hugging Face Inference endpoints.",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
