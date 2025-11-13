@@ -132,18 +132,37 @@ def _init_session_state() -> None:
 _init_session_state()
 
 # Database + auth with graceful failure if Mongo is unreachable
-try:
-    db = get_database()
-    ensure_collections(db)
-    auth_manager = AuthManager(db)
-    auth_manager.ensure_super_admin()
-    user = auth_manager.get_current_user()
-except Exception as exc:
-    st.error(
-        "Database connection failed. Set MONGODB_URI (and MONGODB_DB) and ensure your IP is allowed."
-    )
-    st.caption("Tip: On Streamlit Cloud, add them under st.secrets.")
-    st.stop()
+def _initialize_database_and_auth() -> tuple[object, AuthManager]:
+    try:
+        db = get_database()
+    except Exception as exc:  # pragma: no cover - safety net for Streamlit runtime
+        st.error(
+            "Database connection failed. Set MONGODB_URI (and MONGODB_DB) and ensure your IP is allowed."
+        )
+        st.caption("Tip: On Streamlit Cloud, add them under st.secrets.")
+        st.exception(exc)
+        st.stop()
+
+    if getattr(db, "is_local", False):
+        st.info(
+            "MongoDB is unavailable. Using the encrypted local datastore instead — your data will persist only on this machine.",
+            icon="💾",
+        )
+
+    try:
+        ensure_collections(db)
+        auth_manager = AuthManager(db)
+        auth_manager.ensure_super_admin()
+    except Exception as exc:  # pragma: no cover - initialization must succeed or fail loud
+        st.error("Unable to initialize the application state. Please check the logs for details.")
+        st.exception(exc)
+        st.stop()
+
+    return db, auth_manager
+
+
+db, auth_manager = _initialize_database_and_auth()
+user = auth_manager.get_current_user()
 
 public_pages = ("Login", "Sign Up")
 private_pages = ("Dashboard", "AI Tutor", "Studio", "Profile", "Log out")
