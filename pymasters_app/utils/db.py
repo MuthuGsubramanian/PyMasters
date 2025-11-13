@@ -6,9 +6,10 @@ from typing import Any
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from pymongo.errors import ServerSelectionTimeoutError
 import certifi
 import streamlit as st
+
+from pymasters_app.utils.local_db import LocalJSONDatabase
 
 load_dotenv()
 
@@ -49,8 +50,25 @@ def get_mongo_client() -> MongoClient:
     return client
 
 
+_LOCAL_DATABASES: dict[str, LocalJSONDatabase] = {}
+
+
+def _get_or_create_local_db(name: str) -> LocalJSONDatabase:
+    if name not in _LOCAL_DATABASES:
+        _LOCAL_DATABASES[name] = LocalJSONDatabase(name=name)
+    return _LOCAL_DATABASES[name]
+
+
 def get_database(db_name: str | None = None) -> Any:
-    """Return the configured MongoDB database."""
-    client = get_mongo_client()
+    """Return the configured MongoDB database or a resilient local fallback."""
+
     database_name = db_name or os.getenv("MONGODB_DB", "pymasters")
-    return client[database_name]
+    try:
+        client = get_mongo_client()
+        return client[database_name]
+    except Exception as exc:
+        st.warning(
+            f"MongoDB connection unavailable — using the built-in encrypted local store. ({exc})",
+            icon="⚠️",
+        )
+        return _get_or_create_local_db(database_name)

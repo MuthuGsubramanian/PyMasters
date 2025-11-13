@@ -20,7 +20,9 @@ class AuthManager:
         self._ensure_indexes()
 
     def _ensure_indexes(self) -> None:
-        self._users.create_index("email", unique=True)
+        self._users.create_index("email", unique=True, sparse=True)
+        self._users.create_index("username_normalized", unique=True)
+        self._users.create_index("phone_normalized", unique=True, sparse=True)
         self._sessions.create_index("session_id", unique=True)
         self._sessions.create_index("user_id")
 
@@ -66,7 +68,11 @@ class AuthManager:
         password_hash = self._hash_password("Password@123")
         user_doc = {
             "name": "Muthu G Subramanian",
+            "username": "founder",
+            "username_normalized": "founder",
             "email": email,
+            "phone": None,
+            "phone_normalized": None,
             "password_hash": password_hash,
             "role": "superadmin",
             "created_at": datetime.utcnow(),
@@ -74,9 +80,20 @@ class AuthManager:
         }
         self._users.insert_one(user_doc)
 
-    def login(self, *, email: str, password: str) -> Optional[dict[str, Any]]:
-        email = email.strip().lower()
-        record = self._users.find_one({"email": email})
+    def login(self, *, identifier: str, password: str) -> Optional[dict[str, Any]]:
+        lookup = identifier.strip().lower()
+        if not lookup:
+            return None
+
+        record = self._users.find_one({"username_normalized": lookup})
+        if not record and "@" in lookup:
+            record = self._users.find_one({"email": lookup})
+        if not record:
+            phone_lookup = self._normalize_phone(identifier)
+            if phone_lookup:
+                record = self._users.find_one({"phone_normalized": phone_lookup})
+        if not record:
+            record = self._users.find_one({"email": lookup})
         if not record:
             return None
 
@@ -87,15 +104,42 @@ class AuthManager:
         self._start_session(user)
         return user
 
-    def signup(self, *, name: str, email: str, password: str) -> tuple[bool, Optional[dict[str, Any]], str | None]:
-        email = email.strip().lower()
-        existing = self._users.find_one({"email": email})
-        if existing:
-            return False, None, "An account with that email already exists."
+    def signup(
+        self,
+        *,
+        name: str,
+        username: str,
+        password: str,
+        email: Optional[str] = None,
+        phone: Optional[str] = None,
+    ) -> tuple[bool, Optional[dict[str, Any]], str | None]:
+        username_normalized = self._normalize_username(username)
+        if not username_normalized:
+            return False, None, "Please choose a valid user ID."
+
+        existing_username = self._users.find_one({"username_normalized": username_normalized})
+        if existing_username:
+            return False, None, "That user ID is already taken."
+
+        email_normalized = self._normalize_email(email)
+        if email_normalized:
+            existing_email = self._users.find_one({"email": email_normalized})
+            if existing_email:
+                return False, None, "An account with that email already exists."
+
+        phone_normalized = self._normalize_phone(phone)
+        if phone_normalized:
+            existing_phone = self._users.find_one({"phone_normalized": phone_normalized})
+            if existing_phone:
+                return False, None, "That phone number is already linked to another account."
 
         user_doc = {
             "name": name.strip(),
-            "email": email,
+            "username": username.strip(),
+            "username_normalized": username_normalized,
+            "email": email_normalized,
+            "phone": phone.strip() if phone else None,
+            "phone_normalized": phone_normalized,
             "password_hash": self._hash_password(password),
             "role": "learner",
             "created_at": datetime.utcnow(),
@@ -107,18 +151,54 @@ class AuthManager:
         self._start_session(user)
         return True, user, None
 
-    def update_profile(self, user_id: str, *, name: str, email: str) -> tuple[bool, str | None, dict[str, Any] | None]:
-        email = email.strip().lower()
-        updates: dict[str, Any] = {"name": name.strip(), "email": email, "updated_at": datetime.utcnow()}
+    def update_profile(
+        self,
+        user_id: str,
+        *,
+        name: str,
+        username: str,
+        email: Optional[str],
+        phone: Optional[str],
+    ) -> tuple[bool, str | None, dict[str, Any] | None]:
+        email_normalized = self._normalize_email(email)
+        username_normalized = self._normalize_username(username)
+        phone_normalized = self._normalize_phone(phone)
+
+        if not username_normalized:
+            return False, "User ID cannot be empty.", None
+
+        updates: dict[str, Any] = {
+            "name": name.strip(),
+            "username": username.strip(),
+            "username_normalized": username_normalized,
+            "email": email_normalized,
+            "phone": phone.strip() if phone else None,
+            "phone_normalized": phone_normalized,
+            "updated_at": datetime.utcnow(),
+        }
 
         try:
             object_id = ObjectId(user_id)
         except Exception:
             return False, "Invalid user identifier", None
 
-        duplicate = self._users.find_one({"email": email, "_id": {"$ne": object_id}})
-        if duplicate:
-            return False, "Another account already uses that email address.", None
+        if email_normalized:
+            duplicate_email = self._users.find_one({"email": email_normalized, "_id": {"$ne": object_id}})
+            if duplicate_email:
+                return False, "Another account already uses that email address.", None
+
+        duplicate_username = self._users.find_one(
+            {"username_normalized": username_normalized, "_id": {"$ne": object_id}}
+        )
+        if duplicate_username:
+            return False, "That user ID is already taken.", None
+
+        if phone_normalized:
+            duplicate_phone = self._users.find_one(
+                {"phone_normalized": phone_normalized, "_id": {"$ne": object_id}}
+            )
+            if duplicate_phone:
+                return False, "Another account already uses that phone number.", None
 
         result = self._users.update_one({"_id": object_id}, {"$set": updates})
         if result.matched_count == 0:
@@ -159,7 +239,8 @@ class AuthManager:
                 "$set": {
                     "session_id": session_id,
                     "user_id": user["id"],
-                    "email": user["email"],
+                    "email": user.get("email"),
+                    "username": user.get("username"),
                     "role": user.get("role", "learner"),
                     "last_active": datetime.utcnow(),
                 },
@@ -180,10 +261,27 @@ class AuthManager:
         return {
             "id": str(record["_id"]),
             "name": record.get("name", ""),
+            "username": record.get("username", ""),
             "email": record.get("email", ""),
+            "phone": record.get("phone"),
             "role": record.get("role", "learner"),
             "created_at": record.get("created_at"),
         }
+
+    def _normalize_username(self, value: Optional[str]) -> str:
+        return value.strip().lower() if value else ""
+
+    def _normalize_email(self, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        normalized = value.strip().lower()
+        return normalized or None
+
+    def _normalize_phone(self, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        digits = "".join(ch for ch in value if ch.isdigit())
+        return digits or None
 
 
 def require_user(auth_manager: AuthManager) -> dict[str, Any]:

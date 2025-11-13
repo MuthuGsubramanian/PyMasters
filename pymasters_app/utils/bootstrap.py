@@ -1,15 +1,17 @@
-"""Bootstrap utilities for MongoDB collections and indexes."""
+"""Bootstrap utilities for MongoDB (or local fallback) collections and indexes."""
 from __future__ import annotations
 
-from pymongo.database import Database
+from typing import Any
 
 
-def ensure_collections(db: Database) -> None:
+def ensure_collections(db: Any) -> None:
     """Create required collections and indexes if missing."""
     # Users
     if "users" not in db.list_collection_names():
         db.create_collection("users")
     db["users"].create_index("email", unique=True, sparse=True)
+    db["users"].create_index("username_normalized", unique=True)
+    db["users"].create_index("phone_normalized", unique=True, sparse=True)
 
     # Tutor sessions
     if "tutor_sessions" not in db.list_collection_names():

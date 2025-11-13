@@ -77,7 +77,7 @@ def render(*, user: dict[str, Any]) -> None:
             # persist metadata
             db["generations"].insert_one(
                 {
-                    "user_id": user.get("_id") if user else None,
+                    "user_id": user.get("id") if user else None,
                     "user_email": user.get("email") if user else None,
                     "task": task.lower(),
                     "model": model,
