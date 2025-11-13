@@ -50,6 +50,16 @@ class Settings(BaseSettings):
         env="HUGGINGFACEHUB_API_TOKEN",
         description="API token for Hugging Face Inference endpoints.",
     )
+    oauth_client_id: Optional[str] = Field(
+        default=None,
+        env="CLIENT_ID",
+        description="OAuth client ID for external providers (read from .env or Streamlit secrets).",
+    )
+    oauth_client_secret: Optional[str] = Field(
+        default=None,
+        env="CLIENT_SECRET",
+        description="OAuth client secret for external providers (read from .env or Streamlit secrets).",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

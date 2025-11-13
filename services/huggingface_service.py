@@ -15,6 +15,7 @@ from typing import Optional, Tuple
 import requests
 
 from config.settings import settings
+from pymasters_app.utils.secrets import get_secret
 
 
 HF_API_BASE = "https://api-inference.huggingface.co/models"
@@ -25,7 +26,7 @@ class HuggingFaceError(RuntimeError):
 
 
 def _auth_headers() -> dict[str, str]:
-    token = settings.huggingfacehub_api_token
+    token = settings.huggingfacehub_api_token or get_secret("HUGGINGFACEHUB_API_TOKEN")
     if not token:
         raise HuggingFaceError(
             "Missing HUGGINGFACEHUB_API_TOKEN. Set it in your environment or .env."

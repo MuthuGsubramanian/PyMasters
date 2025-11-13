@@ -13,13 +13,14 @@ import requests
 
 from pymasters_app.utils.db import get_database
 from config.settings import settings
+from pymasters_app.utils.secrets import get_secret
 
 
 HF_API_BASE = "https://api-inference.huggingface.co/models"
 
 
 def _headers() -> dict[str, str]:
-    token = settings.huggingfacehub_api_token
+    token = settings.huggingfacehub_api_token or get_secret("HUGGINGFACEHUB_API_TOKEN")
     if not token:
         raise RuntimeError("Missing HUGGINGFACEHUB_API_TOKEN for tutor.")
     return {"Authorization": f"Bearer {token}", "Accept": "application/json"}
