@@ -120,6 +120,11 @@ def render(auth_manager: AuthManager) -> None:
             unsafe_allow_html=True,
         )
 
+        st.info(
+            "Remember: your user ID is the only credential used to sign in. Emails and phone numbers are optional for notifications.",
+            icon="ℹ️",
+        )
+
         with st.form("signup-form", clear_on_submit=False):
             name = st.text_input("Full name", placeholder="Ada Lovelace")
             username = st.text_input(
