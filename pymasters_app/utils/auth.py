@@ -3,15 +3,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import bcrypt
-from bson import ObjectId
 import streamlit as st
 
 
 class AuthManager:
-    """Encapsulate Mongo backed authentication helpers."""
+    """Encapsulate DuckDB-backed authentication helpers."""
 
     def __init__(self, database: Any) -> None:
         self._db = database
@@ -177,10 +176,9 @@ class AuthManager:
             "updated_at": datetime.utcnow(),
         }
 
-        try:
-            object_id = ObjectId(user_id)
-        except Exception:
+        if not self._is_valid_user_id(user_id):
             return False, "Invalid user identifier", None
+        object_id = user_id
 
         if email_normalized:
             duplicate_email = self._users.find_one({"email": email_normalized, "_id": {"$ne": object_id}})
@@ -210,10 +208,9 @@ class AuthManager:
         return True, None, user
 
     def change_password(self, user_id: str, *, current_password: str, new_password: str) -> tuple[bool, str | None]:
-        try:
-            object_id = ObjectId(user_id)
-        except Exception:
+        if not self._is_valid_user_id(user_id):
             return False, "Invalid user identifier"
+        object_id = user_id
 
         record = self._users.find_one({"_id": object_id})
         if not record or not self._verify_password(current_password, record["password_hash"]):
@@ -282,6 +279,13 @@ class AuthManager:
             return None
         digits = "".join(ch for ch in value if ch.isdigit())
         return digits or None
+
+    def _is_valid_user_id(self, value: str) -> bool:
+        try:
+            UUID(str(value))
+            return True
+        except Exception:
+            return False
 
 
 def require_user(auth_manager: AuthManager) -> dict[str, Any]:

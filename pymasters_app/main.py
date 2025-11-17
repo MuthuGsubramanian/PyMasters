@@ -131,23 +131,17 @@ def _init_session_state() -> None:
 
 _init_session_state()
 
-# Database + auth with graceful failure if Mongo is unreachable
+# Database + auth bootstrap
 def _initialize_database_and_auth() -> tuple[object, AuthManager]:
     try:
         db = get_database()
     except Exception as exc:  # pragma: no cover - safety net for Streamlit runtime
         st.error(
-            "Database connection failed. Set MONGODB_URI (and MONGODB_DB) and ensure your IP is allowed."
+            "Database initialization failed. Ensure DUCKDB_PATH is writable and try again."
         )
-        st.caption("Tip: On Streamlit Cloud, add them under st.secrets.")
+        st.caption("Tip: Set DUCKDB_PATH in .env or Streamlit secrets when deploying.")
         st.exception(exc)
         st.stop()
-
-    if getattr(db, "is_local", False):
-        st.info(
-            "MongoDB is unavailable. Using the encrypted local datastore instead — your data will persist only on this machine.",
-            icon="💾",
-        )
 
     try:
         ensure_collections(db)

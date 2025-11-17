@@ -1,4 +1,4 @@
-"""Bootstrap utilities for MongoDB (or local fallback) collections and indexes."""
+"""Bootstrap utilities for DuckDB collections and indexes."""
 from __future__ import annotations
 
 from typing import Any

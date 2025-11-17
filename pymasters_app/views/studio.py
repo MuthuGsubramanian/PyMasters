@@ -1,7 +1,7 @@
 """Generative Studio page using Hugging Face Inference API.
 
 Allows users to generate images or videos by providing a prompt and model name.
-Stores generation metadata in MongoDB for auditing and future retrieval.
+Stores generation metadata in DuckDB for auditing and future retrieval.
 """
 from __future__ import annotations
 
