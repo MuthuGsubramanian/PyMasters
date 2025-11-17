@@ -148,7 +148,7 @@ def render(auth_manager: AuthManager) -> None:
             """
             <section class="pm-login-layout">
                 <h2>Access mission control</h2>
-                <p>Use your personal call-sign (Thor11), email, or verified phone number.</p>
+                <p>Your cinematic user ID (e.g. <strong>Thor11</strong>) is the only credential required.</p>
             </section>
             """,
             unsafe_allow_html=True,
@@ -167,8 +167,8 @@ def render(auth_manager: AuthManager) -> None:
 
         with st.form("login-form", clear_on_submit=False):
             identifier = st.text_input(
-                "User ID, email, or phone",
-                placeholder="Thor11 / you@example.com / +1 555 123 4567",
+                "User ID",
+                placeholder="Thor11 / valkyrie",
             )
             password = st.text_input(
                 "Password",
@@ -180,12 +180,12 @@ def render(auth_manager: AuthManager) -> None:
 
         if submitted:
             if not identifier or not password:
-                st.error("Please provide both your unique user ID (or email/phone) and password.")
+                st.error("Please provide both your unique user ID and password.")
                 return
 
             user = auth_manager.login(identifier=identifier, password=password)
             if not user:
-                st.error("We couldn't find an account that matches those credentials.")
+                st.error("We couldn't find an account with that user ID and password.")
                 return
 
             st.success(f"Welcome back, {user['name']}! Redirecting to your dashboard...")

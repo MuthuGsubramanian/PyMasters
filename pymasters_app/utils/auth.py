@@ -59,17 +59,18 @@ class AuthManager:
     # ------------------------------------------------------------------
     def ensure_super_admin(self) -> None:
         """Seed a default super administrator if missing."""
-        email = "muthu.g.subramanian"
-        existing = self._users.find_one({"email": email})
-        if existing:
+
+        username = "founder"
+        normalized_username = self._normalize_username(username)
+        if self._get_user_by_username(username):
             return
 
         password_hash = self._hash_password("Password@123")
         user_doc = {
             "name": "Muthu G Subramanian",
-            "username": "founder",
-            "username_normalized": "founder",
-            "email": email,
+            "username": username,
+            "username_normalized": normalized_username,
+            "email": "muthu.g.subramanian@pymasters.local",
             "phone": None,
             "phone_normalized": None,
             "password_hash": password_hash,
@@ -80,19 +81,9 @@ class AuthManager:
         self._users.insert_one(user_doc)
 
     def login(self, *, identifier: str, password: str) -> Optional[dict[str, Any]]:
-        lookup = identifier.strip().lower()
-        if not lookup:
-            return None
+        """Authenticate using the unique user ID (case-insensitive)."""
 
-        record = self._users.find_one({"username_normalized": lookup})
-        if not record and "@" in lookup:
-            record = self._users.find_one({"email": lookup})
-        if not record:
-            phone_lookup = self._normalize_phone(identifier)
-            if phone_lookup:
-                record = self._users.find_one({"phone_normalized": phone_lookup})
-        if not record:
-            record = self._users.find_one({"email": lookup})
+        record = self._get_user_by_username(identifier)
         if not record:
             return None
 
@@ -286,6 +277,12 @@ class AuthManager:
             return True
         except Exception:
             return False
+
+    def _get_user_by_username(self, identifier: str) -> Optional[dict[str, Any]]:
+        username = self._normalize_username(identifier)
+        if not username:
+            return None
+        return self._users.find_one({"username_normalized": username})
 
 
 def require_user(auth_manager: AuthManager) -> dict[str, Any]:
