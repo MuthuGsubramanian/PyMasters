@@ -4,7 +4,16 @@ from __future__ import annotations
 from importlib import import_module
 from types import ModuleType
 
-__all__ = ["dashboard", "login", "profile", "signup", "studio", "tutor"]
+__all__ = [
+    "dashboard",
+    "login",
+    "profile",
+    "signup",
+    "studio",
+    "tutor",
+    "instructor",
+    "playground",
+]
 
 
 def _load(name: str) -> ModuleType:
