@@ -1,7 +1,7 @@
 """AI-based Python Tutor using Hugging Face text generation.
 
 Provides a chat interface where learners can ask questions and receive
-guided explanations. Sessions are stored in MongoDB for continuity.
+guided explanations. Sessions are stored in DuckDB for continuity.
 """
 from __future__ import annotations
 

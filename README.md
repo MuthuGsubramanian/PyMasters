@@ -1,6 +1,6 @@
 # PyMasters
 
-PyMasters is a Streamlit-powered learning platform for interactive Python mastery. The refreshed application ships with a modular architecture, MongoDB-backed persistence, and an authentication flow that mirrors a production SaaS experience.
+PyMasters is a Streamlit-powered learning platform for interactive Python mastery. The refreshed application ships with a modular architecture, DuckDB-backed persistence, and an authentication flow that mirrors a production SaaS experience.
 
 ## Getting started
 
@@ -22,7 +22,7 @@ pymasters_app/
   main.py              # Streamlit entrypoint with navigation + layout
   components/          # Header + sidebar UI components
   pages/               # Login, signup, dashboard, and profile views
-  utils/               # MongoDB + authentication helpers
+  utils/               # DuckDB + authentication helpers
 data/seed/             # Seed data for learning modules and demo content
 ```
 
@@ -39,8 +39,8 @@ data/seed/             # Seed data for learning modules and demo content
 pytest
 ```
 
-## MongoDB connection tips
+## DuckDB persistence tips
 
-- Set `MONGODB_URI` and `MONGODB_DB` in `.env` (Atlas SRV URIs are supported).
-- If you see SSL/TLS handshake errors on Windows (e.g., `tlsv1 alert internal error`), the app now uses the `certifi` CA bundle for MongoDB connections by default.
-- In corporate networks with a custom root CA, set `MONGODB_TLS_CA_FILE` to the full path of your CA bundle file to override the default.
+- Configure `DUCKDB_PATH` in `.env` if you want to store the database somewhere other than `data/pymasters.duckdb`.
+- The application automatically creates the DuckDB file (and parent directories) if it does not exist.
+- To reset all data, delete the DuckDB file and restart the app; collections will be recreated along with the default super admin.

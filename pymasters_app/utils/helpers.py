@@ -38,7 +38,7 @@ def get_learning_modules(collection: Any) -> list[dict[str, Any]]:
 
 
 def serialize_module(document: dict[str, Any]) -> dict[str, Any]:
-    """Convert Mongo document into a serializable dictionary."""
+    """Convert a database document into a serializable dictionary."""
     return {
         "id": str(document.get("_id")),
         "title": document.get("title", ""),

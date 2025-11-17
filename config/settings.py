@@ -35,15 +35,10 @@ class Settings(BaseSettings):
             "community_features": False,
         }
     )
-    mongodb_uri: Optional[str] = Field(
-        default=None,
-        env="mongodb_uri",
-        description="Optional MongoDB connection string for auxiliary services.",
-    )
-    mongodb_db: Optional[str] = Field(
-        default=None,
-        env="mongodb_db",
-        description="Optional MongoDB database name for auxiliary services.",
+    duckdb_path: Path = Field(
+        Path("data/pymasters.duckdb"),
+        env="DUCKDB_PATH",
+        description="Path to the DuckDB database file used for persistence.",
     )
     huggingfacehub_api_token: Optional[str] = Field(
         default=None,
