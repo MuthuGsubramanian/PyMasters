@@ -4,7 +4,7 @@ from __future__ import annotations
 from importlib import import_module
 from types import ModuleType
 
-__all__ = ["auth", "bootstrap", "db", "helpers", "secrets"]
+__all__ = ["auth", "bootstrap", "db", "helpers", "secrets", "user_store"]
 
 
 def _load(name: str) -> ModuleType:
