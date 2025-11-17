@@ -5,7 +5,7 @@ import streamlit as st
 
 from pymasters_app.components.header import render_header
 from pymasters_app.views import dashboard, login, profile, signup
-from pymasters_app.views import studio, tutor
+from pymasters_app.views import studio, tutor, instructor, playground
 from pymasters_app.utils.auth import AuthManager
 from pymasters_app.utils.db import get_database
 from pymasters_app.utils.bootstrap import ensure_collections
@@ -159,7 +159,7 @@ db, auth_manager = _initialize_database_and_auth()
 user = auth_manager.get_current_user()
 
 public_pages = ("Login", "Sign Up")
-private_pages = ("Dashboard", "AI Tutor", "Studio", "Profile", "Log out")
+private_pages = ("Dashboard", "AI Instructor", "AI Tutor", "Playground", "Studio", "Profile", "Log out")
 
 if not user and st.session_state.get("current_page") not in public_pages:
     st.session_state["current_page"] = "Login"
@@ -194,12 +194,24 @@ elif page == "Profile":
         login.render(auth_manager)
     else:
         profile.render(auth_manager=auth_manager, user=user)
+elif page == "AI Instructor":
+    if not user:
+        st.warning("Please sign in to continue.")
+        login.render(auth_manager)
+    else:
+        instructor.render(auth_manager=auth_manager, user=user)
 elif page == "AI Tutor":
     if not user:
         st.warning("Please sign in to continue.")
         login.render(auth_manager)
     else:
         tutor.render(auth_manager=auth_manager, user=user)
+elif page == "Playground":
+    if not user:
+        st.warning("Please sign in to continue.")
+        login.render(auth_manager)
+    else:
+        playground.render(auth_manager=auth_manager, user=user)
 elif page == "Studio":
     if not user:
         st.warning("Please sign in to continue.")
