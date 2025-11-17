@@ -5,7 +5,8 @@ import os
 from typing import Any
 
 from dotenv import load_dotenv
-from pymongo import MongoClient
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 import certifi
 import streamlit as st
 
@@ -66,6 +67,7 @@ def get_mongo_client() -> MongoClient:
     client_kwargs: dict[str, Any] = {
         "serverSelectionTimeoutMS": 10000,
         "tlsCAFile": None if allow_invalid else ca_file,
+        "server_api": ServerApi("1"),
     }
     if allow_invalid:
         client_kwargs["tlsAllowInvalidCertificates"] = True
