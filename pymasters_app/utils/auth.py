@@ -8,20 +8,19 @@ from uuid import UUID, uuid4
 import bcrypt
 import streamlit as st
 
+from pymasters_app.utils.user_store import UserStore
+
 
 class AuthManager:
     """Encapsulate DuckDB-backed authentication helpers."""
 
-    def __init__(self, database: Any) -> None:
+    def __init__(self, database: Any, user_store: UserStore | None = None) -> None:
         self._db = database
-        self._users = database["users"]
+        self._user_store = user_store or UserStore()
         self._sessions = database["sessions"]
-        self._ensure_indexes()
+        self._ensure_session_indexes()
 
-    def _ensure_indexes(self) -> None:
-        self._users.create_index("email", unique=True, sparse=True)
-        self._users.create_index("username_normalized", unique=True)
-        self._users.create_index("phone_normalized", unique=True, sparse=True)
+    def _ensure_session_indexes(self) -> None:
         self._sessions.create_index("session_id", unique=True)
         self._sessions.create_index("user_id")
 
@@ -62,11 +61,12 @@ class AuthManager:
 
         username = "founder"
         normalized_username = self._normalize_username(username)
-        if self._get_user_by_username(username):
+        if self._user_store.get_by_username(normalized_username):
             return
 
         password_hash = self._hash_password("Password@123")
         user_doc = {
+            "id": str(uuid4()),
             "name": "Muthu G Subramanian",
             "username": username,
             "username_normalized": normalized_username,
@@ -78,15 +78,17 @@ class AuthManager:
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
         }
-        self._users.insert_one(user_doc)
+        self._user_store.insert(user_doc)
 
     def login(self, *, identifier: str, password: str) -> Optional[dict[str, Any]]:
         """Authenticate using the unique user ID (case-insensitive)."""
 
-        record = self._get_user_by_username(identifier)
+        lookup = self._normalize_username(identifier)
+        if not lookup:
+            return None
+        record = self._user_store.get_by_username(lookup)
         if not record:
             return None
-
         if not self._verify_password(password, record["password_hash"]):
             return None
 
@@ -107,23 +109,19 @@ class AuthManager:
         if not username_normalized:
             return False, None, "Please choose a valid user ID."
 
-        existing_username = self._users.find_one({"username_normalized": username_normalized})
-        if existing_username:
+        if self._user_store.get_by_username(username_normalized):
             return False, None, "That user ID is already taken."
 
         email_normalized = self._normalize_email(email)
-        if email_normalized:
-            existing_email = self._users.find_one({"email": email_normalized})
-            if existing_email:
-                return False, None, "An account with that email already exists."
+        if email_normalized and self._user_store.get_by_email(email_normalized):
+            return False, None, "An account with that email already exists."
 
         phone_normalized = self._normalize_phone(phone)
-        if phone_normalized:
-            existing_phone = self._users.find_one({"phone_normalized": phone_normalized})
-            if existing_phone:
-                return False, None, "That phone number is already linked to another account."
+        if phone_normalized and self._user_store.get_by_phone(phone_normalized):
+            return False, None, "That phone number is already linked to another account."
 
         user_doc = {
+            "id": str(uuid4()),
             "name": name.strip(),
             "username": username.strip(),
             "username_normalized": username_normalized,
@@ -135,9 +133,8 @@ class AuthManager:
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
         }
-        inserted = self._users.insert_one(user_doc)
-        user_doc["_id"] = inserted.inserted_id
-        user = self._serialize_user(user_doc)
+        record = self._user_store.insert(user_doc)
+        user = self._serialize_user(record)
         self._start_session(user)
         return True, user, None
 
@@ -150,14 +147,29 @@ class AuthManager:
         email: Optional[str],
         phone: Optional[str],
     ) -> tuple[bool, str | None, dict[str, Any] | None]:
-        email_normalized = self._normalize_email(email)
-        username_normalized = self._normalize_username(username)
-        phone_normalized = self._normalize_phone(phone)
+        if not self._is_valid_user_id(user_id):
+            return False, "Invalid user identifier", None
 
+        username_normalized = self._normalize_username(username)
         if not username_normalized:
             return False, "User ID cannot be empty.", None
 
-        updates: dict[str, Any] = {
+        email_normalized = self._normalize_email(email)
+        phone_normalized = self._normalize_phone(phone)
+
+        existing_username = self._user_store.get_by_username(username_normalized)
+        if existing_username and existing_username["id"] != user_id:
+            return False, "That user ID is already taken.", None
+
+        existing_email = self._user_store.get_by_email(email_normalized) if email_normalized else None
+        if existing_email and existing_email["id"] != user_id:
+            return False, "Another account already uses that email address.", None
+
+        existing_phone = self._user_store.get_by_phone(phone_normalized) if phone_normalized else None
+        if existing_phone and existing_phone["id"] != user_id:
+            return False, "Another account already uses that phone number.", None
+
+        updates = {
             "name": name.strip(),
             "username": username.strip(),
             "username_normalized": username_normalized,
@@ -166,34 +178,10 @@ class AuthManager:
             "phone_normalized": phone_normalized,
             "updated_at": datetime.utcnow(),
         }
-
-        if not self._is_valid_user_id(user_id):
-            return False, "Invalid user identifier", None
-        object_id = user_id
-
-        if email_normalized:
-            duplicate_email = self._users.find_one({"email": email_normalized, "_id": {"$ne": object_id}})
-            if duplicate_email:
-                return False, "Another account already uses that email address.", None
-
-        duplicate_username = self._users.find_one(
-            {"username_normalized": username_normalized, "_id": {"$ne": object_id}}
-        )
-        if duplicate_username:
-            return False, "That user ID is already taken.", None
-
-        if phone_normalized:
-            duplicate_phone = self._users.find_one(
-                {"phone_normalized": phone_normalized, "_id": {"$ne": object_id}}
-            )
-            if duplicate_phone:
-                return False, "Another account already uses that phone number.", None
-
-        result = self._users.update_one({"_id": object_id}, {"$set": updates})
-        if result.matched_count == 0:
+        record = self._user_store.update(user_id, updates)
+        if not record:
             return False, "Profile not found.", None
 
-        record = self._users.find_one({"_id": object_id})
         user = self._serialize_user(record)
         st.session_state["user"] = user
         return True, None, user
@@ -201,17 +189,13 @@ class AuthManager:
     def change_password(self, user_id: str, *, current_password: str, new_password: str) -> tuple[bool, str | None]:
         if not self._is_valid_user_id(user_id):
             return False, "Invalid user identifier"
-        object_id = user_id
 
-        record = self._users.find_one({"_id": object_id})
+        record = self._user_store.get_by_id(user_id)
         if not record or not self._verify_password(current_password, record["password_hash"]):
             return False, "Current password is incorrect."
 
         password_hash = self._hash_password(new_password)
-        self._users.update_one(
-            {"_id": object_id},
-            {"$set": {"password_hash": password_hash, "updated_at": datetime.utcnow()}},
-        )
+        self._user_store.update_password(user_id, password_hash)
         return True, None
 
     # ------------------------------------------------------------------
@@ -247,7 +231,7 @@ class AuthManager:
 
     def _serialize_user(self, record: dict[str, Any]) -> dict[str, Any]:
         return {
-            "id": str(record["_id"]),
+            "id": str(record["id"]),
             "name": record.get("name", ""),
             "username": record.get("username", ""),
             "email": record.get("email", ""),
@@ -282,7 +266,7 @@ class AuthManager:
         username = self._normalize_username(identifier)
         if not username:
             return None
-        return self._users.find_one({"username_normalized": username})
+        return self._user_store.get_by_username(username)
 
 
 def require_user(auth_manager: AuthManager) -> dict[str, Any]:
