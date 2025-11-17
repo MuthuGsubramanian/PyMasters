@@ -7,211 +7,138 @@ from pymasters_app.utils.auth import AuthManager
 from utils.streamlit_helpers import rerun
 
 
+LOGIN_STYLES = """
+<style>
+.pm-login-layout {margin-top:1.5rem;}
+.pm-login-hero {
+    padding:2.4rem;
+    border-radius:32px;
+    border:1px solid rgba(56,189,248,0.35);
+    background:linear-gradient(150deg, rgba(8,47,73,0.75), rgba(2,6,23,0.72));
+    box-shadow:0 45px 140px -90px rgba(56,189,248,0.85);
+}
+.pm-login-hero h1 {
+    font-size:2.65rem;
+    line-height:1.1;
+    margin:1.1rem 0 0.6rem;
+}
+.pm-login-hero h1 span {color:#38bdf8;}
+.pm-login-hero p {color:rgba(241,245,249,0.9); font-size:1rem;}
+.pm-login-hero .pm-hero-badge {
+    display:inline-flex;
+    padding:0.35rem 0.9rem;
+    border-radius:999px;
+    border:1px solid rgba(94,234,212,0.4);
+    text-transform:uppercase;
+    letter-spacing:0.28em;
+    font-size:0.72rem;
+    color:#bbf7d0;
+}
+.pm-login-metrics {
+    margin-top:1.8rem;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+    gap:1rem;
+}
+.pm-login-metric {
+    padding:1rem 1.2rem;
+    border-radius:20px;
+    border:1px solid rgba(148,163,184,0.25);
+    background:rgba(15,23,42,0.7);
+}
+.pm-login-metric strong {
+    font-size:1.5rem;
+    display:block;
+    color:#f8fafc;
+}
+.pm-login-metric span {
+    font-size:0.8rem;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:rgba(148,163,184,0.85);
+}
+form[data-testid="stForm"][aria-label="login-form"] {
+    padding:2.2rem;
+    border-radius:30px;
+    border:1px solid rgba(56,189,248,0.35);
+    background:linear-gradient(150deg, rgba(15,23,42,0.92), rgba(2,6,23,0.88));
+    box-shadow:0 45px 120px -80px rgba(14,165,233,0.7);
+}
+form[data-testid="stForm"][aria-label="login-form"] label {
+    font-weight:600;
+    letter-spacing:0.04em;
+}
+form[data-testid="stForm"][aria-label="login-form"] input {
+    border-radius:14px !important;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(15,23,42,0.75);
+}
+.pm-login-meta {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.45rem;
+    margin:0.85rem 0 1.1rem;
+}
+.pm-login-chip {
+    padding:0.35rem 0.85rem;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(15,23,42,0.8);
+    font-size:0.75rem;
+    letter-spacing:0.12em;
+    color:#e2e8f0;
+}
+.pm-feature-grid {
+    margin-top:2.5rem;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:1.2rem;
+}
+.pm-feature-card {
+    padding:1.4rem 1.6rem;
+    border-radius:22px;
+    border:1px solid rgba(148,163,184,0.25);
+    background:rgba(15,23,42,0.82);
+    box-shadow:0 35px 90px -70px rgba(8,145,178,0.65);
+}
+.pm-feature-card h3 {margin-bottom:0.35rem;}
+.pm-feature-card p {color:rgba(226,232,240,0.85); font-size:0.92rem;}
+</style>
+"""
+
+
 def render(auth_manager: AuthManager) -> None:
     """Render a cinematic landing page with a streamlined login form."""
 
-    st.markdown(
-        """
-        <style>
-        .pm-landing-grid {
-            display:grid;
-            grid-template-columns:minmax(0, 0.6fr) minmax(0, 0.4fr);
-            gap:2.5rem;
-            margin-top:1.5rem;
-        }
-        @media (max-width: 1100px) {
-            .pm-landing-grid {grid-template-columns:1fr;}
-        }
-        .pm-landing-hero {
-            padding:2.5rem;
-            border-radius:36px;
-            background:linear-gradient(145deg, rgba(8,47,73,0.75), rgba(2,6,23,0.65));
-            border:1px solid rgba(56,189,248,0.35);
-            box-shadow:0 55px 160px -80px rgba(56,189,248,0.85);
-            position:relative;
-            overflow:hidden;
-        }
-        .pm-landing-hero::after {
-            content:"";
-            position:absolute;
-            inset:0;
-            pointer-events:none;
-            background:radial-gradient(circle at 12% 20%, rgba(59,130,246,0.45), transparent 55%);
-            opacity:0.6;
-        }
-        .pm-hero-badge {
-            display:inline-flex;
-            align-items:center;
-            gap:0.4rem;
-            padding:0.35rem 0.95rem;
-            border-radius:999px;
-            border:1px solid rgba(94,234,212,0.45);
-            background:rgba(15,118,110,0.18);
-            letter-spacing:0.28em;
-            text-transform:uppercase;
-            font-size:0.72rem;
-            color:#99f6e4;
-        }
-        .pm-landing-hero h1 {
-            font-size:3rem;
-            line-height:1.05;
-            margin:1.4rem 0 0.8rem;
-        }
-        .pm-landing-hero h1 span {
-            color:#38bdf8;
-            text-shadow:0 0 35px rgba(56,189,248,0.55);
-        }
-        .pm-hero-subcopy {
-            font-size:1.05rem;
-            color:rgba(241,245,249,0.85);
-            max-width:620px;
-        }
-        .pm-hero-cards {
-            display:grid;
-            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
-            gap:1rem;
-            margin-top:2rem;
-        }
-        .pm-hero-card {
-            padding:1.1rem 1.3rem;
-            border-radius:22px;
-            border:1px solid rgba(148,163,184,0.25);
-            background:rgba(15,23,42,0.65);
-            box-shadow:0 25px 60px -40px rgba(8,145,178,0.65);
-        }
-        .pm-hero-card strong {
-            display:block;
-            font-size:1.6rem;
-            color:#f8fafc;
-            font-family:'Orbitron', 'Inter', sans-serif;
-        }
-        .pm-hero-card span {
-            display:block;
-            text-transform:uppercase;
-            letter-spacing:0.3em;
-            font-size:0.72rem;
-            color:rgba(148,163,184,0.85);
-            margin-top:0.35rem;
-        }
-        .pm-hero-cta {
-            margin-top:2.2rem;
-            display:flex;
-            flex-wrap:wrap;
-            gap:0.75rem;
-        }
-        .pm-hero-cta a {
-            padding:0.65rem 1.45rem;
-            border-radius:999px;
-            text-transform:uppercase;
-            letter-spacing:0.32em;
-            font-size:0.74rem;
-            font-weight:600;
-            border:1px solid rgba(148,163,184,0.35);
-            color:#e2e8f0;
-        }
-        .pm-hero-cta a.primary {
-            border:none;
-            color:#020617;
-            background:linear-gradient(120deg, rgba(56,189,248,0.95), rgba(192,132,252,0.85));
-            box-shadow:0 25px 65px -32px rgba(56,189,248,0.95);
-        }
-        .pm-auth-card {
-            position:relative;
-            padding:2.4rem;
-            border-radius:32px;
-            border:1px solid rgba(56,189,248,0.35);
-            background:linear-gradient(160deg, rgba(15,23,42,0.92), rgba(2,6,23,0.88));
-            box-shadow:0 45px 90px -60px rgba(8,145,178,0.8);
-        }
-        .pm-auth-card::after {
-            content:"";
-            position:absolute;
-            inset:0;
-            pointer-events:none;
-            background:radial-gradient(circle at 0% 0%, rgba(56,189,248,0.45), transparent 55%);
-            opacity:0.45;
-        }
-        .pm-auth-card h2 {
-            font-size:2rem;
-            margin-bottom:0.45rem;
-        }
-        .pm-auth-card p {color:rgba(226,232,240,0.8);}
-        .pm-auth-card small {
-            text-transform:uppercase;
-            letter-spacing:0.28em;
-            color:rgba(148,163,184,0.9);
-        }
-        .pm-login-meta {
-            margin:1.4rem 0 1.8rem;
-            display:grid;
-            grid-template-columns:repeat(2, minmax(0, 1fr));
-            gap:0.85rem;
-        }
-        .pm-login-chip {
-            border-radius:18px;
-            padding:0.65rem 0.85rem;
-            border:1px solid rgba(148,163,184,0.22);
-            background:rgba(15,23,42,0.75);
-            font-size:0.8rem;
-            color:rgba(148,163,184,0.9);
-        }
-        .pm-feature-grid {
-            margin-top:2rem;
-            display:grid;
-            grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-            gap:1.1rem;
-        }
-        .pm-feature-card {
-            padding:1.35rem;
-            border-radius:22px;
-            border:1px solid rgba(59,130,246,0.25);
-            background:rgba(15,23,42,0.7);
-            min-height:180px;
-            box-shadow:0 35px 95px -60px rgba(59,130,246,0.75);
-        }
-        .pm-feature-card h3 {
-            font-size:1.05rem;
-            margin-bottom:0.45rem;
-        }
-        .pm-feature-card p {
-            font-size:0.9rem;
-            color:rgba(226,232,240,0.85);
-        }
-        .pm-auth-card form label {font-weight:600; letter-spacing:0.05em;}
-        .pm-auth-card form input {
-            border-radius:14px !important;
-            background:rgba(2,6,23,0.75);
-            border:1px solid rgba(148,163,184,0.35);
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(LOGIN_STYLES, unsafe_allow_html=True)
 
-    st.markdown("<div class='pm-landing-grid'>", unsafe_allow_html=True)
-
-    hero_col, form_col = st.columns([0.6, 0.4])
+    hero_col, form_col = st.columns([0.58, 0.42], gap="large")
 
     with hero_col:
         st.markdown(
             """
-            <div class="pm-landing-hero">
+            <section class="pm-login-layout pm-login-hero">
                 <div class="pm-hero-badge">Immersive learning OS</div>
-                <h1>Command your <span>Python journey</span> with cinematic clarity.</h1>
-                <p class="pm-hero-subcopy">
+                <h1>Command your <span>Python journey</span> with clarity.</h1>
+                <p>
                     Adaptive cohorts, AI copilots, and production-grade sandboxes converge into one
                     beautiful timeline. Sign in to continue exactly where you left off.
                 </p>
-                <div class="pm-hero-cards">
-                    <div class="pm-hero-card"><strong>+210</strong><span>hands-on missions</span></div>
-                    <div class="pm-hero-card"><strong>12ms</strong><span>feedback latency</span></div>
-                    <div class="pm-hero-card"><strong>Global</strong><span>talent network</span></div>
+                <div class="pm-login-metrics">
+                    <div class="pm-login-metric">
+                        <strong>+210</strong>
+                        <span>Missions</span>
+                    </div>
+                    <div class="pm-login-metric">
+                        <strong>12 ms</strong>
+                        <span>Feedback</span>
+                    </div>
+                    <div class="pm-login-metric">
+                        <strong>Global</strong>
+                        <span>Network</span>
+                    </div>
                 </div>
-                <div class="pm-hero-cta">
-                    <a class="primary" href="#">Preview experience</a>
-                    <a href="#">Watch lab tour</a>
-                </div>
-            </div>
+            </section>
             """,
             unsafe_allow_html=True,
         )
@@ -219,10 +146,10 @@ def render(auth_manager: AuthManager) -> None:
     with form_col:
         st.markdown(
             """
-            <div class="pm-auth-card">
-                <small>Encrypted portal</small>
+            <section class="pm-login-layout">
                 <h2>Access mission control</h2>
-                <p>Use your personal call-sign (e.g. <strong>Thor11</strong>) or the email/phone linked to your profile.</p>
+                <p>Use your personal call-sign (Thor11), email, or verified phone number.</p>
+            </section>
             """,
             unsafe_allow_html=True,
         )
@@ -230,8 +157,9 @@ def render(auth_manager: AuthManager) -> None:
         st.markdown(
             """
             <div class="pm-login-meta">
-                <div class="pm-login-chip">SAML security &amp; anomaly guard</div>
-                <div class="pm-login-chip">Biometric-ready sessions</div>
+                <div class="pm-login-chip">SAML ready</div>
+                <div class="pm-login-chip">Anomaly guard</div>
+                <div class="pm-login-chip">Biometric aware</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -245,7 +173,7 @@ def render(auth_manager: AuthManager) -> None:
             password = st.text_input(
                 "Password",
                 type="password",
-                placeholder="••••••••",
+                placeholder="Enter your password",
             )
             st.checkbox("Keep me signed in on this device", value=True, key="pm-login-remember")
             submitted = st.form_submit_button("Enter workspace", use_container_width=True)
@@ -260,21 +188,13 @@ def render(auth_manager: AuthManager) -> None:
                 st.error("We couldn't find an account that matches those credentials.")
                 return
 
-            st.success(f"Welcome back, {user['name']}! Redirecting to your dashboard…")
+            st.success(f"Welcome back, {user['name']}! Redirecting to your dashboard...")
             st.session_state["current_page"] = "Dashboard"
             rerun()
 
-        st.markdown(
-            """
-            <div class="pm-auth-footnote">
-                Prefer to experience the immersive onboarding? Switch to the <strong>Sign Up</strong> view — email and phone are optional.
-            </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st.caption(
+            "Prefer the immersive onboarding? Switch to **Sign Up** – email and phone remain optional."
         )
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown(
         """
@@ -285,7 +205,7 @@ def render(auth_manager: AuthManager) -> None:
             </div>
             <div class="pm-feature-card">
                 <h3>Generative studio</h3>
-                <p>Spin up image &amp; video sandboxes without leaving the dashboard. Outputs auto-sync to your history.</p>
+                <p>Spin up image and video sandboxes without leaving the dashboard. Outputs auto-sync to your history.</p>
             </div>
             <div class="pm-feature-card">
                 <h3>Pulse analytics</h3>
@@ -295,4 +215,3 @@ def render(auth_manager: AuthManager) -> None:
         """,
         unsafe_allow_html=True,
     )
-
