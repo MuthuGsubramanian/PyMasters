@@ -157,7 +157,7 @@ def render_header(
                         <div>
                             <div class="pm-meta-chip">Next-Gen Python</div>
                             <h3 class="title">PyMasters</h3>
-                            <div class="subtitle">AI enhanced learning studio</div>
+                            <div class="subtitle">AI-guided Python learning lab</div>
                         </div>
                     </div>
                 </div>
