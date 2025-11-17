@@ -40,6 +40,21 @@ class Settings(BaseSettings):
         env="DUCKDB_PATH",
         description="Path to the DuckDB database file used for persistence.",
     )
+    local_ai_base_url: str = Field(
+        "http://192.168.1.10:1234",
+        env="LOCAL_AI_BASE_URL",
+        description="Base URL for the on-prem OpenAI-compatible inference server.",
+    )
+    local_ai_api_key: Optional[str] = Field(
+        default=None,
+        env="LOCAL_AI_API_KEY",
+        description="Optional API key for the local AI service.",
+    )
+    local_ai_default_model: str = Field(
+        "local-llm",
+        env="LOCAL_AI_DEFAULT_MODEL",
+        description="Default chat/completion model to use with the local AI service.",
+    )
     huggingfacehub_api_token: Optional[str] = Field(
         default=None,
         env="HUGGINGFACEHUB_API_TOKEN",

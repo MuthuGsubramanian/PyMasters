@@ -8,6 +8,14 @@ from .huggingface_service import (
     generate_video,
     HuggingFaceError,
 )
+from .local_ai_service import (
+    LocalAIError,
+    list_local_models,
+    create_local_chat_completion,
+    create_local_completion,
+    create_local_response,
+    create_local_embedding,
+)
 
 __all__ = [
     "AuthService",
@@ -17,4 +25,10 @@ __all__ = [
     "generate_image",
     "generate_video",
     "HuggingFaceError",
+    "LocalAIError",
+    "list_local_models",
+    "create_local_chat_completion",
+    "create_local_completion",
+    "create_local_response",
+    "create_local_embedding",
 ]
