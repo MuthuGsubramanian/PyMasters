@@ -1,46 +1,68 @@
-# PyMasters
+# PyMasters (Re-Architected)
 
-PyMasters is a Streamlit-powered learning platform for interactive Python mastery. The refreshed application ships with a modular architecture, DuckDB-backed persistence, and an authentication flow that mirrors a production SaaS experience.
+**Web:** [www.pymasters.net](http://www.pymasters.net)
 
-## Getting started
+PyMasters has been completely rebuilt as a modern, high-performance web application. It features a React-based frontend for a premium, interactive user experience, and a FastAPI backend for robust logic and safe code execution.
+
+## Architecture
+
+*   **Frontend**: React (Vite) + Glassmorphism UI + Axios
+*   **Backend**: FastAPI + DuckDB + Simulated Sandbox
+*   **Deployment**: Docker Compose (Nginx + Python)
+
+## Prerequisites
+
+*   **Node.js** (v18+)
+*   **Python** (v3.9+)
+*   **Docker** (Optional, for production deployment)
+
+## Fast Start (Local Development)
+
+We have provided a launcher script for Windows:
 
 ```bash
-cp .env.example .env  # update credentials if needed
+.\start_dev.bat
+```
+
+This will launch:
+1.  **Backend API** at `http://localhost:8000`
+2.  **Frontend App** at `http://localhost:5173`
+
+## Manual Start
+
+### Backend
+
+```bash
+cd backend
 pip install -r requirements.txt
-streamlit run pymasters_app/main.py
+python -m uvicorn main:app --reload
 ```
 
-The platform seeds a default super admin account on first launch:
+### Frontend
 
-- **Email:** `muthu.g.subramanian`
-- **Password:** `Password@123`
-
-## Project layout
-
-```
-pymasters_app/
-  main.py              # Streamlit entrypoint with navigation + layout
-  components/          # Header + sidebar UI components
-  pages/               # Login, signup, dashboard, and profile views
-  utils/               # DuckDB + authentication helpers
-data/seed/             # Seed data for learning modules and demo content
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-## Extending the platform
+## Production Deployment ("Make it live")
 
-- Add learning streak analytics and cohort reporting by expanding the `progress` collection schema.
-- Integrate interactive code execution by adapting the sandbox client in `components/code_runner.py`.
-- Wire optional role-based access control rules through the `users` collection.
-- Deploy via Streamlit Community Cloud, Hugging Face Spaces, or a custom Docker image mapped to your preferred domain.
+To run the full stack in production mode (using Docker):
 
-## Testing
-
-```
-pytest
+```bash
+docker-compose up --build -d
 ```
 
-## DuckDB persistence tips
+The application will be available at `http://localhost:80` (or your domain).
 
-- Configure `DUCKDB_PATH` in `.env` if you want to store the database somewhere other than `data/pymasters.duckdb`.
-- The application automatically creates the DuckDB file (and parent directories) if it does not exist.
-- To reset all data, delete the DuckDB file and restart the app; collections will be recreated along with the default super admin.
+### Stack Details
+
+*   **Auth**: Custom JWT-based auth (Username/Password only).
+*   **Database**: DuckDB (Fast, file-based embedded SQL).
+*   **AI**: Mock Instructor enabled by default. Connect to a local LLM by mimicking the OpenAI API if needed.
+*   **Security**: The code execution playground currently uses a restricted `exec` environment. **For public deployment, users strictly advised to wrap the backend in a secure container environment (gVisor/Firecracker).**
+
+## Legacy Code
+
+The previous Streamlit version has been archived in the `/legacy_streamlit` folder.
