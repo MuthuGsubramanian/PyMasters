@@ -12,6 +12,7 @@ from typing import Any
 
 import streamlit as st
 
+from pymasters_app.utils.activity import log_activity
 from pymasters_app.utils.db import get_database
 from services.huggingface_service import (
     HuggingFaceError,
@@ -116,6 +117,7 @@ def render(*, user: dict[str, Any]) -> None:
             )
 
             st.success("Generation saved to history.")
+            log_activity(db, user.get("id", ""), "generation", f"{task}: {prompt[:60]}")
         except HuggingFaceError as e:
             st.error(str(e))
         except Exception as e:
