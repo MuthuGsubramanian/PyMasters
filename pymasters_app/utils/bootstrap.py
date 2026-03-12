@@ -27,3 +27,23 @@ def ensure_collections(db: Any) -> None:
     if "progress" in db.list_collection_names():
         db["progress"].create_index([("user_id", 1), ("module_id", 1)])
 
+    # Notes / bookmarks
+    if "notes" not in db.list_collection_names():
+        db.create_collection("notes")
+    db["notes"].create_index([("user_id", 1), ("created_at", -1)])
+
+    # Playground runs
+    if "playground_runs" not in db.list_collection_names():
+        db.create_collection("playground_runs")
+    db["playground_runs"].create_index([("user_id", 1), ("created_at", -1)])
+
+    # Activity feed
+    if "activity" not in db.list_collection_names():
+        db.create_collection("activity")
+    db["activity"].create_index([("user_id", 1), ("created_at", -1)])
+
+    # Leaderboard cache
+    if "leaderboard_cache" not in db.list_collection_names():
+        db.create_collection("leaderboard_cache")
+    db["leaderboard_cache"].create_index("user_id", unique=True)
+
