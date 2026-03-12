@@ -23,6 +23,16 @@ def ensure_collections(db: Any) -> None:
         db.create_collection("generations")
     db["generations"].create_index([("user_id", 1), ("created_at", -1)])
 
+    # Notes
+    if "notes" not in db.list_collection_names():
+        db.create_collection("notes")
+    db["notes"].create_index([("user_id", 1), ("created_at", -1)])
+
+    # Playground runs
+    if "playground_runs" not in db.list_collection_names():
+        db.create_collection("playground_runs")
+    db["playground_runs"].create_index([("user_id", 1), ("created_at", -1)])
+
     # Modules/progress may already exist via seed; add helpful indexes
     if "progress" in db.list_collection_names():
         db["progress"].create_index([("user_id", 1), ("module_id", 1)])
