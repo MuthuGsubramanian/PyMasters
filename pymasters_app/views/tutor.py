@@ -12,6 +12,7 @@ from typing import Any
 import streamlit as st
 import requests
 
+from pymasters_app.utils.activity import log_activity
 from pymasters_app.utils.db import get_database
 from pymasters_app.utils.tutor_parser import parse_tutor_response
 from config.settings import settings
@@ -121,7 +122,7 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
         ]
 
     # Render chat history
-    for msg in st.session_state.tutor_messages:
+    for i, msg in enumerate(st.session_state.tutor_messages):
         if msg["role"] == "user":
             with st.chat_message("user"):
                 escaped = html_mod.escape(msg["content"])
@@ -139,6 +140,16 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
                     parse_tutor_response(msg["content"]),
                     unsafe_allow_html=True,
                 )
+                # Save button for this message
+                if st.button("\U0001f4be Save", key=f"save-note-{i}"):
+                    db["notes"].insert_one({
+                        "user_id": user.get("_id") or user.get("id", ""),
+                        "source": "tutor",
+                        "content": msg["content"],
+                        "snippet_preview": msg["content"][:200],
+                        "created_at": datetime.utcnow(),
+                    })
+                    st.toast("Note saved!")
 
     if prompt := st.chat_input("Ask me anything about Python..."):
         st.session_state.tutor_messages.append({"role": "user", "content": prompt})
@@ -188,6 +199,7 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
                 "created_at": datetime.utcnow(),
             }
         )
+        log_activity(db, user.get("_id") or user.get("id", ""), "tutor_session", prompt[:60])
 
     with st.expander("Recent sessions"):
         rows = (
@@ -208,3 +220,29 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
                 "</div>",
                 unsafe_allow_html=True,
             )
+
+    # --- Saved notes ---
+    with st.expander("Saved notes"):
+        notes = list(
+            db["notes"]
+            .find({"user_id": user.get("_id") or user.get("id", ""), "source": "tutor"})
+            .sort("created_at", -1)
+            .limit(20)
+        )
+        if not notes:
+            st.markdown(
+                '<p style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--text-muted);">No saved notes yet. Click the bookmark icon on any response to save it.</p>',
+                unsafe_allow_html=True,
+            )
+        else:
+            for note in notes:
+                ts = note.get("created_at")
+                ts_str = ts.strftime("%Y-%m-%d %H:%M") if ts else ""
+                preview = note.get("snippet_preview", "")[:100]
+                st.markdown(
+                    f'<div class="ob-card" style="margin-bottom:8px;padding:12px;">'
+                    f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-muted);margin-bottom:4px;">{ts_str}</div>'
+                    f'<div style="font-size:12px;color:var(--text-secondary);">{html_mod.escape(preview)}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
