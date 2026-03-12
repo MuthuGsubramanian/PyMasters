@@ -32,29 +32,33 @@ def _save_bytes(data: bytes, suffix: str) -> str:
 
 
 def render(*, user: dict[str, Any]) -> None:
-    st.subheader("Generative Studio")
-    st.caption("Create images and videos powered by Hugging Face models.")
+    # ── Header ────────────────────────────────────────────────────────────────
+    st.markdown("### Studio")
+    st.caption("Generate images and videos with AI models.")
 
     db = get_database()
 
+    # ── Generation form ───────────────────────────────────────────────────────
     with st.form("gen_form"):
-        col1, col2 = st.columns([0.7, 0.3])
-        with col1:
+        col_left, col_right = st.columns([0.65, 0.35])
+        with col_left:
             prompt = st.text_area(
                 "Prompt",
                 value="A futuristic python robot teaching code in a neon-lit lab",
                 height=120,
             )
-        with col2:
+        with col_right:
             task = st.selectbox("Task", ["Image", "Video"], index=0)
-            if task == "Image":
-                default_model = "black-forest-labs/FLUX.1-dev"
-            else:
-                default_model = "damo-vilab/text-to-video-ms-1.7b"
-            model = st.text_input("HF model", value=default_model)
+            default_model = (
+                "black-forest-labs/FLUX.1-dev"
+                if task == "Image"
+                else "damo-vilab/text-to-video-ms-1.7b"
+            )
+            model = st.text_input("Model", value=default_model)
 
         submitted = st.form_submit_button("Generate", use_container_width=True)
 
+    # ── Generation logic ──────────────────────────────────────────────────────
     if submitted:
         if not prompt.strip():
             st.warning("Please enter a descriptive prompt.")
@@ -65,16 +69,39 @@ def render(*, user: dict[str, Any]) -> None:
                 if task == "Image":
                     img = generate_image(prompt=prompt, model=model)
                     file_path = _save_bytes(img.bytes, ".png")
-                    st.image(img.bytes, caption=f"{model}", use_column_width=True)
                     mime = img.mime_type
+                    # Preview card
+                    st.markdown(
+                        '<div class="ob-card" style="padding:12px;">',
+                        unsafe_allow_html=True,
+                    )
+                    st.image(img.bytes, use_column_width=True)
+                    truncated = prompt[:80] + ("…" if len(prompt) > 80 else "")
+                    st.markdown(
+                        f'<p style="font-family:\'JetBrains Mono\',monospace;font-size:10px;" '
+                        f'class="text-muted">{model} &mdash; {truncated}</p>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown("</div>", unsafe_allow_html=True)
                 else:
                     vid = generate_video(prompt=prompt, model=model)
-                    # assume mp4 or octet-stream
                     file_path = _save_bytes(vid.bytes, ".mp4")
-                    st.video(vid.bytes)
                     mime = vid.mime_type
+                    # Preview card
+                    st.markdown(
+                        '<div class="ob-card" style="padding:12px;">',
+                        unsafe_allow_html=True,
+                    )
+                    st.video(vid.bytes)
+                    truncated = prompt[:80] + ("…" if len(prompt) > 80 else "")
+                    st.markdown(
+                        f'<p style="font-family:\'JetBrains Mono\',monospace;font-size:10px;" '
+                        f'class="text-muted">{model} &mdash; {truncated}</p>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown("</div>", unsafe_allow_html=True)
 
-            # persist metadata
+            # Persist metadata
             db["generations"].insert_one(
                 {
                     "user_id": user.get("id") if user else None,
@@ -94,15 +121,46 @@ def render(*, user: dict[str, Any]) -> None:
         except Exception as e:
             st.exception(e)
 
-    with st.expander("Recent generations", expanded=False):
-        rows = (
+    # ── History ───────────────────────────────────────────────────────────────
+    with st.expander("History"):
+        rows = list(
             db["generations"]
             .find({}, {"prompt": 1, "task": 1, "model": 1, "created_at": 1})
             .sort("created_at", -1)
             .limit(10)
         )
-        for row in rows:
-            st.markdown(
-                f"- {row.get('created_at'):%Y-%m-%d %H:%M} — {row.get('task')} — {row.get('model')} — `{row.get('prompt')[:60]}…`"
-            )
 
+        if not rows:
+            st.markdown(
+                '<p style="font-family:\'JetBrains Mono\',monospace;font-size:10px;" '
+                'class="text-muted">No generations yet.</p>',
+                unsafe_allow_html=True,
+            )
+        else:
+            for row in rows:
+                task_val = (row.get("task") or "image").upper()
+                pill_class = "accent" if task_val == "IMAGE" else "warning"
+                truncated_prompt = (row.get("prompt") or "")[:70]
+                if len(row.get("prompt") or "") > 70:
+                    truncated_prompt += "…"
+                ts = row.get("created_at")
+                ts_str = ts.strftime("%Y-%m-%d %H:%M") if ts else "—"
+
+                st.markdown(
+                    f"""
+<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--color-border,#2a2a2a);">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;
+               padding:2px 6px;border-radius:4px;
+               background:var(--color-elevated,#1e1e1e);
+               color:var(--color-{pill_class},{'#7c6af7' if pill_class == 'accent' else '#e8a838'});">
+    {task_val}
+  </span>
+  <span style="font-size:11px;color:var(--color-text-secondary,#a0a0a0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+    {truncated_prompt}
+  </span>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--color-text-muted,#666);margin-left:auto;white-space:nowrap;">
+    {ts_str}
+  </span>
+</div>""",
+                    unsafe_allow_html=True,
+                )
