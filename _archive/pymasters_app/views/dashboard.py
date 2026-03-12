@@ -3,6 +3,7 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.utils import helpers
+from pymasters_app.utils.leaderboard import get_leaderboard
 from utils.streamlit_helpers import rerun
 
 
@@ -200,6 +201,28 @@ def render(*, db, user: dict[str, str]) -> None:
             )
             st.toast(f"Reset progress for {module['title']}")
             rerun()
+
+    # Leaderboard
+    with st.expander("Leaderboard"):
+        leaderboard = get_leaderboard(db)
+        if not leaderboard:
+            st.caption("No completed modules yet. Be the first on the board!")
+        else:
+            for rank, entry in enumerate(leaderboard, 1):
+                is_current = entry["user_id"] == user["id"]
+                bg = "var(--accent-glow)" if is_current else "transparent"
+                border = "1px solid rgba(34,197,94,0.2)" if is_current else "1px solid var(--border-subtle)"
+
+                rank_color = "var(--accent)" if rank == 1 else ("var(--warning)" if rank == 2 else ("var(--text-secondary)" if rank == 3 else "var(--text-muted)"))
+
+                st.markdown(
+                    f"<div style='display:flex;align-items:center;gap:12px;padding:10px 12px;background:{bg};border:{border};border-radius:8px;margin-bottom:4px;'>"
+                    f"<span style='font-family:\"JetBrains Mono\",monospace;font-size:16px;font-weight:700;color:{rank_color};min-width:28px;'>{rank}</span>"
+                    f"<span style='font-size:13px;color:var(--text-primary);flex:1;font-weight:{\"600\" if is_current else \"400\"};'>{entry['username']}</span>"
+                    f"<span style='font-family:\"JetBrains Mono\",monospace;font-size:12px;color:var(--text-muted);'>{entry['completed_count']} completed</span>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
 
 
 def render_status_chip(status: str) -> str:
