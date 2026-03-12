@@ -27,3 +27,8 @@ def ensure_collections(db: Any) -> None:
     if "progress" in db.list_collection_names():
         db["progress"].create_index([("user_id", 1), ("module_id", 1)])
 
+    # Leaderboard cache (optional, for future use)
+    if "leaderboard_cache" not in db.list_collection_names():
+        db.create_collection("leaderboard_cache")
+    db["leaderboard_cache"].create_index("user_id", unique=True)
+
