@@ -6,7 +6,7 @@ import streamlit as st
 from pymasters_app.styles import OBSIDIAN_CSS
 from pymasters_app.components.tab_nav import render_tab_nav
 from pymasters_app.views import dashboard, login, profile, signup
-from pymasters_app.views import studio, tutor
+from pymasters_app.views import studio, tutor, playground
 from pymasters_app.utils.auth import AuthManager
 from pymasters_app.utils.db import get_database
 from pymasters_app.utils.bootstrap import ensure_collections
@@ -103,8 +103,7 @@ elif page == "Playground":
         st.warning("Sign in to continue.")
         login.render(auth_manager)
     else:
-        st.markdown("### Playground")
-        st.caption("Coming soon in Phase 3.")
+        playground.render(user=user)
 else:
     if not user:
         st.warning("Sign in to continue.")
