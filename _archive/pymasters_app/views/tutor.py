@@ -181,11 +181,20 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
             {"role": "system", "content": SYSTEM_PROMPT},
         ]
 
-    for msg in st.session_state.tutor_messages:
+    for i, msg in enumerate(st.session_state.tutor_messages):
         if msg["role"] == "user":
             st.chat_message("user").write(msg["content"])
         elif msg["role"] == "assistant":
             st.chat_message("assistant").write(msg["content"])
+            if st.button("\U0001f4be Save", key=f"save-note-{i}"):
+                db["notes"].insert_one({
+                    "user_id": user.get("id") or str(user.get("_id")),
+                    "source": "tutor",
+                    "content": msg["content"],
+                    "snippet_preview": msg["content"][:80],
+                    "created_at": datetime.utcnow(),
+                })
+                st.toast("Note saved.")
 
     if prompt := st.chat_input("Ask me anything about Python…"):
         st.session_state.tutor_messages.append({"role": "user", "content": prompt})
@@ -234,3 +243,25 @@ def render(*, auth_manager, user: dict[str, Any]) -> None:
             st.markdown(
                 f"- {row.get('created_at'):%Y-%m-%d %H:%M} – {provider_name.upper()} – {row.get('model')}"
             )
+
+    with st.expander("Saved notes"):
+        notes = list(
+            db["notes"]
+            .find({"user_id": user.get("id") or str(user.get("_id")), "source": "tutor"})
+            .sort("created_at", -1)
+            .limit(10)
+        )
+        if not notes:
+            st.caption("No saved notes yet. Click the save button on any tutor response.")
+        else:
+            for note in notes:
+                preview = note.get("snippet_preview", "")
+                ts = note.get("created_at")
+                ts_str = ts.strftime("%Y-%m-%d %H:%M") if ts else ""
+                st.markdown(
+                    f"<div class='ob-card' style='padding:12px;margin-bottom:8px;'>"
+                    f"<div style='font-size:12px;color:var(--text-secondary);line-height:1.4;'>{preview}...</div>"
+                    f"<div style='font-family:\"JetBrains Mono\",monospace;font-size:10px;color:var(--text-muted);margin-top:6px;'>{ts_str}</div>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
