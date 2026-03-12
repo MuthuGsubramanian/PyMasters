@@ -25,6 +25,7 @@ export default function Layout() {
         { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
         { icon: BookOpen, label: 'Learning Path', path: '/dashboard/learn' },
         { icon: Code2, label: 'Code Studio', path: '/dashboard/studio' },
+        { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
 
     return (

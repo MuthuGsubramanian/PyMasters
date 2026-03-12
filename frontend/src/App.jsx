@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import { Overview, LearningMap, ModuleViewer, StudioView } from './pages/Dashboard';
+import Settings from './pages/Settings';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="learn" element={<LearningMap />} />
             <Route path="learn/:id" element={<ModuleViewer />} />
             <Route path="studio" element={<StudioView />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           {/* Fallback */}
