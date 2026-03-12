@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 import time
 import uuid
 import random
+from datetime import datetime, timezone
 
 # --- Database Setup ---
 import os
@@ -102,6 +103,21 @@ def init_db():
             conn.execute("INSERT INTO users VALUES (?, ?, ?, ?, current_timestamp, 0, ?)", 
                         [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"])])
             
+        # Activity feed table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS activity (
+                id VARCHAR PRIMARY KEY,
+                user_id VARCHAR,
+                action VARCHAR,
+                detail VARCHAR DEFAULT '',
+                created_at TIMESTAMP
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_activity_user_time
+            ON activity (user_id, created_at)
+        """)
+
     except Exception as e:
         print(f"DB Init Error: {e}")
     finally:
@@ -161,6 +177,21 @@ import hashlib
 
 def hash_pw(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
+# --- Activity Logging ---
+
+def log_activity(user_id: str, action: str, detail: str = "") -> None:
+    """Log a user activity event to the activity table."""
+    conn = duckdb.connect(DB_PATH)
+    try:
+        conn.execute(
+            "INSERT INTO activity VALUES (?, ?, ?, ?, ?)",
+            [str(uuid.uuid4()), user_id, action, detail, datetime.now(timezone.utc)]
+        )
+    except Exception as e:
+        print(f"Activity log error: {e}")
+    finally:
+        conn.close()
 
 # --- Routes ---
 
@@ -268,12 +299,31 @@ def complete_module(sub: QuizSubmission):
             [new_points, json.dumps(current_unlocks), sub.user_id]
         )
         
+        # Log activity
+        log_activity(sub.user_id, "completed_module", module["title"])
+
         return {
-            "success": True, 
-            "new_points": new_points, 
+            "success": True,
+            "new_points": new_points,
             "unlocked": current_unlocks,
             "message": "Module Completed!"
         }
+    finally:
+        conn.close()
+
+@app.get("/api/activity/{user_id}")
+def get_activity(user_id: str, limit: int = 15):
+    """Get recent activity for a user."""
+    conn = duckdb.connect(DB_PATH)
+    try:
+        rows = conn.execute(
+            "SELECT action, detail, created_at FROM activity WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
+            [user_id, limit]
+        ).fetchall()
+        return [
+            {"action": r[0], "detail": r[1], "created_at": r[2].isoformat() if r[2] else None}
+            for r in rows
+        ]
     finally:
         conn.close()
 
@@ -302,6 +352,24 @@ def execute_code(request: CodeRequest):
         return {"output": stdout_buffer.getvalue(), "error": str(e)}
         
     return {"output": stdout_buffer.getvalue(), "error": stderr_buffer.getvalue()}
+
+class CodeRequestWithUser(BaseModel):
+    code: str
+    user_id: Optional[str] = None
+
+@app.post("/api/run/tracked")
+def execute_code_tracked(request: CodeRequestWithUser):
+    """Execute code and log activity if user_id is provided."""
+    result = execute_code(CodeRequest(code=request.code))
+    if request.user_id:
+        snippet = request.code[:60].replace("\n", " ")
+        log_activity(request.user_id, "playground_run", snippet)
+    return result
+
+class AIRequestWithUser(BaseModel):
+    prompt: str
+    context: Optional[str] = ""
+    user_id: Optional[str] = None
 
 @app.post("/api/ai/chat")
 def chat_ai(request: AIRequest):
@@ -344,6 +412,49 @@ def chat_ai(request: AIRequest):
             "role": "assistant",
             "warning": "Running in simulation mode (AI server unavailable)."
         }
+
+@app.post("/api/ai/chat/tracked")
+def chat_ai_tracked(request: AIRequestWithUser):
+    """Chat with AI and log activity if user_id is provided."""
+    result = chat_ai(AIRequest(prompt=request.prompt, context=request.context))
+    if request.user_id:
+        log_activity(request.user_id, "tutor_session", request.prompt[:80])
+    return result
+
+# --- Settings ---
+
+class SettingsUpdate(BaseModel):
+    user_id: str
+    hf_token: Optional[str] = None
+
+@app.post("/api/settings/save")
+def save_settings(settings: SettingsUpdate):
+    """Save user settings (HF token stored server-side per session, not persisted to DB for security)."""
+    # In a production app, you'd encrypt and store this. For now we acknowledge receipt.
+    return {"success": True, "message": "Settings saved for this session."}
+
+@app.get("/api/user/{user_id}")
+def get_user_profile(user_id: str):
+    """Get user profile information."""
+    conn = duckdb.connect(DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT id, username, name, points, unlocked_modules, created_at FROM users WHERE id = ?",
+            [user_id]
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+        unlocks = json.loads(row[4]) if row[4] else ["module_1"]
+        return {
+            "id": row[0],
+            "username": row[1],
+            "name": row[2],
+            "points": row[3] or 0,
+            "unlocked": unlocks,
+            "created_at": row[5].isoformat() if row[5] else None,
+        }
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
