@@ -3,6 +3,9 @@ from __future__ import annotations
 import streamlit as st
 
 from pymasters_app.utils import helpers
+from pymasters_app.utils.activity import log_activity, get_recent_activity
+from pymasters_app.utils.leaderboard import get_leaderboard
+from pymasters_app.utils.db import get_database
 from utils.streamlit_helpers import rerun
 
 
@@ -15,6 +18,9 @@ STATUS_PILLS = {
 
 def render(*, db, user: dict[str, str]) -> None:
     """Render the dashboard view with Obsidian Terminal design."""
+
+    if db is None:
+        db = get_database()
 
     modules_collection = db["learning_modules"]
     progress_collection = db["progress"]
@@ -128,6 +134,7 @@ def render(*, db, user: dict[str, str]) -> None:
                     status="in_progress",
                 )
                 st.toast(f"Marked {module['title']} as in progress.")
+                log_activity(db, user["id"], "started_module", module["title"])
                 rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -141,6 +148,7 @@ def render(*, db, user: dict[str, str]) -> None:
                     status="completed",
                 )
                 st.toast(f"Marked {module['title']} as completed.")
+                log_activity(db, user["id"], "completed_module", module["title"])
                 rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -154,5 +162,53 @@ def render(*, db, user: dict[str, str]) -> None:
                     status="not_started",
                 )
                 st.toast(f"Reset progress for {module['title']}")
+                log_activity(db, user["id"], "reset_module", module["title"])
                 rerun()
             st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- Activity feed ---
+    with st.expander("Recent activity"):
+        activities = get_recent_activity(db, user["id"])
+        if not activities:
+            st.markdown(
+                '<p style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--text-muted);">No activity yet.</p>',
+                unsafe_allow_html=True,
+            )
+        else:
+            for act in activities:
+                ts = act.get("created_at")
+                ts_str = ts.strftime("%Y-%m-%d %H:%M") if ts else ""
+                action = act.get("action", "").replace("_", " ").title()
+                detail = act.get("detail", "")
+                st.markdown(
+                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+                    '<div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>'
+                    f'<span style="font-size:12px;color:var(--text-secondary);">{action}</span>'
+                    f'<span style="font-size:11px;color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{detail}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-muted);white-space:nowrap;">{ts_str}</span>'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # --- Leaderboard ---
+    with st.expander("Leaderboard"):
+        leaders = get_leaderboard(db)
+        if not leaders:
+            st.markdown(
+                '<p style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--text-muted);">No completions yet. Be the first!</p>',
+                unsafe_allow_html=True,
+            )
+        else:
+            for rank, entry in enumerate(leaders, 1):
+                is_current = entry["user_id"] == user.get("id")
+                bg = "var(--accent-glow)" if is_current else "transparent"
+                accent = "var(--accent)" if is_current else "var(--text-secondary)"
+                st.markdown(
+                    f'<div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:6px;background:{bg};margin-bottom:4px;">'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:16px;font-weight:700;color:{accent};min-width:28px;">#{rank}</span>'
+                    f'<span style="font-size:13px;color:var(--text-primary);flex:1;">{entry["username"]}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;color:var(--accent);">{entry["completed_count"]}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;">completed</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
