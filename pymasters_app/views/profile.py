@@ -107,11 +107,15 @@ def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
             disabled=True,
             help="Obsidian Terminal theme is always dark.",
         )
-        st.text_input(
+        hf_token = st.text_input(
             "HuggingFace API token",
             type="password",
             placeholder="hf_...",
+            value=st.session_state.get("hf_token", ""),
         )
+        if hf_token != st.session_state.get("hf_token", ""):
+            st.session_state["hf_token"] = hf_token
+            st.toast("HuggingFace token saved for this session.")
 
         st.markdown("#### Notifications")
         st.checkbox(
