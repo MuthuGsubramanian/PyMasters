@@ -13,5 +13,8 @@ export const chatAI = (prompt, context = "") => api.post('/ai/chat', { prompt, c
 export const getModules = () => api.get('/content/modules');
 export const getModule = (id) => api.get(`/content/module/${id}`);
 export const completeModule = (userId, moduleId, score) => api.post('/content/complete', { user_id: userId, module_id: moduleId, score });
+export const getActivity = (userId, limit = 15) => api.get(`/activity/${userId}?limit=${limit}`);
+export const getUserProfile = (userId) => api.get(`/user/${userId}`);
+export const saveSettings = (userId, hfToken) => api.post('/settings/save', { user_id: userId, hf_token: hfToken });
 
 export default api;

@@ -16,15 +16,41 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { runCode, chatAI, getModules, getModule, completeModule } from '../api';
+import { runCode, chatAI, getModules, getModule, completeModule, getActivity } from '../api';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 // --- SUB-VIEWS ---
 
+const ACTION_LABELS = {
+    started_module: "Started",
+    completed_module: "Completed",
+    tutor_session: "Tutor",
+    generation: "Studio",
+    playground_run: "Playground",
+};
+
+function formatTimestamp(isoStr) {
+    if (!isoStr) return "";
+    const d = new Date(isoStr);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) +
+        " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
 export function Overview() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [activities, setActivities] = useState([]);
+    const [loadingActivity, setLoadingActivity] = useState(true);
+
+    useEffect(() => {
+        if (user?.id) {
+            getActivity(user.id)
+                .then(res => setActivities(res.data))
+                .catch(err => console.error("Activity fetch error:", err))
+                .finally(() => setLoadingActivity(false));
+        }
+    }, [user?.id]);
 
     return (
         <div className="animate-fade-in space-y-8">
@@ -72,18 +98,31 @@ export function Overview() {
                     </div>
                 </div>
 
-                {/* Social / Leaderboard (Placeholder) */}
+                {/* Activity Feed */}
                 <div className="panel p-6 rounded-xl h-full">
-                    <h3 className="font-bold text-sm text-slate-400 uppercase tracking-widest mb-4">Live Feed</h3>
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="flex gap-3 text-sm items-start">
-                                <div className="w-2 h-2 mt-1.5 rounded-full bg-green-500 shrink-0 animate-pulse"></div>
-                                <div className="text-slate-400">
-                                    <span className="text-white font-bold">User_{900 + i}</span> just completed <span className="text-cyan-400">Advanced Recursion</span>.
-                                </div>
+                    <h3 className="font-bold text-sm text-slate-400 uppercase tracking-widest mb-4">Recent Activity</h3>
+                    <div className="space-y-3 overflow-y-auto max-h-80">
+                        {loadingActivity ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="animate-spin w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full"></div>
                             </div>
-                        ))}
+                        ) : activities.length === 0 ? (
+                            <p className="text-xs text-slate-600 italic">No activity yet. Start a module to see your timeline.</p>
+                        ) : (
+                            activities.map((act, i) => {
+                                const label = ACTION_LABELS[act.action] || act.action;
+                                return (
+                                    <div key={i} className="flex items-center gap-2 py-2 border-b border-white/5 last:border-0">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                                        <span className="font-mono text-[10px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                                            {label}
+                                        </span>
+                                        <span className="text-xs text-slate-400 flex-1 truncate">{act.detail}</span>
+                                        <span className="font-mono text-[10px] text-slate-600 shrink-0">{formatTimestamp(act.created_at)}</span>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             </div>
