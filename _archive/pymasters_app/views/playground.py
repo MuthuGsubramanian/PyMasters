@@ -1,100 +1,142 @@
-"""Interactive AI playground for experimenting with Python topics."""
+"""Code Playground — Obsidian Terminal."""
 from __future__ import annotations
 
-import contextlib
 import io
+import sys
+import traceback
+from datetime import datetime
 from typing import Any
 
 import streamlit as st
 
-from services.local_ai_service import LocalAIError, create_local_chat_completion
-from config.settings import settings
+from pymasters_app.utils.db import get_database
 
 
-PLAYGROUND_TOPICS = {
-    "Asynchronous programming": {
-        "primer": "Use asyncio to orchestrate concurrent IO-bound tasks. Master event loops, tasks, and structured concurrency.",
-        "snippet": """import asyncio\n\nasync def fetch_data(delay: float, label: str) -> str:\n    await asyncio.sleep(delay)\n    return f\"{label} finished\"\n\nasync def main():\n    results = await asyncio.gather(\n        fetch_data(1, \"alpha\"),\n        fetch_data(2, \"beta\"),\n        fetch_data(0.3, \"gamma\"),\n    )\n    for line in results:\n        print(line)\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n""",
-    },
-    "Pandas transformations": {
-        "primer": "Chain query, assign, and groupby operations to build expressive data pipelines. Favor method chaining for readability.",
-        "snippet": """import pandas as pd\n\ndata = pd.DataFrame(\n    {\n        \"team\": [\"alpha\", \"beta\", \"alpha\", \"beta\"],\n        \"score\": [10, 15, 25, 5],\n        \"round\": [1, 1, 2, 2],\n    }\n)\n\nsummary = (\n    data.query(\"score > 8\")\n        .assign(bonus=lambda df: df[\"score\"] * 0.1)\n        .groupby(\"team\", as_index=False)\n        .agg(total_score=(\"score\", \"sum\"), avg_bonus=(\"bonus\", \"mean\"))\n)\nprint(summary)\n""",
-    },
-    "FastAPI microservices": {
-        "primer": "Expose typed endpoints with dependency injection and background tasks. Perfect for small API backends.",
-        "snippet": """from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/status\")\nasync def status():\n    return {\"status\": \"ok\"}\n\n@app.post(\"/echo\")\nasync def echo(payload: dict[str, str]):\n    return {\"mirrored\": payload}\n""",
-    },
+SNIPPETS = {
+    "Hello World": 'print("Hello, PyMasters!")',
+    "List Ops": "numbers = [1, 2, 3, 4, 5]\nsquared = [n ** 2 for n in numbers]\nprint(squared)",
+    "Dictionary": 'user = {"name": "Ada", "role": "learner"}\nfor key, val in user.items():\n    print(f"{key}: {val}")',
+    "API Call": 'import json\ndata = {"name": "PyMasters", "version": "1.0"}\nprint(json.dumps(data, indent=2))',
 }
 
 
-def _ai_tip(prompt: str) -> str:
-    response = create_local_chat_completion(
-        model=settings.local_ai_default_model,
-        messages=[
-            {"role": "system", "content": "You are a pragmatic Python coach. Respond with short actionable tips."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.4,
-        max_tokens=400,
-    )
-    choice = response.get("choices", [{}])[0]
-    if "message" in choice and "content" in choice["message"]:
-        return choice["message"]["content"]
-    return str(response)
+def _safe_exec(code: str, timeout_hint: int = 5) -> tuple[str, bool]:
+    """Execute Python code safely and capture output.
+    Returns (output_text, success_bool).
+    """
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = buffer_out = io.StringIO()
+    sys.stderr = buffer_err = io.StringIO()
 
-
-def _run_code(source: str) -> tuple[str, str]:
-    stdout_buffer = io.StringIO()
-    stderr_buffer = io.StringIO()
-    local_env: dict[str, Any] = {}
+    success = True
     try:
-        with contextlib.redirect_stdout(stdout_buffer), contextlib.redirect_stderr(stderr_buffer):
-            exec(compile(source, filename="<playground>", mode="exec"), {}, local_env)
-    except Exception as exc:  # pragma: no cover - runtime exec
-        stderr_buffer.write(f"{type(exc).__name__}: {exc}\n")
-    return stdout_buffer.getvalue(), stderr_buffer.getvalue()
+        exec(code, {"__builtins__": __builtins__}, {})
+    except Exception:
+        success = False
+        traceback.print_exc(file=buffer_err)
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
+    stdout_text = buffer_out.getvalue()
+    stderr_text = buffer_err.getvalue()
+    output = stdout_text
+    if stderr_text:
+        output += ("\n" if output else "") + stderr_text
+    return output or "(no output)", success
 
 
-def render(*, auth_manager, user: dict[str, str]) -> None:
-    st.subheader("AI Playground")
-    st.caption("Prototype ideas, run code snippets, and ask the local instructor for targeted guidance.")
+def render(*, user: dict[str, Any], **_: Any) -> None:
+    st.markdown("### Playground")
+    st.caption("Write and run Python in your browser.")
 
-    topic_names = list(PLAYGROUND_TOPICS.keys())
-    col_topic, col_creativity = st.columns([0.6, 0.4])
-    with col_topic:
-        topic = st.selectbox("Topic focus", topic_names, index=0)
-    with col_creativity:
-        temperature = st.slider("Instructor creativity", 0.0, 1.2, 0.35, 0.05)
+    db = get_database()
 
-    details = PLAYGROUND_TOPICS[topic]
-    st.markdown(f"**Primer:** {details['primer']}")
+    # Snippet buttons
+    snippet_cols = st.columns(len(SNIPPETS))
+    selected_snippet = None
+    for i, (name, code) in enumerate(SNIPPETS.items()):
+        with snippet_cols[i]:
+            if st.button(name, key=f"snippet-{name}"):
+                selected_snippet = code
 
-    code = st.text_area("Workspace", value=details["snippet"], height=300)
-    run = st.button("Run code", type="primary")
+    # Initialize code in session state
+    if "playground_code" not in st.session_state:
+        st.session_state.playground_code = SNIPPETS["Hello World"]
+    if selected_snippet:
+        st.session_state.playground_code = selected_snippet
 
-    if run:
-        stdout, stderr = _run_code(code)
-        with st.expander("Console output", expanded=True):
-            if stdout.strip():
-                st.code(stdout, language="plaintext")
-            if stderr.strip():
-                st.error(stderr)
-            if not stdout.strip() and not stderr.strip():
-                st.info("No output produced.")
+    # Editor + Output columns
+    editor_col, output_col = st.columns([0.55, 0.45], gap="large")
 
-    st.divider()
-    st.markdown("### Ask for a playground tip")
-    question = st.text_area(
-        "Ask the instructor",
-        placeholder="Explain how to convert this function into an async variant...",
-        height=120,
-    )
-    ask = st.button("Get tip", disabled=not question.strip())
-    if ask and question.strip():
-        with st.spinner("Summoning the local instructor..."):
-            try:
-                prompt = f"Topic: {topic}. Question: {question.strip()}."
-                tip = _ai_tip(prompt)
-            except LocalAIError as exc:
-                tip = f"Local AI service unavailable: {exc}"
-        st.write(tip)
+    with editor_col:
+        code = st.text_area(
+            "Code",
+            value=st.session_state.playground_code,
+            height=300,
+            key="playground-editor",
+            label_visibility="collapsed",
+        )
+        if st.button("Run \u25b8", key="playground-run", use_container_width=True):
+            st.session_state.playground_code = code
+            output, success = _safe_exec(code)
+            st.session_state.playground_output = output
+            st.session_state.playground_success = success
+
+            # Persist run
+            db["playground_runs"].insert_one({
+                "user_id": user.get("id", ""),
+                "code": code[:2000],
+                "output": output[:2000],
+                "status": "success" if success else "error",
+                "created_at": datetime.utcnow(),
+            })
+
+    with output_col:
+        # Terminal-style output panel
+        st.markdown(
+            """<div class="ob-card" style="padding:8px 16px;margin-bottom:0;border-bottom:none;border-radius:10px 10px 0 0;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+                    <div style="width:8px;height:8px;border-radius:50%;background:#eab308;"></div>
+                    <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);margin-left:8px;letter-spacing:0.08em;">output</span>
+                </div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+        output_text = st.session_state.get("playground_output", "Click Run to execute your code.")
+        is_success = st.session_state.get("playground_success", True)
+        output_color = "var(--text-primary)" if is_success else "var(--danger)"
+
+        st.markdown(
+            f"<div class='ob-card' style='border-radius:0 0 10px 10px;border-top:none;min-height:250px;padding:16px;'>"
+            f"<pre style='margin:0;font-family:\"JetBrains Mono\",monospace;font-size:12px;color:{output_color};white-space:pre-wrap;line-height:1.5;'>{output_text}</pre>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+    # Recent runs
+    with st.expander("Recent runs"):
+        rows = (
+            db["playground_runs"]
+            .find({"user_id": user.get("id", "")}, {"code": 1, "status": 1, "created_at": 1})
+            .sort("created_at", -1)
+            .limit(10)
+        )
+        for row in rows:
+            status = row.get("status", "success")
+            status_color = "var(--accent)" if status == "success" else "var(--danger)"
+            code_preview = (row.get("code", "")[:60] or "").replace("\n", " ")
+            ts = row.get("created_at")
+            ts_str = ts.strftime("%Y-%m-%d %H:%M") if ts else ""
+            st.markdown(
+                f"<div style='display:flex;align-items:center;gap:8px;padding:4px 0;'>"
+                f"<span style='font-family:\"JetBrains Mono\",monospace;font-size:10px;color:{status_color};'>{status.upper()}</span>"
+                f"<span style='font-size:11px;color:var(--text-secondary);flex:1;'>{code_preview}...</span>"
+                f"<span style='font-family:\"JetBrains Mono\",monospace;font-size:10px;color:var(--text-muted);'>{ts_str}</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
