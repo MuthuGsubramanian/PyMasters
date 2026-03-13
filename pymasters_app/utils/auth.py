@@ -7,7 +7,6 @@ from uuid import uuid4
 
 import bcrypt
 from bson import ObjectId
-import streamlit as st
 
 
 class AuthManager:
@@ -29,15 +28,26 @@ class AuthManager:
     # ------------------------------------------------------------------
     # Session helpers
     # ------------------------------------------------------------------
-    def get_current_user(self) -> Optional[dict[str, Any]]:
-        """Return the current user stored in session state."""
-        user = st.session_state.get("user")
-        if user:
-            self._touch_session()
-        return user
+    def get_current_user(self, session_id: str) -> Optional[dict[str, Any]]:
+        """Return the current user for the given session_id, or None."""
+        if not session_id:
+            return None
+        session = self._sessions.find_one({"session_id": session_id})
+        if not session:
+            return None
+        user_id = session.get("user_id")
+        if not user_id:
+            return None
+        try:
+            record = self._users.find_one({"_id": ObjectId(user_id)})
+        except Exception:
+            return None
+        if not record:
+            return None
+        self._touch_session(session_id)
+        return self._serialize_user(record)
 
-    def _touch_session(self) -> None:
-        session_id = st.session_state.get("session_id")
+    def _touch_session(self, session_id: str) -> None:
         if not session_id:
             return
         self._sessions.update_one(
@@ -46,14 +56,10 @@ class AuthManager:
             upsert=True,
         )
 
-    def logout(self) -> None:
-        """Terminate the active session."""
-        session_id = st.session_state.get("session_id")
+    def logout(self, session_id: str) -> None:
+        """Terminate the session identified by session_id."""
         if session_id:
             self._sessions.delete_one({"session_id": session_id})
-        st.session_state.pop("user", None)
-        st.session_state.pop("session_id", None)
-        st.session_state["current_page"] = "Login"
 
     # ------------------------------------------------------------------
     # User management
@@ -80,7 +86,7 @@ class AuthManager:
         }
         self._users.insert_one(user_doc)
 
-    def login(self, *, identifier: str, password: str) -> Optional[dict[str, Any]]:
+    def login(self, *, identifier: str, password: str) -> Optional[tuple[dict[str, Any], str]]:
         lookup = identifier.strip().lower()
         if not lookup:
             return None
@@ -101,8 +107,8 @@ class AuthManager:
             return None
 
         user = self._serialize_user(record)
-        self._start_session(user)
-        return user
+        session_id = self._start_session(user)
+        return user, session_id
 
     def signup(
         self,
@@ -112,26 +118,26 @@ class AuthManager:
         password: str,
         email: Optional[str] = None,
         phone: Optional[str] = None,
-    ) -> tuple[bool, Optional[dict[str, Any]], str | None]:
+    ) -> tuple[bool, Optional[dict[str, Any]], str | None, Optional[str]]:
         username_normalized = self._normalize_username(username)
         if not username_normalized:
-            return False, None, "Please choose a valid user ID."
+            return False, None, "Please choose a valid user ID.", None
 
         existing_username = self._users.find_one({"username_normalized": username_normalized})
         if existing_username:
-            return False, None, "That user ID is already taken."
+            return False, None, "That user ID is already taken.", None
 
         email_normalized = self._normalize_email(email)
         if email_normalized:
             existing_email = self._users.find_one({"email": email_normalized})
             if existing_email:
-                return False, None, "An account with that email already exists."
+                return False, None, "An account with that email already exists.", None
 
         phone_normalized = self._normalize_phone(phone)
         if phone_normalized:
             existing_phone = self._users.find_one({"phone_normalized": phone_normalized})
             if existing_phone:
-                return False, None, "That phone number is already linked to another account."
+                return False, None, "That phone number is already linked to another account.", None
 
         user_doc = {
             "name": name.strip(),
@@ -148,8 +154,8 @@ class AuthManager:
         inserted = self._users.insert_one(user_doc)
         user_doc["_id"] = inserted.inserted_id
         user = self._serialize_user(user_doc)
-        self._start_session(user)
-        return True, user, None
+        session_id = self._start_session(user)
+        return True, user, None, session_id
 
     def update_profile(
         self,
@@ -206,7 +212,6 @@ class AuthManager:
 
         record = self._users.find_one({"_id": object_id})
         user = self._serialize_user(record)
-        st.session_state["user"] = user
         return True, None, user
 
     def change_password(self, user_id: str, *, current_password: str, new_password: str) -> tuple[bool, str | None]:
@@ -229,10 +234,8 @@ class AuthManager:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _start_session(self, user: dict[str, Any]) -> None:
-        session_id = st.session_state.get("session_id") or str(uuid4())
-        st.session_state["session_id"] = session_id
-        st.session_state["user"] = user
+    def _start_session(self, user: dict[str, Any]) -> str:
+        session_id = str(uuid4())
         self._sessions.update_one(
             {"session_id": session_id},
             {
@@ -248,6 +251,7 @@ class AuthManager:
             },
             upsert=True,
         )
+        return session_id
 
     def _hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt(rounds=12)
@@ -282,13 +286,3 @@ class AuthManager:
             return None
         digits = "".join(ch for ch in value if ch.isdigit())
         return digits or None
-
-
-def require_user(auth_manager: AuthManager) -> dict[str, Any]:
-    """Ensure there is an authenticated user before proceeding."""
-    user = auth_manager.get_current_user()
-    if user:
-        return user
-    st.session_state["current_page"] = "Login"
-    st.error("Please sign in to continue.")
-    st.stop()

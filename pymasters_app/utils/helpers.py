@@ -3,11 +3,8 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-import json
 from pathlib import Path
 from typing import Any, Iterable
-
-import streamlit as st
 
 DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "seed" / "modules.json"
 
@@ -29,7 +26,6 @@ def seed_learning_modules(collection: Any) -> None:
         collection.insert_many(payload)
 
 
-@st.cache_data(ttl=300, show_spinner=False)
 def get_learning_modules(collection: Any) -> list[dict[str, Any]]:
     """Return all learning modules ordered by difficulty and title."""
     cursor = collection.find().sort([("difficulty", 1), ("title", 1)])
