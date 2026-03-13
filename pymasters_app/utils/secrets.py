@@ -16,26 +16,7 @@ def get_secret(name: str, default: Optional[str] = None) -> Optional[str]:
     - Falls back to `st.secrets[name]` if available.
     - Returns `default` if not found.
     """
-    value = os.getenv(name)
-    if value:
-        return value
-
-    try:
-        import streamlit as st  # import lazily to avoid import-time side effects
-
-        secrets_obj = getattr(st, "secrets", None)
-        if secrets_obj is None:
-            return default
-
-        # Support both Mapping-like and object with .get
-        try:
-            if hasattr(secrets_obj, "get"):
-                return secrets_obj.get(name, default)
-            return secrets_obj[name]  # type: ignore[index]
-        except Exception:
-            return default
-    except Exception:
-        return default
+    return os.getenv(name, default)
 
 
 def get_client_credentials() -> Tuple[Optional[str], Optional[str]]:
