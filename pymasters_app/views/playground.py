@@ -56,10 +56,6 @@ def render(*, user: dict[str, Any]) -> None:
     db = get_database()
 
     # --- Snippet bar ---
-    st.markdown(
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">',
-        unsafe_allow_html=True,
-    )
     snippet_cols = st.columns(len(SNIPPETS))
     for col, (name, code) in zip(snippet_cols, SNIPPETS.items()):
         with col:

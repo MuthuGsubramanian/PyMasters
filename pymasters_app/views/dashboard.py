@@ -123,9 +123,8 @@ def render(*, db, user: dict[str, str]) -> None:
             unsafe_allow_html=True,
         )
 
-        action_cols = st.columns(3)
+        action_cols = st.columns([1, 1, 1, 3])
         with action_cols[0]:
-            st.markdown("<div class='ob-btn-secondary'>", unsafe_allow_html=True)
             if st.button("Start", key=f"start-{module['id']}"):
                 helpers.upsert_progress(
                     progress_collection,
@@ -136,10 +135,8 @@ def render(*, db, user: dict[str, str]) -> None:
                 st.toast(f"Marked {module['title']} as in progress.")
                 log_activity(db, user["id"], "started_module", module["title"])
                 rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
 
         with action_cols[1]:
-            st.markdown("<div class='ob-btn-secondary'>", unsafe_allow_html=True)
             if st.button("Complete", key=f"complete-{module['id']}"):
                 helpers.upsert_progress(
                     progress_collection,
@@ -150,10 +147,8 @@ def render(*, db, user: dict[str, str]) -> None:
                 st.toast(f"Marked {module['title']} as completed.")
                 log_activity(db, user["id"], "completed_module", module["title"])
                 rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
 
         with action_cols[2]:
-            st.markdown("<div class='ob-btn-secondary'>", unsafe_allow_html=True)
             if st.button("Reset", key=f"reset-{module['id']}"):
                 helpers.upsert_progress(
                     progress_collection,
@@ -164,7 +159,6 @@ def render(*, db, user: dict[str, str]) -> None:
                 st.toast(f"Reset progress for {module['title']}")
                 log_activity(db, user["id"], "reset_module", module["title"])
                 rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
 
     # --- Activity feed ---
     with st.expander("Recent activity"):

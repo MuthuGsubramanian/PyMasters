@@ -91,12 +91,10 @@ def render(*, auth_manager: AuthManager, user: dict[str, str]) -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="ob-btn-secondary">', unsafe_allow_html=True)
     if st.button("Sign out", key="profile-sign-out"):
         auth_manager.logout()
         st.session_state["current_page"] = "Sign in"
         rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Settings stub ─────────────────────────────────────────────────────────
     with st.expander("Settings"):

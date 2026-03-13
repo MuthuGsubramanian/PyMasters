@@ -148,21 +148,12 @@ def render(*, user: dict[str, Any]) -> None:
                 ts = row.get("created_at")
                 ts_str = ts.strftime("%Y-%m-%d %H:%M") if ts else "—"
 
+                pill_color = "var(--accent)" if pill_class == "accent" else "var(--warning)"
                 st.markdown(
-                    f"""
-<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--color-border,#2a2a2a);">
-  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;
-               padding:2px 6px;border-radius:4px;
-               background:var(--color-elevated,#1e1e1e);
-               color:var(--color-{pill_class},{'#7c6af7' if pill_class == 'accent' else '#e8a838'});">
-    {task_val}
-  </span>
-  <span style="font-size:11px;color:var(--color-text-secondary,#a0a0a0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-    {truncated_prompt}
-  </span>
-  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--color-text-muted,#666);margin-left:auto;white-space:nowrap;">
-    {ts_str}
-  </span>
-</div>""",
+                    f'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg-elevated);color:{pill_color};">{task_val}</span>'
+                    f'<span style="font-size:11px;color:var(--text-secondary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{truncated_prompt}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-muted);white-space:nowrap;">{ts_str}</span>'
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
