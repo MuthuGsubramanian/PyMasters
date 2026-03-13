@@ -39,10 +39,7 @@ def _initialize_database_and_auth() -> tuple[object, AuthManager]:
         st.stop()
 
     if getattr(db, "is_local", False):
-        st.info(
-            "MongoDB is unavailable — using the local datastore. Data persists only on this machine.",
-            icon="💾",
-        )
+        st.toast("Using local datastore — data persists only on this machine.", icon="💾")
 
     try:
         ensure_collections(db)

@@ -42,16 +42,16 @@ def render(auth_manager: AuthManager) -> None:
                             flex-shrink: 0;
                         "></div>
                         <span style="
-                            font-family: monospace;
+                            font-family: 'JetBrains Mono', monospace;
                             text-transform: uppercase;
-                            letter-spacing: 0.2em;
-                            font-size: 13px;
-                            color: var(--ob-text-primary, #e2e8f0);
+                            letter-spacing: 0.18em;
+                            font-size: 11px;
+                            color: var(--text-muted);
                         ">PYMASTERS</span>
                     </div>
 
                     <p style="
-                        color: var(--ob-text-primary, #e2e8f0);
+                        color: var(--text-primary);
                         font-size: 22px;
                         font-weight: 600;
                         margin: 0 0 10px 0;
@@ -59,7 +59,7 @@ def render(auth_manager: AuthManager) -> None:
                     ">Create your account.<br>Start building.</p>
 
                     <p style="
-                        color: var(--ob-text-muted, #94a3b8);
+                        color: var(--text-muted);
                         font-size: 13px;
                         margin: 0;
                         line-height: 1.6;
@@ -73,13 +73,13 @@ def render(auth_manager: AuthManager) -> None:
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 32px;">
                     <div class="ob-card" style="padding: 12px 16px;">
                         <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Privacy-first</div>
-                        <div style="color: var(--ob-text-muted, #94a3b8); font-size: 13px;">
+                        <div style="color: var(--text-muted); font-size: 13px;">
                             Email and phone are always optional.
                         </div>
                     </div>
                     <div class="ob-card" style="padding: 12px 16px;">
                         <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Instant access</div>
-                        <div style="color: var(--ob-text-muted, #94a3b8); font-size: 13px;">
+                        <div style="color: var(--text-muted); font-size: 13px;">
                             Start learning the moment you sign up.
                         </div>
                     </div>
@@ -143,7 +143,7 @@ def render(auth_manager: AuthManager) -> None:
             rerun()
 
         st.markdown(
-            "<p style='color: var(--ob-text-muted, #94a3b8); font-size: 13px; margin-top: 12px;'>"
+            "<p style='color: var(--text-muted); font-size: 13px; margin-top: 12px;'>"
             "Already have an account? Switch to the <strong>Sign in</strong> tab.</p>",
             unsafe_allow_html=True,
         )

@@ -268,24 +268,93 @@ p, label, span {
 }
 
 /* --- Secondary button wrapper --- */
-.ob-btn-secondary [data-testid="stButton"] > button {
+.ob-btn-secondary [data-testid="stButton"] > button,
+.ob-btn-secondary button {
     background-color: transparent !important;
     color: var(--text-secondary) !important;
     border: 1px solid var(--border) !important;
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.78rem !important;
+    font-size: 0.72rem !important;
     font-weight: 500 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.06em !important;
     border-radius: var(--radius) !important;
-    padding: 0.45rem 1rem !important;
+    padding: 0.35rem 0.8rem !important;
     transition: border-color var(--transition), color var(--transition) !important;
 }
-.ob-btn-secondary [data-testid="stButton"] > button:hover {
+.ob-btn-secondary [data-testid="stButton"] > button:hover,
+.ob-btn-secondary button:hover {
     border-color: var(--accent) !important;
     color: var(--accent) !important;
     box-shadow: none !important;
     opacity: 1 !important;
+}
+
+/* --- Form submit button (keep green primary) --- */
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] > button {
+    background-color: var(--accent) !important;
+    color: #000 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    border: none !important;
+    border-radius: var(--radius) !important;
+}
+
+/* --- Snippet / action buttons (non-primary) — secondary by default --- */
+[data-testid="stHorizontalBlock"] [data-testid="stButton"] > button:not([kind="primary"]) {
+    background-color: var(--bg-elevated) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 0.8rem !important;
+}
+[data-testid="stHorizontalBlock"] [data-testid="stButton"] > button:not([kind="primary"]):hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+}
+
+/* --- Primary button (explicit type="primary") --- */
+[data-testid="stButton"] > button[kind="primary"] {
+    background-color: var(--accent) !important;
+    color: #000 !important;
+}
+
+/* --- Toast styling --- */
+[data-testid="stToast"] {
+    background-color: var(--bg-elevated) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.8rem !important;
+}
+
+/* --- Divider --- */
+[data-testid="stDivider"] {
+    border-color: var(--border) !important;
+}
+
+/* --- Toggle/checkbox --- */
+[data-testid="stCheckbox"] label span,
+[data-testid="stToggle"] label span {
+    font-size: 0.85rem !important;
+}
+
+/* --- Column gap polish --- */
+[data-testid="stHorizontalBlock"] {
+    gap: 0.75rem !important;
+}
+
+/* --- Caption --- */
+.stCaption, [data-testid="stCaption"] {
+    font-family: 'Inter', sans-serif !important;
+    color: var(--text-muted) !important;
+    font-size: 0.82rem !important;
 }
 
 /* --- Tab navigation (radio override) --- */
@@ -341,22 +410,22 @@ p, label, span {
     border-radius: 99px;
     border: 1px solid transparent;
 }
-.ob-pill--queued {
+.ob-pill-queued {
     background-color: rgba(82, 82, 91, 0.25);
     border-color: var(--text-muted);
     color: var(--text-muted);
 }
-.ob-pill--progress {
+.ob-pill-progress {
     background-color: rgba(234, 179, 8, 0.12);
     border-color: var(--warning);
     color: var(--warning);
 }
-.ob-pill--completed {
+.ob-pill-completed {
     background-color: rgba(34, 197, 94, 0.12);
     border-color: var(--accent);
     color: var(--accent);
 }
-.ob-pill--danger {
+.ob-pill-danger {
     background-color: rgba(239, 68, 68, 0.12);
     border-color: var(--danger);
     color: var(--danger);

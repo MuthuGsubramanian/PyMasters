@@ -99,9 +99,5 @@ def get_database(db_name: str | None = None) -> Any:
     try:
         client = get_mongo_client()
         return client[database_name]
-    except Exception as exc:
-        st.warning(
-            f"MongoDB connection unavailable — using the built-in encrypted local store. ({exc})",
-            icon="⚠️",
-        )
+    except Exception:
         return _get_or_create_local_db(database_name)
