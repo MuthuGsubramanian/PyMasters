@@ -1,9 +1,5 @@
-"""Thin launcher to the modern PyMasters app in pymasters_app/main.py.
+"""PyMasters application entrypoint."""
+import uvicorn
 
-This keeps a single, consistent UI/UX entrypoint.
-"""
-from __future__ import annotations
-
-# Importing this module performs all Streamlit rendering and configuration.
-import pymasters_app.main  # noqa: F401
-
+if __name__ == "__main__":
+    uvicorn.run("pymasters_app.server:app", host="0.0.0.0", port=8000, reload=True)
