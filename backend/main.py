@@ -13,6 +13,8 @@ import random
 import os
 import json
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
 
 # --- Route imports ---
