@@ -9,6 +9,9 @@ services:
       - ./data:/app/data
     environment:
       - DB_PATH=/app/data/pymasters.duckdb
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY:-208d52f4a68a4c00aa4518fac8d995c6.oV--ePuqKn4DSs2T7tBW0KE7}
+      - OLLAMA_API_URL=${OLLAMA_API_URL:-https://api.ollama.com/v1}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3.5}
 
   frontend:
     build: ./frontend
