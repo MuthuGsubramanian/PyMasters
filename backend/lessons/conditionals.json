@@ -1,0 +1,129 @@
+{
+  "id": "conditionals",
+  "topic": "conditionals",
+  "title": {
+    "en": "Conditionals: The Traffic Signal",
+    "ta": "\u0928\u093f\u092a\u0902\u0927\u0928\u0948\u0915\u0933\u094d: \u0917\u094d\u0930\u093e\u092e \u0935\u0947\u0932\u0948\u092f\u0948"
+  },
+  "description": {
+    "en": "Learn if/elif/else by following the logic of a traffic signal: green means go, yellow means slow, red means stop.",
+    "ta": "\u0917\u094d\u0930\u093e\u092e \u0935\u0947\u0932\u0948\u092f\u093f\u0928\u094d \u0924\u0930\u094d\u0915\u0924\u094d\u0924\u0948 \u092a\u093f\u0928\u094d\u092a\u093f\u0932\u094d\u0932\u093f\u0924\u094d\u0924\u0941 if/elif/else \u0906\u0932\u094d\u0932\u0924\u0941 \u0915\u0932\u094d\u0932\u0941\u0919\u094d\u0915\u0933\u094d."
+  },
+  "xp_reward": 75,
+  "next_unlock": "for_loops",
+  "story_variants": {
+    "en": "Imagine you are standing at a traffic signal. Green light — you go! Yellow light — you slow down. Red light — you stop. Python's if/elif/else works exactly the same way. When a condition is True, Python takes that path and skips the rest. You can chain as many `elif` branches as you need, and `else` catches everything that didn't match. Every decision your program makes is just a traffic signal in disguise!",
+    "ta": "\u0928\u0940\u0919\u094d\u0915\u0933\u094d \u0917\u094d\u0930\u093e\u092e \u0935\u0947\u0932\u0948 \u0905\u0930\u0941\u0915\u093f\u0932\u094d \u0928\u093f\u0932\u094d\u0915\u093f\u0928\u094d\u0930\u0940\u0930\u094d\u0915\u0933\u094d \u0910\u0928\u094d\u0931\u0941 \u0928\u093f\u0928\u0948\u0924\u094d\u0924\u0941\u0915\u094d\u0915\u094b\u0933\u094d\u0933\u0941\u0919\u094d\u0915\u0933\u094d. \u092a\u091a\u094d\u0938\u0948 \u0935\u093f\u0933\u0915\u094d\u0915\u0941 — \u0938\u0947\u0932\u094d\u0932\u0941! \u092e\u091e\u094d\u0938\u0933\u094d \u0935\u093f\u0933\u0915\u094d\u0915\u0941 — \u092e\u0947\u0932\u0947 \u0938\u0947\u0932\u094d\u0932\u0941. \u0938\u093f\u0935\u092a\u094d\u092a\u0941 \u0935\u093f\u0933\u0915\u094d\u0915\u0941 — \u0928\u093f\u0932\u094d\u0932\u0941. Python\u0928\u094d if/elif/else \u0905\u0935\u094d\u0935\u093e\u0931\u0947 \u0924\u093e\u0928\u094d. \u0928\u093f\u092a\u0902\u0927\u0928\u0948 True \u0906\u0928\u093e\u0932\u094d, \u0905\u0928\u094d\u0924 \u092a\u093e\u0924\u0948\u092f\u093f\u0932\u094d \u0938\u0947\u0932\u094d\u0932\u0941\u092e\u094d; \u0907\u0932\u094d\u0932\u0948\u0928\u094d\u0930\u0947\u0932\u094d else \u092a\u093f\u0921\u093f\u0915\u094d\u0915\u0941\u092e\u094d.",
+    "te": "\u0c26\u0c3e\u0c30\u0c3f\u0c32\u0c4b \u0c38\u0c3f\u0c17\u0c4d\u0c28\u0c32\u0c4d \u0c26\u0c17\u0c4d\u0c17\u0c30 \u0c28\u0c3f\u0c32\u0c2c\u0c21\u0c4d\u0c21\u0c3e\u0c30\u0c28\u0c3f \u0c24\u0c32\u0c02\u0c1a\u0c41\u0c15\u0c4b\u0c02\u0c21\u0c3f. \u0c06\u0c15\u0c41\u0c2a\u0c1a\u0c4d\u0c1a \u0c35\u0c46\u0c32\u0c41\u0c24\u0c41\u0c30\u0c41 — \u0c35\u0c46\u0c33\u0c4d\u0c33\u0c02\u0c21\u0c3f! \u0c2a\u0c38\u0c41\u0c2a\u0c41 — \u0c28\u0c3f\u0c27\u0c3e\u0c28\u0c02\u0c17\u0c3e. \u0c0e\u0c30\u0c41\u0c2a\u0c41 — \u0c06\u0c17\u0c02\u0c21\u0c3f. Python if/elif/else \u0c05\u0c26\u0c47 \u0c35\u0c3f\u0c27\u0c02\u0c17\u0c3e \u0c2a\u0c28\u0c3f\u0c1a\u0c47\u0c38\u0c4d\u0c24\u0c41\u0c02\u0c26\u0c3f.",
+    "fr": "Imaginez que vous êtes devant un feu de circulation. Feu vert — vous avancez! Feu jaune — vous ralentissez. Feu rouge — vous vous arrêtez. Le if/elif/else de Python fonctionne exactement de la même façon. Quand une condition est vraie, Python prend ce chemin et ignore le reste. Chaque décision de votre programme est un feu de circulation déguisé!",
+    "es": "Imagina que estás parado en un semáforo. Luz verde — ¡avanzas! Luz amarilla — reduces la velocidad. Luz roja — te detienes. El if/elif/else de Python funciona exactamente igual. Cuando una condición es True, Python toma ese camino y omite el resto. ¡Cada decisión que toma tu programa es un semáforo disfrazado!",
+    "ko": "\uc2e0\ud638\ub4f1 \uc55e\uc5d0 \uc11c \uc788\ub294 \uc0c1\uc0c1\uc744 \ud574\ubcf4\uc138\uc694. \ub179\uc0c9 \uc2e0\ud638 \u2014 \uc2dc\uc791! \ub178\ub780\uc0c9 \uc2e0\ud638 \u2014 \uc2ac\ub974\uac8c. \ube68\uac04\uc0c9 \uc2e0\ud638 \u2014 \uc815\uc9c0. Python\uc758 if/elif/else\ub3c4 \uc815\ud655\ud788 \ub3d9\uc77c\ud558\uac8c \uc791\ub3d9\ud569\ub2c8\ub2e4. \uc870\uac74\uc774 True\uba74 \uadf8 \uacbd\ub85c\ub97c \ub530\ub974\uace0 \ub098\uba38\uc9c0\ub294 \uac74\ub108\ub9d5\ub2c8\ub2e4. \ud504\ub85c\uadf8\ub7a8\uc758 \ubaa8\ub4e0 \uacb0\uc815\uc740 \ubcc0\uc7a5\ud55c \uc2e0\ud638\ub4f1\uc5d0 \ubd88\uacfc\ud569\ub2c8\ub2e4!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "traffic_signal",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        { "line": "signal = 'green'", "highlight": "signal", "explanation": { "en": "Set the traffic signal value", "ta": "\u0935\u0947\u0932\u0948 \u092e\u0924\u093f\u092a\u094d\u092a\u0948 \u0920\u093e\u0915\u094d\u0915\u0932\u094d" } },
+        { "line": "if signal == 'green':", "highlight": "if", "explanation": { "en": "Check if signal is green", "ta": "\u0935\u0947\u0932\u0948 \u092a\u091a\u094d\u0938\u0948\u092f\u093e? \u0924\u093f\u0930\u0942\u092e\u094d" } },
+        { "line": "    print('Go!')", "highlight": "print", "explanation": { "en": "Green is True — execute this branch", "ta": "\u092a\u091a\u094d\u0938\u0948 \u0909\u0923\u094d\u092e\u0948 — \u0907\u0928\u094d\u0924 \u0935\u0937\u093f \u0907\u092f\u0919\u094d\u0915\u0941\u092e\u094d" } },
+        { "line": "elif signal == 'yellow':", "highlight": "elif", "explanation": { "en": "If not green, check yellow", "ta": "\u092a\u091a\u094d\u0938\u0948 \u0907\u0932\u094d\u0932\u0948\u092f\u0947\u0932\u094d \u092e\u091e\u094d\u0938\u0933\u0948 \u092a\u093e\u0930\u094d\u0915\u094d\u0915\u0932\u094d" } },
+        { "line": "    print('Slow down!')", "highlight": "print", "explanation": { "en": "Yellow branch output", "ta": "\u092e\u091e\u094d\u0938\u0933\u094d \u0935\u0937\u093f \u0935\u093f\u0933\u0948\u0935\u0941" } },
+        { "line": "else:", "highlight": "else", "explanation": { "en": "Everything else — must be red", "ta": "\u092e\u0924\u093f\u092a\u094d\u092a\u0941 \u092e\u093f\u0915\u094d\u0915\u0935\u0941\u092e\u094d \u092a\u094b\u0924\u094d\u0924\u0947 \u0907\u0932\u094d\u0932\u0948 — \u0938\u093f\u0935\u092a\u094d\u092a\u093e\u0915 \u0907\u0930\u0941\u0915\u094d\u0915\u0941\u092e\u094d" } },
+        { "line": "    print('Stop!')", "highlight": "print", "explanation": { "en": "Red branch output", "ta": "\u0938\u093f\u0935\u092a\u094d\u092a\u0941 \u0935\u0937\u093f \u0935\u093f\u0933\u0948\u0935\u0941" } }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_signal",
+      "variable": "signal",
+      "value": "green",
+      "data_type": "str",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "flow_true",
+      "label": { "en": "condition is True", "ta": "\u0928\u093f\u092a\u0902\u0927\u0928\u0948 True" },
+      "direction": "down",
+      "branch": "if"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": "Go!"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a grade checker. If score >= 90 print 'A', if score >= 80 print 'B', if score >= 70 print 'C', otherwise print 'F'. Set score = 85 and run it.",
+        "ta": "\u0924\u0930\u0948 \u0938\u094b\u0924\u0928\u0948 \u0909\u0923\u094d\u0921\u093e\u0915\u094d\u0915\u0941\u0919\u094d\u0915\u0933\u094d. score >= 90 \u090e\u0928\u094d\u0928\u093e\u0932\u094d 'A', >= 80 \u090e\u0928\u094d\u0928\u093e\u0932\u094d 'B', >= 70 \u090e\u0928\u094d\u0928\u093e\u0932\u094d 'C', \u0907\u0932\u094d\u0932\u0948\u092f\u0947\u0932\u094d 'F'. score = 85 \u0910\u0915 \u0935\u0948\u0915\u094d\u0915\u0935\u0941\u092e\u094d."
+      },
+      "starter_code": "score = 85\n\n# Write your if/elif/else below\nif score >= 90:\n    print('')\nelif score >= 80:\n    print('')\nelif score >= 70:\n    print('')\nelse:\n    print('')",
+      "expected_output": "B",
+      "hints": {
+        "en": [
+          "score = 85 is already set for you at the top",
+          "Use >= to check 'greater than or equal to'",
+          "elif lets you check a second condition only if the first was False",
+          "else catches everything that didn't match any if or elif"
+        ],
+        "ta": [
+          "score = 85 \u0910\u0932\u094d\u0932\u0947\u0924\u0947\u092f\u0947 \u0920\u093e\u0915\u094d\u0915\u0932\u094d\u092a\u091f\u094d\u0921\u0941\u0933\u094d\u0933\u0924\u0941",
+          ">= \u090e\u0928\u094d\u092a\u0924\u0941 '\u0915\u0941\u0926\u093f\u0924\u094d\u0924\u094b \u0905\u0932\u094d\u0932\u0924\u0941 \u0938\u092e\u092e\u093e\u0928\u092e\u093e\u0915' \u0910\u0928\u094d\u092a\u0924\u0948 \u0915\u0941\u0931\u093f\u0915\u094d\u0915\u093f\u0928\u094d\u0931\u0924\u0941",
+          "elif \u0907\u0930\u0923\u094d\u0921\u093e\u092e\u0924\u0941 \u0928\u093f\u092a\u0902\u0927\u0928\u0948\u0915\u0933\u0948 \u0909\u0930\u0942 \u0938\u094b\u0924\u093f\u0915\u094d\u0915\u093f\u0928\u094d\u0931\u0924\u0941",
+          "else \u090f\u0928\u094d\u0928 \u0928\u093f\u092a\u0902\u0927\u0928\u0948\u0915\u0933\u093f\u0932\u0941\u092e\u094d \u092a\u094a\u0930\u0941\u0928\u094d\u0924\u093e\u0924\u0935\u0948\u0915\u0933\u0948 \u092a\u093f\u0921\u093f\u0915\u094d\u0915\u0941\u092e\u094d"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What keyword do you use to check a second condition if the first is False?",
+        "ta": "\u0924\u0932\u093e\u092e\u0948 False \u0906\u0928\u093e\u0932\u094d \u0907\u0930\u0923\u094d\u0921\u093e\u092e\u0924\u0941 \u0928\u093f\u092a\u0902\u0927\u0928\u0948 \u0938\u094b\u0924\u093f\u0915\u094d\u0915 \u090f\u0928\u094d\u0928 \u0935\u093e\u0930\u094d\u0924\u094d\u0924\u0948 \u0909\u092a\u092f\u094b\u0915\u093f\u092a\u094d\u092a\u0940\u0930\u094d?"
+      },
+      "options": {
+        "en": ["else", "elif", "then", "and"],
+        "ta": ["else", "elif", "then", "and"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In Python, what does the `else` block execute?",
+        "ta": "Python\u0932\u093f\u0932\u094d `else` \u0924\u094b\u0915\u0941\u0921\u093f \u090f\u092a\u094d\u092a\u094b\u0924\u0941 \u0907\u092f\u0919\u094d\u0915\u0941\u092e\u094d?"
+      },
+      "options": {
+        "en": [
+          "Always",
+          "Only when the if condition is True",
+          "When none of the if/elif conditions are True",
+          "Never"
+        ],
+        "ta": [
+          "\u090e\u092a\u094d\u092a\u094b\u0924\u0941\u092e\u094d",
+          "if \u0928\u093f\u092a\u0902\u0927\u0928\u0948 True \u0906\u0928\u093e\u0932\u094d \u092e\u091f\u094d\u0921\u0941\u092e\u094d",
+          "if/elif \u090e\u0928\u094d\u0928 \u0928\u093f\u092a\u0902\u0927\u0928\u0948\u092f\u0941\u092e\u094d True \u0906\u0915\u093e\u0935\u093f\u091f\u094d\u0921\u093e\u0932\u094d",
+          "\u090e\u0928\u094d\u092a\u094b\u0924\u0941\u092e\u094d \u0907\u0932\u094d\u0932\u0948"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "adaptation_points": []
+}
