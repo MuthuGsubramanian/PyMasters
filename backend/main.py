@@ -242,8 +242,10 @@ def register(user: UserRegister):
         # Initialize with module_1 unlocked
         default_unlocks = json.dumps(["module_1"])
         
-        conn.execute("INSERT INTO users VALUES (?, ?, ?, ?, current_timestamp, 0, ?)", 
-                     [user_id, user.username, hashed, user.name, default_unlocks])
+        conn.execute(
+            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, current_timestamp, 0, ?, 'en', false)",
+            [user_id, user.username, hashed, user.name, default_unlocks]
+        )
         return {"id": user_id, "username": user.username, "name": user.name, "points": 0, "unlocked": ["module_1"]}
     finally:
         conn.close()
