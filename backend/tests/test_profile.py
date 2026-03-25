@@ -1,6 +1,8 @@
 """
 Tests for the database schema migration introduced for user profiles,
 learning signals, and mastery tracking (Task 1).
+
+Also contains tests for the Vaathiyaar profiler service (Task 3).
 """
 import os
 import sys
@@ -208,3 +210,168 @@ class TestUserMasterySchema:
         assert row is not None
         assert row[0] == pytest.approx(0.6)
         assert row[1] == 2
+
+
+# ---------------------------------------------------------------------------
+# Task 3: Profiler Service Tests
+# ---------------------------------------------------------------------------
+
+def _setup_db(db_path: str):
+    """
+    Create all required tables in a fresh test DuckDB database.
+
+    Note: learning_signals.value is VARCHAR here to support JSON-serialised
+    signal payloads as written by profiler.record_signal.
+    """
+    conn = duckdb.connect(db_path)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id VARCHAR PRIMARY KEY,
+            username VARCHAR UNIQUE,
+            password_hash VARCHAR,
+            name VARCHAR,
+            created_at TIMESTAMP,
+            points INTEGER DEFAULT 0,
+            unlocked_modules VARCHAR DEFAULT '["module_1"]',
+            preferred_language VARCHAR DEFAULT 'en',
+            onboarding_completed BOOLEAN DEFAULT false
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            user_id VARCHAR PRIMARY KEY,
+            motivation VARCHAR,
+            prior_experience VARCHAR,
+            known_languages VARCHAR,
+            learning_style VARCHAR,
+            goal VARCHAR,
+            time_commitment VARCHAR,
+            preferred_language VARCHAR,
+            skill_level VARCHAR,
+            diagnostic_score FLOAT,
+            onboarding_completed BOOLEAN DEFAULT false,
+            created_at TIMESTAMP DEFAULT current_timestamp
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS learning_signals (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR,
+            signal_type VARCHAR,
+            topic VARCHAR,
+            value VARCHAR,
+            session_id VARCHAR,
+            created_at TIMESTAMP DEFAULT current_timestamp
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_mastery (
+            user_id VARCHAR,
+            topic VARCHAR,
+            mastery_level FLOAT,
+            attempts INTEGER,
+            avg_time_seconds FLOAT,
+            last_practiced TIMESTAMP,
+            struggle_count INTEGER,
+            PRIMARY KEY (user_id, topic)
+        )
+    """)
+    conn.close()
+
+
+class TestProfilerService:
+    """Tests for vaathiyaar.profiler service functions (Task 3)."""
+
+    def test_save_onboarding(self, tmp_path):
+        """save_onboarding should upsert user_profiles and update users table."""
+        from vaathiyaar.profiler import save_onboarding
+
+        db_path = str(tmp_path / "profiler_test.duckdb")
+        _setup_db(db_path)
+
+        # Insert a user so the UPDATE in save_onboarding has a target row
+        conn = duckdb.connect(db_path)
+        conn.execute(
+            "INSERT INTO users (id, username, name, created_at) VALUES (?, ?, ?, current_timestamp)",
+            ["user-001", "tester", "Test User"]
+        )
+        conn.close()
+
+        data = {
+            "motivation": "career",
+            "prior_experience": "none",
+            "known_languages": "Tamil",
+            "learning_style": "visual",
+            "goal": "get a job",
+            "time_commitment": "1h/day",
+            "preferred_language": "ta",
+            "skill_level": "beginner",
+            "diagnostic_score": 55.0,
+        }
+
+        result = save_onboarding(db_path, "user-001", data)
+
+        assert result == {"onboarding_completed": True, "user_id": "user-001"}
+
+        conn = duckdb.connect(db_path)
+        row = conn.execute(
+            "SELECT motivation, preferred_language, onboarding_completed FROM user_profiles WHERE user_id = 'user-001'"
+        ).fetchone()
+        assert row is not None
+        assert row[0] == "career"
+        assert row[1] == "ta"
+        assert row[2] is True
+
+        user_row = conn.execute(
+            "SELECT preferred_language, onboarding_completed FROM users WHERE id = 'user-001'"
+        ).fetchone()
+        assert user_row is not None
+        assert user_row[0] == "ta"
+        assert user_row[1] is True
+        conn.close()
+
+    def test_record_signal(self, tmp_path):
+        """record_signal should insert exactly one row into learning_signals."""
+        from vaathiyaar.profiler import record_signal
+
+        db_path = str(tmp_path / "signal_test.duckdb")
+        _setup_db(db_path)
+
+        record_signal(
+            db_path,
+            user_id="user-002",
+            signal_type="quiz_score",
+            topic="loops",
+            value={"score": 0.85, "attempts": 2},
+            session_id="sess-xyz",
+        )
+
+        conn = duckdb.connect(db_path)
+        rows = conn.execute(
+            "SELECT user_id, signal_type, topic, value, session_id FROM learning_signals"
+        ).fetchall()
+        conn.close()
+
+        assert len(rows) == 1
+        row = rows[0]
+        assert row[0] == "user-002"
+        assert row[1] == "quiz_score"
+        assert row[2] == "loops"
+
+        import json
+        parsed = json.loads(row[3])
+        assert parsed["score"] == pytest.approx(0.85)
+        assert row[4] == "sess-xyz"
+
+    def test_update_and_get_mastery(self, tmp_path):
+        """update_mastery + get_mastery_map should store and return correct data."""
+        from vaathiyaar.profiler import update_mastery, get_mastery_map
+
+        db_path = str(tmp_path / "mastery_test.duckdb")
+        _setup_db(db_path)
+
+        update_mastery(db_path, user_id="user-003", topic="functions", level=0.75, time_seconds=45.0)
+
+        mastery = get_mastery_map(db_path, "user-003")
+        assert "functions" in mastery
+        assert mastery["functions"] == pytest.approx(0.75)

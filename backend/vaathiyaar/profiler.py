@@ -1,0 +1,208 @@
+"""
+Vaathiyaar Profiler Service
+
+Handles student profiling: onboarding data persistence, learning signal
+recording, mastery tracking, and profile retrieval.
+"""
+
+import json
+import uuid
+import duckdb
+
+
+def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
+    """
+    Save onboarding questionnaire answers for a user.
+
+    Upserts into user_profiles using INSERT ... ON CONFLICT UPDATE.
+    Also updates users.preferred_language and users.onboarding_completed.
+
+    Returns {"onboarding_completed": True, "user_id": user_id}.
+    """
+    conn = duckdb.connect(db_path)
+    try:
+        preferred_language = data.get("preferred_language", "en")
+        motivation = data.get("motivation")
+        prior_experience = data.get("prior_experience")
+        known_languages = data.get("known_languages")
+        learning_style = data.get("learning_style")
+        goal = data.get("goal")
+        time_commitment = data.get("time_commitment")
+        skill_level = data.get("skill_level")
+        diagnostic_score = data.get("diagnostic_score")
+
+        conn.execute("""
+            INSERT INTO user_profiles
+                (user_id, motivation, prior_experience, known_languages,
+                 learning_style, goal, time_commitment, preferred_language,
+                 skill_level, diagnostic_score, onboarding_completed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
+            ON CONFLICT (user_id) DO UPDATE SET
+                motivation = excluded.motivation,
+                prior_experience = excluded.prior_experience,
+                known_languages = excluded.known_languages,
+                learning_style = excluded.learning_style,
+                goal = excluded.goal,
+                time_commitment = excluded.time_commitment,
+                preferred_language = excluded.preferred_language,
+                skill_level = excluded.skill_level,
+                diagnostic_score = excluded.diagnostic_score,
+                onboarding_completed = true
+        """, [
+            user_id, motivation, prior_experience, known_languages,
+            learning_style, goal, time_commitment, preferred_language,
+            skill_level, diagnostic_score
+        ])
+
+        conn.execute("""
+            UPDATE users
+            SET preferred_language = ?,
+                onboarding_completed = true
+            WHERE id = ?
+        """, [preferred_language, user_id])
+
+    finally:
+        conn.close()
+
+    return {"onboarding_completed": True, "user_id": user_id}
+
+
+def record_signal(
+    db_path: str,
+    user_id: str,
+    signal_type: str,
+    topic: str,
+    value: dict,
+    session_id: str = None
+):
+    """
+    Insert a learning signal row into the learning_signals table.
+
+    value is serialised via json.dumps before storage.
+    """
+    conn = duckdb.connect(db_path)
+    try:
+        signal_id = str(uuid.uuid4())
+        value_json = json.dumps(value)
+        conn.execute("""
+            INSERT INTO learning_signals
+                (id, user_id, signal_type, topic, value, session_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, [signal_id, user_id, signal_type, topic, value_json, session_id])
+    finally:
+        conn.close()
+
+
+def update_mastery(
+    db_path: str,
+    user_id: str,
+    topic: str,
+    level: float,
+    time_seconds: float = None
+):
+    """
+    Upsert mastery data for a (user_id, topic) pair.
+
+    If a row already exists: increments attempts, recalculates avg_time_seconds,
+    increments struggle_count when level < 0.4.
+    If no row exists: inserts with attempts=1.
+    """
+    conn = duckdb.connect(db_path)
+    try:
+        existing = conn.execute("""
+            SELECT attempts, avg_time_seconds, struggle_count
+            FROM user_mastery
+            WHERE user_id = ? AND topic = ?
+        """, [user_id, topic]).fetchone()
+
+        if existing:
+            old_attempts, old_avg_time, old_struggle = existing
+            new_attempts = old_attempts + 1
+
+            # Recalculate running average for avg_time_seconds
+            if time_seconds is not None and old_avg_time is not None:
+                new_avg_time = ((old_avg_time * old_attempts) + time_seconds) / new_attempts
+            elif time_seconds is not None:
+                new_avg_time = time_seconds
+            else:
+                new_avg_time = old_avg_time
+
+            new_struggle = old_struggle + (1 if level < 0.4 else 0)
+
+            conn.execute("""
+                UPDATE user_mastery
+                SET mastery_level = ?,
+                    attempts = ?,
+                    avg_time_seconds = ?,
+                    struggle_count = ?,
+                    last_practiced = current_timestamp
+                WHERE user_id = ? AND topic = ?
+            """, [level, new_attempts, new_avg_time, new_struggle, user_id, topic])
+        else:
+            conn.execute("""
+                INSERT INTO user_mastery
+                    (user_id, topic, mastery_level, attempts, avg_time_seconds,
+                     last_practiced, struggle_count)
+                VALUES (?, ?, ?, 1, ?, current_timestamp, ?)
+            """, [
+                user_id, topic, level, time_seconds,
+                1 if level < 0.4 else 0
+            ])
+    finally:
+        conn.close()
+
+
+def get_mastery_map(db_path: str, user_id: str) -> dict:
+    """
+    Return {topic: mastery_level} dict for the given user from user_mastery.
+    """
+    conn = duckdb.connect(db_path)
+    try:
+        rows = conn.execute("""
+            SELECT topic, mastery_level
+            FROM user_mastery
+            WHERE user_id = ?
+        """, [user_id]).fetchall()
+        return {row[0]: row[1] for row in rows}
+    finally:
+        conn.close()
+
+
+def get_student_profile(db_path: str, user_id: str) -> dict:
+    """
+    Return the full student profile for a user, including their mastery map.
+
+    Returns None if no profile exists for user_id.
+    """
+    conn = duckdb.connect(db_path)
+    try:
+        row = conn.execute("""
+            SELECT user_id, motivation, prior_experience, known_languages,
+                   learning_style, goal, time_commitment, preferred_language,
+                   skill_level, diagnostic_score, onboarding_completed, created_at
+            FROM user_profiles
+            WHERE user_id = ?
+        """, [user_id]).fetchone()
+
+        if row is None:
+            return None
+
+        profile = {
+            "user_id": row[0],
+            "motivation": row[1],
+            "prior_experience": row[2],
+            "known_languages": row[3],
+            "learning_style": row[4],
+            "goal": row[5],
+            "time_commitment": row[6],
+            "preferred_language": row[7],
+            "skill_level": row[8],
+            "diagnostic_score": row[9],
+            "onboarding_completed": row[10],
+            "created_at": row[11],
+        }
+    finally:
+        conn.close()
+
+    profile["mastery"] = get_mastery_map(db_path, user_id)
+    return profile
