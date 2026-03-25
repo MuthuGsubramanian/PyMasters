@@ -163,7 +163,7 @@ class TestLearningSignalsSchema:
         ).fetchone()
         assert row is not None
         assert row[0] == "quiz_score"
-        assert row[1] == pytest.approx(0.85)
+        assert row[1] == "0.85"  # value column is VARCHAR
 
 
 # ---------------------------------------------------------------------------
