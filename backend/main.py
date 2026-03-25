@@ -15,7 +15,12 @@ import json
 import requests
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
 
-# Seed Data: Tutorials & Quizzes
+# --- Route imports ---
+from routes.language import router as language_router
+from routes.profile import router as profile_router
+from routes.classroom import router as classroom_router
+
+# Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
     "module_1": {
         "id": "module_1",
@@ -127,7 +132,7 @@ def init_db():
                 user_id VARCHAR,
                 signal_type VARCHAR,
                 topic VARCHAR,
-                value FLOAT,
+                value VARCHAR,
                 session_id VARCHAR,
                 created_at TIMESTAMP DEFAULT current_timestamp
             )
@@ -170,6 +175,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="PyMasters API", lifespan=lifespan)
 
+# Mount routers
+app.include_router(language_router)
+app.include_router(profile_router)
+app.include_router(classroom_router)
+
 # --- CORS ---
 origins = [
     "http://localhost:5173",
@@ -198,13 +208,6 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
-
-class CodeRequest(BaseModel):
-    code: str
-
-class AIRequest(BaseModel):
-    prompt: str
-    context: Optional[str] = ""
 
 class QuizSubmission(BaseModel):
     user_id: str
@@ -331,74 +334,6 @@ def complete_module(sub: QuizSubmission):
         }
     finally:
         conn.close()
-
-@app.post("/api/run")
-def execute_code(request: CodeRequest):
-    """
-    Executes Python code safely (simulated sandbox).
-    WARNING: In production, use Docker or specialized sandbox.
-    """
-    import io
-    import contextlib
-    
-    # Basic forbidden keyword check
-    forbidden = ["import os", "import sys", "subprocess", "open(", "exec(", "eval("]
-    if any(f in request.code for f in forbidden):
-        return {"output": "Security Error: Restricted keywords found.", "error": "Code contains unsafe operations."}
-
-    stdout_buffer = io.StringIO()
-    stderr_buffer = io.StringIO()
-    
-    try:
-        with contextlib.redirect_stdout(stdout_buffer), contextlib.redirect_stderr(stderr_buffer):
-            # We restrict the globals to ensure they can't access much
-            exec(request.code, {"__builtins__": __builtins__}, {})
-    except Exception as e:
-        return {"output": stdout_buffer.getvalue(), "error": str(e)}
-        
-    return {"output": stdout_buffer.getvalue(), "error": stderr_buffer.getvalue()}
-
-@app.post("/api/ai/chat")
-def chat_ai(request: AIRequest):
-    """
-    Connects to the Local AI (LM Studio) instance.
-    Falls back to mock responses if the generic AI server is unreachable.
-    """
-    # Configuration for the Local AI Server
-    AI_BASE_URL = "http://192.168.1.10:1234/v1"
-    
-    # Prepare the payload for OpenAI-compatible API
-    payload = {
-        "messages": [
-            {"role": "system", "content": "You are a helpful Python programming tutor. Keep answers concise and code-focused."},
-            {"role": "user", "content": request.prompt}
-        ],
-        "temperature": 0.7,
-        "max_tokens": 500
-    }
-    if request.context:
-         payload["messages"].insert(1, {"role": "system", "content": f"Context: {request.context}"})
-
-    try:
-        # Attempt to hit the real AI endpoint
-        response = requests.post(f"{AI_BASE_URL}/chat/completions", json=payload, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        # Extract content from OpenAI-style response
-        ai_content = data["choices"][0]["message"]["content"]
-        return {"response": ai_content, "role": "assistant"}
-        
-    except Exception as e:
-        error_msg = str(e)
-        print(f"AI Connection Failed: {error_msg}")
-        
-        # --- Fallback Mock Logic ---
-        return {
-            "response": f"[SYSTEM ERROR] Could not reach AI Server at {AI_BASE_URL}.\nDetails: {error_msg}\n\n[SIMULATION] To answer '{request.prompt}', try breaking it down into functions.",
-            "role": "assistant",
-            "warning": "Running in simulation mode (AI server unavailable)."
-        }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
