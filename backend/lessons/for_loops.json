@@ -1,0 +1,134 @@
+{
+  "id": "for_loops",
+  "topic": "for_loops",
+  "title": {
+    "en": "For Loops: The Postman's Route",
+    "ta": "\u0938\u0941\u0937\u094d\u0936\u093f\u0915\u0933\u094d: \u0924\u092a\u093e\u0932\u094d \u0915\u093e\u0930\u0930\u093f\u0928\u094d \u092a\u093e\u0924\u0948"
+  },
+  "description": {
+    "en": "Learn for loops by following a postman who delivers letters to 5 houses in order, visiting each one without skipping.",
+    "ta": "5 \u0935\u0940\u0921\u0941\u0915\u0933\u093f\u0932\u094d \u0915\u0921\u093f\u0924\u0902 \u0935\u093f\u0924\u0930\u093f\u0915\u094d\u0915\u0941\u092e\u094d \u0924\u092a\u093e\u0932\u094d\u0915\u093e\u0930\u0930\u0948 \u092a\u093f\u0928\u094d\u092a\u093f\u0932\u094d\u0932\u093f\u0924\u094d\u0924\u0941 for loops \u0906\u0932\u094d\u0932\u0924\u0941 \u0915\u0932\u094d\u0932\u0941\u0919\u094d\u0915\u0933\u094d."
+  },
+  "xp_reward": 100,
+  "next_unlock": "lists",
+  "story_variants": {
+    "en": "Meet Rajan, the PyMasters postman. Every morning he walks down a street with 5 houses. He does not skip any house, and he does not revisit a house he has already been to. He simply goes 0, 1, 2, 3, 4 — one house at a time, in order. A Python `for` loop does exactly the same thing: it visits every item in a sequence, once, in order. `range(5)` creates that list of five houses. The loop variable `i` is like Rajan's current door number. When all doors are done, the loop ends.",
+    "ta": "PyMasters \u0924\u092a\u093e\u0932\u094d\u0915\u093e\u0930\u0930\u093e\u0928 \u0930\u093e\u091c\u0928\u0948 \u0938\u0902\u0924\u093f\u092f\u0941\u0919\u094d\u0915\u0933\u094d. \u0915\u093e\u0932\u0948\u092f\u093f\u0932\u094d 5 \u0935\u0940\u0921\u0941\u0915\u0933\u094d \u0909\u0933\u094d\u0933 \u0924\u0947\u0930\u0941\u0935\u093f\u0932\u094d \u0928\u0921\u0915\u093f\u0928\u094d\u0931\u093e\u0930\u094d. \u0913\u0930\u0941 \u0935\u0940\u0921\u094d\u0921\u0948\u092f\u0941\u0902 \u0935\u093f\u0921\u0941\u0935\u093f\u0924\u094d\u0924\u093e\u0932\u094d, \u0932\u093f\u0938\u094d\u091f\u094d \u0924\u093f\u0930\u0941\u092e\u094d\u092a\u0935\u093f\u0932\u094d\u0932\u0948. 0, 1, 2, 3, 4 \u0910\u0928\u094d\u0928\u0941 \u0935\u0930\u093f\u0938\u0948\u092f\u093e\u0915 \u0938\u0947\u0932\u094d\u0932\u0941\u0935\u093e\u0930\u094d. Python `for` \u0938\u0941\u0937\u093f\u092f\u0941\u092e\u094d \u0905\u0935\u094d\u0935\u093e\u0931\u0947 \u0924\u093e\u0928\u094d — \u0913\u0935\u094d\u0935\u094b\u0930\u0941 \u0909\u0930\u0941\u092a\u094d\u092a\u0948\u092f\u0941\u092e\u094d \u0935\u0930\u093f\u0938\u0948\u092f\u093e\u0915 \u0938\u0947\u0928\u094d\u0924\u0941 \u0938\u093f\u0921\u094d\u0921\u0941\u0915\u093f\u0928\u094d\u0931\u0924\u0941.",
+    "te": "PyMasters \u0c24\u0c2a\u0c3e\u0c32\u0c3e \u0c35\u0c3e\u0c21\u0c41 \u0c30\u0c3e\u0c1c\u0c28\u0c4d\u0c28\u0c41 \u0c15\u0c32\u0c35\u0c02\u0c21\u0c3f. \u0c05\u0c24\u0c28\u0c41 \u0c2a\u0c4d\u0c30\u0c24\u0c3f\u0c30\u0c4b\u0c1c\u0c42 5 \u0c07\u0c33\u0c4d\u0c33\u0c2e\u0c41\u0c32\u0c41 \u0c09\u0c28\u0c4d\u0c28 \u0c35\u0c40\u0c27\u0c3f\u0c32\u0c4b \u0c28\u0c21\u0c41\u0c38\u0c4d\u0c24\u0c3e\u0c21\u0c41. \u0c0f \u0c07\u0c02\u0c1f\u0c3f\u0c28\u0c3f \u0c26\u0c3e\u0c1f\u0c21\u0c41, \u0c0e\u0c02\u0c21\u0c41\u0c15\u0c41 \u0c35\u0c46\u0c33\u0c4d\u0c33\u0c21\u0c41. Python `for` loop \u0c05\u0c26\u0c47 \u0c35\u0c3f\u0c27\u0c02\u0c17\u0c3e \u0c2a\u0c28\u0c3f\u0c1a\u0c47\u0c38\u0c4d\u0c24\u0c41\u0c02\u0c26\u0c3f.",
+    "fr": "Rencontrez Rajan, le facteur PyMasters. Chaque matin il parcourt une rue avec 5 maisons. Il ne saute aucune maison et n'en revisite aucune. Il fait simplement 0, 1, 2, 3, 4 — une maison à la fois, dans l'ordre. Une boucle `for` Python fait exactement la même chose: elle visite chaque élément d'une séquence, une fois, dans l'ordre. Quand toutes les portes sont faites, la boucle se termine.",
+    "es": "Conoce a Rajan, el cartero de PyMasters. Cada mañana camina por una calle con 5 casas. No se salta ninguna casa y no vuelve a visitar una ya visitada. Simplemente va 0, 1, 2, 3, 4 — una casa a la vez, en orden. Un bucle `for` de Python hace exactamente lo mismo: visita cada elemento de una secuencia, una vez, en orden.",
+    "ko": "PyMasters \uc6b0\uccb4\ubd80\uac04 \ub77c\uc794\uc744 \ub9cc\ub098\ubcf4\uc138\uc694. \uadf8\ub294 \ub9e4\uc77c \uc544\uce68 5\uac1c\uc758 \uc9d1\uc774 \uc788\ub294 \uac70\ub9ac\ub97c \uac78\uc5b4\ub2e4\ub2d9\ub2c8\ub2e4. \uc5b4\ub5a4 \uc9d1\ub3c4 \uac74\ub108\ub9f0\ub2e4 \ub108\uc9dc\uc9c0\uc9c0 \uc54a\uace0, \uc774\ubbf8 \ubc29\ubb38\ud55c \uc9d1\uc740 \ub2e4\uc2dc \uac00\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. 0, 1, 2, 3, 4 \uc21c\uc11c\ub300\ub85c \ud55c \uc9d1\uc529. Python `for` \ub8e8\ud504\ub3c4 \uc815\ud655\ud788 \uac19\uc2b5\ub2c8\ub2e4."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "postman_street",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Start a loop that runs 5 times (i = 0 to 4)", "ta": "5 \u0924\u0921\u0935\u0948 \u0907\u092f\u0919\u094d\u0915\u0941\u092e\u094d \u0938\u0941\u0937\u093f \u0924\u094b\u0921\u0919\u094d\u0915\u0941" } },
+        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "Print the current house number on each iteration", "ta": "\u0913\u0935\u094d\u0935\u094b\u0930\u0941 \u0938\u0941\u0937\u093f\u092f\u093f\u0932\u0941\u092e\u094d \u0924\u0932\u094d\u0932\u093f \u0935\u0940\u0921\u094d\u0921\u0941 \u090e\u0923\u094d\u0923\u0948 \u0905\u091a\u094d\u0938\u093f\u0921\u0941" } }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_i",
+      "variable": "i",
+      "value": [0, 1, 2, 3, 4],
+      "data_type": "int (loop variable)",
+      "color": "#9b59b6",
+      "animate_sequence": true
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": "Delivering to house 0\nDelivering to house 1\nDelivering to house 2\nDelivering to house 3\nDelivering to house 4"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "loop_back",
+      "label": { "en": "loop back if i < 5", "ta": "i < 5 \u0906\u0928\u093e\u0932\u094d \u0924\u093f\u0930\u0941\u092e\u094d\u092a\u093f \u0938\u0941\u0937\u093f" },
+      "direction": "up",
+      "branch": "loop"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use a for loop to print the numbers 1 to 5, each on its own line.",
+        "ta": "for \u0938\u0941\u0937\u093f \u0909\u092a\u092f\u094b\u0915\u093f\u0924\u094d\u0924\u0941 1 \u0932\u093f\u0930\u0941\u0928\u094d\u0924\u0941 5 \u0935\u0930\u0948 \u0909\u0933\u094d\u0933 \u090e\u0923\u094d\u0923\u0941\u0915\u0933\u0948 \u0924\u0928\u093f\u0924\u094d\u0924\u0928\u093f \u0935\u0930\u093f\u0938\u0948\u092f\u093e\u0915 \u0905\u091a\u094d\u0938\u093f\u0921\u0941."
+      },
+      "starter_code": "# Print numbers 1 to 5\nfor i in range(__):\n    print(__)",
+      "expected_output": "1\n2\n3\n4\n5",
+      "hints": {
+        "en": [
+          "range(5) gives 0, 1, 2, 3, 4 — but you need 1 to 5",
+          "Try range(1, 6) to start at 1 and stop before 6",
+          "The loop variable i holds the current number each iteration",
+          "print(i) will print whatever i currently holds"
+        ],
+        "ta": [
+          "range(5) 0 \u0932\u093f\u0930\u0941\u0928\u094d\u0924\u0941 4 \u0935\u0930\u0948 \u0924\u0930\u0941\u0915\u093f\u0928\u094d\u0931\u0924\u0941 — \u0906\u0928\u093e\u0932\u094d 1 \u0932\u093f\u0930\u0941\u0928\u094d\u0924\u0941 5 \u0935\u0947\u0923\u094d\u0921\u0941\u092e\u094d",
+          "range(1, 6) \u090e\u0928\u094d\u092a\u0924\u0948 1\u0932\u093f\u0932\u094d \u0924\u094b\u0921\u0919\u094d\u0915\u093f 6\u0915\u094d\u0915\u0941 \u092e\u0941\u0928\u094d\u092a\u093e\u0915 \u0928\u093f\u0932\u094d\u0915\u094d\u0915\u0941\u092e\u094d",
+          "\u0938\u0941\u0937\u093f \u092e\u093e\u0932\u094d\u092e\u0941 i \u0924\u0932\u094d\u0932\u093f \u0924\u0932\u094d\u0932\u093f \u0924\u093e\u0928\u093e\u0915 \u0939\u093e\u0928\u094d\u0924\u094d\u0924\u093f\u0932\u094d \u0915\u094b\u0932\u094d\u0932\u0941\u0915\u093f\u0928\u094d\u0931\u0924\u0941",
+          "print(i) \u090e\u0928\u094d\u092a\u0924\u0941 i \u0907\u0932\u094d\u0932\u093e\u0924\u0935\u093f\u0930\u094d \u0905\u091a\u094d\u0938\u093f\u0921\u0941\u0915\u093f\u0928\u094d\u0931\u0924\u0941"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does range(3) produce?",
+        "ta": "range(3) \u090f\u0928\u094d\u0928 \u0924\u0930\u0941\u0915\u093f\u0928\u094d\u0931\u0924\u0941?"
+      },
+      "options": {
+        "en": ["1, 2, 3", "0, 1, 2", "0, 1, 2, 3", "1, 2"],
+        "ta": ["1, 2, 3", "0, 1, 2", "0, 1, 2, 3", "1, 2"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How many times does the body of `for i in range(4):` execute?",
+        "ta": "`for i in range(4):` \u0907\u0928\u094d \u0924\u094b\u0915\u0941\u0921\u093f \u090e\u0924\u094d\u0924\u0928\u0948 \u0924\u0921\u0935\u0948 \u0907\u092f\u0919\u094d\u0915\u0941\u092e\u094d?"
+      },
+      "options": {
+        "en": ["3 times", "4 times", "5 times", "0 times"],
+        "ta": ["3 \u0924\u0921\u0935\u0948", "4 \u0924\u0921\u0935\u0948", "5 \u0924\u0921\u0935\u0948", "0 \u0924\u0921\u0935\u0948"]
+      },
+      "correct": 1
+    }
+  ],
+  "adaptation_points": [
+    {
+      "at_step": 1,
+      "if_struggle": "iteration",
+      "inject": [
+        {
+          "type": "StoryCard",
+          "id": "extra_story_iteration",
+          "content": { "en": "Think of iteration like turning pages in a book. Each page is one step. You start at page 1 and keep going until you reach the last page. You never jump backwards. That is exactly what a loop does with range().", "ta": "\u0938\u0941\u0937\u093f \u0910\u0928\u094d\u092a\u0924\u0941 \u0913\u0930\u0941 \u0928\u0942\u0932\u093f\u0928\u094d \u0924\u093e\u0933\u094d\u0915\u0933\u0948 \u0924\u093f\u0930\u0941\u092a\u094d\u092a\u0941\u0935\u0924\u0941 \u092a\u094b\u0932. \u0913\u0935\u094d\u0935\u094b\u0930\u0941 \u0924\u093e\u0933\u0941\u092e\u094d \u0913\u0930\u0941 \u0915\u0921\u093f. \u0915\u0921\u0948\u0938\u093f \u0924\u093e\u0933\u0948 \u0935\u0930\u0948\u092f\u0940\u0932\u0941\u092e\u094d \u0924\u094b\u0921\u0919\u094d\u0915\u093f \u0938\u0947\u0932\u094d\u0932\u0941\u0935\u093e\u0930\u094d. \u0935\u0937\u093f\u0921\u0947\u092e\u094d \u0924\u093f\u0930\u0941\u092e\u094d\u092a\u0935\u0941\u092e\u094d \u0935\u0930\u0935\u093f\u0932\u094d\u0932\u0948." },
+          "visual_theme": "book_pages",
+          "duration_ms": 3000
+        }
+      ]
+    },
+    {
+      "at_step": 5,
+      "if_struggle": "advanced",
+      "inject": []
+    }
+  ]
+}
