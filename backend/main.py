@@ -81,27 +81,82 @@ def init_db():
                 created_at TIMESTAMP
             )
         """)
-        
+
         # Check/Add extra columns manually since DuckDB ALTER TABLE IF NOT EXISTS is tricky
         columns = conn.execute("DESCRIBE users").fetchall()
         col_names = [c[0] for c in columns]
-        
+
         if 'points' not in col_names:
             print("Migrating DB: Adding points column")
             conn.execute("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
-            
+
         if 'unlocked_modules' not in col_names:
             print("Migrating DB: Adding unlocked_modules column")
             conn.execute("ALTER TABLE users ADD COLUMN unlocked_modules VARCHAR DEFAULT '[\"module_1\"]'")
+
+        if 'preferred_language' not in col_names:
+            print("Migrating DB: Adding preferred_language column")
+            conn.execute("ALTER TABLE users ADD COLUMN preferred_language VARCHAR DEFAULT 'en'")
+
+        if 'onboarding_completed' not in col_names:
+            print("Migrating DB: Adding onboarding_completed column")
+            conn.execute("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN DEFAULT false")
+
+        # Create user_profiles table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_profiles (
+                user_id VARCHAR PRIMARY KEY,
+                motivation VARCHAR,
+                prior_experience VARCHAR,
+                known_languages VARCHAR,
+                learning_style VARCHAR,
+                goal VARCHAR,
+                time_commitment VARCHAR,
+                preferred_language VARCHAR,
+                skill_level VARCHAR,
+                diagnostic_score FLOAT,
+                onboarding_completed BOOLEAN DEFAULT false,
+                created_at TIMESTAMP DEFAULT current_timestamp
+            )
+        """)
+
+        # Create learning_signals table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS learning_signals (
+                id VARCHAR PRIMARY KEY,
+                user_id VARCHAR,
+                signal_type VARCHAR,
+                topic VARCHAR,
+                value FLOAT,
+                session_id VARCHAR,
+                created_at TIMESTAMP DEFAULT current_timestamp
+            )
+        """)
+
+        # Create user_mastery table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_mastery (
+                user_id VARCHAR,
+                topic VARCHAR,
+                mastery_level FLOAT,
+                attempts INTEGER,
+                avg_time_seconds FLOAT,
+                last_practiced TIMESTAMP,
+                struggle_count INTEGER,
+                PRIMARY KEY (user_id, topic)
+            )
+        """)
 
         # Create a test user if empty
         existing = conn.execute("SELECT count(*) FROM users").fetchone()[0]
         if existing == 0:
             print("Seeding default admin user...")
             hashed = hash_pw("admin123")
-            conn.execute("INSERT INTO users VALUES (?, ?, ?, ?, current_timestamp, 0, ?)", 
-                        [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"])])
-            
+            conn.execute(
+                "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, current_timestamp, 0, ?, ?, ?)",
+                [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", False]
+            )
+
     except Exception as e:
         print(f"DB Init Error: {e}")
     finally:
