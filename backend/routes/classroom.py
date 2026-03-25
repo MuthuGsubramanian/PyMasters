@@ -68,9 +68,9 @@ class ChatRequest(BaseModel):
 class EvaluateRequest(BaseModel):
     user_id: str
     code: str
-    expected_output: str
-    lesson_id: str
-    topic: str
+    expected_output: Optional[str] = ""
+    lesson_id: Optional[str] = None
+    topic: Optional[str] = None
 
 
 class DiagnosticRequest(BaseModel):
@@ -196,8 +196,8 @@ def get_lesson(
     if not profile:
         return lesson
 
-    preferred_lang = profile.get("preferred_language", "en")
-    skill_level = profile.get("skill_level", "intermediate")
+    preferred_lang = profile.get("preferred_language") or "en"
+    skill_level = profile.get("skill_level") or "beginner"
     mastery_map = profile.get("mastery", {})
 
     # Swap story_variants to preferred language
@@ -207,10 +207,12 @@ def get_lesson(
     elif story_variants and "en" in story_variants:
         lesson["active_story"] = story_variants["en"]
 
-    # Set active_title if variants exist
-    title_variants = lesson.get("title_variants", {})
-    if title_variants:
-        lesson["active_title"] = title_variants.get(preferred_lang, lesson.get("title", ""))
+    # Set active_title if title is a dict of variants
+    title = lesson.get("title", "")
+    if isinstance(title, dict):
+        lesson["active_title"] = title.get(preferred_lang, title.get("en", ""))
+    else:
+        lesson["active_title"] = title
 
     # Set speed_multiplier based on skill level
     lesson["speed_multiplier"] = SPEED_MULTIPLIER.get(skill_level, 1.0)
