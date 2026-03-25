@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ProfileProvider } from './context/ProfileContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import { Overview, LearningMap, ModuleViewer, StudioView } from './pages/Dashboard';
+import Onboarding from './pages/Onboarding';
+import { Overview, LearningMap, ModuleViewer } from './pages/Dashboard';
+import Classroom from './pages/Classroom';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -14,22 +17,20 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Public Logic */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-
-          {/* Private Logic - Wrapped in Sidebar Layout */}
-          <Route path="/dashboard" element={<PrivateRoute><Layout /></PrivateRoute>}>
-            <Route index element={<Overview />} />
-            <Route path="learn" element={<LearningMap />} />
-            <Route path="learn/:id" element={<ModuleViewer />} />
-            <Route path="studio" element={<StudioView />} />
-          </Route>
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
+            <Route path="/dashboard" element={<PrivateRoute><Layout /></PrivateRoute>}>
+              <Route index element={<Overview />} />
+              <Route path="learn" element={<LearningMap />} />
+              <Route path="learn/:id" element={<ModuleViewer />} />
+              <Route path="classroom" element={<Classroom />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </ProfileProvider>
       </AuthProvider>
     </BrowserRouter>
   );

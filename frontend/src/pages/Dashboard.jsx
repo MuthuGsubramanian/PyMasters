@@ -1,22 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Outlet, Navigate, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     BookOpen,
-    Code2,
     Cpu,
-    Play,
-    Send,
     Lock,
     CheckCircle2,
     Trophy,
     Award,
-    Terminal as TerminalIcon,
     ChevronRight,
-    Activity
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { runCode, chatAI, getModules, getModule, completeModule } from '../api';
+import { getModules, getModule, completeModule } from '../api';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -296,127 +291,3 @@ export function ModuleViewer() {
     );
 }
 
-export function StudioView() {
-    const [code, setCode] = useState('print("Hello from PyMasters!")\n');
-    const [output, setOutput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [input, setInput] = useState('');
-    const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'Neural Link established. I am ready to assist with your Python code.' }
-    ]);
-    const [chatLoading, setChatLoading] = useState(false);
-
-    // ... (Keep existing Run/Chat logic, styling updated below) ...
-    const handleRun = async () => {
-        setLoading(true);
-        setOutput('');
-        try {
-            const res = await runCode(code);
-            if (res.data.error) {
-                setOutput(`Error:\n${res.data.error}`);
-            } else {
-                setOutput(res.data.output || '(No output)');
-            }
-        } catch (err) {
-            setOutput('Failed to execute code. Connection error?');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleChat = async (e) => {
-        e.preventDefault();
-        if (!input.trim()) return;
-
-        const userMsg = { role: 'user', content: input };
-        setMessages(prev => [...prev, userMsg]);
-        setInput('');
-        setChatLoading(true);
-
-        try {
-            const res = await chatAI(userMsg.content, code);
-            setMessages((prev) => [...prev, { role: 'assistant', content: res.data.response }]);
-        } catch (err) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Uplink Failed. Check Local AI Server.' }]);
-        } finally {
-            setChatLoading(false);
-        }
-    };
-
-    return (
-        <div className="h-[calc(100vh-8rem)] grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
-            {/* Editor */}
-            <div className="lg:col-span-8 flex flex-col h-full gap-4">
-                <div className="flex-1 panel rounded-xl overflow-hidden flex flex-col">
-                    {/* Toolbar */}
-                    <div className="h-10 border-b border-white/5 bg-[#0b101b] flex items-center justify-between px-4">
-                        <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                            <TerminalIcon size={14} />
-                            <span>main.py</span>
-                        </div>
-                        <button
-                            onClick={handleRun}
-                            disabled={loading}
-                            className="flex items-center gap-1.5 text-[10px] font-bold bg-green-500/10 text-green-400 px-3 py-1 rounded hover:bg-green-500/20 transition-colors uppercase tracking-wider"
-                        >
-                            {loading ? <Activity size={12} className="animate-spin" /> : <Play size={12} fill="currentColor" />}
-                            {loading ? 'Compiling' : 'Execute'}
-                        </button>
-                    </div>
-                    {/* Code Area */}
-                    <textarea
-                        className="flex-1 bg-[#0b101b] text-slate-300 font-mono text-sm p-4 resize-none focus:outline-none leading-relaxed"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        spellCheck="false"
-                    />
-                </div>
-
-                <div className="h-[30%] panel rounded-xl overflow-hidden flex flex-col">
-                    <div className="bg-white/5 px-4 py-2 text-[10px] uppercase font-bold tracking-widest text-slate-500 border-b border-white/5 flex justify-between items-center">
-                        <span>Console Output</span>
-                    </div>
-                    <pre className="flex-1 p-4 font-mono text-sm text-slate-300 overflow-auto whitespace-pre-wrap bg-[#020617]">
-                        {output || <span className="text-slate-700 italic">// Waiting for execution...</span>}
-                    </pre>
-                </div>
-            </div>
-
-            {/* AI Sidebar */}
-            <div className="lg:col-span-4 h-full flex flex-col panel rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-white/5 bg-white/5 flex items-center gap-2">
-                    <Cpu size={16} className="text-purple-400" />
-                    <span className="text-sm font-bold text-white">Neural Assistant</span>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0b101b]">
-                    {messages.map((msg, idx) => (
-                        <div key={idx} className={clsx("flex flex-col max-w-[90%]", msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start")}>
-                            <div className={clsx(
-                                "p-3 rounded-2xl text-sm mb-1",
-                                msg.role === 'user' ? "bg-cyan-500 text-white rounded-br-none" : "bg-white/10 text-slate-200 rounded-bl-none"
-                            )}>
-                                {msg.content}
-                            </div>
-                            <span className="text-[9px] text-slate-600 uppercase font-bold">{msg.role}</span>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="p-4 border-t border-white/5 bg-[#0b101b]">
-                    <form onSubmit={handleChat} className="relative">
-                        <input
-                            className="input-neo pr-10"
-                            placeholder="Request assistance..."
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                        />
-                        <button className="absolute right-2 top-2.5 text-slate-500 hover:text-cyan-400 transition-colors">
-                            <Send size={16} />
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-}

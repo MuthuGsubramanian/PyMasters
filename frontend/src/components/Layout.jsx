@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard,
     BookOpen,
-    Code2,
+    GraduationCap,
     LogOut,
     Settings,
     ChevronRight,
@@ -24,7 +24,7 @@ export default function Layout() {
     const navItems = [
         { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
         { icon: BookOpen, label: 'Learning Path', path: '/dashboard/learn' },
-        { icon: Code2, label: 'Code Studio', path: '/dashboard/studio' },
+        { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom' },
     ];
 
     return (
