@@ -241,10 +241,20 @@ You MUST respond with a single valid JSON object. Do NOT wrap it in markdown cod
 fences. Do NOT add any text before or after the JSON. The object must contain exactly
 these top-level keys:
 
+Your "message" field must be well-structured Markdown:
+- Use ## headings to break into sections (e.g., "## What is it?", "## How it works", "## Quick Example")
+- Use bullet points for key takeaways
+- Include at least one short code example in ```python blocks
+- Use **bold** for important terms
+- If comparing things, use a Markdown table with | delimiters
+- Keep each section concise (2-3 sentences max)
+- Always end with a "## Try This!" section with a mini-challenge
+
 ```
 {
-  "message": "string — your conversational response to the student. Can contain
-              markdown formatting for inline code or emphasis.",
+  "message": "string — your conversational response to the student. MUST be
+              well-structured Markdown with headings, bullet points, code blocks,
+              bold terms, and tables where appropriate.",
   "phase": "story | visual | code | practice | hint | feedback | welcome",
   "animation": { ... animation primitive object ... } | null,
   "practice_challenge": {
