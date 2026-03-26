@@ -1,0 +1,95 @@
+{
+  "id": "pandas_merging",
+  "topic": "pandas",
+  "track": "ai_ml_foundations",
+  "module": "pandas",
+  "order": 4,
+  "title": {
+    "en": "Pandas Merging: merge, join & concat"
+  },
+  "description": {
+    "en": "Combine DataFrames using merge (SQL-style joins), join (index-based), and concat (stacking rows or columns)."
+  },
+  "xp_reward": 65,
+  "next_unlock": "viz_matplotlib",
+  "story_variants": {
+    "en": "## Combining DataFrames\n\nReal data rarely lives in one table. Pandas provides three main ways to combine DataFrames.\n\n### pd.concat — Stacking\n\nStack DataFrames vertically (more rows) or horizontally (more columns):\n\n```python\nimport pandas as pd\n\ndf1 = pd.DataFrame({'id': [1,2], 'name': ['Alice','Bob']})\ndf2 = pd.DataFrame({'id': [3,4], 'name': ['Charlie','Diana']})\n\nstacked = pd.concat([df1, df2], ignore_index=True)\n# id     name\n# 0  1    Alice\n# 1  2      Bob\n# 2  3  Charlie\n# 3  4    Diana\n```\n\n### pd.merge — SQL-style Joins\n\n```python\norders = pd.DataFrame({'order_id': [1,2,3], 'cust_id': [10,11,10], 'amount': [100,200,150]})\ncustomers = pd.DataFrame({'cust_id': [10,11,12], 'name': ['Alice','Bob','Charlie']})\n\nresult = pd.merge(orders, customers, on='cust_id', how='left')\n```\n\n### Join Types\n\n| how= | Keeps |\n|------|-------|\n| `'inner'` | Only matching rows in both DataFrames |\n| `'left'` | All rows from left, matching from right |\n| `'right'` | All rows from right, matching from left |\n| `'outer'` | All rows from both, NaN where no match |\n\n### df.join — Index-based Joining\n\n```python\ndf_a = pd.DataFrame({'score': [90,85]}, index=['Alice','Bob'])\ndf_b = pd.DataFrame({'age': [25,30]}, index=['Alice','Bob'])\n\njoined = df_a.join(df_b)\n```\n\n### Merging on Multiple Keys\n\n```python\npd.merge(df1, df2, on=['year', 'month'])\n```\n\n> **Key Insight:** `pd.merge` is the most powerful and flexible — it mirrors SQL JOIN syntax. Use `concat` when you simply want to pile DataFrames on top of each other, and `join` when working with index-aligned data."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "merge_steps",
+      "steps": [
+        {
+          "line": "stacked = pd.concat([df1, df2], ignore_index=True)",
+          "highlight": "pd.concat",
+          "explanation": { "en": "Vertically stack two DataFrames; reset index with ignore_index=True" }
+        },
+        {
+          "line": "result = pd.merge(orders, customers, on='cust_id', how='left')",
+          "highlight": "pd.merge",
+          "explanation": { "en": "Left join: keep all orders, attach customer info where available" }
+        },
+        {
+          "line": "joined = df_a.join(df_b)",
+          "highlight": ".join",
+          "explanation": { "en": "Index-based join: align on row labels" }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "join_types",
+      "left": {
+        "label": "INNER join",
+        "code": "pd.merge(a, b, on='id', how='inner')",
+        "note": "Only matching rows"
+      },
+      "right": {
+        "label": "LEFT join",
+        "code": "pd.merge(a, b, on='id', how='left')",
+        "note": "All from left, NaN where no match"
+      }
+    },
+    {
+      "type": "FlowArrow",
+      "id": "merge_flow",
+      "from": "orders",
+      "to": "customers",
+      "label": "merge on cust_id"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "merge_output",
+      "output": ["order_id  cust_id  amount   name", "1         10      100    Alice", "2         11      200      Bob", "3         10      150    Alice"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create two DataFrames: `employees` (emp_id, name) and `salaries` (emp_id, salary). Merge them on `emp_id` using an inner join and store the result in `merged`."
+      },
+      "hints": [
+        { "en": "merged = pd.merge(employees, salaries, on='emp_id', how='inner')" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(employees, pd.DataFrame) and 'emp_id' in employees.columns\nassert isinstance(salaries, pd.DataFrame) and 'salary' in salaries.columns\nassert isinstance(merged, pd.DataFrame)\nassert 'name' in merged.columns and 'salary' in merged.columns, 'merged must have both name and salary'"
+    },
+    {
+      "instruction": {
+        "en": "Create three DataFrames `q1`, `q2`, `q3` each with columns `product` and `units_sold` for a different quarter. Stack them into one DataFrame called `annual` using `pd.concat`."
+      },
+      "hints": [
+        { "en": "annual = pd.concat([q1, q2, q3], ignore_index=True)" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(annual, pd.DataFrame)\nassert len(annual) == len(q1) + len(q2) + len(q3), 'annual must contain all rows from all quarters'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

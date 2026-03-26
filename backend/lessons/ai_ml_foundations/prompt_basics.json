@@ -1,0 +1,115 @@
+{
+  "id": "prompt_basics",
+  "topic": "prompt_engineering",
+  "track": "ai_ml_foundations",
+  "module": "prompt_engineering",
+  "order": 1,
+  "title": {
+    "en": "Prompt Basics: Talking to AI Models Effectively"
+  },
+  "description": {
+    "en": "Learn core prompting techniques — zero-shot, role assignment, and structured instructions — to get better AI outputs."
+  },
+  "xp_reward": 60,
+  "next_unlock": "prompt_few_shot",
+  "story_variants": {
+    "en": "## Prompt Engineering: The Art of AI Communication\n\nA **prompt** is the text you send to a language model. Prompt engineering is the skill of crafting prompts that reliably produce high-quality, relevant outputs.\n\n### Why Prompting Matters\n\nThe same model can give wildly different outputs depending on how you ask:\n\n```\nBad prompt:  \"Tell me about sorting\"\n\nGood prompt: \"Explain Python's sort() method to a beginner.\n              Include: what it does, syntax, and one code example.\n              Use simple language, no jargon.\"\n```\n\n### Core Techniques\n\n| Technique | Description | Example |\n|-----------|-------------|----------|\n| **Zero-shot** | Ask directly, no examples | \"Translate to French: Hello\" |\n| **Role assignment** | Tell the model who to be | \"You are a Python expert...\" |\n| **Structured output** | Ask for specific format | \"Reply in JSON with keys: name, age\" |\n| **Task decomposition** | Break into steps | \"First do X, then do Y, then do Z\" |\n| **Constraint setting** | Limit the response | \"In under 100 words...\" |\n\n### The Anatomy of a Good Prompt\n\n```\n[ROLE]        You are a senior data scientist.\n[CONTEXT]     I have a CSV with 10,000 rows and 20 columns.\n[TASK]        Suggest 5 data cleaning steps I should take first.\n[FORMAT]      Reply as a numbered list.\n[CONSTRAINTS] Be specific to Python/pandas.\n```\n\n### Zero-Shot Prompting\n\nZero-shot means providing no examples — just a clear instruction:\n\n```python\nprompt = \"\"\"\nClassify the following customer review as Positive, Negative, or Neutral.\nReview: \"The product arrived on time but the packaging was damaged.\"\nLabel:\n\"\"\"\n```\n\n> **Key Insight:** Specificity is the single most important factor in prompt quality. Vague prompts produce vague responses. The more clearly you define the task, format, audience, and constraints, the more reliably the model delivers what you need."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "prompt_anatomy",
+      "steps": [
+        {
+          "line": "role = 'You are a senior Python developer.'",
+          "highlight": "role",
+          "explanation": { "en": "Role assignment primes the model to respond with domain expertise" }
+        },
+        {
+          "line": "task = 'Review the following code and list 3 improvements.'",
+          "highlight": "task",
+          "explanation": { "en": "A clear, specific task instruction" }
+        },
+        {
+          "line": "format_instr = 'Format as a numbered list. Be concise.'",
+          "highlight": "format_instr",
+          "explanation": { "en": "Format instructions control the structure of the response" }
+        },
+        {
+          "line": "prompt = f'{role}\\n{task}\\n{format_instr}\\n\\n{code}'",
+          "highlight": "f-string",
+          "explanation": { "en": "Combine all parts into one well-structured prompt" }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "bad_vs_good",
+      "left": {
+        "label": "Vague prompt",
+        "code": "\"Tell me about Python\"",
+        "note": "Produces unfocused, generic response"
+      },
+      "right": {
+        "label": "Structured prompt",
+        "code": "\"You are a Python tutor.\\nExplain list comprehensions\\nto a beginner in 3 bullet points.\"",
+        "note": "Focused, concise, targeted"
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "prompt_parts",
+      "nodes": [
+        { "id": "role", "label": "Role" },
+        { "id": "context", "label": "Context" },
+        { "id": "task", "label": "Task" },
+        { "id": "format", "label": "Format" },
+        { "id": "constraints", "label": "Constraints" },
+        { "id": "output", "label": "Quality Output" }
+      ],
+      "edges": [
+        { "from": "role", "to": "output" },
+        { "from": "context", "to": "output" },
+        { "from": "task", "to": "output" },
+        { "from": "format", "to": "output" },
+        { "from": "constraints", "to": "output" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "prompt_output",
+      "output": ["Good prompt structure:", "  1. Role: who the AI is", "  2. Context: background info", "  3. Task: what to do", "  4. Format: how to respond", "  5. Constraints: limits"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a well-structured prompt string called `explain_prompt` that asks an AI to explain recursion to a high school student. Include a role, the task, a format instruction (use an analogy), and a constraint (under 150 words)."
+      },
+      "hints": [
+        { "en": "Start with: 'You are an experienced Python teacher.'" },
+        { "en": "Specify the audience: '...explaining to a 16-year-old'" },
+        { "en": "Add a format instruction: 'Use a real-world analogy.'" }
+      ],
+      "test_code": "assert isinstance(explain_prompt, str), 'explain_prompt must be a string'\nassert len(explain_prompt) > 50, 'prompt should be detailed enough (> 50 chars)'\nassert 'recursion' in explain_prompt.lower(), 'prompt must mention recursion'\nassert any(word in explain_prompt.lower() for word in ['student', 'beginner', 'simple', 'analogy', 'words']), 'prompt should guide the audience or format'"
+    },
+    {
+      "instruction": {
+        "en": "Write a zero-shot classification prompt string called `classify_prompt` that asks an AI to classify a movie review as 'Positive', 'Negative', or 'Neutral'. The review to classify is: 'The visuals were stunning but the plot was predictable.'  Include the expected format explicitly."
+      },
+      "hints": [
+        { "en": "End your prompt with 'Label:' to guide the model toward a single-word answer" },
+        { "en": "Specify: 'Reply with only one word: Positive, Negative, or Neutral.'" }
+      ],
+      "test_code": "assert isinstance(classify_prompt, str), 'classify_prompt must be a string'\nassert 'positive' in classify_prompt.lower() or 'negative' in classify_prompt.lower(), 'prompt must include label options'\nassert 'stunning' in classify_prompt.lower() or 'predictable' in classify_prompt.lower() or 'visuals' in classify_prompt.lower(), 'prompt must include the review text'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

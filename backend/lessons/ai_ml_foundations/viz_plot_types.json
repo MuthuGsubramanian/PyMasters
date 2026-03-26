@@ -1,0 +1,114 @@
+{
+  "id": "viz_plot_types",
+  "topic": "visualization",
+  "track": "ai_ml_foundations",
+  "module": "visualization",
+  "order": 3,
+  "title": {
+    "en": "Choosing the Right Chart"
+  },
+  "description": {
+    "en": "Learn which chart type to use for comparisons, distributions, relationships, compositions and time-series data."
+  },
+  "xp_reward": 55,
+  "next_unlock": "sklearn_classification",
+  "story_variants": {
+    "en": "## The Right Chart for the Right Question\n\nChoosing the wrong chart obscures your message. The best visualisation is the one that **answers your specific question** most clearly.\n\n### Chart Selection Framework\n\n| Goal | Chart Type | Example |\n|------|------------|----------|\n| Compare categories | Bar chart | Sales by region |\n| Show distribution | Histogram, Box, Violin | Exam score spread |\n| Show relationship | Scatter plot, Heatmap | Height vs weight |\n| Show composition | Pie, Stacked bar | Market share |\n| Show trend over time | Line chart | Stock price history |\n| Show correlation | Heatmap | Feature correlation matrix |\n\n### Comparison: Bar vs Line\n\n```python\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\n\n# Categorical comparison → Bar chart\ndf_cat = pd.DataFrame({'city': ['NYC','LA','CHI'], 'pop': [8.3, 4.0, 2.7]})\nsns.barplot(data=df_cat, x='city', y='pop')\n\n# Continuous time trend → Line chart\ndf_time = pd.DataFrame({'year': range(2018, 2024), 'users': [100,150,200,300,450,600]})\nplt.plot(df_time['year'], df_time['users'], marker='o')\n```\n\n### Distribution Choices\n\n```python\n# Few data points or comparing groups → Box plot\nsns.boxplot(data=df, x='group', y='value')\n\n# Want to see shape of distribution → Histogram or KDE\nsns.histplot(df['value'], kde=True)\n\n# Want to compare distribution shape between groups → Violin\nsns.violinplot(data=df, x='group', y='value')\n```\n\n### Common Mistakes to Avoid\n\n| Mistake | Better Alternative |\n|---------|--------------------|\n| Pie chart with >5 slices | Horizontal bar chart |\n| 3-D bar charts | Simple 2-D bar |\n| Dual y-axes without care | Separate plots |\n| Too many colours | Use hue only for categorical data |\n\n### When to Use a Heatmap\n\n```python\ncorr = df.corr(numeric_only=True)\nsns.heatmap(corr, annot=True, cmap='coolwarm', center=0)\n```\n\nUse heatmaps to reveal correlations between **many numeric features** at once — essential during feature selection in ML.\n\n> **Key Insight:** Start with the question, not the chart. Ask \"What am I trying to show?\" then pick the appropriate chart type. A simple bar chart done well beats a complex 3-D surface chart that confuses everyone."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "chart_types_steps",
+      "steps": [
+        {
+          "line": "sns.barplot(data=df_cat, x='city', y='pop')",
+          "highlight": "barplot",
+          "explanation": { "en": "Bar chart: compare discrete categories — perfect for sales, counts, etc." }
+        },
+        {
+          "line": "plt.plot(years, values, marker='o')",
+          "highlight": "plot",
+          "explanation": { "en": "Line chart: show how a value changes continuously over time" }
+        },
+        {
+          "line": "sns.histplot(df['value'], kde=True)",
+          "highlight": "histplot",
+          "explanation": { "en": "Histogram: reveal the shape and spread of a single variable" }
+        },
+        {
+          "line": "sns.heatmap(corr, annot=True, cmap='coolwarm')",
+          "highlight": "heatmap",
+          "explanation": { "en": "Heatmap: show pairwise correlations across many numeric features" }
+        }
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "chart_decision_map",
+      "nodes": [
+        { "id": "q", "label": "What is your goal?" },
+        { "id": "compare", "label": "Compare → Bar" },
+        { "id": "distribute", "label": "Distribute → Hist/Box" },
+        { "id": "relate", "label": "Relate → Scatter/Heatmap" },
+        { "id": "trend", "label": "Trend → Line" },
+        { "id": "compose", "label": "Compose → Pie/Stacked" }
+      ],
+      "edges": [
+        { "from": "q", "to": "compare" },
+        { "from": "q", "to": "distribute" },
+        { "from": "q", "to": "relate" },
+        { "from": "q", "to": "trend" },
+        { "from": "q", "to": "compose" }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "bar_vs_pie",
+      "left": {
+        "label": "Bar chart (recommended)",
+        "code": "sns.barplot(x=labels, y=values)",
+        "note": "Easy to compare lengths"
+      },
+      "right": {
+        "label": "Pie chart (use sparingly)",
+        "code": "plt.pie(values, labels=labels)",
+        "note": "Hard to compare angles"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "chart_output",
+      "output": ["Bar → categories", "Line → time series", "Scatter → relationships", "Hist → distributions", "Heatmap → correlations"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "You have a dataset with columns `month` (Jan-Dec) and `temperature` (floats). What chart type is most appropriate? Write code to create it using matplotlib, storing the figure in `fig` and axes in `ax`."
+      },
+      "hints": [
+        { "en": "Temperature over months is a time trend → use a line chart" },
+        { "en": "fig, ax = plt.subplots(); ax.plot(months, temperatures)" }
+      ],
+      "test_code": "import matplotlib\nassert fig is not None, 'fig must be assigned'\nassert ax is not None, 'ax must be assigned'"
+    },
+    {
+      "instruction": {
+        "en": "Create a DataFrame `scores_df` with `subject` and `score` columns (4+ subjects). Create a horizontal bar chart (use `plt.barh`) to compare the scores. Store axes in `ax`."
+      },
+      "hints": [
+        { "en": "fig, ax = plt.subplots()" },
+        { "en": "ax.barh(scores_df['subject'], scores_df['score'])" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(scores_df, pd.DataFrame)\nassert 'subject' in scores_df.columns and 'score' in scores_df.columns\nassert len(scores_df) >= 4, 'Need at least 4 subjects'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

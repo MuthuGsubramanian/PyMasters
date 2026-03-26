@@ -1,0 +1,117 @@
+{
+  "id": "numpy_arrays",
+  "topic": "numpy",
+  "track": "ai_ml_foundations",
+  "module": "numpy",
+  "order": 1,
+  "title": {
+    "en": "NumPy Arrays: The Foundation of Numerical Computing"
+  },
+  "description": {
+    "en": "Learn how NumPy's ndarray works — shape, dtype, and why arrays are faster than Python lists for numerical computation."
+  },
+  "xp_reward": 60,
+  "next_unlock": "numpy_operations",
+  "story_variants": {
+    "en": "## NumPy Arrays: Supercharged Lists\n\n**NumPy** (Numerical Python) is the backbone of data science in Python. At its heart is the `ndarray` — an N-dimensional array that is far faster and more memory-efficient than a regular Python list.\n\n### Why Not Just Use Lists?\n\n| Feature | Python List | NumPy Array |\n|---------|-------------|-------------|\n| Speed | Slow (interpreted loop) | Fast (C under the hood) |\n| Memory | Each element is a Python object | Raw binary data |\n| Math ops | Manual loops required | Vectorised (no loops) |\n| Dimensionality | Nested lists only | True N-D arrays |\n\n### Creating Arrays\n\n```python\nimport numpy as np\n\na = np.array([1, 2, 3, 4])        # 1-D array\nb = np.array([[1, 2], [3, 4]])     # 2-D array (matrix)\nc = np.zeros((3, 3))               # 3x3 matrix of zeros\nd = np.ones((2, 4))                # 2x4 matrix of ones\ne = np.arange(0, 10, 2)           # [0, 2, 4, 6, 8]\n```\n\n### Shape and dtype\n\nEvery array has two key properties:\n- **`shape`** — a tuple describing dimensions, e.g. `(3, 4)` means 3 rows, 4 columns\n- **`dtype`** — the data type of elements, e.g. `float64`, `int32`, `bool`\n\n```python\nprint(b.shape)   # (2, 2)\nprint(b.dtype)   # int64\nprint(b.ndim)    # 2  (number of dimensions)\nprint(b.size)    # 4  (total elements)\n```\n\n### Reshaping\n\n```python\nflat = np.arange(12)          # shape (12,)\nmatrix = flat.reshape(3, 4)   # shape (3, 4)\n```\n\n> **Key Insight:** NumPy operations work element-by-element across the entire array without writing a single `for` loop. This is called **vectorisation** and it is the secret to fast numerical code."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "array_creation",
+      "steps": [
+        {
+          "line": "import numpy as np",
+          "highlight": "numpy",
+          "explanation": { "en": "Import NumPy with the conventional alias np" }
+        },
+        {
+          "line": "a = np.array([1, 2, 3, 4])",
+          "highlight": "np.array",
+          "explanation": { "en": "Create a 1-D array from a Python list" }
+        },
+        {
+          "line": "b = np.array([[1, 2], [3, 4]])",
+          "highlight": "np.array",
+          "explanation": { "en": "Create a 2-D array (matrix) from nested lists" }
+        },
+        {
+          "line": "print(b.shape)",
+          "highlight": "shape",
+          "explanation": { "en": "shape is a tuple: (rows, columns)" },
+          "output": "(2, 2)"
+        },
+        {
+          "line": "print(b.dtype)",
+          "highlight": "dtype",
+          "explanation": { "en": "dtype tells us the numeric type stored in memory" },
+          "output": "int64"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "array_visual",
+      "structure_type": "matrix",
+      "data": [[1, 2], [3, 4]],
+      "labels": ["row 0", "row 1"],
+      "highlight_color": "#f7914f"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "list_vs_array",
+      "left": {
+        "label": "Python List",
+        "code": "lst = [1, 2, 3, 4]\nresult = [x*2 for x in lst]",
+        "note": "Needs a loop"
+      },
+      "right": {
+        "label": "NumPy Array",
+        "code": "arr = np.array([1,2,3,4])\nresult = arr * 2",
+        "note": "Vectorised — no loop!"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "shape_output",
+      "output": ["b.shape → (2, 2)", "b.dtype → int64", "b.ndim  → 2", "b.size  → 4"]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebration",
+      "trigger": "on_complete",
+      "style": "burst"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a NumPy array called `matrix` that is a 3x3 array of integers from 1 to 9. Then print its shape and dtype."
+      },
+      "hints": [
+        { "en": "Use np.array([[1,2,3],[4,5,6],[7,8,9]])" },
+        { "en": "Access shape with matrix.shape" },
+        { "en": "Access dtype with matrix.dtype" }
+      ],
+      "test_code": "import numpy as np\nassert isinstance(matrix, np.ndarray), 'matrix must be a numpy array'\nassert matrix.shape == (3, 3), 'matrix must be 3x3'\nassert matrix.size == 9, 'matrix must have 9 elements'"
+    },
+    {
+      "instruction": {
+        "en": "Create a 1-D array called `evens` containing even numbers from 0 to 20 (inclusive) using `np.arange`."
+      },
+      "hints": [
+        { "en": "np.arange(start, stop, step) — stop is exclusive" },
+        { "en": "np.arange(0, 22, 2)" }
+      ],
+      "test_code": "import numpy as np\nassert isinstance(evens, np.ndarray), 'evens must be a numpy array'\nassert len(evens) == 11, 'evens should have 11 elements (0,2,...,20)'\nassert evens[0] == 0 and evens[-1] == 20, 'evens must start at 0 and end at 20'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

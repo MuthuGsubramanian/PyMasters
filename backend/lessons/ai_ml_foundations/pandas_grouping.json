@@ -1,0 +1,94 @@
+{
+  "id": "pandas_grouping",
+  "topic": "pandas",
+  "track": "ai_ml_foundations",
+  "module": "pandas",
+  "order": 3,
+  "title": {
+    "en": "Pandas Grouping: groupby, agg & Pivot Tables"
+  },
+  "description": {
+    "en": "Aggregate and summarise data using groupby, agg functions, and pivot_table to uncover patterns in your dataset."
+  },
+  "xp_reward": 65,
+  "next_unlock": "pandas_merging",
+  "story_variants": {
+    "en": "## Grouping Data: Finding Patterns\n\nWhen you have data about many things, you often want to **group** similar items and compute summaries. That is exactly what `groupby` does.\n\n### The Split-Apply-Combine Pattern\n\n```\n1. SPLIT   → Group rows by a column's values\n2. APPLY   → Compute a function within each group\n3. COMBINE → Collect results back into a DataFrame\n```\n\n### Basic groupby\n\n```python\nimport pandas as pd\n\ndf = pd.DataFrame({\n    'dept':   ['Sales', 'Eng', 'Sales', 'Eng', 'HR'],\n    'salary': [50000, 90000, 55000, 95000, 60000],\n    'years':  [3, 5, 2, 7, 4]\n})\n\nprint(df.groupby('dept')['salary'].mean())\n# dept\n# Eng      92500.0\n# HR       60000.0\n# Sales    52500.0\n```\n\n### Multiple Aggregations with .agg()\n\n```python\nsummary = df.groupby('dept')['salary'].agg(['mean', 'min', 'max', 'count'])\nprint(summary)\n```\n\n### Custom Aggregations per Column\n\n```python\nresult = df.groupby('dept').agg(\n    avg_salary=('salary', 'mean'),\n    max_years=('years', 'max'),\n    headcount=('salary', 'count')\n)\n```\n\n### Pivot Tables\n\nPivot tables provide a 2-D summary view:\n\n| Operation | Code |\n|-----------|------|\n| Basic pivot | `df.pivot_table(values='salary', index='dept', aggfunc='mean')` |\n| Multi-index | `df.pivot_table(values='salary', index='dept', columns='year_band', aggfunc='sum')` |\n\n```python\npivot = pd.pivot_table(df, values='salary', index='dept', aggfunc='mean')\n```\n\n> **Key Insight:** `groupby` is the workhorse of data analysis. Mastering it lets you answer questions like \"What is the average purchase per customer?\" or \"Which product category has the highest return rate?\" in a single line of code."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "groupby_steps",
+      "steps": [
+        {
+          "line": "groups = df.groupby('dept')",
+          "highlight": "groupby",
+          "explanation": { "en": "Creates a GroupBy object — data is split by dept value" }
+        },
+        {
+          "line": "print(groups['salary'].mean())",
+          "highlight": "mean",
+          "explanation": { "en": "Compute mean salary for each department group" },
+          "output": "dept\nEng      92500.0\nHR       60000.0\nSales    52500.0"
+        },
+        {
+          "line": "summary = df.groupby('dept')['salary'].agg(['mean','max'])",
+          "highlight": "agg",
+          "explanation": { "en": ".agg() runs multiple aggregation functions at once" }
+        },
+        {
+          "line": "pivot = pd.pivot_table(df, values='salary', index='dept', aggfunc='mean')",
+          "highlight": "pivot_table",
+          "explanation": { "en": "pivot_table gives a 2-D cross-tabulation summary" }
+        }
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "split_apply_combine",
+      "nodes": [
+        { "id": "split", "label": "SPLIT by dept" },
+        { "id": "apply", "label": "APPLY mean/sum" },
+        { "id": "combine", "label": "COMBINE results" }
+      ],
+      "edges": [
+        { "from": "split", "to": "apply" },
+        { "from": "apply", "to": "combine" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "groupby_output",
+      "output": ["dept", "Eng      92500.0", "HR       60000.0", "Sales    52500.0", "Name: salary, dtype: float64"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a DataFrame `sales` with columns `region` (strings), `product` (strings), and `revenue` (numbers). Use `groupby` to compute `regional_totals` — the total revenue per region."
+      },
+      "hints": [
+        { "en": "regional_totals = sales.groupby('region')['revenue'].sum()" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(sales, pd.DataFrame)\nassert set(['region','product','revenue']).issubset(sales.columns)\nexpected = sales.groupby('region')['revenue'].sum()\nassert regional_totals.equals(expected), 'regional_totals must be total revenue per region'"
+    },
+    {
+      "instruction": {
+        "en": "Using the same `sales` DataFrame, create `summary` with columns `total` (sum of revenue) and `avg` (mean of revenue) per region using `.agg()`."
+      },
+      "hints": [
+        { "en": "summary = sales.groupby('region')['revenue'].agg(total='sum', avg='mean')" },
+        { "en": "Or: sales.groupby('region').agg(total=('revenue','sum'), avg=('revenue','mean'))" }
+      ],
+      "test_code": "import pandas as pd\nassert 'total' in summary.columns, 'summary must have a total column'\nassert 'avg' in summary.columns, 'summary must have an avg column'\nassert summary['total'].sum() == sales['revenue'].sum(), 'totals must match overall sum'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
