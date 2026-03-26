@@ -1,0 +1,65 @@
+{
+  "id": "functions_basics",
+  "topic": "functions_basics",
+  "track": "python_fundamentals",
+  "module": "functions",
+  "order": 1,
+  "title": { "en": "Functions: The Recipe Card" },
+  "description": { "en": "Learn to define and call functions — reusable blocks of code that take inputs and return outputs, like a recipe card in a kitchen." },
+  "xp_reward": 50,
+  "next_unlock": "functions_scope",
+  "story_variants": {
+    "en": "## The Recipe Card\n\nA great chef doesn't re-read instructions every time they make a dish — they write a **recipe card** once and follow it whenever needed.\n\nIn Python, a **function** is your recipe card: write it once, call it many times.\n\n### Anatomy of a Function\n\n| Part | Role | Example |\n|------|------|---------|\n| `def` | declare function | `def greet():` |\n| name | identifier | `greet` |\n| parameters | inputs | `(name, age)` |\n| body | instructions | indented block |\n| `return` | output | `return result` |\n\n> **Key rule:** Everything inside the function is indented. The function runs only when you *call* it — `greet('Alice')`.\n\n### Return vs Print\n- `return` sends a value **back** to the caller — you can store it\n- `print` just displays — the value disappears after\n\n### Benefits of Functions\n- **DRY** — Don't Repeat Yourself\n- Easier to test individual pieces\n- Names make code self-documenting\n- Swap out implementations without changing callers"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Define a function\ndef greet(name):\n    message = f'Hello, {name}!'\n    return message\n\n# Call it\nresult = greet('Alice')\nprint(result)  # Hello, Alice!\n\n# Call again with different input\nprint(greet('Bob'))  # Hello, Bob!",
+        "language": "python"
+      }
+    },
+    {
+      "type": "MemoryStack",
+      "id": "call_stack",
+      "slots": [
+        { "name": "greet('Alice')", "value": "name='Alice'", "type": "frame" },
+        { "name": "message", "value": "'Hello, Alice!'", "type": "str" },
+        { "name": "return", "value": "'Hello, Alice!'", "type": "str" }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Function with multiple params and default\ndef add(a, b):\n    return a + b\n\nprint(add(3, 4))   # 7\nprint(add(10, 20)) # 30",
+        "language": "python"
+      }
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write a function called 'square' that takes a number and returns its square." },
+      "expected_output": "25",
+      "hints": [
+        { "en": "Use def square(n):" },
+        { "en": "Return n ** 2" },
+        { "en": "Call it with square(5) to get 25" }
+      ],
+      "test_code": "def square(n):\n    return n ** 2\nassert square(5) == 25\nassert square(3) == 9\nassert square(0) == 0"
+    },
+    {
+      "instruction": { "en": "Write a function 'full_name' that takes first and last name strings and returns them joined with a space." },
+      "expected_output": "John Doe",
+      "hints": [
+        { "en": "def full_name(first, last):" },
+        { "en": "Return first + ' ' + last or use an f-string" },
+        { "en": "full_name('John', 'Doe') should return 'John Doe'" }
+      ],
+      "test_code": "def full_name(first, last):\n    return first + ' ' + last\nassert full_name('John', 'Doe') == 'John Doe'\nassert full_name('Ada', 'Lovelace') == 'Ada Lovelace'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

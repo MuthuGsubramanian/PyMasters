@@ -1,0 +1,46 @@
+{
+  "id": "errors_context_managers",
+  "topic": "errors_context_managers",
+  "track": "python_fundamentals",
+  "module": "file_io",
+  "order": 4,
+  "title": { "en": "Context Managers: The Automatic Door" },
+  "description": { "en": "Learn context managers and the with statement — how __enter__ and __exit__ guarantee setup and teardown, like an automatic door." },
+  "xp_reward": 50,
+  "next_unlock": "adv_decorators",
+  "story_variants": {
+    "en": "## The Automatic Door\n\nAn **automatic door** opens as you approach and closes behind you — no matter what. You can't leave it open accidentally.\n\nPython **context managers** work the same way: guaranteed setup (`__enter__`) and guaranteed cleanup (`__exit__`), even if an exception occurs.\n\n### The with Statement\n```python\nwith expression as variable:\n    body\n```\nPython calls `expression.__enter__()` before the body and `expression.__exit__()` after — success or exception.\n\n### Building a Context Manager\n\n| Method | Called when | Purpose |\n|--------|------------|----------|\n| `__enter__` | entering `with` block | setup, return resource |\n| `__exit__` | leaving `with` block | cleanup, handle exceptions |\n\n### Simpler: @contextmanager\n```python\nfrom contextlib import contextmanager\n\n@contextmanager\ndef timer():\n    start = time.time()\n    yield\n    print(f'Elapsed: {time.time() - start:.2f}s')\n```\n\n> **Use cases:** file handles, database connections, timers, locks, temporary directories — anything that needs guaranteed cleanup."
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Class-based context manager\nclass ManagedResource:\n    def __enter__(self):\n        print('Opening resource')\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        print('Closing resource')\n        return False  # don't suppress exceptions\n\n    def use(self):\n        print('Using resource')\n\nwith ManagedResource() as r:\n    r.use()\n# Output:\n# Opening resource\n# Using resource\n# Closing resource\n\n# contextmanager decorator\nfrom contextlib import contextmanager\n\n@contextmanager\ndef temp_message(msg):\n    print(f'START: {msg}')\n    yield\n    print(f'END: {msg}')\n\nwith temp_message('processing'):\n    print('doing work')",
+        "language": "python"
+      }
+    },
+    {
+      "type": "FlowArrow",
+      "id": "cm_flow",
+      "label": { "en": "__enter__ → body → __exit__ (always)" },
+      "direction": "right",
+      "branch": "sequential"
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create a context manager class 'Timer' that records start/end time and prints elapsed seconds on exit." },
+      "expected_output": "Elapsed: ~0.0s",
+      "hints": [
+        { "en": "import time; in __enter__, store self.start = time.time()" },
+        { "en": "In __exit__, print time.time() - self.start" },
+        { "en": "__enter__ should return self; __exit__ returns False" }
+      ],
+      "test_code": "import time\nclass Timer:\n    def __enter__(self):\n        self.start = time.time()\n        return self\n    def __exit__(self, *args):\n        self.elapsed = time.time() - self.start\n        return False\nwith Timer() as t:\n    pass\nassert t.elapsed >= 0"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

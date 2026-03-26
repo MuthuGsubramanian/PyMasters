@@ -1,0 +1,46 @@
+{
+  "id": "adv_decorators",
+  "topic": "adv_decorators",
+  "track": "python_fundamentals",
+  "module": "advanced",
+  "order": 1,
+  "title": { "en": "Decorators: The Gift Wrapper" },
+  "description": { "en": "Learn to write decorators that wrap functions with extra behaviour — logging, timing, caching — without changing the original code." },
+  "xp_reward": 50,
+  "next_unlock": "adv_generators",
+  "story_variants": {
+    "en": "## The Gift Wrapper\n\nA **gift wrapper** takes any present and wraps it — adding a bow, paper, and ribbon — without changing what's inside. The gift remains the same; the presentation is enhanced.\n\nPython **decorators** wrap functions: add logging, timing, authentication — without touching the original function.\n\n### How Decorators Work\n```python\n@my_decorator\ndef my_function():\n    ...\n# Equivalent to:\nmy_function = my_decorator(my_function)\n```\n\n### Anatomy of a Decorator\n\n| Part | Role |\n|------|------|\n| outer function | takes function as argument |\n| `wrapper` inner function | the wrapping logic |\n| `*args, **kwargs` | pass through any arguments |\n| `functools.wraps` | preserve original function metadata |\n\n> **Always use `functools.wraps(func)`** on your wrapper — it preserves `__name__`, `__doc__`, and other metadata that tools and debuggers rely on.\n\n### Common Use Cases\n- `@timer` — measure execution time\n- `@retry` — retry on failure\n- `@login_required` — check auth before executing\n- `@cache` / `@lru_cache` — memoize results"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "import functools\nimport time\n\ndef timer(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)  # call original\n        elapsed = time.time() - start\n        print(f'{func.__name__} took {elapsed:.4f}s')\n        return result\n    return wrapper\n\n@timer\ndef slow_sum(n):\n    return sum(range(n))\n\nresult = slow_sum(1_000_000)\nprint(result)  # slow_sum took 0.0523s  \\n 499999500000",
+        "language": "python"
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "decorator_flow",
+      "nodes": [
+        { "label": "@timer wraps slow_sum", "children": ["start timer", "call original slow_sum()", "stop timer", "return result"] }
+      ]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write a decorator 'logger' that prints 'Calling: <function_name>' before calling the function and 'Done: <function_name>' after." },
+      "expected_output": "Calling: greet\nHello!\nDone: greet",
+      "hints": [
+        { "en": "def logger(func): def wrapper(*args, **kwargs): ..." },
+        { "en": "print(f'Calling: {func.__name__}') before the call" },
+        { "en": "Don't forget @functools.wraps(func) on wrapper" }
+      ],
+      "test_code": "import functools\nlog = []\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        log.append(f'Calling: {func.__name__}')\n        result = func(*args, **kwargs)\n        log.append(f'Done: {func.__name__}')\n        return result\n    return wrapper\n@logger\ndef add(a, b):\n    return a + b\nadd(2, 3)\nassert log == ['Calling: add', 'Done: add']"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
