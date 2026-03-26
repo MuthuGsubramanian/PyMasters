@@ -8,14 +8,13 @@ echo "OLLAMA_API_KEY=${OLLAMA_API_KEY:+set (hidden)}"
 # Test DB access
 cd /app/backend
 python -c "
-import os
-db = os.getenv('DB_PATH', 'pymasters.duckdb')
+import os, sqlite3
+db = os.getenv('DB_PATH', 'pymasters.db')
 print(f'DB path: {db}')
-import duckdb
-conn = duckdb.connect(db)
+conn = sqlite3.connect(db)
 conn.execute('SELECT 1').fetchone()
 conn.close()
-print('DuckDB OK')
+print('SQLite OK')
 from main import app
 print('App import OK')
 " 2>&1
