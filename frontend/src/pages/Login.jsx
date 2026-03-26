@@ -25,6 +25,7 @@ export default function Login() {
 
         try {
             let data;
+            let isNewUser = false;
             if (isLogin) {
                 const res = await loginUser(username, password);
                 data = res.data;
@@ -32,9 +33,16 @@ export default function Login() {
                 await registerUser(username, password, username);
                 const loginRes = await loginUser(username, password);
                 data = loginRes.data;
+                isNewUser = true;
             }
             login(data);
-            navigate('/dashboard');
+
+            // New users → onboarding. Existing users who haven't onboarded → onboarding. Otherwise → dashboard.
+            if (isNewUser || !data.onboarding_completed) {
+                navigate('/onboarding');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             console.error("Auth Fail", err);
             if (err.response) {

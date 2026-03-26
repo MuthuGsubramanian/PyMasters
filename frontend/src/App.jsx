@@ -14,6 +14,13 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" />;
 }
 
+function OnboardedRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  if (!user.onboarding_completed) return <Navigate to="/onboarding" />;
+  return children;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -23,7 +30,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
-            <Route path="/dashboard" element={<PrivateRoute><Layout /></PrivateRoute>}>
+            <Route path="/dashboard" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
               <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />
               <Route path="learn" element={<ErrorBoundary><LearningMap /></ErrorBoundary>} />
               <Route path="learn/:id" element={<ErrorBoundary><ModuleViewer /></ErrorBoundary>} />

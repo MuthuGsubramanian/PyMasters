@@ -226,7 +226,7 @@ function ProgressDots({ total, current }) {
 // Main component
 // ---------------------------------------------------------------------------
 export default function Onboarding() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const navigate = useNavigate();
     const bottomRef = useRef(null);
 
@@ -285,6 +285,9 @@ export default function Onboarding() {
             addMsg(makeMsg('vaathiyaar', "Let's begin your Python journey! 🚀"));
             setDone(true);
             setBusy(false);
+
+            // Mark onboarding complete in local user state
+            updateUser({ onboarding_completed: true, preferred_language: newAnswers.preferred_language || 'en' });
 
             await delay(1500);
             navigate('/dashboard/classroom');
