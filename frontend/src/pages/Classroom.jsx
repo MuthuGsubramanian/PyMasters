@@ -102,8 +102,10 @@ function LessonSelect({ lessons, onSelectLesson, loading, language }) {
                     <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
                 </div>
             ) : lessons.length === 0 ? (
-                <div className="panel rounded-xl p-10 text-center text-slate-400">
-                    No lessons available yet. Check back soon!
+                <div className="panel rounded-xl p-10 text-center space-y-3">
+                    <BookOpen size={32} className="mx-auto text-purple-400" />
+                    <p className="text-slate-600 font-medium">Your lessons are being prepared.</p>
+                    <p className="text-slate-400 text-sm">Ask Vaathiyaar to teach you a topic using the chat below!</p>
                 </div>
             ) : (
                 presentTracks.map((track) => (

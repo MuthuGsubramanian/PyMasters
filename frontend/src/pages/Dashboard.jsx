@@ -183,13 +183,24 @@ export function ModuleViewer() {
                 const res = await completeModule(user.id, module.id, correctCount);
                 if (res.data.success) {
                     updateProgress(res.data.new_points, res.data.unlocked);
-                    setResult({ passed: true, msg: `Module Complete! +${module.xp_reward} XP` });
+                    const unlocked = res.data.unlocked;
+                    const unlockedMsg = unlocked?.length
+                        ? `\nNew modules unlocked: ${unlocked.join(', ')}`
+                        : '';
+                    setResult({
+                        passed: true,
+                        msg: `Module Complete! You earned ${module.xp_reward} XP.${unlockedMsg}\nYou're ready to move on to the next challenge.`,
+                    });
                 }
             } catch (err) {
                 console.error(err);
             }
         } else {
-            setResult({ passed: false, msg: `Score: ${correctCount}/${module.quiz.length}. Retake required.` });
+            const remaining = module.quiz.length - correctCount;
+            setResult({
+                passed: false,
+                msg: `You got ${correctCount} out of ${module.quiz.length} correct — ${remaining} ${remaining === 1 ? 'answer' : 'answers'} to fix. Review the material and try again. You need 100% to pass.`,
+            });
         }
     };
 
@@ -238,8 +249,13 @@ export function ModuleViewer() {
                             </div>
 
                             {result && (
-                                <div className={`p-4 rounded-xl mb-8 text-center font-bold border ${result.passed ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                                    <div className="text-lg">{result.msg}</div>
+                                <div className={`p-5 rounded-xl mb-8 text-center border ${result.passed ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                    <div className={`text-lg font-bold mb-1 ${result.passed ? 'text-green-700' : 'text-red-600'}`}>
+                                        {result.passed ? '✓ Module Complete!' : '✗ Not quite there yet'}
+                                    </div>
+                                    <div className={`text-sm whitespace-pre-line ${result.passed ? 'text-green-600' : 'text-red-500'}`}>
+                                        {result.msg}
+                                    </div>
                                 </div>
                             )}
 
