@@ -107,10 +107,22 @@ def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | Non
     if root_file.exists():
         with open(root_file, "r", encoding="utf-8") as f:
             return json.load(f)
+
+    # Check generated lessons in database
+    try:
+        conn = sqlite3.connect(_get_db_path())
+        row = conn.execute(
+            "SELECT lesson_data FROM generated_lessons WHERE id = ?", [lesson_id]
+        ).fetchone()
+        conn.close()
+        if row:
+            return json.loads(row[0])
+    except Exception:
+        pass
     return None
 
 
-def _list_all_lessons(lessons_dir: str = None) -> list[dict]:
+def _list_all_lessons(lessons_dir: str = None, user_id: int = None) -> list[dict]:
     """List all lessons across all track subdirectories."""
     base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
     lessons = []
@@ -131,6 +143,32 @@ def _list_all_lessons(lessons_dir: str = None) -> list[dict]:
                         "module": data.get("module"),
                         "order": data.get("order", 0),
                     })
+
+    # Generated lessons from database
+    if user_id:
+        try:
+            conn = sqlite3.connect(_get_db_path())
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT lesson_data FROM generated_lessons WHERE user_id = ?", [user_id]
+            ).fetchall()
+            conn.close()
+            for row in rows:
+                data = json.loads(row["lesson_data"])
+                lessons.append({
+                    "id": data.get("id"),
+                    "title": data.get("title", {}),
+                    "description": data.get("description", {}),
+                    "xp_reward": data.get("xp_reward", 50),
+                    "topic": data.get("topic"),
+                    "track": "generated",
+                    "module": data.get("module"),
+                    "order": 0,
+                    "generated": True,
+                })
+        except Exception:
+            pass
+
     return lessons
 
 
@@ -268,18 +306,20 @@ def chat_stream(request: ChatRequest):
 
 
 @router.get("/lessons")
-def list_lessons():
+async def list_lessons(user_id: int = None):
     """
     List all available lessons (metadata only: id, title, description, xp_reward, topic, track, module, order).
     Returns an empty list if the lessons directory doesn't exist yet.
+    If user_id is provided, also includes generated lessons from the database.
     """
     if not LESSONS_DIR.exists():
-        return []
+        return {"lessons": []}
 
     try:
-        return _list_all_lessons()
+        lessons = _list_all_lessons(user_id=user_id)
+        return {"lessons": lessons}
     except Exception:
-        return []
+        return {"lessons": []}
 
 
 @router.get("/lesson/{lesson_id}")
