@@ -21,6 +21,7 @@ DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 from routes.language import router as language_router
 from routes.profile import router as profile_router
 from routes.classroom import router as classroom_router
+from routes.playground import router as playground_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -111,6 +112,10 @@ def init_db():
         if 'onboarding_completed' not in col_names:
             print("Migrating DB: Adding onboarding_completed column")
             cursor.execute("ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0")
+
+        if 'playground_prompts_used' not in col_names:
+            print("Migrating DB: Adding playground_prompts_used column")
+            cursor.execute("ALTER TABLE users ADD COLUMN playground_prompts_used INTEGER DEFAULT 0")
 
         if 'email' not in col_names:
             print("Migrating DB: Adding email column")
@@ -210,6 +215,7 @@ app = FastAPI(title="PyMasters API", lifespan=lifespan)
 app.include_router(language_router)
 app.include_router(profile_router)
 app.include_router(classroom_router)
+app.include_router(playground_router)
 
 # --- CORS ---
 origins = [

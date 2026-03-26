@@ -9,7 +9,8 @@ import {
     ChevronRight,
     Terminal,
     Zap,
-    Hexagon
+    Hexagon,
+    Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -25,6 +26,7 @@ export default function Layout() {
         { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
         { icon: BookOpen, label: 'Learning Path', path: '/dashboard/learn' },
         { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom' },
+        { icon: Sparkles, label: 'Playground', path: '/dashboard/playground' },
     ];
 
     return (
