@@ -90,7 +90,7 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
       ref={containerRef}
       className="panel rounded-xl border-l-4 border-orange-500 p-5 opacity-0 w-64"
     >
-      <div className="text-xs font-semibold text-orange-400 uppercase tracking-widest mb-3">
+      <div className="text-xs font-semibold text-orange-600 uppercase tracking-widest mb-3">
         Call Stack
       </div>
 
@@ -108,16 +108,16 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
               className={`rounded-lg border p-3 ${
                 idx === 0
                   ? 'bg-orange-500/10 border-orange-500/40'
-                  : 'bg-white/[0.02] border-white/10'
+                  : 'bg-slate-50 border-slate-200'
               }`}
             >
-              <div className="text-xs font-semibold text-orange-300 mb-1.5 font-mono">
+              <div className="text-xs font-semibold text-orange-700 mb-1.5 font-mono">
                 {frame.name}()
               </div>
               {frame.variables && Object.entries(frame.variables).map(([k, v]) => (
                 <div key={k} className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-400">{k}</span>
-                  <span className="text-cyan-300">{String(v)}</span>
+                  <span className="text-slate-700">{k}</span>
+                  <span className="text-cyan-700">{String(v)}</span>
                 </div>
               ))}
             </div>

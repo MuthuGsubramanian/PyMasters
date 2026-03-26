@@ -63,7 +63,7 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
           <div
             key={node.id}
             ref={(el) => (nodeRefs.current[node.id] = el)}
-            className="panel rounded-xl px-4 py-2.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-100 text-sm font-medium"
+            className="panel rounded-xl px-4 py-2.5 bg-cyan-500/10 border border-cyan-500/30 text-slate-800 text-sm font-medium"
           >
             {node.label}
           </div>
@@ -82,7 +82,7 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
                 ref={(el) => (edgeRefs.current[idx] = el)}
                 className="flex items-center gap-2 text-sm"
               >
-                <span className="text-cyan-300 font-medium">
+                <span className="text-cyan-700 font-medium">
                   {fromNode?.label ?? edge.from}
                 </span>
                 <span className="flex items-center gap-1 text-slate-500">
@@ -92,7 +92,7 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
                     <polygon points="24,6 16,2 16,10" fill="#475569" />
                   </svg>
                 </span>
-                <span className="text-cyan-300 font-medium">
+                <span className="text-cyan-700 font-medium">
                   {toNode?.label ?? edge.to}
                 </span>
               </div>

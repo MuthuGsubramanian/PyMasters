@@ -102,7 +102,7 @@ export default function DataStructure({
       className="panel rounded-xl border-l-4 border-purple-500 p-5 opacity-0 max-w-lg"
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-semibold text-purple-400 uppercase tracking-widest">
+        <span className="text-xs font-semibold text-purple-600 uppercase tracking-widest">
           {structureLabel}
         </span>
         <span className="text-slate-600 font-mono text-sm">{bracketOpen}</span>
@@ -117,7 +117,7 @@ export default function DataStructure({
             className="flex flex-col items-center"
           >
             <div className="text-xs text-slate-600 mb-0.5 font-mono">[{idx}]</div>
-            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-2 font-mono text-sm text-cyan-100 min-w-[2.5rem] text-center">
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-2 font-mono text-sm text-slate-800 min-w-[2.5rem] text-center">
               {String(item)}
             </div>
           </div>
