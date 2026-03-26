@@ -262,6 +262,16 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON module_generation_jobs(status, priority)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_user ON generated_lessons(user_id)")
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lesson_completions (
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                xp_awarded INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, lesson_id)
+            )
+        """)
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
