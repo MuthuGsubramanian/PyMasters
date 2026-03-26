@@ -7,7 +7,8 @@ Prefix: /api/playground
 import json
 import os
 import sqlite3
-from typing import Optional
+import uuid
+from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -28,6 +29,7 @@ class PlaygroundChatRequest(BaseModel):
     user_id: str
     message: str
     language: Optional[str] = "en"
+    conversation_id: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +68,79 @@ def _get_user_credits(db_path: str, user_id: str) -> dict:
         conn.close()
 
 
+def _get_or_create_conversation(db_path: str, user_id: str, conversation_id: Optional[str] = None) -> str:
+    """Get existing conversation or create a new one. Returns conversation_id."""
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        if conversation_id:
+            cursor.execute(
+                "SELECT id FROM playground_conversations WHERE id = ? AND user_id = ?",
+                [conversation_id, user_id],
+            )
+            if cursor.fetchone():
+                return conversation_id
+
+        # Create new conversation
+        new_id = str(uuid.uuid4())
+        cursor.execute(
+            "INSERT INTO playground_conversations (id, user_id) VALUES (?, ?)",
+            [new_id, user_id],
+        )
+        conn.commit()
+        return new_id
+    finally:
+        conn.close()
+
+
+def _save_message(db_path: str, conversation_id: str, role: str, content: str):
+    """Save a message to the conversation history."""
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "INSERT INTO playground_messages (conversation_id, role, content) VALUES (?, ?, ?)",
+            [conversation_id, role, content],
+        )
+        conn.execute(
+            "UPDATE playground_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [conversation_id],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _update_conversation_title(db_path: str, conversation_id: str, first_message: str):
+    """Set conversation title from first user message (truncated)."""
+    title = first_message[:80].strip()
+    if len(first_message) > 80:
+        title += "..."
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "UPDATE playground_conversations SET title = ? WHERE id = ? AND title = 'New conversation'",
+            [title, conversation_id],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _get_conversation_history(db_path: str, conversation_id: str, limit: int = 20) -> list:
+    """Get recent messages from a conversation for context."""
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT role, content FROM playground_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT ?",
+            [conversation_id, limit],
+        )
+        rows = cursor.fetchall()
+        return [{"role": r[0], "content": r[1]} for r in reversed(rows)]
+    finally:
+        conn.close()
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -75,6 +150,51 @@ def get_credits(user_id: str):
     """Return the user's XP-based prompt credit balance."""
     db_path = _get_db_path()
     return _get_user_credits(db_path, user_id)
+
+
+@router.get("/conversations/{user_id}")
+def get_conversations(user_id: str):
+    """Return the user's playground conversation list."""
+    db_path = _get_db_path()
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, title, created_at, updated_at FROM playground_conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT 50",
+            [user_id],
+        )
+        rows = cursor.fetchall()
+        return [
+            {"id": r[0], "title": r[1], "created_at": r[2], "updated_at": r[3]}
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+@router.get("/conversations/{user_id}/{conversation_id}")
+def get_conversation_messages(user_id: str, conversation_id: str):
+    """Return all messages for a conversation."""
+    db_path = _get_db_path()
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        # Verify ownership
+        cursor.execute(
+            "SELECT id FROM playground_conversations WHERE id = ? AND user_id = ?",
+            [conversation_id, user_id],
+        )
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        cursor.execute(
+            "SELECT role, content, created_at FROM playground_messages WHERE conversation_id = ? ORDER BY created_at",
+            [conversation_id],
+        )
+        rows = cursor.fetchall()
+        return [{"role": r[0], "content": r[1], "created_at": r[2]} for r in rows]
+    finally:
+        conn.close()
 
 
 @router.post("/chat")
@@ -151,6 +271,16 @@ def playground_chat_stream(request: PlaygroundChatRequest):
             detail="You've used all your prompts! Complete more lessons to earn XP and unlock more.",
         )
 
+    # Get or create conversation
+    conversation_id = _get_or_create_conversation(db_path, request.user_id, request.conversation_id)
+
+    # Save user message
+    _save_message(db_path, conversation_id, "user", request.message)
+    _update_conversation_title(db_path, conversation_id, request.message)
+
+    # Load conversation history for context
+    history = _get_conversation_history(db_path, conversation_id)
+
     profile = get_student_profile(db_path, request.user_id)
     lesson_context = {
         "mode": "playground",
@@ -160,15 +290,16 @@ def playground_chat_stream(request: PlaygroundChatRequest):
     system_prompt = build_system_prompt(profile, lesson_context)
     client = get_ollama_client()
 
+    # Build messages with conversation history
+    ollama_messages = [{"role": "system", "content": system_prompt}]
+    ollama_messages.extend(history)
+
     def generate():
         full_response = ""
         try:
             for chunk in client.chat(
                 model=OLLAMA_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": request.message},
-                ],
+                messages=ollama_messages,
                 stream=True,
             ):
                 token = chunk.get("message", {}).get("content", "")
@@ -193,7 +324,13 @@ def playground_chat_stream(request: PlaygroundChatRequest):
             except (json.JSONDecodeError, KeyError):
                 pass
 
-            yield f"data: {json.dumps({'done': True, 'message': clean_message, 'full_response': full_response})}\n\n"
+            # Save assistant response to conversation
+            try:
+                _save_message(db_path, conversation_id, "assistant", clean_message)
+            except Exception:
+                pass
+
+            yield f"data: {json.dumps({'done': True, 'message': clean_message, 'full_response': full_response, 'conversation_id': conversation_id})}\n\n"
 
             # Increment prompts used (best effort)
             try:

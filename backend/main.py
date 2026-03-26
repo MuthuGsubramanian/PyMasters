@@ -262,6 +262,30 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON module_generation_jobs(status, priority)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_user ON generated_lessons(user_id)")
 
+        # ── Playground conversation history ─────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS playground_conversations (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                title TEXT DEFAULT 'New conversation',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS playground_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id TEXT NOT NULL REFERENCES playground_conversations(id),
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pg_conv_user ON playground_conversations(user_id, updated_at DESC)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pg_msg_conv ON playground_messages(conversation_id, created_at)")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS lesson_completions (
                 user_id TEXT NOT NULL,
@@ -431,12 +455,12 @@ def get_module_detail(module_id: str):
 
 @app.post("/api/content/complete")
 def complete_module(sub: QuizSubmission):
-    """Update user points and unlock next module."""
+    """Update user points and unlock next module. XP awarded only once per module."""
     if sub.module_id not in CONTENT_MAP:
         raise HTTPException(status_code=404, detail="Module not found")
-        
+
     module = CONTENT_MAP[sub.module_id]
-    
+
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
@@ -449,27 +473,45 @@ def complete_module(sub: QuizSubmission):
         current_points = row[0] or 0
         current_unlocks = json.loads(row[1]) if row[1] else []
 
-        # Calculate new state
-        new_points = current_points + module["xp_reward"]
+        # Check if already completed — only award XP once per module
+        existing = cursor.execute(
+            "SELECT 1 FROM lesson_completions WHERE user_id = ? AND lesson_id = ?",
+            [sub.user_id, sub.module_id],
+        ).fetchone()
 
+        xp_earned = 0
+        if not existing:
+            xp_earned = module["xp_reward"]
+            current_points += xp_earned
+            cursor.execute(
+                "INSERT INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES (?, ?, ?)",
+                [sub.user_id, sub.module_id, xp_earned],
+            )
+            cursor.execute(
+                "UPDATE users SET points = ? WHERE id = ?",
+                [current_points, sub.user_id],
+            )
+
+        # Unlock next module regardless of XP (retake should still unlock)
         updates = []
         next_mod = module["next_unlock"]
         if next_mod and next_mod not in current_unlocks:
             current_unlocks.append(next_mod)
             updates.append(f"Unlocked {CONTENT_MAP[next_mod]['title']}")
+            cursor.execute(
+                "UPDATE users SET unlocked_modules = ? WHERE id = ?",
+                [json.dumps(current_unlocks), sub.user_id],
+            )
 
-        # Commit
-        cursor.execute(
-            "UPDATE users SET points = ?, unlocked_modules = ? WHERE id = ?",
-            [new_points, json.dumps(current_unlocks), sub.user_id]
-        )
         conn.commit()
 
         return {
             "success": True,
-            "new_points": new_points,
+            "new_points": current_points,
+            "xp_earned": xp_earned,
             "unlocked": current_unlocks,
-            "message": "Module Completed!"
+            "already_completed": existing is not None,
+            "message": "Module Completed!" if not existing else "Module already completed — no XP awarded.",
         }
     finally:
         conn.close()
