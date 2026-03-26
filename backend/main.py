@@ -154,6 +154,19 @@ def init_db():
             )
         """)
 
+        # Create training_data table for fine-tuning pipeline
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS training_data (
+                id VARCHAR PRIMARY KEY,
+                input_text VARCHAR,
+                output_text VARCHAR,
+                profile_json VARCHAR,
+                context_json VARCHAR,
+                quality_score FLOAT,
+                created_at TIMESTAMP DEFAULT current_timestamp
+            )
+        """)
+
         # Create a test user if empty
         existing = conn.execute("SELECT count(*) FROM users").fetchone()[0]
         if existing == 0:
