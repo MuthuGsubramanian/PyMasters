@@ -51,8 +51,8 @@ export default function Login() {
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[var(--bg-deep)]">
             {/* Background Effects */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_var(--bg-surface-light)_0%,_transparent_50%)] opacity-30 animate-pulse-slow"></div>
-                <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_rgba(6,182,212,0.06)_0%,_transparent_50%)] animate-pulse-slow"></div>
+                <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]"></div>
             </div>
 
             <motion.div
@@ -63,24 +63,24 @@ export default function Login() {
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-2xl shadow-cyan-900/50 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-xl shadow-cyan-500/20 mb-6">
                         <Lock className="text-white" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold mb-2 tracking-tight">
+                    <h2 className="text-3xl font-bold mb-2 tracking-tight text-slate-900">
                         {isLogin ? 'Welcome Back, Pilot.' : 'New User Registration'}
                     </h2>
                     <p className="text-slate-500">Enter your credentials to access the mainframe.</p>
                 </div>
 
                 {/* Card */}
-                <div className="bg-[#0f172a]/90 backdrop-blur-xl border border-white/5 p-8 rounded-2xl shadow-2xl">
+                <div className="bg-white/90 backdrop-blur-xl border border-black/[0.06] p-8 rounded-2xl shadow-xl">
                     <AnimatePresence mode="wait">
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="bg-red-500/10 border border-red-500/20 text-red-200 p-3 rounded-lg text-sm mb-6 flex items-center gap-3"
+                                className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm mb-6 flex items-center gap-3"
                             >
                                 <AlertCircle size={16} />
                                 {error}
@@ -90,9 +90,9 @@ export default function Login() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Identity</label>
+                            <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Identity</label>
                             <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-500 transition-colors" size={18} />
                                 <input
                                     type="text"
                                     value={username}
@@ -105,9 +105,9 @@ export default function Login() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Passcode</label>
+                            <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Passcode</label>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-500 transition-colors" size={18} />
                                 <input
                                     type="password"
                                     value={password}
@@ -139,12 +139,12 @@ export default function Login() {
                 <div className="mt-8 text-center">
                     <button
                         onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                        className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                        className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
                     >
                         {isLogin ? (
-                            <>Cannot access? <span className="text-cyan-400">Create new identity</span></>
+                            <>Cannot access? <span className="text-cyan-600">Create new identity</span></>
                         ) : (
-                            <>Already registered? <span className="text-cyan-400">Login now</span></>
+                            <>Already registered? <span className="text-cyan-600">Login now</span></>
                         )}
                     </button>
                 </div>
