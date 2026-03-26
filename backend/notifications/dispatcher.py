@@ -63,6 +63,7 @@ def create_notification(
 
 
 from backend.notifications.email_sender import send_email, build_lesson_ready_email
+from backend.notifications.whatsapp_sender import send_whatsapp, build_whatsapp_message
 
 
 def process_pending_deliveries():
@@ -104,8 +105,18 @@ def process_pending_deliveries():
                 error = "SMTP send failed"
 
         elif delivery["channel"] == "whatsapp" and user["whatsapp"]:
-            # WhatsApp will be implemented in Task 19
-            pass
+            name = user["name"] or "Student"
+            lang = user["preferred_language"] or "en"
+            msg = build_whatsapp_message(
+                name=name,
+                title=delivery["title"],
+                reason=delivery["message"],
+                link=delivery["link"] or "/dashboard/classroom",
+                language=lang,
+            )
+            success = send_whatsapp(user["whatsapp"], msg)
+            if not success:
+                error = "Twilio send failed"
 
         status = "sent" if success else "failed"
         conn.execute(
