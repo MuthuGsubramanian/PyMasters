@@ -12,6 +12,7 @@ const ILLUSTRATION_MAP = {
 export default function StoryCard({ content = '', illustration = '', duration = 3000, onComplete }) {
   const cardRef = useRef(null);
   const textRef = useRef(null);
+  const emojiRef = useRef(null);
   const [displayed, setDisplayed] = useState('');
 
   const emoji = ILLUSTRATION_MAP[illustration] || '📖';
@@ -25,22 +26,34 @@ export default function StoryCard({ content = '', illustration = '', duration = 
       },
     });
 
-    // Card springs in
+    // Card springs in with glow
     tl.fromTo(
       cardRef.current,
       { opacity: 0, y: 40, scale: 0.95 },
       { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
     );
 
-    // Typewriter effect
+    // Start glow effect
+    tl.to(
+      cardRef.current,
+      {
+        boxShadow: '0 0 30px rgba(168, 85, 247, 0.2), 0 0 60px rgba(168, 85, 247, 0.1)',
+        duration: 0.5,
+        ease: 'power2.out',
+      },
+      0.3
+    );
+
+    // Smoother typewriter — use requestAnimationFrame-based interpolation
     const chars = content.split('');
-    const charDuration = Math.max((duration / 1000 - 0.6) / Math.max(chars.length, 1), 0.02);
+    const charDuration = Math.max((duration / 1000 - 0.6) / Math.max(chars.length, 1), 0.015);
 
     let current = '';
     tl.to(
       {},
       {
         duration: chars.length * charDuration,
+        ease: 'none',
         onUpdate: function () {
           const progress = this.progress();
           const charIndex = Math.floor(progress * chars.length);
@@ -49,9 +62,26 @@ export default function StoryCard({ content = '', illustration = '', duration = 
         },
         onComplete: () => {
           setDisplayed(content);
+          // Fade out glow when story complete
+          gsap.to(cardRef.current, {
+            boxShadow: '0 0 0px rgba(168, 85, 247, 0)',
+            duration: 1,
+            ease: 'power2.out',
+          });
         },
       }
     );
+
+    // Bounce the emoji
+    if (emojiRef.current) {
+      gsap.to(emojiRef.current, {
+        y: -6,
+        duration: 0.8,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+    }
 
     return () => {
       tl.kill();
@@ -61,7 +91,7 @@ export default function StoryCard({ content = '', illustration = '', duration = 
   return (
     <div
       ref={cardRef}
-      className="panel rounded-2xl p-6 border-l-4 border-purple-400 opacity-0 max-w-2xl"
+      className="panel rounded-2xl p-6 border-l-4 border-purple-400 opacity-0 max-w-2xl transition-shadow"
     >
       <div className="flex items-start gap-4">
         {/* Vaathiyaar avatar */}
@@ -74,7 +104,7 @@ export default function StoryCard({ content = '', illustration = '', duration = 
             <span className="text-xs font-semibold text-purple-500 uppercase tracking-widest">
               Vaathiyaar
             </span>
-            <span className="text-2xl">{emoji}</span>
+            <span ref={emojiRef} className="text-4xl">{emoji}</span>
           </div>
 
           <p ref={textRef} className="text-slate-700 text-sm leading-relaxed min-h-[3rem]">
