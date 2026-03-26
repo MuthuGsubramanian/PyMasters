@@ -38,4 +38,12 @@ export const markNotificationRead = (notifId, userId) =>
 export const markAllNotificationsRead = (userId) =>
     api.patch(`/notifications/read-all?user_id=${userId}`);
 
+// Module generation
+export const requestModule = (userId, topic) =>
+    api.post('/modules/request', { user_id: userId, topic });
+export const getModuleStatus = (jobId) =>
+    api.get(`/modules/status/${jobId}`);
+export const getGeneratedModules = (userId) =>
+    api.get(`/modules/generated/${userId}`);
+
 export default api;
