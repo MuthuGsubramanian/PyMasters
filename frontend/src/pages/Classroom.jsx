@@ -18,7 +18,7 @@ function resolveText(obj, language = 'en') {
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: select — lesson list
 // ──────────────────────────────────────────────────────────────────────────────
-function LessonSelect({ lessons, onSelectLesson, loading }) {
+function LessonSelect({ lessons, onSelectLesson, loading, language }) {
     return (
         <div className="animate-fade-in space-y-8 max-w-2xl mx-auto">
             <header className="space-y-2">
@@ -49,11 +49,11 @@ function LessonSelect({ lessons, onSelectLesson, loading }) {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="font-bold text-white group-hover:text-purple-300 transition-colors truncate">
-                                    {lesson.title}
+                                    {resolveText(lesson.title, language)}
                                 </div>
                                 {lesson.description && (
                                     <div className="text-sm text-slate-400 truncate mt-0.5">
-                                        {lesson.description}
+                                        {resolveText(lesson.description, language)}
                                     </div>
                                 )}
                             </div>
@@ -92,7 +92,7 @@ function IntroPhase({ lesson, language, onComplete }) {
                 <p className="text-xs font-bold uppercase tracking-widest text-purple-400">
                     Lesson Introduction
                 </p>
-                <h2 className="text-2xl font-bold text-white">{lesson.title}</h2>
+                <h2 className="text-2xl font-bold text-white">{resolveText(lesson.active_title || lesson.title, language)}</h2>
             </header>
 
             {sequence.length > 0 ? (
@@ -483,6 +483,7 @@ export default function Classroom() {
                                 lessons={lessons}
                                 onSelectLesson={handleSelectLesson}
                                 loading={lessonsLoading}
+                                language={language}
                             />
                         </motion.div>
                     )}

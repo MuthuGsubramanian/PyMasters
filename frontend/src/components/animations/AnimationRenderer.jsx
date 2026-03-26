@@ -10,17 +10,28 @@ import MemoryStack from './MemoryStack';
 import ComparisonPanel from './ComparisonPanel';
 import ConceptMap from './ConceptMap';
 
-// Maps primitive type strings to components
+// Maps primitive type strings to components (supports both PascalCase and snake_case)
 const PRIMITIVE_MAP = {
+  StoryCard: StoryCard,
   story_card: StoryCard,
+  CodeStepper: CodeStepper,
   code_stepper: CodeStepper,
+  VariableBox: VariableBox,
   variable_box: VariableBox,
+  Terminal: TerminalOutput,
+  TerminalOutput: TerminalOutput,
   terminal_output: TerminalOutput,
+  ParticleEffect: ParticleEffect,
   particle_effect: ParticleEffect,
+  FlowArrow: FlowArrow,
   flow_arrow: FlowArrow,
+  DataStructure: DataStructure,
   data_structure: DataStructure,
+  MemoryStack: MemoryStack,
   memory_stack: MemoryStack,
+  ComparisonPanel: ComparisonPanel,
   comparison_panel: ComparisonPanel,
+  ConceptMap: ConceptMap,
   concept_map: ConceptMap,
 };
 
@@ -57,6 +68,77 @@ function resolveProps(props, language, storyContent) {
     }
   }
   return resolved;
+}
+
+/**
+ * Normalize lesson JSON props to match component prop signatures.
+ * Lesson JSON may use different names than what components expect.
+ */
+function normalizeProps(type, raw) {
+  const p = { ...raw };
+  // Remove internal fields
+  delete p.id;
+
+  // duration_ms → duration
+  if (p.duration_ms != null && p.duration == null) {
+    p.duration = p.duration_ms;
+    delete p.duration_ms;
+  }
+
+  // visual_theme → illustration
+  if (p.visual_theme != null && p.illustration == null) {
+    p.illustration = p.visual_theme;
+    delete p.visual_theme;
+  }
+
+  // CodeStepper: steps → code + highlightSequence
+  if ((type === 'CodeStepper' || type === 'code_stepper') && p.steps && !p.code) {
+    const code = p.steps.map(s => s.code || s.line || s).join('\n');
+    const seq = p.steps.map((_, i) => i + 1);
+    p.code = code;
+    p.highlightSequence = seq;
+    p.speed = p.speed || 'normal';
+    delete p.steps;
+  }
+
+  // VariableBox: value → values (wrap single in array), animate_sequence
+  if ((type === 'VariableBox' || type === 'variable_box')) {
+    if (p.value != null && !p.values) {
+      p.values = p.animate_sequence || [p.value];
+      delete p.value;
+      delete p.animate_sequence;
+    }
+    delete p.data_type;
+    delete p.color;
+  }
+
+  // MemoryStack: slots → frames
+  if ((type === 'MemoryStack' || type === 'memory_stack') && p.slots && !p.frames) {
+    p.frames = p.slots.map(s => ({
+      name: s.label || s.name || 'frame',
+      variables: s.variables || s.value ? { value: s.value } : {}
+    }));
+    p.operations = p.slots.map(() => 'push');
+    delete p.slots;
+  }
+
+  // ConceptMap: ensure nodes have id and label
+  if ((type === 'ConceptMap' || type === 'concept_map') && p.nodes) {
+    p.nodes = p.nodes.map((n, i) => ({
+      id: n.id || `n${i}`,
+      label: n.label || n.text || n
+    }));
+  }
+
+  // FlowArrow: branch → label fallback
+  if ((type === 'FlowArrow' || type === 'flow_arrow')) {
+    if (p.branch && !p.label) {
+      p.label = p.branch;
+      delete p.branch;
+    }
+  }
+
+  return p;
 }
 
 /**
@@ -107,34 +189,43 @@ export default function AnimationRenderer({
   const visiblePrimitives = sequence.slice(0, currentStep + 1);
 
   // Find the particle effect primitive in the sequence if any
-  const particlePrimitive = sequence.find((s) => s.type === 'particle_effect');
-  const particleEffect = particlePrimitive?.props?.effect ?? 'success_confetti';
+  const particlePrimitive = sequence.find((s) => s.type === 'particle_effect' || s.type === 'ParticleEffect');
+  const particleEffect = particlePrimitive?.props?.effect ?? particlePrimitive?.effect ?? 'success_confetti';
 
   return (
     <div className="relative flex flex-col gap-6">
       {visiblePrimitives.map((primitive, idx) => {
-        if (primitive.type === 'particle_effect') {
+        const pType = primitive.type;
+        if (pType === 'particle_effect' || pType === 'ParticleEffect') {
           // Handled separately below
           return null;
         }
 
-        const Component = PRIMITIVE_MAP[primitive.type];
+        const Component = PRIMITIVE_MAP[pType];
         if (!Component) {
-          console.warn(`[AnimationRenderer] Unknown primitive type: "${primitive.type}"`);
+          console.warn(`[AnimationRenderer] Unknown primitive type: "${pType}"`);
           return null;
         }
 
-        let props = resolveProps(primitive.props ?? {}, language, storyContent);
+        // Props can be nested under primitive.props OR directly on the primitive object
+        const rawProps = primitive.props ?? (() => {
+          const { type, sync_with, ...rest } = primitive;
+          return rest;
+        })();
+        const normalized = normalizeProps(pType, rawProps);
+        let props = resolveProps(normalized, language, storyContent);
         props = applySpeed(props, speedMultiplier);
 
         const isCurrentStep = idx === currentStep;
 
         // Wire sync props
         const syncProps = {};
-        if (primitive.type === 'variable_box' || primitive.type === 'terminal_output') {
+        const syncTypes = ['variable_box', 'VariableBox', 'terminal_output', 'Terminal', 'TerminalOutput'];
+        const stepperTypes = ['code_stepper', 'CodeStepper'];
+        if (syncTypes.includes(pType) || primitive.sync_with) {
           syncProps.syncStep = syncStep;
         }
-        if (primitive.type === 'code_stepper') {
+        if (stepperTypes.includes(pType)) {
           syncProps.onStep = handleCodeStep;
         }
 
