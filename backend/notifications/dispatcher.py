@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import os
+from datetime import datetime
 
 
 def _get_db_path():
@@ -59,3 +60,58 @@ def create_notification(
     conn.commit()
     conn.close()
     return notif_id
+
+
+from backend.notifications.email_sender import send_email, build_lesson_ready_email
+
+
+def process_pending_deliveries():
+    """Process all pending notification deliveries (email/whatsapp)."""
+    conn = sqlite3.connect(_get_db_path())
+    conn.row_factory = sqlite3.Row
+
+    pending = conn.execute(
+        """SELECT d.id, d.notification_id, d.channel, n.type, n.title, n.message, n.link, n.user_id
+           FROM notification_deliveries d
+           JOIN notifications n ON d.notification_id = n.id
+           WHERE d.status = 'pending'
+           ORDER BY d.id ASC
+           LIMIT 10""",
+    ).fetchall()
+
+    for delivery in pending:
+        user = conn.execute(
+            "SELECT email, whatsapp, preferred_language, name FROM users WHERE id = ?",
+            [delivery["user_id"]],
+        ).fetchone()
+
+        if not user:
+            conn.execute("UPDATE notification_deliveries SET status = 'failed', error_message = 'User not found' WHERE id = ?", [delivery["id"]])
+            continue
+
+        success = False
+        error = None
+
+        if delivery["channel"] == "email" and user["email"]:
+            text, html = build_lesson_ready_email(
+                title=delivery["title"],
+                topic=delivery["title"],
+                reason=delivery["message"],
+                link=f"https://pymasters.net{delivery['link'] or '/dashboard/classroom'}",
+            )
+            success = send_email(user["email"], delivery["title"], text, html)
+            if not success:
+                error = "SMTP send failed"
+
+        elif delivery["channel"] == "whatsapp" and user["whatsapp"]:
+            # WhatsApp will be implemented in Task 19
+            pass
+
+        status = "sent" if success else "failed"
+        conn.execute(
+            "UPDATE notification_deliveries SET status = ?, sent_at = ?, error_message = ? WHERE id = ?",
+            [status, datetime.utcnow().isoformat() if success else None, error, delivery["id"]],
+        )
+
+    conn.commit()
+    conn.close()
