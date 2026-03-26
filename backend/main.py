@@ -22,6 +22,7 @@ from routes.language import router as language_router
 from routes.profile import router as profile_router
 from routes.classroom import router as classroom_router
 from routes.playground import router as playground_router
+from routes.notifications import router as notifications_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -257,6 +258,7 @@ app.include_router(language_router)
 app.include_router(profile_router)
 app.include_router(classroom_router)
 app.include_router(playground_router)
+app.include_router(notifications_router)
 
 # --- CORS ---
 origins = [
