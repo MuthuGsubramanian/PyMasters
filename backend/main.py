@@ -225,6 +225,42 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_deliveries_notification ON notification_deliveries(notification_id)")
 
+        # ── Module generation tables ──────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS module_generation_jobs (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                topic TEXT NOT NULL,
+                trigger TEXT NOT NULL,
+                trigger_detail TEXT,
+                status TEXT NOT NULL DEFAULT 'queued',
+                current_stage_data TEXT,
+                result_lesson_id TEXT,
+                error_message TEXT,
+                priority INTEGER NOT NULL DEFAULT 2,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS generated_lessons (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                job_id TEXT REFERENCES module_generation_jobs(id),
+                topic TEXT NOT NULL,
+                track TEXT,
+                lesson_data TEXT NOT NULL,
+                trigger TEXT,
+                trigger_detail TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_user ON module_generation_jobs(user_id, status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON module_generation_jobs(status, priority)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_user ON generated_lessons(user_id)")
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
