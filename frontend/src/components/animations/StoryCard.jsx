@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const ILLUSTRATION_MAP = {
   postman_street: '\u{1F3D8}\uFE0F',
@@ -139,7 +140,7 @@ export default function StoryCard({ content = '', illustration = '', duration = 
 
           <div ref={textRef} className="text-slate-700 text-sm leading-relaxed min-h-[3rem]">
             {hasStructuredContent ? (
-              <ReactMarkdown components={storyMarkdownComponents}>{displayed}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={storyMarkdownComponents}>{displayed}</ReactMarkdown>
             ) : (
               <p>{displayed}</p>
             )}
