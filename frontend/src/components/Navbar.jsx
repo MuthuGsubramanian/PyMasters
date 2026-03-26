@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Trophy, LogOut, Hexagon } from 'lucide-react';
+import { Trophy, LogOut } from 'lucide-react';
+import PymastersIcon from '../assets/pymasters-icon.svg';
 import { motion } from 'framer-motion';
 import NotificationBell from './NotificationBell';
 
@@ -21,7 +22,7 @@ export default function Navbar() {
                     <div className="relative">
                         <div className="absolute inset-0 bg-cyan-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
                         <div className="bg-gradient-to-br from-cyan-400 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg relative z-10">
-                            <Hexagon size={24} strokeWidth={2} />
+                            <img src={PymastersIcon} alt="PyMasters" className="w-8 h-8" />
                         </div>
                     </div>
                     <div>

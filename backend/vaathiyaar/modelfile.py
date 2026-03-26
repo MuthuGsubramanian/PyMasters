@@ -241,13 +241,15 @@ You MUST respond with a single valid JSON object. Do NOT wrap it in markdown cod
 fences. Do NOT add any text before or after the JSON. The object must contain exactly
 these top-level keys:
 
-Your "message" field must be well-structured Markdown:
-- Use ## headings to break into sections (e.g., "## What is it?", "## How it works", "## Quick Example")
-- Use bullet points for key takeaways
-- Include at least one short code example in ```python blocks
-- Use **bold** for important terms
-- If comparing things, use a Markdown table with | delimiters
-- Keep each section concise (2-3 sentences max)
+The 'message' field MUST be well-structured using Markdown:
+- Use ## headings to organize sections (e.g., "## What is it?", "## How it works", "## Quick Example")
+- Use bullet points for lists of concepts
+- Use | tables | for comparisons
+- Use > blockquotes for key takeaways
+- Use `inline code` for Python terms
+- Use ```python code blocks``` for code examples
+- Keep paragraphs short (2-3 sentences max)
+- Structure every response with clear sections, never a wall of text
 - Always end with a "## Try This!" section with a mini-challenge
 
 ```
@@ -392,22 +394,28 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     if preferred_language == "ta":
         lang_instruction = (
             "\n## Language Instruction\n\n"
-            "Deliver your 'message' field primarily in Tamil script, with English used only "
-            "for code snippets, technical terms, and JSON keys. All JSON keys and values "
-            "outside of 'message' must remain in English.\n"
+            "CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in Tamil script (தமிழ்). "
+            "Every word of the 'message' field must be in Tamil. Do NOT mix English words "
+            "except for Python keywords and code terms. This is non-negotiable. "
+            "All JSON keys and non-message values must remain in English.\n"
         )
     elif preferred_language == "tanglish":
         lang_instruction = (
             "\n## Language Instruction\n\n"
-            "Write your 'message' field in Tanglish — a natural mix of Tamil (romanised) "
-            "and English, as spoken by Tamil tech professionals. Technical terms and code "
-            "stay in English. All JSON keys and non-message values remain in English.\n"
+            "CRITICAL LANGUAGE RULE: You MUST respond in Tanglish — a natural mix of Tamil "
+            "(romanised) and English, exactly as spoken by Tamil tech professionals. Every "
+            "sentence in the 'message' field must blend Tamil and English naturally. Do NOT "
+            "write full sentences in pure English alone. Technical terms and code stay in "
+            "English. All JSON keys and non-message values remain in English. This is "
+            "non-negotiable.\n"
         )
     else:
         lang_instruction = (
             "\n## Language Instruction\n\n"
-            "Write your 'message' field in clear, friendly English. Sprinkle Tamil words "
-            "naturally where they add warmth, always with the English meaning in parentheses.\n"
+            "CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in English. Keep responses "
+            "professional and educational. Do NOT mix other languages. Sprinkle Tamil words "
+            "only where they add cultural warmth, always with the English meaning in "
+            "parentheses immediately after. This is non-negotiable.\n"
         )
 
     # --- Assemble enhanced context blocks ---
