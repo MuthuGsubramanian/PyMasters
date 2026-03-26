@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PyMasters Lesson",
+  "type": "object",
+  "required": ["id", "topic", "track", "module", "order", "title", "description", "xp_reward", "story_variants", "animation_sequence", "practice_challenges"],
+  "properties": {
+    "id": { "type": "string", "description": "Unique lesson identifier (snake_case)" },
+    "topic": { "type": "string", "description": "Topic slug" },
+    "track": { "type": "string", "enum": ["python_fundamentals", "ai_ml_foundations", "deep_learning"] },
+    "module": { "type": "string", "description": "Module slug within track" },
+    "order": { "type": "integer", "description": "Order within module (1-based)" },
+    "title": {
+      "type": "object",
+      "properties": { "en": { "type": "string" }, "ta": { "type": "string" } },
+      "required": ["en"]
+    },
+    "description": {
+      "type": "object",
+      "properties": { "en": { "type": "string" }, "ta": { "type": "string" } },
+      "required": ["en"]
+    },
+    "xp_reward": { "type": "integer", "minimum": 25 },
+    "next_unlock": { "type": ["string", "null"] },
+    "story_variants": {
+      "type": "object",
+      "description": "Structured markdown content per language with ## headings, bullet points, tables, and > blockquote callouts",
+      "properties": { "en": { "type": "string" }, "ta": { "type": "string" } },
+      "required": ["en"]
+    },
+    "animation_sequence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "type": "string", "enum": ["StoryCard", "CodeStepper", "VariableBox", "TerminalOutput", "DataStructure", "FlowArrow", "MemoryStack", "ComparisonPanel", "ParticleEffect", "ConceptMap"] }
+        }
+      }
+    },
+    "practice_challenges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["instruction", "hints"],
+        "properties": {
+          "instruction": { "type": "object" },
+          "expected_output": { "type": "string" },
+          "hints": { "type": "array" },
+          "test_code": { "type": "string" }
+        }
+      }
+    },
+    "generated": { "type": "boolean", "default": false },
+    "speed_multiplier": { "type": "number", "default": 1.0 }
+  }
+}
