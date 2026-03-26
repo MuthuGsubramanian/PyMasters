@@ -112,6 +112,14 @@ def init_db():
             print("Migrating DB: Adding onboarding_completed column")
             cursor.execute("ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0")
 
+        if 'email' not in col_names:
+            print("Migrating DB: Adding email column")
+            cursor.execute("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''")
+
+        if 'whatsapp' not in col_names:
+            print("Migrating DB: Adding whatsapp column")
+            cursor.execute("ALTER TABLE users ADD COLUMN whatsapp TEXT DEFAULT ''")
+
         # Create user_profiles table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_profiles (

@@ -75,6 +75,21 @@ const QUESTIONS = [
             { value: 'weekends', label: '📅 Weekends Only' },
         ],
     },
+    {
+        key: 'contact_preference',
+        type: 'choice',
+        text: "Would you like me to send you progress updates and learning reminders? 📬",
+        options: [
+            { value: 'yes', label: '✅ Yes, keep me updated!' },
+            { value: 'no',  label: '⏭️ Skip for now' },
+        ],
+    },
+    {
+        key: 'contact_details',
+        type: 'contact',
+        text: "Great! How should I reach you? (Both are optional) 📧",
+        condition: 'contact_preference === yes',
+    },
 ];
 
 // ---------------------------------------------------------------------------
@@ -108,6 +123,9 @@ const REACTIONS = {
     '30min':         "30 minutes is the sweet spot — enough to make real progress every single day. 🔥",
     '1hour':         "One full hour? You're going to level up faster than you can imagine. 💪",
     weekends:        "Weekend warrior mode activated! Focused sessions beat scattered ones every time. 📅",
+    // contact_preference
+    yes:             "Awesome! I'll make sure you never miss a milestone. 📬",
+    no:              "No worries! You can always opt in later from your profile. 👍",
 };
 
 // ---------------------------------------------------------------------------
@@ -263,6 +281,67 @@ function LangPickerBlock({ onSelect, disabled }) {
     );
 }
 
+function ContactInputBlock({ onSelect, disabled }) {
+    const [email, setEmail] = useState('');
+    const [whatsapp, setWhatsapp] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+        if (email && !email.includes('@')) {
+            setError('Please enter a valid email address');
+            return;
+        }
+        setError('');
+        const parts = [];
+        if (email) parts.push(email);
+        if (whatsapp) parts.push(whatsapp);
+        const label = parts.length > 0 ? parts.join(', ') : 'Skipped';
+        onSelect({ value: JSON.stringify({ email, whatsapp }), label, email, whatsapp });
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="flex flex-col gap-3 pl-12"
+        >
+            <div className="flex flex-col gap-2 max-w-sm">
+                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-slate-200">
+                    <span className="text-slate-400 text-sm">@</span>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                        placeholder="Email address"
+                        disabled={disabled}
+                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50"
+                    />
+                </div>
+                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-slate-200">
+                    <span className="text-slate-400 text-sm">📱</span>
+                    <input
+                        type="tel"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                        placeholder="WhatsApp number"
+                        disabled={disabled}
+                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50"
+                    />
+                </div>
+                {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+            <button
+                onClick={handleSubmit}
+                disabled={disabled}
+                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+                Continue →
+            </button>
+        </motion.div>
+    );
+}
+
 function ProgressDots({ total, current }) {
     return (
         <div className="flex items-center justify-center gap-2">
@@ -312,17 +391,39 @@ export default function Onboarding() {
 
         const question = QUESTIONS[currentStep];
         const newAnswers = { ...answers, [question.key]: option.value };
+
+        // For contact_details, also store email/whatsapp at top level
+        if (question.key === 'contact_details') {
+            newAnswers.email = option.email || '';
+            newAnswers.whatsapp = option.whatsapp || '';
+        }
+
         setAnswers(newAnswers);
 
         // User message
         addMsg(makeMsg('user', option.label));
 
-        // Reaction from Vaathiyaar
-        const reaction = REACTIONS[option.value] || "Noted! Let's keep going. 😊";
-        await delay(400);
-        addMsg(makeMsg('vaathiyaar', reaction));
+        // Reaction from Vaathiyaar (skip for contact type)
+        if (question.type !== 'contact') {
+            const reaction = REACTIONS[option.value] || "Noted! Let's keep going. 😊";
+            await delay(400);
+            addMsg(makeMsg('vaathiyaar', reaction));
+        }
 
-        const nextStep = currentStep + 1;
+        // Determine next step, skipping conditional questions that don't apply
+        let nextStep = currentStep + 1;
+        while (nextStep < QUESTIONS.length) {
+            const nextQ = QUESTIONS[nextStep];
+            if (nextQ.condition) {
+                // Parse condition like 'contact_preference === yes'
+                const [condKey, condVal] = nextQ.condition.split('===').map(s => s.trim());
+                if (newAnswers[condKey] !== condVal) {
+                    nextStep++;
+                    continue;
+                }
+            }
+            break;
+        }
 
         if (nextStep < QUESTIONS.length) {
             // Next question after a short pause
@@ -387,6 +488,8 @@ export default function Onboarding() {
                                         <>
                                             {QUESTIONS[msg.questionIndex].type === 'language' ? (
                                                 <LangPickerBlock onSelect={handleAnswer} disabled={busy} />
+                                            ) : QUESTIONS[msg.questionIndex].type === 'contact' ? (
+                                                <ContactInputBlock onSelect={handleAnswer} disabled={busy} />
                                             ) : QUESTIONS[msg.questionIndex].multi ? (
                                                 <MultiOptionPills
                                                     options={QUESTIONS[msg.questionIndex].options}

@@ -62,6 +62,15 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
             WHERE id = ?
         """, [preferred_language, user_id])
 
+        # Save email and whatsapp to users table
+        email = data.get("email", "")
+        whatsapp = data.get("whatsapp", "")
+        if email or whatsapp:
+            cursor.execute(
+                "UPDATE users SET email = ?, whatsapp = ? WHERE id = ?",
+                [email, whatsapp, user_id]
+            )
+
         conn.commit()
 
     finally:
