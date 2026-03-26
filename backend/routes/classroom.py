@@ -18,6 +18,7 @@ from vaathiyaar.engine import call_vaathiyaar, evaluate_code, get_ollama_client,
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
 from vaathiyaar.training_data import record_training_pair
+from backend.modules.trigger_engine import check_triggers
 
 router = APIRouter(prefix="/api/classroom", tags=["classroom"])
 
@@ -445,6 +446,17 @@ def evaluate(request: EvaluateRequest):
         update_mastery(db_path, request.user_id, request.topic, new_mastery)
     except Exception:
         pass
+
+    # Check triggers for AI-inferred module generation
+    try:
+        check_triggers(
+            user_id=request.user_id,
+            signal_type="code_evaluation",
+            topic=request.topic,
+            value={"success": result.get("success", False)},
+        )
+    except Exception:
+        pass  # Trigger check should never block evaluation
 
     return result
 
