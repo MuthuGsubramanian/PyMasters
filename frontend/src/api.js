@@ -30,4 +30,12 @@ export const submitDiagnostic = (data) => api.post('/classroom/diagnostic', data
 export const getLanguages = () => api.get('/languages');
 export const checkLanguage = (code) => api.get(`/languages/check/${code}`);
 
+// Notifications
+export const getNotifications = (userId, unreadOnly = false) =>
+    api.get(`/notifications?user_id=${userId}&unread_only=${unreadOnly}`);
+export const markNotificationRead = (notifId, userId) =>
+    api.put(`/notifications/${notifId}/read?user_id=${userId}`);
+export const markAllNotificationsRead = (userId) =>
+    api.patch(`/notifications/read-all?user_id=${userId}`);
+
 export default api;
