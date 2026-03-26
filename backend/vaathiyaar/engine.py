@@ -9,7 +9,7 @@ import os
 import contextlib
 from typing import Optional
 
-import requests
+from ollama import Client as OllamaClient
 
 from vaathiyaar.modelfile import build_system_prompt
 
@@ -17,9 +17,20 @@ from vaathiyaar.modelfile import build_system_prompt
 # Environment configuration
 # ---------------------------------------------------------------------------
 
-OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "https://api.ollama.com")
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5")
+
+# Initialize Ollama client using the official SDK
+_ollama_client = None
+
+def get_ollama_client():
+    global _ollama_client
+    if _ollama_client is None:
+        _ollama_client = OllamaClient(
+            host="https://ollama.com",
+            headers={"Authorization": f"Bearer {OLLAMA_API_KEY}"}
+        )
+    return _ollama_client
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -65,36 +76,20 @@ def call_vaathiyaar(
     """
     system_prompt = build_system_prompt(student_profile, lesson_context)
 
-    headers = {
-        "Content-Type": "application/json",
-    }
-    if OLLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {OLLAMA_API_KEY}"
+    client = get_ollama_client()
 
-    payload = {
-        "model": OLLAMA_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-        "stream": False,
-    }
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_message},
+    ]
 
-    response = requests.post(
-        f"{OLLAMA_API_URL}/api/chat",
-        headers=headers,
-        json=payload,
-        timeout=60,
+    response = client.chat(
+        model=OLLAMA_MODEL,
+        messages=messages,
+        stream=False,
     )
-    response.raise_for_status()
 
-    data = response.json()
-
-    try:
-        raw_content = data["message"]["content"]
-    except (KeyError, IndexError) as exc:
-        raise ValueError(f"Unexpected API response structure: {data}") from exc
-
+    raw_content = response["message"]["content"]
     return parse_vaathiyaar_response(raw_content)
 
 
