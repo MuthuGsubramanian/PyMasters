@@ -416,8 +416,9 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     # ── Enhanced Context: Mastery Map ──────────────────────────────────
     if student_profile and student_profile.get("mastery_topics"):
         mastery = student_profile["mastery_topics"]
-        strong = [t for t, m in mastery.items() if m >= 0.7]
-        weak = [t for t, m in mastery.items() if m < 0.4]
+        # mastery_topics is a list of {"topic": str, "mastery_level": float}
+        strong = [m.get("topic", "") for m in mastery if m.get("mastery_level", 0.0) >= 0.7]
+        weak = [m.get("topic", "") for m in mastery if m.get("mastery_level", 0.0) < 0.4]
         if strong or weak:
             blocks.append("\n## Student Mastery Map")
             if strong:

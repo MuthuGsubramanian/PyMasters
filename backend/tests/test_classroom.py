@@ -30,9 +30,11 @@ client = TestClient(app)
 # ---------------------------------------------------------------------------
 
 def test_list_lessons_endpoint():
-    """GET /api/classroom/lessons returns a list (possibly empty if Task 5 not done yet)."""
+    """GET /api/classroom/lessons returns a dict with a 'lessons' key containing a list."""
     response = client.get("/api/classroom/lessons")
     assert response.status_code == 200
 
     data = response.json()
-    assert isinstance(data, list), f"Expected a list, got: {type(data)}"
+    assert isinstance(data, dict), f"Expected a dict, got: {type(data)}"
+    assert "lessons" in data, f"Expected 'lessons' key in response, got: {list(data.keys())}"
+    assert isinstance(data["lessons"], list), f"Expected data['lessons'] to be a list, got: {type(data['lessons'])}"
