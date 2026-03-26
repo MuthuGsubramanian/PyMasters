@@ -427,16 +427,34 @@ def evaluate(request: EvaluateRequest):
         lesson = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
         xp_reward = lesson.get("xp_reward", 25) if lesson else 25
 
+        # Use lesson_id for deduplication; fall back to topic when no lesson_id
+        lesson_id_for_completion = request.lesson_id or request.topic
+
         try:
             conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            cursor.execute("UPDATE users SET points = points + ? WHERE id = ?", [xp_reward, request.user_id])
+
+            # Check if already completed — only award XP once per lesson
+            existing = conn.execute(
+                "SELECT 1 FROM lesson_completions WHERE user_id = ? AND lesson_id = ?",
+                [request.user_id, lesson_id_for_completion],
+            ).fetchone()
+
+            if not existing:
+                conn.execute("UPDATE users SET points = points + ? WHERE id = ?", [xp_reward, request.user_id])
+                conn.execute(
+                    "INSERT INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES (?, ?, ?)",
+                    [request.user_id, lesson_id_for_completion, xp_reward],
+                )
+                xp_earned = xp_reward
+            else:
+                xp_earned = 0
+
             conn.commit()
             conn.close()
         except Exception:
-            pass
+            xp_earned = 0
 
-        result["xp_earned"] = xp_reward
+        result["xp_earned"] = xp_earned
 
     # Update mastery based on success
     mastery_delta = 0.1 if result["success"] else -0.05
