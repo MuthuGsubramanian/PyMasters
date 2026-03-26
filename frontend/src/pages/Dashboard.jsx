@@ -226,7 +226,7 @@ export function ModuleViewer() {
                             </ReactMarkdown>
                             <div className="mt-16 pt-8 border-t border-white/5 flex justify-end">
                                 <button onClick={() => setQuizMode(true)} className="btn-neo btn-neo-primary">
-                                    Initialize Quiz Protocol <ArrowRight size={18} className="ml-2" />
+                                    Initialize Quiz Protocol <ChevronRight size={18} className="ml-2" />
                                 </button>
                             </div>
                         </motion.div>

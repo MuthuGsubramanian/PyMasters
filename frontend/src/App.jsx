@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import { Overview, LearningMap, ModuleViewer } from './pages/Dashboard';
 import Classroom from './pages/Classroom';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -23,10 +24,10 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
             <Route path="/dashboard" element={<PrivateRoute><Layout /></PrivateRoute>}>
-              <Route index element={<Overview />} />
-              <Route path="learn" element={<LearningMap />} />
-              <Route path="learn/:id" element={<ModuleViewer />} />
-              <Route path="classroom" element={<Classroom />} />
+              <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />
+              <Route path="learn" element={<ErrorBoundary><LearningMap /></ErrorBoundary>} />
+              <Route path="learn/:id" element={<ErrorBoundary><ModuleViewer /></ErrorBoundary>} />
+              <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
