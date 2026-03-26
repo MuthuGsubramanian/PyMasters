@@ -32,6 +32,8 @@ class OnboardingData(BaseModel):
     goal: str
     time_commitment: str
     preferred_language: str
+    email: Optional[str] = ""
+    whatsapp: Optional[str] = ""
 
 
 class SignalData(BaseModel):
@@ -68,6 +70,8 @@ def onboarding(data: OnboardingData):
         "goal": data.goal,
         "time_commitment": data.time_commitment,
         "preferred_language": data.preferred_language,
+        "email": data.email or "",
+        "whatsapp": data.whatsapp or "",
     }
 
     result = save_onboarding(db_path, data.user_id, payload)
