@@ -311,13 +311,54 @@ async def list_lessons(user_id: int = None):
     """
     List all available lessons (metadata only: id, title, description, xp_reward, topic, track, module, order).
     Returns an empty list if the lessons directory doesn't exist yet.
-    If user_id is provided, also includes generated lessons from the database.
+    If user_id is provided, also includes generated lessons from the database and filters/sorts
+    lessons based on the user's onboarding profile (skill_level, goal).
     """
     if not LESSONS_DIR.exists():
         return {"lessons": []}
 
     try:
         lessons = _list_all_lessons(user_id=user_id)
+
+        if user_id:
+            # Get user profile for filtering
+            try:
+                conn = sqlite3.connect(_get_db_path())
+                conn.row_factory = sqlite3.Row
+                profile = conn.execute(
+                    "SELECT skill_level, goal FROM user_profiles WHERE user_id = ?", [user_id]
+                ).fetchone()
+                conn.close()
+
+                if profile:
+                    skill_level = profile["skill_level"] or "beginner"
+
+                    # Define track visibility by skill level
+                    track_order = {
+                        "beginner": ["python_fundamentals"],
+                        "intermediate": ["python_fundamentals", "ai_ml_foundations"],
+                        "advanced": ["python_fundamentals", "ai_ml_foundations", "deep_learning"],
+                    }
+                    visible_tracks = track_order.get(skill_level, ["python_fundamentals"])
+
+                    # Mark lessons as recommended or locked
+                    for lesson in lessons:
+                        track = lesson.get("track", "")
+                        if track in visible_tracks or track == "generated":
+                            lesson["recommended"] = True
+                        else:
+                            lesson["recommended"] = False
+
+                    # Sort: recommended first, then by track order, then by module order
+                    track_priority = {t: i for i, t in enumerate(["python_fundamentals", "ai_ml_foundations", "deep_learning", "generated"])}
+                    lessons.sort(key=lambda l: (
+                        0 if l.get("recommended") else 1,
+                        track_priority.get(l.get("track", ""), 99),
+                        l.get("order", 0),
+                    ))
+            except Exception:
+                pass
+
         return {"lessons": lessons}
     except Exception:
         return {"lessons": []}

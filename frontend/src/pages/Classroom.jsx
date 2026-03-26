@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
-import { BookOpen, ChevronRight, Play, RotateCcw } from 'lucide-react';
+import { BookOpen, ChevronRight, Play, RotateCcw, Lock } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -61,11 +61,35 @@ function resolveText(obj, language = 'en') {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Phase: select — lesson list
+// Phase: select — lesson list grouped by track
 // ──────────────────────────────────────────────────────────────────────────────
+const TRACK_NAMES = {
+    python_fundamentals: 'Python Fundamentals',
+    ai_ml_foundations: 'AI/ML Foundations',
+    deep_learning: 'Deep Learning & Neural Networks',
+    generated: 'Custom Modules',
+};
+
+const TRACK_ORDER = ['python_fundamentals', 'ai_ml_foundations', 'deep_learning', 'generated'];
+
 function LessonSelect({ lessons, onSelectLesson, loading, language }) {
+    // Group lessons by track
+    const grouped = {};
+    lessons.forEach((lesson) => {
+        const track = lesson.track || 'other';
+        if (!grouped[track]) grouped[track] = [];
+        grouped[track].push(lesson);
+    });
+
+    // Determine which tracks are present, sorted by canonical order
+    const presentTracks = TRACK_ORDER.filter((t) => grouped[t]?.length > 0);
+    // Append any tracks not in canonical order
+    Object.keys(grouped).forEach((t) => {
+        if (!presentTracks.includes(t)) presentTracks.push(t);
+    });
+
     return (
-        <div className="animate-fade-in space-y-8 max-w-2xl mx-auto">
+        <div className="animate-fade-in space-y-10 max-w-2xl mx-auto">
             <header className="space-y-2">
                 <h1 className="text-3xl font-bold font-display text-slate-900">Classroom</h1>
                 <p className="text-slate-500">
@@ -82,45 +106,87 @@ function LessonSelect({ lessons, onSelectLesson, loading, language }) {
                     No lessons available yet. Check back soon!
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {lessons.map((lesson) => (
-                        <button
-                            key={lesson.id}
-                            onClick={() => onSelectLesson(lesson)}
-                            className="w-full text-left panel panel-hover rounded-xl p-5 flex items-center gap-4 group transition-all duration-300"
-                        >
-                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-500 group-hover:bg-purple-100 transition-colors">
-                                <BookOpen size={18} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="font-bold text-slate-800 group-hover:text-purple-600 transition-colors truncate">
-                                    {resolveText(lesson.title, language)}
-                                </div>
-                                {lesson.description && (
-                                    <div className="text-sm text-slate-400 truncate mt-0.5">
-                                        {resolveText(lesson.description, language)}
+                presentTracks.map((track) => (
+                    <div key={track} className="space-y-3">
+                        {/* Track header */}
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                                {TRACK_NAMES[track] || track}
+                            </h2>
+                            <div className="flex-1 h-px bg-slate-200" />
+                        </div>
+
+                        {/* Lesson cards for this track */}
+                        {grouped[track].map((lesson) => {
+                            const isLocked = lesson.recommended === false;
+                            return (
+                                <button
+                                    key={lesson.id}
+                                    onClick={() => !isLocked && onSelectLesson(lesson)}
+                                    title={isLocked ? 'Complete earlier modules first' : undefined}
+                                    className={`w-full text-left panel rounded-xl p-5 flex items-center gap-4 group transition-all duration-300 ${
+                                        isLocked
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : 'panel-hover cursor-pointer'
+                                    } ${
+                                        lesson.recommended === true
+                                            ? 'border border-purple-100 bg-purple-50/30'
+                                            : ''
+                                    }`}
+                                >
+                                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg border flex items-center justify-center transition-colors ${
+                                        isLocked
+                                            ? 'bg-slate-100 border-slate-200 text-slate-400'
+                                            : 'bg-purple-50 border-purple-200 text-purple-500 group-hover:bg-purple-100'
+                                    }`}>
+                                        {isLocked ? <Lock size={16} /> : <BookOpen size={18} />}
                                     </div>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                                {lesson.generated && (
-                                    <span className="text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
-                                        Custom
-                                    </span>
-                                )}
-                                {lesson.xp_reward != null && (
-                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">
-                                        +{lesson.xp_reward} XP
-                                    </span>
-                                )}
-                                <ChevronRight
-                                    size={18}
-                                    className="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all"
-                                />
-                            </div>
-                        </button>
-                    ))}
-                </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`font-bold truncate transition-colors ${
+                                            isLocked
+                                                ? 'text-slate-500'
+                                                : 'text-slate-800 group-hover:text-purple-600'
+                                        }`}>
+                                            {resolveText(lesson.title, language)}
+                                        </div>
+                                        {lesson.description && (
+                                            <div className="text-sm text-slate-400 truncate mt-0.5">
+                                                {resolveText(lesson.description, language)}
+                                            </div>
+                                        )}
+                                        {isLocked && (
+                                            <div className="text-xs text-slate-400 mt-0.5 italic">
+                                                Complete earlier modules first
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-shrink-0">
+                                        {lesson.generated && (
+                                            <span className="text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                                                Custom
+                                            </span>
+                                        )}
+                                        {lesson.xp_reward != null && (
+                                            <span className={`text-xs font-bold rounded-full px-2.5 py-0.5 border ${
+                                                isLocked
+                                                    ? 'text-slate-400 bg-slate-50 border-slate-200'
+                                                    : 'text-amber-600 bg-amber-50 border-amber-200'
+                                            }`}>
+                                                +{lesson.xp_reward} XP
+                                            </span>
+                                        )}
+                                        {!isLocked && (
+                                            <ChevronRight
+                                                size={18}
+                                                className="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all"
+                                            />
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                ))
             )}
         </div>
     );
