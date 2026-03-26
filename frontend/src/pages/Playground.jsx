@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
-import { Sparkles, Zap } from 'lucide-react';
+import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble
@@ -21,7 +21,7 @@ function ThinkingBubble() {
                     <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}} />
                     <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}} />
                     <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}} />
-                    <span className="text-sm text-purple-500 ml-2">Vaathiyaar is thinking...</span>
+
                 </div>
             </div>
         </div>
@@ -68,14 +68,27 @@ export default function Playground() {
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(null);
     const [creditsLoading, setCreditsLoading] = useState(true);
+    const [conversationId, setConversationId] = useState(null);
+    const [conversations, setConversations] = useState([]);
+    const [showSidebar, setShowSidebar] = useState(false);
 
-    // Fetch credits on mount
+    // Fetch credits and conversations on mount
     useEffect(() => {
         if (user?.id) {
             api.get(`/playground/credits/${user.id}`)
                 .then((r) => setCredits(r.data))
                 .catch(() => setCredits({ xp: 0, total_prompts: 0, used_prompts: 0, remaining_prompts: 0 }))
                 .finally(() => setCreditsLoading(false));
+
+            api.get(`/playground/conversations/${user.id}`)
+                .then((r) => {
+                    setConversations(r.data);
+                    // Resume the most recent conversation if exists
+                    if (r.data.length > 0) {
+                        loadConversation(r.data[0].id);
+                    }
+                })
+                .catch(() => {});
         }
     }, [user]);
 
@@ -83,6 +96,34 @@ export default function Playground() {
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, loading]);
+
+    const loadConversation = async (convId) => {
+        if (!user?.id) return;
+        try {
+            const r = await api.get(`/playground/conversations/${user.id}/${convId}`);
+            setMessages(r.data.map((m) => ({ role: m.role, content: m.content })));
+            setConversationId(convId);
+            setShowSidebar(false);
+        } catch {
+            // Conversation not found, start fresh
+            setMessages([]);
+            setConversationId(null);
+        }
+    };
+
+    const startNewChat = () => {
+        setMessages([]);
+        setConversationId(null);
+        setShowSidebar(false);
+    };
+
+    const refreshConversations = () => {
+        if (user?.id) {
+            api.get(`/playground/conversations/${user.id}`)
+                .then((r) => setConversations(r.data))
+                .catch(() => {});
+        }
+    };
 
     const handleSend = async (message) => {
         if (!message.trim() || loading) return;
@@ -104,6 +145,7 @@ export default function Playground() {
                     user_id: user?.id,
                     message,
                     language: user?.preferred_language || 'en',
+                    conversation_id: conversationId,
                 }),
             });
 
@@ -174,6 +216,11 @@ export default function Playground() {
                                 setMessages((prev) =>
                                     prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
                                 );
+                                // Capture conversation_id from response
+                                if (data.conversation_id) {
+                                    setConversationId(data.conversation_id);
+                                    refreshConversations();
+                                }
                             }
                             if (data.error) {
                                 setMessages((prev) =>
@@ -223,17 +270,35 @@ export default function Playground() {
                         </div>
                     </div>
 
-                    {!creditsLoading && credits && (
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5 text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5">
-                                <Zap size={14} />
-                                {credits.xp} XP
-                            </div>
-                            <div className="text-sm font-mono text-slate-500">
-                                {remaining} prompts left
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {/* New Chat & History buttons */}
+                        <button
+                            onClick={startNewChat}
+                            className="flex items-center gap-1.5 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 hover:bg-purple-100 transition-colors"
+                        >
+                            <Plus size={14} />
+                            New Chat
+                        </button>
+                        <button
+                            onClick={() => setShowSidebar(!showSidebar)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5 hover:bg-slate-100 transition-colors"
+                        >
+                            <MessageSquare size={14} />
+                            History
+                        </button>
+
+                        {!creditsLoading && credits && (
+                            <>
+                                <div className="flex items-center gap-1.5 text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5">
+                                    <Zap size={14} />
+                                    {credits.xp} XP
+                                </div>
+                                <div className="text-sm font-mono text-slate-500">
+                                    {remaining} prompts left
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Progress bar */}
@@ -246,6 +311,54 @@ export default function Playground() {
                     </div>
                 )}
             </header>
+
+            {/* Conversation History Sidebar */}
+            <AnimatePresence>
+                {showSidebar && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-50 flex"
+                    >
+                        <div className="w-80 bg-white shadow-2xl border-r border-slate-200 flex flex-col h-full">
+                            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+                                <h2 className="text-sm font-bold text-slate-800">Chat History</h2>
+                                <button
+                                    onClick={() => setShowSidebar(false)}
+                                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                {conversations.length === 0 ? (
+                                    <p className="text-sm text-slate-400 text-center py-8">No conversations yet</p>
+                                ) : (
+                                    conversations.map((conv) => (
+                                        <button
+                                            key={conv.id}
+                                            onClick={() => loadConversation(conv.id)}
+                                            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                                conversationId === conv.id
+                                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                                    : 'text-slate-700 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <p className="font-medium truncate">{conv.title}</p>
+                                            <p className="text-xs text-slate-400 mt-0.5">
+                                                {new Date(conv.updated_at).toLocaleDateString()}
+                                            </p>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex-1 bg-black/20" onClick={() => setShowSidebar(false)} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Exhausted banner */}
             {exhausted && (
