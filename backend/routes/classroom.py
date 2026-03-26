@@ -192,15 +192,36 @@ def chat_stream(request: ChatRequest):
                     full_response += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
 
-            # Send final message with full content
-            yield f"data: {json.dumps({'done': True, 'full_response': full_response})}\n\n"
+            # Parse the full response — extract just the message field
+            # Vaathiyaar returns JSON with message, phase, animation, etc.
+            clean_message = full_response
+            parsed_response = None
+            try:
+                # Strip markdown code fences if present
+                cleaned = full_response.strip()
+                if cleaned.startswith("```json"):
+                    cleaned = cleaned[7:]
+                elif cleaned.startswith("```"):
+                    cleaned = cleaned[3:]
+                if cleaned.endswith("```"):
+                    cleaned = cleaned[:-3]
+                cleaned = cleaned.strip()
+
+                parsed_response = json.loads(cleaned)
+                if isinstance(parsed_response, dict) and "message" in parsed_response:
+                    clean_message = parsed_response["message"]
+            except (json.JSONDecodeError, KeyError):
+                # If not valid JSON, use the raw text as the message
+                clean_message = full_response
+
+            yield f"data: {json.dumps({'done': True, 'message': clean_message, 'phase': parsed_response.get('phase') if parsed_response else 'chat', 'full_response': full_response})}\n\n"
 
             # Record training data (best effort)
             try:
                 record_training_pair(
                     db_path=db_path,
                     user_message=request.message,
-                    vaathiyaar_response={"message": full_response},
+                    vaathiyaar_response=parsed_response or {"message": full_response},
                     student_profile=profile,
                     lesson_context=lesson_context,
                 )
