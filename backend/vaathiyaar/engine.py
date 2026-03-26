@@ -17,7 +17,7 @@ from vaathiyaar.modelfile import build_system_prompt
 # Environment configuration
 # ---------------------------------------------------------------------------
 
-OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "https://api.ollama.com/v1")
+OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "https://api.ollama.com")
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5")
 
@@ -34,8 +34,8 @@ def call_vaathiyaar(
     max_tokens: int = 1500,
 ) -> dict:
     """
-    Build a dynamic system prompt, call the Ollama Cloud API (OpenAI-compatible
-    /chat/completions endpoint), and return a parsed Vaathiyaar response dict.
+    Build a dynamic system prompt, call the Ollama Cloud API (native /api/chat
+    endpoint), and return a parsed Vaathiyaar response dict.
 
     Parameters
     ----------
@@ -77,12 +77,11 @@ def call_vaathiyaar(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
         ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
+        "stream": False,
     }
 
     response = requests.post(
-        f"{OLLAMA_API_URL}/chat/completions",
+        f"{OLLAMA_API_URL}/api/chat",
         headers=headers,
         json=payload,
         timeout=60,
@@ -92,7 +91,7 @@ def call_vaathiyaar(
     data = response.json()
 
     try:
-        raw_content = data["choices"][0]["message"]["content"]
+        raw_content = data["message"]["content"]
     except (KeyError, IndexError) as exc:
         raise ValueError(f"Unexpected API response structure: {data}") from exc
 
