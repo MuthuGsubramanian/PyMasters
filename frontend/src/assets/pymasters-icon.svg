@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 190" fill="none">
+  <defs>
+    <!-- Triangle housing gradient -->
+    <linearGradient id="triGrad" x1="90" y1="0" x2="90" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e1145"/>
+      <stop offset="100%" stop-color="#0a0618"/>
+    </linearGradient>
+
+    <!-- Core glow radial gradient -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#7c3aed" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Outer ring glow -->
+    <radialGradient id="ringGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e1145"/>
+      <stop offset="100%" stop-color="#0d0a2e"/>
+    </radialGradient>
+
+    <!-- Drop shadow filter -->
+    <filter id="glowFilter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft glow for core -->
+    <filter id="coreGlowFilter" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Clip to triangle -->
+    <clipPath id="triClip">
+      <polygon points="90,8 170,172 10,172"/>
+    </clipPath>
+  </defs>
+
+  <!-- ── Outer triangle housing ── -->
+  <polygon
+    points="90,8 170,172 10,172"
+    fill="url(#triGrad)"
+    stroke="#7c3aed"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+
+  <!-- ── Concentric inner triangle rings ── -->
+  <!-- Ring 1 — 88% scale -->
+  <polygon
+    points="90,22 158,163 22,163"
+    fill="none"
+    stroke="#7c3aed"
+    stroke-width="1"
+    stroke-opacity="0.25"
+    stroke-linejoin="round"
+  />
+  <!-- Ring 2 — 74% scale -->
+  <polygon
+    points="90,38 144,153 36,153"
+    fill="none"
+    stroke="#7c3aed"
+    stroke-width="1"
+    stroke-opacity="0.18"
+    stroke-linejoin="round"
+  />
+  <!-- Ring 3 — 60% scale -->
+  <polygon
+    points="90,53 130,143 50,143"
+    fill="none"
+    stroke="#a78bfa"
+    stroke-width="0.75"
+    stroke-opacity="0.12"
+    stroke-linejoin="round"
+  />
+
+  <!-- ── Energy lines from core to vertices ── -->
+  <!-- To top vertex -->
+  <line x1="90" y1="95" x2="90" y2="16" stroke="#7c3aed" stroke-width="1" stroke-opacity="0.5" stroke-dasharray="4 3"/>
+  <!-- To bottom-right vertex -->
+  <line x1="90" y1="95" x2="161" y2="166" stroke="#7c3aed" stroke-width="1" stroke-opacity="0.5" stroke-dasharray="4 3"/>
+  <!-- To bottom-left vertex -->
+  <line x1="90" y1="95" x2="19" y2="166" stroke="#7c3aed" stroke-width="1" stroke-opacity="0.5" stroke-dasharray="4 3"/>
+
+  <!-- ── Reactor core assembly ── -->
+  <!-- Outer ring -->
+  <circle
+    cx="90" cy="95" r="22"
+    fill="url(#ringGlow)"
+    stroke="#7c3aed"
+    stroke-width="1.5"
+  />
+  <!-- Inner ring -->
+  <circle
+    cx="90" cy="95" r="15"
+    fill="#12082a"
+    stroke="#a78bfa"
+    stroke-width="1"
+  />
+  <!-- Core glow halo -->
+  <circle
+    cx="90" cy="95" r="10"
+    fill="#7c3aed"
+    fill-opacity="0.3"
+    filter="url(#coreGlowFilter)"
+  />
+  <!-- Bright center -->
+  <circle
+    cx="90" cy="95" r="3"
+    fill="#c4b5fd"
+    filter="url(#coreGlowFilter)"
+  />
+
+  <!-- ── "Py" text in core ── -->
+  <text
+    x="90" y="102"
+    font-family="'Inter', 'Outfit', system-ui, sans-serif"
+    font-size="20"
+    font-weight="900"
+    fill="#ffffff"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    filter="url(#glowFilter)"
+  >Py</text>
+
+  <!-- ── "MASTERS" text below core ── -->
+  <text
+    x="90" y="158"
+    font-family="'Inter', 'Outfit', system-ui, sans-serif"
+    font-size="11"
+    font-weight="700"
+    fill="#64748b"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    letter-spacing="3"
+  >MASTERS</text>
+
+  <!-- ── Accent dots at triangle vertices ── -->
+  <!-- Top vertex -->
+  <circle cx="90" cy="8" r="3" fill="#7c3aed" opacity="0.85"/>
+  <!-- Bottom-right vertex -->
+  <circle cx="170" cy="172" r="3" fill="#7c3aed" opacity="0.85"/>
+  <!-- Bottom-left vertex -->
+  <circle cx="10" cy="172" r="3" fill="#7c3aed" opacity="0.85"/>
+</svg>
