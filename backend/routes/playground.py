@@ -176,8 +176,24 @@ def playground_chat_stream(request: PlaygroundChatRequest):
                     full_response += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
 
-            # Send final message with full content
-            yield f"data: {json.dumps({'done': True, 'full_response': full_response})}\n\n"
+            # Parse response and extract clean message
+            clean_message = full_response
+            try:
+                cleaned = full_response.strip()
+                if cleaned.startswith("```json"):
+                    cleaned = cleaned[7:]
+                elif cleaned.startswith("```"):
+                    cleaned = cleaned[3:]
+                if cleaned.endswith("```"):
+                    cleaned = cleaned[:-3]
+                cleaned = cleaned.strip()
+                parsed = json.loads(cleaned)
+                if isinstance(parsed, dict) and "message" in parsed:
+                    clean_message = parsed["message"]
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+            yield f"data: {json.dumps({'done': True, 'message': clean_message, 'full_response': full_response})}\n\n"
 
             # Increment prompts used (best effort)
             try:

@@ -483,7 +483,38 @@ export default function Classroom() {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let fullText = '';
+            let rawText = '';
+
+            // Extract just the "message" value from partial/streaming JSON
+            const extractMessage = (text) => {
+                const marker = '"message"';
+                const idx = text.indexOf(marker);
+                if (idx === -1) return null;
+                const afterMarker = text.substring(idx + marker.length);
+                const colonIdx = afterMarker.indexOf(':');
+                if (colonIdx === -1) return null;
+                const afterColon = afterMarker.substring(colonIdx + 1).trimStart();
+                if (!afterColon.startsWith('"')) return null;
+                let content = '';
+                let i = 1;
+                while (i < afterColon.length) {
+                    if (afterColon[i] === '\\' && i + 1 < afterColon.length) {
+                        const next = afterColon[i + 1];
+                        if (next === 'n') content += '\n';
+                        else if (next === 't') content += '\t';
+                        else if (next === '"') content += '"';
+                        else if (next === '\\') content += '\\';
+                        else content += next;
+                        i += 2;
+                    } else if (afterColon[i] === '"') {
+                        break;
+                    } else {
+                        content += afterColon[i];
+                        i++;
+                    }
+                }
+                return content || null;
+            };
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -497,14 +528,25 @@ export default function Classroom() {
                         try {
                             const data = JSON.parse(line.slice(6));
                             if (data.token) {
-                                fullText += data.token;
-                                setChatMessages((prev) =>
-                                    prev.map((m) => m._isStreaming ? { ...m, content: fullText } : m)
-                                );
+                                rawText += data.token;
+                                // Show just the message content, not raw JSON
+                                const display = extractMessage(rawText) || '';
+                                if (display) {
+                                    setChatMessages((prev) =>
+                                        prev.map((m) => m._isStreaming ? { ...m, content: display } : m)
+                                    );
+                                }
                             }
                             if (data.done) {
+                                // Server sends parsed clean message
+                                const finalMsg = data.message || extractMessage(rawText) || rawText;
                                 setChatMessages((prev) =>
-                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: fullText } : m)
+                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
+                                );
+                            }
+                            if (data.error) {
+                                setChatMessages((prev) =>
+                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: `Error: ${data.error}` } : m)
                                 );
                             }
                         } catch (e) {
