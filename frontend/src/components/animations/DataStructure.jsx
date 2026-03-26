@@ -1,19 +1,36 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 
 export default function DataStructure({
   structure = 'list',
   data = [],
   operations = [],
+  duration = 3000,
   onComplete,
 }) {
   const containerRef = useRef(null);
-  const [items, setItems] = useState([...data]);
   const itemRefs = useRef({});
   const highlightedRef = useRef(null);
 
+  // Stabilize props to prevent re-render loops
+  const stableData = useMemo(() => data, [JSON.stringify(data)]);
+  const stableOperations = useMemo(() => operations, [JSON.stringify(operations)]);
+
+  const [items, setItems] = useState([...stableData]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
+  // Sync items when stableData changes
+  useEffect(() => {
+    setItems([...stableData]);
+  }, [stableData]);
+
   useEffect(() => {
     if (!containerRef.current) return;
+
+    const holdSeconds = Math.max(duration / 1000, 2);
 
     // Spring in on mount
     gsap.fromTo(
@@ -22,21 +39,21 @@ export default function DataStructure({
       { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
     );
 
-    if (operations.length === 0) {
-      // No operations — complete immediately after spring
-      gsap.delayedCall(0.7, () => onComplete?.());
-      return;
+    if (stableOperations.length === 0) {
+      // No operations — complete after hold duration
+      const id = gsap.delayedCall(0.7 + holdSeconds, () => onCompleteRef.current?.());
+      return () => { id.kill(); };
     }
 
     // Play operations sequentially
     const tl = gsap.timeline({
       delay: 0.7,
-      onComplete: () => onComplete?.(),
+      onComplete: () => onCompleteRef.current?.(),
     });
 
-    let currentItems = [...data];
+    let currentItems = [...stableData];
 
-    operations.forEach((op, opIdx) => {
+    stableOperations.forEach((op, opIdx) => {
       tl.call(
         () => {
           if (op.action === 'append' || op.action === 'add') {
@@ -81,10 +98,13 @@ export default function DataStructure({
       );
     });
 
+    // Hold so users can see the result before completing
+    tl.to({}, { duration: holdSeconds });
+
     return () => {
       tl.kill();
     };
-  }, []);
+  }, [stableData, stableOperations, duration]);
 
   const structureLabel = {
     list: 'list',

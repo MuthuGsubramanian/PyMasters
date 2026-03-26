@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 
 function detectType(val) {
@@ -20,7 +20,15 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   const valueRef = useRef(null);
   const oldValueRef = useRef(null);
   const pulseRef = useRef(null);
-  const [currentValue, setCurrentValue] = useState(values[0] ?? '');
+
+  // Stabilize props to prevent re-render loops
+  const stableValues = useMemo(() => values, [JSON.stringify(values)]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
+  const [currentValue, setCurrentValue] = useState(stableValues[0] ?? '');
   const [oldValue, setOldValue] = useState(null);
   const [showOld, setShowOld] = useState(false);
   const [justChanged, setJustChanged] = useState(false);
@@ -41,20 +49,20 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
         duration: 0.7,
         ease: 'elastic.out(1, 0.6)',
         onComplete: () => {
-          if (values.length === 0) onComplete?.();
+          if (stableValues.length === 0) onCompleteRef.current?.();
         },
       }
     );
-  }, []);
+  }, [stableValues]);
 
   useEffect(() => {
     const valueIndex = syncStep;
     if (valueIndex === prevStep.current) return;
-    if (valueIndex < 0 || valueIndex >= values.length) return;
+    if (valueIndex < 0 || valueIndex >= stableValues.length) return;
 
     prevStep.current = valueIndex;
-    const newValue = values[valueIndex];
-    const isLast = valueIndex === values.length - 1;
+    const newValue = stableValues[valueIndex];
+    const isLast = valueIndex === stableValues.length - 1;
 
     // Show old -> new crossfade
     if (valueRef.current && currentValue !== newValue) {
@@ -65,7 +73,7 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
       const tl = gsap.timeline({
         onComplete: () => {
           setShowOld(false);
-          if (isLast) onComplete?.();
+          if (isLast) onCompleteRef.current?.();
         },
       });
 
@@ -93,11 +101,11 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
       tl.call(() => setJustChanged(false), [], '+=0.5');
     } else {
       setCurrentValue(newValue);
-      if (isLast) onComplete?.();
+      if (isLast) onCompleteRef.current?.();
     }
-  }, [syncStep, values]);
+  }, [syncStep, stableValues]);
 
-  const totalSteps = values.length;
+  const totalSteps = stableValues.length;
   const currentIndex = Math.min(syncStep, totalSteps - 1);
 
   return (
@@ -162,7 +170,7 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
         {/* Progress dots */}
         {totalSteps > 1 && (
           <div className="flex gap-1.5">
-            {values.map((_, i) => (
+            {stableValues.map((_, i) => (
               <span
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors duration-300 ${

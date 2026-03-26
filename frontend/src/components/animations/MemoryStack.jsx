@@ -1,18 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 
-export default function MemoryStack({ frames: initialFrames = [], operations = [], onComplete }) {
+export default function MemoryStack({ frames: initialFrames = [], operations = [], duration = 3000, onComplete }) {
   const containerRef = useRef(null);
-  const [frames, setFrames] = useState([...initialFrames]);
+
+  // Stabilize props to prevent re-render loops
+  const stableInitialFrames = useMemo(() => initialFrames, [JSON.stringify(initialFrames)]);
+  const stableOperations = useMemo(() => operations, [JSON.stringify(operations)]);
+
+  const [frames, setFrames] = useState([...stableInitialFrames]);
   const frameRefs = useRef({});
   const frameKeyCounter = useRef(0);
 
   // Assign unique keys to initial frames
-  const [frameKeys] = useState(() => initialFrames.map(() => frameKeyCounter.current++));
+  const [frameKeys] = useState(() => stableInitialFrames.map(() => frameKeyCounter.current++));
   const [keys, setKeys] = useState([...frameKeys]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
     if (!containerRef.current) return;
+
+    const holdSeconds = Math.max(duration / 1000, 2);
 
     gsap.fromTo(
       containerRef.current,
@@ -20,17 +31,17 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
       { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }
     );
 
-    if (operations.length === 0) {
-      gsap.delayedCall(0.6, () => onComplete?.());
-      return;
+    if (stableOperations.length === 0) {
+      const id = gsap.delayedCall(0.6 + holdSeconds, () => onCompleteRef.current?.());
+      return () => { id.kill(); };
     }
 
-    const tl = gsap.timeline({ delay: 0.6, onComplete: () => onComplete?.() });
+    const tl = gsap.timeline({ delay: 0.6, onComplete: () => onCompleteRef.current?.() });
 
-    let currentFrames = [...initialFrames];
+    let currentFrames = [...stableInitialFrames];
     let currentKeys = [...frameKeys];
 
-    operations.forEach((op, idx) => {
+    stableOperations.forEach((op, idx) => {
       tl.call(
         () => {
           if (op.action === 'push' && op.frame) {
@@ -80,10 +91,13 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
       );
     });
 
+    // Hold so users can see the result before completing
+    tl.to({}, { duration: holdSeconds });
+
     return () => {
       tl.kill();
     };
-  }, []);
+  }, [stableInitialFrames, stableOperations, duration]);
 
   return (
     <div
