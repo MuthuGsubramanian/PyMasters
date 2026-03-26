@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import { Overview, LearningMap, ModuleViewer } from './pages/Dashboard';
 import Classroom from './pages/Classroom';
+import Playground from './pages/Playground';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function PrivateRoute({ children }) {
@@ -35,6 +36,7 @@ export default function App() {
               <Route path="learn" element={<ErrorBoundary><LearningMap /></ErrorBoundary>} />
               <Route path="learn/:id" element={<ErrorBoundary><ModuleViewer /></ErrorBoundary>} />
               <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
+              <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
