@@ -52,7 +52,7 @@ jobs:
             --set-env-vars "OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }},OLLAMA_API_URL=https://api.ollama.com/v1,OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.duckdb" \
             --memory 1Gi \
             --cpu 1 \
-            --min-instances 0 \
+            --min-instances 1 \
             --max-instances 3
 
       - name: Show deployment URL
