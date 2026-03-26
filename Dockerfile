@@ -39,6 +39,10 @@ COPY nginx.conf /etc/nginx/conf.d/pymasters.conf
 # Supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/pymasters.conf
 
+# Startup script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Data directory for DuckDB
 RUN mkdir -p /app/data
 
@@ -47,4 +51,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s \
     CMD curl -f http://localhost:8080/health || exit 1
 
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/pymasters.conf"]
+CMD ["/app/start.sh"]
