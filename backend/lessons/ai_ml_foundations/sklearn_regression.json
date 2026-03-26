@@ -1,0 +1,104 @@
+{
+  "id": "sklearn_regression",
+  "topic": "sklearn",
+  "track": "ai_ml_foundations",
+  "module": "sklearn",
+  "order": 2,
+  "title": {
+    "en": "scikit-learn Regression: Predicting Continuous Values"
+  },
+  "description": {
+    "en": "Build linear and polynomial regression models, interpret coefficients, and evaluate with MSE and R² score."
+  },
+  "xp_reward": 70,
+  "next_unlock": "sklearn_clustering",
+  "story_variants": {
+    "en": "## Regression: Predicting Numbers\n\nWhen the output is a **continuous number** (price, temperature, salary), you need **regression** rather than classification.\n\n### Linear Regression\n\nLinear regression fits the best straight line through your data: `y = mx + b`\n\n```python\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import mean_squared_error, r2_score\nimport numpy as np\n\n# Synthetic data\nnp.random.seed(42)\nX = np.random.randn(100, 1) * 10\ny = 3 * X.ravel() + 7 + np.random.randn(100) * 5\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)\n\nmodel = LinearRegression()\nmodel.fit(X_train, y_train)\n\npreds = model.predict(X_test)\nprint('R²  :', r2_score(y_test, preds))\nprint('MSE :', mean_squared_error(y_test, preds))\nprint('Coef:', model.coef_)      # ≈ [3.0]\nprint('Bias:', model.intercept_) # ≈ 7.0\n```\n\n### Regression Metrics\n\n| Metric | Formula | Good when... |\n|--------|---------|-------|\n| MSE | mean((y_true - y_pred)²) | Penalises large errors |\n| RMSE | sqrt(MSE) | Same units as y |\n| MAE | mean(|y_true - y_pred|) | Robust to outliers |\n| R² | 1 - SS_res/SS_tot | 1.0 is perfect; <0 worse than mean |\n\n### Polynomial Regression\n\nLinear regression only fits straight lines. For curves, use `PolynomialFeatures`:\n\n```python\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.pipeline import Pipeline\n\npoly_model = Pipeline([\n    ('poly', PolynomialFeatures(degree=2)),\n    ('linear', LinearRegression())\n])\n\npoly_model.fit(X_train, y_train)\npoly_preds = poly_model.predict(X_test)\n```\n\n### Feature Scaling\n\nMany models (especially regularised ones) need features on similar scales:\n\n```python\nfrom sklearn.preprocessing import StandardScaler\nscaler = StandardScaler()\nX_scaled = scaler.fit_transform(X_train)\n```\n\n> **Key Insight:** R² tells you how much variance in y is explained by the model. An R² of 0.85 means the model explains 85% of the variability in the target — the remaining 15% is noise or missing features."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "regression_steps",
+      "steps": [
+        {
+          "line": "model = LinearRegression()",
+          "highlight": "LinearRegression",
+          "explanation": { "en": "Instantiate the linear regression model — no hyperparameters needed for basic usage" }
+        },
+        {
+          "line": "model.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Learn the best-fit line: find optimal coefficients and intercept" }
+        },
+        {
+          "line": "preds = model.predict(X_test)",
+          "highlight": "predict",
+          "explanation": { "en": "Apply the learned line equation to new X values" }
+        },
+        {
+          "line": "print(r2_score(y_test, preds))",
+          "highlight": "r2_score",
+          "explanation": { "en": "R² close to 1.0 means the model explains nearly all variance" },
+          "output": "0.9823"
+        },
+        {
+          "line": "print(model.coef_)",
+          "highlight": "coef_",
+          "explanation": { "en": "The learned slope(s) — one per feature" },
+          "output": "[2.98]"
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "coef_box",
+      "variable": "model.coef_",
+      "value": "[2.98]",
+      "data_type": "ndarray",
+      "color": "#f7914f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "intercept_box",
+      "variable": "model.intercept_",
+      "value": "7.12",
+      "data_type": "float",
+      "color": "#4faf7f"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "regression_output",
+      "output": ["R²  : 0.9823", "MSE : 27.4", "RMSE: 5.23", "Coef: [2.98]", "Bias: 7.12"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Load the `california_housing` dataset from `sklearn.datasets`. Train a `LinearRegression` model and compute `r2` and `rmse` on the test set."
+      },
+      "hints": [
+        { "en": "from sklearn.datasets import fetch_california_housing" },
+        { "en": "rmse = mean_squared_error(y_test, preds, squared=False) or np.sqrt(mean_squared_error(...))" }
+      ],
+      "test_code": "import numpy as np\nfrom sklearn.metrics import r2_score, mean_squared_error\nassert isinstance(r2, float), 'r2 must be a float'\nassert 0 < r2 < 1, 'r2 should be between 0 and 1 for this dataset'\nassert rmse > 0, 'rmse must be positive'"
+    },
+    {
+      "instruction": {
+        "en": "Create a polynomial regression pipeline of degree 3 called `poly_pipeline`. Fit it to your training data and compare its R² to the plain linear regression model."
+      },
+      "hints": [
+        { "en": "from sklearn.preprocessing import PolynomialFeatures; from sklearn.pipeline import Pipeline" },
+        { "en": "poly_pipeline = Pipeline([('poly', PolynomialFeatures(degree=3)), ('lr', LinearRegression())])" }
+      ],
+      "test_code": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.linear_model import LinearRegression\nassert isinstance(poly_pipeline, Pipeline), 'poly_pipeline must be a sklearn Pipeline'\nsteps = dict(poly_pipeline.steps)\nassert 'poly' in steps or any(isinstance(s, PolynomialFeatures) for s in steps.values()), 'must include PolynomialFeatures'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

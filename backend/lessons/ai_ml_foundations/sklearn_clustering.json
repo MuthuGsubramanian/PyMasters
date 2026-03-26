@@ -1,0 +1,101 @@
+{
+  "id": "sklearn_clustering",
+  "topic": "sklearn",
+  "track": "ai_ml_foundations",
+  "module": "sklearn",
+  "order": 3,
+  "title": {
+    "en": "scikit-learn Clustering: Grouping Without Labels"
+  },
+  "description": {
+    "en": "Discover patterns with unsupervised learning — K-Means and DBSCAN, choosing K with the elbow method, and cluster evaluation."
+  },
+  "xp_reward": 70,
+  "next_unlock": "sklearn_evaluation",
+  "story_variants": {
+    "en": "## Clustering: Finding Groups in Unlabelled Data\n\n**Clustering** is an **unsupervised** learning task — you have data but no labels. The algorithm finds natural groups (clusters) on its own.\n\n### K-Means Clustering\n\nK-Means divides data into **K clusters** by iteratively:\n1. Assigning each point to the nearest centroid\n2. Moving centroids to the mean of assigned points\n3. Repeating until stable\n\n```python\nfrom sklearn.cluster import KMeans\nfrom sklearn.datasets import make_blobs\nimport numpy as np\n\n# Synthetic data with 4 natural clusters\nX, _ = make_blobs(n_samples=300, centers=4, random_state=42)\n\nkmeans = KMeans(n_clusters=4, random_state=42, n_init=10)\nkmeans.fit(X)\n\nlabels = kmeans.labels_          # cluster id per sample\ncentroids = kmeans.cluster_centers_  # centroid coordinates\nprint(labels[:10])  # e.g. [1 0 3 2 1 0 0 3 ...]\n```\n\n### Choosing K: The Elbow Method\n\n```python\ninertias = []\nfor k in range(1, 10):\n    km = KMeans(n_clusters=k, random_state=42, n_init=10)\n    km.fit(X)\n    inertias.append(km.inertia_)\n\n# Plot inertias and look for the 'elbow' — the k where\n# improvement starts to diminish\n```\n\n### DBSCAN: Density-Based Clustering\n\nUnlike K-Means, **DBSCAN** does not need K upfront. It finds clusters of arbitrary shape and marks noise as `-1`:\n\n```python\nfrom sklearn.cluster import DBSCAN\n\ndb = DBSCAN(eps=0.5, min_samples=5)\ndb.fit(X)\nlabels_db = db.labels_  # -1 = noise\n```\n\n### K-Means vs DBSCAN\n\n| Aspect | K-Means | DBSCAN |\n|--------|---------|--------|\n| K required | Yes | No |\n| Cluster shape | Spherical only | Arbitrary |\n| Handles noise | No | Yes (labels as -1) |\n| Scalability | Fast | Slower for large data |\n\n> **Key Insight:** K-Means works best when clusters are roughly spherical and similar in size. DBSCAN shines when clusters have irregular shapes or when you need to automatically detect outliers (noise points)."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "kmeans_steps",
+      "steps": [
+        {
+          "line": "X, _ = make_blobs(n_samples=300, centers=4)",
+          "highlight": "make_blobs",
+          "explanation": { "en": "Generate synthetic data with 4 natural blob clusters" }
+        },
+        {
+          "line": "kmeans = KMeans(n_clusters=4, n_init=10)",
+          "highlight": "KMeans",
+          "explanation": { "en": "Instantiate K-Means with K=4; n_init runs 10 random starts" }
+        },
+        {
+          "line": "kmeans.fit(X)",
+          "highlight": "fit",
+          "explanation": { "en": "Run the iterative assignment and centroid update steps" }
+        },
+        {
+          "line": "labels = kmeans.labels_",
+          "highlight": "labels_",
+          "explanation": { "en": "Each sample gets an integer cluster ID (0 to K-1)" }
+        },
+        {
+          "line": "db = DBSCAN(eps=0.5, min_samples=5).fit(X)",
+          "highlight": "DBSCAN",
+          "explanation": { "en": "DBSCAN groups dense regions; -1 means noise" }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "kmeans_vs_dbscan",
+      "left": {
+        "label": "K-Means",
+        "code": "KMeans(n_clusters=4)\n.fit(X)",
+        "note": "Spherical clusters, K required"
+      },
+      "right": {
+        "label": "DBSCAN",
+        "code": "DBSCAN(eps=0.5,\n  min_samples=5).fit(X)",
+        "note": "Any shape, noise detection"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "cluster_output",
+      "output": ["KMeans labels[:5]: [1 0 3 2 1]", "Centroids shape: (4, 2)", "DBSCAN labels[:5]: [0 0 1 2 0]", "Noise points: 3"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Generate synthetic data with `make_blobs(n_samples=200, centers=3, random_state=0)`. Fit a KMeans model with `n_clusters=3` and store the labels in `cluster_labels`. Count how many points are in each cluster."
+      },
+      "hints": [
+        { "en": "from sklearn.datasets import make_blobs; from sklearn.cluster import KMeans" },
+        { "en": "cluster_labels = kmeans.labels_" },
+        { "en": "import numpy as np; np.unique(cluster_labels, return_counts=True)" }
+      ],
+      "test_code": "import numpy as np\nfrom sklearn.datasets import make_blobs\nassert len(cluster_labels) == 200, 'must label all 200 samples'\nassert set(cluster_labels).issubset({0,1,2}), 'cluster ids must be 0, 1, or 2'"
+    },
+    {
+      "instruction": {
+        "en": "Implement the elbow method: fit KMeans for k=1 to k=8 on the same data. Store inertia values in a list called `inertias`."
+      },
+      "hints": [
+        { "en": "inertias = []" },
+        { "en": "for k in range(1, 9): km = KMeans(n_clusters=k, n_init=10, random_state=0); km.fit(X); inertias.append(km.inertia_)" }
+      ],
+      "test_code": "assert len(inertias) == 8, 'inertias must have 8 values (k=1..8)'\nassert inertias[0] > inertias[-1], 'inertia should decrease as k increases'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

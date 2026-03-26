@@ -1,0 +1,54 @@
+{
+  "id": "fileio_writing",
+  "topic": "fileio_writing",
+  "track": "python_fundamentals",
+  "module": "file_io",
+  "order": 2,
+  "title": { "en": "Writing Files: The Printing Press" },
+  "description": { "en": "Master writing, appending, and working with CSV and JSON files — persisting data beyond your program's lifetime." },
+  "xp_reward": 50,
+  "next_unlock": "errors_handling",
+  "story_variants": {
+    "en": "## The Printing Press\n\nA printing press stamps words onto paper — permanently. Once printed, the page persists long after the press stops running.\n\nWriting to a file works the same way: data **persists** after your program ends.\n\n### Write Modes\n\n| Mode | Behaviour |\n|------|----------|\n| `'w'` | write (overwrites if exists) |\n| `'a'` | append (adds to end) |\n| `'x'` | exclusive create (fails if exists) |\n| `'wb'` | write binary |\n\n### Writing Methods\n- `f.write('text')` — write a string (no automatic newline!)\n- `f.writelines(list)` — write list of strings\n\n### CSV and JSON\n```python\nimport csv\nimport json\n```\n\n> **Warning:** `'w'` mode **destroys** existing file content. Use `'a'` to add to a file without erasing it.\n\n### CSV Writing Pattern\n```python\nwith open('data.csv', 'w', newline='') as f:\n    writer = csv.writer(f)\n    writer.writerow(['name', 'age'])\n    writer.writerows(data)\n```"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Write to a file\nwith open('output.txt', 'w') as f:\n    f.write('Hello, World!\\n')\n    f.write('Second line\\n')\n\n# Append to file\nwith open('log.txt', 'a') as f:\n    f.write('New log entry\\n')\n\n# Write JSON\nimport json\ndata = {'name': 'Alice', 'scores': [90, 85, 92]}\nwith open('data.json', 'w') as f:\n    json.dump(data, f, indent=2)\n\n# Read it back\nwith open('data.json', 'r') as f:\n    loaded = json.load(f)\nprint(loaded['name'])  # Alice",
+        "language": "python"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output",
+      "lines": ["Alice"]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write a list of 3 fruits to a file 'fruits.txt', one per line, then read it back and verify." },
+      "expected_output": "['apple\\n', 'banana\\n', 'cherry\\n']",
+      "hints": [
+        { "en": "Use 'w' mode and write each fruit + '\\n'" },
+        { "en": "Or use f.writelines([f + '\\n' for f in fruits])" },
+        { "en": "Read back with f.readlines()" }
+      ],
+      "test_code": "import tempfile, os\nfruits = ['apple', 'banana', 'cherry']\ntmp = tempfile.mktemp(suffix='.txt')\nwith open(tmp, 'w') as f:\n    for fruit in fruits:\n        f.write(fruit + '\\n')\nwith open(tmp, 'r') as f:\n    lines = f.readlines()\nassert [l.strip() for l in lines] == fruits\nos.unlink(tmp)"
+    },
+    {
+      "instruction": { "en": "Serialize a dict {'city': 'Paris', 'pop': 2161000} to JSON and deserialize it, checking the values." },
+      "expected_output": "Paris 2161000",
+      "hints": [
+        { "en": "import json; json.dump(data, f)" },
+        { "en": "Read back with json.load(f)" },
+        { "en": "Access loaded['city'] and loaded['pop']" }
+      ],
+      "test_code": "import json, tempfile, os\ndata = {'city': 'Paris', 'pop': 2161000}\ntmp = tempfile.mktemp(suffix='.json')\nwith open(tmp, 'w') as f:\n    json.dump(data, f)\nwith open(tmp, 'r') as f:\n    loaded = json.load(f)\nassert loaded['city'] == 'Paris'\nassert loaded['pop'] == 2161000\nos.unlink(tmp)"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

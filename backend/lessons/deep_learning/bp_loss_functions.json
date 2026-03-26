@@ -1,0 +1,102 @@
+{
+  "id": "bp_loss_functions",
+  "topic": "loss_functions",
+  "track": "deep_learning",
+  "module": "backpropagation",
+  "order": 2,
+  "title": {
+    "en": "Loss Functions: Measuring How Wrong We Are"
+  },
+  "description": {
+    "en": "Learn about MSE and cross-entropy loss — the functions that quantify prediction error and drive the learning process."
+  },
+  "xp_reward": 65,
+  "next_unlock": "bp_optimization",
+  "story_variants": {
+    "en": "## Loss Functions: Measuring How Wrong We Are\n\nA **loss function** (or cost function) measures the gap between the model's predictions and the true labels. The goal of training is to minimise this gap.\n\n### Mean Squared Error (MSE)\n\nUsed for **regression** tasks (predicting continuous values):\n\n```\nMSE = (1/N) · Σ (yᵢ − ŷᵢ)²\n```\n\n```python\ndef mse(y_true, y_pred):\n    n = len(y_true)\n    return sum((yt - yp)**2 for yt, yp in zip(y_true, y_pred)) / n\n```\n\n- Squared error **penalises large mistakes heavily**.\n- Gradient is smooth and easy to differentiate.\n\n### Cross-Entropy Loss\n\nUsed for **classification** tasks. For binary classification:\n\n```\nBCE = −(1/N) · Σ [yᵢ · log(ŷᵢ) + (1−yᵢ) · log(1−ŷᵢ)]\n```\n\n```python\nimport math\ndef binary_cross_entropy(y_true, y_pred):\n    eps = 1e-15  # avoid log(0)\n    n = len(y_true)\n    return -sum(\n        yt * math.log(yp + eps) + (1-yt) * math.log(1-yp+eps)\n        for yt, yp in zip(y_true, y_pred)\n    ) / n\n```\n\n### Comparing Loss Functions\n\n| Task | Loss Function | Why |\n|------|--------------|-----|\n| Regression | MSE | Penalises distance |\n| Binary classification | Binary Cross-Entropy | Penalises wrong probabilities |\n| Multi-class | Categorical Cross-Entropy | Correct class probability |\n| Object detection | Combination | Mix of regression + classification |\n\n> **Key Concept:** Cross-entropy loss is very sensitive to confident wrong predictions. If your model says P=0.001 for the correct class, the loss is enormous: −log(0.001) = 6.9.\n\n### Perfect vs Bad Predictions\n\n| Prediction | True Label | MSE | BCE |\n|-----------|-----------|-----|-----|\n| 0.95 | 1 | 0.002 | 0.051 |\n| 0.50 | 1 | 0.250 | 0.693 |\n| 0.05 | 1 | 0.902 | 2.996 |"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "loss_comparison",
+      "items": [
+        {"label": "MSE", "value": "Σ(y−ŷ)²/N", "color": "#4f8ef7", "note": "Regression tasks"},
+        {"label": "Binary CE", "value": "−Σ[y·log(ŷ)+(1−y)·log(1−ŷ)]/N", "color": "#e74c3c", "note": "Binary classification"},
+        {"label": "Categorical CE", "value": "−Σ yᵢ·log(ŷᵢ)", "color": "#a44ff7", "note": "Multi-class classification"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "loss_code",
+      "steps": [
+        {
+          "line": "y_true = [1, 0, 1, 1]",
+          "highlight": "y_true",
+          "explanation": {"en": "True labels"}
+        },
+        {
+          "line": "y_pred = [0.9, 0.1, 0.8, 0.3]",
+          "highlight": "y_pred",
+          "explanation": {"en": "Model predicted probabilities"}
+        },
+        {
+          "line": "mse_val = mse(y_true, y_pred)",
+          "highlight": "mse_val",
+          "explanation": {"en": "Compute MSE: average squared differences"},
+          "output": "MSE = 0.0775"
+        },
+        {
+          "line": "bce_val = binary_cross_entropy(y_true, y_pred)",
+          "highlight": "bce_val",
+          "explanation": {"en": "Compute BCE: heavily penalises confident wrong predictions"},
+          "output": "BCE = 0.3677"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "loss_table",
+      "label": "Loss Values by Confidence",
+      "structure": "table",
+      "data": [
+        ["Prediction", "True", "MSE", "BCE"],
+        ["0.95", "1", "0.002", "0.051"],
+        ["0.50", "1", "0.250", "0.693"],
+        ["0.05", "1", "0.902", "2.996"]
+      ],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "loss_flow",
+      "steps": ["Predictions ŷ", "Compare to y", "Compute Loss", "Gradient ∂L/∂ŷ", "Backpropagate"]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["MSE  = 0.0775", "BCE  = 0.3677", "Bad prediction (0.05 for true=1): BCE = 2.996"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `mse(y_true, y_pred)` and `binary_cross_entropy(y_true, y_pred)` functions. Use `math.log` for BCE and add a small epsilon (1e-15) to avoid log(0)."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "MSE: sum of (true - pred)^2, divided by N"},
+        {"en": "BCE: -mean(y*log(p+eps) + (1-y)*log(1-p+eps))"},
+        {"en": "Perfect predictions should give very low BCE, near 0"}
+      ],
+      "test_code": "import math\nassert abs(mse([1,0,1], [1,0,1]) - 0.0) < 1e-9, 'perfect predictions: MSE=0'\nassert abs(mse([1,0], [0,1]) - 1.0) < 1e-9, 'worst case: MSE=1'\nbce_good = binary_cross_entropy([1], [0.999])\nbce_bad  = binary_cross_entropy([1], [0.001])\nassert bce_good < bce_bad, 'confident correct should have lower BCE'\nassert bce_good < 0.01, 'BCE near 0 for correct confident prediction'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

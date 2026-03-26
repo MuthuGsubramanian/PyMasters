@@ -18,6 +18,7 @@ from vaathiyaar.engine import call_vaathiyaar, evaluate_code, get_ollama_client,
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
 from vaathiyaar.training_data import record_training_pair
+from backend.modules.trigger_engine import check_triggers
 
 router = APIRouter(prefix="/api/classroom", tags=["classroom"])
 
@@ -92,17 +93,84 @@ def _get_db_path() -> str:
     return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
-def _load_lesson(lesson_id: str) -> dict:
-    """Load a lesson JSON file. Raises HTTPException 404 if not found."""
-    if not LESSONS_DIR.exists():
-        raise HTTPException(status_code=404, detail="Lessons directory not found.")
+def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | None:
+    """Load a lesson by ID, searching across all track subdirectories."""
+    base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
+    # Search track subdirectories
+    for track_dir in sorted(base.iterdir()):
+        if track_dir.is_dir():
+            lesson_file = track_dir / f"{lesson_id}.json"
+            if lesson_file.exists():
+                with open(lesson_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+    # Fallback: check root directory (backward compat)
+    root_file = base / f"{lesson_id}.json"
+    if root_file.exists():
+        with open(root_file, "r", encoding="utf-8") as f:
+            return json.load(f)
 
-    lesson_file = LESSONS_DIR / f"{lesson_id}.json"
-    if not lesson_file.exists():
-        raise HTTPException(status_code=404, detail=f"Lesson '{lesson_id}' not found.")
+    # Check generated lessons in database
+    try:
+        conn = sqlite3.connect(_get_db_path())
+        row = conn.execute(
+            "SELECT lesson_data FROM generated_lessons WHERE id = ?", [lesson_id]
+        ).fetchone()
+        conn.close()
+        if row:
+            return json.loads(row[0])
+    except Exception:
+        pass
+    return None
 
-    with open(lesson_file, "r", encoding="utf-8") as f:
-        return json.load(f)
+
+def _list_all_lessons(lessons_dir: str = None, user_id: int = None) -> list[dict]:
+    """List all lessons across all track subdirectories."""
+    base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
+    lessons = []
+    for track_dir in sorted(base.iterdir()):
+        if track_dir.is_dir() and track_dir.name != "__pycache__":
+            for lesson_file in sorted(track_dir.glob("*.json")):
+                if lesson_file.name == "schema.json":
+                    continue
+                with open(lesson_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    lessons.append({
+                        "id": data.get("id", lesson_file.stem),
+                        "title": data.get("title", {}),
+                        "description": data.get("description", {}),
+                        "xp_reward": data.get("xp_reward"),
+                        "topic": data.get("topic"),
+                        "track": data.get("track"),
+                        "module": data.get("module"),
+                        "order": data.get("order", 0),
+                    })
+
+    # Generated lessons from database
+    if user_id:
+        try:
+            conn = sqlite3.connect(_get_db_path())
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT lesson_data FROM generated_lessons WHERE user_id = ?", [user_id]
+            ).fetchall()
+            conn.close()
+            for row in rows:
+                data = json.loads(row["lesson_data"])
+                lessons.append({
+                    "id": data.get("id"),
+                    "title": data.get("title", {}),
+                    "description": data.get("description", {}),
+                    "xp_reward": data.get("xp_reward", 50),
+                    "topic": data.get("topic"),
+                    "track": "generated",
+                    "module": data.get("module"),
+                    "order": 0,
+                    "generated": True,
+                })
+        except Exception:
+            pass
+
+    return lessons
 
 
 # ---------------------------------------------------------------------------
@@ -239,30 +307,20 @@ def chat_stream(request: ChatRequest):
 
 
 @router.get("/lessons")
-def list_lessons():
+async def list_lessons(user_id: int = None):
     """
-    List all available lessons (metadata only: id, title, description, xp_reward, topic).
+    List all available lessons (metadata only: id, title, description, xp_reward, topic, track, module, order).
     Returns an empty list if the lessons directory doesn't exist yet.
+    If user_id is provided, also includes generated lessons from the database.
     """
     if not LESSONS_DIR.exists():
-        return []
+        return {"lessons": []}
 
-    lessons = []
-    for lesson_file in sorted(LESSONS_DIR.glob("*.json")):
-        try:
-            with open(lesson_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            lessons.append({
-                "id": data.get("id", lesson_file.stem),
-                "title": data.get("title", ""),
-                "description": data.get("description", ""),
-                "xp_reward": data.get("xp_reward", 0),
-                "topic": data.get("topic", ""),
-            })
-        except Exception:
-            continue  # Skip malformed files gracefully
-
-    return lessons
+    try:
+        lessons = _list_all_lessons(user_id=user_id)
+        return {"lessons": lessons}
+    except Exception:
+        return {"lessons": []}
 
 
 @router.get("/lesson/{lesson_id}")
@@ -278,7 +336,9 @@ def get_lesson(
     - set speed_multiplier based on skill level
     - check adaptation_points against mastery
     """
-    lesson = _load_lesson(lesson_id)
+    lesson = _load_lesson_from_dir(lesson_id)
+    if lesson is None:
+        raise HTTPException(status_code=404, detail=f"Lesson '{lesson_id}' not found.")
 
     if not user_id:
         return lesson
@@ -364,7 +424,7 @@ def evaluate(request: EvaluateRequest):
 
     # Award XP when student completes a challenge successfully
     if result["success"] and request.topic:
-        lesson = _load_lesson(request.lesson_id) if request.lesson_id else None
+        lesson = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
         xp_reward = lesson.get("xp_reward", 25) if lesson else 25
 
         try:
@@ -386,6 +446,17 @@ def evaluate(request: EvaluateRequest):
         update_mastery(db_path, request.user_id, request.topic, new_mastery)
     except Exception:
         pass
+
+    # Check triggers for AI-inferred module generation
+    try:
+        check_triggers(
+            user_id=request.user_id,
+            signal_type="code_evaluation",
+            topic=request.topic,
+            value={"success": result.get("success", False)},
+        )
+    except Exception:
+        pass  # Trigger check should never block evaluation
 
     return result
 

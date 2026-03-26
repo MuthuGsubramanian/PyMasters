@@ -1,0 +1,158 @@
+{
+  "id": "variables_conversion",
+  "topic": "variables",
+  "track": "python_fundamentals",
+  "module": "variables_and_types",
+  "order": 3,
+  "title": {
+    "en": "Type Conversion: The Shape Shifter",
+    "ta": "வகை மாற்றம்: வடிவம் மாற்றுபவர்"
+  },
+  "description": {
+    "en": "Learn to convert between Python data types using int(), float(), str(), and bool()."
+  },
+  "xp_reward": 50,
+  "next_unlock": "variables_operators",
+  "story_variants": {
+    "en": "## The Shape Shifter\n\nIn a fantasy world, a shape shifter can transform between any form — wolf, eagle, human — while keeping their identity. Python lets you **convert values between types** in the same way using built-in functions.\n\n### Type Conversion Functions\n\n| Function | Converts to | Example | Result |\n|----------|-------------|---------|--------|\n| `int()` | Integer | `int('42')` | `42` |\n| `float()` | Float | `float(7)` | `7.0` |\n| `str()` | String | `str(100)` | `'100'` |\n| `bool()` | Boolean | `bool(0)` | `False` |\n\n### What Converts to False?\n\nWhen converting to `bool`, these values become `False`:\n- `0` and `0.0`\n- `''` (empty string)\n- `[]` (empty list)\n- `None`\n\nEverything else becomes `True`.\n\n### Explicit vs Implicit Conversion\n\n```python\n# Explicit — you call the function\nage_str = '25'\nage_int = int(age_str)   # convert string to int\n\n# Implicit — Python handles it automatically\ntotal = 10 + 2.5         # int + float => float (5.5)\n```\n\n> **Watch Out:** Not every conversion is valid. `int('hello')` will raise a `ValueError` because `'hello'` is not a number. Always convert values you know are numeric.",
+    "ta": "## வடிவம் மாற்றுபவர்\n\nஒரு கற்பனை உலகில், ஒரு வடிவம் மாற்றுபவர் எந்த வடிவத்திற்கும் மாறலாம். Python உங்களை உள்ளமைக்கப்பட்ட செயல்பாடுகள் மூலம் **மதிப்புகளை வகைகளுக்கு இடையில் மாற்ற** அனுமதிக்கிறது.\n\n### வகை மாற்றும் செயல்பாடுகள்\n\n| செயல்பாடு | மாற்றுகிறது | எடுத்துக்காட்டு | முடிவு |\n|-----------|------------|----------------|--------|\n| `int()` | முழு எண் | `int('42')` | `42` |\n| `float()` | தசம எண் | `float(7)` | `7.0` |\n| `str()` | சரம் | `str(100)` | `'100'` |\n| `bool()` | பூலியன் | `bool(0)` | `False` |\n\n> **கவனம்:** ஒவ்வொரு மாற்றமும் செல்லுபடியாகாது. `int('hello')` `ValueError` தரும் ஏனெனில் `'hello'` ஒரு எண் அல்ல."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_conversion",
+      "steps": [
+        {
+          "line": "age_str = '25'",
+          "highlight": "age_str",
+          "explanation": {
+            "en": "Start with a string that looks like a number",
+            "ta": "எண் போல் தெரியும் சரத்துடன் தொடங்கவும்"
+          }
+        },
+        {
+          "line": "age_int = int(age_str)",
+          "highlight": "int",
+          "explanation": {
+            "en": "int() converts the string '25' into the integer 25",
+            "ta": "int() '25' என்ற சரத்தை 25 என்ற முழு எண்ணாக மாற்றுகிறது"
+          }
+        },
+        {
+          "line": "print(age_int, type(age_int))",
+          "highlight": "print",
+          "explanation": {
+            "en": "Confirm the value and its new type",
+            "ta": "மதிப்பு மற்றும் அதன் புதிய வகையை உறுதிப்படுத்தவும்"
+          },
+          "output": "25 <class 'int'>"
+        },
+        {
+          "line": "score = 88",
+          "highlight": "score",
+          "explanation": {
+            "en": "Start with an integer",
+            "ta": "முழு எண்ணுடன் தொடங்கவும்"
+          }
+        },
+        {
+          "line": "score_float = float(score)",
+          "highlight": "float",
+          "explanation": {
+            "en": "float() converts the integer 88 into 88.0",
+            "ta": "float() 88 என்ற முழு எண்ணை 88.0 ஆக மாற்றுகிறது"
+          }
+        },
+        {
+          "line": "print(score_float, type(score_float))",
+          "highlight": "print",
+          "explanation": {
+            "en": "The integer now has a decimal point",
+            "ta": "முழு எண்ணுக்கு இப்போது தசம புள்ளி உள்ளது"
+          },
+          "output": "88.0 <class 'float'>"
+        },
+        {
+          "line": "num = 42",
+          "highlight": "num",
+          "explanation": {
+            "en": "An integer we want to embed in a message",
+            "ta": "ஒரு செய்தியில் சேர்க்க விரும்பும் முழு எண்"
+          }
+        },
+        {
+          "line": "message = 'The answer is ' + str(num)",
+          "highlight": "str",
+          "explanation": {
+            "en": "str() converts 42 to '42' so it can be joined with text",
+            "ta": "str() 42-ஐ '42' ஆக மாற்றுகிறது, இதனால் உரையுடன் இணைக்கலாம்"
+          }
+        },
+        {
+          "line": "print(message)",
+          "highlight": "print",
+          "explanation": {
+            "en": "The combined string is printed",
+            "ta": "இணைக்கப்பட்ட சரம் அச்சிடப்படுகிறது"
+          },
+          "output": "The answer is 42"
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "left": {
+        "label": "Before conversion",
+        "items": ["'25'  (str)", "88   (int)", "42   (int)", "0    (int)"]
+      },
+      "right": {
+        "label": "After conversion",
+        "items": ["25   (int)", "88.0 (float)", "'42' (str)", "False (bool)"]
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": [
+        "25 <class 'int'>",
+        "88.0 <class 'float'>",
+        "The answer is 42"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "You are given a string `num_str = '7'` and an integer `base = 3`. Convert `num_str` to an integer, convert `base` to a float, add them together, and print the result."
+      },
+      "expected_output": "10.0",
+      "hints": [
+        { "en": "Use int() to convert num_str to an integer: int(num_str)" },
+        { "en": "Use float() to convert base to a float: float(base)" },
+        { "en": "Add the two converted values and print the result" }
+      ],
+      "test_code": "num_str = '7'\nbase = 3\nconverted_num = int(num_str)\nconverted_base = float(base)\nresult = converted_num + converted_base\nassert result == 10.0, f'Expected 10.0 but got {result}'\nassert type(result) == float, 'Result must be a float'"
+    },
+    {
+      "instruction": {
+        "en": "Convert the integer `0` to a bool and the integer `5` to a bool. Print both results and verify that `bool(0)` is `False` and `bool(5)` is `True`."
+      },
+      "expected_output": "False\nTrue",
+      "hints": [
+        { "en": "bool(0) evaluates to False because 0 is a falsy value" },
+        { "en": "bool(5) evaluates to True because any non-zero number is truthy" },
+        { "en": "Use print() to display the results" }
+      ],
+      "test_code": "assert bool(0) == False, 'bool(0) must be False'\nassert bool(5) == True, 'bool(5) must be True'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

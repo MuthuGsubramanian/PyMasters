@@ -1,0 +1,110 @@
+{
+  "id": "rnn_basics",
+  "topic": "rnn_sequence_processing",
+  "track": "deep_learning",
+  "module": "rnn",
+  "order": 1,
+  "title": {
+    "en": "RNNs: Networks That Remember"
+  },
+  "description": {
+    "en": "Learn how Recurrent Neural Networks process sequences by maintaining a hidden state that carries context from past inputs."
+  },
+  "xp_reward": 70,
+  "next_unlock": "rnn_lstm",
+  "story_variants": {
+    "en": "## RNNs: Networks That Remember\n\nA standard feedforward network sees each input in isolation. A **Recurrent Neural Network (RNN)** has a memory — its **hidden state** — that is updated at each time step and carries information from the past.\n\n### The RNN Equation\n\nAt each time step `t`:\n\n```\nh_t = tanh(W_h · h_{t-1} + W_x · x_t + b)\n```\n\n- `x_t` — current input\n- `h_{t-1}` — previous hidden state (the memory)\n- `W_h`, `W_x` — weight matrices\n- `h_t` — new hidden state\n\n### Implementing a Simple RNN Cell\n\n```python\nimport numpy as np\n\ndef rnn_cell(x_t, h_prev, W_h, W_x, b):\n    return np.tanh(W_h @ h_prev + W_x @ x_t + b)\n\n# Process a sequence\nh = np.zeros(hidden_size)\nfor x_t in sequence:\n    h = rnn_cell(x_t, h, W_h, W_x, b)\n# h now summarises the entire sequence\n```\n\n### Sequence Applications\n\n| Task | Input Sequence | Output |\n|------|---------------|--------|\n| Sentiment analysis | Words in review | Positive/Negative |\n| Language modelling | Previous words | Next word |\n| Machine translation | Source sentence | Target sentence |\n| Time series forecast | Past values | Future value |\n\n### The Vanishing Gradient Problem\n\n> **Key Concept:** In long sequences, gradients must travel back through many time steps. They tend to shrink (vanish) or explode exponentially, making it hard to learn long-range dependencies. LSTM and GRU architectures solve this.\n\n### Unrolling Through Time\n\nAn RNN with 5 time steps is equivalent to a 5-layer deep network — but all layers **share the same weights**. This is called **Backpropagation Through Time (BPTT)**."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rnn_cell_map",
+      "nodes": [
+        {"id": "xt", "label": "Input x_t", "color": "#4f8ef7"},
+        {"id": "h_prev", "label": "h_{t-1} (memory)", "color": "#f7914f"},
+        {"id": "Wx", "label": "W_x · x_t", "color": "#a44ff7"},
+        {"id": "Wh", "label": "W_h · h_{t-1}", "color": "#a44ff7"},
+        {"id": "sum", "label": "Sum + bias", "color": "#4fc97a"},
+        {"id": "tanh", "label": "tanh", "color": "#e74c3c"},
+        {"id": "h_new", "label": "h_t (new state)", "color": "#f7914f"}
+      ],
+      "edges": [
+        {"from": "xt", "to": "Wx"},
+        {"from": "h_prev", "to": "Wh"},
+        {"from": "Wx", "to": "sum"},
+        {"from": "Wh", "to": "sum"},
+        {"from": "sum", "to": "tanh"},
+        {"from": "tanh", "to": "h_new"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "sequence_flow",
+      "steps": ["x_0", "h_0 → h_1", "x_1 → h_2", "x_2 → h_3", "x_3 → output"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rnn_code",
+      "steps": [
+        {
+          "line": "h = np.zeros(4)   # initial hidden state",
+          "highlight": "h",
+          "explanation": {"en": "Start with zero hidden state"}
+        },
+        {
+          "line": "for x_t in sequence:",
+          "highlight": "for",
+          "explanation": {"en": "Process each element of the sequence"}
+        },
+        {
+          "line": "    h = np.tanh(W_h @ h + W_x @ x_t + b)",
+          "highlight": "tanh",
+          "explanation": {"en": "Update hidden state — blends old memory with new input"}
+        },
+        {
+          "line": "output = W_out @ h",
+          "highlight": "output",
+          "explanation": {"en": "Final hidden state summarises the whole sequence"},
+          "output": "Sequence encoded"
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "time_steps",
+      "frames": [
+        {"label": "h_3 (final state)", "color": "#4fc97a"},
+        {"label": "h_2", "color": "#f7914f"},
+        {"label": "h_1", "color": "#f7914f"},
+        {"label": "h_0 = zeros", "color": "#4f8ef7"}
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["t=0: h=[0.46, -0.12, 0.33, 0.71]", "t=1: h=[0.81, -0.34, 0.22, 0.56]", "t=2: h=[0.92, -0.61, 0.44, 0.38]", "t=3: h=[0.77, -0.55, 0.51, 0.29]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `rnn_forward(sequence, W_x, W_h, b, h_init)` using NumPy. The function should process a list of input vectors and return the final hidden state. Use `np.tanh` as the activation function."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Start with h = h_init"},
+        {"en": "For each x_t: h = np.tanh(W_h @ h + W_x @ x_t + b)"},
+        {"en": "Return h after the loop"}
+      ],
+      "test_code": "import numpy as np\nnp.random.seed(42)\nsequence = [np.array([1.0, 0.0]), np.array([0.0, 1.0])]\nW_x = np.eye(3, 2)\nW_h = np.eye(3)\nb   = np.zeros(3)\nh0  = np.zeros(3)\nresult = rnn_forward(sequence, W_x, W_h, b, h0)\nassert result.shape == (3,), f'Expected shape (3,), got {result.shape}'\nassert np.all(result >= -1) and np.all(result <= 1), 'tanh output must be in [-1,1]'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

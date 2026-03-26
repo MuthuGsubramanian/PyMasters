@@ -227,4 +227,18 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
         conn.close()
 
     profile["mastery"] = get_mastery_map(db_path, user_id)
+
+    # Add recent learning signals
+    conn = sqlite3.connect(db_path)
+    try:
+        signals = conn.execute(
+            "SELECT signal_type, topic, created_at FROM learning_signals WHERE user_id = ? ORDER BY created_at DESC LIMIT 10",
+            [user_id],
+        ).fetchall()
+        profile["recent_signals"] = [
+            {"signal_type": s[0], "topic": s[1], "created_at": s[2]} for s in signals
+        ]
+    finally:
+        conn.close()
+
     return profile

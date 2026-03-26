@@ -1,0 +1,55 @@
+{
+  "id": "functions_lambda",
+  "topic": "functions_lambda",
+  "track": "python_fundamentals",
+  "module": "functions",
+  "order": 4,
+  "title": { "en": "Lambda & Functional Tools: The Inline Stamp" },
+  "description": { "en": "Write anonymous one-liner functions with lambda, and use map/filter for elegant data transformations." },
+  "xp_reward": 50,
+  "next_unlock": "ds_dicts",
+  "story_variants": {
+    "en": "## The Inline Stamp\n\nSometimes you need a **rubber stamp** — a tiny tool used once or twice, not worth naming and storing. Python's `lambda` is exactly that: a tiny, anonymous function.\n\n### Lambda Syntax\n```python\nlambda parameters: expression\n```\n\n### Lambda vs def\n\n| Feature | `def` | `lambda` |\n|---------|-------|----------|\n| Name | has one | anonymous |\n| Lines | many | one |\n| Return | explicit | implicit |\n| Use | general | callbacks, sorting |\n\n### map and filter\n\n- `map(func, iterable)` — apply `func` to every item\n- `filter(func, iterable)` — keep items where `func` returns `True`\n\n> **Best practice:** Use lambda when the function is short and used in-place. For anything complex, write a named `def` — readability wins.\n\n### Common Patterns\n- `sorted(items, key=lambda x: x[1])` — sort by second element\n- `list(map(lambda x: x*2, nums))` — double every number\n- `list(filter(lambda x: x > 0, nums))` — keep positives only"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Simple lambda\ndouble = lambda x: x * 2\nprint(double(5))   # 10\n\n# Lambda as sort key\nstudents = [('Alice', 90), ('Bob', 75), ('Carol', 88)]\nsorted_students = sorted(students, key=lambda s: s[1])\nprint(sorted_students)\n# [('Bob', 75), ('Carol', 88), ('Alice', 90)]\n\n# map\nnums = [1, 2, 3, 4]\nsquared = list(map(lambda x: x**2, nums))\nprint(squared)  # [1, 4, 9, 16]\n\n# filter\nevens = list(filter(lambda x: x % 2 == 0, nums))\nprint(evens)    # [2, 4]",
+        "language": "python"
+      }
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "lambda_vs_def",
+      "left": { "label": "def", "code": "def double(x):\n    return x * 2" },
+      "right": { "label": "lambda", "code": "double = lambda x: x * 2" }
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Use map and a lambda to convert a list of temperatures in Celsius [0, 20, 37, 100] to Fahrenheit (F = C*9/5 + 32)." },
+      "expected_output": "[32.0, 68.0, 98.6, 212.0]",
+      "hints": [
+        { "en": "lambda c: c * 9/5 + 32" },
+        { "en": "Wrap with list(map(...))" },
+        { "en": "list(map(lambda c: c*9/5+32, [0, 20, 37, 100]))" }
+      ],
+      "test_code": "celsius = [0, 20, 37, 100]\nfahrenheit = list(map(lambda c: c * 9/5 + 32, celsius))\nassert fahrenheit == [32.0, 68.0, 98.6, 212.0]"
+    },
+    {
+      "instruction": { "en": "Sort this list of words by length (shortest first): ['banana', 'fig', 'apple', 'kiwi']" },
+      "expected_output": "['fig', 'kiwi', 'apple', 'banana']",
+      "hints": [
+        { "en": "Use sorted() with a key parameter" },
+        { "en": "key=lambda w: len(w)" },
+        { "en": "sorted(['banana', 'fig', 'apple', 'kiwi'], key=lambda w: len(w))" }
+      ],
+      "test_code": "words = ['banana', 'fig', 'apple', 'kiwi']\nresult = sorted(words, key=lambda w: len(w))\nassert result == ['fig', 'kiwi', 'apple', 'banana']"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

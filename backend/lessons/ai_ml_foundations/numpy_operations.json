@@ -1,0 +1,110 @@
+{
+  "id": "numpy_operations",
+  "topic": "numpy",
+  "track": "ai_ml_foundations",
+  "module": "numpy",
+  "order": 2,
+  "title": {
+    "en": "NumPy Operations: Vectorised Math & Aggregation"
+  },
+  "description": {
+    "en": "Master element-wise arithmetic, universal functions (ufuncs), and aggregation methods like sum, mean, min, max."
+  },
+  "xp_reward": 60,
+  "next_unlock": "numpy_broadcasting",
+  "story_variants": {
+    "en": "## NumPy Operations: Math Without Loops\n\nOne of NumPy's greatest powers is performing operations on **every element at once** — no `for` loop needed. This is called **vectorisation**.\n\n### Element-wise Arithmetic\n\nWhen you add, subtract, multiply or divide two arrays of the same shape, the operation happens element by element:\n\n```python\nimport numpy as np\n\na = np.array([1, 2, 3, 4])\nb = np.array([10, 20, 30, 40])\n\nprint(a + b)    # [11 22 33 44]\nprint(b - a)    # [ 9 18 27 36]\nprint(a * b)    # [ 10  40  90 160]\nprint(b / a)    # [10. 10. 10. 10.]\nprint(a ** 2)   # [ 1  4  9 16]\n```\n\n### Universal Functions (ufuncs)\n\nNumPy provides **ufuncs** — functions that apply element-wise automatically:\n\n| Function | Description |\n|----------|-------------|\n| `np.sqrt(a)` | Square root of each element |\n| `np.abs(a)` | Absolute value |\n| `np.exp(a)` | e raised to each element |\n| `np.log(a)` | Natural log of each element |\n| `np.sin(a)` | Sine of each element |\n\n### Aggregation Methods\n\nAggregate all elements into a single value (or along an axis):\n\n```python\nm = np.array([[1, 2, 3],\n              [4, 5, 6]])\n\nprint(m.sum())          # 21  — sum of all elements\nprint(m.mean())         # 3.5 — mean of all elements\nprint(m.min())          # 1\nprint(m.max())          # 6\nprint(m.sum(axis=0))    # [5 7 9]  — sum each column\nprint(m.sum(axis=1))    # [ 6 15] — sum each row\nprint(m.std())          # standard deviation\n```\n\n> **Key Concept:** The `axis` parameter tells NumPy which dimension to collapse. `axis=0` collapses rows (giving per-column results). `axis=1` collapses columns (giving per-row results)."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "elementwise_ops",
+      "steps": [
+        {
+          "line": "a = np.array([1, 2, 3, 4])",
+          "highlight": "np.array",
+          "explanation": { "en": "Create a simple integer array" }
+        },
+        {
+          "line": "b = np.array([10, 20, 30, 40])",
+          "highlight": "np.array",
+          "explanation": { "en": "Create a second array of the same shape" }
+        },
+        {
+          "line": "print(a + b)",
+          "highlight": "+",
+          "explanation": { "en": "Add each corresponding pair of elements" },
+          "output": "[11 22 33 44]"
+        },
+        {
+          "line": "print(a ** 2)",
+          "highlight": "**",
+          "explanation": { "en": "Square every element in a" },
+          "output": "[ 1  4  9 16]"
+        },
+        {
+          "line": "print(m.sum(axis=0))",
+          "highlight": "axis=0",
+          "explanation": { "en": "Sum down each column" },
+          "output": "[5 7 9]"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "matrix_agg",
+      "structure_type": "matrix",
+      "data": [[1, 2, 3], [4, 5, 6]],
+      "highlight_color": "#4f8ef7"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "axis_compare",
+      "left": {
+        "label": "axis=0 (collapse rows)",
+        "code": "m.sum(axis=0)\n# [5, 7, 9]",
+        "note": "One result per column"
+      },
+      "right": {
+        "label": "axis=1 (collapse columns)",
+        "code": "m.sum(axis=1)\n# [6, 15]",
+        "note": "One result per row"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "agg_output",
+      "output": ["sum → 21", "mean → 3.5", "min → 1", "max → 6", "std → 1.708..."]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a 2-D NumPy array called `scores` with shape (3, 4) filled with integers of your choice. Compute `row_means` as the mean of each row."
+      },
+      "hints": [
+        { "en": "Use np.array([...]) with nested lists to create a 3x4 matrix" },
+        { "en": "row_means = scores.mean(axis=1) gives a mean per row" }
+      ],
+      "test_code": "import numpy as np\nassert isinstance(scores, np.ndarray), 'scores must be a numpy array'\nassert scores.shape == (3, 4), 'scores must be shape (3, 4)'\nassert isinstance(row_means, np.ndarray), 'row_means must be a numpy array'\nassert row_means.shape == (3,), 'row_means must have 3 values (one per row)'"
+    },
+    {
+      "instruction": {
+        "en": "Given `arr = np.array([-3, -1, 0, 2, 5])`, create `abs_arr` using np.abs and `squared` by squaring arr."
+      },
+      "hints": [
+        { "en": "abs_arr = np.abs(arr)" },
+        { "en": "squared = arr ** 2" }
+      ],
+      "test_code": "import numpy as np\narr = np.array([-3, -1, 0, 2, 5])\nassert np.array_equal(abs_arr, np.abs(arr)), 'abs_arr must be the absolute values'\nassert np.array_equal(squared, arr**2), 'squared must be arr squared'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

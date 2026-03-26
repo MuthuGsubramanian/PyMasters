@@ -1,0 +1,56 @@
+{
+  "id": "oop_inheritance",
+  "topic": "oop_inheritance",
+  "track": "python_fundamentals",
+  "module": "oop",
+  "order": 2,
+  "title": { "en": "Inheritance: The Family Tree" },
+  "description": { "en": "Learn inheritance and super() — how child classes reuse and extend parent class behaviour, like inheriting traits in a family." },
+  "xp_reward": 50,
+  "next_unlock": "oop_polymorphism",
+  "story_variants": {
+    "en": "## The Family Tree\n\nChildren **inherit** traits from parents — eye colour, height, personality — but they also add their own unique characteristics.\n\nIn Python, a **child class** inherits all methods and attributes of its **parent class**, and can add or override them.\n\n### Inheritance Syntax\n```python\nclass Child(Parent):\n    ...\n```\n\n### super() — Calling the Parent\n\n| Use | Code |\n|-----|------|\n| Call parent `__init__` | `super().__init__(args)` |\n| Call parent method | `super().method()` |\n\n### Method Resolution Order (MRO)\n- Python searches the class hierarchy from child → parent → grandparent\n- `ClassName.__mro__` shows the full order\n\n> **Rule of thumb:** Use inheritance for **is-a** relationships. A `Dog` is an `Animal`. A `Manager` is an `Employee`.\n\n### Override vs Extend\n- **Override:** replace parent's method entirely\n- **Extend:** call `super().method()` then add more logic"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "class Animal:\n    def __init__(self, name):\n        self.name = name\n\n    def speak(self):\n        return f'{self.name} makes a sound'\n\nclass Dog(Animal):\n    def speak(self):  # override\n        return f'{self.name} says Woof!'\n\nclass Cat(Animal):\n    def __init__(self, name, indoor):\n        super().__init__(name)  # call parent\n        self.indoor = indoor\n\n    def speak(self):\n        return f'{self.name} says Meow!'\n\nd = Dog('Rex')\nc = Cat('Whiskers', True)\nprint(d.speak())    # Rex says Woof!\nprint(c.speak())    # Whiskers says Meow!\nprint(c.indoor)     # True",
+        "language": "python"
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "hierarchy",
+      "nodes": [
+        { "label": "Animal", "children": ["Dog", "Cat"] }
+      ]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create a class 'Vehicle' with attribute 'speed'. Then create 'Car(Vehicle)' that adds attribute 'brand'. Both set up via __init__ using super()." },
+      "expected_output": "Tesla 120",
+      "hints": [
+        { "en": "class Vehicle: def __init__(self, speed): self.speed = speed" },
+        { "en": "class Car(Vehicle): def __init__(self, brand, speed): super().__init__(speed); self.brand = brand" },
+        { "en": "c = Car('Tesla', 120); print(c.brand, c.speed)" }
+      ],
+      "test_code": "class Vehicle:\n    def __init__(self, speed):\n        self.speed = speed\nclass Car(Vehicle):\n    def __init__(self, brand, speed):\n        super().__init__(speed)\n        self.brand = brand\nc = Car('Tesla', 120)\nassert c.brand == 'Tesla'\nassert c.speed == 120"
+    },
+    {
+      "instruction": { "en": "Create 'Employee' with name and salary. Create 'Manager(Employee)' that adds 'department' and overrides __init__ with super()." },
+      "expected_output": "Alice Engineering 90000",
+      "hints": [
+        { "en": "Manager.__init__ should call super().__init__(name, salary)" },
+        { "en": "Then set self.department = department" },
+        { "en": "m = Manager('Alice', 90000, 'Engineering')" }
+      ],
+      "test_code": "class Employee:\n    def __init__(self, name, salary):\n        self.name = name\n        self.salary = salary\nclass Manager(Employee):\n    def __init__(self, name, salary, department):\n        super().__init__(name, salary)\n        self.department = department\nm = Manager('Alice', 90000, 'Engineering')\nassert m.name == 'Alice'\nassert m.salary == 90000\nassert m.department == 'Engineering'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

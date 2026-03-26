@@ -1,0 +1,87 @@
+{
+  "id": "pandas_filtering",
+  "topic": "pandas",
+  "track": "ai_ml_foundations",
+  "module": "pandas",
+  "order": 2,
+  "title": {
+    "en": "Pandas Filtering: Boolean Indexing & Query"
+  },
+  "description": {
+    "en": "Filter DataFrames using boolean conditions, multiple criteria with & and |, and the convenient .query() method."
+  },
+  "xp_reward": 60,
+  "next_unlock": "pandas_grouping",
+  "story_variants": {
+    "en": "## Filtering Data: Asking Questions of Your Dataset\n\nReal datasets are large. **Filtering** lets you extract only the rows that satisfy a condition — like asking \"show me all students who passed\" or \"find products that cost under $50\".\n\n### Boolean Indexing\n\nA boolean condition applied to a column returns a **Series of True/False values**. Use it inside `df[...]` to keep only the `True` rows:\n\n```python\nimport pandas as pd\n\ndf = pd.DataFrame({\n    'name':  ['Alice', 'Bob', 'Charlie', 'Diana'],\n    'score': [88, 45, 92, 67],\n    'passed': [True, False, True, True]\n})\n\n# Keep rows where score > 70\npassed = df[df['score'] > 70]\nprint(passed)\n```\n\n### Multiple Conditions\n\nCombine conditions with `&` (AND) and `|` (OR). Always wrap each condition in parentheses:\n\n```python\n# Passed AND score above 85\nhigh_pass = df[(df['passed'] == True) & (df['score'] > 85)]\n\n# Failed OR score below 50\nstruggling = df[(df['passed'] == False) | (df['score'] < 50)]\n```\n\n### The .query() Method\n\n`.query()` lets you write filter conditions as a **readable string**:\n\n```python\nhigh_pass = df.query('passed == True and score > 85')\nstruggling = df.query('score < 50')\n```\n\n### Useful Filter Patterns\n\n| Pattern | Code |\n|---------|------|\n| Null check | `df[df['col'].isna()]` |\n| Not null | `df[df['col'].notna()]` |\n| Value in list | `df[df['col'].isin(['A','B'])]` |\n| String contains | `df[df['col'].str.contains('xyz')]` |\n| Between values | `df[df['col'].between(10, 50)]` |\n\n> **Key Insight:** Boolean indexing creates a **new** filtered DataFrame — it does not modify the original. Always assign the result to a new variable if you want to keep it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "filter_steps",
+      "steps": [
+        {
+          "line": "mask = df['score'] > 70",
+          "highlight": "> 70",
+          "explanation": { "en": "This creates a Series: [True, False, True, False, ...]" }
+        },
+        {
+          "line": "passed = df[mask]",
+          "highlight": "df[mask]",
+          "explanation": { "en": "Only rows where mask is True are kept" }
+        },
+        {
+          "line": "high_pass = df[(df['passed']==True) & (df['score']>85)]",
+          "highlight": "&",
+          "explanation": { "en": "& means both conditions must be True" }
+        },
+        {
+          "line": "result = df.query('score > 70')",
+          "highlight": "query",
+          "explanation": { "en": ".query() is often cleaner than boolean indexing for simple conditions" }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "filter_table",
+      "structure_type": "table",
+      "data": [["name", "score", "passed"], ["Alice", 88, true], ["Bob", 45, false], ["Charlie", 92, true], ["Diana", 67, true]],
+      "highlight_color": "#4faf7f"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "filter_output",
+      "output": ["After score > 70:", "      name  score  passed", "0    Alice     88    True", "2  Charlie     92    True", "3    Diana     67    True"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Given a DataFrame `df` with columns `product`, `price`, and `in_stock`, filter to get `affordable` (price < 100 AND in_stock is True)."
+      },
+      "hints": [
+        { "en": "affordable = df[(df['price'] < 100) & (df['in_stock'] == True)]" },
+        { "en": "Remember parentheses around each condition" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(df, pd.DataFrame), 'df must be a DataFrame'\nassert 'price' in df.columns and 'in_stock' in df.columns\nexpected = df[(df['price'] < 100) & (df['in_stock'] == True)]\nassert len(affordable) == len(expected), 'affordable must match the expected filter result'"
+    },
+    {
+      "instruction": {
+        "en": "Using `.query()`, filter the same `df` to get `expensive` — products costing more than 200. Store the result in `expensive`."
+      },
+      "hints": [
+        { "en": "expensive = df.query('price > 200')" }
+      ],
+      "test_code": "import pandas as pd\nexpected = df[df['price'] > 200]\nassert len(expensive) == len(expected), 'expensive must contain all rows where price > 200'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

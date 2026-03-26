@@ -26,23 +26,59 @@ export default function StoryCard({ content = '', illustration = '', duration = 
 
   const emoji = ILLUSTRATION_MAP[illustration] || '\u{1F4D6}';
 
-  // Check if content has markdown sections (## headings)
-  const hasStructuredContent = typeof stableContent === 'string' && stableContent.includes('##');
-
   // Markdown components for structured story rendering
   const storyMarkdownComponents = {
-    h2: ({children}) => <h2 className="text-sm font-bold text-purple-700 mt-3 mb-1 uppercase tracking-wide">{children}</h2>,
-    h3: ({children}) => <h3 className="text-sm font-semibold text-purple-600 mt-2 mb-1">{children}</h3>,
-    p: ({children}) => <p className="text-slate-700 text-sm leading-relaxed mb-2">{children}</p>,
-    ul: ({children}) => <ul className="text-sm text-slate-700 mb-2 space-y-1 ml-1">{children}</ul>,
-    li: ({children}) => (
-      <li className="flex items-start gap-2">
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 flex-shrink-0" />
-        <span>{children}</span>
-      </li>
+    h2: ({children}) => (
+        <h2 className="text-lg font-bold text-slate-900 mt-4 mb-2 pb-1 border-b border-purple-200">
+            {children}
+        </h2>
     ),
+    h3: ({children}) => (
+        <h3 className="text-base font-bold text-purple-700 mt-3 mb-1.5">
+            {children}
+        </h3>
+    ),
+    p: ({children}) => (
+        <p className="text-sm text-slate-700 mb-2 leading-relaxed">{children}</p>
+    ),
+    ul: ({children}) => (
+        <ul className="list-disc list-inside text-sm text-slate-700 mb-2 space-y-1 pl-2">
+            {children}
+        </ul>
+    ),
+    ol: ({children}) => (
+        <ol className="list-decimal list-inside text-sm text-slate-700 mb-2 space-y-1 pl-2">
+            {children}
+        </ol>
+    ),
+    li: ({children}) => (
+        <li className="text-sm text-slate-700 leading-relaxed">{children}</li>
+    ),
+    table: ({children}) => (
+        <div className="overflow-x-auto my-3 rounded-lg border border-slate-200">
+            <table className="text-sm w-full">{children}</table>
+        </div>
+    ),
+    thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
+    tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
+    tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+    th: ({children}) => (
+        <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
+            {children}
+        </th>
+    ),
+    td: ({children}) => (
+        <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
+    ),
+    code: ({inline, children}) => inline
+        ? <code className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
+        : <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
     strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
-    code: ({children}) => <code className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+    blockquote: ({children}) => (
+        <div className="my-3 p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+            <div className="text-sm text-amber-800">{children}</div>
+        </div>
+    ),
   };
 
   useEffect(() => {
@@ -139,11 +175,9 @@ export default function StoryCard({ content = '', illustration = '', duration = 
           </div>
 
           <div ref={textRef} className="text-slate-700 text-sm leading-relaxed min-h-[3rem]">
-            {hasStructuredContent ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={storyMarkdownComponents}>{displayed}</ReactMarkdown>
-            ) : (
-              <p>{displayed}</p>
-            )}
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={storyMarkdownComponents}>
+              {displayed}
+            </ReactMarkdown>
             <span className="inline-block w-0.5 h-4 bg-purple-500 ml-0.5 animate-pulse align-middle" />
           </div>
         </div>

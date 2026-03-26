@@ -1,0 +1,55 @@
+{
+  "id": "ds_sets",
+  "topic": "ds_sets",
+  "track": "python_fundamentals",
+  "module": "data_structures",
+  "order": 3,
+  "title": { "en": "Sets: The Guest List Bouncer" },
+  "description": { "en": "Learn sets — unordered collections of unique items — and their powerful operations: union, intersection, and difference." },
+  "xp_reward": 50,
+  "next_unlock": "ds_tuples",
+  "story_variants": {
+    "en": "## The Guest List Bouncer\n\nA nightclub bouncer has a **guest list**. No duplicates — each name is either on it or not. If you're already on the list, adding your name again changes nothing.\n\nPython **sets** behave exactly like that guest list.\n\n### Creating Sets\n```python\nguests = {'Alice', 'Bob', 'Carol'}\nempty_set = set()   # NOT {} — that's a dict!\n```\n\n### Set Operations\n\n| Operation | Symbol | Meaning |\n|-----------|--------|---------|\n| Union | `\\|` | all items from both |\n| Intersection | `&` | only items in both |\n| Difference | `-` | in A but not B |\n| Symmetric diff | `^` | in one but not both |\n\n> **Key property:** Sets have **O(1)** membership testing — `x in my_set` is instant regardless of size. Lists are O(n).\n\n### When to Use Sets\n- Removing duplicates: `unique = list(set(items))`\n- Fast membership checks\n- Finding common or unique items between collections\n- Mathematical set operations"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Set basics\nfruits = {'apple', 'banana', 'cherry'}\nfruits.add('mango')\nfruits.add('apple')  # duplicate — ignored!\nprint(len(fruits))   # still 4\n\n# Membership test\nprint('banana' in fruits)   # True\nprint('grape' in fruits)    # False\n\n# Set operations\na = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\nprint(a | b)  # {1, 2, 3, 4, 5, 6}  union\nprint(a & b)  # {3, 4}              intersection\nprint(a - b)  # {1, 2}              difference",
+        "language": "python"
+      }
+    },
+    {
+      "type": "DataStructure",
+      "id": "set_venn",
+      "structure": "set",
+      "items": [1, 2, 3, 4, 5, 6]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Remove duplicates from this list using a set: [1, 2, 2, 3, 3, 3, 4]" },
+      "expected_output": "{1, 2, 3, 4}",
+      "hints": [
+        { "en": "Pass the list to set()" },
+        { "en": "unique = set([1, 2, 2, 3, 3, 3, 4])" },
+        { "en": "The result will have only unique elements" }
+      ],
+      "test_code": "nums = [1, 2, 2, 3, 3, 3, 4]\nunique = set(nums)\nassert unique == {1, 2, 3, 4}"
+    },
+    {
+      "instruction": { "en": "Find the common friends between Alice's set {'Bob', 'Carol', 'Dave'} and Bob's set {'Carol', 'Eve', 'Alice'}." },
+      "expected_output": "{'Carol'}",
+      "hints": [
+        { "en": "Use the intersection operator &" },
+        { "en": "alice_friends & bob_friends" },
+        { "en": "The result should be {'Carol'}" }
+      ],
+      "test_code": "alice_friends = {'Bob', 'Carol', 'Dave'}\nbob_friends = {'Carol', 'Eve', 'Alice'}\ncommon = alice_friends & bob_friends\nassert common == {'Carol'}"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

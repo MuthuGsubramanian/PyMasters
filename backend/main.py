@@ -22,6 +22,8 @@ from routes.language import router as language_router
 from routes.profile import router as profile_router
 from routes.classroom import router as classroom_router
 from routes.playground import router as playground_router
+from routes.notifications import router as notifications_router
+from routes.modules import router as modules_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -183,6 +185,83 @@ def init_db():
             )
         """)
 
+        # ── Notification tables ──────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                link TEXT,
+                metadata TEXT,
+                read INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notification_deliveries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                notification_id INTEGER NOT NULL REFERENCES notifications(id),
+                channel TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                sent_at TIMESTAMP,
+                error_message TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notification_preferences (
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                channel TEXT NOT NULL,
+                type TEXT NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                quiet_hours_start TEXT,
+                quiet_hours_end TEXT,
+                PRIMARY KEY (user_id, channel, type)
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_deliveries_notification ON notification_deliveries(notification_id)")
+
+        # ── Module generation tables ──────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS module_generation_jobs (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                topic TEXT NOT NULL,
+                trigger TEXT NOT NULL,
+                trigger_detail TEXT,
+                status TEXT NOT NULL DEFAULT 'queued',
+                current_stage_data TEXT,
+                result_lesson_id TEXT,
+                error_message TEXT,
+                priority INTEGER NOT NULL DEFAULT 2,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS generated_lessons (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                job_id TEXT REFERENCES module_generation_jobs(id),
+                topic TEXT NOT NULL,
+                track TEXT,
+                lesson_data TEXT NOT NULL,
+                trigger TEXT,
+                trigger_detail TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_user ON module_generation_jobs(user_id, status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON module_generation_jobs(status, priority)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_user ON generated_lessons(user_id)")
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
@@ -216,6 +295,8 @@ app.include_router(language_router)
 app.include_router(profile_router)
 app.include_router(classroom_router)
 app.include_router(playground_router)
+app.include_router(notifications_router)
+app.include_router(modules_router)
 
 # --- CORS ---
 origins = [

@@ -1,0 +1,179 @@
+{
+  "id": "variables_types",
+  "topic": "variables",
+  "track": "python_fundamentals",
+  "module": "variables_and_types",
+  "order": 2,
+  "title": {
+    "en": "Data Types: The Toolbox",
+    "ta": "தரவு வகைகள்: கருவிப்பெட்டி"
+  },
+  "description": {
+    "en": "Explore Python's core data types — int, float, str, bool, and NoneType — using the toolbox metaphor."
+  },
+  "xp_reward": 50,
+  "next_unlock": "variables_conversion",
+  "story_variants": {
+    "en": "## The Toolbox\n\nA master craftsperson keeps **different compartments** in their toolbox — one for wrenches, one for screwdrivers, one for measuring tape. Python works the same way: every value has a **type** that determines what you can do with it.\n\n### Python's Core Types\n\n| Type | Keyword | Example | Description |\n|------|---------|---------|-------------|\n| Integer | `int` | `42` | Whole numbers, positive or negative |\n| Float | `float` | `3.14` | Numbers with a decimal point |\n| String | `str` | `'hello'` | Text enclosed in quotes |\n| Boolean | `bool` | `True` | Either `True` or `False` |\n| None | `NoneType` | `None` | Represents \"no value\" |\n\n### Checking Types with `type()`\n\nPython gives you a built-in function to inspect any value's type:\n\n```python\nprint(type(42))        # <class 'int'>\nprint(type(3.14))      # <class 'float'>\nprint(type('hello'))   # <class 'str'>\nprint(type(True))      # <class 'bool'>\nprint(type(None))      # <class 'NoneType'>\n```\n\n### Mutable vs Immutable\n\n| Category | Types | Can change in-place? |\n|----------|-------|----------------------|\n| Immutable | `int`, `float`, `str`, `bool`, `NoneType` | No — reassign instead |\n| Mutable | `list`, `dict`, `set` | Yes — modify directly |\n\n> **Key Concept:** Python uses **dynamic typing** — you never declare a type. Python reads the value you assign and automatically picks the right compartment in its toolbox.",
+    "ta": "## கருவிப்பெட்டி\n\nஒரு திறமையான கைவினைஞர் தங்கள் கருவிப்பெட்டியில் **வெவ்வேறு பகுதிகளை** வைத்திருப்பார் — ஒன்று ரேஞ்சுகளுக்கு, ஒன்று ஸ்க்ரூடிரைவர்களுக்கு. Python அதே போல் வேலை செய்கிறது: ஒவ்வொரு மதிப்புக்கும் ஒரு **வகை** உள்ளது.\n\n### Python-ன் முக்கிய வகைகள்\n\n| வகை | முக்கிய வார்த்தை | எடுத்துக்காட்டு | விளக்கம் |\n|------|----------------|----------------|----------|\n| முழு எண் | `int` | `42` | நேர்மறை அல்லது எதிர்மறை முழு எண்கள் |\n| தசம எண் | `float` | `3.14` | தசம புள்ளியுடன் கூடிய எண்கள் |\n| சரம் | `str` | `'hello'` | மேற்கோள் குறிகளில் உரை |\n| பூலியன் | `bool` | `True` | `True` அல்லது `False` மட்டும் |\n| நொண்டி | `NoneType` | `None` | \"மதிப்பு இல்லை\" என்று குறிக்கிறது |\n\n### `type()` மூலம் வகைகளை சரிபார்க்கவும்\n\n> **முக்கிய கருத்து:** Python **dynamic typing** பயன்படுத்துகிறது — நீங்கள் வகையை அறிவிக்க வேண்டியதில்லை. நீங்கள் ஒதுக்கும் மதிப்பை Python படித்து தானாகவே சரியான வகையைத் தேர்ந்தெடுக்கும்."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_types",
+      "steps": [
+        {
+          "line": "count = 10",
+          "highlight": "count",
+          "explanation": {
+            "en": "An integer — a whole number with no decimal point",
+            "ta": "முழு எண் — தசம புள்ளி இல்லாத எண்"
+          }
+        },
+        {
+          "line": "print(type(count))",
+          "highlight": "type",
+          "explanation": {
+            "en": "type() reveals what kind of value is stored",
+            "ta": "type() சேமிக்கப்பட்ட மதிப்பின் வகையை வெளிப்படுத்துகிறது"
+          },
+          "output": "<class 'int'>"
+        },
+        {
+          "line": "price = 9.99",
+          "highlight": "price",
+          "explanation": {
+            "en": "A float — a number with a decimal point",
+            "ta": "தசம எண் — தசம புள்ளியுடன் கூடிய எண்"
+          }
+        },
+        {
+          "line": "print(type(price))",
+          "highlight": "type",
+          "explanation": {
+            "en": "Python identifies this as a float automatically",
+            "ta": "Python இதை தானாகவே float என்று அடையாளம் காட்டுகிறது"
+          },
+          "output": "<class 'float'>"
+        },
+        {
+          "line": "greeting = 'Hello!'",
+          "highlight": "greeting",
+          "explanation": {
+            "en": "A string — text wrapped in single or double quotes",
+            "ta": "சரம் — ஒற்றை அல்லது இரட்டை மேற்கோள் குறிகளில் உரை"
+          }
+        },
+        {
+          "line": "print(type(greeting))",
+          "highlight": "type",
+          "explanation": {
+            "en": "Python identifies this as a str",
+            "ta": "Python இதை str என்று அடையாளம் காட்டுகிறது"
+          },
+          "output": "<class 'str'>"
+        },
+        {
+          "line": "is_active = True",
+          "highlight": "is_active",
+          "explanation": {
+            "en": "A boolean — only True or False are valid values",
+            "ta": "பூலியன் — True அல்லது False மட்டுமே செல்லுபடியான மதிப்புகள்"
+          }
+        },
+        {
+          "line": "print(type(is_active))",
+          "highlight": "type",
+          "explanation": {
+            "en": "Python identifies this as a bool",
+            "ta": "Python இதை bool என்று அடையாளம் காட்டுகிறது"
+          },
+          "output": "<class 'bool'>"
+        },
+        {
+          "line": "result = None",
+          "highlight": "result",
+          "explanation": {
+            "en": "None means 'no value' — useful as a placeholder",
+            "ta": "None என்பது 'மதிப்பு இல்லை' — placeholder ஆக பயனுள்ளது"
+          }
+        },
+        {
+          "line": "print(type(result))",
+          "highlight": "type",
+          "explanation": {
+            "en": "Python identifies this as NoneType",
+            "ta": "Python இதை NoneType என்று அடையாளம் காட்டுகிறது"
+          },
+          "output": "<class 'NoneType'>"
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_count",
+      "variable": "count",
+      "value": 10,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_price",
+      "variable": "price",
+      "value": 9.99,
+      "data_type": "float",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_greeting",
+      "variable": "greeting",
+      "value": "Hello!",
+      "data_type": "str",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_is_active",
+      "variable": "is_active",
+      "value": true,
+      "data_type": "bool",
+      "color": "#f74fa4"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "mutable_vs_immutable",
+      "left": {
+        "label": "Immutable (cannot change in-place)",
+        "items": ["int", "float", "str", "bool", "NoneType"]
+      },
+      "right": {
+        "label": "Mutable (can change in-place)",
+        "items": ["list", "dict", "set"]
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create one variable of each type: an `int`, a `float`, a `str`, a `bool`, and `None`. Then print the `type()` of each variable."
+      },
+      "expected_output": "<class 'int'>\n<class 'float'>\n<class 'str'>\n<class 'bool'>\n<class 'NoneType'>",
+      "hints": [
+        { "en": "Use a whole number for int: my_int = 7" },
+        { "en": "Use a decimal for float: my_float = 2.5" },
+        { "en": "Use quotes for str: my_str = 'hello'" }
+      ],
+      "test_code": "assert type(my_int) == int, 'my_int must be an int'\nassert type(my_float) == float, 'my_float must be a float'\nassert type(my_str) == str, 'my_str must be a str'\nassert type(my_bool) == bool, 'my_bool must be a bool'\nassert my_none is None, 'my_none must be None'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

@@ -4,6 +4,7 @@ Stores conversations in JSONL format compatible with Ollama/OpenAI fine-tuning.
 """
 
 import json
+import os
 import uuid
 from datetime import datetime
 
@@ -163,3 +164,82 @@ def get_training_stats(db_path: str) -> dict:
         "min_date": str(row[2]) if row[2] else None,
         "max_date": str(row[3]) if row[3] else None,
     }
+
+
+def export_training_data(output_path: str = "training_export.jsonl", min_quality: float = 0.5) -> int:
+    """Export training data as JSONL for fine-tuning. Returns count."""
+    db_path = os.environ.get("DB_PATH", "pymasters.db")
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+
+    rows = conn.execute(
+        "SELECT * FROM training_data WHERE quality_score >= ? ORDER BY created_at ASC",
+        [min_quality],
+    ).fetchall()
+
+    count = 0
+    with open(output_path, "w", encoding="utf-8") as f:
+        for row in rows:
+            profile = json.loads(row["profile_json"]) if row["profile_json"] else {}
+            context = json.loads(row["context_json"]) if row["context_json"] else {}
+
+            from backend.vaathiyaar.modelfile import build_system_prompt
+            system_prompt = build_system_prompt(profile, context)
+
+            output = row["output_text"]
+            try:
+                json.loads(output)
+            except (json.JSONDecodeError, TypeError):
+                output = json.dumps({"message": output})
+
+            entry = {
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": row["input_text"]},
+                    {"role": "assistant", "content": output},
+                ]
+            }
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            count += 1
+
+    conn.close()
+    return count
+
+
+def export_curriculum_as_training(lessons_dir: str, output_path: str = "curriculum_training.jsonl") -> int:
+    """Convert pre-built lessons into training data format for fine-tuning."""
+    from pathlib import Path
+    from backend.vaathiyaar.modelfile import build_system_prompt
+
+    base = Path(lessons_dir)
+    count = 0
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        for track_dir in sorted(base.iterdir()):
+            if not track_dir.is_dir() or track_dir.name == "__pycache__":
+                continue
+            for lesson_file in sorted(track_dir.glob("*.json")):
+                if lesson_file.name == "schema.json":
+                    continue
+                with open(lesson_file, "r", encoding="utf-8") as lf:
+                    lesson = json.load(lf)
+
+                system = build_system_prompt({}, {"topic": lesson.get("topic", "")})
+
+                story_en = lesson.get("story_variants", {}).get("en", "")
+                if story_en:
+                    entry = {
+                        "messages": [
+                            {"role": "system", "content": system},
+                            {"role": "user", "content": f"Teach me about {lesson.get('topic', '')}. Start with a story."},
+                            {"role": "assistant", "content": json.dumps({
+                                "message": story_en,
+                                "phase": "story",
+                                "animation": {"sequence": lesson.get("animation_sequence", [])},
+                            }, ensure_ascii=False)},
+                        ]
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                    count += 1
+
+    return count

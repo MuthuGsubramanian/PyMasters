@@ -1,0 +1,115 @@
+{
+  "id": "pt_training",
+  "topic": "pytorch_training",
+  "track": "deep_learning",
+  "module": "pytorch",
+  "order": 3,
+  "title": {
+    "en": "Building and Training a Neural Network in PyTorch"
+  },
+  "description": {
+    "en": "Put it all together: define an nn.Module, write a training loop, validate performance, and save/load model checkpoints."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Building and Training a Neural Network in PyTorch\n\nAll the pieces come together here. We will define a model using `nn.Module`, write the training loop, track validation loss, and save our trained weights.\n\n### Defining a Model\n\n```python\nimport torch\nimport torch.nn as nn\n\nclass MLP(nn.Module):\n    def __init__(self, in_features, hidden, out_features):\n        super().__init__()\n        self.net = nn.Sequential(\n            nn.Linear(in_features, hidden),\n            nn.ReLU(),\n            nn.Linear(hidden, hidden),\n            nn.ReLU(),\n            nn.Linear(hidden, out_features),\n        )\n\n    def forward(self, x):\n        return self.net(x)\n\nmodel = MLP(10, 64, 1)\n```\n\n### The Training Loop\n\n```python\noptimizer = torch.optim.Adam(model.parameters(), lr=1e-3)\ncriterion = nn.MSELoss()\n\nfor epoch in range(100):\n    model.train()\n    optimizer.zero_grad()\n    predictions = model(X_train)\n    loss = criterion(predictions, y_train)\n    loss.backward()\n    optimizer.step()\n\n    if epoch % 10 == 0:\n        model.eval()\n        with torch.no_grad():\n            val_loss = criterion(model(X_val), y_val)\n        print(f'Epoch {epoch}: train={loss:.4f}, val={val_loss:.4f}')\n```\n\n### Training Loop Anatomy\n\n| Step | Code | Purpose |\n|------|------|---------|\n| 1 | `model.train()` | Enable dropout/batchnorm training mode |\n| 2 | `optimizer.zero_grad()` | Clear stale gradients |\n| 3 | `model(X)` | Forward pass |\n| 4 | `loss.backward()` | Compute gradients |\n| 5 | `optimizer.step()` | Update weights |\n\n### Saving and Loading\n\n```python\n# Save\ntorch.save(model.state_dict(), 'model.pt')\n\n# Load\nmodel = MLP(10, 64, 1)\nmodel.load_state_dict(torch.load('model.pt'))\nmodel.eval()\n```\n\n> **Key Concept:** `model.train()` vs `model.eval()` affects layers like Dropout and BatchNorm. Always call `model.eval()` before inference to get deterministic predictions, and `model.train()` before each training epoch."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "training_loop_flow",
+      "steps": ["model.train()", "zero_grad()", "Forward Pass", "Compute Loss", "loss.backward()", "optimizer.step()", "Repeat"]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "training_map",
+      "nodes": [
+        {"id": "data", "label": "Training Data", "color": "#4f8ef7"},
+        {"id": "model", "label": "nn.Module", "color": "#f7914f"},
+        {"id": "loss", "label": "Loss Function", "color": "#e74c3c"},
+        {"id": "backward", "label": "Autograd .backward()", "color": "#a44ff7"},
+        {"id": "optim", "label": "Optimizer .step()", "color": "#4fc97a"},
+        {"id": "params", "label": "Updated Params", "color": "#f7914f"}
+      ],
+      "edges": [
+        {"from": "data", "to": "model", "label": "forward"},
+        {"from": "model", "to": "loss", "label": "predictions"},
+        {"from": "loss", "to": "backward"},
+        {"from": "backward", "to": "optim", "label": "gradients"},
+        {"from": "optim", "to": "params"},
+        {"from": "params", "to": "model", "label": "update"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "training_code",
+      "steps": [
+        {
+          "line": "model = MLP(10, 64, 1)",
+          "highlight": "model",
+          "explanation": {"en": "Instantiate the model with 10 inputs, 64 hidden, 1 output"}
+        },
+        {
+          "line": "optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)",
+          "highlight": "optimizer",
+          "explanation": {"en": "Adam will manage all model.parameters()"}
+        },
+        {
+          "line": "optimizer.zero_grad()",
+          "highlight": "zero_grad",
+          "explanation": {"en": "Must clear gradients from previous step"}
+        },
+        {
+          "line": "loss = criterion(model(X_train), y_train)",
+          "highlight": "loss",
+          "explanation": {"en": "Forward pass + loss in one line"}
+        },
+        {
+          "line": "loss.backward(); optimizer.step()",
+          "highlight": "backward",
+          "explanation": {"en": "Backprop then update all parameters"},
+          "output": "Epoch 0: train=0.9142, val=0.8991"
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "mlp_stack",
+      "frames": [
+        {"label": "Linear(64 → 1)", "color": "#4fc97a"},
+        {"label": "ReLU", "color": "#a44ff7"},
+        {"label": "Linear(64 → 64)", "color": "#f7914f"},
+        {"label": "ReLU", "color": "#a44ff7"},
+        {"label": "Linear(10 → 64)", "color": "#f7914f"}
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Epoch  0: train=0.9142, val=0.8991", "Epoch 10: train=0.3451, val=0.3612", "Epoch 20: train=0.1203, val=0.1345", "Epoch 50: train=0.0112, val=0.0198", "Model saved to model.pt"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Define a PyTorch `nn.Module` class `TwoLayerNet(in_f, hidden, out_f)` with two Linear layers and a ReLU in between. Then instantiate it with `in_f=4, hidden=8, out_f=1` and verify you can do a forward pass with a batch of 5 samples."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Use nn.Sequential(nn.Linear(in_f, hidden), nn.ReLU(), nn.Linear(hidden, out_f))"},
+        {"en": "Call super().__init__() in __init__"},
+        {"en": "forward(x) should just call self.net(x)"}
+      ],
+      "test_code": "import torch\nimport torch.nn as nn\nnet = TwoLayerNet(4, 8, 1)\nassert isinstance(net, nn.Module), 'Must be an nn.Module'\nx = torch.randn(5, 4)  # batch of 5 samples, 4 features\nout = net(x)\nassert out.shape == (5, 1), f'Expected (5,1), got {out.shape}'\nparams = sum(p.numel() for p in net.parameters())\nassert params == (4*8+8) + (8*1+1), f'Parameter count wrong: {params}'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

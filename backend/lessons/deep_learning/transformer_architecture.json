@@ -1,0 +1,123 @@
+{
+  "id": "transformer_architecture",
+  "topic": "transformer_architecture",
+  "track": "deep_learning",
+  "module": "transformers",
+  "order": 3,
+  "title": {
+    "en": "Transformer Architecture: BERT, GPT, and Beyond"
+  },
+  "description": {
+    "en": "Explore the full Transformer encoder-decoder design and understand how BERT and GPT use it differently for language understanding vs generation."
+  },
+  "xp_reward": 80,
+  "next_unlock": "pt_tensors",
+  "story_variants": {
+    "en": "## Transformer Architecture: BERT, GPT, and Beyond\n\nThe 2017 paper \"Attention Is All You Need\" introduced the Transformer — now the foundation of almost all large language models.\n\n### Encoder-Decoder Structure\n\n```\nEncoder:  Input → [Self-Attn + FFN] × N → Encoded Representation\nDecoder:  Target → [Self-Attn + Cross-Attn + FFN] × N → Output\n```\n\n### One Transformer Block\n\n```python\ndef transformer_block(x, attn_heads, d_ff):\n    # Sub-layer 1: Multi-head Self-Attention\n    attn_out = multi_head_attention(x)\n    x = layer_norm(x + attn_out)    # residual + norm\n\n    # Sub-layer 2: Feed-Forward Network\n    ff_out = feed_forward(x, d_ff)  # 2-layer MLP\n    x = layer_norm(x + ff_out)      # residual + norm\n    return x\n```\n\n### Architecture Comparison\n\n| Model | Type | Task | Key Innovation |\n|-------|------|------|----------------|\n| Original Transformer | Enc+Dec | Translation | Attention replaces RNN |\n| BERT | Encoder only | Classification, QA | Masked language modelling |\n| GPT | Decoder only | Text generation | Causal autoregressive |\n| T5 | Enc+Dec | Text-to-text | All NLP as seq2seq |\n| GPT-4 | Decoder only | General | Massive scale |\n\n### BERT vs GPT\n\n**BERT** (Bidirectional):\n- Sees the entire sentence at once\n- 15% of tokens masked during training\n- Excellent for understanding tasks\n- Not designed for generation\n\n**GPT** (Autoregressive):\n- Sees only left context (causal mask)\n- Trained to predict next token\n- Excellent for generation\n- Can do zero-shot anything\n\n### Layer Normalisation\n\n> **Key Concept:** Layer norm (not batch norm) is used in Transformers. It normalises across the feature dimension for each token individually, making training stable regardless of sequence length or batch size.\n\n```python\ndef layer_norm(x, eps=1e-6):\n    mean = x.mean(axis=-1, keepdims=True)\n    std  = x.std(axis=-1, keepdims=True)\n    return (x - mean) / (std + eps)\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "transformer_map",
+      "nodes": [
+        {"id": "embed", "label": "Input Embeddings + PE", "color": "#4f8ef7"},
+        {"id": "self_attn", "label": "Multi-Head Self-Attn", "color": "#f7914f"},
+        {"id": "add1", "label": "Add & LayerNorm", "color": "#a44ff7"},
+        {"id": "ffn", "label": "Feed-Forward (MLP)", "color": "#f7914f"},
+        {"id": "add2", "label": "Add & LayerNorm", "color": "#a44ff7"},
+        {"id": "repeat", "label": "Repeat N times", "color": "#4fc97a"},
+        {"id": "output", "label": "Output", "color": "#e74c3c"}
+      ],
+      "edges": [
+        {"from": "embed", "to": "self_attn"},
+        {"from": "self_attn", "to": "add1"},
+        {"from": "add1", "to": "ffn"},
+        {"from": "ffn", "to": "add2"},
+        {"from": "add2", "to": "repeat"},
+        {"from": "repeat", "to": "output"}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "bert_gpt",
+      "items": [
+        {"label": "BERT", "value": "Encoder only, bidirectional", "color": "#4f8ef7", "note": "Understanding tasks"},
+        {"label": "GPT", "value": "Decoder only, causal", "color": "#4fc97a", "note": "Generation tasks"},
+        {"label": "T5/BART", "value": "Encoder + Decoder", "color": "#f7914f", "note": "Translation, summarisation"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "transformer_flow",
+      "steps": ["Tokens", "Embed + PE", "N × [Attn + FFN]", "Representation", "Task Head → Output"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "transformer_code",
+      "steps": [
+        {
+          "line": "x = embedding(tokens) + positional_encoding",
+          "highlight": "x",
+          "explanation": {"en": "Combine token meaning with positional information"}
+        },
+        {
+          "line": "for _ in range(N_layers):",
+          "highlight": "N_layers",
+          "explanation": {"en": "Stack N identical transformer blocks"}
+        },
+        {
+          "line": "    x = layer_norm(x + self_attention(x))",
+          "highlight": "self_attention",
+          "explanation": {"en": "Attend + residual + normalise"}
+        },
+        {
+          "line": "    x = layer_norm(x + feed_forward(x))",
+          "highlight": "feed_forward",
+          "explanation": {"en": "MLP sub-layer + residual + normalise"},
+          "output": "Contextualised representation"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "scale_table",
+      "label": "Model Scale Comparison",
+      "structure": "table",
+      "data": [
+        ["Model", "Params", "Layers", "Heads", "d_model"],
+        ["BERT-base", "110M", "12", "12", "768"],
+        ["GPT-2", "117M", "12", "12", "768"],
+        ["GPT-3", "175B", "96", "96", "12288"],
+        ["GPT-4", "~1T?", "~120", "~128", "~25600"]
+      ],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["BERT-base: 110M params, encoder-only", "GPT-2: 117M params, decoder-only (causal)", "Transformer block: Attn + FFN + 2× LayerNorm + 2× Residual"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `layer_norm(x, eps=1e-6)` using NumPy. It should normalise along the last axis (features) for each token independently. Return the normalised array."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "mean = x.mean(axis=-1, keepdims=True)"},
+        {"en": "std = x.std(axis=-1, keepdims=True)"},
+        {"en": "return (x - mean) / (std + eps)"}
+      ],
+      "test_code": "import numpy as np\nx = np.array([[1.0, 2.0, 3.0, 4.0], [10.0, 20.0, 30.0, 40.0]])\nout = layer_norm(x)\nassert out.shape == x.shape, 'Output shape must match input'\nassert abs(out[0].mean()) < 1e-5, 'Mean of normalised row should be ~0'\nassert abs(out[0].std() - 1.0) < 0.1, 'Std of normalised row should be ~1'\nassert abs(out[1].mean()) < 1e-5, 'Second row also normalised independently'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
