@@ -4,8 +4,8 @@ import uuid
 import json
 import os
 import threading
-from backend.modules.models import ModuleRequest, JobStatus
-from backend.modules.pipeline import run_pipeline
+from modules.models import ModuleRequest, JobStatus
+from modules.pipeline import run_pipeline
 
 router = APIRouter(prefix="/api/modules", tags=["modules"])
 

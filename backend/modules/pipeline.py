@@ -6,10 +6,10 @@ import uuid
 import sqlite3
 import os
 from datetime import datetime
-from backend.vaathiyaar.engine import call_vaathiyaar
-from backend.vaathiyaar.profiler import get_student_profile
-from backend.modules.templates import CONCEPT_TEMPLATES, get_template_for_topic
-from backend.notifications.dispatcher import create_notification
+from vaathiyaar.engine import call_vaathiyaar
+from vaathiyaar.profiler import get_student_profile
+from modules.templates import CONCEPT_TEMPLATES, get_template_for_topic
+from notifications.dispatcher import create_notification
 
 
 def _get_db_path():
