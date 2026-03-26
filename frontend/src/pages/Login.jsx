@@ -30,9 +30,10 @@ export default function Login() {
                 const res = await loginUser(username, password);
                 data = res.data;
             } else {
-                await registerUser(username, password, username);
-                const loginRes = await loginUser(username, password);
-                data = loginRes.data;
+                const res = await registerUser(username, password, username);
+                data = res.data;
+                // Add token for consistency with login response
+                if (!data.token) data.token = `mock-jwt-${data.id}`;
                 isNewUser = true;
             }
             login(data);
@@ -46,9 +47,16 @@ export default function Login() {
         } catch (err) {
             console.error("Auth Fail", err);
             if (err.response) {
-                setError(err.response.data.detail || 'Access Denied');
+                const detail = err.response.data.detail || '';
+                if (detail.includes('already taken')) {
+                    setError('This username is already taken. Try a different one or login instead.');
+                } else if (detail.includes('Invalid credentials')) {
+                    setError('Invalid username or password. Please try again.');
+                } else {
+                    setError(detail || 'Something went wrong. Please try again.');
+                }
             } else {
-                setError('Uplink Failed. Check System Connection.');
+                setError('Could not connect to server. Please check your connection.');
             }
         } finally {
             setLoading(false);
