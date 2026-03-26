@@ -7,7 +7,7 @@ import json
 import uuid
 from datetime import datetime
 
-import duckdb
+import sqlite3
 
 from vaathiyaar.modelfile import build_system_prompt
 
@@ -26,7 +26,7 @@ def record_training_pair(
     Parameters
     ----------
     db_path : str
-        Path to the DuckDB database file.
+        Path to the SQLite database file.
     user_message : str
         The student's input message.
     vaathiyaar_response : dict
@@ -48,9 +48,10 @@ def record_training_pair(
     profile_json = json.dumps(student_profile or {}, ensure_ascii=False)
     context_json = json.dumps(lesson_context or {}, ensure_ascii=False)
 
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
-        conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             """
             INSERT INTO training_data
                 (id, input_text, output_text, profile_json, context_json, quality_score)
@@ -58,6 +59,7 @@ def record_training_pair(
             """,
             [pair_id, user_message, output_text, profile_json, context_json, quality_score],
         )
+        conn.commit()
     finally:
         conn.close()
 
@@ -78,7 +80,7 @@ def export_training_data(
     Parameters
     ----------
     db_path : str
-        Path to the DuckDB database file.
+        Path to the SQLite database file.
     output_path : str
         Path to the output JSONL file.
     min_quality : float, optional
@@ -89,19 +91,21 @@ def export_training_data(
     int
         Number of training examples exported.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
+        cursor = conn.cursor()
         if min_quality is not None:
-            rows = conn.execute(
+            cursor.execute(
                 "SELECT input_text, output_text, profile_json, context_json "
                 "FROM training_data WHERE quality_score >= ? ORDER BY created_at",
                 [min_quality],
-            ).fetchall()
+            )
         else:
-            rows = conn.execute(
+            cursor.execute(
                 "SELECT input_text, output_text, profile_json, context_json "
                 "FROM training_data ORDER BY created_at"
-            ).fetchall()
+            )
+        rows = cursor.fetchall()
     finally:
         conn.close()
 
@@ -136,9 +140,10 @@ def get_training_stats(db_path: str) -> dict:
     dict
         Keys: total_pairs, avg_quality_score, min_date, max_date.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
-        row = conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             """
             SELECT
                 count(*) AS total_pairs,
@@ -147,7 +152,8 @@ def get_training_stats(db_path: str) -> dict:
                 max(created_at) AS max_date
             FROM training_data
             """
-        ).fetchone()
+        )
+        row = cursor.fetchone()
     finally:
         conn.close()
 

@@ -85,7 +85,7 @@ class DiagnosticRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 def _get_db_path() -> str:
-    return os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
+    return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
 def _load_lesson(lesson_id: str) -> dict:

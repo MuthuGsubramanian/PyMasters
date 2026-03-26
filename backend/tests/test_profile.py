@@ -8,29 +8,33 @@ import os
 import sys
 import tempfile
 import pytest
-import duckdb
+import sqlite3
 
 # Ensure the backend package root is on the path so we can import main
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 def make_temp_db():
-    """Return a path to a fresh temporary DuckDB database file."""
-    fd, path = tempfile.mkstemp(suffix=".duckdb")
+    """Return a path to a fresh temporary SQLite database file."""
+    fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
-    os.unlink(path)  # duckdb will create it; remove the empty placeholder
+    os.unlink(path)  # sqlite3 will create it; remove the empty placeholder
     return path
 
 
 def get_table_columns(conn, table_name):
     """Return a list of column names for *table_name*."""
-    rows = conn.execute(f"DESCRIBE {table_name}").fetchall()
-    return [r[0] for r in rows]
+    cursor = conn.cursor()
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    rows = cursor.fetchall()
+    return [r[1] for r in rows]
 
 
 def get_table_names(conn):
     """Return a set of table names present in the database."""
-    rows = conn.execute("SHOW TABLES").fetchall()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    rows = cursor.fetchall()
     return {r[0] for r in rows}
 
 
@@ -44,7 +48,7 @@ def initialized_db(tmp_path):
     Run init_db() against a fresh temporary database and yield (conn, db_path).
     Overrides DB_PATH via environment variable so main.py uses the temp file.
     """
-    db_path = str(tmp_path / "test_pymasters.duckdb")
+    db_path = str(tmp_path / "test_pymasters.db")
     original_db_path = os.environ.get("DB_PATH")
     os.environ["DB_PATH"] = db_path
 
@@ -54,7 +58,7 @@ def initialized_db(tmp_path):
     importlib.reload(m)
     m.init_db()
 
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     yield conn, db_path
 
     conn.close()
@@ -120,21 +124,24 @@ class TestUserProfilesSchema:
 
     def test_can_insert_and_retrieve_row(self, initialized_db):
         conn, _ = initialized_db
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT INTO user_profiles
                 (user_id, motivation, prior_experience, known_languages,
                  learning_style, goal, time_commitment, preferred_language,
                  skill_level, diagnostic_score, onboarding_completed)
             VALUES ('u1', 'career', 'none', 'Tamil', 'visual',
-                    'get a job', '1h/day', 'ta', 'beginner', 42.5, true)
+                    'get a job', '1h/day', 'ta', 'beginner', 42.5, 1)
         """)
-        row = conn.execute(
+        conn.commit()
+        cursor.execute(
             "SELECT user_id, diagnostic_score, onboarding_completed FROM user_profiles WHERE user_id = 'u1'"
-        ).fetchone()
+        )
+        row = cursor.fetchone()
         assert row is not None
         assert row[0] == "u1"
         assert row[1] == pytest.approx(42.5)
-        assert row[2] is True
+        assert row[2] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -154,16 +161,19 @@ class TestLearningSignalsSchema:
 
     def test_can_insert_and_retrieve_row(self, initialized_db):
         conn, _ = initialized_db
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id)
-            VALUES ('sig1', 'u1', 'quiz_score', 'loops', 0.85, 'sess-abc')
+            VALUES ('sig1', 'u1', 'quiz_score', 'loops', '0.85', 'sess-abc')
         """)
-        row = conn.execute(
+        conn.commit()
+        cursor.execute(
             "SELECT signal_type, value FROM learning_signals WHERE id = 'sig1'"
-        ).fetchone()
+        )
+        row = cursor.fetchone()
         assert row is not None
         assert row[0] == "quiz_score"
-        assert row[1] == "0.85"  # value column is VARCHAR
+        assert row[1] == "0.85"  # value column is TEXT
 
 
 # ---------------------------------------------------------------------------
@@ -184,14 +194,16 @@ class TestUserMasterySchema:
 
     def test_composite_primary_key_enforced(self, initialized_db):
         conn, _ = initialized_db
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT INTO user_mastery
                 (user_id, topic, mastery_level, attempts, avg_time_seconds, struggle_count)
             VALUES ('u1', 'loops', 0.7, 3, 45.0, 1)
         """)
+        conn.commit()
         with pytest.raises(Exception):
             # Inserting the same (user_id, topic) pair must raise a constraint error
-            conn.execute("""
+            cursor.execute("""
                 INSERT INTO user_mastery
                     (user_id, topic, mastery_level, attempts, avg_time_seconds, struggle_count)
                 VALUES ('u1', 'loops', 0.9, 5, 30.0, 0)
@@ -199,14 +211,17 @@ class TestUserMasterySchema:
 
     def test_can_insert_and_retrieve_row(self, initialized_db):
         conn, _ = initialized_db
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT INTO user_mastery
                 (user_id, topic, mastery_level, attempts, avg_time_seconds, struggle_count)
             VALUES ('u2', 'functions', 0.6, 2, 60.5, 0)
         """)
-        row = conn.execute(
+        conn.commit()
+        cursor.execute(
             "SELECT mastery_level, attempts FROM user_mastery WHERE user_id = 'u2' AND topic = 'functions'"
-        ).fetchone()
+        )
+        row = cursor.fetchone()
         assert row is not None
         assert row[0] == pytest.approx(0.6)
         assert row[1] == 2
@@ -218,64 +233,66 @@ class TestUserMasterySchema:
 
 def _setup_db(db_path: str):
     """
-    Create all required tables in a fresh test DuckDB database.
+    Create all required tables in a fresh test SQLite database.
 
-    Note: learning_signals.value is VARCHAR here to support JSON-serialised
+    Note: learning_signals.value is TEXT here to support JSON-serialised
     signal payloads as written by profiler.record_signal.
     """
-    conn = duckdb.connect(db_path)
-    conn.execute("""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id VARCHAR PRIMARY KEY,
-            username VARCHAR UNIQUE,
-            password_hash VARCHAR,
-            name VARCHAR,
+            id TEXT PRIMARY KEY,
+            username TEXT UNIQUE,
+            password_hash TEXT,
+            name TEXT,
             created_at TIMESTAMP,
             points INTEGER DEFAULT 0,
-            unlocked_modules VARCHAR DEFAULT '["module_1"]',
-            preferred_language VARCHAR DEFAULT 'en',
-            onboarding_completed BOOLEAN DEFAULT false
+            unlocked_modules TEXT DEFAULT '["module_1"]',
+            preferred_language TEXT DEFAULT 'en',
+            onboarding_completed INTEGER DEFAULT 0
         )
     """)
-    conn.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_profiles (
-            user_id VARCHAR PRIMARY KEY,
-            motivation VARCHAR,
-            prior_experience VARCHAR,
-            known_languages VARCHAR,
-            learning_style VARCHAR,
-            goal VARCHAR,
-            time_commitment VARCHAR,
-            preferred_language VARCHAR,
-            skill_level VARCHAR,
-            diagnostic_score FLOAT,
-            onboarding_completed BOOLEAN DEFAULT false,
-            created_at TIMESTAMP DEFAULT current_timestamp
+            user_id TEXT PRIMARY KEY,
+            motivation TEXT,
+            prior_experience TEXT,
+            known_languages TEXT,
+            learning_style TEXT,
+            goal TEXT,
+            time_commitment TEXT,
+            preferred_language TEXT,
+            skill_level TEXT,
+            diagnostic_score REAL,
+            onboarding_completed INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    conn.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS learning_signals (
-            id VARCHAR PRIMARY KEY,
-            user_id VARCHAR,
-            signal_type VARCHAR,
-            topic VARCHAR,
-            value VARCHAR,
-            session_id VARCHAR,
-            created_at TIMESTAMP DEFAULT current_timestamp
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            signal_type TEXT,
+            topic TEXT,
+            value TEXT,
+            session_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    conn.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_mastery (
-            user_id VARCHAR,
-            topic VARCHAR,
-            mastery_level FLOAT,
+            user_id TEXT,
+            topic TEXT,
+            mastery_level REAL,
             attempts INTEGER,
-            avg_time_seconds FLOAT,
+            avg_time_seconds REAL,
             last_practiced TIMESTAMP,
             struggle_count INTEGER,
             PRIMARY KEY (user_id, topic)
         )
     """)
+    conn.commit()
     conn.close()
 
 
@@ -286,15 +303,17 @@ class TestProfilerService:
         """save_onboarding should upsert user_profiles and update users table."""
         from vaathiyaar.profiler import save_onboarding
 
-        db_path = str(tmp_path / "profiler_test.duckdb")
+        db_path = str(tmp_path / "profiler_test.db")
         _setup_db(db_path)
 
         # Insert a user so the UPDATE in save_onboarding has a target row
-        conn = duckdb.connect(db_path)
-        conn.execute(
-            "INSERT INTO users (id, username, name, created_at) VALUES (?, ?, ?, current_timestamp)",
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (id, username, name, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
             ["user-001", "tester", "Test User"]
         )
+        conn.commit()
         conn.close()
 
         data = {
@@ -313,28 +332,31 @@ class TestProfilerService:
 
         assert result == {"onboarding_completed": True, "user_id": "user-001"}
 
-        conn = duckdb.connect(db_path)
-        row = conn.execute(
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
             "SELECT motivation, preferred_language, onboarding_completed FROM user_profiles WHERE user_id = 'user-001'"
-        ).fetchone()
+        )
+        row = cursor.fetchone()
         assert row is not None
         assert row[0] == "career"
         assert row[1] == "ta"
-        assert row[2] is True
+        assert row[2] == 1
 
-        user_row = conn.execute(
+        cursor.execute(
             "SELECT preferred_language, onboarding_completed FROM users WHERE id = 'user-001'"
-        ).fetchone()
+        )
+        user_row = cursor.fetchone()
         assert user_row is not None
         assert user_row[0] == "ta"
-        assert user_row[1] is True
+        assert user_row[1] == 1
         conn.close()
 
     def test_record_signal(self, tmp_path):
         """record_signal should insert exactly one row into learning_signals."""
         from vaathiyaar.profiler import record_signal
 
-        db_path = str(tmp_path / "signal_test.duckdb")
+        db_path = str(tmp_path / "signal_test.db")
         _setup_db(db_path)
 
         record_signal(
@@ -346,10 +368,12 @@ class TestProfilerService:
             session_id="sess-xyz",
         )
 
-        conn = duckdb.connect(db_path)
-        rows = conn.execute(
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
             "SELECT user_id, signal_type, topic, value, session_id FROM learning_signals"
-        ).fetchall()
+        )
+        rows = cursor.fetchall()
         conn.close()
 
         assert len(rows) == 1
@@ -367,7 +391,7 @@ class TestProfilerService:
         """update_mastery + get_mastery_map should store and return correct data."""
         from vaathiyaar.profiler import update_mastery, get_mastery_map
 
-        db_path = str(tmp_path / "mastery_test.duckdb")
+        db_path = str(tmp_path / "mastery_test.db")
         _setup_db(db_path)
 
         update_mastery(db_path, user_id="user-003", topic="functions", level=0.75, time_seconds=45.0)
