@@ -10,59 +10,74 @@ import MemoryStack from './MemoryStack';
 import ComparisonPanel from './ComparisonPanel';
 import ConceptMap from './ConceptMap';
 
-// Maps primitive type strings to components (supports both PascalCase and snake_case)
+// Maps primitive type strings to components (PascalCase + snake_case)
 const PRIMITIVE_MAP = {
-  StoryCard: StoryCard,
-  story_card: StoryCard,
-  CodeStepper: CodeStepper,
-  code_stepper: CodeStepper,
-  VariableBox: VariableBox,
-  variable_box: VariableBox,
-  Terminal: TerminalOutput,
-  TerminalOutput: TerminalOutput,
-  terminal_output: TerminalOutput,
-  ParticleEffect: ParticleEffect,
-  particle_effect: ParticleEffect,
-  FlowArrow: FlowArrow,
-  flow_arrow: FlowArrow,
-  DataStructure: DataStructure,
-  data_structure: DataStructure,
-  MemoryStack: MemoryStack,
-  memory_stack: MemoryStack,
-  ComparisonPanel: ComparisonPanel,
-  comparison_panel: ComparisonPanel,
-  ConceptMap: ConceptMap,
-  concept_map: ConceptMap,
+  StoryCard, story_card: StoryCard,
+  CodeStepper, code_stepper: CodeStepper,
+  VariableBox, variable_box: VariableBox,
+  Terminal: TerminalOutput, TerminalOutput, terminal_output: TerminalOutput,
+  ParticleEffect, particle_effect: ParticleEffect,
+  FlowArrow, flow_arrow: FlowArrow,
+  DataStructure, data_structure: DataStructure,
+  MemoryStack, memory_stack: MemoryStack,
+  ComparisonPanel, comparison_panel: ComparisonPanel,
+  ConceptMap, concept_map: ConceptMap,
 };
 
+// Keys whose values are locale maps ({"en": "...", "ta": "..."})
+const LOCALE_KEYS = new Set([
+  'content', 'label', 'description', 'instruction', 'title', 'explanation',
+]);
+
+// Keys whose values are structured data (NOT locale maps)
+const STRUCT_KEYS = new Set([
+  'before', 'after', 'left', 'right', 'nodes', 'edges', 'frames',
+  'operations', 'steps', 'data', 'slots', 'children', 'variables',
+  'highlightSequence', 'stepDescriptions', 'values', 'output',
+  'animate_sequence', 'animation', 'practice_challenge', 'profile_update',
+]);
+
 /**
- * Resolve a localized string prop.
- * - If the value is a plain string starting with "story_variant", return storyContent
- * - If the value is an object, return value[language] ?? value['en'] ?? value[Object.keys(value)[0]]
- * - Otherwise return as-is
+ * Check if an object looks like a locale map: keys are 2-char language codes
  */
-function resolveContent(value, language, storyContent) {
+function isLocaleMap(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return false;
+  return keys.every(k => /^[a-z]{2}$/.test(k));
+}
+
+/**
+ * Resolve a value if it's a locale map or story_variant reference.
+ */
+function resolveValue(value, language, storyContent) {
   if (typeof value === 'string') {
     if (value === 'story_variant' || value.startsWith('story_variant')) {
       return storyContent;
     }
     return value;
   }
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value[language] ?? value['en'] ?? Object.values(value)[0];
+  if (isLocaleMap(value)) {
+    return value[language] ?? value['en'] ?? Object.values(value)[0] ?? '';
   }
   return value;
 }
 
 /**
- * Recursively resolve all string/object props in a props object.
+ * Resolve locale-like props in an object. Only resolves known locale keys
+ * and objects that look like locale maps. Leaves structured data untouched.
  */
 function resolveProps(props, language, storyContent) {
   if (!props) return {};
   const resolved = {};
   for (const [key, value] of Object.entries(props)) {
-    if (typeof value === 'string' || (value && typeof value === 'object' && !Array.isArray(value))) {
-      resolved[key] = resolveContent(value, language, storyContent);
+    if (STRUCT_KEYS.has(key)) {
+      // Structured data — pass through as-is
+      resolved[key] = value;
+    } else if (LOCALE_KEYS.has(key) || typeof value === 'string') {
+      resolved[key] = resolveValue(value, language, storyContent);
+    } else if (isLocaleMap(value)) {
+      resolved[key] = resolveValue(value, language, storyContent);
     } else {
       resolved[key] = value;
     }
@@ -72,11 +87,9 @@ function resolveProps(props, language, storyContent) {
 
 /**
  * Normalize lesson JSON props to match component prop signatures.
- * Lesson JSON may use different names than what components expect.
  */
-function normalizeProps(type, raw) {
+function normalizeProps(type, raw, language) {
   const p = { ...raw };
-  // Remove internal fields
   delete p.id;
 
   // duration_ms → duration
@@ -93,24 +106,37 @@ function normalizeProps(type, raw) {
 
   // CodeStepper: steps → code + highlightSequence + stepDescriptions
   if ((type === 'CodeStepper' || type === 'code_stepper') && p.steps && !p.code) {
-    const code = p.steps.map(s => s.code || s.line || s).join('\n');
-    const seq = p.steps.map((_, i) => i + 1);
-    const stepDescriptions = p.steps.map(s => {
-      if (typeof s === 'string') return {};
-      return {
-        description: s.explanation || s.description || '',
-        output: s.output || null,
-      };
-    });
-    p.code = code;
-    p.highlightSequence = seq;
-    p.stepDescriptions = stepDescriptions;
+    const steps = p.steps;
+    const codeLines = [];
+    const descriptions = [];
+
+    // Build a proper execution sequence that shows the full program flow
+    for (const step of steps) {
+      const line = typeof step === 'string' ? step : (step.code || step.line || '');
+      codeLines.push(line);
+
+      if (typeof step === 'object') {
+        const desc = step.explanation || step.description || '';
+        const resolvedDesc = isLocaleMap(desc) ? (desc[language] || desc.en || '') : desc;
+        descriptions.push({
+          description: resolvedDesc,
+          output: step.output || null,
+        });
+      } else {
+        descriptions.push({});
+      }
+    }
+
+    p.code = codeLines.join('\n');
+    // Highlight each line in sequence
+    p.highlightSequence = codeLines.map((_, i) => i + 1);
+    p.stepDescriptions = descriptions;
     p.speed = p.speed || 'normal';
     delete p.steps;
   }
 
-  // VariableBox: value → values (wrap single in array), animate_sequence
-  if ((type === 'VariableBox' || type === 'variable_box')) {
+  // VariableBox: value → values
+  if (type === 'VariableBox' || type === 'variable_box') {
     if (p.value != null && !p.values) {
       p.values = p.animate_sequence || [p.value];
       delete p.value;
@@ -124,24 +150,63 @@ function normalizeProps(type, raw) {
   if ((type === 'MemoryStack' || type === 'memory_stack') && p.slots && !p.frames) {
     p.frames = p.slots.map(s => ({
       name: s.label || s.name || 'frame',
-      variables: s.variables || s.value ? { value: s.value } : {}
+      variables: s.variables || (s.value != null ? { value: s.value } : {})
     }));
     p.operations = p.slots.map(() => 'push');
     delete p.slots;
   }
 
-  // ConceptMap: ensure nodes have id and label
-  if ((type === 'ConceptMap' || type === 'concept_map') && p.nodes) {
-    p.nodes = p.nodes.map((n, i) => ({
-      id: n.id || `n${i}`,
-      label: n.label || n.text || n
-    }));
+  // ConceptMap: normalize nodes — handle {label, children} format
+  if (type === 'ConceptMap' || type === 'concept_map') {
+    if (p.nodes) {
+      const flatNodes = [];
+      const flatEdges = p.edges || [];
+
+      p.nodes.forEach((n, i) => {
+        const nodeLabel = typeof n === 'string' ? n : (n.label || n.text || `Node ${i}`);
+        const nodeId = n.id || `n${i}`;
+        flatNodes.push({ id: nodeId, label: nodeLabel });
+
+        // Expand children into nodes + edges
+        if (n.children && Array.isArray(n.children)) {
+          n.children.forEach((child, ci) => {
+            const childLabel = typeof child === 'string' ? child : (child.label || child.text || '');
+            const childId = `${nodeId}_c${ci}`;
+            flatNodes.push({ id: childId, label: childLabel });
+            flatEdges.push({ from: nodeId, to: childId, label: '' });
+          });
+        }
+      });
+
+      p.nodes = flatNodes;
+      p.edges = flatEdges;
+    }
   }
 
-  // FlowArrow: branch → label fallback
-  if ((type === 'FlowArrow' || type === 'flow_arrow')) {
+  // ComparisonPanel: left/right → before/after
+  if (type === 'ComparisonPanel' || type === 'comparison_panel') {
+    if (p.left && !p.before) {
+      p.before = {
+        label: p.left.label || 'Before',
+        code: p.left.result != null ? `Result: ${p.left.result}` : (p.left.code || ''),
+      };
+      delete p.left;
+    }
+    if (p.right && !p.after) {
+      p.after = {
+        label: p.right.label || 'After',
+        code: p.right.result != null ? `Result: ${p.right.result}` : (p.right.code || ''),
+      };
+      delete p.right;
+    }
+    // Remove description — it's for the lesson, not the component
+    delete p.description;
+  }
+
+  // FlowArrow: branch → label
+  if (type === 'FlowArrow' || type === 'flow_arrow') {
     if (p.branch && !p.label) {
-      p.label = p.branch;
+      p.label = typeof p.branch === 'string' ? p.branch : '';
       delete p.branch;
     }
   }
@@ -149,9 +214,6 @@ function normalizeProps(type, raw) {
   return p;
 }
 
-/**
- * Apply speedMultiplier to duration props.
- */
 function applySpeed(props, speedMultiplier) {
   if (!props || speedMultiplier === 1) return props;
   const out = { ...props };
@@ -176,9 +238,7 @@ export default function AnimationRenderer({
   const handleStepComplete = useCallback(
     (stepIndex) => {
       const nextStep = stepIndex + 1;
-
       if (nextStep >= sequence.length) {
-        // Sequence complete — fire particles
         setParticleActive(true);
         setParticleTrigger((t) => t + 1);
         onSequenceComplete?.();
@@ -193,34 +253,39 @@ export default function AnimationRenderer({
     setSyncStep(stepIdx);
   }, []);
 
-  // Render primitives up to and including currentStep
   const visiblePrimitives = sequence.slice(0, currentStep + 1);
 
-  // Find the particle effect primitive in the sequence if any
-  const particlePrimitive = sequence.find((s) => s.type === 'particle_effect' || s.type === 'ParticleEffect');
-  const particleEffect = particlePrimitive?.props?.effect ?? particlePrimitive?.effect ?? 'success_confetti';
+  const particlePrimitive = sequence.find(
+    (s) => s.type === 'particle_effect' || s.type === 'ParticleEffect'
+  );
+  const particleEffect =
+    particlePrimitive?.props?.effect ?? particlePrimitive?.effect ?? 'success_confetti';
 
   return (
     <div className="relative flex flex-col gap-6">
       {visiblePrimitives.map((primitive, idx) => {
         const pType = primitive.type;
         if (pType === 'particle_effect' || pType === 'ParticleEffect') {
-          // Handled separately below
           return null;
         }
 
         const Component = PRIMITIVE_MAP[pType];
         if (!Component) {
-          console.warn(`[AnimationRenderer] Unknown primitive type: "${pType}"`);
+          console.warn(`[AnimationRenderer] Unknown primitive: "${pType}"`);
+          // Skip unknown primitives and auto-advance
+          if (idx === currentStep) {
+            setTimeout(() => handleStepComplete(idx), 100);
+          }
           return null;
         }
 
-        // Props can be nested under primitive.props OR directly on the primitive object
+        // Extract props — either from .props or from the primitive object directly
         const rawProps = primitive.props ?? (() => {
           const { type, sync_with, ...rest } = primitive;
           return rest;
         })();
-        const normalized = normalizeProps(pType, rawProps);
+
+        const normalized = normalizeProps(pType, rawProps, language);
         let props = resolveProps(normalized, language, storyContent);
         props = applySpeed(props, speedMultiplier);
 
@@ -228,17 +293,15 @@ export default function AnimationRenderer({
 
         // Wire sync props
         const syncProps = {};
-        const syncTypes = ['variable_box', 'VariableBox', 'terminal_output', 'Terminal', 'TerminalOutput'];
-        const stepperTypes = ['code_stepper', 'CodeStepper'];
-        if (syncTypes.includes(pType) || primitive.sync_with) {
+        if (['VariableBox', 'variable_box', 'Terminal', 'TerminalOutput', 'terminal_output'].includes(pType) || primitive.sync_with) {
           syncProps.syncStep = syncStep;
         }
-        if (stepperTypes.includes(pType)) {
+        if (['CodeStepper', 'code_stepper'].includes(pType)) {
           syncProps.onStep = handleCodeStep;
         }
 
         return (
-          <div key={`${primitive.type}-${idx}`} className="animate-in fade-in">
+          <div key={`${pType}-${idx}`}>
             <Component
               {...props}
               {...syncProps}
@@ -248,7 +311,6 @@ export default function AnimationRenderer({
         );
       })}
 
-      {/* Global particle overlay */}
       <ParticleEffect
         effect={particleEffect}
         trigger={particleTrigger}
