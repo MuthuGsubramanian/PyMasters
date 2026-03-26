@@ -62,8 +62,8 @@ def create_notification(
     return notif_id
 
 
-from backend.notifications.email_sender import send_email, build_lesson_ready_email
-from backend.notifications.whatsapp_sender import send_whatsapp, build_whatsapp_message
+from notifications.email_sender import send_email, build_lesson_ready_email
+from notifications.whatsapp_sender import send_whatsapp, build_whatsapp_message
 
 
 def process_pending_deliveries():

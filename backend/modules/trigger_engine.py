@@ -19,7 +19,7 @@ def _get_db_path():
 def _run_pipeline_safe(job_id: str, user_id: int, topic: str):
     """Run pipeline if available, otherwise no-op."""
     try:
-        from backend.modules.pipeline import run_pipeline
+        from modules.pipeline import run_pipeline
         run_pipeline(job_id, user_id, topic)
     except ImportError:
         pass  # Pipeline not yet implemented; job remains queued
