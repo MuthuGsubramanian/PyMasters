@@ -1,0 +1,127 @@
+{
+  "id": "transformer_self_attention",
+  "topic": "self_attention",
+  "track": "deep_learning",
+  "module": "transformers",
+  "order": 2,
+  "title": {
+    "en": "Self-Attention: Q, K, V Matrices"
+  },
+  "description": {
+    "en": "Dive into multi-head self-attention — the core operation of Transformers — and understand how Q, K, V projections enable each token to attend to every other token."
+  },
+  "xp_reward": 80,
+  "next_unlock": "transformer_architecture",
+  "story_variants": {
+    "en": "## Self-Attention: Q, K, V Matrices\n\nIn **self-attention**, the queries, keys, and values all come from the **same sequence**. Every token attends to every other token — letting the model capture long-range dependencies in a single operation.\n\n### Projecting to Q, K, V\n\nGiven input embeddings `X` (shape: [seq_len, d_model]), we create Q, K, V by linear projections:\n\n```python\nW_Q = np.random.randn(d_model, d_k)  # (512, 64)\nW_K = np.random.randn(d_model, d_k)  # (512, 64)\nW_V = np.random.randn(d_model, d_v)  # (512, 64)\n\nQ = X @ W_Q   # (seq_len, d_k)\nK = X @ W_K   # (seq_len, d_k)\nV = X @ W_V   # (seq_len, d_v)\n```\n\n### Multi-Head Attention\n\nInstead of one set of Q/K/V, use **h heads** in parallel — each head can attend to different relationships:\n\n```\nhead_i = Attention(Q·W_Qi, K·W_Ki, V·W_Vi)\nMultiHead = Concat(head_1, ..., head_h) · W_O\n```\n\n| GPT-2 Small | Value |\n|------------|-------|\n| d_model | 768 |\n| n_heads | 12 |\n| d_k per head | 64 |\n| n_layers | 12 |\n\n### Attention Mask\n\nFor **causal** (decoder) self-attention, we mask future positions so the model cannot look ahead:\n\n```python\nmask = np.tril(np.ones((seq_len, seq_len)))  # lower triangle\nscores = scores * mask + (1 - mask) * (-1e9) # set upper to -inf\nweights = softmax(scores)  # masked positions get weight ≈ 0\n```\n\n### Positional Encoding\n\n> **Key Concept:** Self-attention has no notion of position — the same output regardless of word order. **Positional encodings** are added to input embeddings to inject order information. Transformers use sine/cosine waves at different frequencies.\n\n```python\nPE[pos, 2i]   = sin(pos / 10000^(2i/d_model))\nPE[pos, 2i+1] = cos(pos / 10000^(2i/d_model))\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "self_attention_map",
+      "nodes": [
+        {"id": "X", "label": "Input X (seq×d_model)", "color": "#4f8ef7"},
+        {"id": "WQ", "label": "W_Q projection", "color": "#f7914f"},
+        {"id": "WK", "label": "W_K projection", "color": "#f7914f"},
+        {"id": "WV", "label": "W_V projection", "color": "#f7914f"},
+        {"id": "Q", "label": "Q (seq×d_k)", "color": "#4fc97a"},
+        {"id": "K", "label": "K (seq×d_k)", "color": "#4fc97a"},
+        {"id": "V", "label": "V (seq×d_v)", "color": "#4fc97a"},
+        {"id": "attn", "label": "Attention(Q,K,V)", "color": "#a44ff7"},
+        {"id": "WO", "label": "W_O concat", "color": "#e74c3c"},
+        {"id": "out", "label": "Output (seq×d_model)", "color": "#4f8ef7"}
+      ],
+      "edges": [
+        {"from": "X", "to": "WQ"},
+        {"from": "X", "to": "WK"},
+        {"from": "X", "to": "WV"},
+        {"from": "WQ", "to": "Q"},
+        {"from": "WK", "to": "K"},
+        {"from": "WV", "to": "V"},
+        {"from": "Q", "to": "attn"},
+        {"from": "K", "to": "attn"},
+        {"from": "V", "to": "attn"},
+        {"from": "attn", "to": "WO"},
+        {"from": "WO", "to": "out"}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "multihead_table",
+      "label": "Multi-Head Attention Config (GPT-2 Small)",
+      "structure": "table",
+      "data": [
+        ["Parameter", "Value"],
+        ["d_model", "768"],
+        ["n_heads", "12"],
+        ["d_k per head", "64"],
+        ["Total Q/K/V params", "3 × 768 × 768 = 1,769,472"]
+      ],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "mha_flow",
+      "steps": ["Input X", "Linear → Q,K,V", "Split into h heads", "Each head: Attention", "Concat heads", "Linear W_O → Output"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "self_attn_code",
+      "steps": [
+        {
+          "line": "Q = X @ W_Q  # project to query space",
+          "highlight": "Q",
+          "explanation": {"en": "Each row asks: 'what am I looking for?'"}
+        },
+        {
+          "line": "K = X @ W_K  # project to key space",
+          "highlight": "K",
+          "explanation": {"en": "Each row says: 'I contain this information'"}
+        },
+        {
+          "line": "V = X @ W_V  # project to value space",
+          "highlight": "V",
+          "explanation": {"en": "Each row says: 'here is my content'"}
+        },
+        {
+          "line": "scores = Q @ K.T / sqrt(d_k)",
+          "highlight": "scores",
+          "explanation": {"en": "Every token compares with every other token: O(n²) complexity"}
+        },
+        {
+          "line": "output = softmax(scores) @ V",
+          "highlight": "output",
+          "explanation": {"en": "Weighted blend of all value vectors"},
+          "output": "Contextualised embeddings"
+        }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Input shape:  (10, 512)", "Q,K,V shape: (10, 64) each per head", "Scores shape: (10, 10) — full attention matrix", "Output shape: (10, 512)"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `causal_mask(seq_len)` that returns a lower-triangular boolean matrix of shape `(seq_len, seq_len)`. Positions where mask is False should be set to -1e9 in the attention scores (not attended to)."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Use np.tril(np.ones((n, n), dtype=bool)) for the lower triangle"},
+        {"en": "Position (i,j) should be True if j <= i (can see current and past tokens)"},
+        {"en": "For a 4-token sequence: row 0 sees only token 0, row 3 sees tokens 0-3"}
+      ],
+      "test_code": "import numpy as np\nmask = causal_mask(4)\nassert mask.shape == (4, 4), f'Expected (4,4), got {mask.shape}'\nassert mask[0, 0] == True, 'Token 0 should see itself'\nassert mask[0, 1] == False, 'Token 0 should NOT see token 1'\nassert mask[3, 0] == True, 'Token 3 can see token 0'\nassert mask[3, 3] == True, 'Token 3 can see itself'\nassert np.sum(mask) == 4*5//2, 'Lower triangle has n*(n+1)/2 True values'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

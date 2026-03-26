@@ -1,0 +1,114 @@
+{
+  "id": "nn_activation",
+  "topic": "activation_functions",
+  "track": "deep_learning",
+  "module": "nn_basics",
+  "order": 2,
+  "title": {
+    "en": "Activation Functions: Giving Neurons Personality"
+  },
+  "description": {
+    "en": "Discover sigmoid, ReLU, tanh, and softmax — the non-linear functions that let neural networks learn complex patterns."
+  },
+  "xp_reward": 60,
+  "next_unlock": "nn_forward_pass",
+  "story_variants": {
+    "en": "## Activation Functions: Giving Neurons Personality\n\nWithout activation functions, a neural network is just a fancy linear equation. **Activation functions** inject non-linearity, enabling networks to learn curves, shapes, and complex boundaries.\n\n### Why Non-Linearity?\n\n> **Key Insight:** Stacking linear layers without activation is mathematically identical to a single linear layer. Non-linear activations break this limitation.\n\n### The Big Four\n\n| Function | Formula | Range | Best For |\n|----------|---------|-------|----------|\n| Sigmoid | 1 / (1 + e^−x) | (0, 1) | Binary classification output |\n| Tanh | (e^x − e^−x)/(e^x + e^−x) | (−1, 1) | Hidden layers (zero-centered) |\n| ReLU | max(0, x) | [0, ∞) | Hidden layers (fast, sparse) |\n| Softmax | e^xᵢ / Σe^xⱼ | (0, 1), sums to 1 | Multi-class output |\n\n### ReLU: The Workhorse\n\n```python\nimport math\n\ndef relu(x):    return max(0, x)\ndef sigmoid(x): return 1 / (1 + math.exp(-x))\ndef tanh(x):    return math.tanh(x)\ndef softmax(xs):\n    exps = [math.exp(x) for x in xs]\n    total = sum(exps)\n    return [e / total for e in exps]\n```\n\n### When to Use What\n\n- **Hidden layers** → ReLU (fast gradients, avoids vanishing)\n- **Binary output** → Sigmoid (outputs a probability 0–1)\n- **Multi-class output** → Softmax (probability distribution)\n- **RNNs/LSTMs** → Tanh (bounded, zero-centered)\n\n### The Dying ReLU Problem\n\nIf a neuron's input is always negative, ReLU outputs 0 forever — the neuron \"dies\". **Leaky ReLU** solves this with a small slope for negatives."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "activation_comparison",
+      "items": [
+        {"label": "Sigmoid", "value": "σ(x) = 1/(1+e^−x)", "color": "#4f8ef7", "note": "Squashes to (0,1)"},
+        {"label": "ReLU", "value": "max(0, x)", "color": "#4fc97a", "note": "Zero for negatives"},
+        {"label": "Tanh", "value": "tanh(x)", "color": "#f7914f", "note": "Squashes to (−1,1)"},
+        {"label": "Softmax", "value": "e^xᵢ/Σe^xⱼ", "color": "#a44ff7", "note": "Probability distribution"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "activation_code",
+      "steps": [
+        {
+          "line": "import math",
+          "highlight": "math",
+          "explanation": {"en": "Import math for exp and tanh"}
+        },
+        {
+          "line": "relu(2.0)   # max(0, 2.0) = 2.0",
+          "highlight": "relu",
+          "explanation": {"en": "Positive input passes through unchanged"},
+          "output": "2.0"
+        },
+        {
+          "line": "relu(-3.0)  # max(0, -3.0) = 0",
+          "highlight": "relu",
+          "explanation": {"en": "Negative input is zeroed out"},
+          "output": "0"
+        },
+        {
+          "line": "sigmoid(0)  # 1/(1+e^0) = 0.5",
+          "highlight": "sigmoid",
+          "explanation": {"en": "At zero, sigmoid returns exactly 0.5"},
+          "output": "0.5"
+        },
+        {
+          "line": "softmax([2.0, 1.0, 0.5])",
+          "highlight": "softmax",
+          "explanation": {"en": "Converts logits to probabilities that sum to 1"},
+          "output": "[0.626, 0.230, 0.144]"
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "flow_activation",
+      "steps": ["Raw Score (z)", "Activation f(z)", "Neuron Output"]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "activation_map",
+      "nodes": [
+        {"id": "hidden", "label": "Hidden Layer", "color": "#4f8ef7"},
+        {"id": "relu_node", "label": "ReLU", "color": "#4fc97a"},
+        {"id": "output_layer", "label": "Output Layer", "color": "#f7914f"},
+        {"id": "sigmoid_node", "label": "Sigmoid/Softmax", "color": "#a44ff7"},
+        {"id": "prediction", "label": "Prediction", "color": "#e74c3c"}
+      ],
+      "edges": [
+        {"from": "hidden", "to": "relu_node"},
+        {"from": "relu_node", "to": "output_layer"},
+        {"from": "output_layer", "to": "sigmoid_node"},
+        {"from": "sigmoid_node", "to": "prediction"}
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["relu(2.0) = 2.0", "relu(-3.0) = 0", "sigmoid(0) = 0.5", "softmax([2,1,0.5]) = [0.626, 0.230, 0.144]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `relu(x)`, `sigmoid(x)`, and `softmax(xs)` functions. Use Python's `math` module for `exp`."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "relu: return max(0, x)"},
+        {"en": "sigmoid: return 1 / (1 + math.exp(-x))"},
+        {"en": "softmax: exponentiate each element, then divide by the sum"}
+      ],
+      "test_code": "import math\nassert relu(3.0) == 3.0, 'relu of positive should be itself'\nassert relu(-5.0) == 0, 'relu of negative should be 0'\nassert abs(sigmoid(0) - 0.5) < 1e-9, 'sigmoid(0) must be 0.5'\nassert sigmoid(100) > 0.99, 'sigmoid of large positive is near 1'\nprobs = softmax([1.0, 2.0, 3.0])\nassert abs(sum(probs) - 1.0) < 1e-9, 'softmax must sum to 1'\nassert probs[2] > probs[1] > probs[0], 'largest logit gets largest probability'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

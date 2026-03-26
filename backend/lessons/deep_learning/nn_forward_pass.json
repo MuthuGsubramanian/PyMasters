@@ -1,0 +1,117 @@
+{
+  "id": "nn_forward_pass",
+  "topic": "forward_pass",
+  "track": "deep_learning",
+  "module": "nn_basics",
+  "order": 3,
+  "title": {
+    "en": "Forward Pass: Data Flows Through the Network"
+  },
+  "description": {
+    "en": "Understand how information travels through a neural network layer by layer using matrix multiplication and activation functions."
+  },
+  "xp_reward": 65,
+  "next_unlock": "nn_layers",
+  "story_variants": {
+    "en": "## Forward Pass: Data Flows Through the Network\n\nThe **forward pass** is the journey your data takes from input to prediction. At each layer, matrix multiplication transforms the data, and an activation function adds non-linearity.\n\n### Matrix Multiplication: The Engine\n\nFor a layer with weight matrix **W** (shape: [out_features, in_features]) and bias **b**:\n\n```\nz = W · x + b\na = activation(z)\n```\n\n### A Two-Layer Example\n\n```python\nimport numpy as np\n\n# Input: 3 features\nx = np.array([1.0, 2.0, 3.0])\n\n# Layer 1: 3 inputs → 4 hidden neurons\nW1 = np.random.randn(4, 3)\nb1 = np.zeros(4)\nz1 = W1 @ x + b1\na1 = np.maximum(0, z1)  # ReLU\n\n# Layer 2: 4 hidden → 2 outputs\nW2 = np.random.randn(2, 4)\nb2 = np.zeros(2)\nz2 = W2 @ a1 + b2\n# output = softmax(z2)\n```\n\n### Shapes Matter!\n\n| Quantity | Shape | Meaning |\n|----------|-------|---------|\n| x | (3,) | 3 input features |\n| W1 | (4, 3) | 4 neurons × 3 inputs |\n| z1, a1 | (4,) | 4 hidden activations |\n| W2 | (2, 4) | 2 outputs × 4 hidden |\n| z2 | (2,) | 2 raw output scores |\n\n### Batch Processing\n\n> **Key Concept:** In practice, we process many examples at once. If the batch size is N, then x has shape (N, 3) and z1 has shape (N, 4). All computations are still just matrix multiplication.\n\n### Why `@` in NumPy?\n\nThe `@` operator is Python's matrix multiplication symbol (PEP 465). It is equivalent to `np.matmul(W, x)`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "DataStructure",
+      "id": "matrix_W1",
+      "label": "Weight Matrix W1 (4×3)",
+      "structure": "matrix",
+      "data": [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9], [1.0, 1.1, 1.2]],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "DataStructure",
+      "id": "input_vector",
+      "label": "Input x (3,)",
+      "structure": "vector",
+      "data": [1.0, 2.0, 3.0],
+      "color": "#f7914f"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "forward_flow",
+      "steps": ["Input x", "W1 · x + b1", "ReLU(z1) = a1", "W2 · a1 + b2", "Softmax → ŷ"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "forward_code",
+      "steps": [
+        {
+          "line": "x = np.array([1.0, 2.0, 3.0])",
+          "highlight": "x",
+          "explanation": {"en": "Input vector with 3 features"}
+        },
+        {
+          "line": "z1 = W1 @ x + b1",
+          "highlight": "z1",
+          "explanation": {"en": "Matrix multiply: W1 has shape (4,3), result z1 has shape (4,)"}
+        },
+        {
+          "line": "a1 = np.maximum(0, z1)",
+          "highlight": "a1",
+          "explanation": {"en": "Apply ReLU: zero out all negatives"}
+        },
+        {
+          "line": "z2 = W2 @ a1 + b2",
+          "highlight": "z2",
+          "explanation": {"en": "Second layer: W2 has shape (2,4), result z2 has shape (2,)"}
+        },
+        {
+          "line": "pred = np.exp(z2) / np.exp(z2).sum()",
+          "highlight": "pred",
+          "explanation": {"en": "Softmax: convert raw scores to probabilities"},
+          "output": "[0.73, 0.27]"
+        }
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "layer_map",
+      "nodes": [
+        {"id": "input", "label": "Input (3)", "color": "#4f8ef7"},
+        {"id": "layer1", "label": "Hidden Layer (4)", "color": "#f7914f"},
+        {"id": "relu", "label": "ReLU", "color": "#4fc97a"},
+        {"id": "layer2", "label": "Output Layer (2)", "color": "#a44ff7"},
+        {"id": "softmax", "label": "Softmax", "color": "#e74c3c"}
+      ],
+      "edges": [
+        {"from": "input", "to": "layer1", "label": "W1 (4×3)"},
+        {"from": "layer1", "to": "relu"},
+        {"from": "relu", "to": "layer2", "label": "W2 (2×4)"},
+        {"from": "layer2", "to": "softmax"}
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["z1.shape = (4,)", "a1.shape = (4,)", "z2.shape = (2,)", "pred = [0.73, 0.27]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Using NumPy, implement a single forward pass. Given `x = np.array([1.0, 0.5, -1.0])`, `W = np.array([[0.2, 0.8, -0.5], [0.1, -0.3, 0.7]])`, `b = np.array([0.1, -0.1])`, compute `z = W @ x + b` and then apply ReLU to get `a`."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Use the @ operator for matrix multiplication"},
+        {"en": "ReLU: a = np.maximum(0, z)"},
+        {"en": "Check shapes: W is (2,3), x is (3,), result z should be (2,)"}
+      ],
+      "test_code": "import numpy as np\nx = np.array([1.0, 0.5, -1.0])\nW = np.array([[0.2, 0.8, -0.5], [0.1, -0.3, 0.7]])\nb = np.array([0.1, -0.1])\nassert z.shape == (2,), 'z must have shape (2,)'\nassert a.shape == (2,), 'a must have shape (2,)'\nassert np.all(a >= 0), 'ReLU output must be non-negative'\nassert np.allclose(z, W @ x + b), 'z must equal W @ x + b'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

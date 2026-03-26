@@ -1,0 +1,109 @@
+{
+  "id": "bp_gradient_descent",
+  "topic": "gradient_descent",
+  "track": "deep_learning",
+  "module": "backpropagation",
+  "order": 1,
+  "title": {
+    "en": "Gradient Descent: Learning by Sliding Downhill"
+  },
+  "description": {
+    "en": "Understand how neural networks learn by computing gradients and taking small steps in the direction that reduces the loss."
+  },
+  "xp_reward": 70,
+  "next_unlock": "bp_loss_functions",
+  "story_variants": {
+    "en": "## Gradient Descent: Learning by Sliding Downhill\n\nImagine you are blindfolded on a hilly landscape and want to reach the lowest point. You feel the slope under your feet and take a small step downward. Repeat. This is **gradient descent**.\n\n### The Core Idea\n\nA neural network's parameters (weights and biases) define a **loss surface**. Gradient descent navigates this surface toward the minimum:\n\n```\nw ← w − η · (∂L/∂w)\n```\n\nWhere:\n- `w` — weight being updated\n- `η` (eta) — **learning rate** (step size)\n- `∂L/∂w` — gradient of the loss with respect to `w`\n\n### The Learning Rate\n\n| Learning Rate | Effect |\n|--------------|--------|\n| Too large (η = 1.0) | Overshoots the minimum, diverges |\n| Too small (η = 0.0001) | Painfully slow convergence |\n| Just right (η = 0.01) | Steady descent toward minimum |\n\n### Simple 1D Example\n\n```python\ndef gradient_descent_1d(w_init, learning_rate, steps):\n    w = w_init\n    for _ in range(steps):\n        grad = 2 * w       # derivative of L = w^2 is 2w\n        w = w - learning_rate * grad\n    return w\n\nresult = gradient_descent_1d(10.0, 0.1, 50)\n# result ≈ 0.0 (minimum of w^2 is at w=0)\n```\n\n### Variants\n\n> **Key Concept:** Pure gradient descent computes gradients over the entire dataset. **Mini-batch** GD uses small random subsets (batches), giving noisy but faster updates.\n\n- **Batch GD**: Use all N samples — exact gradient, slow.\n- **Stochastic GD (SGD)**: Use 1 sample — noisy, fast.\n- **Mini-batch GD**: Use 32–256 samples — best of both."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "gd_concept",
+      "nodes": [
+        {"id": "loss", "label": "Loss L(w)", "color": "#e74c3c"},
+        {"id": "grad", "label": "Gradient ∂L/∂w", "color": "#f7914f"},
+        {"id": "lr", "label": "Learning Rate η", "color": "#4f8ef7"},
+        {"id": "update", "label": "Weight Update", "color": "#4fc97a"},
+        {"id": "new_w", "label": "New Weight w'", "color": "#a44ff7"}
+      ],
+      "edges": [
+        {"from": "loss", "to": "grad", "label": "differentiate"},
+        {"from": "grad", "to": "update", "label": "scale by η"},
+        {"from": "lr", "to": "update"},
+        {"from": "update", "to": "new_w", "label": "w − η·grad"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "gd_code",
+      "steps": [
+        {
+          "line": "w = 10.0          # start far from minimum",
+          "highlight": "w",
+          "explanation": {"en": "Initialize weight at 10, far from the minimum at 0"}
+        },
+        {
+          "line": "learning_rate = 0.1",
+          "highlight": "learning_rate",
+          "explanation": {"en": "Step size for each update"}
+        },
+        {
+          "line": "for step in range(5):",
+          "highlight": "for",
+          "explanation": {"en": "Run 5 gradient descent steps"}
+        },
+        {
+          "line": "    grad = 2 * w    # dL/dw for L = w^2",
+          "highlight": "grad",
+          "explanation": {"en": "Compute gradient of loss w.r.t. w"}
+        },
+        {
+          "line": "    w = w - learning_rate * grad",
+          "highlight": "w",
+          "explanation": {"en": "Update: move opposite to gradient"},
+          "output": "w=6.0, w=3.6, w=2.16, w=1.296, w=0.778"
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "gd_loop",
+      "steps": ["Forward Pass", "Compute Loss", "Compute Gradient", "Update Weights", "Repeat"]
+    },
+    {
+      "type": "VariableBox",
+      "id": "lr_box",
+      "variable": "learning_rate",
+      "value": 0.1,
+      "data_type": "float",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Step 0: w=10.00, loss=100.00", "Step 1: w= 6.00, loss= 36.00", "Step 2: w= 3.60, loss= 12.96", "Step 3: w= 2.16, loss=  4.67", "Step 4: w= 1.30, loss=  1.68", "Step 5: w= 0.78, loss=  0.60"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `gradient_descent(w_init, lr, n_steps)` that minimises L(w) = (w − 3)² starting from `w_init`, using learning rate `lr` for `n_steps` steps. Return the final `w`."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "The gradient of (w-3)^2 is 2*(w-3)"},
+        {"en": "Update rule: w = w - lr * grad"},
+        {"en": "After many steps with lr=0.1, w should converge near 3.0"}
+      ],
+      "test_code": "result = gradient_descent(0.0, 0.1, 100)\nassert abs(result - 3.0) < 0.01, f'Expected w near 3.0, got {result}'\nresult2 = gradient_descent(10.0, 0.1, 100)\nassert abs(result2 - 3.0) < 0.01, f'Should converge from above too: got {result2}'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

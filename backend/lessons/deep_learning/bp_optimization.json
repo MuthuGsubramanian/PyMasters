@@ -1,0 +1,111 @@
+{
+  "id": "bp_optimization",
+  "topic": "optimizers",
+  "track": "deep_learning",
+  "module": "backpropagation",
+  "order": 3,
+  "title": {
+    "en": "Optimizers: SGD, Momentum, and Adam"
+  },
+  "description": {
+    "en": "Go beyond vanilla gradient descent with momentum, RMSProp, and the Adam optimizer that powers most modern neural networks."
+  },
+  "xp_reward": 70,
+  "next_unlock": "cnn_convolutions",
+  "story_variants": {
+    "en": "## Optimizers: SGD, Momentum, and Adam\n\nVanilla gradient descent works but is slow and gets stuck in ravines. Modern optimizers add **memory** and **adaptive learning rates** to converge faster.\n\n### SGD with Momentum\n\nMomentum accumulates a velocity vector in the gradient direction:\n\n```\nv ← β·v − η·∇L\nw ← w + v\n```\n\n- `β` is the momentum coefficient (typically 0.9).\n- Like a ball rolling downhill — it builds speed.\n\n### RMSProp\n\nAdapts the learning rate for each parameter individually based on recent gradient magnitudes:\n\n```\nE[g²] ← β·E[g²] + (1−β)·g²\nw ← w − η · g / √(E[g²] + ε)\n```\n\n### Adam: The Best of Both\n\n**Adam** (Adaptive Moment Estimation) combines momentum (first moment) and RMSProp (second moment):\n\n```python\ndef adam_update(w, g, m, v, t, lr=0.001, b1=0.9, b2=0.999, eps=1e-8):\n    m = b1 * m + (1 - b1) * g          # first moment\n    v = b2 * v + (1 - b2) * g**2       # second moment\n    m_hat = m / (1 - b1**t)            # bias correction\n    v_hat = v / (1 - b2**t)            # bias correction\n    w = w - lr * m_hat / (v**0.5 + eps)\n    return w, m, v\n```\n\n### Optimizer Comparison\n\n| Optimizer | Adaptive LR | Momentum | Typical Use |\n|-----------|------------|---------|-------------|\n| SGD | No | No | Simple baselines |\n| SGD + Momentum | No | Yes | Image classification |\n| RMSProp | Yes | No | RNNs |\n| Adam | Yes | Yes | General purpose |\n| AdamW | Yes | Yes | Transformers |\n\n> **Key Concept:** Adam is the default choice for most deep learning tasks. If Adam doesn't converge, try SGD with momentum and a learning rate schedule."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "optimizer_panel",
+      "items": [
+        {"label": "SGD", "value": "w -= η·g", "color": "#4f8ef7", "note": "Simple, no memory"},
+        {"label": "Momentum", "value": "v = βv - ηg; w += v", "color": "#f7914f", "note": "Smooth, faster"},
+        {"label": "Adam", "value": "Adaptive + Momentum", "color": "#4fc97a", "note": "Best of both worlds"}
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "adam_map",
+      "nodes": [
+        {"id": "grad", "label": "Gradient g", "color": "#e74c3c"},
+        {"id": "m1", "label": "1st Moment (mean)", "color": "#f7914f"},
+        {"id": "m2", "label": "2nd Moment (variance)", "color": "#4f8ef7"},
+        {"id": "bc", "label": "Bias Correction", "color": "#a44ff7"},
+        {"id": "update", "label": "Weight Update", "color": "#4fc97a"}
+      ],
+      "edges": [
+        {"from": "grad", "to": "m1"},
+        {"from": "grad", "to": "m2"},
+        {"from": "m1", "to": "bc"},
+        {"from": "m2", "to": "bc"},
+        {"from": "bc", "to": "update"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "adam_code",
+      "steps": [
+        {
+          "line": "m, v, t = 0.0, 0.0, 0",
+          "highlight": "m, v, t",
+          "explanation": {"en": "Initialise moment estimates and time step"}
+        },
+        {
+          "line": "g = 2.0  # example gradient",
+          "highlight": "g",
+          "explanation": {"en": "Gradient at this step"}
+        },
+        {
+          "line": "m = 0.9 * m + 0.1 * g",
+          "highlight": "m",
+          "explanation": {"en": "Update first moment (exponential moving average of gradient)"}
+        },
+        {
+          "line": "v = 0.999 * v + 0.001 * g**2",
+          "highlight": "v",
+          "explanation": {"en": "Update second moment (exponential moving average of squared gradient)"}
+        },
+        {
+          "line": "w -= 0.001 * m_hat / (v_hat**0.5 + 1e-8)",
+          "highlight": "w",
+          "explanation": {"en": "Adaptive update: large variance → small step"},
+          "output": "w updated"
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "optim_flow",
+      "steps": ["Gradient g", "First Moment m", "Second Moment v", "Bias Correct", "Update w"]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["SGD:      convergence in ~500 steps", "Momentum: convergence in ~200 steps", "Adam:     convergence in ~100 steps"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `sgd_with_momentum(w, g, v, lr=0.01, beta=0.9)` that returns the updated `(w, v)` using momentum. Also implement `adam_step(w, g, m, v, t, lr=0.001)` that returns updated `(w, m, v)`."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Momentum: v_new = beta*v + (1-beta)*g; w_new = w - lr * v_new"},
+        {"en": "Adam first moment: m = b1*m + (1-b1)*g"},
+        {"en": "Adam second moment: v = b2*v + (1-b2)*g**2"}
+      ],
+      "test_code": "w0, g0, v0 = 5.0, 2.0, 0.0\nw1, v1 = sgd_with_momentum(w0, g0, v0)\nassert v1 == 0.9*0.0 + 0.1*2.0, 'velocity update wrong'\nassert abs(w1 - (5.0 - 0.01 * v1)) < 1e-9, 'weight update wrong'\n\nw2, m2, v2 = adam_step(5.0, 2.0, 0.0, 0.0, 1)\nassert m2 > 0, 'first moment must be positive after positive gradient'\nassert v2 > 0, 'second moment must be positive'\nassert w2 < 5.0, 'weight should decrease for positive gradient'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
