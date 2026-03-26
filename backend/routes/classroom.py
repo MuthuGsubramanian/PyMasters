@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from vaathiyaar.engine import call_vaathiyaar, evaluate_code
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
+from vaathiyaar.training_data import record_training_pair
 
 router = APIRouter(prefix="/api/classroom", tags=["classroom"])
 
@@ -127,6 +128,18 @@ def chat(request: ChatRequest):
         )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Vaathiyaar AI error: {exc}")
+
+    # Record interaction for future fine-tuning
+    try:
+        record_training_pair(
+            db_path=db_path,
+            user_message=request.message,
+            vaathiyaar_response=response,
+            student_profile=profile,
+            lesson_context=lesson_context,
+        )
+    except Exception:
+        pass  # Best-effort; don't fail the request
 
     # Auto-record profile_update signal if present and non-trivial
     profile_update = response.get("profile_update")
