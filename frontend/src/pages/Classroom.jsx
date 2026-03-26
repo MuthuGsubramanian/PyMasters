@@ -1,10 +1,43 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
 import { BookOpen, ChevronRight, Play, RotateCcw } from 'lucide-react';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Thinking bubble — animated dots while Vaathiyaar processes
+// ──────────────────────────────────────────────────────────────────────────────
+function ThinkingBubble() {
+    return (
+        <div className="flex items-center gap-1.5 px-4 py-3">
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}} />
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}} />
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}} />
+            <span className="text-sm text-purple-500 ml-2">Vaathiyaar is thinking...</span>
+        </div>
+    );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Markdown components for rendering structured chat responses
+// ──────────────────────────────────────────────────────────────────────────────
+const markdownComponents = {
+    h2: ({children}) => <h2 className="text-base font-bold text-slate-900 mt-3 mb-1">{children}</h2>,
+    h3: ({children}) => <h3 className="text-sm font-bold text-slate-800 mt-2 mb-1">{children}</h3>,
+    p: ({children}) => <p className="text-sm text-slate-700 mb-2">{children}</p>,
+    ul: ({children}) => <ul className="list-disc list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ul>,
+    ol: ({children}) => <ol className="list-decimal list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ol>,
+    code: ({inline, children}) => inline
+        ? <code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
+        : <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
+    table: ({children}) => <table className="text-xs border-collapse my-2 w-full">{children}</table>,
+    th: ({children}) => <th className="border border-slate-300 bg-slate-100 px-2 py-1 text-left font-bold text-slate-700">{children}</th>,
+    td: ({children}) => <td className="border border-slate-200 px-2 py-1 text-slate-600">{children}</td>,
+    strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
+};
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helper: resolve a localised string from an object or return as-is
@@ -271,7 +304,11 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
                     >
                         {success ? 'Success!' : 'Not quite right'}
                     </p>
-                    <p className="text-slate-700 leading-relaxed">{feedbackMsg}</p>
+                    <div className="text-slate-700 leading-relaxed">
+                        <ReactMarkdown components={markdownComponents}>
+                            {feedbackMsg}
+                        </ReactMarkdown>
+                    </div>
 
                     {evalResult?.output && (
                         <pre className="mt-3 p-3 bg-slate-800 rounded-lg font-mono text-xs text-slate-300 whitespace-pre-wrap max-h-32 overflow-auto border border-slate-700">
@@ -420,7 +457,8 @@ export default function Classroom() {
     // ── Chat with Vaathiyaar ────────────────────────────────────────────────
     const handleChat = async (message) => {
         const userMsg = { role: 'user', content: message };
-        setChatMessages((prev) => [...prev, userMsg]);
+        const thinkingMsg = { role: 'assistant', content: null, _isThinking: true };
+        setChatMessages((prev) => [...prev, userMsg, thinkingMsg]);
         setChatLoading(true);
         try {
             const res = await api.post('/classroom/chat', {
@@ -431,18 +469,16 @@ export default function Classroom() {
                 language,
             }, { timeout: 90000 });
             const reply = res.data.response ?? res.data.message ?? 'No response.';
-            setChatMessages((prev) => [
-                ...prev,
-                { role: 'assistant', content: reply },
-            ]);
+            setChatMessages((prev) =>
+                prev.map((m) => m._isThinking ? { role: 'assistant', content: reply } : m)
+            );
         } catch (err) {
-            setChatMessages((prev) => [
-                ...prev,
-                {
-                    role: 'assistant',
-                    content: `Sorry, Vaathiyaar is thinking... (${err.message}). Try again in a moment.`,
-                },
-            ]);
+            setChatMessages((prev) =>
+                prev.map((m) => m._isThinking
+                    ? { role: 'assistant', content: `Sorry, something went wrong (${err.message}). Try again in a moment.` }
+                    : m
+                )
+            );
         } finally {
             setChatLoading(false);
         }
@@ -570,7 +606,15 @@ export default function Classroom() {
                                                 : 'panel text-slate-700 rounded-bl-none'
                                         }`}
                                     >
-                                        {msg.content}
+                                        {msg._isThinking ? (
+                                            <ThinkingBubble />
+                                        ) : msg.role === 'assistant' ? (
+                                            <ReactMarkdown components={markdownComponents}>
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        ) : (
+                                            msg.content
+                                        )}
                                     </div>
                                 </div>
                             ))}
