@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Terminal, Cpu, ArrowRight, Zap, Code2, Globe } from 'lucide-react';
 
@@ -140,6 +140,21 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* Footer */}
+            <footer className="relative z-10 border-t border-black/[0.06] bg-white/40 backdrop-blur-sm py-8 px-6">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-slate-400">
+                        &copy; {new Date().getFullYear()} PyMasters &mdash; <a href="https://www.pymasters.net" className="hover:text-cyan-600 transition-colors">www.pymasters.net</a>
+                    </p>
+                    <div className="flex items-center gap-6 text-xs text-slate-400">
+                        <Link to="/terms" className="hover:text-cyan-600 transition-colors">Terms of Use</Link>
+                        <Link to="/privacy" className="hover:text-cyan-600 transition-colors">Privacy Policy</Link>
+                        <Link to="/security" className="hover:text-cyan-600 transition-colors">Security</Link>
+                        <a href="mailto:legal@pymasters.net" className="hover:text-cyan-600 transition-colors">legal@pymasters.net</a>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
