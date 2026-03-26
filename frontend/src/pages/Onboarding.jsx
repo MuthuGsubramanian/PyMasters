@@ -17,6 +17,7 @@ const QUESTIONS = [
     {
         key: 'motivation',
         type: 'choice',
+        multi: true,
         text: "Great! Now tell me — what brings you to Python? 🎯",
         options: [
             { value: 'career_switch', label: '💼 Career Switch' },
@@ -52,6 +53,7 @@ const QUESTIONS = [
     {
         key: 'goal',
         type: 'choice',
+        multi: true,
         text: "What's the main thing you want to build or do with Python? 🏗️",
         options: [
             { value: 'web',          label: '🌐 Web Development' },
@@ -129,11 +131,11 @@ function VaathiyaarBubble({ text }) {
             className="flex items-start gap-3 max-w-[85%]"
         >
             {/* Avatar */}
-            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-lg select-none mt-1">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-lg select-none mt-1">
                 🧑‍🏫
             </div>
             {/* Bubble */}
-            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-slate-200 text-sm leading-relaxed">
+            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-slate-800 text-sm leading-relaxed">
                 {text}
             </div>
         </motion.div>
@@ -148,7 +150,7 @@ function UserBubble({ text }) {
             transition={{ duration: 0.35 }}
             className="flex justify-end"
         >
-            <div className="max-w-[75%] panel rounded-2xl rounded-tr-sm px-5 py-3 border-r-2 border-cyan-500/60 text-slate-200 text-sm leading-relaxed">
+            <div className="max-w-[75%] panel rounded-2xl rounded-tr-sm px-5 py-3 border-r-2 border-cyan-500/60 text-slate-800 text-sm leading-relaxed">
                 {text}
             </div>
         </motion.div>
@@ -168,11 +170,69 @@ function OptionPills({ options, onSelect, disabled }) {
                     key={opt.value}
                     onClick={() => onSelect(opt)}
                     disabled={disabled}
-                    className="px-4 py-2 rounded-full text-sm font-medium border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-4 py-2 rounded-full text-sm font-medium border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     {opt.label}
                 </button>
             ))}
+        </motion.div>
+    );
+}
+
+function MultiOptionPills({ options, onSelect, disabled }) {
+    const [selected, setSelected] = useState([]);
+
+    const toggle = (opt) => {
+        setSelected((prev) =>
+            prev.find((s) => s.value === opt.value)
+                ? prev.filter((s) => s.value !== opt.value)
+                : [...prev, opt]
+        );
+    };
+
+    const handleContinue = () => {
+        if (selected.length === 0) return;
+        const label = selected.map((s) => s.label).join(', ');
+        const value = selected.length === 1 ? selected[0].value : selected.map((s) => s.value).join(',');
+        onSelect({ value, label });
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="flex flex-col gap-3 pl-12"
+        >
+            <div className="flex flex-wrap gap-2">
+                {options.map((opt) => {
+                    const isSelected = selected.find((s) => s.value === opt.value);
+                    return (
+                        <button
+                            key={opt.value}
+                            onClick={() => toggle(opt)}
+                            disabled={disabled}
+                            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
+                                isSelected
+                                    ? 'bg-cyan-500 text-white border-cyan-500'
+                                    : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-700 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900'
+                            }`}
+                        >
+                            {isSelected && <span className="mr-1">✓</span>}
+                            {opt.label}
+                        </button>
+                    );
+                })}
+            </div>
+            {selected.length > 0 && (
+                <button
+                    onClick={handleContinue}
+                    disabled={disabled}
+                    className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    Continue →
+                </button>
+            )}
         </motion.div>
     );
 }
@@ -195,7 +255,7 @@ function LangPickerBlock({ onSelect, disabled }) {
             <button
                 onClick={() => onSelect({ value: selected, label: selected.toUpperCase() })}
                 disabled={disabled}
-                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 Confirm Language ✓
             </button>
@@ -214,7 +274,7 @@ function ProgressDots({ total, current }) {
                             ? 'w-2 h-2 bg-cyan-400'
                             : i === current
                             ? 'w-4 h-2 bg-purple-400'
-                            : 'w-2 h-2 bg-white/10'
+                            : 'w-2 h-2 bg-slate-200'
                     }`}
                 />
             ))}
@@ -303,12 +363,12 @@ export default function Onboarding() {
             style={{ background: 'var(--bg-deep)' }}
         >
             {/* Header */}
-            <header className="flex-shrink-0 px-6 py-4 flex items-center gap-3 border-b border-white/5">
-                <div className="w-8 h-8 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-base select-none">
+            <header className="flex-shrink-0 px-6 py-4 flex items-center gap-3 border-b border-slate-200">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-base select-none">
                     🧑‍🏫
                 </div>
                 <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-purple-400">Vaathiyaar</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-purple-600">Vaathiyaar</p>
                     <p className="text-[11px] text-slate-500">Your personal Python guide</p>
                 </div>
             </header>
@@ -327,6 +387,12 @@ export default function Onboarding() {
                                         <>
                                             {QUESTIONS[msg.questionIndex].type === 'language' ? (
                                                 <LangPickerBlock onSelect={handleAnswer} disabled={busy} />
+                                            ) : QUESTIONS[msg.questionIndex].multi ? (
+                                                <MultiOptionPills
+                                                    options={QUESTIONS[msg.questionIndex].options}
+                                                    onSelect={handleAnswer}
+                                                    disabled={busy}
+                                                />
                                             ) : (
                                                 <OptionPills
                                                     options={QUESTIONS[msg.questionIndex].options}
@@ -346,7 +412,7 @@ export default function Onboarding() {
             </div>
 
             {/* Footer — progress + dots */}
-            <footer className="flex-shrink-0 px-4 py-5 border-t border-white/5 flex flex-col items-center gap-3">
+            <footer className="flex-shrink-0 px-4 py-5 border-t border-slate-200 flex flex-col items-center gap-3">
                 <ProgressDots total={QUESTIONS.length} current={done ? QUESTIONS.length : currentStep} />
                 <p className="text-[11px] text-slate-600">
                     {done ? 'All done!' : `Question ${currentStep + 1} of ${QUESTIONS.length}`}

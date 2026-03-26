@@ -426,10 +426,10 @@ export default function Classroom() {
             const res = await api.post('/classroom/chat', {
                 user_id: user?.id,
                 message,
-                lesson_context: currentLesson?.id ?? '',
+                lesson_context: currentLesson ? { topic: currentLesson.topic || currentLesson.id, lesson_id: currentLesson.id } : null,
                 phase,
                 language,
-            });
+            }, { timeout: 90000 });
             const reply = res.data.response ?? res.data.message ?? 'No response.';
             setChatMessages((prev) => [
                 ...prev,
@@ -440,7 +440,7 @@ export default function Classroom() {
                 ...prev,
                 {
                     role: 'assistant',
-                    content: 'Sorry, I could not reach Vaathiyaar right now.',
+                    content: `Sorry, Vaathiyaar is thinking... (${err.message}). Try again in a moment.`,
                 },
             ]);
         } finally {
