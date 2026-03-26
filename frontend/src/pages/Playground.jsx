@@ -39,7 +39,11 @@ const markdownComponents = {
     code: ({inline, children}) => inline
         ? <code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
         : <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
-    table: ({children}) => <table className="text-xs border-collapse my-2 w-full">{children}</table>,
+    table: ({children}) => (
+        <div className="overflow-x-auto my-2">
+            <table className="text-xs border-collapse w-full min-w-[300px]">{children}</table>
+        </div>
+    ),
     th: ({children}) => <th className="border border-slate-300 bg-slate-100 px-2 py-1 text-left font-bold text-slate-700">{children}</th>,
     td: ({children}) => <td className="border border-slate-200 px-2 py-1 text-slate-600">{children}</td>,
     strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
@@ -80,35 +84,73 @@ export default function Playground() {
         setMessages((prev) => [...prev, userMsg]);
         setLoading(true);
 
+        // Add empty assistant message that we'll stream into
+        const streamMsg = { role: 'assistant', content: '', _isStreaming: true };
+        setMessages((prev) => [...prev, streamMsg]);
+
         try {
-            const res = await api.post('/playground/chat', {
-                user_id: user?.id,
-                message,
-                language: user?.preferred_language || 'en',
-            }, { timeout: 90000 });
+            const response = await fetch(`${api.defaults.baseURL}/playground/chat/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user?.id,
+                    message,
+                    language: user?.preferred_language || 'en',
+                }),
+            });
 
-            const reply = res.data.response ?? res.data.message ?? 'No response.';
-            setMessages((prev) => [
-                ...prev,
-                { role: 'assistant', content: reply },
-            ]);
+            if (response.status === 403) {
+                setMessages((prev) => {
+                    const filtered = prev.filter((m) => !m._isStreaming);
+                    return [...filtered, { role: 'assistant', content: "You've used all your prompts! Complete more lessons to earn XP and unlock more." }];
+                });
+                return;
+            }
 
-            if (res.data.credits) {
-                setCredits(res.data.credits);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.token) {
+                                fullText += data.token;
+                                setMessages((prev) =>
+                                    prev.map((m) => m._isStreaming ? { ...m, content: fullText } : m)
+                                );
+                            }
+                            if (data.done) {
+                                setMessages((prev) =>
+                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: fullText } : m)
+                                );
+                            }
+                        } catch (e) {
+                            // ignore parse errors on partial chunks
+                        }
+                    }
+                }
+            }
+
+            // Refresh credits after streaming completes
+            if (user?.id) {
+                api.get(`/playground/credits/${user.id}`)
+                    .then((r) => setCredits(r.data))
+                    .catch(() => {});
             }
         } catch (err) {
-            const detail = err.response?.data?.detail;
-            if (err.response?.status === 403) {
-                setMessages((prev) => [
-                    ...prev,
-                    { role: 'assistant', content: detail || "You've used all your prompts! Complete more lessons to earn XP and unlock more." },
-                ]);
-            } else {
-                setMessages((prev) => [
-                    ...prev,
-                    { role: 'assistant', content: `Sorry, something went wrong. (${err.message}). Try again in a moment.` },
-                ]);
-            }
+            setMessages((prev) => {
+                const filtered = prev.filter((m) => !m._isStreaming);
+                return [...filtered, { role: 'assistant', content: `Sorry, something went wrong. (${err.message}). Try again in a moment.` }];
+            });
         } finally {
             setLoading(false);
         }
@@ -207,6 +249,7 @@ export default function Playground() {
                                         <ReactMarkdown components={markdownComponents}>
                                             {msg.content}
                                         </ReactMarkdown>
+                                        {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5" />}
                                     </div>
                                 </div>
                             ) : (

@@ -4,14 +4,17 @@ playground.py — FastAPI APIRouter for the XP-based Playground chat.
 Prefix: /api/playground
 """
 
+import json
 import os
 import sqlite3
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from vaathiyaar.engine import call_vaathiyaar
+from vaathiyaar.engine import call_vaathiyaar, get_ollama_client, OLLAMA_MODEL
+from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile
 
 router = APIRouter(prefix="/api/playground", tags=["playground"])
@@ -133,3 +136,61 @@ def playground_chat(request: PlaygroundChatRequest):
         "response": reply,
         "credits": updated_credits,
     }
+
+
+@router.post("/chat/stream")
+def playground_chat_stream(request: PlaygroundChatRequest):
+    """Stream a free-form Vaathiyaar response token by token using SSE."""
+    db_path = _get_db_path()
+
+    # Check credits
+    credits = _get_user_credits(db_path, request.user_id)
+    if credits["remaining_prompts"] <= 0:
+        raise HTTPException(
+            status_code=403,
+            detail="You've used all your prompts! Complete more lessons to earn XP and unlock more.",
+        )
+
+    profile = get_student_profile(db_path, request.user_id)
+    lesson_context = {
+        "mode": "playground",
+        "language": request.language or "en",
+    }
+
+    system_prompt = build_system_prompt(profile, lesson_context)
+    client = get_ollama_client()
+
+    def generate():
+        full_response = ""
+        try:
+            for chunk in client.chat(
+                model=OLLAMA_MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": request.message},
+                ],
+                stream=True,
+            ):
+                token = chunk.get("message", {}).get("content", "")
+                if token:
+                    full_response += token
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+
+            # Send final message with full content
+            yield f"data: {json.dumps({'done': True, 'full_response': full_response})}\n\n"
+
+            # Increment prompts used (best effort)
+            try:
+                conn = sqlite3.connect(db_path)
+                conn.execute(
+                    "UPDATE users SET playground_prompts_used = playground_prompts_used + 1 WHERE id = ?",
+                    [request.user_id],
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")

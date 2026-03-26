@@ -11,9 +11,11 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from vaathiyaar.engine import call_vaathiyaar, evaluate_code
+from vaathiyaar.engine import call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL
+from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
 from vaathiyaar.training_data import record_training_pair
 
@@ -157,6 +159,57 @@ def chat(request: ChatRequest):
             pass  # Best-effort; don't fail the request
 
     return response
+
+
+@router.post("/chat/stream")
+def chat_stream(request: ChatRequest):
+    """Stream Vaathiyaar's response token by token using SSE."""
+    db_path = _get_db_path()
+    profile = get_student_profile(db_path, request.user_id)
+
+    lesson_context = request.lesson_context or {}
+    if request.phase:
+        lesson_context["phase"] = request.phase
+    if request.language:
+        lesson_context["language"] = request.language
+
+    system_prompt = build_system_prompt(profile, lesson_context)
+    client = get_ollama_client()
+
+    def generate():
+        full_response = ""
+        try:
+            for chunk in client.chat(
+                model=OLLAMA_MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": request.message},
+                ],
+                stream=True,
+            ):
+                token = chunk.get("message", {}).get("content", "")
+                if token:
+                    full_response += token
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+
+            # Send final message with full content
+            yield f"data: {json.dumps({'done': True, 'full_response': full_response})}\n\n"
+
+            # Record training data (best effort)
+            try:
+                record_training_pair(
+                    db_path=db_path,
+                    user_message=request.message,
+                    vaathiyaar_response={"message": full_response},
+                    student_profile=profile,
+                    lesson_context=lesson_context,
+                )
+            except Exception:
+                pass
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @router.get("/lessons")

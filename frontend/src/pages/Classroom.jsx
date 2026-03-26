@@ -33,7 +33,11 @@ const markdownComponents = {
     code: ({inline, children}) => inline
         ? <code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
         : <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
-    table: ({children}) => <table className="text-xs border-collapse my-2 w-full">{children}</table>,
+    table: ({children}) => (
+        <div className="overflow-x-auto my-2">
+            <table className="text-xs border-collapse w-full min-w-[300px]">{children}</table>
+        </div>
+    ),
     th: ({children}) => <th className="border border-slate-300 bg-slate-100 px-2 py-1 text-left font-bold text-slate-700">{children}</th>,
     td: ({children}) => <td className="border border-slate-200 px-2 py-1 text-slate-600">{children}</td>,
     strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
@@ -454,31 +458,66 @@ export default function Classroom() {
         setHintIndex((i) => i + 1);
     };
 
-    // ── Chat with Vaathiyaar ────────────────────────────────────────────────
+    // ── Chat with Vaathiyaar (streaming) ────────────────────────────────────
     const handleChat = async (message) => {
         const userMsg = { role: 'user', content: message };
-        const thinkingMsg = { role: 'assistant', content: null, _isThinking: true };
-        setChatMessages((prev) => [...prev, userMsg, thinkingMsg]);
+        setChatMessages((prev) => [...prev, userMsg]);
         setChatLoading(true);
+
+        // Add empty assistant message that we'll stream into
+        const streamMsg = { role: 'assistant', content: '', _isStreaming: true };
+        setChatMessages((prev) => [...prev, streamMsg]);
+
         try {
-            const res = await api.post('/classroom/chat', {
-                user_id: user?.id,
-                message,
-                lesson_context: currentLesson ? { topic: currentLesson.topic || currentLesson.id, lesson_id: currentLesson.id } : null,
-                phase,
-                language,
-            }, { timeout: 90000 });
-            const reply = res.data.response ?? res.data.message ?? 'No response.';
-            setChatMessages((prev) =>
-                prev.map((m) => m._isThinking ? { role: 'assistant', content: reply } : m)
-            );
+            const response = await fetch(`${api.defaults.baseURL}/classroom/chat/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user?.id,
+                    message,
+                    lesson_context: currentLesson ? { topic: currentLesson.topic || currentLesson.id, lesson_id: currentLesson.id } : null,
+                    phase,
+                    language,
+                }),
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.token) {
+                                fullText += data.token;
+                                setChatMessages((prev) =>
+                                    prev.map((m) => m._isStreaming ? { ...m, content: fullText } : m)
+                                );
+                            }
+                            if (data.done) {
+                                setChatMessages((prev) =>
+                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: fullText } : m)
+                                );
+                            }
+                        } catch (e) {
+                            // ignore parse errors on partial chunks
+                        }
+                    }
+                }
+            }
         } catch (err) {
-            setChatMessages((prev) =>
-                prev.map((m) => m._isThinking
-                    ? { role: 'assistant', content: `Sorry, something went wrong (${err.message}). Try again in a moment.` }
-                    : m
-                )
-            );
+            setChatMessages((prev) => {
+                const filtered = prev.filter((m) => !m._isStreaming);
+                return [...filtered, { role: 'assistant', content: `Vaathiyaar is busy. (${err.message}). Try again.` }];
+            });
         } finally {
             setChatLoading(false);
         }
@@ -609,9 +648,12 @@ export default function Classroom() {
                                         {msg._isThinking ? (
                                             <ThinkingBubble />
                                         ) : msg.role === 'assistant' ? (
-                                            <ReactMarkdown components={markdownComponents}>
-                                                {msg.content}
-                                            </ReactMarkdown>
+                                            <>
+                                                <ReactMarkdown components={markdownComponents}>
+                                                    {msg.content}
+                                                </ReactMarkdown>
+                                                {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5" />}
+                                            </>
                                         ) : (
                                             msg.content
                                         )}
