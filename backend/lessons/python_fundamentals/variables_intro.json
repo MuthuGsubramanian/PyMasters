@@ -1,0 +1,130 @@
+{
+  "id": "variables_intro",
+  "topic": "variables",
+  "track": "python_fundamentals",
+  "module": "variables_and_types",
+  "order": 1,
+  "title": {
+    "en": "Variables: The Magic Boxes",
+    "ta": "மாறிகள்: மந்திர பெட்டிகள்"
+  },
+  "description": {
+    "en": "Discover what variables are by imagining labeled magic boxes that store any value you choose."
+  },
+  "xp_reward": 50,
+  "next_unlock": "variables_types",
+  "story_variants": {
+    "en": "## The Magic Boxes\n\nImagine a room full of **magic boxes**. Every box has a label on the outside and can hold any value inside. That is exactly what a Python variable is!\n\n### What is a Variable?\n- A **named container** that stores a value\n- Created the moment you use `=` to assign something\n- Can hold text, numbers, lists, and more\n- Its value can be replaced at any time\n\n### The Assignment Operator\n\nThe `=` sign does **not** mean \"equals\" like in maths. It means **\"put this value into this box\"**.\n\n```python\nx = 42          # put 42 into the box called x\nname = 'Ada'    # put 'Ada' into the box called name\nscores = [90, 85]  # put a list into the box called scores\n```\n\n### Naming Rules\n\n| Rule | Good | Bad |\n|------|------|-----|\n| Start with letter or `_` | `age`, `_count` | `2fast` |\n| Letters, digits, underscores only | `user_1` | `user-1` |\n| Case-sensitive | `Name` ≠ `name` | — |\n| No reserved words | `score` | `for`, `if` |\n\n> **Key Concept:** Variable names should be descriptive. `student_age` is far better than `x` because it tells you what the box holds at a glance.",
+    "ta": "## மந்திர பெட்டிகள்\n\n**மந்திர பெட்டிகள்** நிறைந்த ஒரு அறையை கற்பனை செய்யுங்கள். ஒவ்வொரு பெட்டிக்கும் வெளியே ஒரு பெயர் இருக்கும், உள்ளே எந்த மதிப்பும் வைக்கலாம். Python மாறி சரியாக அப்படித்தான் இருக்கும்!\n\n### மாறி என்றால் என்ன?\n- மதிப்பைச் சேமிக்கும் **பெயரிடப்பட்ட கொள்கலன்**\n- `=` உடன் ஒதுக்கும்போது உருவாகும்\n- உரை, எண்கள், பட்டியல்கள் மற்றும் பலவற்றை வைக்க முடியும்\n- எந்த நேரத்திலும் மதிப்பை மாற்றலாம்\n\n### ஒதுக்கீட்டு ஆபரேட்டர்\n\n`=` குறி கணிதத்தில் உள்ளது போல் \"சமம்\" என்று பொருளில்லை. இது **\"இந்த மதிப்பை இந்தப் பெட்டியில் வை\"** என்று பொருள்.\n\n### பெயரிடல் விதிகள்\n\n| விதி | நல்லது | கெட்டது |\n|------|--------|----------|\n| எழுத்து அல்லது `_` உடன் தொடங்கவும் | `age`, `_count` | `2fast` |\n| எழுத்துகள், இலக்கங்கள், அடிக்கோடுகள் மட்டும் | `user_1` | `user-1` |\n| பெரிய/சிறிய எழுத்து வேறுபாடு | `Name` ≠ `name` | — |\n| ஒதுக்கப்பட்ட வார்த்தைகள் வேண்டாம் | `score` | `for`, `if` |\n\n> **முக்கிய கருத்து:** மாறிப் பெயர்கள் விவரிப்பானவாக இருக்க வேண்டும். `student_age` என்பது `x`-ஐ விட மிகவும் சிறந்தது."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "x = 42",
+          "highlight": "x",
+          "explanation": {
+            "en": "Create a variable called x and store the integer 42",
+            "ta": "x என்ற மாறியை உருவாக்கி 42 என்ற முழு எண்ணைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "name = 'Ada'",
+          "highlight": "name",
+          "explanation": {
+            "en": "Create a variable called name and store the string 'Ada'",
+            "ta": "name என்ற மாறியை உருவாக்கி 'Ada' என்ற சரத்தைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "scores = [90, 85]",
+          "highlight": "scores",
+          "explanation": {
+            "en": "Create a variable called scores and store a list of two numbers",
+            "ta": "scores என்ற மாறியை உருவாக்கி இரண்டு எண்களின் பட்டியலைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "print(x)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the value stored inside x",
+            "ta": "x-ல் சேமிக்கப்பட்ட மதிப்பை அச்சிடவும்"
+          },
+          "output": "42"
+        },
+        {
+          "line": "print(name)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the value stored inside name",
+            "ta": "name-ல் சேமிக்கப்பட்ட மதிப்பை அச்சிடவும்"
+          },
+          "output": "Ada"
+        },
+        {
+          "line": "print(scores)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the list stored inside scores",
+            "ta": "scores-ல் சேமிக்கப்பட்ட பட்டியலை அச்சிடவும்"
+          },
+          "output": "[90, 85]"
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_x",
+      "variable": "x",
+      "value": 42,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_name",
+      "variable": "name",
+      "value": "Ada",
+      "data_type": "str",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_scores",
+      "variable": "scores",
+      "value": [90, 85],
+      "data_type": "list",
+      "color": "#a44ff7"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["42", "Ada", "[90, 85]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create 3 variables: `age` (an integer), `name` (a string), and `hobbies` (a list of at least 2 strings). Then print each variable on its own line."
+      },
+      "expected_output": "",
+      "hints": [
+        { "en": "Assign an integer: age = 16" },
+        { "en": "Assign a string: name = 'Priya'" },
+        { "en": "Assign a list: hobbies = ['reading', 'coding']" }
+      ],
+      "test_code": "assert isinstance(age, int), 'age must be an integer'\nassert isinstance(name, str), 'name must be a string'\nassert isinstance(hobbies, list), 'hobbies must be a list'\nassert len(hobbies) >= 2, 'hobbies must have at least 2 items'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

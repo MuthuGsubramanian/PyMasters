@@ -1,0 +1,172 @@
+{
+  "id": "variables_operators",
+  "topic": "variables",
+  "track": "python_fundamentals",
+  "module": "variables_and_types",
+  "order": 4,
+  "title": {
+    "en": "Operators: The Calculator",
+    "ta": "ஆபரேட்டர்கள்: கணிப்பான்"
+  },
+  "description": {
+    "en": "Master Python operators — arithmetic, comparison, logical, and assignment — by building a smart calculator."
+  },
+  "xp_reward": 50,
+  "next_unlock": "conditionals",
+  "story_variants": {
+    "en": "## The Calculator\n\nEvery programmer eventually builds a calculator. To do that well, you need to know Python's **four families of operators**.\n\n### Arithmetic Operators\n\n| Operator | Name | Example | Result |\n|----------|------|---------|--------|\n| `+` | Addition | `5 + 3` | `8` |\n| `-` | Subtraction | `5 - 3` | `2` |\n| `*` | Multiplication | `5 * 3` | `15` |\n| `/` | Division | `7 / 2` | `3.5` |\n| `//` | Floor Division | `7 // 2` | `3` |\n| `%` | Modulo (remainder) | `7 % 2` | `1` |\n| `**` | Exponentiation | `2 ** 8` | `256` |\n\n### Comparison Operators\n\n```python\n10 == 10   # True  — equal to\n10 != 5    # True  — not equal to\n10 > 5     # True  — greater than\n10 < 5     # False — less than\n10 >= 10   # True  — greater than or equal\n10 <= 9    # False — less than or equal\n```\n\n### Logical Operators\n\n| Operator | Meaning | Example | Result |\n|----------|---------|---------|--------|\n| `and` | Both must be True | `True and False` | `False` |\n| `or` | At least one True | `True or False` | `True` |\n| `not` | Flip the boolean | `not True` | `False` |\n\n### Assignment Shorthand\n\n```python\nscore = 10\nscore += 5   # same as score = score + 5  => 15\nscore -= 2   # same as score = score - 2  => 13\nscore *= 2   # same as score = score * 2  => 26\n```\n\n> **Key Concept:** `/` always returns a float. Use `//` when you need a whole-number result, and `%` to find what is left over after dividing.",
+    "ta": "## கணிப்பான்\n\nஒவ்வொரு நிரலாளரும் இறுதியில் ஒரு கணிப்பானை உருவாக்குகிறார். அதை நன்றாக செய்ய Python-ன் **நான்கு ஆபரேட்டர் குடும்பங்களை** தெரிந்து கொள்ள வேண்டும்.\n\n### கணித ஆபரேட்டர்கள்\n\n| ஆபரேட்டர் | பெயர் | எடுத்துக்காட்டு | முடிவு |\n|-----------|-------|----------------|--------|\n| `+` | கூட்டல் | `5 + 3` | `8` |\n| `-` | கழித்தல் | `5 - 3` | `2` |\n| `*` | பெருக்கல் | `5 * 3` | `15` |\n| `/` | வகுத்தல் | `7 / 2` | `3.5` |\n| `//` | தள வகுத்தல் | `7 // 2` | `3` |\n| `%` | மீதி | `7 % 2` | `1` |\n| `**` | அடுக்கு | `2 ** 8` | `256` |\n\n### ஒப்பீட்டு ஆபரேட்டர்கள்\n\nஒப்பீட்டு ஆபரேட்டர்கள் எப்போதும் `True` அல்லது `False` தருகின்றன.\n\n### தர்க்க ஆபரேட்டர்கள்\n\n`and`, `or`, `not` பூலியன் மதிப்புகளை இணைக்க அல்லது மாற்ற பயன்படுகின்றன.\n\n> **முக்கிய கருத்து:** `/` எப்போதும் float தருகிறது. முழு எண் முடிவு வேண்டுமென்றால் `//` பயன்படுத்துங்கள்."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_operators",
+      "steps": [
+        {
+          "line": "width = 8",
+          "highlight": "width",
+          "explanation": {
+            "en": "Store the width of a rectangle",
+            "ta": "ஒரு செவ்வகத்தின் அகலத்தைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "height = 5",
+          "highlight": "height",
+          "explanation": {
+            "en": "Store the height of a rectangle",
+            "ta": "ஒரு செவ்வகத்தின் உயரத்தைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "area = width * height",
+          "highlight": "*",
+          "explanation": {
+            "en": "Multiply to calculate the area (8 * 5 = 40)",
+            "ta": "பரப்பளவைக் கணக்கிட பெருக்கவும் (8 * 5 = 40)"
+          }
+        },
+        {
+          "line": "print('Area:', area)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the calculated area",
+            "ta": "கணக்கிடப்பட்ட பரப்பளவை அச்சிடவும்"
+          },
+          "output": "Area: 40"
+        },
+        {
+          "line": "is_large = area > 30",
+          "highlight": ">",
+          "explanation": {
+            "en": "Comparison: is 40 greater than 30? Returns True",
+            "ta": "ஒப்பீடு: 40 என்பது 30-ஐ விட அதிகமா? True திரும்புகிறது"
+          }
+        },
+        {
+          "line": "print('Large area?', is_large)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the boolean result of the comparison",
+            "ta": "ஒப்பீட்டின் பூலியன் முடிவை அச்சிடவும்"
+          },
+          "output": "Large area? True"
+        },
+        {
+          "line": "has_perimeter = area > 0 and width > 0",
+          "highlight": "and",
+          "explanation": {
+            "en": "Logical and: both conditions must be True",
+            "ta": "தர்க்க and: இரண்டு நிபந்தனைகளும் True ஆக இருக்க வேண்டும்"
+          }
+        },
+        {
+          "line": "print('Valid shape?', has_perimeter)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Both area > 0 and width > 0 are True, so the result is True",
+            "ta": "area > 0 மற்றும் width > 0 இரண்டும் True, எனவே முடிவு True"
+          },
+          "output": "Valid shape? True"
+        },
+        {
+          "line": "area += 10",
+          "highlight": "+=",
+          "explanation": {
+            "en": "Assignment shorthand: area = area + 10, so area becomes 50",
+            "ta": "ஒதுக்கீடு சுருக்கம்: area = area + 10, எனவே area 50 ஆகிறது"
+          }
+        },
+        {
+          "line": "print('Updated area:', area)",
+          "highlight": "print",
+          "explanation": {
+            "en": "area is now 50 after the += operation",
+            "ta": "+= செயல்பாட்டிற்குப் பிறகு area இப்போது 50"
+          },
+          "output": "Updated area: 50"
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_area",
+      "variable": "area",
+      "value": 40,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_is_large",
+      "variable": "is_large",
+      "value": true,
+      "data_type": "bool",
+      "color": "#f74fa4"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": [
+        "Area: 40",
+        "Large area? True",
+        "Valid shape? True",
+        "Updated area: 50"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Given a circle with `radius = 7`, calculate its area using `area = 3.14159 * radius ** 2`. Print the area. Then check if the area is greater than 100 and print the result of that comparison."
+      },
+      "expected_output": "153.93791\nTrue",
+      "hints": [
+        { "en": "Use ** for exponentiation: radius ** 2 squares the radius" },
+        { "en": "Multiply by 3.14159 to get the area of the circle" },
+        { "en": "Use > to compare: area > 100 returns True or False" }
+      ],
+      "test_code": "radius = 7\narea = 3.14159 * radius ** 2\nassert abs(area - 153.93791) < 0.0001, f'Expected ~153.93791 but got {area}'\nassert area > 100, 'Area should be greater than 100'"
+    },
+    {
+      "instruction": {
+        "en": "Set `x = 15`. Use augmented assignment to subtract 5 (`x -= 5`), then multiply by 2 (`x *= 2`). Print the final value of `x`. Also print whether `x` is even using the modulo operator (`x % 2 == 0`)."
+      },
+      "expected_output": "20\nTrue",
+      "hints": [
+        { "en": "x -= 5 is shorthand for x = x - 5" },
+        { "en": "x *= 2 is shorthand for x = x * 2" },
+        { "en": "x % 2 == 0 returns True if x has no remainder when divided by 2 (even number)" }
+      ],
+      "test_code": "x = 15\nx -= 5\nx *= 2\nassert x == 20, f'Expected x to be 20 but got {x}'\nassert x % 2 == 0, 'x should be even'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
