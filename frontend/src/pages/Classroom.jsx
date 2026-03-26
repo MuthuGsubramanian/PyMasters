@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
@@ -157,7 +158,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             {sequence.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     {/* Left: Story + Concept */}
-                    <div className="lg:col-span-3 space-y-4">
+                    <div className="lg:col-span-2 space-y-4">
                         {storyPrimitives.length > 0 ? (
                             <AnimationRenderer
                                 sequence={storyPrimitives}
@@ -167,13 +168,13 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                             />
                         ) : storyContent ? (
                             <div className="panel rounded-xl p-6">
-                                <ReactMarkdown>{storyContent}</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{storyContent}</ReactMarkdown>
                             </div>
                         ) : null}
                     </div>
 
                     {/* Right: Code + Variables + Terminal */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-3 space-y-4">
                         {animPrimitives.length > 0 && (
                             <AnimationRenderer
                                 sequence={animPrimitives}
@@ -361,7 +362,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
                         {success ? 'Success!' : 'Not quite right'}
                     </p>
                     <div className="text-slate-700 leading-relaxed">
-                        <ReactMarkdown components={markdownComponents}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                             {feedbackMsg}
                         </ReactMarkdown>
                     </div>
@@ -745,7 +746,7 @@ export default function Classroom() {
                                             <ThinkingBubble />
                                         ) : msg.role === 'assistant' ? (
                                             <>
-                                                <ReactMarkdown components={markdownComponents}>
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                                                     {msg.content}
                                                 </ReactMarkdown>
                                                 {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5" />}

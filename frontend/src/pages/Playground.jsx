@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
 import { Sparkles, Zap } from 'lucide-react';
@@ -292,7 +293,7 @@ export default function Playground() {
                                         🧑‍🏫
                                     </div>
                                     <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-slate-800 text-sm leading-relaxed">
-                                        <ReactMarkdown components={markdownComponents}>
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                                             {msg.content}
                                         </ReactMarkdown>
                                         {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5" />}
