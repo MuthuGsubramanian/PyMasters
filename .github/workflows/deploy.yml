@@ -49,7 +49,7 @@ jobs:
             --platform managed \
             --port 8080 \
             --allow-unauthenticated \
-            --set-env-vars "OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }},OLLAMA_API_URL=https://api.ollama.com/v1,OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.duckdb" \
+            --set-env-vars "OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }},OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db" \
             --memory 1Gi \
             --cpu 1 \
             --min-instances 1 \
