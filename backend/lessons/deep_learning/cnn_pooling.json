@@ -1,0 +1,104 @@
+{
+  "id": "cnn_pooling",
+  "topic": "pooling",
+  "track": "deep_learning",
+  "module": "cnn",
+  "order": 2,
+  "title": {
+    "en": "Pooling: Summarising Feature Maps"
+  },
+  "description": {
+    "en": "Learn how max pooling and average pooling reduce spatial dimensions while preserving the most important features."
+  },
+  "xp_reward": 60,
+  "next_unlock": "cnn_architectures",
+  "story_variants": {
+    "en": "## Pooling: Summarising Feature Maps\n\nAfter convolution, feature maps can be large and redundant. **Pooling** layers down-sample the spatial dimensions, reducing computation and providing some translation invariance.\n\n### Max Pooling\n\nTake the **maximum value** in each pooling window:\n\n```\nFeature map:   [[1, 3, 2, 4],     Max pool 2×2, stride 2:\n                [5, 6, 1, 2],  →  [[6, 4],\n                [3, 2, 5, 1],      [5, 5]]\n                [1, 4, 2, 3]]\n```\n\n```python\ndef max_pool2d(feature_map, pool_size=2, stride=2):\n    h, w = feature_map.shape\n    oh = (h - pool_size) // stride + 1\n    ow = (w - pool_size) // stride + 1\n    output = [[0] * ow for _ in range(oh)]\n    for i in range(oh):\n        for j in range(ow):\n            r, c = i*stride, j*stride\n            patch = [feature_map[r+di][c+dj]\n                     for di in range(pool_size)\n                     for dj in range(pool_size)]\n            output[i][j] = max(patch)\n    return output\n```\n\n### Average Pooling\n\nTake the **average value** in each pooling window. Less aggressive than max pooling — retains more context.\n\n### Global Average Pooling (GAP)\n\nA special case that reduces an entire feature map to a single value — the average of all pixels. Used in modern architectures (ResNet, MobileNet) instead of fully-connected layers at the end.\n\n### Stride vs Pooling\n\n| Method | Reduces size by | Trainable? |\n|--------|----------------|------------|\n| Max Pool | pool_size / stride | No |\n| Avg Pool | pool_size / stride | No |\n| Strided Conv | stride | Yes |\n\n> **Key Concept:** Max pooling keeps the strongest activation — if an edge detector fired anywhere in the window, max pooling preserves that signal even if the exact location shifts slightly."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "DataStructure",
+      "id": "before_pool",
+      "label": "Feature Map (4×4)",
+      "structure": "matrix",
+      "data": [[1,3,2,4],[5,6,1,2],[3,2,5,1],[1,4,2,3]],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "DataStructure",
+      "id": "after_pool",
+      "label": "After Max Pool 2×2 (2×2)",
+      "structure": "matrix",
+      "data": [[6,4],[5,5]],
+      "color": "#4fc97a"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "pool_flow",
+      "steps": ["Feature Map (4×4)", "2×2 Max Pool", "Reduced Map (2×2)", "Fewer params", "Less overfitting"]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "pool_comparison",
+      "items": [
+        {"label": "Max Pool", "value": "take max of window", "color": "#4f8ef7", "note": "Sharpest feature preserved"},
+        {"label": "Avg Pool", "value": "take average of window", "color": "#f7914f", "note": "Smooth overall context"},
+        {"label": "Global Avg Pool", "value": "average entire map", "color": "#4fc97a", "note": "Single value per channel"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pool_code",
+      "steps": [
+        {
+          "line": "fm = [[1,3,2,4],[5,6,1,2],[3,2,5,1],[1,4,2,3]]",
+          "highlight": "fm",
+          "explanation": {"en": "4×4 feature map"}
+        },
+        {
+          "line": "# Top-left 2×2 window: max(1,3,5,6) = 6",
+          "highlight": "max",
+          "explanation": {"en": "First pooling window"}
+        },
+        {
+          "line": "# Top-right 2×2 window: max(2,4,1,2) = 4",
+          "highlight": "max",
+          "explanation": {"en": "Second pooling window"}
+        },
+        {
+          "line": "result = [[6, 4], [5, 5]]",
+          "highlight": "result",
+          "explanation": {"en": "2×2 output after max pooling"},
+          "output": "[[6, 4], [5, 5]]"
+        }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Input:  4×4 = 16 values", "Output: 2×2 = 4 values", "Reduction factor: 4×", "Strongest activations preserved"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `max_pool2d(matrix, pool_size=2, stride=2)` where `matrix` is a list of lists. Return the pooled result as a list of lists."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Output height = (input_height - pool_size) // stride + 1"},
+        {"en": "At window starting at (i*stride, j*stride), find the max over the pool_size×pool_size region"},
+        {"en": "Use nested loops and Python's max() function"}
+      ],
+      "test_code": "fm = [[1,3,2,4],[5,6,1,2],[3,2,5,1],[1,4,2,3]]\nresult = max_pool2d(fm)\nassert len(result) == 2, 'Output must have 2 rows'\nassert len(result[0]) == 2, 'Output must have 2 cols'\nassert result[0][0] == 6, 'Top-left window max is 6'\nassert result[0][1] == 4, 'Top-right window max is 4'\nassert result[1][0] == 5, 'Bottom-left window max is 5'\nassert result[1][1] == 5, 'Bottom-right window max is 5'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

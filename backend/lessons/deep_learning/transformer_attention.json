@@ -1,0 +1,111 @@
+{
+  "id": "transformer_attention",
+  "topic": "attention_mechanism",
+  "track": "deep_learning",
+  "module": "transformers",
+  "order": 1,
+  "title": {
+    "en": "Attention: Focusing on What Matters"
+  },
+  "description": {
+    "en": "Understand the attention mechanism that lets neural networks dynamically focus on relevant parts of the input rather than processing everything equally."
+  },
+  "xp_reward": 75,
+  "next_unlock": "transformer_self_attention",
+  "story_variants": {
+    "en": "## Attention: Focusing on What Matters\n\nWhen you read \"The animal didn't cross the street because **it** was too tired\", you know \"it\" refers to \"animal\" — not \"street\". You focused on the right word. **Attention** gives neural networks this same ability.\n\n### The Attention Concept\n\nGiven a **query** (what we are looking for) and a set of **key-value pairs** (what is available), attention computes a weighted sum of values where weights reflect how well each key matches the query.\n\n```\nAttention(Q, K, V) = softmax(Q·Kᵀ / √d_k) · V\n```\n\n### A Simple Worked Example\n\n```python\nimport numpy as np\n\ndef attention(Q, K, V):\n    d_k = K.shape[-1]\n    scores = Q @ K.T / np.sqrt(d_k)   # similarity scores\n    weights = softmax(scores)           # normalise\n    return weights @ V                  # weighted sum\n```\n\n### Interpretation\n\n| Component | Role | Analogy |\n|-----------|------|---------|\n| Query (Q) | What am I looking for? | Google search query |\n| Key (K) | What do I offer? | Web page title/metadata |\n| Value (V) | What information do I carry? | Web page content |\n| Score Q·Kᵀ | How relevant is this key? | Search ranking |\n| Softmax | Probability distribution over keys | Ranking scores |\n| Output | Weighted average of values | Blended relevant content |\n\n### Sequence-to-Sequence Attention\n\nIn machine translation (\"Je suis étudiant\" → \"I am a student\"), the decoder attends to all encoder positions when generating each output word.\n\n> **Key Concept:** The `√d_k` scaling factor prevents the dot products from growing too large in high dimensions, which would push softmax into regions with near-zero gradients (the vanishing gradient problem again).\n\n### Attention Is All You Need\n\nThe famous 2017 paper replaced RNNs entirely with attention mechanisms. The result: the **Transformer** architecture that powers GPT, BERT, and modern LLMs."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "attention_map",
+      "nodes": [
+        {"id": "Q", "label": "Query Q", "color": "#4f8ef7"},
+        {"id": "K", "label": "Keys K", "color": "#f7914f"},
+        {"id": "V", "label": "Values V", "color": "#4fc97a"},
+        {"id": "scores", "label": "Scores Q·Kᵀ/√d", "color": "#a44ff7"},
+        {"id": "weights", "label": "Softmax Weights", "color": "#e74c3c"},
+        {"id": "output", "label": "Context Output", "color": "#4f8ef7"}
+      ],
+      "edges": [
+        {"from": "Q", "to": "scores"},
+        {"from": "K", "to": "scores"},
+        {"from": "scores", "to": "weights", "label": "softmax"},
+        {"from": "weights", "to": "output", "label": "× V"},
+        {"from": "V", "to": "output"}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "qkv_matrices",
+      "label": "Q, K, V Vectors (d_k=4)",
+      "structure": "table",
+      "data": [
+        ["Token", "Q", "K", "V"],
+        ["The", "[0.1,0.2,0.3,0.4]", "[0.1,0.1,0.2,0.1]", "[1,0,0,0]"],
+        ["cat", "[0.5,0.1,0.2,0.3]", "[0.5,0.2,0.3,0.4]", "[0,1,0,0]"],
+        ["sat", "[0.3,0.4,0.1,0.2]", "[0.3,0.4,0.1,0.2]", "[0,0,1,0]"]
+      ],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "attention_flow",
+      "steps": ["Query Q", "Q · Kᵀ", "÷ √d_k", "softmax", "× V", "Context"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "attention_code",
+      "steps": [
+        {
+          "line": "scores = Q @ K.T  # dot product similarity",
+          "highlight": "scores",
+          "explanation": {"en": "Higher score = query is more similar to that key"}
+        },
+        {
+          "line": "scores /= np.sqrt(d_k)  # scale down",
+          "highlight": "sqrt",
+          "explanation": {"en": "Scaling prevents extreme softmax saturation"}
+        },
+        {
+          "line": "weights = np.exp(scores) / np.exp(scores).sum()",
+          "highlight": "weights",
+          "explanation": {"en": "Softmax normalises scores to probabilities"}
+        },
+        {
+          "line": "output = weights @ V",
+          "highlight": "output",
+          "explanation": {"en": "Weighted combination of value vectors"},
+          "output": "Context vector computed"
+        }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Scores: [0.21, 0.87, 0.34]", "After softmax: [0.18, 0.56, 0.26]", "Output: 0.18×V_the + 0.56×V_cat + 0.26×V_sat"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `scaled_dot_product_attention(Q, K, V)` using NumPy. Compute scores as Q @ K.T / sqrt(d_k), apply softmax row-wise, then return the weighted sum of V."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "d_k = K.shape[-1]"},
+        {"en": "scores = Q @ K.T / np.sqrt(d_k)"},
+        {"en": "softmax row-wise: exp(scores) / exp(scores).sum(axis=-1, keepdims=True)"}
+      ],
+      "test_code": "import numpy as np\nnp.random.seed(42)\nQ = np.random.randn(3, 4)\nK = np.random.randn(3, 4)\nV = np.random.randn(3, 4)\nout = scaled_dot_product_attention(Q, K, V)\nassert out.shape == (3, 4), f'Expected (3,4), got {out.shape}'\n# Weights should be non-negative and sum to 1 per row\nscores = Q @ K.T / np.sqrt(4)\nweights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)\nassert np.allclose(out, weights @ V), 'Output should be weighted sum of V'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

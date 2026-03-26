@@ -1,0 +1,103 @@
+{
+  "id": "cnn_architectures",
+  "topic": "cnn_architectures",
+  "track": "deep_learning",
+  "module": "cnn",
+  "order": 3,
+  "title": {
+    "en": "CNN Architectures: LeNet to ResNet"
+  },
+  "description": {
+    "en": "Survey the landmark CNN architectures — LeNet, AlexNet, VGG, and ResNet — and understand the innovations that made each a milestone."
+  },
+  "xp_reward": 65,
+  "next_unlock": "cnn_image_classification",
+  "story_variants": {
+    "en": "## CNN Architectures: LeNet to ResNet\n\nOver 30 years, CNN architectures evolved from simple 5-layer networks to 150+ layer behemoths. Each generation solved a key limitation of the previous one.\n\n### LeNet-5 (1998, LeCun)\n\nThe first successful CNN for digit recognition:\n- 2 conv layers + 2 pooling + 3 fully-connected\n- 60,000 parameters\n- Input: 32×32 grayscale\n\n### AlexNet (2012, Krizhevsky)\n\nWon ImageNet with 15.3% top-5 error (previous best: 26%):\n- 5 conv + 3 FC layers\n- 60 million parameters\n- Introduced: ReLU, Dropout, GPU training, data augmentation\n\n### VGG-16 (2014, Simonyan)\n\nSimple recipe: only 3×3 conv filters, depth matters:\n- 13 conv + 3 FC layers\n- 138 million parameters\n- Very deep but very regular — easy to understand\n\n### ResNet (2015, He)\n\nIntroduced **residual connections** (skip connections):\n\n```python\n# Residual block pseudo-code\ndef residual_block(x):\n    identity = x\n    x = conv(x)\n    x = batch_norm(x)\n    x = relu(x)\n    x = conv(x)\n    x = batch_norm(x)\n    return relu(x + identity)  # skip connection!\n```\n\n### Architecture Timeline\n\n| Model | Year | Depth | Params | ImageNet Error |\n|-------|------|-------|--------|----------------|\n| LeNet-5 | 1998 | 5 | 60K | N/A |\n| AlexNet | 2012 | 8 | 60M | 15.3% |\n| VGG-16 | 2014 | 16 | 138M | 7.3% |\n| ResNet-50 | 2015 | 50 | 25M | 5.25% |\n| ResNet-152 | 2015 | 152 | 60M | 3.57% |\n\n> **Key Concept:** ResNet's skip connections solve the **vanishing gradient** problem. Gradients can flow directly through the shortcut path, enabling training of networks 10× deeper than before."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "arch_timeline",
+      "nodes": [
+        {"id": "lenet", "label": "LeNet (1998)", "color": "#4f8ef7"},
+        {"id": "alexnet", "label": "AlexNet (2012)", "color": "#f7914f"},
+        {"id": "vgg", "label": "VGG (2014)", "color": "#a44ff7"},
+        {"id": "resnet", "label": "ResNet (2015)", "color": "#4fc97a"}
+      ],
+      "edges": [
+        {"from": "lenet", "to": "alexnet", "label": "GPU + ReLU"},
+        {"from": "alexnet", "to": "vgg", "label": "Deeper + 3×3"},
+        {"from": "vgg", "to": "resnet", "label": "Skip connections"}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "arch_comparison",
+      "items": [
+        {"label": "LeNet", "value": "5 layers, 60K params", "color": "#4f8ef7", "note": "Digits only"},
+        {"label": "VGG-16", "value": "16 layers, 138M params", "color": "#f7914f", "note": "Simple but huge"},
+        {"label": "ResNet-50", "value": "50 layers, 25M params", "color": "#4fc97a", "note": "Skip connections"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "resnet_flow",
+      "steps": ["Input x", "Conv + BN + ReLU", "Conv + BN", "Add identity x", "ReLU → output"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "resnet_code",
+      "steps": [
+        {
+          "line": "identity = x  # save input",
+          "highlight": "identity",
+          "explanation": {"en": "Store input before transformation"}
+        },
+        {
+          "line": "x = relu(batch_norm(conv(x)))",
+          "highlight": "x",
+          "explanation": {"en": "First conv-bn-relu in residual block"}
+        },
+        {
+          "line": "x = batch_norm(conv(x))",
+          "highlight": "x",
+          "explanation": {"en": "Second conv-bn (no relu yet)"}
+        },
+        {
+          "line": "x = relu(x + identity)",
+          "highlight": "identity",
+          "explanation": {"en": "Add skip connection then activate — gradients flow both paths!"},
+          "output": "Residual output"
+        }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["LeNet: 60K params → handwriting", "VGG: 138M params → ImageNet 7.3%", "ResNet-50: 25M params → ImageNet 5.25%", "Skip connections: solved vanishing gradients"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Calculate the total number of parameters for a simplified LeNet-like network: Conv1 (1→6 channels, 5×5 kernel), Conv2 (6→16 channels, 5×5 kernel), FC1 (400→120), FC2 (120→84), FC3 (84→10). Include bias terms."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Conv params = (kernel_h × kernel_w × in_channels + 1) × out_channels"},
+        {"en": "FC params = in_features × out_features + out_features (bias)"},
+        {"en": "Conv1: (5*5*1+1)*6 = 156"}
+      ],
+      "test_code": "conv1_params = (5*5*1 + 1) * 6\nconv2_params = (5*5*6 + 1) * 16\nfc1_params   = 400*120 + 120\nfc2_params   = 120*84 + 84\nfc3_params   = 84*10 + 10\ntotal = conv1_params + conv2_params + fc1_params + fc2_params + fc3_params\nassert total == lenet_params, f'Expected {total}, got {lenet_params}'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

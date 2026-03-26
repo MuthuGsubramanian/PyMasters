@@ -1,0 +1,104 @@
+{
+  "id": "pt_autograd",
+  "topic": "autograd",
+  "track": "deep_learning",
+  "module": "pytorch",
+  "order": 2,
+  "title": {
+    "en": "Autograd: Automatic Differentiation"
+  },
+  "description": {
+    "en": "Learn how PyTorch's autograd engine tracks operations and automatically computes gradients via backward pass."
+  },
+  "xp_reward": 70,
+  "next_unlock": "pt_training",
+  "story_variants": {
+    "en": "## Autograd: Automatic Differentiation\n\nPyTorch's **autograd** engine automatically computes derivatives. You just define the forward computation; PyTorch builds a **computation graph** and calculates gradients when you call `.backward()`.\n\n### How It Works\n\n```python\nimport torch\n\nx = torch.tensor(3.0, requires_grad=True)\ny = x ** 2      # y = x²\ny.backward()    # compute dy/dx\nprint(x.grad)   # tensor(6.) — derivative is 2x = 2×3 = 6\n```\n\n### The Computation Graph\n\nEvery tensor operation creates a node in a directed acyclic graph (DAG):\n\n```\nx (leaf) → x² (pow) → y (loss)\n```\n\nBackward traverses this graph from `y` to `x`, applying the chain rule at each node.\n\n### Multi-Variable Example\n\n```python\nw = torch.tensor(2.0, requires_grad=True)\nb = torch.tensor(1.0, requires_grad=True)\n\nx = torch.tensor(3.0)      # input (no grad)\ny_hat = w * x + b          # 2×3 + 1 = 7\nloss  = (y_hat - 5.0)**2   # (7-5)^2 = 4\n\nloss.backward()\nprint(w.grad)  # d_loss/dw = 2*(y_hat-5)*x = 2*2*3 = 12\nprint(b.grad)  # d_loss/db = 2*(y_hat-5)*1 = 4\n```\n\n### Detaching and No-Grad\n\n| Operation | Use Case |\n|-----------|----------|\n| `tensor.detach()` | Remove from graph; useful for inference |\n| `torch.no_grad()` | Context manager; disables grad tracking |\n| `.grad.zero_()` | Zero out gradients before next backward |\n\n### Gradient Accumulation\n\n> **Key Concept:** By default, PyTorch **accumulates** gradients. If you call `.backward()` twice without zeroing, gradients add up. Always call `optimizer.zero_grad()` at the start of each training step.\n\n```python\nfor batch in dataloader:\n    optimizer.zero_grad()     # 1. clear previous gradients\n    loss = model(batch)       # 2. forward pass\n    loss.backward()           # 3. compute gradients\n    optimizer.step()          # 4. update parameters\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "autograd_graph",
+      "nodes": [
+        {"id": "x", "label": "x=3 (requires_grad)", "color": "#4f8ef7"},
+        {"id": "pow", "label": "x² operation", "color": "#f7914f"},
+        {"id": "y", "label": "y=9", "color": "#4fc97a"},
+        {"id": "backward", "label": ".backward()", "color": "#e74c3c"},
+        {"id": "grad", "label": "x.grad = 6.0", "color": "#a44ff7"}
+      ],
+      "edges": [
+        {"from": "x", "to": "pow", "label": "forward"},
+        {"from": "pow", "to": "y"},
+        {"from": "y", "to": "backward"},
+        {"from": "backward", "to": "grad", "label": "chain rule"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "autograd_code",
+      "steps": [
+        {
+          "line": "x = torch.tensor(3.0, requires_grad=True)",
+          "highlight": "requires_grad",
+          "explanation": {"en": "Tell PyTorch to track operations on x"}
+        },
+        {
+          "line": "y = x ** 2   # builds computation graph",
+          "highlight": "y",
+          "explanation": {"en": "PyTorch records: y was produced by squaring x"}
+        },
+        {
+          "line": "y.backward() # traverse graph backward",
+          "highlight": "backward",
+          "explanation": {"en": "Trigger automatic differentiation"}
+        },
+        {
+          "line": "print(x.grad) # dy/dx = 2x = 6",
+          "highlight": "grad",
+          "explanation": {"en": "Gradient of y w.r.t. x at x=3 is 2×3=6"},
+          "output": "tensor(6.)"
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "backprop_flow",
+      "steps": ["Forward: x → y=f(x)", "Compute loss", ".backward()", "Chain rule traversal", "x.grad populated"]
+    },
+    {
+      "type": "VariableBox",
+      "id": "grad_box",
+      "variable": "x.grad",
+      "value": 6.0,
+      "data_type": "torch.Tensor",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["x = 3.0", "y = x^2 = 9.0", "y.backward()", "x.grad = 6.0  # dy/dx = 2x = 2*3 = 6", "", "w.grad = 12.0  # for linear regression example", "b.grad =  4.0"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Using PyTorch autograd, compute the gradient of `L = (w*x + b - y_true)**2` with respect to `w` and `b`, where `w=2.0`, `b=0.5`, `x=4.0`, `y_true=10.0`. Store gradients in `w.grad` and `b.grad` by calling `L.backward()`."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Set requires_grad=True on w and b (not x or y_true)"},
+        {"en": "Compute: y_hat = w * x + b, then L = (y_hat - y_true)**2"},
+        {"en": "Call L.backward() to populate w.grad and b.grad"}
+      ],
+      "test_code": "import torch\nw_val, b_val, x_val, y_val = 2.0, 0.5, 4.0, 10.0\ny_hat_val = w_val * x_val + b_val  # = 8.5\n# dL/dw = 2*(y_hat - y_true)*x = 2*(8.5-10)*4 = -12\n# dL/db = 2*(y_hat - y_true)*1 = 2*(8.5-10) = -3\nassert abs(float(w.grad) - (-12.0)) < 1e-4, f'w.grad should be -12, got {float(w.grad)}'\nassert abs(float(b.grad) - (-3.0)) < 1e-4, f'b.grad should be -3, got {float(b.grad)}'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

@@ -1,0 +1,107 @@
+{
+  "id": "nn_layers",
+  "topic": "network_architecture",
+  "track": "deep_learning",
+  "module": "nn_basics",
+  "order": 4,
+  "title": {
+    "en": "Hidden Layers and Network Architecture"
+  },
+  "description": {
+    "en": "Learn how stacking hidden layers creates deep neural networks capable of learning hierarchical representations."
+  },
+  "xp_reward": 65,
+  "next_unlock": "bp_gradient_descent",
+  "story_variants": {
+    "en": "## Hidden Layers and Network Architecture\n\nA **deep** neural network is simply a network with more than one hidden layer. Depth allows the network to build increasingly abstract representations of the input.\n\n### Layer Vocabulary\n\n| Layer | Role |\n|-------|------|\n| Input layer | Receives raw features |\n| Hidden layers | Learn intermediate representations |\n| Output layer | Produces the final prediction |\n\n### Why Depth Helps\n\n- Layer 1 might learn **edges** in an image.\n- Layer 2 might learn **shapes** (circles, lines).\n- Layer 3 might learn **parts** (eyes, wheels).\n- Layer 4 might learn **objects** (face, car).\n\n> **Key Concept:** Each hidden layer compresses and transforms the signal, forcing the network to discover the most relevant features for the task.\n\n### Width vs Depth\n\n- **Width** (neurons per layer): more capacity in a single pass.\n- **Depth** (number of layers): hierarchical abstraction.\n- In practice, **deep and narrow** often beats **shallow and wide**.\n\n### Architecture Design Choices\n\n```python\n# Typical MLP for tabular data\nlayers = [\n    ('input',   784),   # 28×28 pixels flattened\n    ('hidden1', 256),   # first hidden layer\n    ('hidden2', 128),   # second hidden layer\n    ('hidden3',  64),   # third hidden layer\n    ('output',   10),   # 10 class scores\n]\n```\n\n### Parameter Count\n\nFor a layer connecting `n_in` → `n_out` neurons:\n- **Weights**: n_in × n_out\n- **Biases**: n_out\n- **Total**: n_in × n_out + n_out\n\n```python\ndef count_params(layers):\n    total = 0\n    for i in range(len(layers) - 1):\n        n_in  = layers[i][1]\n        n_out = layers[i+1][1]\n        total += n_in * n_out + n_out\n    return total\n# count_params(layers) = 784*256+256 + 256*128+128 + 128*64+64 + 64*10+10\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "deep_network_map",
+      "nodes": [
+        {"id": "inp", "label": "Input (784)", "color": "#4f8ef7"},
+        {"id": "h1", "label": "Hidden 1 (256)", "color": "#f7914f"},
+        {"id": "h2", "label": "Hidden 2 (128)", "color": "#f7914f"},
+        {"id": "h3", "label": "Hidden 3 (64)", "color": "#f7914f"},
+        {"id": "out", "label": "Output (10)", "color": "#4fc97a"}
+      ],
+      "edges": [
+        {"from": "inp", "to": "h1", "label": "784×256"},
+        {"from": "h1", "to": "h2", "label": "256×128"},
+        {"from": "h2", "to": "h3", "label": "128×64"},
+        {"from": "h3", "to": "out", "label": "64×10"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "architecture_code",
+      "steps": [
+        {
+          "line": "layers = [(784,), (256,), (128,), (64,), (10,)]",
+          "highlight": "layers",
+          "explanation": {"en": "Define the layer sizes for MNIST digit classifier"}
+        },
+        {
+          "line": "params_L1 = 784 * 256 + 256  # 200,960",
+          "highlight": "params_L1",
+          "explanation": {"en": "Layer 1: 784 inputs × 256 outputs + 256 biases"}
+        },
+        {
+          "line": "params_L2 = 256 * 128 + 128  # 32,896",
+          "highlight": "params_L2",
+          "explanation": {"en": "Layer 2: 256 inputs × 128 outputs + 128 biases"}
+        },
+        {
+          "line": "total = 200960 + 32896 + 8256 + 650  # 242,762",
+          "highlight": "total",
+          "explanation": {"en": "Total trainable parameters in this network"},
+          "output": "Total params: 242,762"
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "layer_stack",
+      "frames": [
+        {"label": "Output Layer (10)", "color": "#4fc97a"},
+        {"label": "Hidden Layer 3 (64)", "color": "#f7914f"},
+        {"label": "Hidden Layer 2 (128)", "color": "#f7914f"},
+        {"label": "Hidden Layer 1 (256)", "color": "#f7914f"},
+        {"label": "Input Layer (784)", "color": "#4f8ef7"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "depth_flow",
+      "steps": ["Raw Pixels", "Edges", "Shapes", "Parts", "Object Class"]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Layer 1 params: 200,960", "Layer 2 params:  32,896", "Layer 3 params:   8,256", "Layer 4 params:     650", "Total:         242,762"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `count_params(layer_sizes)` that takes a list of integers (e.g. [784, 256, 128, 10]) and returns the total number of trainable parameters (weights + biases)."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Iterate over consecutive pairs: zip(layer_sizes, layer_sizes[1:])"},
+        {"en": "For each pair (n_in, n_out), add n_in * n_out + n_out"},
+        {"en": "The biases count equals n_out for each layer"}
+      ],
+      "test_code": "assert count_params([2, 3]) == 9, '2*3 weights + 3 biases = 9'\nassert count_params([784, 256, 128, 10]) == 200960 + 256 + 32768 + 128 + 1280 + 10, 'MNIST MLP params'\nassert count_params([3, 3, 1]) == (3*3+3) + (3*1+1), 'two-layer network'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

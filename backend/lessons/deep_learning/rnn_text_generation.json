@@ -1,0 +1,115 @@
+{
+  "id": "rnn_text_generation",
+  "topic": "text_generation",
+  "track": "deep_learning",
+  "module": "rnn",
+  "order": 3,
+  "title": {
+    "en": "Text Generation: Teaching an RNN to Write"
+  },
+  "description": {
+    "en": "Build a character-level language model using an LSTM to generate text one character at a time."
+  },
+  "xp_reward": 75,
+  "next_unlock": "transformer_attention",
+  "story_variants": {
+    "en": "## Text Generation: Teaching an RNN to Write\n\nA character-level language model learns to predict the next character given all previous characters. Given enough training, it can generate convincing new text in the style of the training data.\n\n### The Core Idea\n\n```\nInput:   \"hell\" → predict → 'o'\nInput:   \"hello\" → predict → ' '\nInput:   \"hello \" → predict → 'w'\n```\n\n### Building the Dataset\n\n```python\ntext = \"hello world\"\nvocab = sorted(set(text))\nchar2idx = {c: i for i, c in enumerate(vocab)}\nidx2char = {i: c for c, i in char2idx.items()}\n\n# Create input-target pairs (one step apart)\nX = [char2idx[c] for c in text[:-1]]\nY = [char2idx[c] for c in text[1:]]\n```\n\n### The Model (PyTorch)\n\n```python\nimport torch\nimport torch.nn as nn\n\nclass CharLM(nn.Module):\n    def __init__(self, vocab_size, embed_dim=32, hidden_size=128):\n        super().__init__()\n        self.embed   = nn.Embedding(vocab_size, embed_dim)\n        self.lstm    = nn.LSTM(embed_dim, hidden_size, batch_first=True)\n        self.linear  = nn.Linear(hidden_size, vocab_size)\n\n    def forward(self, x, hidden=None):\n        x = self.embed(x)\n        out, hidden = self.lstm(x, hidden)\n        return self.linear(out), hidden\n```\n\n### Generating Text\n\n```python\ndef generate(model, seed_char, length=100, temperature=0.8):\n    model.eval()\n    idx = char2idx[seed_char]\n    hidden = None\n    result = [seed_char]\n    for _ in range(length):\n        x = torch.tensor([[idx]])\n        logits, hidden = model(x, hidden)\n        probs = torch.softmax(logits[0,-1] / temperature, dim=0)\n        idx = torch.multinomial(probs, 1).item()\n        result.append(idx2char[idx])\n    return ''.join(result)\n```\n\n### Temperature Controls Creativity\n\n| Temperature | Effect |\n|------------|--------|\n| < 0.5 | Repetitive, safe text |\n| 0.8–1.0 | Balanced creativity |\n| > 1.5 | Wild, incoherent text |\n\n> **Key Concept:** Temperature divides the logits before softmax. Low temperature sharpens the distribution (model is more certain); high temperature flattens it (more random sampling)."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "lm_flow",
+      "steps": ["'h'", "Embed → LSTM", "'e' predicted", "Feed back 'e'", "'l' predicted", "... → 'hello'"]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "charlm_map",
+      "nodes": [
+        {"id": "char", "label": "Character 'h'", "color": "#4f8ef7"},
+        {"id": "embed", "label": "Embedding (32d)", "color": "#f7914f"},
+        {"id": "lstm", "label": "LSTM (128 hidden)", "color": "#a44ff7"},
+        {"id": "linear", "label": "Linear (vocab_size)", "color": "#4fc97a"},
+        {"id": "sample", "label": "Sample Next Char", "color": "#e74c3c"}
+      ],
+      "edges": [
+        {"from": "char", "to": "embed"},
+        {"from": "embed", "to": "lstm"},
+        {"from": "lstm", "to": "linear"},
+        {"from": "linear", "to": "sample"},
+        {"from": "sample", "to": "char", "label": "feed back"}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "vocab_map",
+      "label": "Character Vocabulary",
+      "structure": "table",
+      "data": [
+        ["Char", "Index"],
+        [" ", "0"],
+        ["d", "1"],
+        ["e", "2"],
+        ["h", "3"],
+        ["l", "4"],
+        ["o", "5"],
+        ["r", "6"],
+        ["w", "7"]
+      ],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "gen_code",
+      "steps": [
+        {
+          "line": "seed = 'h'",
+          "highlight": "seed",
+          "explanation": {"en": "Start generation from the character 'h'"}
+        },
+        {
+          "line": "logits, hidden = model(embed('h'), None)",
+          "highlight": "logits",
+          "explanation": {"en": "First forward pass — get distribution over next chars"}
+        },
+        {
+          "line": "probs = softmax(logits / temperature)",
+          "highlight": "probs",
+          "explanation": {"en": "Convert to probability with temperature scaling"}
+        },
+        {
+          "line": "next_char = sample(probs)",
+          "highlight": "next_char",
+          "explanation": {"en": "Sample stochastically — 'e' with high probability"},
+          "output": "Generated: 'hello world'"
+        }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Epoch  10: loss=2.31 | 'hxqzmw...'", "Epoch  50: loss=1.52 | 'helo wold'", "Epoch 200: loss=0.31 | 'hello world'"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a `build_vocab(text)` function that returns `(char2idx, idx2char)` dictionaries mapping characters to integer indices and back. The indices should be assigned in sorted order."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "vocab = sorted(set(text))"},
+        {"en": "char2idx = {c: i for i, c in enumerate(vocab)}"},
+        {"en": "idx2char = {i: c for c, i in char2idx.items()}"}
+      ],
+      "test_code": "c2i, i2c = build_vocab('hello')\nassert set(c2i.keys()) == {'h','e','l','o'}, 'vocab should have unique chars'\nassert len(c2i) == 4, 'hello has 4 unique chars'\nassert i2c[c2i['h']] == 'h', 'round-trip: idx->char->idx should work'\nassert c2i['e'] < c2i['h'], 'e comes before h alphabetically'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

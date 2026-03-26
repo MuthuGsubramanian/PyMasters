@@ -1,0 +1,109 @@
+{
+  "id": "pt_tensors",
+  "topic": "pytorch_tensors",
+  "track": "deep_learning",
+  "module": "pytorch",
+  "order": 1,
+  "title": {
+    "en": "PyTorch Tensors: The Engine Room"
+  },
+  "description": {
+    "en": "Master PyTorch tensors — the multi-dimensional arrays that power all deep learning computations — including creation, operations, and GPU acceleration."
+  },
+  "xp_reward": 65,
+  "next_unlock": "pt_autograd",
+  "story_variants": {
+    "en": "## PyTorch Tensors: The Engine Room\n\nA **tensor** is a multi-dimensional array — an N-dimensional generalisation of scalars, vectors, and matrices. In PyTorch, all data and all model parameters are tensors.\n\n### Creating Tensors\n\n```python\nimport torch\n\n# From Python data\nt1 = torch.tensor([1.0, 2.0, 3.0])   # 1D\nt2 = torch.tensor([[1, 2], [3, 4]])   # 2D matrix\n\n# Special tensors\nzeros = torch.zeros(3, 4)             # 3×4 zeros\nones  = torch.ones(2, 3)              # 2×3 ones\nrand  = torch.randn(4, 4)             # 4×4 standard normal\neye   = torch.eye(3)                  # 3×3 identity\n```\n\n### Tensor Attributes\n\n| Attribute | Meaning | Example |\n|-----------|---------|----------|\n| `.shape` | Dimensions | torch.Size([3, 4]) |\n| `.dtype` | Data type | torch.float32 |\n| `.device` | CPU or GPU | device('cuda:0') |\n| `.requires_grad` | Track gradients? | True/False |\n\n### Key Operations\n\n```python\na = torch.tensor([[1.0, 2.0], [3.0, 4.0]])\nb = torch.tensor([[5.0, 6.0], [7.0, 8.0]])\n\n# Arithmetic (element-wise)\nc = a + b\nd = a * b\n\n# Matrix multiplication\ne = a @ b        # or torch.matmul(a, b)\n\n# Reshaping\nf = a.view(4)    # flatten to 1D\ng = a.unsqueeze(0)  # add batch dimension\n```\n\n### GPU Acceleration\n\n```python\ndevice = 'cuda' if torch.cuda.is_available() else 'cpu'\nt = torch.randn(1000, 1000).to(device)\nresult = t @ t.T  # matrix multiply on GPU\n```\n\n> **Key Concept:** Moving data between CPU and GPU is expensive. Keep your entire computation graph on one device. Use `.to(device)` to move tensors and `.cuda()` / `.cpu()` as shortcuts."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "DataStructure",
+      "id": "tensor_dims",
+      "label": "Tensor Dimensions",
+      "structure": "table",
+      "data": [
+        ["Rank", "Name", "Shape Example", "Use Case"],
+        ["0", "Scalar", "()", "Loss value"],
+        ["1", "Vector", "(128,)", "Embedding"],
+        ["2", "Matrix", "(32, 512)", "Batch of embeddings"],
+        ["3", "3D Tensor", "(32, 10, 512)", "Batch of sequences"],
+        ["4", "4D Tensor", "(32, 3, 224, 224)", "Batch of images"]
+      ],
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "tensor_code",
+      "steps": [
+        {
+          "line": "t = torch.tensor([[1.0, 2.0], [3.0, 4.0]])",
+          "highlight": "t",
+          "explanation": {"en": "Create a 2×2 tensor from a Python list"}
+        },
+        {
+          "line": "print(t.shape, t.dtype)",
+          "highlight": "shape",
+          "explanation": {"en": "Check shape and data type"},
+          "output": "torch.Size([2, 2]) torch.float32"
+        },
+        {
+          "line": "t_gpu = t.to('cuda')",
+          "highlight": "cuda",
+          "explanation": {"en": "Move tensor to GPU for fast computation"}
+        },
+        {
+          "line": "result = t @ t.T",
+          "highlight": "@",
+          "explanation": {"en": "Matrix multiplication: (2×2) @ (2×2) = (2×2)"},
+          "output": "tensor([[5., 11.], [11., 25.]])"
+        },
+        {
+          "line": "flat = t.view(-1)",
+          "highlight": "view",
+          "explanation": {"en": "Flatten: shape (2,2) → (4,)"},
+          "output": "tensor([1., 2., 3., 4.])"
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "tensor_box",
+      "variable": "tensor",
+      "value": "[[1.0, 2.0], [3.0, 4.0]]",
+      "data_type": "torch.Tensor",
+      "color": "#f7914f"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "tensor_flow",
+      "steps": ["Python Data", "torch.tensor()", "CPU Tensor", ".to('cuda')", "GPU Tensor", "@ operation", "Result"]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["t.shape = torch.Size([2, 2])", "t.dtype = torch.float32", "t @ t.T = tensor([[ 5., 11.], [11., 25.]])", "t.view(-1) = tensor([1., 2., 3., 4.])"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Using PyTorch, create a tensor `A` of shape (3, 4) filled with random normal values, and `B` of shape (4, 2) also random normal. Compute their matrix product `C = A @ B`. Also compute and store the sum of all elements of C as `total`."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Use torch.randn(rows, cols) to create random tensors"},
+        {"en": "Matrix multiply: C = A @ B"},
+        {"en": "Sum all elements: total = C.sum()"}
+      ],
+      "test_code": "import torch\nassert A.shape == (3, 4), f'A must be (3,4), got {A.shape}'\nassert B.shape == (4, 2), f'B must be (4,2), got {B.shape}'\nassert C.shape == (3, 2), f'C = A@B must be (3,2), got {C.shape}'\nassert total.shape == torch.Size([]), 'total must be a scalar'\nassert torch.allclose(C, A @ B), 'C must equal A @ B'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

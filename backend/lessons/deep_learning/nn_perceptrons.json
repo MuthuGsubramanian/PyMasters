@@ -1,0 +1,119 @@
+{
+  "id": "nn_perceptrons",
+  "topic": "perceptrons",
+  "track": "deep_learning",
+  "module": "nn_basics",
+  "order": 1,
+  "title": {
+    "en": "The Perceptron: Birth of a Neuron"
+  },
+  "description": {
+    "en": "Explore the single perceptron — the fundamental building block of every neural network — and understand weights, bias, and how it makes decisions."
+  },
+  "xp_reward": 60,
+  "next_unlock": "nn_activation",
+  "story_variants": {
+    "en": "## The Perceptron: Birth of a Neuron\n\nIn 1958, Frank Rosenblatt built the **Perceptron** — the very first artificial neuron. Today it powers everything from spam filters to self-driving cars.\n\n### What Is a Perceptron?\n\nA perceptron takes several numeric **inputs**, multiplies each by a **weight**, sums them up, adds a **bias**, and then decides: fire (1) or stay silent (0).\n\n```python\ndef perceptron(inputs, weights, bias):\n    total = sum(x * w for x, w in zip(inputs, weights))\n    return 1 if (total + bias) >= 0 else 0\n```\n\n### Anatomy\n\n| Part | Symbol | Role |\n|------|--------|------|\n| Input | x₁, x₂, … | Raw features fed in |\n| Weight | w₁, w₂, … | Importance of each input |\n| Bias | b | Shifts the decision boundary |\n| Output | ŷ | 0 or 1 (binary decision) |\n\n### How Weights Work\n\n- A **large positive weight** means that input strongly pushes toward firing.\n- A **large negative weight** means it suppresses the output.\n- A **weight of zero** means that input is ignored entirely.\n\n### The Bias Term\n\n> **Key Concept:** The bias `b` lets the neuron fire even when all inputs are zero, giving the model extra flexibility to shift the decision threshold.\n\n### A Concrete Example\n\nShould a student pass? Inputs: study_hours=1, sleep=1, weights=[0.6, 0.4], bias=−0.5.\n\n```python\ntotal = 1*0.6 + 1*0.4 + (-0.5)  # = 0.5\noutput = 1  # 0.5 >= 0, so PASS\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "perceptron_diagram",
+      "nodes": [
+        {"id": "x1", "label": "Input x₁", "color": "#4f8ef7"},
+        {"id": "x2", "label": "Input x₂", "color": "#4f8ef7"},
+        {"id": "w1", "label": "Weight w₁", "color": "#f7914f"},
+        {"id": "w2", "label": "Weight w₂", "color": "#f7914f"},
+        {"id": "sum", "label": "Σ (sum + bias)", "color": "#a44ff7"},
+        {"id": "out", "label": "Output ŷ", "color": "#4fc97a"}
+      ],
+      "edges": [
+        {"from": "x1", "to": "w1"},
+        {"from": "x2", "to": "w2"},
+        {"from": "w1", "to": "sum"},
+        {"from": "w2", "to": "sum"},
+        {"from": "sum", "to": "out"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "perceptron_code",
+      "steps": [
+        {
+          "line": "inputs  = [1, 1]",
+          "highlight": "inputs",
+          "explanation": {"en": "Two input features: study_hours=1, sleep=1"}
+        },
+        {
+          "line": "weights = [0.6, 0.4]",
+          "highlight": "weights",
+          "explanation": {"en": "study_hours gets weight 0.6, sleep gets weight 0.4"}
+        },
+        {
+          "line": "bias    = -0.5",
+          "highlight": "bias",
+          "explanation": {"en": "Bias shifts the decision threshold"}
+        },
+        {
+          "line": "total = sum(x*w for x,w in zip(inputs, weights)) + bias",
+          "highlight": "total",
+          "explanation": {"en": "Weighted sum: 1*0.6 + 1*0.4 - 0.5 = 0.5"}
+        },
+        {
+          "line": "output = 1 if total >= 0 else 0",
+          "highlight": "output",
+          "explanation": {"en": "0.5 >= 0 so output is 1 (PASS)"},
+          "output": "1"
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_weights",
+      "variable": "weights",
+      "value": [0.6, 0.4],
+      "data_type": "list",
+      "color": "#f7914f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_bias",
+      "variable": "bias",
+      "value": -0.5,
+      "data_type": "float",
+      "color": "#a44ff7"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "flow_decision",
+      "steps": ["Inputs", "× Weights", "+ Bias", "Step Function", "0 or 1"]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["total = 0.5", "output = 1  # PASS"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a `perceptron(inputs, weights, bias)` function that returns 1 if the weighted sum plus bias is >= 0, else 0. Test it with inputs=[2, 3], weights=[0.5, -0.5], bias=0."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Use zip(inputs, weights) to pair each input with its weight"},
+        {"en": "Compute: total = sum(x*w for x,w in zip(inputs, weights)) + bias"},
+        {"en": "Return 1 if total >= 0, else return 0"}
+      ],
+      "test_code": "assert perceptron([2, 3], [0.5, -0.5], 0) == 0, 'expected 0: 2*0.5 + 3*(-0.5) + 0 = -0.5'\nassert perceptron([1, 1], [0.6, 0.4], -0.5) == 1, 'expected 1'\nassert perceptron([0, 0], [1.0, 1.0], -0.1) == 0, 'expected 0 when inputs are zero and bias is negative'\nassert perceptron([0, 0], [1.0, 1.0], 0.1) == 1, 'expected 1 when bias pushes above threshold'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
