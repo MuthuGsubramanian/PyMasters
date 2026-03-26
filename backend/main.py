@@ -270,7 +270,7 @@ def register(user: UserRegister):
             [user_id, user.username, hashed, user.name, default_unlocks]
         )
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "points": 0, "unlocked": ["module_1"]}
+        return {"id": user_id, "username": user.username, "name": user.name, "points": 0, "unlocked": ["module_1"], "onboarding_completed": False}
     finally:
         conn.close()
 
@@ -281,9 +281,9 @@ def login(user: UserLogin):
     try:
         cursor = conn.cursor()
         hashed = hash_pw(user.password)
-        # Fetch basic info + points + unlocks
+        # Fetch basic info + points + unlocks + onboarding status
         cursor.execute(
-            "SELECT id, name, points, unlocked_modules FROM users WHERE username = ? AND password_hash = ?",
+            "SELECT id, name, points, unlocked_modules, onboarding_completed FROM users WHERE username = ? AND password_hash = ?",
             [user.username, hashed]
         )
         record = cursor.fetchone()
@@ -298,6 +298,7 @@ def login(user: UserLogin):
             "username": user.username,
             "points": record[2] or 0,
             "unlocked": unlocks,
+            "onboarding_completed": bool(record[4]),
             "token": f"mock-jwt-{record[0]}"
         }
     finally:
