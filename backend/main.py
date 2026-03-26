@@ -183,6 +183,47 @@ def init_db():
             )
         """)
 
+        # ── Notification tables ──────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                link TEXT,
+                metadata TEXT,
+                read INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notification_deliveries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                notification_id INTEGER NOT NULL REFERENCES notifications(id),
+                channel TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                sent_at TIMESTAMP,
+                error_message TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notification_preferences (
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                channel TEXT NOT NULL,
+                type TEXT NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                quiet_hours_start TEXT,
+                quiet_hours_end TEXT,
+                PRIMARY KEY (user_id, channel, type)
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_deliveries_notification ON notification_deliveries(notification_id)")
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
