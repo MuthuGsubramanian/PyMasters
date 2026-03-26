@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
-import duckdb
+import sqlite3
 import uvicorn
 from contextlib import asynccontextmanager
 import time
@@ -15,7 +15,7 @@ import json
 import requests
 from dotenv import load_dotenv
 load_dotenv()
-DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
+DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 # --- Route imports ---
 from routes.language import router as language_router
@@ -76,78 +76,81 @@ CONTENT_MAP = {
 
 def init_db():
     print(f"Initializing Database at: {DB_PATH}")
-    conn = duckdb.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
     try:
+        cursor = conn.cursor()
+
         # Schema Migration: Add gamification columns if they don't exist
-        conn.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id VARCHAR PRIMARY KEY,
-                username VARCHAR UNIQUE,
-                password_hash VARCHAR,
-                name VARCHAR,
+                id TEXT PRIMARY KEY,
+                username TEXT UNIQUE,
+                password_hash TEXT,
+                name TEXT,
                 created_at TIMESTAMP
             )
         """)
 
-        # Check/Add extra columns manually since DuckDB ALTER TABLE IF NOT EXISTS is tricky
-        columns = conn.execute("DESCRIBE users").fetchall()
-        col_names = [c[0] for c in columns]
+        # Check/Add extra columns manually
+        cursor.execute("PRAGMA table_info(users)")
+        columns = cursor.fetchall()
+        col_names = [c[1] for c in columns]
 
         if 'points' not in col_names:
             print("Migrating DB: Adding points column")
-            conn.execute("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
+            cursor.execute("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
 
         if 'unlocked_modules' not in col_names:
             print("Migrating DB: Adding unlocked_modules column")
-            conn.execute("ALTER TABLE users ADD COLUMN unlocked_modules VARCHAR DEFAULT '[\"module_1\"]'")
+            cursor.execute("ALTER TABLE users ADD COLUMN unlocked_modules TEXT DEFAULT '[\"module_1\"]'")
 
         if 'preferred_language' not in col_names:
             print("Migrating DB: Adding preferred_language column")
-            conn.execute("ALTER TABLE users ADD COLUMN preferred_language VARCHAR DEFAULT 'en'")
+            cursor.execute("ALTER TABLE users ADD COLUMN preferred_language TEXT DEFAULT 'en'")
 
         if 'onboarding_completed' not in col_names:
             print("Migrating DB: Adding onboarding_completed column")
-            conn.execute("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN DEFAULT false")
+            cursor.execute("ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0")
 
         # Create user_profiles table
-        conn.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_profiles (
-                user_id VARCHAR PRIMARY KEY,
-                motivation VARCHAR,
-                prior_experience VARCHAR,
-                known_languages VARCHAR,
-                learning_style VARCHAR,
-                goal VARCHAR,
-                time_commitment VARCHAR,
-                preferred_language VARCHAR,
-                skill_level VARCHAR,
-                diagnostic_score FLOAT,
-                onboarding_completed BOOLEAN DEFAULT false,
-                created_at TIMESTAMP DEFAULT current_timestamp
+                user_id TEXT PRIMARY KEY,
+                motivation TEXT,
+                prior_experience TEXT,
+                known_languages TEXT,
+                learning_style TEXT,
+                goal TEXT,
+                time_commitment TEXT,
+                preferred_language TEXT,
+                skill_level TEXT,
+                diagnostic_score REAL,
+                onboarding_completed INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
         # Create learning_signals table
-        conn.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS learning_signals (
-                id VARCHAR PRIMARY KEY,
-                user_id VARCHAR,
-                signal_type VARCHAR,
-                topic VARCHAR,
-                value VARCHAR,
-                session_id VARCHAR,
-                created_at TIMESTAMP DEFAULT current_timestamp
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                signal_type TEXT,
+                topic TEXT,
+                value TEXT,
+                session_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
         # Create user_mastery table
-        conn.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_mastery (
-                user_id VARCHAR,
-                topic VARCHAR,
-                mastery_level FLOAT,
+                user_id TEXT,
+                topic TEXT,
+                mastery_level REAL,
                 attempts INTEGER,
-                avg_time_seconds FLOAT,
+                avg_time_seconds REAL,
                 last_practiced TIMESTAMP,
                 struggle_count INTEGER,
                 PRIMARY KEY (user_id, topic)
@@ -155,27 +158,30 @@ def init_db():
         """)
 
         # Create training_data table for fine-tuning pipeline
-        conn.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS training_data (
-                id VARCHAR PRIMARY KEY,
-                input_text VARCHAR,
-                output_text VARCHAR,
-                profile_json VARCHAR,
-                context_json VARCHAR,
-                quality_score FLOAT,
-                created_at TIMESTAMP DEFAULT current_timestamp
+                id TEXT PRIMARY KEY,
+                input_text TEXT,
+                output_text TEXT,
+                profile_json TEXT,
+                context_json TEXT,
+                quality_score REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
         # Create a test user if empty
-        existing = conn.execute("SELECT count(*) FROM users").fetchone()[0]
+        cursor.execute("SELECT count(*) FROM users")
+        existing = cursor.fetchone()[0]
         if existing == 0:
             print("Seeding default admin user...")
             hashed = hash_pw("admin123")
-            conn.execute(
-                "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, current_timestamp, 0, ?, ?, ?)",
-                [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", False]
+            cursor.execute(
+                "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?)",
+                [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", 0]
             )
+
+        conn.commit()
 
     except Exception as e:
         print(f"DB Init Error: {e}")
@@ -246,21 +252,24 @@ def read_root():
 @app.post("/api/auth/register")
 def register(user: UserRegister):
     print(f"Register request for: {user.username}")
-    conn = duckdb.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
     try:
-        existing = conn.execute("SELECT id FROM users WHERE username = ?", [user.username]).fetchone()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", [user.username])
+        existing = cursor.fetchone()
         if existing:
             raise HTTPException(status_code=400, detail="Username already taken")
-        
+
         user_id = str(uuid.uuid4())
         hashed = hash_pw(user.password)
         # Initialize with module_1 unlocked
         default_unlocks = json.dumps(["module_1"])
-        
-        conn.execute(
-            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, current_timestamp, 0, ?, 'en', false)",
+
+        cursor.execute(
+            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, 'en', 0)",
             [user_id, user.username, hashed, user.name, default_unlocks]
         )
+        conn.commit()
         return {"id": user_id, "username": user.username, "name": user.name, "points": 0, "unlocked": ["module_1"]}
     finally:
         conn.close()
@@ -268,23 +277,25 @@ def register(user: UserRegister):
 @app.post("/api/auth/login")
 def login(user: UserLogin):
     print(f"Login request for: {user.username}")
-    conn = duckdb.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
     try:
+        cursor = conn.cursor()
         hashed = hash_pw(user.password)
         # Fetch basic info + points + unlocks
-        record = conn.execute(
-            "SELECT id, name, points, unlocked_modules FROM users WHERE username = ? AND password_hash = ?", 
+        cursor.execute(
+            "SELECT id, name, points, unlocked_modules FROM users WHERE username = ? AND password_hash = ?",
             [user.username, hashed]
-        ).fetchone()
-        
+        )
+        record = cursor.fetchone()
+
         if not record:
             raise HTTPException(status_code=401, detail="Invalid credentials")
-        
+
         unlocks = json.loads(record[3]) if record[3] else ["module_1"]
         return {
-            "id": record[0], 
-            "name": record[1], 
-            "username": user.username, 
+            "id": record[0],
+            "name": record[1],
+            "username": user.username,
             "points": record[2] or 0,
             "unlocked": unlocks,
             "token": f"mock-jwt-{record[0]}"
@@ -320,34 +331,37 @@ def complete_module(sub: QuizSubmission):
         
     module = CONTENT_MAP[sub.module_id]
     
-    conn = duckdb.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
     try:
+        cursor = conn.cursor()
         # Get current state
-        row = conn.execute("SELECT points, unlocked_modules FROM users WHERE id = ?", [sub.user_id]).fetchone()
+        cursor.execute("SELECT points, unlocked_modules FROM users WHERE id = ?", [sub.user_id])
+        row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
-            
+
         current_points = row[0] or 0
         current_unlocks = json.loads(row[1]) if row[1] else []
-        
+
         # Calculate new state
         new_points = current_points + module["xp_reward"]
-        
+
         updates = []
         next_mod = module["next_unlock"]
         if next_mod and next_mod not in current_unlocks:
             current_unlocks.append(next_mod)
             updates.append(f"Unlocked {CONTENT_MAP[next_mod]['title']}")
-            
+
         # Commit
-        conn.execute(
-            "UPDATE users SET points = ?, unlocked_modules = ? WHERE id = ?", 
+        cursor.execute(
+            "UPDATE users SET points = ?, unlocked_modules = ? WHERE id = ?",
             [new_points, json.dumps(current_unlocks), sub.user_id]
         )
-        
+        conn.commit()
+
         return {
-            "success": True, 
-            "new_points": new_points, 
+            "success": True,
+            "new_points": new_points,
             "unlocked": current_unlocks,
             "message": "Module Completed!"
         }

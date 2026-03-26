@@ -7,7 +7,7 @@ recording, mastery tracking, and profile retrieval.
 
 import json
 import uuid
-import duckdb
+import sqlite3
 
 
 def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
@@ -19,8 +19,9 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
 
     Returns {"onboarding_completed": True, "user_id": user_id}.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
+        cursor = conn.cursor()
         preferred_language = data.get("preferred_language", "en")
         motivation = data.get("motivation")
         prior_experience = data.get("prior_experience")
@@ -31,12 +32,12 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
         skill_level = data.get("skill_level")
         diagnostic_score = data.get("diagnostic_score")
 
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO user_profiles
                 (user_id, motivation, prior_experience, known_languages,
                  learning_style, goal, time_commitment, preferred_language,
                  skill_level, diagnostic_score, onboarding_completed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
             ON CONFLICT (user_id) DO UPDATE SET
                 motivation = excluded.motivation,
                 prior_experience = excluded.prior_experience,
@@ -47,19 +48,21 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
                 preferred_language = excluded.preferred_language,
                 skill_level = excluded.skill_level,
                 diagnostic_score = excluded.diagnostic_score,
-                onboarding_completed = true
+                onboarding_completed = 1
         """, [
             user_id, motivation, prior_experience, known_languages,
             learning_style, goal, time_commitment, preferred_language,
             skill_level, diagnostic_score
         ])
 
-        conn.execute("""
+        cursor.execute("""
             UPDATE users
             SET preferred_language = ?,
-                onboarding_completed = true
+                onboarding_completed = 1
             WHERE id = ?
         """, [preferred_language, user_id])
+
+        conn.commit()
 
     finally:
         conn.close()
@@ -80,15 +83,17 @@ def record_signal(
 
     value is serialised via json.dumps before storage.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
+        cursor = conn.cursor()
         signal_id = str(uuid.uuid4())
         value_json = json.dumps(value)
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO learning_signals
                 (id, user_id, signal_type, topic, value, session_id)
             VALUES (?, ?, ?, ?, ?, ?)
         """, [signal_id, user_id, signal_type, topic, value_json, session_id])
+        conn.commit()
     finally:
         conn.close()
 
@@ -107,13 +112,15 @@ def update_mastery(
     increments struggle_count when level < 0.4.
     If no row exists: inserts with attempts=1.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
-        existing = conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             SELECT attempts, avg_time_seconds, struggle_count
             FROM user_mastery
             WHERE user_id = ? AND topic = ?
-        """, [user_id, topic]).fetchone()
+        """, [user_id, topic])
+        existing = cursor.fetchone()
 
         if existing:
             old_attempts, old_avg_time, old_struggle = existing
@@ -129,25 +136,26 @@ def update_mastery(
 
             new_struggle = old_struggle + (1 if level < 0.4 else 0)
 
-            conn.execute("""
+            cursor.execute("""
                 UPDATE user_mastery
                 SET mastery_level = ?,
                     attempts = ?,
                     avg_time_seconds = ?,
                     struggle_count = ?,
-                    last_practiced = current_timestamp
+                    last_practiced = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND topic = ?
             """, [level, new_attempts, new_avg_time, new_struggle, user_id, topic])
         else:
-            conn.execute("""
+            cursor.execute("""
                 INSERT INTO user_mastery
                     (user_id, topic, mastery_level, attempts, avg_time_seconds,
                      last_practiced, struggle_count)
-                VALUES (?, ?, ?, 1, ?, current_timestamp, ?)
+                VALUES (?, ?, ?, 1, ?, CURRENT_TIMESTAMP, ?)
             """, [
                 user_id, topic, level, time_seconds,
                 1 if level < 0.4 else 0
             ])
+        conn.commit()
     finally:
         conn.close()
 
@@ -156,13 +164,15 @@ def get_mastery_map(db_path: str, user_id: str) -> dict:
     """
     Return {topic: mastery_level} dict for the given user from user_mastery.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
-        rows = conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             SELECT topic, mastery_level
             FROM user_mastery
             WHERE user_id = ?
-        """, [user_id]).fetchall()
+        """, [user_id])
+        rows = cursor.fetchall()
         return {row[0]: row[1] for row in rows}
     finally:
         conn.close()
@@ -174,15 +184,17 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
 
     Returns None if no profile exists for user_id.
     """
-    conn = duckdb.connect(db_path)
+    conn = sqlite3.connect(db_path)
     try:
-        row = conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             SELECT user_id, motivation, prior_experience, known_languages,
                    learning_style, goal, time_commitment, preferred_language,
                    skill_level, diagnostic_score, onboarding_completed, created_at
             FROM user_profiles
             WHERE user_id = ?
-        """, [user_id]).fetchone()
+        """, [user_id])
+        row = cursor.fetchone()
 
         if row is None:
             return None

@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from vaathiyaar.profiler import save_onboarding, get_student_profile, record_signal
 
-DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
+DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -58,7 +58,7 @@ def onboarding(data: OnboardingData):
             detail="Hindi is not supported on PyMasters. Please choose another language.",
         )
 
-    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
+    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
     payload = {
         "motivation": data.motivation,
@@ -80,7 +80,7 @@ def get_profile(user_id: str):
     Retrieve the student profile for a given user_id.
     Returns {profile, onboarding_completed}.
     """
-    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
+    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
     profile = get_student_profile(db_path, user_id)
 
     if profile is None:
@@ -97,7 +97,7 @@ def post_signal(data: SignalData):
     """
     Record a learning signal for a user.
     """
-    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.duckdb"))
+    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
     record_signal(
         db_path,
