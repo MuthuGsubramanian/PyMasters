@@ -203,6 +203,13 @@ function normalizeProps(type, raw, language) {
     delete p.description;
   }
 
+  // Terminal: ensure output is always an array
+  if (type === 'Terminal' || type === 'TerminalOutput' || type === 'terminal_output') {
+    if (typeof p.output === 'string') {
+      p.output = p.output.split('\n').filter(Boolean);
+    }
+  }
+
   // FlowArrow: branch → label
   if (type === 'FlowArrow' || type === 'flow_arrow') {
     if (p.branch && !p.label) {

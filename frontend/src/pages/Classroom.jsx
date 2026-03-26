@@ -34,12 +34,19 @@ const markdownComponents = {
         ? <code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
         : <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
     table: ({children}) => (
-        <div className="overflow-x-auto my-2">
-            <table className="text-xs border-collapse w-full min-w-[300px]">{children}</table>
+        <div className="overflow-x-auto my-3 rounded-lg border border-slate-200">
+            <table className="text-sm w-full">{children}</table>
         </div>
     ),
-    th: ({children}) => <th className="border border-slate-300 bg-slate-100 px-2 py-1 text-left font-bold text-slate-700">{children}</th>,
-    td: ({children}) => <td className="border border-slate-200 px-2 py-1 text-slate-600">{children}</td>,
+    thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
+    tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
+    tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+    th: ({children}) => (
+        <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
+    ),
+    td: ({children}) => (
+        <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
+    ),
     strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
 };
 
@@ -116,30 +123,68 @@ function LessonSelect({ lessons, onSelectLesson, loading, language }) {
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: intro — animated story sequence
 // ──────────────────────────────────────────────────────────────────────────────
-function IntroPhase({ lesson, language, onComplete }) {
+function IntroPhase({ lesson, language, onComplete, username }) {
     const storyContent =
         lesson.active_story || resolveText(lesson.story_variants, language);
 
     const speedMultiplier = lesson.speed_multiplier ?? 1.0;
     const sequence = lesson.animation_sequence ?? [];
 
+    // Split sequence: StoryCard/ConceptMap go in left column, rest in right
+    const storyPrimitives = sequence.filter(s =>
+        s.type === 'StoryCard' || s.type === 'ConceptMap'
+    );
+    const animPrimitives = sequence.filter(s =>
+        s.type !== 'StoryCard' && s.type !== 'ConceptMap' && s.type !== 'ParticleEffect'
+    );
+
     return (
-        <div className="animate-fade-in max-w-2xl mx-auto space-y-6">
+        <div className="animate-fade-in space-y-6">
+            {/* Header */}
             <header className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-widest text-purple-500">
-                    Lesson Introduction
+                <p className="text-xs font-bold uppercase tracking-widest text-purple-600">
+                    Lesson
                 </p>
-                <h2 className="text-2xl font-bold text-slate-900">{resolveText(lesson.active_title || lesson.title, language)}</h2>
+                <h2 className="text-2xl font-bold text-slate-900">
+                    {resolveText(lesson.active_title || lesson.title, language)}
+                </h2>
+                {username && (
+                    <p className="text-sm text-slate-500 mt-1">Welcome, {username}!</p>
+                )}
             </header>
 
+            {/* Two-column layout */}
             {sequence.length > 0 ? (
-                <AnimationRenderer
-                    sequence={sequence}
-                    storyContent={storyContent}
-                    speedMultiplier={speedMultiplier}
-                    language={language}
-                    onSequenceComplete={onComplete}
-                />
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    {/* Left: Story + Concept */}
+                    <div className="lg:col-span-3 space-y-4">
+                        {storyPrimitives.length > 0 ? (
+                            <AnimationRenderer
+                                sequence={storyPrimitives}
+                                storyContent={storyContent}
+                                speedMultiplier={speedMultiplier}
+                                language={language}
+                            />
+                        ) : storyContent ? (
+                            <div className="panel rounded-xl p-6">
+                                <ReactMarkdown>{storyContent}</ReactMarkdown>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Right: Code + Variables + Terminal */}
+                    <div className="lg:col-span-2 space-y-4">
+                        {animPrimitives.length > 0 && (
+                            <AnimationRenderer
+                                sequence={animPrimitives}
+                                storyContent={storyContent}
+                                speedMultiplier={speedMultiplier}
+                                language={language}
+                                onSequenceComplete={onComplete}
+                            />
+                        )}
+                    </div>
+                </div>
             ) : (
                 // Fallback when no animation sequence exists
                 <div className="panel rounded-xl p-8 space-y-6">
@@ -154,6 +199,13 @@ function IntroPhase({ lesson, language, onComplete }) {
                         Start Practice
                     </button>
                 </div>
+            )}
+
+            {/* Complete button fallback when no anim primitives for right column */}
+            {sequence.length > 0 && animPrimitives.length === 0 && (
+                <button onClick={onComplete} className="btn-neo btn-neo-primary">
+                    Start Practice &rarr;
+                </button>
             )}
         </div>
     );
@@ -478,6 +530,7 @@ export default function Classroom() {
                     lesson_context: currentLesson ? { topic: currentLesson.topic || currentLesson.id, lesson_id: currentLesson.id } : null,
                     phase,
                     language,
+                    username: user?.name || user?.username,
                 }),
             });
 
@@ -585,7 +638,7 @@ export default function Classroom() {
     // ── Render ──────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen pb-40">
-            <div className="max-w-2xl mx-auto px-4 py-10">
+            <div className="max-w-5xl mx-auto px-4 py-10">
                 {/* Phase: select */}
                 <AnimatePresence mode="wait">
                     {phase === 'select' && (
@@ -618,6 +671,7 @@ export default function Classroom() {
                                 lesson={currentLesson}
                                 language={language}
                                 onComplete={handleIntroComplete}
+                                username={user?.name || user?.username}
                             />
                         </motion.div>
                     )}
@@ -713,7 +767,7 @@ export default function Classroom() {
                     {/* Gradient fade */}
                     <div className="h-10 bg-gradient-to-t from-[#f0f4f8] to-transparent pointer-events-none" />
                     <div className="bg-[#f0f4f8] px-4 pb-4">
-                        <div className="max-w-2xl mx-auto">
+                        <div className="max-w-5xl mx-auto">
                             <ChatBar
                                 onSend={handleChat}
                                 loading={chatLoading}

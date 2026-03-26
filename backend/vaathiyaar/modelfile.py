@@ -312,7 +312,7 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     context = lesson_context or {}
 
     # --- Student profile section ---
-    name = profile.get("name", "the student")
+    name = profile.get("name") or profile.get("username") or "the student"
     skill_level = profile.get("skill_level", "beginner")
     preferred_language = profile.get("preferred_language", "en")
     motivation = profile.get("motivation", "not specified")
@@ -344,6 +344,11 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     else:
         mastery_section = "Known topic mastery: none recorded yet (new student)."
 
+    # Personalized name instruction
+    name_instruction = ""
+    if name and name != "the student":
+        name_instruction = f"\n- **Important**: Address the student by their name '{name}' for personal connection."
+
     profile_block = f"""
 ## Current Student Profile
 
@@ -355,7 +360,7 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
 - **Learning style**: {learning_style}
 - **Goal**: {goal}
 - {diagnostic_line}
-- {mastery_section}
+- {mastery_section}{name_instruction}
 """
 
     # --- Lesson context section ---

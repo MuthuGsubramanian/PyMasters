@@ -39,23 +39,29 @@
       "type": "CodeStepper",
       "id": "code_intro",
       "steps": [
-        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Start a loop that runs 5 times (i = 0 to 4)", "ta": "5 முறை இயங்கும் சுழற்சியைத் தொடங்கு (i = 0 முதல் 4 வரை)" } },
-        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "Print the current house number on each iteration", "ta": "ஒவ்வொரு சுழற்சியிலும் தற்போதைய வீட்டு எண்ணை அச்சிடு" } }
+        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Start the loop \u2014 i will go from 0 to 4", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf\u0baf\u0bc8\u0ba4\u0bcd \u0ba4\u0bca\u0b9f\u0b99\u0bcd\u0b95\u0bc1 \u2014 i 0 \u0bae\u0bc1\u0ba4\u0bb2\u0bcd 4 \u0bb5\u0bb0\u0bc8 \u0b9a\u0bc6\u0bb2\u0bcd\u0bb2\u0bc1\u0bae\u0bcd" } },
+        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 0: Print 'Delivering to house 0'", "ta": "i = 0: 'Delivering to house 0' \u0b85\u0b9a\u0bcd\u0b9a\u0bbf\u0b9f\u0bc1" }, "output": "Delivering to house 0" },
+        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 1", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 1 \u0b86\u0b95\u0bbf\u0bb1\u0ba4\u0bc1" } },
+        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 1: Print 'Delivering to house 1'", "ta": "i = 1: 'Delivering to house 1' \u0b85\u0b9a\u0bcd\u0b9a\u0bbf\u0b9f\u0bc1" }, "output": "Delivering to house 1" },
+        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 2", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 2 \u0b86\u0b95\u0bbf\u0bb1\u0ba4\u0bc1" } },
+        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 2: Print 'Delivering to house 2'", "ta": "i = 2: 'Delivering to house 2' \u0b85\u0b9a\u0bcd\u0b9a\u0bbf\u0b9f\u0bc1" }, "output": "Delivering to house 2" },
+        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 3", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 3 \u0b86\u0b95\u0bbf\u0bb1\u0ba4\u0bc1" } },
+        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 3: Almost done!", "ta": "i = 3: \u0b95\u0bbf\u0b9f\u0bcd\u0b9f\u0ba4\u0bcd\u0ba4\u0b9f\u0bcd\u0b9f \u0bae\u0bc1\u0b9f\u0bbf\u0baf\u0bc1\u0bae\u0bcd!" }, "output": "Delivering to house 3" },
+        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 4 (last iteration)", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 4 (\u0b95\u0b9f\u0bc8\u0b9a\u0bbf \u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf)" } },
+        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 4: Last house! All letters delivered!", "ta": "i = 4: \u0b95\u0b9f\u0bc8\u0b9a\u0bbf \u0bb5\u0bc0\u0b9f\u0bc1! \u0b85\u0ba9\u0bc8\u0ba4\u0bcd\u0ba4\u0bc1 \u0b95\u0b9f\u0bbf\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bc1\u0bae\u0bcd \u0bb5\u0bbf\u0ba8\u0bbf\u0baf\u0bcb\u0b95\u0bbf\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba9!" }, "output": "Delivering to house 4" },
+        { "line": "# Loop complete!", "explanation": { "en": "range(5) is exhausted \u2014 loop ends. 5 houses visited!", "ta": "range(5) \u0bae\u0bc1\u0b9f\u0bbf\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1 \u2014 \u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0bae\u0bc1\u0b9f\u0bbf\u0b95\u0bbf\u0bb1\u0ba4\u0bc1. 5 \u0bb5\u0bc0\u0b9f\u0bc1\u0b95\u0bb3\u0bcd \u0baa\u0bbe\u0bb0\u0bcd\u0bb5\u0bc8\u0baf\u0bbf\u0b9f\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba9!" } }
       ]
     },
     {
       "type": "VariableBox",
       "id": "box_i",
       "variable": "i",
-      "value": [0, 1, 2, 3, 4],
-      "data_type": "int (loop variable)",
-      "color": "#9b59b6",
-      "animate_sequence": true
+      "values": [0, 1, 2, 3, 4]
     },
     {
       "type": "Terminal",
       "id": "output_display",
-      "output": "Delivering to house 0\nDelivering to house 1\nDelivering to house 2\nDelivering to house 3\nDelivering to house 4"
+      "output": ["Delivering to house 0", "Delivering to house 1", "Delivering to house 2", "Delivering to house 3", "Delivering to house 4"]
     },
     {
       "type": "FlowArrow",
