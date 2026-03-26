@@ -185,7 +185,9 @@ def init_db():
 # --- App Lifecycle ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    import threading
+    t = threading.Thread(target=init_db, daemon=True)
+    t.start()
     yield
 
 app = FastAPI(title="PyMasters API", lifespan=lifespan)
