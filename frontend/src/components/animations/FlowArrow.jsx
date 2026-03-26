@@ -58,7 +58,7 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
   return (
     <div ref={arrowRef} className="flex flex-col items-center gap-1 opacity-0">
       {label && direction !== 'down' && (
-        <span className="text-xs text-slate-400 mb-1">{label}</span>
+        <span className="text-xs text-slate-700 mb-1">{label}</span>
       )}
       <svg {...svgProps}>
         <line
@@ -73,7 +73,7 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
         {arrowhead}
       </svg>
       {label && direction === 'down' && (
-        <span className="text-xs text-slate-400 mt-1">{label}</span>
+        <span className="text-xs text-slate-700 mt-1">{label}</span>
       )}
     </div>
   );

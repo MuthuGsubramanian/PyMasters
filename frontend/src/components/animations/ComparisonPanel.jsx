@@ -39,7 +39,7 @@ export default function ComparisonPanel({
       >
         <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-400" />
-          <span className="text-xs font-semibold text-red-400">{before.label}</span>
+          <span className="text-xs font-semibold text-red-600">{before.label}</span>
         </div>
         <pre className="bg-[#020617] p-4 font-mono text-sm text-slate-300 overflow-x-auto leading-relaxed">
           {before.code}
@@ -53,7 +53,7 @@ export default function ComparisonPanel({
       >
         <div className="bg-green-500/10 border-b border-green-500/20 px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-400" />
-          <span className="text-xs font-semibold text-green-400">{after.label}</span>
+          <span className="text-xs font-semibold text-green-600">{after.label}</span>
         </div>
         <pre className="bg-[#020617] p-4 font-mono text-sm text-slate-300 overflow-x-auto leading-relaxed">
           {after.code}

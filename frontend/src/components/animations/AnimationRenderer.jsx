@@ -91,12 +91,20 @@ function normalizeProps(type, raw) {
     delete p.visual_theme;
   }
 
-  // CodeStepper: steps → code + highlightSequence
+  // CodeStepper: steps → code + highlightSequence + stepDescriptions
   if ((type === 'CodeStepper' || type === 'code_stepper') && p.steps && !p.code) {
     const code = p.steps.map(s => s.code || s.line || s).join('\n');
     const seq = p.steps.map((_, i) => i + 1);
+    const stepDescriptions = p.steps.map(s => {
+      if (typeof s === 'string') return {};
+      return {
+        description: s.explanation || s.description || '',
+        output: s.output || null,
+      };
+    });
     p.code = code;
     p.highlightSequence = seq;
+    p.stepDescriptions = stepDescriptions;
     p.speed = p.speed || 'normal';
     delete p.steps;
   }
