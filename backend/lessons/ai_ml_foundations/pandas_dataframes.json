@@ -1,0 +1,110 @@
+{
+  "id": "pandas_dataframes",
+  "topic": "pandas",
+  "track": "ai_ml_foundations",
+  "module": "pandas",
+  "order": 1,
+  "title": {
+    "en": "Pandas DataFrames: Spreadsheets in Python"
+  },
+  "description": {
+    "en": "Learn to create and navigate DataFrames and Series — pandas' core data structures — with loc, iloc and attribute indexing."
+  },
+  "xp_reward": 60,
+  "next_unlock": "pandas_filtering",
+  "story_variants": {
+    "en": "## Pandas: Python's Data Table\n\n**Pandas** is the go-to library for working with tabular data in Python. Think of it as a super-powered spreadsheet that you can manipulate with code.\n\n### Two Core Structures\n\n| Structure | Description | Analogy |\n|-----------|-------------|----------|\n| `Series` | 1-D labelled array | A single spreadsheet column |\n| `DataFrame` | 2-D labelled table | A full spreadsheet |\n\n### Creating a DataFrame\n\n```python\nimport pandas as pd\n\ndata = {\n    'name':  ['Alice', 'Bob', 'Charlie'],\n    'age':   [25, 30, 35],\n    'score': [88.5, 92.0, 78.3]\n}\n\ndf = pd.DataFrame(data)\nprint(df)\n```\n\nOutput:\n```\n      name  age  score\n0    Alice   25   88.5\n1      Bob   30   92.0\n2  Charlie   35   78.3\n```\n\n### Exploring a DataFrame\n\n```python\ndf.shape        # (3, 3) — rows, columns\ndf.dtypes       # column data types\ndf.head(2)      # first 2 rows\ndf.tail(2)      # last 2 rows\ndf.info()       # non-null counts + dtypes\ndf.describe()   # stats summary for numeric cols\n```\n\n### Indexing\n\n```python\ndf['name']          # select column → Series\ndf[['name','age']]  # select multiple columns → DataFrame\ndf.loc[0]           # row by label/index\ndf.iloc[1]          # row by integer position\ndf.loc[1, 'score']  # single cell by label\ndf.iloc[0, 2]       # single cell by position\n```\n\n> **Key Insight:** `.loc` uses **labels** while `.iloc` uses **integer positions**. When the default integer index is used they look the same — but once you set a custom index they differ."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "df_creation",
+      "steps": [
+        {
+          "line": "import pandas as pd",
+          "highlight": "pandas",
+          "explanation": { "en": "Import pandas with the conventional alias pd" }
+        },
+        {
+          "line": "df = pd.DataFrame(data)",
+          "highlight": "pd.DataFrame",
+          "explanation": { "en": "Create a DataFrame from a dict where keys become column names" }
+        },
+        {
+          "line": "print(df.shape)",
+          "highlight": "shape",
+          "explanation": { "en": "Returns (rows, columns) tuple" },
+          "output": "(3, 3)"
+        },
+        {
+          "line": "df['name']",
+          "highlight": "'name'",
+          "explanation": { "en": "Select a single column as a Series" },
+          "output": "0      Alice\n1        Bob\n2    Charlie"
+        },
+        {
+          "line": "df.loc[1, 'score']",
+          "highlight": "loc",
+          "explanation": { "en": "Access cell at row label 1, column 'score'" },
+          "output": "92.0"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "df_visual",
+      "structure_type": "table",
+      "data": [["name", "age", "score"], ["Alice", 25, 88.5], ["Bob", 30, 92.0], ["Charlie", 35, 78.3]],
+      "highlight_color": "#4f8ef7"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "loc_vs_iloc",
+      "left": {
+        "label": ".loc — label-based",
+        "code": "df.loc[1, 'age']\n# → 30",
+        "note": "Uses index labels"
+      },
+      "right": {
+        "label": ".iloc — position-based",
+        "code": "df.iloc[1, 1]\n# → 30",
+        "note": "Uses 0-based integers"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "df_output",
+      "output": ["   name  age  score", "0   Alice   25   88.5", "1     Bob   30   92.0", "2 Charlie   35   78.3"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a DataFrame called `students` with columns `student_id` (integers), `name` (strings), and `grade` (floats). Include at least 4 rows."
+      },
+      "hints": [
+        { "en": "Build a dict with three lists, then pass to pd.DataFrame()" },
+        { "en": "students = pd.DataFrame({'student_id': [...], 'name': [...], 'grade': [...]})" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(students, pd.DataFrame), 'students must be a DataFrame'\nassert set(['student_id','name','grade']).issubset(students.columns), 'missing required columns'\nassert len(students) >= 4, 'need at least 4 rows'"
+    },
+    {
+      "instruction": {
+        "en": "Using the `students` DataFrame, extract the `name` column as a Series stored in `names`, and use `.iloc` to get the grade of the third student stored in `third_grade`."
+      },
+      "hints": [
+        { "en": "names = students['name']" },
+        { "en": "third_grade = students.iloc[2]['grade'] or students.iloc[2, students.columns.get_loc('grade')]" }
+      ],
+      "test_code": "import pandas as pd\nassert isinstance(names, pd.Series), 'names must be a Series'\nassert third_grade == students.iloc[2]['grade'], 'third_grade must be the grade of row index 2'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

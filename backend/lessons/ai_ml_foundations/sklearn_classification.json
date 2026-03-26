@@ -1,0 +1,112 @@
+{
+  "id": "sklearn_classification",
+  "topic": "sklearn",
+  "track": "ai_ml_foundations",
+  "module": "sklearn",
+  "order": 1,
+  "title": {
+    "en": "scikit-learn Classification: Teaching Machines to Sort"
+  },
+  "description": {
+    "en": "Train your first classifier with scikit-learn — the fit/predict API, train-test split, and accuracy score."
+  },
+  "xp_reward": 70,
+  "next_unlock": "sklearn_regression",
+  "story_variants": {
+    "en": "## Classification: Drawing Boundaries\n\n**Classification** is the task of assigning an input to one of several discrete categories. Examples: spam/not-spam, cat/dog, disease/healthy.\n\n### The scikit-learn API Pattern\n\nEvery scikit-learn model follows the same three-step pattern:\n\n```\n1. IMPORT  → from sklearn.X import ModelName\n2. FIT     → model.fit(X_train, y_train)\n3. PREDICT → predictions = model.predict(X_test)\n```\n\n### Your First Classifier\n\n```python\nfrom sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.metrics import accuracy_score\n\n# Load data\niris = load_iris()\nX, y = iris.data, iris.target\n\n# Split into train (80%) and test (20%)\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.2, random_state=42\n)\n\n# Train model\nclf = DecisionTreeClassifier(max_depth=3)\nclf.fit(X_train, y_train)\n\n# Evaluate\npreds = clf.predict(X_test)\nprint(accuracy_score(y_test, preds))  # e.g. 0.9667\n```\n\n### Popular Classifiers\n\n| Classifier | Module | Notes |\n|-----------|--------|-------|\n| Decision Tree | `tree` | Interpretable, prone to overfit |\n| Random Forest | `ensemble` | Ensemble of trees, robust |\n| Logistic Regression | `linear_model` | Linear, fast, probabilistic |\n| K-Nearest Neighbors | `neighbors` | Simple, no training phase |\n| Support Vector Machine | `svm` | Great for high-dim data |\n\n### Classification Report\n\n```python\nfrom sklearn.metrics import classification_report\nprint(classification_report(y_test, preds))\n```\n\nThis shows **precision**, **recall**, and **F1-score** per class.\n\n> **Key Insight:** Always split your data before fitting. If you evaluate on training data the model has \"seen\", you get an unrealistically high score — the model has simply memorised the answers."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "classifier_steps",
+      "steps": [
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)",
+          "highlight": "train_test_split",
+          "explanation": { "en": "Split: 80% for training, 20% for evaluation" }
+        },
+        {
+          "line": "clf = DecisionTreeClassifier(max_depth=3)",
+          "highlight": "DecisionTreeClassifier",
+          "explanation": { "en": "Instantiate the model — max_depth limits complexity" }
+        },
+        {
+          "line": "clf.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train: the model learns patterns from X_train and y_train" }
+        },
+        {
+          "line": "preds = clf.predict(X_test)",
+          "highlight": "predict",
+          "explanation": { "en": "Predict: apply learned rules to unseen X_test data" }
+        },
+        {
+          "line": "print(accuracy_score(y_test, preds))",
+          "highlight": "accuracy_score",
+          "explanation": { "en": "Compare predictions to ground truth — fraction correct" },
+          "output": "0.9667"
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "ml_pipeline",
+      "from": "raw_data",
+      "to": "split",
+      "label": "train_test_split"
+    },
+    {
+      "type": "ConceptMap",
+      "id": "fit_predict_flow",
+      "nodes": [
+        { "id": "data", "label": "Raw Data (X, y)" },
+        { "id": "split", "label": "Train / Test Split" },
+        { "id": "fit", "label": "model.fit(X_train, y_train)" },
+        { "id": "predict", "label": "model.predict(X_test)" },
+        { "id": "evaluate", "label": "accuracy_score()" }
+      ],
+      "edges": [
+        { "from": "data", "to": "split" },
+        { "from": "split", "to": "fit" },
+        { "from": "fit", "to": "predict" },
+        { "from": "predict", "to": "evaluate" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "clf_output",
+      "output": ["accuracy_score: 0.9667", "classification_report:", "              precision  recall  f1-score", "   class 0       1.00      1.00      1.00", "   class 1       0.93      0.93      0.93", "   class 2       0.93      0.93      0.93"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Load the `wine` dataset from sklearn.datasets. Split it 75/25 into `X_train, X_test, y_train, y_test`. Train a `RandomForestClassifier(n_estimators=50)` and store accuracy in `acc`."
+      },
+      "hints": [
+        { "en": "from sklearn.datasets import load_wine" },
+        { "en": "from sklearn.ensemble import RandomForestClassifier" },
+        { "en": "acc = accuracy_score(y_test, model.predict(X_test))" }
+      ],
+      "test_code": "from sklearn.datasets import load_wine\nfrom sklearn.metrics import accuracy_score\nimport numpy as np\nwine = load_wine()\nassert X_train.shape[0] + X_test.shape[0] == len(wine.data), 'split sizes must add up'\nassert isinstance(acc, float), 'acc must be a float'\nassert acc > 0.7, 'accuracy should be above 0.7 for random forest on wine'"
+    },
+    {
+      "instruction": {
+        "en": "Using the iris dataset, train a `LogisticRegression` classifier. Print the classification report and store the predictions in `lr_preds`."
+      },
+      "hints": [
+        { "en": "from sklearn.linear_model import LogisticRegression" },
+        { "en": "lr = LogisticRegression(max_iter=200); lr.fit(X_train, y_train)" }
+      ],
+      "test_code": "from sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\niris = load_iris()\nX, y = iris.data, iris.target\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\nassert len(lr_preds) == len(y_test), 'lr_preds must have one prediction per test sample'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

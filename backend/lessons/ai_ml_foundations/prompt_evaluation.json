@@ -1,0 +1,99 @@
+{
+  "id": "prompt_evaluation",
+  "topic": "prompt_engineering",
+  "track": "ai_ml_foundations",
+  "module": "prompt_engineering",
+  "order": 3,
+  "title": {
+    "en": "Evaluating Prompt Quality"
+  },
+  "description": {
+    "en": "Learn how to systematically assess AI outputs — correctness, consistency, format adherence, and building evaluation pipelines."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Evaluating Prompts: How Do You Know It Works?\n\nWriting a prompt is only half the job. **Evaluating** whether it reliably produces good outputs is the other half — and the one that separates amateurs from professionals.\n\n### What Makes a Good Output?\n\n| Dimension | Question to Ask |\n|-----------|-----------------|\n| **Correctness** | Is the answer factually right? |\n| **Relevance** | Does it answer what was asked? |\n| **Format** | Does it match the requested structure? |\n| **Consistency** | Does it give the same answer multiple times? |\n| **Conciseness** | Is it free of unnecessary filler? |\n\n### Building a Simple Evaluation Pipeline\n\n```python\ndef evaluate_prompt(prompt_fn, test_cases):\n    \"\"\"\n    prompt_fn: function(input) -> model_output string\n    test_cases: list of (input, expected_output) tuples\n    \"\"\"\n    results = []\n    for inp, expected in test_cases:\n        output = prompt_fn(inp)\n        passed = expected.lower() in output.lower()\n        results.append({'input': inp, 'expected': expected,\n                        'output': output, 'passed': passed})\n    accuracy = sum(r['passed'] for r in results) / len(results)\n    return accuracy, results\n```\n\n### Test Cases for Classification Prompts\n\n```python\ntest_cases = [\n    (\"I love this product!\",    \"Positive\"),\n    (\"Terrible, broke in a day\", \"Negative\"),\n    (\"It works as expected\",     \"Neutral\"),\n    (\"Best purchase ever!\",      \"Positive\"),\n    (\"Completely useless\",       \"Negative\"),\n]\n\nacc, results = evaluate_prompt(classify_review, test_cases)\nprint(f\"Accuracy: {acc:.0%}\")  # e.g. Accuracy: 80%\n```\n\n### Systematic Prompt Improvement\n\n```\n1. Write baseline prompt\n2. Create evaluation test suite\n3. Run → measure accuracy\n4. Identify failure modes\n5. Edit prompt to fix failures\n6. Re-evaluate → compare scores\n7. Repeat until satisfied\n```\n\n### Automated Metrics for Text\n\n| Metric | Best For |\n|--------|----------|\n| Exact match | Single-word answers, classifications |\n| BLEU score | Machine translation |\n| ROUGE score | Summarisation |\n| Semantic similarity | Open-ended answers (embeddings) |\n\n> **Key Insight:** Never evaluate a prompt by eyeballing a single example. Build a test suite with at least 10-20 representative cases covering edge cases, and measure accuracy across the entire suite. Only then can you confidently say your prompt \"works\"."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "eval_steps",
+      "steps": [
+        {
+          "line": "test_cases = [(input_text, expected_label), ...]",
+          "highlight": "test_cases",
+          "explanation": { "en": "Build a test suite: each case has a known correct answer" }
+        },
+        {
+          "line": "output = prompt_fn(inp)",
+          "highlight": "prompt_fn",
+          "explanation": { "en": "Call your prompt wrapper on each test input" }
+        },
+        {
+          "line": "passed = expected.lower() in output.lower()",
+          "highlight": "in output",
+          "explanation": { "en": "Simple check: does the expected answer appear in the output?" }
+        },
+        {
+          "line": "accuracy = sum(r['passed'] for r in results) / len(results)",
+          "highlight": "accuracy",
+          "explanation": { "en": "Fraction of test cases where the model was correct" }
+        }
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "eval_cycle",
+      "nodes": [
+        { "id": "write", "label": "Write Prompt" },
+        { "id": "test", "label": "Build Test Suite" },
+        { "id": "run", "label": "Run & Measure" },
+        { "id": "analyse", "label": "Analyse Failures" },
+        { "id": "refine", "label": "Refine Prompt" }
+      ],
+      "edges": [
+        { "from": "write", "to": "test" },
+        { "from": "test", "to": "run" },
+        { "from": "run", "to": "analyse" },
+        { "from": "analyse", "to": "refine" },
+        { "from": "refine", "to": "run" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "eval_output",
+      "output": ["Test results:", "  [PASS] 'I love this product!' → Positive", "  [PASS] 'Terrible, broke in a day' → Negative", "  [FAIL] 'It works as expected' → expected Neutral", "Accuracy: 80%"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `evaluate_classifier(outputs, expected)` that takes two lists (model outputs and expected labels) and returns the accuracy as a float between 0 and 1. Comparison should be case-insensitive."
+      },
+      "hints": [
+        { "en": "Compare output.strip().lower() == expected.strip().lower()" },
+        { "en": "accuracy = sum(o.lower()==e.lower() for o,e in zip(outputs, expected)) / len(expected)" }
+      ],
+      "test_code": "outputs  = ['Positive', 'negative', 'NEUTRAL', 'positive']\nexpected = ['Positive', 'Negative', 'Positive', 'Positive']\nacc = evaluate_classifier(outputs, expected)\nassert isinstance(acc, float), 'must return a float'\nassert abs(acc - 0.75) < 0.01, 'accuracy should be 0.75 (3 out of 4 correct)'"
+    },
+    {
+      "instruction": {
+        "en": "Create a list `test_suite` with at least 5 tuples of (prompt_input, expected_output) for a task of your choice (e.g., language detection, sentiment). Then write a loop that checks exact-match accuracy and stores it in `suite_accuracy`."
+      },
+      "hints": [
+        { "en": "test_suite = [('Hello', 'English'), ('Bonjour', 'French'), ...]" },
+        { "en": "passes = sum(1 for inp, exp in test_suite if exp.lower() in simulate_output(inp).lower())" }
+      ],
+      "test_code": "assert isinstance(test_suite, list), 'test_suite must be a list'\nassert len(test_suite) >= 5, 'need at least 5 test cases'\nassert all(isinstance(t, tuple) and len(t) == 2 for t in test_suite), 'each item must be a (input, expected) tuple'\nassert isinstance(suite_accuracy, float), 'suite_accuracy must be a float'\nassert 0.0 <= suite_accuracy <= 1.0, 'accuracy must be between 0 and 1'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
