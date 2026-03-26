@@ -67,6 +67,7 @@ class ChatRequest(BaseModel):
     lesson_context: Optional[dict] = None
     phase: Optional[str] = None
     language: Optional[str] = "en"
+    username: Optional[str] = None
 
 
 class EvaluateRequest(BaseModel):
@@ -116,6 +117,8 @@ def chat(request: ChatRequest):
     """
     db_path = _get_db_path()
     profile = get_student_profile(db_path, request.user_id)
+    if request.username and profile is not None:
+        profile["username"] = request.username
 
     lesson_context = request.lesson_context or {}
     if request.phase:
@@ -166,6 +169,8 @@ def chat_stream(request: ChatRequest):
     """Stream Vaathiyaar's response token by token using SSE."""
     db_path = _get_db_path()
     profile = get_student_profile(db_path, request.user_id)
+    if request.username and profile is not None:
+        profile["username"] = request.username
 
     lesson_context = request.lesson_context or {}
     if request.phase:

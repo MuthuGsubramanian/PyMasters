@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
+import ReactMarkdown from 'react-markdown';
 
 const ILLUSTRATION_MAP = {
   postman_street: '\u{1F3D8}\uFE0F',
@@ -23,6 +24,25 @@ export default function StoryCard({ content = '', illustration = '', duration = 
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   const emoji = ILLUSTRATION_MAP[illustration] || '\u{1F4D6}';
+
+  // Check if content has markdown sections (## headings)
+  const hasStructuredContent = typeof stableContent === 'string' && stableContent.includes('##');
+
+  // Markdown components for structured story rendering
+  const storyMarkdownComponents = {
+    h2: ({children}) => <h2 className="text-sm font-bold text-purple-700 mt-3 mb-1 uppercase tracking-wide">{children}</h2>,
+    h3: ({children}) => <h3 className="text-sm font-semibold text-purple-600 mt-2 mb-1">{children}</h3>,
+    p: ({children}) => <p className="text-slate-700 text-sm leading-relaxed mb-2">{children}</p>,
+    ul: ({children}) => <ul className="text-sm text-slate-700 mb-2 space-y-1 ml-1">{children}</ul>,
+    li: ({children}) => (
+      <li className="flex items-start gap-2">
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 flex-shrink-0" />
+        <span>{children}</span>
+      </li>
+    ),
+    strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
+    code: ({children}) => <code className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+  };
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -117,10 +137,14 @@ export default function StoryCard({ content = '', illustration = '', duration = 
             <span ref={emojiRef} className="text-4xl">{emoji}</span>
           </div>
 
-          <p ref={textRef} className="text-slate-700 text-sm leading-relaxed min-h-[3rem]">
-            {displayed}
+          <div ref={textRef} className="text-slate-700 text-sm leading-relaxed min-h-[3rem]">
+            {hasStructuredContent ? (
+              <ReactMarkdown components={storyMarkdownComponents}>{displayed}</ReactMarkdown>
+            ) : (
+              <p>{displayed}</p>
+            )}
             <span className="inline-block w-0.5 h-4 bg-purple-500 ml-0.5 animate-pulse align-middle" />
-          </p>
+          </div>
         </div>
       </div>
     </div>

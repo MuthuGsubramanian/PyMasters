@@ -40,12 +40,19 @@ const markdownComponents = {
         ? <code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
         : <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
     table: ({children}) => (
-        <div className="overflow-x-auto my-2">
-            <table className="text-xs border-collapse w-full min-w-[300px]">{children}</table>
+        <div className="overflow-x-auto my-3 rounded-lg border border-slate-200">
+            <table className="text-sm w-full">{children}</table>
         </div>
     ),
-    th: ({children}) => <th className="border border-slate-300 bg-slate-100 px-2 py-1 text-left font-bold text-slate-700">{children}</th>,
-    td: ({children}) => <td className="border border-slate-200 px-2 py-1 text-slate-600">{children}</td>,
+    thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
+    tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
+    tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+    th: ({children}) => (
+        <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
+    ),
+    td: ({children}) => (
+        <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
+    ),
     strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
 };
 
