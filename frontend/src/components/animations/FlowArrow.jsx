@@ -1,15 +1,26 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 
-export default function FlowArrow({ label = '', style = 'solid', direction = 'down', onComplete }) {
+export default function FlowArrow({ label = '', style = 'solid', direction = 'down', duration = 3000, onComplete }) {
   const arrowRef = useRef(null);
 
   const isVertical = direction === 'down' || direction === 'up';
 
+  // Stabilize props to prevent re-render loops
+  const stableLabel = useMemo(() => label, [JSON.stringify(label)]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
   useEffect(() => {
     if (!arrowRef.current) return;
 
-    gsap.fromTo(
+    const holdSeconds = Math.max(duration / 1000, 2);
+
+    const tl = gsap.timeline({ onComplete: () => onCompleteRef.current?.() });
+
+    tl.fromTo(
       arrowRef.current,
       {
         opacity: 0,
@@ -25,10 +36,16 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
         scaleX: 1,
         duration: 0.5,
         ease: 'power2.out',
-        onComplete: () => onComplete?.(),
       }
     );
-  }, []);
+
+    // Hold so users can see the result before completing
+    tl.to({}, { duration: holdSeconds });
+
+    return () => {
+      tl.kill();
+    };
+  }, [stableLabel, direction, style, isVertical, duration]);
 
   // SVG dimensions based on direction
   const svgProps = isVertical
@@ -57,8 +74,8 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
 
   return (
     <div ref={arrowRef} className="flex flex-col items-center gap-1 opacity-0">
-      {label && direction !== 'down' && (
-        <span className="text-xs text-slate-700 mb-1">{label}</span>
+      {stableLabel && direction !== 'down' && (
+        <span className="text-xs text-slate-700 mb-1">{stableLabel}</span>
       )}
       <svg {...svgProps}>
         <line
@@ -72,8 +89,8 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
         />
         {arrowhead}
       </svg>
-      {label && direction === 'down' && (
-        <span className="text-xs text-slate-700 mt-1">{label}</span>
+      {stableLabel && direction === 'down' && (
+        <span className="text-xs text-slate-700 mt-1">{stableLabel}</span>
       )}
     </div>
   );

@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 
 const ILLUSTRATION_MAP = {
-  postman_street: '🏘️',
-  warehouse_boxes: '📦',
-  traffic_signal: '🚦',
-  train_compartments: '🚂',
-  counting_fingers: '🖐️',
+  postman_street: '\u{1F3D8}\uFE0F',
+  warehouse_boxes: '\u{1F4E6}',
+  traffic_signal: '\u{1F6A6}',
+  train_compartments: '\u{1F682}',
+  counting_fingers: '\u{1F590}\uFE0F',
 };
 
 export default function StoryCard({ content = '', illustration = '', duration = 3000, onComplete }) {
@@ -15,14 +15,21 @@ export default function StoryCard({ content = '', illustration = '', duration = 
   const emojiRef = useRef(null);
   const [displayed, setDisplayed] = useState('');
 
-  const emoji = ILLUSTRATION_MAP[illustration] || '📖';
+  // Stabilize props to prevent re-render loops
+  const stableContent = useMemo(() => content, [JSON.stringify(content)]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
+  const emoji = ILLUSTRATION_MAP[illustration] || '\u{1F4D6}';
 
   useEffect(() => {
     if (!cardRef.current) return;
 
     const tl = gsap.timeline({
       onComplete: () => {
-        onComplete?.();
+        onCompleteRef.current?.();
       },
     });
 
@@ -44,8 +51,8 @@ export default function StoryCard({ content = '', illustration = '', duration = 
       0.3
     );
 
-    // Smoother typewriter — use requestAnimationFrame-based interpolation
-    const chars = content.split('');
+    // Smoother typewriter
+    const chars = stableContent.split('');
     const charDuration = Math.max((duration / 1000 - 0.6) / Math.max(chars.length, 1), 0.015);
 
     let current = '';
@@ -61,7 +68,7 @@ export default function StoryCard({ content = '', illustration = '', duration = 
           setDisplayed(current);
         },
         onComplete: () => {
-          setDisplayed(content);
+          setDisplayed(stableContent);
           // Fade out glow when story complete
           gsap.to(cardRef.current, {
             boxShadow: '0 0 0px rgba(168, 85, 247, 0)',
@@ -71,6 +78,9 @@ export default function StoryCard({ content = '', illustration = '', duration = 
         },
       }
     );
+
+    // Hold so users can see the result before completing
+    tl.to({}, { duration: 2 });
 
     // Bounce the emoji
     if (emojiRef.current) {
@@ -86,7 +96,7 @@ export default function StoryCard({ content = '', illustration = '', duration = 
     return () => {
       tl.kill();
     };
-  }, [content, duration]);
+  }, [stableContent, duration]);
 
   return (
     <div
@@ -96,7 +106,7 @@ export default function StoryCard({ content = '', illustration = '', duration = 
       <div className="flex items-start gap-4">
         {/* Vaathiyaar avatar */}
         <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-purple-300/30">
-          🧑‍🏫
+          {'\u{1F9D1}\u200D\u{1F3EB}'}
         </div>
 
         <div className="flex-1 min-w-0">

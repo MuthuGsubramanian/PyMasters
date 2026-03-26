@@ -1,18 +1,30 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 
-export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
+export default function ConceptMap({ nodes = [], edges = [], duration = 3000, onComplete }) {
   const containerRef = useRef(null);
   const nodeRefs = useRef({});
   const edgeRefs = useRef([]);
 
+  // Stabilize props to prevent re-render loops
+  const stableNodes = useMemo(() => nodes, [JSON.stringify(nodes)]);
+  const stableEdges = useMemo(() => edges, [JSON.stringify(edges)]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const nodeEls = nodes.map((n) => nodeRefs.current[n.id]).filter(Boolean);
+    const nodeEls = stableNodes.map((n) => nodeRefs.current[n.id]).filter(Boolean);
     const edgeEls = edgeRefs.current.filter(Boolean);
 
-    const tl = gsap.timeline({ onComplete: () => onComplete?.() });
+    const holdSeconds = Math.max(duration / 1000, 2);
+
+    const tl = gsap.timeline({
+      onComplete: () => onCompleteRef.current?.(),
+    });
 
     // Animate container
     tl.fromTo(
@@ -47,10 +59,13 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
       );
     }
 
+    // Hold so users can see the result before completing
+    tl.to({}, { duration: holdSeconds });
+
     return () => {
       tl.kill();
     };
-  }, [nodes, edges]);
+  }, [stableNodes, stableEdges, duration]);
 
   return (
     <div
@@ -59,7 +74,7 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
     >
       {/* Nodes */}
       <div className="flex flex-wrap gap-3 mb-4">
-        {nodes.map((node) => (
+        {stableNodes.map((node) => (
           <div
             key={node.id}
             ref={(el) => (nodeRefs.current[node.id] = el)}
@@ -71,11 +86,11 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
       </div>
 
       {/* Edges */}
-      {edges.length > 0 && (
+      {stableEdges.length > 0 && (
         <div className="flex flex-col gap-2">
-          {edges.map((edge, idx) => {
-            const fromNode = nodes.find((n) => n.id === edge.from);
-            const toNode = nodes.find((n) => n.id === edge.to);
+          {stableEdges.map((edge, idx) => {
+            const fromNode = stableNodes.find((n) => n.id === edge.from);
+            const toNode = stableNodes.find((n) => n.id === edge.to);
             return (
               <div
                 key={idx}
@@ -86,7 +101,7 @@ export default function ConceptMap({ nodes = [], edges = [], onComplete }) {
                   {fromNode?.label ?? edge.from}
                 </span>
                 <span className="flex items-center gap-1 text-slate-500">
-                  <span className="text-xs">{edge.label || '→'}</span>
+                  <span className="text-xs">{edge.label || '\u2192'}</span>
                   <svg width="24" height="12" viewBox="0 0 24 12">
                     <line x1="0" y1="6" x2="18" y2="6" stroke="#475569" strokeWidth="1.5" />
                     <polygon points="24,6 16,2 16,10" fill="#475569" />

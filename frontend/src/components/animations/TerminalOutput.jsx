@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 
 export default function TerminalOutput({ output = [], syncStep = 0, onComplete }) {
@@ -8,6 +8,13 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
   const [typedText, setTypedText] = useState('');
   const lineRefs = useRef([]);
   const prevStep = useRef(-1);
+
+  // Stabilize props to prevent re-render loops
+  const stableOutput = useMemo(() => output, [JSON.stringify(output)]);
+
+  // Ref for onComplete to avoid it being a useEffect dependency
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -22,11 +29,11 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
   useEffect(() => {
     const lineIndex = syncStep;
     if (lineIndex === prevStep.current) return;
-    if (lineIndex < 0 || lineIndex >= output.length) return;
+    if (lineIndex < 0 || lineIndex >= stableOutput.length) return;
 
     prevStep.current = lineIndex;
-    const isLast = lineIndex === output.length - 1;
-    const lineText = output[lineIndex];
+    const isLast = lineIndex === stableOutput.length - 1;
+    const lineText = stableOutput[lineIndex];
 
     // Typing effect for each line
     setTypingLine(lineIndex);
@@ -52,7 +59,7 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
           }
         });
 
-        if (isLast) onComplete?.();
+        if (isLast) onCompleteRef.current?.();
       },
     });
 
@@ -72,7 +79,7 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
     return () => {
       tl.kill();
     };
-  }, [syncStep, output]);
+  }, [syncStep, stableOutput]);
 
   return (
     <div
