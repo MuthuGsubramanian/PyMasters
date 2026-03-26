@@ -6,6 +6,7 @@ Prefix: /api/classroom
 
 import json
 import os
+import sqlite3
 from pathlib import Path
 from typing import Optional
 
@@ -281,6 +282,22 @@ def evaluate(request: EvaluateRequest):
         )
     except Exception:
         pass
+
+    # Award XP when student completes a challenge successfully
+    if result["success"] and request.topic:
+        lesson = _load_lesson(request.lesson_id) if request.lesson_id else None
+        xp_reward = lesson.get("xp_reward", 25) if lesson else 25
+
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET points = points + ? WHERE id = ?", [xp_reward, request.user_id])
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+        result["xp_earned"] = xp_reward
 
     # Update mastery based on success
     mastery_delta = 0.1 if result["success"] else -0.05

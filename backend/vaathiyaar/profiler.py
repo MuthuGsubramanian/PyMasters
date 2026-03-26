@@ -29,7 +29,7 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
         learning_style = data.get("learning_style")
         goal = data.get("goal")
         time_commitment = data.get("time_commitment")
-        skill_level = data.get("skill_level")
+        skill_level = data.get("skill_level") or "beginner"
         diagnostic_score = data.get("diagnostic_score")
 
         cursor.execute("""
@@ -222,6 +222,7 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
             "onboarding_completed": row[10],
             "created_at": row[11],
         }
+        profile["skill_level"] = profile.get("skill_level") or "beginner"
     finally:
         conn.close()
 
