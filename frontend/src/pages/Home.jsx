@@ -215,7 +215,7 @@ export default function Home() {
             <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 border-b border-white/[0.06] bg-slate-950/80 backdrop-blur-xl">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <img src={PymastersIcon} alt="PyMasters" className="w-8 h-8 drop-shadow-[0_0_8px_rgba(124,58,237,0.8)]" />
+                        <img src={PymastersIcon} alt="PyMasters" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(124,58,237,0.8)]" />
                         <span className="font-display font-bold text-xl tracking-tight text-white">PYMASTERS</span>
                     </div>
                     <div className="flex items-center gap-4">
@@ -253,19 +253,6 @@ export default function Home() {
                 <FloatingOrbs />
                 <GridOverlay />
 
-                {/* Live badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-300 text-xs font-bold tracking-wider uppercase mb-10"
-                >
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
-                    </span>
-                    v2.0 — Now Live
-                </motion.div>
 
                 {/* Arc reactor icon */}
                 <motion.div
@@ -275,16 +262,16 @@ export default function Home() {
                     className="relative mb-10"
                 >
                     <div className="absolute inset-0 rounded-full blur-[60px] bg-purple-600/50 scale-125" />
-                    <div className="relative w-32 h-32 flex items-center justify-center rounded-full border border-purple-500/30 bg-slate-900/60 backdrop-blur-sm shadow-[0_0_80px_rgba(124,58,237,0.5)]">
+                    <div className="relative w-40 h-40 flex items-center justify-center rounded-full border border-purple-500/30 bg-slate-900/60 backdrop-blur-sm shadow-[0_0_80px_rgba(124,58,237,0.5)]">
                         <img
                             src={PymastersIcon}
                             alt="PyMasters Arc Reactor"
-                            className="w-20 h-20 drop-shadow-[0_0_20px_rgba(124,58,237,1)]"
+                            className="w-28 h-28 drop-shadow-[0_0_20px_rgba(124,58,237,1)]"
                             style={{ filter: 'drop-shadow(0 0 16px #7c3aed) drop-shadow(0 0 32px #06b6d4)' }}
                         />
                     </div>
                     {/* Orbit ring */}
-                    <div className="absolute inset-[-24px] rounded-full border border-purple-500/20 animate-spin" style={{ animationDuration: '12s' }}>
+                    <div className="absolute inset-[-28px] rounded-full border border-purple-500/20 animate-spin" style={{ animationDuration: '12s' }}>
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_10px_#7c3aed]" />
                     </div>
                     <div className="absolute inset-[-50px] rounded-full border border-cyan-500/10 animate-spin" style={{ animationDuration: '20s', animationDirection: 'reverse' }}>

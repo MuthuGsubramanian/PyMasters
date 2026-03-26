@@ -349,6 +349,22 @@ async def list_lessons(user_id: int = None):
                         else:
                             lesson["recommended"] = False
 
+                    # Guarantee at least 3 recommended lessons — if the user's
+                    # visible tracks don't have enough, promote from next tracks
+                    MIN_RECOMMENDED = 3
+                    recommended_count = sum(1 for l in lessons if l.get("recommended"))
+                    if recommended_count < MIN_RECOMMENDED:
+                        all_tracks = ["python_fundamentals", "ai_ml_foundations", "deep_learning"]
+                        for fallback_track in all_tracks:
+                            if recommended_count >= MIN_RECOMMENDED:
+                                break
+                            for lesson in lessons:
+                                if recommended_count >= MIN_RECOMMENDED:
+                                    break
+                                if lesson.get("track") == fallback_track and not lesson.get("recommended"):
+                                    lesson["recommended"] = True
+                                    recommended_count += 1
+
                     # Sort: recommended first, then by track order, then by module order
                     track_priority = {t: i for i, t in enumerate(["python_fundamentals", "ai_ml_foundations", "deep_learning", "generated"])}
                     lessons.sort(key=lambda l: (
