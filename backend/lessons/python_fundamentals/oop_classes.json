@@ -1,0 +1,57 @@
+{
+  "id": "oop_classes",
+  "topic": "oop_classes",
+  "track": "python_fundamentals",
+  "module": "oop",
+  "order": 1,
+  "title": { "en": "Classes: The Cookie Cutter" },
+  "description": { "en": "Learn to define classes with __init__ and self — blueprints that stamp out objects with their own attributes and methods." },
+  "xp_reward": 50,
+  "next_unlock": "oop_inheritance",
+  "story_variants": {
+    "en": "## The Cookie Cutter\n\nA **cookie cutter** is a blueprint — use it to stamp out as many cookies as you want. Each cookie is its own object: same shape, but different toppings.\n\nIn Python, a **class** is the cookie cutter; each **instance** is a cookie.\n\n### Anatomy of a Class\n\n| Part | Role | Example |\n|------|------|---------|\n| `class` | define blueprint | `class Dog:` |\n| `__init__` | constructor | sets up attributes |\n| `self` | this instance | `self.name = name` |\n| method | function on instance | `def bark(self):` |\n| attribute | data on instance | `self.name` |\n\n> **self** is always the first parameter of every method. Python passes the instance automatically — you never pass it explicitly.\n\n### Instance vs Class Variables\n- **Instance variable:** `self.name` — unique per object\n- **Class variable:** `Dog.species` — shared by all dogs\n\n### Benefits of OOP\n- Bundle related data + behaviour together\n- Create many independent objects from one template\n- Model real-world entities naturally"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "class Dog:\n    species = 'Canis familiaris'  # class variable\n\n    def __init__(self, name, breed):\n        self.name = name    # instance variable\n        self.breed = breed\n\n    def bark(self):\n        return f'{self.name} says: Woof!'\n\n# Create instances\nrex = Dog('Rex', 'Labrador')\nbella = Dog('Bella', 'Poodle')\n\nprint(rex.bark())    # Rex says: Woof!\nprint(bella.name)    # Bella\nprint(Dog.species)   # Canis familiaris",
+        "language": "python"
+      }
+    },
+    {
+      "type": "MemoryStack",
+      "id": "objects",
+      "slots": [
+        { "name": "rex", "value": "Dog(name='Rex', breed='Labrador')", "type": "object" },
+        { "name": "bella", "value": "Dog(name='Bella', breed='Poodle')", "type": "object" }
+      ]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create a class 'Circle' with an __init__ that takes radius. Add a method 'area' that returns pi * r^2 (use 3.14159 for pi)." },
+      "expected_output": "78.53975",
+      "hints": [
+        { "en": "class Circle: def __init__(self, radius): self.radius = radius" },
+        { "en": "def area(self): return 3.14159 * self.radius ** 2" },
+        { "en": "Circle(5).area() should return 78.53975" }
+      ],
+      "test_code": "import math\nclass Circle:\n    def __init__(self, radius):\n        self.radius = radius\n    def area(self):\n        return 3.14159 * self.radius ** 2\nc = Circle(5)\nassert abs(c.area() - 78.53975) < 0.001"
+    },
+    {
+      "instruction": { "en": "Create a class 'BankAccount' with balance=0. Add methods deposit(amount) and withdraw(amount) that update the balance." },
+      "expected_output": "150",
+      "hints": [
+        { "en": "def __init__(self): self.balance = 0" },
+        { "en": "deposit adds to self.balance, withdraw subtracts" },
+        { "en": "After deposit(200) and withdraw(50), balance should be 150" }
+      ],
+      "test_code": "class BankAccount:\n    def __init__(self):\n        self.balance = 0\n    def deposit(self, amount):\n        self.balance += amount\n    def withdraw(self, amount):\n        self.balance -= amount\nacc = BankAccount()\nacc.deposit(200)\nacc.withdraw(50)\nassert acc.balance == 150"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

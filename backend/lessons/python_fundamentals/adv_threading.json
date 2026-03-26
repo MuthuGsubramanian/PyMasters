@@ -1,0 +1,45 @@
+{
+  "id": "adv_threading",
+  "topic": "adv_threading",
+  "track": "python_fundamentals",
+  "module": "advanced",
+  "order": 5,
+  "title": { "en": "Threading & Multiprocessing: The Parallel Kitchen" },
+  "description": { "en": "Learn Python threading and multiprocessing basics — when to use each, the GIL, and how to parallelize work safely." },
+  "xp_reward": 50,
+  "next_unlock": "testing_pytest",
+  "story_variants": {
+    "en": "## The Parallel Kitchen\n\nA restaurant kitchen has **multiple chefs** working simultaneously. Some share one stove (threads share memory); others have their own kitchen entirely (processes have separate memory).\n\n### Threading vs Multiprocessing vs Async\n\n| Approach | Best For | Memory | GIL affected? |\n|----------|----------|--------|---------------|\n| `threading` | I/O-bound | shared | Yes |\n| `multiprocessing` | CPU-bound | separate | No |\n| `asyncio` | I/O-bound | shared | Yes |\n\n### The GIL\n> The **Global Interpreter Lock** (GIL) allows only one thread to execute Python bytecode at a time. Threads can still be useful for I/O — while one thread waits for network, another runs.\n\n### Key Classes\n- `threading.Thread(target=func)` — create a thread\n- `thread.start()` — launch it\n- `thread.join()` — wait for it to finish\n- `multiprocessing.Process` — same API, separate process\n- `concurrent.futures.ThreadPoolExecutor` — high-level pool\n\n> **Rule of thumb:** Use `threading` for I/O-bound (web scraping, file ops). Use `multiprocessing` for CPU-bound (number crunching, image processing)."
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "import threading\nimport time\n\ndef worker(name, delay):\n    print(f'{name} starting')\n    time.sleep(delay)\n    print(f'{name} done')\n\n# Create threads\nt1 = threading.Thread(target=worker, args=('Thread-1', 1))\nt2 = threading.Thread(target=worker, args=('Thread-2', 2))\n\nt1.start()\nt2.start()\n\nt1.join()  # wait for t1\nt2.join()  # wait for t2\nprint('All threads done')\n\n# High-level: ThreadPoolExecutor\nfrom concurrent.futures import ThreadPoolExecutor\n\nwith ThreadPoolExecutor(max_workers=3) as pool:\n    futures = [pool.submit(worker, f'W{i}', 0.1) for i in range(3)]\n    for f in futures:\n        f.result()",
+        "language": "python"
+      }
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "thread_vs_process",
+      "left": { "label": "threading", "code": "import threading\nt = threading.Thread(target=f)\nt.start(); t.join()" },
+      "right": { "label": "multiprocessing", "code": "import multiprocessing\np = multiprocessing.Process(target=f)\np.start(); p.join()" }
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create two threads that each append their name to a shared list, then verify both names are in the list after joining." },
+      "expected_output": "['thread-1', 'thread-2'] (order may vary)",
+      "hints": [
+        { "en": "results = []; def task(name): results.append(name)" },
+        { "en": "Create threading.Thread(target=task, args=('thread-1',))" },
+        { "en": "Start both, join both, then check results" }
+      ],
+      "test_code": "import threading\nresults = []\ndef task(name):\n    results.append(name)\nt1 = threading.Thread(target=task, args=('thread-1',))\nt2 = threading.Thread(target=task, args=('thread-2',))\nt1.start(); t2.start()\nt1.join(); t2.join()\nassert 'thread-1' in results\nassert 'thread-2' in results\nassert len(results) == 2"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

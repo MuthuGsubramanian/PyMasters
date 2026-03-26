@@ -1,0 +1,56 @@
+{
+  "id": "ds_tuples",
+  "topic": "ds_tuples",
+  "track": "python_fundamentals",
+  "module": "data_structures",
+  "order": 4,
+  "title": { "en": "Tuples: The Sealed Envelope" },
+  "description": { "en": "Learn tuples — immutable sequences perfect for fixed data — and how to unpack them elegantly." },
+  "xp_reward": 50,
+  "next_unlock": "ds_nested",
+  "story_variants": {
+    "en": "## The Sealed Envelope\n\nWhen you send a **sealed envelope**, the contents are fixed. You can read the letter inside, but you can't change it without opening a new envelope.\n\nPython **tuples** are sealed envelopes — sequences you can read but never modify.\n\n### List vs Tuple\n\n| Feature | List `[]` | Tuple `()` |\n|---------|-----------|------------|\n| Mutable | Yes | No |\n| Syntax | `[1, 2, 3]` | `(1, 2, 3)` |\n| Use case | changing data | fixed records |\n| As dict key | No | Yes |\n| Speed | slower | faster |\n\n### Tuple Unpacking\n```python\ncoords = (10, 20)\nx, y = coords   # x=10, y=20\n```\n\n> **Power move:** Return multiple values from a function using a tuple, then unpack at the call site.\n\n### Named Tuples\nUse `collections.namedtuple` when you want tuple speed but dict-like readability: `point.x` instead of `point[0]`.\n\n### When to Use Tuples\n- Coordinates, RGB colors, fixed pairs\n- Function return values (multiple outputs)\n- Dictionary keys that are compound\n- When you want to signal data shouldn't change"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Tuple creation\npoint = (3, 7)\nrgb = (255, 128, 0)\nsingle = (42,)   # note the comma!\n\n# Access like a list\nprint(point[0])  # 3\nprint(rgb[-1])   # 0\n\n# Unpacking\nx, y = point\nprint(f'x={x}, y={y}')  # x=3, y=7\n\n# Multiple return values\ndef min_max(nums):\n    return min(nums), max(nums)\n\nlo, hi = min_max([5, 1, 8, 3])\nprint(lo, hi)  # 1 8\n\n# Tuples as dict keys\nlocations = {}\nlocations[(40.7, -74.0)] = 'New York'\nprint(locations[(40.7, -74.0)])",
+        "language": "python"
+      }
+    },
+    {
+      "type": "DataStructure",
+      "id": "tuple_visual",
+      "structure": "tuple",
+      "items": [3, 7],
+      "label": "point (immutable)"
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create a tuple 'dimensions' with width=800, height=600, depth=32 and unpack them into three variables." },
+      "expected_output": "800 600 32",
+      "hints": [
+        { "en": "dimensions = (800, 600, 32)" },
+        { "en": "Unpack: w, h, d = dimensions" },
+        { "en": "print(w, h, d)" }
+      ],
+      "test_code": "dimensions = (800, 600, 32)\nw, h, d = dimensions\nassert w == 800\nassert h == 600\nassert d == 32"
+    },
+    {
+      "instruction": { "en": "Write a function 'stats' that returns a tuple of (min, max, sum) for a list of numbers." },
+      "expected_output": "(1, 9, 25)",
+      "hints": [
+        { "en": "def stats(nums): return min(nums), max(nums), sum(nums)" },
+        { "en": "The return value is automatically a tuple" },
+        { "en": "Unpack: lo, hi, total = stats([...])" }
+      ],
+      "test_code": "def stats(nums):\n    return min(nums), max(nums), sum(nums)\nresult = stats([3, 1, 9, 5, 7])\nassert result == (1, 9, 25)"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

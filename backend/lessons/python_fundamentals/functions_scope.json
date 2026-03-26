@@ -1,0 +1,66 @@
+{
+  "id": "functions_scope",
+  "topic": "functions_scope",
+  "track": "python_fundamentals",
+  "module": "functions",
+  "order": 2,
+  "title": { "en": "Scope: The Russian Nesting Dolls" },
+  "description": { "en": "Understand local vs global scope and the LEGB rule — how Python searches for variable names layer by layer." },
+  "xp_reward": 50,
+  "next_unlock": "functions_args",
+  "story_variants": {
+    "en": "## The Russian Nesting Dolls (Matryoshka)\n\nImagine **nested dolls** — each doll lives inside a bigger one. When Python looks for a name, it starts from the **innermost** doll and works outward until it finds it.\n\nThis is the **LEGB rule**:\n\n| Letter | Scope | Where |\n|--------|-------|-------|\n| **L** | Local | Inside the current function |\n| **E** | Enclosing | Outer function (closures) |\n| **G** | Global | Module-level variables |\n| **B** | Built-in | Python builtins: `len`, `print` |\n\n> **Rule:** Python checks L → E → G → B in order and uses the first match it finds.\n\n### Key Points\n- Variables created inside a function are **local** — invisible outside\n- `global x` lets you modify a global variable inside a function\n- Avoid global state when possible — use parameters and return values instead\n- Each function call gets its **own** local scope (frame on the call stack)"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "x = 'global'\n\ndef outer():\n    x = 'enclosing'\n    def inner():\n        x = 'local'\n        print(x)   # local\n    inner()\n    print(x)       # enclosing\n\nouter()\nprint(x)           # global",
+        "language": "python"
+      }
+    },
+    {
+      "type": "MemoryStack",
+      "id": "scope_stack",
+      "slots": [
+        { "name": "Built-in", "value": "len, print, range...", "type": "scope" },
+        { "name": "Global", "value": "x = 'global'", "type": "scope" },
+        { "name": "Enclosing (outer)", "value": "x = 'enclosing'", "type": "scope" },
+        { "name": "Local (inner)", "value": "x = 'local'", "type": "scope" }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "count = 0\n\ndef increment():\n    global count\n    count += 1\n\nincrement()\nincrement()\nprint(count)  # 2",
+        "language": "python"
+      }
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Predict the output: x = 10; def f(): x = 99; f(); print(x) — what does print(x) show?" },
+      "expected_output": "10",
+      "hints": [
+        { "en": "x inside f() is a local variable, separate from the global x" },
+        { "en": "The global x is never modified by f()" },
+        { "en": "print(x) reads the global x, which is still 10" }
+      ],
+      "test_code": "x = 10\ndef f():\n    x = 99\nf()\nassert x == 10"
+    },
+    {
+      "instruction": { "en": "Write a function 'add_to_total' that uses 'global' to add its argument to a global variable 'total'." },
+      "expected_output": "15",
+      "hints": [
+        { "en": "Declare 'global total' at the start of the function" },
+        { "en": "Then do total += amount" },
+        { "en": "Start with total = 0, call add_to_total(10), add_to_total(5)" }
+      ],
+      "test_code": "total = 0\ndef add_to_total(amount):\n    global total\n    total += amount\nadd_to_total(10)\nadd_to_total(5)\nassert total == 15"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

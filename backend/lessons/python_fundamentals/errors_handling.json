@@ -1,0 +1,56 @@
+{
+  "id": "errors_handling",
+  "topic": "errors_handling",
+  "track": "python_fundamentals",
+  "module": "file_io",
+  "order": 3,
+  "title": { "en": "Error Handling: The Safety Net" },
+  "description": { "en": "Learn try/except/finally and custom exceptions — the safety net that keeps your program running gracefully when things go wrong." },
+  "xp_reward": 50,
+  "next_unlock": "errors_context_managers",
+  "story_variants": {
+    "en": "## The Safety Net\n\nA **tightrope walker** performs death-defying stunts — but there's always a **safety net** below. If something goes wrong, they bounce back rather than crash to the ground.\n\nPython's `try/except` is your safety net.\n\n### The Try/Except Structure\n\n```python\ntry:\n    risky_code()\nexcept SomeError as e:\n    handle_it(e)\nelse:\n    ran_without_error()\nfinally:\n    always_runs()\n```\n\n### Common Exceptions\n\n| Exception | When |\n|-----------|------|\n| `ValueError` | wrong value type/format |\n| `TypeError` | wrong type |\n| `KeyError` | missing dict key |\n| `IndexError` | list index out of range |\n| `FileNotFoundError` | file doesn't exist |\n| `ZeroDivisionError` | dividing by zero |\n\n> **Golden rule:** Catch **specific** exceptions, not bare `except:`. Catching everything hides bugs.\n\n### Custom Exceptions\n```python\nclass InsufficientFundsError(Exception):\n    pass\n```\nInherit from `Exception` to create domain-specific errors."
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Basic try/except\ntry:\n    result = 10 / 0\nexcept ZeroDivisionError:\n    print('Cannot divide by zero!')\n\n# Multiple exceptions\ndef safe_convert(s):\n    try:\n        return int(s)\n    except ValueError:\n        return None\n\n# finally always runs\ndef read_file(path):\n    f = None\n    try:\n        f = open(path)\n        return f.read()\n    except FileNotFoundError:\n        return ''\n    finally:\n        if f:\n            f.close()  # always close!\n\n# Custom exception\nclass NegativeAmountError(Exception):\n    pass\n\ndef deposit(amount):\n    if amount < 0:\n        raise NegativeAmountError(f'Amount cannot be negative: {amount}')\n    return amount",
+        "language": "python"
+      }
+    },
+    {
+      "type": "FlowArrow",
+      "id": "exception_flow",
+      "label": { "en": "exception raised → jump to except" },
+      "direction": "down",
+      "branch": "exception"
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write a function 'safe_divide(a, b)' that returns a/b, but returns None if b is zero instead of crashing." },
+      "expected_output": "2.5 None",
+      "hints": [
+        { "en": "Wrap a/b in try/except ZeroDivisionError" },
+        { "en": "In the except block, return None" },
+        { "en": "safe_divide(5, 2) == 2.5, safe_divide(1, 0) is None" }
+      ],
+      "test_code": "def safe_divide(a, b):\n    try:\n        return a / b\n    except ZeroDivisionError:\n        return None\nassert safe_divide(5, 2) == 2.5\nassert safe_divide(1, 0) is None"
+    },
+    {
+      "instruction": { "en": "Create a custom exception 'AgeError' and a function 'validate_age(age)' that raises it if age is negative or > 150." },
+      "expected_output": "AgeError raised",
+      "hints": [
+        { "en": "class AgeError(Exception): pass" },
+        { "en": "if age < 0 or age > 150: raise AgeError('Invalid age')" },
+        { "en": "Test with validate_age(-1) and validate_age(200)" }
+      ],
+      "test_code": "class AgeError(Exception):\n    pass\ndef validate_age(age):\n    if age < 0 or age > 150:\n        raise AgeError('Invalid age')\n    return age\ntry:\n    validate_age(-1)\n    assert False, 'Should have raised'\nexcept AgeError:\n    pass\nassert validate_age(25) == 25"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}
