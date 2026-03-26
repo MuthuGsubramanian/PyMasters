@@ -410,12 +410,45 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
             "naturally where they add warmth, always with the English meaning in parentheses.\n"
         )
 
+    # --- Assemble enhanced context blocks ---
+    blocks = []
+
+    # ── Enhanced Context: Mastery Map ──────────────────────────────────
+    if student_profile and student_profile.get("mastery_topics"):
+        mastery = student_profile["mastery_topics"]
+        strong = [t for t, m in mastery.items() if m >= 0.7]
+        weak = [t for t, m in mastery.items() if m < 0.4]
+        if strong or weak:
+            blocks.append("\n## Student Mastery Map")
+            if strong:
+                blocks.append(f"Strong topics: {', '.join(strong)}")
+            if weak:
+                blocks.append(f"Needs help with: {', '.join(weak)}")
+            blocks.append("Adapt your teaching based on what the student already knows and where they struggle.")
+
+    # ── Enhanced Context: Recent Signals ──────────────────────────────
+    if student_profile and student_profile.get("recent_signals"):
+        signals = student_profile["recent_signals"][:10]
+        if signals:
+            blocks.append("\n## Recent Learning Activity")
+            for sig in signals:
+                blocks.append(f"- {sig.get('signal_type', 'unknown')}: {sig.get('topic', '')} ({sig.get('created_at', '')})")
+
+    # ── Enhanced Context: Generated Module ────────────────────────────
+    if lesson_context and lesson_context.get("generated"):
+        blocks.append("\n## This Is a Custom-Generated Lesson")
+        blocks.append(f"Generated for this student based on: {lesson_context.get('trigger_detail', 'their learning path')}")
+        blocks.append("Be especially attentive to their understanding — this lesson was created specifically for them.")
+
+    enhanced_context = "\n".join(blocks)
+
     # --- Assemble full prompt ---
     full_prompt = (
         VAATHIYAAR_IDENTITY
         + profile_block
         + context_block
         + lang_instruction
+        + enhanced_context
         + ANIMATION_INSTRUCTIONS
         + RESPONSE_FORMAT
     )
