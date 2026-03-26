@@ -156,9 +156,9 @@ function IntroPhase({ lesson, language, onComplete, username }) {
 
             {/* Two-column layout */}
             {sequence.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left: Story + Concept */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-1 space-y-4">
                         {storyPrimitives.length > 0 ? (
                             <AnimationRenderer
                                 sequence={storyPrimitives}
@@ -174,7 +174,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     </div>
 
                     {/* Right: Code + Variables + Terminal */}
-                    <div className="lg:col-span-3 space-y-4">
+                    <div className="lg:col-span-2 space-y-4">
                         {animPrimitives.length > 0 && (
                             <AnimationRenderer
                                 sequence={animPrimitives}
@@ -234,7 +234,7 @@ function PracticePhase({
           'Write your solution below.';
 
     return (
-        <div className="animate-fade-in max-w-2xl mx-auto space-y-5">
+        <div className="animate-fade-in max-w-4xl mx-auto space-y-5">
             {/* Vaathiyaar instruction panel */}
             <div className="panel rounded-xl p-5 border-l-4 border-l-purple-400 flex items-start gap-4">
                 <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-lg select-none">
@@ -332,7 +332,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
     const animationSeq = evalResult?.feedback?.animation;
 
     return (
-        <div className="animate-fade-in max-w-2xl mx-auto space-y-6">
+        <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
             {/* Animated feedback if available */}
             {animationSeq && (
                 <AnimationRenderer
@@ -639,7 +639,7 @@ export default function Classroom() {
     // ── Render ──────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen pb-40">
-            <div className="max-w-5xl mx-auto px-4 py-10">
+            <div className="max-w-screen-xl mx-auto px-8 py-10">
                 {/* Phase: select */}
                 <AnimatePresence mode="wait">
                     {phase === 'select' && (
@@ -768,7 +768,7 @@ export default function Classroom() {
                     {/* Gradient fade */}
                     <div className="h-10 bg-gradient-to-t from-[#f0f4f8] to-transparent pointer-events-none" />
                     <div className="bg-[#f0f4f8] px-4 pb-4">
-                        <div className="max-w-5xl mx-auto">
+                        <div className="max-w-screen-xl mx-auto">
                             <ChatBar
                                 onSend={handleChat}
                                 loading={chatLoading}
