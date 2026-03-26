@@ -1,0 +1,118 @@
+{
+  "id": "rnn_lstm",
+  "topic": "lstm",
+  "track": "deep_learning",
+  "module": "rnn",
+  "order": 2,
+  "title": {
+    "en": "LSTM: Long Short-Term Memory"
+  },
+  "description": {
+    "en": "Understand the LSTM gating mechanism — forget, input, and output gates — and how the cell state enables learning over very long sequences."
+  },
+  "xp_reward": 75,
+  "next_unlock": "rnn_text_generation",
+  "story_variants": {
+    "en": "## LSTM: Long Short-Term Memory\n\nLSTMs solve the vanishing gradient problem by introducing a **cell state** — a highway for information to flow through time — and three **gates** that control what information is kept, written, or read.\n\n### The Three Gates\n\n| Gate | Symbol | Purpose |\n|------|--------|----------|\n| Forget gate | f_t | Decides what to erase from cell state |\n| Input gate | i_t | Decides what new info to write |\n| Output gate | o_t | Decides what to read from cell state |\n\n### LSTM Equations\n\n```\nf_t = σ(W_f · [h_{t-1}, x_t] + b_f)   # forget\ni_t = σ(W_i · [h_{t-1}, x_t] + b_i)   # input\nC̃_t = tanh(W_C · [h_{t-1}, x_t] + b_C) # candidate cell\nC_t = f_t ⊙ C_{t-1} + i_t ⊙ C̃_t       # update cell\no_t = σ(W_o · [h_{t-1}, x_t] + b_o)   # output\nh_t = o_t ⊙ tanh(C_t)                  # hidden state\n```\n\nWhere `σ` is sigmoid and `⊙` is element-wise multiplication.\n\n### Intuitive Understanding\n\n- **Forget gate**: Reading \"The cat sat on the mat. The dog...\" — forget \"cat\" when you see \"dog\".\n- **Input gate**: Add the new subject to memory.\n- **Output gate**: What aspect of memory is relevant for the next word prediction?\n\n> **Key Concept:** The cell state `C_t` flows with minimal modification through long sequences. The forget gate's sigmoid output is near 1 (keep) or 0 (erase), not squashed to tiny values — so gradients don't vanish.\n\n### GRU: A Simpler Alternative\n\nThe **Gated Recurrent Unit** combines forget + input into one update gate and has no separate cell state — fewer parameters, similar performance:\n\n```python\n# GRU has 2 gates instead of LSTM's 3\nz_t = sigmoid(W_z @ [h_prev, x_t])  # update gate\nr_t = sigmoid(W_r @ [h_prev, x_t])  # reset gate\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "lstm_gates",
+      "nodes": [
+        {"id": "x_t", "label": "Input x_t", "color": "#4f8ef7"},
+        {"id": "h_prev", "label": "h_{t-1}", "color": "#f7914f"},
+        {"id": "forget", "label": "Forget Gate f_t", "color": "#e74c3c"},
+        {"id": "input_g", "label": "Input Gate i_t", "color": "#4fc97a"},
+        {"id": "output_g", "label": "Output Gate o_t", "color": "#a44ff7"},
+        {"id": "cell", "label": "Cell State C_t", "color": "#f7914f"},
+        {"id": "hidden", "label": "Hidden State h_t", "color": "#4f8ef7"}
+      ],
+      "edges": [
+        {"from": "x_t", "to": "forget"},
+        {"from": "h_prev", "to": "forget"},
+        {"from": "x_t", "to": "input_g"},
+        {"from": "h_prev", "to": "input_g"},
+        {"from": "x_t", "to": "output_g"},
+        {"from": "h_prev", "to": "output_g"},
+        {"from": "forget", "to": "cell", "label": "erase"},
+        {"from": "input_g", "to": "cell", "label": "write"},
+        {"from": "cell", "to": "hidden"},
+        {"from": "output_g", "to": "hidden"}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "gate_comparison",
+      "items": [
+        {"label": "Forget Gate", "value": "σ(W_f[h,x]+b)", "color": "#e74c3c", "note": "0=forget, 1=keep"},
+        {"label": "Input Gate", "value": "σ(W_i[h,x]+b)", "color": "#4fc97a", "note": "What to write"},
+        {"label": "Output Gate", "value": "σ(W_o[h,x]+b)", "color": "#a44ff7", "note": "What to expose"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "cell_flow",
+      "steps": ["C_{t-1}", "× Forget Gate", "+ Input × Candidate", "= C_t", "× Output Gate → h_t"]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "lstm_code",
+      "steps": [
+        {
+          "line": "f_t = sigmoid(W_f @ concat(h_prev, x_t) + b_f)",
+          "highlight": "f_t",
+          "explanation": {"en": "Forget gate: decides what to erase from cell state"}
+        },
+        {
+          "line": "i_t = sigmoid(W_i @ concat(h_prev, x_t) + b_i)",
+          "highlight": "i_t",
+          "explanation": {"en": "Input gate: controls new information flow"}
+        },
+        {
+          "line": "C_tilde = tanh(W_C @ concat(h_prev, x_t) + b_C)",
+          "highlight": "C_tilde",
+          "explanation": {"en": "Candidate values to potentially add"}
+        },
+        {
+          "line": "C_t = f_t * C_prev + i_t * C_tilde",
+          "highlight": "C_t",
+          "explanation": {"en": "New cell state: erase old + write new"}
+        },
+        {
+          "line": "h_t = sigmoid(W_o @ concat(h_prev, x_t)) * tanh(C_t)",
+          "highlight": "h_t",
+          "explanation": {"en": "Hidden state: gated read from cell state"},
+          "output": "LSTM step complete"
+        }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "output_display",
+      "output": ["Forget gate: f=[0.9, 0.1, 0.8] (keep most, erase dim 1)", "Input gate:  i=[0.2, 0.95, 0.3] (write mostly to dim 1)", "New cell:    C=[old*0.9, new*0.95, old*0.8+new*0.3]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `forget_gate(h_prev, x_t, W_f, b_f)` using NumPy. It should concatenate h_prev and x_t, apply the linear transform, and return the sigmoid output. Use `1 / (1 + np.exp(-z))` for sigmoid."
+      },
+      "expected_output": "",
+      "hints": [
+        {"en": "Concatenate: combined = np.concatenate([h_prev, x_t])"},
+        {"en": "Linear: z = W_f @ combined + b_f"},
+        {"en": "Sigmoid: return 1 / (1 + np.exp(-z))"}
+      ],
+      "test_code": "import numpy as np\nnp.random.seed(0)\nh = np.array([0.5, -0.3])\nx = np.array([1.0, 0.0])\nW_f = np.random.randn(2, 4)\nb_f = np.zeros(2)\nf = forget_gate(h, x, W_f, b_f)\nassert f.shape == (2,), f'Expected shape (2,), got {f.shape}'\nassert np.all(f >= 0) and np.all(f <= 1), 'Forget gate must be in [0,1] (sigmoid output)'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

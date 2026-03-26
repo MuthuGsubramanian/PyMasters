@@ -1,0 +1,44 @@
+{
+  "id": "testing_pytest",
+  "topic": "testing_pytest",
+  "track": "python_fundamentals",
+  "module": "testing",
+  "order": 1,
+  "title": { "en": "pytest: The Quality Inspector" },
+  "description": { "en": "Learn pytest basics — writing test functions, assertions, fixtures, and running your test suite with confidence." },
+  "xp_reward": 50,
+  "next_unlock": "testing_tdd",
+  "story_variants": {
+    "en": "## The Quality Inspector\n\nA factory **quality inspector** checks every product on the line: does it meet spec? If one fails, the alarm rings immediately — no broken products reach customers.\n\n**pytest** is your code's quality inspector: run it, and failing code is caught before it ships.\n\n### Writing Tests\n\n```python\n# test_math.py\ndef test_addition():\n    assert 1 + 1 == 2\n\ndef test_division():\n    assert 10 / 2 == 5.0\n```\n\nRun with: `pytest test_math.py`\n\n### pytest Rules\n\n| Rule | Example |\n|------|---------|\n| File name | `test_*.py` or `*_test.py` |\n| Function name | `def test_*():` |\n| Assertion | plain `assert` |\n| Expected error | `pytest.raises(ValueError)` |\n\n### Fixtures — Shared Setup\n```python\n@pytest.fixture\ndef sample_list():\n    return [1, 2, 3]\n\ndef test_len(sample_list):\n    assert len(sample_list) == 3\n```\n\n> **Power of pytest:** When an assertion fails, pytest shows you *exactly* what the left and right sides were — far more useful than a bare `AssertionError`."
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# calculator.py\ndef add(a, b):\n    return a + b\n\ndef divide(a, b):\n    if b == 0:\n        raise ValueError('Cannot divide by zero')\n    return a / b\n\n# test_calculator.py\nimport pytest\nfrom calculator import add, divide\n\ndef test_add_positive():\n    assert add(2, 3) == 5\n\ndef test_add_negative():\n    assert add(-1, 1) == 0\n\ndef test_divide_normal():\n    assert divide(10, 2) == 5.0\n\ndef test_divide_by_zero():\n    with pytest.raises(ValueError):\n        divide(10, 0)\n\n@pytest.fixture\ndef numbers():\n    return [1, 2, 3, 4, 5]\n\ndef test_sum(numbers):\n    assert sum(numbers) == 15",
+        "language": "python"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "pytest_output",
+      "lines": ["collected 5 items", "test_calculator.py .....  [100%]", "5 passed in 0.08s"]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write three test functions for a 'multiply(a, b)' function: test positive, test zero, and test negative numbers." },
+      "expected_output": "All 3 tests pass",
+      "hints": [
+        { "en": "def test_multiply_positive(): assert multiply(3, 4) == 12" },
+        { "en": "def test_multiply_zero(): assert multiply(5, 0) == 0" },
+        { "en": "def test_multiply_negative(): assert multiply(-2, 3) == -6" }
+      ],
+      "test_code": "def multiply(a, b):\n    return a * b\ndef test_multiply_positive():\n    assert multiply(3, 4) == 12\ndef test_multiply_zero():\n    assert multiply(5, 0) == 0\ndef test_multiply_negative():\n    assert multiply(-2, 3) == -6\ntest_multiply_positive()\ntest_multiply_zero()\ntest_multiply_negative()"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

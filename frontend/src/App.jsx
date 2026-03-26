@@ -8,6 +8,9 @@ import Onboarding from './pages/Onboarding';
 import { Overview, LearningMap, ModuleViewer } from './pages/Dashboard';
 import Classroom from './pages/Classroom';
 import Playground from './pages/Playground';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Security from './pages/Security';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function PrivateRoute({ children }) {
@@ -30,6 +33,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/security" element={<Security />} />
             <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
             <Route path="/dashboard" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
               <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />

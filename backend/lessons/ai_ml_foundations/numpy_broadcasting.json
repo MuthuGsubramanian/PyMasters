@@ -1,0 +1,108 @@
+{
+  "id": "numpy_broadcasting",
+  "topic": "numpy",
+  "track": "ai_ml_foundations",
+  "module": "numpy",
+  "order": 3,
+  "title": {
+    "en": "NumPy Broadcasting: Smart Shape Expansion"
+  },
+  "description": {
+    "en": "Understand how NumPy automatically expands smaller arrays to match larger ones during arithmetic — the broadcasting rules."
+  },
+  "xp_reward": 65,
+  "next_unlock": "numpy_linalg",
+  "story_variants": {
+    "en": "## Broadcasting: Doing More With Less\n\n**Broadcasting** lets NumPy perform operations on arrays with different shapes without copying data. It is one of the most powerful — and initially confusing — features of NumPy.\n\n### The Simple Case: Scalar Broadcasting\n\n```python\nimport numpy as np\n\na = np.array([1, 2, 3, 4])\nresult = a * 10   # 10 is broadcast across every element\nprint(result)     # [10 20 30 40]\n```\n\nThe scalar `10` is conceptually stretched to match the shape of `a`.\n\n### Broadcasting Rules\n\nWhen operating on two arrays, NumPy compares shapes **from the right**:\n\n| Rule | Detail |\n|------|--------|\n| 1. Prepend 1s | If ranks differ, pad the smaller shape on the left with 1s |\n| 2. Stretch 1s | A dimension of size 1 stretches to match the other |\n| 3. Error | If neither dimension is 1 and sizes differ → error |\n\n### Example: Adding a Row Vector to a Matrix\n\n```python\nmatrix = np.array([[1, 2, 3],\n                   [4, 5, 6]])\nrow = np.array([10, 20, 30])  # shape (3,)\n\nresult = matrix + row\n# row is broadcast over both matrix rows\n# result:\n# [[11 22 33]\n#  [14 25 36]]\n```\n\n### Column vs Row Broadcasting\n\n```python\ncol = np.array([[100],\n                [200]])   # shape (2, 1)\n\nresult2 = matrix + col\n# Each column element is added to every column\n# [[101 102 103]\n#  [204 205 206]]\n```\n\n> **Key Insight:** Broadcasting never actually copies data. NumPy uses a **virtual** expansion, so memory usage stays efficient. Think of it as NumPy being smart enough to know you want the same operation applied across a whole dimension."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "broadcast_steps",
+      "steps": [
+        {
+          "line": "a = np.array([1, 2, 3, 4])",
+          "highlight": "np.array",
+          "explanation": { "en": "1-D array, shape (4,)" }
+        },
+        {
+          "line": "result = a * 10",
+          "highlight": "* 10",
+          "explanation": { "en": "Scalar 10 is broadcast to match shape (4,)" },
+          "output": "[10 20 30 40]"
+        },
+        {
+          "line": "matrix = np.array([[1,2,3],[4,5,6]])",
+          "highlight": "np.array",
+          "explanation": { "en": "2-D array, shape (2, 3)" }
+        },
+        {
+          "line": "row = np.array([10, 20, 30])",
+          "highlight": "np.array",
+          "explanation": { "en": "1-D array, shape (3,) — will be broadcast across rows" }
+        },
+        {
+          "line": "print(matrix + row)",
+          "highlight": "+",
+          "explanation": { "en": "row is virtually repeated for each row of matrix" },
+          "output": "[[11 22 33]\n [14 25 36]]"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "broadcast_visual",
+      "structure_type": "matrix",
+      "data": [[1, 2, 3], [4, 5, 6]],
+      "highlight_color": "#a44ff7"
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rules_map",
+      "nodes": [
+        { "id": "rule1", "label": "Prepend 1s to smaller shape" },
+        { "id": "rule2", "label": "Stretch dim-1 axes" },
+        { "id": "rule3", "label": "Error if incompatible" }
+      ],
+      "edges": [
+        { "from": "rule1", "to": "rule2" },
+        { "from": "rule2", "to": "rule3" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "broadcast_output",
+      "output": ["a * 10 → [10 20 30 40]", "matrix + row →", "[[11 22 33]", " [14 25 36]]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a (4, 3) matrix called `m` of your choice. Subtract a 1-D array `offsets = np.array([1, 2, 3])` from it (broadcasting along rows). Store the result in `result`."
+      },
+      "hints": [
+        { "en": "offsets has shape (3,), m has shape (4, 3) — they are compatible for broadcasting" },
+        { "en": "result = m - offsets" }
+      ],
+      "test_code": "import numpy as np\nassert isinstance(m, np.ndarray) and m.shape == (4, 3), 'm must be shape (4,3)'\noffsets = np.array([1, 2, 3])\nassert np.array_equal(result, m - offsets), 'result must equal m - offsets'"
+    },
+    {
+      "instruction": {
+        "en": "Given `x = np.array([[1],[2],[3]])` (shape 3x1) and `y = np.array([10, 20, 30, 40])` (shape 4,), compute `z = x + y`. What is its shape?"
+      },
+      "hints": [
+        { "en": "x has shape (3,1) and y has shape (4,) → y becomes (1,4) → result is (3,4)" },
+        { "en": "z = x + y" }
+      ],
+      "test_code": "import numpy as np\nx = np.array([[1],[2],[3]])\ny = np.array([10, 20, 30, 40])\nassert z.shape == (3, 4), 'z must have shape (3, 4)'\nassert z[0, 0] == 11 and z[2, 3] == 43, 'check broadcast values'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

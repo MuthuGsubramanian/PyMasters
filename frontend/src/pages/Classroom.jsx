@@ -103,6 +103,11 @@ function LessonSelect({ lessons, onSelectLesson, loading, language }) {
                                 )}
                             </div>
                             <div className="flex items-center gap-3 flex-shrink-0">
+                                {lesson.generated && (
+                                    <span className="text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                                        Custom
+                                    </span>
+                                )}
                                 {lesson.xp_reward != null && (
                                     <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">
                                         +{lesson.xp_reward} XP
@@ -156,9 +161,9 @@ function IntroPhase({ lesson, language, onComplete, username }) {
 
             {/* Two-column layout */}
             {sequence.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left: Story + Concept */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-1 space-y-4">
                         {storyPrimitives.length > 0 ? (
                             <AnimationRenderer
                                 sequence={storyPrimitives}
@@ -174,7 +179,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     </div>
 
                     {/* Right: Code + Variables + Terminal */}
-                    <div className="lg:col-span-3 space-y-4">
+                    <div className="lg:col-span-2 space-y-4">
                         {animPrimitives.length > 0 && (
                             <AnimationRenderer
                                 sequence={animPrimitives}
@@ -234,7 +239,7 @@ function PracticePhase({
           'Write your solution below.';
 
     return (
-        <div className="animate-fade-in max-w-2xl mx-auto space-y-5">
+        <div className="animate-fade-in max-w-4xl mx-auto space-y-5">
             {/* Vaathiyaar instruction panel */}
             <div className="panel rounded-xl p-5 border-l-4 border-l-purple-400 flex items-start gap-4">
                 <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-lg select-none">
@@ -332,7 +337,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
     const animationSeq = evalResult?.feedback?.animation;
 
     return (
-        <div className="animate-fade-in max-w-2xl mx-auto space-y-6">
+        <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
             {/* Animated feedback if available */}
             {animationSeq && (
                 <AnimationRenderer
@@ -437,12 +442,13 @@ export default function Classroom() {
 
     // ── Fetch lesson list ───────────────────────────────────────────────────
     useEffect(() => {
+        const params = user?.id ? `?user_id=${user.id}` : '';
         api
-            .get('/classroom/lessons')
+            .get(`/classroom/lessons${params}`)
             .then((r) => setLessons(r.data.lessons ?? r.data))
             .catch(() => setLessons([]))
             .finally(() => setLessonsLoading(false));
-    }, []);
+    }, [user]);
 
     // ── Auto-scroll chat ────────────────────────────────────────────────────
     useEffect(() => {
@@ -597,6 +603,18 @@ export default function Classroom() {
                                 setChatMessages((prev) =>
                                     prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
                                 );
+                                // After streaming is complete, check if user asked to learn a topic
+                                const learnPatterns = /(?:teach me|learn about|i want to learn|explain)\s+(.+)/i;
+                                const topicMatch = message.match(learnPatterns);
+                                if (topicMatch && topicMatch[1]) {
+                                    const requestedTopic = topicMatch[1].trim().replace(/[?.!]$/, '');
+                                    setChatMessages(prev => [...prev, {
+                                        role: 'system',
+                                        content: `Would you like Vaathiyaar to create a custom lesson module on "${requestedTopic}"?`,
+                                        _isModuleSuggestion: true,
+                                        _topic: requestedTopic,
+                                    }]);
+                                }
                             }
                             if (data.error) {
                                 setChatMessages((prev) =>
@@ -639,7 +657,7 @@ export default function Classroom() {
     // ── Render ──────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen pb-40">
-            <div className="max-w-5xl mx-auto px-4 py-10">
+            <div className="max-w-screen-xl mx-auto px-8 py-10">
                 {/* Phase: select */}
                 <AnimatePresence mode="wait">
                     {phase === 'select' && (
@@ -735,26 +753,48 @@ export default function Classroom() {
                                         msg.role === 'user' ? 'justify-end' : 'justify-start'
                                     }`}
                                 >
-                                    <div
-                                        className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                                            msg.role === 'user'
-                                                ? 'bg-cyan-500 text-white rounded-br-none'
-                                                : 'panel text-slate-700 rounded-bl-none'
-                                        }`}
-                                    >
-                                        {msg._isThinking ? (
-                                            <ThinkingBubble />
-                                        ) : msg.role === 'assistant' ? (
-                                            <>
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                                    {msg.content}
-                                                </ReactMarkdown>
-                                                {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5" />}
-                                            </>
-                                        ) : (
-                                            msg.content
-                                        )}
-                                    </div>
+                                    {msg._isModuleSuggestion ? (
+                                        <div className="max-w-[80%] px-4 py-3 rounded-2xl panel text-slate-700 rounded-bl-none space-y-2">
+                                            <p className="text-sm">{msg.content}</p>
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const { requestModule } = await import('../api');
+                                                        await requestModule(user.id, msg._topic);
+                                                        setChatMessages(prev => prev.map(m =>
+                                                            m === msg ? { role: 'assistant', content: `Great! I'm preparing a custom lesson on "${msg._topic}" for you. You'll get a notification when it's ready!` } : m
+                                                        ));
+                                                    } catch(e) {
+                                                        console.error(e);
+                                                    }
+                                                }}
+                                                className="btn-neo btn-neo-primary text-sm py-2 px-4"
+                                            >
+                                                Yes, create it!
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                                                msg.role === 'user'
+                                                    ? 'bg-cyan-500 text-white rounded-br-none'
+                                                    : 'panel text-slate-700 rounded-bl-none'
+                                            }`}
+                                        >
+                                            {msg._isThinking ? (
+                                                <ThinkingBubble />
+                                            ) : msg.role === 'assistant' ? (
+                                                <>
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                                        {msg.content}
+                                                    </ReactMarkdown>
+                                                    {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5" />}
+                                                </>
+                                            ) : (
+                                                msg.content
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         <div ref={chatEndRef} />
@@ -768,7 +808,7 @@ export default function Classroom() {
                     {/* Gradient fade */}
                     <div className="h-10 bg-gradient-to-t from-[#f0f4f8] to-transparent pointer-events-none" />
                     <div className="bg-[#f0f4f8] px-4 pb-4">
-                        <div className="max-w-5xl mx-auto">
+                        <div className="max-w-screen-xl mx-auto">
                             <ChatBar
                                 onSend={handleChat}
                                 loading={chatLoading}

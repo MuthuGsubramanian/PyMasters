@@ -1,0 +1,62 @@
+{
+  "id": "ds_dicts",
+  "topic": "ds_dicts",
+  "track": "python_fundamentals",
+  "module": "data_structures",
+  "order": 2,
+  "title": { "en": "Dictionaries: The Address Book" },
+  "description": { "en": "Master Python dictionaries — key-value pairs that let you look up any value instantly, like finding a phone number in an address book." },
+  "xp_reward": 50,
+  "next_unlock": "ds_sets",
+  "story_variants": {
+    "en": "## The Address Book\n\nAn **address book** stores names and phone numbers. You don't search through every entry — you just look up the name and instantly get the number.\n\nPython **dictionaries** work the same way: keys map to values.\n\n### Dictionary Operations\n\n| Operation | Syntax | Notes |\n|-----------|--------|-------|\n| Create | `d = {'key': val}` | or `dict()` |\n| Read | `d['key']` | KeyError if missing |\n| Safe read | `d.get('key', default)` | no error |\n| Add/update | `d['key'] = val` | |\n| Delete | `del d['key']` | |\n| Check key | `'key' in d` | True/False |\n\n### Iterating\n- `d.keys()` — all keys\n- `d.values()` — all values\n- `d.items()` — `(key, value)` pairs\n\n> **Key fact:** Dictionary keys must be **immutable** (strings, numbers, tuples). Values can be anything — even other dictionaries.\n\n### When to Use a Dict\n- Named attributes (like a mini object)\n- Counting/grouping: `counts[word] += 1`\n- Caching computed results\n- Config and settings"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Create a dictionary\ncontact = {\n    'name': 'Alice',\n    'phone': '555-1234',\n    'city': 'NYC'\n}\n\n# Access\nprint(contact['name'])           # Alice\nprint(contact.get('email', 'N/A'))  # N/A\n\n# Add and update\ncontact['email'] = 'alice@example.com'\ncontact['city'] = 'LA'\n\n# Iterate\nfor key, value in contact.items():\n    print(f'{key}: {value}')",
+        "language": "python"
+      }
+    },
+    {
+      "type": "DataStructure",
+      "id": "dict_visual",
+      "structure": "dict",
+      "items": { "name": "Alice", "phone": "555-1234", "city": "NYC" }
+    },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Word frequency counter\nwords = ['apple', 'banana', 'apple', 'cherry', 'banana', 'apple']\ncounts = {}\nfor word in words:\n    counts[word] = counts.get(word, 0) + 1\nprint(counts)\n# {'apple': 3, 'banana': 2, 'cherry': 1}",
+        "language": "python"
+      }
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create a dictionary for a student with keys 'name', 'grade', 'score' and values 'Maya', 'A', 95. Then print the score." },
+      "expected_output": "95",
+      "hints": [
+        { "en": "student = {'name': 'Maya', 'grade': 'A', 'score': 95}" },
+        { "en": "Access with student['score']" },
+        { "en": "print(student['score'])" }
+      ],
+      "test_code": "student = {'name': 'Maya', 'grade': 'A', 'score': 95}\nassert student['name'] == 'Maya'\nassert student['grade'] == 'A'\nassert student['score'] == 95"
+    },
+    {
+      "instruction": { "en": "Count how many times each letter appears in 'mississippi' using a dictionary." },
+      "expected_output": "{'m': 1, 'i': 4, 's': 4, 'p': 2}",
+      "hints": [
+        { "en": "Start with an empty dict: counts = {}" },
+        { "en": "Use counts.get(letter, 0) + 1 to safely increment" },
+        { "en": "Loop over each character in the string" }
+      ],
+      "test_code": "word = 'mississippi'\ncounts = {}\nfor ch in word:\n    counts[ch] = counts.get(ch, 0) + 1\nassert counts == {'m': 1, 'i': 4, 's': 4, 'p': 2}"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

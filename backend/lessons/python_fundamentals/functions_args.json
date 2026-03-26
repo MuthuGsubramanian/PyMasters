@@ -1,0 +1,57 @@
+{
+  "id": "functions_args",
+  "topic": "functions_args",
+  "track": "python_fundamentals",
+  "module": "functions",
+  "order": 3,
+  "title": { "en": "Args & Kwargs: The Swiss Army Function" },
+  "description": { "en": "Master *args, **kwargs, and default parameters to write flexible functions that handle any number of inputs." },
+  "xp_reward": 50,
+  "next_unlock": "functions_lambda",
+  "story_variants": {
+    "en": "## The Swiss Army Function\n\nA Swiss Army knife doesn't know how many tools you'll need — it just carries them all. Python's `*args` and `**kwargs` give your functions the same flexibility.\n\n### Default Parameters\n```python\ndef greet(name, greeting='Hello'):\n    ...\n```\nIf `greeting` isn't provided, it defaults to `'Hello'`.\n\n### *args — Variable Positional Arguments\n\n| What | How |\n|------|-----|\n| Capture extras | `def f(*args):` |\n| Type inside | `tuple` |\n| Access | `args[0]`, or `for a in args:` |\n\n### **kwargs — Variable Keyword Arguments\n\n| What | How |\n|------|-----|\n| Capture extras | `def f(**kwargs):` |\n| Type inside | `dict` |\n| Access | `kwargs['key']`, or `for k, v in kwargs.items():` |\n\n> **Order rule:** Parameters must go in this order: `positional`, `*args`, `keyword-only`, `**kwargs`.\n\n### Real-world uses\n- `print(*items)` — unpack a list into separate print args\n- Decorators use `*args, **kwargs` to pass through any call\n- Config functions accept arbitrary keyword options"
+  },
+  "animation_sequence": [
+    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "code": "# Default parameter\ndef greet(name, greeting='Hello'):\n    return f'{greeting}, {name}!'\n\nprint(greet('Alice'))          # Hello, Alice!\nprint(greet('Bob', 'Hi'))      # Hi, Bob!\n\n# *args\ndef total(*args):\n    return sum(args)\n\nprint(total(1, 2, 3))     # 6\nprint(total(10, 20))      # 30\n\n# **kwargs\ndef profile(**kwargs):\n    for key, val in kwargs.items():\n        print(f'{key}: {val}')\n\nprofile(name='Alice', age=30, city='NYC')",
+        "language": "python"
+      }
+    },
+    {
+      "type": "MemoryStack",
+      "id": "args_stack",
+      "slots": [
+        { "name": "args", "value": "(1, 2, 3)", "type": "tuple" },
+        { "name": "kwargs", "value": "{'name': 'Alice', 'age': 30}", "type": "dict" }
+      ]
+    },
+    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write a function 'multiply_all' using *args that multiplies all its arguments together." },
+      "expected_output": "24",
+      "hints": [
+        { "en": "def multiply_all(*args):" },
+        { "en": "Start with result = 1, then multiply each arg" },
+        { "en": "multiply_all(2, 3, 4) should return 24" }
+      ],
+      "test_code": "def multiply_all(*args):\n    result = 1\n    for a in args:\n        result *= a\n    return result\nassert multiply_all(2, 3, 4) == 24\nassert multiply_all(5) == 5\nassert multiply_all() == 1"
+    },
+    {
+      "instruction": { "en": "Write a function 'make_tag' with a required 'tag' param and **kwargs that builds an HTML-like string: '<tag key=val>'." },
+      "expected_output": "<a href=google.com>",
+      "hints": [
+        { "en": "def make_tag(tag, **kwargs):" },
+        { "en": "Build attributes string from kwargs items" },
+        { "en": "Return f'<{tag} {attrs}>' where attrs is key=value pairs" }
+      ],
+      "test_code": "def make_tag(tag, **kwargs):\n    attrs = ' '.join(f'{k}={v}' for k, v in kwargs.items())\n    return f'<{tag} {attrs}>'\nresult = make_tag('a', href='google.com')\nassert 'href=google.com' in result\nassert result.startswith('<a')"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

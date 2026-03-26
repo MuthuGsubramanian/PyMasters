@@ -1,0 +1,111 @@
+{
+  "id": "numpy_linalg",
+  "topic": "numpy",
+  "track": "ai_ml_foundations",
+  "module": "numpy",
+  "order": 4,
+  "title": {
+    "en": "NumPy Linear Algebra: Dot Products & Matrix Ops"
+  },
+  "description": {
+    "en": "Explore the numpy.linalg module — dot products, matrix multiplication, transpose, inverse, and determinants."
+  },
+  "xp_reward": 70,
+  "next_unlock": "pandas_dataframes",
+  "story_variants": {
+    "en": "## Linear Algebra with NumPy\n\nLinear algebra is the mathematical language of machine learning. NumPy provides fast, readable functions for all the key operations through `np.linalg`.\n\n### Dot Product\n\nThe dot product multiplies corresponding elements and sums them:\n\n```python\nimport numpy as np\n\nv1 = np.array([1, 2, 3])\nv2 = np.array([4, 5, 6])\n\nprint(np.dot(v1, v2))   # 1*4 + 2*5 + 3*6 = 32\nprint(v1 @ v2)          # @ is the matrix multiply operator\n```\n\n### Matrix Multiplication\n\n```python\nA = np.array([[1, 2],\n              [3, 4]])\nB = np.array([[5, 6],\n              [7, 8]])\n\nC = A @ B   # matrix multiply\n# [[1*5+2*7, 1*6+2*8],\n#  [3*5+4*7, 3*6+4*8]]\n# [[19 22]\n#  [43 50]]\n```\n\n### Key Linear Algebra Operations\n\n| Operation | Code | Description |\n|-----------|------|-------------|\n| Transpose | `A.T` | Flip rows and columns |\n| Inverse | `np.linalg.inv(A)` | A matrix where A @ inv(A) = I |\n| Determinant | `np.linalg.det(A)` | Scalar value for square matrices |\n| Eigenvalues | `np.linalg.eig(A)` | Eigenvalues and eigenvectors |\n| Solve system | `np.linalg.solve(A, b)` | Solve Ax = b |\n\n### Practical Example: Solving a Linear System\n\n```python\n# 2x + y = 5\n# x + 3y = 10\nA = np.array([[2, 1], [1, 3]])\nb = np.array([5, 10])\nx = np.linalg.solve(A, b)\nprint(x)   # [1. 3.] → x=1, y=3\n```\n\n> **Why It Matters:** Every neural network layer is a matrix multiplication. Gradient descent updates are dot products. Understanding these operations is essential to understanding how models learn."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "linalg_steps",
+      "steps": [
+        {
+          "line": "v1 = np.array([1, 2, 3])",
+          "highlight": "np.array",
+          "explanation": { "en": "A 1-D vector" }
+        },
+        {
+          "line": "print(np.dot(v1, v2))",
+          "highlight": "np.dot",
+          "explanation": { "en": "Dot product: sum of element-wise products" },
+          "output": "32"
+        },
+        {
+          "line": "C = A @ B",
+          "highlight": "@",
+          "explanation": { "en": "@ is Python's matrix multiplication operator (PEP 465)" }
+        },
+        {
+          "line": "print(C)",
+          "highlight": "print",
+          "explanation": { "en": "Result of 2x2 matrix multiplication" },
+          "output": "[[19 22]\n [43 50]]"
+        },
+        {
+          "line": "x = np.linalg.solve(A, b)",
+          "highlight": "np.linalg.solve",
+          "explanation": { "en": "Efficiently solves the linear system Ax = b" },
+          "output": "[1. 3.]"
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "matrix_A",
+      "structure_type": "matrix",
+      "data": [[1, 2], [3, 4]],
+      "highlight_color": "#f7914f"
+    },
+    {
+      "type": "DataStructure",
+      "id": "matrix_B",
+      "structure_type": "matrix",
+      "data": [[5, 6], [7, 8]],
+      "highlight_color": "#4f8ef7"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "matmul_arrow",
+      "from": "matrix_A",
+      "to": "matrix_B",
+      "label": "@ multiply"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "linalg_output",
+      "output": ["dot(v1,v2) = 32", "A @ B =", "[[19 22]", " [43 50]]", "solve(A,b) = [1. 3.]"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create two 3x3 matrices `P` and `Q` of your choice and compute their matrix product `R = P @ Q`."
+      },
+      "hints": [
+        { "en": "P = np.array([[...],[...],[...]])" },
+        { "en": "R = P @ Q" }
+      ],
+      "test_code": "import numpy as np\nassert isinstance(P, np.ndarray) and P.shape == (3,3), 'P must be 3x3'\nassert isinstance(Q, np.ndarray) and Q.shape == (3,3), 'Q must be 3x3'\nassert np.allclose(R, P @ Q), 'R must equal P @ Q'"
+    },
+    {
+      "instruction": {
+        "en": "Solve the system: 3x + y = 9, x + 2y = 8. Store the coefficient matrix as `A`, the right-hand side as `b`, and the solution as `sol`."
+      },
+      "hints": [
+        { "en": "A = np.array([[3, 1], [1, 2]])" },
+        { "en": "b = np.array([9, 8])" },
+        { "en": "sol = np.linalg.solve(A, b)" }
+      ],
+      "test_code": "import numpy as np\nassert A.shape == (2, 2), 'A must be 2x2'\nassert b.shape == (2,), 'b must have 2 elements'\nassert np.allclose(sol, [2., 3.]), 'solution should be x=2, y=3'"
+    }
+  ],
+  "generated": false,
+  "speed_multiplier": 1.0
+}

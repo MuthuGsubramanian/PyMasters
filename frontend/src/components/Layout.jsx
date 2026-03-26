@@ -1,4 +1,4 @@
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard,
@@ -100,13 +100,20 @@ export default function Layout() {
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-black/[0.06]">
+                <div className="p-4 border-t border-black/[0.06] space-y-2">
                     <button
                         onClick={logout}
                         className="w-full flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
                     >
                         <LogOut size={14} /> TERMINATE SESSION
                     </button>
+                    <div className="flex items-center justify-center gap-3 pt-1">
+                        <Link to="/terms" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Terms</Link>
+                        <span className="text-slate-300 text-[10px]">&middot;</span>
+                        <Link to="/privacy" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Privacy</Link>
+                        <span className="text-slate-300 text-[10px]">&middot;</span>
+                        <Link to="/security" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Security</Link>
+                    </div>
                 </div>
             </aside>
 
