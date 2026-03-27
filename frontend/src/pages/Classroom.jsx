@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
-import api, { getAuthHeaders, requestModule } from '../api';
+import api, { getAuthHeaders, requestModule, getCompletions } from '../api';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
@@ -181,7 +181,7 @@ const PROFILE_WELCOME = {
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: select — lesson list grouped by track
 // ──────────────────────────────────────────────────────────────────────────────
-function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint = 'general', primaryTracks = null }) {
+function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint = 'general', primaryTracks = null, completedLessons = new Set() }) {
     const [expandedTrack, setExpandedTrack] = useState(null);
 
     const grouped = {};
@@ -321,6 +321,11 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                         : 'text-slate-800 group-hover:text-purple-600'
                                                                 }`}>
                                                                     {resolveText(lesson.title, language)}
+                                                                    {completedLessons.has(lesson.id) && (
+                                                                        <span className="ml-2 text-[9px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                                                                            Done
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 {lesson.description && (
                                                                     <div className="text-xs text-slate-400 truncate mt-0.5">
@@ -836,6 +841,7 @@ export default function Classroom() {
     const [running, setRunning] = useState(false);
     const [hintIndex, setHintIndex] = useState(0);
     const [evalResult, setEvalResult] = useState(null);
+    const [completedLessons, setCompletedLessons] = useState(new Set());
 
     const chatEndRef = useRef(null);
 
@@ -851,6 +857,14 @@ export default function Classroom() {
             .catch(() => setLessons([]))
             .finally(() => setLessonsLoading(false));
     }, [user]);
+
+    useEffect(() => {
+        if (user?.id) {
+            getCompletions(user.id)
+                .then(res => setCompletedLessons(new Set((res.data.completions || []).map(c => c.lesson_id))))
+                .catch(() => {});
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1097,6 +1111,7 @@ export default function Classroom() {
                                 language={language}
                                 profileHint={profileHint}
                                 primaryTracks={primaryTracks}
+                                completedLessons={completedLessons}
                             />
                         </motion.div>
                     )}
