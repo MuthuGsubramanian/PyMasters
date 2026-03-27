@@ -844,6 +844,13 @@ export default function Classroom() {
     const [completedLessons, setCompletedLessons] = useState(new Set());
 
     const chatEndRef = useRef(null);
+    const streamControllerRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (streamControllerRef.current) streamControllerRef.current.abort();
+        };
+    }, []);
 
     useEffect(() => {
         const params = user?.id ? `?user_id=${user.id}` : '';
@@ -943,6 +950,11 @@ export default function Classroom() {
         setChatMessages((prev) => [...prev, streamMsg]);
 
         try {
+            if (streamControllerRef.current) streamControllerRef.current.abort();
+            streamControllerRef.current = new AbortController();
+
+            const { parseSSELine, extractMessageFromJSON } = await import('../utils/streaming');
+
             const response = await fetch(`${api.defaults.baseURL}/classroom/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -955,93 +967,66 @@ export default function Classroom() {
                     username: user?.name || user?.username,
                     history: chatMessages.filter(m => !m._isStreaming).slice(-5).map(m => ({ role: m.role, content: m.content })),
                 }),
+                signal: streamControllerRef.current.signal,
             });
 
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
 
+            if (!response.body) {
+                throw new Error('Response body is empty');
+            }
+
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let rawText = '';
-
-            const extractMessage = (text) => {
-                const marker = '"message"';
-                const idx = text.indexOf(marker);
-                if (idx === -1) return null;
-                const afterMarker = text.substring(idx + marker.length);
-                const colonIdx = afterMarker.indexOf(':');
-                if (colonIdx === -1) return null;
-                const afterColon = afterMarker.substring(colonIdx + 1).trimStart();
-                if (!afterColon.startsWith('"')) return null;
-                let content = '';
-                let i = 1;
-                while (i < afterColon.length) {
-                    if (afterColon[i] === '\\' && i + 1 < afterColon.length) {
-                        const next = afterColon[i + 1];
-                        if (next === 'n') content += '\n';
-                        else if (next === 't') content += '\t';
-                        else if (next === '"') content += '"';
-                        else if (next === '\\') content += '\\';
-                        else content += next;
-                        i += 2;
-                    } else if (afterColon[i] === '"') {
-                        break;
-                    } else {
-                        content += afterColon[i];
-                        i++;
-                    }
-                }
-                return content || null;
-            };
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
 
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            if (data.token) {
-                                rawText += data.token;
-                                const display = extractMessage(rawText) || '';
-                                if (display) {
-                                    setChatMessages((prev) =>
-                                        prev.map((m) => m._isStreaming ? { ...m, content: display } : m)
-                                    );
-                                }
-                            }
-                            if (data.done) {
-                                const finalMsg = data.message || extractMessage(rawText) || rawText;
-                                setChatMessages((prev) =>
-                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
-                                );
-                                const learnPatterns = /(?:teach me|learn about|i want to learn|explain)\s+(.+)/i;
-                                const topicMatch = message.match(learnPatterns);
-                                if (topicMatch && topicMatch[1]) {
-                                    const requestedTopic = topicMatch[1].trim().replace(/[?.!]$/, '');
-                                    setChatMessages(prev => [...prev, {
-                                        role: 'system',
-                                        content: `Would you like Vaathiyaar to create a custom lesson module on "${requestedTopic}"?`,
-                                        _isModuleSuggestion: true,
-                                        _topic: requestedTopic,
-                                    }]);
-                                }
-                            }
-                            if (data.error) {
-                                setChatMessages((prev) =>
-                                    prev.map((m) => m._isStreaming ? { role: 'assistant', content: `Error: ${data.error}` } : m)
-                                );
-                            }
-                        } catch (e) {}
+                for (const line of chunk.split('\n')) {
+                    const data = parseSSELine(line);
+                    if (!data) continue;
+
+                    if (data.token) {
+                        rawText += data.token;
+                        const display = extractMessageFromJSON(rawText) || '';
+                        if (display) {
+                            setChatMessages((prev) =>
+                                prev.map((m) => m._isStreaming ? { ...m, content: display } : m)
+                            );
+                        }
+                    }
+                    if (data.done) {
+                        const finalMsg = data.message || extractMessageFromJSON(rawText) || rawText;
+                        setChatMessages((prev) =>
+                            prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
+                        );
+                        const learnPatterns = /(?:teach me|learn about|i want to learn|explain)\s+(.+)/i;
+                        const topicMatch = message.match(learnPatterns);
+                        if (topicMatch && topicMatch[1]) {
+                            const requestedTopic = topicMatch[1].trim().replace(/[?.!]$/, '');
+                            setChatMessages(prev => [...prev, {
+                                role: 'system',
+                                content: `Would you like Vaathiyaar to create a custom lesson module on "${requestedTopic}"?`,
+                                _isModuleSuggestion: true,
+                                _topic: requestedTopic,
+                            }]);
+                        }
+                    }
+                    if (data.error) {
+                        setChatMessages((prev) =>
+                            prev.map((m) => m._isStreaming ? { role: 'assistant', content: `Error: ${data.error}` } : m)
+                        );
                     }
                 }
             }
         } catch (err) {
+            if (err.name === 'AbortError') return;
             setChatMessages((prev) => {
                 const filtered = prev.filter((m) => !m._isStreaming);
                 return [...filtered, { role: 'assistant', content: `Vaathiyaar is busy. (${err.message}). Try again.` }];
