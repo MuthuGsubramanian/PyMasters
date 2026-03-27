@@ -16,6 +16,7 @@ import ExecutionVisualizer from '../components/animations/ExecutionVisualizer';
 import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
 import PythonEditor from '../components/PythonEditor';
+import OutputPanel from '../components/OutputPanel';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -653,12 +654,14 @@ function PracticePhase({
 
             {/* Output */}
             {output && (
-                <div className="rounded-2xl overflow-hidden border border-slate-800/30">
-                    <div className="bg-slate-800 px-4 py-2 text-[10px] uppercase font-bold tracking-widest text-slate-400 border-b border-white/[0.06] flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                        Output
-                    </div>
-                    <pre className="p-4 font-mono text-sm text-green-300/90 whitespace-pre-wrap bg-[#0d1117] max-h-40 overflow-auto">{output}</pre>
+                <div className="rounded-2xl overflow-hidden border border-slate-800/30" style={{ maxHeight: '200px' }}>
+                    <OutputPanel
+                        output={output}
+                        error=""
+                        running={running}
+                        executionTime={null}
+                        onClear={() => {}}
+                    />
                 </div>
             )}
 
