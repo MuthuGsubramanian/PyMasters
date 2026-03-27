@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import PymastersIcon from '../assets/pymasters-icon.svg';
 import LanguageSelector from '../components/LanguageSelector';
 
 // ---------------------------------------------------------------------------
@@ -500,12 +501,12 @@ export default function Onboarding() {
         >
             {/* Header */}
             <header className="flex-shrink-0 px-6 py-4 flex items-center gap-3 border-b border-slate-200">
-                <div className="w-8 h-8 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-base select-none">
-                    🧑‍🏫
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-md shadow-purple-500/20 border border-white/10">
+                    <img src={PymastersIcon} alt="PyMasters" className="w-5 h-5" style={{ filter: 'brightness(2)' }} />
                 </div>
                 <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-purple-600">Vaathiyaar</p>
-                    <p className="text-[11px] text-slate-500">Your personal Python guide</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-purple-600">PyMasters</p>
+                    <p className="text-[11px] text-slate-500">Onboarding with Vaathiyaar</p>
                 </div>
             </header>
 

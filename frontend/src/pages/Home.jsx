@@ -565,35 +565,35 @@ export default function Home() {
             {/* ══════════════════════════════════════════
                 SECTION 1 — HERO
             ══════════════════════════════════════════ */}
-            <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-20">
+            <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-32 pb-10">
                 <FloatingOrbs />
                 <GridOverlay />
 
-                {/* Arc reactor icon */}
+                {/* Arc reactor icon — sized for full visibility below navbar */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.6 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 1, ease: 'easeOut', delay: 0.1 }}
-                    className="relative mb-10"
+                    className="relative mb-12"
+                    style={{ width: 200, height: 200 }}
                 >
-                    <div className="absolute inset-0 rounded-full blur-[60px] bg-purple-600/50 scale-125" />
-                    <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-purple-500/30 bg-slate-900/60 backdrop-blur-sm shadow-[0_0_80px_rgba(124,58,237,0.5)]">
+                    <div className="absolute inset-[-20px] rounded-full blur-[80px] bg-purple-600/40" />
+                    <div className="relative w-[200px] h-[200px] flex items-center justify-center rounded-full border-2 border-purple-500/30 bg-slate-900/70 backdrop-blur-md shadow-[0_0_100px_rgba(124,58,237,0.5)]">
                         <img
                             src={PymastersIcon}
-                            alt="PyMasters Arc Reactor"
-                            className="w-24 h-24 drop-shadow-[0_0_20px_rgba(124,58,237,1)]"
-                            style={{ filter: 'drop-shadow(0 0 16px #7c3aed) drop-shadow(0 0 32px #06b6d4)' }}
+                            alt="PyMasters"
+                            className="w-32 h-32"
+                            style={{ filter: 'drop-shadow(0 0 20px #7c3aed) drop-shadow(0 0 40px #06b6d4)' }}
                         />
                     </div>
-                    {/* Orbit rings */}
-                    <div className="absolute inset-[-28px] rounded-full border border-purple-500/20 animate-spin" style={{ animationDuration: '12s' }}>
+                    {/* Orbit rings — kept within safe bounds */}
+                    <div className="absolute inset-[-16px] rounded-full border border-purple-500/20 animate-spin" style={{ animationDuration: '12s' }}>
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_10px_#7c3aed]" />
                     </div>
-                    <div className="absolute inset-[-50px] rounded-full border border-cyan-500/10 animate-spin" style={{ animationDuration: '20s', animationDirection: 'reverse' }}>
+                    <div className="absolute inset-[-36px] rounded-full border border-cyan-500/10 animate-spin" style={{ animationDuration: '20s', animationDirection: 'reverse' }}>
                         <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#06b6d4]" />
                     </div>
-                    {/* Third ring */}
-                    <div className="absolute inset-[-72px] rounded-full border border-violet-500/5 animate-spin" style={{ animationDuration: '30s' }}>
+                    <div className="absolute inset-[-54px] rounded-full border border-violet-500/5 animate-spin" style={{ animationDuration: '30s' }}>
                         <div className="absolute top-1/2 right-0 translate-x-1/2 w-1.5 h-1.5 rounded-full bg-violet-400/50 shadow-[0_0_6px_#8b5cf6]" />
                     </div>
                 </motion.div>
