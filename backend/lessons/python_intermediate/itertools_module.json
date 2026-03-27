@@ -191,6 +191,105 @@
         "Permutations: [('A', 'B'), ('A', 'C'), ('B', 'A'), ('B', 'C'), ('C', 'A'), ('C', 'B')]",
         "islice: [5, 6, 7, 8, 9]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from itertools import chain, product, combinations, islice\n\nmerged = list(chain([1, 2], [3, 4], [5]))\nprint(f'chain: {merged}')\n\ncombos = list(product('AB', '12'))\nprint(f'product: {combos}')\n\nteams = list(combinations(['A','B','C','D'], 2))\nprint(f'teams: {len(teams)} combos')\n\nsliced = list(islice(range(100), 5, 10))\nprint(f'islice: {sliced}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import key itertools functions"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "merged": "[1, 2, 3, 4, 5]"
+          },
+          "output": "",
+          "description": "chain merges iterables into one sequence"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "chain: [1, 2, 3, 4, 5]",
+          "description": "Three lists merged into one"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "description": "product creates cartesian product of inputs"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "product: [('A','1'),('A','2'),('B','1'),('B','2')]",
+          "description": "Every combination of AB x 12"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "teams": "6 combinations"
+          },
+          "output": "",
+          "description": "combinations(4,2) = 4 choose 2 = 6"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "teams: 6 combos",
+          "description": "All possible 2-person teams from 4 people"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "sliced": "[5, 6, 7, 8, 9]"
+          },
+          "output": "",
+          "description": "islice slices any iterator without materializing it"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "islice: [5, 6, 7, 8, 9]",
+          "description": "Elements 5-9 from range(100) without creating all 100"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "product_iteration",
+      "iterable": "product('AB', '12')",
+      "iterations": [
+        {
+          "index": 0,
+          "value": "('A','1')",
+          "variables": {},
+          "description": "First from each: A + 1"
+        },
+        {
+          "index": 1,
+          "value": "('A','2')",
+          "variables": {},
+          "description": "First stays, second advances: A + 2"
+        },
+        {
+          "index": 2,
+          "value": "('B','1')",
+          "variables": {},
+          "description": "First advances, second resets: B + 1"
+        },
+        {
+          "index": 3,
+          "value": "('B','2')",
+          "variables": {},
+          "description": "B + 2 - all combinations done"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -243,8 +342,18 @@
         "ta": "chain([1,2], [3,4]) என்ன உருவாக்கும்?"
       },
       "options": {
-        "en": ["[[1,2],[3,4]]", "[1,2,3,4]", "[(1,3),(2,4)]", "Error"],
-        "ta": ["[[1,2],[3,4]]", "[1,2,3,4]", "[(1,3),(2,4)]", "பிழை"]
+        "en": [
+          "[[1,2],[3,4]]",
+          "[1,2,3,4]",
+          "[(1,3),(2,4)]",
+          "Error"
+        ],
+        "ta": [
+          "[[1,2],[3,4]]",
+          "[1,2,3,4]",
+          "[(1,3),(2,4)]",
+          "பிழை"
+        ]
       },
       "correct": 1
     },
@@ -271,13 +380,30 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["itertools", "chain", "product", "combinations", "permutations", "islice"],
-    "concepts_required": ["iterables", "generators", "tuples"],
+    "concepts_taught": [
+      "itertools",
+      "chain",
+      "product",
+      "combinations",
+      "permutations",
+      "islice"
+    ],
+    "concepts_required": [
+      "iterables",
+      "generators",
+      "tuples"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["data_pipelines", "combinatorial_problems", "testing"],
+    "real_world_application": [
+      "data_pipelines",
+      "combinatorial_problems",
+      "testing"
+    ],
     "category": "standard_library",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

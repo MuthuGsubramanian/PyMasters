@@ -147,12 +147,33 @@
       "type": "DataStructure",
       "id": "heap_visual",
       "structure_type": "list",
-      "initial_state": [5, 3, 8, 1, 2],
+      "initial_state": [
+        5,
+        3,
+        8,
+        1,
+        2
+      ],
       "animations": [
-        {"action": "remove", "index": 0, "value": "heapify"},
-        {"action": "add", "index": 0, "value": 1},
-        {"action": "add", "index": 5, "value": 0},
-        {"action": "remove", "index": 0}
+        {
+          "action": "remove",
+          "index": 0,
+          "value": "heapify"
+        },
+        {
+          "action": "add",
+          "index": 0,
+          "value": 1
+        },
+        {
+          "action": "add",
+          "index": 5,
+          "value": 0
+        },
+        {
+          "action": "remove",
+          "index": 0
+        }
       ]
     },
     {
@@ -179,6 +200,83 @@
         "0",
         "[26, 11, 10]",
         "[4, 5, 6]"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_heaps",
+      "code": "import heapq\n\nnums = [5, 3, 8, 1, 2]\nheapq.heapify(nums)\nprint(f'Heapified: {nums}')\n\nheapq.heappush(nums, 0)\nprint(f'After push 0: {nums}')\n\nsmallest = heapq.heappop(nums)\nprint(f'Popped min: {smallest}')\n\ndata = [10, 4, 5, 8, 6, 11, 26]\nprint(f'Top 3: {heapq.nlargest(3, data)}')\nprint(f'Bottom 3: {heapq.nsmallest(3, data)}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "nums": [
+              5,
+              3,
+              8,
+              1,
+              2
+            ]
+          },
+          "output": "",
+          "explanation": "Unsorted list — not yet a valid heap"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "nums": [
+              1,
+              2,
+              8,
+              5,
+              3
+            ]
+          },
+          "output": "Heapified: [1, 2, 8, 5, 3]",
+          "explanation": "heapify rearranges in O(n). Smallest (1) at index 0"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "nums": [
+              0,
+              2,
+              1,
+              5,
+              3,
+              8
+            ]
+          },
+          "output": "After push 0: [0, 2, 1, 5, 3, 8]",
+          "explanation": "Push 0 — bubbles up to root in O(log n)"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "smallest": 0,
+            "nums": [
+              1,
+              2,
+              8,
+              5,
+              3
+            ]
+          },
+          "output": "Popped min: 0",
+          "explanation": "heappop extracts min and restructures in O(log n)"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Top 3: [26, 11, 10]",
+          "explanation": "nlargest uses heap internally — efficient for top-K"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "Bottom 3: [4, 5, 6]",
+          "explanation": "nsmallest similarly efficient for bottom-K"
+        }
       ]
     }
   ],
@@ -211,8 +309,18 @@
         "ta": "min-heap-ல், சிறிய உறுப்பு எங்கே இருக்கும்?"
       },
       "options": {
-        "en": ["At the last index", "At a random position", "At the root (index 0)", "It varies"],
-        "ta": ["கடைசி index-ல்", "சீரற்ற நிலையில்", "Root-ல் (index 0)", "மாறுபடும்"]
+        "en": [
+          "At the last index",
+          "At a random position",
+          "At the root (index 0)",
+          "It varies"
+        ],
+        "ta": [
+          "கடைசி index-ல்",
+          "சீரற்ற நிலையில்",
+          "Root-ல் (index 0)",
+          "மாறுபடும்"
+        ]
       },
       "correct": 2
     },
@@ -222,8 +330,18 @@
         "ta": "heapq.heapify()-ன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n log n)", "O(n)", "O(log n)", "O(1)"],
-        "ta": ["O(n log n)", "O(n)", "O(log n)", "O(1)"]
+        "en": [
+          "O(n log n)",
+          "O(n)",
+          "O(log n)",
+          "O(1)"
+        ],
+        "ta": [
+          "O(n log n)",
+          "O(n)",
+          "O(log n)",
+          "O(1)"
+        ]
       },
       "correct": 1
     },
@@ -233,20 +351,45 @@
         "ta": "Python-ன் heapq (min-heap) பயன்படுத்தி max-heap-ஐ எவ்வாறு செயல்படுத்துவீர்கள்?"
       },
       "options": {
-        "en": ["Use heapq.maxheap()", "Sort the list in reverse", "Negate all values before pushing", "It's not possible"],
-        "ta": ["heapq.maxheap() பயன்படுத்துங்கள்", "பட்டியலை தலைகீழாக வரிசைப்படுத்துங்கள்", "push செய்யும் முன் அனைத்து மதிப்புகளையும் எதிர்மறையாக்குங்கள்", "சாத்தியமில்லை"]
+        "en": [
+          "Use heapq.maxheap()",
+          "Sort the list in reverse",
+          "Negate all values before pushing",
+          "It's not possible"
+        ],
+        "ta": [
+          "heapq.maxheap() பயன்படுத்துங்கள்",
+          "பட்டியலை தலைகீழாக வரிசைப்படுத்துங்கள்",
+          "push செய்யும் முன் அனைத்து மதிப்புகளையும் எதிர்மறையாக்குங்கள்",
+          "சாத்தியமில்லை"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["heap", "min_heap", "max_heap", "heapq", "priority_queue"],
-    "concepts_required": ["binary_tree", "lists"],
+    "concepts_taught": [
+      "heap",
+      "min_heap",
+      "max_heap",
+      "heapq",
+      "priority_queue"
+    ],
+    "concepts_required": [
+      "binary_tree",
+      "lists"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["task_scheduling", "median_finding", "top_k_problems"],
+    "real_world_application": [
+      "task_scheduling",
+      "median_finding",
+      "top_k_problems"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

@@ -135,6 +135,21 @@
         "88.0 <class 'float'>",
         "The answer is 42"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "age_str = '25'\nage_int = int(age_str)\nprint(age_int, type(age_int))\nscore = 88\nscore_float = float(score)\nprint(score_float)\nmessage = 'Answer: ' + str(42)\nprint(message)",
+      "executionSteps": [
+        { "line": 1, "variables": { "age_str": "25" }, "output": "", "description": "Assign string '25' to age_str" },
+        { "line": 2, "variables": { "age_str": "25", "age_int": 25 }, "output": "", "description": "Convert string '25' to integer 25 using int()" },
+        { "line": 3, "variables": { "age_str": "25", "age_int": 25 }, "output": "25 <class 'int'>", "description": "Print age_int and its type" },
+        { "line": 4, "variables": { "age_str": "25", "age_int": 25, "score": 88 }, "output": "25 <class 'int'>", "description": "Assign integer 88 to score" },
+        { "line": 5, "variables": { "age_str": "25", "age_int": 25, "score": 88, "score_float": 88.0 }, "output": "25 <class 'int'>", "description": "Convert integer 88 to float 88.0 using float()" },
+        { "line": 6, "variables": { "age_str": "25", "age_int": 25, "score": 88, "score_float": 88.0 }, "output": "25 <class 'int'>\n88.0", "description": "Print score_float" },
+        { "line": 7, "variables": { "age_str": "25", "age_int": 25, "score": 88, "score_float": 88.0, "message": "Answer: 42" }, "output": "25 <class 'int'>\n88.0", "description": "Convert 42 to string and concatenate with 'Answer: '" },
+        { "line": 8, "variables": { "age_str": "25", "age_int": 25, "score": 88, "score_float": 88.0, "message": "Answer: 42" }, "output": "25 <class 'int'>\n88.0\nAnswer: 42", "description": "Print the concatenated message" }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

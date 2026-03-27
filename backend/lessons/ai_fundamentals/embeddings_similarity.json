@@ -173,9 +173,21 @@
       "id": "vector_viz",
       "structure_type": "vector",
       "data": {
-        "I love Python programming": [0.82, 0.91, 0.15],
-        "Python coding is great": [0.80, 0.89, 0.18],
-        "The weather is sunny": [0.12, 0.08, 0.95]
+        "I love Python programming": [
+          0.82,
+          0.91,
+          0.15
+        ],
+        "Python coding is great": [
+          0.8,
+          0.89,
+          0.18
+        ],
+        "The weather is sunny": [
+          0.12,
+          0.08,
+          0.95
+        ]
       },
       "visualization": "vector_space",
       "caption": "Similar texts cluster together in vector space — 'Python' texts are close, 'weather' is far"
@@ -204,6 +216,59 @@
         "",
         ">>> print(f'Vector dimensions: {len(vectors[0])}')",
         "Vector dimensions: 1536"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_embeddings_similarity",
+      "code": "from openai import OpenAI\nimport numpy as np\nclient = OpenAI()\n\ndef get_embedding(text):\n    resp = client.embeddings.create(\n        model='text-embedding-3-small', input=text)\n    return resp.data[0].embedding\n\ndef cosine_sim(a, b):\n    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))\n\nv1 = get_embedding('Python is great for data science')\nv2 = get_embedding('Data analysis with Python is powerful')\nv3 = get_embedding('The weather is sunny today')\n\nprint(f'Similar: {cosine_sim(v1, v2):.3f}')\nprint(f'Different: {cosine_sim(v1, v3):.3f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "model": "text-embedding-3-small"
+          },
+          "output": "",
+          "explanation": "Embedding API: text -> 1536-dim vector"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "",
+          "explanation": "Cosine similarity: 1.0 = identical, 0 = unrelated"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "v1": "1536-dim vector"
+          },
+          "output": "",
+          "explanation": "Embed 'Python data science' text"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "v2": "1536-dim vector"
+          },
+          "output": "",
+          "explanation": "Embed similar text about Python + data"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "sim": 0.89
+          },
+          "output": "Similar: 0.890",
+          "explanation": "High similarity — both about Python + data"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "sim": 0.12
+          },
+          "output": "Different: 0.120",
+          "explanation": "Low similarity — completely different topics"
+        }
       ]
     }
   ],
@@ -295,13 +360,26 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["embeddings", "cosine_similarity", "faiss", "semantic_search"],
-    "concepts_required": ["rag_fundamentals", "llm_how_they_work"],
+    "concepts_taught": [
+      "embeddings",
+      "cosine_similarity",
+      "faiss",
+      "semantic_search"
+    ],
+    "concepts_required": [
+      "rag_fundamentals",
+      "llm_how_they_work"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["semantic_search", "recommendation_systems"],
+    "real_world_application": [
+      "semantic_search",
+      "recommendation_systems"
+    ],
     "category": "ai_rag",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

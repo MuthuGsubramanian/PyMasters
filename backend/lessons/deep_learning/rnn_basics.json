@@ -166,6 +166,110 @@
         "t=2: h=[0.92, -0.61, 0.44, 0.38]",
         "t=3: h=[0.77, -0.55, 0.51, 0.29]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_rnn_basics",
+      "code": "import torch\nimport torch.nn as nn\n\nrnn = nn.RNN(input_size=10, hidden_size=20, batch_first=True)\nx = torch.randn(2, 5, 10)  # batch=2, seq=5, features=10\noutput, h_n = rnn(x)\nprint(f'Input:  {x.shape}')\nprint(f'Output: {output.shape}')\nprint(f'Hidden: {h_n.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "rnn": "RNN(10, 20)"
+          },
+          "output": "",
+          "explanation": "Simple RNN: 10 input features, 20 hidden units"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "x.shape": "(2, 5, 10)"
+          },
+          "output": "",
+          "explanation": "2 sequences, each 5 timesteps, 10 features per step"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "output": "all hidden states",
+            "h_n": "final hidden"
+          },
+          "output": "",
+          "explanation": "Process sequence step-by-step, passing hidden state forward"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Input:  torch.Size([2, 5, 10])",
+          "explanation": "Batch of 2 sequences"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Output: torch.Size([2, 5, 20])",
+          "explanation": "Hidden state (20-dim) at every timestep"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Hidden: torch.Size([1, 2, 20])",
+          "explanation": "Final hidden state: 1 layer, batch=2, hidden=20"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_rnn_unrolled",
+      "title": "RNN Unrolled Through Time",
+      "nodes": [
+        {
+          "id": "t0",
+          "label": "x[0] -> h[0]",
+          "type": "start"
+        },
+        {
+          "id": "t1",
+          "label": "x[1] -> h[1]",
+          "type": "process"
+        },
+        {
+          "id": "t2",
+          "label": "x[2] -> h[2]",
+          "type": "process"
+        },
+        {
+          "id": "tn",
+          "label": "x[T] -> h[T]",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "t0",
+          "to": "t1",
+          "label": "h[0]"
+        },
+        {
+          "from": "t1",
+          "to": "t2",
+          "label": "h[1]"
+        },
+        {
+          "from": "t2",
+          "to": "tn",
+          "label": "..."
+        },
+        {
+          "from": "tn",
+          "to": "out"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

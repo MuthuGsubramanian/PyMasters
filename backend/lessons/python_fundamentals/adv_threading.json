@@ -42,6 +42,23 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "import threading\nresults = []\ndef worker(name):\n    results.append(name)\nt1 = threading.Thread(target=worker, args=('A',))\nt2 = threading.Thread(target=worker, args=('B',))\nt1.start()\nt2.start()\nt1.join()\nt2.join()\nprint(results)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Import threading module" },
+        { "line": 2, "variables": { "results": [] }, "output": "", "description": "Create shared list for results" },
+        { "line": 3, "variables": { "results": [] }, "output": "", "description": "Define worker function that appends name" },
+        { "line": 5, "variables": { "results": [], "t1": "Thread(worker, 'A')" }, "output": "", "description": "Create thread t1 targeting worker('A')" },
+        { "line": 6, "variables": { "results": [], "t1": "Thread(worker, 'A')", "t2": "Thread(worker, 'B')" }, "output": "", "description": "Create thread t2 targeting worker('B')" },
+        { "line": 7, "variables": { "results": ["A"], "t1": "running" }, "output": "", "description": "Start t1 -- it runs worker('A') concurrently" },
+        { "line": 8, "variables": { "results": ["A", "B"], "t2": "running" }, "output": "", "description": "Start t2 -- it runs worker('B') concurrently" },
+        { "line": 9, "variables": { "results": ["A", "B"] }, "output": "", "description": "join() waits for t1 to finish" },
+        { "line": 10, "variables": { "results": ["A", "B"] }, "output": "", "description": "join() waits for t2 to finish" },
+        { "line": 11, "variables": { "results": ["A", "B"] }, "output": "['A', 'B']", "description": "Both threads done -- print shared results" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

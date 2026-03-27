@@ -165,19 +165,49 @@
       "structure_type": "list",
       "initial_state": [],
       "animations": [
-        {"action": "add", "index": 0, "value": "A"},
-        {"action": "add", "index": 1, "value": "B"},
-        {"action": "add", "index": 2, "value": "C"},
-        {"action": "remove", "index": 2}
+        {
+          "action": "add",
+          "index": 0,
+          "value": "A"
+        },
+        {
+          "action": "add",
+          "index": 1,
+          "value": "B"
+        },
+        {
+          "action": "add",
+          "index": 2,
+          "value": "C"
+        },
+        {
+          "action": "remove",
+          "index": 2
+        }
       ]
     },
     {
       "type": "MemoryStack",
       "id": "call_stack_demo",
       "slots": [
-        {"name": "main()", "value": "running", "type": "frame", "address": "0x01"},
-        {"name": "is_balanced('([{}])')", "value": "running", "type": "frame", "address": "0x02"},
-        {"name": "stack = ['(', '[', '{']", "value": "checking '}'", "type": "local", "address": "0x03"}
+        {
+          "name": "main()",
+          "value": "running",
+          "type": "frame",
+          "address": "0x01"
+        },
+        {
+          "name": "is_balanced('([{}])')",
+          "value": "running",
+          "type": "frame",
+          "address": "0x02"
+        },
+        {
+          "name": "stack = ['(', '[', '{']",
+          "value": "checking '}'",
+          "type": "local",
+          "address": "0x03"
+        }
       ]
     },
     {
@@ -198,6 +228,116 @@
         "Stack: ['A', 'B']",
         "is_balanced('([{}])'): True",
         "is_balanced('([{]}'): False"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_stacks",
+      "code": "stack = []\nstack.append('A')\nstack.append('B')\nstack.append('C')\nprint(f'Stack: {stack}')\n\ntop = stack.pop()\nprint(f'Popped: {top}')\nprint(f'Stack now: {stack}')\n\ndef is_balanced(expr):\n    stk = []\n    pairs = {')':'(', ']':'[', '}':'{'}\n    for ch in expr:\n        if ch in '([{': stk.append(ch)\n        elif ch in pairs:\n            if not stk or stk[-1] != pairs[ch]: return False\n            stk.pop()\n    return len(stk) == 0\n\nprint(is_balanced('([{}])'))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "stack": []
+          },
+          "output": "",
+          "explanation": "Create empty stack using a Python list"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "stack": [
+              "A"
+            ]
+          },
+          "output": "",
+          "explanation": "Push 'A' — stack: ['A']"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "stack": [
+              "A",
+              "B"
+            ]
+          },
+          "output": "",
+          "explanation": "Push 'B' on top — stack: ['A', 'B']"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "stack": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          "output": "",
+          "explanation": "Push 'C' on top — stack: ['A', 'B', 'C']"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Stack: ['A', 'B', 'C']",
+          "explanation": "C is on top (last in)"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "top": "C",
+            "stack": [
+              "A",
+              "B"
+            ]
+          },
+          "output": "Popped: C",
+          "explanation": "Pop removes C (LIFO). O(1) operation"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "ch": "(",
+            "stk": [
+              "("
+            ]
+          },
+          "output": "",
+          "explanation": "Opening bracket — push onto stack"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "ch": "{",
+            "stk": [
+              "(",
+              "[",
+              "{"
+            ]
+          },
+          "output": "",
+          "explanation": "More openers pushed: stack tracks nesting"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "ch": "}",
+            "stk": [
+              "(",
+              "["
+            ]
+          },
+          "output": "",
+          "explanation": "Closing } matches top {. Pop it. Stack: ['(','[']"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "stk": []
+          },
+          "output": "True",
+          "explanation": "All brackets matched, stack empty => balanced!"
+        }
       ]
     }
   ],
@@ -230,8 +370,18 @@
         "ta": "LIFO என்றால் என்ன?"
       },
       "options": {
-        "en": ["Last In First Out", "Last In Fast Out", "List In First Order", "Linear First Out"],
-        "ta": ["Last In First Out", "Last In Fast Out", "List In First Order", "Linear First Out"]
+        "en": [
+          "Last In First Out",
+          "Last In Fast Out",
+          "List In First Order",
+          "Linear First Out"
+        ],
+        "ta": [
+          "Last In First Out",
+          "Last In Fast Out",
+          "List In First Order",
+          "Linear First Out"
+        ]
       },
       "correct": 0
     },
@@ -241,8 +391,18 @@
         "ta": "A, B, C ஐ அடுக்கில் push செய்துவிட்டு இரண்டு முறை pop செய்தால், என்ன மீதம் இருக்கும்?"
       },
       "options": {
-        "en": ["['A']", "['C']", "['A', 'B']", "['B', 'C']"],
-        "ta": ["['A']", "['C']", "['A', 'B']", "['B', 'C']"]
+        "en": [
+          "['A']",
+          "['C']",
+          "['A', 'B']",
+          "['B', 'C']"
+        ],
+        "ta": [
+          "['A']",
+          "['C']",
+          "['A', 'B']",
+          "['B', 'C']"
+        ]
       },
       "correct": 0
     },
@@ -252,20 +412,45 @@
         "ta": "எந்த நிஜ உலக கருத்து ஒரு அடுக்கால் சிறப்பாக மாதிரிப்படுத்தப்படுகிறது?"
       },
       "options": {
-        "en": ["A queue at a bank", "Browser back button (undo)", "A phone book", "A calendar"],
-        "ta": ["வங்கியில் வரிசை", "உலாவி பின் பொத்தான் (undo)", "தொலைபேசி புத்தகம்", "நாட்காட்டி"]
+        "en": [
+          "A queue at a bank",
+          "Browser back button (undo)",
+          "A phone book",
+          "A calendar"
+        ],
+        "ta": [
+          "வங்கியில் வரிசை",
+          "உலாவி பின் பொத்தான் (undo)",
+          "தொலைபேசி புத்தகம்",
+          "நாட்காட்டி"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["stack", "lifo", "push", "pop", "balanced_parentheses"],
-    "concepts_required": ["classes", "lists"],
+    "concepts_taught": [
+      "stack",
+      "lifo",
+      "push",
+      "pop",
+      "balanced_parentheses"
+    ],
+    "concepts_required": [
+      "classes",
+      "lists"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["undo_redo", "call_stack", "expression_evaluation"],
+    "real_world_application": [
+      "undo_redo",
+      "call_stack",
+      "expression_evaluation"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

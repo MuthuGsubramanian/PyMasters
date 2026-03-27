@@ -46,25 +46,103 @@
       "type": "CodeStepper",
       "id": "loss_code",
       "steps": [
-        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch"}},
-        {"line": "import torch.nn as nn", "highlight": "nn", "explanation": {"en": "Import neural network module with loss functions"}},
-        {"line": "predictions = torch.tensor([2.5, 0.0, 2.1, 7.8])", "highlight": "predictions", "explanation": {"en": "Model's predicted values for 4 samples"}},
-        {"line": "targets = torch.tensor([3.0, -0.5, 2.0, 7.5])", "highlight": "targets", "explanation": {"en": "True target values we want to match"}},
-        {"line": "mse_loss = nn.MSELoss()", "highlight": "MSELoss", "explanation": {"en": "MSE = mean of (prediction - target)^2. Penalizes large errors heavily"}},
-        {"line": "loss = mse_loss(predictions, targets)", "highlight": "loss", "explanation": {"en": "Compute MSE: ((2.5-3)^2 + (0-(-0.5))^2 + (2.1-2)^2 + (7.8-7.5)^2) / 4"}},
-        {"line": "logits = torch.tensor([[2.0, 1.0, 0.1]])", "highlight": "logits", "explanation": {"en": "Raw network outputs for 3 classes (before softmax)"}},
-        {"line": "target = torch.tensor([0])", "highlight": "target", "explanation": {"en": "True class index is 0. CrossEntropyLoss expects class indices, not one-hot"}},
-        {"line": "ce_loss = nn.CrossEntropyLoss()", "highlight": "CrossEntropyLoss", "explanation": {"en": "Cross-entropy includes softmax internally. Higher confidence in wrong class = higher loss"}},
-        {"line": "loss = ce_loss(logits, target)", "highlight": "loss", "explanation": {"en": "Computes -log(softmax(logits)[target_class]). Lower loss when model is confident and correct"}},
-        {"line": "preds = torch.tensor([0.9, 0.1, 0.8])", "highlight": "preds", "explanation": {"en": "Binary predictions (already through sigmoid, range 0-1)"}},
-        {"line": "bce_loss = nn.BCELoss()", "highlight": "BCELoss", "explanation": {"en": "Binary cross-entropy for yes/no decisions per sample"}}
+        {
+          "line": "import torch",
+          "highlight": "torch",
+          "explanation": {
+            "en": "Import PyTorch"
+          }
+        },
+        {
+          "line": "import torch.nn as nn",
+          "highlight": "nn",
+          "explanation": {
+            "en": "Import neural network module with loss functions"
+          }
+        },
+        {
+          "line": "predictions = torch.tensor([2.5, 0.0, 2.1, 7.8])",
+          "highlight": "predictions",
+          "explanation": {
+            "en": "Model's predicted values for 4 samples"
+          }
+        },
+        {
+          "line": "targets = torch.tensor([3.0, -0.5, 2.0, 7.5])",
+          "highlight": "targets",
+          "explanation": {
+            "en": "True target values we want to match"
+          }
+        },
+        {
+          "line": "mse_loss = nn.MSELoss()",
+          "highlight": "MSELoss",
+          "explanation": {
+            "en": "MSE = mean of (prediction - target)^2. Penalizes large errors heavily"
+          }
+        },
+        {
+          "line": "loss = mse_loss(predictions, targets)",
+          "highlight": "loss",
+          "explanation": {
+            "en": "Compute MSE: ((2.5-3)^2 + (0-(-0.5))^2 + (2.1-2)^2 + (7.8-7.5)^2) / 4"
+          }
+        },
+        {
+          "line": "logits = torch.tensor([[2.0, 1.0, 0.1]])",
+          "highlight": "logits",
+          "explanation": {
+            "en": "Raw network outputs for 3 classes (before softmax)"
+          }
+        },
+        {
+          "line": "target = torch.tensor([0])",
+          "highlight": "target",
+          "explanation": {
+            "en": "True class index is 0. CrossEntropyLoss expects class indices, not one-hot"
+          }
+        },
+        {
+          "line": "ce_loss = nn.CrossEntropyLoss()",
+          "highlight": "CrossEntropyLoss",
+          "explanation": {
+            "en": "Cross-entropy includes softmax internally. Higher confidence in wrong class = higher loss"
+          }
+        },
+        {
+          "line": "loss = ce_loss(logits, target)",
+          "highlight": "loss",
+          "explanation": {
+            "en": "Computes -log(softmax(logits)[target_class]). Lower loss when model is confident and correct"
+          }
+        },
+        {
+          "line": "preds = torch.tensor([0.9, 0.1, 0.8])",
+          "highlight": "preds",
+          "explanation": {
+            "en": "Binary predictions (already through sigmoid, range 0-1)"
+          }
+        },
+        {
+          "line": "bce_loss = nn.BCELoss()",
+          "highlight": "BCELoss",
+          "explanation": {
+            "en": "Binary cross-entropy for yes/no decisions per sample"
+          }
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "loss_comparison",
-      "left": {"label": "MSE Loss", "content": "For regression tasks\nPenalizes large errors quadratically\nAlways positive\nUnit: squared units of target"},
-      "right": {"label": "Cross-Entropy Loss", "content": "For classification tasks\n-log(probability of true class)\nPenalizes confident wrong answers heavily\nUnit: nats (natural log)"},
+      "left": {
+        "label": "MSE Loss",
+        "content": "For regression tasks\nPenalizes large errors quadratically\nAlways positive\nUnit: squared units of target"
+      },
+      "right": {
+        "label": "Cross-Entropy Loss",
+        "content": "For classification tasks\n-log(probability of true class)\nPenalizes confident wrong answers heavily\nUnit: nats (natural log)"
+      },
       "duration_ms": 3000
     },
     {
@@ -96,7 +174,13 @@
       "id": "loss_flow",
       "from": "predictions",
       "to": "loss_value",
-      "steps": ["predictions", "vs targets", "compute difference", "aggregate (mean)", "scalar loss"],
+      "steps": [
+        "predictions",
+        "vs targets",
+        "compute difference",
+        "aggregate (mean)",
+        "scalar loss"
+      ],
       "duration_ms": 3000
     },
     {
@@ -113,6 +197,69 @@
         ">>> huber = nn.SmoothL1Loss()",
         ">>> huber(predictions, targets)",
         "tensor(0.0887)"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_loss",
+      "code": "import torch\nimport torch.nn as nn\n\n# MSE Loss (regression)\ny_pred = torch.tensor([2.5, 0.0, 2.1])\ny_true = torch.tensor([3.0, -0.5, 2.0])\nmse = nn.MSELoss()(y_pred, y_true)\nprint(f'MSE: {mse.item():.4f}')\n\n# Cross-Entropy (classification)\nlogits = torch.tensor([[2.0, 1.0, 0.1]])\ntarget = torch.tensor([0])  # class 0\nce = nn.CrossEntropyLoss()(logits, target)\nprint(f'CrossEntropy: {ce.item():.4f}')\n\n# BCE (binary classification)\nprob = torch.tensor([0.9, 0.2, 0.8])\nlabel = torch.tensor([1.0, 0.0, 1.0])\nbce = nn.BCELoss()(prob, label)\nprint(f'BCE: {bce.item():.4f}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "y_pred": "[2.5, 0.0, 2.1]"
+          },
+          "output": "",
+          "explanation": "Regression predictions"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "y_true": "[3.0, -0.5, 2.0]"
+          },
+          "output": "",
+          "explanation": "True regression targets"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "mse": "0.1167"
+          },
+          "output": "MSE: 0.1167",
+          "explanation": "Mean of (0.5^2 + 0.5^2 + 0.1^2)/3 = 0.1167"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "logits": "[[2.0, 1.0, 0.1]]"
+          },
+          "output": "",
+          "explanation": "Raw model outputs (before softmax)"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "ce": "0.4170"
+          },
+          "output": "CrossEntropy: 0.4170",
+          "explanation": "CE applies softmax internally, then -log(p_correct)"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "prob": "[0.9, 0.2, 0.8]"
+          },
+          "output": "",
+          "explanation": "Sigmoid probabilities for binary classes"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "bce": "0.1528"
+          },
+          "output": "BCE: 0.1528",
+          "explanation": "Binary CE: -[y*log(p) + (1-y)*log(1-p)]"
+        }
       ]
     },
     {
@@ -150,8 +297,18 @@
         "ta": "பல வகுப்பு வகைப்பாட்டிற்கு பொதுவாக எந்த இழப்பு செயல்பாடு பயன்படுத்தப்படுகிறது?"
       },
       "options": {
-        "en": ["MSELoss", "BCELoss", "CrossEntropyLoss", "L1Loss"],
-        "ta": ["MSELoss", "BCELoss", "CrossEntropyLoss", "L1Loss"]
+        "en": [
+          "MSELoss",
+          "BCELoss",
+          "CrossEntropyLoss",
+          "L1Loss"
+        ],
+        "ta": [
+          "MSELoss",
+          "BCELoss",
+          "CrossEntropyLoss",
+          "L1Loss"
+        ]
       },
       "correct": 2
     },
@@ -161,8 +318,18 @@
         "ta": "nn.CrossEntropyLoss() உள்ளே என்ன உள்ளடக்கியுள்ளது, நீங்கள் சேர்க்க வேண்டியதில்லை?"
       },
       "options": {
-        "en": ["ReLU activation", "Softmax + negative log likelihood", "Dropout", "Batch normalization"],
-        "ta": ["ReLU செயல்பாடு", "Softmax + எதிர்மறை log likelihood", "Dropout", "Batch normalization"]
+        "en": [
+          "ReLU activation",
+          "Softmax + negative log likelihood",
+          "Dropout",
+          "Batch normalization"
+        ],
+        "ta": [
+          "ReLU செயல்பாடு",
+          "Softmax + எதிர்மறை log likelihood",
+          "Dropout",
+          "Batch normalization"
+        ]
       },
       "correct": 1
     },
@@ -172,20 +339,44 @@
         "ta": "MSE இழப்பு 0.25 எனில், சராசரி முழுமையான பிழை தோராயமாக என்ன?"
       },
       "options": {
-        "en": ["0.0625", "0.25", "0.5", "1.0"],
-        "ta": ["0.0625", "0.25", "0.5", "1.0"]
+        "en": [
+          "0.0625",
+          "0.25",
+          "0.5",
+          "1.0"
+        ],
+        "ta": [
+          "0.0625",
+          "0.25",
+          "0.5",
+          "1.0"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["mse_loss", "cross_entropy", "bce_loss", "custom_loss", "huber_loss"],
-    "concepts_required": ["forward_pass", "activation_functions"],
+    "concepts_taught": [
+      "mse_loss",
+      "cross_entropy",
+      "bce_loss",
+      "custom_loss",
+      "huber_loss"
+    ],
+    "concepts_required": [
+      "forward_pass",
+      "activation_functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["regression", "classification"],
+    "real_world_application": [
+      "regression",
+      "classification"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

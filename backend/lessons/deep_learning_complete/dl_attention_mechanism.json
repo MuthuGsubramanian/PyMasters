@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "attention_code",
       "steps": [
-        {"line": "self.W_q = nn.Linear(embed_dim, embed_dim)", "highlight": "W_q", "explanation": {"en": "Query projection: 'What am I looking for?' Each token creates a query vector"}},
-        {"line": "self.W_k = nn.Linear(embed_dim, embed_dim)", "highlight": "W_k", "explanation": {"en": "Key projection: 'What do I contain?' Each token advertises its content"}},
-        {"line": "self.W_v = nn.Linear(embed_dim, embed_dim)", "highlight": "W_v", "explanation": {"en": "Value projection: 'What info do I provide?' The actual content to aggregate"}},
-        {"line": "Q = self.W_q(x)", "highlight": "Q", "explanation": {"en": "Project all tokens to query space. Shape: [batch, seq_len, embed_dim]"}},
-        {"line": "scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale", "highlight": "scores", "explanation": {"en": "Dot product of Q and K gives attention scores. Scale by sqrt(d) for stability"}},
-        {"line": "attention_weights = F.softmax(scores, dim=-1)", "highlight": "softmax", "explanation": {"en": "Softmax normalizes scores to probabilities. Each row sums to 1.0"}},
-        {"line": "output = torch.matmul(attention_weights, V)", "highlight": "output", "explanation": {"en": "Weighted sum of values: each token gets a blend of all tokens weighted by attention"}},
-        {"line": "self.attention = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)", "highlight": "MultiheadAttention", "explanation": {"en": "PyTorch built-in: runs multiple attention heads in parallel, each learning different patterns"}},
-        {"line": "output, weights = self.attention(x, x, x)", "highlight": "self_attention", "explanation": {"en": "Self-attention: Q=K=V=x. Each token attends to all tokens in the same sequence"}},
-        {"line": "# 8 heads of dim 8 each = 64 total (same as single head of 64)", "highlight": "heads", "explanation": {"en": "Multi-head: instead of one 64-dim attention, use 8 parallel 8-dim attentions. Different perspectives!"}}
+        {
+          "line": "self.W_q = nn.Linear(embed_dim, embed_dim)",
+          "highlight": "W_q",
+          "explanation": {
+            "en": "Query projection: 'What am I looking for?' Each token creates a query vector"
+          }
+        },
+        {
+          "line": "self.W_k = nn.Linear(embed_dim, embed_dim)",
+          "highlight": "W_k",
+          "explanation": {
+            "en": "Key projection: 'What do I contain?' Each token advertises its content"
+          }
+        },
+        {
+          "line": "self.W_v = nn.Linear(embed_dim, embed_dim)",
+          "highlight": "W_v",
+          "explanation": {
+            "en": "Value projection: 'What info do I provide?' The actual content to aggregate"
+          }
+        },
+        {
+          "line": "Q = self.W_q(x)",
+          "highlight": "Q",
+          "explanation": {
+            "en": "Project all tokens to query space. Shape: [batch, seq_len, embed_dim]"
+          }
+        },
+        {
+          "line": "scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale",
+          "highlight": "scores",
+          "explanation": {
+            "en": "Dot product of Q and K gives attention scores. Scale by sqrt(d) for stability"
+          }
+        },
+        {
+          "line": "attention_weights = F.softmax(scores, dim=-1)",
+          "highlight": "softmax",
+          "explanation": {
+            "en": "Softmax normalizes scores to probabilities. Each row sums to 1.0"
+          }
+        },
+        {
+          "line": "output = torch.matmul(attention_weights, V)",
+          "highlight": "output",
+          "explanation": {
+            "en": "Weighted sum of values: each token gets a blend of all tokens weighted by attention"
+          }
+        },
+        {
+          "line": "self.attention = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)",
+          "highlight": "MultiheadAttention",
+          "explanation": {
+            "en": "PyTorch built-in: runs multiple attention heads in parallel, each learning different patterns"
+          }
+        },
+        {
+          "line": "output, weights = self.attention(x, x, x)",
+          "highlight": "self_attention",
+          "explanation": {
+            "en": "Self-attention: Q=K=V=x. Each token attends to all tokens in the same sequence"
+          }
+        },
+        {
+          "line": "# 8 heads of dim 8 each = 64 total (same as single head of 64)",
+          "highlight": "heads",
+          "explanation": {
+            "en": "Multi-head: instead of one 64-dim attention, use 8 parallel 8-dim attentions. Different perspectives!"
+          }
+        }
       ]
     },
     {
@@ -64,9 +124,36 @@
       "id": "attention_matrix",
       "structure_type": "attention_heatmap",
       "layers": [
-        {"name": "Token", "nodes": ["The", "cat", "sat", "on", "it"]},
-        {"name": "Attention from 'it'", "nodes": ["0.05", "0.70", "0.10", "0.05", "0.10"]},
-        {"name": "Interpretation", "nodes": ["low", "HIGH (referent!)", "low", "low", "self"]}
+        {
+          "name": "Token",
+          "nodes": [
+            "The",
+            "cat",
+            "sat",
+            "on",
+            "it"
+          ]
+        },
+        {
+          "name": "Attention from 'it'",
+          "nodes": [
+            "0.05",
+            "0.70",
+            "0.10",
+            "0.05",
+            "0.10"
+          ]
+        },
+        {
+          "name": "Interpretation",
+          "nodes": [
+            "low",
+            "HIGH (referent!)",
+            "low",
+            "low",
+            "self"
+          ]
+        }
       ],
       "duration_ms": 4000
     },
@@ -91,19 +178,55 @@
       "id": "attention_flow",
       "from": "input",
       "to": "attended_output",
-      "steps": ["x -> Q, K, V", "Q @ K^T / sqrt(d)", "Softmax -> weights", "weights @ V", "attended output"],
+      "steps": [
+        "x -> Q, K, V",
+        "Q @ K^T / sqrt(d)",
+        "Softmax -> weights",
+        "weights @ V",
+        "attended output"
+      ],
       "duration_ms": 3000
     },
     {
       "type": "MemoryStack",
       "id": "qkv_computation",
       "slots": [
-        {"name": "Input x", "value": "[1, 5, 8]", "type": "tensor", "address": "embed_dim=8"},
-        {"name": "Q = W_q(x)", "value": "[1, 5, 8]", "type": "tensor", "address": "queries"},
-        {"name": "K = W_k(x)", "value": "[1, 5, 8]", "type": "tensor", "address": "keys"},
-        {"name": "V = W_v(x)", "value": "[1, 5, 8]", "type": "tensor", "address": "values"},
-        {"name": "scores = Q@K^T/scale", "value": "[1, 5, 5]", "type": "tensor", "address": "attention_matrix"},
-        {"name": "output = softmax(scores)@V", "value": "[1, 5, 8]", "type": "tensor", "address": "attended"}
+        {
+          "name": "Input x",
+          "value": "[1, 5, 8]",
+          "type": "tensor",
+          "address": "embed_dim=8"
+        },
+        {
+          "name": "Q = W_q(x)",
+          "value": "[1, 5, 8]",
+          "type": "tensor",
+          "address": "queries"
+        },
+        {
+          "name": "K = W_k(x)",
+          "value": "[1, 5, 8]",
+          "type": "tensor",
+          "address": "keys"
+        },
+        {
+          "name": "V = W_v(x)",
+          "value": "[1, 5, 8]",
+          "type": "tensor",
+          "address": "values"
+        },
+        {
+          "name": "scores = Q@K^T/scale",
+          "value": "[1, 5, 5]",
+          "type": "tensor",
+          "address": "attention_matrix"
+        },
+        {
+          "name": "output = softmax(scores)@V",
+          "value": "[1, 5, 8]",
+          "type": "tensor",
+          "address": "attended"
+        }
       ]
     },
     {
@@ -120,6 +243,143 @@
         "        [0.18, 0.23, 0.20, 0.19, 0.20],",
         "        ...])"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_attention",
+      "code": "import torch\nimport torch.nn.functional as F\nimport math\n\ndef scaled_dot_product_attention(Q, K, V):\n    d_k = Q.size(-1)\n    scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(d_k)\n    weights = F.softmax(scores, dim=-1)\n    return torch.matmul(weights, V), weights\n\n# Example: 1 head, seq_len=4, d_k=8\nQ = torch.randn(1, 4, 8)\nK = torch.randn(1, 4, 8)\nV = torch.randn(1, 4, 8)\n\noutput, attn_weights = scaled_dot_product_attention(Q, K, V)\nprint(f'Output shape: {output.shape}')\nprint(f'Attention weights: {attn_weights.shape}')\nprint(f'Weights sum per query: {attn_weights.sum(dim=-1)}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "function": "scaled_dot_product_attention"
+          },
+          "output": "",
+          "explanation": "Core attention mechanism: Q, K, V"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "scores": "Q @ K^T / sqrt(d_k)"
+          },
+          "output": "",
+          "explanation": "Compute similarity scores, scale by sqrt(d_k)"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "weights": "softmax(scores)"
+          },
+          "output": "",
+          "explanation": "Softmax converts scores to probabilities (sum to 1)"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "output": "weights @ V"
+          },
+          "output": "",
+          "explanation": "Weighted sum of values — attend to relevant keys"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "Q.shape": "(1, 4, 8)"
+          },
+          "output": "",
+          "explanation": "4 queries, each 8-dimensional"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "Output shape: torch.Size([1, 4, 8])",
+          "explanation": "Same shape as input — enriched with context"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "Weights sum per query: tensor([[1., 1., 1., 1.]])",
+          "explanation": "Each query's attention weights sum to 1"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_attention",
+      "title": "Scaled Dot-Product Attention",
+      "nodes": [
+        {
+          "id": "q",
+          "label": "Query (Q)",
+          "type": "start"
+        },
+        {
+          "id": "k",
+          "label": "Key (K)",
+          "type": "start"
+        },
+        {
+          "id": "v",
+          "label": "Value (V)",
+          "type": "start"
+        },
+        {
+          "id": "dot",
+          "label": "Q @ K^T",
+          "type": "process"
+        },
+        {
+          "id": "scale",
+          "label": "/ sqrt(d_k)",
+          "type": "process"
+        },
+        {
+          "id": "soft",
+          "label": "Softmax",
+          "type": "process"
+        },
+        {
+          "id": "mul",
+          "label": "weights @ V",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "Attended Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "q",
+          "to": "dot"
+        },
+        {
+          "from": "k",
+          "to": "dot"
+        },
+        {
+          "from": "dot",
+          "to": "scale"
+        },
+        {
+          "from": "scale",
+          "to": "soft"
+        },
+        {
+          "from": "soft",
+          "to": "mul"
+        },
+        {
+          "from": "v",
+          "to": "mul"
+        },
+        {
+          "from": "mul",
+          "to": "out"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -157,8 +417,18 @@
         "ta": "Self-attention-ல், Q, K, V என்ன குறிக்கின்றன?"
       },
       "options": {
-        "en": ["Quick, Kind, Vast", "Query, Key, Value", "Quantize, Kernel, Vector", "Queue, Keep, Validate"],
-        "ta": ["Quick, Kind, Vast", "Query, Key, Value", "Quantize, Kernel, Vector", "Queue, Keep, Validate"]
+        "en": [
+          "Quick, Kind, Vast",
+          "Query, Key, Value",
+          "Quantize, Kernel, Vector",
+          "Queue, Keep, Validate"
+        ],
+        "ta": [
+          "Quick, Kind, Vast",
+          "Query, Key, Value",
+          "Quantize, Kernel, Vector",
+          "Queue, Keep, Validate"
+        ]
       },
       "correct": 1
     },
@@ -168,8 +438,18 @@
         "ta": "Attention scores-ஐ ஏன் sqrt(d)-ஆல் வகுக்கிறோம்?"
       },
       "options": {
-        "en": ["To speed up computation", "To prevent dot products from growing too large, which makes softmax too peaked", "To reduce memory usage", "It's just a convention with no effect"],
-        "ta": ["கணக்கீட்டை வேகப்படுத்த", "Dot products மிகவும் பெரியதாகாமல் தடுக்க, softmax அதிகமாக peaked ஆகாமல்", "நினைவகப் பயன்பாட்டைக் குறைக்க", "எந்த விளைவும் இல்லாத மரபு"]
+        "en": [
+          "To speed up computation",
+          "To prevent dot products from growing too large, which makes softmax too peaked",
+          "To reduce memory usage",
+          "It's just a convention with no effect"
+        ],
+        "ta": [
+          "கணக்கீட்டை வேகப்படுத்த",
+          "Dot products மிகவும் பெரியதாகாமல் தடுக்க, softmax அதிகமாக peaked ஆகாமல்",
+          "நினைவகப் பயன்பாட்டைக் குறைக்க",
+          "எந்த விளைவும் இல்லாத மரபு"
+        ]
       },
       "correct": 1
     },
@@ -179,20 +459,45 @@
         "ta": "Single-head-ஐ விட multi-head attention-ன் நன்மை என்ன?"
       },
       "options": {
-        "en": ["Uses fewer parameters", "Each head can learn different attention patterns (syntax, semantics, etc.)", "It's faster", "It requires less training data"],
-        "ta": ["குறைவான அளவுருக்களைப் பயன்படுத்துகிறது", "ஒவ்வொரு head-ம் வெவ்வேறு attention patterns கற்க முடியும்", "வேகமானது", "குறைவான பயிற்சி தரவு தேவை"]
+        "en": [
+          "Uses fewer parameters",
+          "Each head can learn different attention patterns (syntax, semantics, etc.)",
+          "It's faster",
+          "It requires less training data"
+        ],
+        "ta": [
+          "குறைவான அளவுருக்களைப் பயன்படுத்துகிறது",
+          "ஒவ்வொரு head-ம் வெவ்வேறு attention patterns கற்க முடியும்",
+          "வேகமானது",
+          "குறைவான பயிற்சி தரவு தேவை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["self_attention", "query_key_value", "attention_scores", "multi_head_attention", "scaled_dot_product"],
-    "concepts_required": ["rnn_intro", "matrix_multiplication"],
+    "concepts_taught": [
+      "self_attention",
+      "query_key_value",
+      "attention_scores",
+      "multi_head_attention",
+      "scaled_dot_product"
+    ],
+    "concepts_required": [
+      "rnn_intro",
+      "matrix_multiplication"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["transformers", "nlp", "machine_translation"],
+    "real_world_application": [
+      "transformers",
+      "nlp",
+      "machine_translation"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

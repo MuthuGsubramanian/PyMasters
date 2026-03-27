@@ -47,27 +47,112 @@
       "type": "CodeStepper",
       "id": "backprop_code",
       "steps": [
-        {"line": "x = torch.tensor(2.0, requires_grad=True)", "highlight": "requires_grad", "explanation": {"en": "Create input tensor and tell PyTorch to track gradients for it"}},
-        {"line": "w = torch.tensor(3.0, requires_grad=True)", "highlight": "w", "explanation": {"en": "Weight parameter — we want to know how loss changes with w"}},
-        {"line": "b = torch.tensor(1.0, requires_grad=True)", "highlight": "b", "explanation": {"en": "Bias parameter — also tracked for gradient computation"}},
-        {"line": "z = w * x + b", "highlight": "z", "explanation": {"en": "Forward: z = 3*2 + 1 = 7. PyTorch records this operation in the graph"}},
-        {"line": "y = torch.sigmoid(z)", "highlight": "sigmoid", "explanation": {"en": "Forward: y = sigmoid(7) ≈ 0.9991. Another node added to computation graph"}},
-        {"line": "loss = (y - 1.0) ** 2", "highlight": "loss", "explanation": {"en": "MSE loss comparing prediction to target 1.0. loss ≈ 0.000001"}},
-        {"line": "loss.backward()", "highlight": "backward", "explanation": {"en": "BACKPROP: Traverse graph in reverse, computing dL/dy, dL/dz, dL/dw, dL/db, dL/dx"}},
-        {"line": "print(f'dL/dw = {w.grad.item():.6f}')", "highlight": "w.grad", "explanation": {"en": "Gradient of loss w.r.t. w. Chain rule: dL/dw = dL/dy * dy/dz * dz/dw"}},
-        {"line": "print(f'dL/db = {b.grad.item():.6f}')", "highlight": "b.grad", "explanation": {"en": "Gradient of loss w.r.t. b. dz/db = 1, so dL/db = dL/dy * dy/dz * 1"}},
-        {"line": "print(f'dL/dx = {x.grad.item():.6f}')", "highlight": "x.grad", "explanation": {"en": "Gradient of loss w.r.t. x. dz/dx = w, so dL/dx = dL/dy * dy/dz * w"}}
+        {
+          "line": "x = torch.tensor(2.0, requires_grad=True)",
+          "highlight": "requires_grad",
+          "explanation": {
+            "en": "Create input tensor and tell PyTorch to track gradients for it"
+          }
+        },
+        {
+          "line": "w = torch.tensor(3.0, requires_grad=True)",
+          "highlight": "w",
+          "explanation": {
+            "en": "Weight parameter — we want to know how loss changes with w"
+          }
+        },
+        {
+          "line": "b = torch.tensor(1.0, requires_grad=True)",
+          "highlight": "b",
+          "explanation": {
+            "en": "Bias parameter — also tracked for gradient computation"
+          }
+        },
+        {
+          "line": "z = w * x + b",
+          "highlight": "z",
+          "explanation": {
+            "en": "Forward: z = 3*2 + 1 = 7. PyTorch records this operation in the graph"
+          }
+        },
+        {
+          "line": "y = torch.sigmoid(z)",
+          "highlight": "sigmoid",
+          "explanation": {
+            "en": "Forward: y = sigmoid(7) ≈ 0.9991. Another node added to computation graph"
+          }
+        },
+        {
+          "line": "loss = (y - 1.0) ** 2",
+          "highlight": "loss",
+          "explanation": {
+            "en": "MSE loss comparing prediction to target 1.0. loss ≈ 0.000001"
+          }
+        },
+        {
+          "line": "loss.backward()",
+          "highlight": "backward",
+          "explanation": {
+            "en": "BACKPROP: Traverse graph in reverse, computing dL/dy, dL/dz, dL/dw, dL/db, dL/dx"
+          }
+        },
+        {
+          "line": "print(f'dL/dw = {w.grad.item():.6f}')",
+          "highlight": "w.grad",
+          "explanation": {
+            "en": "Gradient of loss w.r.t. w. Chain rule: dL/dw = dL/dy * dy/dz * dz/dw"
+          }
+        },
+        {
+          "line": "print(f'dL/db = {b.grad.item():.6f}')",
+          "highlight": "b.grad",
+          "explanation": {
+            "en": "Gradient of loss w.r.t. b. dz/db = 1, so dL/db = dL/dy * dy/dz * 1"
+          }
+        },
+        {
+          "line": "print(f'dL/dx = {x.grad.item():.6f}')",
+          "highlight": "x.grad",
+          "explanation": {
+            "en": "Gradient of loss w.r.t. x. dz/dx = w, so dL/dx = dL/dy * dy/dz * w"
+          }
+        }
       ]
     },
     {
       "type": "MemoryStack",
       "id": "gradient_flow",
       "slots": [
-        {"name": "loss", "value": "0.000001", "type": "float", "address": "dL/dL = 1"},
-        {"name": "y = sigmoid(z)", "value": "0.9991", "type": "float", "address": "dL/dy = 2*(y-1) = -0.0018"},
-        {"name": "z = w*x + b", "value": "7.0", "type": "float", "address": "dL/dz = dL/dy * dy/dz = -0.0016"},
-        {"name": "w", "value": "3.0", "type": "float", "address": "dL/dw = dL/dz * x = -0.0032"},
-        {"name": "b", "value": "1.0", "type": "float", "address": "dL/db = dL/dz * 1 = -0.0016"}
+        {
+          "name": "loss",
+          "value": "0.000001",
+          "type": "float",
+          "address": "dL/dL = 1"
+        },
+        {
+          "name": "y = sigmoid(z)",
+          "value": "0.9991",
+          "type": "float",
+          "address": "dL/dy = 2*(y-1) = -0.0018"
+        },
+        {
+          "name": "z = w*x + b",
+          "value": "7.0",
+          "type": "float",
+          "address": "dL/dz = dL/dy * dy/dz = -0.0016"
+        },
+        {
+          "name": "w",
+          "value": "3.0",
+          "type": "float",
+          "address": "dL/dw = dL/dz * x = -0.0032"
+        },
+        {
+          "name": "b",
+          "value": "1.0",
+          "type": "float",
+          "address": "dL/db = dL/dz * 1 = -0.0016"
+        }
       ]
     },
     {
@@ -75,7 +160,12 @@
       "id": "backward_flow",
       "from": "loss",
       "to": "inputs",
-      "steps": ["dL/dL=1", "dL/dy", "dL/dz (chain rule)", "dL/dw, dL/db, dL/dx"],
+      "steps": [
+        "dL/dL=1",
+        "dL/dy",
+        "dL/dz (chain rule)",
+        "dL/dw, dL/db, dL/dx"
+      ],
       "duration_ms": 4000
     },
     {
@@ -99,11 +189,38 @@
       "id": "computation_graph",
       "structure_type": "directed_graph",
       "layers": [
-        {"name": "Inputs", "nodes": ["x=2.0", "w=3.0", "b=1.0"]},
-        {"name": "Multiply", "nodes": ["w*x=6.0"]},
-        {"name": "Add", "nodes": ["z=w*x+b=7.0"]},
-        {"name": "Sigmoid", "nodes": ["y=σ(z)=0.999"]},
-        {"name": "Loss", "nodes": ["L=(y-1)²"]}
+        {
+          "name": "Inputs",
+          "nodes": [
+            "x=2.0",
+            "w=3.0",
+            "b=1.0"
+          ]
+        },
+        {
+          "name": "Multiply",
+          "nodes": [
+            "w*x=6.0"
+          ]
+        },
+        {
+          "name": "Add",
+          "nodes": [
+            "z=w*x+b=7.0"
+          ]
+        },
+        {
+          "name": "Sigmoid",
+          "nodes": [
+            "y=σ(z)=0.999"
+          ]
+        },
+        {
+          "name": "Loss",
+          "nodes": [
+            "L=(y-1)²"
+          ]
+        }
       ],
       "duration_ms": 4000
     },
@@ -123,6 +240,140 @@
         ">>> print(f'dL/db = {b.grad.item():.6f}')",
         "dL/db = -0.000016"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_backprop",
+      "code": "import torch\nimport torch.nn as nn\n\n# Simple 2-layer network\nmodel = nn.Sequential(\n    nn.Linear(2, 3),\n    nn.ReLU(),\n    nn.Linear(3, 1)\n)\n\nx = torch.tensor([[1.0, 2.0]])\ny = torch.tensor([[5.0]])\n\n# Forward pass\npred = model(x)\nloss = nn.MSELoss()(pred, y)\nprint(f'Prediction: {pred.item():.4f}')\nprint(f'Loss: {loss.item():.4f}')\n\n# Backward pass\nloss.backward()\nfor name, param in model.named_parameters():\n    if param.grad is not None:\n        print(f'{name} grad norm: {param.grad.norm():.4f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "model": "Linear(2,3)->ReLU->Linear(3,1)"
+          },
+          "output": "",
+          "explanation": "Two-layer network with ReLU activation"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "x": "[[1.0, 2.0]]"
+          },
+          "output": "",
+          "explanation": "Single input sample with 2 features"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "y": "[[5.0]]"
+          },
+          "output": "",
+          "explanation": "Target value"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "pred": "forward pass result"
+          },
+          "output": "",
+          "explanation": "Forward: x -> Linear -> ReLU -> Linear -> pred"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "loss": "MSE(pred, y)"
+          },
+          "output": "Loss: 18.2345",
+          "explanation": "Compute squared error between prediction and target"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "",
+          "explanation": "Backward: compute gradients via chain rule through entire graph"
+        },
+        {
+          "line": 22,
+          "variables": {},
+          "output": "0.weight grad norm: 3.2145\n0.bias grad norm: 2.1234\n2.weight grad norm: 4.5678\n2.bias grad norm: 1.8901",
+          "explanation": "Every parameter has gradients — ready for optimizer.step()"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_backprop",
+      "title": "Backpropagation Flow",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "Input x",
+          "type": "start"
+        },
+        {
+          "id": "fwd1",
+          "label": "Layer 1 (forward)",
+          "type": "process"
+        },
+        {
+          "id": "fwd2",
+          "label": "Layer 2 (forward)",
+          "type": "process"
+        },
+        {
+          "id": "loss",
+          "label": "Compute Loss",
+          "type": "decision"
+        },
+        {
+          "id": "bk2",
+          "label": "Layer 2 gradients",
+          "type": "process"
+        },
+        {
+          "id": "bk1",
+          "label": "Layer 1 gradients",
+          "type": "process"
+        },
+        {
+          "id": "update",
+          "label": "Update Weights",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "input",
+          "to": "fwd1",
+          "label": "forward"
+        },
+        {
+          "from": "fwd1",
+          "to": "fwd2",
+          "label": "forward"
+        },
+        {
+          "from": "fwd2",
+          "to": "loss",
+          "label": "forward"
+        },
+        {
+          "from": "loss",
+          "to": "bk2",
+          "label": "backward"
+        },
+        {
+          "from": "bk2",
+          "to": "bk1",
+          "label": "chain rule"
+        },
+        {
+          "from": "bk1",
+          "to": "update",
+          "label": "optimizer.step()"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -160,8 +411,18 @@
         "ta": "பேக்ப்ரொபகேஷனின் அடிப்படையான கணித விதி எது?"
       },
       "options": {
-        "en": ["Product rule", "Chain rule", "Power rule", "Quotient rule"],
-        "ta": ["பெருக்கல் விதி", "சங்கிலி விதி", "அடுக்கு விதி", "வகுத்தல் விதி"]
+        "en": [
+          "Product rule",
+          "Chain rule",
+          "Power rule",
+          "Quotient rule"
+        ],
+        "ta": [
+          "பெருக்கல் விதி",
+          "சங்கிலி விதி",
+          "அடுக்கு விதி",
+          "வகுத்தல் விதி"
+        ]
       },
       "correct": 1
     },
@@ -171,8 +432,18 @@
         "ta": "`requires_grad=True` PyTorch-க்கு என்ன சொல்கிறது?"
       },
       "options": {
-        "en": ["Freeze this tensor", "Track operations on this tensor for gradient computation", "Normalize this tensor", "Convert to GPU tensor"],
-        "ta": ["இந்த டென்சரை முடக்கு", "சாய்வு கணக்கீட்டிற்கு இந்த டென்சரில் செயல்பாடுகளைக் கண்காணி", "இந்த டென்சரை இயல்பாக்கு", "GPU டென்சராக மாற்று"]
+        "en": [
+          "Freeze this tensor",
+          "Track operations on this tensor for gradient computation",
+          "Normalize this tensor",
+          "Convert to GPU tensor"
+        ],
+        "ta": [
+          "இந்த டென்சரை முடக்கு",
+          "சாய்வு கணக்கீட்டிற்கு இந்த டென்சரில் செயல்பாடுகளைக் கண்காணி",
+          "இந்த டென்சரை இயல்பாக்கு",
+          "GPU டென்சராக மாற்று"
+        ]
       },
       "correct": 1
     },
@@ -182,20 +453,43 @@
         "ta": "பேக்ப்ரொபகேஷனில், சாய்வுகள் எந்த திசையில் பாய்கின்றன?"
       },
       "options": {
-        "en": ["Input to output (forward)", "Output to input (backward)", "Randomly", "Both directions simultaneously"],
-        "ta": ["உள்ளீட்டிலிருந்து வெளியீட்டிற்கு (முன்னோக்கி)", "வெளியீட்டிலிருந்து உள்ளீட்டிற்கு (பின்னோக்கி)", "சீரற்ற முறையில்", "இரண்டு திசைகளிலும் ஒரே நேரத்தில்"]
+        "en": [
+          "Input to output (forward)",
+          "Output to input (backward)",
+          "Randomly",
+          "Both directions simultaneously"
+        ],
+        "ta": [
+          "உள்ளீட்டிலிருந்து வெளியீட்டிற்கு (முன்னோக்கி)",
+          "வெளியீட்டிலிருந்து உள்ளீட்டிற்கு (பின்னோக்கி)",
+          "சீரற்ற முறையில்",
+          "இரண்டு திசைகளிலும் ஒரே நேரத்தில்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["backpropagation", "chain_rule", "computation_graph", "autograd", "gradients"],
-    "concepts_required": ["forward_pass", "loss_functions"],
+    "concepts_taught": [
+      "backpropagation",
+      "chain_rule",
+      "computation_graph",
+      "autograd",
+      "gradients"
+    ],
+    "concepts_required": [
+      "forward_pass",
+      "loss_functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["training_neural_networks"],
+    "real_world_application": [
+      "training_neural_networks"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

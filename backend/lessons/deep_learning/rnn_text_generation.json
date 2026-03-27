@@ -176,6 +176,91 @@
         "Epoch  50: loss=1.52 | 'helo wold'",
         "Epoch 200: loss=0.31 | 'hello world'"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_rnn_textgen",
+      "code": "import torch\nimport torch.nn as nn\n\nclass TextGenerator(nn.Module):\n    def __init__(self, vocab_size, embed_dim, hidden_dim):\n        super().__init__()\n        self.embed = nn.Embedding(vocab_size, embed_dim)\n        self.lstm = nn.LSTM(embed_dim, hidden_dim, batch_first=True)\n        self.fc = nn.Linear(hidden_dim, vocab_size)\n    def forward(self, x, hidden=None):\n        x = self.embed(x)\n        out, hidden = self.lstm(x, hidden)\n        return self.fc(out), hidden\n\nmodel = TextGenerator(vocab_size=100, embed_dim=32, hidden_dim=64)\nx = torch.randint(0, 100, (1, 15))\nlogits, hidden = model(x)\nprint(f'Logits: {logits.shape}')",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "embed": "Embedding(100, 32)"
+          },
+          "output": "",
+          "explanation": "Map character indices to 32-dim vectors"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "lstm": "LSTM(32, 64)"
+          },
+          "output": "",
+          "explanation": "LSTM processes embedded sequence"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "fc": "Linear(64, 100)"
+          },
+          "output": "",
+          "explanation": "Project to vocab size for next-char prediction"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "x.shape": "(1, 15)"
+          },
+          "output": "",
+          "explanation": "1 sequence of 15 character indices"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Logits: torch.Size([1, 15, 100])",
+          "explanation": "At each position, predict next character (100 options)"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_text_generation",
+      "title": "Character-by-Character Generation",
+      "loopVariable": "step",
+      "iterations": [
+        {
+          "iteration": 1,
+          "state": {
+            "input": "H",
+            "predicted": "e"
+          },
+          "description": "Seed with 'H', generate 'e'"
+        },
+        {
+          "iteration": 2,
+          "state": {
+            "input": "e",
+            "predicted": "l"
+          },
+          "description": "Feed 'e', generate 'l'"
+        },
+        {
+          "iteration": 3,
+          "state": {
+            "input": "l",
+            "predicted": "l"
+          },
+          "description": "Feed 'l', generate 'l'"
+        },
+        {
+          "iteration": 4,
+          "state": {
+            "input": "l",
+            "predicted": "o"
+          },
+          "description": "Feed 'l', generate 'o' -> 'Hello'"
+        }
+      ]
     }
   ],
   "practice_challenges": [

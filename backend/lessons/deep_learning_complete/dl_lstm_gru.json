@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "lstm_code",
       "steps": [
-        {"line": "lstm = nn.LSTM(input_size=10, hidden_size=32, num_layers=2, batch_first=True)", "highlight": "LSTM", "explanation": {"en": "2-layer LSTM: 10 input features, 32-dim hidden/cell state per layer"}},
-        {"line": "output, (h_n, c_n) = lstm(x)", "highlight": "output", "explanation": {"en": "LSTM returns output AND (hidden_state, cell_state). Cell state is LSTM's long-term memory"}},
-        {"line": "# h_n shape: [num_layers, batch, hidden_size]", "highlight": "h_n", "explanation": {"en": "Final hidden state for each layer. h_n[-1] is the last layer's final hidden state"}},
-        {"line": "# c_n shape: [num_layers, batch, hidden_size]", "highlight": "c_n", "explanation": {"en": "Cell state: the 'conveyor belt' of long-term memory. Unique to LSTM (GRU lacks this)"}},
-        {"line": "gru = nn.GRU(input_size=10, hidden_size=32, num_layers=2)", "highlight": "GRU", "explanation": {"en": "GRU: simpler than LSTM with only 2 gates (reset and update). No separate cell state"}},
-        {"line": "self.embedding = nn.Embedding(vocab_size, embed_dim)", "highlight": "Embedding", "explanation": {"en": "Convert word indices to dense vectors. vocab_size words, each becomes embed_dim-dimensional"}},
-        {"line": "self.lstm = nn.LSTM(..., bidirectional=True)", "highlight": "bidirectional", "explanation": {"en": "Process sequence both forward and backward. Doubles hidden size in output"}},
-        {"line": "hidden = torch.cat((h_n[-2], h_n[-1]), dim=1)", "highlight": "cat", "explanation": {"en": "Concatenate forward and backward final hidden states for classification"}},
-        {"line": "self.fc = nn.Linear(hidden_dim * 2, num_classes)", "highlight": "fc", "explanation": {"en": "Classifier takes concatenated bidirectional hidden state (*2 for both directions)"}},
-        {"line": "# LSTM params: 4 * ((input+hidden)*hidden + hidden)", "highlight": "params", "explanation": {"en": "LSTM has 4x more parameters than vanilla RNN due to 4 weight matrices (3 gates + candidate)"}}
+        {
+          "line": "lstm = nn.LSTM(input_size=10, hidden_size=32, num_layers=2, batch_first=True)",
+          "highlight": "LSTM",
+          "explanation": {
+            "en": "2-layer LSTM: 10 input features, 32-dim hidden/cell state per layer"
+          }
+        },
+        {
+          "line": "output, (h_n, c_n) = lstm(x)",
+          "highlight": "output",
+          "explanation": {
+            "en": "LSTM returns output AND (hidden_state, cell_state). Cell state is LSTM's long-term memory"
+          }
+        },
+        {
+          "line": "# h_n shape: [num_layers, batch, hidden_size]",
+          "highlight": "h_n",
+          "explanation": {
+            "en": "Final hidden state for each layer. h_n[-1] is the last layer's final hidden state"
+          }
+        },
+        {
+          "line": "# c_n shape: [num_layers, batch, hidden_size]",
+          "highlight": "c_n",
+          "explanation": {
+            "en": "Cell state: the 'conveyor belt' of long-term memory. Unique to LSTM (GRU lacks this)"
+          }
+        },
+        {
+          "line": "gru = nn.GRU(input_size=10, hidden_size=32, num_layers=2)",
+          "highlight": "GRU",
+          "explanation": {
+            "en": "GRU: simpler than LSTM with only 2 gates (reset and update). No separate cell state"
+          }
+        },
+        {
+          "line": "self.embedding = nn.Embedding(vocab_size, embed_dim)",
+          "highlight": "Embedding",
+          "explanation": {
+            "en": "Convert word indices to dense vectors. vocab_size words, each becomes embed_dim-dimensional"
+          }
+        },
+        {
+          "line": "self.lstm = nn.LSTM(..., bidirectional=True)",
+          "highlight": "bidirectional",
+          "explanation": {
+            "en": "Process sequence both forward and backward. Doubles hidden size in output"
+          }
+        },
+        {
+          "line": "hidden = torch.cat((h_n[-2], h_n[-1]), dim=1)",
+          "highlight": "cat",
+          "explanation": {
+            "en": "Concatenate forward and backward final hidden states for classification"
+          }
+        },
+        {
+          "line": "self.fc = nn.Linear(hidden_dim * 2, num_classes)",
+          "highlight": "fc",
+          "explanation": {
+            "en": "Classifier takes concatenated bidirectional hidden state (*2 for both directions)"
+          }
+        },
+        {
+          "line": "# LSTM params: 4 * ((input+hidden)*hidden + hidden)",
+          "highlight": "params",
+          "explanation": {
+            "en": "LSTM has 4x more parameters than vanilla RNN due to 4 weight matrices (3 gates + candidate)"
+          }
+        }
       ]
     },
     {
@@ -64,12 +124,48 @@
       "id": "lstm_cell",
       "structure_type": "lstm_gates",
       "layers": [
-        {"name": "Forget Gate", "nodes": ["f_t = σ(W_f·[h_{t-1}, x_t] + b_f)"], "type": "gate"},
-        {"name": "Input Gate", "nodes": ["i_t = σ(W_i·[h_{t-1}, x_t] + b_i)"], "type": "gate"},
-        {"name": "Candidate", "nodes": ["c̃_t = tanh(W_c·[h_{t-1}, x_t] + b_c)"], "type": "candidate"},
-        {"name": "Cell Update", "nodes": ["c_t = f_t * c_{t-1} + i_t * c̃_t"], "type": "update"},
-        {"name": "Output Gate", "nodes": ["o_t = σ(W_o·[h_{t-1}, x_t] + b_o)"], "type": "gate"},
-        {"name": "Hidden State", "nodes": ["h_t = o_t * tanh(c_t)"], "type": "output"}
+        {
+          "name": "Forget Gate",
+          "nodes": [
+            "f_t = σ(W_f·[h_{t-1}, x_t] + b_f)"
+          ],
+          "type": "gate"
+        },
+        {
+          "name": "Input Gate",
+          "nodes": [
+            "i_t = σ(W_i·[h_{t-1}, x_t] + b_i)"
+          ],
+          "type": "gate"
+        },
+        {
+          "name": "Candidate",
+          "nodes": [
+            "c̃_t = tanh(W_c·[h_{t-1}, x_t] + b_c)"
+          ],
+          "type": "candidate"
+        },
+        {
+          "name": "Cell Update",
+          "nodes": [
+            "c_t = f_t * c_{t-1} + i_t * c̃_t"
+          ],
+          "type": "update"
+        },
+        {
+          "name": "Output Gate",
+          "nodes": [
+            "o_t = σ(W_o·[h_{t-1}, x_t] + b_o)"
+          ],
+          "type": "gate"
+        },
+        {
+          "name": "Hidden State",
+          "nodes": [
+            "h_t = o_t * tanh(c_t)"
+          ],
+          "type": "output"
+        }
       ],
       "duration_ms": 5000
     },
@@ -92,8 +188,14 @@
     {
       "type": "ComparisonPanel",
       "id": "lstm_gru_comparison",
-      "left": {"label": "LSTM", "content": "3 gates (forget, input, output)\nSeparate cell state\nMore parameters\nBetter for long sequences"},
-      "right": {"label": "GRU", "content": "2 gates (reset, update)\nNo cell state\nFewer parameters\nFaster training, often similar accuracy"},
+      "left": {
+        "label": "LSTM",
+        "content": "3 gates (forget, input, output)\nSeparate cell state\nMore parameters\nBetter for long sequences"
+      },
+      "right": {
+        "label": "GRU",
+        "content": "2 gates (reset, update)\nNo cell state\nFewer parameters\nFaster training, often similar accuracy"
+      },
       "duration_ms": 3000
     },
     {
@@ -101,7 +203,14 @@
       "id": "lstm_flow",
       "from": "input",
       "to": "output",
-      "steps": ["x_t + h_{t-1}", "Forget gate", "Input gate", "Update cell", "Output gate", "h_t"],
+      "steps": [
+        "x_t + h_{t-1}",
+        "Forget gate",
+        "Input gate",
+        "Update cell",
+        "Output gate",
+        "h_t"
+      ],
       "duration_ms": 3000
     },
     {
@@ -117,6 +226,65 @@
         "torch.Size([2, 4, 32])",
         ">>> c_n.shape     # final cell per layer",
         "torch.Size([2, 4, 32])"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_lstm",
+      "code": "import torch\nimport torch.nn as nn\n\n# LSTM\nlstm = nn.LSTM(input_size=10, hidden_size=32, num_layers=2, batch_first=True)\nx = torch.randn(4, 15, 10)  # batch=4, seq=15, features=10\noutput, (h_n, c_n) = lstm(x)\nprint(f'LSTM output: {output.shape}')\nprint(f'Hidden: {h_n.shape}, Cell: {c_n.shape}')\n\n# GRU (simpler, often comparable)\ngru = nn.GRU(input_size=10, hidden_size=32, num_layers=2, batch_first=True)\noutput_g, h_g = gru(x)\nprint(f'GRU output: {output_g.shape}')\nprint(f'GRU hidden: {h_g.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "lstm": "LSTM(10, 32, 2 layers)"
+          },
+          "output": "",
+          "explanation": "LSTM: input=10, hidden=32, stacked 2 layers"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "x.shape": "(4, 15, 10)"
+          },
+          "output": "",
+          "explanation": "Batch of 4 sequences, length 15, 10 features"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "output": "all timestep outputs",
+            "h_n": "final hidden",
+            "c_n": "final cell"
+          },
+          "output": "",
+          "explanation": "LSTM returns output, (hidden, cell_state)"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "LSTM output: torch.Size([4, 15, 32])",
+          "explanation": "32-dim hidden state at each of 15 timesteps"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Hidden: torch.Size([2, 4, 32]), Cell: torch.Size([2, 4, 32])",
+          "explanation": "2 layers x batch=4 x hidden=32"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "gru": "GRU(10, 32, 2 layers)"
+          },
+          "output": "",
+          "explanation": "GRU: simpler than LSTM (no cell state), often similar performance"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "GRU hidden: torch.Size([2, 4, 32])",
+          "explanation": "GRU only has hidden state — no separate cell state"
+        }
       ]
     },
     {
@@ -155,8 +323,18 @@
         "ta": "LSTM-ல் cell state என்ன?"
       },
       "options": {
-        "en": ["The model's learning rate", "A long-term memory pathway that carries information across many time steps", "The loss function", "The batch normalization parameter"],
-        "ta": ["மாதிரியின் learning rate", "பல நேரப் படிகளில் தகவலை கொண்டு செல்லும் நீண்ட கால நினைவக பாதை", "இழப்பு செயல்பாடு", "Batch normalization அளவுரு"]
+        "en": [
+          "The model's learning rate",
+          "A long-term memory pathway that carries information across many time steps",
+          "The loss function",
+          "The batch normalization parameter"
+        ],
+        "ta": [
+          "மாதிரியின் learning rate",
+          "பல நேரப் படிகளில் தகவலை கொண்டு செல்லும் நீண்ட கால நினைவக பாதை",
+          "இழப்பு செயல்பாடு",
+          "Batch normalization அளவுரு"
+        ]
       },
       "correct": 1
     },
@@ -166,8 +344,18 @@
         "ta": "GRU LSTM-லிருந்து எப்படி வேறுபடுகிறது?"
       },
       "options": {
-        "en": ["GRU is always more accurate", "GRU has 2 gates and no separate cell state, making it simpler", "GRU cannot process sequences", "GRU requires more memory"],
-        "ta": ["GRU எப்போதும் மிகவும் துல்லியமானது", "GRU-க்கு 2 gates உள்ளன, தனி cell state இல்லை, எளிமையானது", "GRU வரிசைகளை செயலாக்க முடியாது", "GRU-க்கு அதிக நினைவகம் தேவை"]
+        "en": [
+          "GRU is always more accurate",
+          "GRU has 2 gates and no separate cell state, making it simpler",
+          "GRU cannot process sequences",
+          "GRU requires more memory"
+        ],
+        "ta": [
+          "GRU எப்போதும் மிகவும் துல்லியமானது",
+          "GRU-க்கு 2 gates உள்ளன, தனி cell state இல்லை, எளிமையானது",
+          "GRU வரிசைகளை செயலாக்க முடியாது",
+          "GRU-க்கு அதிக நினைவகம் தேவை"
+        ]
       },
       "correct": 1
     },
@@ -177,20 +365,46 @@
         "ta": "LSTM-ல் 'bidirectional=True' என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Doubles the learning rate", "Processes the sequence both forward and backward, doubling the hidden state size", "Reverses the input", "Makes training twice as fast"],
-        "ta": ["Learning rate-ஐ இரட்டிப்பாக்குகிறது", "வரிசையை முன்னும் பின்னும் செயலாக்கி, hidden state அளவை இரட்டிப்பாக்குகிறது", "உள்ளீட்டை தலைகீழாக மாற்றுகிறது", "பயிற்சியை இரு மடங்கு வேகமாக ஆக்குகிறது"]
+        "en": [
+          "Doubles the learning rate",
+          "Processes the sequence both forward and backward, doubling the hidden state size",
+          "Reverses the input",
+          "Makes training twice as fast"
+        ],
+        "ta": [
+          "Learning rate-ஐ இரட்டிப்பாக்குகிறது",
+          "வரிசையை முன்னும் பின்னும் செயலாக்கி, hidden state அளவை இரட்டிப்பாக்குகிறது",
+          "உள்ளீட்டை தலைகீழாக மாற்றுகிறது",
+          "பயிற்சியை இரு மடங்கு வேகமாக ஆக்குகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["lstm", "gru", "gates", "cell_state", "bidirectional", "embedding"],
-    "concepts_required": ["rnn_intro", "vanishing_gradients"],
+    "concepts_taught": [
+      "lstm",
+      "gru",
+      "gates",
+      "cell_state",
+      "bidirectional",
+      "embedding"
+    ],
+    "concepts_required": [
+      "rnn_intro",
+      "vanishing_gradients"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["sentiment_analysis", "machine_translation", "speech_recognition"],
+    "real_world_application": [
+      "sentiment_analysis",
+      "machine_translation",
+      "speech_recognition"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

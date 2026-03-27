@@ -38,15 +38,25 @@
         },
         {
           "label": "Supervised",
-          "children": ["Classification", "Regression"]
+          "children": [
+            "Classification",
+            "Regression"
+          ]
         },
         {
           "label": "Unsupervised",
-          "children": ["Clustering", "Dimensionality Reduction"]
+          "children": [
+            "Clustering",
+            "Dimensionality Reduction"
+          ]
         },
         {
           "label": "Reinforcement",
-          "children": ["Agent", "Environment", "Reward Signal"]
+          "children": [
+            "Agent",
+            "Environment",
+            "Reward Signal"
+          ]
         }
       ],
       "duration_ms": 4000
@@ -58,62 +68,86 @@
         {
           "line": "from sklearn.linear_model import LinearRegression",
           "highlight": "LinearRegression",
-          "explanation": { "en": "Import a supervised learning model for regression tasks" }
+          "explanation": {
+            "en": "Import a supervised learning model for regression tasks"
+          }
         },
         {
           "line": "from sklearn.cluster import KMeans",
           "highlight": "KMeans",
-          "explanation": { "en": "Import an unsupervised learning model for clustering" }
+          "explanation": {
+            "en": "Import an unsupervised learning model for clustering"
+          }
         },
         {
           "line": "import numpy as np",
           "highlight": "numpy",
-          "explanation": { "en": "NumPy provides the numerical arrays ML models consume" }
+          "explanation": {
+            "en": "NumPy provides the numerical arrays ML models consume"
+          }
         },
         {
           "line": "X_train = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])",
           "highlight": "X_train",
-          "explanation": { "en": "Create training features — each row is a sample with 2 features" }
+          "explanation": {
+            "en": "Create training features — each row is a sample with 2 features"
+          }
         },
         {
           "line": "y_train = np.array([3, 7, 11, 15])",
           "highlight": "y_train",
-          "explanation": { "en": "Create labels — the target values we want to predict" }
+          "explanation": {
+            "en": "Create labels — the target values we want to predict"
+          }
         },
         {
           "line": "reg = LinearRegression()",
           "highlight": "reg",
-          "explanation": { "en": "Instantiate the supervised model — no learning yet" }
+          "explanation": {
+            "en": "Instantiate the supervised model — no learning yet"
+          }
         },
         {
           "line": "reg.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Train the model: it learns the relationship between X and y" }
+          "explanation": {
+            "en": "Train the model: it learns the relationship between X and y"
+          }
         },
         {
           "line": "prediction = reg.predict(np.array([[9, 10]]))",
           "highlight": "predict",
-          "explanation": { "en": "Use the trained model to predict the label for new data" }
+          "explanation": {
+            "en": "Use the trained model to predict the label for new data"
+          }
         },
         {
           "line": "print(f'Prediction: {prediction[0]:.2f}')",
           "highlight": "print",
-          "explanation": { "en": "Display the predicted value — the model generalizes from training data" }
+          "explanation": {
+            "en": "Display the predicted value — the model generalizes from training data"
+          }
         },
         {
           "line": "kmeans = KMeans(n_clusters=2, random_state=42)",
           "highlight": "KMeans",
-          "explanation": { "en": "Instantiate an unsupervised model — it will find 2 groups" }
+          "explanation": {
+            "en": "Instantiate an unsupervised model — it will find 2 groups"
+          }
         },
         {
           "line": "kmeans.fit(X_train)",
           "highlight": "fit",
-          "explanation": { "en": "Fit without labels — the algorithm discovers structure on its own" }
+          "explanation": {
+            "en": "Fit without labels — the algorithm discovers structure on its own"
+          }
         },
         {
           "line": "print(f'Cluster labels: {kmeans.labels_}')",
           "highlight": "labels_",
-          "explanation": { "en": "Each sample is assigned to a cluster — no human labels needed" }
+          "explanation": {
+            "en": "Each sample is assigned to a cluster — no human labels needed"
+          }
         }
       ]
     },
@@ -140,6 +174,128 @@
         "Prediction: 19.00",
         "Cluster labels: [0 0 1 1]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_ml_what",
+      "code": "from sklearn.linear_model import LinearRegression\nimport numpy as np\n\n# Traditional programming: rules -> output\ndef is_spam_rules(email):\n    if 'free' in email.lower() and 'click' in email.lower():\n        return True\n    return False\n\n# ML approach: data -> model -> output\nX = np.array([[1, 0], [0, 1], [1, 1], [0, 0]])\ny = np.array([1, 0, 1, 0])  # spam or not\nmodel = LinearRegression().fit(X, y)\nprint(model.predict([[1, 0]]))",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "approach": "rule-based"
+          },
+          "output": "",
+          "explanation": "Traditional: programmer writes explicit rules"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "explanation": "Hard-coded: if 'free' AND 'click' -> spam"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "X": "4 samples, 2 features"
+          },
+          "output": "",
+          "explanation": "ML: provide examples, let model learn the pattern"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "y": "[1, 0, 1, 0]"
+          },
+          "output": "",
+          "explanation": "Labels: 1=spam, 0=not spam"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "model": "fitted"
+          },
+          "output": "",
+          "explanation": "Model learns weights from data — no explicit rules"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "prediction": "~1.0"
+          },
+          "output": "[1.]",
+          "explanation": "Predicts spam for new input — learned from examples"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_ml_types",
+      "title": "Types of Machine Learning",
+      "nodes": [
+        {
+          "id": "ml",
+          "label": "Machine Learning",
+          "type": "start"
+        },
+        {
+          "id": "sup",
+          "label": "Supervised Learning",
+          "type": "process"
+        },
+        {
+          "id": "unsup",
+          "label": "Unsupervised Learning",
+          "type": "process"
+        },
+        {
+          "id": "rl",
+          "label": "Reinforcement Learning",
+          "type": "process"
+        },
+        {
+          "id": "clf",
+          "label": "Classification / Regression",
+          "type": "end"
+        },
+        {
+          "id": "cluster",
+          "label": "Clustering / Dim. Reduction",
+          "type": "end"
+        },
+        {
+          "id": "agent",
+          "label": "Agent / Reward",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "ml",
+          "to": "sup"
+        },
+        {
+          "from": "ml",
+          "to": "unsup"
+        },
+        {
+          "from": "ml",
+          "to": "rl"
+        },
+        {
+          "from": "sup",
+          "to": "clf"
+        },
+        {
+          "from": "unsup",
+          "to": "cluster"
+        },
+        {
+          "from": "rl",
+          "to": "agent"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -171,8 +327,18 @@
         "ta": "எந்த வகை ML பெயரிடப்பட்ட பயிற்சி தரவைப் பயன்படுத்துகிறது?"
       },
       "options": {
-        "en": ["Unsupervised Learning", "Supervised Learning", "Reinforcement Learning", "Transfer Learning"],
-        "ta": ["மேற்பார்வையிடப்படாத கற்றல்", "மேற்பார்வையிடப்பட்ட கற்றல்", "வலுவூட்டல் கற்றல்", "பரிமாற்ற கற்றல்"]
+        "en": [
+          "Unsupervised Learning",
+          "Supervised Learning",
+          "Reinforcement Learning",
+          "Transfer Learning"
+        ],
+        "ta": [
+          "மேற்பார்வையிடப்படாத கற்றல்",
+          "மேற்பார்வையிடப்பட்ட கற்றல்",
+          "வலுவூட்டல் கற்றல்",
+          "பரிமாற்ற கற்றல்"
+        ]
       },
       "correct": 1
     },
@@ -182,8 +348,18 @@
         "ta": "K-Means கிளஸ்டரிங் எந்த வகை கற்றலுக்கு உதாரணம்?"
       },
       "options": {
-        "en": ["Supervised Learning", "Reinforcement Learning", "Unsupervised Learning", "Semi-supervised Learning"],
-        "ta": ["மேற்பார்வையிடப்பட்ட கற்றல்", "வலுவூட்டல் கற்றல்", "மேற்பார்வையிடப்படாத கற்றல்", "அரை-மேற்பார்வை கற்றல்"]
+        "en": [
+          "Supervised Learning",
+          "Reinforcement Learning",
+          "Unsupervised Learning",
+          "Semi-supervised Learning"
+        ],
+        "ta": [
+          "மேற்பார்வையிடப்பட்ட கற்றல்",
+          "வலுவூட்டல் கற்றல்",
+          "மேற்பார்வையிடப்படாத கற்றல்",
+          "அரை-மேற்பார்வை கற்றல்"
+        ]
       },
       "correct": 2
     },
@@ -193,20 +369,43 @@
         "ta": "வலுவூட்டல் கற்றலில், ஒரு செயலைச் செய்த பிறகு முகவர் என்ன பெறுகிறார்?"
       },
       "options": {
-        "en": ["Labeled data", "A reward or penalty", "A cluster assignment", "A regression coefficient"],
-        "ta": ["பெயரிடப்பட்ட தரவு", "வெகுமதி அல்லது தண்டனை", "கிளஸ்டர் ஒதுக்கீடு", "பின்னடைவு குணகம்"]
+        "en": [
+          "Labeled data",
+          "A reward or penalty",
+          "A cluster assignment",
+          "A regression coefficient"
+        ],
+        "ta": [
+          "பெயரிடப்பட்ட தரவு",
+          "வெகுமதி அல்லது தண்டனை",
+          "கிளஸ்டர் ஒதுக்கீடு",
+          "பின்னடைவு குணகம்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["supervised_learning", "unsupervised_learning", "reinforcement_learning", "sklearn_basics"],
-    "concepts_required": ["python_basics"],
+    "concepts_taught": [
+      "supervised_learning",
+      "unsupervised_learning",
+      "reinforcement_learning",
+      "sklearn_basics"
+    ],
+    "concepts_required": [
+      "python_basics"
+    ],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["spam_detection", "recommendation_systems", "game_ai"],
+    "real_world_application": [
+      "spam_detection",
+      "recommendation_systems",
+      "game_ai"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["ml_fundamentals"]
+    "path_memberships": [
+      "ml_fundamentals"
+    ]
   }
 }

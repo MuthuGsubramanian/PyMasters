@@ -47,27 +47,112 @@
       "type": "CodeStepper",
       "id": "rnn_code",
       "steps": [
-        {"line": "rnn = nn.RNN(input_size=10, hidden_size=20, num_layers=1, batch_first=True)", "highlight": "RNN", "explanation": {"en": "Create RNN: 10 input features per step, 20-dim hidden state, batch_first means [batch, seq, features]"}},
-        {"line": "x = torch.randn(3, 5, 10)", "highlight": "input", "explanation": {"en": "Batch of 3 sequences, each with 5 time steps, 10 features per step"}},
-        {"line": "output, hidden = rnn(x)", "highlight": "forward", "explanation": {"en": "Returns output (hidden state at every step) and final hidden state"}},
-        {"line": "# output shape: [3, 5, 20]", "highlight": "output", "explanation": {"en": "Hidden state at each of the 5 time steps. Useful for sequence-to-sequence tasks"}},
-        {"line": "# hidden shape: [1, 3, 20]", "highlight": "hidden", "explanation": {"en": "Final hidden state (last time step). Useful for classification: summarizes entire sequence"}},
-        {"line": "self.W_xh = nn.Linear(input_size, hidden_size)", "highlight": "W_xh", "explanation": {"en": "Weight matrix from input to hidden state — transforms current input"}},
-        {"line": "self.W_hh = nn.Linear(hidden_size, hidden_size)", "highlight": "W_hh", "explanation": {"en": "Weight matrix from hidden to hidden — carries information from past"}},
-        {"line": "h = torch.zeros(batch_size, self.hidden_size)", "highlight": "h_init", "explanation": {"en": "Initialize hidden state to zeros at the start of each sequence"}},
-        {"line": "h = torch.tanh(self.W_xh(x[:, t, :]) + self.W_hh(h))", "highlight": "update", "explanation": {"en": "Core RNN equation: new hidden = tanh(transform_input + transform_previous_hidden)"}},
-        {"line": "outputs.append(h)", "highlight": "collect", "explanation": {"en": "Save hidden state at each time step for later use"}}
+        {
+          "line": "rnn = nn.RNN(input_size=10, hidden_size=20, num_layers=1, batch_first=True)",
+          "highlight": "RNN",
+          "explanation": {
+            "en": "Create RNN: 10 input features per step, 20-dim hidden state, batch_first means [batch, seq, features]"
+          }
+        },
+        {
+          "line": "x = torch.randn(3, 5, 10)",
+          "highlight": "input",
+          "explanation": {
+            "en": "Batch of 3 sequences, each with 5 time steps, 10 features per step"
+          }
+        },
+        {
+          "line": "output, hidden = rnn(x)",
+          "highlight": "forward",
+          "explanation": {
+            "en": "Returns output (hidden state at every step) and final hidden state"
+          }
+        },
+        {
+          "line": "# output shape: [3, 5, 20]",
+          "highlight": "output",
+          "explanation": {
+            "en": "Hidden state at each of the 5 time steps. Useful for sequence-to-sequence tasks"
+          }
+        },
+        {
+          "line": "# hidden shape: [1, 3, 20]",
+          "highlight": "hidden",
+          "explanation": {
+            "en": "Final hidden state (last time step). Useful for classification: summarizes entire sequence"
+          }
+        },
+        {
+          "line": "self.W_xh = nn.Linear(input_size, hidden_size)",
+          "highlight": "W_xh",
+          "explanation": {
+            "en": "Weight matrix from input to hidden state — transforms current input"
+          }
+        },
+        {
+          "line": "self.W_hh = nn.Linear(hidden_size, hidden_size)",
+          "highlight": "W_hh",
+          "explanation": {
+            "en": "Weight matrix from hidden to hidden — carries information from past"
+          }
+        },
+        {
+          "line": "h = torch.zeros(batch_size, self.hidden_size)",
+          "highlight": "h_init",
+          "explanation": {
+            "en": "Initialize hidden state to zeros at the start of each sequence"
+          }
+        },
+        {
+          "line": "h = torch.tanh(self.W_xh(x[:, t, :]) + self.W_hh(h))",
+          "highlight": "update",
+          "explanation": {
+            "en": "Core RNN equation: new hidden = tanh(transform_input + transform_previous_hidden)"
+          }
+        },
+        {
+          "line": "outputs.append(h)",
+          "highlight": "collect",
+          "explanation": {
+            "en": "Save hidden state at each time step for later use"
+          }
+        }
       ]
     },
     {
       "type": "MemoryStack",
       "id": "rnn_unrolled",
       "slots": [
-        {"name": "t=0: h0", "value": "tanh(W_xh*x0 + W_hh*h_init)", "type": "hidden", "address": "Step 0"},
-        {"name": "t=1: h1", "value": "tanh(W_xh*x1 + W_hh*h0)", "type": "hidden", "address": "Step 1"},
-        {"name": "t=2: h2", "value": "tanh(W_xh*x2 + W_hh*h1)", "type": "hidden", "address": "Step 2"},
-        {"name": "t=3: h3", "value": "tanh(W_xh*x3 + W_hh*h2)", "type": "hidden", "address": "Step 3"},
-        {"name": "t=4: h4", "value": "tanh(W_xh*x4 + W_hh*h3)", "type": "hidden", "address": "Step 4 (final)"}
+        {
+          "name": "t=0: h0",
+          "value": "tanh(W_xh*x0 + W_hh*h_init)",
+          "type": "hidden",
+          "address": "Step 0"
+        },
+        {
+          "name": "t=1: h1",
+          "value": "tanh(W_xh*x1 + W_hh*h0)",
+          "type": "hidden",
+          "address": "Step 1"
+        },
+        {
+          "name": "t=2: h2",
+          "value": "tanh(W_xh*x2 + W_hh*h1)",
+          "type": "hidden",
+          "address": "Step 2"
+        },
+        {
+          "name": "t=3: h3",
+          "value": "tanh(W_xh*x3 + W_hh*h2)",
+          "type": "hidden",
+          "address": "Step 3"
+        },
+        {
+          "name": "t=4: h4",
+          "value": "tanh(W_xh*x4 + W_hh*h3)",
+          "type": "hidden",
+          "address": "Step 4 (final)"
+        }
       ]
     },
     {
@@ -75,7 +160,13 @@
       "id": "rnn_flow",
       "from": "input_sequence",
       "to": "output",
-      "steps": ["x0 -> h0", "x1 + h0 -> h1", "x2 + h1 -> h2", "x3 + h2 -> h3", "x4 + h3 -> h4 (output)"],
+      "steps": [
+        "x0 -> h0",
+        "x1 + h0 -> h1",
+        "x2 + h1 -> h2",
+        "x3 + h2 -> h3",
+        "x4 + h3 -> h4 (output)"
+      ],
       "duration_ms": 4000
     },
     {
@@ -97,8 +188,14 @@
     {
       "type": "ComparisonPanel",
       "id": "rnn_vs_ff",
-      "left": {"label": "Feedforward Network", "content": "Fixed-size input\nNo memory\nEach input independent\nGood for: images, tabular"},
-      "right": {"label": "Recurrent Network", "content": "Variable-length sequences\nHidden state = memory\nContext from previous steps\nGood for: text, audio, time series"},
+      "left": {
+        "label": "Feedforward Network",
+        "content": "Fixed-size input\nNo memory\nEach input independent\nGood for: images, tabular"
+      },
+      "right": {
+        "label": "Recurrent Network",
+        "content": "Variable-length sequences\nHidden state = memory\nContext from previous steps\nGood for: text, audio, time series"
+      },
       "duration_ms": 3000
     },
     {
@@ -114,6 +211,127 @@
         "torch.Size([1, 3, 20])",
         ">>> # Same weights used at every time step!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_rnn_intro",
+      "code": "import torch\nimport torch.nn as nn\n\nrnn = nn.RNN(input_size=10, hidden_size=20, num_layers=1, batch_first=True)\n\n# Input: (batch=1, seq_len=5, features=10)\nx = torch.randn(1, 5, 10)\noutput, hidden = rnn(x)\nprint(f'Input shape:  {x.shape}')\nprint(f'Output shape: {output.shape}')\nprint(f'Hidden shape: {hidden.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "rnn": "RNN(10, 20)"
+          },
+          "output": "",
+          "explanation": "RNN: input_size=10, hidden_size=20"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "x.shape": "(1, 5, 10)"
+          },
+          "output": "",
+          "explanation": "1 sequence of length 5, each step has 10 features"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "output": "all hidden states",
+            "hidden": "last hidden state"
+          },
+          "output": "",
+          "explanation": "RNN processes sequence step by step"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Input shape:  torch.Size([1, 5, 10])",
+          "explanation": "5 time steps, 10 features each"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Output shape: torch.Size([1, 5, 20])",
+          "explanation": "Hidden state at each of 5 time steps (size 20)"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Hidden shape: torch.Size([1, 1, 20])",
+          "explanation": "Final hidden state — summary of entire sequence"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_rnn_unrolled",
+      "title": "RNN Unrolled Through Time",
+      "nodes": [
+        {
+          "id": "x0",
+          "label": "x[0]",
+          "type": "start"
+        },
+        {
+          "id": "h0",
+          "label": "h[0]",
+          "type": "process"
+        },
+        {
+          "id": "x1",
+          "label": "x[1]",
+          "type": "start"
+        },
+        {
+          "id": "h1",
+          "label": "h[1]",
+          "type": "process"
+        },
+        {
+          "id": "x2",
+          "label": "x[2]",
+          "type": "start"
+        },
+        {
+          "id": "h2",
+          "label": "h[2]",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "x0",
+          "to": "h0"
+        },
+        {
+          "from": "h0",
+          "to": "h1",
+          "label": "hidden state"
+        },
+        {
+          "from": "x1",
+          "to": "h1"
+        },
+        {
+          "from": "h1",
+          "to": "h2",
+          "label": "hidden state"
+        },
+        {
+          "from": "x2",
+          "to": "h2"
+        },
+        {
+          "from": "h2",
+          "to": "out"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -151,8 +369,18 @@
         "ta": "RNN-ல் hidden state என்ன குறிக்கிறது?"
       },
       "options": {
-        "en": ["The model's weights", "A compressed summary of all previous time steps", "The loss value", "The input at the current step"],
-        "ta": ["மாதிரியின் எடைகள்", "முந்தைய அனைத்து நேரப் படிகளின் சுருக்கப்பட்ட சுருக்கம்", "இழப்பு மதிப்பு", "தற்போதைய படியில் உள்ளீடு"]
+        "en": [
+          "The model's weights",
+          "A compressed summary of all previous time steps",
+          "The loss value",
+          "The input at the current step"
+        ],
+        "ta": [
+          "மாதிரியின் எடைகள்",
+          "முந்தைய அனைத்து நேரப் படிகளின் சுருக்கப்பட்ட சுருக்கம்",
+          "இழப்பு மதிப்பு",
+          "தற்போதைய படியில் உள்ளீடு"
+        ]
       },
       "correct": 1
     },
@@ -162,8 +390,18 @@
         "ta": "வெண்ணிலா RNN-களின் முக்கிய வரம்பு என்ன?"
       },
       "options": {
-        "en": ["They can only process images", "They suffer from vanishing gradients for long sequences", "They require GPUs", "They can only handle binary input"],
-        "ta": ["படங்களை மட்டுமே செயலாக்க முடியும்", "நீண்ட வரிசைகளுக்கு மறையும் சாய்வுகளால் பாதிக்கப்படுகின்றன", "GPU-க்கள் தேவை", "binary உள்ளீட்டை மட்டுமே கையாள முடியும்"]
+        "en": [
+          "They can only process images",
+          "They suffer from vanishing gradients for long sequences",
+          "They require GPUs",
+          "They can only handle binary input"
+        ],
+        "ta": [
+          "படங்களை மட்டுமே செயலாக்க முடியும்",
+          "நீண்ட வரிசைகளுக்கு மறையும் சாய்வுகளால் பாதிக்கப்படுகின்றன",
+          "GPU-க்கள் தேவை",
+          "binary உள்ளீட்டை மட்டுமே கையாள முடியும்"
+        ]
       },
       "correct": 1
     },
@@ -173,20 +411,46 @@
         "ta": "batch_first=True உடன் nn.RNN-ல், output tensor என்ன கொண்டுள்ளது?"
       },
       "options": {
-        "en": ["Only the final prediction", "The hidden state at every time step", "The input repeated", "The loss at each step"],
-        "ta": ["இறுதி கணிப்பு மட்டும்", "ஒவ்வொரு நேரப் படியிலும் hidden state", "உள்ளீடு திரும்ப", "ஒவ்வொரு படியிலும் இழப்பு"]
+        "en": [
+          "Only the final prediction",
+          "The hidden state at every time step",
+          "The input repeated",
+          "The loss at each step"
+        ],
+        "ta": [
+          "இறுதி கணிப்பு மட்டும்",
+          "ஒவ்வொரு நேரப் படியிலும் hidden state",
+          "உள்ளீடு திரும்ப",
+          "ஒவ்வொரு படியிலும் இழப்பு"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["rnn", "hidden_state", "sequential_processing", "time_steps", "weight_sharing"],
-    "concepts_required": ["pytorch_basics", "forward_pass", "backpropagation"],
+    "concepts_taught": [
+      "rnn",
+      "hidden_state",
+      "sequential_processing",
+      "time_steps",
+      "weight_sharing"
+    ],
+    "concepts_required": [
+      "pytorch_basics",
+      "forward_pass",
+      "backpropagation"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["nlp", "time_series", "speech_recognition"],
+    "real_world_application": [
+      "nlp",
+      "time_series",
+      "speech_recognition"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

@@ -105,6 +105,91 @@
         "Sending to Bob... Done!",
         "2 emails sent in 1.2 seconds"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from email.mime.text import MIMEText\n\ncontacts = [\n    {'name': 'Alice', 'email': 'alice@example.com'},\n    {'name': 'Bob', 'email': 'bob@example.com'},\n]\n\nfor contact in contacts:\n    body = f\"Hi {contact['name']}, Happy Birthday!\"\n    msg = MIMEText(body)\n    msg['Subject'] = 'Happy Birthday!'\n    msg['To'] = contact['email']\n    print(f\"Sent to {contact['name']} at {contact['email']}\")",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import MIMEText to create email messages"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "contacts": "[{Alice,...},{Bob,...}]"
+          },
+          "output": "",
+          "description": "List of contacts with name and email"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "contact": "{'name':'Alice','email':'alice@example.com'}"
+          },
+          "output": "",
+          "description": "First iteration: processing Alice"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "body": "'Hi Alice, Happy Birthday!'"
+          },
+          "output": "",
+          "description": "Personalized message using f-string"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "msg": "MIMEText object"
+          },
+          "output": "",
+          "description": "Wrap body in MIME email format"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Sent to Alice at alice@example.com",
+          "description": "Email composed for Alice"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "contact": "{'name':'Bob',...}"
+          },
+          "output": "Sent to Bob at bob@example.com",
+          "description": "Second iteration: Bob's email composed"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "email_loop",
+      "iterable": "contacts",
+      "iterations": [
+        {
+          "index": 0,
+          "value": "Alice",
+          "variables": {
+            "body": "Hi Alice, Happy Birthday!",
+            "msg['To']": "alice@example.com"
+          },
+          "description": "Compose and send to Alice"
+        },
+        {
+          "index": 1,
+          "value": "Bob",
+          "variables": {
+            "body": "Hi Bob, Happy Birthday!",
+            "msg['To']": "bob@example.com"
+          },
+          "description": "Compose and send to Bob"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

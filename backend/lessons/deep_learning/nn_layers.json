@@ -157,6 +157,65 @@
         "Layer 4 params:     650",
         "Total:         242,762"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_nn_layers",
+      "code": "import torch\nimport torch.nn as nn\n\nmodel = nn.Sequential(\n    nn.Linear(4, 8),     # Hidden layer 1\n    nn.ReLU(),\n    nn.Linear(8, 4),     # Hidden layer 2\n    nn.ReLU(),\n    nn.Linear(4, 3),     # Output layer\n)\n\nx = torch.randn(2, 4)  # batch of 2, 4 features\nout = model(x)\nprint(f'Input:  {x.shape}')\nprint(f'Output: {out.shape}')\n\n# Inspect layer shapes\nfor i, layer in enumerate(model):\n    if hasattr(layer, 'weight'):\n        print(f'Layer {i}: {layer.weight.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "model": "Sequential(5 modules)"
+          },
+          "output": "",
+          "explanation": "3 linear layers with ReLU activations between them"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "hidden1": "Linear(4, 8)"
+          },
+          "output": "",
+          "explanation": "First hidden: 4 inputs -> 8 neurons"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "hidden2": "Linear(8, 4)"
+          },
+          "output": "",
+          "explanation": "Second hidden: 8 -> 4 neurons"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "output_layer": "Linear(4, 3)"
+          },
+          "output": "",
+          "explanation": "Output: 4 -> 3 classes"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "x.shape": "(2, 4)"
+          },
+          "output": "",
+          "explanation": "Batch of 2 samples, 4 features each"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Output: torch.Size([2, 3])",
+          "explanation": "Each sample gets 3 output values"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Layer 0: torch.Size([8, 4])\nLayer 2: torch.Size([4, 8])\nLayer 4: torch.Size([3, 4])",
+          "explanation": "Weight matrices show connections between layers"
+        }
+      ]
     }
   ],
   "practice_challenges": [

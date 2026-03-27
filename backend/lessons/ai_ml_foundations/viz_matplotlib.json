@@ -124,6 +124,68 @@
         "y-axis: -1 to 1",
         "Legend: sin(x)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_matplotlib",
+      "code": "import matplotlib.pyplot as plt\nimport numpy as np\n\nx = np.linspace(0, 10, 100)\ny = np.sin(x)\n\nfig, ax = plt.subplots(figsize=(8, 4))\nax.plot(x, y, color='blue', linewidth=2, label='sin(x)')\nax.set_title('Sine Wave')\nax.set_xlabel('x')\nax.set_ylabel('sin(x)')\nax.legend()\nplt.show()",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import matplotlib's pyplot interface"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "x": "100 points from 0 to 10"
+          },
+          "output": "",
+          "explanation": "Create evenly spaced x values"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "y": "sin values"
+          },
+          "output": "",
+          "explanation": "Compute sine for each x"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "fig": "Figure",
+            "ax": "Axes"
+          },
+          "output": "",
+          "explanation": "Create figure and axes — the OO approach"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "explanation": "Plot line with color, width, and label"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "explanation": "Set title — always label your plots"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "",
+          "explanation": "Add legend to identify the line"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "[Sine wave plot displayed]",
+          "explanation": "Render the plot"
+        }
+      ]
     }
   ],
   "practice_challenges": [

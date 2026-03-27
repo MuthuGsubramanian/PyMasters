@@ -194,12 +194,30 @@
       "type": "FlowArrow",
       "id": "react_flow",
       "nodes": [
-        {"label": "User: 'What is 15% tip on ₹2400?'", "type": "input"},
-        {"label": "Thought: I need to calculate 15% of 2400", "type": "reasoning"},
-        {"label": "Action: calculate('2400 * 0.15')", "type": "tool_call"},
-        {"label": "Observation: 360.0", "type": "observation"},
-        {"label": "Thought: The tip is ₹360", "type": "reasoning"},
-        {"label": "Final Answer: A 15% tip on ₹2400 is ₹360", "type": "output"}
+        {
+          "label": "User: 'What is 15% tip on ₹2400?'",
+          "type": "input"
+        },
+        {
+          "label": "Thought: I need to calculate 15% of 2400",
+          "type": "reasoning"
+        },
+        {
+          "label": "Action: calculate('2400 * 0.15')",
+          "type": "tool_call"
+        },
+        {
+          "label": "Observation: 360.0",
+          "type": "observation"
+        },
+        {
+          "label": "Thought: The tip is ₹360",
+          "type": "reasoning"
+        },
+        {
+          "label": "Final Answer: A 15% tip on ₹2400 is ₹360",
+          "type": "output"
+        }
       ],
       "direction": "vertical",
       "duration_ms": 5000
@@ -230,6 +248,114 @@
         ">>> print(result['output'])",
         "A 15% tip on ₹2400 is ₹360.00"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_langchain_agents",
+      "code": "from langchain.agents import tool\n\n@tool\ndef calculator(expression: str) -> str:\n    '''Evaluate a math expression.'''\n    return str(eval(expression))\n\n@tool\ndef get_weather(city: str) -> str:\n    '''Get current weather for a city.'''\n    return f'{city}: 28C, Sunny'\n\n# Agent decides which tools to call\n# Input: 'Temperature in Chennai in Fahrenheit?'\n# Thought: I need weather first, then convert\n# Action: get_weather('Chennai') => '28C, Sunny'\n# Action: calculator('28*9/5+32') => '82.4'\n# Answer: 'Chennai is 82.4F and Sunny'",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "tool": "calculator"
+          },
+          "output": "",
+          "explanation": "@tool decorator registers function as agent tool"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "tool": "get_weather"
+          },
+          "output": "",
+          "explanation": "Agent chooses which tool based on the question"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "thought": "need weather + conversion"
+          },
+          "output": "",
+          "explanation": "ReAct: Reason about what's needed"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "action": "get_weather('Chennai')"
+          },
+          "output": "",
+          "explanation": "Action 1: Call weather tool => '28C, Sunny'"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "action": "calculator('28*9/5+32')"
+          },
+          "output": "",
+          "explanation": "Action 2: Convert C to F => 82.4"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Chennai is 82.4F and Sunny",
+          "explanation": "Agent combined two tools for multi-step answer"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_langchain_agents",
+      "nodes": [
+        {
+          "id": "question",
+          "label": "User question",
+          "next": [
+            "think"
+          ]
+        },
+        {
+          "id": "think",
+          "label": "Thought: What do I need?",
+          "next": [
+            "select"
+          ]
+        },
+        {
+          "id": "select",
+          "label": "Select tool",
+          "next": [
+            "act"
+          ]
+        },
+        {
+          "id": "act",
+          "label": "Action: Call tool",
+          "next": [
+            "observe"
+          ]
+        },
+        {
+          "id": "observe",
+          "label": "Observation: Tool result",
+          "next": [
+            "enough"
+          ]
+        },
+        {
+          "id": "enough",
+          "label": "Enough info?",
+          "next": [
+            "think",
+            "answer"
+          ]
+        },
+        {
+          "id": "answer",
+          "label": "Final Answer",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -282,8 +408,18 @@
         "ta": "ReAct pattern-ல், Action-க்குப் பிறகு என்ன வரும்?"
       },
       "options": {
-        "en": ["Another Action", "Observation", "Final Answer", "Thought"],
-        "ta": ["மற்றொரு Action", "Observation", "Final Answer", "Thought"]
+        "en": [
+          "Another Action",
+          "Observation",
+          "Final Answer",
+          "Thought"
+        ],
+        "ta": [
+          "மற்றொரு Action",
+          "Observation",
+          "Final Answer",
+          "Thought"
+        ]
       },
       "correct": 1
     },
@@ -310,13 +446,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["langchain_agents", "tools", "react_pattern", "agent_executor"],
-    "concepts_required": ["langchain_intro"],
+    "concepts_taught": [
+      "langchain_agents",
+      "tools",
+      "react_pattern",
+      "agent_executor"
+    ],
+    "concepts_required": [
+      "langchain_intro"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["autonomous_ai", "task_automation"],
+    "real_world_application": [
+      "autonomous_ai",
+      "task_automation"
+    ],
     "category": "ai_frameworks",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

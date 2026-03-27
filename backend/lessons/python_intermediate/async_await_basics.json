@@ -218,12 +218,183 @@
       "type": "FlowArrow",
       "id": "execution_flow",
       "flows": [
-        {"label": "gather()", "from": "make_breakfast", "to": ["brew_coffee", "toast_bread"]},
-        {"label": "await sleep(2)", "from": "brew_coffee", "to": "event_loop"},
-        {"label": "await sleep(3)", "from": "toast_bread", "to": "event_loop"},
-        {"label": "resume", "from": "event_loop", "to": "brew_coffee"},
-        {"label": "resume", "from": "event_loop", "to": "toast_bread"}
+        {
+          "label": "gather()",
+          "from": "make_breakfast",
+          "to": [
+            "brew_coffee",
+            "toast_bread"
+          ]
+        },
+        {
+          "label": "await sleep(2)",
+          "from": "brew_coffee",
+          "to": "event_loop"
+        },
+        {
+          "label": "await sleep(3)",
+          "from": "toast_bread",
+          "to": "event_loop"
+        },
+        {
+          "label": "resume",
+          "from": "event_loop",
+          "to": "brew_coffee"
+        },
+        {
+          "label": "resume",
+          "from": "event_loop",
+          "to": "toast_bread"
+        }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import asyncio\n\nasync def brew_coffee():\n    print('Start brewing...')\n    await asyncio.sleep(2)\n    print('Coffee ready!')\n    return 'coffee'\n\nasync def toast_bread():\n    print('Start toasting...')\n    await asyncio.sleep(3)\n    print('Toast ready!')\n    return 'toast'\n\nasync def main():\n    results = await asyncio.gather(\n        brew_coffee(), toast_bread()\n    )\n    print(f'Breakfast: {results}')\n\nasyncio.run(main())",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Define async coroutine brew_coffee"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "description": "Define async coroutine toast_bread"
+        },
+        {
+          "line": 21,
+          "variables": {},
+          "output": "",
+          "description": "asyncio.run starts the event loop"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Start brewing...\nStart toasting...",
+          "description": "gather starts BOTH coroutines concurrently"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "description": "brew_coffee awaits 2s - event loop switches to toast_bread"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Coffee ready!",
+          "description": "After 2s, brew_coffee resumes and finishes"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Toast ready!",
+          "description": "After 3s total, toast_bread finishes too"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "results": "['coffee', 'toast']"
+          },
+          "output": "Breakfast: ['coffee', 'toast']",
+          "description": "Total time ~3s (max), not 5s (sum)!"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "asyncio.gather()",
+          "type": "start"
+        },
+        {
+          "id": "brew_start",
+          "label": "brew_coffee starts",
+          "type": "process"
+        },
+        {
+          "id": "toast_start",
+          "label": "toast_bread starts",
+          "type": "process"
+        },
+        {
+          "id": "brew_await",
+          "label": "await sleep(2) - yield control",
+          "type": "process"
+        },
+        {
+          "id": "toast_await",
+          "label": "await sleep(3) - yield control",
+          "type": "process"
+        },
+        {
+          "id": "brew_done",
+          "label": "Coffee ready (2s)",
+          "type": "process"
+        },
+        {
+          "id": "toast_done",
+          "label": "Toast ready (3s)",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Both done in ~3s",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "brew_start"
+        },
+        {
+          "from": "start",
+          "to": "toast_start"
+        },
+        {
+          "from": "brew_start",
+          "to": "brew_await"
+        },
+        {
+          "from": "toast_start",
+          "to": "toast_await"
+        },
+        {
+          "from": "brew_await",
+          "to": "brew_done"
+        },
+        {
+          "from": "toast_await",
+          "to": "toast_done"
+        },
+        {
+          "from": "brew_done",
+          "to": "end"
+        },
+        {
+          "from": "toast_done",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "brew_start",
+        "toast_start",
+        "brew_await",
+        "toast_await",
+        "brew_done",
+        "toast_done",
+        "end"
+      ],
+      "variables": {},
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -278,8 +449,18 @@
         "ta": "task A 2s, task B 3s எடுத்தால், asyncio.gather(A, B) எவ்வளவு நேரம் எடுக்கும்?"
       },
       "options": {
-        "en": ["2 seconds", "3 seconds", "5 seconds", "6 seconds"],
-        "ta": ["2 வினாடிகள்", "3 வினாடிகள்", "5 வினாடிகள்", "6 வினாடிகள்"]
+        "en": [
+          "2 seconds",
+          "3 seconds",
+          "5 seconds",
+          "6 seconds"
+        ],
+        "ta": [
+          "2 வினாடிகள்",
+          "3 வினாடிகள்",
+          "5 வினாடிகள்",
+          "6 வினாடிகள்"
+        ]
       },
       "correct": 1
     },
@@ -306,13 +487,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["async_await", "asyncio", "coroutines", "event_loop", "gather"],
-    "concepts_required": ["functions", "generators"],
+    "concepts_taught": [
+      "async_await",
+      "asyncio",
+      "coroutines",
+      "event_loop",
+      "gather"
+    ],
+    "concepts_required": [
+      "functions",
+      "generators"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["web_servers", "API_calls", "IO_bound_tasks"],
+    "real_world_application": [
+      "web_servers",
+      "API_calls",
+      "IO_bound_tasks"
+    ],
     "category": "async",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

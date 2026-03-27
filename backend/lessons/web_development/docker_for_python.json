@@ -177,6 +177,115 @@
         "CONTAINER ID  IMAGE             STATUS   PORTS",
         "a1b2c3d4e5f6  pymaster-app      Up 5s    0.0.0.0:8000->8000/tcp"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_docker_python",
+      "title": "Dockerfile Build Process",
+      "code": "# Dockerfile\nFROM python:3.12-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nEXPOSE 8000\nCMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\"]",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "layer": "base"
+          },
+          "output": "Pulling python:3.12-slim...",
+          "explanation": "FROM sets base image -- slim is ~120MB"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "cwd": "/app"
+          },
+          "output": "",
+          "explanation": "WORKDIR creates and enters /app"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "COPY requirements.txt",
+          "explanation": "Copy requirements first for caching"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Installing deps...",
+          "explanation": "RUN installs dependencies -- cached layer"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "COPY . .",
+          "explanation": "Copy app files -- changes on code edit"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "explanation": "EXPOSE documents port 8000"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Ready to start",
+          "explanation": "CMD runs uvicorn on container start"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_docker_build",
+      "title": "Docker Build and Deploy Flow",
+      "nodes": [
+        {
+          "id": "dockerfile",
+          "label": "Dockerfile",
+          "type": "start"
+        },
+        {
+          "id": "build",
+          "label": "docker build",
+          "type": "process"
+        },
+        {
+          "id": "image",
+          "label": "Docker Image",
+          "type": "process"
+        },
+        {
+          "id": "run",
+          "label": "docker run",
+          "type": "process"
+        },
+        {
+          "id": "app",
+          "label": "App Serving\non :8000",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "dockerfile",
+          "to": "build",
+          "label": "Layers"
+        },
+        {
+          "from": "build",
+          "to": "image",
+          "label": "Tagged"
+        },
+        {
+          "from": "image",
+          "to": "run",
+          "label": "-p 8000:8000"
+        },
+        {
+          "from": "run",
+          "to": "app",
+          "label": "CMD"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -210,8 +319,18 @@
         "ta": "Docker படத்திற்கும் கொள்கலனுக்கும் என்ன வேறுபாடு?"
       },
       "options": {
-        "en": ["They are the same thing", "An image is a read-only template; a container is a running instance of an image", "A container is read-only; an image is running", "An image is for development; a container is for production"],
-        "ta": ["அவை ஒன்றே", "படம் படிக்க மட்டும் வார்ப்புரு; கொள்கலன் படத்தின் இயங்கும் நிகழ்வு", "கொள்கலன் படிக்க மட்டும்; படம் இயங்குகிறது", "படம் மேம்பாட்டிற்கு; கொள்கலன் உற்பத்திக்கு"]
+        "en": [
+          "They are the same thing",
+          "An image is a read-only template; a container is a running instance of an image",
+          "A container is read-only; an image is running",
+          "An image is for development; a container is for production"
+        ],
+        "ta": [
+          "அவை ஒன்றே",
+          "படம் படிக்க மட்டும் வார்ப்புரு; கொள்கலன் படத்தின் இயங்கும் நிகழ்வு",
+          "கொள்கலன் படிக்க மட்டும்; படம் இயங்குகிறது",
+          "படம் மேம்பாட்டிற்கு; கொள்கலன் உற்பத்திக்கு"
+        ]
       },
       "correct": 1
     },
@@ -221,8 +340,18 @@
         "ta": "Dockerfile-ல் COPY . . க்கு முன் COPY requirements.txt ஏன் செய்ய வேண்டும்?"
       },
       "options": {
-        "en": ["It's required by Docker", "Docker caches layers — if requirements haven't changed, pip install is skipped on rebuild", "It makes the image smaller", "It's a security requirement"],
-        "ta": ["Docker-க்கு தேவை", "Docker அடுக்குகளை கேச் செய்கிறது — requirements மாறவில்லை என்றால், மீண்டும் கட்டும்போது pip install தவிர்க்கப்படும்", "படத்தை சிறியதாக்குகிறது", "பாதுகாப்பு தேவை"]
+        "en": [
+          "It's required by Docker",
+          "Docker caches layers — if requirements haven't changed, pip install is skipped on rebuild",
+          "It makes the image smaller",
+          "It's a security requirement"
+        ],
+        "ta": [
+          "Docker-க்கு தேவை",
+          "Docker அடுக்குகளை கேச் செய்கிறது — requirements மாறவில்லை என்றால், மீண்டும் கட்டும்போது pip install தவிர்க்கப்படும்",
+          "படத்தை சிறியதாக்குகிறது",
+          "பாதுகாப்பு தேவை"
+        ]
       },
       "correct": 1
     },
@@ -232,20 +361,45 @@
         "ta": "'docker-compose up -d' என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Deletes all containers", "Builds images and starts all services in detached (background) mode", "Shows running containers", "Stops all services"],
-        "ta": ["அனைத்து கொள்கலன்களையும் நீக்குகிறது", "படங்களை உருவாக்கி அனைத்து சேவைகளையும் பின்னணி முறையில் தொடங்குகிறது", "இயங்கும் கொள்கலன்களைக் காட்டுகிறது", "அனைத்து சேவைகளையும் நிறுத்துகிறது"]
+        "en": [
+          "Deletes all containers",
+          "Builds images and starts all services in detached (background) mode",
+          "Shows running containers",
+          "Stops all services"
+        ],
+        "ta": [
+          "அனைத்து கொள்கலன்களையும் நீக்குகிறது",
+          "படங்களை உருவாக்கி அனைத்து சேவைகளையும் பின்னணி முறையில் தொடங்குகிறது",
+          "இயங்கும் கொள்கலன்களைக் காட்டுகிறது",
+          "அனைத்து சேவைகளையும் நிறுத்துகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["dockerfile", "docker_compose", "containers", "images", "volumes"],
-    "concepts_required": ["deployment_basics", "command_line"],
+    "concepts_taught": [
+      "dockerfile",
+      "docker_compose",
+      "containers",
+      "images",
+      "volumes"
+    ],
+    "concepts_required": [
+      "deployment_basics",
+      "command_line"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["containerization", "devops", "microservices"],
+    "real_world_application": [
+      "containerization",
+      "devops",
+      "microservices"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

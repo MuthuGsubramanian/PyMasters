@@ -50,6 +50,29 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "numbers = [1, 2, 3, 4, 5]\nsquares = [n ** 2 for n in numbers]\nprint(squares)\nevens = [n for n in numbers if n % 2 == 0]\nprint(evens)\nwords = ['hi', 'hello', 'hey']\nlengths = {w: len(w) for w in words}\nprint(lengths)",
+      "executionSteps": [
+        { "line": 1, "variables": { "numbers": [1, 2, 3, 4, 5] }, "output": "", "description": "Create a list of numbers 1 to 5" },
+        { "line": 2, "variables": { "numbers": [1, 2, 3, 4, 5], "squares": [1, 4, 9, 16, 25] }, "output": "", "description": "List comprehension squares each number" },
+        { "line": 3, "variables": { "numbers": [1, 2, 3, 4, 5], "squares": [1, 4, 9, 16, 25] }, "output": "[1, 4, 9, 16, 25]", "description": "Print the squares list" },
+        { "line": 4, "variables": { "numbers": [1, 2, 3, 4, 5], "squares": [1, 4, 9, 16, 25], "evens": [2, 4] }, "output": "[1, 4, 9, 16, 25]", "description": "Comprehension with filter: keep only even numbers" },
+        { "line": 5, "variables": { "numbers": [1, 2, 3, 4, 5], "squares": [1, 4, 9, 16, 25], "evens": [2, 4] }, "output": "[1, 4, 9, 16, 25]\n[2, 4]", "description": "Print the filtered evens" },
+        { "line": 6, "variables": { "words": ["hi", "hello", "hey"] }, "output": "[1, 4, 9, 16, 25]\n[2, 4]", "description": "Create a list of words" },
+        { "line": 7, "variables": { "words": ["hi", "hello", "hey"], "lengths": {"hi": 2, "hello": 5, "hey": 3} }, "output": "[1, 4, 9, 16, 25]\n[2, 4]", "description": "Dict comprehension maps each word to its length" },
+        { "line": 8, "variables": { "words": ["hi", "hello", "hey"], "lengths": {"hi": 2, "hello": 5, "hey": 3} }, "output": "[1, 4, 9, 16, 25]\n[2, 4]\n{'hi': 2, 'hello': 5, 'hey': 3}", "description": "Print the lengths dictionary" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "iterable": [1, 2, 3, 4, 5],
+      "expression": "n ** 2",
+      "result": [1, 4, 9, 16, 25],
+      "label": "[n ** 2 for n in numbers]",
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

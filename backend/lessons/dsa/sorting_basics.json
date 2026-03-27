@@ -163,22 +163,70 @@
       "type": "DataStructure",
       "id": "sort_visual",
       "structure_type": "list",
-      "initial_state": [64, 34, 25, 12, 22, 11, 90],
+      "initial_state": [
+        64,
+        34,
+        25,
+        12,
+        22,
+        11,
+        90
+      ],
       "animations": [
-        {"action": "remove", "index": 0, "value": "swap 64,34"},
-        {"action": "add", "index": 0, "value": 11},
-        {"action": "add", "index": 1, "value": 12}
+        {
+          "action": "remove",
+          "index": 0,
+          "value": "swap 64,34"
+        },
+        {
+          "action": "add",
+          "index": 0,
+          "value": 11
+        },
+        {
+          "action": "add",
+          "index": 1,
+          "value": 12
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "sort_comparison",
       "comparisons": [
-        {"label": "Bubble Sort", "values": [100, 10000, 1000000], "color": "#f74f4f"},
-        {"label": "Selection Sort", "values": [100, 10000, 1000000], "color": "#f7d44f"},
-        {"label": "Insertion Sort", "values": [10, 5000, 500000], "color": "#4ff7a4"}
+        {
+          "label": "Bubble Sort",
+          "values": [
+            100,
+            10000,
+            1000000
+          ],
+          "color": "#f74f4f"
+        },
+        {
+          "label": "Selection Sort",
+          "values": [
+            100,
+            10000,
+            1000000
+          ],
+          "color": "#f7d44f"
+        },
+        {
+          "label": "Insertion Sort",
+          "values": [
+            10,
+            5000,
+            500000
+          ],
+          "color": "#4ff7a4"
+        }
       ],
-      "x_labels": ["n=10", "n=100", "n=1000"]
+      "x_labels": [
+        "n=10",
+        "n=100",
+        "n=1000"
+      ]
     },
     {
       "type": "VariableBox",
@@ -197,6 +245,313 @@
         "Select:   [11, 12, 22, 25, 34, 64, 90]",
         "Insert:   [11, 12, 22, 25, 34, 64, 90]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_sorting_basics",
+      "code": "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        swapped = False\n        for j in range(n - 1 - i):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n                swapped = True\n        if not swapped: break\n    return arr\n\narr = [64, 34, 25, 12, 22, 11, 90]\nprint(bubble_sort(arr.copy()))",
+      "executionSteps": [
+        {
+          "line": 12,
+          "variables": {
+            "arr": [
+              64,
+              34,
+              25,
+              12,
+              22,
+              11,
+              90
+            ]
+          },
+          "output": "",
+          "explanation": "Unsorted array with 7 elements"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "i": 0,
+            "j": 0
+          },
+          "output": "",
+          "explanation": "Pass 1: compare 64 > 34? Yes, swap!"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "arr": [
+              34,
+              64,
+              25,
+              12,
+              22,
+              11,
+              90
+            ]
+          },
+          "output": "",
+          "explanation": "After swap: 34 and 64 exchanged positions"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "j": 1
+          },
+          "output": "",
+          "explanation": "Compare 64 > 25? Yes, swap! 64 bubbles right"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "arr": [
+              34,
+              25,
+              12,
+              22,
+              11,
+              64,
+              90
+            ]
+          },
+          "output": "",
+          "explanation": "End of pass 1: 90 in final position (largest bubbled up)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "i": 1
+          },
+          "output": "",
+          "explanation": "Pass 2: process remaining unsorted portion"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "i": 5
+          },
+          "output": "",
+          "explanation": "After all passes, every element is in place"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "[11, 12, 22, 25, 34, 64, 90]",
+          "explanation": "Sorted! Bubble sort made O(n^2) comparisons total"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "loop_viz_sorting_basics",
+      "arrayLabel": "Bubble Sort",
+      "initialArray": [
+        64,
+        34,
+        25,
+        12,
+        22,
+        11,
+        90
+      ],
+      "iterations": [
+        {
+          "pass": 1,
+          "comparing": [
+            0,
+            1
+          ],
+          "action": "swap",
+          "array": [
+            34,
+            64,
+            25,
+            12,
+            22,
+            11,
+            90
+          ]
+        },
+        {
+          "pass": 1,
+          "comparing": [
+            1,
+            2
+          ],
+          "action": "swap",
+          "array": [
+            34,
+            25,
+            64,
+            12,
+            22,
+            11,
+            90
+          ]
+        },
+        {
+          "pass": 1,
+          "comparing": [
+            2,
+            3
+          ],
+          "action": "swap",
+          "array": [
+            34,
+            25,
+            12,
+            64,
+            22,
+            11,
+            90
+          ]
+        },
+        {
+          "pass": 1,
+          "comparing": [
+            3,
+            4
+          ],
+          "action": "swap",
+          "array": [
+            34,
+            25,
+            12,
+            22,
+            64,
+            11,
+            90
+          ]
+        },
+        {
+          "pass": 1,
+          "comparing": [
+            4,
+            5
+          ],
+          "action": "swap",
+          "array": [
+            34,
+            25,
+            12,
+            22,
+            11,
+            64,
+            90
+          ]
+        },
+        {
+          "pass": 1,
+          "comparing": [
+            5,
+            6
+          ],
+          "action": "no_swap",
+          "array": [
+            34,
+            25,
+            12,
+            22,
+            11,
+            64,
+            90
+          ]
+        },
+        {
+          "pass": 2,
+          "comparing": [
+            0,
+            1
+          ],
+          "action": "swap",
+          "array": [
+            25,
+            34,
+            12,
+            22,
+            11,
+            64,
+            90
+          ]
+        },
+        {
+          "pass": "final",
+          "comparing": [],
+          "action": "done",
+          "array": [
+            11,
+            12,
+            22,
+            25,
+            34,
+            64,
+            90
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_sorting_basics",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start outer loop (passes)",
+          "next": [
+            "inner"
+          ]
+        },
+        {
+          "id": "inner",
+          "label": "Compare adjacent pair",
+          "next": [
+            "compare"
+          ]
+        },
+        {
+          "id": "compare",
+          "label": "Left > Right?",
+          "next": [
+            "swap",
+            "no_swap"
+          ]
+        },
+        {
+          "id": "swap",
+          "label": "Swap elements",
+          "next": [
+            "next_pair"
+          ]
+        },
+        {
+          "id": "no_swap",
+          "label": "Keep order",
+          "next": [
+            "next_pair"
+          ]
+        },
+        {
+          "id": "next_pair",
+          "label": "More pairs?",
+          "next": [
+            "inner",
+            "check_sorted"
+          ]
+        },
+        {
+          "id": "check_sorted",
+          "label": "Any swaps?",
+          "next": [
+            "start",
+            "done"
+          ]
+        },
+        {
+          "id": "done",
+          "label": "Array sorted!",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -228,8 +583,18 @@
         "ta": "கிட்டத்தட்ட வரிசைப்படுத்தப்பட்ட தரவில் எந்த அடிப்படை sorting algorithm மிகவும் திறமையானது?"
       },
       "options": {
-        "en": ["Bubble sort", "Selection sort", "Insertion sort", "All are equal"],
-        "ta": ["Bubble sort", "Selection sort", "Insertion sort", "அனைத்தும் சமம்"]
+        "en": [
+          "Bubble sort",
+          "Selection sort",
+          "Insertion sort",
+          "All are equal"
+        ],
+        "ta": [
+          "Bubble sort",
+          "Selection sort",
+          "Insertion sort",
+          "அனைத்தும் சமம்"
+        ]
       },
       "correct": 2
     },
@@ -239,8 +604,18 @@
         "ta": "மோசமான நிலையில் bubble sort-ன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"],
-        "ta": ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"]
+        "en": [
+          "O(n)",
+          "O(n log n)",
+          "O(n²)",
+          "O(2ⁿ)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(n log n)",
+          "O(n²)",
+          "O(2ⁿ)"
+        ]
       },
       "correct": 2
     },
@@ -250,20 +625,43 @@
         "ta": "மூன்று அடிப்படை sorts-ல் எது எப்போதும் குறைவான swaps செய்யும்?"
       },
       "options": {
-        "en": ["Bubble sort", "Selection sort", "Insertion sort", "They all make the same"],
-        "ta": ["Bubble sort", "Selection sort", "Insertion sort", "அனைத்தும் ஒரே அளவு"]
+        "en": [
+          "Bubble sort",
+          "Selection sort",
+          "Insertion sort",
+          "They all make the same"
+        ],
+        "ta": [
+          "Bubble sort",
+          "Selection sort",
+          "Insertion sort",
+          "அனைத்தும் ஒரே அளவு"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["bubble_sort", "selection_sort", "insertion_sort"],
-    "concepts_required": ["lists", "loops", "big_o"],
+    "concepts_taught": [
+      "bubble_sort",
+      "selection_sort",
+      "insertion_sort"
+    ],
+    "concepts_required": [
+      "lists",
+      "loops",
+      "big_o"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["small_dataset_sorting", "understanding_algorithm_design"],
+    "real_world_application": [
+      "small_dataset_sorting",
+      "understanding_algorithm_design"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

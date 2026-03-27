@@ -123,6 +123,122 @@
         "Added 3 pages from chapter3.pdf",
         "Done! Merged 3 files → merged.pdf (16 pages total)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from PyPDF2 import PdfReader, PdfWriter\n\nfiles = ['chapter1.pdf', 'chapter2.pdf', 'chapter3.pdf']\nwriter = PdfWriter()\ntotal_pages = 0\n\nfor pdf_file in files:\n    reader = PdfReader(pdf_file)\n    for page in reader.pages:\n        writer.add_page(page)\n    total_pages += len(reader.pages)\n    print(f'Added {len(reader.pages)} pages from {pdf_file}')\n\nwith open('merged.pdf', 'wb') as output:\n    writer.write(output)\nprint(f'Done! {total_pages} pages merged')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import PdfReader (read) and PdfWriter (create new PDF)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "files": "['chapter1.pdf','chapter2.pdf','chapter3.pdf']"
+          },
+          "output": "",
+          "description": "List of PDFs to merge"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "writer": "PdfWriter(empty)"
+          },
+          "output": "",
+          "description": "Empty writer that will hold all merged pages"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "pdf_file": "'chapter1.pdf'"
+          },
+          "output": "",
+          "description": "Process first PDF file"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "reader": "PdfReader(5 pages)"
+          },
+          "output": "",
+          "description": "Read chapter1 - it has 5 pages"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "total_pages": 5
+          },
+          "output": "Added 5 pages from chapter1.pdf",
+          "description": "All 5 pages added to writer"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "pdf_file": "'chapter2.pdf'"
+          },
+          "output": "Added 8 pages from chapter2.pdf",
+          "description": "chapter2 has 8 pages, total now 13"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "pdf_file": "'chapter3.pdf'"
+          },
+          "output": "Added 3 pages from chapter3.pdf",
+          "description": "chapter3 has 3 pages, total now 16"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "",
+          "description": "Write all 16 pages to merged.pdf"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Done! 16 pages merged",
+          "description": "All 3 files combined into one PDF"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "pdf_merge_loop",
+      "iterable": "files",
+      "iterations": [
+        {
+          "index": 0,
+          "value": "chapter1.pdf",
+          "variables": {
+            "pages": 5,
+            "total": 5
+          },
+          "description": "Read 5 pages from chapter1, add to writer"
+        },
+        {
+          "index": 1,
+          "value": "chapter2.pdf",
+          "variables": {
+            "pages": 8,
+            "total": 13
+          },
+          "description": "Read 8 pages from chapter2, running total: 13"
+        },
+        {
+          "index": 2,
+          "value": "chapter3.pdf",
+          "variables": {
+            "pages": 3,
+            "total": 16
+          },
+          "description": "Read 3 pages from chapter3, final total: 16"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

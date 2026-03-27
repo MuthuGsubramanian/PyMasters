@@ -184,11 +184,149 @@
       "id": "conftest_structure",
       "structure_type": "tree",
       "layers": [
-        { "label": "tests/", "count": "root", "color": "#4f8ef7" },
-        { "label": "conftest.py", "count": "shared fixtures", "color": "#6bcf7f" },
-        { "label": "test_api.py", "count": "uses fixtures", "color": "#ffd93d" },
-        { "label": "test_db.py", "count": "uses fixtures", "color": "#ffd93d" }
+        {
+          "label": "tests/",
+          "count": "root",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "conftest.py",
+          "count": "shared fixtures",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "test_api.py",
+          "count": "uses fixtures",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "test_db.py",
+          "count": "uses fixtures",
+          "color": "#ffd93d"
+        }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pytest_mock",
+      "title": "Mocking External APIs",
+      "code": "from unittest.mock import patch, Mock\n\ndef get_user(user_id):\n    import requests\n    return requests.get(f'https://api.example.com/users/{user_id}').json()\n\n@patch('requests.get')\ndef test_get_user(mock_get):\n    mock_get.return_value = Mock(json=lambda: {'id': 1, 'name': 'Alice'})\n    user = get_user(1)\n    assert user['name'] == 'Alice'\n    mock_get.assert_called_once()",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import patch and Mock"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "Function that calls external API"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "mock_get": "<MagicMock>"
+          },
+          "output": "",
+          "explanation": "@patch replaces requests.get with Mock"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "explanation": "Configure mock to return fake data"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "user": {
+              "id": 1,
+              "name": "Alice"
+            }
+          },
+          "output": "",
+          "explanation": "get_user calls mock -- no real HTTP"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "PASSED",
+          "explanation": "Assert mock data matches"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "",
+          "explanation": "Verify mock was called once"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_mock_tdd",
+      "title": "TDD with Mocking Flow",
+      "nodes": [
+        {
+          "id": "test",
+          "label": "Test Function",
+          "type": "start"
+        },
+        {
+          "id": "patch",
+          "label": "@patch\nReplace Real",
+          "type": "process"
+        },
+        {
+          "id": "configure",
+          "label": "Configure\nMock",
+          "type": "process"
+        },
+        {
+          "id": "call",
+          "label": "Call Code",
+          "type": "process"
+        },
+        {
+          "id": "assert",
+          "label": "Assert\nResults",
+          "type": "decision"
+        },
+        {
+          "id": "restore",
+          "label": "Auto-Restore",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "test",
+          "to": "patch",
+          "label": "Decorator"
+        },
+        {
+          "from": "patch",
+          "to": "configure",
+          "label": "Mock"
+        },
+        {
+          "from": "configure",
+          "to": "call",
+          "label": "Fake"
+        },
+        {
+          "from": "call",
+          "to": "assert",
+          "label": "Check"
+        },
+        {
+          "from": "assert",
+          "to": "restore",
+          "label": "Done"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -220,8 +358,18 @@
         "ta": "சோதனையில் @patch என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Installs a package", "Temporarily replaces an object with a mock", "Skips the test", "Patches a bug in the code"],
-        "ta": ["ஒரு package-ஐ நிறுவும்", "ஒரு object-ஐ தற்காலிகமாக mock-உடன் மாற்றும்", "சோதனையைத் தவிர்க்கும்", "code-ல் உள்ள bug-ஐ சரிசெய்யும்"]
+        "en": [
+          "Installs a package",
+          "Temporarily replaces an object with a mock",
+          "Skips the test",
+          "Patches a bug in the code"
+        ],
+        "ta": [
+          "ஒரு package-ஐ நிறுவும்",
+          "ஒரு object-ஐ தற்காலிகமாக mock-உடன் மாற்றும்",
+          "சோதனையைத் தவிர்க்கும்",
+          "code-ல் உள்ள bug-ஐ சரிசெய்யும்"
+        ]
       },
       "correct": 1
     },
@@ -231,8 +379,18 @@
         "ta": "conftest.py எதற்குப் பயன்படுகிறது?"
       },
       "options": {
-        "en": ["Configuring Python version", "Sharing fixtures across test files without importing", "Running tests in parallel", "Storing test results"],
-        "ta": ["Python version-ஐ configure செய்ய", "import செய்யாமல் test files-க்கிடையே fixtures-ஐ பகிர", "Tests-ஐ parallel-ல் இயக்க", "Test results-ஐ சேமிக்க"]
+        "en": [
+          "Configuring Python version",
+          "Sharing fixtures across test files without importing",
+          "Running tests in parallel",
+          "Storing test results"
+        ],
+        "ta": [
+          "Python version-ஐ configure செய்ய",
+          "import செய்யாமல் test files-க்கிடையே fixtures-ஐ பகிர",
+          "Tests-ஐ parallel-ல் இயக்க",
+          "Test results-ஐ சேமிக்க"
+        ]
       },
       "correct": 1
     },
@@ -242,20 +400,45 @@
         "ta": "monkeypatch.setattr() என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Permanently changes an attribute", "Temporarily replaces an attribute, reverted after test", "Deletes an attribute", "Creates a new class"],
-        "ta": ["ஒரு attribute-ஐ நிரந்தரமாக மாற்றும்", "ஒரு attribute-ஐ தற்காலிகமாக மாற்றும், சோதனைக்குப் பிறகு மீட்டமைக்கும்", "ஒரு attribute-ஐ நீக்கும்", "ஒரு புதிய class உருவாக்கும்"]
+        "en": [
+          "Permanently changes an attribute",
+          "Temporarily replaces an attribute, reverted after test",
+          "Deletes an attribute",
+          "Creates a new class"
+        ],
+        "ta": [
+          "ஒரு attribute-ஐ நிரந்தரமாக மாற்றும்",
+          "ஒரு attribute-ஐ தற்காலிகமாக மாற்றும், சோதனைக்குப் பிறகு மீட்டமைக்கும்",
+          "ஒரு attribute-ஐ நீக்கும்",
+          "ஒரு புதிய class உருவாக்கும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["mocking", "monkeypatch", "conftest", "patch", "MagicMock"],
-    "concepts_required": ["pytest", "functions", "classes"],
+    "concepts_taught": [
+      "mocking",
+      "monkeypatch",
+      "conftest",
+      "patch",
+      "MagicMock"
+    ],
+    "concepts_required": [
+      "pytest",
+      "functions",
+      "classes"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["api_testing", "test_isolation"],
+    "real_world_application": [
+      "api_testing",
+      "test_isolation"
+    ],
     "category": "testing",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

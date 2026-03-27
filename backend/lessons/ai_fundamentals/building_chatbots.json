@@ -240,6 +240,61 @@
         ">>> print(f'Messages in history: {len(bot.messages)}')",
         "Messages in history: 6"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_building_chatbots",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\nhistory = [{'role':'system','content':'You are a Python tutor.'}]\n\ndef chat(msg):\n    history.append({'role':'user','content': msg})\n    resp = client.chat.completions.create(\n        model='gpt-4o-mini', messages=history\n    )\n    reply = resp.choices[0].message.content\n    history.append({'role':'assistant','content': reply})\n    return reply\n\nprint(chat('What is a list?'))\nprint(chat('How do I add items?'))\nprint(f'History: {len(history)} messages')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "history": [
+              {
+                "role": "system"
+              }
+            ]
+          },
+          "output": "",
+          "explanation": "Conversation history IS the chatbot's memory"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "msg": "What is a list?"
+          },
+          "output": "",
+          "explanation": "Append user message to history"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "messages_sent": 2
+          },
+          "output": "",
+          "explanation": "Send FULL history — API is stateless"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "A list is a collection of items...",
+          "explanation": "AI responds based on full context"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "msg": "How do I add items?"
+          },
+          "output": "Use .append() or .extend()...",
+          "explanation": "AI knows we're discussing lists from history!"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "History: 5 messages",
+          "explanation": "system + user + assistant + user + assistant = 5"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -330,13 +385,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["chatbot_memory", "sliding_window", "summarization", "context_management"],
-    "concepts_required": ["openai_api_basics"],
+    "concepts_taught": [
+      "chatbot_memory",
+      "sliding_window",
+      "summarization",
+      "context_management"
+    ],
+    "concepts_required": [
+      "openai_api_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["customer_support_bots", "personal_assistants"],
+    "real_world_application": [
+      "customer_support_bots",
+      "personal_assistants"
+    ],
     "category": "ai_applications",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

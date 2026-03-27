@@ -187,6 +187,81 @@
         "Thursday, March 27, 2025 at 02:30 PM",
         "Weekday: 3 (0=Mon, 6=Sun)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from datetime import datetime, timedelta\n\nnow = datetime(2025, 3, 27, 14, 30)\nprint(f'Year: {now.year}, Month: {now.month}')\n\nbirthday = datetime(1995, 8, 15)\nage_days = (now - birthday).days\nprint(f'Age in days: {age_days}')\n\ndeadline = now + timedelta(days=30)\nprint(f'Deadline: {deadline.strftime(\"%Y-%m-%d\")}')\n\nparsed = datetime.strptime('27/03/2025', '%d/%m/%Y')\nprint(f'Parsed: {parsed}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import datetime and timedelta"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "now": "2025-03-27 14:30:00"
+          },
+          "output": "",
+          "description": "Create a specific datetime"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "Year: 2025, Month: 3",
+          "description": "Access components as attributes"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "birthday": "1995-08-15 00:00:00"
+          },
+          "output": "",
+          "description": "Create birthday datetime"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "age_days": 10816
+          },
+          "output": "",
+          "description": "Subtract datetimes -> timedelta, access .days"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Age in days: 10816",
+          "description": "About 29.6 years in days"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "deadline": "2025-04-26 14:30:00"
+          },
+          "output": "",
+          "description": "Add 30 days with timedelta"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Deadline: 2025-04-26",
+          "description": "strftime formats datetime to string"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "",
+          "description": "strptime parses string to datetime"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Parsed: 2025-03-27 00:00:00",
+          "description": "Successfully parsed DD/MM/YYYY format"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -241,8 +316,18 @@
         "ta": "datetime கழிப்பு எந்த வகையை திருப்பும்?"
       },
       "options": {
-        "en": ["int", "float", "timedelta", "datetime"],
-        "ta": ["int", "float", "timedelta", "datetime"]
+        "en": [
+          "int",
+          "float",
+          "timedelta",
+          "datetime"
+        ],
+        "ta": [
+          "int",
+          "float",
+          "timedelta",
+          "datetime"
+        ]
       },
       "correct": 2
     },
@@ -252,20 +337,45 @@
         "ta": "மாதத்தை (01-12) எந்த format code குறிக்கிறது?"
       },
       "options": {
-        "en": ["%M", "%m", "%d", "%Y"],
-        "ta": ["%M", "%m", "%d", "%Y"]
+        "en": [
+          "%M",
+          "%m",
+          "%d",
+          "%Y"
+        ],
+        "ta": [
+          "%M",
+          "%m",
+          "%d",
+          "%Y"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["datetime", "timedelta", "strftime", "strptime", "date_arithmetic"],
-    "concepts_required": ["strings", "functions"],
+    "concepts_taught": [
+      "datetime",
+      "timedelta",
+      "strftime",
+      "strptime",
+      "date_arithmetic"
+    ],
+    "concepts_required": [
+      "strings",
+      "functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["scheduling", "log_analysis", "reporting"],
+    "real_world_application": [
+      "scheduling",
+      "log_analysis",
+      "reporting"
+    ],
     "category": "standard_library",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

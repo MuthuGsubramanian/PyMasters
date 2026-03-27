@@ -40,6 +40,19 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "import sys\nprint(sys.prefix)\nprint(sys.executable)\nimport os\nvenv_active = hasattr(sys, 'real_prefix') or sys.base_prefix != sys.prefix\nprint('In venv:', venv_active)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Import sys module to inspect the environment" },
+        { "line": 2, "variables": {}, "output": "/home/user/myproject/venv", "description": "sys.prefix shows the active venv path" },
+        { "line": 3, "variables": {}, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python", "description": "sys.executable shows which Python binary is running" },
+        { "line": 4, "variables": {}, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python", "description": "Import os for operating system utilities" },
+        { "line": 5, "variables": { "venv_active": true }, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python", "description": "Check if we are inside a virtual environment" },
+        { "line": 6, "variables": { "venv_active": true }, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python\nIn venv: True", "description": "Confirm we are in a venv" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

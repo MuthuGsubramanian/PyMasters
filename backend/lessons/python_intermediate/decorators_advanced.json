@@ -214,6 +214,144 @@
         "label": "Parameterized Decorator",
         "code": "def factory(param):       # level 1\n    def decorator(func):  # level 2\n        def wrapper(*args):# level 3\n            return func(*args)\n        return wrapper\n    return decorator"
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import functools\n\ndef repeat(n):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            for i in range(n):\n                result = func(*args, **kwargs)\n            return result\n        return wrapper\n    return decorator\n\n@repeat(3)\ndef greet(name):\n    print(f'Hello, {name}!')\n\ngreet('Alice')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "repeat(n) is a FACTORY - returns a decorator"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "n": 3
+          },
+          "output": "",
+          "description": "@repeat(3) calls repeat(3) which returns decorator"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "greet": "wrapper"
+          },
+          "output": "",
+          "description": "decorator(greet) wraps greet, now greet = wrapper"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "i": 0
+          },
+          "output": "Hello, Alice!",
+          "description": "First iteration: wrapper calls greet('Alice')"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "i": 1
+          },
+          "output": "Hello, Alice!",
+          "description": "Second iteration: calls greet('Alice') again"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "i": 2
+          },
+          "output": "Hello, Alice!",
+          "description": "Third iteration: calls greet('Alice') one more time"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "@repeat(3)",
+          "type": "start"
+        },
+        {
+          "id": "factory",
+          "label": "repeat(3) -> decorator",
+          "type": "process"
+        },
+        {
+          "id": "apply",
+          "label": "decorator(greet) -> wrapper",
+          "type": "process"
+        },
+        {
+          "id": "call",
+          "label": "greet('Alice') = wrapper('Alice')",
+          "type": "process"
+        },
+        {
+          "id": "loop",
+          "label": "for i in range(3)",
+          "type": "process"
+        },
+        {
+          "id": "original",
+          "label": "Call original greet",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Return last result",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "factory"
+        },
+        {
+          "from": "factory",
+          "to": "apply"
+        },
+        {
+          "from": "apply",
+          "to": "call"
+        },
+        {
+          "from": "call",
+          "to": "loop"
+        },
+        {
+          "from": "loop",
+          "to": "original"
+        },
+        {
+          "from": "original",
+          "to": "loop",
+          "label": "repeat"
+        },
+        {
+          "from": "loop",
+          "to": "end",
+          "label": "done"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "factory",
+        "apply",
+        "call",
+        "loop",
+        "original",
+        "end"
+      ],
+      "variables": {
+        "n": 3
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -247,8 +385,18 @@
         "ta": "parameterized decorator-ல் எத்தனை நிலை செயல்பாடுகள் உள்ளன?"
       },
       "options": {
-        "en": ["1", "2", "3", "4"],
-        "ta": ["1", "2", "3", "4"]
+        "en": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "ta": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
       },
       "correct": 2
     },
@@ -296,13 +444,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["parameterized_decorators", "class_decorators", "decorator_stacking", "decorator_factory"],
-    "concepts_required": ["decorators", "closures", "functions"],
+    "concepts_taught": [
+      "parameterized_decorators",
+      "class_decorators",
+      "decorator_stacking",
+      "decorator_factory"
+    ],
+    "concepts_required": [
+      "decorators",
+      "closures",
+      "functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["retry_logic", "caching", "access_control"],
+    "real_world_application": [
+      "retry_logic",
+      "caching",
+      "access_control"
+    ],
     "category": "functional",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

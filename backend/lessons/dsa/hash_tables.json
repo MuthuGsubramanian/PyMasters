@@ -149,9 +149,21 @@
       "structure_type": "dict",
       "initial_state": {},
       "animations": [
-        {"action": "add", "index": "name", "value": "Vaathiyaar"},
-        {"action": "add", "index": "role", "value": "Teacher"},
-        {"action": "add", "index": "subject", "value": "DSA"}
+        {
+          "action": "add",
+          "index": "name",
+          "value": "Vaathiyaar"
+        },
+        {
+          "action": "add",
+          "index": "role",
+          "value": "Teacher"
+        },
+        {
+          "action": "add",
+          "index": "subject",
+          "value": "DSA"
+        }
       ]
     },
     {
@@ -179,6 +191,95 @@
         "Key 'name' → bucket 7",
         "Key 'role' → bucket 3",
         "O(1) lookup achieved!"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_hash_tables",
+      "code": "phonebook = {}\nphonebook['Alice'] = '555-0001'\nphonebook['Bob'] = '555-0002'\nphonebook['Charlie'] = '555-0003'\n\nprint(phonebook['Alice'])\nprint('Dave' in phonebook)\n\nkey = 'Alice'\nhash_val = hash(key)\nbucket = hash_val % 10\nprint(f'hash({key}) => bucket {bucket}')\n\nfrom collections import Counter\nwords = 'the cat sat on the mat the cat'.split()\nfreq = Counter(words)\nprint(freq.most_common(2))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "phonebook": {}
+          },
+          "output": "",
+          "explanation": "Empty dict — internally a hash table with buckets"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "phonebook": {
+              "Alice": "555-0001"
+            }
+          },
+          "output": "",
+          "explanation": "hash('Alice') -> bucket index -> store value. O(1)"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "phonebook": {
+              "Alice": "555-0001",
+              "Bob": "555-0002",
+              "Charlie": "555-0003"
+            }
+          },
+          "output": "",
+          "explanation": "3 entries, each in its own bucket (ideally)"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "555-0001",
+          "explanation": "Lookup: hash('Alice') -> same bucket -> found in O(1)"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "False",
+          "explanation": "'Dave' not in dict: hash('Dave') -> bucket -> empty => False. O(1)"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "key": "Alice",
+            "bucket": 7
+          },
+          "output": "hash(Alice) => bucket 7",
+          "explanation": "Same key always hashes to the same bucket (deterministic)"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "words": [
+              "the",
+              "cat",
+              "sat",
+              "on",
+              "the",
+              "mat",
+              "the",
+              "cat"
+            ]
+          },
+          "output": "",
+          "explanation": "Counter uses a dict internally — O(n) to count all words"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "freq": {
+              "the": 3,
+              "cat": 2,
+              "sat": 1,
+              "on": 1,
+              "mat": 1
+            }
+          },
+          "output": "[('the', 3), ('cat', 2)]",
+          "explanation": "most_common(2) returns top 2 frequencies"
+        }
       ]
     }
   ],
@@ -211,8 +312,18 @@
         "ta": "hash table-ல் ஒரு key-ஐ தேடுவதன் சராசரி நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(log n)", "O(1)", "O(n²)"],
-        "ta": ["O(n)", "O(log n)", "O(1)", "O(n²)"]
+        "en": [
+          "O(n)",
+          "O(log n)",
+          "O(1)",
+          "O(n²)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(log n)",
+          "O(1)",
+          "O(n²)"
+        ]
       },
       "correct": 2
     },
@@ -222,8 +333,18 @@
         "ta": "இரண்டு வெவ்வேறு keys ஒரே index-க்கு hash ஆனால் என்ன நடக்கும்?"
       },
       "options": {
-        "en": ["Error is raised", "One key is lost", "A collision occurs", "The table resizes"],
-        "ta": ["பிழை எழும்", "ஒரு key தொலையும்", "Collision ஏற்படும்", "table அளவு மாறும்"]
+        "en": [
+          "Error is raised",
+          "One key is lost",
+          "A collision occurs",
+          "The table resizes"
+        ],
+        "ta": [
+          "பிழை எழும்",
+          "ஒரு key தொலையும்",
+          "Collision ஏற்படும்",
+          "table அளவு மாறும்"
+        ]
       },
       "correct": 2
     },
@@ -233,20 +354,45 @@
         "ta": "எந்த Python built-in வகை hash table ஆக செயல்படுத்தப்பட்டுள்ளது?"
       },
       "options": {
-        "en": ["list", "tuple", "dict", "set and dict"],
-        "ta": ["list", "tuple", "dict", "set மற்றும் dict"]
+        "en": [
+          "list",
+          "tuple",
+          "dict",
+          "set and dict"
+        ],
+        "ta": [
+          "list",
+          "tuple",
+          "dict",
+          "set மற்றும் dict"
+        ]
       },
       "correct": 3
     }
   ],
   "tags": {
-    "concepts_taught": ["hash_table", "hashing", "collision_handling", "dict_internals"],
-    "concepts_required": ["lists", "classes", "loops"],
+    "concepts_taught": [
+      "hash_table",
+      "hashing",
+      "collision_handling",
+      "dict_internals"
+    ],
+    "concepts_required": [
+      "lists",
+      "classes",
+      "loops"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["database_indexing", "caching", "deduplication"],
+    "real_world_application": [
+      "database_indexing",
+      "caching",
+      "deduplication"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

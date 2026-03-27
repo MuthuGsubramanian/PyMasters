@@ -196,8 +196,142 @@
       "type": "DataStructure",
       "id": "deque_visual",
       "structure_type": "deque",
-      "data": [0, 1, 2, 3, 4],
-      "highlight_cells": [0, 4]
+      "data": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "highlight_cells": [
+        0,
+        4
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from collections import Counter, defaultdict, deque\n\nvotes = ['Alice', 'Bob', 'Alice', 'Alice', 'Bob']\ntally = Counter(votes)\nprint(tally.most_common(2))\n\ngroups = defaultdict(list)\nfor subj, name in [('Math','Alice'),('Sci','Bob'),('Math','Charlie')]:\n    groups[subj].append(name)\nprint(dict(groups))\n\ndq = deque([1, 2, 3])\ndq.appendleft(0)\ndq.append(4)\nprint(list(dq))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import Counter, defaultdict, deque from collections"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "votes": "['Alice','Bob','Alice','Alice','Bob']"
+          },
+          "output": "",
+          "description": "List of votes to count"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "tally": "Counter({'Alice':3,'Bob':2})"
+          },
+          "output": "",
+          "description": "Counter automatically counts occurrences"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "[('Alice', 3), ('Bob', 2)]",
+          "description": "most_common(2) returns top 2 by count"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "groups": "defaultdict(list)"
+          },
+          "output": "",
+          "description": "defaultdict auto-creates empty list for missing keys"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "description": "Loop through subject-student pairs"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "groups": "{'Math':['Alice','Charlie'],'Sci':['Bob']}"
+          },
+          "output": "",
+          "description": "No KeyError! Missing keys auto-create empty list"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "{'Math': ['Alice', 'Charlie'], 'Sci': ['Bob']}",
+          "description": "Students grouped by subject"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "dq": "deque([1, 2, 3])"
+          },
+          "output": "",
+          "description": "Create a deque (double-ended queue)"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "dq": "deque([0, 1, 2, 3])"
+          },
+          "output": "",
+          "description": "appendleft adds to front in O(1)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "dq": "deque([0, 1, 2, 3, 4])"
+          },
+          "output": "",
+          "description": "append adds to back in O(1)"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "[0, 1, 2, 3, 4]",
+          "description": "Both ends efficiently accessible"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "defaultdict_grouping",
+      "iterable": "[('Math','Alice'), ('Sci','Bob'), ('Math','Charlie')]",
+      "iterations": [
+        {
+          "index": 0,
+          "value": "('Math','Alice')",
+          "variables": {
+            "groups": "{'Math': ['Alice']}"
+          },
+          "description": "Key 'Math' auto-created with [], Alice appended"
+        },
+        {
+          "index": 1,
+          "value": "('Sci','Bob')",
+          "variables": {
+            "groups": "{'Math': ['Alice'], 'Sci': ['Bob']}"
+          },
+          "description": "Key 'Sci' auto-created with [], Bob appended"
+        },
+        {
+          "index": 2,
+          "value": "('Math','Charlie')",
+          "variables": {
+            "groups": "{'Math': ['Alice','Charlie'], 'Sci': ['Bob']}"
+          },
+          "description": "'Math' exists, Charlie appended to list"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -288,13 +422,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["Counter", "defaultdict", "namedtuple", "deque", "collections"],
-    "concepts_required": ["dictionaries", "lists", "tuples"],
+    "concepts_taught": [
+      "Counter",
+      "defaultdict",
+      "namedtuple",
+      "deque",
+      "collections"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "lists",
+      "tuples"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["data_analysis", "caching", "queue_processing"],
+    "real_world_application": [
+      "data_analysis",
+      "caching",
+      "queue_processing"
+    ],
     "category": "standard_library",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

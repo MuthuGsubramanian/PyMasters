@@ -30,11 +30,21 @@
       "nodes": [
         {
           "label": "KNN",
-          "children": ["Lazy Learner", "Distance Metrics", "K Selection", "Majority Vote"]
+          "children": [
+            "Lazy Learner",
+            "Distance Metrics",
+            "K Selection",
+            "Majority Vote"
+          ]
         },
         {
           "label": "Distance Metrics",
-          "children": ["Euclidean", "Manhattan", "Minkowski", "Cosine"]
+          "children": [
+            "Euclidean",
+            "Manhattan",
+            "Minkowski",
+            "Cosine"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,67 +56,93 @@
         {
           "line": "from sklearn.neighbors import KNeighborsClassifier",
           "highlight": "KNeighborsClassifier",
-          "explanation": { "en": "Import KNN classifier — also available: KNeighborsRegressor" }
+          "explanation": {
+            "en": "Import KNN classifier — also available: KNeighborsRegressor"
+          }
         },
         {
           "line": "from sklearn.datasets import load_iris",
           "highlight": "load_iris",
-          "explanation": { "en": "Load Iris dataset for multi-class classification" }
+          "explanation": {
+            "en": "Load Iris dataset for multi-class classification"
+          }
         },
         {
           "line": "from sklearn.preprocessing import StandardScaler",
           "highlight": "StandardScaler",
-          "explanation": { "en": "KNN uses distance — features MUST be scaled to the same range" }
+          "explanation": {
+            "en": "KNN uses distance — features MUST be scaled to the same range"
+          }
         },
         {
           "line": "X, y = load_iris(return_X_y=True)",
           "highlight": "X, y",
-          "explanation": { "en": "Get features and labels" }
+          "explanation": {
+            "en": "Get features and labels"
+          }
         },
         {
           "line": "scaler = StandardScaler(); X_scaled = scaler.fit_transform(X)",
           "highlight": "fit_transform",
-          "explanation": { "en": "Scale features — without this, features with larger ranges dominate distances" }
+          "explanation": {
+            "en": "Scale features — without this, features with larger ranges dominate distances"
+          }
         },
         {
           "line": "X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)",
           "highlight": "train_test_split",
-          "explanation": { "en": "Split the scaled data" }
+          "explanation": {
+            "en": "Split the scaled data"
+          }
         },
         {
           "line": "knn = KNeighborsClassifier(n_neighbors=5)",
           "highlight": "n_neighbors=5",
-          "explanation": { "en": "Create KNN with K=5 — each prediction considers 5 closest training points" }
+          "explanation": {
+            "en": "Create KNN with K=5 — each prediction considers 5 closest training points"
+          }
         },
         {
           "line": "knn.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Fitting KNN just stores the data — no computation happens yet" }
+          "explanation": {
+            "en": "Fitting KNN just stores the data — no computation happens yet"
+          }
         },
         {
           "line": "print(f'Test Accuracy: {knn.score(X_test, y_test):.3f}')",
           "highlight": "score",
-          "explanation": { "en": "Prediction is where the work happens — distances computed at query time" }
+          "explanation": {
+            "en": "Prediction is where the work happens — distances computed at query time"
+          }
         },
         {
           "line": "import numpy as np; new_point = np.array([[0, 0, 0, 0]])",
           "highlight": "new_point",
-          "explanation": { "en": "A new point at the origin (after scaling)" }
+          "explanation": {
+            "en": "A new point at the origin (after scaling)"
+          }
         },
         {
           "line": "distances, indices = knn.kneighbors(new_point)",
           "highlight": "kneighbors",
-          "explanation": { "en": "Find 5 nearest training points and their distances" }
+          "explanation": {
+            "en": "Find 5 nearest training points and their distances"
+          }
         },
         {
           "line": "print(f'Nearest neighbors: indices={indices[0]}, distances={distances[0].round(2)}')",
           "highlight": "distances",
-          "explanation": { "en": "See exactly which training points influence the prediction" }
+          "explanation": {
+            "en": "See exactly which training points influence the prediction"
+          }
         },
         {
           "line": "print(f'Their labels: {y_train[indices[0]]}')",
           "highlight": "labels",
-          "explanation": { "en": "The majority class among these 5 neighbors becomes the prediction" }
+          "explanation": {
+            "en": "The majority class among these 5 neighbors becomes the prediction"
+          }
         }
       ]
     },
@@ -137,6 +173,53 @@
         "K= 7: CV Accuracy = 0.967 +/- 0.021",
         "K= 9: CV Accuracy = 0.958 +/- 0.026",
         "K=11: CV Accuracy = 0.958 +/- 0.026"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_knn",
+      "code": "from sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_iris(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nscaler = StandardScaler().fit(X_train)\nX_train_s = scaler.transform(X_train)\nX_test_s = scaler.transform(X_test)\n\nknn = KNeighborsClassifier(n_neighbors=5)\nknn.fit(X_train_s, y_train)\nprint(f'Accuracy: {knn.score(X_test_s, y_test):.3f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(150, 4)"
+          },
+          "output": "",
+          "explanation": "Load Iris dataset"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "scaler": "StandardScaler"
+          },
+          "output": "",
+          "explanation": "KNN needs scaling — uses distance metrics"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "k": "5"
+          },
+          "output": "",
+          "explanation": "Use 5 nearest neighbors for voting"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "knn": "fitted (stores all training data)"
+          },
+          "output": "",
+          "explanation": "Lazy learner: no real training, stores data"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "accuracy": "1.000"
+          },
+          "output": "Accuracy: 1.000",
+          "explanation": "For each test point, find 5 closest training points, majority vote"
+        }
       ]
     }
   ],
@@ -169,8 +252,18 @@
         "ta": "KNN ஏன் 'சோம்பேறி கற்றல்' என்று அழைக்கப்படுகிறது?"
       },
       "options": {
-        "en": ["It is slow", "It does no training — just stores data and computes at prediction time", "It uses only a few features", "It doesn't learn at all"],
-        "ta": ["இது மெதுவானது", "பயிற்சி செய்யாது — தரவை சேமித்து கணிப்பு நேரத்தில் கணக்கிடுகிறது", "சில அம்சங்களை மட்டும் பயன்படுத்துகிறது", "இது கற்றுக்கொள்வதே இல்லை"]
+        "en": [
+          "It is slow",
+          "It does no training — just stores data and computes at prediction time",
+          "It uses only a few features",
+          "It doesn't learn at all"
+        ],
+        "ta": [
+          "இது மெதுவானது",
+          "பயிற்சி செய்யாது — தரவை சேமித்து கணிப்பு நேரத்தில் கணக்கிடுகிறது",
+          "சில அம்சங்களை மட்டும் பயன்படுத்துகிறது",
+          "இது கற்றுக்கொள்வதே இல்லை"
+        ]
       },
       "correct": 1
     },
@@ -180,8 +273,18 @@
         "ta": "KNN பயன்படுத்துவதற்கு முன் அம்சங்களை ஏன் அளவிட வேண்டும்?"
       },
       "options": {
-        "en": ["To make training faster", "Because KNN uses distance — unscaled features with large ranges dominate", "To reduce overfitting", "To handle missing values"],
-        "ta": ["பயிற்சியை வேகமாக்க", "KNN தூரத்தைப் பயன்படுத்துவதால் — பெரிய வீச்சு கொண்ட அளவிடப்படாத அம்சங்கள் ஆதிக்கம் செலுத்தும்", "அதிகப்படி பொருத்தத்தைக் குறைக்க", "விடுபட்ட மதிப்புகளை கையாள"]
+        "en": [
+          "To make training faster",
+          "Because KNN uses distance — unscaled features with large ranges dominate",
+          "To reduce overfitting",
+          "To handle missing values"
+        ],
+        "ta": [
+          "பயிற்சியை வேகமாக்க",
+          "KNN தூரத்தைப் பயன்படுத்துவதால் — பெரிய வீச்சு கொண்ட அளவிடப்படாத அம்சங்கள் ஆதிக்கம் செலுத்தும்",
+          "அதிகப்படி பொருத்தத்தைக் குறைக்க",
+          "விடுபட்ட மதிப்புகளை கையாள"
+        ]
       },
       "correct": 1
     },
@@ -191,20 +294,45 @@
         "ta": "KNN-ல் K=1 ஆக இருக்கும்போது என்ன நடக்கும்?"
       },
       "options": {
-        "en": ["The model averages all points", "The prediction is based on the single closest neighbor", "The model becomes linear", "An error occurs"],
-        "ta": ["மாடல் அனைத்து புள்ளிகளின் சராசரி எடுக்கிறது", "ஒற்றை நெருங்கிய அண்டையின் அடிப்படையில் கணிப்பு", "மாடல் நேரியல் ஆகிறது", "பிழை ஏற்படுகிறது"]
+        "en": [
+          "The model averages all points",
+          "The prediction is based on the single closest neighbor",
+          "The model becomes linear",
+          "An error occurs"
+        ],
+        "ta": [
+          "மாடல் அனைத்து புள்ளிகளின் சராசரி எடுக்கிறது",
+          "ஒற்றை நெருங்கிய அண்டையின் அடிப்படையில் கணிப்பு",
+          "மாடல் நேரியல் ஆகிறது",
+          "பிழை ஏற்படுகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["knn", "distance_metrics", "lazy_learning", "k_selection", "curse_of_dimensionality"],
-    "concepts_required": ["feature_scaling", "cross_validation"],
+    "concepts_taught": [
+      "knn",
+      "distance_metrics",
+      "lazy_learning",
+      "k_selection",
+      "curse_of_dimensionality"
+    ],
+    "concepts_required": [
+      "feature_scaling",
+      "cross_validation"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["recommendation_systems", "anomaly_detection", "pattern_recognition"],
+    "real_world_application": [
+      "recommendation_systems",
+      "anomaly_detection",
+      "pattern_recognition"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["supervised_learning"]
+    "path_memberships": [
+      "supervised_learning"
+    ]
   }
 }

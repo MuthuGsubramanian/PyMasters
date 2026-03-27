@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "textgen_code",
       "steps": [
-        {"line": "chars = sorted(set(text))", "highlight": "chars", "explanation": {"en": "Build vocabulary from all unique characters in the text corpus"}},
-        {"line": "char_to_idx = {c: i for i, c in enumerate(chars)}", "highlight": "char_to_idx", "explanation": {"en": "Map each character to a unique integer index for the model"}},
-        {"line": "encoded = torch.tensor([char_to_idx[c] for c in text])", "highlight": "encode", "explanation": {"en": "Convert entire text to a tensor of integer indices"}},
-        {"line": "self.embedding = nn.Embedding(vocab_size, embed_dim)", "highlight": "Embedding", "explanation": {"en": "Each character index becomes a 64-dim vector. Network learns these representations"}},
-        {"line": "self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers, ...)", "highlight": "LSTM", "explanation": {"en": "2-layer LSTM processes character embeddings and maintains memory"}},
-        {"line": "self.fc = nn.Linear(hidden_dim, vocab_size)", "highlight": "fc", "explanation": {"en": "Output layer predicts probability distribution over all characters"}},
-        {"line": "logits = logits[0, -1] / temperature", "highlight": "temperature", "explanation": {"en": "Temperature scales logits before softmax. Low=peaked (conservative), high=flat (creative)"}},
-        {"line": "probs = F.softmax(logits, dim=0)", "highlight": "softmax", "explanation": {"en": "Convert scaled logits to probability distribution over characters"}},
-        {"line": "next_idx = torch.multinomial(probs, 1).item()", "highlight": "multinomial", "explanation": {"en": "Sample next character from the probability distribution (not always argmax for variety)"}},
-        {"line": "x = torch.tensor([[next_idx]])", "highlight": "autoregressive", "explanation": {"en": "Feed generated character back as input for next prediction. This is autoregressive generation"}}
+        {
+          "line": "chars = sorted(set(text))",
+          "highlight": "chars",
+          "explanation": {
+            "en": "Build vocabulary from all unique characters in the text corpus"
+          }
+        },
+        {
+          "line": "char_to_idx = {c: i for i, c in enumerate(chars)}",
+          "highlight": "char_to_idx",
+          "explanation": {
+            "en": "Map each character to a unique integer index for the model"
+          }
+        },
+        {
+          "line": "encoded = torch.tensor([char_to_idx[c] for c in text])",
+          "highlight": "encode",
+          "explanation": {
+            "en": "Convert entire text to a tensor of integer indices"
+          }
+        },
+        {
+          "line": "self.embedding = nn.Embedding(vocab_size, embed_dim)",
+          "highlight": "Embedding",
+          "explanation": {
+            "en": "Each character index becomes a 64-dim vector. Network learns these representations"
+          }
+        },
+        {
+          "line": "self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers, ...)",
+          "highlight": "LSTM",
+          "explanation": {
+            "en": "2-layer LSTM processes character embeddings and maintains memory"
+          }
+        },
+        {
+          "line": "self.fc = nn.Linear(hidden_dim, vocab_size)",
+          "highlight": "fc",
+          "explanation": {
+            "en": "Output layer predicts probability distribution over all characters"
+          }
+        },
+        {
+          "line": "logits = logits[0, -1] / temperature",
+          "highlight": "temperature",
+          "explanation": {
+            "en": "Temperature scales logits before softmax. Low=peaked (conservative), high=flat (creative)"
+          }
+        },
+        {
+          "line": "probs = F.softmax(logits, dim=0)",
+          "highlight": "softmax",
+          "explanation": {
+            "en": "Convert scaled logits to probability distribution over characters"
+          }
+        },
+        {
+          "line": "next_idx = torch.multinomial(probs, 1).item()",
+          "highlight": "multinomial",
+          "explanation": {
+            "en": "Sample next character from the probability distribution (not always argmax for variety)"
+          }
+        },
+        {
+          "line": "x = torch.tensor([[next_idx]])",
+          "highlight": "autoregressive",
+          "explanation": {
+            "en": "Feed generated character back as input for next prediction. This is autoregressive generation"
+          }
+        }
       ]
     },
     {
@@ -64,7 +124,16 @@
       "id": "generation_flow",
       "from": "seed_text",
       "to": "generated_text",
-      "steps": ["'to ' (seed)", "Embed chars", "LSTM process", "Predict next char", "Sample 'b'", "Feed back", "Predict next...", "200 chars generated"],
+      "steps": [
+        "'to ' (seed)",
+        "Embed chars",
+        "LSTM process",
+        "Predict next char",
+        "Sample 'b'",
+        "Feed back",
+        "Predict next...",
+        "200 chars generated"
+      ],
       "duration_ms": 4000
     },
     {
@@ -95,18 +164,49 @@
       "type": "MemoryStack",
       "id": "char_sequence",
       "slots": [
-        {"name": "Input: 't'", "value": "idx=20, embed=[0.3,...]", "type": "char", "address": "t=0"},
-        {"name": "Input: 'o'", "value": "idx=15, embed=[0.1,...]", "type": "char", "address": "t=1"},
-        {"name": "Input: ' '", "value": "idx=0, embed=[-0.2,...]", "type": "char", "address": "t=2"},
-        {"name": "Predict: 'b'", "value": "prob=0.35, sampled", "type": "output", "address": "t=3"},
-        {"name": "Predict: 'e'", "value": "prob=0.42, sampled", "type": "output", "address": "t=4"}
+        {
+          "name": "Input: 't'",
+          "value": "idx=20, embed=[0.3,...]",
+          "type": "char",
+          "address": "t=0"
+        },
+        {
+          "name": "Input: 'o'",
+          "value": "idx=15, embed=[0.1,...]",
+          "type": "char",
+          "address": "t=1"
+        },
+        {
+          "name": "Input: ' '",
+          "value": "idx=0, embed=[-0.2,...]",
+          "type": "char",
+          "address": "t=2"
+        },
+        {
+          "name": "Predict: 'b'",
+          "value": "prob=0.35, sampled",
+          "type": "output",
+          "address": "t=3"
+        },
+        {
+          "name": "Predict: 'e'",
+          "value": "prob=0.42, sampled",
+          "type": "output",
+          "address": "t=4"
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "temperature_comparison",
-      "left": {"label": "Temperature = 0.2", "content": "to be or not to be that is the question whether tis nobler in the mind to"},
-      "right": {"label": "Temperature = 1.5", "content": "to bnx qr fot us bemthau ix rhe qvosriom wlerhet sis nxgler on rhe mind"},
+      "left": {
+        "label": "Temperature = 0.2",
+        "content": "to be or not to be that is the question whether tis nobler in the mind to"
+      },
+      "right": {
+        "label": "Temperature = 1.5",
+        "content": "to bnx qr fot us bemthau ix rhe qvosriom wlerhet sis nxgler on rhe mind"
+      },
       "duration_ms": 3000
     },
     {
@@ -121,6 +221,103 @@
         "to be or not to be that is the question",
         "whether tis nobler in the mind to suffer",
         "the slings and arrows of outrageous..."
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_text_gen",
+      "code": "import torch\nimport torch.nn as nn\n\nclass CharRNN(nn.Module):\n    def __init__(self, vocab_size, embed_dim, hidden_dim):\n        super().__init__()\n        self.embed = nn.Embedding(vocab_size, embed_dim)\n        self.lstm = nn.LSTM(embed_dim, hidden_dim, batch_first=True)\n        self.fc = nn.Linear(hidden_dim, vocab_size)\n\n    def forward(self, x, hidden=None):\n        x = self.embed(x)\n        out, hidden = self.lstm(x, hidden)\n        return self.fc(out), hidden\n\nvocab_size = 50\nmodel = CharRNN(vocab_size, embed_dim=32, hidden_dim=64)\nx = torch.randint(0, vocab_size, (1, 10))  # sequence of 10 chars\nlogits, hidden = model(x)\nprint(f'Logits shape: {logits.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "class": "CharRNN"
+          },
+          "output": "",
+          "explanation": "Character-level RNN for text generation"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "embed": "Embedding(50, 32)"
+          },
+          "output": "",
+          "explanation": "Map each character to a 32-dim dense vector"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "lstm": "LSTM(32, 64)"
+          },
+          "output": "",
+          "explanation": "LSTM processes embedded sequence"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "fc": "Linear(64, 50)"
+          },
+          "output": "",
+          "explanation": "Project hidden state back to vocab size"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "x.shape": "(1, 10)"
+          },
+          "output": "",
+          "explanation": "Input: sequence of 10 character indices"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "Logits shape: torch.Size([1, 10, 50])",
+          "explanation": "For each position, predict next character (50 options)"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_text_gen",
+      "title": "Autoregressive Text Generation",
+      "loopVariable": "step",
+      "iterations": [
+        {
+          "iteration": 1,
+          "state": {
+            "input": "T",
+            "output": "h",
+            "hidden": "updated"
+          },
+          "description": "Feed 'T', predict 'h'"
+        },
+        {
+          "iteration": 2,
+          "state": {
+            "input": "h",
+            "output": "e",
+            "hidden": "updated"
+          },
+          "description": "Feed 'h', predict 'e'"
+        },
+        {
+          "iteration": 3,
+          "state": {
+            "input": "e",
+            "output": " ",
+            "hidden": "updated"
+          },
+          "description": "Feed 'e', predict space"
+        },
+        {
+          "iteration": 4,
+          "state": {
+            "input": " ",
+            "output": "c",
+            "hidden": "updated"
+          },
+          "description": "Feed space, predict 'c'"
+        }
       ]
     },
     {
@@ -159,8 +356,18 @@
         "ta": "உரை உருவாக்கத்தில் temperature என்ன கட்டுப்படுத்துகிறது?"
       },
       "options": {
-        "en": ["Training speed", "The randomness/creativity of generated text", "Model size", "Vocabulary size"],
-        "ta": ["பயிற்சி வேகம்", "உருவாக்கப்பட்ட உரையின் சீரற்ற தன்மை/படைப்பாற்றல்", "மாதிரி அளவு", "சொல்வளம் அளவு"]
+        "en": [
+          "Training speed",
+          "The randomness/creativity of generated text",
+          "Model size",
+          "Vocabulary size"
+        ],
+        "ta": [
+          "பயிற்சி வேகம்",
+          "உருவாக்கப்பட்ட உரையின் சீரற்ற தன்மை/படைப்பாற்றல்",
+          "மாதிரி அளவு",
+          "சொல்வளம் அளவு"
+        ]
       },
       "correct": 1
     },
@@ -170,8 +377,18 @@
         "ta": "'Autoregressive' உருவாக்கம் என்ன?"
       },
       "options": {
-        "en": ["Generating all characters at once", "Using each generated output as input for the next step", "Generating text in reverse", "Using a pre-defined template"],
-        "ta": ["அனைத்து எழுத்துக்களையும் ஒரே நேரத்தில் உருவாக்குவது", "ஒவ்வொரு உருவாக்கப்பட்ட வெளியீட்டையும் அடுத்த படிக்கான உள்ளீடாகப் பயன்படுத்துவது", "உரையை தலைகீழாக உருவாக்குவது", "முன் வரையறுக்கப்பட்ட வார்ப்புருவைப் பயன்படுத்துவது"]
+        "en": [
+          "Generating all characters at once",
+          "Using each generated output as input for the next step",
+          "Generating text in reverse",
+          "Using a pre-defined template"
+        ],
+        "ta": [
+          "அனைத்து எழுத்துக்களையும் ஒரே நேரத்தில் உருவாக்குவது",
+          "ஒவ்வொரு உருவாக்கப்பட்ட வெளியீட்டையும் அடுத்த படிக்கான உள்ளீடாகப் பயன்படுத்துவது",
+          "உரையை தலைகீழாக உருவாக்குவது",
+          "முன் வரையறுக்கப்பட்ட வார்ப்புருவைப் பயன்படுத்துவது"
+        ]
       },
       "correct": 1
     },
@@ -181,20 +398,45 @@
         "ta": "உருவாக்கத்தில் argmax-க்கு பதிலாக ஏன் torch.multinomial() பயன்படுத்துகிறோம்?"
       },
       "options": {
-        "en": ["It's faster", "Sampling adds variety and prevents repetitive output", "Argmax doesn't work with text", "Multinomial uses less memory"],
-        "ta": ["வேகமானது", "மாதிரி எடுத்தல் வகைமையை சேர்த்து, மீண்டும் மீண்டும் வரும் வெளியீட்டைத் தடுக்கிறது", "Argmax உரையுடன் வேலை செய்யாது", "Multinomial குறைந்த நினைவகம் பயன்படுத்துகிறது"]
+        "en": [
+          "It's faster",
+          "Sampling adds variety and prevents repetitive output",
+          "Argmax doesn't work with text",
+          "Multinomial uses less memory"
+        ],
+        "ta": [
+          "வேகமானது",
+          "மாதிரி எடுத்தல் வகைமையை சேர்த்து, மீண்டும் மீண்டும் வரும் வெளியீட்டைத் தடுக்கிறது",
+          "Argmax உரையுடன் வேலை செய்யாது",
+          "Multinomial குறைந்த நினைவகம் பயன்படுத்துகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["text_generation", "character_level_rnn", "temperature_sampling", "autoregressive", "embedding"],
-    "concepts_required": ["lstm_gru", "rnn_intro"],
+    "concepts_taught": [
+      "text_generation",
+      "character_level_rnn",
+      "temperature_sampling",
+      "autoregressive",
+      "embedding"
+    ],
+    "concepts_required": [
+      "lstm_gru",
+      "rnn_intro"
+    ],
     "difficulty": "advanced",
     "engagement_type": "project",
     "estimated_minutes": 40,
-    "real_world_application": ["chatbots", "creative_writing", "code_generation"],
+    "real_world_application": [
+      "chatbots",
+      "creative_writing",
+      "code_generation"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

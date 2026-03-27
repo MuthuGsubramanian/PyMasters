@@ -159,6 +159,19 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "fruits = ['apple', 'banana', 'cherry']\nfruits.append('date')\nprint(fruits[0])\nprint(len(fruits))\nfruits.pop()\nprint(fruits)",
+      "executionSteps": [
+        { "line": 1, "variables": { "fruits": ["apple", "banana", "cherry"] }, "output": "", "description": "Create a list with 3 fruit strings" },
+        { "line": 2, "variables": { "fruits": ["apple", "banana", "cherry", "date"] }, "output": "", "description": "Append 'date' to the end of the list" },
+        { "line": 3, "variables": { "fruits": ["apple", "banana", "cherry", "date"] }, "output": "apple", "description": "Access first item at index 0" },
+        { "line": 4, "variables": { "fruits": ["apple", "banana", "cherry", "date"] }, "output": "apple\n4", "description": "len() returns 4 -- the list has 4 items" },
+        { "line": 5, "variables": { "fruits": ["apple", "banana", "cherry"] }, "output": "apple\n4", "description": "pop() removes and returns the last item 'date'" },
+        { "line": 6, "variables": { "fruits": ["apple", "banana", "cherry"] }, "output": "apple\n4\n['apple', 'banana', 'cherry']", "description": "Print the list after pop -- back to 3 items" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish_effect",
       "effect": "confetti",

@@ -132,6 +132,62 @@
         "Hist → distributions",
         "Heatmap → correlations"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_plot_types",
+      "code": "import matplotlib.pyplot as plt\nimport numpy as np\n\ndata = np.random.randn(1000)\n\nfig, axes = plt.subplots(2, 2, figsize=(10, 8))\n\naxes[0,0].hist(data, bins=30, color='skyblue', edgecolor='black')\naxes[0,0].set_title('Histogram')\n\naxes[0,1].scatter(data[:50], data[:50]*2 + np.random.randn(50), alpha=0.6)\naxes[0,1].set_title('Scatter Plot')\n\naxes[1,0].bar(['A','B','C','D'], [25, 40, 30, 55], color='coral')\naxes[1,0].set_title('Bar Chart')\n\naxes[1,1].boxplot([data[:250], data[250:500]], labels=['Group A', 'Group B'])\naxes[1,1].set_title('Box Plot')\n\nplt.tight_layout()\nplt.show()",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "data": "1000 random normal values"
+          },
+          "output": "",
+          "explanation": "Generate standard normal random data"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "fig": "Figure",
+            "axes": "2x2 grid of Axes"
+          },
+          "output": "",
+          "explanation": "Create 2x2 subplot grid"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "plot": "histogram"
+          },
+          "output": "",
+          "explanation": "Histogram: shows data distribution with 30 bins"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "plot": "scatter"
+          },
+          "output": "",
+          "explanation": "Scatter: shows relationship between two variables"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "plot": "bar"
+          },
+          "output": "",
+          "explanation": "Bar: compares categorical values"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "plot": "boxplot"
+          },
+          "output": "",
+          "explanation": "Box: shows median, quartiles, and outliers"
+        }
+      ]
     }
   ],
   "practice_challenges": [

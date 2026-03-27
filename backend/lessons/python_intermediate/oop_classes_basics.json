@@ -205,6 +205,143 @@
           "address": "0x04"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class Dog:\n    def __init__(self, name, breed):\n        self.name = name\n        self.breed = breed\n        self.energy = 100\n\n    def bark(self):\n        self.energy -= 10\n        return f'{self.name} says Woof!'\n\ndog1 = Dog('Rex', 'Labrador')\ndog2 = Dog('Bella', 'Poodle')\nprint(dog1.bark())\nprint(f'{dog1.name} energy: {dog1.energy}')\nprint(f'{dog2.name} energy: {dog2.energy}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define the Dog class blueprint"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "description": "Constructor takes name and breed parameters"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "dog1": "Dog(name='Rex', breed='Labrador', energy=100)"
+          },
+          "output": "",
+          "description": "Create dog1 instance - __init__ runs, sets name='Rex', breed='Labrador', energy=100"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "dog1": "Dog(name='Rex',...)",
+            "dog2": "Dog(name='Bella', breed='Poodle', energy=100)"
+          },
+          "output": "",
+          "description": "Create dog2 - separate instance with its own attributes"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "dog1.energy": 90
+          },
+          "output": "Rex says Woof!",
+          "description": "dog1.bark() decreases dog1's energy to 90, returns greeting"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Rex energy: 90",
+          "description": "dog1's energy is 90 after barking"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "Bella energy: 100",
+          "description": "dog2's energy unchanged - each object has independent state"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Dog('Rex','Labrador')",
+          "type": "start"
+        },
+        {
+          "id": "new",
+          "label": "__new__ creates instance",
+          "type": "process"
+        },
+        {
+          "id": "init",
+          "label": "__init__(self, name, breed)",
+          "type": "process"
+        },
+        {
+          "id": "set_name",
+          "label": "self.name = 'Rex'",
+          "type": "process"
+        },
+        {
+          "id": "set_breed",
+          "label": "self.breed = 'Labrador'",
+          "type": "process"
+        },
+        {
+          "id": "set_energy",
+          "label": "self.energy = 100",
+          "type": "process"
+        },
+        {
+          "id": "done",
+          "label": "dog1 ready",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "new"
+        },
+        {
+          "from": "new",
+          "to": "init"
+        },
+        {
+          "from": "init",
+          "to": "set_name"
+        },
+        {
+          "from": "set_name",
+          "to": "set_breed"
+        },
+        {
+          "from": "set_breed",
+          "to": "set_energy"
+        },
+        {
+          "from": "set_energy",
+          "to": "done"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "new",
+        "init",
+        "set_name",
+        "set_breed",
+        "set_energy",
+        "done"
+      ],
+      "variables": {
+        "self.name": "Rex",
+        "self.breed": "Labrador",
+        "self.energy": 100
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -295,13 +432,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["classes", "objects", "__init__", "self", "instance_attributes", "methods"],
-    "concepts_required": ["functions", "variables"],
+    "concepts_taught": [
+      "classes",
+      "objects",
+      "__init__",
+      "self",
+      "instance_attributes",
+      "methods"
+    ],
+    "concepts_required": [
+      "functions",
+      "variables"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["modeling_real_world_entities", "game_development"],
+    "real_world_application": [
+      "modeling_real_world_entities",
+      "game_development"
+    ],
     "category": "oop",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

@@ -192,6 +192,49 @@
         "Got: 42 (type: int)",
         "Got: hello (type: str)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from typing import Optional\n\ndef greet(name: str, excited: bool = False) -> str:\n    if excited:\n        return f'HELLO, {name.upper()}!!!'\n    return f'Hello, {name}.'\n\ndef find_user(user_id: int) -> Optional[str]:\n    users = {1: 'Alice', 2: 'Bob'}\n    return users.get(user_id)\n\nprint(greet('Alice', excited=True))\nprint(greet('Bob'))\nprint(find_user(1))\nprint(find_user(99))",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Function with type hints: name is str, returns str"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "description": "Optional[str] means returns str OR None"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "HELLO, ALICE!!!",
+          "description": "excited=True path taken"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "Hello, Bob.",
+          "description": "excited defaults to False"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Alice",
+          "description": "User 1 found -> returns 'Alice'"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "None",
+          "description": "User 99 not found -> returns None (Optional)"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -225,8 +268,18 @@
         "ta": "Python runtime-ல் type hints-ஐ அமல்படுத்துமா?"
       },
       "options": {
-        "en": ["Yes, always", "No, they are metadata only", "Only in strict mode", "Only for functions"],
-        "ta": ["ஆம், எப்போதும்", "இல்லை, metadata மட்டுமே", "strict mode-ல் மட்டும்", "functions-க்கு மட்டும்"]
+        "en": [
+          "Yes, always",
+          "No, they are metadata only",
+          "Only in strict mode",
+          "Only for functions"
+        ],
+        "ta": [
+          "ஆம், எப்போதும்",
+          "இல்லை, metadata மட்டுமே",
+          "strict mode-ல் மட்டும்",
+          "functions-க்கு மட்டும்"
+        ]
       },
       "correct": 1
     },
@@ -236,8 +289,18 @@
         "ta": "Optional[str] என்றால் என்ன?"
       },
       "options": {
-        "en": ["Only str", "str or None", "str or int", "Empty string"],
-        "ta": ["str மட்டும்", "str அல்லது None", "str அல்லது int", "வெற்று string"]
+        "en": [
+          "Only str",
+          "str or None",
+          "str or int",
+          "Empty string"
+        ],
+        "ta": [
+          "str மட்டும்",
+          "str அல்லது None",
+          "str அல்லது int",
+          "வெற்று string"
+        ]
       },
       "correct": 1
     },
@@ -247,20 +310,46 @@
         "ta": "குறியீட்டை இயக்காமல் type hints சரிபார்க்கும் கருவி எது?"
       },
       "options": {
-        "en": ["pylint", "mypy", "pytest", "black"],
-        "ta": ["pylint", "mypy", "pytest", "black"]
+        "en": [
+          "pylint",
+          "mypy",
+          "pytest",
+          "black"
+        ],
+        "ta": [
+          "pylint",
+          "mypy",
+          "pytest",
+          "black"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["type_hints", "annotations", "Optional", "Union", "typing_module"],
-    "concepts_required": ["functions", "variables", "data_types"],
+    "concepts_taught": [
+      "type_hints",
+      "annotations",
+      "Optional",
+      "Union",
+      "typing_module"
+    ],
+    "concepts_required": [
+      "functions",
+      "variables",
+      "data_types"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 20,
-    "real_world_application": ["code_documentation", "IDE_support", "static_analysis"],
+    "real_world_application": [
+      "code_documentation",
+      "IDE_support",
+      "static_analysis"
+    ],
     "category": "code_quality",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

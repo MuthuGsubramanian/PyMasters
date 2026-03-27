@@ -204,6 +204,51 @@
         "name: Name cannot be empty",
         "email: value is not a valid email address"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_ai_code_assistants",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\ndef code_review(code):\n    resp = client.chat.completions.create(\n        model='gpt-4o-mini',\n        messages=[\n            {'role':'system','content':'Review Python code. Find bugs.'},\n            {'role':'user','content':f'Review:\\n```python\\n{code}\\n```'}\n        ]\n    )\n    return resp.choices[0].message.content\n\nmy_code = 'def fib(n):\\n    if n <= 1: return n\\n    return fib(n-1) + fib(n-2)'\nreview = code_review(my_code)\nprint(review)",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "function": "code_review"
+          },
+          "output": "",
+          "explanation": "Build an AI code reviewer"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "system": "Review Python code"
+          },
+          "output": "",
+          "explanation": "System prompt specializes AI for code review"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "code": "fibonacci"
+          },
+          "output": "",
+          "explanation": "Send code in markdown block for clarity"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "my_code": "naive fibonacci"
+          },
+          "output": "",
+          "explanation": "Recursive fib — has performance issues"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "Bug: O(2^n) complexity. Use @lru_cache...",
+          "explanation": "AI identifies exponential complexity, suggests fix"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -294,13 +339,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["claude_code", "cursor", "copilot", "ai_assisted_development"],
-    "concepts_required": ["what_is_ai"],
+    "concepts_taught": [
+      "claude_code",
+      "cursor",
+      "copilot",
+      "ai_assisted_development"
+    ],
+    "concepts_required": [
+      "what_is_ai"
+    ],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["daily_coding", "productivity"],
+    "real_world_application": [
+      "daily_coding",
+      "productivity"
+    ],
     "category": "ai_tools",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

@@ -197,11 +197,184 @@
       "type": "ComparisonPanel",
       "id": "complexity_comparison",
       "comparisons": [
-        {"label": "O(1)", "values": [1, 1, 1, 1], "color": "#4ff7a4"},
-        {"label": "O(n)", "values": [10, 100, 1000, 10000], "color": "#f7d44f"},
-        {"label": "O(n²)", "values": [100, 10000, 1000000, 100000000], "color": "#f74f4f"}
+        {
+          "label": "O(1)",
+          "values": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "color": "#4ff7a4"
+        },
+        {
+          "label": "O(n)",
+          "values": [
+            10,
+            100,
+            1000,
+            10000
+          ],
+          "color": "#f7d44f"
+        },
+        {
+          "label": "O(n²)",
+          "values": [
+            100,
+            10000,
+            1000000,
+            100000000
+          ],
+          "color": "#f74f4f"
+        }
       ],
-      "x_labels": ["n=10", "n=100", "n=1000", "n=10000"]
+      "x_labels": [
+        "n=10",
+        "n=100",
+        "n=1000",
+        "n=10000"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_big_o_complexity",
+      "code": "def constant_time(lst):\n    return lst[0]\n\ndef linear_time(lst):\n    total = 0\n    for x in lst:\n        total += x\n    return total\n\ndef quadratic_time(lst):\n    count = 0\n    for i in range(len(lst)):\n        for j in range(len(lst)):\n            count += 1\n    return count\n\ndata = [1, 2, 3, 4, 5]\nprint(constant_time(data))\nprint(linear_time(data))\nprint(quadratic_time(data))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "lst": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "output": "",
+          "explanation": "O(1): access one element regardless of list size"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "lst": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "return": 1
+          },
+          "output": "1",
+          "explanation": "Returns lst[0]=1. Only 1 operation no matter how big the list"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "lst": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "total": 0
+          },
+          "output": "",
+          "explanation": "O(n): must visit every element once"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "x": 1,
+            "total": 1
+          },
+          "output": "",
+          "explanation": "Iteration 1: total=0+1=1"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "x": 3,
+            "total": 6
+          },
+          "output": "",
+          "explanation": "Iteration 3: total=3+3=6. Each element visited once => O(n)"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "total": 15
+          },
+          "output": "15",
+          "explanation": "Sum of all 5 elements = 15. Took n=5 steps"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "count": 0
+          },
+          "output": "",
+          "explanation": "O(n^2): nested loop, each iterating n times"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "i": 0,
+            "j": 4,
+            "count": 5
+          },
+          "output": "",
+          "explanation": "After i=0 completes inner loop: 5 iterations"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "count": 25
+          },
+          "output": "25",
+          "explanation": "5*5=25 operations. For n=1000 this becomes 1,000,000!"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_big_o_complexity",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Analyze Algorithm",
+          "next": [
+            "check_loops"
+          ]
+        },
+        {
+          "id": "check_loops",
+          "label": "Count nested loops?",
+          "next": [
+            "no_loop",
+            "one_loop",
+            "two_loops"
+          ]
+        },
+        {
+          "id": "no_loop",
+          "label": "No loops => O(1)",
+          "next": []
+        },
+        {
+          "id": "one_loop",
+          "label": "1 loop over n => O(n)",
+          "next": []
+        },
+        {
+          "id": "two_loops",
+          "label": "2 nested loops => O(n^2)",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -233,8 +406,18 @@
         "ta": "ஒரு பட்டியலில் குறியீட்டால் ஒரு உறுப்பை அணுகுவதன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(1)", "O(log n)", "O(n²)"],
-        "ta": ["O(n)", "O(1)", "O(log n)", "O(n²)"]
+        "en": [
+          "O(n)",
+          "O(1)",
+          "O(log n)",
+          "O(n²)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(1)",
+          "O(log n)",
+          "O(n²)"
+        ]
       },
       "correct": 1
     },
@@ -244,8 +427,18 @@
         "ta": "எந்த Big O குறியீடு மிக மோசமான அளவிடுதலைக் குறிக்கிறது?"
       },
       "options": {
-        "en": ["O(n)", "O(n log n)", "O(1)", "O(2ⁿ)"],
-        "ta": ["O(n)", "O(n log n)", "O(1)", "O(2ⁿ)"]
+        "en": [
+          "O(n)",
+          "O(n log n)",
+          "O(1)",
+          "O(2ⁿ)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(n log n)",
+          "O(1)",
+          "O(2ⁿ)"
+        ]
       },
       "correct": 3
     },
@@ -255,20 +448,42 @@
         "ta": "இரண்டு loops-ம் n உறுப்புகளை சுழற்சிக்கும் உள்ளமைக்கப்பட்ட loop-ன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(2n)", "O(n²)", "O(n log n)"],
-        "ta": ["O(n)", "O(2n)", "O(n²)", "O(n log n)"]
+        "en": [
+          "O(n)",
+          "O(2n)",
+          "O(n²)",
+          "O(n log n)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(2n)",
+          "O(n²)",
+          "O(n log n)"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["big_o_notation", "time_complexity", "space_complexity"],
-    "concepts_required": ["loops", "functions"],
+    "concepts_taught": [
+      "big_o_notation",
+      "time_complexity",
+      "space_complexity"
+    ],
+    "concepts_required": [
+      "loops",
+      "functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["performance_optimization", "algorithm_selection"],
+    "real_world_application": [
+      "performance_optimization",
+      "algorithm_selection"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

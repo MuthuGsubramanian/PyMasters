@@ -146,6 +146,110 @@
         "Step 4: w= 1.30, loss=  1.68",
         "Step 5: w= 0.78, loss=  0.60"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_bp_gd",
+      "code": "import torch\n\nw = torch.tensor(5.0, requires_grad=True)\nlr = 0.1\nhistory = []\n\nfor step in range(6):\n    loss = (w - 2) ** 2\n    loss.backward()\n    with torch.no_grad():\n        w -= lr * w.grad\n    history.append((w.item(), loss.item()))\n    w.grad.zero_()\n    print(f'Step {step}: w={w.item():.3f}, loss={loss.item():.3f}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "w": "5.0"
+          },
+          "output": "",
+          "explanation": "Start at w=5, trying to reach minimum at w=2"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "lr": "0.1"
+          },
+          "output": "",
+          "explanation": "Learning rate: step size multiplier"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "loss": "9.0",
+            "grad": "6.0"
+          },
+          "output": "",
+          "explanation": "(5-2)^2=9, gradient=2*(5-2)=6"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "w": "4.4"
+          },
+          "output": "Step 0: w=4.400, loss=9.000",
+          "explanation": "w = 5 - 0.1*6 = 4.4"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "w": "3.920"
+          },
+          "output": "Step 1: w=3.920, loss=5.760",
+          "explanation": "Closer to 2, loss decreasing"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "w": "3.536"
+          },
+          "output": "Step 2: w=3.536, loss=3.686",
+          "explanation": "Steps shrink as gradient gets smaller"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "w": "2.230"
+          },
+          "output": "Step 5: w=2.230, loss=0.603",
+          "explanation": "Converging toward w=2"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_bp_gd",
+      "title": "Gradient Descent Convergence",
+      "loopVariable": "step",
+      "iterations": [
+        {
+          "iteration": 0,
+          "state": {
+            "w": 5.0,
+            "loss": 9.0
+          },
+          "description": "Far from minimum"
+        },
+        {
+          "iteration": 1,
+          "state": {
+            "w": 4.4,
+            "loss": 5.76
+          },
+          "description": "Big step toward target"
+        },
+        {
+          "iteration": 3,
+          "state": {
+            "w": 3.229,
+            "loss": 2.36
+          },
+          "description": "Slowing down near minimum"
+        },
+        {
+          "iteration": 5,
+          "state": {
+            "w": 2.23,
+            "loss": 0.6
+          },
+          "description": "Close to optimal w=2"
+        }
+      ]
     }
   ],
   "practice_challenges": [

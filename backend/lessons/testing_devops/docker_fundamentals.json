@@ -129,12 +129,36 @@
       "id": "container_layers",
       "structure_type": "stack",
       "layers": [
-        { "label": "CMD uvicorn app:app", "count": "startup", "color": "#ff6b6b" },
-        { "label": "COPY . . (app code)", "count": "layer 5", "color": "#ffd93d" },
-        { "label": "RUN pip install", "count": "layer 4 (cached)", "color": "#a66bf7" },
-        { "label": "COPY requirements.txt", "count": "layer 3", "color": "#6bcf7f" },
-        { "label": "WORKDIR /app", "count": "layer 2", "color": "#4ff7a4" },
-        { "label": "python:3.12-slim", "count": "base image", "color": "#4f8ef7" }
+        {
+          "label": "CMD uvicorn app:app",
+          "count": "startup",
+          "color": "#ff6b6b"
+        },
+        {
+          "label": "COPY . . (app code)",
+          "count": "layer 5",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "RUN pip install",
+          "count": "layer 4 (cached)",
+          "color": "#a66bf7"
+        },
+        {
+          "label": "COPY requirements.txt",
+          "count": "layer 3",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "WORKDIR /app",
+          "count": "layer 2",
+          "color": "#4ff7a4"
+        },
+        {
+          "label": "python:3.12-slim",
+          "count": "base image",
+          "color": "#4f8ef7"
+        }
       ]
     },
     {
@@ -168,6 +192,107 @@
       "value": "Image (blueprint)",
       "data_type": "Docker Image",
       "color": "#4f8ef7"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_docker_fund",
+      "title": "Docker Container Lifecycle",
+      "code": "# $ docker pull python:3.12-slim\n# $ docker run -d --name myapp -p 8000:8000 myimage\n# $ docker ps\n# $ docker logs myapp\n# $ docker stop myapp\n# $ docker rm myapp",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "Pulling python:3.12-slim...",
+          "explanation": "Download image from Docker Hub"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "container": "myapp"
+          },
+          "output": "a1b2c3d4...",
+          "explanation": "Start container: -d detached, -p port map"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "CONTAINER  IMAGE    STATUS\na1b2c3d4   myimage  Up 5s",
+          "explanation": "List running containers"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "Ready to serve",
+          "explanation": "View container logs"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "myapp",
+          "explanation": "Stop container gracefully"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "myapp",
+          "explanation": "Remove stopped container"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_container_life",
+      "title": "Container Lifecycle",
+      "nodes": [
+        {
+          "id": "image",
+          "label": "Docker Image",
+          "type": "start"
+        },
+        {
+          "id": "create",
+          "label": "Create",
+          "type": "process"
+        },
+        {
+          "id": "start",
+          "label": "Start\n(Running)",
+          "type": "process"
+        },
+        {
+          "id": "stop",
+          "label": "Stop",
+          "type": "process"
+        },
+        {
+          "id": "remove",
+          "label": "Remove",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "image",
+          "to": "create",
+          "label": "docker create"
+        },
+        {
+          "from": "create",
+          "to": "start",
+          "label": "docker start"
+        },
+        {
+          "from": "start",
+          "to": "stop",
+          "label": "docker stop"
+        },
+        {
+          "from": "stop",
+          "to": "remove",
+          "label": "docker rm"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -201,8 +326,18 @@
         "ta": "Docker image மற்றும் container இடையே என்ன உறவு?"
       },
       "options": {
-        "en": ["They are the same thing", "An image is a running container", "A container is a running instance of an image", "A container creates images"],
-        "ta": ["அவை ஒன்றுதான்", "Image என்பது இயங்கும் container", "Container என்பது image-ன் இயங்கும் instance", "Container images-ஐ உருவாக்கும்"]
+        "en": [
+          "They are the same thing",
+          "An image is a running container",
+          "A container is a running instance of an image",
+          "A container creates images"
+        ],
+        "ta": [
+          "அவை ஒன்றுதான்",
+          "Image என்பது இயங்கும் container",
+          "Container என்பது image-ன் இயங்கும் instance",
+          "Container images-ஐ உருவாக்கும்"
+        ]
       },
       "correct": 2
     },
@@ -212,8 +347,18 @@
         "ta": "மீதமுள்ள code-ஐ copy செய்வதற்கு முன் requirements.txt-ஐ ஏன் copy செய்கிறோம்?"
       },
       "options": {
-        "en": ["It's required by Docker syntax", "For better layer caching — deps only reinstall when requirements change", "To make the image smaller", "It doesn't matter"],
-        "ta": ["Docker syntax-ல் கட்டாயம்", "சிறந்த layer caching-க்கு — requirements மாறும்போது மட்டும் deps reinstall ஆகும்", "Image-ஐ சிறியதாக்க", "முக்கியமில்லை"]
+        "en": [
+          "It's required by Docker syntax",
+          "For better layer caching — deps only reinstall when requirements change",
+          "To make the image smaller",
+          "It doesn't matter"
+        ],
+        "ta": [
+          "Docker syntax-ல் கட்டாயம்",
+          "சிறந்த layer caching-க்கு — requirements மாறும்போது மட்டும் deps reinstall ஆகும்",
+          "Image-ஐ சிறியதாக்க",
+          "முக்கியமில்லை"
+        ]
       },
       "correct": 1
     },
@@ -223,20 +368,44 @@
         "ta": "'docker run -p 8000:8000 myapp' என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Builds the image", "Runs the container and maps host port 8000 to container port 8000", "Deletes the container", "Pushes to Docker Hub"],
-        "ta": ["Image-ஐ build செய்யும்", "Container-ஐ இயக்கி host port 8000-ஐ container port 8000-க்கு map செய்யும்", "Container-ஐ நீக்கும்", "Docker Hub-க்கு push செய்யும்"]
+        "en": [
+          "Builds the image",
+          "Runs the container and maps host port 8000 to container port 8000",
+          "Deletes the container",
+          "Pushes to Docker Hub"
+        ],
+        "ta": [
+          "Image-ஐ build செய்யும்",
+          "Container-ஐ இயக்கி host port 8000-ஐ container port 8000-க்கு map செய்யும்",
+          "Container-ஐ நீக்கும்",
+          "Docker Hub-க்கு push செய்யும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["docker", "dockerfile", "images", "containers", "volumes"],
-    "concepts_required": ["command_line_basics"],
+    "concepts_taught": [
+      "docker",
+      "dockerfile",
+      "images",
+      "containers",
+      "volumes"
+    ],
+    "concepts_required": [
+      "command_line_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["deployment", "microservices", "cloud"],
+    "real_world_application": [
+      "deployment",
+      "microservices",
+      "cloud"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

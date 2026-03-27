@@ -30,7 +30,14 @@
       "nodes": [
         {
           "label": "End-to-End Project",
-          "children": ["Data Loading", "EDA", "Feature Engineering", "Pipeline", "Model Comparison", "Deployment"]
+          "children": [
+            "Data Loading",
+            "EDA",
+            "Feature Engineering",
+            "Pipeline",
+            "Model Comparison",
+            "Deployment"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -39,12 +46,36 @@
       "type": "FlowArrow",
       "id": "project_flow",
       "stages": [
-        { "label": "Raw Data (500 rows)", "icon": "database", "color": "#e74c3c" },
-        { "label": "EDA & Cleaning", "icon": "search", "color": "#f39c12" },
-        { "label": "Feature Engineering (+3)", "icon": "wrench", "color": "#2ecc71" },
-        { "label": "Pipeline (prep+model)", "icon": "pipeline", "color": "#3498db" },
-        { "label": "Compare 3 Models", "icon": "chart", "color": "#9b59b6" },
-        { "label": "Best Model → API", "icon": "rocket", "color": "#1abc9c" }
+        {
+          "label": "Raw Data (500 rows)",
+          "icon": "database",
+          "color": "#e74c3c"
+        },
+        {
+          "label": "EDA & Cleaning",
+          "icon": "search",
+          "color": "#f39c12"
+        },
+        {
+          "label": "Feature Engineering (+3)",
+          "icon": "wrench",
+          "color": "#2ecc71"
+        },
+        {
+          "label": "Pipeline (prep+model)",
+          "icon": "pipeline",
+          "color": "#3498db"
+        },
+        {
+          "label": "Compare 3 Models",
+          "icon": "chart",
+          "color": "#9b59b6"
+        },
+        {
+          "label": "Best Model → API",
+          "icon": "rocket",
+          "color": "#1abc9c"
+        }
       ],
       "duration_ms": 5000
     },
@@ -55,72 +86,100 @@
         {
           "line": "import pandas as pd; import numpy as np",
           "highlight": "import",
-          "explanation": { "en": "Import core data libraries" }
+          "explanation": {
+            "en": "Import core data libraries"
+          }
         },
         {
           "line": "from sklearn.model_selection import train_test_split, cross_val_score",
           "highlight": "sklearn",
-          "explanation": { "en": "Import splitting and evaluation tools" }
+          "explanation": {
+            "en": "Import splitting and evaluation tools"
+          }
         },
         {
           "line": "# Generate realistic churn dataset with 500 customers",
           "highlight": "dataset",
-          "explanation": { "en": "Stage 1: Create synthetic but realistic customer data with 7 features" }
+          "explanation": {
+            "en": "Stage 1: Create synthetic but realistic customer data with 7 features"
+          }
         },
         {
           "line": "df['charge_per_month'] = df['total_charges'] / (df['tenure_months'] + 1)",
           "highlight": "charge_per_month",
-          "explanation": { "en": "Stage 2: Engineer new features — average spending per month" }
+          "explanation": {
+            "en": "Stage 2: Engineer new features — average spending per month"
+          }
         },
         {
           "line": "df['is_new_customer'] = (df['tenure_months'] < 6).astype(int)",
           "highlight": "is_new_customer",
-          "explanation": { "en": "Binary feature: flag customers with less than 6 months tenure" }
+          "explanation": {
+            "en": "Binary feature: flag customers with less than 6 months tenure"
+          }
         },
         {
           "line": "preprocessor = ColumnTransformer([('num', numeric_transformer, numeric_features), ('cat', categorical_transformer, categorical_features), ('bin', 'passthrough', binary_features)])",
           "highlight": "ColumnTransformer",
-          "explanation": { "en": "Stage 3: Different preprocessing for numeric, categorical, and binary columns" }
+          "explanation": {
+            "en": "Stage 3: Different preprocessing for numeric, categorical, and binary columns"
+          }
         },
         {
           "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)",
           "highlight": "stratify",
-          "explanation": { "en": "Stratified split preserves churn ratio in both sets" }
+          "explanation": {
+            "en": "Stratified split preserves churn ratio in both sets"
+          }
         },
         {
           "line": "models = {'Logistic Regression': ..., 'Random Forest': ..., 'Gradient Boosting': ...}",
           "highlight": "models",
-          "explanation": { "en": "Stage 4: Define 3 candidate models, each wrapped in a pipeline" }
+          "explanation": {
+            "en": "Stage 4: Define 3 candidate models, each wrapped in a pipeline"
+          }
         },
         {
           "line": "for name, pipeline in models.items(): scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring='roc_auc')",
           "highlight": "cross_val_score",
-          "explanation": { "en": "5-fold CV with ROC-AUC scoring — fair comparison on same data splits" }
+          "explanation": {
+            "en": "5-fold CV with ROC-AUC scoring — fair comparison on same data splits"
+          }
         },
         {
           "line": "best_name = max(results, key=results.get)",
           "highlight": "best_name",
-          "explanation": { "en": "Select the model with highest mean CV ROC-AUC score" }
+          "explanation": {
+            "en": "Select the model with highest mean CV ROC-AUC score"
+          }
         },
         {
           "line": "best_pipeline.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Stage 5: Retrain the best model on all training data" }
+          "explanation": {
+            "en": "Stage 5: Retrain the best model on all training data"
+          }
         },
         {
           "line": "print(classification_report(y_test, y_pred))",
           "highlight": "classification_report",
-          "explanation": { "en": "Final evaluation on held-out test set — precision, recall, F1 per class" }
+          "explanation": {
+            "en": "Final evaluation on held-out test set — precision, recall, F1 per class"
+          }
         },
         {
           "line": "joblib.dump(best_pipeline, 'churn_model.joblib')",
           "highlight": "dump",
-          "explanation": { "en": "Stage 6: Save the complete pipeline for deployment" }
+          "explanation": {
+            "en": "Stage 6: Save the complete pipeline for deployment"
+          }
         },
         {
           "line": "# @app.post('/predict-churn') -> FastAPI endpoint",
           "highlight": "FastAPI",
-          "explanation": { "en": "Deploy: serve predictions via REST API — the model is now a product" }
+          "explanation": {
+            "en": "Deploy: serve predictions via REST API — the model is now a product"
+          }
         }
       ]
     },
@@ -128,9 +187,21 @@
       "type": "ComparisonPanel",
       "id": "model_comparison",
       "models": [
-        { "name": "Logistic Regression", "strengths": "Fast, interpretable", "weaknesses": "May underfit complex patterns" },
-        { "name": "Random Forest", "strengths": "Handles non-linearity, feature importance", "weaknesses": "Slower, less interpretable" },
-        { "name": "Gradient Boosting", "strengths": "Often best accuracy, handles imbalance", "weaknesses": "Slowest, risk of overfitting" }
+        {
+          "name": "Logistic Regression",
+          "strengths": "Fast, interpretable",
+          "weaknesses": "May underfit complex patterns"
+        },
+        {
+          "name": "Random Forest",
+          "strengths": "Handles non-linearity, feature importance",
+          "weaknesses": "Slower, less interpretable"
+        },
+        {
+          "name": "Gradient Boosting",
+          "strengths": "Often best accuracy, handles imbalance",
+          "weaknesses": "Slowest, risk of overfitting"
+        }
       ],
       "duration_ms": 4000
     },
@@ -173,6 +244,129 @@
         "Model saved as churn_model.joblib",
         "Loaded model predictions verified!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_e2e_project",
+      "code": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import classification_report\n\n# Simulate dataset\nimport numpy as np\nnp.random.seed(42)\nX = np.random.randn(500, 10)\ny = (X[:, 0] + X[:, 1]*2 - X[:, 2] > 0).astype(int)\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y)\nscaler = StandardScaler().fit(X_train)\nX_train_s, X_test_s = scaler.transform(X_train), scaler.transform(X_test)\n\nmodels = {\n    'Logistic': LogisticRegression(),\n    'RF': RandomForestClassifier(n_estimators=100),\n    'GBM': GradientBoostingClassifier(n_estimators=100)\n}\nfor name, model in models.items():\n    model.fit(X_train_s, y_train)\n    acc = model.score(X_test_s, y_test)\n    print(f'{name}: {acc:.3f}')",
+      "executionSteps": [
+        {
+          "line": 10,
+          "variables": {
+            "X.shape": "(500, 10)"
+          },
+          "output": "",
+          "explanation": "500 samples, 10 features"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "split": "400 train, 100 test"
+          },
+          "output": "",
+          "explanation": "Stratified 80/20 split"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "scaler": "fitted"
+          },
+          "output": "",
+          "explanation": "Scale features using training stats"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "models": "3 classifiers"
+          },
+          "output": "",
+          "explanation": "Compare 3 different algorithms"
+        },
+        {
+          "line": 24,
+          "variables": {},
+          "output": "Logistic: 0.870\nRF: 0.890\nGBM: 0.910",
+          "explanation": "GBM wins — compare multiple models before choosing"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_e2e",
+      "title": "End-to-End ML Project",
+      "nodes": [
+        {
+          "id": "data",
+          "label": "Collect Data",
+          "type": "start"
+        },
+        {
+          "id": "eda",
+          "label": "EDA & Cleaning",
+          "type": "process"
+        },
+        {
+          "id": "feat",
+          "label": "Feature Engineering",
+          "type": "process"
+        },
+        {
+          "id": "split",
+          "label": "Train/Test Split",
+          "type": "process"
+        },
+        {
+          "id": "train",
+          "label": "Train Multiple Models",
+          "type": "process"
+        },
+        {
+          "id": "compare",
+          "label": "Compare & Select",
+          "type": "decision"
+        },
+        {
+          "id": "tune",
+          "label": "Hyperparameter Tuning",
+          "type": "process"
+        },
+        {
+          "id": "deploy",
+          "label": "Deploy Best Model",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "data",
+          "to": "eda"
+        },
+        {
+          "from": "eda",
+          "to": "feat"
+        },
+        {
+          "from": "feat",
+          "to": "split"
+        },
+        {
+          "from": "split",
+          "to": "train"
+        },
+        {
+          "from": "train",
+          "to": "compare"
+        },
+        {
+          "from": "compare",
+          "to": "tune"
+        },
+        {
+          "from": "tune",
+          "to": "deploy"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -204,8 +398,18 @@
         "ta": "end-to-end ML திட்டத்தில், ஏன் பல மாடல்களை ஒப்பிடுகிறோம்?"
       },
       "options": {
-        "en": ["To waste time", "Because no single model is best for all datasets — we must empirically find the best", "Because we need at least 3 models", "To increase accuracy automatically"],
-        "ta": ["நேரத்தை வீணடிக்க", "எல்லா தரவுத்தொகுப்புகளுக்கும் ஒற்றை மாடல் சிறந்தது அல்ல — சிறந்ததை அனுபவ ரீதியாக கண்டறிய வேண்டும்", "குறைந்தது 3 மாடல்கள் தேவை", "துல்லியத்தை தானாக அதிகரிக்க"]
+        "en": [
+          "To waste time",
+          "Because no single model is best for all datasets — we must empirically find the best",
+          "Because we need at least 3 models",
+          "To increase accuracy automatically"
+        ],
+        "ta": [
+          "நேரத்தை வீணடிக்க",
+          "எல்லா தரவுத்தொகுப்புகளுக்கும் ஒற்றை மாடல் சிறந்தது அல்ல — சிறந்ததை அனுபவ ரீதியாக கண்டறிய வேண்டும்",
+          "குறைந்தது 3 மாடல்கள் தேவை",
+          "துல்லியத்தை தானாக அதிகரிக்க"
+        ]
       },
       "correct": 1
     },
@@ -215,8 +419,18 @@
         "ta": "இலக்கு சமநிலையற்றதாக இருக்கும்போது ஏன் stratified split பயன்படுத்துகிறோம்?"
       },
       "options": {
-        "en": ["To make training faster", "To ensure both train and test sets have the same class proportion", "To increase the dataset size", "To remove outliers"],
-        "ta": ["பயிற்சியை வேகமாக்க", "பயிற்சி மற்றும் சோதனை தொகுப்புகளில் ஒரே வகுப்பு விகிதம் இருப்பதை உறுதிசெய்ய", "தரவுத்தொகுப்பின் அளவை அதிகரிக்க", "வெளிப்புற மதிப்புகளை நீக்க"]
+        "en": [
+          "To make training faster",
+          "To ensure both train and test sets have the same class proportion",
+          "To increase the dataset size",
+          "To remove outliers"
+        ],
+        "ta": [
+          "பயிற்சியை வேகமாக்க",
+          "பயிற்சி மற்றும் சோதனை தொகுப்புகளில் ஒரே வகுப்பு விகிதம் இருப்பதை உறுதிசெய்ய",
+          "தரவுத்தொகுப்பின் அளவை அதிகரிக்க",
+          "வெளிப்புற மதிப்புகளை நீக்க"
+        ]
       },
       "correct": 1
     },
@@ -226,20 +440,47 @@
         "ta": "வரிசைப்படுத்தலுக்கு மாடல் மட்டுமின்றி முழு பைப்லைனையும் சேமிப்பதன் நன்மை என்ன?"
       },
       "options": {
-        "en": ["It saves disk space", "New data automatically gets the same preprocessing as training data", "It trains faster", "It increases accuracy"],
-        "ta": ["வட்டு இடத்தை சேமிக்கிறது", "புதிய தரவு தானாகவே பயிற்சி தரவு போன்ற முன்செயலாக்கத்தைப் பெறுகிறது", "வேகமாக பயிற்சிக்கிறது", "துல்லியத்தை அதிகரிக்கிறது"]
+        "en": [
+          "It saves disk space",
+          "New data automatically gets the same preprocessing as training data",
+          "It trains faster",
+          "It increases accuracy"
+        ],
+        "ta": [
+          "வட்டு இடத்தை சேமிக்கிறது",
+          "புதிய தரவு தானாகவே பயிற்சி தரவு போன்ற முன்செயலாக்கத்தைப் பெறுகிறது",
+          "வேகமாக பயிற்சிக்கிறது",
+          "துல்லியத்தை அதிகரிக்கிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["end_to_end_ml", "model_comparison", "feature_engineering", "pipeline_deployment", "project_structure"],
-    "concepts_required": ["ml_pipelines", "model_evaluation", "model_deployment", "feature_engineering"],
+    "concepts_taught": [
+      "end_to_end_ml",
+      "model_comparison",
+      "feature_engineering",
+      "pipeline_deployment",
+      "project_structure"
+    ],
+    "concepts_required": [
+      "ml_pipelines",
+      "model_evaluation",
+      "model_deployment",
+      "feature_engineering"
+    ],
     "difficulty": "advanced",
     "engagement_type": "project",
     "estimated_minutes": 60,
-    "real_world_application": ["churn_prediction", "full_ml_lifecycle", "production_deployment"],
+    "real_world_application": [
+      "churn_prediction",
+      "full_ml_lifecycle",
+      "production_deployment"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["production"]
+    "path_memberships": [
+      "production"
+    ]
   }
 }

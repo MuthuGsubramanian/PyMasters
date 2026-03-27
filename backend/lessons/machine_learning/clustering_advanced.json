@@ -30,15 +30,29 @@
       "nodes": [
         {
           "label": "Advanced Clustering",
-          "children": ["DBSCAN", "Hierarchical", "GMM"]
+          "children": [
+            "DBSCAN",
+            "Hierarchical",
+            "GMM"
+          ]
         },
         {
           "label": "DBSCAN",
-          "children": ["eps", "min_samples", "Noise detection", "Arbitrary shapes"]
+          "children": [
+            "eps",
+            "min_samples",
+            "Noise detection",
+            "Arbitrary shapes"
+          ]
         },
         {
           "label": "GMM",
-          "children": ["Soft assignments", "Probability per cluster", "Elliptical clusters", "BIC/AIC for model selection"]
+          "children": [
+            "Soft assignments",
+            "Probability per cluster",
+            "Elliptical clusters",
+            "BIC/AIC for model selection"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -47,10 +61,26 @@
       "type": "ComparisonPanel",
       "id": "clustering_comparison",
       "models": [
-        { "name": "K-Means", "strengths": "Fast, scalable", "weaknesses": "Assumes spherical clusters, needs K" },
-        { "name": "DBSCAN", "strengths": "Any shape, finds outliers, no K needed", "weaknesses": "Sensitive to eps/min_samples" },
-        { "name": "Hierarchical", "strengths": "Dendrogram visualization, no K needed upfront", "weaknesses": "Slow on large data" },
-        { "name": "GMM", "strengths": "Soft assignments, elliptical clusters", "weaknesses": "Assumes Gaussian, needs n_components" }
+        {
+          "name": "K-Means",
+          "strengths": "Fast, scalable",
+          "weaknesses": "Assumes spherical clusters, needs K"
+        },
+        {
+          "name": "DBSCAN",
+          "strengths": "Any shape, finds outliers, no K needed",
+          "weaknesses": "Sensitive to eps/min_samples"
+        },
+        {
+          "name": "Hierarchical",
+          "strengths": "Dendrogram visualization, no K needed upfront",
+          "weaknesses": "Slow on large data"
+        },
+        {
+          "name": "GMM",
+          "strengths": "Soft assignments, elliptical clusters",
+          "weaknesses": "Assumes Gaussian, needs n_components"
+        }
       ],
       "duration_ms": 4000
     },
@@ -61,72 +91,100 @@
         {
           "line": "from sklearn.cluster import DBSCAN, AgglomerativeClustering",
           "highlight": "DBSCAN",
-          "explanation": { "en": "Import density-based and hierarchical clustering algorithms" }
+          "explanation": {
+            "en": "Import density-based and hierarchical clustering algorithms"
+          }
         },
         {
           "line": "from sklearn.mixture import GaussianMixture",
           "highlight": "GaussianMixture",
-          "explanation": { "en": "Import GMM for probabilistic soft clustering" }
+          "explanation": {
+            "en": "Import GMM for probabilistic soft clustering"
+          }
         },
         {
           "line": "from sklearn.datasets import make_moons",
           "highlight": "make_moons",
-          "explanation": { "en": "Generate crescent-shaped data — K-Means fails on this shape" }
+          "explanation": {
+            "en": "Generate crescent-shaped data — K-Means fails on this shape"
+          }
         },
         {
           "line": "X, y = make_moons(n_samples=300, noise=0.1, random_state=42)",
           "highlight": "make_moons",
-          "explanation": { "en": "300 points in two interlocking crescents — a classic non-linear clustering test" }
+          "explanation": {
+            "en": "300 points in two interlocking crescents — a classic non-linear clustering test"
+          }
         },
         {
           "line": "db = DBSCAN(eps=0.2, min_samples=5)",
           "highlight": "eps=0.2",
-          "explanation": { "en": "eps: maximum distance between neighbors; min_samples: minimum points to form a cluster" }
+          "explanation": {
+            "en": "eps: maximum distance between neighbors; min_samples: minimum points to form a cluster"
+          }
         },
         {
           "line": "db_labels = db.fit_predict(X)",
           "highlight": "fit_predict",
-          "explanation": { "en": "Fit and assign clusters in one step — label -1 means noise/outlier" }
+          "explanation": {
+            "en": "Fit and assign clusters in one step — label -1 means noise/outlier"
+          }
         },
         {
           "line": "n_clusters = len(set(db_labels)) - (1 if -1 in db_labels else 0)",
           "highlight": "n_clusters",
-          "explanation": { "en": "Count real clusters (excluding noise label -1)" }
+          "explanation": {
+            "en": "Count real clusters (excluding noise label -1)"
+          }
         },
         {
           "line": "print(f'DBSCAN found {n_clusters} clusters, {(db_labels==-1).sum()} noise points')",
           "highlight": "print",
-          "explanation": { "en": "DBSCAN finds 2 crescents and identifies noise points automatically" }
+          "explanation": {
+            "en": "DBSCAN finds 2 crescents and identifies noise points automatically"
+          }
         },
         {
           "line": "agg = AgglomerativeClustering(n_clusters=2, linkage='ward')",
           "highlight": "ward",
-          "explanation": { "en": "Ward linkage minimizes variance when merging clusters — most common choice" }
+          "explanation": {
+            "en": "Ward linkage minimizes variance when merging clusters — most common choice"
+          }
         },
         {
           "line": "agg_labels = agg.fit_predict(X)",
           "highlight": "fit_predict",
-          "explanation": { "en": "Hierarchical clustering: starts with each point as its own cluster, merges bottom-up" }
+          "explanation": {
+            "en": "Hierarchical clustering: starts with each point as its own cluster, merges bottom-up"
+          }
         },
         {
           "line": "gmm = GaussianMixture(n_components=2, random_state=42)",
           "highlight": "n_components=2",
-          "explanation": { "en": "GMM with 2 Gaussian components — each models one cluster" }
+          "explanation": {
+            "en": "GMM with 2 Gaussian components — each models one cluster"
+          }
         },
         {
           "line": "gmm.fit(X)",
           "highlight": "fit",
-          "explanation": { "en": "Fit: learn the mean, covariance, and weight of each Gaussian component" }
+          "explanation": {
+            "en": "Fit: learn the mean, covariance, and weight of each Gaussian component"
+          }
         },
         {
           "line": "probas = gmm.predict_proba(X[:3])",
           "highlight": "predict_proba",
-          "explanation": { "en": "Soft assignment: each point gets a probability for each cluster" }
+          "explanation": {
+            "en": "Soft assignment: each point gets a probability for each cluster"
+          }
         },
         {
           "line": "print(f'GMM BIC: {gmm.bic(X):.0f}')",
           "highlight": "bic",
-          "explanation": { "en": "BIC helps choose the optimal number of components — lower is better" }
+          "explanation": {
+            "en": "BIC helps choose the optimal number of components — lower is better"
+          }
         }
       ]
     },
@@ -157,6 +215,58 @@
         " [0.002 0.998]",
         " [0.985 0.015]]",
         "GMM BIC: 542"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cluster_adv",
+      "code": "from sklearn.cluster import DBSCAN, AgglomerativeClustering\nfrom sklearn.datasets import make_moons\nfrom sklearn.metrics import silhouette_score\n\nX, _ = make_moons(n_samples=200, noise=0.1, random_state=42)\n\ndb = DBSCAN(eps=0.2, min_samples=5)\ndb_labels = db.fit_predict(X)\nn_clusters = len(set(db_labels)) - (1 if -1 in db_labels else 0)\nprint(f'DBSCAN: {n_clusters} clusters, {(db_labels==-1).sum()} noise points')\n\nagg = AgglomerativeClustering(n_clusters=2, linkage='ward')\nagg_labels = agg.fit_predict(X)\nprint(f'Agglomerative silhouette: {silhouette_score(X, agg_labels):.3f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "X.shape": "(200, 2)"
+          },
+          "output": "",
+          "explanation": "Moon-shaped clusters — KMeans would fail here"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "eps": "0.2",
+            "min_samples": "5"
+          },
+          "output": "",
+          "explanation": "DBSCAN: density-based, no need to specify k"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "db_labels": "cluster assignments"
+          },
+          "output": "",
+          "explanation": "Points in dense regions = cluster, sparse = noise (-1)"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "DBSCAN: 2 clusters, 3 noise points",
+          "explanation": "Found 2 moon-shaped clusters, 3 outliers"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "linkage": "ward"
+          },
+          "output": "",
+          "explanation": "Hierarchical: merges closest clusters bottom-up"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Agglomerative silhouette: 0.481",
+          "explanation": "Ward linkage minimizes within-cluster variance"
+        }
       ]
     }
   ],
@@ -189,8 +299,18 @@
         "ta": "DBSCAN -1 என்று எதை குறிக்கிறது?"
       },
       "options": {
-        "en": ["The first cluster", "Noise/outlier points", "The centroid", "Missing values"],
-        "ta": ["முதல் கிளஸ்டர்", "நாய்ஸ்/வெளிப்புற புள்ளிகள்", "மையப்புள்ளி", "விடுபட்ட மதிப்புகள்"]
+        "en": [
+          "The first cluster",
+          "Noise/outlier points",
+          "The centroid",
+          "Missing values"
+        ],
+        "ta": [
+          "முதல் கிளஸ்டர்",
+          "நாய்ஸ்/வெளிப்புற புள்ளிகள்",
+          "மையப்புள்ளி",
+          "விடுபட்ட மதிப்புகள்"
+        ]
       },
       "correct": 1
     },
@@ -200,8 +320,18 @@
         "ta": "K-Means-ஐ விட GMM-ன் முக்கிய நன்மை என்ன?"
       },
       "options": {
-        "en": ["It is faster", "It provides soft (probabilistic) cluster assignments", "It needs fewer parameters", "It always finds the correct K"],
-        "ta": ["இது வேகமானது", "மென்மையான (நிகழ்தகவு) கிளஸ்டர் ஒதுக்கீடுகளை வழங்குகிறது", "குறைவான அளவுருக்கள் தேவை", "சரியான K ஐ எப்போதும் கண்டுபிடிக்கிறது"]
+        "en": [
+          "It is faster",
+          "It provides soft (probabilistic) cluster assignments",
+          "It needs fewer parameters",
+          "It always finds the correct K"
+        ],
+        "ta": [
+          "இது வேகமானது",
+          "மென்மையான (நிகழ்தகவு) கிளஸ்டர் ஒதுக்கீடுகளை வழங்குகிறது",
+          "குறைவான அளவுருக்கள் தேவை",
+          "சரியான K ஐ எப்போதும் கண்டுபிடிக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -211,20 +341,45 @@
         "ta": "எப்போது DBSCAN K-Means-ஐ விட சிறப்பாக செயல்படும்?"
       },
       "options": {
-        "en": ["When clusters are perfectly spherical", "When clusters have arbitrary shapes and there are outliers", "When you know the exact number of clusters", "When data is very high-dimensional"],
-        "ta": ["கிளஸ்டர்கள் சரியான கோள வடிவமாக இருக்கும்போது", "கிளஸ்டர்கள் தன்னிச்சையான வடிவங்கள் கொண்டிருக்கும்போது மற்றும் வெளிப்புற மதிப்புகள் இருக்கும்போது", "கிளஸ்டர்களின் சரியான எண்ணிக்கை தெரிந்தால்", "தரவு மிகவும் உயர் பரிமாணமாக இருக்கும்போது"]
+        "en": [
+          "When clusters are perfectly spherical",
+          "When clusters have arbitrary shapes and there are outliers",
+          "When you know the exact number of clusters",
+          "When data is very high-dimensional"
+        ],
+        "ta": [
+          "கிளஸ்டர்கள் சரியான கோள வடிவமாக இருக்கும்போது",
+          "கிளஸ்டர்கள் தன்னிச்சையான வடிவங்கள் கொண்டிருக்கும்போது மற்றும் வெளிப்புற மதிப்புகள் இருக்கும்போது",
+          "கிளஸ்டர்களின் சரியான எண்ணிக்கை தெரிந்தால்",
+          "தரவு மிகவும் உயர் பரிமாணமாக இருக்கும்போது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["dbscan", "hierarchical_clustering", "gmm", "density_clustering", "soft_clustering"],
-    "concepts_required": ["kmeans", "clustering_basics"],
+    "concepts_taught": [
+      "dbscan",
+      "hierarchical_clustering",
+      "gmm",
+      "density_clustering",
+      "soft_clustering"
+    ],
+    "concepts_required": [
+      "kmeans",
+      "clustering_basics"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["anomaly_detection", "spatial_analysis", "market_segmentation"],
+    "real_world_application": [
+      "anomaly_detection",
+      "spatial_analysis",
+      "market_segmentation"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["unsupervised_learning"]
+    "path_memberships": [
+      "unsupervised_learning"
+    ]
   }
 }

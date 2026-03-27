@@ -157,10 +157,26 @@
       "id": "service_architecture",
       "structure_type": "network",
       "layers": [
-        { "label": "web (Python:8000)", "count": "app", "color": "#4f8ef7" },
-        { "label": "db (Postgres:5432)", "count": "database", "color": "#6bcf7f" },
-        { "label": "cache (Redis:6379)", "count": "cache", "color": "#ff6b6b" },
-        { "label": "pgdata (volume)", "count": "persistent", "color": "#ffd93d" }
+        {
+          "label": "web (Python:8000)",
+          "count": "app",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "db (Postgres:5432)",
+          "count": "database",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "cache (Redis:6379)",
+          "count": "cache",
+          "color": "#ff6b6b"
+        },
+        {
+          "label": "pgdata (volume)",
+          "count": "persistent",
+          "color": "#ffd93d"
+        }
       ]
     },
     {
@@ -192,6 +208,119 @@
       "value": "postgresql://user:pass@db:5432/myapp",
       "data_type": "env var",
       "color": "#a66bf7"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_compose",
+      "title": "Docker Compose Multi-Service",
+      "code": "# docker-compose.yml\nservices:\n  web:\n    build: .\n    ports: ['8000:8000']\n    depends_on: [db]\n  db:\n    image: postgres:16\n# $ docker-compose up -d\n# $ docker-compose ps\n# $ docker-compose down",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "Define services"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "service": "web"
+          },
+          "output": "",
+          "explanation": "Web service from Dockerfile"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "depends_on": [
+              "db"
+            ]
+          },
+          "output": "",
+          "explanation": "Start db before web"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "service": "db"
+          },
+          "output": "",
+          "explanation": "PostgreSQL service"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Creating db...\nCreating web...",
+          "explanation": "Start all services"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "web Up  8000->8000\ndb  Up  5432",
+          "explanation": "Both running"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Stopping...",
+          "explanation": "Stop and remove all"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_compose_arch",
+      "title": "Compose Architecture",
+      "nodes": [
+        {
+          "id": "compose",
+          "label": "docker-compose.yml",
+          "type": "start"
+        },
+        {
+          "id": "network",
+          "label": "Docker Network",
+          "type": "process"
+        },
+        {
+          "id": "db",
+          "label": "DB Service\nPostgreSQL",
+          "type": "process"
+        },
+        {
+          "id": "web",
+          "label": "Web Service\nPython",
+          "type": "process"
+        },
+        {
+          "id": "ports",
+          "label": "Port Mapping\n8000:8000",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "compose",
+          "to": "network",
+          "label": "Create"
+        },
+        {
+          "from": "network",
+          "to": "db",
+          "label": "First"
+        },
+        {
+          "from": "network",
+          "to": "web",
+          "label": "depends_on"
+        },
+        {
+          "from": "web",
+          "to": "ports",
+          "label": "Expose"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -225,8 +354,18 @@
         "ta": "docker-compose.yml-ல் வரையறுக்கப்பட்ட அனைத்து services-ஐயும் தொடங்க என்ன command?"
       },
       "options": {
-        "en": ["docker start all", "docker compose up", "docker run compose", "docker build --all"],
-        "ta": ["docker start all", "docker compose up", "docker run compose", "docker build --all"]
+        "en": [
+          "docker start all",
+          "docker compose up",
+          "docker run compose",
+          "docker build --all"
+        ],
+        "ta": [
+          "docker start all",
+          "docker compose up",
+          "docker run compose",
+          "docker build --all"
+        ]
       },
       "correct": 1
     },
@@ -236,8 +375,18 @@
         "ta": "ஒரே Compose file-ல் உள்ள containers எப்படி communicate செய்கின்றன?"
       },
       "options": {
-        "en": ["By IP address only", "Using the service name as hostname", "They cannot communicate", "Through a shared file"],
-        "ta": ["IP address மூலம் மட்டும்", "Service பெயரை hostname-ஆக பயன்படுத்தி", "அவை communicate செய்ய முடியாது", "பகிரப்பட்ட file மூலம்"]
+        "en": [
+          "By IP address only",
+          "Using the service name as hostname",
+          "They cannot communicate",
+          "Through a shared file"
+        ],
+        "ta": [
+          "IP address மூலம் மட்டும்",
+          "Service பெயரை hostname-ஆக பயன்படுத்தி",
+          "அவை communicate செய்ய முடியாது",
+          "பகிரப்பட்ட file மூலம்"
+        ]
       },
       "correct": 1
     },
@@ -247,20 +396,44 @@
         "ta": "'depends_on' என்ன உறுதி செய்கிறது?"
       },
       "options": {
-        "en": ["Containers share the same image", "Dependent services start first", "Services run on the same port", "Data is shared between containers"],
-        "ta": ["Containers ஒரே image-ஐ பகிரும்", "சார்ந்த services முதலில் தொடங்கும்", "Services ஒரே port-ல் இயங்கும்", "Data containers இடையே பகிரப்படும்"]
+        "en": [
+          "Containers share the same image",
+          "Dependent services start first",
+          "Services run on the same port",
+          "Data is shared between containers"
+        ],
+        "ta": [
+          "Containers ஒரே image-ஐ பகிரும்",
+          "சார்ந்த services முதலில் தொடங்கும்",
+          "Services ஒரே port-ல் இயங்கும்",
+          "Data containers இடையே பகிரப்படும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["docker_compose", "multi_container", "networking", "volumes", "environment_vars"],
-    "concepts_required": ["docker_fundamentals"],
+    "concepts_taught": [
+      "docker_compose",
+      "multi_container",
+      "networking",
+      "volumes",
+      "environment_vars"
+    ],
+    "concepts_required": [
+      "docker_fundamentals"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["microservices", "local_development", "deployment"],
+    "real_world_application": [
+      "microservices",
+      "local_development",
+      "deployment"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

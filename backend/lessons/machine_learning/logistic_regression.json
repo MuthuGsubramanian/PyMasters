@@ -30,11 +30,20 @@
       "nodes": [
         {
           "label": "Logistic Regression",
-          "children": ["Sigmoid Function", "Decision Boundary", "Log-Loss", "Binary Classification"]
+          "children": [
+            "Sigmoid Function",
+            "Decision Boundary",
+            "Log-Loss",
+            "Binary Classification"
+          ]
         },
         {
           "label": "Output",
-          "children": ["Probability (0-1)", "Class Label (0 or 1)", "Confidence Score"]
+          "children": [
+            "Probability (0-1)",
+            "Class Label (0 or 1)",
+            "Confidence Score"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,72 +55,100 @@
         {
           "line": "import numpy as np",
           "highlight": "numpy",
-          "explanation": { "en": "Import NumPy for sigmoid demonstration" }
+          "explanation": {
+            "en": "Import NumPy for sigmoid demonstration"
+          }
         },
         {
           "line": "def sigmoid(z): return 1 / (1 + np.exp(-z))",
           "highlight": "sigmoid",
-          "explanation": { "en": "The sigmoid function squashes any real number to range (0, 1)" }
+          "explanation": {
+            "en": "The sigmoid function squashes any real number to range (0, 1)"
+          }
         },
         {
           "line": "print(f'sigmoid(-5)={sigmoid(-5):.4f}, sigmoid(0)={sigmoid(0):.4f}, sigmoid(5)={sigmoid(5):.4f}')",
           "highlight": "sigmoid",
-          "explanation": { "en": "sigmoid(-5)≈0, sigmoid(0)=0.5, sigmoid(5)≈1 — S-shaped curve" }
+          "explanation": {
+            "en": "sigmoid(-5)≈0, sigmoid(0)=0.5, sigmoid(5)≈1 — S-shaped curve"
+          }
         },
         {
           "line": "from sklearn.linear_model import LogisticRegression",
           "highlight": "LogisticRegression",
-          "explanation": { "en": "Import logistic regression — despite the name, it is a classifier" }
+          "explanation": {
+            "en": "Import logistic regression — despite the name, it is a classifier"
+          }
         },
         {
           "line": "from sklearn.datasets import load_breast_cancer",
           "highlight": "load_breast_cancer",
-          "explanation": { "en": "569 samples, 30 features, binary: malignant (0) or benign (1)" }
+          "explanation": {
+            "en": "569 samples, 30 features, binary: malignant (0) or benign (1)"
+          }
         },
         {
           "line": "X, y = load_breast_cancer(return_X_y=True)",
           "highlight": "X, y",
-          "explanation": { "en": "Load features and labels — a real medical classification problem" }
+          "explanation": {
+            "en": "Load features and labels — a real medical classification problem"
+          }
         },
         {
           "line": "from sklearn.model_selection import train_test_split",
           "highlight": "train_test_split",
-          "explanation": { "en": "Import the splitting function" }
+          "explanation": {
+            "en": "Import the splitting function"
+          }
         },
         {
           "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
           "highlight": "test_size=0.2",
-          "explanation": { "en": "80/20 split — 455 train, 114 test samples" }
+          "explanation": {
+            "en": "80/20 split — 455 train, 114 test samples"
+          }
         },
         {
           "line": "model = LogisticRegression(max_iter=10000, random_state=42)",
           "highlight": "max_iter",
-          "explanation": { "en": "max_iter=10000 ensures convergence — default 100 may not be enough" }
+          "explanation": {
+            "en": "max_iter=10000 ensures convergence — default 100 may not be enough"
+          }
         },
         {
           "line": "model.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Train: model learns weights that minimize log-loss" }
+          "explanation": {
+            "en": "Train: model learns weights that minimize log-loss"
+          }
         },
         {
           "line": "y_pred = model.predict(X_test)",
           "highlight": "predict",
-          "explanation": { "en": "Predict class labels (0 or 1) for test data" }
+          "explanation": {
+            "en": "Predict class labels (0 or 1) for test data"
+          }
         },
         {
           "line": "y_proba = model.predict_proba(X_test)[:3]",
           "highlight": "predict_proba",
-          "explanation": { "en": "Get probability scores — shows confidence for each class" }
+          "explanation": {
+            "en": "Get probability scores — shows confidence for each class"
+          }
         },
         {
           "line": "from sklearn.metrics import accuracy_score, classification_report",
           "highlight": "metrics",
-          "explanation": { "en": "Import evaluation tools for classification" }
+          "explanation": {
+            "en": "Import evaluation tools for classification"
+          }
         },
         {
           "line": "print(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')",
           "highlight": "accuracy_score",
-          "explanation": { "en": "Overall accuracy — percentage of correct predictions" }
+          "explanation": {
+            "en": "Overall accuracy — percentage of correct predictions"
+          }
         }
       ]
     },
@@ -141,6 +178,69 @@
         "           0       0.95      0.95      0.95        43",
         "           1       0.97      0.97      0.97        71",
         "    accuracy                           0.96       114"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_logistic_reg",
+      "code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import accuracy_score, log_loss\n\nnp.random.seed(42)\nX = np.random.randn(200, 2)\ny = (X[:, 0] + X[:, 1] > 0).astype(int)\n\nmodel = LogisticRegression()\nmodel.fit(X, y)\ny_pred = model.predict(X)\ny_prob = model.predict_proba(X)\n\nprint(f'Accuracy: {accuracy_score(y, y_pred):.3f}')\nprint(f'Log Loss: {log_loss(y, y_prob):.4f}')\nprint(f'Coefficients: {model.coef_[0]}')\nprint(f'Intercept: {model.intercept_[0]:.4f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(200, 2)"
+          },
+          "output": "",
+          "explanation": "200 samples, 2 features from standard normal"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "y": "binary labels"
+          },
+          "output": "",
+          "explanation": "Label 1 if x1 + x2 > 0, else 0"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "model": "LogisticRegression()"
+          },
+          "output": "",
+          "explanation": "Uses sigmoid function to output probabilities"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "fitted": true
+          },
+          "output": "",
+          "explanation": "Fit maximizes log-likelihood (minimizes log loss)"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "y_prob": "[[p0, p1], ...]"
+          },
+          "output": "",
+          "explanation": "predict_proba gives probability for each class"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "accuracy": "0.945"
+          },
+          "output": "Accuracy: 0.945",
+          "explanation": "94.5% correctly classified"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "log_loss": "0.2134"
+          },
+          "output": "Log Loss: 0.2134",
+          "explanation": "Log loss penalizes confident wrong predictions heavily"
+        }
       ]
     }
   ],
@@ -215,20 +315,45 @@
         "ta": "sklearn-ன் LogisticRegression-ல் இயல்புநிலை முடிவு வரம்பு என்ன?"
       },
       "options": {
-        "en": ["0.3", "0.5", "0.7", "0.9"],
-        "ta": ["0.3", "0.5", "0.7", "0.9"]
+        "en": [
+          "0.3",
+          "0.5",
+          "0.7",
+          "0.9"
+        ],
+        "ta": [
+          "0.3",
+          "0.5",
+          "0.7",
+          "0.9"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["logistic_regression", "sigmoid", "decision_boundary", "binary_classification", "log_loss"],
-    "concepts_required": ["linear_regression", "train_test_split"],
+    "concepts_taught": [
+      "logistic_regression",
+      "sigmoid",
+      "decision_boundary",
+      "binary_classification",
+      "log_loss"
+    ],
+    "concepts_required": [
+      "linear_regression",
+      "train_test_split"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["spam_detection", "disease_prediction", "credit_scoring"],
+    "real_world_application": [
+      "spam_detection",
+      "disease_prediction",
+      "credit_scoring"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["supervised_learning"]
+    "path_memberships": [
+      "supervised_learning"
+    ]
   }
 }

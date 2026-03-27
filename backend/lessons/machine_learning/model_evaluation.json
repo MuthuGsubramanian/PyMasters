@@ -30,11 +30,24 @@
       "nodes": [
         {
           "label": "Model Evaluation",
-          "children": ["Confusion Matrix", "Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC"]
+          "children": [
+            "Confusion Matrix",
+            "Accuracy",
+            "Precision",
+            "Recall",
+            "F1-Score",
+            "ROC-AUC"
+          ]
         },
         {
           "label": "When to Use",
-          "children": ["Accuracy: balanced classes", "Precision: minimize false positives", "Recall: minimize false negatives", "F1: balance precision & recall", "ROC-AUC: threshold-independent"]
+          "children": [
+            "Accuracy: balanced classes",
+            "Precision: minimize false positives",
+            "Recall: minimize false negatives",
+            "F1: balance precision & recall",
+            "ROC-AUC: threshold-independent"
+          ]
         }
       ],
       "duration_ms": 4000
@@ -43,11 +56,31 @@
       "type": "ComparisonPanel",
       "id": "metric_comparison",
       "models": [
-        { "name": "Accuracy", "strengths": "Simple, intuitive", "weaknesses": "Misleading with imbalanced data" },
-        { "name": "Precision", "strengths": "Important when FP is costly (spam filter)", "weaknesses": "Ignores false negatives" },
-        { "name": "Recall", "strengths": "Important when FN is costly (cancer detection)", "weaknesses": "Ignores false positives" },
-        { "name": "F1-Score", "strengths": "Balances precision and recall", "weaknesses": "Doesn't consider true negatives" },
-        { "name": "ROC-AUC", "strengths": "Threshold-independent, handles imbalance", "weaknesses": "Less intuitive" }
+        {
+          "name": "Accuracy",
+          "strengths": "Simple, intuitive",
+          "weaknesses": "Misleading with imbalanced data"
+        },
+        {
+          "name": "Precision",
+          "strengths": "Important when FP is costly (spam filter)",
+          "weaknesses": "Ignores false negatives"
+        },
+        {
+          "name": "Recall",
+          "strengths": "Important when FN is costly (cancer detection)",
+          "weaknesses": "Ignores false positives"
+        },
+        {
+          "name": "F1-Score",
+          "strengths": "Balances precision and recall",
+          "weaknesses": "Doesn't consider true negatives"
+        },
+        {
+          "name": "ROC-AUC",
+          "strengths": "Threshold-independent, handles imbalance",
+          "weaknesses": "Less intuitive"
+        }
       ],
       "duration_ms": 4000
     },
@@ -58,72 +91,100 @@
         {
           "line": "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score, classification_report",
           "highlight": "metrics",
-          "explanation": { "en": "Import all essential evaluation metrics from sklearn" }
+          "explanation": {
+            "en": "Import all essential evaluation metrics from sklearn"
+          }
         },
         {
           "line": "from sklearn.linear_model import LogisticRegression",
           "highlight": "LogisticRegression",
-          "explanation": { "en": "We'll use logistic regression as our model to evaluate" }
+          "explanation": {
+            "en": "We'll use logistic regression as our model to evaluate"
+          }
         },
         {
           "line": "X, y = load_breast_cancer(return_X_y=True)",
           "highlight": "load_breast_cancer",
-          "explanation": { "en": "Binary classification: 0=malignant, 1=benign — imbalanced classes" }
+          "explanation": {
+            "en": "Binary classification: 0=malignant, 1=benign — imbalanced classes"
+          }
         },
         {
           "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
           "highlight": "train_test_split",
-          "explanation": { "en": "Standard 80/20 split" }
+          "explanation": {
+            "en": "Standard 80/20 split"
+          }
         },
         {
           "line": "model = LogisticRegression(max_iter=10000, random_state=42); model.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Train the model" }
+          "explanation": {
+            "en": "Train the model"
+          }
         },
         {
           "line": "y_pred = model.predict(X_test)",
           "highlight": "predict",
-          "explanation": { "en": "Get class predictions (0 or 1)" }
+          "explanation": {
+            "en": "Get class predictions (0 or 1)"
+          }
         },
         {
           "line": "y_proba = model.predict_proba(X_test)[:, 1]",
           "highlight": "predict_proba",
-          "explanation": { "en": "Get probability of class 1 — needed for ROC-AUC" }
+          "explanation": {
+            "en": "Get probability of class 1 — needed for ROC-AUC"
+          }
         },
         {
           "line": "cm = confusion_matrix(y_test, y_pred)",
           "highlight": "confusion_matrix",
-          "explanation": { "en": "The confusion matrix shows TP, FP, TN, FN in a 2x2 grid" }
+          "explanation": {
+            "en": "The confusion matrix shows TP, FP, TN, FN in a 2x2 grid"
+          }
         },
         {
           "line": "print(f'Confusion Matrix:\\n{cm}')",
           "highlight": "print",
-          "explanation": { "en": "Rows = actual classes, Columns = predicted classes" }
+          "explanation": {
+            "en": "Rows = actual classes, Columns = predicted classes"
+          }
         },
         {
           "line": "print(f'Accuracy:  {accuracy_score(y_test, y_pred):.3f}')",
           "highlight": "accuracy",
-          "explanation": { "en": "Overall correct predictions / total — simple but can be misleading" }
+          "explanation": {
+            "en": "Overall correct predictions / total — simple but can be misleading"
+          }
         },
         {
           "line": "print(f'Precision: {precision_score(y_test, y_pred):.3f}')",
           "highlight": "precision",
-          "explanation": { "en": "Of predicted positives, how many are actually positive? High = few false alarms" }
+          "explanation": {
+            "en": "Of predicted positives, how many are actually positive? High = few false alarms"
+          }
         },
         {
           "line": "print(f'Recall:    {recall_score(y_test, y_pred):.3f}')",
           "highlight": "recall",
-          "explanation": { "en": "Of actual positives, how many did we catch? High = few missed cases" }
+          "explanation": {
+            "en": "Of actual positives, how many did we catch? High = few missed cases"
+          }
         },
         {
           "line": "print(f'F1:        {f1_score(y_test, y_pred):.3f}')",
           "highlight": "f1",
-          "explanation": { "en": "Harmonic mean of precision and recall — single balanced metric" }
+          "explanation": {
+            "en": "Harmonic mean of precision and recall — single balanced metric"
+          }
         },
         {
           "line": "print(f'ROC-AUC:   {roc_auc_score(y_test, y_proba):.3f}')",
           "highlight": "roc_auc",
-          "explanation": { "en": "Area under ROC curve — 1.0 is perfect, 0.5 is random guessing" }
+          "explanation": {
+            "en": "Area under ROC curve — 1.0 is perfect, 0.5 is random guessing"
+          }
         }
       ]
     },
@@ -164,6 +225,77 @@
         "F1:        0.972",
         "ROC-AUC:   0.996"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_model_eval",
+      "code": "from sklearn.metrics import (confusion_matrix, precision_score,\n    recall_score, f1_score, roc_auc_score, classification_report)\nimport numpy as np\n\ny_true = np.array([1,0,1,1,0,1,0,0,1,1,0,0,1,0,1])\ny_pred = np.array([1,0,1,0,0,1,1,0,1,1,0,1,1,0,0])\ny_prob = np.array([.9,.1,.8,.4,.2,.9,.6,.1,.7,.85,.15,.55,.95,.1,.3])\n\nprint(confusion_matrix(y_true, y_pred))\nprint(f'Precision: {precision_score(y_true, y_pred):.3f}')\nprint(f'Recall: {recall_score(y_true, y_pred):.3f}')\nprint(f'F1: {f1_score(y_true, y_pred):.3f}')\nprint(f'ROC-AUC: {roc_auc_score(y_true, y_prob):.3f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "y_true": "8 positive, 7 negative"
+          },
+          "output": "",
+          "explanation": "Ground truth labels"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "y_pred": "binary predictions"
+          },
+          "output": "",
+          "explanation": "Model predictions — some errors"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "y_prob": "probability scores"
+          },
+          "output": "",
+          "explanation": "Predicted probabilities for ROC-AUC"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "cm": "[[5,2],[2,6]]"
+          },
+          "output": "[[5 2]\n [2 6]]",
+          "explanation": "TN=5, FP=2, FN=2, TP=6"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "precision": "0.750"
+          },
+          "output": "Precision: 0.750",
+          "explanation": "TP/(TP+FP) = 6/8 — 75% of positive predictions correct"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "recall": "0.750"
+          },
+          "output": "Recall: 0.750",
+          "explanation": "TP/(TP+FN) = 6/8 — found 75% of actual positives"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "f1": "0.750"
+          },
+          "output": "F1: 0.750",
+          "explanation": "Harmonic mean of precision and recall"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "roc_auc": "0.893"
+          },
+          "output": "ROC-AUC: 0.893",
+          "explanation": "Area under ROC curve — measures ranking quality"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -195,8 +327,18 @@
         "ta": "புற்றுநோய் கண்டறிதலில், எந்த அளவீட்டை அதிகப்படுத்துவது மிக முக்கியம்?"
       },
       "options": {
-        "en": ["Accuracy", "Precision", "Recall (Sensitivity)", "Specificity"],
-        "ta": ["துல்லியம்", "துல்லியம் (Precision)", "நினைவுகூர்தல் (Recall/Sensitivity)", "குறிப்பிட்டதன்மை"]
+        "en": [
+          "Accuracy",
+          "Precision",
+          "Recall (Sensitivity)",
+          "Specificity"
+        ],
+        "ta": [
+          "துல்லியம்",
+          "துல்லியம் (Precision)",
+          "நினைவுகூர்தல் (Recall/Sensitivity)",
+          "குறிப்பிட்டதன்மை"
+        ]
       },
       "correct": 2
     },
@@ -206,8 +348,18 @@
         "ta": "ROC-AUC 0.5 என்ன குறிக்கிறது?"
       },
       "options": {
-        "en": ["Perfect model", "Model performs no better than random guessing", "Model is 50% accurate", "Model needs more data"],
-        "ta": ["சரியான மாடல்", "மாடல் சீரற்ற யூகத்தை விட சிறப்பாக செயல்படவில்லை", "மாடல் 50% துல்லியமானது", "மாடலுக்கு அதிக தரவு தேவை"]
+        "en": [
+          "Perfect model",
+          "Model performs no better than random guessing",
+          "Model is 50% accurate",
+          "Model needs more data"
+        ],
+        "ta": [
+          "சரியான மாடல்",
+          "மாடல் சீரற்ற யூகத்தை விட சிறப்பாக செயல்படவில்லை",
+          "மாடல் 50% துல்லியமானது",
+          "மாடலுக்கு அதிக தரவு தேவை"
+        ]
       },
       "correct": 1
     },
@@ -217,20 +369,46 @@
         "ta": "சமநிலையற்ற தரவுத்தொகுப்புகளுக்கு துல்லியம் ஏன் தவறானது?"
       },
       "options": {
-        "en": ["It is always zero", "A model predicting only the majority class can still achieve high accuracy", "It considers both precision and recall", "It requires probability outputs"],
-        "ta": ["இது எப்போதும் பூஜ்ஜியம்", "பெரும்பான்மை வகுப்பை மட்டும் கணிக்கும் மாடல் இன்னும் அதிக துல்லியம் பெறலாம்", "precision மற்றும் recall இரண்டையும் கருதுகிறது", "நிகழ்தகவு வெளியீடுகள் தேவை"]
+        "en": [
+          "It is always zero",
+          "A model predicting only the majority class can still achieve high accuracy",
+          "It considers both precision and recall",
+          "It requires probability outputs"
+        ],
+        "ta": [
+          "இது எப்போதும் பூஜ்ஜியம்",
+          "பெரும்பான்மை வகுப்பை மட்டும் கணிக்கும் மாடல் இன்னும் அதிக துல்லியம் பெறலாம்",
+          "precision மற்றும் recall இரண்டையும் கருதுகிறது",
+          "நிகழ்தகவு வெளியீடுகள் தேவை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["confusion_matrix", "precision", "recall", "f1_score", "roc_auc", "classification_report"],
-    "concepts_required": ["classification", "logistic_regression"],
+    "concepts_taught": [
+      "confusion_matrix",
+      "precision",
+      "recall",
+      "f1_score",
+      "roc_auc",
+      "classification_report"
+    ],
+    "concepts_required": [
+      "classification",
+      "logistic_regression"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 35,
-    "real_world_application": ["medical_diagnosis", "fraud_detection", "quality_control"],
+    "real_world_application": [
+      "medical_diagnosis",
+      "fraud_detection",
+      "quality_control"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["evaluation"]
+    "path_memberships": [
+      "evaluation"
+    ]
   }
 }

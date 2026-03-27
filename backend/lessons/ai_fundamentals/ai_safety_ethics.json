@@ -245,6 +245,49 @@
         "True",
         ">>> # Always verify factual claims with external sources!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_ai_safety_ethics",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\n# Content moderation API\nmod = client.moderations.create(input='I love building AI!')\nprint(f'Flagged: {mod.results[0].flagged}')\n\n# Safe chat with guardrails\ndef safe_chat(user_input):\n    check = client.moderations.create(input=user_input)\n    if check.results[0].flagged:\n        return 'I cannot help with that request.'\n    resp = client.chat.completions.create(\n        model='gpt-4o-mini',\n        messages=[\n            {'role':'system','content':'Be helpful, harmless, honest.'},\n            {'role':'user','content': user_input}\n        ]\n    )\n    return resp.choices[0].message.content\n\nprint(safe_chat('How do I learn Python?'))",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "input": "I love building AI!"
+          },
+          "output": "Flagged: False",
+          "explanation": "Moderation API checks for harmful content"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "",
+          "explanation": "Guardrail: check input BEFORE sending to LLM"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "flagged": false
+          },
+          "output": "",
+          "explanation": "If flagged, refuse immediately"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "system": "helpful, harmless, honest"
+          },
+          "output": "",
+          "explanation": "System prompt reinforces ethical behavior"
+        },
+        {
+          "line": 22,
+          "variables": {},
+          "output": "Start with the official Python tutorial...",
+          "explanation": "Safe input passes through for helpful response"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -335,13 +378,27 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["ai_safety", "hallucination", "prompt_injection", "bias", "responsible_ai"],
-    "concepts_required": ["what_is_ai", "prompt_engineering_basics"],
+    "concepts_taught": [
+      "ai_safety",
+      "hallucination",
+      "prompt_injection",
+      "bias",
+      "responsible_ai"
+    ],
+    "concepts_required": [
+      "what_is_ai",
+      "prompt_engineering_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["production_ai", "compliance"],
+    "real_world_application": [
+      "production_ai",
+      "compliance"
+    ],
     "category": "ai_ethics",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

@@ -47,6 +47,18 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "contact = {'name': 'Alice', 'phone': '555-1234'}\nprint(contact['name'])\ncontact['email'] = 'alice@ex.com'\nprint(contact.get('age', 'N/A'))\nprint(len(contact))",
+      "executionSteps": [
+        { "line": 1, "variables": { "contact": {"name": "Alice", "phone": "555-1234"} }, "output": "", "description": "Create a dict with name and phone keys" },
+        { "line": 2, "variables": { "contact": {"name": "Alice", "phone": "555-1234"} }, "output": "Alice", "description": "Access value for key 'name'" },
+        { "line": 3, "variables": { "contact": {"name": "Alice", "phone": "555-1234", "email": "alice@ex.com"} }, "output": "Alice", "description": "Add new key 'email' to the dict" },
+        { "line": 4, "variables": { "contact": {"name": "Alice", "phone": "555-1234", "email": "alice@ex.com"} }, "output": "Alice\nN/A", "description": ".get() returns default 'N/A' since 'age' key is missing" },
+        { "line": 5, "variables": { "contact": {"name": "Alice", "phone": "555-1234", "email": "alice@ex.com"} }, "output": "Alice\nN/A\n3", "description": "len() returns 3 -- the dict has 3 key-value pairs" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

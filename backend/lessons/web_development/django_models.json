@@ -187,6 +187,113 @@
         ">>> Post.objects.filter(author__name='Vaathiyaar').count()",
         "1"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_django_models",
+      "title": "Django ORM Queries Step by Step",
+      "code": "author = Author.objects.create(name='Vaathiyaar', email='v@py.com')\npost = Post.objects.create(title='Learn Django', content='ORM power', author=author)\ncount = Post.objects.count()\nfiltered = Post.objects.filter(author__name='Vaathiyaar')\nprint(f'Posts: {count}')\nprint(f'By Vaathiyaar: {filtered.count()}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "author": "<Author: Vaathiyaar>"
+          },
+          "output": "",
+          "explanation": "objects.create() runs INSERT INTO author"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "post": "<Post: Learn Django>"
+          },
+          "output": "",
+          "explanation": "Create Post linked via ForeignKey"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "count": 1
+          },
+          "output": "",
+          "explanation": "count() runs SELECT COUNT(*)"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "filtered": "<QuerySet [<Post>]>"
+          },
+          "output": "",
+          "explanation": "Double underscore traverses ForeignKey"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Posts: 1",
+          "explanation": "Total post count"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "Posts: 1\nBy Vaathiyaar: 1",
+          "explanation": "Filtered count matches"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_django_orm",
+      "title": "Django ORM Query Pipeline",
+      "nodes": [
+        {
+          "id": "python",
+          "label": "Python Code\nPost.objects.filter()",
+          "type": "start"
+        },
+        {
+          "id": "queryset",
+          "label": "QuerySet\n(lazy, chainable)",
+          "type": "process"
+        },
+        {
+          "id": "sql",
+          "label": "SQL Generation\nSELECT ... WHERE",
+          "type": "process"
+        },
+        {
+          "id": "db",
+          "label": "Database\nExecute Query",
+          "type": "process"
+        },
+        {
+          "id": "objects",
+          "label": "Python Objects\nModel Instances",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "python",
+          "to": "queryset",
+          "label": "Build"
+        },
+        {
+          "from": "queryset",
+          "to": "sql",
+          "label": "Evaluate"
+        },
+        {
+          "from": "sql",
+          "to": "db",
+          "label": "Execute"
+        },
+        {
+          "from": "db",
+          "to": "objects",
+          "label": "Hydrate"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -220,8 +327,18 @@
         "ta": "'python manage.py makemigrations' என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates the database tables", "Detects model changes and creates migration files", "Runs the development server", "Deletes old migrations"],
-        "ta": ["தரவுத்தள அட்டவணைகளை உருவாக்குகிறது", "மாதிரி மாற்றங்களைக் கண்டறிந்து இடம்பெயர்வு கோப்புகளை உருவாக்குகிறது", "மேம்பாட்டு சேவையகத்தை இயக்குகிறது", "பழைய இடம்பெயர்வுகளை நீக்குகிறது"]
+        "en": [
+          "Creates the database tables",
+          "Detects model changes and creates migration files",
+          "Runs the development server",
+          "Deletes old migrations"
+        ],
+        "ta": [
+          "தரவுத்தள அட்டவணைகளை உருவாக்குகிறது",
+          "மாதிரி மாற்றங்களைக் கண்டறிந்து இடம்பெயர்வு கோப்புகளை உருவாக்குகிறது",
+          "மேம்பாட்டு சேவையகத்தை இயக்குகிறது",
+          "பழைய இடம்பெயர்வுகளை நீக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -231,8 +348,18 @@
         "ta": "ForeignKey-ல் on_delete=models.CASCADE என்ன அர்த்தம்?"
       },
       "options": {
-        "en": ["The field cannot be null", "When the parent is deleted, all related objects are also deleted", "The relationship is many-to-many", "The field auto-increments"],
-        "ta": ["புலம் null ஆக இருக்க முடியாது", "பெற்றோர் நீக்கப்படும்போது, தொடர்புடைய அனைத்து பொருள்களும் நீக்கப்படும்", "உறவு பல-க்கு-பல", "புலம் தானாக அதிகரிக்கிறது"]
+        "en": [
+          "The field cannot be null",
+          "When the parent is deleted, all related objects are also deleted",
+          "The relationship is many-to-many",
+          "The field auto-increments"
+        ],
+        "ta": [
+          "புலம் null ஆக இருக்க முடியாது",
+          "பெற்றோர் நீக்கப்படும்போது, தொடர்புடைய அனைத்து பொருள்களும் நீக்கப்படும்",
+          "உறவு பல-க்கு-பல",
+          "புலம் தானாக அதிகரிக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -242,20 +369,43 @@
         "ta": "ஒரு புலம் ஒரு மதிப்பை விட அதிகமாக இருக்கும் Django பொருள்களை எவ்வாறு வடிகட்டுவது?"
       },
       "options": {
-        "en": ["Model.objects.filter(field > value)", "Model.objects.filter(field__gt=value)", "Model.objects.where(field > value)", "Model.objects.get(field__greater=value)"],
-        "ta": ["Model.objects.filter(field > value)", "Model.objects.filter(field__gt=value)", "Model.objects.where(field > value)", "Model.objects.get(field__greater=value)"]
+        "en": [
+          "Model.objects.filter(field > value)",
+          "Model.objects.filter(field__gt=value)",
+          "Model.objects.where(field > value)",
+          "Model.objects.get(field__greater=value)"
+        ],
+        "ta": [
+          "Model.objects.filter(field > value)",
+          "Model.objects.filter(field__gt=value)",
+          "Model.objects.where(field > value)",
+          "Model.objects.get(field__greater=value)"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["django_models", "orm_queries", "migrations", "relationships"],
-    "concepts_required": ["django_project_structure", "python_classes"],
+    "concepts_taught": [
+      "django_models",
+      "orm_queries",
+      "migrations",
+      "relationships"
+    ],
+    "concepts_required": [
+      "django_project_structure",
+      "python_classes"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["database_design", "data_modeling"],
+    "real_world_application": [
+      "database_design",
+      "data_modeling"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

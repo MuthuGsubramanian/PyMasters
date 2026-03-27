@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "gan_code",
       "steps": [
-        {"line": "class Generator(nn.Module):", "highlight": "Generator", "explanation": {"en": "The forger: takes random noise and transforms it into data that looks real"}},
-        {"line": "nn.Linear(latent_dim, 256) -> LeakyReLU -> BN -> ... -> Tanh()", "highlight": "G_arch", "explanation": {"en": "Progressively upsample from 64-dim noise to 784-dim (28x28) output with Tanh for [-1,1] range"}},
-        {"line": "class Discriminator(nn.Module):", "highlight": "Discriminator", "explanation": {"en": "The detective: takes data (real or fake) and outputs probability of it being real"}},
-        {"line": "nn.Linear(data_dim, 512) -> LeakyReLU -> Dropout -> ... -> Sigmoid()", "highlight": "D_arch", "explanation": {"en": "Progressively downsample from 784 to scalar probability. Dropout prevents D from overpowering G"}},
-        {"line": "fake_data = G(z).detach()", "highlight": "detach", "explanation": {"en": "CRITICAL: detach() stops gradients flowing to G when training D. Train one at a time!"}},
-        {"line": "d_loss = criterion(real_pred, ones) + criterion(fake_pred, zeros)", "highlight": "d_loss", "explanation": {"en": "D wants: real->1, fake->0. Loss = how wrong D is on both real and fake samples"}},
-        {"line": "g_loss = criterion(fake_pred, torch.ones(64, 1))", "highlight": "g_loss", "explanation": {"en": "G wants D to predict 1 (real) for its fakes. If D says fake->0, G gets high loss"}},
-        {"line": "betas=(0.5, 0.999)", "highlight": "betas", "explanation": {"en": "GAN-specific Adam settings: lower beta1 (0.5 vs 0.9) stabilizes adversarial training"}},
-        {"line": "z = torch.randn(64, latent_dim)", "highlight": "noise", "explanation": {"en": "Random noise from standard normal distribution. This is the 'seed' for generation"}},
-        {"line": "# Train D first, then G each epoch", "highlight": "alternating", "explanation": {"en": "Alternating training: D gets better at detecting, G gets better at fooling D"}}
+        {
+          "line": "class Generator(nn.Module):",
+          "highlight": "Generator",
+          "explanation": {
+            "en": "The forger: takes random noise and transforms it into data that looks real"
+          }
+        },
+        {
+          "line": "nn.Linear(latent_dim, 256) -> LeakyReLU -> BN -> ... -> Tanh()",
+          "highlight": "G_arch",
+          "explanation": {
+            "en": "Progressively upsample from 64-dim noise to 784-dim (28x28) output with Tanh for [-1,1] range"
+          }
+        },
+        {
+          "line": "class Discriminator(nn.Module):",
+          "highlight": "Discriminator",
+          "explanation": {
+            "en": "The detective: takes data (real or fake) and outputs probability of it being real"
+          }
+        },
+        {
+          "line": "nn.Linear(data_dim, 512) -> LeakyReLU -> Dropout -> ... -> Sigmoid()",
+          "highlight": "D_arch",
+          "explanation": {
+            "en": "Progressively downsample from 784 to scalar probability. Dropout prevents D from overpowering G"
+          }
+        },
+        {
+          "line": "fake_data = G(z).detach()",
+          "highlight": "detach",
+          "explanation": {
+            "en": "CRITICAL: detach() stops gradients flowing to G when training D. Train one at a time!"
+          }
+        },
+        {
+          "line": "d_loss = criterion(real_pred, ones) + criterion(fake_pred, zeros)",
+          "highlight": "d_loss",
+          "explanation": {
+            "en": "D wants: real->1, fake->0. Loss = how wrong D is on both real and fake samples"
+          }
+        },
+        {
+          "line": "g_loss = criterion(fake_pred, torch.ones(64, 1))",
+          "highlight": "g_loss",
+          "explanation": {
+            "en": "G wants D to predict 1 (real) for its fakes. If D says fake->0, G gets high loss"
+          }
+        },
+        {
+          "line": "betas=(0.5, 0.999)",
+          "highlight": "betas",
+          "explanation": {
+            "en": "GAN-specific Adam settings: lower beta1 (0.5 vs 0.9) stabilizes adversarial training"
+          }
+        },
+        {
+          "line": "z = torch.randn(64, latent_dim)",
+          "highlight": "noise",
+          "explanation": {
+            "en": "Random noise from standard normal distribution. This is the 'seed' for generation"
+          }
+        },
+        {
+          "line": "# Train D first, then G each epoch",
+          "highlight": "alternating",
+          "explanation": {
+            "en": "Alternating training: D gets better at detecting, G gets better at fooling D"
+          }
+        }
       ]
     },
     {
@@ -64,11 +124,41 @@
       "id": "gan_architecture",
       "structure_type": "gan",
       "layers": [
-        {"name": "Noise z", "nodes": ["64-dim random"], "type": "input"},
-        {"name": "Generator", "nodes": ["64->256->512->784"], "type": "generator"},
-        {"name": "Fake Data", "nodes": ["784-dim (28x28)"], "type": "generated"},
-        {"name": "Discriminator", "nodes": ["784->512->256->1"], "type": "discriminator"},
-        {"name": "Output", "nodes": ["P(real) = 0.0 to 1.0"], "type": "output"}
+        {
+          "name": "Noise z",
+          "nodes": [
+            "64-dim random"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Generator",
+          "nodes": [
+            "64->256->512->784"
+          ],
+          "type": "generator"
+        },
+        {
+          "name": "Fake Data",
+          "nodes": [
+            "784-dim (28x28)"
+          ],
+          "type": "generated"
+        },
+        {
+          "name": "Discriminator",
+          "nodes": [
+            "784->512->256->1"
+          ],
+          "type": "discriminator"
+        },
+        {
+          "name": "Output",
+          "nodes": [
+            "P(real) = 0.0 to 1.0"
+          ],
+          "type": "output"
+        }
       ],
       "duration_ms": 4000
     },
@@ -93,14 +183,27 @@
       "id": "gan_flow",
       "from": "noise",
       "to": "judgment",
-      "steps": ["z (noise)", "Generator(z)", "fake_data", "Discriminator(fake)", "P(real)", "Loss -> update G and D"],
+      "steps": [
+        "z (noise)",
+        "Generator(z)",
+        "fake_data",
+        "Discriminator(fake)",
+        "P(real)",
+        "Loss -> update G and D"
+      ],
       "duration_ms": 3000
     },
     {
       "type": "ComparisonPanel",
       "id": "training_progress",
-      "left": {"label": "Epoch 1", "content": "Generator: random noise\nDiscriminator: easily tells apart\nG_loss: high, D_loss: low"},
-      "right": {"label": "Epoch 200", "content": "Generator: realistic data\nDiscriminator: confused (P≈0.5)\nEquilibrium reached"},
+      "left": {
+        "label": "Epoch 1",
+        "content": "Generator: random noise\nDiscriminator: easily tells apart\nG_loss: high, D_loss: low"
+      },
+      "right": {
+        "label": "Epoch 200",
+        "content": "Generator: realistic data\nDiscriminator: confused (P≈0.5)\nEquilibrium reached"
+      },
       "duration_ms": 3000
     },
     {
@@ -114,6 +217,122 @@
         "Epoch 200: D_loss=0.52, G_loss=0.71",
         ">>> # D(real) ≈ 0.6, D(fake) ≈ 0.4  (getting confused!)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_gan",
+      "code": "import torch\nimport torch.nn as nn\n\n# Generator: noise -> fake data\nG = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 2))\n\n# Discriminator: data -> real/fake probability\nD = nn.Sequential(nn.Linear(2, 32), nn.ReLU(), nn.Linear(32, 1), nn.Sigmoid())\n\n# Generate fake data\nz = torch.randn(8, 10)  # 8 noise vectors\nfake = G(z)\nprint(f'Fake data shape: {fake.shape}')\n\n# Discriminator judgment\nscore = D(fake)\nprint(f'D(fake) scores: {score.detach().flatten().round(decimals=2)}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "G": "10->32->2"
+          },
+          "output": "",
+          "explanation": "Generator maps random noise to data space"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "D": "2->32->1"
+          },
+          "output": "",
+          "explanation": "Discriminator outputs probability: real (1) or fake (0)"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "z.shape": "(8, 10)"
+          },
+          "output": "",
+          "explanation": "Sample 8 random noise vectors from N(0,1)"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "fake.shape": "(8, 2)"
+          },
+          "output": "Fake data shape: torch.Size([8, 2])",
+          "explanation": "Generator produces 8 fake 2D data points"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "score": "near 0.5"
+          },
+          "output": "D(fake) scores: tensor([0.52, 0.48, 0.51, 0.49, 0.50, 0.53, 0.47, 0.51])",
+          "explanation": "Untrained D guesses ~0.5 — can't distinguish real from fake yet"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_gan_training",
+      "title": "GAN Training Loop",
+      "nodes": [
+        {
+          "id": "noise",
+          "label": "Random Noise z",
+          "type": "start"
+        },
+        {
+          "id": "gen",
+          "label": "Generator G(z)",
+          "type": "process"
+        },
+        {
+          "id": "fake",
+          "label": "Fake Data",
+          "type": "data"
+        },
+        {
+          "id": "real",
+          "label": "Real Data",
+          "type": "start"
+        },
+        {
+          "id": "disc",
+          "label": "Discriminator D",
+          "type": "decision"
+        },
+        {
+          "id": "d_loss",
+          "label": "D Loss: classify real/fake",
+          "type": "process"
+        },
+        {
+          "id": "g_loss",
+          "label": "G Loss: fool D",
+          "type": "process"
+        }
+      ],
+      "edges": [
+        {
+          "from": "noise",
+          "to": "gen"
+        },
+        {
+          "from": "gen",
+          "to": "fake"
+        },
+        {
+          "from": "fake",
+          "to": "disc"
+        },
+        {
+          "from": "real",
+          "to": "disc"
+        },
+        {
+          "from": "disc",
+          "to": "d_loss"
+        },
+        {
+          "from": "disc",
+          "to": "g_loss"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -151,8 +370,18 @@
         "ta": "GAN-ல் generator-ன் குறிக்கோள் என்ன?"
       },
       "options": {
-        "en": ["To classify data correctly", "To produce fake data that the discriminator classifies as real", "To minimize the discriminator's accuracy on real data", "To memorize the training data"],
-        "ta": ["தரவை சரியாக வகைப்படுத்துவது", "discriminator உண்மை என வகைப்படுத்தும் போலி தரவை உருவாக்குவது", "உண்மையான தரவில் discriminator-ன் துல்லியத்தை குறைப்பது", "பயிற்சி தரவை மனப்பாடம் செய்வது"]
+        "en": [
+          "To classify data correctly",
+          "To produce fake data that the discriminator classifies as real",
+          "To minimize the discriminator's accuracy on real data",
+          "To memorize the training data"
+        ],
+        "ta": [
+          "தரவை சரியாக வகைப்படுத்துவது",
+          "discriminator உண்மை என வகைப்படுத்தும் போலி தரவை உருவாக்குவது",
+          "உண்மையான தரவில் discriminator-ன் துல்லியத்தை குறைப்பது",
+          "பயிற்சி தரவை மனப்பாடம் செய்வது"
+        ]
       },
       "correct": 1
     },
@@ -162,8 +391,18 @@
         "ta": "Discriminator-ஐ பயிற்சி செய்யும்போது ஏன் fake data-வில் .detach() அழைக்கிறோம்?"
       },
       "options": {
-        "en": ["To save memory", "To prevent gradients from flowing back to the generator during D's update", "To make the data look more real", "It's optional and has no effect"],
-        "ta": ["நினைவகத்தை சேமிக்க", "D-ன் புதுப்பிப்பின் போது gradients generator-க்கு பாய்வதைத் தடுக்க", "தரவை மேலும் உண்மையாக தெரியச் செய்ய", "இது விருப்பமானது, எந்த விளைவும் இல்லை"]
+        "en": [
+          "To save memory",
+          "To prevent gradients from flowing back to the generator during D's update",
+          "To make the data look more real",
+          "It's optional and has no effect"
+        ],
+        "ta": [
+          "நினைவகத்தை சேமிக்க",
+          "D-ன் புதுப்பிப்பின் போது gradients generator-க்கு பாய்வதைத் தடுக்க",
+          "தரவை மேலும் உண்மையாக தெரியச் செய்ய",
+          "இது விருப்பமானது, எந்த விளைவும் இல்லை"
+        ]
       },
       "correct": 1
     },
@@ -173,20 +412,45 @@
         "ta": "GAN பயிற்சியில் mode collapse என்ன?"
       },
       "options": {
-        "en": ["The model runs out of memory", "The generator produces only one or few types of outputs, ignoring diversity", "The discriminator becomes too accurate", "The learning rate becomes zero"],
-        "ta": ["மாதிரிக்கு நினைவகம் தீர்ந்துவிடுகிறது", "generator ஒன்று அல்லது சில வகை வெளியீடுகளை மட்டுமே உருவாக்குகிறது, பன்முகத்தன்மையை புறக்கணிக்கிறது", "discriminator மிகவும் துல்லியமாகிறது", "learning rate பூஜ்ஜியமாகிறது"]
+        "en": [
+          "The model runs out of memory",
+          "The generator produces only one or few types of outputs, ignoring diversity",
+          "The discriminator becomes too accurate",
+          "The learning rate becomes zero"
+        ],
+        "ta": [
+          "மாதிரிக்கு நினைவகம் தீர்ந்துவிடுகிறது",
+          "generator ஒன்று அல்லது சில வகை வெளியீடுகளை மட்டுமே உருவாக்குகிறது, பன்முகத்தன்மையை புறக்கணிக்கிறது",
+          "discriminator மிகவும் துல்லியமாகிறது",
+          "learning rate பூஜ்ஜியமாகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["gan", "generator", "discriminator", "adversarial_training", "latent_space"],
-    "concepts_required": ["pytorch_training", "loss_functions"],
+    "concepts_taught": [
+      "gan",
+      "generator",
+      "discriminator",
+      "adversarial_training",
+      "latent_space"
+    ],
+    "concepts_required": [
+      "pytorch_training",
+      "loss_functions"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["image_generation", "data_augmentation", "creative_ai"],
+    "real_world_application": [
+      "image_generation",
+      "data_augmentation",
+      "creative_ai"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

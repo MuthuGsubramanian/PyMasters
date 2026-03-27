@@ -46,25 +46,103 @@
       "type": "CodeStepper",
       "id": "activation_code",
       "steps": [
-        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch for tensor operations"}},
-        {"line": "import torch.nn.functional as F", "highlight": "F", "explanation": {"en": "Import functional API with activation functions"}},
-        {"line": "x = torch.linspace(-5, 5, 100)", "highlight": "linspace", "explanation": {"en": "Create 100 evenly spaced values from -5 to 5"}},
-        {"line": "sigmoid_out = torch.sigmoid(x)", "highlight": "sigmoid", "explanation": {"en": "Sigmoid squashes all values to range (0, 1)"}},
-        {"line": "tanh_out = torch.tanh(x)", "highlight": "tanh", "explanation": {"en": "Tanh squashes to (-1, 1), zero-centered unlike sigmoid"}},
-        {"line": "relu_out = F.relu(x)", "highlight": "relu", "explanation": {"en": "ReLU: returns x if positive, 0 if negative. Simple and fast"}},
-        {"line": "leaky_out = F.leaky_relu(x, 0.01)", "highlight": "leaky_relu", "explanation": {"en": "Leaky ReLU: small slope for negatives, prevents dead neurons"}},
-        {"line": "logits = torch.tensor([2.0, 1.0, 0.1])", "highlight": "logits", "explanation": {"en": "Raw scores from the last layer (before softmax)"}},
-        {"line": "probs = F.softmax(logits, dim=0)", "highlight": "softmax", "explanation": {"en": "Softmax converts logits to probabilities that sum to 1.0"}},
-        {"line": "print(f'Sigmoid at 0: {torch.sigmoid(torch.tensor(0.0))}')", "highlight": "print", "explanation": {"en": "Sigmoid(0) = 0.5 — the midpoint of the output range"}},
-        {"line": "print(f'ReLU at -3: {F.relu(torch.tensor(-3.0))}')", "highlight": "print", "explanation": {"en": "ReLU(-3) = 0 — negative values are zeroed out"}},
-        {"line": "print(f'Softmax probs: {probs}, sum: {probs.sum()}')", "highlight": "print", "explanation": {"en": "Softmax outputs: [0.659, 0.243, 0.099], summing to 1.0"}}
+        {
+          "line": "import torch",
+          "highlight": "torch",
+          "explanation": {
+            "en": "Import PyTorch for tensor operations"
+          }
+        },
+        {
+          "line": "import torch.nn.functional as F",
+          "highlight": "F",
+          "explanation": {
+            "en": "Import functional API with activation functions"
+          }
+        },
+        {
+          "line": "x = torch.linspace(-5, 5, 100)",
+          "highlight": "linspace",
+          "explanation": {
+            "en": "Create 100 evenly spaced values from -5 to 5"
+          }
+        },
+        {
+          "line": "sigmoid_out = torch.sigmoid(x)",
+          "highlight": "sigmoid",
+          "explanation": {
+            "en": "Sigmoid squashes all values to range (0, 1)"
+          }
+        },
+        {
+          "line": "tanh_out = torch.tanh(x)",
+          "highlight": "tanh",
+          "explanation": {
+            "en": "Tanh squashes to (-1, 1), zero-centered unlike sigmoid"
+          }
+        },
+        {
+          "line": "relu_out = F.relu(x)",
+          "highlight": "relu",
+          "explanation": {
+            "en": "ReLU: returns x if positive, 0 if negative. Simple and fast"
+          }
+        },
+        {
+          "line": "leaky_out = F.leaky_relu(x, 0.01)",
+          "highlight": "leaky_relu",
+          "explanation": {
+            "en": "Leaky ReLU: small slope for negatives, prevents dead neurons"
+          }
+        },
+        {
+          "line": "logits = torch.tensor([2.0, 1.0, 0.1])",
+          "highlight": "logits",
+          "explanation": {
+            "en": "Raw scores from the last layer (before softmax)"
+          }
+        },
+        {
+          "line": "probs = F.softmax(logits, dim=0)",
+          "highlight": "softmax",
+          "explanation": {
+            "en": "Softmax converts logits to probabilities that sum to 1.0"
+          }
+        },
+        {
+          "line": "print(f'Sigmoid at 0: {torch.sigmoid(torch.tensor(0.0))}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Sigmoid(0) = 0.5 — the midpoint of the output range"
+          }
+        },
+        {
+          "line": "print(f'ReLU at -3: {F.relu(torch.tensor(-3.0))}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "ReLU(-3) = 0 — negative values are zeroed out"
+          }
+        },
+        {
+          "line": "print(f'Softmax probs: {probs}, sum: {probs.sum()}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Softmax outputs: [0.659, 0.243, 0.099], summing to 1.0"
+          }
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "activation_comparison",
-      "left": {"label": "Sigmoid", "content": "Output: (0,1)\nGradient: vanishes at extremes\nUse: binary output layer"},
-      "right": {"label": "ReLU", "content": "Output: [0, inf)\nGradient: 1 for positive, 0 for negative\nUse: hidden layers (default)"},
+      "left": {
+        "label": "Sigmoid",
+        "content": "Output: (0,1)\nGradient: vanishes at extremes\nUse: binary output layer"
+      },
+      "right": {
+        "label": "ReLU",
+        "content": "Output: [0, inf)\nGradient: 1 for positive, 0 for negative\nUse: hidden layers (default)"
+      },
       "duration_ms": 3000
     },
     {
@@ -96,7 +174,12 @@
       "id": "choosing_activation",
       "from": "problem_type",
       "to": "activation",
-      "steps": ["Hidden layers -> ReLU", "Binary output -> Sigmoid", "Multi-class -> Softmax", "RNN hidden -> Tanh"],
+      "steps": [
+        "Hidden layers -> ReLU",
+        "Binary output -> Sigmoid",
+        "Multi-class -> Softmax",
+        "RNN hidden -> Tanh"
+      ],
       "duration_ms": 3000
     },
     {
@@ -111,6 +194,69 @@
         "tensor(0.)",
         ">>> F.softmax(torch.tensor([2.0, 1.0, 0.1]), dim=0)",
         "tensor([0.6590, 0.2424, 0.0986])"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_activations",
+      "code": "import numpy as np\n\ndef sigmoid(x): return 1 / (1 + np.exp(-x))\ndef tanh(x): return np.tanh(x)\ndef relu(x): return np.maximum(0, x)\ndef leaky_relu(x, alpha=0.01): return np.where(x > 0, x, alpha * x)\n\nx = np.array([-2, -1, 0, 1, 2])\nprint(f'Sigmoid:    {sigmoid(x)}')\nprint(f'Tanh:       {tanh(x)}')\nprint(f'ReLU:       {relu(x)}')\nprint(f'Leaky ReLU: {leaky_relu(x)}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "sigmoid": "1/(1+exp(-x))"
+          },
+          "output": "",
+          "explanation": "Sigmoid: squashes to (0, 1) — used for probabilities"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "tanh": "(exp(x)-exp(-x))/(exp(x)+exp(-x))"
+          },
+          "output": "",
+          "explanation": "Tanh: squashes to (-1, 1) — zero-centered"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "relu": "max(0, x)"
+          },
+          "output": "",
+          "explanation": "ReLU: most popular — simple and effective"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "leaky_relu": "x if x>0 else 0.01*x"
+          },
+          "output": "",
+          "explanation": "Leaky ReLU: prevents dead neurons by allowing small negative slope"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Sigmoid:    [0.119 0.269 0.5   0.731 0.881]",
+          "explanation": "Output always between 0 and 1"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Tanh:       [-0.964 -0.762  0.     0.762  0.964]",
+          "explanation": "Output between -1 and 1, zero-centered"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "ReLU:       [0 0 0 1 2]",
+          "explanation": "Negatives become 0 — sparse activation"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Leaky ReLU: [-0.02 -0.01  0.    1.    2.  ]",
+          "explanation": "Small gradient for negatives prevents dying ReLU"
+        }
       ]
     },
     {
@@ -148,8 +294,18 @@
         "ta": "நவீன ஆழ்ந்த நெட்வொர்க்குகளின் மறைந்த அடுக்குகளில் பொதுவாக எந்த செயல்பாட்டு செயல்பாடு பயன்படுத்தப்படுகிறது?"
       },
       "options": {
-        "en": ["Sigmoid", "Tanh", "ReLU", "Softmax"],
-        "ta": ["Sigmoid", "Tanh", "ReLU", "Softmax"]
+        "en": [
+          "Sigmoid",
+          "Tanh",
+          "ReLU",
+          "Softmax"
+        ],
+        "ta": [
+          "Sigmoid",
+          "Tanh",
+          "ReLU",
+          "Softmax"
+        ]
       },
       "correct": 2
     },
@@ -159,8 +315,18 @@
         "ta": "Softmax அதன் வெளியீட்டைப் பற்றி என்ன உத்தரவாதம் அளிக்கிறது?"
       },
       "options": {
-        "en": ["All values are negative", "All values are between -1 and 1", "All values sum to 1.0", "The largest value becomes 1"],
-        "ta": ["அனைத்து மதிப்புகளும் எதிர்மறை", "அனைத்து மதிப்புகளும் -1 மற்றும் 1 இடையே", "அனைத்து மதிப்புகளும் 1.0-க்கு கூட்டும்", "பெரிய மதிப்பு 1 ஆகும்"]
+        "en": [
+          "All values are negative",
+          "All values are between -1 and 1",
+          "All values sum to 1.0",
+          "The largest value becomes 1"
+        ],
+        "ta": [
+          "அனைத்து மதிப்புகளும் எதிர்மறை",
+          "அனைத்து மதிப்புகளும் -1 மற்றும் 1 இடையே",
+          "அனைத்து மதிப்புகளும் 1.0-க்கு கூட்டும்",
+          "பெரிய மதிப்பு 1 ஆகும்"
+        ]
       },
       "correct": 2
     },
@@ -170,20 +336,45 @@
         "ta": "'dying ReLU' பிரச்சனை என்ன?"
       },
       "options": {
-        "en": ["ReLU is too slow to compute", "Neurons with negative inputs always output 0 and stop learning", "ReLU causes memory overflow", "ReLU outputs grow to infinity"],
-        "ta": ["ReLU கணக்கிட மிகவும் மெதுவானது", "எதிர்மறை உள்ளீடுகள் கொண்ட நியூரான்கள் எப்போதும் 0 வெளியிட்டு கற்பதை நிறுத்துகின்றன", "ReLU நினைவக வழிதல் ஏற்படுத்துகிறது", "ReLU வெளியீடுகள் முடிவிலிக்கு வளரும்"]
+        "en": [
+          "ReLU is too slow to compute",
+          "Neurons with negative inputs always output 0 and stop learning",
+          "ReLU causes memory overflow",
+          "ReLU outputs grow to infinity"
+        ],
+        "ta": [
+          "ReLU கணக்கிட மிகவும் மெதுவானது",
+          "எதிர்மறை உள்ளீடுகள் கொண்ட நியூரான்கள் எப்போதும் 0 வெளியிட்டு கற்பதை நிறுத்துகின்றன",
+          "ReLU நினைவக வழிதல் ஏற்படுத்துகிறது",
+          "ReLU வெளியீடுகள் முடிவிலிக்கு வளரும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["sigmoid", "tanh", "relu", "leaky_relu", "softmax", "vanishing_gradient"],
-    "concepts_required": ["perceptron", "multilayer_network"],
+    "concepts_taught": [
+      "sigmoid",
+      "tanh",
+      "relu",
+      "leaky_relu",
+      "softmax",
+      "vanishing_gradient"
+    ],
+    "concepts_required": [
+      "perceptron",
+      "multilayer_network"
+    ],
     "difficulty": "beginner",
     "engagement_type": "visual",
     "estimated_minutes": 25,
-    "real_world_application": ["classification", "regression"],
+    "real_world_application": [
+      "classification",
+      "regression"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

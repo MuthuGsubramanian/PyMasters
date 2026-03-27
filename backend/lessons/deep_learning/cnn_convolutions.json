@@ -187,6 +187,61 @@
         "conv result at (0,0): 8",
         "Weight sharing: same kernel scanned entire image"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cnn_conv",
+      "code": "import torch\nimport torch.nn as nn\n\nconv = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=1)\ninput_img = torch.randn(1, 1, 28, 28)\noutput = conv(input_img)\nprint(f'Input:  {input_img.shape}')\nprint(f'Output: {output.shape}')\nprint(f'Kernel shape: {conv.weight.shape}')\nprint(f'Parameters: {conv.weight.numel() + conv.bias.numel()}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "conv": "Conv2d(1, 8, 3, pad=1)"
+          },
+          "output": "",
+          "explanation": "8 filters of size 3x3, same padding"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "input_img": "(1, 1, 28, 28)"
+          },
+          "output": "",
+          "explanation": "1 grayscale image, 28x28 pixels"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "output": "8 feature maps"
+          },
+          "output": "",
+          "explanation": "Each filter slides across image producing one feature map"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Input:  torch.Size([1, 1, 28, 28])",
+          "explanation": "Single channel input"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Output: torch.Size([1, 8, 28, 28])",
+          "explanation": "8 channels out (one per filter), same spatial size"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Kernel shape: torch.Size([8, 1, 3, 3])",
+          "explanation": "8 filters, each 1x3x3 (in_ch x H x W)"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Parameters: 80",
+          "explanation": "8 * (1*3*3) + 8 bias = 72 + 8 = 80 parameters"
+        }
+      ]
     }
   ],
   "practice_challenges": [

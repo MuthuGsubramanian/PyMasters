@@ -223,11 +223,167 @@
       "type": "FlowArrow",
       "id": "execution_flow",
       "flows": [
-        {"label": "Semaphore(2)", "from": "main", "to": ["slot_1", "slot_2"]},
-        {"label": "URL 0,1 run", "from": "slot_1", "to": "fetch_url"},
-        {"label": "URL 2 waits", "from": "slot_2", "to": "queue"},
-        {"label": "slot freed", "from": "fetch_url", "to": "queue"}
+        {
+          "label": "Semaphore(2)",
+          "from": "main",
+          "to": [
+            "slot_1",
+            "slot_2"
+          ]
+        },
+        {
+          "label": "URL 0,1 run",
+          "from": "slot_1",
+          "to": "fetch_url"
+        },
+        {
+          "label": "URL 2 waits",
+          "from": "slot_2",
+          "to": "queue"
+        },
+        {
+          "label": "slot freed",
+          "from": "fetch_url",
+          "to": "queue"
+        }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import asyncio\n\nasync def fetch(url, sem):\n    async with sem:\n        print(f'Fetching {url}')\n        await asyncio.sleep(1)\n        return f'{url}: OK'\n\nasync def main():\n    sem = asyncio.Semaphore(2)\n    urls = [f'url/{i}' for i in range(4)]\n    tasks = [asyncio.create_task(fetch(u, sem)) for u in urls]\n    results = await asyncio.gather(*tasks)\n    for r in results:\n        print(r)",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Define fetch coroutine that respects semaphore"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "sem": "Semaphore(2)"
+          },
+          "output": "",
+          "description": "Semaphore(2) allows only 2 concurrent operations"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "urls": "['url/0','url/1','url/2','url/3']"
+          },
+          "output": "",
+          "description": "4 URLs to fetch"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Fetching url/0\nFetching url/1",
+          "description": "create_task starts all, but semaphore limits to 2 at a time"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Fetching url/2\nFetching url/3",
+          "description": "After first 2 finish, next 2 acquire semaphore"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "url/0: OK\nurl/1: OK\nurl/2: OK\nurl/3: OK",
+          "description": "All results collected, printed in order"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "4 tasks created",
+          "type": "start"
+        },
+        {
+          "id": "sem",
+          "label": "Semaphore(2) gate",
+          "type": "decision"
+        },
+        {
+          "id": "slot1",
+          "label": "Slot 1: fetch url/0",
+          "type": "process"
+        },
+        {
+          "id": "slot2",
+          "label": "Slot 2: fetch url/1",
+          "type": "process"
+        },
+        {
+          "id": "wait",
+          "label": "url/2, url/3 wait",
+          "type": "process"
+        },
+        {
+          "id": "release",
+          "label": "Slot freed -> next enters",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "All 4 complete",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "sem"
+        },
+        {
+          "from": "sem",
+          "to": "slot1",
+          "label": "acquire"
+        },
+        {
+          "from": "sem",
+          "to": "slot2",
+          "label": "acquire"
+        },
+        {
+          "from": "sem",
+          "to": "wait",
+          "label": "full"
+        },
+        {
+          "from": "slot1",
+          "to": "release"
+        },
+        {
+          "from": "slot2",
+          "to": "release"
+        },
+        {
+          "from": "release",
+          "to": "wait"
+        },
+        {
+          "from": "wait",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "sem",
+        "slot1",
+        "slot2",
+        "wait",
+        "release",
+        "end"
+      ],
+      "variables": {
+        "max_concurrent": 2
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -320,13 +476,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["create_task", "semaphore", "async_generators", "async_context_managers", "asyncio_wait"],
-    "concepts_required": ["async_await", "asyncio", "generators"],
+    "concepts_taught": [
+      "create_task",
+      "semaphore",
+      "async_generators",
+      "async_context_managers",
+      "asyncio_wait"
+    ],
+    "concepts_required": [
+      "async_await",
+      "asyncio",
+      "generators"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["rate_limiting", "web_scraping", "real_time_streaming"],
+    "real_world_application": [
+      "rate_limiting",
+      "web_scraping",
+      "real_time_streaming"
+    ],
     "category": "async",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

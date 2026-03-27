@@ -46,27 +46,112 @@
       "type": "CodeStepper",
       "id": "forward_code",
       "steps": [
-        {"line": "X = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])", "highlight": "X", "explanation": {"en": "Input batch: 3 samples, each with 2 features. Shape: [3, 2]"}},
-        {"line": "W1 = torch.randn(2, 3)", "highlight": "W1", "explanation": {"en": "Weight matrix for layer 1: maps 2 inputs to 3 hidden neurons. Shape: [2, 3]"}},
-        {"line": "b1 = torch.zeros(3)", "highlight": "b1", "explanation": {"en": "Bias vector for 3 hidden neurons, initialized to zeros"}},
-        {"line": "z1 = X @ W1 + b1", "highlight": "@", "explanation": {"en": "Matrix multiply [3,2] @ [2,3] = [3,3], then add bias. This is the pre-activation"}},
-        {"line": "a1 = torch.relu(z1)", "highlight": "relu", "explanation": {"en": "Apply ReLU: negative values become 0, positive stay. Shape still [3,3]"}},
-        {"line": "W2 = torch.randn(3, 1)", "highlight": "W2", "explanation": {"en": "Weight matrix for layer 2: maps 3 hidden to 1 output. Shape: [3, 1]"}},
-        {"line": "z2 = a1 @ W2 + b2", "highlight": "z2", "explanation": {"en": "Matrix multiply [3,3] @ [3,1] = [3,1]. One prediction per sample"}},
-        {"line": "output = torch.sigmoid(z2)", "highlight": "sigmoid", "explanation": {"en": "Sigmoid squashes output to (0,1) for probability interpretation"}},
-        {"line": "print(f'Input shape: {X.shape}')", "highlight": "shape", "explanation": {"en": "Shape tracking is critical: [batch_size, features] at each layer"}},
-        {"line": "print(f'Predictions:\\n{output}')", "highlight": "output", "explanation": {"en": "Final predictions: one probability per sample in the batch"}}
+        {
+          "line": "X = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])",
+          "highlight": "X",
+          "explanation": {
+            "en": "Input batch: 3 samples, each with 2 features. Shape: [3, 2]"
+          }
+        },
+        {
+          "line": "W1 = torch.randn(2, 3)",
+          "highlight": "W1",
+          "explanation": {
+            "en": "Weight matrix for layer 1: maps 2 inputs to 3 hidden neurons. Shape: [2, 3]"
+          }
+        },
+        {
+          "line": "b1 = torch.zeros(3)",
+          "highlight": "b1",
+          "explanation": {
+            "en": "Bias vector for 3 hidden neurons, initialized to zeros"
+          }
+        },
+        {
+          "line": "z1 = X @ W1 + b1",
+          "highlight": "@",
+          "explanation": {
+            "en": "Matrix multiply [3,2] @ [2,3] = [3,3], then add bias. This is the pre-activation"
+          }
+        },
+        {
+          "line": "a1 = torch.relu(z1)",
+          "highlight": "relu",
+          "explanation": {
+            "en": "Apply ReLU: negative values become 0, positive stay. Shape still [3,3]"
+          }
+        },
+        {
+          "line": "W2 = torch.randn(3, 1)",
+          "highlight": "W2",
+          "explanation": {
+            "en": "Weight matrix for layer 2: maps 3 hidden to 1 output. Shape: [3, 1]"
+          }
+        },
+        {
+          "line": "z2 = a1 @ W2 + b2",
+          "highlight": "z2",
+          "explanation": {
+            "en": "Matrix multiply [3,3] @ [3,1] = [3,1]. One prediction per sample"
+          }
+        },
+        {
+          "line": "output = torch.sigmoid(z2)",
+          "highlight": "sigmoid",
+          "explanation": {
+            "en": "Sigmoid squashes output to (0,1) for probability interpretation"
+          }
+        },
+        {
+          "line": "print(f'Input shape: {X.shape}')",
+          "highlight": "shape",
+          "explanation": {
+            "en": "Shape tracking is critical: [batch_size, features] at each layer"
+          }
+        },
+        {
+          "line": "print(f'Predictions:\\n{output}')",
+          "highlight": "output",
+          "explanation": {
+            "en": "Final predictions: one probability per sample in the batch"
+          }
+        }
       ]
     },
     {
       "type": "MemoryStack",
       "id": "shape_tracking",
       "slots": [
-        {"name": "X (Input)", "value": "shape [3, 2]", "type": "tensor", "address": "Layer 0"},
-        {"name": "z1 = X @ W1 + b1", "value": "shape [3, 3]", "type": "tensor", "address": "Layer 1 pre"},
-        {"name": "a1 = relu(z1)", "value": "shape [3, 3]", "type": "tensor", "address": "Layer 1 post"},
-        {"name": "z2 = a1 @ W2 + b2", "value": "shape [3, 1]", "type": "tensor", "address": "Layer 2 pre"},
-        {"name": "output = sigmoid(z2)", "value": "shape [3, 1]", "type": "tensor", "address": "Layer 2 post"}
+        {
+          "name": "X (Input)",
+          "value": "shape [3, 2]",
+          "type": "tensor",
+          "address": "Layer 0"
+        },
+        {
+          "name": "z1 = X @ W1 + b1",
+          "value": "shape [3, 3]",
+          "type": "tensor",
+          "address": "Layer 1 pre"
+        },
+        {
+          "name": "a1 = relu(z1)",
+          "value": "shape [3, 3]",
+          "type": "tensor",
+          "address": "Layer 1 post"
+        },
+        {
+          "name": "z2 = a1 @ W2 + b2",
+          "value": "shape [3, 1]",
+          "type": "tensor",
+          "address": "Layer 2 pre"
+        },
+        {
+          "name": "output = sigmoid(z2)",
+          "value": "shape [3, 1]",
+          "type": "tensor",
+          "address": "Layer 2 post"
+        }
       ]
     },
     {
@@ -74,7 +159,16 @@
       "id": "data_flow",
       "from": "input",
       "to": "output",
-      "steps": ["X [3,2]", "@ W1 [2,3]", "+ b1", "ReLU", "@ W2 [3,1]", "+ b2", "Sigmoid", "output [3,1]"],
+      "steps": [
+        "X [3,2]",
+        "@ W1 [2,3]",
+        "+ b1",
+        "ReLU",
+        "@ W2 [3,1]",
+        "+ b2",
+        "Sigmoid",
+        "output [3,1]"
+      ],
       "duration_ms": 4000
     },
     {
@@ -117,6 +211,130 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_forward",
+      "code": "import numpy as np\n\ndef relu(x): return np.maximum(0, x)\ndef softmax(x): e = np.exp(x - np.max(x)); return e / e.sum()\n\n# Input: 3 features\nx = np.array([1.0, 0.5, -0.3])\n\n# Layer 1: 3 -> 4 neurons\nW1 = np.random.randn(3, 4) * 0.5\nb1 = np.zeros(4)\nz1 = x @ W1 + b1\na1 = relu(z1)\nprint(f'Layer 1 output: {a1.round(3)}')\n\n# Layer 2: 4 -> 2 classes\nW2 = np.random.randn(4, 2) * 0.5\nb2 = np.zeros(2)\nz2 = a1 @ W2 + b2\nprobs = softmax(z2)\nprint(f'Probabilities: {probs.round(3)}')",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "x": "[1.0, 0.5, -0.3]",
+            "shape": "(3,)"
+          },
+          "output": "",
+          "explanation": "Input vector with 3 features"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "W1.shape": "(3, 4)"
+          },
+          "output": "",
+          "explanation": "Weight matrix: maps 3 inputs to 4 neurons"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "z1": "linear combination"
+          },
+          "output": "",
+          "explanation": "z1 = x @ W1 + b1 — matrix multiplication"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "a1": "ReLU applied"
+          },
+          "output": "",
+          "explanation": "Apply ReLU: negative values become 0"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "a1.shape": "(4,)"
+          },
+          "output": "Layer 1 output: [0.234 0.0 0.891 0.156]",
+          "explanation": "4 neuron activations — some zeroed by ReLU"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "W2.shape": "(4, 2)"
+          },
+          "output": "",
+          "explanation": "Second layer: 4 neurons to 2 output classes"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "probs": "[0.62, 0.38]"
+          },
+          "output": "Probabilities: [0.623 0.377]",
+          "explanation": "Softmax converts raw scores to probabilities summing to 1"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_forward_pass",
+      "title": "Forward Pass Through Network",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "Input x (3,)",
+          "type": "start"
+        },
+        {
+          "id": "linear1",
+          "label": "z1 = x @ W1 + b1",
+          "type": "process"
+        },
+        {
+          "id": "relu",
+          "label": "a1 = ReLU(z1)",
+          "type": "process"
+        },
+        {
+          "id": "linear2",
+          "label": "z2 = a1 @ W2 + b2",
+          "type": "process"
+        },
+        {
+          "id": "softmax",
+          "label": "probs = softmax(z2)",
+          "type": "process"
+        },
+        {
+          "id": "output",
+          "label": "Class Probabilities",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "input",
+          "to": "linear1"
+        },
+        {
+          "from": "linear1",
+          "to": "relu"
+        },
+        {
+          "from": "relu",
+          "to": "linear2"
+        },
+        {
+          "from": "linear2",
+          "to": "softmax"
+        },
+        {
+          "from": "softmax",
+          "to": "output"
+        }
+      ],
+      "animated": true
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish_effect",
       "effect": "data_stream",
@@ -152,8 +370,18 @@
         "ta": "உள்ளீடு X-ன் வடிவம் [32, 10] மற்றும் எடை W-ன் வடிவம் [10, 5] எனில், X @ W-ன் வடிவம் என்ன?"
       },
       "options": {
-        "en": ["[32, 10]", "[10, 5]", "[32, 5]", "[5, 32]"],
-        "ta": ["[32, 10]", "[10, 5]", "[32, 5]", "[5, 32]"]
+        "en": [
+          "[32, 10]",
+          "[10, 5]",
+          "[32, 5]",
+          "[5, 32]"
+        ],
+        "ta": [
+          "[32, 10]",
+          "[10, 5]",
+          "[32, 5]",
+          "[5, 32]"
+        ]
       },
       "correct": 2
     },
@@ -163,8 +391,18 @@
         "ta": "ஃபார்வர்ட் பாஸ் போது என்ன நடக்கிறது?"
       },
       "options": {
-        "en": ["Weights are updated", "Gradients are computed", "Input data flows through layers to produce output", "Loss function is minimized"],
-        "ta": ["எடைகள் புதுப்பிக்கப்படுகின்றன", "சாய்வுகள் கணக்கிடப்படுகின்றன", "உள்ளீட்டு தரவு அடுக்குகள் வழியாக பாய்ந்து வெளியீட்டை உருவாக்குகிறது", "இழப்பு செயல்பாடு குறைக்கப்படுகிறது"]
+        "en": [
+          "Weights are updated",
+          "Gradients are computed",
+          "Input data flows through layers to produce output",
+          "Loss function is minimized"
+        ],
+        "ta": [
+          "எடைகள் புதுப்பிக்கப்படுகின்றன",
+          "சாய்வுகள் கணக்கிடப்படுகின்றன",
+          "உள்ளீட்டு தரவு அடுக்குகள் வழியாக பாய்ந்து வெளியீட்டை உருவாக்குகிறது",
+          "இழப்பு செயல்பாடு குறைக்கப்படுகிறது"
+        ]
       },
       "correct": 2
     },
@@ -174,20 +412,43 @@
         "ta": "அடுக்குகளுக்கு இடையே ஏன் செயல்பாட்டு செயல்பாடுகளைப் பயன்படுத்துகிறோம்?"
       },
       "options": {
-        "en": ["To speed up computation", "To introduce non-linearity so the network can learn complex patterns", "To reduce memory usage", "To normalize the outputs"],
-        "ta": ["கணக்கீட்டை வேகப்படுத்த", "நெட்வொர்க் சிக்கலான வடிவங்களைக் கற்க நேரியல் அல்லாத தன்மையை அறிமுகப்படுத்த", "நினைவகப் பயன்பாட்டைக் குறைக்க", "வெளியீடுகளை இயல்பாக்க"]
+        "en": [
+          "To speed up computation",
+          "To introduce non-linearity so the network can learn complex patterns",
+          "To reduce memory usage",
+          "To normalize the outputs"
+        ],
+        "ta": [
+          "கணக்கீட்டை வேகப்படுத்த",
+          "நெட்வொர்க் சிக்கலான வடிவங்களைக் கற்க நேரியல் அல்லாத தன்மையை அறிமுகப்படுத்த",
+          "நினைவகப் பயன்பாட்டைக் குறைக்க",
+          "வெளியீடுகளை இயல்பாக்க"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["forward_pass", "matrix_multiplication", "shape_tracking", "batch_processing"],
-    "concepts_required": ["multilayer_network", "activation_functions"],
+    "concepts_taught": [
+      "forward_pass",
+      "matrix_multiplication",
+      "shape_tracking",
+      "batch_processing"
+    ],
+    "concepts_required": [
+      "multilayer_network",
+      "activation_functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["inference", "prediction"],
+    "real_world_application": [
+      "inference",
+      "prediction"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

@@ -255,6 +255,113 @@
           "address": "0x03"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class Engine:\n    def __init__(self, hp):\n        self.hp = hp\n\n    def start(self):\n        return f'Engine ({self.hp}hp) started'\n\nclass Car:\n    def __init__(self, brand, engine):\n        self.brand = brand\n        self.engine = engine\n\n    def drive(self):\n        msg = self.engine.start()\n        return f'{self.brand}: {msg}'\n\ne = Engine(200)\ncar = Car('Honda', e)\nprint(car.drive())\nprint(car.engine.hp)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Engine class - a component"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "description": "Define Car class - it HAS an Engine (composition)"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "e": "Engine(hp=200)"
+          },
+          "output": "",
+          "description": "Create an Engine with 200 horsepower"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "car": "Car(brand='Honda', engine=Engine(200))"
+          },
+          "output": "",
+          "description": "Create Car and pass the Engine object in - composition!"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "Honda: Engine (200hp) started",
+          "description": "car.drive() delegates to self.engine.start()"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "200",
+          "description": "Access engine's attribute through car - car.engine.hp"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "car.drive()",
+          "type": "start"
+        },
+        {
+          "id": "delegate",
+          "label": "Delegate to self.engine",
+          "type": "process"
+        },
+        {
+          "id": "engine_start",
+          "label": "engine.start()",
+          "type": "process"
+        },
+        {
+          "id": "return_msg",
+          "label": "Return combined message",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "delegate"
+        },
+        {
+          "from": "delegate",
+          "to": "engine_start"
+        },
+        {
+          "from": "engine_start",
+          "to": "return_msg"
+        },
+        {
+          "from": "return_msg",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "delegate",
+        "engine_start",
+        "return_msg",
+        "end"
+      ],
+      "variables": {
+        "car.brand": "Honda",
+        "car.engine.hp": 200
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -286,8 +393,18 @@
         "ta": "கலவை எந்த உறவை குறிக்கிறது?"
       },
       "options": {
-        "en": ["Is-a", "Has-a", "Uses-a", "None of these"],
-        "ta": ["Is-a", "Has-a", "Uses-a", "இவற்றில் எதுவுமில்லை"]
+        "en": [
+          "Is-a",
+          "Has-a",
+          "Uses-a",
+          "None of these"
+        ],
+        "ta": [
+          "Is-a",
+          "Has-a",
+          "Uses-a",
+          "இவற்றில் எதுவுமில்லை"
+        ]
       },
       "correct": 1
     },
@@ -318,20 +435,44 @@
         "ta": "Car(brand, engine)-ல், Car engine.start() அழைக்கும்போது எந்த வடிவமைப்பு முறை பயன்படுத்தப்படுகிறது?"
       },
       "options": {
-        "en": ["Inheritance", "Delegation", "Polymorphism", "Abstraction"],
-        "ta": ["பரம்பரை", "பிரதிநிதித்துவம்", "பல்லுருவாக்கம்", "சுருக்கம்"]
+        "en": [
+          "Inheritance",
+          "Delegation",
+          "Polymorphism",
+          "Abstraction"
+        ],
+        "ta": [
+          "பரம்பரை",
+          "பிரதிநிதித்துவம்",
+          "பல்லுருவாக்கம்",
+          "சுருக்கம்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["composition", "has_a_relationship", "delegation", "object_composition"],
-    "concepts_required": ["classes", "objects", "inheritance"],
+    "concepts_taught": [
+      "composition",
+      "has_a_relationship",
+      "delegation",
+      "object_composition"
+    ],
+    "concepts_required": [
+      "classes",
+      "objects",
+      "inheritance"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["software_architecture", "component_design"],
+    "real_world_application": [
+      "software_architecture",
+      "component_design"
+    ],
     "category": "oop",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

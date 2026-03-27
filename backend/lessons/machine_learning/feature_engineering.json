@@ -30,11 +30,21 @@
       "nodes": [
         {
           "label": "Feature Engineering",
-          "children": ["Feature Creation", "Polynomial Features", "Feature Selection", "Interaction Terms"]
+          "children": [
+            "Feature Creation",
+            "Polynomial Features",
+            "Feature Selection",
+            "Interaction Terms"
+          ]
         },
         {
           "label": "Feature Selection",
-          "children": ["SelectKBest", "Correlation", "Mutual Information", "Recursive Elimination"]
+          "children": [
+            "SelectKBest",
+            "Correlation",
+            "Mutual Information",
+            "Recursive Elimination"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,72 +56,100 @@
         {
           "line": "import pandas as pd; import numpy as np",
           "highlight": "import",
-          "explanation": { "en": "Import core libraries for data manipulation" }
+          "explanation": {
+            "en": "Import core libraries for data manipulation"
+          }
         },
         {
           "line": "df = pd.DataFrame({'length': [10, 20, 15, 25], 'width': [5, 8, 6, 10], 'price': [100, 320, 180, 500]})",
           "highlight": "DataFrame",
-          "explanation": { "en": "Create sample data — length and width of products with prices" }
+          "explanation": {
+            "en": "Create sample data — length and width of products with prices"
+          }
         },
         {
           "line": "df['area'] = df['length'] * df['width']",
           "highlight": "area",
-          "explanation": { "en": "Create area feature — combines two features into a more informative one" }
+          "explanation": {
+            "en": "Create area feature — combines two features into a more informative one"
+          }
         },
         {
           "line": "df['ratio'] = df['length'] / df['width']",
           "highlight": "ratio",
-          "explanation": { "en": "Create aspect ratio — captures the shape relationship" }
+          "explanation": {
+            "en": "Create aspect ratio — captures the shape relationship"
+          }
         },
         {
           "line": "df['log_price'] = np.log1p(df['price'])",
           "highlight": "log1p",
-          "explanation": { "en": "Log-transform skewed features — log1p handles zero values safely" }
+          "explanation": {
+            "en": "Log-transform skewed features — log1p handles zero values safely"
+          }
         },
         {
           "line": "df['length_bin'] = pd.cut(df['length'], bins=3, labels=['small', 'medium', 'large'])",
           "highlight": "cut",
-          "explanation": { "en": "Bin continuous features into categories — useful for tree-based models" }
+          "explanation": {
+            "en": "Bin continuous features into categories — useful for tree-based models"
+          }
         },
         {
           "line": "from sklearn.preprocessing import PolynomialFeatures",
           "highlight": "PolynomialFeatures",
-          "explanation": { "en": "Import tool for creating polynomial and interaction features" }
+          "explanation": {
+            "en": "Import tool for creating polynomial and interaction features"
+          }
         },
         {
           "line": "poly = PolynomialFeatures(degree=2, include_bias=False)",
           "highlight": "degree=2",
-          "explanation": { "en": "Degree 2 creates x1, x2, x1^2, x1*x2, x2^2" }
+          "explanation": {
+            "en": "Degree 2 creates x1, x2, x1^2, x1*x2, x2^2"
+          }
         },
         {
           "line": "X_poly = poly.fit_transform(df[['length', 'width']])",
           "highlight": "fit_transform",
-          "explanation": { "en": "Transform 2 features into 5 polynomial features" }
+          "explanation": {
+            "en": "Transform 2 features into 5 polynomial features"
+          }
         },
         {
           "line": "print(f'Original features: 2, Polynomial features: {X_poly.shape[1]}')",
           "highlight": "shape",
-          "explanation": { "en": "Polynomial expansion: 2 features become 5 features" }
+          "explanation": {
+            "en": "Polynomial expansion: 2 features become 5 features"
+          }
         },
         {
           "line": "from sklearn.feature_selection import SelectKBest, f_regression",
           "highlight": "SelectKBest",
-          "explanation": { "en": "Import feature selector — keeps the K most informative features" }
+          "explanation": {
+            "en": "Import feature selector — keeps the K most informative features"
+          }
         },
         {
           "line": "selector = SelectKBest(f_regression, k=3)",
           "highlight": "k=3",
-          "explanation": { "en": "Select top 3 features based on F-statistic with the target" }
+          "explanation": {
+            "en": "Select top 3 features based on F-statistic with the target"
+          }
         },
         {
           "line": "X_selected = selector.fit_transform(X_poly, df['price'])",
           "highlight": "fit_transform",
-          "explanation": { "en": "Fit selector and keep only the 3 best features out of 5" }
+          "explanation": {
+            "en": "Fit selector and keep only the 3 best features out of 5"
+          }
         },
         {
           "line": "print(f'Selected features: {X_selected.shape[1]}')",
           "highlight": "Selected",
-          "explanation": { "en": "From 5 polynomial features down to 3 — only the most useful survive" }
+          "explanation": {
+            "en": "From 5 polynomial features down to 3 — only the most useful survive"
+          }
         }
       ]
     },
@@ -146,6 +184,59 @@
         "Original features: 2, Polynomial features: 5",
         "Feature names: ['length', 'width', 'length^2', 'length width', 'width^2']",
         "Selected features: 3"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_feature_eng",
+      "code": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import PolynomialFeatures\n\ndf = pd.DataFrame({\n    'sqft': [1500, 2000, 1200, 1800],\n    'bedrooms': [3, 4, 2, 3],\n    'price': [300000, 450000, 200000, 350000]\n})\ndf['price_per_sqft'] = df['price'] / df['sqft']\ndf['log_price'] = np.log(df['price'])\ndf['sqft_bedrooms'] = df['sqft'] * df['bedrooms']\npoly = PolynomialFeatures(degree=2, include_bias=False)\nX_poly = poly.fit_transform(df[['sqft', 'bedrooms']])\nprint(f'Original features: 2')\nprint(f'Polynomial features: {X_poly.shape[1]}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "df": "4 rows x 3 cols"
+          },
+          "output": "",
+          "explanation": "Housing data with sqft, bedrooms, price"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "price_per_sqft": "[200, 225, 167, 194]"
+          },
+          "output": "",
+          "explanation": "Create ratio feature — price per square foot"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "log_price": "[12.61, 13.02, 12.21, 12.77]"
+          },
+          "output": "",
+          "explanation": "Log transform — handles skewed distributions"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "sqft_bedrooms": "[4500, 8000, 2400, 5400]"
+          },
+          "output": "",
+          "explanation": "Interaction feature — captures combined effect"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "X_poly.shape": "(4, 5)"
+          },
+          "output": "",
+          "explanation": "Polynomial features: sqft, bed, sqft^2, sqft*bed, bed^2"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Polynomial features: 5",
+          "explanation": "2 features expanded to 5 with degree-2 polynomials"
+        }
       ]
     }
   ],
@@ -237,13 +328,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["feature_creation", "polynomial_features", "feature_selection", "binning", "log_transform"],
-    "concepts_required": ["pandas_basics", "numpy_basics", "data_cleaning"],
+    "concepts_taught": [
+      "feature_creation",
+      "polynomial_features",
+      "feature_selection",
+      "binning",
+      "log_transform"
+    ],
+    "concepts_required": [
+      "pandas_basics",
+      "numpy_basics",
+      "data_cleaning"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["feature_stores", "data_pipelines"],
+    "real_world_application": [
+      "feature_stores",
+      "data_pipelines"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["ml_fundamentals"]
+    "path_memberships": [
+      "ml_fundamentals"
+    ]
   }
 }

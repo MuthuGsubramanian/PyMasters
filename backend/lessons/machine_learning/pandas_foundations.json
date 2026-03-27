@@ -30,11 +30,23 @@
       "nodes": [
         {
           "label": "Pandas",
-          "children": ["Series", "DataFrame", "Indexing", "Filtering", "GroupBy", "Merge"]
+          "children": [
+            "Series",
+            "DataFrame",
+            "Indexing",
+            "Filtering",
+            "GroupBy",
+            "Merge"
+          ]
         },
         {
           "label": "DataFrame",
-          "children": ["rows (index)", "columns", "dtypes", "shape"]
+          "children": [
+            "rows (index)",
+            "columns",
+            "dtypes",
+            "shape"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,67 +58,93 @@
         {
           "line": "import pandas as pd",
           "highlight": "pandas",
-          "explanation": { "en": "Import pandas — aliased as pd by convention" }
+          "explanation": {
+            "en": "Import pandas — aliased as pd by convention"
+          }
         },
         {
           "line": "df = pd.DataFrame({'name': ['Alice', 'Bob', 'Charlie', 'Diana'], 'age': [25, 30, 35, 28], 'salary': [50000, 60000, 70000, 55000], 'department': ['Engineering', 'Marketing', 'Engineering', 'Marketing']})",
           "highlight": "DataFrame",
-          "explanation": { "en": "Create a DataFrame from a dictionary — keys become column names" }
+          "explanation": {
+            "en": "Create a DataFrame from a dictionary — keys become column names"
+          }
         },
         {
           "line": "print(df.shape)",
           "highlight": "shape",
-          "explanation": { "en": "Shape is (4, 4) — 4 rows and 4 columns" }
+          "explanation": {
+            "en": "Shape is (4, 4) — 4 rows and 4 columns"
+          }
         },
         {
           "line": "print(df.dtypes)",
           "highlight": "dtypes",
-          "explanation": { "en": "Each column has a data type: object (string), int64, etc." }
+          "explanation": {
+            "en": "Each column has a data type: object (string), int64, etc."
+          }
         },
         {
           "line": "print(df.describe())",
           "highlight": "describe",
-          "explanation": { "en": "Statistical summary of numerical columns: mean, std, min, max, quartiles" }
+          "explanation": {
+            "en": "Statistical summary of numerical columns: mean, std, min, max, quartiles"
+          }
         },
         {
           "line": "ages = df['age']",
           "highlight": "df['age']",
-          "explanation": { "en": "Select a single column — returns a Series object" }
+          "explanation": {
+            "en": "Select a single column — returns a Series object"
+          }
         },
         {
           "line": "subset = df[['name', 'salary']]",
           "highlight": "[['name', 'salary']]",
-          "explanation": { "en": "Select multiple columns — returns a new DataFrame" }
+          "explanation": {
+            "en": "Select multiple columns — returns a new DataFrame"
+          }
         },
         {
           "line": "first_row = df.iloc[0]",
           "highlight": "iloc",
-          "explanation": { "en": "Select row by integer position — iloc uses numbers" }
+          "explanation": {
+            "en": "Select row by integer position — iloc uses numbers"
+          }
         },
         {
           "line": "senior = df.loc[df['age'] > 28]",
           "highlight": "loc",
-          "explanation": { "en": "Boolean filtering: keep only rows where age > 28" }
+          "explanation": {
+            "en": "Boolean filtering: keep only rows where age > 28"
+          }
         },
         {
           "line": "eng_high = df.loc[(df['department'] == 'Engineering') & (df['salary'] > 55000)]",
           "highlight": "&",
-          "explanation": { "en": "Combine conditions with & (and) or | (or) — parentheses required" }
+          "explanation": {
+            "en": "Combine conditions with & (and) or | (or) — parentheses required"
+          }
         },
         {
           "line": "avg_salary = df.groupby('department')['salary'].mean()",
           "highlight": "groupby",
-          "explanation": { "en": "Group by department and compute mean salary per group" }
+          "explanation": {
+            "en": "Group by department and compute mean salary per group"
+          }
         },
         {
           "line": "df['bonus'] = df['salary'] * 0.1",
           "highlight": "bonus",
-          "explanation": { "en": "Create a new column — vectorized operation on entire column" }
+          "explanation": {
+            "en": "Create a new column — vectorized operation on entire column"
+          }
         },
         {
           "line": "print(df.head())",
           "highlight": "head",
-          "explanation": { "en": "Display first 5 rows — always preview your data" }
+          "explanation": {
+            "en": "Display first 5 rows — always preview your data"
+          }
         }
       ]
     },
@@ -115,15 +153,45 @@
       "id": "dataframe_visual",
       "structure_type": "table",
       "data": {
-        "columns": ["name", "age", "salary", "department"],
+        "columns": [
+          "name",
+          "age",
+          "salary",
+          "department"
+        ],
         "rows": [
-          ["Alice", 25, 50000, "Engineering"],
-          ["Bob", 30, 60000, "Marketing"],
-          ["Charlie", 35, 70000, "Engineering"],
-          ["Diana", 28, 55000, "Marketing"]
+          [
+            "Alice",
+            25,
+            50000,
+            "Engineering"
+          ],
+          [
+            "Bob",
+            30,
+            60000,
+            "Marketing"
+          ],
+          [
+            "Charlie",
+            35,
+            70000,
+            "Engineering"
+          ],
+          [
+            "Diana",
+            28,
+            55000,
+            "Marketing"
+          ]
         ]
       },
-      "highlight_cells": [[2, 2]],
+      "highlight_cells": [
+        [
+          2,
+          2
+        ]
+      ],
       "color": "#2ecc71"
     },
     {
@@ -147,6 +215,55 @@
         "Engineering    60000.0",
         "Marketing      57500.0",
         "Name: salary, dtype: float64"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pd_foundations",
+      "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'student': ['Alice', 'Bob', 'Charlie', 'Diana'],\n    'math': [90, 85, 78, 92],\n    'science': [88, 92, 75, 95]\n})\nprint(df.head())\nprint(df.describe())\nhonors = df[df['math'] > 80]\nprint(f'Honor students: {len(honors)}')\ndf['average'] = (df['math'] + df['science']) / 2\nprint(df[['student', 'average']])",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "df": "4 rows x 3 cols"
+          },
+          "output": "",
+          "explanation": "Create student grades DataFrame"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "  student  math  science\n0   Alice    90       88\n1     Bob    85       92",
+          "explanation": "head() shows first rows"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "honors": "3 students"
+          },
+          "output": "",
+          "explanation": "Boolean filter: math > 80"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Honor students: 3",
+          "explanation": "Alice (90), Bob (85), Diana (92) qualify"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "average_col": "new column"
+          },
+          "output": "",
+          "explanation": "Create new column from existing ones"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "  student  average\n0   Alice     89.0\n1     Bob     88.5\n2 Charlie     76.5\n3   Diana     93.5",
+          "explanation": "Average of math and science per student"
+        }
       ]
     }
   ],
@@ -238,13 +355,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["dataframe", "series", "indexing", "filtering", "groupby"],
-    "concepts_required": ["python_basics", "dictionaries"],
+    "concepts_taught": [
+      "dataframe",
+      "series",
+      "indexing",
+      "filtering",
+      "groupby"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "dictionaries"
+    ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["data_analysis", "data_cleaning", "exploratory_analysis"],
+    "real_world_application": [
+      "data_analysis",
+      "data_cleaning",
+      "exploratory_analysis"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["ml_fundamentals"]
+    "path_memberships": [
+      "ml_fundamentals"
+    ]
   }
 }

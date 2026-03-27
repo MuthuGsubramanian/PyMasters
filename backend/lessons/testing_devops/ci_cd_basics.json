@@ -155,12 +155,36 @@
       "type": "FlowArrow",
       "id": "pipeline_flow",
       "stages": [
-        { "label": "Push Code", "icon": "git", "color": "#4f8ef7" },
-        { "label": "Checkout", "icon": "download", "color": "#6bcf7f" },
-        { "label": "Install Deps", "icon": "package", "color": "#ffd93d" },
-        { "label": "Lint", "icon": "search", "color": "#a66bf7" },
-        { "label": "Test", "icon": "check", "color": "#4ff7a4" },
-        { "label": "Deploy", "icon": "rocket", "color": "#ff6b6b" }
+        {
+          "label": "Push Code",
+          "icon": "git",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "Checkout",
+          "icon": "download",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "Install Deps",
+          "icon": "package",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "Lint",
+          "icon": "search",
+          "color": "#a66bf7"
+        },
+        {
+          "label": "Test",
+          "icon": "check",
+          "color": "#4ff7a4"
+        },
+        {
+          "label": "Deploy",
+          "icon": "rocket",
+          "color": "#ff6b6b"
+        }
       ]
     },
     {
@@ -185,11 +209,144 @@
       "id": "workflow_file_tree",
       "structure_type": "tree",
       "layers": [
-        { "label": ".github/", "count": "root", "color": "#4f8ef7" },
-        { "label": "workflows/", "count": "YAML files", "color": "#6bcf7f" },
-        { "label": "ci.yml", "count": "main pipeline", "color": "#ffd93d" },
-        { "label": "deploy.yml", "count": "deployment", "color": "#ff6b6b" }
+        {
+          "label": ".github/",
+          "count": "root",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "workflows/",
+          "count": "YAML files",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "ci.yml",
+          "count": "main pipeline",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "deploy.yml",
+          "count": "deployment",
+          "color": "#ff6b6b"
+        }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cicd",
+      "title": "GitHub Actions Workflow",
+      "code": "# .github/workflows/ci.yml\nname: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n      - run: pip install -r requirements.txt\n      - run: pytest tests/ -v\n      - run: flake8 .",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "Name your workflow"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "triggers": [
+              "push"
+            ]
+          },
+          "output": "",
+          "explanation": "Trigger on every push"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "runner": "ubuntu-latest"
+          },
+          "output": "",
+          "explanation": "Fresh Ubuntu VM"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Checking out...",
+          "explanation": "Clone repo"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Python 3.12...",
+          "explanation": "Install Python"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Installing...",
+          "explanation": "Install dependencies"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "5 passed in 0.3s",
+          "explanation": "Run tests"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "All checks passed",
+          "explanation": "Lint code"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_cicd_pipeline",
+      "title": "CI/CD Pipeline Stages",
+      "nodes": [
+        {
+          "id": "commit",
+          "label": "git push",
+          "type": "start"
+        },
+        {
+          "id": "build",
+          "label": "Build\nInstall",
+          "type": "process"
+        },
+        {
+          "id": "test",
+          "label": "Test\npytest",
+          "type": "decision"
+        },
+        {
+          "id": "staging",
+          "label": "Deploy\nStaging",
+          "type": "process"
+        },
+        {
+          "id": "prod",
+          "label": "Deploy\nProduction",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "commit",
+          "to": "build",
+          "label": "Trigger"
+        },
+        {
+          "from": "build",
+          "to": "test",
+          "label": "Ready"
+        },
+        {
+          "from": "test",
+          "to": "staging",
+          "label": "Pass"
+        },
+        {
+          "from": "staging",
+          "to": "prod",
+          "label": "Approved"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -225,8 +382,18 @@
         "ta": "CI என்பது எதைக் குறிக்கிறது?"
       },
       "options": {
-        "en": ["Code Inspector", "Continuous Integration", "Complete Installation", "Central Interface"],
-        "ta": ["Code Inspector", "Continuous Integration", "Complete Installation", "Central Interface"]
+        "en": [
+          "Code Inspector",
+          "Continuous Integration",
+          "Complete Installation",
+          "Central Interface"
+        ],
+        "ta": [
+          "Code Inspector",
+          "Continuous Integration",
+          "Complete Installation",
+          "Central Interface"
+        ]
       },
       "correct": 1
     },
@@ -236,8 +403,18 @@
         "ta": "GitHub Actions workflow files எங்கே இருக்கும்?"
       },
       "options": {
-        "en": [".github/workflows/", "actions/", "ci/", ".workflows/"],
-        "ta": [".github/workflows/", "actions/", "ci/", ".workflows/"]
+        "en": [
+          ".github/workflows/",
+          "actions/",
+          "ci/",
+          ".workflows/"
+        ],
+        "ta": [
+          ".github/workflows/",
+          "actions/",
+          "ci/",
+          ".workflows/"
+        ]
       },
       "correct": 0
     },
@@ -247,20 +424,44 @@
         "ta": "'runs-on: ubuntu-latest' என்ன குறிப்பிடுகிறது?"
       },
       "options": {
-        "en": ["The Python version", "The virtual machine OS for the job", "The branch to deploy to", "The test framework to use"],
-        "ta": ["Python version", "Job-க்கான virtual machine OS", "Deploy செய்ய வேண்டிய branch", "பயன்படுத்த வேண்டிய test framework"]
+        "en": [
+          "The Python version",
+          "The virtual machine OS for the job",
+          "The branch to deploy to",
+          "The test framework to use"
+        ],
+        "ta": [
+          "Python version",
+          "Job-க்கான virtual machine OS",
+          "Deploy செய்ய வேண்டிய branch",
+          "பயன்படுத்த வேண்டிய test framework"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["ci_cd", "github_actions", "yaml_workflows", "automation"],
-    "concepts_required": ["testing_basics", "git_basics"],
+    "concepts_taught": [
+      "ci_cd",
+      "github_actions",
+      "yaml_workflows",
+      "automation"
+    ],
+    "concepts_required": [
+      "testing_basics",
+      "git_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["devops", "automation", "deployment"],
+    "real_world_application": [
+      "devops",
+      "automation",
+      "deployment"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

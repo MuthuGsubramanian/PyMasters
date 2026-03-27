@@ -39,6 +39,46 @@
       "branch": "concurrent"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "import asyncio\nasync def fetch(name, delay):\n    print(f'{name}: start')\n    await asyncio.sleep(delay)\n    print(f'{name}: done')\n    return f'{name}_result'\nasync def main():\n    results = await asyncio.gather(\n        fetch('A', 2),\n        fetch('B', 1)\n    )\n    print(results)\nasyncio.run(main())",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Import asyncio module" },
+        { "line": 2, "variables": {}, "output": "", "description": "Define async coroutine function fetch" },
+        { "line": 7, "variables": {}, "output": "", "description": "Define main coroutine" },
+        { "line": 13, "variables": {}, "output": "", "description": "asyncio.run() starts the event loop" },
+        { "line": 8, "variables": {}, "output": "A: start\nB: start", "description": "gather() starts both coroutines concurrently" },
+        { "line": 4, "variables": {}, "output": "A: start\nB: start", "description": "Both await sleep -- event loop switches between them" },
+        { "line": 5, "variables": {}, "output": "A: start\nB: start\nB: done", "description": "B finishes first (shorter delay)" },
+        { "line": 5, "variables": {}, "output": "A: start\nB: start\nB: done\nA: done", "description": "A finishes next" },
+        { "line": 12, "variables": { "results": ["A_result", "B_result"] }, "output": "A: start\nB: start\nB: done\nA: done\n['A_result', 'B_result']", "description": "gather returns results in original order" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "asyncio.run(main())", "type": "start" },
+        { "id": "gather", "label": "gather(fetch A, fetch B)", "type": "process" },
+        { "id": "a_start", "label": "A: start, then await", "type": "process" },
+        { "id": "b_start", "label": "B: start, then await", "type": "process" },
+        { "id": "b_done", "label": "B: done (shorter delay)", "type": "process" },
+        { "id": "a_done", "label": "A: done", "type": "process" },
+        { "id": "end", "label": "Return results", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "gather" },
+        { "from": "gather", "to": "a_start" },
+        { "from": "gather", "to": "b_start" },
+        { "from": "b_start", "to": "b_done" },
+        { "from": "a_start", "to": "a_done" },
+        { "from": "b_done", "to": "end" },
+        { "from": "a_done", "to": "end" }
+      ],
+      "executionPath": ["start", "gather", "a_start", "b_start", "b_done", "a_done", "end"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

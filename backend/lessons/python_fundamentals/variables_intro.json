@@ -116,6 +116,19 @@
         "Ada",
         "[90, 85]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "x = 42\nname = 'Ada'\nscores = [90, 85]\nprint(x)\nprint(name)\nprint(scores)",
+      "executionSteps": [
+        { "line": 1, "variables": { "x": 42 }, "output": "", "description": "Create variable x and assign integer 42" },
+        { "line": 2, "variables": { "x": 42, "name": "Ada" }, "output": "", "description": "Create variable name and assign string 'Ada'" },
+        { "line": 3, "variables": { "x": 42, "name": "Ada", "scores": [90, 85] }, "output": "", "description": "Create variable scores and assign a list [90, 85]" },
+        { "line": 4, "variables": { "x": 42, "name": "Ada", "scores": [90, 85] }, "output": "42", "description": "Print the value of x" },
+        { "line": 5, "variables": { "x": 42, "name": "Ada", "scores": [90, 85] }, "output": "42\nAda", "description": "Print the value of name" },
+        { "line": 6, "variables": { "x": 42, "name": "Ada", "scores": [90, 85] }, "output": "42\nAda\n[90, 85]", "description": "Print the value of scores" }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

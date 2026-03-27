@@ -171,6 +171,139 @@
         "│      © 2026 PyMasters Academy      │ ← footer",
         "└────────────────────────────────────┘"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_html_css",
+      "title": "CSS Selector Specificity in Action",
+      "code": "from bs4 import BeautifulSoup\n\nhtml = '<div class=\"card\"><h2 id=\"title\">Hello</h2><p class=\"text\">World</p></div>'\nsoup = BeautifulSoup(html, 'html.parser')\ntag_select = soup.select('h2')\nclass_select = soup.select('.text')\nid_select = soup.select('#title')\nnested = soup.select('.card p')\nprint(f'Tag: {tag_select[0].text}')\nprint(f'Class: {class_select[0].text}')\nprint(f'ID: {id_select[0].text}')\nprint(f'Nested: {nested[0].text}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import BeautifulSoup to demonstrate CSS selectors in Python"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "html": "<div class='card'>..."
+          },
+          "output": "",
+          "explanation": "Create sample HTML with div, h2 (with id), and p (with class)"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "soup": "<BeautifulSoup>"
+          },
+          "output": "",
+          "explanation": "Parse the HTML string into a navigable tree"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "tag_select": "[<h2>Hello</h2>]"
+          },
+          "output": "",
+          "explanation": "Element selector 'h2' selects all h2 tags"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "class_select": "[<p class='text'>World</p>]"
+          },
+          "output": "",
+          "explanation": "Class selector '.text' selects elements with class='text'"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "id_select": "[<h2 id='title'>Hello</h2>]"
+          },
+          "output": "",
+          "explanation": "ID selector '#title' targets one specific element"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "nested": "[<p class='text'>World</p>]"
+          },
+          "output": "",
+          "explanation": "Descendant selector '.card p' finds p inside .card"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Tag: Hello\nClass: World\nID: Hello\nNested: World",
+          "explanation": "Print results showing each selector found its target"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_browser_render",
+      "title": "Browser Rendering Pipeline",
+      "nodes": [
+        {
+          "id": "html_file",
+          "label": "HTML File",
+          "type": "start"
+        },
+        {
+          "id": "parse_html",
+          "label": "Parse HTML\n(build DOM tree)",
+          "type": "process"
+        },
+        {
+          "id": "parse_css",
+          "label": "Parse CSS\n(build CSSOM)",
+          "type": "process"
+        },
+        {
+          "id": "render_tree",
+          "label": "Combine into\nRender Tree",
+          "type": "process"
+        },
+        {
+          "id": "layout",
+          "label": "Layout\n(calculate positions)",
+          "type": "process"
+        },
+        {
+          "id": "paint",
+          "label": "Paint Pixels\non Screen",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "html_file",
+          "to": "parse_html",
+          "label": "Browser loads"
+        },
+        {
+          "from": "parse_html",
+          "to": "parse_css",
+          "label": "DOM ready"
+        },
+        {
+          "from": "parse_css",
+          "to": "render_tree",
+          "label": "CSSOM ready"
+        },
+        {
+          "from": "render_tree",
+          "to": "layout",
+          "label": "Box model"
+        },
+        {
+          "from": "layout",
+          "to": "paint",
+          "label": "Pixels"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -204,8 +337,18 @@
         "ta": "CSS box-sizing: border-box பண்பு என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Adds a visible border", "Includes padding and border in the element's total width/height", "Removes all margins", "Centers the element"],
-        "ta": ["கண்ணுக்குத் தெரியும் எல்லையைச் சேர்க்கிறது", "உறுப்பின் மொத்த அகலம்/உயரத்தில் padding மற்றும் border-ஐ சேர்க்கிறது", "அனைத்து விளிம்புகளையும் நீக்குகிறது", "உறுப்பை நடுவில் வைக்கிறது"]
+        "en": [
+          "Adds a visible border",
+          "Includes padding and border in the element's total width/height",
+          "Removes all margins",
+          "Centers the element"
+        ],
+        "ta": [
+          "கண்ணுக்குத் தெரியும் எல்லையைச் சேர்க்கிறது",
+          "உறுப்பின் மொத்த அகலம்/உயரத்தில் padding மற்றும் border-ஐ சேர்க்கிறது",
+          "அனைத்து விளிம்புகளையும் நீக்குகிறது",
+          "உறுப்பை நடுவில் வைக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -215,8 +358,18 @@
         "ta": "எந்த CSS பண்பு 3-நெடுவரிசை கட்ட தளவமைப்பை உருவாக்குகிறது?"
       },
       "options": {
-        "en": ["display: flex; flex-columns: 3", "display: grid; grid-template-columns: repeat(3, 1fr)", "columns: 3", "display: block; width: 33%"],
-        "ta": ["display: flex; flex-columns: 3", "display: grid; grid-template-columns: repeat(3, 1fr)", "columns: 3", "display: block; width: 33%"]
+        "en": [
+          "display: flex; flex-columns: 3",
+          "display: grid; grid-template-columns: repeat(3, 1fr)",
+          "columns: 3",
+          "display: block; width: 33%"
+        ],
+        "ta": [
+          "display: flex; flex-columns: 3",
+          "display: grid; grid-template-columns: repeat(3, 1fr)",
+          "columns: 3",
+          "display: block; width: 33%"
+        ]
       },
       "correct": 1
     },
@@ -226,20 +379,41 @@
         "ta": "<article> மற்றும் <section> போன்ற சொற்பொருள் HTML உறுப்புகளை ஏன் பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["They load faster", "They improve accessibility and SEO by describing content meaning", "They add automatic styling", "They are required by browsers"],
-        "ta": ["அவை வேகமாக ஏற்றப்படும்", "உள்ளடக்க அர்த்தத்தை விவரிப்பதன் மூலம் அணுகல் மற்றும் SEO-வை மேம்படுத்துகின்றன", "அவை தானியங்கி வடிவமைப்பைச் சேர்க்கின்றன", "உலாவிகளுக்கு அவை தேவை"]
+        "en": [
+          "They load faster",
+          "They improve accessibility and SEO by describing content meaning",
+          "They add automatic styling",
+          "They are required by browsers"
+        ],
+        "ta": [
+          "அவை வேகமாக ஏற்றப்படும்",
+          "உள்ளடக்க அர்த்தத்தை விவரிப்பதன் மூலம் அணுகல் மற்றும் SEO-வை மேம்படுத்துகின்றன",
+          "அவை தானியங்கி வடிவமைப்பைச் சேர்க்கின்றன",
+          "உலாவிகளுக்கு அவை தேவை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["html_structure", "css_selectors", "box_model", "flexbox", "css_grid"],
+    "concepts_taught": [
+      "html_structure",
+      "css_selectors",
+      "box_model",
+      "flexbox",
+      "css_grid"
+    ],
     "concepts_required": [],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["web_design", "frontend_development"],
+    "real_world_application": [
+      "web_design",
+      "frontend_development"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

@@ -114,6 +114,61 @@
         "  [FAIL] 'It works as expected' → expected Neutral",
         "Accuracy: 80%"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_prompt_eval",
+      "code": "# Evaluating LLM Output Quality\nimport json\n\nexpected = {\"sentiment\": \"positive\", \"score\": 0.9}\nactual = json.loads(llm_response)\n\n# Check structure\nassert \"sentiment\" in actual\nassert \"score\" in actual\n\n# Check value ranges\nassert actual[\"sentiment\"] in [\"positive\", \"negative\", \"neutral\"]\nassert 0 <= actual[\"score\"] <= 1\n\n# Consistency test: run same prompt 5 times\nresults = [run_prompt(prompt) for _ in range(5)]\nconsistency = len(set(r['sentiment'] for r in results)) == 1\nprint(f\"Consistent: {consistency}\")",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "expected": "{sentiment: positive, score: 0.9}"
+          },
+          "output": "",
+          "explanation": "Define expected output structure"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "actual": "parsed JSON from LLM"
+          },
+          "output": "",
+          "explanation": "Parse LLM response as JSON"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "check": "key exists"
+          },
+          "output": "",
+          "explanation": "Verify required keys are present"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "valid_sentiments": "[positive, negative, neutral]"
+          },
+          "output": "",
+          "explanation": "Validate output values are in expected set"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "results": "5 LLM responses"
+          },
+          "output": "",
+          "explanation": "Run same prompt multiple times for consistency"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "consistency": "True/False"
+          },
+          "output": "Consistent: True",
+          "explanation": "All 5 runs gave same sentiment = good prompt"
+        }
+      ]
     }
   ],
   "practice_challenges": [

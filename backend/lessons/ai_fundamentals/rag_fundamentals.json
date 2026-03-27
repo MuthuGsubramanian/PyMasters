@@ -188,10 +188,26 @@
       "id": "vector_store_viz",
       "structure_type": "vector",
       "data": {
-        "doc1_python_origin": [0.82, 0.15, 0.91],
-        "doc2_python_syntax": [0.78, 0.45, 0.12],
-        "doc3_list_comprehension": [0.65, 0.88, 0.34],
-        "query_who_created": [0.84, 0.13, 0.89]
+        "doc1_python_origin": [
+          0.82,
+          0.15,
+          0.91
+        ],
+        "doc2_python_syntax": [
+          0.78,
+          0.45,
+          0.12
+        ],
+        "doc3_list_comprehension": [
+          0.65,
+          0.88,
+          0.34
+        ],
+        "query_who_created": [
+          0.84,
+          0.13,
+          0.89
+        ]
       },
       "visualization": "vector_space",
       "caption": "Query vector is closest to doc1 (Python origin) — that's what gets retrieved"
@@ -219,6 +235,116 @@
         ">>> prompt = f'Based on this context: {context}\\nAnswer: Who created Python?'",
         ">>> # LLM answers: 'Python was created by Guido van Rossum in 1991.'"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_rag_fundamentals",
+      "code": "from langchain.text_splitter import RecursiveCharacterTextSplitter\nfrom langchain_openai import OpenAIEmbeddings\n\n# Step 1: Split documents into chunks\ntext = 'PyMasters teaches Python through stories...'\nsplitter = RecursiveCharacterTextSplitter(chunk_size=500)\nchunks = splitter.split_text(text)\nprint(f'Split into {len(chunks)} chunks')\n\n# Step 2: Embed chunks into vectors\nembeddings = OpenAIEmbeddings()\nvectors = embeddings.embed_documents(chunks)\nprint(f'Each chunk => {len(vectors[0])}-dim vector')\n\n# Step 3: Query — find relevant chunks\nquery_vec = embeddings.embed_query('How to learn recursion?')\n# Step 4: Similarity search finds best matching chunks\n# Step 5: LLM answers using retrieved context",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "text": "long document..."
+          },
+          "output": "",
+          "explanation": "RAG starts by splitting docs into chunks"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "chunks": "12 chunks"
+          },
+          "output": "Split into 12 chunks",
+          "explanation": "500-char chunks for manageable processing"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Each chunk => 1536-dim vector",
+          "explanation": "Vectors capture semantic meaning of each chunk"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "query": "How to learn recursion?"
+          },
+          "output": "",
+          "explanation": "User question also converted to a vector"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "",
+          "explanation": "Find chunks closest to query vector — this is retrieval!"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "",
+          "explanation": "LLM answers using retrieved chunks as context"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_rag_fundamentals",
+      "nodes": [
+        {
+          "id": "docs",
+          "label": "Documents",
+          "next": [
+            "split"
+          ]
+        },
+        {
+          "id": "split",
+          "label": "Split into chunks",
+          "next": [
+            "embed"
+          ]
+        },
+        {
+          "id": "embed",
+          "label": "Embed to vectors",
+          "next": [
+            "store"
+          ]
+        },
+        {
+          "id": "store",
+          "label": "Store in vector DB",
+          "next": [
+            "query"
+          ]
+        },
+        {
+          "id": "query",
+          "label": "User question",
+          "next": [
+            "retrieve"
+          ]
+        },
+        {
+          "id": "retrieve",
+          "label": "Retrieve similar chunks",
+          "next": [
+            "generate"
+          ]
+        },
+        {
+          "id": "generate",
+          "label": "LLM answers with context",
+          "next": [
+            "answer"
+          ]
+        },
+        {
+          "id": "answer",
+          "label": "Grounded answer",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -309,13 +435,27 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["rag", "retrieval_augmented_generation", "vector_stores", "similarity_search"],
-    "concepts_required": ["langchain_intro", "llm_how_they_work"],
+    "concepts_taught": [
+      "rag",
+      "retrieval_augmented_generation",
+      "vector_stores",
+      "similarity_search"
+    ],
+    "concepts_required": [
+      "langchain_intro",
+      "llm_how_they_work"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["document_qa", "enterprise_search", "chatbots"],
+    "real_world_application": [
+      "document_qa",
+      "enterprise_search",
+      "chatbots"
+    ],
     "category": "ai_rag",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

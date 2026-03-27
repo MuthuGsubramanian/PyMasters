@@ -193,6 +193,69 @@
         "Parent: project/src",
         "Content: Hello from pathlib!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from pathlib import Path\n\np = Path('project') / 'src' / 'main.py'\nprint(p)\nprint(f'Name: {p.name}')\nprint(f'Stem: {p.stem}')\nprint(f'Suffix: {p.suffix}')\nprint(f'Parent: {p.parent}')\n\nfile = Path('demo.txt')\nfile.write_text('Hello pathlib!')\nprint(file.read_text())",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import Path from pathlib"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "p": "Path('project/src/main.py')"
+          },
+          "output": "",
+          "description": "Build path with / operator - cross-platform!"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "project/src/main.py",
+          "description": "Print the path"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Name: main.py",
+          "description": ".name returns filename with extension"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "Stem: main",
+          "description": ".stem returns filename without extension"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Suffix: .py",
+          "description": ".suffix returns the extension"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Parent: project/src",
+          "description": ".parent returns containing directory"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "",
+          "description": "write_text writes string to file directly"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Hello pathlib!",
+          "description": "read_text reads entire file as string"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -247,8 +310,18 @@
         "ta": "Path('file.py').stem என்ன திருப்பும்?"
       },
       "options": {
-        "en": ["file.py", "file", ".py", "Path('file')"],
-        "ta": ["file.py", "file", ".py", "Path('file')"]
+        "en": [
+          "file.py",
+          "file",
+          ".py",
+          "Path('file')"
+        ],
+        "ta": [
+          "file.py",
+          "file",
+          ".py",
+          "Path('file')"
+        ]
       },
       "correct": 1
     },
@@ -258,20 +331,45 @@
         "ta": "எந்த முறை முழு கோப்பையும் சரமாக படிக்கும்?"
       },
       "options": {
-        "en": ["read()", "read_text()", "read_all()", "get_text()"],
-        "ta": ["read()", "read_text()", "read_all()", "get_text()"]
+        "en": [
+          "read()",
+          "read_text()",
+          "read_all()",
+          "get_text()"
+        ],
+        "ta": [
+          "read()",
+          "read_text()",
+          "read_all()",
+          "get_text()"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["pathlib", "Path", "glob", "file_operations", "directory_traversal"],
-    "concepts_required": ["strings", "files"],
+    "concepts_taught": [
+      "pathlib",
+      "Path",
+      "glob",
+      "file_operations",
+      "directory_traversal"
+    ],
+    "concepts_required": [
+      "strings",
+      "files"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["file_management", "build_scripts", "data_pipelines"],
+    "real_world_application": [
+      "file_management",
+      "build_scripts",
+      "data_pipelines"
+    ],
     "category": "standard_library",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

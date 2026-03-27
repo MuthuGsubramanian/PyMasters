@@ -163,11 +163,26 @@
       "type": "FlowArrow",
       "id": "pattern_flow",
       "steps": [
-        {"label": "Read the problem", "active": true},
-        {"label": "Identify: sorted array? → Two Pointers", "active": true},
-        {"label": "Identify: contiguous subarray? → Sliding Window", "active": true},
-        {"label": "Identify: linked list cycle? → Fast/Slow", "active": true},
-        {"label": "Identify: range queries? → Prefix Sum", "active": true}
+        {
+          "label": "Read the problem",
+          "active": true
+        },
+        {
+          "label": "Identify: sorted array? → Two Pointers",
+          "active": true
+        },
+        {
+          "label": "Identify: contiguous subarray? → Sliding Window",
+          "active": true
+        },
+        {
+          "label": "Identify: linked list cycle? → Fast/Slow",
+          "active": true
+        },
+        {
+          "label": "Identify: range queries? → Prefix Sum",
+          "active": true
+        }
       ]
     },
     {
@@ -204,6 +219,143 @@
         "Range sum [1..3]: 9",
         "Patterns mastered: 4/4!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_coding_interview_patterns",
+      "code": "def two_sum_sorted(arr, target):\n    left, right = 0, len(arr) - 1\n    while left < right:\n        s = arr[left] + arr[right]\n        if s == target: return [left, right]\n        elif s < target: left += 1\n        else: right -= 1\n    return []\n\ndef max_subarray_sum(arr, k):\n    window = sum(arr[:k])\n    best = window\n    for i in range(k, len(arr)):\n        window += arr[i] - arr[i-k]\n        best = max(best, window)\n    return best\n\nprint(two_sum_sorted([1,2,3,4,6], 6))\nprint(max_subarray_sum([2,1,5,1,3,2], 3))",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "left": 0,
+            "right": 4
+          },
+          "output": "",
+          "explanation": "Two pointers at both ends of sorted array"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "s": 7
+          },
+          "output": "",
+          "explanation": "1+6=7 > 6. Too big — move right pointer left"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "right": 3,
+            "s": 5
+          },
+          "output": "",
+          "explanation": "1+4=5 < 6. Too small — move left pointer right"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "left": 1,
+            "s": 6
+          },
+          "output": "",
+          "explanation": "2+4=6 == target! Found!"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "[1, 3]",
+          "explanation": "Two pointers: O(n) time, O(1) space"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "window": 8
+          },
+          "output": "",
+          "explanation": "Sliding window: sum of first 3 = 2+1+5 = 8"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "i": 3,
+            "window": 7
+          },
+          "output": "",
+          "explanation": "Slide: +1, -2 = 7"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "i": 4,
+            "window": 9
+          },
+          "output": "",
+          "explanation": "Slide: +3, -1 = 9. New best!"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "9",
+          "explanation": "Max subarray sum of size 3 = 9. O(n) sliding window!"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_coding_interview_patterns",
+      "nodes": [
+        {
+          "id": "read",
+          "label": "Read the problem",
+          "next": [
+            "identify"
+          ]
+        },
+        {
+          "id": "identify",
+          "label": "Identify pattern",
+          "next": [
+            "sorted",
+            "subarray",
+            "cycle",
+            "range"
+          ]
+        },
+        {
+          "id": "sorted",
+          "label": "Sorted array? => Two Pointers",
+          "next": [
+            "solve"
+          ]
+        },
+        {
+          "id": "subarray",
+          "label": "Contiguous subarray? => Sliding Window",
+          "next": [
+            "solve"
+          ]
+        },
+        {
+          "id": "cycle",
+          "label": "Linked list cycle? => Fast/Slow",
+          "next": [
+            "solve"
+          ]
+        },
+        {
+          "id": "range",
+          "label": "Range queries? => Prefix Sum",
+          "next": [
+            "solve"
+          ]
+        },
+        {
+          "id": "solve",
+          "label": "Apply pattern template",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -235,8 +387,18 @@
         "ta": "Two pointers pattern-ஐ எப்போது பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["On unsorted arrays only", "When dealing with a sorted array or finding pairs", "Only for linked lists", "When sorting is needed"],
-        "ta": ["வரிசைப்படுத்தப்படாத arrays-ல் மட்டும்", "sorted array அல்லது ஜோடிகளை கண்டறிய", "linked lists-க்கு மட்டும்", "sorting தேவைப்படும்போது"]
+        "en": [
+          "On unsorted arrays only",
+          "When dealing with a sorted array or finding pairs",
+          "Only for linked lists",
+          "When sorting is needed"
+        ],
+        "ta": [
+          "வரிசைப்படுத்தப்படாத arrays-ல் மட்டும்",
+          "sorted array அல்லது ஜோடிகளை கண்டறிய",
+          "linked lists-க்கு மட்டும்",
+          "sorting தேவைப்படும்போது"
+        ]
       },
       "correct": 1
     },
@@ -246,8 +408,18 @@
         "ta": "k அளவு max sum subarray-க்கான sliding window அணுகுமுறையின் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n*k)", "O(n)", "O(n²)", "O(k)"],
-        "ta": ["O(n*k)", "O(n)", "O(n²)", "O(k)"]
+        "en": [
+          "O(n*k)",
+          "O(n)",
+          "O(n²)",
+          "O(k)"
+        ],
+        "ta": [
+          "O(n*k)",
+          "O(n)",
+          "O(n²)",
+          "O(k)"
+        ]
       },
       "correct": 1
     },
@@ -257,20 +429,45 @@
         "ta": "Fast/slow pointers எவ்வாறு linked list-ல் cycle-ஐ கண்டறியும்?"
       },
       "options": {
-        "en": ["By counting all nodes", "If fast pointer reaches None, there's a cycle", "If slow and fast pointers meet, there's a cycle", "By reversing the list"],
-        "ta": ["அனைத்து முனைகளை எண்ணுவதன் மூலம்", "fast pointer None-ஐ அடைந்தால் cycle உள்ளது", "slow மற்றும் fast pointers சந்தித்தால் cycle உள்ளது", "பட்டியலை reverse செய்வதன் மூலம்"]
+        "en": [
+          "By counting all nodes",
+          "If fast pointer reaches None, there's a cycle",
+          "If slow and fast pointers meet, there's a cycle",
+          "By reversing the list"
+        ],
+        "ta": [
+          "அனைத்து முனைகளை எண்ணுவதன் மூலம்",
+          "fast pointer None-ஐ அடைந்தால் cycle உள்ளது",
+          "slow மற்றும் fast pointers சந்தித்தால் cycle உள்ளது",
+          "பட்டியலை reverse செய்வதன் மூலம்"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["two_pointers", "sliding_window", "fast_slow_pointers", "prefix_sum"],
-    "concepts_required": ["arrays", "linked_lists", "hash_tables"],
+    "concepts_taught": [
+      "two_pointers",
+      "sliding_window",
+      "fast_slow_pointers",
+      "prefix_sum"
+    ],
+    "concepts_required": [
+      "arrays",
+      "linked_lists",
+      "hash_tables"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["coding_interviews", "algorithm_optimization", "competitive_programming"],
+    "real_world_application": [
+      "coding_interviews",
+      "algorithm_optimization",
+      "competitive_programming"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

@@ -166,6 +166,134 @@
         "$ curl http://localhost:8000/users/me",
         "{\"detail\":\"Not authenticated\"}"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_fastapi_jwt",
+      "title": "JWT Token Creation and Verification",
+      "code": "from jose import jwt\nfrom datetime import datetime, timedelta\n\nSECRET = 'my-secret'\npayload = {'sub': 'pymaster', 'exp': datetime.utcnow() + timedelta(hours=1)}\ntoken = jwt.encode(payload, SECRET, algorithm='HS256')\nprint(f'Token: {token[:40]}...')\ndecoded = jwt.decode(token, SECRET, algorithms=['HS256'])\nprint(f'User: {decoded[\"sub\"]}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import python-jose for JWT"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "SECRET": "my-secret"
+          },
+          "output": "",
+          "explanation": "Secret key for signing"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "payload": {
+              "sub": "pymaster",
+              "exp": "..."
+            }
+          },
+          "output": "",
+          "explanation": "Build payload with user and expiry"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "token": "eyJhbGciOiJIUzI1NiIs..."
+          },
+          "output": "",
+          "explanation": "jwt.encode creates signed token"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC...",
+          "explanation": "Base64 encoded header.payload.signature"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "decoded": {
+              "sub": "pymaster"
+            }
+          },
+          "output": "",
+          "explanation": "jwt.decode verifies and extracts payload"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "...User: pymaster",
+          "explanation": "Username from 'sub' claim"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_jwt_auth_flow",
+      "title": "JWT Authentication Flow",
+      "nodes": [
+        {
+          "id": "login",
+          "label": "POST /token\nCredentials",
+          "type": "start"
+        },
+        {
+          "id": "verify",
+          "label": "Verify Password\nbcrypt",
+          "type": "decision"
+        },
+        {
+          "id": "create",
+          "label": "Create JWT\njwt.encode()",
+          "type": "process"
+        },
+        {
+          "id": "client",
+          "label": "Client Stores\nToken",
+          "type": "process"
+        },
+        {
+          "id": "request",
+          "label": "Authorization:\nBearer token",
+          "type": "process"
+        },
+        {
+          "id": "protected",
+          "label": "Protected\nEndpoint",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "login",
+          "to": "verify",
+          "label": "user+pass"
+        },
+        {
+          "from": "verify",
+          "to": "create",
+          "label": "Match"
+        },
+        {
+          "from": "create",
+          "to": "client",
+          "label": "JWT"
+        },
+        {
+          "from": "client",
+          "to": "request",
+          "label": "Header"
+        },
+        {
+          "from": "request",
+          "to": "protected",
+          "label": "Decoded"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -199,8 +327,18 @@
         "ta": "JWT-ன் மூன்று பகுதிகள் என்ன?"
       },
       "options": {
-        "en": ["Username, password, email", "Header, payload, signature", "Token, refresh, expiry", "Key, value, hash"],
-        "ta": ["பயனர்பெயர், கடவுச்சொல், மின்னஞ்சல்", "தலைப்பு, பேலோட், கையொப்பம்", "டோக்கன், புதுப்பிப்பு, காலாவதி", "சாவி, மதிப்பு, ஹாஷ்"]
+        "en": [
+          "Username, password, email",
+          "Header, payload, signature",
+          "Token, refresh, expiry",
+          "Key, value, hash"
+        ],
+        "ta": [
+          "பயனர்பெயர், கடவுச்சொல், மின்னஞ்சல்",
+          "தலைப்பு, பேலோட், கையொப்பம்",
+          "டோக்கன், புதுப்பிப்பு, காலாவதி",
+          "சாவி, மதிப்பு, ஹாஷ்"
+        ]
       },
       "correct": 1
     },
@@ -210,8 +348,18 @@
         "ta": "வழங்கப்பட்ட JWT-ஐ ஏன் எளிதாக ரத்து செய்ய முடியாது?"
       },
       "options": {
-        "en": ["JWTs are encrypted", "JWTs are stateless — the server doesn't track them", "JWTs require a database", "JWTs are stored on the server"],
-        "ta": ["JWT-கள் குறியாக்கம் செய்யப்பட்டவை", "JWT-கள் நிலையற்றவை — சேவையகம் அவற்றைக் கண்காணிக்காது", "JWT-களுக்கு தரவுத்தளம் தேவை", "JWT-கள் சேவையகத்தில் சேமிக்கப்படுகின்றன"]
+        "en": [
+          "JWTs are encrypted",
+          "JWTs are stateless — the server doesn't track them",
+          "JWTs require a database",
+          "JWTs are stored on the server"
+        ],
+        "ta": [
+          "JWT-கள் குறியாக்கம் செய்யப்பட்டவை",
+          "JWT-கள் நிலையற்றவை — சேவையகம் அவற்றைக் கண்காணிக்காது",
+          "JWT-களுக்கு தரவுத்தளம் தேவை",
+          "JWT-கள் சேவையகத்தில் சேமிக்கப்படுகின்றன"
+        ]
       },
       "correct": 1
     },
@@ -221,20 +369,43 @@
         "ta": "FastAPI-ல், OAuth2PasswordBearer(tokenUrl='token') என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates a new user", "Defines the scheme that extracts Bearer tokens from the Authorization header", "Hashes the password", "Connects to the database"],
-        "ta": ["புதிய பயனரை உருவாக்குகிறது", "Authorization தலைப்பிலிருந்து Bearer டோக்கன்களைப் பிரித்தெடுக்கும் திட்டத்தை வரையறுக்கிறது", "கடவுச்சொல்லை ஹாஷ் செய்கிறது", "தரவுத்தளத்துடன் இணைக்கிறது"]
+        "en": [
+          "Creates a new user",
+          "Defines the scheme that extracts Bearer tokens from the Authorization header",
+          "Hashes the password",
+          "Connects to the database"
+        ],
+        "ta": [
+          "புதிய பயனரை உருவாக்குகிறது",
+          "Authorization தலைப்பிலிருந்து Bearer டோக்கன்களைப் பிரித்தெடுக்கும் திட்டத்தை வரையறுக்கிறது",
+          "கடவுச்சொல்லை ஹாஷ் செய்கிறது",
+          "தரவுத்தளத்துடன் இணைக்கிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["jwt_authentication", "oauth2", "password_hashing", "protected_routes"],
-    "concepts_required": ["fastapi_basics", "http_headers"],
+    "concepts_taught": [
+      "jwt_authentication",
+      "oauth2",
+      "password_hashing",
+      "protected_routes"
+    ],
+    "concepts_required": [
+      "fastapi_basics",
+      "http_headers"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 40,
-    "real_world_application": ["api_security", "user_auth"],
+    "real_world_application": [
+      "api_security",
+      "user_auth"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

@@ -214,6 +214,49 @@
         ">>> #     'type': 'base64', 'media_type': 'image/png', 'data': image_data",
         ">>> # }}"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_multi_modal_ai",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\n# Vision: analyze an image\nresponse = client.chat.completions.create(\n    model='gpt-4o',\n    messages=[{'role':'user','content': [\n        {'type':'text','text':'What is in this image?'},\n        {'type':'image_url','image_url':{'url':'https://example.com/photo.jpg'}}\n    ]}]\n)\nprint(response.choices[0].message.content)\n\n# Audio: text-to-speech\naudio = client.audio.speech.create(\n    model='tts-1', voice='alloy', input='Hello from PyMasters!'\n)\nprint('Audio generated successfully')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "model": "gpt-4o"
+          },
+          "output": "",
+          "explanation": "GPT-4o: multi-modal — text, images, audio"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "content": "text + image_url"
+          },
+          "output": "",
+          "explanation": "Send text and image in one message"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "A Python code editor showing...",
+          "explanation": "AI describes image content — vision capability"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "model": "tts-1"
+          },
+          "output": "",
+          "explanation": "Text-to-speech: convert text to audio"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Audio generated successfully",
+          "explanation": "Multi-modal: text + images + audio via APIs"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -304,13 +347,26 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["vision_api", "multi_modal", "image_analysis", "document_understanding"],
-    "concepts_required": ["openai_api_basics"],
+    "concepts_taught": [
+      "vision_api",
+      "multi_modal",
+      "image_analysis",
+      "document_understanding"
+    ],
+    "concepts_required": [
+      "openai_api_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["document_processing", "visual_qa", "receipt_scanning"],
+    "real_world_application": [
+      "document_processing",
+      "visual_qa",
+      "receipt_scanning"
+    ],
     "category": "ai_applications",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

@@ -231,6 +231,57 @@
           "address": "0x04"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from multiprocessing import Pool\nimport time\n\ndef square_sum(n):\n    return sum(i*i for i in range(n))\n\nnumbers = [1000000, 1000000, 1000000, 1000000]\n\nstart = time.time()\nwith Pool(4) as pool:\n    results = pool.map(square_sum, numbers)\nparallel = time.time() - start\n\nstart = time.time()\nsequential = [square_sum(n) for n in numbers]\nseq_time = time.time() - start\n\nprint(f'Parallel: {parallel:.2f}s')\nprint(f'Sequential: {seq_time:.2f}s')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "description": "CPU-heavy function: sum of squares"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "numbers": "[1M, 1M, 1M, 1M]"
+          },
+          "output": "",
+          "description": "4 identical heavy tasks"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "",
+          "description": "Pool(4) creates 4 worker PROCESSES (separate GILs)"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "",
+          "description": "pool.map distributes work across 4 cores"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "",
+          "description": "Sequential: same work, one at a time"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Parallel: 0.85s",
+          "description": "~4x faster with 4 processes"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "Sequential: 3.20s",
+          "description": "Sequential takes ~4x longer"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -323,13 +374,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["multiprocessing", "Process", "Pool", "pool_map", "true_parallelism"],
-    "concepts_required": ["functions", "threading_basics", "GIL"],
+    "concepts_taught": [
+      "multiprocessing",
+      "Process",
+      "Pool",
+      "pool_map",
+      "true_parallelism"
+    ],
+    "concepts_required": [
+      "functions",
+      "threading_basics",
+      "GIL"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["data_processing", "image_processing", "scientific_computing"],
+    "real_world_application": [
+      "data_processing",
+      "image_processing",
+      "scientific_computing"
+    ],
     "category": "concurrency",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

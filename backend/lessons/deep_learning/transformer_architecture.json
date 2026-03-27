@@ -211,6 +211,134 @@
         "GPT-2: 117M params, decoder-only (causal)",
         "Transformer block: Attn + FFN + 2× LayerNorm + 2× Residual"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_transformer_arch",
+      "code": "import torch\nimport torch.nn as nn\n\nencoder_layer = nn.TransformerEncoderLayer(\n    d_model=64, nhead=8, dim_feedforward=256, batch_first=True\n)\nencoder = nn.TransformerEncoder(encoder_layer, num_layers=3)\n\nx = torch.randn(4, 12, 64)  # batch=4, seq=12, dim=64\nout = encoder(x)\nprint(f'Input:  {x.shape}')\nprint(f'Output: {out.shape}')\nprint(f'Params: {sum(p.numel() for p in encoder.parameters()):,}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "layer": "d=64, 8 heads, ff=256"
+          },
+          "output": "",
+          "explanation": "Encoder layer: self-attention + feed-forward + layer norm"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "encoder": "3 layers stacked"
+          },
+          "output": "",
+          "explanation": "Stack 3 identical encoder layers"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "x.shape": "(4, 12, 64)"
+          },
+          "output": "",
+          "explanation": "4 sequences, 12 tokens each, 64-dim"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Input:  torch.Size([4, 12, 64])",
+          "explanation": "Same shape in and out"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Output: torch.Size([4, 12, 64])",
+          "explanation": "Each token now has rich contextual representation"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "Params: 133,440",
+          "explanation": "133K parameters across 3 encoder layers"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_transformer_arch",
+      "title": "Transformer Encoder Architecture",
+      "nodes": [
+        {
+          "id": "emb",
+          "label": "Token Embeddings",
+          "type": "start"
+        },
+        {
+          "id": "pos",
+          "label": "+ Positional Encoding",
+          "type": "process"
+        },
+        {
+          "id": "attn",
+          "label": "Multi-Head Self-Attention",
+          "type": "process"
+        },
+        {
+          "id": "add1",
+          "label": "Add & LayerNorm",
+          "type": "process"
+        },
+        {
+          "id": "ff",
+          "label": "Feed-Forward Network",
+          "type": "process"
+        },
+        {
+          "id": "add2",
+          "label": "Add & LayerNorm",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "Encoder Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "emb",
+          "to": "pos"
+        },
+        {
+          "from": "pos",
+          "to": "attn"
+        },
+        {
+          "from": "attn",
+          "to": "add1"
+        },
+        {
+          "from": "pos",
+          "to": "add1",
+          "label": "residual"
+        },
+        {
+          "from": "add1",
+          "to": "ff"
+        },
+        {
+          "from": "ff",
+          "to": "add2"
+        },
+        {
+          "from": "add1",
+          "to": "add2",
+          "label": "residual"
+        },
+        {
+          "from": "add2",
+          "to": "out"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

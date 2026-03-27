@@ -215,6 +215,59 @@
         "Alice: 85",
         "Bob: 92"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import json\n\ndata = {'name': 'Alice', 'age': 30, 'skills': ['Python', 'SQL']}\njson_str = json.dumps(data, indent=2)\nprint(json_str)\n\nparsed = json.loads(json_str)\nprint(f\"Name: {parsed['name']}\")\nprint(f\"Skills: {parsed['skills']}\")",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import json module"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "data": "{'name':'Alice','age':30,'skills':[...]}"
+          },
+          "output": "",
+          "description": "Python dict with nested list"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "description": "dumps = dump to String, indent=2 for pretty print"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "{\n  \"name\": \"Alice\",\n  \"age\": 30,\n  \"skills\": [\"Python\", \"SQL\"]\n}",
+          "description": "JSON string with double quotes (not single)"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "parsed": "dict"
+          },
+          "output": "",
+          "description": "loads = load from String, back to Python dict"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Name: Alice",
+          "description": "Access parsed data like normal dict"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Skills: ['Python', 'SQL']",
+          "description": "Nested structures preserved"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -307,13 +360,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["json", "csv", "serialization", "deserialization", "DictReader"],
-    "concepts_required": ["dictionaries", "files", "lists"],
+    "concepts_taught": [
+      "json",
+      "csv",
+      "serialization",
+      "deserialization",
+      "DictReader"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "files",
+      "lists"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["api_integration", "data_import_export", "configuration"],
+    "real_world_application": [
+      "api_integration",
+      "data_import_export",
+      "configuration"
+    ],
     "category": "data_processing",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

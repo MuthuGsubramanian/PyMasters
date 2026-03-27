@@ -39,6 +39,42 @@
       "branch": "sequential"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class ManagedResource:\n    def __enter__(self):\n        print('Opening')\n        return self\n    def __exit__(self, *args):\n        print('Closing')\n        return False\n    def use(self):\n        print('Using')\nwith ManagedResource() as r:\n    r.use()",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define ManagedResource with __enter__ and __exit__" },
+        { "line": 10, "variables": {}, "output": "Opening", "description": "with statement calls __enter__() -- prints 'Opening'" },
+        { "line": 10, "variables": { "r": "ManagedResource()" }, "output": "Opening", "description": "__enter__ returns self, bound to 'r'" },
+        { "line": 11, "variables": { "r": "ManagedResource()" }, "output": "Opening\nUsing", "description": "Call r.use() inside the with block" },
+        { "line": 5, "variables": { "r": "ManagedResource()" }, "output": "Opening\nUsing\nClosing", "description": "Leaving with block -- __exit__() called automatically" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "with statement", "type": "start" },
+        { "id": "enter", "label": "__enter__() called", "type": "process" },
+        { "id": "body", "label": "Execute body", "type": "process" },
+        { "id": "check", "label": "Exception in body?", "type": "decision" },
+        { "id": "exit_ok", "label": "__exit__() cleanup (no error)", "type": "process" },
+        { "id": "exit_err", "label": "__exit__() cleanup (with error)", "type": "process" },
+        { "id": "end", "label": "Resource guaranteed closed", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "enter" },
+        { "from": "enter", "to": "body" },
+        { "from": "body", "to": "check" },
+        { "from": "check", "to": "exit_ok" },
+        { "from": "check", "to": "exit_err" },
+        { "from": "exit_ok", "to": "end" },
+        { "from": "exit_err", "to": "end" }
+      ],
+      "executionPath": ["start", "enter", "body", "check", "exit_ok", "end"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

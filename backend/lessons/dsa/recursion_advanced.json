@@ -155,19 +155,54 @@
       "type": "MemoryStack",
       "id": "memo_stack",
       "slots": [
-        {"name": "fib(5)", "value": "cache miss", "type": "frame", "address": "0x01"},
-        {"name": "fib(4)", "value": "cache miss", "type": "frame", "address": "0x02"},
-        {"name": "fib(3)", "value": "cache HIT!", "type": "frame", "address": "0x03"}
+        {
+          "name": "fib(5)",
+          "value": "cache miss",
+          "type": "frame",
+          "address": "0x01"
+        },
+        {
+          "name": "fib(4)",
+          "value": "cache miss",
+          "type": "frame",
+          "address": "0x02"
+        },
+        {
+          "name": "fib(3)",
+          "value": "cache HIT!",
+          "type": "frame",
+          "address": "0x03"
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "memo_comparison",
       "comparisons": [
-        {"label": "Naive O(2ⁿ)", "values": [1024, 1048576, 1073741824], "color": "#f74f4f"},
-        {"label": "Memoized O(n)", "values": [10, 20, 30], "color": "#4ff7a4"}
+        {
+          "label": "Naive O(2ⁿ)",
+          "values": [
+            1024,
+            1048576,
+            1073741824
+          ],
+          "color": "#f74f4f"
+        },
+        {
+          "label": "Memoized O(n)",
+          "values": [
+            10,
+            20,
+            30
+          ],
+          "color": "#4ff7a4"
+        }
       ],
-      "x_labels": ["n=10", "n=20", "n=30"]
+      "x_labels": [
+        "n=10",
+        "n=20",
+        "n=30"
+      ]
     },
     {
       "type": "VariableBox",
@@ -185,6 +220,75 @@
         "fib(30) memoized: 31 calls",
         "fib(50) = 12586269025",
         "fib(100) = 354224848179261915075"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_recursion_advanced",
+      "code": "from functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib_memo(n):\n    if n <= 1: return n\n    return fib_memo(n-1) + fib_memo(n-2)\n\nprint(fib_memo(50))\n\ndef fib_dp(n):\n    if n <= 1: return n\n    dp = [0] * (n + 1)\n    dp[1] = 1\n    for i in range(2, n + 1):\n        dp[i] = dp[i-1] + dp[i-2]\n    return dp[n]\n\nprint(fib_dp(50))",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "@lru_cache: Python automatically caches every result"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "n": 5,
+            "cache": {
+              "0": 0,
+              "1": 1,
+              "2": 1,
+              "3": 2,
+              "4": 3
+            }
+          },
+          "output": "",
+          "explanation": "fib(5): fib(4)=3 from cache + fib(3)=2 from cache = 5"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "12586269025",
+          "explanation": "fib(50) instant with memoization! Only 51 unique calls vs 2^50"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "dp": [
+              0,
+              1
+            ]
+          },
+          "output": "",
+          "explanation": "Bottom-up DP: start from base cases dp[0]=0, dp[1]=1"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "i": 2,
+            "dp[2]": 1
+          },
+          "output": "",
+          "explanation": "dp[2] = dp[1]+dp[0] = 1. Building iteratively"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "i": 10,
+            "dp[10]": 55
+          },
+          "output": "",
+          "explanation": "dp[10] = 55. No recursion needed — pure iteration"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "12586269025",
+          "explanation": "Same answer, no recursion. O(n) time, O(n) space"
+        }
       ]
     }
   ],
@@ -217,8 +321,18 @@
         "ta": "Memoization என்ன செய்யும்?"
       },
       "options": {
-        "en": ["Makes code run in parallel", "Caches results of function calls to avoid recomputation", "Converts recursion to loops", "Reduces memory usage"],
-        "ta": ["code-ஐ parallel ஆக இயக்கும்", "மறு கணக்கிடுதலை தவிர்க்க function call முடிவுகளை cache செய்யும்", "recursion-ஐ loops ஆக மாற்றும்", "நினைவக பயன்பாட்டை குறைக்கும்"]
+        "en": [
+          "Makes code run in parallel",
+          "Caches results of function calls to avoid recomputation",
+          "Converts recursion to loops",
+          "Reduces memory usage"
+        ],
+        "ta": [
+          "code-ஐ parallel ஆக இயக்கும்",
+          "மறு கணக்கிடுதலை தவிர்க்க function call முடிவுகளை cache செய்யும்",
+          "recursion-ஐ loops ஆக மாற்றும்",
+          "நினைவக பயன்பாட்டை குறைக்கும்"
+        ]
       },
       "correct": 1
     },
@@ -228,8 +342,18 @@
         "ta": "memoization-க்கு Python என்ன decorator வழங்குகிறது?"
       },
       "options": {
-        "en": ["@cache_result", "@memoize", "@functools.lru_cache", "@property"],
-        "ta": ["@cache_result", "@memoize", "@functools.lru_cache", "@property"]
+        "en": [
+          "@cache_result",
+          "@memoize",
+          "@functools.lru_cache",
+          "@property"
+        ],
+        "ta": [
+          "@cache_result",
+          "@memoize",
+          "@functools.lru_cache",
+          "@property"
+        ]
       },
       "correct": 2
     },
@@ -239,20 +363,44 @@
         "ta": "Memoization மற்றும் dynamic programming இடையே என்ன உறவு?"
       },
       "options": {
-        "en": ["They are unrelated", "Memoization is top-down DP", "DP is slower than memoization", "Memoization replaces DP"],
-        "ta": ["அவை தொடர்பற்றவை", "Memoization top-down DP ஆகும்", "DP memoization-ஐ விட மெதுவானது", "Memoization DP-ஐ மாற்றுகிறது"]
+        "en": [
+          "They are unrelated",
+          "Memoization is top-down DP",
+          "DP is slower than memoization",
+          "Memoization replaces DP"
+        ],
+        "ta": [
+          "அவை தொடர்பற்றவை",
+          "Memoization top-down DP ஆகும்",
+          "DP memoization-ஐ விட மெதுவானது",
+          "Memoization DP-ஐ மாற்றுகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["memoization", "lru_cache", "top_down_dp", "optimization"],
-    "concepts_required": ["recursion", "functions", "dictionaries"],
+    "concepts_taught": [
+      "memoization",
+      "lru_cache",
+      "top_down_dp",
+      "optimization"
+    ],
+    "concepts_required": [
+      "recursion",
+      "functions",
+      "dictionaries"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["api_caching", "database_query_optimization"],
+    "real_world_application": [
+      "api_caching",
+      "database_query_optimization"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

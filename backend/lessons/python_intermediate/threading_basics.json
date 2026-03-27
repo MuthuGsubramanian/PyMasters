@@ -250,6 +250,136 @@
           "address": "0x04"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import threading\nimport time\n\ndef download(name, seconds):\n    print(f'Downloading {name}...')\n    time.sleep(seconds)\n    print(f'{name} done!')\n\nstart = time.time()\nt1 = threading.Thread(target=download, args=('file1', 2))\nt2 = threading.Thread(target=download, args=('file2', 3))\nt1.start()\nt2.start()\nt1.join()\nt2.join()\nprint(f'Total: {time.time()-start:.1f}s')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "description": "Define download function - simulates I/O work"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "t1": "Thread(download, 'file1', 2)"
+          },
+          "output": "",
+          "description": "Create thread for file1 (2s download)"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "t2": "Thread(download, 'file2', 3)"
+          },
+          "output": "",
+          "description": "Create thread for file2 (3s download)"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Downloading file1...",
+          "description": "t1.start() begins file1 download in background"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "Downloading file2...",
+          "description": "t2.start() begins file2 concurrently"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "file1 done!",
+          "description": "t1.join() waits for file1 to finish (2s)"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "file2 done!",
+          "description": "t2.join() waits for file2 (already nearly done at 3s)"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Total: 3.0s",
+          "description": "~3s total (max), not 5s (sum) - threads ran concurrently!"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Main thread",
+          "type": "start"
+        },
+        {
+          "id": "create",
+          "label": "Create t1, t2",
+          "type": "process"
+        },
+        {
+          "id": "start_t1",
+          "label": "t1.start() - file1",
+          "type": "process"
+        },
+        {
+          "id": "start_t2",
+          "label": "t2.start() - file2",
+          "type": "process"
+        },
+        {
+          "id": "join",
+          "label": "join() - wait for both",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Both done (~3s)",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "create"
+        },
+        {
+          "from": "create",
+          "to": "start_t1"
+        },
+        {
+          "from": "create",
+          "to": "start_t2"
+        },
+        {
+          "from": "start_t1",
+          "to": "join"
+        },
+        {
+          "from": "start_t2",
+          "to": "join"
+        },
+        {
+          "from": "join",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "create",
+        "start_t1",
+        "start_t2",
+        "join",
+        "end"
+      ],
+      "variables": {},
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -342,13 +472,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["threading", "Thread", "Lock", "GIL", "race_conditions", "join"],
-    "concepts_required": ["functions", "loops"],
+    "concepts_taught": [
+      "threading",
+      "Thread",
+      "Lock",
+      "GIL",
+      "race_conditions",
+      "join"
+    ],
+    "concepts_required": [
+      "functions",
+      "loops"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["concurrent_downloads", "GUI_responsiveness", "web_scraping"],
+    "real_world_application": [
+      "concurrent_downloads",
+      "GUI_responsiveness",
+      "web_scraping"
+    ],
     "category": "concurrency",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

@@ -42,6 +42,36 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def __str__(self):\n        return f'Vector({self.x}, {self.y})'\n    def __add__(self, other):\n        return Vector(self.x+other.x, self.y+other.y)\n    def __eq__(self, other):\n        return self.x==other.x and self.y==other.y\nv1 = Vector(1, 2)\nv2 = Vector(3, 4)\nv3 = v1 + v2\nprint(v3)\nprint(v1 == v2)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define Vector class with magic methods" },
+        { "line": 11, "variables": { "v1": "Vector(1, 2)" }, "output": "", "description": "Create v1 -- __init__ sets x=1, y=2" },
+        { "line": 12, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)" }, "output": "", "description": "Create v2 -- __init__ sets x=3, y=4" },
+        { "line": 13, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)", "v3": "Vector(4, 6)" }, "output": "", "description": "v1 + v2 calls __add__: Vector(1+3, 2+4) = Vector(4,6)" },
+        { "line": 14, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)", "v3": "Vector(4, 6)" }, "output": "Vector(4, 6)", "description": "print(v3) calls __str__ to get readable string" },
+        { "line": 15, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)", "v3": "Vector(4, 6)" }, "output": "Vector(4, 6)\nFalse", "description": "v1 == v2 calls __eq__: (1!=3) so False" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "v1 + v2", "type": "start" },
+        { "id": "call", "label": "Python calls v1.__add__(v2)", "type": "process" },
+        { "id": "compute", "label": "x=1+3=4, y=2+4=6", "type": "process" },
+        { "id": "return", "label": "Returns Vector(4, 6)", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "call" },
+        { "from": "call", "to": "compute" },
+        { "from": "compute", "to": "return" }
+      ],
+      "executionPath": ["start", "call", "compute", "return"],
+      "variables": { "self.x": 1, "other.x": 3, "result.x": 4 },
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

@@ -44,6 +44,43 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Dog:\n    def speak(self): return 'Woof!'\nclass Cat:\n    def speak(self): return 'Meow!'\nclass Duck:\n    def speak(self): return 'Quack!'\nanimals = [Dog(), Cat(), Duck()]\nfor a in animals:\n    print(a.speak())",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define Dog with speak() returning 'Woof!'" },
+        { "line": 3, "variables": {}, "output": "", "description": "Define Cat with speak() returning 'Meow!'" },
+        { "line": 5, "variables": {}, "output": "", "description": "Define Duck with speak() returning 'Quack!'" },
+        { "line": 7, "variables": { "animals": ["Dog()", "Cat()", "Duck()"] }, "output": "", "description": "Create a list of different animal objects" },
+        { "line": 8, "variables": { "a": "Dog()" }, "output": "Woof!", "description": "Polymorphism: a.speak() calls Dog.speak()" },
+        { "line": 8, "variables": { "a": "Cat()" }, "output": "Woof!\nMeow!", "description": "Same interface, different class: Cat.speak()" },
+        { "line": 8, "variables": { "a": "Duck()" }, "output": "Woof!\nMeow!\nQuack!", "description": "Duck typing: any object with speak() works" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "for a in animals", "type": "start" },
+        { "id": "check", "label": "a.speak() -- which class?", "type": "decision" },
+        { "id": "dog", "label": "Dog.speak() -> Woof!", "type": "process" },
+        { "id": "cat", "label": "Cat.speak() -> Meow!", "type": "process" },
+        { "id": "duck", "label": "Duck.speak() -> Quack!", "type": "process" },
+        { "id": "end", "label": "Same interface, different behavior", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "check" },
+        { "from": "check", "to": "dog" },
+        { "from": "check", "to": "cat" },
+        { "from": "check", "to": "duck" },
+        { "from": "dog", "to": "end" },
+        { "from": "cat", "to": "end" },
+        { "from": "duck", "to": "end" }
+      ],
+      "executionPath": ["start", "check", "dog", "end"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

@@ -218,6 +218,127 @@
         "Sum: 499999500000",
         "Timer stopped: 0.0312s"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class Timer:\n    def __enter__(self):\n        import time\n        self.start = time.time()\n        print('Timer started')\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        import time\n        elapsed = time.time() - self.start\n        print(f'Elapsed: {elapsed:.4f}s')\n        return False\n\nwith Timer() as t:\n    total = sum(range(100000))\n    print(f'Sum: {total}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Timer context manager with __enter__ and __exit__"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Timer started",
+          "description": "with Timer() calls __enter__, t = self"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "total": 4999950000
+          },
+          "output": "",
+          "description": "Code inside 'with' block executes"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Sum: 4999950000",
+          "description": "Print the computed sum"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Elapsed: 0.0031s",
+          "description": "Leaving 'with' block triggers __exit__ automatically"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "with Timer() as t:",
+          "type": "start"
+        },
+        {
+          "id": "enter",
+          "label": "__enter__() runs",
+          "type": "process"
+        },
+        {
+          "id": "body",
+          "label": "Code block executes",
+          "type": "process"
+        },
+        {
+          "id": "check_err",
+          "label": "Exception?",
+          "type": "decision"
+        },
+        {
+          "id": "exit_ok",
+          "label": "__exit__(None, None, None)",
+          "type": "process"
+        },
+        {
+          "id": "exit_err",
+          "label": "__exit__(type, val, tb)",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Cleanup done",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "enter"
+        },
+        {
+          "from": "enter",
+          "to": "body"
+        },
+        {
+          "from": "body",
+          "to": "check_err"
+        },
+        {
+          "from": "check_err",
+          "to": "exit_ok",
+          "label": "No"
+        },
+        {
+          "from": "check_err",
+          "to": "exit_err",
+          "label": "Yes"
+        },
+        {
+          "from": "exit_ok",
+          "to": "end"
+        },
+        {
+          "from": "exit_err",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "enter",
+        "body",
+        "check_err",
+        "exit_ok",
+        "end"
+      ],
+      "variables": {},
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -310,13 +431,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["context_managers", "with_statement", "__enter__", "__exit__", "contextlib"],
-    "concepts_required": ["classes", "exceptions", "files"],
+    "concepts_taught": [
+      "context_managers",
+      "with_statement",
+      "__enter__",
+      "__exit__",
+      "contextlib"
+    ],
+    "concepts_required": [
+      "classes",
+      "exceptions",
+      "files"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["file_handling", "database_connections", "locks"],
+    "real_world_application": [
+      "file_handling",
+      "database_connections",
+      "locks"
+    ],
     "category": "python_core",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

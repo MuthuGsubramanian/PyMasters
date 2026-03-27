@@ -44,6 +44,21 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "import math\nprint(math.pi)\nfrom math import sqrt\nresult = sqrt(16)\nprint(result)\nimport collections as col\nc = col.Counter('abracadabra')\nprint(c.most_common(2))",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Import the math module" },
+        { "line": 2, "variables": {}, "output": "3.141592653589793", "description": "Access pi constant from math module" },
+        { "line": 3, "variables": {}, "output": "3.141592653589793", "description": "Import sqrt function directly from math" },
+        { "line": 4, "variables": { "result": 4.0 }, "output": "3.141592653589793", "description": "Call sqrt(16) = 4.0" },
+        { "line": 5, "variables": { "result": 4.0 }, "output": "3.141592653589793\n4.0", "description": "Print the square root result" },
+        { "line": 6, "variables": { "result": 4.0 }, "output": "3.141592653589793\n4.0", "description": "Import collections with alias 'col'" },
+        { "line": 7, "variables": { "result": 4.0, "c": "Counter({'a': 5, 'b': 2, ...})" }, "output": "3.141592653589793\n4.0", "description": "Counter counts each character in 'abracadabra'" },
+        { "line": 8, "variables": { "result": 4.0, "c": "Counter({'a': 5, 'b': 2, ...})" }, "output": "3.141592653589793\n4.0\n[('a', 5), ('b', 2)]", "description": "most_common(2) returns the 2 most frequent characters" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

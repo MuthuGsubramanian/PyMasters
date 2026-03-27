@@ -259,6 +259,65 @@
         "label": "@dataclass (5 lines)",
         "code": "@dataclass\nclass Student:\n    name: str\n    age: int\n    grade: float = 0.0"
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from dataclasses import dataclass, field\n\n@dataclass\nclass Student:\n    name: str\n    age: int\n    grade: float = 0.0\n    courses: list = field(default_factory=list)\n\ns1 = Student('Alice', 20, 95.5)\ns2 = Student('Alice', 20, 95.5)\nprint(s1)\nprint(s1 == s2)\ns1.courses.append('Math')\nprint(s1.courses)\nprint(s2.courses)",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "@dataclass auto-generates __init__, __repr__, __eq__"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "s1": "Student(name='Alice', age=20, grade=95.5, courses=[])"
+          },
+          "output": "",
+          "description": "Create Student - __init__ auto-generated from field declarations"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "s2": "Student(name='Alice', age=20, grade=95.5, courses=[])"
+          },
+          "output": "",
+          "description": "Create another Student with same values"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Student(name='Alice', age=20, grade=95.5, courses=[])",
+          "description": "Auto-generated __repr__ shows all fields"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "True",
+          "description": "Auto-generated __eq__ compares all fields"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "",
+          "description": "Append to s1's courses"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "['Math']",
+          "description": "s1.courses has 'Math'"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "[]",
+          "description": "s2.courses is empty - field(default_factory=list) prevents sharing"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -351,13 +410,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["dataclasses", "dataclass_decorator", "field", "frozen", "post_init"],
-    "concepts_required": ["classes", "type_hints", "magic_methods"],
+    "concepts_taught": [
+      "dataclasses",
+      "dataclass_decorator",
+      "field",
+      "frozen",
+      "post_init"
+    ],
+    "concepts_required": [
+      "classes",
+      "type_hints",
+      "magic_methods"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["data_models", "configuration", "API_responses"],
+    "real_world_application": [
+      "data_models",
+      "configuration",
+      "API_responses"
+    ],
     "category": "code_quality",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

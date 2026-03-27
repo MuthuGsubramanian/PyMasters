@@ -144,6 +144,107 @@
         "ResNet-50: 25M params → ImageNet 5.25%",
         "Skip connections: solved vanishing gradients"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cnn_archs",
+      "code": "import torch\nimport torch.nn as nn\n\n# ResNet skip connection block\nclass ResBlock(nn.Module):\n    def __init__(self, channels):\n        super().__init__()\n        self.block = nn.Sequential(\n            nn.Conv2d(channels, channels, 3, padding=1),\n            nn.BatchNorm2d(channels),\n            nn.ReLU(),\n            nn.Conv2d(channels, channels, 3, padding=1),\n            nn.BatchNorm2d(channels)\n        )\n    def forward(self, x):\n        return torch.relu(self.block(x) + x)  # skip connection!\n\nblock = ResBlock(16)\nx = torch.randn(1, 16, 8, 8)\nout = block(x)\nprint(f'Input == Output shape: {x.shape == out.shape}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "class": "ResBlock"
+          },
+          "output": "",
+          "explanation": "Residual block: core building block of ResNet"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "conv1": "Conv2d + BN + ReLU"
+          },
+          "output": "",
+          "explanation": "Two conv layers with batch normalization"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "skip": "block(x) + x"
+          },
+          "output": "",
+          "explanation": "Add input directly to output — gradients flow through shortcut"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "x.shape": "(1, 16, 8, 8)"
+          },
+          "output": "",
+          "explanation": "16-channel 8x8 feature map"
+        },
+        {
+          "line": 21,
+          "variables": {},
+          "output": "Input == Output shape: True",
+          "explanation": "Residual blocks preserve dimensions — can stack many deep"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_resnet",
+      "title": "ResNet Skip Connection",
+      "nodes": [
+        {
+          "id": "in",
+          "label": "Input x",
+          "type": "start"
+        },
+        {
+          "id": "c1",
+          "label": "Conv + BN + ReLU",
+          "type": "process"
+        },
+        {
+          "id": "c2",
+          "label": "Conv + BN",
+          "type": "process"
+        },
+        {
+          "id": "add",
+          "label": "F(x) + x",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "ReLU -> Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "in",
+          "to": "c1"
+        },
+        {
+          "from": "c1",
+          "to": "c2"
+        },
+        {
+          "from": "c2",
+          "to": "add"
+        },
+        {
+          "from": "in",
+          "to": "add",
+          "label": "skip"
+        },
+        {
+          "from": "add",
+          "to": "out"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

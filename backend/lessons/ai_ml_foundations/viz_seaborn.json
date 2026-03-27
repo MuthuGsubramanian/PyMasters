@@ -78,6 +78,59 @@
         "[boxplot: salary per department]",
         "[heatmap: correlation matrix]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_seaborn",
+      "code": "import seaborn as sns\nimport pandas as pd\nimport numpy as np\n\nnp.random.seed(42)\ndf = pd.DataFrame({\n    'x': np.random.randn(100),\n    'y': np.random.randn(100),\n    'category': np.random.choice(['A', 'B'], 100)\n})\n\nsns.set_theme(style='whitegrid')\nsns.scatterplot(data=df, x='x', y='y', hue='category')\nsns.histplot(data=df, x='x', kde=True, hue='category')\nsns.heatmap(df[['x','y']].corr(), annot=True, cmap='coolwarm')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import seaborn — high-level statistical plotting"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "df": "DataFrame(100 rows)"
+          },
+          "output": "",
+          "explanation": "Create sample DataFrame with x, y, and category"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "theme": "whitegrid"
+          },
+          "output": "",
+          "explanation": "Set clean white background with grid lines"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "plot": "scatter with hue"
+          },
+          "output": "",
+          "explanation": "Scatter colored by category — automatic legend"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "plot": "histogram + KDE"
+          },
+          "output": "",
+          "explanation": "Distribution with smooth kernel density estimate overlay"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "plot": "correlation heatmap"
+          },
+          "output": "",
+          "explanation": "Annotated heatmap of pairwise correlations"
+        }
+      ]
     }
   ],
   "practice_challenges": [

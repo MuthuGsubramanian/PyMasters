@@ -37,6 +37,21 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "with open('output.txt', 'w') as f:\n    f.write('Hello!\\n')\n    f.write('World!\\n')\nimport json\ndata = {'name': 'Alice', 'score': 95}\nwith open('data.json', 'w') as f:\n    json.dump(data, f)\nprint('Files written!')",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Open output.txt in write mode (creates or overwrites)" },
+        { "line": 2, "variables": {}, "output": "", "description": "Write 'Hello!' followed by a newline to the file" },
+        { "line": 3, "variables": {}, "output": "", "description": "Write 'World!' followed by a newline to the file" },
+        { "line": 4, "variables": {}, "output": "", "description": "Import the json module for JSON file handling" },
+        { "line": 5, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "", "description": "Create a dict to serialize" },
+        { "line": 6, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "", "description": "Open data.json in write mode" },
+        { "line": 7, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "", "description": "json.dump() writes the dict as JSON to the file" },
+        { "line": 8, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "Files written!", "description": "Confirm both files were written successfully" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

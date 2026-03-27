@@ -175,6 +175,98 @@
         ">>> # AI correctly identifies this as NOT spam",
         ">>> # while rule-based would flag 'winning' as spam"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_what_is_ai",
+      "code": "# Traditional rule-based approach\ndef is_spam_rules(email):\n    keywords = ['buy now', 'free', 'winner']\n    return any(kw in email.lower() for kw in keywords)\n\ntest1 = 'You are the WINNER! Click here!'\ntest2 = 'Congratulations on winning the science fair!'\nprint(f'Rules on test1: {is_spam_rules(test1)}')\nprint(f'Rules on test2: {is_spam_rules(test2)}')\nprint('AI correctly identifies test2 as NOT spam')",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "keywords": [
+              "buy now",
+              "free",
+              "winner"
+            ]
+          },
+          "output": "",
+          "explanation": "Traditional: manually list every spam keyword"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "explanation": "Check if ANY keyword appears in email text"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Rules on test1: True",
+          "explanation": "'winner' found — correctly flagged as spam"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Rules on test2: True",
+          "explanation": "FALSE POSITIVE! 'winning' matches — science fair flagged as spam"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "AI correctly identifies test2 as NOT spam",
+          "explanation": "AI understands context: 'winning a science fair' is not spam"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_what_is_ai",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "User provides data",
+          "next": [
+            "approach"
+          ]
+        },
+        {
+          "id": "approach",
+          "label": "Which AI approach?",
+          "next": [
+            "rules",
+            "ml",
+            "genai"
+          ]
+        },
+        {
+          "id": "rules",
+          "label": "Symbolic AI: If-Then rules",
+          "next": [
+            "output"
+          ]
+        },
+        {
+          "id": "ml",
+          "label": "ML: Learn from data patterns",
+          "next": [
+            "output"
+          ]
+        },
+        {
+          "id": "genai",
+          "label": "GenAI: Generate new content",
+          "next": [
+            "output"
+          ]
+        },
+        {
+          "id": "output",
+          "label": "Prediction / Output",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -206,8 +298,18 @@
         "ta": "AI துறை அதிகாரப்பூர்வமாக எப்போது தொடங்கியது?"
       },
       "options": {
-        "en": ["2022", "1956", "2017", "1990"],
-        "ta": ["2022", "1956", "2017", "1990"]
+        "en": [
+          "2022",
+          "1956",
+          "2017",
+          "1990"
+        ],
+        "ta": [
+          "2022",
+          "1956",
+          "2017",
+          "1990"
+        ]
       },
       "correct": 1
     },
@@ -217,8 +319,18 @@
         "ta": "ChatGPT எந்த வகை AI?"
       },
       "options": {
-        "en": ["Artificial General Intelligence", "Narrow AI", "Super AI", "Symbolic AI"],
-        "ta": ["பொது செயற்கை நுண்ணறிவு", "குறுகிய AI", "சூப்பர் AI", "குறியீட்டு AI"]
+        "en": [
+          "Artificial General Intelligence",
+          "Narrow AI",
+          "Super AI",
+          "Symbolic AI"
+        ],
+        "ta": [
+          "பொது செயற்கை நுண்ணறிவு",
+          "குறுகிய AI",
+          "சூப்பர் AI",
+          "குறியீட்டு AI"
+        ]
       },
       "correct": 1
     },
@@ -228,20 +340,39 @@
         "ta": "GPT மற்றும் Claude போன்ற நவீன LLM-களை எந்த கட்டமைப்பு இயக்குகிறது?"
       },
       "options": {
-        "en": ["Decision Trees", "Recurrent Neural Networks", "Transformers", "Support Vector Machines"],
-        "ta": ["முடிவு மரங்கள்", "மீண்டும் வரும் நரம்பு வலையமைப்புகள்", "Transformers", "Support Vector Machines"]
+        "en": [
+          "Decision Trees",
+          "Recurrent Neural Networks",
+          "Transformers",
+          "Support Vector Machines"
+        ],
+        "ta": [
+          "முடிவு மரங்கள்",
+          "மீண்டும் வரும் நரம்பு வலையமைப்புகள்",
+          "Transformers",
+          "Support Vector Machines"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["ai_history", "ai_types", "narrow_ai", "generative_ai"],
+    "concepts_taught": [
+      "ai_history",
+      "ai_types",
+      "narrow_ai",
+      "generative_ai"
+    ],
     "concepts_required": [],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 20,
-    "real_world_application": ["understanding_ai_landscape"],
+    "real_world_application": [
+      "understanding_ai_landscape"
+    ],
     "category": "ai_core",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

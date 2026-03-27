@@ -149,12 +149,36 @@
       "structure_type": "dict",
       "initial_state": {},
       "animations": [
-        {"action": "add", "index": "l", "value": 1},
-        {"action": "add", "index": "i", "value": 1},
-        {"action": "add", "index": "s", "value": 1},
-        {"action": "add", "index": "t", "value": 1},
-        {"action": "add", "index": "e", "value": 1},
-        {"action": "add", "index": "n", "value": 1}
+        {
+          "action": "add",
+          "index": "l",
+          "value": 1
+        },
+        {
+          "action": "add",
+          "index": "i",
+          "value": 1
+        },
+        {
+          "action": "add",
+          "index": "s",
+          "value": 1
+        },
+        {
+          "action": "add",
+          "index": "t",
+          "value": 1
+        },
+        {
+          "action": "add",
+          "index": "e",
+          "value": 1
+        },
+        {
+          "action": "add",
+          "index": "n",
+          "value": 1
+        }
       ]
     },
     {
@@ -181,6 +205,69 @@
         "longest_palindrome('xracecary'): racecar",
         "find_pattern('abcabcabc', 'abc'): [0, 3, 6]",
         "compress('aabcccccaaa'): a2b1c5a3"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_string_algorithms",
+      "code": "from collections import Counter\n\ndef is_anagram(s1, s2):\n    return Counter(s1.lower()) == Counter(s2.lower())\n\ndef longest_palindrome(s):\n    result = ''\n    for i in range(len(s)):\n        l, r = i, i\n        while l >= 0 and r < len(s) and s[l] == s[r]:\n            if r - l + 1 > len(result):\n                result = s[l:r+1]\n            l -= 1; r += 1\n    return result\n\ndef compress(s):\n    res, count = [], 1\n    for i in range(1, len(s)):\n        if s[i] == s[i-1]: count += 1\n        else: res.append(s[i-1]+str(count)); count = 1\n    res.append(s[-1]+str(count))\n    return ''.join(res)\n\nprint(is_anagram('listen', 'silent'))\nprint(longest_palindrome('babad'))\nprint(compress('aabcccccaaa'))",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "s1": "listen",
+            "s2": "silent"
+          },
+          "output": "True",
+          "explanation": "Counter matches: both have {l:1,i:1,s:1,t:1,e:1,n:1}"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "i": 1,
+            "s": "babad"
+          },
+          "output": "",
+          "explanation": "Try index 1 as palindrome center"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "l": 0,
+            "r": 2
+          },
+          "output": "",
+          "explanation": "Expand: s[0]='b'==s[2]='b'. Palindrome 'bab' found!"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "result": "bab"
+          },
+          "output": "bab",
+          "explanation": "Longest palindromic substring: 'bab'"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "count": 2
+          },
+          "output": "",
+          "explanation": "Compress: 'aa' counted as a:2"
+        },
+        {
+          "line": 21,
+          "variables": {
+            "res": [
+              "a2",
+              "b1",
+              "c5",
+              "a3"
+            ]
+          },
+          "output": "a2b1c5a3",
+          "explanation": "Run-length encoding complete"
+        }
       ]
     }
   ],
@@ -213,8 +300,18 @@
         "ta": "இரண்டு சரங்கள் anagrams ஆ என திறமையாக சரிபார்ப்பது எப்படி?"
       },
       "options": {
-        "en": ["Compare lengths only", "Sort both and compare", "Check first character", "Compare using Counter or sorted"],
-        "ta": ["நீளங்களை மட்டும் ஒப்பிடுங்கள்", "இரண்டையும் sort செய்து ஒப்பிடுங்கள்", "முதல் எழுத்தை சரிபார்க்கவும்", "Counter அல்லது sorted பயன்படுத்தி ஒப்பிடுங்கள்"]
+        "en": [
+          "Compare lengths only",
+          "Sort both and compare",
+          "Check first character",
+          "Compare using Counter or sorted"
+        ],
+        "ta": [
+          "நீளங்களை மட்டும் ஒப்பிடுங்கள்",
+          "இரண்டையும் sort செய்து ஒப்பிடுங்கள்",
+          "முதல் எழுத்தை சரிபார்க்கவும்",
+          "Counter அல்லது sorted பயன்படுத்தி ஒப்பிடுங்கள்"
+        ]
       },
       "correct": 3
     },
@@ -224,8 +321,18 @@
         "ta": "'expand around center' palindrome algorithm-ன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(n²)", "O(n log n)", "O(n³)"],
-        "ta": ["O(n)", "O(n²)", "O(n log n)", "O(n³)"]
+        "en": [
+          "O(n)",
+          "O(n²)",
+          "O(n log n)",
+          "O(n³)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(n²)",
+          "O(n log n)",
+          "O(n³)"
+        ]
       },
       "correct": 1
     },
@@ -235,20 +342,45 @@
         "ta": "சரம் s2 சரம் s1-ன் rotation ஆ என எவ்வாறு சரிபார்ப்பது?"
       },
       "options": {
-        "en": ["Sort both strings", "Check if s2 in (s1 + s1) and same length", "Compare character by character", "Reverse s1 and compare"],
-        "ta": ["இரண்டு சரங்களையும் sort செய்யுங்கள்", "s2 in (s1 + s1) மற்றும் ஒரே நீளம் சரிபார்க்கவும்", "எழுத்து எழுத்தாக ஒப்பிடுங்கள்", "s1-ஐ reverse செய்து ஒப்பிடுங்கள்"]
+        "en": [
+          "Sort both strings",
+          "Check if s2 in (s1 + s1) and same length",
+          "Compare character by character",
+          "Reverse s1 and compare"
+        ],
+        "ta": [
+          "இரண்டு சரங்களையும் sort செய்யுங்கள்",
+          "s2 in (s1 + s1) மற்றும் ஒரே நீளம் சரிபார்க்கவும்",
+          "எழுத்து எழுத்தாக ஒப்பிடுங்கள்",
+          "s1-ஐ reverse செய்து ஒப்பிடுங்கள்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["anagram", "palindrome", "pattern_matching", "string_compression"],
-    "concepts_required": ["strings", "hash_tables", "loops"],
+    "concepts_taught": [
+      "anagram",
+      "palindrome",
+      "pattern_matching",
+      "string_compression"
+    ],
+    "concepts_required": [
+      "strings",
+      "hash_tables",
+      "loops"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["text_search", "spell_checking", "data_compression"],
+    "real_world_application": [
+      "text_search",
+      "spell_checking",
+      "data_compression"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

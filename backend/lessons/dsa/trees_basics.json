@@ -171,10 +171,30 @@
       "type": "MemoryStack",
       "id": "recursion_stack",
       "slots": [
-        {"name": "inorder(1)", "value": "root", "type": "frame", "address": "0x01"},
-        {"name": "inorder(2)", "value": "left of 1", "type": "frame", "address": "0x02"},
-        {"name": "inorder(4)", "value": "left of 2", "type": "frame", "address": "0x03"},
-        {"name": "inorder(None)", "value": "base case", "type": "frame", "address": "0x04"}
+        {
+          "name": "inorder(1)",
+          "value": "root",
+          "type": "frame",
+          "address": "0x01"
+        },
+        {
+          "name": "inorder(2)",
+          "value": "left of 1",
+          "type": "frame",
+          "address": "0x02"
+        },
+        {
+          "name": "inorder(4)",
+          "value": "left of 2",
+          "type": "frame",
+          "address": "0x03"
+        },
+        {
+          "name": "inorder(None)",
+          "value": "base case",
+          "type": "frame",
+          "address": "0x04"
+        }
       ]
     },
     {
@@ -203,6 +223,139 @@
         "Tree height: 2",
         "Total nodes: 5"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_trees_basics",
+      "code": "class TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = self.right = None\n\nroot = TreeNode(1)\nroot.left = TreeNode(2)\nroot.right = TreeNode(3)\nroot.left.left = TreeNode(4)\nroot.left.right = TreeNode(5)\n\ndef inorder(node):\n    if node:\n        inorder(node.left)\n        print(node.val, end=' ')\n        inorder(node.right)\n\nprint('Inorder:', end=' ')\ninorder(root)",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "root": "TreeNode(1)"
+          },
+          "output": "",
+          "explanation": "Create root node with value 1"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "root.left": "TreeNode(2)"
+          },
+          "output": "",
+          "explanation": "Attach left child: 1 -> left -> 2"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "root.right": "TreeNode(3)"
+          },
+          "output": "",
+          "explanation": "Attach right child: 1 -> right -> 3"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "",
+          "explanation": "Tree: 1(root), 2(left), 3(right), 4(left-left), 5(left-right)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "node.val": 1
+          },
+          "output": "",
+          "explanation": "Inorder starts at root(1), goes left first"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "node.val": 2
+          },
+          "output": "",
+          "explanation": "At node 2, go left again to node 4"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node.val": 4
+          },
+          "output": "4 ",
+          "explanation": "Node 4 has no left child, so print 4 first"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node.val": 2
+          },
+          "output": "4 2 ",
+          "explanation": "Back to node 2, print it after left subtree done"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node.val": 5
+          },
+          "output": "4 2 5 ",
+          "explanation": "Visit right child of 2, print 5"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node.val": 1
+          },
+          "output": "Inorder: 4 2 5 1 3",
+          "explanation": "Back to root(1), print 1, then visit right subtree: 3"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_trees_basics",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Visit Node",
+          "next": [
+            "has_children"
+          ]
+        },
+        {
+          "id": "has_children",
+          "label": "Has children?",
+          "next": [
+            "go_left",
+            "print_val"
+          ]
+        },
+        {
+          "id": "go_left",
+          "label": "Recurse Left subtree",
+          "next": [
+            "print_val"
+          ]
+        },
+        {
+          "id": "print_val",
+          "label": "Print Node Value",
+          "next": [
+            "go_right"
+          ]
+        },
+        {
+          "id": "go_right",
+          "label": "Recurse Right subtree",
+          "next": [
+            "done"
+          ]
+        },
+        {
+          "id": "done",
+          "label": "Return to parent",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -234,8 +387,18 @@
         "ta": "root=1, left=2, right=3 உடன் binary மரத்தின் inorder traversal என்ன?"
       },
       "options": {
-        "en": ["1 2 3", "2 1 3", "2 3 1", "3 2 1"],
-        "ta": ["1 2 3", "2 1 3", "2 3 1", "3 2 1"]
+        "en": [
+          "1 2 3",
+          "2 1 3",
+          "2 3 1",
+          "3 2 1"
+        ],
+        "ta": [
+          "1 2 3",
+          "2 1 3",
+          "2 3 1",
+          "3 2 1"
+        ]
       },
       "correct": 1
     },
@@ -245,8 +408,18 @@
         "ta": "binary மரத்தில் k நிலையில் அதிகபட்ச முனைகள் எத்தனை?"
       },
       "options": {
-        "en": ["k", "2k", "2^k", "k²"],
-        "ta": ["k", "2k", "2^k", "k²"]
+        "en": [
+          "k",
+          "2k",
+          "2^k",
+          "k²"
+        ],
+        "ta": [
+          "k",
+          "2k",
+          "2^k",
+          "k²"
+        ]
       },
       "correct": 2
     },
@@ -256,20 +429,45 @@
         "ta": "எந்த traversal root முனையை முதலில் பார்வையிடும்?"
       },
       "options": {
-        "en": ["Inorder", "Preorder", "Postorder", "Level-order and Preorder"],
-        "ta": ["Inorder", "Preorder", "Postorder", "Level-order மற்றும் Preorder"]
+        "en": [
+          "Inorder",
+          "Preorder",
+          "Postorder",
+          "Level-order and Preorder"
+        ],
+        "ta": [
+          "Inorder",
+          "Preorder",
+          "Postorder",
+          "Level-order மற்றும் Preorder"
+        ]
       },
       "correct": 3
     }
   ],
   "tags": {
-    "concepts_taught": ["binary_tree", "tree_traversal", "inorder", "preorder", "postorder"],
-    "concepts_required": ["recursion", "classes"],
+    "concepts_taught": [
+      "binary_tree",
+      "tree_traversal",
+      "inorder",
+      "preorder",
+      "postorder"
+    ],
+    "concepts_required": [
+      "recursion",
+      "classes"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["file_systems", "html_dom", "expression_parsing"],
+    "real_world_application": [
+      "file_systems",
+      "html_dom",
+      "expression_parsing"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

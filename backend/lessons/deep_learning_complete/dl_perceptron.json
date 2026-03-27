@@ -48,11 +48,38 @@
       "id": "neuron_architecture",
       "structure_type": "neuron_diagram",
       "layers": [
-        {"name": "Inputs", "nodes": ["x1=1.0", "x2=0.5"]},
-        {"name": "Weights", "nodes": ["w1=0.3", "w2=-0.8"]},
-        {"name": "Sum", "nodes": ["z = 0.3*1.0 + (-0.8)*0.5 + 0.1 = 0.0"]},
-        {"name": "Activation", "nodes": ["sigmoid(0.0) = 0.5"]},
-        {"name": "Output", "nodes": ["0.5"]}
+        {
+          "name": "Inputs",
+          "nodes": [
+            "x1=1.0",
+            "x2=0.5"
+          ]
+        },
+        {
+          "name": "Weights",
+          "nodes": [
+            "w1=0.3",
+            "w2=-0.8"
+          ]
+        },
+        {
+          "name": "Sum",
+          "nodes": [
+            "z = 0.3*1.0 + (-0.8)*0.5 + 0.1 = 0.0"
+          ]
+        },
+        {
+          "name": "Activation",
+          "nodes": [
+            "sigmoid(0.0) = 0.5"
+          ]
+        },
+        {
+          "name": "Output",
+          "nodes": [
+            "0.5"
+          ]
+        }
       ],
       "duration_ms": 4000
     },
@@ -60,18 +87,90 @@
       "type": "CodeStepper",
       "id": "perceptron_code",
       "steps": [
-        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch for tensor operations and neural network building"}},
-        {"line": "import torch.nn as nn", "highlight": "nn", "explanation": {"en": "Import neural network module with pre-built layers"}},
-        {"line": "class Perceptron(nn.Module):", "highlight": "Perceptron", "explanation": {"en": "Define a custom neural network class inheriting from nn.Module"}},
-        {"line": "    def __init__(self, input_size):", "highlight": "__init__", "explanation": {"en": "Constructor takes number of input features"}},
-        {"line": "        super().__init__()", "highlight": "super", "explanation": {"en": "Initialize the parent nn.Module class"}},
-        {"line": "        self.linear = nn.Linear(input_size, 1)", "highlight": "nn.Linear", "explanation": {"en": "Create a linear layer: computes w*x + b with input_size weights and 1 output"}},
-        {"line": "    def forward(self, x):", "highlight": "forward", "explanation": {"en": "Define how data flows through the network"}},
-        {"line": "        return torch.sigmoid(self.linear(x))", "highlight": "sigmoid", "explanation": {"en": "Pass weighted sum through sigmoid activation to get output between 0 and 1"}},
-        {"line": "model = Perceptron(2)", "highlight": "model", "explanation": {"en": "Create a perceptron that takes 2 inputs"}},
-        {"line": "x = torch.tensor([1.0, 0.5])", "highlight": "tensor", "explanation": {"en": "Create input tensor with two features"}},
-        {"line": "output = model(x)", "highlight": "output", "explanation": {"en": "Run forward pass: weights * inputs + bias, then sigmoid"}},
-        {"line": "print(f'Output: {output.item():.4f}')", "highlight": "print", "explanation": {"en": "Print the perceptron's output as a scalar value"}}
+        {
+          "line": "import torch",
+          "highlight": "torch",
+          "explanation": {
+            "en": "Import PyTorch for tensor operations and neural network building"
+          }
+        },
+        {
+          "line": "import torch.nn as nn",
+          "highlight": "nn",
+          "explanation": {
+            "en": "Import neural network module with pre-built layers"
+          }
+        },
+        {
+          "line": "class Perceptron(nn.Module):",
+          "highlight": "Perceptron",
+          "explanation": {
+            "en": "Define a custom neural network class inheriting from nn.Module"
+          }
+        },
+        {
+          "line": "    def __init__(self, input_size):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Constructor takes number of input features"
+          }
+        },
+        {
+          "line": "        super().__init__()",
+          "highlight": "super",
+          "explanation": {
+            "en": "Initialize the parent nn.Module class"
+          }
+        },
+        {
+          "line": "        self.linear = nn.Linear(input_size, 1)",
+          "highlight": "nn.Linear",
+          "explanation": {
+            "en": "Create a linear layer: computes w*x + b with input_size weights and 1 output"
+          }
+        },
+        {
+          "line": "    def forward(self, x):",
+          "highlight": "forward",
+          "explanation": {
+            "en": "Define how data flows through the network"
+          }
+        },
+        {
+          "line": "        return torch.sigmoid(self.linear(x))",
+          "highlight": "sigmoid",
+          "explanation": {
+            "en": "Pass weighted sum through sigmoid activation to get output between 0 and 1"
+          }
+        },
+        {
+          "line": "model = Perceptron(2)",
+          "highlight": "model",
+          "explanation": {
+            "en": "Create a perceptron that takes 2 inputs"
+          }
+        },
+        {
+          "line": "x = torch.tensor([1.0, 0.5])",
+          "highlight": "tensor",
+          "explanation": {
+            "en": "Create input tensor with two features"
+          }
+        },
+        {
+          "line": "output = model(x)",
+          "highlight": "output",
+          "explanation": {
+            "en": "Run forward pass: weights * inputs + bias, then sigmoid"
+          }
+        },
+        {
+          "line": "print(f'Output: {output.item():.4f}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the perceptron's output as a scalar value"
+          }
+        }
       ]
     },
     {
@@ -103,7 +202,13 @@
       "id": "data_flow",
       "from": "inputs",
       "to": "output",
-      "steps": ["x1, x2", "w1*x1 + w2*x2", "+ bias", "sigmoid(z)", "output"],
+      "steps": [
+        "x1, x2",
+        "w1*x1 + w2*x2",
+        "+ bias",
+        "sigmoid(z)",
+        "output"
+      ],
       "duration_ms": 3000
     },
     {
@@ -118,6 +223,151 @@
         ">>> print(dict(model.named_parameters()))",
         "{'linear.weight': tensor([[ 0.3017, -0.7981]]), 'linear.bias': tensor([0.1035])}"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_perceptron",
+      "code": "import numpy as np\n\ndef perceptron(x, weights, bias):\n    z = np.dot(x, weights) + bias\n    return 1 if z >= 0 else 0\n\n# AND gate\nweights = np.array([0.5, 0.5])\nbias = -0.7\n\ninputs = [[0,0], [0,1], [1,0], [1,1]]\nfor x in inputs:\n    out = perceptron(np.array(x), weights, bias)\n    print(f'{x} -> {out}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "function": "perceptron(x, weights, bias)"
+          },
+          "output": "",
+          "explanation": "Define perceptron: weighted sum + bias, then threshold"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "z": "dot(x, w) + b"
+          },
+          "output": "",
+          "explanation": "Linear combination of inputs"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "output": "1 if z >= 0 else 0"
+          },
+          "output": "",
+          "explanation": "Step function activation: binary decision"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "weights": "[0.5, 0.5]",
+            "bias": "-0.7"
+          },
+          "output": "",
+          "explanation": "Weights and bias configured for AND gate"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "x": "[0,0]",
+            "z": "-0.7"
+          },
+          "output": "[0, 0] -> 0",
+          "explanation": "0*0.5 + 0*0.5 - 0.7 = -0.7 < 0 -> 0"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "x": "[0,1]",
+            "z": "-0.2"
+          },
+          "output": "[0, 1] -> 0",
+          "explanation": "0*0.5 + 1*0.5 - 0.7 = -0.2 < 0 -> 0"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "x": "[1,0]",
+            "z": "-0.2"
+          },
+          "output": "[1, 0] -> 0",
+          "explanation": "1*0.5 + 0*0.5 - 0.7 = -0.2 < 0 -> 0"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "x": "[1,1]",
+            "z": "0.3"
+          },
+          "output": "[1, 1] -> 1",
+          "explanation": "1*0.5 + 1*0.5 - 0.7 = 0.3 >= 0 -> 1 (AND gate!)"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_perceptron",
+      "title": "Perceptron Forward Pass",
+      "nodes": [
+        {
+          "id": "x1",
+          "label": "Input x1",
+          "type": "start"
+        },
+        {
+          "id": "x2",
+          "label": "Input x2",
+          "type": "start"
+        },
+        {
+          "id": "mul1",
+          "label": "x1 * w1",
+          "type": "process"
+        },
+        {
+          "id": "mul2",
+          "label": "x2 * w2",
+          "type": "process"
+        },
+        {
+          "id": "sum",
+          "label": "Sum + Bias",
+          "type": "process"
+        },
+        {
+          "id": "act",
+          "label": "Step Function",
+          "type": "decision"
+        },
+        {
+          "id": "out",
+          "label": "Output (0 or 1)",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "x1",
+          "to": "mul1"
+        },
+        {
+          "from": "x2",
+          "to": "mul2"
+        },
+        {
+          "from": "mul1",
+          "to": "sum"
+        },
+        {
+          "from": "mul2",
+          "to": "sum"
+        },
+        {
+          "from": "sum",
+          "to": "act"
+        },
+        {
+          "from": "act",
+          "to": "out"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -156,8 +406,18 @@
         "ta": "செயல்பாட்டு செயல்பாட்டைப் பயன்படுத்துவதற்கு முன் பெர்செப்ட்ரான் என்ன கணக்கிடுகிறது?"
       },
       "options": {
-        "en": ["The average of inputs", "The weighted sum of inputs plus bias", "The maximum input value", "The product of all inputs"],
-        "ta": ["உள்ளீடுகளின் சராசரி", "உள்ளீடுகளின் எடையிடப்பட்ட தொகை + பயாஸ்", "அதிகபட்ச உள்ளீட்டு மதிப்பு", "அனைத்து உள்ளீடுகளின் பெருக்கல்"]
+        "en": [
+          "The average of inputs",
+          "The weighted sum of inputs plus bias",
+          "The maximum input value",
+          "The product of all inputs"
+        ],
+        "ta": [
+          "உள்ளீடுகளின் சராசரி",
+          "உள்ளீடுகளின் எடையிடப்பட்ட தொகை + பயாஸ்",
+          "அதிகபட்ச உள்ளீட்டு மதிப்பு",
+          "அனைத்து உள்ளீடுகளின் பெருக்கல்"
+        ]
       },
       "correct": 1
     },
@@ -167,8 +427,18 @@
         "ta": "சிக்மாய்ட் செயல்பாட்டு செயல்பாட்டின் வெளியீட்டு வரம்பு என்ன?"
       },
       "options": {
-        "en": ["(-1, 1)", "(0, 1)", "(0, infinity)", "(-infinity, infinity)"],
-        "ta": ["(-1, 1)", "(0, 1)", "(0, முடிவிலி)", "(-முடிவிலி, முடிவிலி)"]
+        "en": [
+          "(-1, 1)",
+          "(0, 1)",
+          "(0, infinity)",
+          "(-infinity, infinity)"
+        ],
+        "ta": [
+          "(-1, 1)",
+          "(0, 1)",
+          "(0, முடிவிலி)",
+          "(-முடிவிலி, முடிவிலி)"
+        ]
       },
       "correct": 1
     },
@@ -178,20 +448,43 @@
         "ta": "ஒரு பெர்செப்ட்ரானால் எந்த சிக்கலை தீர்க்க முடியாது?"
       },
       "options": {
-        "en": ["AND gate", "OR gate", "XOR gate", "NOT gate"],
-        "ta": ["AND கேட்", "OR கேட்", "XOR கேட்", "NOT கேட்"]
+        "en": [
+          "AND gate",
+          "OR gate",
+          "XOR gate",
+          "NOT gate"
+        ],
+        "ta": [
+          "AND கேட்",
+          "OR கேட்",
+          "XOR கேட்",
+          "NOT கேட்"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["perceptron", "weights", "bias", "activation_function", "sigmoid"],
-    "concepts_required": ["python_basics", "numpy_basics"],
+    "concepts_taught": [
+      "perceptron",
+      "weights",
+      "bias",
+      "activation_function",
+      "sigmoid"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_basics"
+    ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["binary_classification"],
+    "real_world_application": [
+      "binary_classification"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

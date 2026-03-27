@@ -45,6 +45,42 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "import functools\ndef timer(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f'Calling {func.__name__}')\n        result = func(*args, **kwargs)\n        print(f'Done {func.__name__}')\n        return result\n    return wrapper\n@timer\ndef add(a, b):\n    return a + b\nresult = add(3, 5)\nprint(result)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Import functools for wraps decorator" },
+        { "line": 2, "variables": {}, "output": "", "description": "Define timer decorator function" },
+        { "line": 10, "variables": {}, "output": "", "description": "@timer wraps add: add = timer(add)" },
+        { "line": 13, "variables": {}, "output": "", "description": "Call add(3, 5) -- actually calls wrapper(3, 5)" },
+        { "line": 5, "variables": { "args": "(3, 5)" }, "output": "Calling add", "description": "wrapper prints 'Calling add' before original" },
+        { "line": 6, "variables": { "args": "(3, 5)", "result": 8 }, "output": "Calling add", "description": "Call original add(3, 5) = 8" },
+        { "line": 7, "variables": { "args": "(3, 5)", "result": 8 }, "output": "Calling add\nDone add", "description": "wrapper prints 'Done add' after original" },
+        { "line": 14, "variables": { "result": 8 }, "output": "Calling add\nDone add\n8", "description": "Print the returned result: 8" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "call", "label": "add(3, 5) called", "type": "start" },
+        { "id": "wrapper", "label": "wrapper() runs (decorator)", "type": "process" },
+        { "id": "before", "label": "Pre-logic: print 'Calling'", "type": "process" },
+        { "id": "original", "label": "Call original add()", "type": "process" },
+        { "id": "after", "label": "Post-logic: print 'Done'", "type": "process" },
+        { "id": "return", "label": "Return result to caller", "type": "end" }
+      ],
+      "edges": [
+        { "from": "call", "to": "wrapper" },
+        { "from": "wrapper", "to": "before" },
+        { "from": "before", "to": "original" },
+        { "from": "original", "to": "after" },
+        { "from": "after", "to": "return" }
+      ],
+      "executionPath": ["call", "wrapper", "before", "original", "after", "return"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

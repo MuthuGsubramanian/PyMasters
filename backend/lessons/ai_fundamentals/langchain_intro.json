@@ -185,11 +185,26 @@
       "type": "FlowArrow",
       "id": "chain_flow",
       "nodes": [
-        {"label": "Input: {topic: 'Python decorators'}", "type": "input"},
-        {"label": "PromptTemplate: fills variables", "type": "process"},
-        {"label": "ChatOpenAI: generates response", "type": "process"},
-        {"label": "StrOutputParser: extracts text", "type": "process"},
-        {"label": "Output: '1. Start with @property...'", "type": "output"}
+        {
+          "label": "Input: {topic: 'Python decorators'}",
+          "type": "input"
+        },
+        {
+          "label": "PromptTemplate: fills variables",
+          "type": "process"
+        },
+        {
+          "label": "ChatOpenAI: generates response",
+          "type": "process"
+        },
+        {
+          "label": "StrOutputParser: extracts text",
+          "type": "process"
+        },
+        {
+          "label": "Output: '1. Start with @property...'",
+          "type": "output"
+        }
       ],
       "direction": "horizontal",
       "duration_ms": 4000
@@ -219,6 +234,91 @@
         "3. Use @functools.wraps in your custom decorators to preserve",
         "   the original function's name and docstring."
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_langchain_intro",
+      "code": "from langchain_openai import ChatOpenAI\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.output_parsers import StrOutputParser\n\nllm = ChatOpenAI(model='gpt-4o-mini')\nprompt = ChatPromptTemplate.from_messages([\n    ('system', 'You are a {role}.'),\n    ('user', '{question}')\n])\n\nchain = prompt | llm | StrOutputParser()\nresult = chain.invoke({'role':'Python tutor','question':'What is a decorator?'})\nprint(result)",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "llm": "ChatOpenAI"
+          },
+          "output": "",
+          "explanation": "LangChain wraps LLM APIs with a unified interface"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "prompt": "template with {role}, {question}"
+          },
+          "output": "",
+          "explanation": "Reusable prompt template with variables"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "chain": "prompt | llm | parser"
+          },
+          "output": "",
+          "explanation": "LCEL pipe: data flows through each component"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "role": "Python tutor"
+          },
+          "output": "",
+          "explanation": "Invoke fills template -> sends to LLM -> parses output"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "A decorator wraps a function to add behavior...",
+          "explanation": "Chain executed end-to-end in one call"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_langchain_intro",
+      "nodes": [
+        {
+          "id": "vars",
+          "label": "Input variables",
+          "next": [
+            "template"
+          ]
+        },
+        {
+          "id": "template",
+          "label": "Prompt Template",
+          "next": [
+            "llm"
+          ]
+        },
+        {
+          "id": "llm",
+          "label": "LLM generates response",
+          "next": [
+            "parser"
+          ]
+        },
+        {
+          "id": "parser",
+          "label": "Output Parser",
+          "next": [
+            "result"
+          ]
+        },
+        {
+          "id": "result",
+          "label": "Final result string",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -309,13 +409,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["langchain", "prompt_templates", "output_parsers", "lcel_chains"],
-    "concepts_required": ["openai_api_basics"],
+    "concepts_taught": [
+      "langchain",
+      "prompt_templates",
+      "output_parsers",
+      "lcel_chains"
+    ],
+    "concepts_required": [
+      "openai_api_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["ai_app_development", "workflow_automation"],
+    "real_world_application": [
+      "ai_app_development",
+      "workflow_automation"
+    ],
     "category": "ai_frameworks",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

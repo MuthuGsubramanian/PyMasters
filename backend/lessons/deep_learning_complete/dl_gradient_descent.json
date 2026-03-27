@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "optimizer_code",
       "steps": [
-        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch"}},
-        {"line": "model = nn.Linear(10, 1)", "highlight": "model", "explanation": {"en": "Simple linear model: 10 inputs, 1 output (11 parameters)"}},
-        {"line": "sgd = torch.optim.SGD(model.parameters(), lr=0.01)", "highlight": "SGD", "explanation": {"en": "Vanilla SGD: w = w - lr * gradient. Simple but can be slow"}},
-        {"line": "sgd_m = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)", "highlight": "momentum", "explanation": {"en": "Momentum: accumulates velocity from past gradients. Rolls faster downhill"}},
-        {"line": "adam = torch.optim.Adam(model.parameters(), lr=0.001)", "highlight": "Adam", "explanation": {"en": "Adam: adaptive lr per parameter + momentum. Best general-purpose optimizer"}},
-        {"line": "optimizer.zero_grad()", "highlight": "zero_grad", "explanation": {"en": "CRITICAL: Clear accumulated gradients. Without this, gradients accumulate across epochs"}},
-        {"line": "loss.backward()", "highlight": "backward", "explanation": {"en": "Compute gradients for all parameters via backpropagation"}},
-        {"line": "optimizer.step()", "highlight": "step", "explanation": {"en": "Update all weights using the computed gradients and optimizer algorithm"}},
-        {"line": "scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)", "highlight": "StepLR", "explanation": {"en": "Reduce learning rate by 50% every 100 epochs for fine-tuning"}},
-        {"line": "scheduler.step()", "highlight": "scheduler.step", "explanation": {"en": "Call after optimizer.step() to update learning rate according to schedule"}}
+        {
+          "line": "import torch",
+          "highlight": "torch",
+          "explanation": {
+            "en": "Import PyTorch"
+          }
+        },
+        {
+          "line": "model = nn.Linear(10, 1)",
+          "highlight": "model",
+          "explanation": {
+            "en": "Simple linear model: 10 inputs, 1 output (11 parameters)"
+          }
+        },
+        {
+          "line": "sgd = torch.optim.SGD(model.parameters(), lr=0.01)",
+          "highlight": "SGD",
+          "explanation": {
+            "en": "Vanilla SGD: w = w - lr * gradient. Simple but can be slow"
+          }
+        },
+        {
+          "line": "sgd_m = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)",
+          "highlight": "momentum",
+          "explanation": {
+            "en": "Momentum: accumulates velocity from past gradients. Rolls faster downhill"
+          }
+        },
+        {
+          "line": "adam = torch.optim.Adam(model.parameters(), lr=0.001)",
+          "highlight": "Adam",
+          "explanation": {
+            "en": "Adam: adaptive lr per parameter + momentum. Best general-purpose optimizer"
+          }
+        },
+        {
+          "line": "optimizer.zero_grad()",
+          "highlight": "zero_grad",
+          "explanation": {
+            "en": "CRITICAL: Clear accumulated gradients. Without this, gradients accumulate across epochs"
+          }
+        },
+        {
+          "line": "loss.backward()",
+          "highlight": "backward",
+          "explanation": {
+            "en": "Compute gradients for all parameters via backpropagation"
+          }
+        },
+        {
+          "line": "optimizer.step()",
+          "highlight": "step",
+          "explanation": {
+            "en": "Update all weights using the computed gradients and optimizer algorithm"
+          }
+        },
+        {
+          "line": "scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)",
+          "highlight": "StepLR",
+          "explanation": {
+            "en": "Reduce learning rate by 50% every 100 epochs for fine-tuning"
+          }
+        },
+        {
+          "line": "scheduler.step()",
+          "highlight": "scheduler.step",
+          "explanation": {
+            "en": "Call after optimizer.step() to update learning rate according to schedule"
+          }
+        }
       ]
     },
     {
@@ -86,8 +146,14 @@
     {
       "type": "ComparisonPanel",
       "id": "optimizer_comparison",
-      "left": {"label": "SGD", "content": "Simple w = w - lr*grad\nFast per step\nNeeds careful lr tuning\nCan get stuck in saddle points"},
-      "right": {"label": "Adam", "content": "Adaptive lr per parameter\nBuilt-in momentum\nWorks well out of the box\nDefault: lr=0.001"},
+      "left": {
+        "label": "SGD",
+        "content": "Simple w = w - lr*grad\nFast per step\nNeeds careful lr tuning\nCan get stuck in saddle points"
+      },
+      "right": {
+        "label": "Adam",
+        "content": "Adaptive lr per parameter\nBuilt-in momentum\nWorks well out of the box\nDefault: lr=0.001"
+      },
       "duration_ms": 3000
     },
     {
@@ -95,7 +161,14 @@
       "id": "training_loop",
       "from": "start",
       "to": "convergence",
-      "steps": ["forward pass", "compute loss", "zero_grad()", "backward()", "step()", "repeat"],
+      "steps": [
+        "forward pass",
+        "compute loss",
+        "zero_grad()",
+        "backward()",
+        "step()",
+        "repeat"
+      ],
       "duration_ms": 3000
     },
     {
@@ -109,6 +182,131 @@
         "Epoch 300, Loss: 0.0412",
         "Epoch 400, Loss: 0.0089",
         "Epoch 500, Loss: 0.0034"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_gd",
+      "code": "import torch\n\n# Simple gradient descent\nw = torch.tensor(5.0, requires_grad=True)\nlr = 0.1\n\nfor step in range(5):\n    loss = (w - 2) ** 2  # minimum at w=2\n    loss.backward()\n    with torch.no_grad():\n        w -= lr * w.grad\n    w.grad.zero_()\n    print(f'Step {step}: w={w.item():.4f}, loss={loss.item():.4f}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "w": "5.0",
+            "requires_grad": true
+          },
+          "output": "",
+          "explanation": "Start weight at 5.0, target minimum at w=2"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "lr": "0.1"
+          },
+          "output": "",
+          "explanation": "Learning rate controls step size"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "loss": "(5-2)^2 = 9.0"
+          },
+          "output": "",
+          "explanation": "Compute loss: squared distance from target"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "w.grad": "6.0"
+          },
+          "output": "",
+          "explanation": "d(loss)/dw = 2*(w-2) = 2*3 = 6.0"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "w": "5.0 - 0.1*6.0 = 4.4"
+          },
+          "output": "Step 0: w=4.4000, loss=9.0000",
+          "explanation": "Update: w = w - lr * gradient"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "w": "3.92"
+          },
+          "output": "Step 1: w=3.9200, loss=5.7600",
+          "explanation": "w moves closer to 2.0"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "w": "3.536"
+          },
+          "output": "Step 2: w=3.5360, loss=3.6864",
+          "explanation": "Loss decreasing each step"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "w": "2.829"
+          },
+          "output": "Step 4: w=2.8290, loss=1.5116",
+          "explanation": "Converging toward minimum at w=2"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_gradient_descent",
+      "title": "Gradient Descent Steps",
+      "loopVariable": "step",
+      "iterations": [
+        {
+          "iteration": 0,
+          "state": {
+            "w": 5.0,
+            "loss": 9.0,
+            "grad": 6.0
+          },
+          "description": "Start far from minimum"
+        },
+        {
+          "iteration": 1,
+          "state": {
+            "w": 4.4,
+            "loss": 5.76,
+            "grad": 4.8
+          },
+          "description": "Large step toward minimum"
+        },
+        {
+          "iteration": 2,
+          "state": {
+            "w": 3.92,
+            "loss": 3.69,
+            "grad": 3.84
+          },
+          "description": "Steps get smaller as gradient shrinks"
+        },
+        {
+          "iteration": 3,
+          "state": {
+            "w": 3.536,
+            "loss": 2.36,
+            "grad": 3.07
+          },
+          "description": "Approaching w=2"
+        },
+        {
+          "iteration": 4,
+          "state": {
+            "w": 2.829,
+            "loss": 1.51,
+            "grad": 2.46
+          },
+          "description": "Converging — loss still decreasing"
+        }
       ]
     },
     {
@@ -147,8 +345,18 @@
         "ta": "optimizer.zero_grad() அழைக்க மறந்தால் என்ன நடக்கும்?"
       },
       "options": {
-        "en": ["Nothing, it's optional", "Gradients accumulate from previous batches, causing incorrect updates", "The model weights freeze", "Training runs faster"],
-        "ta": ["ஒன்றும் நடக்காது, இது விருப்பமானது", "முந்தைய தொகுதிகளிலிருந்து சாய்வுகள் குவிந்து தவறான புதுப்பிப்புகளை ஏற்படுத்தும்", "மாதிரி எடைகள் உறைந்துவிடும்", "பயிற்சி வேகமாக இயங்கும்"]
+        "en": [
+          "Nothing, it's optional",
+          "Gradients accumulate from previous batches, causing incorrect updates",
+          "The model weights freeze",
+          "Training runs faster"
+        ],
+        "ta": [
+          "ஒன்றும் நடக்காது, இது விருப்பமானது",
+          "முந்தைய தொகுதிகளிலிருந்து சாய்வுகள் குவிந்து தவறான புதுப்பிப்புகளை ஏற்படுத்தும்",
+          "மாதிரி எடைகள் உறைந்துவிடும்",
+          "பயிற்சி வேகமாக இயங்கும்"
+        ]
       },
       "correct": 1
     },
@@ -158,8 +366,18 @@
         "ta": "Learning rate என்ன கட்டுப்படுத்துகிறது?"
       },
       "options": {
-        "en": ["The number of layers", "The size of weight updates at each step", "The batch size", "The number of epochs"],
-        "ta": ["அடுக்குகளின் எண்ணிக்கை", "ஒவ்வொரு படியிலும் எடை புதுப்பிப்புகளின் அளவு", "தொகுதி அளவு", "சகாப்தங்களின் எண்ணிக்கை"]
+        "en": [
+          "The number of layers",
+          "The size of weight updates at each step",
+          "The batch size",
+          "The number of epochs"
+        ],
+        "ta": [
+          "அடுக்குகளின் எண்ணிக்கை",
+          "ஒவ்வொரு படியிலும் எடை புதுப்பிப்புகளின் அளவு",
+          "தொகுதி அளவு",
+          "சகாப்தங்களின் எண்ணிக்கை"
+        ]
       },
       "correct": 1
     },
@@ -169,20 +387,45 @@
         "ta": "Adam ஏன் பொதுவாக இயல்புநிலை ஆப்டிமைசர் தேர்வாக உள்ளது?"
       },
       "options": {
-        "en": ["It uses the least memory", "It adapts learning rate per parameter and includes momentum", "It's the fastest to compute", "It guarantees finding the global minimum"],
-        "ta": ["குறைந்த நினைவகம் பயன்படுத்துகிறது", "ஒவ்வொரு அளவுருவுக்கும் learning rate-ஐ தகவமைத்து momentum சேர்க்கிறது", "கணக்கிட வேகமானது", "உலகளாவிய குறைந்தபட்சத்தைக் கண்டுபிடிக்க உத்தரவாதம் அளிக்கிறது"]
+        "en": [
+          "It uses the least memory",
+          "It adapts learning rate per parameter and includes momentum",
+          "It's the fastest to compute",
+          "It guarantees finding the global minimum"
+        ],
+        "ta": [
+          "குறைந்த நினைவகம் பயன்படுத்துகிறது",
+          "ஒவ்வொரு அளவுருவுக்கும் learning rate-ஐ தகவமைத்து momentum சேர்க்கிறது",
+          "கணக்கிட வேகமானது",
+          "உலகளாவிய குறைந்தபட்சத்தைக் கண்டுபிடிக்க உத்தரவாதம் அளிக்கிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["sgd", "momentum", "adam", "learning_rate", "lr_scheduler", "optimizer"],
-    "concepts_required": ["backpropagation", "gradients"],
+    "concepts_taught": [
+      "sgd",
+      "momentum",
+      "adam",
+      "learning_rate",
+      "lr_scheduler",
+      "optimizer"
+    ],
+    "concepts_required": [
+      "backpropagation",
+      "gradients"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["model_training", "hyperparameter_tuning"],
+    "real_world_application": [
+      "model_training",
+      "hyperparameter_tuning"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

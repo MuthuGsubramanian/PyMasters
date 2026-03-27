@@ -168,6 +168,119 @@
         ">>> User.objects.count()",
         "1"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_django_auth",
+      "title": "Django Registration and Login",
+      "code": "from django.contrib.auth.models import User\nfrom django.contrib.auth import authenticate\n\nuser = User.objects.create_user('pymaster', 'py@master.com', 'securepass123')\nprint(f'Created: {user.username}')\nauth_user = authenticate(username='pymaster', password='securepass123')\nprint(f'Authenticated: {auth_user is not None}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import Django's built-in User model"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "Import authenticate to verify credentials"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "user": "<User: pymaster>"
+          },
+          "output": "",
+          "explanation": "create_user hashes the password automatically"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Created: pymaster",
+          "explanation": "User created with hashed password"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "auth_user": "<User: pymaster>"
+          },
+          "output": "",
+          "explanation": "authenticate checks password against stored hash"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "...Authenticated: True",
+          "explanation": "Credentials match"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_django_auth_flow",
+      "title": "Django Auth Flow",
+      "nodes": [
+        {
+          "id": "register",
+          "label": "User Registers\n/register/",
+          "type": "start"
+        },
+        {
+          "id": "form",
+          "label": "UserCreationForm\nValidate",
+          "type": "decision"
+        },
+        {
+          "id": "save",
+          "label": "form.save()\nHash Password",
+          "type": "process"
+        },
+        {
+          "id": "login",
+          "label": "User Logs In\nauthenticate()",
+          "type": "process"
+        },
+        {
+          "id": "session",
+          "label": "Session Created\nlogin()",
+          "type": "process"
+        },
+        {
+          "id": "dashboard",
+          "label": "@login_required\nDashboard",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "register",
+          "to": "form",
+          "label": "POST"
+        },
+        {
+          "from": "form",
+          "to": "save",
+          "label": "Valid"
+        },
+        {
+          "from": "save",
+          "to": "login",
+          "label": "Redirect"
+        },
+        {
+          "from": "login",
+          "to": "session",
+          "label": "Verified"
+        },
+        {
+          "from": "session",
+          "to": "dashboard",
+          "label": "Cookie"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -201,8 +314,18 @@
         "ta": "Django-வின் UserCreationForm இயல்பாக என்ன வழங்குகிறது?"
       },
       "options": {
-        "en": ["Only a username field", "Username, password, and password confirmation with validation", "Email and phone number fields", "A complete profile form"],
-        "ta": ["பயனர்பெயர் புலம் மட்டும்", "சரிபார்ப்புடன் பயனர்பெயர், கடவுச்சொல் மற்றும் கடவுச்சொல் உறுதிப்படுத்தல்", "மின்னஞ்சல் மற்றும் தொலைபேசி எண் புலங்கள்", "முழுமையான சுயவிவர படிவம்"]
+        "en": [
+          "Only a username field",
+          "Username, password, and password confirmation with validation",
+          "Email and phone number fields",
+          "A complete profile form"
+        ],
+        "ta": [
+          "பயனர்பெயர் புலம் மட்டும்",
+          "சரிபார்ப்புடன் பயனர்பெயர், கடவுச்சொல் மற்றும் கடவுச்சொல் உறுதிப்படுத்தல்",
+          "மின்னஞ்சல் மற்றும் தொலைபேசி எண் புலங்கள்",
+          "முழுமையான சுயவிவர படிவம்"
+        ]
       },
       "correct": 1
     },
@@ -212,8 +335,18 @@
         "ta": "Django-ல் authenticate() மற்றும் login() இடையே என்ன வேறுபாடு?"
       },
       "options": {
-        "en": ["They do the same thing", "authenticate() verifies credentials; login() creates the session", "login() verifies credentials; authenticate() creates the session", "authenticate() is for API; login() is for web"],
-        "ta": ["அவை ஒரே வேலையைச் செய்கின்றன", "authenticate() நற்சான்றிதழ்களை சரிபார்க்கிறது; login() அமர்வை உருவாக்குகிறது", "login() நற்சான்றிதழ்களை சரிபார்க்கிறது; authenticate() அமர்வை உருவாக்குகிறது", "authenticate() API-க்கு; login() வலைக்கு"]
+        "en": [
+          "They do the same thing",
+          "authenticate() verifies credentials; login() creates the session",
+          "login() verifies credentials; authenticate() creates the session",
+          "authenticate() is for API; login() is for web"
+        ],
+        "ta": [
+          "அவை ஒரே வேலையைச் செய்கின்றன",
+          "authenticate() நற்சான்றிதழ்களை சரிபார்க்கிறது; login() அமர்வை உருவாக்குகிறது",
+          "login() நற்சான்றிதழ்களை சரிபார்க்கிறது; authenticate() அமர்வை உருவாக்குகிறது",
+          "authenticate() API-க்கு; login() வலைக்கு"
+        ]
       },
       "correct": 1
     },
@@ -223,20 +356,43 @@
         "ta": "Django ModelForm-ல், Meta வகுப்பு எதைக் குறிப்பிடுகிறது?"
       },
       "options": {
-        "en": ["The database connection string", "The model and fields the form should use", "The URL pattern for the form", "The CSS styling for the form"],
-        "ta": ["தரவுத்தள இணைப்பு சரம்", "படிவம் பயன்படுத்த வேண்டிய மாதிரி மற்றும் புலங்கள்", "படிவத்தின் URL வடிவம்", "படிவத்தின் CSS வடிவமைப்பு"]
+        "en": [
+          "The database connection string",
+          "The model and fields the form should use",
+          "The URL pattern for the form",
+          "The CSS styling for the form"
+        ],
+        "ta": [
+          "தரவுத்தள இணைப்பு சரம்",
+          "படிவம் பயன்படுத்த வேண்டிய மாதிரி மற்றும் புலங்கள்",
+          "படிவத்தின் URL வடிவம்",
+          "படிவத்தின் CSS வடிவமைப்பு"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["django_forms", "user_registration", "django_auth", "model_forms"],
-    "concepts_required": ["django_views", "django_models"],
+    "concepts_taught": [
+      "django_forms",
+      "user_registration",
+      "django_auth",
+      "model_forms"
+    ],
+    "concepts_required": [
+      "django_views",
+      "django_models"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["user_management", "web_forms"],
+    "real_world_application": [
+      "user_management",
+      "web_forms"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

@@ -42,6 +42,39 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "double = lambda x: x * 2\nprint(double(5))\nnums = [1, 2, 3, 4]\nsquared = list(map(lambda x: x**2, nums))\nprint(squared)\nevens = list(filter(lambda x: x % 2 == 0, nums))\nprint(evens)",
+      "executionSteps": [
+        { "line": 1, "variables": { "double": "lambda x: x * 2" }, "output": "", "description": "Create a lambda function that doubles its input" },
+        { "line": 2, "variables": { "double": "lambda x: x * 2" }, "output": "10", "description": "Call double(5) = 10" },
+        { "line": 3, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4] }, "output": "10", "description": "Create a list of numbers" },
+        { "line": 4, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16] }, "output": "10", "description": "map applies lambda x: x**2 to each item" },
+        { "line": 5, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16] }, "output": "10\n[1, 4, 9, 16]", "description": "Print the squared list" },
+        { "line": 6, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16], "evens": [2, 4] }, "output": "10\n[1, 4, 9, 16]", "description": "filter keeps items where x % 2 == 0" },
+        { "line": 7, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16], "evens": [2, 4] }, "output": "10\n[1, 4, 9, 16]\n[2, 4]", "description": "Print the filtered even numbers" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "Input list [1,2,3,4]", "type": "start" },
+        { "id": "map", "label": "map(lambda x: x**2, nums)", "type": "process" },
+        { "id": "result_map", "label": "[1, 4, 9, 16]", "type": "process" },
+        { "id": "filter", "label": "filter(lambda x: x%2==0, nums)", "type": "process" },
+        { "id": "result_filter", "label": "[2, 4]", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "map" },
+        { "from": "map", "to": "result_map" },
+        { "from": "start", "to": "filter" },
+        { "from": "filter", "to": "result_filter" }
+      ],
+      "executionPath": ["start", "map", "result_map"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

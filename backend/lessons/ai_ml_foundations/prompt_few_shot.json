@@ -109,6 +109,69 @@
         "  Step 2: £10.00 - £6.00 = £4.00",
         "  Answer: Alice gets £4.00 change"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_prompt_few_shot",
+      "code": "# Few-Shot Prompting\nprompt = \"\"\"\nClassify the sentiment:\n\nText: \"I love this product!\" -> positive\nText: \"Terrible experience\" -> negative\nText: \"It was okay\" -> neutral\n\nText: \"Best purchase ever!\" ->\n\"\"\"\n# The LLM sees 3 examples and learns the pattern\n# Output: \"positive\"\n\n# Chain-of-Thought variant\ncot_prompt = \"\"\"\nQ: Is 17 prime? Let's think step by step.\nA: Check divisors: 17/2=8.5, 17/3=5.67, 17/4=4.25. \n   sqrt(17)~4.1, no divisors found. Yes, 17 is prime.\n\nQ: Is 21 prime? Let's think step by step.\n\"\"\"",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "technique": "few-shot"
+          },
+          "output": "",
+          "explanation": "Provide examples before the actual query"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "example_1": "love -> positive"
+          },
+          "output": "",
+          "explanation": "First example teaches positive sentiment pattern"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "example_2": "terrible -> negative"
+          },
+          "output": "",
+          "explanation": "Second example teaches negative pattern"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "example_3": "okay -> neutral"
+          },
+          "output": "",
+          "explanation": "Third example teaches neutral pattern"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "query": "Best purchase ever!"
+          },
+          "output": "positive",
+          "explanation": "LLM follows the pattern: strong praise = positive"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "technique": "chain-of-thought"
+          },
+          "output": "",
+          "explanation": "CoT adds reasoning steps to improve accuracy"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "expected": "21=3*7, not prime"
+          },
+          "output": "Check: 21/2=10.5, 21/3=7. Divisor found! No, 21 is not prime.",
+          "explanation": "Step-by-step reasoning catches the factor of 3"
+        }
+      ]
     }
   ],
   "practice_challenges": [

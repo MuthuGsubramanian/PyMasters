@@ -47,23 +47,89 @@
       "type": "CodeStepper",
       "id": "arch_code",
       "steps": [
-        {"line": "# LeNet-5: The first successful CNN", "highlight": "LeNet", "explanation": {"en": "Yann LeCun, 1998. Used for handwritten digit recognition. Only 60K parameters"}},
-        {"line": "nn.Conv2d(1, 6, 5) -> Tanh -> AvgPool", "highlight": "LeNet layers", "explanation": {"en": "LeNet used tanh activation and average pooling. Simple but effective for MNIST"}},
-        {"line": "# VGG-16: Stack of 3x3 convolutions", "highlight": "VGG", "explanation": {"en": "Simonyan & Zisserman, 2014. Key idea: use many small 3x3 filters instead of large ones"}},
-        {"line": "nn.Conv2d(in_ch, out_ch, 3, padding=1)", "highlight": "3x3", "explanation": {"en": "Two 3x3 convs have same receptive field as one 5x5, but fewer parameters and more non-linearity"}},
-        {"line": "# ResNet: Skip connections solve vanishing gradients", "highlight": "ResNet", "explanation": {"en": "He et al., 2015. Won ImageNet. Key innovation: residual (skip) connections"}},
-        {"line": "class ResidualBlock(nn.Module):", "highlight": "ResidualBlock", "explanation": {"en": "The building block of ResNet: learns residual F(x), output is F(x) + x"}},
-        {"line": "out += residual  # skip connection!", "highlight": "skip", "explanation": {"en": "Add input directly to output. If layer learns nothing useful, gradient still flows through"}},
-        {"line": "self.bn1 = nn.BatchNorm2d(channels)", "highlight": "BatchNorm2d", "explanation": {"en": "Batch normalization: normalizes feature maps, stabilizes deep network training"}},
-        {"line": "# ResNet-18 parameters: ~11M", "highlight": "params", "explanation": {"en": "ResNet-18 has 11 million parameters. ResNet-152 has 60 million"}},
-        {"line": "# LeNet: 60K, VGG-16: 138M, ResNet-50: 25M", "highlight": "comparison", "explanation": {"en": "ResNet achieves better accuracy than VGG with far fewer parameters"}}
+        {
+          "line": "# LeNet-5: The first successful CNN",
+          "highlight": "LeNet",
+          "explanation": {
+            "en": "Yann LeCun, 1998. Used for handwritten digit recognition. Only 60K parameters"
+          }
+        },
+        {
+          "line": "nn.Conv2d(1, 6, 5) -> Tanh -> AvgPool",
+          "highlight": "LeNet layers",
+          "explanation": {
+            "en": "LeNet used tanh activation and average pooling. Simple but effective for MNIST"
+          }
+        },
+        {
+          "line": "# VGG-16: Stack of 3x3 convolutions",
+          "highlight": "VGG",
+          "explanation": {
+            "en": "Simonyan & Zisserman, 2014. Key idea: use many small 3x3 filters instead of large ones"
+          }
+        },
+        {
+          "line": "nn.Conv2d(in_ch, out_ch, 3, padding=1)",
+          "highlight": "3x3",
+          "explanation": {
+            "en": "Two 3x3 convs have same receptive field as one 5x5, but fewer parameters and more non-linearity"
+          }
+        },
+        {
+          "line": "# ResNet: Skip connections solve vanishing gradients",
+          "highlight": "ResNet",
+          "explanation": {
+            "en": "He et al., 2015. Won ImageNet. Key innovation: residual (skip) connections"
+          }
+        },
+        {
+          "line": "class ResidualBlock(nn.Module):",
+          "highlight": "ResidualBlock",
+          "explanation": {
+            "en": "The building block of ResNet: learns residual F(x), output is F(x) + x"
+          }
+        },
+        {
+          "line": "out += residual  # skip connection!",
+          "highlight": "skip",
+          "explanation": {
+            "en": "Add input directly to output. If layer learns nothing useful, gradient still flows through"
+          }
+        },
+        {
+          "line": "self.bn1 = nn.BatchNorm2d(channels)",
+          "highlight": "BatchNorm2d",
+          "explanation": {
+            "en": "Batch normalization: normalizes feature maps, stabilizes deep network training"
+          }
+        },
+        {
+          "line": "# ResNet-18 parameters: ~11M",
+          "highlight": "params",
+          "explanation": {
+            "en": "ResNet-18 has 11 million parameters. ResNet-152 has 60 million"
+          }
+        },
+        {
+          "line": "# LeNet: 60K, VGG-16: 138M, ResNet-50: 25M",
+          "highlight": "comparison",
+          "explanation": {
+            "en": "ResNet achieves better accuracy than VGG with far fewer parameters"
+          }
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "architecture_comparison",
-      "left": {"label": "VGG-16", "content": "16 layers\n138M parameters\nNo skip connections\n7.3% top-5 error on ImageNet"},
-      "right": {"label": "ResNet-50", "content": "50 layers\n25M parameters\nSkip connections\n3.6% top-5 error on ImageNet"},
+      "left": {
+        "label": "VGG-16",
+        "content": "16 layers\n138M parameters\nNo skip connections\n7.3% top-5 error on ImageNet"
+      },
+      "right": {
+        "label": "ResNet-50",
+        "content": "50 layers\n25M parameters\nSkip connections\n3.6% top-5 error on ImageNet"
+      },
       "duration_ms": 3000
     },
     {
@@ -71,13 +137,55 @@
       "id": "resnet_visual",
       "structure_type": "neural_network",
       "layers": [
-        {"name": "Input", "nodes": ["3x224x224"], "type": "input"},
-        {"name": "Conv + BN", "nodes": ["64x112x112"], "type": "conv"},
-        {"name": "ResBlock x2", "nodes": ["64x56x56"], "type": "residual"},
-        {"name": "ResBlock x2", "nodes": ["128x28x28"], "type": "residual"},
-        {"name": "ResBlock x2", "nodes": ["256x14x14"], "type": "residual"},
-        {"name": "ResBlock x2", "nodes": ["512x7x7"], "type": "residual"},
-        {"name": "AvgPool + FC", "nodes": ["1000 classes"], "type": "output"}
+        {
+          "name": "Input",
+          "nodes": [
+            "3x224x224"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Conv + BN",
+          "nodes": [
+            "64x112x112"
+          ],
+          "type": "conv"
+        },
+        {
+          "name": "ResBlock x2",
+          "nodes": [
+            "64x56x56"
+          ],
+          "type": "residual"
+        },
+        {
+          "name": "ResBlock x2",
+          "nodes": [
+            "128x28x28"
+          ],
+          "type": "residual"
+        },
+        {
+          "name": "ResBlock x2",
+          "nodes": [
+            "256x14x14"
+          ],
+          "type": "residual"
+        },
+        {
+          "name": "ResBlock x2",
+          "nodes": [
+            "512x7x7"
+          ],
+          "type": "residual"
+        },
+        {
+          "name": "AvgPool + FC",
+          "nodes": [
+            "1000 classes"
+          ],
+          "type": "output"
+        }
       ],
       "duration_ms": 4000
     },
@@ -102,7 +210,14 @@
       "id": "skip_connection",
       "from": "block_input",
       "to": "block_output",
-      "steps": ["x (input)", "Conv -> BN -> ReLU", "Conv -> BN", "Add x (skip!)", "ReLU", "output"],
+      "steps": [
+        "x (input)",
+        "Conv -> BN -> ReLU",
+        "Conv -> BN",
+        "Add x (skip!)",
+        "ReLU",
+        "output"
+      ],
       "duration_ms": 3000
     },
     {
@@ -119,6 +234,124 @@
         "torch.Size([1, 64, 32, 32])",
         ">>> # Input shape == Output shape (residual connection preserves dimensions)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_cnn_arch",
+      "code": "import torch\nimport torch.nn as nn\n\n# ResNet-style skip connection\nclass ResidualBlock(nn.Module):\n    def __init__(self, channels):\n        super().__init__()\n        self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)\n        self.bn1 = nn.BatchNorm2d(channels)\n        self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)\n        self.bn2 = nn.BatchNorm2d(channels)\n\n    def forward(self, x):\n        residual = x\n        out = torch.relu(self.bn1(self.conv1(x)))\n        out = self.bn2(self.conv2(out))\n        out += residual  # skip connection\n        return torch.relu(out)\n\nblock = ResidualBlock(16)\nx = torch.randn(1, 16, 8, 8)\nprint(f'Input:  {x.shape}')\nprint(f'Output: {block(x).shape}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "class": "ResidualBlock"
+          },
+          "output": "",
+          "explanation": "ResNet building block with skip connection"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "conv1": "Conv2d(16, 16, 3, pad=1)"
+          },
+          "output": "",
+          "explanation": "First conv preserves spatial dimensions"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "residual": "x (saved)"
+          },
+          "output": "",
+          "explanation": "Save input for skip connection"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "out": "out + residual"
+          },
+          "output": "",
+          "explanation": "Add input directly to output — gradients flow through shortcut"
+        },
+        {
+          "line": 21,
+          "variables": {
+            "x.shape": "(1, 16, 8, 8)"
+          },
+          "output": "",
+          "explanation": "16-channel 8x8 feature map"
+        },
+        {
+          "line": 23,
+          "variables": {},
+          "output": "Output: torch.Size([1, 16, 8, 8])",
+          "explanation": "Same shape — residual blocks preserve dimensions"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_resnet_block",
+      "title": "Residual Block (Skip Connection)",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "Input x",
+          "type": "start"
+        },
+        {
+          "id": "conv1",
+          "label": "Conv2d + BN + ReLU",
+          "type": "process"
+        },
+        {
+          "id": "conv2",
+          "label": "Conv2d + BN",
+          "type": "process"
+        },
+        {
+          "id": "add",
+          "label": "Add (x + F(x))",
+          "type": "process"
+        },
+        {
+          "id": "relu",
+          "label": "ReLU",
+          "type": "process"
+        },
+        {
+          "id": "output",
+          "label": "Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "input",
+          "to": "conv1"
+        },
+        {
+          "from": "conv1",
+          "to": "conv2"
+        },
+        {
+          "from": "conv2",
+          "to": "add"
+        },
+        {
+          "from": "input",
+          "to": "add",
+          "label": "skip connection"
+        },
+        {
+          "from": "add",
+          "to": "relu"
+        },
+        {
+          "from": "relu",
+          "to": "output"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -156,8 +389,18 @@
         "ta": "ResNet-ல் skip connections எந்த சிக்கலை தீர்க்கின்றன?"
       },
       "options": {
-        "en": ["Overfitting", "Vanishing gradients in deep networks", "Slow inference", "Memory overflow"],
-        "ta": ["அதிகமாக பொருத்துதல்", "ஆழ்ந்த நெட்வொர்க்குகளில் மறையும் சாய்வுகள்", "மெதுவான inference", "நினைவக வழிதல்"]
+        "en": [
+          "Overfitting",
+          "Vanishing gradients in deep networks",
+          "Slow inference",
+          "Memory overflow"
+        ],
+        "ta": [
+          "அதிகமாக பொருத்துதல்",
+          "ஆழ்ந்த நெட்வொர்க்குகளில் மறையும் சாய்வுகள்",
+          "மெதுவான inference",
+          "நினைவக வழிதல்"
+        ]
       },
       "correct": 1
     },
@@ -167,8 +410,18 @@
         "ta": "VGG ஏன் ஒரு 5x5-க்கு பதிலாக பல 3x3 convolutions பயன்படுத்துகிறது?"
       },
       "options": {
-        "en": ["3x3 is faster on GPUs", "Same receptive field but fewer parameters and more non-linearity", "5x5 causes errors", "3x3 uses more memory"],
-        "ta": ["3x3 GPU-களில் வேகமானது", "அதே receptive field ஆனால் குறைவான அளவுருக்கள் மற்றும் அதிக non-linearity", "5x5 பிழைகளை ஏற்படுத்துகிறது", "3x3 அதிக நினைவகம் பயன்படுத்துகிறது"]
+        "en": [
+          "3x3 is faster on GPUs",
+          "Same receptive field but fewer parameters and more non-linearity",
+          "5x5 causes errors",
+          "3x3 uses more memory"
+        ],
+        "ta": [
+          "3x3 GPU-களில் வேகமானது",
+          "அதே receptive field ஆனால் குறைவான அளவுருக்கள் மற்றும் அதிக non-linearity",
+          "5x5 பிழைகளை ஏற்படுத்துகிறது",
+          "3x3 அதிக நினைவகம் பயன்படுத்துகிறது"
+        ]
       },
       "correct": 1
     },
@@ -178,20 +431,46 @@
         "ta": "Residual block-ல், நெட்வொர்க் அடுக்குகள் identity function (F(x) = 0) கற்றால் வெளியீடு என்ன?"
       },
       "options": {
-        "en": ["Zero", "The original input x", "Random noise", "An error occurs"],
-        "ta": ["பூஜ்ஜியம்", "அசல் உள்ளீடு x", "சீரற்ற noise", "பிழை ஏற்படும்"]
+        "en": [
+          "Zero",
+          "The original input x",
+          "Random noise",
+          "An error occurs"
+        ],
+        "ta": [
+          "பூஜ்ஜியம்",
+          "அசல் உள்ளீடு x",
+          "சீரற்ற noise",
+          "பிழை ஏற்படும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["lenet", "vgg", "resnet", "skip_connections", "residual_blocks", "batch_normalization"],
-    "concepts_required": ["cnn_intro", "pooling", "convolution"],
+    "concepts_taught": [
+      "lenet",
+      "vgg",
+      "resnet",
+      "skip_connections",
+      "residual_blocks",
+      "batch_normalization"
+    ],
+    "concepts_required": [
+      "cnn_intro",
+      "pooling",
+      "convolution"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "visual",
     "estimated_minutes": 35,
-    "real_world_application": ["image_classification", "computer_vision"],
+    "real_world_application": [
+      "image_classification",
+      "computer_vision"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

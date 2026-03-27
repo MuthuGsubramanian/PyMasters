@@ -39,6 +39,50 @@
       "branch": "sequential"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Counter:\n    def __init__(self, low, high):\n        self.current = low\n        self.high = high\n    def __iter__(self):\n        return self\n    def __next__(self):\n        if self.current > self.high:\n            raise StopIteration\n        val = self.current\n        self.current += 1\n        return val\nfor n in Counter(1, 4):\n    print(n)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define Counter class with __iter__ and __next__" },
+        { "line": 13, "variables": { "current": 1, "high": 4 }, "output": "", "description": "for loop calls Counter(1,4).__iter__() to get iterator" },
+        { "line": 7, "variables": { "current": 2, "high": 4, "n": 1 }, "output": "1", "description": "__next__ returns 1, increments current to 2" },
+        { "line": 7, "variables": { "current": 3, "high": 4, "n": 2 }, "output": "1\n2", "description": "__next__ returns 2, increments current to 3" },
+        { "line": 7, "variables": { "current": 4, "high": 4, "n": 3 }, "output": "1\n2\n3", "description": "__next__ returns 3, increments current to 4" },
+        { "line": 7, "variables": { "current": 5, "high": 4, "n": 4 }, "output": "1\n2\n3\n4", "description": "__next__ returns 4, increments current to 5" },
+        { "line": 8, "variables": { "current": 5, "high": 4 }, "output": "1\n2\n3\n4", "description": "current > high: raise StopIteration, loop ends" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "iterable": [1, 2, 3, 4],
+      "expression": "__next__() returns current, increments",
+      "result": [1, 2, 3, 4],
+      "label": "Counter(1, 4) iterator protocol",
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "for n in Counter(1,4)", "type": "start" },
+        { "id": "iter", "label": "__iter__() returns self", "type": "process" },
+        { "id": "next", "label": "__next__() called", "type": "process" },
+        { "id": "check", "label": "current > high?", "type": "decision" },
+        { "id": "yield", "label": "Return value, increment", "type": "process" },
+        { "id": "stop", "label": "StopIteration raised", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "iter" },
+        { "from": "iter", "to": "next" },
+        { "from": "next", "to": "check" },
+        { "from": "check", "to": "yield" },
+        { "from": "check", "to": "stop" },
+        { "from": "yield", "to": "next" }
+      ],
+      "executionPath": ["start", "iter", "next", "check", "yield", "next", "check", "stop"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

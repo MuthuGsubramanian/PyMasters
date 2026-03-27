@@ -165,6 +165,161 @@
         "200",
         "{'username': 'pymaster', 'email': 'py@master.com'}"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_http_request",
+      "title": "HTTP Request/Response in Action",
+      "code": "import requests\n\nresponse = requests.get('https://httpbin.org/get')\nstatus = response.status_code\ncontent_type = response.headers['Content-Type']\ndata = response.json()\norigin = data['origin']\nprint(f'Status: {status}')\nprint(f'Type: {content_type}')\nprint(f'Origin: {origin}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import the requests library for HTTP calls"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "response": "<Response [200]>"
+          },
+          "output": "",
+          "explanation": "Send GET request to httpbin.org -- server returns our request details"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "response": "<Response [200]>",
+            "status": 200
+          },
+          "output": "",
+          "explanation": "Extract the HTTP status code -- 200 means success"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "response": "<Response [200]>",
+            "status": 200,
+            "content_type": "application/json"
+          },
+          "output": "",
+          "explanation": "Read the Content-Type header from the response"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "status": 200,
+            "content_type": "application/json",
+            "data": {
+              "origin": "1.2.3.4"
+            }
+          },
+          "output": "",
+          "explanation": "Parse JSON body into a Python dictionary"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "data": "...",
+            "origin": "1.2.3.4"
+          },
+          "output": "",
+          "explanation": "Extract the origin IP from the parsed JSON"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Status: 200",
+          "explanation": "Print the status code"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Status: 200\nType: application/json",
+          "explanation": "Print the content type"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Status: 200\nType: application/json\nOrigin: 1.2.3.4",
+          "explanation": "Print our IP as seen by the server"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_http_flow",
+      "title": "HTTP Request/Response Flow",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "Browser/Client",
+          "type": "start"
+        },
+        {
+          "id": "build_req",
+          "label": "Build HTTP Request\n(method, URL, headers)",
+          "type": "process"
+        },
+        {
+          "id": "send",
+          "label": "Send over TCP/IP",
+          "type": "process"
+        },
+        {
+          "id": "server",
+          "label": "Web Server",
+          "type": "process"
+        },
+        {
+          "id": "process",
+          "label": "Process Request\n(route, logic, DB)",
+          "type": "process"
+        },
+        {
+          "id": "build_resp",
+          "label": "Build HTTP Response\n(status, headers, body)",
+          "type": "process"
+        },
+        {
+          "id": "receive",
+          "label": "Client Receives\nResponse",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "build_req",
+          "label": "User action"
+        },
+        {
+          "from": "build_req",
+          "to": "send",
+          "label": "GET /api/data"
+        },
+        {
+          "from": "send",
+          "to": "server",
+          "label": "Network"
+        },
+        {
+          "from": "server",
+          "to": "process",
+          "label": "Route match"
+        },
+        {
+          "from": "process",
+          "to": "build_resp",
+          "label": "200 OK"
+        },
+        {
+          "from": "build_resp",
+          "to": "receive",
+          "label": "JSON body"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -198,8 +353,18 @@
         "ta": "சேவையகத்திலிருந்து தரவைப் பெற எந்த HTTP முறை பயன்படுத்தப்படுகிறது?"
       },
       "options": {
-        "en": ["POST", "GET", "DELETE", "PATCH"],
-        "ta": ["POST", "GET", "DELETE", "PATCH"]
+        "en": [
+          "POST",
+          "GET",
+          "DELETE",
+          "PATCH"
+        ],
+        "ta": [
+          "POST",
+          "GET",
+          "DELETE",
+          "PATCH"
+        ]
       },
       "correct": 1
     },
@@ -209,8 +374,18 @@
         "ta": "404 நிலை குறியீடு என்ன அர்த்தம்?"
       },
       "options": {
-        "en": ["Server error", "Success", "Resource not found", "Redirect"],
-        "ta": ["சேவையக பிழை", "வெற்றி", "வளம் கிடைக்கவில்லை", "திசைமாற்றம்"]
+        "en": [
+          "Server error",
+          "Success",
+          "Resource not found",
+          "Redirect"
+        ],
+        "ta": [
+          "சேவையக பிழை",
+          "வெற்றி",
+          "வளம் கிடைக்கவில்லை",
+          "திசைமாற்றம்"
+        ]
       },
       "correct": 2
     },
@@ -220,20 +395,40 @@
         "ta": "கிளையன்ட் எந்த வடிவ தரவை ஏற்றுக்கொள்கிறது என்று சேவையகத்திற்கு எந்த தலைப்பு தெரிவிக்கிறது?"
       },
       "options": {
-        "en": ["Content-Type", "Authorization", "Accept", "User-Agent"],
-        "ta": ["Content-Type", "Authorization", "Accept", "User-Agent"]
+        "en": [
+          "Content-Type",
+          "Authorization",
+          "Accept",
+          "User-Agent"
+        ],
+        "ta": [
+          "Content-Type",
+          "Authorization",
+          "Accept",
+          "User-Agent"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["http_methods", "status_codes", "headers", "request_response"],
+    "concepts_taught": [
+      "http_methods",
+      "status_codes",
+      "headers",
+      "request_response"
+    ],
     "concepts_required": [],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["web_browsing", "api_calls"],
+    "real_world_application": [
+      "web_browsing",
+      "api_calls"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

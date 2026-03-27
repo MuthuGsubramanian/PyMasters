@@ -189,12 +189,157 @@
       "id": "log_levels",
       "structure_type": "stack",
       "layers": [
-        { "label": "CRITICAL (50)", "count": "system down", "color": "#ff0000" },
-        { "label": "ERROR (40)", "count": "something failed", "color": "#ff6b6b" },
-        { "label": "WARNING (30)", "count": "unexpected", "color": "#ffd93d" },
-        { "label": "INFO (20)", "count": "operational", "color": "#6bcf7f" },
-        { "label": "DEBUG (10)", "count": "detailed", "color": "#4f8ef7" }
+        {
+          "label": "CRITICAL (50)",
+          "count": "system down",
+          "color": "#ff0000"
+        },
+        {
+          "label": "ERROR (40)",
+          "count": "something failed",
+          "color": "#ff6b6b"
+        },
+        {
+          "label": "WARNING (30)",
+          "count": "unexpected",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "INFO (20)",
+          "count": "operational",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "DEBUG (10)",
+          "count": "detailed",
+          "color": "#4f8ef7"
+        }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_logging",
+      "title": "Python Logging Levels",
+      "code": "import logging\n\nlogging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')\nlogger = logging.getLogger(__name__)\n\nlogger.debug('Not shown at INFO level')\nlogger.info('App started')\nlogger.warning('Disk at 85%')\nlogger.error('DB connection failed')\nlogger.critical('System down')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import logging module"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "level": "INFO"
+          },
+          "output": "",
+          "explanation": "Configure: INFO level, with timestamps"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "logger": "<Logger>"
+          },
+          "output": "",
+          "explanation": "Named logger for this module"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "DEBUG not shown at INFO level"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "2026-03-27 INFO App started",
+          "explanation": "INFO: Routine message"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "...WARNING Disk at 85%",
+          "explanation": "WARNING: Needs attention"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "...ERROR DB connection failed",
+          "explanation": "ERROR: Something broke"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "...CRITICAL System down",
+          "explanation": "CRITICAL: System failing"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_logging_tdd",
+      "title": "TDD for Logging",
+      "nodes": [
+        {
+          "id": "test",
+          "label": "Write Test\ncaplog fixture",
+          "type": "start"
+        },
+        {
+          "id": "red",
+          "label": "RED\nNo Logging",
+          "type": "decision"
+        },
+        {
+          "id": "code",
+          "label": "Add Logging",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN\nLog Captured",
+          "type": "decision"
+        },
+        {
+          "id": "refactor",
+          "label": "REFACTOR\nLevels + Format",
+          "type": "process"
+        },
+        {
+          "id": "done",
+          "label": "Production\nMonitoring",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "test",
+          "to": "red",
+          "label": "pytest"
+        },
+        {
+          "from": "red",
+          "to": "code",
+          "label": "Expected"
+        },
+        {
+          "from": "code",
+          "to": "green",
+          "label": "Run"
+        },
+        {
+          "from": "green",
+          "to": "refactor",
+          "label": "Clean"
+        },
+        {
+          "from": "refactor",
+          "to": "done",
+          "label": "Deploy"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -230,8 +375,18 @@
         "ta": "print()-க்கு பதிலாக logging ஏன் பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["print() is slower", "Logging provides levels, timestamps, and routing to files/services", "print() is deprecated", "There is no difference"],
-        "ta": ["print() மெதுவானது", "Logging levels, timestamps, files/services-க்கு routing வழங்குகிறது", "print() deprecated ஆகிவிட்டது", "வேறுபாடு இல்லை"]
+        "en": [
+          "print() is slower",
+          "Logging provides levels, timestamps, and routing to files/services",
+          "print() is deprecated",
+          "There is no difference"
+        ],
+        "ta": [
+          "print() மெதுவானது",
+          "Logging levels, timestamps, files/services-க்கு routing வழங்குகிறது",
+          "print() deprecated ஆகிவிட்டது",
+          "வேறுபாடு இல்லை"
+        ]
       },
       "correct": 1
     },
@@ -241,8 +396,18 @@
         "ta": "'user login successful'-க்கு எந்த logging level பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["DEBUG", "INFO", "WARNING", "ERROR"],
-        "ta": ["DEBUG", "INFO", "WARNING", "ERROR"]
+        "en": [
+          "DEBUG",
+          "INFO",
+          "WARNING",
+          "ERROR"
+        ],
+        "ta": [
+          "DEBUG",
+          "INFO",
+          "WARNING",
+          "ERROR"
+        ]
       },
       "correct": 1
     },
@@ -252,20 +417,45 @@
         "ta": "getLogger(__name__) என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates a random logger name", "Names the logger after the current module", "Returns the root logger", "Creates a file with that name"],
-        "ta": ["ஒரு random logger பெயரை உருவாக்கும்", "தற்போதைய module-ன் பெயரில் logger-ஐ பெயரிடும்", "Root logger-ஐ திருப்பும்", "அந்த பெயரில் ஒரு file உருவாக்கும்"]
+        "en": [
+          "Creates a random logger name",
+          "Names the logger after the current module",
+          "Returns the root logger",
+          "Creates a file with that name"
+        ],
+        "ta": [
+          "ஒரு random logger பெயரை உருவாக்கும்",
+          "தற்போதைய module-ன் பெயரில் logger-ஐ பெயரிடும்",
+          "Root logger-ஐ திருப்பும்",
+          "அந்த பெயரில் ஒரு file உருவாக்கும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["logging", "log_levels", "handlers", "formatters", "structured_logging"],
-    "concepts_required": ["functions", "file_io"],
+    "concepts_taught": [
+      "logging",
+      "log_levels",
+      "handlers",
+      "formatters",
+      "structured_logging"
+    ],
+    "concepts_required": [
+      "functions",
+      "file_io"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["production_monitoring", "debugging", "observability"],
+    "real_world_application": [
+      "production_monitoring",
+      "debugging",
+      "observability"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

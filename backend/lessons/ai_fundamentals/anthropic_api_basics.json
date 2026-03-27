@@ -199,6 +199,59 @@
         ">>> print(f'Output tokens: {message.usage.output_tokens}')",
         "Output tokens: 95"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_anthropic_api_basics",
+      "code": "import anthropic\nclient = anthropic.Anthropic()\n\nmessage = client.messages.create(\n    model='claude-sonnet-4-20250514',\n    max_tokens=100,\n    system='You are a Python tutor. Be concise.',\n    messages=[{'role':'user','content':'Explain decorators in 2 sentences.'}]\n)\n\nprint(message.content[0].text)\nprint(f'Stop: {message.stop_reason}')\nprint(f'Output tokens: {message.usage.output_tokens}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "model": "claude-sonnet-4-20250514"
+          },
+          "output": "",
+          "explanation": "Anthropic Messages API — similar to OpenAI"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "system": "Python tutor"
+          },
+          "output": "",
+          "explanation": "System prompt is separate param (not in messages)"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "role": "user"
+          },
+          "output": "",
+          "explanation": "User message — same format as OpenAI"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Decorators wrap functions to add behavior...",
+          "explanation": "Access text via message.content[0].text"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "stop_reason": "end_turn"
+          },
+          "output": "Stop: end_turn",
+          "explanation": "end_turn = finished naturally"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "output_tokens": 35
+          },
+          "output": "Output tokens: 35",
+          "explanation": "Track tokens for cost monitoring"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -291,13 +344,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["anthropic_api", "claude_messages", "tool_use", "api_comparison"],
-    "concepts_required": ["openai_api_basics"],
+    "concepts_taught": [
+      "anthropic_api",
+      "claude_messages",
+      "tool_use",
+      "api_comparison"
+    ],
+    "concepts_required": [
+      "openai_api_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["multi_model_apps", "ai_integration"],
+    "real_world_application": [
+      "multi_model_apps",
+      "ai_integration"
+    ],
     "category": "ai_api",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

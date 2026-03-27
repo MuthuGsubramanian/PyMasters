@@ -155,11 +155,26 @@
       "type": "FlowArrow",
       "id": "dp_flow",
       "steps": [
-        {"label": "Define dp[i] meaning", "active": true},
-        {"label": "Find recurrence relation", "active": true},
-        {"label": "Set base cases", "active": true},
-        {"label": "Fill table bottom-up", "active": true},
-        {"label": "Return dp[n]", "active": true}
+        {
+          "label": "Define dp[i] meaning",
+          "active": true
+        },
+        {
+          "label": "Find recurrence relation",
+          "active": true
+        },
+        {
+          "label": "Set base cases",
+          "active": true
+        },
+        {
+          "label": "Fill table bottom-up",
+          "active": true
+        },
+        {
+          "label": "Return dp[n]",
+          "active": true
+        }
       ]
     },
     {
@@ -187,6 +202,132 @@
         "lcs('ABCBDAB', 'BDCAB') = 4",
         "dp table filled in O(n*amount) time"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_dynamic_programming",
+      "code": "def coin_change(coins, amount):\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0\n    for i in range(1, amount + 1):\n        for coin in coins:\n            if coin <= i and dp[i-coin] + 1 < dp[i]:\n                dp[i] = dp[i-coin] + 1\n    return dp[amount] if dp[amount] != float('inf') else -1\n\nprint(coin_change([1, 5, 10], 13))",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "dp[0]": 0
+          },
+          "output": "",
+          "explanation": "dp[i] = min coins for amount i. Base: dp[0]=0"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "i": 1
+          },
+          "output": "",
+          "explanation": "dp[1]: try [1,5,10]. Only coin 1 fits: dp[0]+1=1"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "dp[1]": 1
+          },
+          "output": "",
+          "explanation": "dp[1]=1 (one coin of value 1)"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "i": 5
+          },
+          "output": "",
+          "explanation": "dp[5]: coin=1 gives 5, coin=5 gives dp[0]+1=1"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "dp[5]": 1
+          },
+          "output": "",
+          "explanation": "dp[5]=1 (one coin of value 5)"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "i": 10
+          },
+          "output": "",
+          "explanation": "dp[10]: coin=10 gives dp[0]+1=1"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "i": 13
+          },
+          "output": "",
+          "explanation": "dp[13]: best is dp[3]+1 via coin 10 = 4"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "4",
+          "explanation": "Min coins for 13: 4 (10+1+1+1). DP finds optimal!"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_dynamic_programming",
+      "nodes": [
+        {
+          "id": "define",
+          "label": "Define dp[i] = min coins for amount i",
+          "next": [
+            "base"
+          ]
+        },
+        {
+          "id": "base",
+          "label": "Base case: dp[0] = 0",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "loop",
+          "label": "For each amount i = 1..target",
+          "next": [
+            "try_coins"
+          ]
+        },
+        {
+          "id": "try_coins",
+          "label": "Try each coin denomination",
+          "next": [
+            "check"
+          ]
+        },
+        {
+          "id": "check",
+          "label": "dp[i-coin]+1 < dp[i]?",
+          "next": [
+            "update",
+            "skip"
+          ]
+        },
+        {
+          "id": "update",
+          "label": "Update dp[i]",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "skip",
+          "label": "Keep current dp[i]",
+          "next": [
+            "loop"
+          ]
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -218,8 +359,18 @@
         "ta": "DP பொருந்த ஒரு சிக்கலுக்கு எந்த இரண்டு பண்புகள் இருக்க வேண்டும்?"
       },
       "options": {
-        "en": ["Sorting and searching", "Overlapping subproblems and optimal substructure", "Recursion and iteration", "Graphs and trees"],
-        "ta": ["Sorting மற்றும் searching", "Overlapping subproblems மற்றும் optimal substructure", "Recursion மற்றும் iteration", "Graphs மற்றும் trees"]
+        "en": [
+          "Sorting and searching",
+          "Overlapping subproblems and optimal substructure",
+          "Recursion and iteration",
+          "Graphs and trees"
+        ],
+        "ta": [
+          "Sorting மற்றும் searching",
+          "Overlapping subproblems மற்றும் optimal substructure",
+          "Recursion மற்றும் iteration",
+          "Graphs மற்றும் trees"
+        ]
       },
       "correct": 1
     },
@@ -229,8 +380,18 @@
         "ta": "A தொகைக்கு C நாணய வகைகளுடன் coin change DP தீர்வின் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(A)", "O(A × C)", "O(A²)", "O(2^A)"],
-        "ta": ["O(A)", "O(A × C)", "O(A²)", "O(2^A)"]
+        "en": [
+          "O(A)",
+          "O(A × C)",
+          "O(A²)",
+          "O(2^A)"
+        ],
+        "ta": [
+          "O(A)",
+          "O(A × C)",
+          "O(A²)",
+          "O(2^A)"
+        ]
       },
       "correct": 1
     },
@@ -240,20 +401,46 @@
         "ta": "top-down மற்றும் bottom-up DP இடையே என்ன வேறுபாடு?"
       },
       "options": {
-        "en": ["Top-down is faster", "Top-down uses recursion+cache, bottom-up uses iteration+table", "They produce different answers", "Bottom-up uses more memory"],
-        "ta": ["Top-down வேகமானது", "Top-down recursion+cache, bottom-up iteration+table பயன்படுத்தும்", "வெவ்வேறு விடைகளை உருவாக்கும்", "Bottom-up அதிக நினைவகம் பயன்படுத்தும்"]
+        "en": [
+          "Top-down is faster",
+          "Top-down uses recursion+cache, bottom-up uses iteration+table",
+          "They produce different answers",
+          "Bottom-up uses more memory"
+        ],
+        "ta": [
+          "Top-down வேகமானது",
+          "Top-down recursion+cache, bottom-up iteration+table பயன்படுத்தும்",
+          "வெவ்வேறு விடைகளை உருவாக்கும்",
+          "Bottom-up அதிக நினைவகம் பயன்படுத்தும்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["dynamic_programming", "tabulation", "coin_change", "knapsack", "lcs"],
-    "concepts_required": ["recursion", "memoization", "arrays"],
+    "concepts_taught": [
+      "dynamic_programming",
+      "tabulation",
+      "coin_change",
+      "knapsack",
+      "lcs"
+    ],
+    "concepts_required": [
+      "recursion",
+      "memoization",
+      "arrays"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["resource_optimization", "text_diffing", "financial_planning"],
+    "real_world_application": [
+      "resource_optimization",
+      "text_diffing",
+      "financial_planning"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

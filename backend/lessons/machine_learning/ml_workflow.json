@@ -30,7 +30,14 @@
       "nodes": [
         {
           "label": "ML Workflow",
-          "children": ["Data Collection", "Preprocessing", "Feature Engineering", "Training", "Evaluation", "Deployment"]
+          "children": [
+            "Data Collection",
+            "Preprocessing",
+            "Feature Engineering",
+            "Training",
+            "Evaluation",
+            "Deployment"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -39,12 +46,36 @@
       "type": "FlowArrow",
       "id": "pipeline_flow",
       "stages": [
-        { "label": "Raw Data", "icon": "database", "color": "#e74c3c" },
-        { "label": "Clean Data", "icon": "broom", "color": "#f39c12" },
-        { "label": "Features", "icon": "wrench", "color": "#2ecc71" },
-        { "label": "Trained Model", "icon": "brain", "color": "#3498db" },
-        { "label": "Metrics", "icon": "chart", "color": "#9b59b6" },
-        { "label": "Production API", "icon": "rocket", "color": "#1abc9c" }
+        {
+          "label": "Raw Data",
+          "icon": "database",
+          "color": "#e74c3c"
+        },
+        {
+          "label": "Clean Data",
+          "icon": "broom",
+          "color": "#f39c12"
+        },
+        {
+          "label": "Features",
+          "icon": "wrench",
+          "color": "#2ecc71"
+        },
+        {
+          "label": "Trained Model",
+          "icon": "brain",
+          "color": "#3498db"
+        },
+        {
+          "label": "Metrics",
+          "icon": "chart",
+          "color": "#9b59b6"
+        },
+        {
+          "label": "Production API",
+          "icon": "rocket",
+          "color": "#1abc9c"
+        }
       ],
       "duration_ms": 5000
     },
@@ -55,72 +86,100 @@
         {
           "line": "import pandas as pd",
           "highlight": "pandas",
-          "explanation": { "en": "Pandas is the go-to library for loading and manipulating tabular data" }
+          "explanation": {
+            "en": "Pandas is the go-to library for loading and manipulating tabular data"
+          }
         },
         {
           "line": "from sklearn.model_selection import train_test_split",
           "highlight": "train_test_split",
-          "explanation": { "en": "This function splits data into training and testing sets" }
+          "explanation": {
+            "en": "This function splits data into training and testing sets"
+          }
         },
         {
           "line": "from sklearn.preprocessing import StandardScaler",
           "highlight": "StandardScaler",
-          "explanation": { "en": "Scaler transforms features to have mean=0 and std=1" }
+          "explanation": {
+            "en": "Scaler transforms features to have mean=0 and std=1"
+          }
         },
         {
           "line": "from sklearn.ensemble import RandomForestClassifier",
           "highlight": "RandomForestClassifier",
-          "explanation": { "en": "A powerful ensemble model that combines many decision trees" }
+          "explanation": {
+            "en": "A powerful ensemble model that combines many decision trees"
+          }
         },
         {
           "line": "df = pd.DataFrame({'feat1': [1,2,3,4,5], 'feat2': [5,4,3,2,1], 'target': [0,0,1,1,1]})",
           "highlight": "DataFrame",
-          "explanation": { "en": "Stage 1: Create sample data with 2 features and a binary target" }
+          "explanation": {
+            "en": "Stage 1: Create sample data with 2 features and a binary target"
+          }
         },
         {
           "line": "X = df[['feat1', 'feat2']]",
           "highlight": "X",
-          "explanation": { "en": "Stage 2: Separate features from target — X holds the inputs" }
+          "explanation": {
+            "en": "Stage 2: Separate features from target — X holds the inputs"
+          }
         },
         {
           "line": "y = df['target']",
           "highlight": "y",
-          "explanation": { "en": "Target column — what we want to predict" }
+          "explanation": {
+            "en": "Target column — what we want to predict"
+          }
         },
         {
           "line": "scaler = StandardScaler()",
           "highlight": "scaler",
-          "explanation": { "en": "Stage 3: Initialize the scaler for feature normalization" }
+          "explanation": {
+            "en": "Stage 3: Initialize the scaler for feature normalization"
+          }
         },
         {
           "line": "X_scaled = scaler.fit_transform(X)",
           "highlight": "fit_transform",
-          "explanation": { "en": "Compute mean/std from data and transform in one step" }
+          "explanation": {
+            "en": "Compute mean/std from data and transform in one step"
+          }
         },
         {
           "line": "X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)",
           "highlight": "train_test_split",
-          "explanation": { "en": "Stage 4: Split into 80% training and 20% testing data" }
+          "explanation": {
+            "en": "Stage 4: Split into 80% training and 20% testing data"
+          }
         },
         {
           "line": "model = RandomForestClassifier(n_estimators=100, random_state=42)",
           "highlight": "RandomForestClassifier",
-          "explanation": { "en": "Create the model with 100 decision trees" }
+          "explanation": {
+            "en": "Create the model with 100 decision trees"
+          }
         },
         {
           "line": "model.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Train the model — it learns patterns from training data" }
+          "explanation": {
+            "en": "Train the model — it learns patterns from training data"
+          }
         },
         {
           "line": "accuracy = model.score(X_test, y_test)",
           "highlight": "score",
-          "explanation": { "en": "Stage 5: Evaluate — .score() returns accuracy on test data" }
+          "explanation": {
+            "en": "Stage 5: Evaluate — .score() returns accuracy on test data"
+          }
         },
         {
           "line": "print(f'Model Accuracy: {accuracy:.2f}')",
           "highlight": "print",
-          "explanation": { "en": "Display the evaluation metric — how well the model generalizes" }
+          "explanation": {
+            "en": "Display the evaluation metric — how well the model generalizes"
+          }
         }
       ]
     },
@@ -138,6 +197,154 @@
       "output": [
         "Model Accuracy: 1.00"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_ml_workflow",
+      "code": "import pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import accuracy_score\n\n# Step 1: Load data\ndf = pd.DataFrame({'feature1': [1,2,3,4,5], 'feature2': [5,4,3,2,1], 'target': [0,0,1,1,1]})\nX = df[['feature1', 'feature2']]\ny = df['target']\n\n# Step 2: Split\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n# Step 3: Scale\nscaler = StandardScaler().fit(X_train)\nX_train_scaled = scaler.transform(X_train)\nX_test_scaled = scaler.transform(X_test)\n\n# Step 4: Train & Evaluate\nmodel = LogisticRegression().fit(X_train_scaled, y_train)\nprint(f'Accuracy: {model.score(X_test_scaled, y_test):.2f}')",
+      "executionSteps": [
+        {
+          "line": 8,
+          "variables": {
+            "df": "5 rows x 3 cols"
+          },
+          "output": "",
+          "explanation": "Step 1: Load/create dataset"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "X_train": "(4, 2)",
+            "X_test": "(1, 2)"
+          },
+          "output": "",
+          "explanation": "Step 2: Split into train and test sets"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "scaler": "StandardScaler(fitted)"
+          },
+          "output": "",
+          "explanation": "Step 3: Fit scaler on training data ONLY"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "X_train_scaled": "mean=0, std=1"
+          },
+          "output": "",
+          "explanation": "Transform training data"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "X_test_scaled": "scaled with train stats"
+          },
+          "output": "",
+          "explanation": "Transform test data using SAME scaler — prevents data leakage"
+        },
+        {
+          "line": 21,
+          "variables": {
+            "model": "fitted LogisticRegression"
+          },
+          "output": "",
+          "explanation": "Step 4: Train model on scaled data"
+        },
+        {
+          "line": 22,
+          "variables": {
+            "accuracy": "1.00"
+          },
+          "output": "Accuracy: 1.00",
+          "explanation": "Evaluate on scaled test set"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_ml_workflow",
+      "title": "ML Workflow Pipeline",
+      "nodes": [
+        {
+          "id": "collect",
+          "label": "Collect Data",
+          "type": "start"
+        },
+        {
+          "id": "clean",
+          "label": "Clean & Preprocess",
+          "type": "process"
+        },
+        {
+          "id": "split",
+          "label": "Train/Test Split",
+          "type": "process"
+        },
+        {
+          "id": "scale",
+          "label": "Feature Scaling",
+          "type": "process"
+        },
+        {
+          "id": "train",
+          "label": "Train Model",
+          "type": "process"
+        },
+        {
+          "id": "eval",
+          "label": "Evaluate",
+          "type": "decision"
+        },
+        {
+          "id": "deploy",
+          "label": "Deploy",
+          "type": "end"
+        },
+        {
+          "id": "tune",
+          "label": "Tune Hyperparams",
+          "type": "process"
+        }
+      ],
+      "edges": [
+        {
+          "from": "collect",
+          "to": "clean"
+        },
+        {
+          "from": "clean",
+          "to": "split"
+        },
+        {
+          "from": "split",
+          "to": "scale"
+        },
+        {
+          "from": "scale",
+          "to": "train"
+        },
+        {
+          "from": "train",
+          "to": "eval"
+        },
+        {
+          "from": "eval",
+          "to": "deploy",
+          "label": "Good"
+        },
+        {
+          "from": "eval",
+          "to": "tune",
+          "label": "Poor"
+        },
+        {
+          "from": "tune",
+          "to": "train"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -228,13 +435,26 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["ml_pipeline", "train_test_split", "preprocessing", "model_evaluation"],
-    "concepts_required": ["supervised_learning", "python_basics"],
+    "concepts_taught": [
+      "ml_pipeline",
+      "train_test_split",
+      "preprocessing",
+      "model_evaluation"
+    ],
+    "concepts_required": [
+      "supervised_learning",
+      "python_basics"
+    ],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 30,
-    "real_world_application": ["data_science_workflow", "production_ml"],
+    "real_world_application": [
+      "data_science_workflow",
+      "production_ml"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["ml_fundamentals"]
+    "path_memberships": [
+      "ml_fundamentals"
+    ]
   }
 }

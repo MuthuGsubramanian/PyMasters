@@ -196,6 +196,60 @@
         "...         print(chunk.choices[0].delta.content, end='')",
         "1, 2, 3, 4, 5"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_openai_api_basics",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\nresponse = client.chat.completions.create(\n    model='gpt-4o-mini',\n    messages=[\n        {'role':'system','content':'You are a helpful assistant.'},\n        {'role':'user','content':'What is Python in one sentence?'}\n    ],\n    max_tokens=50, temperature=0.7\n)\n\nanswer = response.choices[0].message.content\nprint(answer)\nprint(f'Tokens used: {response.usage.total_tokens}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "model": "gpt-4o-mini"
+          },
+          "output": "",
+          "explanation": "Chat completions — the main API endpoint"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "role": "system"
+          },
+          "output": "",
+          "explanation": "System message sets AI behavior"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "role": "user"
+          },
+          "output": "",
+          "explanation": "User message is your question"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "max_tokens": 50,
+            "temperature": 0.7
+          },
+          "output": "",
+          "explanation": "max_tokens limits length, temperature controls creativity"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Python is a versatile programming language.",
+          "explanation": "Extract response text"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "total_tokens": 42
+          },
+          "output": "Tokens used: 42",
+          "explanation": "Track usage — you pay per token"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -286,13 +340,26 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["openai_api", "chat_completions", "streaming", "api_keys"],
-    "concepts_required": ["prompt_engineering_basics", "llm_how_they_work"],
+    "concepts_taught": [
+      "openai_api",
+      "chat_completions",
+      "streaming",
+      "api_keys"
+    ],
+    "concepts_required": [
+      "prompt_engineering_basics",
+      "llm_how_they_work"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["chatbot_building", "ai_integration"],
+    "real_world_application": [
+      "chatbot_building",
+      "ai_integration"
+    ],
     "category": "ai_api",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

@@ -45,6 +45,19 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "students = [\n    {'name': 'Alice', 'grade': 90},\n    {'name': 'Bob', 'grade': 85}\n]\nprint(students[0]['name'])\nprint(students[1]['grade'])\nscores = {'math': [90, 85], 'eng': [78, 92]}\navg = sum(scores['eng']) / len(scores['eng'])\nprint(avg)",
+      "executionSteps": [
+        { "line": 1, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}] }, "output": "", "description": "Create a list of two student dicts" },
+        { "line": 5, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}] }, "output": "Alice", "description": "Chain indexing: students[0] gets first dict, ['name'] gets 'Alice'" },
+        { "line": 6, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}] }, "output": "Alice\n85", "description": "Access Bob's grade via students[1]['grade']" },
+        { "line": 7, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}], "scores": {"math": [90, 85], "eng": [78, 92]} }, "output": "Alice\n85", "description": "Create a dict of lists -- scores by subject" },
+        { "line": 8, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}], "scores": {"math": [90, 85], "eng": [78, 92]}, "avg": 85.0 }, "output": "Alice\n85", "description": "Calculate average of eng scores: (78+92)/2 = 85.0" },
+        { "line": 9, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}], "scores": {"math": [90, 85], "eng": [78, 92]}, "avg": 85.0 }, "output": "Alice\n85\n85.0", "description": "Print the average" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

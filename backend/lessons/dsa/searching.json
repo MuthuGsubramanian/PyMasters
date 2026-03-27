@@ -147,10 +147,22 @@
       "type": "FlowArrow",
       "id": "binary_search_flow",
       "steps": [
-        {"label": "Array: [2,5,8,12,16,23,38,56,72,91]", "active": true},
-        {"label": "Step 1: mid=16, target>16 → go right", "active": true},
-        {"label": "Step 2: mid=38, target<38 → go left", "active": true},
-        {"label": "Step 3: mid=23, FOUND!", "active": true}
+        {
+          "label": "Array: [2,5,8,12,16,23,38,56,72,91]",
+          "active": true
+        },
+        {
+          "label": "Step 1: mid=16, target>16 → go right",
+          "active": true
+        },
+        {
+          "label": "Step 2: mid=38, target<38 → go left",
+          "active": true
+        },
+        {
+          "label": "Step 3: mid=23, FOUND!",
+          "active": true
+        }
       ]
     },
     {
@@ -178,6 +190,203 @@
         "bisect_left(arr, 23) = 5",
         "For n=1000000: linear=500000 avg, binary=20 max"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_searching",
+      "code": "def binary_search(arr, target):\n    left, right = 0, len(arr) - 1\n    steps = 0\n    while left <= right:\n        mid = (left + right) // 2\n        steps += 1\n        if arr[mid] == target: return mid, steps\n        elif arr[mid] < target: left = mid + 1\n        else: right = mid - 1\n    return -1, steps\n\narr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]\nidx, steps = binary_search(arr, 23)\nprint(f'Found 23 at index {idx} in {steps} steps')",
+      "executionSteps": [
+        {
+          "line": 12,
+          "variables": {
+            "arr": [
+              2,
+              5,
+              8,
+              12,
+              16,
+              23,
+              38,
+              56,
+              72,
+              91
+            ]
+          },
+          "output": "",
+          "explanation": "Sorted array with 10 elements, searching for 23"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "left": 0,
+            "right": 9
+          },
+          "output": "",
+          "explanation": "Search space: entire array (indices 0..9)"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "mid": 4,
+            "arr[mid]": 16
+          },
+          "output": "",
+          "explanation": "Step 1: mid=4, arr[4]=16. 23>16 => go right"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "left": 5,
+            "right": 9
+          },
+          "output": "",
+          "explanation": "Discard left half. Space halved: indices 5..9"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "mid": 7,
+            "arr[mid]": 56
+          },
+          "output": "",
+          "explanation": "Step 2: mid=7, arr[7]=56. 23<56 => go left"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "left": 5,
+            "right": 6
+          },
+          "output": "",
+          "explanation": "Discard right half. Space: indices 5..6"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "mid": 5,
+            "arr[mid]": 23
+          },
+          "output": "",
+          "explanation": "Step 3: mid=5, arr[5]=23. FOUND!"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Found 23 at index 5 in 3 steps",
+          "explanation": "3 steps for 10 elements. log2(10) ~ 3.3. O(log n)!"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "loop_viz_searching",
+      "arrayLabel": "Binary Search",
+      "initialArray": [
+        2,
+        5,
+        8,
+        12,
+        16,
+        23,
+        38,
+        56,
+        72,
+        91
+      ],
+      "iterations": [
+        {
+          "pass": 1,
+          "comparing": [
+            4
+          ],
+          "action": "go_right",
+          "left": 0,
+          "right": 9,
+          "mid": 4
+        },
+        {
+          "pass": 2,
+          "comparing": [
+            7
+          ],
+          "action": "go_left",
+          "left": 5,
+          "right": 9,
+          "mid": 7
+        },
+        {
+          "pass": 3,
+          "comparing": [
+            5
+          ],
+          "action": "found",
+          "left": 5,
+          "right": 6,
+          "mid": 5
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_searching",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Set left=0, right=n-1",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "loop",
+          "label": "left <= right?",
+          "next": [
+            "calc_mid",
+            "not_found"
+          ]
+        },
+        {
+          "id": "calc_mid",
+          "label": "mid = (left+right)//2",
+          "next": [
+            "compare"
+          ]
+        },
+        {
+          "id": "compare",
+          "label": "arr[mid] vs target",
+          "next": [
+            "found",
+            "go_right",
+            "go_left"
+          ]
+        },
+        {
+          "id": "found",
+          "label": "Equal => Return mid",
+          "next": []
+        },
+        {
+          "id": "go_right",
+          "label": "Too small => left=mid+1",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "go_left",
+          "label": "Too big => right=mid-1",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "not_found",
+          "label": "Not found => return -1",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -209,8 +418,18 @@
         "ta": "Binary search வேலை செய்ய என்ன முன்நிபந்தனை?"
       },
       "options": {
-        "en": ["Array must be of even length", "Array must be sorted", "Array must contain unique elements", "Array must be small"],
-        "ta": ["Array இரட்டை நீளமாக இருக்க வேண்டும்", "Array sorted ஆக இருக்க வேண்டும்", "Array தனித்துவ உறுப்புகளைக் கொண்டிருக்க வேண்டும்", "Array சிறியதாக இருக்க வேண்டும்"]
+        "en": [
+          "Array must be of even length",
+          "Array must be sorted",
+          "Array must contain unique elements",
+          "Array must be small"
+        ],
+        "ta": [
+          "Array இரட்டை நீளமாக இருக்க வேண்டும்",
+          "Array sorted ஆக இருக்க வேண்டும்",
+          "Array தனித்துவ உறுப்புகளைக் கொண்டிருக்க வேண்டும்",
+          "Array சிறியதாக இருக்க வேண்டும்"
+        ]
       },
       "correct": 1
     },
@@ -220,8 +439,18 @@
         "ta": "1024 உறுப்புகள் கொண்ட array-க்கு binary search எத்தனை ஒப்பீடுகள் தேவை?"
       },
       "options": {
-        "en": ["1024", "512", "10", "100"],
-        "ta": ["1024", "512", "10", "100"]
+        "en": [
+          "1024",
+          "512",
+          "10",
+          "100"
+        ],
+        "ta": [
+          "1024",
+          "512",
+          "10",
+          "100"
+        ]
       },
       "correct": 2
     },
@@ -231,20 +460,44 @@
         "ta": "bisect.insort(list, val) என்ன செய்யும்?"
       },
       "options": {
-        "en": ["Sorts the entire list", "Inserts val at the end", "Inserts val while maintaining sorted order", "Returns the insertion index"],
-        "ta": ["முழு list-ஐயும் sort செய்யும்", "val-ஐ முடிவில் செருகும்", "sorted order-ஐ பராமரித்தவாறு val-ஐ செருகும்", "insertion index-ஐ திருப்பும்"]
+        "en": [
+          "Sorts the entire list",
+          "Inserts val at the end",
+          "Inserts val while maintaining sorted order",
+          "Returns the insertion index"
+        ],
+        "ta": [
+          "முழு list-ஐயும் sort செய்யும்",
+          "val-ஐ முடிவில் செருகும்",
+          "sorted order-ஐ பராமரித்தவாறு val-ஐ செருகும்",
+          "insertion index-ஐ திருப்பும்"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["linear_search", "binary_search", "bisect"],
-    "concepts_required": ["lists", "loops", "sorting"],
+    "concepts_taught": [
+      "linear_search",
+      "binary_search",
+      "bisect"
+    ],
+    "concepts_required": [
+      "lists",
+      "loops",
+      "sorting"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["database_lookup", "autocomplete", "spell_check"],
+    "real_world_application": [
+      "database_lookup",
+      "autocomplete",
+      "spell_check"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

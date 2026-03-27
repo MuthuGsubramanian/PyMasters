@@ -162,6 +162,132 @@
         "  }",
         "]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_drf",
+      "title": "DRF Serialization Pipeline",
+      "code": "from rest_framework import serializers\n\nclass ArticleSerializer(serializers.Serializer):\n    title = serializers.CharField(max_length=200)\n    author = serializers.CharField()\n\ndata = {'title': 'DRF Guide', 'author': 'Vaathiyaar'}\nserializer = ArticleSerializer(data=data)\nis_valid = serializer.is_valid()\nprint(f'Valid: {is_valid}')\nprint(f'Data: {serializer.validated_data}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import DRF serializers"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "ArticleSerializer": "<class>"
+          },
+          "output": "",
+          "explanation": "Define serializer with title and author fields"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "data": {
+              "title": "DRF Guide",
+              "author": "Vaathiyaar"
+            }
+          },
+          "output": "",
+          "explanation": "Incoming API data"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "serializer": "<ArticleSerializer>"
+          },
+          "output": "",
+          "explanation": "Create serializer with input data"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "is_valid": true
+          },
+          "output": "",
+          "explanation": "is_valid() runs all validators"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Valid: True",
+          "explanation": "Validation passed"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Valid: True\nData: {'title': 'DRF Guide', 'author': 'Vaathiyaar'}",
+          "explanation": "Clean data ready to save"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_drf_pipeline",
+      "title": "DRF Request Pipeline",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "API Client\nPOST /api/",
+          "type": "start"
+        },
+        {
+          "id": "router",
+          "label": "DRF Router\nURL Match",
+          "type": "process"
+        },
+        {
+          "id": "viewset",
+          "label": "ViewSet\ncreate()",
+          "type": "process"
+        },
+        {
+          "id": "serializer",
+          "label": "Serializer\nValidate",
+          "type": "decision"
+        },
+        {
+          "id": "model",
+          "label": "Model.save()",
+          "type": "process"
+        },
+        {
+          "id": "response",
+          "label": "JSON 201",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "router",
+          "label": "JSON"
+        },
+        {
+          "from": "router",
+          "to": "viewset",
+          "label": "Match"
+        },
+        {
+          "from": "viewset",
+          "to": "serializer",
+          "label": "Data"
+        },
+        {
+          "from": "serializer",
+          "to": "model",
+          "label": "Valid"
+        },
+        {
+          "from": "model",
+          "to": "response",
+          "label": "Saved"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -195,8 +321,18 @@
         "ta": "DRF Serializer என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Converts models to HTML templates", "Converts model instances to/from JSON and validates input", "Creates database tables", "Manages URL routing"],
-        "ta": ["மாதிரிகளை HTML வார்ப்புருக்களாக மாற்றுகிறது", "மாதிரி நிகழ்வுகளை JSON-க்கு/JSON-லிருந்து மாற்றுகிறது மற்றும் உள்ளீட்டை சரிபார்க்கிறது", "தரவுத்தள அட்டவணைகளை உருவாக்குகிறது", "URL ரூட்டிங்கை நிர்வகிக்கிறது"]
+        "en": [
+          "Converts models to HTML templates",
+          "Converts model instances to/from JSON and validates input",
+          "Creates database tables",
+          "Manages URL routing"
+        ],
+        "ta": [
+          "மாதிரிகளை HTML வார்ப்புருக்களாக மாற்றுகிறது",
+          "மாதிரி நிகழ்வுகளை JSON-க்கு/JSON-லிருந்து மாற்றுகிறது மற்றும் உள்ளீட்டை சரிபார்க்கிறது",
+          "தரவுத்தள அட்டவணைகளை உருவாக்குகிறது",
+          "URL ரூட்டிங்கை நிர்வகிக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -206,8 +342,18 @@
         "ta": "ModelViewSet இயல்பாக என்ன வழங்குகிறது?"
       },
       "options": {
-        "en": ["Only GET requests", "Only POST and DELETE", "Full CRUD: list, create, retrieve, update, delete", "Only database migrations"],
-        "ta": ["GET கோரிக்கைகள் மட்டும்", "POST மற்றும் DELETE மட்டும்", "முழு CRUD: பட்டியல், உருவாக்கம், மீட்டெடுப்பு, புதுப்பிப்பு, நீக்கம்", "தரவுத்தள இடம்பெயர்வுகள் மட்டும்"]
+        "en": [
+          "Only GET requests",
+          "Only POST and DELETE",
+          "Full CRUD: list, create, retrieve, update, delete",
+          "Only database migrations"
+        ],
+        "ta": [
+          "GET கோரிக்கைகள் மட்டும்",
+          "POST மற்றும் DELETE மட்டும்",
+          "முழு CRUD: பட்டியல், உருவாக்கம், மீட்டெடுப்பு, புதுப்பிப்பு, நீக்கம்",
+          "தரவுத்தள இடம்பெயர்வுகள் மட்டும்"
+        ]
       },
       "correct": 2
     },
@@ -217,20 +363,43 @@
         "ta": "DRF-ன் DefaultRouter-ன் நோக்கம் என்ன?"
       },
       "options": {
-        "en": ["To hash passwords", "To auto-generate URL patterns from ViewSets", "To create database tables", "To serve static files"],
-        "ta": ["கடவுச்சொற்களை ஹாஷ் செய்ய", "ViewSets-லிருந்து URL வடிவங்களை தானாக உருவாக்க", "தரவுத்தள அட்டவணைகளை உருவாக்க", "நிலையான கோப்புகளை வழங்க"]
+        "en": [
+          "To hash passwords",
+          "To auto-generate URL patterns from ViewSets",
+          "To create database tables",
+          "To serve static files"
+        ],
+        "ta": [
+          "கடவுச்சொற்களை ஹாஷ் செய்ய",
+          "ViewSets-லிருந்து URL வடிவங்களை தானாக உருவாக்க",
+          "தரவுத்தள அட்டவணைகளை உருவாக்க",
+          "நிலையான கோப்புகளை வழங்க"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["drf_serializers", "viewsets", "routers", "api_permissions"],
-    "concepts_required": ["django_models", "rest_api_concepts"],
+    "concepts_taught": [
+      "drf_serializers",
+      "viewsets",
+      "routers",
+      "api_permissions"
+    ],
+    "concepts_required": [
+      "django_models",
+      "rest_api_concepts"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["api_development", "backend_services"],
+    "real_world_application": [
+      "api_development",
+      "backend_services"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

@@ -242,6 +242,55 @@
           "address": "0x03"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __str__(self):\n        return f'Vector({self.x}, {self.y})'\n\n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n\n    def __len__(self):\n        return int((self.x**2 + self.y**2)**0.5)\n\nv1 = Vector(3, 4)\nv2 = Vector(1, 2)\nv3 = v1 + v2\nprint(v3)\nprint(len(v1))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Vector class with magic methods"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "v1": "Vector(3, 4)"
+          },
+          "output": "",
+          "description": "Create v1 - __init__ sets x=3, y=4"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "v2": "Vector(1, 2)"
+          },
+          "output": "",
+          "description": "Create v2 - __init__ sets x=1, y=2"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "v3": "Vector(4, 6)"
+          },
+          "output": "",
+          "description": "v1 + v2 triggers __add__ -> new Vector(3+1, 4+2)"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Vector(4, 6)",
+          "description": "print(v3) triggers __str__ -> 'Vector(4, 6)'"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "5",
+          "description": "len(v1) triggers __len__ -> sqrt(9+16) = 5"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -273,8 +322,18 @@
         "ta": "print(obj) எந்த மந்திர முறையை அழைக்கிறது?"
       },
       "options": {
-        "en": ["__repr__", "__str__", "__print__", "__display__"],
-        "ta": ["__repr__", "__str__", "__print__", "__display__"]
+        "en": [
+          "__repr__",
+          "__str__",
+          "__print__",
+          "__display__"
+        ],
+        "ta": [
+          "__repr__",
+          "__str__",
+          "__print__",
+          "__display__"
+        ]
       },
       "correct": 1
     },
@@ -322,13 +381,30 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["magic_methods", "__str__", "__repr__", "__len__", "__eq__", "__add__", "operator_overloading"],
-    "concepts_required": ["classes", "objects", "methods"],
+    "concepts_taught": [
+      "magic_methods",
+      "__str__",
+      "__repr__",
+      "__len__",
+      "__eq__",
+      "__add__",
+      "operator_overloading"
+    ],
+    "concepts_required": [
+      "classes",
+      "objects",
+      "methods"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["custom_types", "operator_overloading"],
+    "real_world_application": [
+      "custom_types",
+      "operator_overloading"
+    ],
     "category": "oop",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }
