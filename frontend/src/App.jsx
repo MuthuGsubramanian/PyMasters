@@ -8,6 +8,7 @@ import Onboarding from './pages/Onboarding';
 import { Overview, LearningMap, ModuleViewer } from './pages/Dashboard';
 import Classroom from './pages/Classroom';
 import Playground from './pages/Playground';
+import Paths from './pages/Paths';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Security from './pages/Security';
@@ -41,6 +42,8 @@ export default function App() {
               <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />
               <Route path="learn" element={<ErrorBoundary><LearningMap /></ErrorBoundary>} />
               <Route path="learn/:id" element={<ErrorBoundary><ModuleViewer /></ErrorBoundary>} />
+              <Route path="paths" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
+              <Route path="paths/:pathId" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
               <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
               <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
             </Route>

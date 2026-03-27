@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
+import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
@@ -924,6 +925,7 @@ export default function Classroom() {
     return (
         <div className="min-h-screen pb-40">
             <div className="max-w-screen-xl mx-auto px-8 py-8">
+                <VaathiyaarMessage />
                 {/* Back button when in a lesson */}
                 {phase !== 'select' && (
                     <motion.button

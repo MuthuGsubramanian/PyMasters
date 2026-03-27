@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
+import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -293,6 +294,7 @@ export default function Playground() {
 
     return (
         <div className="min-h-screen pb-40 flex flex-col">
+            <VaathiyaarMessage />
             {/* Header */}
             <header className="space-y-4 mb-6">
                 <div className="flex items-center justify-between">

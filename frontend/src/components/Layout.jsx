@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard,
     BookOpen,
+    Map,
     GraduationCap,
     LogOut,
     Hexagon,
@@ -24,6 +25,7 @@ export default function Layout() {
     const navItems = [
         { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
         { icon: BookOpen, label: 'Learning Path', path: '/dashboard/learn', desc: 'Module progression' },
+        { icon: Map, label: 'Learning Paths', path: '/dashboard/paths', desc: 'AI-adaptive journeys' },
         { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
         { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
     ];

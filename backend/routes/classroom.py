@@ -19,6 +19,7 @@ from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
 from vaathiyaar.training_data import record_training_pair
 from modules.trigger_engine import check_triggers
+from paths.adapter import adapt_path
 
 router = APIRouter(prefix="/api/classroom", tags=["classroom"])
 
@@ -369,26 +370,38 @@ async def list_lessons(user_id: int = None):
                     if is_hobby:
                         # Fun/automation users see fun_automation first, then fundamentals
                         primary_tracks = ["fun_automation", "python_fundamentals"]
-                        secondary_tracks = ["ai_ml_foundations", "deep_learning"]
+                        secondary_tracks = ["python_intermediate", "ai_ml_foundations", "deep_learning",
+                                            "web_development", "dsa", "ai_fundamentals",
+                                            "machine_learning", "deep_learning_complete", "testing_devops"]
                     elif is_ai_ml:
                         # AI/ML users see fundamentals → AI/ML → Deep Learning
-                        primary_tracks = ["python_fundamentals", "ai_ml_foundations", "deep_learning"]
-                        secondary_tracks = ["fun_automation"]
+                        primary_tracks = ["python_fundamentals", "ai_ml_foundations", "ai_fundamentals",
+                                          "machine_learning", "deep_learning", "deep_learning_complete"]
+                        secondary_tracks = ["python_intermediate", "fun_automation",
+                                            "web_development", "dsa", "testing_devops"]
                     elif is_career:
                         # Career-focused: solid fundamentals first, then everything else
-                        primary_tracks = ["python_fundamentals"]
-                        secondary_tracks = ["fun_automation", "ai_ml_foundations", "deep_learning"]
+                        primary_tracks = ["python_fundamentals", "python_intermediate", "web_development"]
+                        secondary_tracks = ["fun_automation", "ai_ml_foundations", "deep_learning",
+                                            "dsa", "ai_fundamentals", "machine_learning",
+                                            "deep_learning_complete", "testing_devops"]
                     else:
                         # Student / unknown: balanced view — fundamentals first
-                        primary_tracks = ["python_fundamentals", "fun_automation"]
-                        secondary_tracks = ["ai_ml_foundations", "deep_learning"]
+                        primary_tracks = ["python_fundamentals", "python_intermediate", "fun_automation"]
+                        secondary_tracks = ["ai_ml_foundations", "deep_learning", "web_development",
+                                            "dsa", "ai_fundamentals", "machine_learning",
+                                            "deep_learning_complete", "testing_devops"]
 
                     # ── Apply skill level visibility filter ──
 
                     skill_visible = {
                         "beginner": {"python_fundamentals", "fun_automation"},
-                        "intermediate": {"python_fundamentals", "fun_automation", "ai_ml_foundations"},
-                        "advanced": {"python_fundamentals", "fun_automation", "ai_ml_foundations", "deep_learning"},
+                        "intermediate": {"python_fundamentals", "fun_automation", "python_intermediate",
+                                         "ai_ml_foundations", "web_development", "dsa", "testing_devops"},
+                        "advanced": {"python_fundamentals", "fun_automation", "python_intermediate",
+                                     "ai_ml_foundations", "deep_learning", "web_development", "dsa",
+                                     "ai_fundamentals", "machine_learning", "deep_learning_complete",
+                                     "testing_devops"},
                     }
                     visible_tracks = skill_visible.get(skill_level, {"python_fundamentals", "fun_automation"})
 
@@ -440,10 +453,53 @@ async def list_lessons(user_id: int = None):
                     elif is_career:
                         profile_hint = "career"
 
+                    # ── Fetch active learning path info ──
+                    path_info = {}
+                    try:
+                        path_conn = sqlite3.connect(_get_db_path())
+                        path_conn.row_factory = sqlite3.Row
+                        active_path_row = path_conn.execute(
+                            """SELECT ulp.path_id, ulp.current_position, ulp.adapted_sequence,
+                                      lp.lesson_sequence, lp.name as path_name
+                               FROM user_learning_paths ulp
+                               JOIN learning_paths lp ON ulp.path_id = lp.id
+                               WHERE ulp.user_id = ? AND ulp.status = 'active'
+                               ORDER BY ulp.last_activity DESC LIMIT 1""",
+                            [user_id],
+                        ).fetchone()
+                        if active_path_row:
+                            seq = json.loads(active_path_row["adapted_sequence"]) if active_path_row["adapted_sequence"] else json.loads(active_path_row["lesson_sequence"])
+                            pos = active_path_row["current_position"] or 0
+                            next_lesson = seq[pos] if pos < len(seq) else None
+                            # Count completed lessons in path
+                            if seq:
+                                placeholders = ",".join("?" * len(seq))
+                                done_count = path_conn.execute(
+                                    f"SELECT COUNT(*) as cnt FROM lesson_completions WHERE user_id = ? AND lesson_id IN ({placeholders})",
+                                    [user_id] + seq,
+                                ).fetchone()["cnt"]
+                            else:
+                                done_count = 0
+                            path_info = {
+                                "active_path": active_path_row["path_id"],
+                                "active_path_name": active_path_row["path_name"],
+                                "next_in_path": next_lesson,
+                                "path_progress": {
+                                    "current_position": pos,
+                                    "total": len(seq),
+                                    "completed": done_count,
+                                    "pct": round(done_count / len(seq) * 100, 1) if seq else 0,
+                                },
+                            }
+                        path_conn.close()
+                    except Exception:
+                        pass
+
                     return {
                         "lessons": lessons,
                         "profile_hint": profile_hint,
                         "primary_tracks": primary_tracks,
+                        **path_info,
                     }
             except Exception:
                 pass
@@ -605,6 +661,16 @@ def evaluate(request: EvaluateRequest):
         )
     except Exception:
         pass  # Trigger check should never block evaluation
+
+    # Adapt learning path after lesson completion
+    lesson_id_for_adapt = request.lesson_id or request.topic
+    if lesson_id_for_adapt:
+        try:
+            adaptation = adapt_path(request.user_id, lesson_id_for_adapt)
+            if adaptation and adaptation.get("changes"):
+                result["path_adaptation"] = adaptation
+        except Exception:
+            pass  # Path adaptation should never block evaluation
 
     return result
 
