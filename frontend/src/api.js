@@ -38,6 +38,7 @@ export const chatAI = (prompt, context = "") => api.post('/ai/chat', { prompt, c
 export const getModules = () => api.get('/content/modules');
 export const getModule = (id) => api.get(`/content/module/${id}`);
 export const completeModule = (userId, moduleId, score) => api.post('/content/complete', { user_id: userId, module_id: moduleId, score });
+export const getCompletions = (userId) => api.get(`/content/completions/${userId}`);
 
 // Profile
 export const getProfile = (userId) => api.get(`/profile/${userId}`);
