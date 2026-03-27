@@ -238,12 +238,15 @@ function applySpeed(props, speedMultiplier) {
 }
 
 export default function AnimationRenderer({
-  sequence = [],
+  sequence: rawSequence = [],
   storyContent = '',
   speedMultiplier = 1.0,
   language = 'en',
   onSequenceComplete,
 }) {
+  // Ensure sequence is always a valid array
+  const sequence = Array.isArray(rawSequence) ? rawSequence : [];
+
   const [currentStep, setCurrentStep] = useState(0);
   const [syncStep, setSyncStep] = useState(0);
   const [particleActive, setParticleActive] = useState(false);
