@@ -391,39 +391,58 @@ function IntroPhase({ lesson, language, onComplete, username }) {
         && !visualFlowTypes.has(s.type)
     );
 
+    // Find specific visual flow items
+    const executionViz = visualFlowItems.find(i => i.type === 'ExecutionVisualizer' || i.type === 'execution_visualizer');
+    const flowDiagram = visualFlowItems.find(i => i.type === 'FlowDiagram' || i.type === 'flow_diagram');
+    const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
+
     return (
-        <div className="animate-fade-in space-y-6">
-            {/* Header */}
-            <header className="flex items-center gap-4">
-                <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-200 bg-purple-50 text-purple-600 text-[10px] font-bold tracking-wider uppercase">
-                            <Sparkles size={10} />
-                            Lesson
-                        </div>
-                        {lesson.xp_reward && (
-                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-                                +{lesson.xp_reward} XP
-                            </span>
-                        )}
+        <div className="animate-fade-in space-y-5 max-w-7xl mx-auto">
+            {/* ── Header ── */}
+            <header>
+                <div className="flex items-center gap-2 mb-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-200 bg-purple-50 text-purple-600 text-[10px] font-bold tracking-wider uppercase">
+                        <Sparkles size={10} />
+                        Lesson
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 font-display">
-                        {resolveText(lesson.active_title || lesson.title, language)}
-                    </h2>
-                    {username && (
-                        <p className="text-sm text-slate-500 mt-1">Learning with Vaathiyaar</p>
+                    {lesson.xp_reward && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                            +{lesson.xp_reward} XP
+                        </span>
                     )}
                 </div>
+                <h2 className="text-2xl font-bold text-slate-900 font-display">
+                    {resolveText(lesson.active_title || lesson.title, language)}
+                </h2>
             </header>
 
-            {/* Story section */}
-            {storyContent && (
-                <div className="rounded-2xl overflow-hidden border border-slate-800/50 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-xl shadow-black/10">
-                    <div className="px-5 py-3 border-b border-white/[0.04] flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                        <span className="text-[10px] text-purple-300/60 font-bold uppercase tracking-widest">Vaathiyaar Explains</span>
+            {/* ── Main cinema container ── */}
+            <div className="rounded-3xl overflow-hidden border border-slate-200 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-2xl shadow-black/20">
+                {/* Header bar */}
+                <div className="px-5 py-2.5 border-b border-white/[0.06] flex items-center gap-3 bg-slate-800/50">
+                    <div className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                        <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                        <span className="w-3 h-3 rounded-full bg-[#28c840]" />
                     </div>
-                    <div className="p-6">
+                    <span className="text-[11px] text-slate-400 font-mono ml-2">
+                        {resolveText(lesson.active_title || lesson.title, language)}
+                    </span>
+                    <div className="ml-auto flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                        </span>
+                        <span className="text-[10px] text-green-400/80">visual mode</span>
+                    </div>
+                </div>
+
+                {/* ── 2-column layout: Story + Visual Flow ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 min-h-[500px]">
+
+                    {/* LEFT: Story + FlowDiagram (2 cols) */}
+                    <div className="lg:col-span-2 border-r border-white/[0.04] p-5 space-y-4 overflow-y-auto max-h-[700px]">
+                        {/* Vaathiyaar story */}
                         {storyPrimitives.length > 0 ? (
                             <AnimationRenderer
                                 sequence={storyPrimitives}
@@ -431,95 +450,94 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                 speedMultiplier={speedMultiplier}
                                 language={language}
                             />
-                        ) : (
+                        ) : storyContent ? (
                             <div className="text-sm text-slate-300 leading-relaxed">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{storyContent}</ReactMarkdown>
+                            </div>
+                        ) : null}
+
+                        {/* Flow Diagram in left column */}
+                        {flowDiagram && (
+                            <div className="mt-4">
+                                <div className="text-[10px] text-cyan-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                                    Execution Flow
+                                </div>
+                                <FlowDiagram
+                                    nodes={flowDiagram.nodes || []}
+                                    edges={flowDiagram.edges || []}
+                                    executionPath={flowDiagram.executionPath || []}
+                                    variables={flowDiagram.variables || {}}
+                                    speed={flowDiagram.speed || 'normal'}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* RIGHT: ExecutionVisualizer + LoopVisualizer + Legacy (3 cols) */}
+                    <div className="lg:col-span-3 p-5 space-y-4 overflow-y-auto max-h-[700px]">
+
+                        {/* Loop Visualizer — top of right column */}
+                        {loopViz && (
+                            <div>
+                                <div className="text-[10px] text-amber-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    Loop Iteration
+                                </div>
+                                <LoopVisualizer
+                                    loopType={loopViz.loopType || 'for'}
+                                    collection={loopViz.collection}
+                                    variable={loopViz.variable || 'i'}
+                                    rangeStart={loopViz.rangeStart ?? 0}
+                                    rangeEnd={loopViz.rangeEnd ?? 5}
+                                    rangeStep={loopViz.rangeStep ?? 1}
+                                    iterations={loopViz.iterations || []}
+                                    code={loopViz.code || ''}
+                                    speed={loopViz.speed || 'normal'}
+                                />
+                            </div>
+                        )}
+
+                        {/* Execution Visualizer — main right panel */}
+                        {executionViz && (
+                            <div>
+                                <div className="text-[10px] text-purple-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                                    Step-by-Step Execution
+                                </div>
+                                <ExecutionVisualizer
+                                    code={executionViz.code || ''}
+                                    executionSteps={executionViz.executionSteps || []}
+                                    speed={executionViz.speed || 'normal'}
+                                />
+                            </div>
+                        )}
+
+                        {/* Legacy animations (CodeStepper, VariableBox, Terminal) */}
+                        {legacyAnimPrimitives.length > 0 && (
+                            <div>
+                                <div className="text-[10px] text-cyan-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                                    Code Walkthrough
+                                </div>
+                                <AnimationRenderer
+                                    sequence={legacyAnimPrimitives}
+                                    storyContent={storyContent}
+                                    speedMultiplier={speedMultiplier}
+                                    language={language}
+                                />
                             </div>
                         )}
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* ═══════════════════════════════════════════════════════
-                VISUAL CODE FLOW — rendered DIRECTLY, not via AnimationRenderer
-                Each component auto-plays its own GSAP timeline independently
-            ═══════════════════════════════════════════════════════ */}
-            {visualFlowItems.length > 0 && (
-                <div className="space-y-6">
-                    {visualFlowItems.map((item, idx) => {
-                        const key = `${item.type}-${idx}`;
-
-                        if (item.type === 'ExecutionVisualizer' || item.type === 'execution_visualizer') {
-                            return (
-                                <ExecutionVisualizer
-                                    key={key}
-                                    code={item.code || ''}
-                                    executionSteps={item.executionSteps || []}
-                                    speed={item.speed || 'normal'}
-                                />
-                            );
-                        }
-
-                        if (item.type === 'FlowDiagram' || item.type === 'flow_diagram') {
-                            return (
-                                <FlowDiagram
-                                    key={key}
-                                    nodes={item.nodes || []}
-                                    edges={item.edges || []}
-                                    executionPath={item.executionPath || []}
-                                    variables={item.variables || {}}
-                                    speed={item.speed || 'normal'}
-                                />
-                            );
-                        }
-
-                        if (item.type === 'LoopVisualizer' || item.type === 'loop_visualizer') {
-                            return (
-                                <LoopVisualizer
-                                    key={key}
-                                    loopType={item.loopType || 'for'}
-                                    collection={item.collection}
-                                    variable={item.variable || 'i'}
-                                    rangeStart={item.rangeStart ?? 0}
-                                    rangeEnd={item.rangeEnd ?? 5}
-                                    rangeStep={item.rangeStep ?? 1}
-                                    iterations={item.iterations || []}
-                                    code={item.code || ''}
-                                    speed={item.speed || 'normal'}
-                                />
-                            );
-                        }
-
-                        return null;
-                    })}
-                </div>
-            )}
-
-            {/* Legacy animations (CodeStepper, VariableBox, Terminal) via AnimationRenderer */}
-            {legacyAnimPrimitives.length > 0 && (
-                <div className="rounded-2xl overflow-hidden border border-slate-800/50 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-xl shadow-black/10">
-                    <div className="px-5 py-3 border-b border-white/[0.04] flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                        <span className="text-[10px] text-cyan-300/60 font-bold uppercase tracking-widest">Code Walkthrough</span>
-                    </div>
-                    <div className="p-6">
-                        <AnimationRenderer
-                            sequence={legacyAnimPrimitives}
-                            storyContent={storyContent}
-                            speedMultiplier={speedMultiplier}
-                            language={language}
-                            onSequenceComplete={onComplete}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Start Practice button — always visible */}
+            {/* ── Start Practice button ── */}
             <button
                 onClick={onComplete}
-                className="btn-neo btn-neo-primary flex items-center gap-2 w-full justify-center py-4"
+                className="btn-neo btn-neo-primary flex items-center gap-2 w-full justify-center py-4 text-base"
             >
-                <Play size={16} fill="currentColor" />
+                <Play size={18} fill="currentColor" />
                 Start Practice
             </button>
             )}
