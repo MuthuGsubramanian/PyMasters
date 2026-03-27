@@ -12,6 +12,9 @@ import {
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu
 } from 'lucide-react';
+import ExecutionVisualizer from '../components/animations/ExecutionVisualizer';
+import FlowDiagram from '../components/animations/FlowDiagram';
+import LoopVisualizer from '../components/animations/LoopVisualizer';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -373,16 +376,24 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const speedMultiplier = lesson.speed_multiplier ?? 1.0;
     const sequence = lesson.animation_sequence ?? [];
 
+    // Extract visual flow components DIRECTLY (bypass AnimationRenderer)
+    const visualFlowTypes = new Set(['ExecutionVisualizer', 'execution_visualizer', 'FlowDiagram', 'flow_diagram', 'LoopVisualizer', 'loop_visualizer']);
+    const visualFlowItems = sequence.filter(s => visualFlowTypes.has(s.type));
+
+    // Extract story/concept map for the left column
     const storyPrimitives = sequence.filter(s =>
         s.type === 'StoryCard' || s.type === 'ConceptMap'
     );
-    const animPrimitives = sequence.filter(s =>
+
+    // Legacy animation primitives (CodeStepper, VariableBox, etc.) — NOT visual flow
+    const legacyAnimPrimitives = sequence.filter(s =>
         s.type !== 'StoryCard' && s.type !== 'ConceptMap' && s.type !== 'ParticleEffect'
+        && !visualFlowTypes.has(s.type)
     );
 
     return (
         <div className="animate-fade-in space-y-6">
-            {/* Header with back button */}
+            {/* Header */}
             <header className="flex items-center gap-4">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -405,75 +416,112 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </div>
             </header>
 
-            {/* Animation viewer - Dark cinema mode */}
-            {sequence.length > 0 ? (
-                <div className="rounded-3xl overflow-hidden border border-slate-800/50 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-2xl shadow-black/20">
-                    {/* Cinema mode header */}
+            {/* Story section */}
+            {storyContent && (
+                <div className="rounded-2xl overflow-hidden border border-slate-800/50 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-xl shadow-black/10">
                     <div className="px-5 py-3 border-b border-white/[0.04] flex items-center gap-2">
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                            <span className="text-[10px] text-purple-300/60 font-bold uppercase tracking-widest">Visual Mode</span>
-                        </div>
-                        <div className="flex-1" />
-                        <span className="text-[10px] text-slate-500 font-mono">
-                            {animPrimitives.length + storyPrimitives.length} animations
-                        </span>
+                        <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                        <span className="text-[10px] text-purple-300/60 font-bold uppercase tracking-widest">Vaathiyaar Explains</span>
                     </div>
-
-                    <div className="p-6 lg:p-8">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Left: Story */}
-                            <div className="lg:col-span-1 space-y-4">
-                                {storyPrimitives.length > 0 ? (
-                                    <AnimationRenderer
-                                        sequence={storyPrimitives}
-                                        storyContent={storyContent}
-                                        speedMultiplier={speedMultiplier}
-                                        language={language}
-                                    />
-                                ) : storyContent ? (
-                                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6">
-                                        <div className="text-sm text-slate-300 leading-relaxed">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{storyContent}</ReactMarkdown>
-                                        </div>
-                                    </div>
-                                ) : null}
+                    <div className="p-6">
+                        {storyPrimitives.length > 0 ? (
+                            <AnimationRenderer
+                                sequence={storyPrimitives}
+                                storyContent={storyContent}
+                                speedMultiplier={speedMultiplier}
+                                language={language}
+                            />
+                        ) : (
+                            <div className="text-sm text-slate-300 leading-relaxed">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{storyContent}</ReactMarkdown>
                             </div>
-
-                            {/* Right: Code + Variables + Terminal */}
-                            <div className="lg:col-span-2 space-y-4">
-                                {animPrimitives.length > 0 && (
-                                    <AnimationRenderer
-                                        sequence={animPrimitives}
-                                        storyContent={storyContent}
-                                        speedMultiplier={speedMultiplier}
-                                        language={language}
-                                        onSequenceComplete={onComplete}
-                                    />
-                                )}
-                            </div>
-                        </div>
+                        )}
                     </div>
-                </div>
-            ) : (
-                <div className="panel rounded-2xl p-8 space-y-6">
-                    {storyContent && (
-                        <p className="text-slate-600 leading-relaxed">{storyContent}</p>
-                    )}
-                    <button
-                        onClick={onComplete}
-                        className="btn-neo btn-neo-primary flex items-center gap-2"
-                    >
-                        <Play size={16} fill="currentColor" />
-                        Start Practice
-                    </button>
                 </div>
             )}
 
-            {sequence.length > 0 && animPrimitives.length === 0 && (
-                <button onClick={onComplete} className="btn-neo btn-neo-primary">
-                    Start Practice &rarr;
-                </button>
+            {/* ═══════════════════════════════════════════════════════
+                VISUAL CODE FLOW — rendered DIRECTLY, not via AnimationRenderer
+                Each component auto-plays its own GSAP timeline independently
+            ═══════════════════════════════════════════════════════ */}
+            {visualFlowItems.length > 0 && (
+                <div className="space-y-6">
+                    {visualFlowItems.map((item, idx) => {
+                        const key = `${item.type}-${idx}`;
+
+                        if (item.type === 'ExecutionVisualizer' || item.type === 'execution_visualizer') {
+                            return (
+                                <ExecutionVisualizer
+                                    key={key}
+                                    code={item.code || ''}
+                                    executionSteps={item.executionSteps || []}
+                                    speed={item.speed || 'normal'}
+                                />
+                            );
+                        }
+
+                        if (item.type === 'FlowDiagram' || item.type === 'flow_diagram') {
+                            return (
+                                <FlowDiagram
+                                    key={key}
+                                    nodes={item.nodes || []}
+                                    edges={item.edges || []}
+                                    executionPath={item.executionPath || []}
+                                    variables={item.variables || {}}
+                                    speed={item.speed || 'normal'}
+                                />
+                            );
+                        }
+
+                        if (item.type === 'LoopVisualizer' || item.type === 'loop_visualizer') {
+                            return (
+                                <LoopVisualizer
+                                    key={key}
+                                    loopType={item.loopType || 'for'}
+                                    collection={item.collection}
+                                    variable={item.variable || 'i'}
+                                    rangeStart={item.rangeStart ?? 0}
+                                    rangeEnd={item.rangeEnd ?? 5}
+                                    rangeStep={item.rangeStep ?? 1}
+                                    iterations={item.iterations || []}
+                                    code={item.code || ''}
+                                    speed={item.speed || 'normal'}
+                                />
+                            );
+                        }
+
+                        return null;
+                    })}
+                </div>
+            )}
+
+            {/* Legacy animations (CodeStepper, VariableBox, Terminal) via AnimationRenderer */}
+            {legacyAnimPrimitives.length > 0 && (
+                <div className="rounded-2xl overflow-hidden border border-slate-800/50 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-xl shadow-black/10">
+                    <div className="px-5 py-3 border-b border-white/[0.04] flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-[10px] text-cyan-300/60 font-bold uppercase tracking-widest">Code Walkthrough</span>
+                    </div>
+                    <div className="p-6">
+                        <AnimationRenderer
+                            sequence={legacyAnimPrimitives}
+                            storyContent={storyContent}
+                            speedMultiplier={speedMultiplier}
+                            language={language}
+                            onSequenceComplete={onComplete}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Start Practice button — always visible */}
+            <button
+                onClick={onComplete}
+                className="btn-neo btn-neo-primary flex items-center gap-2 w-full justify-center py-4"
+            >
+                <Play size={16} fill="currentColor" />
+                Start Practice
+            </button>
             )}
         </div>
     );
