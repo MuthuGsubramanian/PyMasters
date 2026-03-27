@@ -356,82 +356,27 @@ def execute_code(request: dict = Body(...)):
     Used by the Playground live terminal.
     More permissive than classroom evaluate — allows imports, file ops, etc.
     """
-    import subprocess
-    import tempfile
-    import os
+    from vaathiyaar.execution import run_code_subprocess
 
     code = request.get("code", "")
-    user_id = request.get("user_id", "")
-
     if not code.strip():
-        return {"output": "", "error": "No code provided", "exit_code": 1}
+        return {"output": "", "error": "No code provided.", "exit_code": 1}
 
-    # Hard security limits — block truly dangerous operations
-    HARD_BLOCKED = ["subprocess.call", "subprocess.run", "subprocess.Popen",
-                    "os.system", "os.remove", "os.rmdir", "shutil.rmtree",
-                    "__import__('os').system", "eval(", "exec("]
-    for blocked in HARD_BLOCKED:
-        if blocked in code:
-            return {
-                "output": "",
-                "error": f"Security: '{blocked}' is not allowed in the playground.",
-                "exit_code": 1,
-            }
+    result = run_code_subprocess(code)
 
-    # Write code to a temp file and execute with subprocess
-    try:
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
-            f.write(code)
-            temp_path = f.name
+    output = result["output"]
+    error = result["error"]
 
-        # Find Python executable
-        python_cmd = "python3" if os.name != "nt" else "python"
+    # Combine output for terminal display
+    combined = output
+    if error:
+        combined += ("\n" if combined else "") + error
 
-        result = subprocess.run(
-            [python_cmd, temp_path],
-            capture_output=True,
-            text=True,
-            timeout=10,  # 10 second timeout
-            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-        )
-
-        output = result.stdout
-        error = result.stderr
-        exit_code = result.returncode
-
-        # Clean up
-        try:
-            os.unlink(temp_path)
-        except Exception:
-            pass
-
-        return {
-            "output": output,
-            "error": error,
-            "exit_code": exit_code,
-        }
-    except subprocess.TimeoutExpired:
-        try:
-            os.unlink(temp_path)
-        except Exception:
-            pass
-        return {
-            "output": "",
-            "error": "Execution timed out (10 second limit). Check for infinite loops.",
-            "exit_code": 1,
-        }
-    except FileNotFoundError:
-        return {
-            "output": "",
-            "error": "Python interpreter not found. Please check server configuration.",
-            "exit_code": 1,
-        }
-    except Exception as e:
-        return {
-            "output": "",
-            "error": str(e),
-            "exit_code": 1,
-        }
+    return {
+        "output": combined.strip() if combined else "(No output)",
+        "error": error,
+        "exit_code": result["exit_code"],
+    }
 
 
 @router.post("/install-package")
