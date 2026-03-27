@@ -12,6 +12,7 @@ import {
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu
 } from 'lucide-react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import ExecutionVisualizer from '../components/animations/ExecutionVisualizer';
 import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
@@ -583,11 +584,13 @@ function PracticePhase({
     onRun,
     running,
     chatMessages,
+    executionTime,
+    onClearOutput,
 }) {
-    const challenge = lesson.practice_challenges?.[0] ?? null;
+    const challenge = lesson?.practice_challenges?.[0] ?? null;
     const instruction = challenge
-        ? resolveText(challenge.instruction, language)
-        : resolveText(lesson.challenge_instruction, language) ||
+        ? resolveText(challenge?.instruction, language)
+        : resolveText(lesson?.challenge_instruction, language) ||
           'Write your solution below.';
 
     return (
@@ -607,7 +610,7 @@ function PracticePhase({
             </div>
 
             {/* Hint messages */}
-            {chatMessages.filter((m) => m.role === 'assistant' && m._isHint).map((m, i) => (
+            {chatMessages?.filter((m) => m.role === 'assistant' && m._isHint).map((m, i) => (
                 <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 6, scale: 0.98 }}
@@ -619,9 +622,10 @@ function PracticePhase({
                 </motion.div>
             ))}
 
-            {/* Code editor with improved styling */}
-            <div className="rounded-2xl overflow-hidden border border-slate-800/30 shadow-xl shadow-black/5">
-                <div className="h-10 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] flex items-center justify-between px-4">
+            {/* Code editor + output — same pattern as Playground */}
+            <div className="rounded-2xl overflow-hidden border border-slate-700/30 bg-[#0d1117] shadow-xl">
+                {/* Terminal header */}
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/50 bg-[#161b22]">
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
@@ -630,40 +634,43 @@ function PracticePhase({
                         </div>
                         <span className="text-[11px] font-mono text-slate-400 ml-2">solution.py</span>
                     </div>
-                    <button
-                        onClick={onRun}
-                        disabled={running}
-                        className="flex items-center gap-1.5 text-[10px] font-bold bg-green-500/20 text-green-400 px-4 py-1.5 rounded-lg hover:bg-green-500/30 transition-all duration-300 uppercase tracking-wider disabled:opacity-50 border border-green-500/20"
-                    >
-                        {running ? (
-                            <div className="w-3 h-3 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <Play size={11} fill="currentColor" />
-                        )}
-                        {running ? 'Running...' : 'Run'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-600 font-mono hidden sm:inline">Ctrl+Enter</span>
+                        <button
+                            onClick={onRun}
+                            disabled={running || !code?.trim()}
+                            className="flex items-center gap-1.5 text-[10px] font-bold text-white rounded-xl px-4 py-1.5 transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed border border-green-500/20"
+                        >
+                            {running ? (
+                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <Play size={11} fill="currentColor" />
+                            )}
+                            {running ? 'Running...' : 'Run Code'}
+                        </button>
+                    </div>
                 </div>
+
+                {/* Editor */}
                 <PythonEditor
-                    value={code}
+                    value={code || ''}
                     onChange={(val) => setCode(val)}
                     onRun={onRun}
-                    height="200px"
-                    placeholder="# Write your code here... (Ctrl+Enter to run)"
+                    height="220px"
+                    placeholder="# Write your code here..."
                 />
-            </div>
 
-            {/* Output */}
-            {output && (
-                <div className="rounded-2xl overflow-hidden border border-slate-800/30" style={{ maxHeight: '200px' }}>
+                {/* Output panel — always visible */}
+                <div className="border-t border-slate-700/50" style={{ minHeight: '60px', maxHeight: '200px' }}>
                     <OutputPanel
-                        output={output}
+                        output={output || ''}
                         error=""
                         running={running}
-                        executionTime={null}
-                        onClear={() => {}}
+                        executionTime={executionTime}
+                        onClear={onClearOutput || (() => {})}
                     />
                 </div>
-            )}
+            </div>
 
             {/* Hint button */}
             {challenge?.hints?.length > 0 && (
@@ -836,6 +843,7 @@ export default function Classroom() {
 
     const [code, setCode] = useState('');
     const [output, setOutput] = useState('');
+    const [executionTime, setExecutionTime] = useState(null);
     const [running, setRunning] = useState(false);
     const [hintIndex, setHintIndex] = useState(0);
     const [evalResult, setEvalResult] = useState(null);
@@ -906,6 +914,8 @@ export default function Classroom() {
         if (!code.trim() || running) return;
         setRunning(true);
         setOutput('');
+        setExecutionTime(null);
+        const startTime = performance.now();
         try {
             const challenge = currentLesson?.practice_challenges?.[0] ?? {};
             const res = await api.post('/classroom/evaluate', {
@@ -915,13 +925,21 @@ export default function Classroom() {
                 user_id: user?.id,
                 language,
             });
-            const result = res.data.result ?? res.data;
+            const elapsed = Math.round(performance.now() - startTime);
+            setExecutionTime(elapsed);
+            const result = res.data?.result ?? res.data;
             setEvalResult(result);
-            if (result?.output) setOutput(result.output);
+            // Show output in the terminal
+            const out = result?.output || '';
+            const err = result?.error || '';
+            setOutput(out + (err ? (out ? '\n' : '') + err : '') || '(no output)');
             setPhase('feedback');
         } catch (err) {
-            setOutput('Error running code. Please try again.');
-            console.error(err);
+            const elapsed = Math.round(performance.now() - startTime);
+            setExecutionTime(elapsed);
+            const detail = err.response?.data?.detail || err.message || 'Unknown error';
+            setOutput(`Execution error: ${detail}`);
+            console.error('[Classroom handleRun]', err);
         } finally {
             setRunning(false);
         }
@@ -1133,7 +1151,7 @@ export default function Classroom() {
                             exit="exit"
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
-                            <PracticePhase
+                            <ErrorBoundary><PracticePhase
                                 lesson={currentLesson}
                                 language={language}
                                 code={code}
@@ -1144,7 +1162,9 @@ export default function Classroom() {
                                 onRun={handleRun}
                                 running={running}
                                 chatMessages={chatMessages}
-                            />
+                                executionTime={executionTime}
+                                onClearOutput={() => { setOutput(''); setExecutionTime(null); }}
+                            /></ErrorBoundary>
                         </motion.div>
                     )}
 
@@ -1157,12 +1177,12 @@ export default function Classroom() {
                             exit="exit"
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
-                            <FeedbackPhase
+                            <ErrorBoundary><FeedbackPhase
                                 evalResult={evalResult}
                                 language={language}
                                 onContinue={handleContinue}
                                 onRetry={handleRetry}
-                            />
+                            /></ErrorBoundary>
                         </motion.div>
                     )}
                 </AnimatePresence>
