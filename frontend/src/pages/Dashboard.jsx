@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { getModules, getModule, completeModule } from '../api';
+import { getModules, getModule, completeModule, getCompletions } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -269,18 +269,26 @@ export function Overview() {
 export function LearningMap() {
     const { user } = useAuth();
     const [modules, setModules] = useState([]);
+    const [completions, setCompletions] = useState(new Set());
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => { document.title = 'Learning Path — PyMasters'; }, []);
     useEffect(() => {
-        getModules()
-            .then(res => setModules(res.data))
+        Promise.all([
+            getModules(),
+            user?.id ? getCompletions(user.id) : Promise.resolve({ data: { completions: [] } }),
+        ])
+            .then(([modsRes, compRes]) => {
+                setModules(modsRes.data);
+                setCompletions(new Set((compRes.data.completions || []).map(c => c.lesson_id)));
+            })
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user?.id]);
 
     const isUnlocked = (id) => (user.unlocked || []).includes(id) || id === "module_1";
+    const isCompleted = (id) => completions.has(id);
     const modulesUnlocked = (user.unlocked || []).length;
     const progressPct = modules.length > 0 ? Math.round((modulesUnlocked / modules.length) * 100) : 0;
 
@@ -353,7 +361,7 @@ export function LearningMap() {
                                             ? "bg-cyan-50/50 border-cyan-200 text-cyan-400"
                                             : "bg-slate-100 border-slate-200 text-slate-400"
                                     )}>
-                                        {unlocked ? <CheckCircle2 size={18} /> : idx + 1}
+                                        {isCompleted(mod.id) ? <CheckCircle2 size={18} className="text-green-500" /> : unlocked ? <span className="text-sm">{idx + 1}</span> : idx + 1}
                                     </div>
                                     <div>
                                         <h3 className={clsx(
@@ -373,6 +381,11 @@ export function LearningMap() {
                                                 : "text-slate-400 bg-slate-50 border-slate-200"
                                         )}>
                                             +{mod.xp_reward} XP
+                                        </span>
+                                    )}
+                                    {isCompleted(mod.id) && (
+                                        <span className="text-[10px] font-bold rounded-full px-2.5 py-1 border text-green-600 bg-green-50 border-green-200">
+                                            Completed
                                         </span>
                                     )}
                                     {unlocked ? (
@@ -403,6 +416,8 @@ export function ModuleViewer() {
     const { user, updateProgress } = useAuth();
     const navigate = useNavigate();
     const [module, setModule] = useState(null);
+    const [isModuleCompleted, setIsModuleCompleted] = useState(false);
+    const [completionInfo, setCompletionInfo] = useState(null);
     const [quizMode, setQuizMode] = useState(false);
     const [answers, setAnswers] = useState({});
     const [result, setResult] = useState(null);
@@ -412,7 +427,16 @@ export function ModuleViewer() {
             setModule(res.data);
             document.title = res.data.title + ' — PyMasters';
         }).catch(() => navigate('/dashboard/learn'));
-    }, [id, navigate]);
+        if (user?.id) {
+            getCompletions(user.id).then(res => {
+                const match = (res.data.completions || []).find(c => c.lesson_id === id);
+                if (match) {
+                    setIsModuleCompleted(true);
+                    setCompletionInfo(match);
+                }
+            }).catch(() => {});
+        }
+    }, [id, navigate, user?.id]);
 
     if (!module) return (
         <div className="flex flex-col items-center justify-center h-64 gap-3">
@@ -519,10 +543,22 @@ export function ModuleViewer() {
                                     {module.content}
                                 </ReactMarkdown>
                                 <div className="mt-16 pt-8 border-t border-black/[0.04] flex justify-end">
-                                    <button onClick={() => setQuizMode(true)} className="btn-neo btn-neo-primary gap-2">
-                                        Start Quiz
-                                        <ChevronRight size={18} />
-                                    </button>
+                                    {isModuleCompleted ? (
+                                        <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-green-50 border border-green-200">
+                                            <CheckCircle2 size={20} className="text-green-500" />
+                                            <div>
+                                                <p className="text-sm font-bold text-green-700">Module Completed</p>
+                                                <p className="text-xs text-green-600">
+                                                    Earned {completionInfo?.xp_awarded || 0} XP on {completionInfo?.completed_at ? new Date(completionInfo.completed_at).toLocaleDateString() : 'earlier'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => setQuizMode(true)} className="btn-neo btn-neo-primary gap-2">
+                                            Start Quiz
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    )}
                                 </div>
                             </motion.div>
                         ) : (
