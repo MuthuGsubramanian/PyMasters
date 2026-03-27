@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 
+const TYPE_COLORS = {
+  int: { bg: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-400/40', text: 'text-blue-300', badge: 'bg-blue-500/20 text-blue-300' },
+  float: { bg: 'from-teal-500/20 to-teal-600/10', border: 'border-teal-400/40', text: 'text-teal-300', badge: 'bg-teal-500/20 text-teal-300' },
+  str: { bg: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-400/40', text: 'text-amber-300', badge: 'bg-amber-500/20 text-amber-300' },
+  bool: { bg: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-400/40', text: 'text-purple-300', badge: 'bg-purple-500/20 text-purple-300' },
+  list: { bg: 'from-cyan-500/20 to-cyan-600/10', border: 'border-cyan-400/40', text: 'text-cyan-300', badge: 'bg-cyan-500/20 text-cyan-300' },
+  None: { bg: 'from-slate-500/20 to-slate-600/10', border: 'border-slate-400/40', text: 'text-slate-400', badge: 'bg-slate-500/20 text-slate-400' },
+};
+
+const DEFAULT_COLORS = { bg: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-400/40', text: 'text-violet-300', badge: 'bg-violet-500/20 text-violet-300' };
+
 function detectType(val) {
   if (val === null || val === undefined || val === 'None') return 'None';
   if (Array.isArray(val)) return 'list';
@@ -19,12 +30,11 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   const boxRef = useRef(null);
   const valueRef = useRef(null);
   const oldValueRef = useRef(null);
-  const pulseRef = useRef(null);
+  const glowRef = useRef(null);
+  const historyRef = useRef([]);
 
-  // Stabilize props to prevent re-render loops
   const stableValues = useMemo(() => values, [JSON.stringify(values)]);
 
-  // Ref for onComplete to avoid it being a useEffect dependency
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
@@ -32,21 +42,24 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   const [oldValue, setOldValue] = useState(null);
   const [showOld, setShowOld] = useState(false);
   const [justChanged, setJustChanged] = useState(false);
+  const [history, setHistory] = useState([]);
   const prevStep = useRef(-1);
 
   const typeLabel = detectType(currentValue);
+  const colors = TYPE_COLORS[typeLabel] || DEFAULT_COLORS;
 
   useEffect(() => {
     if (!boxRef.current) return;
 
     gsap.fromTo(
       boxRef.current,
-      { opacity: 0, scale: 0.8, y: 20 },
+      { opacity: 0, scale: 0.85, y: 20, rotateX: 15 },
       {
         opacity: 1,
         scale: 1,
         y: 0,
-        duration: 0.7,
+        rotateX: 0,
+        duration: 0.8,
         ease: 'elastic.out(1, 0.6)',
         onComplete: () => {
           if (stableValues.length === 0) onCompleteRef.current?.();
@@ -64,11 +77,13 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
     const newValue = stableValues[valueIndex];
     const isLast = valueIndex === stableValues.length - 1;
 
-    // Show old -> new crossfade
     if (valueRef.current && currentValue !== newValue) {
       setOldValue(currentValue);
       setShowOld(true);
       setJustChanged(true);
+
+      // Add to history
+      setHistory(prev => [...prev, { value: currentValue, step: valueIndex - 1 }]);
 
       const tl = gsap.timeline({
         onComplete: () => {
@@ -77,28 +92,28 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
         },
       });
 
-      // Fade out old value
-      if (oldValueRef.current) {
-        tl.to(oldValueRef.current, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in' }, 0);
-      }
-
-      // Scale up and set new value
-      tl.to(valueRef.current, { scale: 1.3, duration: 0.15, ease: 'power2.out' }, 0.1);
-      tl.call(() => setCurrentValue(newValue), [], 0.2);
-      tl.to(valueRef.current, { scale: 1, duration: 0.25, ease: 'elastic.out(1, 0.5)' });
-
-      // Pulse effect on change
-      if (pulseRef.current) {
+      // Glow burst on change
+      if (glowRef.current) {
         tl.fromTo(
-          pulseRef.current,
-          { opacity: 0.8, scale: 1 },
-          { opacity: 0, scale: 1.5, duration: 0.6, ease: 'power2.out' },
-          0.15
+          glowRef.current,
+          { opacity: 0.8, scale: 0.8 },
+          { opacity: 0, scale: 2, duration: 0.8, ease: 'power2.out' },
+          0
         );
       }
 
-      // Clear changed state after animation
-      tl.call(() => setJustChanged(false), [], '+=0.5');
+      // Fade out old value upward
+      if (oldValueRef.current) {
+        tl.to(oldValueRef.current, { opacity: 0, y: -20, scale: 0.8, duration: 0.25, ease: 'power2.in' }, 0);
+      }
+
+      // Bounce in new value
+      tl.to(valueRef.current, { scale: 1.2, duration: 0.15, ease: 'power2.out' }, 0.15);
+      tl.call(() => setCurrentValue(newValue), [], 0.25);
+      tl.to(valueRef.current, { scale: 1, duration: 0.35, ease: 'elastic.out(1, 0.4)' });
+
+      // Clear changed state
+      tl.call(() => setJustChanged(false), [], '+=0.6');
     } else {
       setCurrentValue(newValue);
       if (isLast) onCompleteRef.current?.();
@@ -111,73 +126,90 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   return (
     <div
       ref={boxRef}
-      className={`rounded-xl p-[2px] opacity-0 w-52 bg-gradient-to-br transition-all duration-300 ${
-        justChanged
-          ? 'from-yellow-400 via-orange-500 to-yellow-400 shadow-lg shadow-orange-300/40'
-          : 'from-cyan-400 via-purple-500 to-cyan-400'
-      }`}
+      className="opacity-0 w-56 relative perspective-[800px]"
     >
-      <div className="bg-white rounded-[10px] p-5 flex flex-col items-center gap-3 relative">
-        {/* Change indicator arrow */}
-        {justChanged && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-orange-500 text-lg animate-bounce">
-            &#9660;
-          </div>
-        )}
+      {/* Glow burst element */}
+      <div
+        ref={glowRef}
+        className={`absolute inset-0 rounded-2xl opacity-0 pointer-events-none blur-xl ${
+          justChanged ? 'bg-amber-400/30' : 'bg-cyan-400/20'
+        }`}
+      />
 
-        {/* Variable name */}
-        <div className="text-xs font-semibold text-cyan-600 uppercase tracking-widest">
-          {variable}
+      <div className={`relative rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} backdrop-blur-sm overflow-hidden`}>
+        {/* Header strip */}
+        <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest font-mono">
+            {variable}
+          </span>
+          <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
+            {typeLabel}
+          </span>
         </div>
 
-        {label && (
-          <div className="text-xs text-slate-600">{label}</div>
-        )}
-
-        {/* Value display with crossfade and pulse ring */}
-        <div className="relative w-full">
-          {/* Pulse ring */}
-          <div
-            ref={pulseRef}
-            className="absolute inset-0 rounded-lg border-2 border-orange-400 opacity-0 pointer-events-none"
-          />
+        {/* Value display */}
+        <div className="px-4 py-5 relative">
+          {/* Change indicator */}
+          {justChanged && (
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-amber-400 text-[10px] font-bold tracking-wider uppercase animate-bounce">
+              updated
+            </div>
+          )}
 
           {showOld && oldValue !== null && (
             <div
               ref={oldValueRef}
-              className="absolute inset-0 font-mono text-2xl font-bold text-slate-400 bg-slate-100 rounded-lg px-4 py-2 text-center"
+              className="absolute inset-x-4 top-5 font-mono text-2xl font-bold text-slate-500/50 text-center z-0"
             >
               {String(oldValue)}
             </div>
           )}
+
           <div
             ref={valueRef}
-            className={`font-mono text-3xl font-bold text-slate-800 rounded-lg px-4 py-2 w-full text-center transition-colors duration-300 ${
-              justChanged
-                ? 'bg-orange-50 border border-orange-300'
-                : 'bg-cyan-50 border border-cyan-200'
+            className={`font-mono text-3xl font-bold text-center relative z-10 transition-colors duration-300 ${
+              justChanged ? 'text-amber-200' : colors.text
             }`}
           >
             {String(currentValue)}
           </div>
+
+          {label && (
+            <div className="text-[11px] text-slate-400 text-center mt-2">{label}</div>
+          )}
         </div>
 
-        {/* Type indicator */}
-        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 rounded-full px-2.5 py-0.5">
-          {typeLabel}
-        </span>
-
-        {/* Progress dots */}
+        {/* Progress indicator */}
         {totalSteps > 1 && (
-          <div className="flex gap-1.5">
+          <div className="px-4 pb-3 flex items-center gap-1.5 justify-center">
             {stableValues.map((_, i) => (
-              <span
+              <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                  i <= currentIndex ? 'bg-cyan-400' : 'bg-slate-200'
+                className={`h-1 rounded-full transition-all duration-400 ${
+                  i <= currentIndex
+                    ? i === currentIndex
+                      ? 'w-4 bg-cyan-400 shadow-[0_0_4px_rgba(34,211,238,0.5)]'
+                      : 'w-2 bg-slate-500'
+                    : 'w-2 bg-slate-700'
                 }`}
               />
             ))}
+          </div>
+        )}
+
+        {/* Value history trail */}
+        {history.length > 0 && (
+          <div className="px-4 pb-3 flex items-center gap-1 justify-center">
+            <span className="text-[9px] text-slate-600 mr-1">history:</span>
+            {history.slice(-4).map((h, i) => (
+              <span key={i} className="text-[10px] font-mono text-slate-600 bg-white/[0.03] rounded px-1.5 py-0.5">
+                {String(h.value)}
+              </span>
+            ))}
+            <span className="text-[10px] text-slate-500 mx-0.5">→</span>
+            <span className={`text-[10px] font-mono font-bold ${colors.text} bg-white/[0.05] rounded px-1.5 py-0.5`}>
+              {String(currentValue)}
+            </span>
           </div>
         )}
       </div>

@@ -1,15 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 
-/**
- * ChatBar
- * Props:
- *   onSend      {function} — called with the trimmed message string
- *   placeholder {string}   — input placeholder text
- *   loading     {boolean}  — disables input and shows spinner while true
- */
-export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar…', loading = false }) {
+export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loading = false }) {
     const [value, setValue] = useState('');
+    const [focused, setFocused] = useState(false);
+    const inputRef = useRef(null);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -19,37 +14,72 @@ export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar…', loa
         setValue('');
     };
 
+    // Auto-focus on mount
+    useEffect(() => {
+        if (inputRef.current && !loading) {
+            inputRef.current.focus();
+        }
+    }, [loading]);
+
     return (
         <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-3 panel rounded-2xl px-4 py-3 border border-slate-200"
+            className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-300 bg-white/90 backdrop-blur-xl border ${
+                focused
+                    ? 'border-purple-300 shadow-lg shadow-purple-100/30 ring-1 ring-purple-200/50'
+                    : 'border-slate-200 shadow-sm'
+            }`}
         >
             {/* Vaathiyaar Avatar */}
-            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-lg select-none">
-                🧑‍🏫
+            <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg select-none transition-all duration-300 ${
+                focused
+                    ? 'bg-gradient-to-br from-purple-500 to-cyan-500 scale-105 shadow-md shadow-purple-300/30'
+                    : 'bg-purple-100 border border-purple-200'
+            }`}>
+                {focused ? (
+                    <span className="text-sm">{'🧑‍🏫'}</span>
+                ) : (
+                    <span className="text-sm">{'🧑‍🏫'}</span>
+                )}
             </div>
 
             {/* Input */}
             <input
+                ref={inputRef}
                 type="text"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
                 placeholder={placeholder}
                 disabled={loading}
-                className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             />
+
+            {/* Keyboard hint */}
+            {value.trim() && !loading && (
+                <span className="hidden sm:inline text-[10px] text-slate-400 font-mono flex-shrink-0">
+                    Enter ↵
+                </span>
+            )}
 
             {/* Send / Spinner */}
             <button
                 type="submit"
                 disabled={loading || !value.trim()}
-                className="flex-shrink-0 w-9 h-9 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-600 hover:bg-purple-200 hover:text-purple-700 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    loading
+                        ? 'bg-purple-100 text-purple-500'
+                        : value.trim()
+                        ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white shadow-md shadow-purple-300/30 hover:scale-105 active:scale-95'
+                        : 'bg-slate-100 text-slate-400'
+                } disabled:cursor-not-allowed`}
                 aria-label="Send message"
             >
                 {loading ? (
                     <Loader2 size={16} className="animate-spin" />
                 ) : (
-                    <Send size={16} />
+                    <Send size={15} />
                 )}
             </button>
         </form>

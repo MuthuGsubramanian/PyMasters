@@ -9,20 +9,17 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
   const lineRefs = useRef([]);
   const prevStep = useRef(-1);
 
-  // Stabilize props to prevent re-render loops
   const stableOutput = useMemo(() => output, [JSON.stringify(output)]);
 
-  // Ref for onComplete to avoid it being a useEffect dependency
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
     if (!containerRef.current) return;
-
     gsap.fromTo(
       containerRef.current,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+      { opacity: 0, y: 20, scale: 0.98 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power3.out' }
     );
   }, []);
 
@@ -35,7 +32,6 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
     const isLast = lineIndex === stableOutput.length - 1;
     const lineText = stableOutput[lineIndex];
 
-    // Typing effect for each line
     setTypingLine(lineIndex);
     setTypedText('');
 
@@ -47,14 +43,13 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
         setTypingLine(null);
         setVisibleLines((prev) => [...prev, lineText]);
 
-        // Animate the completed line
         requestAnimationFrame(() => {
           const newLineEl = lineRefs.current[lineIndex];
           if (newLineEl) {
             gsap.fromTo(
               newLineEl,
-              { opacity: 0 },
-              { opacity: 1, duration: 0.15, ease: 'power2.out' }
+              { opacity: 0, x: -4 },
+              { opacity: 1, x: 0, duration: 0.2, ease: 'power2.out' }
             );
           }
         });
@@ -84,22 +79,28 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
   return (
     <div
       ref={containerRef}
-      className="rounded-xl overflow-hidden opacity-0 max-w-2xl border border-slate-700"
+      className="rounded-2xl overflow-hidden opacity-0 max-w-2xl border border-white/[0.06] shadow-2xl shadow-black/20"
     >
       {/* Terminal header */}
-      <div className="bg-slate-800 border-b border-slate-700 px-4 py-2 flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-        <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-        <span className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-        <span className="ml-2 text-xs text-slate-400 font-mono">terminal</span>
+      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
+          <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
+          <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
+        </div>
+        <span className="ml-3 text-[11px] text-slate-400 tracking-wide font-mono">python output</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-[10px] text-green-400/80">running</span>
+        </div>
       </div>
 
-      <div className="relative bg-[#0a0f1a] p-4 min-h-[80px] font-mono text-sm">
-        {/* Scanline overlay */}
+      <div className="relative bg-[#0d1117] p-4 min-h-[80px] font-mono text-sm">
+        {/* CRT scanline effect */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 pointer-events-none opacity-[0.02]"
           style={{
-            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.15) 2px, rgba(0,255,0,0.15) 4px)',
+            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,100,0.08) 2px, rgba(0,255,100,0.08) 4px)',
           }}
         />
 
@@ -108,32 +109,43 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
           <div
             key={idx}
             ref={(el) => (lineRefs.current[idx] = el)}
-            className="flex items-start gap-2 mb-1"
+            className="flex items-start gap-2 mb-1.5 group"
           >
-            <span className="text-green-500 select-none flex-shrink-0">$</span>
-            <span className="text-green-300">{line}</span>
+            <span className="text-green-500/60 select-none flex-shrink-0 text-xs mt-0.5">{'>>>'}</span>
+            <span className="text-green-300/90 leading-relaxed">{line}</span>
           </div>
         ))}
 
-        {/* Currently typing line */}
+        {/* Currently typing line with cursor */}
         {typingLine !== null && (
-          <div className="flex items-start gap-2 mb-1">
-            <span className="text-green-500 select-none flex-shrink-0">$</span>
-            <span className="text-green-300">
+          <div className="flex items-start gap-2 mb-1.5">
+            <span className="text-green-500/60 select-none flex-shrink-0 text-xs mt-0.5">{'>>>'}</span>
+            <span className="text-green-300/90 leading-relaxed">
               {typedText}
-              <span className="inline-block w-2 h-4 bg-green-400 ml-px animate-pulse rounded-sm align-middle" />
+              <span className="inline-block w-[7px] h-[14px] bg-green-400 ml-px rounded-[1px] align-middle shadow-[0_0_8px_rgba(74,222,128,0.6)]"
+                style={{ animation: 'blink 1s steps(2) infinite' }}
+              />
             </span>
           </div>
         )}
 
-        {/* Blinking cursor on idle */}
+        {/* Idle cursor */}
         {typingLine === null && (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-green-500 select-none">$</span>
-            <span className="inline-block w-2 h-4 bg-green-400 animate-[blink_1s_steps(2)_infinite] rounded-sm" />
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-green-500/60 select-none text-xs">{'>>>'}</span>
+            <span className="inline-block w-[7px] h-[14px] bg-green-400 rounded-[1px] shadow-[0_0_8px_rgba(74,222,128,0.6)]"
+              style={{ animation: 'blink 1s steps(2) infinite' }}
+            />
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
