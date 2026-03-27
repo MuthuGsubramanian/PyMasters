@@ -3,10 +3,8 @@ engine.py — Vaathiyaar Engine: Ollama Cloud API integration, response parsing,
 and safe code evaluation.
 """
 
-import io
 import json
 import os
-import contextlib
 from typing import Optional
 
 from ollama import Client as OllamaClient
@@ -190,57 +188,49 @@ def evaluate_code(
         - error (str): Captured stderr / exception message, or "".
         - feedback (dict): Parsed Vaathiyaar response dict.
     """
-    FORBIDDEN_KEYWORDS = [
-        "import os",
-        "import sys",
-        "subprocess",
-        "open(",
-        "exec(",
-        "eval(",
-        "__import__",
-        "shutil",
-        "pathlib",
-    ]
+    from vaathiyaar.execution import run_code_subprocess, check_code_safety
 
-    # Security gate
-    for kw in FORBIDDEN_KEYWORDS:
-        if kw in student_code:
-            return {
+    blocked = check_code_safety(student_code)
+    if blocked:
+        feedback_context = {
+            "code_evaluation": {
                 "success": False,
-                "output": "",
-                "error": f"Security Error: forbidden keyword '{kw}' detected.",
-                "feedback": parse_vaathiyaar_response(
-                    json.dumps({
-                        "message": (
-                            f"Ayyo! '{kw}' is not allowed in the sandbox. "
-                            "Try solving the challenge without file I/O or system imports."
-                        ),
-                        "phase": "feedback",
-                        "animation": None,
-                        "practice_challenge": None,
-                        "profile_update": {
-                            "topic_practiced": None,
-                            "struggle_detected": True,
-                            "mastery_delta": None,
-                            "emotion_signal": "confused",
-                        },
-                    })
-                ),
+                "actual_output": "",
+                "expected_output": expected_output,
+                "error": f"Security Error: forbidden operation '{blocked}' detected.",
+            }
+        }
+        if lesson_context:
+            feedback_context.update(lesson_context)
+
+        try:
+            feedback = call_vaathiyaar(
+                f"Student used forbidden keyword '{blocked}' in their code. "
+                f"Explain why this is not allowed and guide them.",
+                student_profile=student_profile,
+                lesson_context=feedback_context,
+            )
+        except Exception:
+            feedback = {
+                "message": f"**Security Error:** `{blocked}` is not allowed in this environment. "
+                           "Try solving the problem without system-level operations.",
+                "phase": "feedback",
             }
 
-    # Execute the code
-    stdout_buf = io.StringIO()
-    stderr_buf = io.StringIO()
-    exec_error = ""
+        return {
+            "success": False,
+            "output": "",
+            "error": f"Forbidden: '{blocked}'",
+            "feedback": feedback.get("message", ""),
+            "phase": feedback.get("phase", "feedback"),
+            "animation": feedback.get("animation"),
+        }
 
-    try:
-        with contextlib.redirect_stdout(stdout_buf), contextlib.redirect_stderr(stderr_buf):
-            exec(student_code, {"__builtins__": __builtins__}, {})  # noqa: S102
-    except Exception as exc:
-        exec_error = str(exc)
-
-    actual_output = stdout_buf.getvalue()
-    stderr_output = stderr_buf.getvalue()
+    # Execute code via subprocess
+    result = run_code_subprocess(student_code)
+    actual_output = result["output"]
+    stderr_output = result["error"]
+    exec_error = stderr_output if result["exit_code"] != 0 else ""
     error_msg = exec_error or stderr_output
 
     success = actual_output.strip() == expected_output.strip()
