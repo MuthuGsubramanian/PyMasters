@@ -369,8 +369,13 @@ export default function Onboarding() {
     const navigate = useNavigate();
     const bottomRef = useRef(null);
 
+    const username = user?.name || user?.username || '';
+    const greeting = username
+        ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?`
+        : "Vanakkam! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?";
+
     const [messages, setMessages] = useState([
-        makeMsg('vaathiyaar', "Vanakkam! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?"),
+        makeMsg('vaathiyaar', greeting),
         makeMsg('vaathiyaar', QUESTIONS[0].text, { questionIndex: 0 }),
     ]);
     const [currentStep, setCurrentStep] = useState(0);
@@ -443,7 +448,10 @@ export default function Onboarding() {
                 console.error('Onboarding submit failed:', err);
             }
 
-            addMsg(makeMsg('vaathiyaar', "Let's begin your Python journey! 🚀"));
+            addMsg(makeMsg('vaathiyaar', username
+                ? `${username}, you're all set! Let's begin your Python journey! 🚀`
+                : "You're all set! Let's begin your Python journey! 🚀"
+            ));
             setDone(true);
             setBusy(false);
 

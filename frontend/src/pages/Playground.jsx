@@ -448,7 +448,11 @@ export default function Playground() {
                         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-cyan-100 border border-purple-200/50 flex items-center justify-center text-4xl mx-auto mb-5 select-none shadow-lg shadow-purple-100/50">
                             {'🧑‍🏫'}
                         </div>
-                        <h2 className="text-xl font-bold text-slate-800 mb-2 font-display">Ask Vaathiyaar anything!</h2>
+                        <h2 className="text-xl font-bold text-slate-800 mb-2 font-display">
+                            {user?.name || user?.username
+                                ? `Hey ${user.name || user.username}, ask me anything!`
+                                : 'Ask Vaathiyaar anything!'}
+                        </h2>
                         <p className="text-sm text-slate-500 max-w-md mx-auto mb-6 leading-relaxed">
                             This is your free-form playground. Ask about Python concepts, debug code,
                             explore ideas, or just have a conversation about programming.
