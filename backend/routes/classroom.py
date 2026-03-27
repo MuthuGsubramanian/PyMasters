@@ -70,6 +70,7 @@ class ChatRequest(BaseModel):
     phase: Optional[str] = None
     language: Optional[str] = "en"
     username: Optional[str] = None
+    history: Optional[list] = None
 
 
 class EvaluateRequest(BaseModel):
@@ -199,9 +200,17 @@ def chat(request: ChatRequest):
     if request.language:
         lesson_context["language"] = request.language
 
+    history_context = ""
+    if request.history:
+        recent = request.history[-5:]
+        history_context = "\n".join(
+            f"{'Student' if m.get('role') == 'user' else 'Vaathiyaar'}: {m.get('content', '')}"
+            for m in recent
+        ) + "\n\n"
+
     try:
         response = call_vaathiyaar(
-            user_message=request.message,
+            user_message=history_context + request.message,
             student_profile=profile,
             lesson_context=lesson_context,
         )
@@ -261,6 +270,7 @@ def chat_stream(request: ChatRequest):
                 model=OLLAMA_MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
+                    *([{"role": m.get("role", "user"), "content": m.get("content", "")} for m in (request.history or [])[-5:]]),
                     {"role": "user", "content": request.message},
                 ],
                 stream=True,
