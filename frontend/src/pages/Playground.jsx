@@ -368,20 +368,16 @@ export default function Playground() {
         setRunning(true);
         setOutput('>>> Running...\n');
         try {
-            const res = await api.post('/classroom/evaluate', {
+            const res = await api.post('/playground/execute', {
                 user_id: user?.id,
                 code: code,
-                expected_output: '',
-                topic: 'playground',
             });
             const result = res.data;
-            if (result.actual_output !== undefined && result.actual_output !== null) {
-                setOutput(String(result.actual_output));
-            } else if (result.error) {
-                setOutput(`Error:\n${result.error}`);
-            } else {
-                setOutput('(no output)');
-            }
+            let out = '';
+            if (result.output) out += result.output;
+            if (result.error) out += (out ? '\n' : '') + result.error;
+            if (!out) out = '(no output)';
+            setOutput(out);
         } catch (err) {
             setOutput(`Execution error: ${err.response?.data?.detail || err.message}`);
         } finally {
@@ -392,6 +388,29 @@ export default function Playground() {
     const handleClearTerminal = () => {
         setCode('# Write Python code here...\n\n');
         setOutput('');
+    };
+
+    const [installPkg, setInstallPkg] = useState('');
+    const [installing, setInstalling] = useState(false);
+
+    const handleInstallPackage = async () => {
+        const pkg = installPkg.trim();
+        if (!pkg || installing) return;
+        setInstalling(true);
+        setOutput(`>>> pip install ${pkg}...\n`);
+        try {
+            const res = await api.post('/playground/install-package', { package: pkg, user_id: user?.id });
+            if (res.data.success) {
+                setOutput(`Successfully installed ${pkg}\n${res.data.output || ''}`);
+            } else {
+                setOutput(`Failed to install ${pkg}:\n${res.data.error}`);
+            }
+        } catch (err) {
+            setOutput(`Install error: ${err.response?.data?.detail || err.message}`);
+        } finally {
+            setInstalling(false);
+            setInstallPkg('');
+        }
     };
 
     const handleSendToVaathiyaar = () => {
@@ -774,6 +793,26 @@ export default function Playground() {
                             >
                                 <Send size={13} />
                                 Send to Vaathiyaar
+                            </button>
+                        </div>
+
+                        {/* Package installer */}
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.04]">
+                            <span className="text-[10px] text-slate-500 font-mono flex-shrink-0">pip install</span>
+                            <input
+                                type="text"
+                                value={installPkg}
+                                onChange={(e) => setInstallPkg(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleInstallPackage()}
+                                placeholder="package-name"
+                                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-slate-300 placeholder-slate-600 font-mono focus:outline-none focus:border-green-500/40"
+                            />
+                            <button
+                                onClick={handleInstallPackage}
+                                disabled={!installPkg.trim() || installing}
+                                className="text-[10px] font-bold text-green-300 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-1.5 hover:bg-green-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {installing ? 'Installing...' : 'Install'}
                             </button>
                         </div>
                     </div>
