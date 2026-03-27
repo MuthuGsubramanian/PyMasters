@@ -1,0 +1,213 @@
+{
+  "id": "api_consumption",
+  "topic": "api_consumption",
+  "track": "web_development",
+  "module": "web_foundations",
+  "order": 16,
+  "title": {
+    "en": "API Consumption: Calling APIs with Python",
+    "ta": "API நுகர்வு: Python மூலம் API-களை அழைத்தல்"
+  },
+  "description": {
+    "en": "Master the requests library — API keys, authentication headers, pagination, error handling, and rate limiting.",
+    "ta": "requests நூலகத்தை கற்றுக்கொள்ளுங்கள் — API விசைகள், அங்கீகார தலைப்புகள், பக்கமாக்கல், பிழை கையாளுதல் மற்றும் வீத வரம்பு."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## The Data Collector\n\nVaathiyaar opens his phone. \"The internet is full of free data — weather, stock prices, GitHub repos, news articles. APIs are the doors. The `requests` library is your key. Today you learn to open those doors properly.\"\n\n### The requests Library\n```python\nimport requests\nresponse = requests.get('https://api.example.com/data')\n```\n\n### Common Patterns\n\n| Pattern | How |\n|---------|-----|\n| Query params | `requests.get(url, params={'q': 'python'})` |\n| Headers | `requests.get(url, headers={'Authorization': 'Bearer token'})` |\n| JSON body | `requests.post(url, json={'key': 'value'})` |\n| Timeout | `requests.get(url, timeout=5)` |\n| Session | `s = requests.Session()` for persistent settings |\n\n### Error Handling\n```python\nresponse = requests.get(url)\nresponse.raise_for_status()  # Raises HTTPError for 4xx/5xx\n```\n\n### Pagination\nMost APIs return data in pages:\n```\nGET /api/items?page=1&per_page=20\nGET /api/items?page=2&per_page=20\n```\n\n### Rate Limiting\nAPIs limit how many requests you can make:\n- Check `X-RateLimit-Remaining` header\n- Use `time.sleep()` between requests\n- Use exponential backoff on 429 errors\n\n> **Key Concept:** Always handle errors, set timeouts, and respect rate limits. An API call without a timeout can hang your program forever. An API call without error handling will crash on any server hiccup."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "data_collector",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "api_consumption_overview",
+      "nodes": [
+        {
+          "label": "API Consumption",
+          "children": [
+            "requests Library",
+            "Authentication (API keys, tokens)",
+            "Pagination (page, offset)",
+            "Error Handling (try/except)",
+            "Rate Limiting (backoff)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "api_demo",
+      "steps": [
+        {
+          "line": "import requests\nimport time",
+          "highlight": "requests",
+          "explanation": {
+            "en": "Import requests for HTTP calls and time for rate limiting"
+          }
+        },
+        {
+          "line": "# Basic GET request with query parameters\nresponse = requests.get(\n    'https://api.github.com/search/repositories',\n    params={'q': 'python', 'sort': 'stars', 'per_page': 5},\n    timeout=10\n)",
+          "highlight": "params",
+          "explanation": {
+            "en": "Query params are URL-encoded automatically: ?q=python&sort=stars&per_page=5"
+          }
+        },
+        {
+          "line": "print(f'Status: {response.status_code}')\nprint(f'Rate limit remaining: {response.headers.get(\"X-RateLimit-Remaining\")}')",
+          "highlight": "X-RateLimit-Remaining",
+          "explanation": {
+            "en": "Check rate limit headers to know how many requests you have left"
+          }
+        },
+        {
+          "line": "data = response.json()\nprint(f'Total results: {data[\"total_count\"]}')\nfor repo in data['items']:\n    print(f'  {repo[\"full_name\"]} - {repo[\"stargazers_count\"]:,} stars')",
+          "highlight": "json()",
+          "explanation": {
+            "en": "Parse JSON response and iterate through results"
+          }
+        },
+        {
+          "line": "# Authentication with API key in headers\nheaders = {\n    'Authorization': 'Bearer ghp_your_github_token_here',\n    'Accept': 'application/vnd.github.v3+json'\n}\nauth_response = requests.get('https://api.github.com/user', headers=headers, timeout=10)",
+          "highlight": "Authorization",
+          "explanation": {
+            "en": "Send API key/token in the Authorization header"
+          }
+        },
+        {
+          "line": "# Error handling with try/except\ntry:\n    response = requests.get('https://api.example.com/data', timeout=5)\n    response.raise_for_status()  # Raises exception for 4xx/5xx\n    data = response.json()\nexcept requests.exceptions.Timeout:\n    print('Request timed out — try again later')\nexcept requests.exceptions.HTTPError as e:\n    print(f'HTTP error: {e.response.status_code}')\nexcept requests.exceptions.ConnectionError:\n    print('Cannot connect to the server')\nexcept requests.exceptions.RequestException as e:\n    print(f'Request failed: {e}')",
+          "highlight": "raise_for_status",
+          "explanation": {
+            "en": "Proper error handling — catch specific exceptions for different failures"
+          }
+        },
+        {
+          "line": "# Pagination — collecting all pages\ndef get_all_items(base_url, per_page=20):\n    all_items = []\n    page = 1\n    while True:\n        response = requests.get(\n            base_url,\n            params={'page': page, 'per_page': per_page},\n            timeout=10\n        )\n        response.raise_for_status()\n        items = response.json()\n        if not items:\n            break\n        all_items.extend(items)\n        page += 1\n        time.sleep(0.5)  # Be nice to the API\n    return all_items",
+          "highlight": "while True",
+          "explanation": {
+            "en": "Paginate: keep requesting pages until empty response, sleep between requests"
+          }
+        },
+        {
+          "line": "# Using a Session for repeated requests\nsession = requests.Session()\nsession.headers.update({'Authorization': 'Bearer token123'})\nsession.timeout = 10\n\nusers = session.get('https://api.example.com/users').json()\nposts = session.get('https://api.example.com/posts').json()",
+          "highlight": "Session()",
+          "explanation": {
+            "en": "Session persists headers, cookies, and settings across multiple requests"
+          }
+        },
+        {
+          "line": "# Retry with exponential backoff\ndef fetch_with_retry(url, max_retries=3):\n    for attempt in range(max_retries):\n        try:\n            response = requests.get(url, timeout=10)\n            if response.status_code == 429:  # Rate limited\n                wait = 2 ** attempt\n                print(f'Rate limited. Waiting {wait}s...')\n                time.sleep(wait)\n                continue\n            response.raise_for_status()\n            return response.json()\n        except requests.exceptions.RequestException:\n            if attempt == max_retries - 1:\n                raise\n            time.sleep(2 ** attempt)\n    return None",
+          "highlight": "2 ** attempt",
+          "explanation": {
+            "en": "Exponential backoff: wait 1s, 2s, 4s between retries"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "request_types",
+      "left_label": "Simple Request",
+      "right_label": "Production Request",
+      "left_content": "response = requests.get(url)\ndata = response.json()\nprint(data)",
+      "right_content": "try:\n    response = requests.get(\n        url,\n        headers=headers,\n        params=params,\n        timeout=10\n    )\n    response.raise_for_status()\n    data = response.json()\nexcept RequestException as e:\n    logger.error(f'API failed: {e}')"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_status",
+      "variable": "response.status_code",
+      "value": 200,
+      "data_type": "int",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Status: 200",
+        "Rate limit remaining: 57",
+        "Total results: 1234567",
+        "  TheAlgorithms/Python - 187,432 stars",
+        "  pallets/flask - 68,123 stars",
+        "  django/django - 79,456 stars",
+        "  tiangolo/fastapi - 75,890 stars",
+        "  python/cpython - 62,345 stars"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function that fetches the top 10 most-starred Python repositories from GitHub's API. Include proper error handling, timeout, and print each repo's name, stars, and description. Use query parameters for search and pagination.",
+        "ta": "GitHub-ன் API-லிருந்து அதிக நட்சத்திரங்களைப் பெற்ற முதல் 10 Python களஞ்சியங்களைப் பெறும் செயல்பாட்டை எழுதுங்கள்."
+      },
+      "starter_code": "import requests\n\ndef get_top_python_repos(count=10):\n    try:\n        response = requests.get(\n            'https://api.github.com/search/repositories',\n            params={\n                'q': 'language:python',\n                'sort': 'stars',\n                'order': 'desc',\n                'per_page': count\n            },\n            headers={'Accept': 'application/vnd.github.v3+json'},\n            timeout=10\n        )\n        response.raise_for_status()\n        data = response.json()\n\n        print(f'Found {data[\"total_count\"]:,} Python repos\\n')\n        for i, repo in enumerate(data['items'], 1):\n            print(f'{i}. {repo[\"full_name\"]}')\n            print(f'   Stars: {repo[\"stargazers_count\"]:,}')\n            print(f'   {repo[\"description\"][:80] if repo[\"description\"] else \"No description\"}')\n            print()\n\n    except requests.exceptions.Timeout:\n        print('Request timed out')\n    except requests.exceptions.HTTPError as e:\n        print(f'HTTP Error: {e.response.status_code}')\n    except requests.exceptions.RequestException as e:\n        print(f'Error: {e}')\n\nget_top_python_repos()",
+      "expected_output": "Found 4,567,890 Python repos\n\n1. TheAlgorithms/Python\n   Stars: 187,432\n   All Algorithms implemented in Python\n...",
+      "hints": {
+        "en": [
+          "Use params dict for query parameters — requests encodes them",
+          "Always set a timeout to prevent hanging",
+          "raise_for_status() converts HTTP errors to Python exceptions",
+          "Use string formatting for readable output"
+        ],
+        "ta": [
+          "வினவல் அளவுருக்களுக்கு params dict பயன்படுத்துங்கள்",
+          "நிறுத்தப்படுவதைத் தடுக்க எப்போதும் timeout அமையுங்கள்",
+          "raise_for_status() HTTP பிழைகளை Python விதிவிலக்குகளாக மாற்றுகிறது",
+          "படிக்கக்கூடிய வெளியீட்டிற்கு சர வடிவமைப்பைப் பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does response.raise_for_status() do?",
+        "ta": "response.raise_for_status() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Returns the status code", "Raises an HTTPError exception for 4xx/5xx responses", "Prints the status code", "Retries the request"],
+        "ta": ["நிலை குறியீட்டை திருப்புகிறது", "4xx/5xx பதில்களுக்கு HTTPError விதிவிலக்கை எழுப்புகிறது", "நிலை குறியீட்டை அச்சிடுகிறது", "கோரிக்கையை மீண்டும் முயற்சிக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why should you always set a timeout on requests?",
+        "ta": "கோரிக்கைகளில் ஏன் எப்போதும் timeout அமைக்க வேண்டும்?"
+      },
+      "options": {
+        "en": ["To make requests faster", "To prevent your program from hanging indefinitely if the server doesn't respond", "To limit the response size", "To add authentication"],
+        "ta": ["கோரிக்கைகளை வேகமாக்க", "சேவையகம் பதிலளிக்கவில்லை என்றால் உங்கள் நிரல் முடிவில்லாமல் நிற்பதைத் தடுக்க", "பதில் அளவை வரம்பிட", "அங்கீகாரத்தைச் சேர்க்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is exponential backoff?",
+        "ta": "அதிவேக பின்வாங்கல் என்றால் என்ன?"
+      },
+      "options": {
+        "en": ["Sending requests as fast as possible", "Waiting increasingly longer between retries (1s, 2s, 4s, 8s...)", "Reducing the payload size each time", "Using multiple API keys"],
+        "ta": ["கோரிக்கைகளை முடிந்தவரை வேகமாக அனுப்புவது", "மறு முயற்சிகளுக்கு இடையே அதிக நேரம் காத்திருப்பது (1s, 2s, 4s, 8s...)", "ஒவ்வொரு முறையும் பேலோட் அளவைக் குறைப்பது", "பல API விசைகளைப் பயன்படுத்துவது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["requests_library", "api_authentication", "pagination", "error_handling", "rate_limiting"],
+    "concepts_required": ["http_methods", "json_format"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["data_collection", "api_integration"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

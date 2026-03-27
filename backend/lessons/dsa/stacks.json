@@ -1,0 +1,271 @@
+{
+  "id": "stacks",
+  "topic": "stacks",
+  "track": "dsa",
+  "module": "linear_structures",
+  "order": 4,
+  "title": {
+    "en": "Stacks: Last In, First Out",
+    "ta": "அடுக்குகள்: கடைசியாக உள்ளே, முதலில் வெளியே"
+  },
+  "description": {
+    "en": "Master the stack data structure — push, pop, peek. Understand the call stack and solve classic stack problems.",
+    "ta": "அடுக்கு தரவு கட்டமைப்பை கற்றுக்கொள்ளுங்கள் — push, pop, peek. அழைப்பு அடுக்கையும் பாரம்பரிய அடுக்கு சிக்கல்களையும் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Plate Stack\n\nVaathiyaar stacks plates on the table. \"You can only add or remove from the **top**. That's a stack — Last In, First Out!\"\n\n### Stack Operations\n- **push(item)** — Add to the top → O(1)\n- **pop()** — Remove from the top → O(1)\n- **peek()** — Look at the top without removing → O(1)\n- **is_empty()** — Check if stack is empty → O(1)\n\n### Implementation\n\n```python\nclass Stack:\n    def __init__(self):\n        self.items = []\n\n    def push(self, item):\n        self.items.append(item)\n\n    def pop(self):\n        if self.is_empty():\n            raise IndexError('Stack is empty')\n        return self.items.pop()\n\n    def peek(self):\n        if self.is_empty():\n            raise IndexError('Stack is empty')\n        return self.items[-1]\n\n    def is_empty(self):\n        return len(self.items) == 0\n\n    def size(self):\n        return len(self.items)\n```\n\n### Classic Problem: Balanced Parentheses\n\n```python\ndef is_balanced(expression):\n    stack = []\n    pairs = {')': '(', ']': '[', '}': '{'}\n    for char in expression:\n        if char in '([{':\n            stack.append(char)\n        elif char in pairs:\n            if not stack or stack[-1] != pairs[char]:\n                return False\n            stack.pop()\n    return len(stack) == 0\n```\n\n> **Key Concept:** Python's call stack is literally a stack! Each function call pushes a frame, and returning pops it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "plate_stack",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Stack (LIFO)",
+          "children": [
+            "push() — O(1)",
+            "pop() — O(1)",
+            "peek() — O(1)",
+            "Call Stack",
+            "Balanced Parentheses"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_stack",
+      "steps": [
+        {
+          "line": "class Stack:",
+          "highlight": "Stack",
+          "explanation": {
+            "en": "Define our Stack class using a Python list as backing storage",
+            "ta": "Python list-ஐ பின்புல சேமிப்பாக பயன்படுத்தி Stack class-ஐ வரையறுக்கவும்"
+          }
+        },
+        {
+          "line": "    def __init__(self):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Initialize with an empty list",
+            "ta": "காலி பட்டியலுடன் துவக்குங்கள்"
+          }
+        },
+        {
+          "line": "        self.items = []",
+          "highlight": "self.items",
+          "explanation": {
+            "en": "Internal list stores our stack elements",
+            "ta": "உள் பட்டியல் நமது அடுக்கு உறுப்புகளை சேமிக்கும்"
+          }
+        },
+        {
+          "line": "    def push(self, item):",
+          "highlight": "push",
+          "explanation": {
+            "en": "Push adds an item to the top of the stack",
+            "ta": "Push அடுக்கின் மேலே ஒரு உருப்படியை சேர்க்கும்"
+          }
+        },
+        {
+          "line": "        self.items.append(item)",
+          "highlight": "append",
+          "explanation": {
+            "en": "list.append() is O(1) — perfect for stack push",
+            "ta": "list.append() O(1) — stack push-க்கு சரியானது"
+          }
+        },
+        {
+          "line": "    def pop(self):",
+          "highlight": "pop",
+          "explanation": {
+            "en": "Pop removes and returns the top item",
+            "ta": "Pop மேலே உள்ள உருப்படியை நீக்கி திருப்பும்"
+          }
+        },
+        {
+          "line": "        return self.items.pop()",
+          "highlight": "pop()",
+          "explanation": {
+            "en": "list.pop() removes last element in O(1) — LIFO behavior",
+            "ta": "list.pop() கடைசி உறுப்பை O(1) ல் நீக்கும் — LIFO நடத்தை"
+          }
+        },
+        {
+          "line": "s = Stack()",
+          "highlight": "s",
+          "explanation": {
+            "en": "Create a new empty stack",
+            "ta": "புதிய காலி அடுக்கை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "s.push('A')",
+          "highlight": "push",
+          "explanation": {
+            "en": "Push 'A' — stack is now ['A']",
+            "ta": "'A' ஐ push செய்யுங்கள் — அடுக்கு இப்போது ['A']"
+          }
+        },
+        {
+          "line": "s.push('B')",
+          "highlight": "push",
+          "explanation": {
+            "en": "Push 'B' — stack is now ['A', 'B']. B is on top",
+            "ta": "'B' ஐ push செய்யுங்கள் — அடுக்கு இப்போது ['A', 'B']. B மேலே"
+          }
+        },
+        {
+          "line": "s.push('C')",
+          "highlight": "push",
+          "explanation": {
+            "en": "Push 'C' — stack is now ['A', 'B', 'C']. C is on top",
+            "ta": "'C' ஐ push செய்யுங்கள் — அடுக்கு இப்போது ['A', 'B', 'C']. C மேலே"
+          }
+        },
+        {
+          "line": "print(s.pop())",
+          "highlight": "pop",
+          "explanation": {
+            "en": "Pop returns 'C' (last in, first out). Stack is now ['A', 'B']",
+            "ta": "Pop 'C' ஐ திருப்பும் (கடைசியாக உள்ளே, முதலில் வெளியே). அடுக்கு இப்போது ['A', 'B']"
+          }
+        },
+        {
+          "line": "# Balanced parentheses check",
+          "highlight": "parentheses",
+          "explanation": {
+            "en": "Classic stack problem: check if brackets are properly matched",
+            "ta": "பாரம்பரிய அடுக்கு சிக்கல்: அடைப்புக்குறிகள் சரியாக பொருந்துகின்றனவா என சரிபார்க்கவும்"
+          }
+        },
+        {
+          "line": "def is_balanced(expr):",
+          "highlight": "is_balanced",
+          "explanation": {
+            "en": "Function takes a string of brackets and returns True if balanced",
+            "ta": "செயல்பாடு அடைப்புக்குறி சரத்தை எடுத்து சமநிலையில் இருந்தால் True திருப்பும்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "stack_visual",
+      "structure_type": "list",
+      "initial_state": [],
+      "animations": [
+        {"action": "add", "index": 0, "value": "A"},
+        {"action": "add", "index": 1, "value": "B"},
+        {"action": "add", "index": 2, "value": "C"},
+        {"action": "remove", "index": 2}
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "call_stack_demo",
+      "slots": [
+        {"name": "main()", "value": "running", "type": "frame", "address": "0x01"},
+        {"name": "is_balanced('([{}])')", "value": "running", "type": "frame", "address": "0x02"},
+        {"name": "stack = ['(', '[', '{']", "value": "checking '}'", "type": "local", "address": "0x03"}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_top",
+      "variable": "top",
+      "value": "C",
+      "data_type": "str",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Push A, B, C",
+        "Stack: ['A', 'B', 'C']",
+        "Pop: C",
+        "Stack: ['A', 'B']",
+        "is_balanced('([{}])'): True",
+        "is_balanced('([{]}'): False"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a Stack class and use it to solve the balanced parentheses problem. Test with multiple expressions including nested brackets.",
+        "ta": "Stack class-ஐ செயல்படுத்தி சமநிலை அடைப்புக்குறி சிக்கலை தீர்க்க பயன்படுத்துங்கள்."
+      },
+      "starter_code": "class Stack:\n    def __init__(self):\n        self.items = []\n\n    def push(self, item):\n        self.items.append(item)\n\n    def pop(self):\n        if not self.items:\n            return None\n        return self.items.pop()\n\n    def peek(self):\n        if not self.items:\n            return None\n        return self.items[-1]\n\n    def is_empty(self):\n        return len(self.items) == 0\n\ndef is_balanced(expression):\n    # Use a Stack to check balanced brackets\n    pass\n\nprint(is_balanced('((()))'))       # True\nprint(is_balanced('([{}])'))       # True\nprint(is_balanced('((())'))        # False\nprint(is_balanced('{[}]'))         # False",
+      "expected_output": "True\nTrue\nFalse\nFalse",
+      "hints": {
+        "en": [
+          "Push opening brackets onto the stack",
+          "For closing brackets, pop and check if it matches",
+          "Use a dict: {')':'(', ']':'[', '}':'{'}"
+        ],
+        "ta": [
+          "திறக்கும் அடைப்புக்குறிகளை அடுக்கில் push செய்யுங்கள்",
+          "மூடும் அடைப்புக்குறிகளுக்கு pop செய்து பொருந்துகிறதா சரிபார்க்கவும்",
+          "dict பயன்படுத்துங்கள்: {')':'(', ']':'[', '}':'{'}"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does LIFO stand for?",
+        "ta": "LIFO என்றால் என்ன?"
+      },
+      "options": {
+        "en": ["Last In First Out", "Last In Fast Out", "List In First Order", "Linear First Out"],
+        "ta": ["Last In First Out", "Last In Fast Out", "List In First Order", "Linear First Out"]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "If you push A, B, C onto a stack and then pop twice, what remains?",
+        "ta": "A, B, C ஐ அடுக்கில் push செய்துவிட்டு இரண்டு முறை pop செய்தால், என்ன மீதம் இருக்கும்?"
+      },
+      "options": {
+        "en": ["['A']", "['C']", "['A', 'B']", "['B', 'C']"],
+        "ta": ["['A']", "['C']", "['A', 'B']", "['B', 'C']"]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which real-world concept is best modeled by a stack?",
+        "ta": "எந்த நிஜ உலக கருத்து ஒரு அடுக்கால் சிறப்பாக மாதிரிப்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": ["A queue at a bank", "Browser back button (undo)", "A phone book", "A calendar"],
+        "ta": ["வங்கியில் வரிசை", "உலாவி பின் பொத்தான் (undo)", "தொலைபேசி புத்தகம்", "நாட்காட்டி"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["stack", "lifo", "push", "pop", "balanced_parentheses"],
+    "concepts_required": ["classes", "lists"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["undo_redo", "call_stack", "expression_evaluation"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

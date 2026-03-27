@@ -1,0 +1,271 @@
+{
+  "id": "logging_monitoring",
+  "topic": "logging_monitoring",
+  "track": "testing_devops",
+  "module": "observability",
+  "order": 12,
+  "title": {
+    "en": "Logging & Monitoring in Python",
+    "ta": "Python-ல் Logging & Monitoring"
+  },
+  "description": {
+    "en": "Master Python's logging module — levels, formatters, handlers, structured logging with JSON, and best practices for production observability.",
+    "ta": "Python-ன் logging module கற்றுக்கொள்ளுங்கள் — levels, formatters, handlers, JSON-உடன் structured logging, production observability-க்கான best practices."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Black Box Recorder\n\nVaathiyaar holds up a flight recorder. \"Every airplane has a black box. If something goes wrong, investigators open it and read the logs. Your Python app needs the same thing. When your server crashes at 3 AM, logs tell you WHY.\"\n\n### Why Not Just print()?\n- `print()` goes to stdout only — lost when the process ends\n- No severity levels — you can't filter what matters\n- No timestamps, no source info\n- Can't route to files, services, or monitoring tools\n\n### Logging Levels\n\n| Level | Value | Use For |\n|-------|-------|---------|\n| DEBUG | 10 | Detailed debugging info |\n| INFO | 20 | General operational events |\n| WARNING | 30 | Something unexpected but not fatal |\n| ERROR | 40 | Something failed |\n| CRITICAL | 50 | System is going down |\n\n### Structured Logging\n- JSON format for machine-readable logs\n- Key-value pairs for easy filtering\n- Essential for log aggregation (ELK, Datadog, Cloud Logging)\n\n### Best Practices\n- Use `__name__` as logger name\n- Never log sensitive data (passwords, tokens)\n- Use appropriate levels — not everything is ERROR\n- Include context: request_id, user_id, operation\n\n> **Key Concept:** Logging is your application's memory. Good logs tell a story — what happened, when, where, and why. In production, logs are your eyes and ears."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "black_box",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "logging_map",
+      "nodes": [
+        {
+          "label": "Python Logging",
+          "children": [
+            "Levels (DEBUG→CRITICAL)",
+            "Formatters",
+            "Handlers (file, stream)",
+            "Structured (JSON)",
+            "Best Practices"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "logging_code",
+      "steps": [
+        {
+          "line": "import logging",
+          "highlight": "logging",
+          "explanation": {
+            "en": "Import the built-in logging module — no pip install needed"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Create a logger for this module"
+          }
+        },
+        {
+          "line": "logger = logging.getLogger(__name__)",
+          "highlight": "__name__",
+          "explanation": {
+            "en": "Use __name__ so the logger is named after the module (e.g., 'app.utils')"
+          }
+        },
+        {
+          "line": "logger.setLevel(logging.DEBUG)",
+          "highlight": "DEBUG",
+          "explanation": {
+            "en": "Set minimum level to DEBUG — process all messages"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Create a formatter to control log output format"
+          }
+        },
+        {
+          "line": "formatter = logging.Formatter(",
+          "highlight": "Formatter",
+          "explanation": {
+            "en": "Define how each log line looks"
+          }
+        },
+        {
+          "line": "    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'",
+          "highlight": "%(asctime)s",
+          "explanation": {
+            "en": "Include timestamp, logger name, level, and the message"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": null,
+          "explanation": {
+            "en": "Close the Formatter constructor"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Create handlers to send logs to different destinations"
+          }
+        },
+        {
+          "line": "file_handler = logging.FileHandler('app.log')",
+          "highlight": "FileHandler",
+          "explanation": {
+            "en": "Send logs to a file — persists after the process ends"
+          }
+        },
+        {
+          "line": "file_handler.setLevel(logging.WARNING)",
+          "highlight": "WARNING",
+          "explanation": {
+            "en": "File only gets WARNING and above — reduces file size"
+          }
+        },
+        {
+          "line": "file_handler.setFormatter(formatter)",
+          "highlight": "setFormatter",
+          "explanation": {
+            "en": "Apply our format to the file handler"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now use the logger in your code"
+          }
+        },
+        {
+          "line": "logger.addHandler(file_handler)",
+          "highlight": "addHandler",
+          "explanation": {
+            "en": "Attach the file handler to the logger"
+          }
+        },
+        {
+          "line": "logger.info('Application started')",
+          "highlight": "info",
+          "explanation": {
+            "en": "Log an INFO message — general operational event"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "print_vs_logging",
+      "left": {
+        "label": "print() (BAD)",
+        "content": "print('Error: DB connection failed')\n# No timestamp\n# No level\n# Lost when process ends\n# Can't filter or route",
+        "status": "fail"
+      },
+      "right": {
+        "label": "logging (GOOD)",
+        "content": "logger.error('DB connection failed',\n  extra={'host': 'db01', 'retry': 3})\n# 2026-03-27 10:15:32 - app - ERROR\n# - DB connection failed",
+        "status": "pass"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "log_output",
+      "output": [
+        "$ python app.py",
+        "2026-03-27 10:15:30 - app - INFO - Application started",
+        "2026-03-27 10:15:30 - app - DEBUG - Loading config from config.yaml",
+        "2026-03-27 10:15:31 - app.db - INFO - Connected to PostgreSQL",
+        "2026-03-27 10:15:32 - app.auth - WARNING - Login attempt with expired token",
+        "2026-03-27 10:15:33 - app.api - ERROR - Request failed: timeout after 30s",
+        "2026-03-27 10:15:33 - app.api - ERROR - Traceback (most recent call last):",
+        "2026-03-27 10:15:33 - app.api - ERROR -   requests.exceptions.Timeout",
+        "",
+        "$ cat app.log  (only WARNING+)",
+        "2026-03-27 10:15:32 - app.auth - WARNING - Login attempt with expired token",
+        "2026-03-27 10:15:33 - app.api - ERROR - Request failed: timeout after 30s"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "log_levels",
+      "structure_type": "stack",
+      "layers": [
+        { "label": "CRITICAL (50)", "count": "system down", "color": "#ff0000" },
+        { "label": "ERROR (40)", "count": "something failed", "color": "#ff6b6b" },
+        { "label": "WARNING (30)", "count": "unexpected", "color": "#ffd93d" },
+        { "label": "INFO (20)", "count": "operational", "color": "#6bcf7f" },
+        { "label": "DEBUG (10)", "count": "detailed", "color": "#4f8ef7" }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Set up a logger with: 1) A StreamHandler for console output at DEBUG level, 2) A FileHandler for 'errors.log' at ERROR level, 3) A formatter with timestamp and level. Then log messages at each level.",
+        "ta": "ஒரு logger அமையுங்கள்: 1) DEBUG level-ல் console output-க்கு StreamHandler, 2) ERROR level-ல் 'errors.log'-க்கு FileHandler, 3) timestamp மற்றும் level-உடன் formatter. பிறகு ஒவ்வொரு level-லும் messages log செய்யுங்கள்."
+      },
+      "starter_code": "import logging\n\n# Create logger\nlogger = logging.getLogger('myapp')\nlogger.setLevel(logging.DEBUG)\n\n# Create formatter\nformatter = logging.Formatter(\n    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'\n)\n\n# Create console handler (DEBUG level)\nconsole_handler = logging.StreamHandler()\n# Set level and formatter\n\n# Create file handler (ERROR level)\n# Your code here\n\n# Add handlers to logger\n# Your code here\n\n# Log at each level\nlogger.debug('This is a debug message')\nlogger.info('Application started')\nlogger.warning('Disk space low')\nlogger.error('Database connection failed')\nlogger.critical('System shutting down')",
+      "expected_output": "Console shows all 5 messages, errors.log shows only ERROR and CRITICAL",
+      "hints": {
+        "en": [
+          "console_handler.setLevel(logging.DEBUG)",
+          "console_handler.setFormatter(formatter)",
+          "file_handler = logging.FileHandler('errors.log')",
+          "file_handler.setLevel(logging.ERROR)",
+          "logger.addHandler(console_handler)"
+        ],
+        "ta": [
+          "console_handler.setLevel(logging.DEBUG)",
+          "console_handler.setFormatter(formatter)",
+          "file_handler = logging.FileHandler('errors.log')",
+          "file_handler.setLevel(logging.ERROR)",
+          "logger.addHandler(console_handler)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why use logging instead of print()?",
+        "ta": "print()-க்கு பதிலாக logging ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["print() is slower", "Logging provides levels, timestamps, and routing to files/services", "print() is deprecated", "There is no difference"],
+        "ta": ["print() மெதுவானது", "Logging levels, timestamps, files/services-க்கு routing வழங்குகிறது", "print() deprecated ஆகிவிட்டது", "வேறுபாடு இல்லை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What logging level should you use for 'user login successful'?",
+        "ta": "'user login successful'-க்கு எந்த logging level பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["DEBUG", "INFO", "WARNING", "ERROR"],
+        "ta": ["DEBUG", "INFO", "WARNING", "ERROR"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does getLogger(__name__) do?",
+        "ta": "getLogger(__name__) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates a random logger name", "Names the logger after the current module", "Returns the root logger", "Creates a file with that name"],
+        "ta": ["ஒரு random logger பெயரை உருவாக்கும்", "தற்போதைய module-ன் பெயரில் logger-ஐ பெயரிடும்", "Root logger-ஐ திருப்பும்", "அந்த பெயரில் ஒரு file உருவாக்கும்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["logging", "log_levels", "handlers", "formatters", "structured_logging"],
+    "concepts_required": ["functions", "file_io"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["production_monitoring", "debugging", "observability"],
+    "category": "devops",
+    "path_memberships": ["testing_devops"]
+  }
+}

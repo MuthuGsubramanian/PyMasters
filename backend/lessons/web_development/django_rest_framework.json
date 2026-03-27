@@ -1,0 +1,236 @@
+{
+  "id": "django_rest_framework",
+  "topic": "django_rest_framework",
+  "track": "web_development",
+  "module": "django_framework",
+  "order": 10,
+  "title": {
+    "en": "Django REST Framework: Building APIs",
+    "ta": "Django REST Framework: API-களை உருவாக்குதல்"
+  },
+  "description": {
+    "en": "Build RESTful APIs with Django REST Framework — serializers, ViewSets, routers, and the browsable API.",
+    "ta": "Django REST Framework மூலம் RESTful API-களை உருவாக்குங்கள் — சீரியலைசர்கள், ViewSets, ரூட்டர்கள் மற்றும் உலாவக்கூடிய API."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## The Translation Bureau\n\nVaathiyaar holds up two documents. \"Django speaks HTML. APIs speak JSON. **Django REST Framework** (DRF) is the translator that converts Django models into JSON API endpoints automatically.\"\n\n### Why DRF?\n- **Serializers** convert models ↔ JSON\n- **ViewSets** provide CRUD with minimal code\n- **Routers** auto-generate URL patterns\n- **Browsable API** — test in the browser!\n- **Authentication** — Token, Session, JWT\n- **Permissions** — IsAuthenticated, IsAdminUser, custom\n\n### The DRF Stack\n\n```\nModel → Serializer → ViewSet → Router → URL\n  ↓         ↓            ↓        ↓       ↓\nDB     JSON/Validate  CRUD Logic  URLs   /api/\n```\n\n### Key Components\n\n| Component | Purpose |\n|-----------|--------|\n| `Serializer` | Converts model ↔ JSON, validates input |\n| `ModelSerializer` | Auto-generates fields from model |\n| `ViewSet` | Handles list, create, retrieve, update, delete |\n| `Router` | Auto-creates URL patterns from ViewSets |\n| `Permission` | Controls who can access what |\n\n> **Key Concept:** DRF follows Django conventions but for APIs. A ModelSerializer is to DRF what a ModelForm is to Django — it auto-generates fields from your model and handles validation."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "translation_bureau",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "drf_overview",
+      "nodes": [
+        {
+          "label": "DRF API",
+          "children": [
+            "Serializers (data conversion)",
+            "ViewSets (CRUD logic)",
+            "Routers (URL generation)",
+            "Permissions (access control)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "drf_demo",
+      "steps": [
+        {
+          "line": "# Install: pip install djangorestframework",
+          "highlight": "djangorestframework",
+          "explanation": {
+            "en": "Install DRF and add 'rest_framework' to INSTALLED_APPS"
+          }
+        },
+        {
+          "line": "# blog/models.py\nfrom django.db import models\n\nclass Article(models.Model):\n    title = models.CharField(max_length=200)\n    content = models.TextField()\n    author = models.CharField(max_length=100)\n    created_at = models.DateTimeField(auto_now_add=True)\n    is_published = models.BooleanField(default=False)",
+          "highlight": "Article",
+          "explanation": {
+            "en": "A simple Article model — DRF will expose this as an API"
+          }
+        },
+        {
+          "line": "# blog/serializers.py\nfrom rest_framework import serializers\nfrom .models import Article",
+          "highlight": "serializers",
+          "explanation": {
+            "en": "Serializers convert model instances to/from JSON"
+          }
+        },
+        {
+          "line": "class ArticleSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Article\n        fields = ['id', 'title', 'content', 'author', 'created_at', 'is_published']",
+          "highlight": "ModelSerializer",
+          "explanation": {
+            "en": "ModelSerializer auto-generates fields and validation from the model"
+          }
+        },
+        {
+          "line": "    def validate_title(self, value):\n        if len(value) < 5:\n            raise serializers.ValidationError('Title must be at least 5 characters')\n        return value",
+          "highlight": "validate_title",
+          "explanation": {
+            "en": "Custom field-level validation — validate_<fieldname> pattern"
+          }
+        },
+        {
+          "line": "# blog/views.py\nfrom rest_framework import viewsets, permissions\nfrom .models import Article\nfrom .serializers import ArticleSerializer",
+          "highlight": "viewsets",
+          "explanation": {
+            "en": "ViewSets combine the logic for all CRUD operations"
+          }
+        },
+        {
+          "line": "class ArticleViewSet(viewsets.ModelViewSet):\n    queryset = Article.objects.all().order_by('-created_at')\n    serializer_class = ArticleSerializer\n    permission_classes = [permissions.IsAuthenticatedOrReadOnly]",
+          "highlight": "ModelViewSet",
+          "explanation": {
+            "en": "ModelViewSet provides list, create, retrieve, update, delete — all in one class!"
+          }
+        },
+        {
+          "line": "    def perform_create(self, serializer):\n        serializer.save(author=self.request.user.username)",
+          "highlight": "perform_create",
+          "explanation": {
+            "en": "Override perform_create to auto-set the author from the logged-in user"
+          }
+        },
+        {
+          "line": "# blog/urls.py\nfrom django.urls import path, include\nfrom rest_framework.routers import DefaultRouter\nfrom .views import ArticleViewSet",
+          "highlight": "DefaultRouter",
+          "explanation": {
+            "en": "DRF's router auto-generates URL patterns from ViewSets"
+          }
+        },
+        {
+          "line": "router = DefaultRouter()\nrouter.register(r'articles', ArticleViewSet)",
+          "highlight": "register",
+          "explanation": {
+            "en": "Register the ViewSet — creates /articles/ and /articles/<pk>/ URLs"
+          }
+        },
+        {
+          "line": "urlpatterns = [\n    path('api/', include(router.urls)),\n]",
+          "highlight": "router.urls",
+          "explanation": {
+            "en": "Include all auto-generated URLs under /api/ prefix"
+          }
+        },
+        {
+          "line": "# Auto-generated endpoints:\n# GET    /api/articles/        → List all articles\n# POST   /api/articles/        → Create new article\n# GET    /api/articles/1/      → Get article #1\n# PUT    /api/articles/1/      → Update article #1\n# PATCH  /api/articles/1/      → Partial update\n# DELETE /api/articles/1/      → Delete article #1",
+          "highlight": "endpoints",
+          "explanation": {
+            "en": "All six CRUD endpoints are auto-generated by the router!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "api_request_response",
+      "left_label": "POST Request",
+      "right_label": "API Response",
+      "left_content": "POST /api/articles/\nContent-Type: application/json\nAuthorization: Token abc123\n\n{\"title\": \"DRF is Amazing\", \"content\": \"Building APIs made easy\"}",
+      "right_content": "HTTP 201 Created\n\n{\"id\": 1, \"title\": \"DRF is Amazing\", \"content\": \"Building APIs made easy\", \"author\": \"pymaster\", \"created_at\": \"2026-03-27T10:00:00Z\", \"is_published\": false}"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_serializer",
+      "variable": "serializer.data",
+      "value": "{\"id\": 1, \"title\": \"DRF is Amazing\", ...}",
+      "data_type": "dict",
+      "color": "#FF9800"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ curl http://localhost:8000/api/articles/",
+        "[",
+        "  {",
+        "    \"id\": 1,",
+        "    \"title\": \"DRF is Amazing\",",
+        "    \"content\": \"Building APIs made easy\",",
+        "    \"author\": \"pymaster\",",
+        "    \"created_at\": \"2026-03-27T10:00:00Z\",",
+        "    \"is_published\": false",
+        "  }",
+        "]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a DRF API for a 'Task' model with fields: title, description, is_completed, and priority (integer). Create a ModelSerializer and a ModelViewSet. Add a custom action that marks a task as completed.",
+        "ta": "title, description, is_completed, priority புலங்களுடன் 'Task' மாதிரிக்கான DRF API-ஐ உருவாக்குங்கள்."
+      },
+      "starter_code": "from rest_framework import viewsets, serializers, status\nfrom rest_framework.decorators import action\nfrom rest_framework.response import Response\nfrom django.db import models\n\nclass Task(models.Model):\n    title = models.CharField(max_length=200)\n    description = models.TextField(blank=True)\n    is_completed = models.BooleanField(default=False)\n    priority = models.IntegerField(default=1)\n\nclass TaskSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Task\n        fields = '__all__'\n\nclass TaskViewSet(viewsets.ModelViewSet):\n    queryset = Task.objects.all().order_by('priority')\n    serializer_class = TaskSerializer\n\n    @action(detail=True, methods=['post'])\n    def complete(self, request, pk=None):\n        task = self.get_object()\n        task.is_completed = True\n        task.save()\n        return Response({'status': 'completed', 'task': TaskSerializer(task).data})",
+      "expected_output": "POST /api/tasks/1/complete/ → {\"status\": \"completed\", \"task\": {..., \"is_completed\": true}}",
+      "hints": {
+        "en": [
+          "ModelSerializer auto-generates fields from the model",
+          "ModelViewSet provides all CRUD operations",
+          "@action decorator creates custom endpoints",
+          "detail=True means the action requires a specific object (pk)"
+        ],
+        "ta": [
+          "ModelSerializer மாதிரியிலிருந்து தானாக புலங்களை உருவாக்குகிறது",
+          "ModelViewSet அனைத்து CRUD செயல்பாடுகளையும் வழங்குகிறது",
+          "@action அலங்காரம் தனிப்பயன் எண்ட்பாயிண்ட்களை உருவாக்குகிறது",
+          "detail=True என்றால் செயலுக்கு ஒரு குறிப்பிட்ட பொருள் (pk) தேவை"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a DRF Serializer do?",
+        "ta": "DRF Serializer என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Converts models to HTML templates", "Converts model instances to/from JSON and validates input", "Creates database tables", "Manages URL routing"],
+        "ta": ["மாதிரிகளை HTML வார்ப்புருக்களாக மாற்றுகிறது", "மாதிரி நிகழ்வுகளை JSON-க்கு/JSON-லிருந்து மாற்றுகிறது மற்றும் உள்ளீட்டை சரிபார்க்கிறது", "தரவுத்தள அட்டவணைகளை உருவாக்குகிறது", "URL ரூட்டிங்கை நிர்வகிக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does ModelViewSet provide out of the box?",
+        "ta": "ModelViewSet இயல்பாக என்ன வழங்குகிறது?"
+      },
+      "options": {
+        "en": ["Only GET requests", "Only POST and DELETE", "Full CRUD: list, create, retrieve, update, delete", "Only database migrations"],
+        "ta": ["GET கோரிக்கைகள் மட்டும்", "POST மற்றும் DELETE மட்டும்", "முழு CRUD: பட்டியல், உருவாக்கம், மீட்டெடுப்பு, புதுப்பிப்பு, நீக்கம்", "தரவுத்தள இடம்பெயர்வுகள் மட்டும்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the purpose of DRF's DefaultRouter?",
+        "ta": "DRF-ன் DefaultRouter-ன் நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": ["To hash passwords", "To auto-generate URL patterns from ViewSets", "To create database tables", "To serve static files"],
+        "ta": ["கடவுச்சொற்களை ஹாஷ் செய்ய", "ViewSets-லிருந்து URL வடிவங்களை தானாக உருவாக்க", "தரவுத்தள அட்டவணைகளை உருவாக்க", "நிலையான கோப்புகளை வழங்க"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["drf_serializers", "viewsets", "routers", "api_permissions"],
+    "concepts_required": ["django_models", "rest_api_concepts"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["api_development", "backend_services"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

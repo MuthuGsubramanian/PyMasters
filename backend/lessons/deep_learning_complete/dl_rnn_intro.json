@@ -1,0 +1,192 @@
+{
+  "id": "dl_rnn_intro",
+  "topic": "rnn_intro",
+  "track": "deep_learning_complete",
+  "module": "recurrent_networks",
+  "order": 15,
+  "title": {
+    "en": "RNN Introduction: Processing Sequential Data",
+    "ta": "RNN அறிமுகம்: வரிசை தரவை செயலாக்குதல்"
+  },
+  "description": {
+    "en": "Understand how Recurrent Neural Networks process sequences by maintaining a hidden state that carries information across time steps.",
+    "ta": "நேர படிகளில் தகவலைக் கொண்டு செல்லும் மறைந்த நிலையை பராமரிப்பதன் மூலம் RNN எவ்வாறு வரிசைகளை செயலாக்குகிறது என்பதைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Storyteller\n\nVaathiyaar tells a story, pausing at each sentence. \"To understand the next word, you need to remember the previous words. A feedforward network sees each input independently — it has no memory. An RNN remembers.\"\n\n### The Hidden State: Memory of the Past\n\n```python\nimport torch\nimport torch.nn as nn\n\n# Simple RNN\nrnn = nn.RNN(input_size=10, hidden_size=20, num_layers=1, batch_first=True)\n\n# Input: batch of 3 sequences, each 5 time steps, 10 features per step\nx = torch.randn(3, 5, 10)  # [batch, seq_len, input_size]\n\n# Forward pass\noutput, hidden = rnn(x)\n\nprint(f'Input shape: {x.shape}')       # [3, 5, 10]\nprint(f'Output shape: {output.shape}')  # [3, 5, 20] - hidden state at every step\nprint(f'Hidden shape: {hidden.shape}')  # [1, 3, 20] - final hidden state\n\n# Manual RNN step-by-step\nclass ManualRNN(nn.Module):\n    def __init__(self, input_size, hidden_size):\n        super().__init__()\n        self.hidden_size = hidden_size\n        self.W_xh = nn.Linear(input_size, hidden_size)   # input to hidden\n        self.W_hh = nn.Linear(hidden_size, hidden_size)   # hidden to hidden\n    \n    def forward(self, x):\n        batch_size, seq_len, _ = x.shape\n        h = torch.zeros(batch_size, self.hidden_size)  # initial hidden state\n        \n        outputs = []\n        for t in range(seq_len):\n            h = torch.tanh(self.W_xh(x[:, t, :]) + self.W_hh(h))  # update hidden\n            outputs.append(h)\n        \n        return torch.stack(outputs, dim=1), h.unsqueeze(0)\n\nmanual_rnn = ManualRNN(10, 20)\nout, h = manual_rnn(x)\nprint(f'Manual output shape: {out.shape}')  # [3, 5, 20]\n```\n\n> **Key Insight:** At each time step, the RNN combines the current input with the previous hidden state: h_t = tanh(W_xh * x_t + W_hh * h_{t-1})",
+    "ta": "## வாத்தியாரின் கதைசொல்லி\n\nவாத்தியார் ஒரு கதை சொல்கிறார், ஒவ்வொரு வாக்கியத்திலும் இடைநிறுத்துகிறார். \"அடுத்த வார்த்தையைப் புரிந்துகொள்ள, முந்தைய வார்த்தைகளை நினைவில் வைக்க வேண்டும். Feedforward நெட்வொர்க் ஒவ்வொரு உள்ளீட்டையும் சுயாதீனமாகப் பார்க்கிறது — அதற்கு நினைவகம் இல்லை. RNN நினைவில் வைக்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "storyteller",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rnn_concepts",
+      "nodes": [
+        {
+          "label": "RNN",
+          "children": [
+            "Hidden State (memory)",
+            "Time Steps",
+            "Weight Sharing",
+            "Sequential Processing",
+            "Vanishing Gradients",
+            "Applications: NLP, Time Series"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rnn_code",
+      "steps": [
+        {"line": "rnn = nn.RNN(input_size=10, hidden_size=20, num_layers=1, batch_first=True)", "highlight": "RNN", "explanation": {"en": "Create RNN: 10 input features per step, 20-dim hidden state, batch_first means [batch, seq, features]"}},
+        {"line": "x = torch.randn(3, 5, 10)", "highlight": "input", "explanation": {"en": "Batch of 3 sequences, each with 5 time steps, 10 features per step"}},
+        {"line": "output, hidden = rnn(x)", "highlight": "forward", "explanation": {"en": "Returns output (hidden state at every step) and final hidden state"}},
+        {"line": "# output shape: [3, 5, 20]", "highlight": "output", "explanation": {"en": "Hidden state at each of the 5 time steps. Useful for sequence-to-sequence tasks"}},
+        {"line": "# hidden shape: [1, 3, 20]", "highlight": "hidden", "explanation": {"en": "Final hidden state (last time step). Useful for classification: summarizes entire sequence"}},
+        {"line": "self.W_xh = nn.Linear(input_size, hidden_size)", "highlight": "W_xh", "explanation": {"en": "Weight matrix from input to hidden state — transforms current input"}},
+        {"line": "self.W_hh = nn.Linear(hidden_size, hidden_size)", "highlight": "W_hh", "explanation": {"en": "Weight matrix from hidden to hidden — carries information from past"}},
+        {"line": "h = torch.zeros(batch_size, self.hidden_size)", "highlight": "h_init", "explanation": {"en": "Initialize hidden state to zeros at the start of each sequence"}},
+        {"line": "h = torch.tanh(self.W_xh(x[:, t, :]) + self.W_hh(h))", "highlight": "update", "explanation": {"en": "Core RNN equation: new hidden = tanh(transform_input + transform_previous_hidden)"}},
+        {"line": "outputs.append(h)", "highlight": "collect", "explanation": {"en": "Save hidden state at each time step for later use"}}
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "rnn_unrolled",
+      "slots": [
+        {"name": "t=0: h0", "value": "tanh(W_xh*x0 + W_hh*h_init)", "type": "hidden", "address": "Step 0"},
+        {"name": "t=1: h1", "value": "tanh(W_xh*x1 + W_hh*h0)", "type": "hidden", "address": "Step 1"},
+        {"name": "t=2: h2", "value": "tanh(W_xh*x2 + W_hh*h1)", "type": "hidden", "address": "Step 2"},
+        {"name": "t=3: h3", "value": "tanh(W_xh*x3 + W_hh*h2)", "type": "hidden", "address": "Step 3"},
+        {"name": "t=4: h4", "value": "tanh(W_xh*x4 + W_hh*h3)", "type": "hidden", "address": "Step 4 (final)"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "rnn_flow",
+      "from": "input_sequence",
+      "to": "output",
+      "steps": ["x0 -> h0", "x1 + h0 -> h1", "x2 + h1 -> h2", "x3 + h2 -> h3", "x4 + h3 -> h4 (output)"],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_hidden",
+      "variable": "hidden_state",
+      "value": "[0.23, -0.45, 0.78, ...]",
+      "data_type": "tensor[20]",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_seq_len",
+      "variable": "sequence_length",
+      "value": "5 time steps",
+      "data_type": "int",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "rnn_vs_ff",
+      "left": {"label": "Feedforward Network", "content": "Fixed-size input\nNo memory\nEach input independent\nGood for: images, tabular"},
+      "right": {"label": "Recurrent Network", "content": "Variable-length sequences\nHidden state = memory\nContext from previous steps\nGood for: text, audio, time series"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> rnn = nn.RNN(10, 20, batch_first=True)",
+        ">>> x = torch.randn(3, 5, 10)",
+        ">>> output, hidden = rnn(x)",
+        ">>> output.shape",
+        "torch.Size([3, 5, 20])",
+        ">>> hidden.shape",
+        "torch.Size([1, 3, 20])",
+        ">>> # Same weights used at every time step!"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "sequence_flow",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an RNN that classifies sequences as 'increasing' or 'decreasing'. Generate 500 sequences of length 10, label them, and train your RNN to classify using the final hidden state.",
+        "ta": "வரிசைகளை 'அதிகரிக்கும்' அல்லது 'குறையும்' என வகைப்படுத்தும் RNN உருவாக்குங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\n\n# Generate sequences\ndef generate_data(n=500, seq_len=10):\n    X, y = [], []\n    for _ in range(n):\n        if torch.rand(1) > 0.5:\n            seq = torch.sort(torch.randn(seq_len))[0]  # increasing\n            X.append(seq); y.append(1)\n        else:\n            seq = torch.sort(torch.randn(seq_len), descending=True)[0]  # decreasing\n            X.append(seq); y.append(0)\n    return torch.stack(X).unsqueeze(-1), torch.tensor(y)\n\nX, y = generate_data()\n\nclass SequenceClassifier(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: RNN + Linear classifier using final hidden state\n        pass\n    \n    def forward(self, x):\n        pass\n\n# TODO: Train and evaluate accuracy\n",
+      "expected_output": "Epoch 50: Loss=0.02, Accuracy=99.2%",
+      "hints": {
+        "en": [
+          "RNN input: [batch, seq_len=10, features=1]",
+          "Use hidden[-1] (final hidden state) as input to Linear classifier",
+          "nn.Linear(hidden_size, 2) for binary classification",
+          "Use CrossEntropyLoss"
+        ],
+        "ta": [
+          "RNN உள்ளீடு: [batch, seq_len=10, features=1]",
+          "Linear classifier-க்கு hidden[-1] (இறுதி hidden state) பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the hidden state in an RNN represent?",
+        "ta": "RNN-ல் hidden state என்ன குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["The model's weights", "A compressed summary of all previous time steps", "The loss value", "The input at the current step"],
+        "ta": ["மாதிரியின் எடைகள்", "முந்தைய அனைத்து நேரப் படிகளின் சுருக்கப்பட்ட சுருக்கம்", "இழப்பு மதிப்பு", "தற்போதைய படியில் உள்ளீடு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the main limitation of vanilla RNNs?",
+        "ta": "வெண்ணிலா RNN-களின் முக்கிய வரம்பு என்ன?"
+      },
+      "options": {
+        "en": ["They can only process images", "They suffer from vanishing gradients for long sequences", "They require GPUs", "They can only handle binary input"],
+        "ta": ["படங்களை மட்டுமே செயலாக்க முடியும்", "நீண்ட வரிசைகளுக்கு மறையும் சாய்வுகளால் பாதிக்கப்படுகின்றன", "GPU-க்கள் தேவை", "binary உள்ளீட்டை மட்டுமே கையாள முடியும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In nn.RNN with batch_first=True, what does the output tensor contain?",
+        "ta": "batch_first=True உடன் nn.RNN-ல், output tensor என்ன கொண்டுள்ளது?"
+      },
+      "options": {
+        "en": ["Only the final prediction", "The hidden state at every time step", "The input repeated", "The loss at each step"],
+        "ta": ["இறுதி கணிப்பு மட்டும்", "ஒவ்வொரு நேரப் படியிலும் hidden state", "உள்ளீடு திரும்ப", "ஒவ்வொரு படியிலும் இழப்பு"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["rnn", "hidden_state", "sequential_processing", "time_steps", "weight_sharing"],
+    "concepts_required": ["pytorch_basics", "forward_pass", "backpropagation"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["nlp", "time_series", "speech_recognition"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

@@ -1,0 +1,239 @@
+{
+  "id": "http_fundamentals",
+  "topic": "http_fundamentals",
+  "track": "web_development",
+  "module": "web_foundations",
+  "order": 1,
+  "title": {
+    "en": "HTTP Fundamentals: The Language of the Web",
+    "ta": "HTTP அடிப்படைகள்: வலையின் மொழி"
+  },
+  "description": {
+    "en": "Understand how browsers and servers communicate using HTTP methods, status codes, and headers.",
+    "ta": "HTTP முறைகள், நிலை குறியீடுகள் மற்றும் தலைப்புகளைப் பயன்படுத்தி உலாவிகளும் சேவையகங்களும் எவ்வாறு தொடர்பு கொள்கின்றன என்பதைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## The Post Office of the Internet\n\nVaathiyaar walks into class carrying a stack of envelopes. \"Every time you visit a website, your browser sends a **letter** to a server and waits for a **reply**. That letter follows strict rules — those rules are **HTTP**.\"\n\n### What is HTTP?\n- **H**yper**T**ext **T**ransfer **P**rotocol\n- A request-response protocol between client and server\n- Stateless: each request is independent\n- Uses methods (verbs) to describe the action\n\n### HTTP Methods\n\n| Method | Purpose | Example |\n|--------|---------|----------|\n| `GET` | Retrieve data | Load a webpage |\n| `POST` | Send data | Submit a form |\n| `PUT` | Replace data | Update a profile |\n| `PATCH` | Partial update | Change just the email |\n| `DELETE` | Remove data | Delete an account |\n\n### Status Codes\n\n| Range | Meaning | Common Codes |\n|-------|---------|---------------|\n| `2xx` | Success | 200 OK, 201 Created |\n| `3xx` | Redirect | 301 Moved, 304 Not Modified |\n| `4xx` | Client Error | 400 Bad Request, 404 Not Found |\n| `5xx` | Server Error | 500 Internal Server Error |\n\n### Headers\nHeaders carry metadata: `Content-Type`, `Authorization`, `User-Agent`, `Accept`.\n\n> **Key Concept:** HTTP is the foundation of ALL web communication. Every API call, every webpage load, every form submission uses HTTP."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "post_office",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "http_overview",
+      "nodes": [
+        {
+          "label": "HTTP",
+          "children": [
+            "Methods (GET, POST, PUT, DELETE)",
+            "Status Codes (2xx, 4xx, 5xx)",
+            "Headers (metadata)",
+            "Body (payload)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "http_request_demo",
+      "steps": [
+        {
+          "line": "import requests",
+          "highlight": "requests",
+          "explanation": {
+            "en": "Import the requests library for making HTTP calls"
+          }
+        },
+        {
+          "line": "response = requests.get('https://api.github.com')",
+          "highlight": "requests.get",
+          "explanation": {
+            "en": "Send a GET request to GitHub's API endpoint"
+          }
+        },
+        {
+          "line": "print(response.status_code)",
+          "highlight": "status_code",
+          "explanation": {
+            "en": "Check the HTTP status code — 200 means success"
+          }
+        },
+        {
+          "line": "print(response.headers['Content-Type'])",
+          "highlight": "headers",
+          "explanation": {
+            "en": "Read the Content-Type header to see the response format"
+          }
+        },
+        {
+          "line": "data = response.json()",
+          "highlight": "json()",
+          "explanation": {
+            "en": "Parse the response body as JSON into a Python dict"
+          }
+        },
+        {
+          "line": "print(type(data))",
+          "highlight": "type",
+          "explanation": {
+            "en": "Confirm the parsed data is a Python dictionary"
+          }
+        },
+        {
+          "line": "print(data['current_user_url'])",
+          "highlight": "current_user_url",
+          "explanation": {
+            "en": "Access a specific key from the JSON response"
+          }
+        },
+        {
+          "line": "# POST request with data",
+          "highlight": "POST",
+          "explanation": {
+            "en": "Now let's see how to send data WITH a request"
+          }
+        },
+        {
+          "line": "payload = {'username': 'pymaster', 'email': 'py@master.com'}",
+          "highlight": "payload",
+          "explanation": {
+            "en": "Create a dictionary with the data to send"
+          }
+        },
+        {
+          "line": "resp = requests.post('https://httpbin.org/post', json=payload)",
+          "highlight": "requests.post",
+          "explanation": {
+            "en": "Send a POST request with JSON payload in the body"
+          }
+        },
+        {
+          "line": "print(resp.status_code)  # 200",
+          "highlight": "status_code",
+          "explanation": {
+            "en": "httpbin echoes back our data with a 200 status"
+          }
+        },
+        {
+          "line": "print(resp.json()['json'])",
+          "highlight": "json",
+          "explanation": {
+            "en": "The server echoes back the JSON we sent"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "request_vs_response",
+      "left_label": "HTTP Request",
+      "right_label": "HTTP Response",
+      "left_content": "GET /api/users HTTP/1.1\nHost: example.com\nAccept: application/json\nAuthorization: Bearer token123",
+      "right_content": "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"users\": [{\"id\": 1, \"name\": \"Alice\"}]}"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_status",
+      "variable": "response.status_code",
+      "value": 200,
+      "data_type": "int",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_content_type",
+      "variable": "Content-Type",
+      "value": "application/json",
+      "data_type": "str",
+      "color": "#2196F3"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "200",
+        "application/json; charset=utf-8",
+        "<class 'dict'>",
+        "https://api.github.com/user",
+        "200",
+        "{'username': 'pymaster', 'email': 'py@master.com'}"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use the requests library to make a GET request to 'https://httpbin.org/get'. Print the status code, the Content-Type header, and the 'origin' field from the JSON response.",
+        "ta": "'https://httpbin.org/get' என்ற முகவரிக்கு GET கோரிக்கை அனுப்புங்கள். நிலை குறியீடு, Content-Type தலைப்பு மற்றும் JSON பதிலிலிருந்து 'origin' புலத்தை அச்சிடுங்கள்."
+      },
+      "starter_code": "import requests\n\n# Make a GET request to httpbin\nresponse = requests.get('https://httpbin.org/get')\n\n# Print the status code\nprint(f'Status: {response.status_code}')\n\n# Print the Content-Type header\nprint(f'Content-Type: {response.headers[\"Content-Type\"]}')\n\n# Parse JSON and print the origin IP\ndata = response.json()\nprint(f'Origin: {data[\"origin\"]}')",
+      "expected_output": "Status: 200\nContent-Type: application/json\nOrigin: <your_ip>",
+      "hints": {
+        "en": [
+          "Use requests.get(url) to make a GET request",
+          "Access status_code attribute for the HTTP status",
+          "Use response.headers['Content-Type'] for headers",
+          "Call response.json() to parse the body as a dict"
+        ],
+        "ta": [
+          "GET கோரிக்கைக்கு requests.get(url) பயன்படுத்துங்கள்",
+          "HTTP நிலைக்கு status_code பண்பை அணுகுங்கள்",
+          "தலைப்புகளுக்கு response.headers['Content-Type'] பயன்படுத்துங்கள்",
+          "உடலை dict ஆக பாகுபடுத்த response.json() அழையுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which HTTP method is used to retrieve data from a server?",
+        "ta": "சேவையகத்திலிருந்து தரவைப் பெற எந்த HTTP முறை பயன்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": ["POST", "GET", "DELETE", "PATCH"],
+        "ta": ["POST", "GET", "DELETE", "PATCH"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does a 404 status code mean?",
+        "ta": "404 நிலை குறியீடு என்ன அர்த்தம்?"
+      },
+      "options": {
+        "en": ["Server error", "Success", "Resource not found", "Redirect"],
+        "ta": ["சேவையக பிழை", "வெற்றி", "வளம் கிடைக்கவில்லை", "திசைமாற்றம்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which header tells the server what format of data the client accepts?",
+        "ta": "கிளையன்ட் எந்த வடிவ தரவை ஏற்றுக்கொள்கிறது என்று சேவையகத்திற்கு எந்த தலைப்பு தெரிவிக்கிறது?"
+      },
+      "options": {
+        "en": ["Content-Type", "Authorization", "Accept", "User-Agent"],
+        "ta": ["Content-Type", "Authorization", "Accept", "User-Agent"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["http_methods", "status_codes", "headers", "request_response"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["web_browsing", "api_calls"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

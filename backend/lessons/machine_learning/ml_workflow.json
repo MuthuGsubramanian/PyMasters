@@ -1,0 +1,240 @@
+{
+  "id": "ml_workflow",
+  "topic": "ml_workflow",
+  "track": "machine_learning",
+  "module": "ml_foundations",
+  "order": 2,
+  "title": {
+    "en": "The ML Workflow: From Data to Deployment",
+    "ta": "ML பணிப்பாய்வு: தரவிலிருந்து வரிசைப்படுத்தல் வரை"
+  },
+  "description": {
+    "en": "Master the complete machine learning pipeline: collect data, preprocess, engineer features, train a model, evaluate performance, and deploy to production.",
+    "ta": "முழுமையான இயந்திர கற்றல் பைப்லைனை கற்றுக்கொள்ளுங்கள்: தரவு சேகரிப்பு, முன்செயலாக்கம், அம்ச பொறியியல், மாடல் பயிற்சி, மதிப்பீடு, மற்றும் உற்பத்திக்கு வரிசைப்படுத்தல்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Assembly Line\n\nVaathiyaar walks students through a factory floor. \"Building an ML model is like running an assembly line,\" he explains. \"Each station does one job, and skipping a station ruins the product.\"\n\n### The 5-Stage Pipeline\n\n**Stage 1: Data Collection**\n- Gather raw data from databases, APIs, CSV files\n- More data usually means better models\n\n**Stage 2: Data Preprocessing**\n- Handle missing values, remove duplicates\n- Encode categorical variables, scale numerical features\n\n**Stage 3: Feature Engineering & Selection**\n- Create new features from existing ones\n- Select the most informative features\n\n**Stage 4: Model Training & Evaluation**\n- Split data into train/test sets\n- Train multiple models, compare performance\n- Use metrics: accuracy, RMSE, F1-score\n\n**Stage 5: Deployment & Monitoring**\n- Serialize model (pickle/joblib)\n- Serve via API (FastAPI/Flask)\n- Monitor for data drift\n\n```python\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.metrics import accuracy_score\n\n# Stage 1: Load data\ndf = pd.read_csv('data.csv')\n\n# Stage 2: Preprocess\ndf.dropna(inplace=True)\nX = df.drop('target', axis=1)\ny = df['target']\n\n# Stage 3: Scale features\nscaler = StandardScaler()\nX_scaled = scaler.fit_transform(X)\n\n# Stage 4: Train & evaluate\nX_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2)\nmodel = RandomForestClassifier(n_estimators=100)\nmodel.fit(X_train, y_train)\nprint(f'Accuracy: {accuracy_score(y_test, model.predict(X_test)):.2f}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "assembly_line",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "workflow_map",
+      "nodes": [
+        {
+          "label": "ML Workflow",
+          "children": ["Data Collection", "Preprocessing", "Feature Engineering", "Training", "Evaluation", "Deployment"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "pipeline_flow",
+      "stages": [
+        { "label": "Raw Data", "icon": "database", "color": "#e74c3c" },
+        { "label": "Clean Data", "icon": "broom", "color": "#f39c12" },
+        { "label": "Features", "icon": "wrench", "color": "#2ecc71" },
+        { "label": "Trained Model", "icon": "brain", "color": "#3498db" },
+        { "label": "Metrics", "icon": "chart", "color": "#9b59b6" },
+        { "label": "Production API", "icon": "rocket", "color": "#1abc9c" }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "workflow_code",
+      "steps": [
+        {
+          "line": "import pandas as pd",
+          "highlight": "pandas",
+          "explanation": { "en": "Pandas is the go-to library for loading and manipulating tabular data" }
+        },
+        {
+          "line": "from sklearn.model_selection import train_test_split",
+          "highlight": "train_test_split",
+          "explanation": { "en": "This function splits data into training and testing sets" }
+        },
+        {
+          "line": "from sklearn.preprocessing import StandardScaler",
+          "highlight": "StandardScaler",
+          "explanation": { "en": "Scaler transforms features to have mean=0 and std=1" }
+        },
+        {
+          "line": "from sklearn.ensemble import RandomForestClassifier",
+          "highlight": "RandomForestClassifier",
+          "explanation": { "en": "A powerful ensemble model that combines many decision trees" }
+        },
+        {
+          "line": "df = pd.DataFrame({'feat1': [1,2,3,4,5], 'feat2': [5,4,3,2,1], 'target': [0,0,1,1,1]})",
+          "highlight": "DataFrame",
+          "explanation": { "en": "Stage 1: Create sample data with 2 features and a binary target" }
+        },
+        {
+          "line": "X = df[['feat1', 'feat2']]",
+          "highlight": "X",
+          "explanation": { "en": "Stage 2: Separate features from target — X holds the inputs" }
+        },
+        {
+          "line": "y = df['target']",
+          "highlight": "y",
+          "explanation": { "en": "Target column — what we want to predict" }
+        },
+        {
+          "line": "scaler = StandardScaler()",
+          "highlight": "scaler",
+          "explanation": { "en": "Stage 3: Initialize the scaler for feature normalization" }
+        },
+        {
+          "line": "X_scaled = scaler.fit_transform(X)",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Compute mean/std from data and transform in one step" }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)",
+          "highlight": "train_test_split",
+          "explanation": { "en": "Stage 4: Split into 80% training and 20% testing data" }
+        },
+        {
+          "line": "model = RandomForestClassifier(n_estimators=100, random_state=42)",
+          "highlight": "RandomForestClassifier",
+          "explanation": { "en": "Create the model with 100 decision trees" }
+        },
+        {
+          "line": "model.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train the model — it learns patterns from training data" }
+        },
+        {
+          "line": "accuracy = model.score(X_test, y_test)",
+          "highlight": "score",
+          "explanation": { "en": "Stage 5: Evaluate — .score() returns accuracy on test data" }
+        },
+        {
+          "line": "print(f'Model Accuracy: {accuracy:.2f}')",
+          "highlight": "print",
+          "explanation": { "en": "Display the evaluation metric — how well the model generalizes" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_accuracy",
+      "variable": "accuracy",
+      "value": 1.0,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Model Accuracy: 1.00"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete the ML workflow: load the iris dataset from sklearn, split it 80/20, train a RandomForestClassifier, and print the accuracy.",
+        "ta": "ML பணிப்பாய்வை நிறைவு செய்யுங்கள்: sklearn-லிருந்து iris தரவுத்தொகுப்பை ஏற்றி, 80/20 பிரித்து, RandomForestClassifier பயிற்சி அளித்து, துல்லியத்தை அச்சிடுங்கள்."
+      },
+      "starter_code": "from sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import RandomForestClassifier\n\n# Load data\niris = load_iris()\nX, y = iris.data, iris.target\n\n# Split data\nX_train, X_test, y_train, y_test = train_test_split(___, ___, test_size=___, random_state=42)\n\n# Train model\nmodel = RandomForestClassifier(n_estimators=100, random_state=42)\nmodel.___(X_train, y_train)\n\n# Evaluate\naccuracy = model.score(___, ___)\nprint(f'Iris Accuracy: {accuracy:.2f}')",
+      "expected_output": "Iris Accuracy: 1.00",
+      "hints": {
+        "en": [
+          "Pass X and y to train_test_split with test_size=0.2",
+          "Call model.fit(X_train, y_train) to train",
+          "Call model.score(X_test, y_test) to evaluate"
+        ],
+        "ta": [
+          "test_size=0.2 உடன் X மற்றும் y ஐ train_test_split க்கு அனுப்புங்கள்",
+          "பயிற்சிக்கு model.fit(X_train, y_train) அழைக்கவும்",
+          "மதிப்பீட்டிற்கு model.score(X_test, y_test) அழைக்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the correct order of the ML workflow?",
+        "ta": "ML பணிப்பாய்வின் சரியான வரிசை என்ன?"
+      },
+      "options": {
+        "en": [
+          "Train > Collect > Deploy > Evaluate",
+          "Collect > Preprocess > Train > Evaluate > Deploy",
+          "Deploy > Train > Collect > Preprocess",
+          "Evaluate > Train > Preprocess > Collect"
+        ],
+        "ta": [
+          "பயிற்சி > சேகரிப்பு > வரிசைப்படுத்தல் > மதிப்பீடு",
+          "சேகரிப்பு > முன்செயலாக்கம் > பயிற்சி > மதிப்பீடு > வரிசைப்படுத்தல்",
+          "வரிசைப்படுத்தல் > பயிற்சி > சேகரிப்பு > முன்செயலாக்கம்",
+          "மதிப்பீடு > பயிற்சி > முன்செயலாக்கம் > சேகரிப்பு"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do we split data into training and testing sets?",
+        "ta": "தரவை பயிற்சி மற்றும் சோதனை தொகுப்புகளாக ஏன் பிரிக்கிறோம்?"
+      },
+      "options": {
+        "en": [
+          "To make training faster",
+          "To evaluate how well the model generalizes to unseen data",
+          "To reduce the dataset size",
+          "To remove outliers"
+        ],
+        "ta": [
+          "பயிற்சியை வேகமாக்க",
+          "மாடல் புதிய தரவுக்கு எவ்வளவு நன்றாக பொதுமைப்படுத்துகிறது என்பதை மதிப்பிட",
+          "தரவுத்தொகுப்பின் அளவைக் குறைக்க",
+          "வெளிப்புற மதிப்புகளை அகற்ற"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does StandardScaler do to the features?",
+        "ta": "StandardScaler அம்சங்களுக்கு என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Removes missing values",
+          "Transforms features to have mean=0 and standard deviation=1",
+          "Selects the best features",
+          "Converts strings to numbers"
+        ],
+        "ta": [
+          "விடுபட்ட மதிப்புகளை நீக்குகிறது",
+          "அம்சங்களை mean=0 மற்றும் standard deviation=1 ஆக மாற்றுகிறது",
+          "சிறந்த அம்சங்களைத் தேர்ந்தெடுக்கிறது",
+          "சரங்களை எண்களாக மாற்றுகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["ml_pipeline", "train_test_split", "preprocessing", "model_evaluation"],
+    "concepts_required": ["supervised_learning", "python_basics"],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 30,
+    "real_world_application": ["data_science_workflow", "production_ml"],
+    "category": "machine_learning",
+    "path_memberships": ["ml_fundamentals"]
+  }
+}

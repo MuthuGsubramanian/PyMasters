@@ -1,0 +1,266 @@
+{
+  "id": "docker_compose",
+  "topic": "docker_compose",
+  "track": "testing_devops",
+  "module": "containers",
+  "order": 9,
+  "title": {
+    "en": "Docker Compose: Multi-Container Apps",
+    "ta": "Docker Compose: பல Container பயன்பாடுகள்"
+  },
+  "description": {
+    "en": "Orchestrate multi-container applications with Docker Compose — define services, networks, volumes, and environment variables in a single YAML file.",
+    "ta": "Docker Compose-உடன் பல container பயன்பாடுகளை ஒருங்கிணையுங்கள் — ஒரே YAML file-ல் services, networks, volumes, environment variables வரையறுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Orchestra\n\nVaathiyaar plays a video of an orchestra. \"One musician is like one container. But a symphony needs many musicians playing together — violins, drums, flute. Docker Compose is the conductor. One wave of the baton (one command) and all containers start in harmony.\"\n\n### What is Docker Compose?\n- Define multi-container apps in `docker-compose.yml`\n- One command to start everything: `docker compose up`\n- Automatic networking between services\n- Shared volumes for persistent data\n- Environment variables for configuration\n\n### Common Architecture\n```\n┌─────────┐    ┌─────────┐    ┌─────────┐\n│  Web    │───→│  API    │───→│  DB     │\n│ (nginx) │    │ (Flask) │    │ (Postgres)│\n└─────────┘    └─────────┘    └─────────┘\n```\n\n### Key Compose Concepts\n- **services** — each container definition\n- **depends_on** — startup order\n- **volumes** — persistent data\n- **networks** — isolated communication\n- **environment** — config variables\n\n> **Key Concept:** Docker Compose lets you define your entire application stack in one file. Web server, API, database, cache — all orchestrated with a single `docker compose up`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "orchestra",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "compose_map",
+      "nodes": [
+        {
+          "label": "docker-compose.yml",
+          "children": [
+            "services",
+            "volumes",
+            "networks",
+            "environment",
+            "depends_on"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "compose_yaml",
+      "steps": [
+        {
+          "line": "services:",
+          "highlight": "services",
+          "explanation": {
+            "en": "Define all the containers (services) your app needs"
+          }
+        },
+        {
+          "line": "  web:",
+          "highlight": "web",
+          "explanation": {
+            "en": "First service: the Python web application"
+          }
+        },
+        {
+          "line": "    build: .",
+          "highlight": "build",
+          "explanation": {
+            "en": "Build from the Dockerfile in the current directory"
+          }
+        },
+        {
+          "line": "    ports:",
+          "highlight": "ports",
+          "explanation": {
+            "en": "Map ports from host to container"
+          }
+        },
+        {
+          "line": "      - '8000:8000'",
+          "highlight": "8000:8000",
+          "explanation": {
+            "en": "Host port 8000 maps to container port 8000"
+          }
+        },
+        {
+          "line": "    environment:",
+          "highlight": "environment",
+          "explanation": {
+            "en": "Set environment variables for the container"
+          }
+        },
+        {
+          "line": "      - DATABASE_URL=postgresql://user:pass@db:5432/myapp",
+          "highlight": "DATABASE_URL",
+          "explanation": {
+            "en": "DB connection string — 'db' is the service name, used as hostname"
+          }
+        },
+        {
+          "line": "      - REDIS_URL=redis://cache:6379",
+          "highlight": "REDIS_URL",
+          "explanation": {
+            "en": "Redis connection — 'cache' refers to the Redis service below"
+          }
+        },
+        {
+          "line": "    depends_on:",
+          "highlight": "depends_on",
+          "explanation": {
+            "en": "Web service waits for db and cache to start first"
+          }
+        },
+        {
+          "line": "      - db",
+          "highlight": "db",
+          "explanation": {
+            "en": "Database must start before the web service"
+          }
+        },
+        {
+          "line": "      - cache",
+          "highlight": "cache",
+          "explanation": {
+            "en": "Cache must also start before the web service"
+          }
+        },
+        {
+          "line": "    volumes:",
+          "highlight": "volumes",
+          "explanation": {
+            "en": "Mount local directory for live code reloading"
+          }
+        },
+        {
+          "line": "      - .:/app",
+          "highlight": ".:/app",
+          "explanation": {
+            "en": "Bind mount: local . directory maps to /app in container"
+          }
+        },
+        {
+          "line": "  db:",
+          "highlight": "db",
+          "explanation": {
+            "en": "Second service: PostgreSQL database"
+          }
+        },
+        {
+          "line": "    image: postgres:16",
+          "highlight": "postgres:16",
+          "explanation": {
+            "en": "Use the official PostgreSQL 16 image from Docker Hub"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "service_architecture",
+      "structure_type": "network",
+      "layers": [
+        { "label": "web (Python:8000)", "count": "app", "color": "#4f8ef7" },
+        { "label": "db (Postgres:5432)", "count": "database", "color": "#6bcf7f" },
+        { "label": "cache (Redis:6379)", "count": "cache", "color": "#ff6b6b" },
+        { "label": "pgdata (volume)", "count": "persistent", "color": "#ffd93d" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "compose_output",
+      "output": [
+        "$ docker compose up -d",
+        "[+] Running 4/4",
+        " ✔ Network myapp_default   Created                         0.1s",
+        " ✔ Volume  myapp_pgdata    Created                         0.0s",
+        " ✔ Container myapp-db-1    Started                         1.2s",
+        " ✔ Container myapp-cache-1 Started                         1.1s",
+        " ✔ Container myapp-web-1   Started                         2.3s",
+        "",
+        "$ docker compose ps",
+        "NAME              STATUS          PORTS",
+        "myapp-web-1       Up 5 seconds    0.0.0.0:8000->8000/tcp",
+        "myapp-db-1        Up 6 seconds    5432/tcp",
+        "myapp-cache-1     Up 6 seconds    6379/tcp",
+        "",
+        "$ docker compose logs web",
+        "myapp-web-1  | INFO:     Uvicorn running on http://0.0.0.0:8000"
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_env",
+      "variable": "DATABASE_URL",
+      "value": "postgresql://user:pass@db:5432/myapp",
+      "data_type": "env var",
+      "color": "#a66bf7"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a docker-compose.yml with three services: a Python web app (build from .), a PostgreSQL database (image: postgres:16), and a Redis cache (image: redis:7). Add depends_on, ports 8000:8000 for web, and a volume for PostgreSQL data.",
+        "ta": "மூன்று services-உடன் docker-compose.yml எழுதுங்கள்: Python web app, PostgreSQL database, Redis cache. depends_on, ports, volume சேர்க்கவும்."
+      },
+      "starter_code": "# docker-compose.yml\nservices:\n  web:\n    build: .\n    ports:\n      # Map port 8000\n    depends_on:\n      # Which services?\n    environment:\n      - DATABASE_URL=postgresql://user:pass@db:5432/app\n\n  db:\n    image: # PostgreSQL image?\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n    environment:\n      - POSTGRES_PASSWORD=pass\n\n  cache:\n    image: # Redis image?\n\nvolumes:\n  pgdata:",
+      "expected_output": "Valid docker-compose.yml with 3 services",
+      "hints": {
+        "en": [
+          "ports: - '8000:8000'",
+          "depends_on: - db and - cache",
+          "db image: postgres:16",
+          "cache image: redis:7"
+        ],
+        "ta": [
+          "ports: - '8000:8000'",
+          "depends_on: - db மற்றும் - cache",
+          "db image: postgres:16",
+          "cache image: redis:7"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What command starts all services defined in docker-compose.yml?",
+        "ta": "docker-compose.yml-ல் வரையறுக்கப்பட்ட அனைத்து services-ஐயும் தொடங்க என்ன command?"
+      },
+      "options": {
+        "en": ["docker start all", "docker compose up", "docker run compose", "docker build --all"],
+        "ta": ["docker start all", "docker compose up", "docker run compose", "docker build --all"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do containers in the same Compose file communicate?",
+        "ta": "ஒரே Compose file-ல் உள்ள containers எப்படி communicate செய்கின்றன?"
+      },
+      "options": {
+        "en": ["By IP address only", "Using the service name as hostname", "They cannot communicate", "Through a shared file"],
+        "ta": ["IP address மூலம் மட்டும்", "Service பெயரை hostname-ஆக பயன்படுத்தி", "அவை communicate செய்ய முடியாது", "பகிரப்பட்ட file மூலம்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does 'depends_on' ensure?",
+        "ta": "'depends_on' என்ன உறுதி செய்கிறது?"
+      },
+      "options": {
+        "en": ["Containers share the same image", "Dependent services start first", "Services run on the same port", "Data is shared between containers"],
+        "ta": ["Containers ஒரே image-ஐ பகிரும்", "சார்ந்த services முதலில் தொடங்கும்", "Services ஒரே port-ல் இயங்கும்", "Data containers இடையே பகிரப்படும்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["docker_compose", "multi_container", "networking", "volumes", "environment_vars"],
+    "concepts_required": ["docker_fundamentals"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["microservices", "local_development", "deployment"],
+    "category": "devops",
+    "path_memberships": ["testing_devops"]
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "id": "prompt_engineering_basics",
+  "topic": "prompt_engineering_basics",
+  "track": "ai_fundamentals",
+  "module": "prompt_engineering",
+  "order": 2,
+  "title": {
+    "en": "Prompt Engineering Basics: Talk to AI Like a Pro",
+    "ta": "Prompt பொறியியல் அடிப்படைகள்: AI-யுடன் திறமையாகப் பேசுங்கள்"
+  },
+  "description": {
+    "en": "Master zero-shot, few-shot, and chain-of-thought prompting techniques to get better results from any LLM.",
+    "ta": "எந்த LLM-லிருந்தும் சிறந்த முடிவுகளைப் பெற zero-shot, few-shot, chain-of-thought prompting நுட்பங்களைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 55,
+  "next_unlock": "prompt_engineering_advanced",
+  "story_variants": {
+    "en": "## Vaathiyaar's Prompt Workshop\n\nVaathiyaar holds up two letters. \"Students, imagine you're writing to a brilliant but literal-minded assistant. The first letter says 'Help me with food.' The second says 'Suggest a 30-minute vegetarian dinner recipe for 2 people using only ingredients from an Indian grocery store.' Which gets a better response?\"\n\n### The Art of Prompting\n\nA **prompt** is the text you send to an AI model. The quality of your prompt determines the quality of the response.\n\n### Three Prompting Strategies\n\n**1. Zero-shot** — Ask directly, no examples\n```\nClassify this review as positive or negative: 'The food was amazing!'\n```\n\n**2. Few-shot** — Provide examples first\n```\nClassify reviews:\n'Great service!' -> positive\n'Terrible wait time' -> negative\n'The food was amazing!' -> \n```\n\n**3. Chain-of-thought** — Ask to reason step by step\n```\nSolve this step by step: If a shirt costs 800 rupees \nand is 25% off, what is the final price?\n```\n\n> **Key Insight:** Few-shot prompting can improve accuracy by 20-40% on classification tasks. Chain-of-thought is essential for math and logic problems.",
+    "ta": "## வாத்தியாரின் Prompt பட்டறை\n\nவாத்தியார் இரண்டு கடிதங்களை உயர்த்திக் காட்டுகிறார். \"மாணவர்களே, நீங்கள் ஒரு புத்திசாலியான ஆனால் நேரடியான உதவியாளருக்கு கடிதம் எழுதுவதாக நினையுங்கள். முதல் கடிதம் 'உணவுக்கு உதவுங்கள்' என்கிறது. இரண்டாவது '2 பேருக்கு 30 நிமிட சைவ இரவு உணவு பரிந்துரையுங்கள்' என்கிறது. எது சிறந்த பதிலைப் பெறும்?\"\n\n### Prompting-ன் கலை\n\n**Prompt** என்பது AI மாதிரிக்கு நீங்கள் அனுப்பும் உரை. உங்கள் prompt-ன் தரம் பதிலின் தரத்தை தீர்மானிக்கிறது."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "prompt_workshop",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "prompting_strategies",
+      "nodes": [
+        {
+          "label": "Prompt Engineering",
+          "children": [
+            "Zero-shot (no examples)",
+            "Few-shot (with examples)",
+            "Chain-of-thought (step by step)"
+          ]
+        },
+        {
+          "label": "Prompt Components",
+          "children": [
+            "Task description",
+            "Context/constraints",
+            "Examples (few-shot)",
+            "Output format"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "prompt_code",
+      "steps": [
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the OpenAI client to send prompts to an LLM"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize the client — it reads your API key from environment"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's try three different prompting strategies"
+          }
+        },
+        {
+          "line": "# Strategy 1: Zero-shot prompting",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Zero-shot means asking directly with no examples — simplest approach"
+          }
+        },
+        {
+          "line": "zero_shot = 'Classify this as positive or negative: The food was great!'",
+          "highlight": "zero_shot",
+          "explanation": {
+            "en": "Direct instruction — works well for simple tasks the model already understands"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's add examples for better accuracy"
+          }
+        },
+        {
+          "line": "# Strategy 2: Few-shot prompting",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Provide examples so the model learns the pattern you want"
+          }
+        },
+        {
+          "line": "few_shot = '''Classify each review:",
+          "highlight": "few_shot",
+          "explanation": {
+            "en": "Start the few-shot prompt with a clear task description"
+          }
+        },
+        {
+          "line": "'Loved it!' -> positive",
+          "highlight": "example1",
+          "explanation": {
+            "en": "First example teaches the model what 'positive' looks like"
+          }
+        },
+        {
+          "line": "'Hated the wait' -> negative",
+          "highlight": "example2",
+          "explanation": {
+            "en": "Second example teaches what 'negative' looks like"
+          }
+        },
+        {
+          "line": "'The food was great!' -> '''",
+          "highlight": "target",
+          "explanation": {
+            "en": "Leave the target blank — the model completes the pattern"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Finally, let's use chain-of-thought for reasoning tasks"
+          }
+        },
+        {
+          "line": "# Strategy 3: Chain-of-thought",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Ask the model to think step by step for complex reasoning"
+          }
+        },
+        {
+          "line": "cot = 'A shirt costs ₹800 with 25% off. What is the price? Think step by step.'",
+          "highlight": "cot",
+          "explanation": {
+            "en": "The magic phrase 'think step by step' dramatically improves math accuracy"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_strategy",
+      "variable": "strategy",
+      "value": "few-shot",
+      "data_type": "str",
+      "color": "#8b5cf6"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_accuracy",
+      "variable": "accuracy_boost",
+      "value": "20-40%",
+      "data_type": "str",
+      "color": "#10b981"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Zero-shot result:",
+        "positive",
+        "",
+        ">>> # Few-shot result:",
+        "positive (higher confidence with examples)",
+        "",
+        ">>> # Chain-of-thought result:",
+        "Step 1: Original price = ₹800",
+        "Step 2: Discount = 25% of 800 = 200",
+        "Step 3: Final price = 800 - 200 = ₹600",
+        "The final price is ₹600."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write three prompt strings: a zero-shot prompt to translate English to Tamil, a few-shot prompt with 2 examples for sentiment classification, and a chain-of-thought prompt for a word problem. Store each in a variable and print them.",
+        "ta": "மூன்று prompt சரங்களை எழுதுங்கள்: ஆங்கிலத்தை தமிழுக்கு மொழிபெயர்க்க zero-shot prompt, உணர்வு வகைப்பாட்டிற்கு 2 எடுத்துக்காட்டுகளுடன் few-shot prompt, மற்றும் ஒரு சொல் கணக்குக்கு chain-of-thought prompt."
+      },
+      "starter_code": "# Zero-shot prompt for translation\nzero_shot_prompt = \"\"\"Translate the following English text to Tamil:\n'Good morning, how are you?'\n\"\"\"\n\n# Few-shot prompt for sentiment (add 2 examples)\nfew_shot_prompt = \"\"\"Classify the sentiment as positive, negative, or neutral.\n\nExamples:\n# Add your examples here\n\nText: 'The movie was okay, nothing special.'\nSentiment:\"\"\"\n\n# Chain-of-thought prompt\ncot_prompt = \"\"\"# Add a math word problem with 'think step by step'\n\"\"\"\n\nprint('=== Zero-shot ===')\nprint(zero_shot_prompt)\nprint('\\n=== Few-shot ===')\nprint(few_shot_prompt)\nprint('\\n=== Chain-of-thought ===')\nprint(cot_prompt)",
+      "expected_output": "=== Zero-shot ===\n(translation prompt)\n\n=== Few-shot ===\n(sentiment prompt with examples)\n\n=== Chain-of-thought ===\n(math problem with step-by-step instruction)",
+      "hints": {
+        "en": [
+          "For few-shot, add examples like: 'I love this!' -> positive",
+          "For chain-of-thought, end with 'Let's think step by step'",
+          "Use triple-quoted strings for multi-line prompts"
+        ],
+        "ta": [
+          "Few-shot க்கு எடுத்துக்காட்டுகள் சேர்க்கவும்: 'I love this!' -> positive",
+          "Chain-of-thought க்கு 'Let's think step by step' என்று முடியுங்கள்",
+          "பல-வரி prompts க்கு triple-quoted strings பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is zero-shot prompting?",
+        "ta": "Zero-shot prompting என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Providing many examples before the task",
+          "Asking the model directly with no examples",
+          "Training the model from scratch",
+          "Using no prompt at all"
+        ],
+        "ta": [
+          "பணிக்கு முன் பல எடுத்துக்காட்டுகள் வழங்குவது",
+          "எடுத்துக்காட்டுகள் இல்லாமல் நேரடியாகக் கேட்பது",
+          "மாதிரியை புதிதாகப் பயிற்சி செய்வது",
+          "எந்த prompt-ம் பயன்படுத்தாமல் இருப்பது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which prompting technique is best for math word problems?",
+        "ta": "கணித சொல் கணக்குகளுக்கு எந்த prompting நுட்பம் சிறந்தது?"
+      },
+      "options": {
+        "en": [
+          "Zero-shot",
+          "Few-shot",
+          "Chain-of-thought",
+          "Single-word prompts"
+        ],
+        "ta": [
+          "Zero-shot",
+          "Few-shot",
+          "Chain-of-thought",
+          "ஒற்றை-சொல் prompts"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In few-shot prompting, what do the examples help the model understand?",
+        "ta": "Few-shot prompting-ல், எடுத்துக்காட்டுகள் மாதிரிக்கு என்ன புரிய வைக்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "How to train itself",
+          "The desired output format and pattern",
+          "How to access the internet",
+          "How to store data permanently"
+        ],
+        "ta": [
+          "தன்னைத்தானே பயிற்சி செய்வது எப்படி",
+          "விரும்பிய வெளியீட்டு வடிவம் மற்றும் வடிவம்",
+          "இணையத்தை அணுகுவது எப்படி",
+          "தரவை நிரந்தரமாக சேமிப்பது எப்படி"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["zero_shot", "few_shot", "chain_of_thought", "prompt_engineering"],
+    "concepts_required": ["what_is_ai"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["chatbot_interaction", "ai_productivity"],
+    "category": "ai_core",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

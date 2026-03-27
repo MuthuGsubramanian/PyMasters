@@ -1,0 +1,199 @@
+{
+  "id": "dl_pytorch_basics",
+  "topic": "pytorch_basics",
+  "track": "deep_learning_complete",
+  "module": "pytorch_mastery",
+  "order": 9,
+  "title": {
+    "en": "PyTorch Basics: Tensors, Autograd & nn.Module",
+    "ta": "PyTorch அடிப்படைகள்: டென்சர்கள், Autograd & nn.Module"
+  },
+  "description": {
+    "en": "Master PyTorch tensors, automatic differentiation, and the nn.Module pattern for building neural networks.",
+    "ta": "PyTorch டென்சர்கள், தானியங்கி வகையீடு, மற்றும் நரம்பியல் நெட்வொர்க்குகளை உருவாக்கும் nn.Module வடிவத்தை கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Toolbox\n\nVaathiyaar opens a red toolbox labeled 'PyTorch'. \"NumPy gave you arrays. PyTorch gives you tensors — arrays that run on GPUs and compute gradients automatically. This is your essential toolkit.\"\n\n### Tensors: The Foundation\n\n```python\nimport torch\n\n# Creating tensors\na = torch.tensor([1.0, 2.0, 3.0])       # from list\nb = torch.zeros(3, 4)                     # 3x4 zeros\nc = torch.randn(2, 3)                     # random normal\nd = torch.arange(0, 10, 2)                # [0, 2, 4, 6, 8]\n\n# Operations\nresult = a * 2 + 1          # element-wise\nmatmul = c @ c.T             # matrix multiply\nreshaped = c.view(6)         # reshape\n\n# GPU support\nif torch.cuda.is_available():\n    gpu_tensor = a.cuda()    # move to GPU\n\nprint(f'Tensor: {a}')\nprint(f'Shape: {a.shape}, dtype: {a.dtype}')\nprint(f'Device: {a.device}')\n```\n\n### Autograd: Automatic Gradients\n\n```python\nx = torch.tensor(3.0, requires_grad=True)\ny = x ** 2 + 2 * x + 1  # y = x^2 + 2x + 1\ny.backward()              # compute dy/dx\nprint(f'dy/dx at x=3: {x.grad}')  # 2*3 + 2 = 8\n```\n\n### nn.Module: The Building Block\n\n```python\nimport torch.nn as nn\n\nclass MyModel(nn.Module):\n    def __init__(self, input_dim, output_dim):\n        super().__init__()\n        self.fc1 = nn.Linear(input_dim, 64)\n        self.relu = nn.ReLU()\n        self.fc2 = nn.Linear(64, output_dim)\n    \n    def forward(self, x):\n        x = self.relu(self.fc1(x))\n        return self.fc2(x)\n\nmodel = MyModel(10, 2)\nprint(f'Parameters: {sum(p.numel() for p in model.parameters())}')\n```\n\n> **Key Pattern:** Every PyTorch model inherits from nn.Module, defines layers in __init__, and data flow in forward().",
+    "ta": "## வாத்தியாரின் கருவிப்பெட்டி\n\nவாத்தியார் 'PyTorch' என்ற சிவப்பு கருவிப்பெட்டியைத் திறக்கிறார். \"NumPy உங்களுக்கு arrays கொடுத்தது. PyTorch உங்களுக்கு tensors கொடுக்கிறது — GPU-களில் இயங்கி தானாகவே gradients கணக்கிடும் arrays.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pytorch_toolbox",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "pytorch_concepts",
+      "nodes": [
+        {
+          "label": "PyTorch",
+          "children": [
+            "Tensors (torch.Tensor)",
+            "Autograd (requires_grad)",
+            "nn.Module (model base)",
+            "nn.Linear, nn.Conv2d",
+            "torch.optim (optimizers)",
+            "CUDA (GPU support)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pytorch_code",
+      "steps": [
+        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch — the deep learning framework"}},
+        {"line": "a = torch.tensor([1.0, 2.0, 3.0])", "highlight": "tensor", "explanation": {"en": "Create a 1D tensor from a Python list. Like numpy array but with GPU and autograd support"}},
+        {"line": "b = torch.zeros(3, 4)", "highlight": "zeros", "explanation": {"en": "Create a 3x4 tensor filled with zeros. Shape: [3, 4]"}},
+        {"line": "c = torch.randn(2, 3)", "highlight": "randn", "explanation": {"en": "Random tensor from standard normal distribution. Shape: [2, 3]"}},
+        {"line": "result = a * 2 + 1", "highlight": "operations", "explanation": {"en": "Element-wise operations: each element multiplied by 2, then add 1"}},
+        {"line": "matmul = c @ c.T", "highlight": "@", "explanation": {"en": "Matrix multiply: [2,3] @ [3,2] = [2,2]. The .T transposes the tensor"}},
+        {"line": "x = torch.tensor(3.0, requires_grad=True)", "highlight": "requires_grad", "explanation": {"en": "Enable gradient tracking — PyTorch will record all operations on x"}},
+        {"line": "y = x ** 2 + 2 * x + 1", "highlight": "y", "explanation": {"en": "Build computation graph: y = 9 + 6 + 1 = 16"}},
+        {"line": "y.backward()", "highlight": "backward", "explanation": {"en": "Compute dy/dx automatically: d/dx(x^2 + 2x + 1) = 2x + 2 = 8"}},
+        {"line": "print(f'dy/dx at x=3: {x.grad}')", "highlight": "grad", "explanation": {"en": "x.grad holds the computed gradient: 8.0"}},
+        {"line": "class MyModel(nn.Module):", "highlight": "nn.Module", "explanation": {"en": "All PyTorch models inherit from nn.Module"}},
+        {"line": "    self.fc1 = nn.Linear(input_dim, 64)", "highlight": "nn.Linear", "explanation": {"en": "Define a fully connected layer with input_dim inputs and 64 outputs"}},
+        {"line": "    def forward(self, x):", "highlight": "forward", "explanation": {"en": "Define forward pass — called automatically when you do model(x)"}},
+        {"line": "model = MyModel(10, 2)", "highlight": "model", "explanation": {"en": "Instantiate model: 10 input features, 2 output classes"}}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_tensor",
+      "variable": "a",
+      "value": "tensor([1., 2., 3.])",
+      "data_type": "torch.Tensor",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_grad",
+      "variable": "x.grad",
+      "value": "8.0",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_params",
+      "variable": "total_params",
+      "value": "770",
+      "data_type": "int",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "MemoryStack",
+      "id": "tensor_memory",
+      "slots": [
+        {"name": "a", "value": "[1.0, 2.0, 3.0]", "type": "float32", "address": "CPU"},
+        {"name": "b", "value": "zeros(3,4)", "type": "float32", "address": "CPU"},
+        {"name": "c", "value": "randn(2,3)", "type": "float32", "address": "CPU"},
+        {"name": "x", "value": "3.0 (grad=8.0)", "type": "float32+grad", "address": "CPU"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "module_flow",
+      "from": "nn.Module",
+      "to": "prediction",
+      "steps": ["__init__: define layers", "forward(): define data flow", "model(x): auto-calls forward", "output tensor"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> a = torch.tensor([1.0, 2.0, 3.0])",
+        ">>> a.shape, a.dtype",
+        "(torch.Size([3]), torch.float32)",
+        ">>> x = torch.tensor(3.0, requires_grad=True)",
+        ">>> y = x**2 + 2*x + 1",
+        ">>> y.backward()",
+        ">>> x.grad",
+        "tensor(8.)",
+        ">>> model = MyModel(10, 2)",
+        ">>> sum(p.numel() for p in model.parameters())",
+        "770"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "torch_flame",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a complete nn.Module that classifies IRIS-like data (4 features, 3 classes). Include batch normalization, dropout, and use nn.Sequential for part of the architecture. Count total parameters.",
+        "ta": "IRIS போன்ற தரவை வகைப்படுத்தும் முழுமையான nn.Module உருவாக்குங்கள் (4 அம்சங்கள், 3 வகுப்புகள்)."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\nclass IrisClassifier(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: Build network with:\n        # Linear(4, 32) -> BatchNorm -> ReLU -> Dropout(0.2)\n        # Linear(32, 16) -> BatchNorm -> ReLU -> Dropout(0.2)\n        # Linear(16, 3)\n        pass\n    \n    def forward(self, x):\n        # TODO: Forward pass\n        pass\n\nmodel = IrisClassifier()\n\n# Test with random input\nX = torch.randn(10, 4)\noutput = model(X)\nprint(f'Output shape: {output.shape}')  # should be [10, 3]\nprint(f'Total parameters: {sum(p.numel() for p in model.parameters())}')\n",
+      "expected_output": "Output shape: torch.Size([10, 3])\nTotal parameters: 787",
+      "hints": {
+        "en": [
+          "Use nn.Sequential to chain layers together",
+          "nn.BatchNorm1d(32) normalizes the 32 features",
+          "Dropout goes after activation: Linear -> BatchNorm -> ReLU -> Dropout",
+          "No activation after the final Linear layer (CrossEntropyLoss handles softmax)"
+        ],
+        "ta": [
+          "அடுக்குகளை இணைக்க nn.Sequential பயன்படுத்துங்கள்",
+          "இறுதி Linear அடுக்குக்குப் பிறகு activation இல்லை"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the key difference between a PyTorch tensor and a NumPy array?",
+        "ta": "PyTorch tensor-க்கும் NumPy array-க்கும் முக்கிய வேறுபாடு என்ன?"
+      },
+      "options": {
+        "en": ["Tensors can only hold integers", "Tensors support GPU and automatic differentiation", "Tensors are slower than arrays", "There is no difference"],
+        "ta": ["Tensors முழு எண்களை மட்டுமே வைத்திருக்க முடியும்", "Tensors GPU மற்றும் தானியங்கி வகையீட்டை ஆதரிக்கின்றன", "Tensors arrays-ஐ விட மெதுவானவை", "வேறுபாடு இல்லை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In an nn.Module, where should you define your layers?",
+        "ta": "nn.Module-ல், உங்கள் அடுக்குகளை எங்கே வரையறுக்க வேண்டும்?"
+      },
+      "options": {
+        "en": ["In the forward() method", "In the __init__() method", "Outside the class", "In a separate config file"],
+        "ta": ["forward() முறையில்", "__init__() முறையில்", "வகுப்பிற்கு வெளியே", "தனி config கோப்பில்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does y.backward() compute?",
+        "ta": "y.backward() என்ன கணக்கிடுகிறது?"
+      },
+      "options": {
+        "en": ["The value of y", "The gradients of y with respect to all tensors with requires_grad=True", "The forward pass", "The loss function"],
+        "ta": ["y-ன் மதிப்பு", "requires_grad=True கொண்ட அனைத்து tensors பற்றிய y-ன் சாய்வுகள்", "Forward pass", "இழப்பு செயல்பாடு"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["pytorch_tensors", "autograd", "nn_module", "gpu_support", "requires_grad"],
+    "concepts_required": ["python_classes", "numpy_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["deep_learning_development"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

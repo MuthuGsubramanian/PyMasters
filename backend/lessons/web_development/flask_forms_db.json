@@ -1,0 +1,290 @@
+{
+  "id": "flask_forms_db",
+  "topic": "flask_forms_db",
+  "track": "web_development",
+  "module": "flask_framework",
+  "order": 4,
+  "title": {
+    "en": "Flask Forms & Database: Handling User Input",
+    "ta": "Flask படிவங்கள் & தரவுத்தளம்: பயனர் உள்ளீட்டை கையாளுதல்"
+  },
+  "description": {
+    "en": "Learn to handle forms with WTForms, validate user input, and store data with SQLAlchemy ORM.",
+    "ta": "WTForms மூலம் படிவங்களைக் கையாளவும், பயனர் உள்ளீட்டை சரிபார்க்கவும், SQLAlchemy ORM மூலம் தரவைச் சேமிக்கவும் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## The Registration Desk\n\nVaathiyaar sets up a registration booth. \"Every web app needs to collect data from users — names, emails, passwords. But you can't just trust whatever they type! You need **forms** to structure the input and **validation** to check it. Then you need a **database** to store it.\"\n\n### Flask-WTF: Form Handling\n- **WTForms** provides form classes with fields and validators\n- **CSRF protection** prevents cross-site request forgery\n- **Validation** ensures data meets your rules before processing\n\n### SQLAlchemy: The ORM\n- **ORM** = Object-Relational Mapping\n- Write Python classes instead of raw SQL\n- Each class = a database table\n- Each instance = a row in the table\n\n### The Flow\n\n```\nUser fills form → Flask validates → SQLAlchemy saves → Database stores\n     ↑                                                      |\n     └──────────── Show success/error page ←────────────────┘\n```\n\n> **Key Concept:** Never trust user input. Always validate on the server side, even if you validate on the client side too. WTForms makes this easy with built-in validators like DataRequired, Email, Length, and EqualTo."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "registration_desk",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "forms_db_overview",
+      "nodes": [
+        {
+          "label": "Flask Forms + DB",
+          "children": [
+            "WTForms (validation)",
+            "CSRF Protection",
+            "SQLAlchemy (ORM)",
+            "Migrations (schema changes)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "forms_db_demo",
+      "steps": [
+        {
+          "line": "from flask import Flask, render_template, redirect, url_for, flash",
+          "highlight": "flash",
+          "explanation": {
+            "en": "Import Flask helpers including flash for user messages"
+          }
+        },
+        {
+          "line": "from flask_sqlalchemy import SQLAlchemy",
+          "highlight": "SQLAlchemy",
+          "explanation": {
+            "en": "Import SQLAlchemy for database operations"
+          }
+        },
+        {
+          "line": "from flask_wtf import FlaskForm",
+          "highlight": "FlaskForm",
+          "explanation": {
+            "en": "Import FlaskForm as the base class for all forms"
+          }
+        },
+        {
+          "line": "from wtforms import StringField, IntegerField, SubmitField",
+          "highlight": "StringField",
+          "explanation": {
+            "en": "Import field types — each maps to an HTML input element"
+          }
+        },
+        {
+          "line": "from wtforms.validators import DataRequired, Length, NumberRange",
+          "highlight": "DataRequired",
+          "explanation": {
+            "en": "Import validators to enforce rules on form fields"
+          }
+        },
+        {
+          "line": "app = Flask(__name__)",
+          "highlight": "Flask(__name__)",
+          "explanation": {
+            "en": "Create the Flask application"
+          }
+        },
+        {
+          "line": "app.config['SECRET_KEY'] = 'your-secret-key-here'",
+          "highlight": "SECRET_KEY",
+          "explanation": {
+            "en": "Required for CSRF protection and session management"
+          }
+        },
+        {
+          "line": "app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'",
+          "highlight": "sqlite:///",
+          "explanation": {
+            "en": "Configure SQLite database — the file will be created automatically"
+          }
+        },
+        {
+          "line": "db = SQLAlchemy(app)",
+          "highlight": "SQLAlchemy(app)",
+          "explanation": {
+            "en": "Initialize SQLAlchemy with our Flask app"
+          }
+        },
+        {
+          "line": "class Student(db.Model):",
+          "highlight": "db.Model",
+          "explanation": {
+            "en": "Define a Student model — this creates a 'student' table in the database"
+          }
+        },
+        {
+          "line": "    id = db.Column(db.Integer, primary_key=True)",
+          "highlight": "primary_key",
+          "explanation": {
+            "en": "Auto-incrementing primary key for each student"
+          }
+        },
+        {
+          "line": "    name = db.Column(db.String(100), nullable=False)",
+          "highlight": "nullable=False",
+          "explanation": {
+            "en": "Name field — max 100 chars, cannot be empty"
+          }
+        },
+        {
+          "line": "    age = db.Column(db.Integer, nullable=False)",
+          "highlight": "db.Integer",
+          "explanation": {
+            "en": "Age field — stored as an integer"
+          }
+        },
+        {
+          "line": "    email = db.Column(db.String(120), unique=True, nullable=False)",
+          "highlight": "unique=True",
+          "explanation": {
+            "en": "Email must be unique — no two students can share an email"
+          }
+        },
+        {
+          "line": "class StudentForm(FlaskForm):",
+          "highlight": "FlaskForm",
+          "explanation": {
+            "en": "Define a form class that inherits from FlaskForm"
+          }
+        },
+        {
+          "line": "    name = StringField('Name', validators=[DataRequired(), Length(min=2, max=100)])",
+          "highlight": "validators",
+          "explanation": {
+            "en": "Name field with required + length validators"
+          }
+        },
+        {
+          "line": "    age = IntegerField('Age', validators=[DataRequired(), NumberRange(min=10, max=120)])",
+          "highlight": "NumberRange",
+          "explanation": {
+            "en": "Age field must be a number between 10 and 120"
+          }
+        },
+        {
+          "line": "    submit = SubmitField('Register')",
+          "highlight": "SubmitField",
+          "explanation": {
+            "en": "The submit button for the form"
+          }
+        },
+        {
+          "line": "@app.route('/register', methods=['GET', 'POST'])",
+          "highlight": "methods",
+          "explanation": {
+            "en": "Route handles GET (show form) and POST (process form)"
+          }
+        },
+        {
+          "line": "def register():\n    form = StudentForm()\n    if form.validate_on_submit():\n        student = Student(name=form.name.data, age=form.age.data, email=form.email.data)\n        db.session.add(student)\n        db.session.commit()\n        flash('Student registered!', 'success')\n        return redirect(url_for('home'))\n    return render_template('register.html', form=form)",
+          "highlight": "validate_on_submit",
+          "explanation": {
+            "en": "validate_on_submit() checks if it's POST AND all validators pass"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_student",
+      "variable": "student",
+      "value": "Student(name='Alice', age=22, email='alice@py.com')",
+      "data_type": "Student",
+      "color": "#9C27B0"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_form",
+      "variable": "form.validate_on_submit()",
+      "value": true,
+      "data_type": "bool",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> student = Student(name='Alice', age=22, email='alice@py.com')",
+        ">>> db.session.add(student)",
+        ">>> db.session.commit()",
+        ">>> Student.query.all()",
+        "[<Student Alice>]",
+        ">>> Student.query.filter_by(name='Alice').first()",
+        "<Student Alice>",
+        ">>> student.age",
+        "22"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a Flask app with a SQLAlchemy model called 'Book' with fields: title (string), author (string), pages (integer). Write a route '/add' that accepts POST data as JSON to add a book, and '/books' that returns all books as JSON.",
+        "ta": "title, author, pages புலங்களுடன் 'Book' என்ற SQLAlchemy மாதிரியுடன் Flask பயன்பாட்டை உருவாக்குங்கள். புத்தகத்தைச் சேர்க்க JSON ஏற்கும் '/add' வழியும், அனைத்து புத்தகங்களையும் JSON ஆகத் திருப்பும் '/books' வழியும் எழுதுங்கள்."
+      },
+      "starter_code": "from flask import Flask, request, jsonify\nfrom flask_sqlalchemy import SQLAlchemy\n\napp = Flask(__name__)\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///books.db'\ndb = SQLAlchemy(app)\n\nclass Book(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    title = db.Column(db.String(200), nullable=False)\n    author = db.Column(db.String(100), nullable=False)\n    pages = db.Column(db.Integer, nullable=False)\n\n@app.route('/add', methods=['POST'])\ndef add_book():\n    data = request.get_json()\n    book = Book(title=data['title'], author=data['author'], pages=data['pages'])\n    db.session.add(book)\n    db.session.commit()\n    return jsonify({'message': f'Added: {book.title}'}), 201\n\n@app.route('/books')\ndef get_books():\n    books = Book.query.all()\n    return jsonify([{'id': b.id, 'title': b.title, 'author': b.author, 'pages': b.pages} for b in books])\n\nif __name__ == '__main__':\n    with app.app_context():\n        db.create_all()\n    app.run(debug=True)",
+      "expected_output": "POST /add → {\"message\": \"Added: Python Mastery\"}\nGET /books → [{\"id\": 1, \"title\": \"Python Mastery\", \"author\": \"Vaathiyaar\", \"pages\": 350}]",
+      "hints": {
+        "en": [
+          "Define your model class inheriting from db.Model",
+          "Use db.Column() to define each field",
+          "db.session.add() stages the record, db.session.commit() saves it",
+          "Book.query.all() returns all rows as Python objects"
+        ],
+        "ta": [
+          "db.Model-லிருந்து மரபுரிமையாக மாதிரி வகுப்பை வரையறுக்கவும்",
+          "ஒவ்வொரு புலத்தையும் வரையறுக்க db.Column() பயன்படுத்தவும்",
+          "db.session.add() பதிவை நிலைநிறுத்துகிறது, db.session.commit() சேமிக்கிறது",
+          "Book.query.all() அனைத்து வரிசைகளையும் Python பொருள்களாகத் திருப்புகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does validate_on_submit() check in Flask-WTF?",
+        "ta": "Flask-WTF-ல் validate_on_submit() என்ன சரிபார்க்கிறது?"
+      },
+      "options": {
+        "en": ["Only if the form was submitted", "Only if validators pass", "If it's a POST request AND all validators pass", "If the database connection is active"],
+        "ta": ["படிவம் சமர்ப்பிக்கப்பட்டதா மட்டும்", "சரிபார்ப்பாளர்கள் தேர்ச்சி பெற்றதா மட்டும்", "POST கோரிக்கையா மற்றும் அனைத்து சரிபார்ப்பாளர்களும் தேர்ச்சி பெற்றதா", "தரவுத்தள இணைப்பு செயலில் உள்ளதா"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In SQLAlchemy, what does db.session.commit() do?",
+        "ta": "SQLAlchemy-ல், db.session.commit() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates the database file", "Saves all pending changes to the database", "Deletes all records", "Rolls back changes"],
+        "ta": ["தரவுத்தள கோப்பை உருவாக்குகிறது", "நிலுவையில் உள்ள அனைத்து மாற்றங்களையும் தரவுத்தளத்தில் சேமிக்கிறது", "அனைத்து பதிவுகளையும் நீக்குகிறது", "மாற்றங்களை திரும்பப் பெறுகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is SECRET_KEY required in Flask-WTF forms?",
+        "ta": "Flask-WTF படிவங்களில் SECRET_KEY ஏன் தேவை?"
+      },
+      "options": {
+        "en": ["To encrypt the database", "For CSRF token protection", "To hash passwords", "To enable debug mode"],
+        "ta": ["தரவுத்தளத்தை குறியாக்க", "CSRF டோக்கன் பாதுகாப்பிற்கு", "கடவுச்சொற்களை ஹாஷ் செய்ய", "பிழைத்திருத்த பயன்முறையை இயக்க"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["wtforms", "sqlalchemy", "form_validation", "database_orm"],
+    "concepts_required": ["flask_routes", "http_methods"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["user_registration", "data_collection"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

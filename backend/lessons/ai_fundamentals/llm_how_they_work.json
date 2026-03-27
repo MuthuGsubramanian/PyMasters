@@ -1,0 +1,287 @@
+{
+  "id": "llm_how_they_work",
+  "topic": "llm_how_they_work",
+  "track": "ai_fundamentals",
+  "module": "ai_foundations",
+  "order": 4,
+  "title": {
+    "en": "How LLMs Work: Tokens, Embeddings & Attention",
+    "ta": "LLM-கள் எவ்வாறு வேலை செய்கின்றன: Tokens, Embeddings & Attention"
+  },
+  "description": {
+    "en": "Understand the inner workings of Large Language Models — tokenization, embeddings, and the attention mechanism explained simply.",
+    "ta": "பெரிய மொழி மாதிரிகளின் உள் செயல்பாடுகளைப் புரிந்துகொள்ளுங்கள் — tokenization, embeddings, attention mechanism எளிமையாக விளக்கப்படுகிறது."
+  },
+  "xp_reward": 65,
+  "next_unlock": "openai_api_basics",
+  "story_variants": {
+    "en": "## Vaathiyaar's Brain Factory\n\nVaathiyaar draws a brain on the whiteboard. \"Students, an LLM is like a massive prediction engine. Given 'The cat sat on the ___', it predicts 'mat' because it has seen this pattern millions of times. But HOW does it do this? Three steps: Tokenize, Embed, Attend.\"\n\n### Step 1: Tokenization\n\nText is split into **tokens** — subword pieces, not full words.\n\n```\n'Hello, PyMasters!' → ['Hello', ',', ' Py', 'Masters', '!']\n```\n\n- GPT-4: ~100K token vocabulary\n- 1 token ≈ 4 characters in English\n- ₹ costs are per-token\n\n### Step 2: Embeddings\n\nEach token becomes a **vector** — a list of numbers representing meaning.\n\n```\n'king'  → [0.2, 0.8, 0.1, ...] (768 dimensions)\n'queen' → [0.2, 0.8, 0.9, ...] (similar but different)\n```\n\n### Step 3: Attention\n\nThe model looks at ALL tokens simultaneously and decides which ones are relevant to each other.\n\n```\n'The bank by the river was steep'\n'bank' attends to 'river' → means riverbank, not financial bank\n```\n\n> **Key Insight:** LLMs don't \"understand\" language — they predict the most likely next token based on patterns in training data. But this prediction is so good it looks like understanding.",
+    "ta": "## வாத்தியாரின் மூளை தொழிற்சாலை\n\nவாத்தியார் வெள்ளைப் பலகையில் ஒரு மூளையை வரைகிறார். \"மாணவர்களே, LLM என்பது ஒரு பெரிய கணிப்பு இயந்திரம் போன்றது. 'The cat sat on the ___' என்று கொடுத்தால், 'mat' என்று கணிக்கிறது. ஆனால் எப்படி? மூன்று படிகள்: Tokenize, Embed, Attend.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "brain_factory",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "llm_pipeline",
+      "nodes": [
+        {
+          "label": "LLM Pipeline",
+          "children": [
+            "1. Tokenization (text → tokens)",
+            "2. Embedding (tokens → vectors)",
+            "3. Attention (context understanding)",
+            "4. Prediction (next token)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "tokenization_code",
+      "steps": [
+        {
+          "line": "import tiktoken",
+          "highlight": "import",
+          "explanation": {
+            "en": "tiktoken is OpenAI's tokenizer library — lets you see how text becomes tokens"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's tokenize some text to see how LLMs see your input"
+          }
+        },
+        {
+          "line": "encoder = tiktoken.encoding_for_model('gpt-4o')",
+          "highlight": "encoder",
+          "explanation": {
+            "en": "Get the tokenizer for GPT-4o — each model has its own vocabulary"
+          }
+        },
+        {
+          "line": "text = 'Hello, PyMasters! Let us learn AI.'",
+          "highlight": "text",
+          "explanation": {
+            "en": "Our sample text to tokenize"
+          }
+        },
+        {
+          "line": "tokens = encoder.encode(text)",
+          "highlight": "tokens",
+          "explanation": {
+            "en": "Encode converts text into a list of token IDs (integers)"
+          }
+        },
+        {
+          "line": "print(f'Text: {text}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Show the original text"
+          }
+        },
+        {
+          "line": "print(f'Token IDs: {tokens}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "These integer IDs are what the model actually processes"
+          }
+        },
+        {
+          "line": "print(f'Number of tokens: {len(tokens)}')",
+          "highlight": "len",
+          "explanation": {
+            "en": "Count tokens — this determines your API cost"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's decode each token to see the subword pieces"
+          }
+        },
+        {
+          "line": "for token_id in tokens:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop through each token ID"
+          }
+        },
+        {
+          "line": "    token_text = encoder.decode([token_id])",
+          "highlight": "decode",
+          "explanation": {
+            "en": "Decode each ID back to text to see the subword piece"
+          }
+        },
+        {
+          "line": "    print(f'  {token_id} → \"{token_text}\"')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Display each token ID and its text representation"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's see how token count affects cost"
+          }
+        },
+        {
+          "line": "cost_per_million = 0.15  # GPT-4o-mini input price",
+          "highlight": "cost",
+          "explanation": {
+            "en": "API pricing is per million tokens — GPT-4o-mini is very affordable"
+          }
+        },
+        {
+          "line": "cost = (len(tokens) / 1_000_000) * cost_per_million",
+          "highlight": "cost",
+          "explanation": {
+            "en": "Calculate the cost for our tokens — usually fractions of a cent"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "embedding_vectors",
+      "structure_type": "vector",
+      "data": {
+        "king": [0.2, 0.8, 0.1, 0.9],
+        "queen": [0.2, 0.8, 0.9, 0.9],
+        "man": [0.1, 0.7, 0.1, 0.3],
+        "woman": [0.1, 0.7, 0.9, 0.3]
+      },
+      "visualization": "vector_space",
+      "caption": "king - man + woman ≈ queen (vector arithmetic captures meaning)"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_tokens",
+      "variable": "num_tokens",
+      "value": 9,
+      "data_type": "int",
+      "color": "#f59e0b"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Text: Hello, PyMasters! Let us learn AI.",
+        "Token IDs: [9906, 11, 5765, 30ologies, 0, 6914, 603, 4048, 15592, 13]",
+        "Number of tokens: 9",
+        "",
+        "  9906 → \"Hello\"",
+        "  11 → \",\"",
+        "  5765 → \" Py\"",
+        "  30890 → \"Masters\"",
+        "  0 → \"!\"",
+        "  6914 → \" Let\"",
+        "  603 → \" us\"",
+        "  4048 → \" learn\"",
+        "  15592 → \" AI\"",
+        "  13 → \".\"",
+        "",
+        "Cost for this text: $0.00000135"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Install tiktoken (pip install tiktoken) and write a function that takes a string and returns a dictionary with: token_count, tokens (list of subword strings), and estimated_cost based on $0.15 per million tokens. Test it with 'Python is the best programming language for AI development.'",
+        "ta": "tiktoken நிறுவி, ஒரு சரத்தை எடுத்து token_count, tokens (subword strings பட்டியல்), மற்றும் estimated_cost ஆகியவற்றைக் கொண்ட அகராதியை திருப்பி அளிக்கும் செயல்பாட்டை எழுதுங்கள்."
+      },
+      "starter_code": "import tiktoken\n\ndef analyze_tokens(text, model='gpt-4o'):\n    encoder = tiktoken.encoding_for_model(model)\n    # Your code here: encode, decode each token, calculate cost\n    pass\n\nresult = analyze_tokens('Python is the best programming language for AI development.')\nprint(f\"Token count: {result['token_count']}\")\nprint(f\"Tokens: {result['tokens']}\")\nprint(f\"Estimated cost: ${result['estimated_cost']:.8f}\")",
+      "expected_output": "Token count: 9\nTokens: ['Python', ' is', ' the', ' best', ' programming', ' language', ' for', ' AI', ' development', '.']\nEstimated cost: $0.00000150",
+      "hints": {
+        "en": [
+          "Use encoder.encode(text) to get token IDs",
+          "Use encoder.decode([token_id]) for each token to get the text",
+          "Cost = (token_count / 1_000_000) * 0.15"
+        ],
+        "ta": [
+          "token ID-களைப் பெற encoder.encode(text) பயன்படுத்துங்கள்",
+          "ஒவ்வொரு token-க்கும் encoder.decode([token_id]) பயன்படுத்துங்கள்",
+          "செலவு = (token_count / 1_000_000) * 0.15"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is a token in the context of LLMs?",
+        "ta": "LLM-களின் சூழலில் token என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "A complete word",
+          "A subword piece that the model processes",
+          "A sentence",
+          "A paragraph"
+        ],
+        "ta": [
+          "ஒரு முழு சொல்",
+          "மாதிரி செயலாக்கும் ஒரு துணைச்சொல் பகுதி",
+          "ஒரு வாக்கியம்",
+          "ஒரு பத்தி"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the attention mechanism help the model do?",
+        "ta": "Attention mechanism மாதிரிக்கு என்ன செய்ய உதவுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Store data permanently",
+          "Understand which tokens are relevant to each other",
+          "Connect to the internet",
+          "Run faster"
+        ],
+        "ta": [
+          "தரவை நிரந்தரமாக சேமிக்க",
+          "எந்த tokens ஒருவருக்கொருவர் தொடர்புடையவை என்பதைப் புரிந்துகொள்ள",
+          "இணையத்துடன் இணைக்க",
+          "வேகமாக இயங்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Approximately how many characters equal one token in English?",
+        "ta": "ஆங்கிலத்தில் தோராயமாக எத்தனை எழுத்துக்கள் ஒரு token-க்கு சமம்?"
+      },
+      "options": {
+        "en": ["1", "4", "10", "20"],
+        "ta": ["1", "4", "10", "20"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["tokenization", "embeddings", "attention_mechanism", "transformer"],
+    "concepts_required": ["what_is_ai"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 30,
+    "real_world_application": ["cost_estimation", "model_selection"],
+    "category": "ai_core",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

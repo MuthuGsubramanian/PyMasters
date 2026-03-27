@@ -1,0 +1,260 @@
+{
+  "id": "tdd_workflow",
+  "topic": "tdd_workflow",
+  "track": "testing_devops",
+  "module": "testing_foundations",
+  "order": 5,
+  "title": {
+    "en": "TDD: Red-Green-Refactor",
+    "ta": "TDD: சிவப்பு-பச்சை-மறுசீரமை"
+  },
+  "description": {
+    "en": "Practice Test-Driven Development — write the test first, watch it fail (red), make it pass (green), then refactor. Build confidence through the TDD cycle.",
+    "ta": "Test-Driven Development பயிற்சி செய்யுங்கள் — முதலில் சோதனை எழுதுங்கள், தோல்வியைப் பாருங்கள் (சிவப்பு), வெற்றி பெறுங்கள் (பச்சை), பிறகு மறுசீரமையுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Backwards Recipe\n\nVaathiyaar holds up a blank plate. \"Most developers cook first, taste later. TDD says: describe the taste first, THEN cook until it matches. Write the test first. Watch it fail. Then write just enough code to pass.\"\n\n### The TDD Cycle\n1. **RED** — Write a failing test for the feature you want\n2. **GREEN** — Write the minimum code to make the test pass\n3. **REFACTOR** — Clean up the code while keeping tests green\n4. **REPEAT** — Next feature, next test\n\n### Why TDD Works\n- Forces you to think about **what** before **how**\n- Every line of code has a reason — a failing test demanded it\n- Refactoring is safe — tests catch regressions instantly\n- Design emerges from usage, not guesswork\n\n### TDD in Practice\n\n```python\n# Step 1: RED — Write the test first\ndef test_fizzbuzz_returns_fizz_for_3():\n    assert fizzbuzz(3) == 'Fizz'  # NameError! fizzbuzz doesn't exist\n\n# Step 2: GREEN — Write minimum code\ndef fizzbuzz(n):\n    if n % 3 == 0:\n        return 'Fizz'\n    return str(n)\n\n# Step 3: REFACTOR — Improve without breaking tests\n```\n\n> **Key Concept:** TDD is not about testing — it's about design. The tests guide you to write exactly the code you need, nothing more."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "backwards_recipe",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "tdd_map",
+      "nodes": [
+        {
+          "label": "TDD Cycle",
+          "children": [
+            "RED: Write failing test",
+            "GREEN: Make it pass",
+            "REFACTOR: Clean up",
+            "REPEAT"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "tdd_fizzbuzz",
+      "steps": [
+        {
+          "line": "# === ROUND 1: RED ===",
+          "highlight": "RED",
+          "explanation": {
+            "en": "Start with a failing test — the function doesn't exist yet"
+          }
+        },
+        {
+          "line": "def test_fizzbuzz_number():",
+          "highlight": "test_fizzbuzz_number",
+          "explanation": {
+            "en": "Test that regular numbers return themselves as strings"
+          }
+        },
+        {
+          "line": "    assert fizzbuzz(1) == '1'",
+          "highlight": "fizzbuzz(1)",
+          "explanation": {
+            "en": "This FAILS with NameError — fizzbuzz is not defined yet"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Step 2: Write the MINIMUM code to make it pass"
+          }
+        },
+        {
+          "line": "# === ROUND 1: GREEN ===",
+          "highlight": "GREEN",
+          "explanation": {
+            "en": "Now write just enough code to pass the test"
+          }
+        },
+        {
+          "line": "def fizzbuzz(n):",
+          "highlight": "fizzbuzz",
+          "explanation": {
+            "en": "Create the function — bare minimum"
+          }
+        },
+        {
+          "line": "    return str(n)",
+          "highlight": "str(n)",
+          "explanation": {
+            "en": "Just return the number as string — simplest thing that works"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Test passes! Now add the next feature with a new test"
+          }
+        },
+        {
+          "line": "# === ROUND 2: RED ===",
+          "highlight": "RED",
+          "explanation": {
+            "en": "New failing test for the Fizz feature"
+          }
+        },
+        {
+          "line": "def test_fizzbuzz_fizz():",
+          "highlight": "test_fizzbuzz_fizz",
+          "explanation": {
+            "en": "Test that multiples of 3 return 'Fizz'"
+          }
+        },
+        {
+          "line": "    assert fizzbuzz(3) == 'Fizz'",
+          "highlight": "'Fizz'",
+          "explanation": {
+            "en": "This FAILS — current code returns '3', not 'Fizz'"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Add the Fizz logic to make this test pass"
+          }
+        },
+        {
+          "line": "# === ROUND 2: GREEN ===",
+          "highlight": "GREEN",
+          "explanation": {
+            "en": "Update fizzbuzz to handle multiples of 3"
+          }
+        },
+        {
+          "line": "def fizzbuzz(n):",
+          "highlight": "fizzbuzz",
+          "explanation": {
+            "en": "Redefine with the new logic added"
+          }
+        },
+        {
+          "line": "    if n % 3 == 0: return 'Fizz'",
+          "highlight": "% 3",
+          "explanation": {
+            "en": "Check divisibility by 3 — return 'Fizz' if true"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "red_vs_green",
+      "left": {
+        "label": "RED Phase",
+        "content": "$ pytest test_fizz.py\n\ntest_fizz.py::test_fizzbuzz_fizz FAILED\n\nAssertionError: assert '3' == 'Fizz'\n\n1 failed",
+        "status": "fail"
+      },
+      "right": {
+        "label": "GREEN Phase",
+        "content": "$ pytest test_fizz.py\n\ntest_fizz.py::test_fizzbuzz_number PASSED\ntest_fizz.py::test_fizzbuzz_fizz PASSED\n\n2 passed",
+        "status": "pass"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "tdd_output",
+      "output": [
+        "$ pytest test_fizzbuzz.py -v",
+        "======================== test session starts ========================",
+        "collected 4 items",
+        "",
+        "test_fizzbuzz.py::test_fizzbuzz_number PASSED                [ 25%]",
+        "test_fizzbuzz.py::test_fizzbuzz_fizz PASSED                  [ 50%]",
+        "test_fizzbuzz.py::test_fizzbuzz_buzz PASSED                  [ 75%]",
+        "test_fizzbuzz.py::test_fizzbuzz_fizzbuzz PASSED              [100%]",
+        "",
+        "========================= 4 passed in 0.02s ========================"
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_cycle",
+      "variable": "tdd_cycle",
+      "value": "RED -> GREEN -> REFACTOR -> REPEAT",
+      "data_type": "workflow",
+      "color": "#ff6b6b"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Using TDD, build a `fizzbuzz(n)` function step by step. Write tests first for: regular numbers return str(n), multiples of 3 return 'Fizz', multiples of 5 return 'Buzz', multiples of 15 return 'FizzBuzz'.",
+        "ta": "TDD பயன்படுத்தி, `fizzbuzz(n)` செயல்பாட்டை படிப்படியாக உருவாக்குங்கள். முதலில் சோதனைகள் எழுதுங்கள்."
+      },
+      "starter_code": "def fizzbuzz(n):\n    # Build this step by step using TDD\n    pass\n\ndef test_regular_number():\n    assert fizzbuzz(1) == '1'\n    assert fizzbuzz(7) == '7'\n\ndef test_fizz():\n    assert fizzbuzz(3) == 'Fizz'\n    assert fizzbuzz(6) == 'Fizz'\n\ndef test_buzz():\n    assert fizzbuzz(5) == 'Buzz'\n    assert fizzbuzz(10) == 'Buzz'\n\ndef test_fizzbuzz():\n    assert fizzbuzz(15) == 'FizzBuzz'\n    assert fizzbuzz(30) == 'FizzBuzz'\n\n# Run all tests\nfor test in [test_regular_number, test_fizz, test_buzz, test_fizzbuzz]:\n    test()\n    print(f'{test.__name__} PASSED')\nprint('All TDD tests passed!')",
+      "expected_output": "test_regular_number PASSED\ntest_fizz PASSED\ntest_buzz PASSED\ntest_fizzbuzz PASSED\nAll TDD tests passed!",
+      "hints": {
+        "en": [
+          "Check FizzBuzz (n%15==0) BEFORE Fizz and Buzz",
+          "Then check Fizz (n%3==0), then Buzz (n%5==0)",
+          "Default case: return str(n)"
+        ],
+        "ta": [
+          "Fizz மற்றும் Buzz-க்கு முன் FizzBuzz (n%15==0) சரிபார்க்கவும்",
+          "பிறகு Fizz (n%3==0), பிறகு Buzz (n%5==0) சரிபார்க்கவும்",
+          "Default case: str(n) திருப்பவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the correct order of the TDD cycle?",
+        "ta": "TDD cycle-ன் சரியான வரிசை என்ன?"
+      },
+      "options": {
+        "en": ["Green-Red-Refactor", "Red-Green-Refactor", "Refactor-Red-Green", "Code-Test-Deploy"],
+        "ta": ["Green-Red-Refactor", "Red-Green-Refactor", "Refactor-Red-Green", "Code-Test-Deploy"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the RED phase, what should happen?",
+        "ta": "RED கட்டத்தில் என்ன நடக்க வேண்டும்?"
+      },
+      "options": {
+        "en": ["All tests pass", "You write a failing test", "You delete old code", "You deploy to production"],
+        "ta": ["அனைத்து சோதனைகளும் pass ஆகும்", "நீங்கள் ஒரு failing test எழுதுவீர்கள்", "நீங்கள் பழைய code-ஐ நீக்குவீர்கள்", "நீங்கள் production-க்கு deploy செய்வீர்கள்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why write the MINIMUM code in the GREEN phase?",
+        "ta": "GREEN கட்டத்தில் ஏன் குறைந்தபட்ச code எழுத வேண்டும்?"
+      },
+      "options": {
+        "en": ["To save typing", "To ensure every line of code is justified by a test", "Because Python is slow", "To avoid bugs in the test"],
+        "ta": ["typing-ஐ சேமிக்க", "ஒவ்வொரு code வரியும் ஒரு test-ஆல் நியாயப்படுத்தப்படுவதை உறுதிசெய்ய", "Python மெதுவாக இருப்பதால்", "Test-ல் bugs-ஐ தவிர்க்க"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["tdd", "red_green_refactor", "test_first"],
+    "concepts_required": ["pytest", "functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["agile_development", "software_design"],
+    "category": "testing",
+    "path_memberships": ["testing_devops"]
+  }
+}

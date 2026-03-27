@@ -1,0 +1,275 @@
+{
+  "id": "trees_basics",
+  "topic": "trees_basics",
+  "track": "dsa",
+  "module": "tree_structures",
+  "order": 7,
+  "title": {
+    "en": "Trees: Branching Out",
+    "ta": "மரங்கள்: கிளைகள் பரவுதல்"
+  },
+  "description": {
+    "en": "Understand binary trees, tree terminology, and the three main traversal methods — inorder, preorder, and postorder.",
+    "ta": "binary மரங்கள், மர சொற்கள் மற்றும் மூன்று முக்கிய traversal முறைகளை புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Family Tree\n\nVaathiyaar sketches a family tree. \"A tree in CS is upside-down — the root is at the **top**, and it branches **downward**!\"\n\n### Tree Terminology\n- **Root** — The topmost node (no parent)\n- **Node** — Each element in the tree\n- **Edge** — Connection between parent and child\n- **Leaf** — Node with no children\n- **Height** — Longest path from root to leaf\n- **Depth** — Distance from root to a node\n\n### Binary Tree Implementation\n\n```python\nclass TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = None\n        self.right = None\n\n#       1\n#      / \\\n#     2   3\n#    / \\\n#   4   5\n\nroot = TreeNode(1)\nroot.left = TreeNode(2)\nroot.right = TreeNode(3)\nroot.left.left = TreeNode(4)\nroot.left.right = TreeNode(5)\n```\n\n### Three Traversals\n\n```python\ndef inorder(node):      # Left → Root → Right\n    if node:\n        inorder(node.left)\n        print(node.val, end=' ')\n        inorder(node.right)\n\ndef preorder(node):     # Root → Left → Right\n    if node:\n        print(node.val, end=' ')\n        preorder(node.left)\n        preorder(node.right)\n\ndef postorder(node):    # Left → Right → Root\n    if node:\n        postorder(node.left)\n        postorder(node.right)\n        print(node.val, end=' ')\n```\n\n> **Key Concept:** Inorder on a BST gives sorted output. Preorder is used for copying trees. Postorder is used for deletion."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "family_tree",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Binary Tree",
+          "children": [
+            "Root node",
+            "Left / Right children",
+            "Inorder traversal",
+            "Preorder traversal",
+            "Postorder traversal"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_tree",
+      "steps": [
+        {
+          "line": "class TreeNode:",
+          "highlight": "TreeNode",
+          "explanation": {
+            "en": "Define the building block of our binary tree",
+            "ta": "நமது binary மரத்தின் கட்டுமானத் தொகுதியை வரையறுக்கவும்"
+          }
+        },
+        {
+          "line": "    def __init__(self, val):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Each node has a value, left child, and right child",
+            "ta": "ஒவ்வொரு முனைக்கும் மதிப்பு, இடது குழந்தை மற்றும் வலது குழந்தை உண்டு"
+          }
+        },
+        {
+          "line": "        self.val = val",
+          "highlight": "self.val",
+          "explanation": {
+            "en": "Store the node's data value",
+            "ta": "முனையின் தரவு மதிப்பை சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "        self.left = None",
+          "highlight": "self.left",
+          "explanation": {
+            "en": "Left child starts as None — no left subtree yet",
+            "ta": "இடது குழந்தை None ஆக தொடங்கும் — இடது துணை மரம் இன்னும் இல்லை"
+          }
+        },
+        {
+          "line": "        self.right = None",
+          "highlight": "self.right",
+          "explanation": {
+            "en": "Right child starts as None — no right subtree yet",
+            "ta": "வலது குழந்தை None ஆக தொடங்கும் — வலது துணை மரம் இன்னும் இல்லை"
+          }
+        },
+        {
+          "line": "root = TreeNode(1)",
+          "highlight": "root",
+          "explanation": {
+            "en": "Create the root node with value 1",
+            "ta": "மதிப்பு 1 உடன் root முனையை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "root.left = TreeNode(2)",
+          "highlight": "root.left",
+          "explanation": {
+            "en": "Attach left child with value 2",
+            "ta": "மதிப்பு 2 உடன் இடது குழந்தையை இணைக்கவும்"
+          }
+        },
+        {
+          "line": "root.right = TreeNode(3)",
+          "highlight": "root.right",
+          "explanation": {
+            "en": "Attach right child with value 3",
+            "ta": "மதிப்பு 3 உடன் வலது குழந்தையை இணைக்கவும்"
+          }
+        },
+        {
+          "line": "root.left.left = TreeNode(4)",
+          "highlight": "root.left.left",
+          "explanation": {
+            "en": "Node 2's left child is 4 — building the second level",
+            "ta": "முனை 2-ன் இடது குழந்தை 4 — இரண்டாவது நிலையை உருவாக்குதல்"
+          }
+        },
+        {
+          "line": "root.left.right = TreeNode(5)",
+          "highlight": "root.left.right",
+          "explanation": {
+            "en": "Node 2's right child is 5 — tree complete!",
+            "ta": "முனை 2-ன் வலது குழந்தை 5 — மரம் முழுமையானது!"
+          }
+        },
+        {
+          "line": "def inorder(node):",
+          "highlight": "inorder",
+          "explanation": {
+            "en": "Inorder: visit Left subtree, then Root, then Right subtree",
+            "ta": "Inorder: இடது துணை மரம், பின் Root, பின் வலது துணை மரம்"
+          }
+        },
+        {
+          "line": "    if node:",
+          "highlight": "if node",
+          "explanation": {
+            "en": "Base case: if node is None, stop recursion",
+            "ta": "அடிப்படை நிலை: node None ஆக இருந்தால், recursion நிறுத்துங்கள்"
+          }
+        },
+        {
+          "line": "        inorder(node.left)",
+          "highlight": "node.left",
+          "explanation": {
+            "en": "First, recurse into the left subtree",
+            "ta": "முதலில், இடது துணை மரத்தில் recurse செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "        print(node.val, end=' ')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Then, visit (print) the current node",
+            "ta": "பின்னர், தற்போதைய முனையை பார்வையிடுங்கள் (print)"
+          }
+        },
+        {
+          "line": "        inorder(node.right)",
+          "highlight": "node.right",
+          "explanation": {
+            "en": "Finally, recurse into the right subtree. Result: 4 2 5 1 3",
+            "ta": "இறுதியாக, வலது துணை மரத்தில் recurse செய்யுங்கள். முடிவு: 4 2 5 1 3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "recursion_stack",
+      "slots": [
+        {"name": "inorder(1)", "value": "root", "type": "frame", "address": "0x01"},
+        {"name": "inorder(2)", "value": "left of 1", "type": "frame", "address": "0x02"},
+        {"name": "inorder(4)", "value": "left of 2", "type": "frame", "address": "0x03"},
+        {"name": "inorder(None)", "value": "base case", "type": "frame", "address": "0x04"}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_root",
+      "variable": "root.val",
+      "value": 1,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_traversal",
+      "variable": "inorder_result",
+      "value": "4 2 5 1 3",
+      "data_type": "str",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Inorder:   4 2 5 1 3",
+        "Preorder:  1 2 4 5 3",
+        "Postorder: 4 5 2 3 1",
+        "Tree height: 2",
+        "Total nodes: 5"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement all three traversals (inorder, preorder, postorder) and a function to calculate tree height. Also implement level-order traversal using a queue.",
+        "ta": "மூன்று traversals-ஐயும் செயல்படுத்தி மர உயரத்தை கணக்கிடும் செயல்பாட்டை எழுதுங்கள். queue பயன்படுத்தி level-order traversal-ஐயும் செயல்படுத்துங்கள்."
+      },
+      "starter_code": "from collections import deque\n\nclass TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = None\n        self.right = None\n\ndef inorder(node, result=None):\n    if result is None:\n        result = []\n    # Implement: Left, Root, Right\n    pass\n    return result\n\ndef tree_height(node):\n    # Return height of the tree\n    pass\n\ndef level_order(root):\n    # BFS using a queue\n    pass\n\nroot = TreeNode(1)\nroot.left = TreeNode(2)\nroot.right = TreeNode(3)\nroot.left.left = TreeNode(4)\nroot.left.right = TreeNode(5)\n\nprint(inorder(root))\nprint(tree_height(root))\nprint(level_order(root))",
+      "expected_output": "[4, 2, 5, 1, 3]\n2\n[[1], [2, 3], [4, 5]]",
+      "hints": {
+        "en": [
+          "Inorder: recurse left, append current val, recurse right",
+          "Height: return -1 for None, else 1 + max(left_height, right_height)",
+          "Level-order: use a deque, process level by level"
+        ],
+        "ta": [
+          "Inorder: இடது recurse, தற்போதைய val-ஐ சேர்க்கவும், வலது recurse",
+          "உயரம்: None-க்கு -1, இல்லையெனில் 1 + max(left_height, right_height)",
+          "Level-order: deque பயன்படுத்தி, நிலை நிலையாக செயலாக்குங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the inorder traversal of a binary tree with root=1, left=2, right=3?",
+        "ta": "root=1, left=2, right=3 உடன் binary மரத்தின் inorder traversal என்ன?"
+      },
+      "options": {
+        "en": ["1 2 3", "2 1 3", "2 3 1", "3 2 1"],
+        "ta": ["1 2 3", "2 1 3", "2 3 1", "3 2 1"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the maximum number of nodes at level k in a binary tree?",
+        "ta": "binary மரத்தில் k நிலையில் அதிகபட்ச முனைகள் எத்தனை?"
+      },
+      "options": {
+        "en": ["k", "2k", "2^k", "k²"],
+        "ta": ["k", "2k", "2^k", "k²"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which traversal visits the root node first?",
+        "ta": "எந்த traversal root முனையை முதலில் பார்வையிடும்?"
+      },
+      "options": {
+        "en": ["Inorder", "Preorder", "Postorder", "Level-order and Preorder"],
+        "ta": ["Inorder", "Preorder", "Postorder", "Level-order மற்றும் Preorder"]
+      },
+      "correct": 3
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["binary_tree", "tree_traversal", "inorder", "preorder", "postorder"],
+    "concepts_required": ["recursion", "classes"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["file_systems", "html_dom", "expression_parsing"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

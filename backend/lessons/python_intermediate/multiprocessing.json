@@ -1,0 +1,335 @@
+{
+  "id": "multiprocessing",
+  "topic": "multiprocessing",
+  "track": "python_intermediate",
+  "module": "concurrency",
+  "order": 23,
+  "title": {
+    "en": "Multiprocessing: True Parallelism on Multiple Cores",
+    "ta": "Multiprocessing: பல Cores-ல் உண்மையான இணையியக்கம்"
+  },
+  "description": {
+    "en": "Learn multiprocessing — Process, Pool, shared memory, and how to bypass the GIL for CPU-bound tasks using separate processes.",
+    "ta": "multiprocessing கற்றுக்கொள்ளுங்கள் — Process, Pool, shared memory, CPU-bound tasks-க்கு GIL-ஐ கடக்க தனி processes பயன்படுத்துதல்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Separate Kitchens\n\nVaathiyaar opens multiple kitchens. \"With threading, all workers share ONE kitchen and take turns with the stove (GIL). With **multiprocessing**, each worker gets their OWN kitchen — true parallel cooking!\"\n\n### Threading vs Multiprocessing\n\n| Feature | Threading | Multiprocessing |\n|---------|----------|------------------|\n| Memory | Shared | Separate per process |\n| GIL | Limited by GIL | No GIL restriction |\n| Best for | I/O-bound | CPU-bound |\n| Overhead | Low | Higher (process creation) |\n| Communication | Easy (shared vars) | Harder (serialization) |\n\n### Key Classes\n\n```python\nfrom multiprocessing import Process, Pool\n\n# Process: manual control\np = Process(target=func, args=(arg,))\np.start()\np.join()\n\n# Pool: managed workers\nwith Pool(4) as pool:\n    results = pool.map(func, data)\n```\n\n> **Key Concept:** Multiprocessing creates SEPARATE Python interpreters. Each has its own GIL, so they truly run in parallel on different CPU cores. The trade-off is higher memory usage and slower communication."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "separate_kitchens",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Multiprocessing",
+          "children": [
+            "Process (separate interpreter)",
+            "Pool (worker pool)",
+            "pool.map (parallel map)",
+            "No GIL limitation",
+            "CPU-bound friendly"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from multiprocessing import Process, Pool",
+          "highlight": "multiprocessing",
+          "explanation": {
+            "en": "Import Process for individual processes, Pool for worker pools"
+          }
+        },
+        {
+          "line": "import time",
+          "highlight": "time",
+          "explanation": {
+            "en": "For timing our parallel execution"
+          }
+        },
+        {
+          "line": "import os",
+          "highlight": "os",
+          "explanation": {
+            "en": "To show process IDs"
+          }
+        },
+        {
+          "line": "def cpu_heavy(n):",
+          "highlight": "cpu_heavy",
+          "explanation": {
+            "en": "A CPU-bound function — heavy computation"
+          }
+        },
+        {
+          "line": "    total = sum(i * i for i in range(n))",
+          "highlight": "sum",
+          "explanation": {
+            "en": "Sum of squares — pure CPU work"
+          }
+        },
+        {
+          "line": "    print(f'PID {os.getpid()}: sum of {n} squares = {total}')",
+          "highlight": "getpid()",
+          "explanation": {
+            "en": "Each process has its own PID — proving they're separate"
+          }
+        },
+        {
+          "line": "    return total",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the computed result"
+          }
+        },
+        {
+          "line": "start = time.time()",
+          "highlight": "start",
+          "explanation": {
+            "en": "Start timing"
+          }
+        },
+        {
+          "line": "numbers = [5000000, 5000000, 5000000, 5000000]",
+          "highlight": "numbers",
+          "explanation": {
+            "en": "4 heavy tasks to process in parallel"
+          }
+        },
+        {
+          "line": "with Pool(4) as pool:",
+          "highlight": "Pool(4)",
+          "explanation": {
+            "en": "Create a pool of 4 worker processes"
+          }
+        },
+        {
+          "line": "    results = pool.map(cpu_heavy, numbers)",
+          "highlight": "pool.map",
+          "explanation": {
+            "en": "pool.map distributes work across all 4 processes"
+          }
+        },
+        {
+          "line": "parallel_time = time.time() - start",
+          "highlight": "parallel_time",
+          "explanation": {
+            "en": "How long parallel execution took"
+          }
+        },
+        {
+          "line": "print(f'Parallel: {parallel_time:.2f}s')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Should be ~4x faster than sequential on 4 cores"
+          }
+        },
+        {
+          "line": "start = time.time()",
+          "highlight": "start",
+          "explanation": {
+            "en": "Now test sequential for comparison"
+          }
+        },
+        {
+          "line": "sequential = [cpu_heavy(n) for n in numbers]",
+          "highlight": "sequential",
+          "explanation": {
+            "en": "Run the same tasks one at a time"
+          }
+        },
+        {
+          "line": "sequential_time = time.time() - start",
+          "highlight": "sequential_time",
+          "explanation": {
+            "en": "Sequential takes ~4x longer"
+          }
+        },
+        {
+          "line": "print(f'Sequential: {sequential_time:.2f}s')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Compare: parallel wins for CPU-bound work!"
+          }
+        },
+        {
+          "line": "print(f'Speedup: {sequential_time/parallel_time:.1f}x')",
+          "highlight": "Speedup",
+          "explanation": {
+            "en": "Close to 4x speedup on a 4-core machine"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_pool",
+      "variable": "pool",
+      "value": "Pool(4 workers)",
+      "data_type": "Pool",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_results",
+      "variable": "results",
+      "value": "[41666664166666500000, ...]",
+      "data_type": "list[int]",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "PID 1234: sum of 5000000 squares = 41666664166666500000",
+        "PID 1235: sum of 5000000 squares = 41666664166666500000",
+        "PID 1236: sum of 5000000 squares = 41666664166666500000",
+        "PID 1237: sum of 5000000 squares = 41666664166666500000",
+        "Parallel: 0.85s",
+        "Sequential: 3.20s",
+        "Speedup: 3.8x"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "Main Process",
+          "value": "PID 1233 (coordinator)",
+          "type": "Process",
+          "address": "0x01"
+        },
+        {
+          "name": "Worker 1",
+          "value": "PID 1234 (own GIL)",
+          "type": "Process",
+          "address": "0x02"
+        },
+        {
+          "name": "Worker 2",
+          "value": "PID 1235 (own GIL)",
+          "type": "Process",
+          "address": "0x03"
+        },
+        {
+          "name": "Worker 3",
+          "value": "PID 1236 (own GIL)",
+          "type": "Process",
+          "address": "0x04"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use Pool.map to compute factorials of [10, 15, 20, 25] in parallel. Create a factorial function and print the results.",
+        "ta": "Pool.map பயன்படுத்தி [10, 15, 20, 25] factorials-ஐ இணையாக கணக்கிடுங்கள். factorial function உருவாக்கி results அச்சிடுங்கள்."
+      },
+      "starter_code": "from multiprocessing import Pool\nimport math\n\ndef factorial(n):\n    result = math.factorial(n)\n    print(f'{n}! = {result}')\n    return result\n\nif __name__ == '__main__':\n    numbers = [10, 15, 20, 25]\n    with Pool(4) as pool:\n        results = pool.map(factorial, numbers)\n    print(f'Results: {results}')",
+      "expected_output": "10! = 3628800\n15! = 1307674368000\n20! = 2432902008176640000\n25! = 15511210043330985984000000\nResults: [3628800, 1307674368000, 2432902008176640000, 15511210043330985984000000]",
+      "hints": {
+        "en": [
+          "Use math.factorial(n) for the computation",
+          "Pool(4) creates 4 worker processes",
+          "pool.map applies the function to each item",
+          "Always use 'if __name__ == '__main__':' on Windows"
+        ],
+        "ta": [
+          "கணக்கிட math.factorial(n) பயன்படுத்துங்கள்",
+          "Pool(4) 4 worker processes உருவாக்கும்",
+          "pool.map ஒவ்வொரு item-க்கும் function-ஐ apply செய்யும்",
+          "Windows-ல் எப்போதும் 'if __name__ == '__main__':' பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does multiprocessing bypass the GIL?",
+        "ta": "multiprocessing ஏன் GIL-ஐ கடக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It disables the GIL",
+          "Each process has its own Python interpreter and GIL",
+          "It uses C code",
+          "The GIL only affects threads"
+        ],
+        "ta": [
+          "GIL-ஐ முடக்குகிறது",
+          "ஒவ்வொரு process-க்கும் சொந்த Python interpreter மற்றும் GIL உண்டு",
+          "C code பயன்படுத்துகிறது",
+          "GIL threads-ஐ மட்டுமே பாதிக்கும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does Pool.map do?",
+        "ta": "Pool.map என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Maps a function to items sequentially",
+          "Distributes function calls across worker processes",
+          "Creates a dictionary",
+          "Maps memory addresses"
+        ],
+        "ta": [
+          "function-ஐ items-க்கு வரிசையாக map செய்கிறது",
+          "function calls-ஐ worker processes-க்கு விநியோகிக்கிறது",
+          "dictionary உருவாக்குகிறது",
+          "memory addresses-ஐ map செய்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is 'if __name__ == \"__main__\":' important for multiprocessing on Windows?",
+        "ta": "Windows-ல் multiprocessing-க்கு 'if __name__ == \"__main__\":' ஏன் முக்கியம்?"
+      },
+      "options": {
+        "en": [
+          "Makes code faster",
+          "Prevents child processes from re-running the main script",
+          "Required by Python syntax",
+          "Enables parallel mode"
+        ],
+        "ta": [
+          "code-ஐ வேகமாக்கும்",
+          "child processes main script-ஐ மீண்டும் இயக்குவதை தடுக்கும்",
+          "Python syntax தேவை",
+          "parallel mode-ஐ இயக்கும்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multiprocessing", "Process", "Pool", "pool_map", "true_parallelism"],
+    "concepts_required": ["functions", "threading_basics", "GIL"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["data_processing", "image_processing", "scientific_computing"],
+    "category": "concurrency",
+    "path_memberships": ["python_intermediate"]
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "id": "rest_api_concepts",
+  "topic": "rest_api_concepts",
+  "track": "web_development",
+  "module": "web_foundations",
+  "order": 2,
+  "title": {
+    "en": "REST API Concepts: Building Web Services",
+    "ta": "REST API கருத்துகள்: வலை சேவைகளை உருவாக்குதல்"
+  },
+  "description": {
+    "en": "Learn REST principles, how to design endpoints, perform CRUD operations, and work with JSON data.",
+    "ta": "REST கொள்கைகள், எண்ட்பாயிண்ட்கள் வடிவமைப்பு, CRUD செயல்பாடுகள் மற்றும் JSON தரவுடன் வேலை செய்வதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## The Restaurant Menu of APIs\n\nVaathiyaar draws a restaurant on the whiteboard. \"Imagine an API is a restaurant. The **menu** lists what you can order (endpoints), the **waiter** carries your order to the kitchen (HTTP), and the **kitchen** prepares the food (server logic). REST is a set of rules that makes this process efficient and predictable.\"\n\n### REST Principles\n- **Stateless** — Each request contains all info needed\n- **Resource-based** — URLs represent resources (nouns, not verbs)\n- **Uniform interface** — Consistent URL patterns\n- **Client-Server** — Separation of concerns\n\n### CRUD Mapping\n\n| Operation | HTTP Method | Endpoint | Example |\n|-----------|------------|----------|----------|\n| **C**reate | POST | `/api/users` | Add a new user |\n| **R**ead | GET | `/api/users/1` | Get user #1 |\n| **U**pdate | PUT/PATCH | `/api/users/1` | Update user #1 |\n| **D**elete | DELETE | `/api/users/1` | Remove user #1 |\n\n### JSON: The Language of REST\n\n```json\n{\n  \"id\": 1,\n  \"name\": \"Alice\",\n  \"email\": \"alice@example.com\",\n  \"is_active\": true\n}\n```\n\n> **Key Concept:** REST is not a protocol — it's an architectural style. Any API that follows REST principles is called a RESTful API."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "restaurant_api",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rest_overview",
+      "nodes": [
+        {
+          "label": "REST API",
+          "children": [
+            "Resources (URLs)",
+            "CRUD Operations",
+            "JSON Data Format",
+            "Stateless Requests"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rest_crud_demo",
+      "steps": [
+        {
+          "line": "import requests",
+          "highlight": "requests",
+          "explanation": {
+            "en": "Import requests to interact with REST APIs"
+          }
+        },
+        {
+          "line": "import json",
+          "highlight": "json",
+          "explanation": {
+            "en": "Import json for pretty-printing JSON responses"
+          }
+        },
+        {
+          "line": "BASE_URL = 'https://jsonplaceholder.typicode.com'",
+          "highlight": "BASE_URL",
+          "explanation": {
+            "en": "Define the base URL — a free fake REST API for testing"
+          }
+        },
+        {
+          "line": "# CREATE — POST a new resource",
+          "highlight": "CREATE",
+          "explanation": {
+            "en": "The C in CRUD: Create a new resource on the server"
+          }
+        },
+        {
+          "line": "new_post = {'title': 'Hello REST', 'body': 'Learning APIs', 'userId': 1}",
+          "highlight": "new_post",
+          "explanation": {
+            "en": "Prepare the data as a Python dictionary"
+          }
+        },
+        {
+          "line": "resp = requests.post(f'{BASE_URL}/posts', json=new_post)",
+          "highlight": "requests.post",
+          "explanation": {
+            "en": "POST sends data to create a new resource at /posts"
+          }
+        },
+        {
+          "line": "print(f'Created: {resp.status_code}')  # 201 Created",
+          "highlight": "201",
+          "explanation": {
+            "en": "201 means the resource was successfully created"
+          }
+        },
+        {
+          "line": "# READ — GET a single resource",
+          "highlight": "READ",
+          "explanation": {
+            "en": "The R in CRUD: Retrieve an existing resource"
+          }
+        },
+        {
+          "line": "resp = requests.get(f'{BASE_URL}/posts/1')",
+          "highlight": "/posts/1",
+          "explanation": {
+            "en": "GET /posts/1 retrieves the post with id=1"
+          }
+        },
+        {
+          "line": "post = resp.json()",
+          "highlight": "json()",
+          "explanation": {
+            "en": "Parse the JSON response into a Python dict"
+          }
+        },
+        {
+          "line": "print(f'Title: {post[\"title\"]}')",
+          "highlight": "title",
+          "explanation": {
+            "en": "Access the title field from the response"
+          }
+        },
+        {
+          "line": "# UPDATE — PUT replaces the entire resource",
+          "highlight": "UPDATE",
+          "explanation": {
+            "en": "The U in CRUD: Update an existing resource"
+          }
+        },
+        {
+          "line": "updated = {'title': 'Updated Title', 'body': 'New body', 'userId': 1}",
+          "highlight": "updated",
+          "explanation": {
+            "en": "PUT requires sending the complete updated resource"
+          }
+        },
+        {
+          "line": "resp = requests.put(f'{BASE_URL}/posts/1', json=updated)",
+          "highlight": "requests.put",
+          "explanation": {
+            "en": "PUT /posts/1 replaces the entire post with new data"
+          }
+        },
+        {
+          "line": "print(f'Updated: {resp.status_code}')  # 200 OK",
+          "highlight": "200",
+          "explanation": {
+            "en": "200 means the resource was successfully updated"
+          }
+        },
+        {
+          "line": "# DELETE — Remove a resource",
+          "highlight": "DELETE",
+          "explanation": {
+            "en": "The D in CRUD: Delete an existing resource"
+          }
+        },
+        {
+          "line": "resp = requests.delete(f'{BASE_URL}/posts/1')",
+          "highlight": "requests.delete",
+          "explanation": {
+            "en": "DELETE /posts/1 removes the post with id=1"
+          }
+        },
+        {
+          "line": "print(f'Deleted: {resp.status_code}')  # 200 OK",
+          "highlight": "200",
+          "explanation": {
+            "en": "200 confirms the resource was deleted"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "crud_comparison",
+      "left_label": "Request",
+      "right_label": "Response",
+      "left_content": "POST /api/posts HTTP/1.1\nContent-Type: application/json\n\n{\"title\": \"Hello REST\", \"body\": \"Learning APIs\", \"userId\": 1}",
+      "right_content": "HTTP/1.1 201 Created\nContent-Type: application/json\n\n{\"id\": 101, \"title\": \"Hello REST\", \"body\": \"Learning APIs\", \"userId\": 1}"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_post",
+      "variable": "new_post",
+      "value": {"title": "Hello REST", "body": "Learning APIs", "userId": 1},
+      "data_type": "dict",
+      "color": "#FF9800"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Created: 201",
+        "Title: sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
+        "Updated: 200",
+        "Deleted: 200"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use the requests library to perform all four CRUD operations against jsonplaceholder.typicode.com. Create a new post, read it, update its title, then delete it. Print the status code after each operation.",
+        "ta": "jsonplaceholder.typicode.com மீது நான்கு CRUD செயல்பாடுகளையும் செய்யுங்கள். புதிய இடுகையை உருவாக்குங்கள், படியுங்கள், தலைப்பை புதுப்பியுங்கள், பின் நீக்குங்கள்."
+      },
+      "starter_code": "import requests\n\nBASE = 'https://jsonplaceholder.typicode.com'\n\n# 1. CREATE a new post\nnew_post = {'title': 'My Post', 'body': 'REST is cool', 'userId': 1}\ncreate_resp = requests.post(f'{BASE}/posts', json=new_post)\nprint(f'CREATE: {create_resp.status_code}')\n\n# 2. READ post with id=1\nread_resp = requests.get(f'{BASE}/posts/1')\nprint(f'READ: {read_resp.status_code} - {read_resp.json()[\"title\"][:30]}')\n\n# 3. UPDATE post with id=1\nupdated = {'title': 'Updated Post', 'body': 'Changed!', 'userId': 1}\nupdate_resp = requests.put(f'{BASE}/posts/1', json=updated)\nprint(f'UPDATE: {update_resp.status_code}')\n\n# 4. DELETE post with id=1\ndelete_resp = requests.delete(f'{BASE}/posts/1')\nprint(f'DELETE: {delete_resp.status_code}')",
+      "expected_output": "CREATE: 201\nREAD: 200 - sunt aut facere repellat prov\nUPDATE: 200\nDELETE: 200",
+      "hints": {
+        "en": [
+          "POST creates new resources — use requests.post()",
+          "GET retrieves resources — use requests.get()",
+          "PUT replaces a resource — use requests.put()",
+          "DELETE removes a resource — use requests.delete()"
+        ],
+        "ta": [
+          "POST புதிய வளங்களை உருவாக்குகிறது — requests.post() பயன்படுத்துங்கள்",
+          "GET வளங்களைப் பெறுகிறது — requests.get() பயன்படுத்துங்கள்",
+          "PUT வளத்தை மாற்றுகிறது — requests.put() பயன்படுத்துங்கள்",
+          "DELETE வளத்தை நீக்குகிறது — requests.delete() பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does REST stand for?",
+        "ta": "REST என்பதன் முழு வடிவம் என்ன?"
+      },
+      "options": {
+        "en": ["Remote Execution State Transfer", "Representational State Transfer", "Request-Event-Server-Transfer", "Resource Entity State Technology"],
+        "ta": ["Remote Execution State Transfer", "Representational State Transfer", "Request-Event-Server-Transfer", "Resource Entity State Technology"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which HTTP method should you use to create a new resource?",
+        "ta": "புதிய வளத்தை உருவாக்க எந்த HTTP முறையைப் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["GET", "PUT", "POST", "DELETE"],
+        "ta": ["GET", "PUT", "POST", "DELETE"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In REST, what does the URL '/api/users/5' typically represent?",
+        "ta": "REST-ல், '/api/users/5' URL பொதுவாக எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["The 5th page of users", "A specific user with id 5", "5 users from the API", "The 5th API version"],
+        "ta": ["பயனர்களின் 5வது பக்கம்", "id 5 கொண்ட குறிப்பிட்ட பயனர்", "API-லிருந்து 5 பயனர்கள்", "5வது API பதிப்பு"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["rest_principles", "crud_operations", "json_format", "api_design"],
+    "concepts_required": ["http_methods", "status_codes"],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["api_development", "web_services"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

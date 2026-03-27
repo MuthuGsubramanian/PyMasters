@@ -1,0 +1,271 @@
+{
+  "id": "datetime_time",
+  "topic": "datetime_time",
+  "track": "python_intermediate",
+  "module": "standard_library",
+  "order": 13,
+  "title": {
+    "en": "datetime & time: Mastering Time in Python",
+    "ta": "datetime & time: Python-ல் நேரத்தில் தேர்ச்சி"
+  },
+  "description": {
+    "en": "Work with dates, times, timedelta for arithmetic, strftime/strptime for formatting/parsing, and timezone awareness.",
+    "ta": "தேதிகள், நேரங்கள், timedelta கணிதம், strftime/strptime வடிவமைப்பு/பாகுபடுத்துதல், timezone awareness ஆகியவற்றுடன் வேலை செய்யுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Time Machine\n\nVaathiyaar adjusts dials on a time machine. \"How many days until the deadline? What day was 100 days ago? Is it business hours in Tokyo? The `datetime` module answers all time questions!\"\n\n### The datetime Module\n\n```python\nfrom datetime import datetime, timedelta\n\nnow = datetime.now()\nprint(now)  # 2025-03-27 14:30:00.123456\n```\n\n### Key Classes\n\n| Class | Purpose | Example |\n|-------|---------|----------|\n| `date` | Date only | `2025-03-27` |\n| `time` | Time only | `14:30:00` |\n| `datetime` | Date + Time | `2025-03-27 14:30:00` |\n| `timedelta` | Duration | `5 days, 3:00:00` |\n\n### Format Codes\n\n| Code | Meaning | Example |\n|------|---------|----------|\n| `%Y` | Year (4 digit) | 2025 |\n| `%m` | Month (01-12) | 03 |\n| `%d` | Day (01-31) | 27 |\n| `%H` | Hour (00-23) | 14 |\n| `%M` | Minute (00-59) | 30 |\n\n> **Key Concept:** `strftime` = string FROM time (formatting). `strptime` = string PARSE time (parsing). The 'f' and 'p' are the mnemonics."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "time_machine",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "datetime module",
+          "children": [
+            "datetime.now()",
+            "timedelta (arithmetic)",
+            "strftime (format)",
+            "strptime (parse)",
+            "timezone"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from datetime import datetime, timedelta, date",
+          "highlight": "datetime",
+          "explanation": {
+            "en": "Import the key classes from datetime module"
+          }
+        },
+        {
+          "line": "now = datetime.now()",
+          "highlight": "now()",
+          "explanation": {
+            "en": "Get the current date and time"
+          }
+        },
+        {
+          "line": "print(f'Now: {now}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Shows full datetime: 2025-03-27 14:30:00.123456"
+          }
+        },
+        {
+          "line": "print(f'Year: {now.year}, Month: {now.month}, Day: {now.day}')",
+          "highlight": ".year",
+          "explanation": {
+            "en": "Access individual components as attributes"
+          }
+        },
+        {
+          "line": "birthday = datetime(1995, 8, 15, 10, 30)",
+          "highlight": "datetime(",
+          "explanation": {
+            "en": "Create a specific datetime: Aug 15, 1995 at 10:30"
+          }
+        },
+        {
+          "line": "age_delta = now - birthday",
+          "highlight": "-",
+          "explanation": {
+            "en": "Subtract two datetimes — get a timedelta"
+          }
+        },
+        {
+          "line": "print(f'Age in days: {age_delta.days}')",
+          "highlight": ".days",
+          "explanation": {
+            "en": "timedelta has .days, .seconds, .total_seconds() attributes"
+          }
+        },
+        {
+          "line": "deadline = now + timedelta(days=30)",
+          "highlight": "timedelta(days=30)",
+          "explanation": {
+            "en": "Add 30 days to now using timedelta"
+          }
+        },
+        {
+          "line": "print(f'Deadline: {deadline.strftime(\"%Y-%m-%d\")}')",
+          "highlight": "strftime",
+          "explanation": {
+            "en": "strftime formats datetime to string: 2025-04-26"
+          }
+        },
+        {
+          "line": "date_str = '27/03/2025'",
+          "highlight": "date_str",
+          "explanation": {
+            "en": "A date as a string — need to parse it"
+          }
+        },
+        {
+          "line": "parsed = datetime.strptime(date_str, '%d/%m/%Y')",
+          "highlight": "strptime",
+          "explanation": {
+            "en": "strptime PARSES a string into a datetime object"
+          }
+        },
+        {
+          "line": "print(f'Parsed: {parsed}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "2025-03-27 00:00:00 — successfully parsed!"
+          }
+        },
+        {
+          "line": "formatted = now.strftime('%A, %B %d, %Y at %I:%M %p')",
+          "highlight": "%A",
+          "explanation": {
+            "en": "Full weekday name, month name, and 12-hour time with AM/PM"
+          }
+        },
+        {
+          "line": "print(formatted)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Thursday, March 27, 2025 at 02:30 PM"
+          }
+        },
+        {
+          "line": "today = date.today()",
+          "highlight": "date.today()",
+          "explanation": {
+            "en": "Get just today's date (no time component)"
+          }
+        },
+        {
+          "line": "print(f'Weekday: {today.weekday()} (0=Mon, 6=Sun)')",
+          "highlight": "weekday()",
+          "explanation": {
+            "en": "weekday() returns 0-6 where Monday is 0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_now",
+      "variable": "now",
+      "value": "2025-03-27 14:30:00",
+      "data_type": "datetime",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_delta",
+      "variable": "age_delta",
+      "value": "10816 days",
+      "data_type": "timedelta",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Now: 2025-03-27 14:30:00.123456",
+        "Year: 2025, Month: 3, Day: 27",
+        "Age in days: 10816",
+        "Deadline: 2025-04-26",
+        "Parsed: 2025-03-27 00:00:00",
+        "Thursday, March 27, 2025 at 02:30 PM",
+        "Weekday: 3 (0=Mon, 6=Sun)"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Calculate how many days are between two dates: '2025-01-01' and '2025-12-31'. Parse both strings with strptime and print the difference in days.",
+        "ta": "'2025-01-01' மற்றும் '2025-12-31' இடையே எத்தனை நாட்கள் என்று கணக்கிடுங்கள். strptime-ஆல் பாகுபடுத்தி நாட்கள் வேறுபாட்டை அச்சிடுங்கள்."
+      },
+      "starter_code": "from datetime import datetime\n\ndate1 = datetime.strptime('2025-01-01', '%Y-%m-%d')\ndate2 = datetime.strptime('2025-12-31', '%Y-%m-%d')\n\ndiff = date2 - date1\nprint(f'Days between: {diff.days}')",
+      "expected_output": "Days between: 364",
+      "hints": {
+        "en": [
+          "Use datetime.strptime(string, format) to parse",
+          "Format for YYYY-MM-DD is '%Y-%m-%d'",
+          "Subtract two datetimes to get timedelta",
+          "Access .days on the timedelta"
+        ],
+        "ta": [
+          "datetime.strptime(string, format) பாகுபடுத்த பயன்படுத்துங்கள்",
+          "YYYY-MM-DD வடிவம் '%Y-%m-%d'",
+          "இரு datetimes-ஐ கழிக்க timedelta கிடைக்கும்",
+          "timedelta-ல் .days அணுகுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does strftime stand for?",
+        "ta": "strftime என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "String from time (format)",
+          "String parse time",
+          "Standard format time",
+          "Stream format time"
+        ],
+        "ta": [
+          "String from time (format)",
+          "String parse time",
+          "Standard format time",
+          "Stream format time"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What type does datetime subtraction return?",
+        "ta": "datetime கழிப்பு எந்த வகையை திருப்பும்?"
+      },
+      "options": {
+        "en": ["int", "float", "timedelta", "datetime"],
+        "ta": ["int", "float", "timedelta", "datetime"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which format code represents the month (01-12)?",
+        "ta": "மாதத்தை (01-12) எந்த format code குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["%M", "%m", "%d", "%Y"],
+        "ta": ["%M", "%m", "%d", "%Y"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["datetime", "timedelta", "strftime", "strptime", "date_arithmetic"],
+    "concepts_required": ["strings", "functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["scheduling", "log_analysis", "reporting"],
+    "category": "standard_library",
+    "path_memberships": ["python_intermediate"]
+  }
+}

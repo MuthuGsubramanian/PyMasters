@@ -1,0 +1,334 @@
+{
+  "id": "oop_magic_methods",
+  "topic": "oop_magic_methods",
+  "track": "python_intermediate",
+  "module": "object_oriented_programming",
+  "order": 4,
+  "title": {
+    "en": "Magic Methods: Teaching Objects to Behave",
+    "ta": "மந்திர முறைகள்: பொருள்களுக்கு நடத்தை கற்பித்தல்"
+  },
+  "description": {
+    "en": "Master dunder methods like __str__, __repr__, __len__, __eq__, __lt__, and __add__ to make your objects work with Python's built-in operations.",
+    "ta": "__str__, __repr__, __len__, __eq__ போன்ற dunder முறைகளில் தேர்ச்சி பெற்று Python-ன் உள்ளமைந்த செயல்பாடுகளுடன் உங்கள் பொருள்களை வேலை செய்யுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Magic Show\n\nVaathiyaar puts on a magician's hat. \"What if your objects could respond to `+`, `==`, `len()`, and `print()` naturally? That's the power of **magic methods** — also called **dunder methods** (double underscore).\"\n\n### What are Magic Methods?\n- Methods with **double underscores**: `__name__`\n- Python calls them automatically for built-in operations\n- They let your custom objects behave like built-in types\n\n### Common Magic Methods\n\n| Method | Triggered By | Purpose |\n|--------|-------------|----------|\n| `__str__` | `print(obj)`, `str(obj)` | Human-readable string |\n| `__repr__` | `repr(obj)`, REPL | Developer-readable string |\n| `__len__` | `len(obj)` | Return length |\n| `__eq__` | `obj1 == obj2` | Equality comparison |\n| `__lt__` | `obj1 < obj2` | Less-than comparison |\n| `__add__` | `obj1 + obj2` | Addition operator |\n\n> **Key Concept:** `__str__` is for end users, `__repr__` is for developers. If only one is defined, `__repr__` is used as fallback for `print()`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magic_show",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Magic Methods",
+          "children": [
+            "__str__ (print)",
+            "__repr__ (debug)",
+            "__len__ (length)",
+            "__eq__ (equality)",
+            "__add__ (addition)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class Playlist:",
+          "highlight": "Playlist",
+          "explanation": {
+            "en": "Create a Playlist class that will support magic methods"
+          }
+        },
+        {
+          "line": "    def __init__(self, name, songs=None):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Constructor with a name and optional song list"
+          }
+        },
+        {
+          "line": "        self.name = name",
+          "highlight": "self.name",
+          "explanation": {
+            "en": "Store the playlist name"
+          }
+        },
+        {
+          "line": "        self.songs = songs if songs else []",
+          "highlight": "songs if songs",
+          "explanation": {
+            "en": "Use empty list if no songs provided — avoids mutable default arg"
+          }
+        },
+        {
+          "line": "    def __str__(self):",
+          "highlight": "__str__",
+          "explanation": {
+            "en": "Called when you print() the object — human-friendly output"
+          }
+        },
+        {
+          "line": "        return f'Playlist: {self.name} ({len(self.songs)} songs)'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Returns a nice readable string for users"
+          }
+        },
+        {
+          "line": "    def __repr__(self):",
+          "highlight": "__repr__",
+          "explanation": {
+            "en": "Called in REPL and debugging — developer-friendly"
+          }
+        },
+        {
+          "line": "        return f'Playlist({self.name!r}, {self.songs!r})'",
+          "highlight": "!r",
+          "explanation": {
+            "en": "!r applies repr() to the value — shows quotes around strings"
+          }
+        },
+        {
+          "line": "    def __len__(self):",
+          "highlight": "__len__",
+          "explanation": {
+            "en": "Called when you use len(playlist)"
+          }
+        },
+        {
+          "line": "        return len(self.songs)",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the number of songs"
+          }
+        },
+        {
+          "line": "    def __eq__(self, other):",
+          "highlight": "__eq__",
+          "explanation": {
+            "en": "Called when you use == to compare two playlists"
+          }
+        },
+        {
+          "line": "        return self.name == other.name and self.songs == other.songs",
+          "highlight": "==",
+          "explanation": {
+            "en": "Two playlists are equal if same name and songs"
+          }
+        },
+        {
+          "line": "    def __add__(self, other):",
+          "highlight": "__add__",
+          "explanation": {
+            "en": "Called when you use + to combine two playlists"
+          }
+        },
+        {
+          "line": "        combined = self.songs + other.songs",
+          "highlight": "+",
+          "explanation": {
+            "en": "Merge the song lists from both playlists"
+          }
+        },
+        {
+          "line": "        return Playlist(f'{self.name} + {other.name}', combined)",
+          "highlight": "return Playlist",
+          "explanation": {
+            "en": "Return a NEW playlist with combined songs"
+          }
+        },
+        {
+          "line": "p1 = Playlist('Rock', ['Thunder', 'Highway'])",
+          "highlight": "Playlist(",
+          "explanation": {
+            "en": "Create first playlist with 2 songs"
+          }
+        },
+        {
+          "line": "p2 = Playlist('Pop', ['Shake', 'Dance'])",
+          "highlight": "Playlist(",
+          "explanation": {
+            "en": "Create second playlist with 2 songs"
+          }
+        },
+        {
+          "line": "print(p1)",
+          "highlight": "print",
+          "explanation": {
+            "en": "print() triggers __str__ automatically"
+          }
+        },
+        {
+          "line": "print(len(p1))",
+          "highlight": "len",
+          "explanation": {
+            "en": "len() triggers __len__ automatically"
+          }
+        },
+        {
+          "line": "p3 = p1 + p2",
+          "highlight": "+",
+          "explanation": {
+            "en": "The + operator triggers __add__ — merges playlists"
+          }
+        },
+        {
+          "line": "print(p3)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the merged playlist"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_p1",
+      "variable": "p1",
+      "value": "Playlist('Rock', ['Thunder', 'Highway'])",
+      "data_type": "Playlist",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_p3",
+      "variable": "p3",
+      "value": "Playlist('Rock + Pop', [4 songs])",
+      "data_type": "Playlist",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Playlist: Rock (2 songs)",
+        "2",
+        "Playlist: Rock + Pop (4 songs)"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "p1",
+          "value": "Playlist instance",
+          "type": "Playlist",
+          "address": "0x01"
+        },
+        {
+          "name": "p2",
+          "value": "Playlist instance",
+          "type": "Playlist",
+          "address": "0x02"
+        },
+        {
+          "name": "p3",
+          "value": "NEW Playlist from __add__",
+          "type": "Playlist",
+          "address": "0x03"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a class Vector with x, y attributes. Implement __str__ to show 'Vector(x, y)', __add__ to add two vectors component-wise, and __eq__ to compare vectors. Test with Vector(1,2) + Vector(3,4).",
+        "ta": "x, y attributes உடன் Vector வகுப்பை உருவாக்குங்கள். __str__, __add__, __eq__ செயல்படுத்துங்கள். Vector(1,2) + Vector(3,4) கொண்டு சோதியுங்கள்."
+      },
+      "starter_code": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __str__(self):\n        # return 'Vector(x, y)'\n        pass\n\n    def __add__(self, other):\n        # return new Vector with added components\n        pass\n\n    def __eq__(self, other):\n        # return True if x and y match\n        pass\n\nv1 = Vector(1, 2)\nv2 = Vector(3, 4)\nv3 = v1 + v2\nprint(v3)\nprint(v3 == Vector(4, 6))",
+      "expected_output": "Vector(4, 6)\nTrue",
+      "hints": {
+        "en": [
+          "In __str__: return f'Vector({self.x}, {self.y})'",
+          "In __add__: return Vector(self.x + other.x, self.y + other.y)",
+          "In __eq__: return self.x == other.x and self.y == other.y"
+        ],
+        "ta": [
+          "__str__-ல்: return f'Vector({self.x}, {self.y})'",
+          "__add__-ல்: return Vector(self.x + other.x, self.y + other.y)",
+          "__eq__-ல்: return self.x == other.x and self.y == other.y"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which magic method is called by print(obj)?",
+        "ta": "print(obj) எந்த மந்திர முறையை அழைக்கிறது?"
+      },
+      "options": {
+        "en": ["__repr__", "__str__", "__print__", "__display__"],
+        "ta": ["__repr__", "__str__", "__print__", "__display__"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does __add__ allow you to do?",
+        "ta": "__add__ எதை செய்ய அனுமதிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Add an attribute to the class",
+          "Use the + operator between objects",
+          "Add a method to the class",
+          "Append to a list"
+        ],
+        "ta": [
+          "வகுப்பில் ஒரு attribute சேர்க்க",
+          "பொருள்களுக்கு இடையே + ஆபரேட்டர் பயன்படுத்த",
+          "வகுப்பில் ஒரு முறை சேர்க்க",
+          "பட்டியலில் சேர்க்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the difference between __str__ and __repr__?",
+        "ta": "__str__ மற்றும் __repr__ இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": [
+          "No difference",
+          "__str__ is for users, __repr__ is for developers",
+          "__repr__ is for users, __str__ is for developers",
+          "__str__ only works with strings"
+        ],
+        "ta": [
+          "வேறுபாடு இல்லை",
+          "__str__ பயனர்களுக்கு, __repr__ டெவலப்பர்களுக்கு",
+          "__repr__ பயனர்களுக்கு, __str__ டெவலப்பர்களுக்கு",
+          "__str__ சரங்களுடன் மட்டுமே வேலை செய்யும்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["magic_methods", "__str__", "__repr__", "__len__", "__eq__", "__add__", "operator_overloading"],
+    "concepts_required": ["classes", "objects", "methods"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["custom_types", "operator_overloading"],
+    "category": "oop",
+    "path_memberships": ["python_intermediate"]
+  }
+}

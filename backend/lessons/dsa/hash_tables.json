@@ -1,0 +1,252 @@
+{
+  "id": "hash_tables",
+  "topic": "hash_tables",
+  "track": "dsa",
+  "module": "hash_structures",
+  "order": 6,
+  "title": {
+    "en": "Hash Tables: The Speed of Dictionaries",
+    "ta": "ஹாஷ் அட்டவணைகள்: அகராதிகளின் வேகம்"
+  },
+  "description": {
+    "en": "Understand how Python dictionaries work internally. Learn hashing, collision handling, and when to use hash tables.",
+    "ta": "Python அகராதிகள் உள்நாட்டில் எவ்வாறு வேலை செய்கின்றன என்பதைப் புரிந்துகொள்ளுங்கள். hashing, collision handling ஆகியவற்றைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Library Index\n\nVaathiyaar holds up a library card catalog. \"Instead of searching every shelf, we use the book's ID to jump straight to it. That's hashing!\"\n\n### How Hashing Works\n- A **hash function** converts a key into an array index\n- `hash('name')` → integer → `index = hash_value % table_size`\n- Lookup, insert, and delete are all **O(1)** average case\n- Worst case is **O(n)** when many collisions occur\n\n### Python Dict Internals\n\n```python\n# Python dict IS a hash table\nphonebook = {}\nphonebook['Alice'] = '555-0001'    # hash('Alice') → index\nphonebook['Bob'] = '555-0002'      # hash('Bob') → index\n\n# O(1) average lookup\nprint(phonebook['Alice'])           # 555-0001\nprint('Charlie' in phonebook)       # False — O(1) check\n```\n\n### Collision Handling\n\n```python\nclass SimpleHashTable:\n    def __init__(self, size=10):\n        self.size = size\n        self.table = [[] for _ in range(size)]  # chaining\n\n    def _hash(self, key):\n        return hash(key) % self.size\n\n    def put(self, key, value):\n        idx = self._hash(key)\n        for i, (k, v) in enumerate(self.table[idx]):\n            if k == key:\n                self.table[idx][i] = (key, value)\n                return\n        self.table[idx].append((key, value))\n\n    def get(self, key):\n        idx = self._hash(key)\n        for k, v in self.table[idx]:\n            if k == key:\n                return v\n        raise KeyError(key)\n```\n\n> **Key Concept:** Hash tables trade space for speed. The hash function is the magic — it must be fast, deterministic, and spread keys evenly."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "library_catalog",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Hash Table",
+          "children": [
+            "Hash Function",
+            "Key → Index mapping",
+            "O(1) average lookup",
+            "Collision Handling",
+            "Python dict"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_hash",
+      "steps": [
+        {
+          "line": "class SimpleHashTable:",
+          "highlight": "SimpleHashTable",
+          "explanation": {
+            "en": "Build our own hash table to understand how Python dicts work",
+            "ta": "Python dict-கள் எவ்வாறு வேலை செய்கின்றன என்பதைப் புரிந்துகொள்ள நமது சொந்த hash table-ஐ உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "    def __init__(self, size=10):",
+          "highlight": "size=10",
+          "explanation": {
+            "en": "Initialize with a fixed number of buckets (slots)",
+            "ta": "நிலையான எண்ணிக்கையிலான buckets (slots) உடன் துவக்குங்கள்"
+          }
+        },
+        {
+          "line": "        self.table = [[] for _ in range(size)]",
+          "highlight": "self.table",
+          "explanation": {
+            "en": "Each bucket is a list — this is 'chaining' for collision handling",
+            "ta": "ஒவ்வொரு bucket-ம் ஒரு list — இது collision handling-க்கான 'chaining'"
+          }
+        },
+        {
+          "line": "    def _hash(self, key):",
+          "highlight": "_hash",
+          "explanation": {
+            "en": "The hash function maps any key to a bucket index",
+            "ta": "hash function எந்த key-ஐயும் bucket index-க்கு மாற்றும்"
+          }
+        },
+        {
+          "line": "        return hash(key) % self.size",
+          "highlight": "hash(key) % self.size",
+          "explanation": {
+            "en": "Python's built-in hash() gives a big number, modulo fits it into our table",
+            "ta": "Python-ன் built-in hash() பெரிய எண் கொடுக்கும், modulo அதை நமது table-ல் பொருத்தும்"
+          }
+        },
+        {
+          "line": "    def put(self, key, value):",
+          "highlight": "put",
+          "explanation": {
+            "en": "Insert or update a key-value pair",
+            "ta": "key-value ஜோடியை செருகவும் அல்லது புதுப்பிக்கவும்"
+          }
+        },
+        {
+          "line": "        idx = self._hash(key)",
+          "highlight": "idx",
+          "explanation": {
+            "en": "Compute which bucket this key belongs to",
+            "ta": "இந்த key எந்த bucket-க்கு சொந்தம் என்பதை கணக்கிடுங்கள்"
+          }
+        },
+        {
+          "line": "        for i, (k, v) in enumerate(self.table[idx]):",
+          "highlight": "enumerate",
+          "explanation": {
+            "en": "Check if key already exists in this bucket (collision chain)",
+            "ta": "இந்த bucket-ல் key ஏற்கனவே உள்ளதா என சரிபார்க்கவும் (collision chain)"
+          }
+        },
+        {
+          "line": "        self.table[idx].append((key, value))",
+          "highlight": "append",
+          "explanation": {
+            "en": "Key not found — add new pair to the bucket's chain",
+            "ta": "Key கிடைக்கவில்லை — bucket-ன் chain-ல் புதிய ஜோடியை சேர்க்கவும்"
+          }
+        },
+        {
+          "line": "ht = SimpleHashTable()",
+          "highlight": "ht",
+          "explanation": {
+            "en": "Create a hash table with 10 buckets",
+            "ta": "10 bucket-களுடன் hash table-ஐ உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "ht.put('name', 'Vaathiyaar')",
+          "highlight": "put",
+          "explanation": {
+            "en": "Hash 'name' to find bucket, store ('name', 'Vaathiyaar') there",
+            "ta": "'name' ஐ hash செய்து bucket-ஐ கண்டறிந்து ('name', 'Vaathiyaar') சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "print(ht.get('name'))",
+          "highlight": "get",
+          "explanation": {
+            "en": "Hash 'name' again → same bucket → find and return 'Vaathiyaar'",
+            "ta": "'name' ஐ மீண்டும் hash → அதே bucket → 'Vaathiyaar' கண்டறிந்து திருப்புங்கள்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "hashtable_visual",
+      "structure_type": "dict",
+      "initial_state": {},
+      "animations": [
+        {"action": "add", "index": "name", "value": "Vaathiyaar"},
+        {"action": "add", "index": "role", "value": "Teacher"},
+        {"action": "add", "index": "subject", "value": "DSA"}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_hash",
+      "variable": "hash('name')",
+      "value": "bucket 7",
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_value",
+      "variable": "ht.get('name')",
+      "value": "Vaathiyaar",
+      "data_type": "str",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Vaathiyaar",
+        "Teacher",
+        "Key 'name' → bucket 7",
+        "Key 'role' → bucket 3",
+        "O(1) lookup achieved!"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a complete SimpleHashTable with put, get, delete, and keys methods. Use it to count word frequencies in a sentence.",
+        "ta": "put, get, delete மற்றும் keys methods உடன் ஒரு முழுமையான SimpleHashTable-ஐ உருவாக்குங்கள். ஒரு வாக்கியத்தில் வார்த்தை அதிர்வெண்களை எண்ண அதைப் பயன்படுத்துங்கள்."
+      },
+      "starter_code": "class SimpleHashTable:\n    def __init__(self, size=10):\n        self.size = size\n        self.table = [[] for _ in range(size)]\n\n    def _hash(self, key):\n        return hash(key) % self.size\n\n    def put(self, key, value):\n        pass\n\n    def get(self, key):\n        pass\n\n    def delete(self, key):\n        pass\n\ndef word_count(sentence):\n    ht = SimpleHashTable()\n    for word in sentence.lower().split():\n        try:\n            count = ht.get(word)\n            ht.put(word, count + 1)\n        except KeyError:\n            ht.put(word, 1)\n    return ht\n\nresult = word_count('the cat sat on the mat the cat')\nprint(result.get('the'))\nprint(result.get('cat'))",
+      "expected_output": "3\n2",
+      "hints": {
+        "en": [
+          "For put: hash the key, search the bucket, update or append",
+          "For get: hash the key, search the bucket, return value or raise KeyError",
+          "For delete: hash the key, find the pair, remove it from the bucket list"
+        ],
+        "ta": [
+          "put-க்கு: key-ஐ hash செய்து, bucket-ஐ தேடி, புதுப்பிக்கவும் அல்லது சேர்க்கவும்",
+          "get-க்கு: key-ஐ hash செய்து, bucket-ஐ தேடி, மதிப்பை திருப்பவும்",
+          "delete-க்கு: key-ஐ hash செய்து, ஜோடியை கண்டறிந்து, bucket list-லிருந்து நீக்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the average time complexity of looking up a key in a hash table?",
+        "ta": "hash table-ல் ஒரு key-ஐ தேடுவதன் சராசரி நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(log n)", "O(1)", "O(n²)"],
+        "ta": ["O(n)", "O(log n)", "O(1)", "O(n²)"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What happens when two different keys hash to the same index?",
+        "ta": "இரண்டு வெவ்வேறு keys ஒரே index-க்கு hash ஆனால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": ["Error is raised", "One key is lost", "A collision occurs", "The table resizes"],
+        "ta": ["பிழை எழும்", "ஒரு key தொலையும்", "Collision ஏற்படும்", "table அளவு மாறும்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which Python built-in type is implemented as a hash table?",
+        "ta": "எந்த Python built-in வகை hash table ஆக செயல்படுத்தப்பட்டுள்ளது?"
+      },
+      "options": {
+        "en": ["list", "tuple", "dict", "set and dict"],
+        "ta": ["list", "tuple", "dict", "set மற்றும் dict"]
+      },
+      "correct": 3
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["hash_table", "hashing", "collision_handling", "dict_internals"],
+    "concepts_required": ["lists", "classes", "loops"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["database_indexing", "caching", "deduplication"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

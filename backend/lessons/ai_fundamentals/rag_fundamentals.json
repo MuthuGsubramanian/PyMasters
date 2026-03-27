@@ -1,0 +1,321 @@
+{
+  "id": "rag_fundamentals",
+  "topic": "rag_fundamentals",
+  "track": "ai_fundamentals",
+  "module": "rag",
+  "order": 9,
+  "title": {
+    "en": "RAG Fundamentals: Retrieval Augmented Generation",
+    "ta": "RAG அடிப்படைகள்: Retrieval Augmented Generation"
+  },
+  "description": {
+    "en": "Learn how RAG combines search with LLMs to answer questions from your own documents — no fine-tuning required.",
+    "ta": "உங்கள் சொந்த ஆவணங்களிலிருந்து கேள்விகளுக்கு பதிலளிக்க RAG எவ்வாறு தேடலை LLM-களுடன் இணைக்கிறது என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "next_unlock": "embeddings_similarity",
+  "story_variants": {
+    "en": "## Vaathiyaar's Library System\n\nVaathiyaar stands in front of a library. \"Students, an LLM knows a LOT, but it doesn't know YOUR company's documents, YOUR codebase, or yesterday's news. RAG solves this: instead of training a new model, you RETRIEVE relevant documents and give them to the LLM as context.\"\n\n### The RAG Pipeline\n\n1. **Ingest** — Split documents into chunks\n2. **Embed** — Convert chunks to vectors\n3. **Store** — Save vectors in a vector database\n4. **Query** — User asks a question\n5. **Retrieve** — Find relevant chunks by similarity\n6. **Generate** — LLM answers using retrieved context\n\n### Why RAG?\n\n| Approach | Cost | Fresh Data | Accuracy |\n|----------|------|-----------|----------|\n| Fine-tuning | $$$$ | Needs retraining | Can hallucinate |\n| RAG | $ | Real-time updates | Cites sources |\n| Prompt stuffing | Free | Limited by context | Misses details |\n\n> **Key Insight:** RAG is the most practical way to give an LLM access to private data. 90% of enterprise AI apps use some form of RAG.",
+    "ta": "## வாத்தியாரின் நூலக அமைப்பு\n\nவாத்தியார் ஒரு நூலகத்தின் முன் நிற்கிறார். \"மாணவர்களே, LLM-க்கு நிறைய தெரியும், ஆனால் உங்கள் நிறுவனத்தின் ஆவணங்கள், உங்கள் codebase, நேற்றைய செய்திகள் தெரியாது. RAG இதைத் தீர்க்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "library_system",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rag_pipeline",
+      "nodes": [
+        {
+          "label": "RAG Pipeline",
+          "children": [
+            "1. Document Loading",
+            "2. Text Splitting (chunking)",
+            "3. Embedding (text → vectors)",
+            "4. Vector Store (storage)",
+            "5. Retrieval (similarity search)",
+            "6. Generation (LLM + context)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rag_code",
+      "steps": [
+        {
+          "line": "from langchain_openai import OpenAIEmbeddings, ChatOpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import embedding model for vectorizing text and chat model for generation"
+          }
+        },
+        {
+          "line": "from langchain_community.vectorstores import FAISS",
+          "highlight": "import",
+          "explanation": {
+            "en": "FAISS is Facebook's vector similarity search library — fast and free"
+          }
+        },
+        {
+          "line": "from langchain.text_splitter import RecursiveCharacterTextSplitter",
+          "highlight": "import",
+          "explanation": {
+            "en": "Text splitter breaks large documents into smaller chunks"
+          }
+        },
+        {
+          "line": "from langchain_core.prompts import ChatPromptTemplate",
+          "highlight": "import",
+          "explanation": {
+            "en": "Prompt template for the final generation step"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 1: Prepare your documents"
+          }
+        },
+        {
+          "line": "# Step 1: Your documents (normally loaded from files/URLs)",
+          "highlight": "comment",
+          "explanation": {
+            "en": "In a real app, you'd load PDFs, web pages, or database records"
+          }
+        },
+        {
+          "line": "documents = [",
+          "highlight": "documents",
+          "explanation": {
+            "en": "For this demo, we use a list of text strings as our knowledge base"
+          }
+        },
+        {
+          "line": "    'Python was created by Guido van Rossum in 1991.',",
+          "highlight": "doc1",
+          "explanation": {
+            "en": "First document about Python's origin"
+          }
+        },
+        {
+          "line": "    'Python uses indentation for code blocks instead of braces.',",
+          "highlight": "doc2",
+          "explanation": {
+            "en": "Second document about Python syntax"
+          }
+        },
+        {
+          "line": "    'List comprehensions provide a concise way to create lists.',",
+          "highlight": "doc3",
+          "explanation": {
+            "en": "Third document about a Python feature"
+          }
+        },
+        {
+          "line": "]",
+          "highlight": "",
+          "explanation": {
+            "en": "Our mini knowledge base is ready"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 2: Create embeddings and store in vector database"
+          }
+        },
+        {
+          "line": "# Step 2: Embed and store",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Convert text to vectors and store in FAISS for fast similarity search"
+          }
+        },
+        {
+          "line": "embeddings = OpenAIEmbeddings()",
+          "highlight": "embeddings",
+          "explanation": {
+            "en": "Create the embedding model — converts text to 1536-dimensional vectors"
+          }
+        },
+        {
+          "line": "vectorstore = FAISS.from_texts(documents, embeddings)",
+          "highlight": "vectorstore",
+          "explanation": {
+            "en": "Create FAISS index from our documents — embeds and stores in one step"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 3: Retrieve and generate"
+          }
+        },
+        {
+          "line": "# Step 3: Query → Retrieve → Generate",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Now we can ask questions and get answers based on our documents"
+          }
+        },
+        {
+          "line": "query = 'Who created Python?'",
+          "highlight": "query",
+          "explanation": {
+            "en": "The user's question"
+          }
+        },
+        {
+          "line": "relevant_docs = vectorstore.similarity_search(query, k=2)",
+          "highlight": "relevant_docs",
+          "explanation": {
+            "en": "Find the 2 most similar documents to our query using vector similarity"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "vector_store_viz",
+      "structure_type": "vector",
+      "data": {
+        "doc1_python_origin": [0.82, 0.15, 0.91],
+        "doc2_python_syntax": [0.78, 0.45, 0.12],
+        "doc3_list_comprehension": [0.65, 0.88, 0.34],
+        "query_who_created": [0.84, 0.13, 0.89]
+      },
+      "visualization": "vector_space",
+      "caption": "Query vector is closest to doc1 (Python origin) — that's what gets retrieved"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_k",
+      "variable": "k",
+      "value": 2,
+      "data_type": "int",
+      "color": "#0ea5e9"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> relevant_docs = vectorstore.similarity_search('Who created Python?', k=2)",
+        ">>> for doc in relevant_docs:",
+        "...     print(f'- {doc.page_content}')",
+        "- Python was created by Guido van Rossum in 1991.",
+        "- Python uses indentation for code blocks instead of braces.",
+        "",
+        ">>> # Now pass retrieved docs as context to the LLM",
+        ">>> context = '\\n'.join(doc.page_content for doc in relevant_docs)",
+        ">>> prompt = f'Based on this context: {context}\\nAnswer: Who created Python?'",
+        ">>> # LLM answers: 'Python was created by Guido van Rossum in 1991.'"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a mini RAG system: Create a list of 5 facts about any topic, embed them using FAISS, then write a function that takes a question, retrieves the 2 most relevant facts, and formats them as context for an LLM prompt.",
+        "ta": "Mini RAG system உருவாக்குங்கள்: எந்த தலைப்பிலும் 5 உண்மைகளின் பட்டியலை உருவாக்கி, FAISS-ல் embed செய்து, கேள்வியை எடுத்து 2 தொடர்புடைய உண்மைகளை retrieve செய்யும் function எழுதுங்கள்."
+      },
+      "starter_code": "from langchain_openai import OpenAIEmbeddings\nfrom langchain_community.vectorstores import FAISS\n\n# Create 5 facts about a topic\nfacts = [\n    # Add your facts here\n]\n\n# Embed and store\nembeddings = OpenAIEmbeddings()\nvectorstore = FAISS.from_texts(facts, embeddings)\n\ndef ask(question: str) -> str:\n    \"\"\"Retrieve relevant facts and format as LLM context.\"\"\"\n    # Your code here\n    pass\n\nprint(ask('Your question here'))",
+      "expected_output": "(Formatted context with relevant facts for the question)",
+      "hints": {
+        "en": [
+          "Use vectorstore.similarity_search(question, k=2) to retrieve",
+          "Format as: 'Context:\\n{fact1}\\n{fact2}\\nQuestion: {question}'",
+          "The function returns the formatted prompt, not the LLM answer"
+        ],
+        "ta": [
+          "vectorstore.similarity_search(question, k=2) பயன்படுத்தி retrieve செய்யுங்கள்",
+          "'Context:\\n{fact1}\\n{fact2}\\nQuestion: {question}' என வடிவமைக்கவும்",
+          "function வடிவமைக்கப்பட்ட prompt-ஐ திருப்பி அனுப்புகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does RAG stand for?",
+        "ta": "RAG என்பது எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Random Automated Generation",
+          "Retrieval Augmented Generation",
+          "Rapid AI Growth",
+          "Recursive Agent Graph"
+        ],
+        "ta": [
+          "Random Automated Generation",
+          "Retrieval Augmented Generation",
+          "Rapid AI Growth",
+          "Recursive Agent Graph"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is RAG preferred over fine-tuning for most enterprise use cases?",
+        "ta": "பெரும்பாலான enterprise பயன்பாடுகளுக்கு fine-tuning-ஐ விட RAG ஏன் விரும்பப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "RAG is always more accurate",
+          "RAG is cheaper, supports real-time updates, and can cite sources",
+          "Fine-tuning doesn't work",
+          "RAG doesn't need an LLM"
+        ],
+        "ta": [
+          "RAG எப்போதும் துல்லியமானது",
+          "RAG மலிவானது, நிகழ்நேர புதுப்பிப்புகளை ஆதரிக்கிறது, ஆதாரங்களை மேற்கோள் காட்டும்",
+          "Fine-tuning வேலை செய்யாது",
+          "RAG-க்கு LLM தேவையில்லை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the 'k' parameter in similarity_search(query, k=2)?",
+        "ta": "similarity_search(query, k=2)-ல் 'k' parameter என்ன?"
+      },
+      "options": {
+        "en": [
+          "The key for the API",
+          "The number of most similar documents to return",
+          "The number of tokens to generate",
+          "The temperature setting"
+        ],
+        "ta": [
+          "API-க்கான key",
+          "திருப்பி அனுப்ப வேண்டிய மிகவும் ஒத்த ஆவணங்களின் எண்ணிக்கை",
+          "உருவாக்க வேண்டிய tokens எண்ணிக்கை",
+          "Temperature அமைப்பு"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["rag", "retrieval_augmented_generation", "vector_stores", "similarity_search"],
+    "concepts_required": ["langchain_intro", "llm_how_they_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["document_qa", "enterprise_search", "chatbots"],
+    "category": "ai_rag",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

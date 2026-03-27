@@ -1,0 +1,322 @@
+{
+  "id": "context_managers",
+  "topic": "context_managers",
+  "track": "python_intermediate",
+  "module": "resource_management",
+  "order": 9,
+  "title": {
+    "en": "Context Managers: The Art of Cleanup",
+    "ta": "சூழல் மேலாளர்கள்: சுத்தம் செய்யும் கலை"
+  },
+  "description": {
+    "en": "Master the 'with' statement, build custom context managers with __enter__/__exit__, and use contextlib for elegant resource management.",
+    "ta": "'with' அறிக்கை, __enter__/__exit__ உடன் தனிப்பயன் சூழல் மேலாளர்கள், contextlib ஆகியவற்றில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Hotel Room\n\nVaathiyaar checks into a hotel. \"When I check in, the room is prepared (__enter__). When I check out, the room is cleaned (__exit__). No matter what happens during my stay — even if there's a fire alarm — checkout ALWAYS happens. That's a context manager!\"\n\n### Why Context Managers?\n- Guarantee cleanup even if exceptions occur\n- Manage resources: files, locks, connections, timers\n- The `with` statement handles enter/exit automatically\n\n### The with Statement\n\n```python\nwith open('data.txt', 'r') as f:\n    content = f.read()\n# f is automatically closed here — even if an error occurred!\n```\n\n### How It Works\n\n| Method | When Called | Purpose |\n|--------|-----------|----------|\n| `__enter__` | Start of `with` block | Setup resource |\n| `__exit__` | End of `with` block | Cleanup resource |\n\n> **Key Concept:** Context managers guarantee cleanup. Use them whenever you acquire a resource that must be released — files, database connections, locks, temporary directories."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "hotel_checkin",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Context Manager",
+          "children": [
+            "with statement",
+            "__enter__ (setup)",
+            "__exit__ (cleanup)",
+            "contextlib",
+            "Exception safety"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class Timer:",
+          "highlight": "Timer",
+          "explanation": {
+            "en": "Build a custom context manager that times code execution"
+          }
+        },
+        {
+          "line": "    def __enter__(self):",
+          "highlight": "__enter__",
+          "explanation": {
+            "en": "__enter__ runs when the 'with' block starts"
+          }
+        },
+        {
+          "line": "        import time",
+          "highlight": "time",
+          "explanation": {
+            "en": "Import time module for timing"
+          }
+        },
+        {
+          "line": "        self.start = time.time()",
+          "highlight": "self.start",
+          "explanation": {
+            "en": "Record the start time"
+          }
+        },
+        {
+          "line": "        print('Timer started')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Announce that timing has begun"
+          }
+        },
+        {
+          "line": "        return self",
+          "highlight": "return self",
+          "explanation": {
+            "en": "Return self — this becomes the 'as' variable"
+          }
+        },
+        {
+          "line": "    def __exit__(self, exc_type, exc_val, exc_tb):",
+          "highlight": "__exit__",
+          "explanation": {
+            "en": "__exit__ runs when the block ends — receives exception info if any"
+          }
+        },
+        {
+          "line": "        import time",
+          "highlight": "time",
+          "explanation": {
+            "en": "Import time again for the end calculation"
+          }
+        },
+        {
+          "line": "        elapsed = time.time() - self.start",
+          "highlight": "elapsed",
+          "explanation": {
+            "en": "Calculate total elapsed time"
+          }
+        },
+        {
+          "line": "        print(f'Timer stopped: {elapsed:.4f}s')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the elapsed time — cleanup is guaranteed!"
+          }
+        },
+        {
+          "line": "        return False",
+          "highlight": "return False",
+          "explanation": {
+            "en": "Return False = don't suppress exceptions. True would swallow them."
+          }
+        },
+        {
+          "line": "with Timer() as t:",
+          "highlight": "with",
+          "explanation": {
+            "en": "Enter the context — __enter__ runs, t = self"
+          }
+        },
+        {
+          "line": "    total = sum(range(1000000))",
+          "highlight": "sum",
+          "explanation": {
+            "en": "Do some work inside the with block"
+          }
+        },
+        {
+          "line": "    print(f'Sum: {total}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the result"
+          }
+        },
+        {
+          "line": "# __exit__ runs here automatically",
+          "highlight": "__exit__",
+          "explanation": {
+            "en": "When we leave the block, __exit__ fires — prints elapsed time"
+          }
+        },
+        {
+          "line": "from contextlib import contextmanager",
+          "highlight": "contextmanager",
+          "explanation": {
+            "en": "contextlib provides a decorator-based shortcut"
+          }
+        },
+        {
+          "line": "@contextmanager",
+          "highlight": "@contextmanager",
+          "explanation": {
+            "en": "Turn a generator function into a context manager"
+          }
+        },
+        {
+          "line": "def managed_resource(name):",
+          "highlight": "managed_resource",
+          "explanation": {
+            "en": "Define a generator-based context manager"
+          }
+        },
+        {
+          "line": "    print(f'Acquiring {name}')",
+          "highlight": "Acquiring",
+          "explanation": {
+            "en": "Code before yield = __enter__"
+          }
+        },
+        {
+          "line": "    yield name",
+          "highlight": "yield",
+          "explanation": {
+            "en": "yield = hand control to the with block. The yielded value is the 'as' variable"
+          }
+        },
+        {
+          "line": "    print(f'Releasing {name}')",
+          "highlight": "Releasing",
+          "explanation": {
+            "en": "Code after yield = __exit__ — guaranteed cleanup"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_timer",
+      "variable": "t",
+      "value": "Timer(start=1711540800.0)",
+      "data_type": "Timer",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_total",
+      "variable": "total",
+      "value": 499999500000,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Timer started",
+        "Sum: 499999500000",
+        "Timer stopped: 0.0312s"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a context manager class called FileLogger that opens a file in __enter__ and closes it in __exit__. It should have a log(message) method that writes to the file. Use it to write 3 log messages.",
+        "ta": "FileLogger என்ற context manager வகுப்பை உருவாக்குங்கள் — __enter__-ல் கோப்பைத் திறந்து __exit__-ல் மூடும். log(message) முறை கோப்பில் எழுதும்."
+      },
+      "starter_code": "class FileLogger:\n    def __init__(self, filename):\n        self.filename = filename\n\n    def __enter__(self):\n        self.file = open(self.filename, 'w')\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.file.close()\n        print(f'{self.filename} closed safely')\n        return False\n\n    def log(self, message):\n        self.file.write(message + '\\n')\n\nwith FileLogger('app.log') as logger:\n    logger.log('App started')\n    logger.log('Processing data')\n    logger.log('App finished')\n\nwith open('app.log') as f:\n    print(f.read())",
+      "expected_output": "app.log closed safely\nApp started\nProcessing data\nApp finished\n",
+      "hints": {
+        "en": [
+          "__enter__ should open the file and return self",
+          "__exit__ should close the file",
+          "log() writes message + newline to self.file",
+          "Return False in __exit__ to not suppress exceptions"
+        ],
+        "ta": [
+          "__enter__ கோப்பைத் திறந்து self திருப்ப வேண்டும்",
+          "__exit__ கோப்பை மூட வேண்டும்",
+          "log() செய்தி + newline-ஐ self.file-ல் எழுதும்",
+          "விதிவிலக்குகளை அடக்காமல் __exit__-ல் False திருப்புங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "When does __exit__ run in a context manager?",
+        "ta": "context manager-ல் __exit__ எப்போது இயங்கும்?"
+      },
+      "options": {
+        "en": [
+          "Only when no exception occurs",
+          "Only when an exception occurs",
+          "Always, whether or not an exception occurs",
+          "Never automatically"
+        ],
+        "ta": [
+          "விதிவிலக்கு இல்லாதபோது மட்டும்",
+          "விதிவிலக்கு இருக்கும்போது மட்டும்",
+          "எப்போதும், விதிவிலக்கு இருந்தாலும் இல்லாவிட்டாலும்",
+          "தானாக ஒருபோதும் இல்லை"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does @contextmanager from contextlib do?",
+        "ta": "contextlib-லிருந்து @contextmanager என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Creates a class automatically",
+          "Turns a generator function into a context manager",
+          "Makes any function a decorator",
+          "Manages memory allocation"
+        ],
+        "ta": [
+          "தானாக வகுப்பை உருவாக்குகிறது",
+          "generator செயல்பாட்டை context manager ஆக மாற்றுகிறது",
+          "எந்த செயல்பாட்டையும் decorator ஆக்குகிறது",
+          "நினைவக ஒதுக்கீட்டை நிர்வகிக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does returning True from __exit__ do?",
+        "ta": "__exit__-லிருந்து True திருப்புவது என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Raises the exception",
+          "Suppresses the exception",
+          "Re-enters the context",
+          "Nothing special"
+        ],
+        "ta": [
+          "விதிவிலக்கை எழுப்புகிறது",
+          "விதிவிலக்கை அடக்குகிறது",
+          "சூழலை மீண்டும் நுழைகிறது",
+          "சிறப்பு எதுவுமில்லை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["context_managers", "with_statement", "__enter__", "__exit__", "contextlib"],
+    "concepts_required": ["classes", "exceptions", "files"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["file_handling", "database_connections", "locks"],
+    "category": "python_core",
+    "path_memberships": ["python_intermediate"]
+  }
+}

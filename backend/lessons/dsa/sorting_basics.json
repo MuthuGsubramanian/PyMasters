@@ -1,0 +1,269 @@
+{
+  "id": "sorting_basics",
+  "topic": "sorting_basics",
+  "track": "dsa",
+  "module": "sorting_searching",
+  "order": 12,
+  "title": {
+    "en": "Sorting Basics: Bubble, Selection & Insertion",
+    "ta": "வரிசைப்படுத்தல் அடிப்படைகள்: Bubble, Selection & Insertion"
+  },
+  "description": {
+    "en": "Understand the three fundamental O(n²) sorting algorithms — bubble sort, selection sort, and insertion sort.",
+    "ta": "மூன்று அடிப்படை O(n²) sorting algorithms — bubble sort, selection sort, insertion sort புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Card Sorting\n\nVaathiyaar shuffles a deck of cards. \"There are many ways to sort these. Let's start with the simplest ones — they're slow, but understanding them is key!\"\n\n### Bubble Sort\nRepeatedly swap adjacent elements if they're in the wrong order.\n\n```python\ndef bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        swapped = False\n        for j in range(n - 1 - i):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n                swapped = True\n        if not swapped:\n            break  # Already sorted!\n    return arr\n```\n\n### Selection Sort\nFind the minimum element and place it at the correct position.\n\n```python\ndef selection_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        min_idx = i\n        for j in range(i + 1, n):\n            if arr[j] < arr[min_idx]:\n                min_idx = j\n        arr[i], arr[min_idx] = arr[min_idx], arr[i]\n    return arr\n```\n\n### Insertion Sort\nBuild the sorted portion one element at a time.\n\n```python\ndef insertion_sort(arr):\n    for i in range(1, len(arr)):\n        key = arr[i]\n        j = i - 1\n        while j >= 0 and arr[j] > key:\n            arr[j + 1] = arr[j]\n            j -= 1\n        arr[j + 1] = key\n    return arr\n```\n\n> **Key Concept:** All three are O(n²) worst case, but insertion sort is the best of the three — it's O(n) on nearly sorted data and works great for small arrays."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "card_sorting",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Basic Sorting",
+          "children": [
+            "Bubble Sort O(n²)",
+            "Selection Sort O(n²)",
+            "Insertion Sort O(n²)",
+            "In-place sorting",
+            "Stability"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_sorting",
+      "steps": [
+        {
+          "line": "def bubble_sort(arr):",
+          "highlight": "bubble_sort",
+          "explanation": {
+            "en": "Bubble sort: repeatedly swap adjacent out-of-order elements",
+            "ta": "Bubble sort: அருகிலுள்ள தவறான வரிசை உறுப்புகளை திரும்பத் திரும்ப மாற்றுங்கள்"
+          }
+        },
+        {
+          "line": "    n = len(arr)",
+          "highlight": "n",
+          "explanation": {
+            "en": "Get array length for loop bounds",
+            "ta": "loop எல்லைகளுக்கு அணி நீளத்தை பெறுங்கள்"
+          }
+        },
+        {
+          "line": "    for i in range(n):",
+          "highlight": "for i",
+          "explanation": {
+            "en": "Outer loop: each pass bubbles the largest unsorted element to its place",
+            "ta": "வெளி loop: ஒவ்வொரு pass-ம் பெரிய வரிசைப்படுத்தப்படாத உறுப்பை அதன் இடத்திற்கு நகர்த்தும்"
+          }
+        },
+        {
+          "line": "        for j in range(n - 1 - i):",
+          "highlight": "for j",
+          "explanation": {
+            "en": "Inner loop: compare adjacent pairs, skip already-sorted end",
+            "ta": "உள் loop: அருகிலுள்ள ஜோடிகளை ஒப்பிடுங்கள்"
+          }
+        },
+        {
+          "line": "            if arr[j] > arr[j + 1]:",
+          "highlight": ">",
+          "explanation": {
+            "en": "If left element is bigger than right, they're out of order",
+            "ta": "இடது உறுப்பு வலது உறுப்பை விட பெரியதாக இருந்தால், வரிசை தவறானது"
+          }
+        },
+        {
+          "line": "                arr[j], arr[j + 1] = arr[j + 1], arr[j]",
+          "highlight": "swap",
+          "explanation": {
+            "en": "Swap them — Python's tuple swap makes this elegant",
+            "ta": "அவற்றை மாற்றுங்கள் — Python-ன் tuple swap இதை எளிதாக்குகிறது"
+          }
+        },
+        {
+          "line": "def selection_sort(arr):",
+          "highlight": "selection_sort",
+          "explanation": {
+            "en": "Selection sort: find the minimum, place it at the front",
+            "ta": "Selection sort: குறைந்தபட்சத்தை கண்டறிந்து முன்னால் வையுங்கள்"
+          }
+        },
+        {
+          "line": "        min_idx = i",
+          "highlight": "min_idx",
+          "explanation": {
+            "en": "Assume current position holds the minimum",
+            "ta": "தற்போதைய நிலையில் குறைந்தபட்சம் இருப்பதாக கருதுங்கள்"
+          }
+        },
+        {
+          "line": "        for j in range(i + 1, n):",
+          "highlight": "for j",
+          "explanation": {
+            "en": "Scan remaining elements to find the actual minimum",
+            "ta": "உண்மையான குறைந்தபட்சத்தை கண்டறிய மீதமுள்ள உறுப்புகளை ஸ்கேன் செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "def insertion_sort(arr):",
+          "highlight": "insertion_sort",
+          "explanation": {
+            "en": "Insertion sort: build sorted portion by inserting each element",
+            "ta": "Insertion sort: ஒவ்வொரு உறுப்பையும் செருகுவதன் மூலம் வரிசைப்படுத்தப்பட்ட பகுதியை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "    for i in range(1, len(arr)):",
+          "highlight": "for i",
+          "explanation": {
+            "en": "Start from index 1 — element at 0 is trivially sorted",
+            "ta": "index 1 லிருந்து தொடங்குங்கள் — 0 ல் உள்ள உறுப்பு இயல்பாகவே வரிசையில் உள்ளது"
+          }
+        },
+        {
+          "line": "        key = arr[i]",
+          "highlight": "key",
+          "explanation": {
+            "en": "Save the element to be inserted into sorted portion",
+            "ta": "வரிசைப்படுத்தப்பட்ட பகுதியில் செருக வேண்டிய உறுப்பை சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "        while j >= 0 and arr[j] > key:",
+          "highlight": "while",
+          "explanation": {
+            "en": "Shift larger elements right to make room for key",
+            "ta": "key-க்கு இடம் உருவாக்க பெரிய உறுப்புகளை வலதுபுறம் நகர்த்துங்கள்"
+          }
+        },
+        {
+          "line": "        arr[j + 1] = key",
+          "highlight": "arr[j + 1]",
+          "explanation": {
+            "en": "Place key in its correct sorted position",
+            "ta": "key-ஐ அதன் சரியான வரிசை நிலையில் வையுங்கள்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "sort_visual",
+      "structure_type": "list",
+      "initial_state": [64, 34, 25, 12, 22, 11, 90],
+      "animations": [
+        {"action": "remove", "index": 0, "value": "swap 64,34"},
+        {"action": "add", "index": 0, "value": 11},
+        {"action": "add", "index": 1, "value": 12}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "sort_comparison",
+      "comparisons": [
+        {"label": "Bubble Sort", "values": [100, 10000, 1000000], "color": "#f74f4f"},
+        {"label": "Selection Sort", "values": [100, 10000, 1000000], "color": "#f7d44f"},
+        {"label": "Insertion Sort", "values": [10, 5000, 500000], "color": "#4ff7a4"}
+      ],
+      "x_labels": ["n=10", "n=100", "n=1000"]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_arr",
+      "variable": "arr",
+      "value": "[11, 12, 22, 25, 34, 64, 90]",
+      "data_type": "list",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Original: [64, 34, 25, 12, 22, 11, 90]",
+        "Bubble:   [11, 12, 22, 25, 34, 64, 90]",
+        "Select:   [11, 12, 22, 25, 34, 64, 90]",
+        "Insert:   [11, 12, 22, 25, 34, 64, 90]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement all three sorting algorithms and compare their step counts on the same input. Count how many comparisons and swaps each makes.",
+        "ta": "மூன்று sorting algorithms-ஐயும் செயல்படுத்தி ஒரே உள்ளீட்டில் அவற்றின் படி எண்ணிக்கைகளை ஒப்பிடுங்கள்."
+      },
+      "starter_code": "def bubble_sort_count(arr):\n    arr = arr.copy()\n    comparisons = 0\n    swaps = 0\n    n = len(arr)\n    for i in range(n):\n        for j in range(n - 1 - i):\n            comparisons += 1\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n                swaps += 1\n    return arr, comparisons, swaps\n\ndef selection_sort_count(arr):\n    # Implement with comparison and swap counting\n    pass\n\ndef insertion_sort_count(arr):\n    # Implement with comparison and shift counting\n    pass\n\ndata = [64, 34, 25, 12, 22, 11, 90]\nfor name, func in [('Bubble', bubble_sort_count), ('Selection', selection_sort_count), ('Insertion', insertion_sort_count)]:\n    result, comps, swaps = func(data)\n    print(f'{name}: {comps} comparisons, {swaps} swaps → {result}')",
+      "expected_output": "Bubble: 21 comparisons, 10 swaps → [11, 12, 22, 25, 34, 64, 90]\nSelection: 21 comparisons, 6 swaps → [11, 12, 22, 25, 34, 64, 90]\nInsertions: 15 comparisons, 10 swaps → [11, 12, 22, 25, 34, 64, 90]",
+      "hints": {
+        "en": [
+          "Selection sort always does n*(n-1)/2 comparisons but fewer swaps",
+          "Insertion sort counts shifts instead of swaps",
+          "Remember to copy the array so each sort gets the original order"
+        ],
+        "ta": [
+          "Selection sort எப்போதும் n*(n-1)/2 ஒப்பீடுகள் செய்யும் ஆனால் குறைவான swaps",
+          "Insertion sort swaps-க்கு பதிலாக shifts-ஐ எண்ணும்",
+          "ஒவ்வொரு sort-க்கும் அசல் வரிசை கிடைக்க array-ஐ copy செய்ய நினைவில் கொள்ளுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which basic sorting algorithm is most efficient on nearly sorted data?",
+        "ta": "கிட்டத்தட்ட வரிசைப்படுத்தப்பட்ட தரவில் எந்த அடிப்படை sorting algorithm மிகவும் திறமையானது?"
+      },
+      "options": {
+        "en": ["Bubble sort", "Selection sort", "Insertion sort", "All are equal"],
+        "ta": ["Bubble sort", "Selection sort", "Insertion sort", "அனைத்தும் சமம்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the time complexity of bubble sort in the worst case?",
+        "ta": "மோசமான நிலையில் bubble sort-ன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"],
+        "ta": ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which sort always makes the fewest swaps among the three basic sorts?",
+        "ta": "மூன்று அடிப்படை sorts-ல் எது எப்போதும் குறைவான swaps செய்யும்?"
+      },
+      "options": {
+        "en": ["Bubble sort", "Selection sort", "Insertion sort", "They all make the same"],
+        "ta": ["Bubble sort", "Selection sort", "Insertion sort", "அனைத்தும் ஒரே அளவு"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["bubble_sort", "selection_sort", "insertion_sort"],
+    "concepts_required": ["lists", "loops", "big_o"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["small_dataset_sorting", "understanding_algorithm_design"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

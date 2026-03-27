@@ -1,0 +1,307 @@
+{
+  "id": "embeddings_similarity",
+  "topic": "embeddings_similarity",
+  "track": "ai_fundamentals",
+  "module": "rag",
+  "order": 10,
+  "title": {
+    "en": "Embeddings & Similarity: The Math Behind RAG",
+    "ta": "Embeddings & Similarity: RAG-ன் பின்னுள்ள கணிதம்"
+  },
+  "description": {
+    "en": "Deep dive into text embeddings, cosine similarity, and FAISS — the foundation of all semantic search and RAG systems.",
+    "ta": "Text embeddings, cosine similarity, FAISS ஆகியவற்றில் ஆழமாக மூழ்குங்கள் — அனைத்து semantic search மற்றும் RAG அமைப்புகளின் அடித்தளம்."
+  },
+  "xp_reward": 70,
+  "next_unlock": "vector_databases",
+  "story_variants": {
+    "en": "## Vaathiyaar's Number Universe\n\nVaathiyaar draws a coordinate system. \"Students, computers don't understand words — they understand numbers. An embedding converts words into a list of numbers (a vector) where SIMILAR words are CLOSE together in this number space. 'king' and 'queen' are close. 'king' and 'banana' are far apart.\"\n\n### What is an Embedding?\n\nAn embedding is a list of numbers (typically 768 to 3072 floats) that represents the MEANING of text.\n\n```python\n'cat' → [0.2, 0.8, 0.1, ...] # 1536 numbers\n'dog' → [0.3, 0.7, 0.1, ...] # similar = close vectors\n'car' → [0.9, 0.1, 0.8, ...] # different = far vectors\n```\n\n### Cosine Similarity\n\nMeasures the angle between two vectors:\n- **1.0** = identical meaning\n- **0.0** = unrelated\n- **-1.0** = opposite meaning\n\n### FAISS (Facebook AI Similarity Search)\n\nSearches millions of vectors in milliseconds.\n\n> **Key Insight:** Embeddings capture meaning, not just keywords. 'How to fix a bug' and 'debugging techniques' have high similarity even though they share no words.",
+    "ta": "## வாத்தியாரின் எண் பிரபஞ்சம்\n\nவாத்தியார் ஒரு ஆய அமைப்பை வரைகிறார். \"மாணவர்களே, கணினிகள் சொற்களைப் புரிந்துகொள்வதில்லை — எண்களைப் புரிந்துகொள்ளும். Embedding என்பது சொற்களை எண்களின் பட்டியலாக (vector) மாற்றுகிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "number_universe",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "embedding_concepts",
+      "nodes": [
+        {
+          "label": "Text Embeddings",
+          "children": [
+            "Text → Vector (list of floats)",
+            "Similar text = close vectors",
+            "1536 dimensions (OpenAI)",
+            "Captures meaning, not keywords"
+          ]
+        },
+        {
+          "label": "Similarity Measures",
+          "children": [
+            "Cosine similarity (angle)",
+            "Euclidean distance (straight line)",
+            "Dot product (projection)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "embedding_code",
+      "steps": [
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import OpenAI to use their embedding model"
+          }
+        },
+        {
+          "line": "import numpy as np",
+          "highlight": "import",
+          "explanation": {
+            "en": "NumPy for vector math — cosine similarity calculation"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's create embeddings for some text"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize the client"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Define our texts to embed"
+          }
+        },
+        {
+          "line": "texts = ['I love Python programming', 'Python coding is great', 'The weather is sunny']",
+          "highlight": "texts",
+          "explanation": {
+            "en": "Three texts — first two are similar in meaning, third is different"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Call the embeddings API"
+          }
+        },
+        {
+          "line": "response = client.embeddings.create(",
+          "highlight": "response",
+          "explanation": {
+            "en": "Call the embeddings endpoint — converts text to vectors"
+          }
+        },
+        {
+          "line": "    model='text-embedding-3-small',",
+          "highlight": "model",
+          "explanation": {
+            "en": "text-embedding-3-small is fast and cheap ($0.02/1M tokens)"
+          }
+        },
+        {
+          "line": "    input=texts",
+          "highlight": "input",
+          "explanation": {
+            "en": "Pass all texts at once for batch embedding — more efficient"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "API returns a vector for each input text"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Extract the vectors"
+          }
+        },
+        {
+          "line": "vectors = [np.array(item.embedding) for item in response.data]",
+          "highlight": "vectors",
+          "explanation": {
+            "en": "Convert each embedding to a NumPy array for math operations"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's calculate cosine similarity"
+          }
+        },
+        {
+          "line": "def cosine_similarity(a, b):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Define cosine similarity — measures angle between two vectors"
+          }
+        },
+        {
+          "line": "    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))",
+          "highlight": "return",
+          "explanation": {
+            "en": "Dot product divided by product of magnitudes — result is 0 to 1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "vector_viz",
+      "structure_type": "vector",
+      "data": {
+        "I love Python programming": [0.82, 0.91, 0.15],
+        "Python coding is great": [0.80, 0.89, 0.18],
+        "The weather is sunny": [0.12, 0.08, 0.95]
+      },
+      "visualization": "vector_space",
+      "caption": "Similar texts cluster together in vector space — 'Python' texts are close, 'weather' is far"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_similarity",
+      "variable": "similarity_score",
+      "value": 0.95,
+      "data_type": "float",
+      "color": "#22c55e"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Compare text 0 and text 1 (both about Python)",
+        ">>> sim_01 = cosine_similarity(vectors[0], vectors[1])",
+        ">>> print(f'\"Python programming\" vs \"Python coding\": {sim_01:.4f}')",
+        "\"Python programming\" vs \"Python coding\": 0.9521",
+        "",
+        ">>> # Compare text 0 and text 2 (Python vs weather)",
+        ">>> sim_02 = cosine_similarity(vectors[0], vectors[2])",
+        ">>> print(f'\"Python programming\" vs \"weather sunny\": {sim_02:.4f}')",
+        "\"Python programming\" vs \"weather sunny\": 0.1834",
+        "",
+        ">>> print(f'Vector dimensions: {len(vectors[0])}')",
+        "Vector dimensions: 1536"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function that takes a list of sentences and a query, embeds all of them, calculates cosine similarity between the query and each sentence, and returns the sentences ranked by similarity. Test with 5 sentences and a query.",
+        "ta": "வாக்கியங்களின் பட்டியல் மற்றும் query எடுத்து, அனைத்தையும் embed செய்து, query-க்கும் ஒவ்வொரு வாக்கியத்திற்கும் cosine similarity கணக்கிட்டு, similarity-ன் படி வரிசைப்படுத்தி திருப்பி அனுப்பும் function எழுதுங்கள்."
+      },
+      "starter_code": "from openai import OpenAI\nimport numpy as np\n\nclient = OpenAI()\n\ndef cosine_similarity(a, b):\n    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))\n\ndef semantic_search(sentences, query, top_k=3):\n    # Embed all sentences + query\n    # Calculate similarity\n    # Return top_k ranked results\n    pass\n\nsentences = [\n    'How to train a machine learning model',\n    'Best restaurants in Chennai',\n    'Deep learning neural network tutorial',\n    'Cricket World Cup 2026 schedule',\n    'Introduction to artificial intelligence'\n]\n\nresults = semantic_search(sentences, 'AI and ML tutorials', top_k=3)\nfor score, text in results:\n    print(f'{score:.4f}: {text}')",
+      "expected_output": "0.8921: Introduction to artificial intelligence\n0.8456: How to train a machine learning model\n0.8234: Deep learning neural network tutorial",
+      "hints": {
+        "en": [
+          "Embed sentences + [query] together in one API call",
+          "The query embedding is the last one in the list",
+          "Use sorted() with key=lambda x: x[0], reverse=True to rank"
+        ],
+        "ta": [
+          "sentences + [query] ஒரே API call-ல் embed செய்யுங்கள்",
+          "Query embedding பட்டியலில் கடைசியாக இருக்கும்",
+          "sorted() உடன் key=lambda x: x[0], reverse=True பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does an embedding represent?",
+        "ta": "Embedding என்ன குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "A compressed image",
+          "A list of numbers representing the meaning of text",
+          "A URL link",
+          "A hash code"
+        ],
+        "ta": [
+          "சுருக்கப்பட்ட படம்",
+          "உரையின் பொருளைக் குறிக்கும் எண்களின் பட்டியல்",
+          "URL link",
+          "Hash code"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A cosine similarity of 0.95 between two texts means:",
+        "ta": "இரண்டு உரைகளுக்கு இடையே 0.95 cosine similarity என்றால்:"
+      },
+      "options": {
+        "en": [
+          "They are completely unrelated",
+          "They are very similar in meaning",
+          "One is 95% longer than the other",
+          "They have 95% of the same words"
+        ],
+        "ta": [
+          "அவை முற்றிலும் தொடர்பற்றவை",
+          "அவை பொருளில் மிகவும் ஒத்தவை",
+          "ஒன்று மற்றொன்றை விட 95% நீளமானது",
+          "அவற்றில் 95% ஒரே சொற்கள் உள்ளன"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are embeddings better than keyword matching for search?",
+        "ta": "தேடலுக்கு keyword matching-ஐ விட embeddings ஏன் சிறந்தவை?"
+      },
+      "options": {
+        "en": [
+          "They are faster",
+          "They capture meaning, not just exact word matches",
+          "They use less memory",
+          "They don't need an API"
+        ],
+        "ta": [
+          "வேகமானவை",
+          "சரியான சொல் பொருத்தங்களை மட்டுமல்ல, பொருளைப் பிடிக்கின்றன",
+          "குறைவான memory பயன்படுத்துகின்றன",
+          "API தேவையில்லை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["embeddings", "cosine_similarity", "faiss", "semantic_search"],
+    "concepts_required": ["rag_fundamentals", "llm_how_they_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["semantic_search", "recommendation_systems"],
+    "category": "ai_rag",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

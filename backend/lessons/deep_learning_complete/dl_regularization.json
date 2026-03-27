@@ -1,0 +1,191 @@
+{
+  "id": "dl_regularization",
+  "topic": "regularization",
+  "track": "deep_learning_complete",
+  "module": "training_fundamentals",
+  "order": 8,
+  "title": {
+    "en": "Regularization: Preventing Overfitting",
+    "ta": "ரெகுலரைசேஷன்: அதிகமாக பொருத்துவதைத் தடுத்தல்"
+  },
+  "description": {
+    "en": "Learn dropout, L1/L2 regularization, batch normalization, and early stopping to build models that generalize well.",
+    "ta": "நன்கு பொதுமைப்படுத்தும் மாதிரிகளை உருவாக்க dropout, L1/L2, batch normalization, early stopping ஆகியவற்றைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Exam Strategy\n\nVaathiyaar shows two students. \"This one memorized every answer — gets 100% on homework but fails the exam. This one understood the concepts — gets 85% on homework but aces the exam. Regularization makes your model the second student.\"\n\n### The Overfitting Problem\n- Model memorizes training data noise\n- Perfect training accuracy, terrible test accuracy\n- Regularization = controlled forgetfulness\n\n### Techniques\n\n```python\nimport torch\nimport torch.nn as nn\n\nclass RegularizedNet(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.net = nn.Sequential(\n            nn.Linear(20, 64),\n            nn.BatchNorm1d(64),   # normalize activations\n            nn.ReLU(),\n            nn.Dropout(0.3),      # randomly zero 30% of neurons\n            nn.Linear(64, 32),\n            nn.BatchNorm1d(32),\n            nn.ReLU(),\n            nn.Dropout(0.3),\n            nn.Linear(32, 1)\n        )\n    \n    def forward(self, x):\n        return self.net(x)\n\nmodel = RegularizedNet()\n\n# L2 regularization via weight_decay in optimizer\noptimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)\n\n# Early stopping logic\nbest_val_loss = float('inf')\npatience = 10\npatience_counter = 0\n\nfor epoch in range(1000):\n    model.train()  # enable dropout\n    # ... training ...\n    \n    model.eval()   # disable dropout\n    with torch.no_grad():\n        val_loss = 0.5  # compute validation loss\n    \n    if val_loss < best_val_loss:\n        best_val_loss = val_loss\n        patience_counter = 0\n        torch.save(model.state_dict(), 'best_model.pth')\n    else:\n        patience_counter += 1\n        if patience_counter >= patience:\n            print(f'Early stopping at epoch {epoch}')\n            break\n```\n\n> **Key Insight:** Always evaluate with model.eval() — dropout and batch norm behave differently during training vs inference!",
+    "ta": "## வாத்தியாரின் தேர்வு உத்தி\n\nவாத்தியார் இரண்டு மாணவர்களைக் காட்டுகிறார். \"இவர் எல்லா பதிலையும் மனப்பாடம் செய்தார் — வீட்டுப்பாடத்தில் 100% ஆனால் தேர்வில் தோல்வி. இவர் கருத்துக்களைப் புரிந்துகொண்டார் — வீட்டுப்பாடத்தில் 85% ஆனால் தேர்வில் சிறப்பு. ரெகுலரைசேஷன் உங்கள் மாதிரியை இரண்டாவது மாணவராக மாற்றுகிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "exam_strategy",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "regularization_concepts",
+      "nodes": [
+        {
+          "label": "Regularization",
+          "children": [
+            "Dropout",
+            "L1 (Lasso)",
+            "L2 (Ridge/weight_decay)",
+            "Batch Normalization",
+            "Early Stopping",
+            "Data Augmentation"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "reg_code",
+      "steps": [
+        {"line": "nn.Dropout(0.3)", "highlight": "Dropout", "explanation": {"en": "Randomly zeroes 30% of neurons during training. Forces redundancy in learned features"}},
+        {"line": "nn.BatchNorm1d(64)", "highlight": "BatchNorm1d", "explanation": {"en": "Normalizes activations across the batch. Stabilizes training and acts as mild regularizer"}},
+        {"line": "weight_decay=1e-4", "highlight": "weight_decay", "explanation": {"en": "L2 regularization: adds penalty for large weights. Keeps weights small and smooth"}},
+        {"line": "model.train()", "highlight": "train", "explanation": {"en": "Enable training mode: dropout active, batch norm uses batch statistics"}},
+        {"line": "model.eval()", "highlight": "eval", "explanation": {"en": "Enable eval mode: dropout disabled, batch norm uses running statistics"}},
+        {"line": "best_val_loss = float('inf')", "highlight": "best_val_loss", "explanation": {"en": "Track best validation loss for early stopping"}},
+        {"line": "patience = 10", "highlight": "patience", "explanation": {"en": "Stop if validation loss doesn't improve for 10 consecutive epochs"}},
+        {"line": "if val_loss < best_val_loss:", "highlight": "if", "explanation": {"en": "Check if current epoch improved validation performance"}},
+        {"line": "    torch.save(model.state_dict(), 'best_model.pth')", "highlight": "save", "explanation": {"en": "Save best model weights — we'll load these after training"}},
+        {"line": "    patience_counter += 1", "highlight": "patience_counter", "explanation": {"en": "No improvement — increment counter toward early stop"}}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "overfit_comparison",
+      "left": {"label": "Without Regularization", "content": "Train acc: 99.8%\nTest acc: 72.3%\nGap: 27.5% (overfitting!)"},
+      "right": {"label": "With Regularization", "content": "Train acc: 92.1%\nTest acc: 89.7%\nGap: 2.4% (generalized!)"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "DataStructure",
+      "id": "dropout_visual",
+      "structure_type": "neural_network",
+      "layers": [
+        {"name": "Input", "nodes": ["x1", "x2", "x3", "x4"], "type": "input"},
+        {"name": "Hidden (dropout)", "nodes": ["h1", "X", "h3", "X", "h5"], "type": "hidden", "note": "X = dropped"},
+        {"name": "Output", "nodes": ["y"], "type": "output"}
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_train_loss",
+      "variable": "train_loss",
+      "value": "0.05",
+      "data_type": "float",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_val_loss",
+      "variable": "val_loss",
+      "value": "0.08",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_patience",
+      "variable": "patience_counter",
+      "value": "0/10",
+      "data_type": "int",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Epoch 50 - Train: 0.32, Val: 0.35",
+        "Epoch 100 - Train: 0.12, Val: 0.15",
+        "Epoch 150 - Train: 0.05, Val: 0.08  <- best model saved",
+        "Epoch 160 - Train: 0.04, Val: 0.09  patience: 1/10",
+        "Epoch 200 - Train: 0.02, Val: 0.12  patience: 5/10",
+        "Epoch 210 - Train: 0.01, Val: 0.14  patience: 10/10",
+        "Early stopping at epoch 210. Best val_loss: 0.08"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "shield_glow",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a deliberately overfit model (no regularization) and a regularized model. Train both on a small dataset (50 samples) and show the train/test accuracy gap.",
+        "ta": "வேண்டுமென்றே அதிகமாக பொருத்தப்பட்ட மாதிரி மற்றும் ரெகுலரைஸ் செய்யப்பட்ட மாதிரியை உருவாக்குங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\n# Small dataset prone to overfitting\nX_train = torch.randn(50, 10)\ny_train = (X_train[:, 0] + X_train[:, 1] > 0).float().unsqueeze(1)\nX_test = torch.randn(200, 10)\ny_test = (X_test[:, 0] + X_test[:, 1] > 0).float().unsqueeze(1)\n\n# TODO: Build OverfitNet (large, no regularization)\n# TODO: Build RegularizedNet (same size + dropout + batch norm + weight_decay)\n# TODO: Train both, compare train/test accuracy\n",
+      "expected_output": "OverfitNet - Train: 100%, Test: 75%\nRegularizedNet - Train: 90%, Test: 88%",
+      "hints": {
+        "en": [
+          "Make OverfitNet with large hidden layers (128, 64) and no dropout",
+          "Add nn.Dropout(0.5) and nn.BatchNorm1d() to RegularizedNet",
+          "Use weight_decay=1e-3 in the optimizer for L2 regularization",
+          "Compute accuracy: ((pred > 0.5) == target).float().mean()"
+        ],
+        "ta": [
+          "OverfitNet-க்கு பெரிய மறைந்த அடுக்குகள் (128, 64) பயன்படுத்தி dropout இல்லாமல்",
+          "RegularizedNet-க்கு nn.Dropout(0.5) மற்றும் nn.BatchNorm1d() சேர்க்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does dropout do during training?",
+        "ta": "பயிற்சியின் போது dropout என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Removes layers from the network", "Randomly zeroes a fraction of neuron outputs", "Reduces the learning rate", "Removes training samples"],
+        "ta": ["நெட்வொர்க்கிலிருந்து அடுக்குகளை அகற்றுகிறது", "நியூரான் வெளியீடுகளின் ஒரு பகுதியை சீரற்ற முறையில் பூஜ்ஜியமாக்குகிறது", "Learning rate-ஐ குறைக்கிறது", "பயிற்சி மாதிரிகளை அகற்றுகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why must you call model.eval() before validation?",
+        "ta": "சரிபார்ப்புக்கு முன் ஏன் model.eval() அழைக்க வேண்டும்?"
+      },
+      "options": {
+        "en": ["To speed up computation", "To disable dropout and use running stats for batch norm", "To save memory", "To enable gradient computation"],
+        "ta": ["கணக்கீட்டை வேகப்படுத்த", "Dropout-ஐ முடக்கி batch norm-க்கு running stats பயன்படுத்த", "நினைவகத்தை சேமிக்க", "சாய்வு கணக்கீட்டை இயக்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does weight_decay in an optimizer implement?",
+        "ta": "ஆப்டிமைசரில் weight_decay என்ன செயல்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["L1 regularization", "L2 regularization", "Dropout", "Early stopping"],
+        "ta": ["L1 ரெகுலரைசேஷன்", "L2 ரெகுலரைசேஷன்", "Dropout", "Early stopping"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dropout", "l1_regularization", "l2_regularization", "batch_normalization", "early_stopping", "overfitting"],
+    "concepts_required": ["gradient_descent", "training_loop"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["model_generalization", "production_models"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

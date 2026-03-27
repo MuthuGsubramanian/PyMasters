@@ -1,0 +1,194 @@
+{
+  "id": "dl_transformer_architecture",
+  "topic": "transformer_architecture",
+  "track": "deep_learning_complete",
+  "module": "attention_and_transformers",
+  "order": 19,
+  "title": {
+    "en": "Transformer Architecture: Attention Is All You Need",
+    "ta": "டிரான்ஸ்ஃபார்மர் கட்டமைப்பு: கவனம்தான் உங்களுக்கு தேவையான அனைத்தும்"
+  },
+  "description": {
+    "en": "Build a Transformer from scratch with encoder-decoder structure, multi-head attention, positional encoding, and feed-forward networks.",
+    "ta": "என்கோடர்-டிகோடர் அமைப்பு, multi-head attention, positional encoding, feed-forward networks உடன் scratch-லிருந்து Transformer உருவாக்குங்கள்."
+  },
+  "xp_reward": 90,
+  "story_variants": {
+    "en": "## Vaathiyaar's Translation Machine\n\nVaathiyaar stands before a machine with two halves. \"The left half (encoder) reads the entire input at once. The right half (decoder) generates the output one token at a time, peeking at the encoder's work. This is the Transformer — the architecture that powers GPT, BERT, and nearly all modern AI.\"\n\n### Transformer Components\n\n```python\nimport torch\nimport torch.nn as nn\nimport math\n\nclass PositionalEncoding(nn.Module):\n    def __init__(self, d_model, max_len=5000):\n        super().__init__()\n        pe = torch.zeros(max_len, d_model)\n        position = torch.arange(0, max_len).unsqueeze(1).float()\n        div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model))\n        pe[:, 0::2] = torch.sin(position * div_term)\n        pe[:, 1::2] = torch.cos(position * div_term)\n        self.register_buffer('pe', pe.unsqueeze(0))\n    \n    def forward(self, x):\n        return x + self.pe[:, :x.size(1)]\n\nclass TransformerBlock(nn.Module):\n    def __init__(self, d_model, num_heads, d_ff, dropout=0.1):\n        super().__init__()\n        self.attention = nn.MultiheadAttention(d_model, num_heads, batch_first=True)\n        self.norm1 = nn.LayerNorm(d_model)\n        self.ff = nn.Sequential(\n            nn.Linear(d_model, d_ff),\n            nn.ReLU(),\n            nn.Dropout(dropout),\n            nn.Linear(d_ff, d_model)\n        )\n        self.norm2 = nn.LayerNorm(d_model)\n        self.dropout = nn.Dropout(dropout)\n    \n    def forward(self, x, mask=None):\n        # Self-attention + residual + layer norm\n        attn_out, _ = self.attention(x, x, x, attn_mask=mask)\n        x = self.norm1(x + self.dropout(attn_out))\n        # Feed-forward + residual + layer norm\n        ff_out = self.ff(x)\n        x = self.norm2(x + self.dropout(ff_out))\n        return x\n\nclass MiniTransformer(nn.Module):\n    def __init__(self, vocab_size, d_model=128, num_heads=8, num_layers=4, d_ff=512):\n        super().__init__()\n        self.embedding = nn.Embedding(vocab_size, d_model)\n        self.pos_encoding = PositionalEncoding(d_model)\n        self.layers = nn.ModuleList([\n            TransformerBlock(d_model, num_heads, d_ff) for _ in range(num_layers)\n        ])\n        self.fc_out = nn.Linear(d_model, vocab_size)\n        self.d_model = d_model\n    \n    def forward(self, x, mask=None):\n        x = self.embedding(x) * math.sqrt(self.d_model)\n        x = self.pos_encoding(x)\n        for layer in self.layers:\n            x = layer(x, mask)\n        return self.fc_out(x)\n\nmodel = MiniTransformer(vocab_size=10000)\nprint(f'Parameters: {sum(p.numel() for p in model.parameters()):,}')\n```\n\n> **Why Transformers Beat RNNs:** No sequential processing — all tokens processed in parallel. Attention connects any two tokens directly, regardless of distance!",
+    "ta": "## வாத்தியாரின் மொழிபெயர்ப்பு இயந்திரம்\n\nவாத்தியார் இரண்டு பாதிகள் கொண்ட இயந்திரத்தின் முன் நிற்கிறார். \"இடது பாதி (encoder) முழு உள்ளீட்டையும் ஒரே நேரத்தில் படிக்கிறது. வலது பாதி (decoder) ஒரு நேரத்தில் ஒரு token-ஐ உருவாக்குகிறது. இது Transformer — GPT, BERT மற்றும் நவீன AI-ஐ இயக்கும் கட்டமைப்பு.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "translation_machine",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "transformer_concepts",
+      "nodes": [
+        {
+          "label": "Transformer",
+          "children": [
+            "Positional Encoding",
+            "Multi-Head Self-Attention",
+            "Layer Normalization",
+            "Feed-Forward Network",
+            "Residual Connections",
+            "Encoder-Decoder"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "transformer_code",
+      "steps": [
+        {"line": "pe[:, 0::2] = torch.sin(position * div_term)", "highlight": "sin", "explanation": {"en": "Positional encoding: sine waves of different frequencies encode token position. Even indices use sin"}},
+        {"line": "pe[:, 1::2] = torch.cos(position * div_term)", "highlight": "cos", "explanation": {"en": "Odd indices use cos. This gives unique position-dependent patterns the model can learn from"}},
+        {"line": "self.attention = nn.MultiheadAttention(d_model, num_heads, batch_first=True)", "highlight": "attention", "explanation": {"en": "Multi-head self-attention: 8 parallel attention heads each learning different patterns"}},
+        {"line": "self.norm1 = nn.LayerNorm(d_model)", "highlight": "LayerNorm", "explanation": {"en": "Layer normalization: normalizes across features (not batch). Stabilizes transformer training"}},
+        {"line": "attn_out, _ = self.attention(x, x, x, attn_mask=mask)", "highlight": "self_attn", "explanation": {"en": "Self-attention: Q=K=V=x. Optional mask for causal (decoder) or padding masking"}},
+        {"line": "x = self.norm1(x + self.dropout(attn_out))", "highlight": "residual", "explanation": {"en": "Residual connection (x + attn_out) followed by layer norm. Same as ResNet idea!"}},
+        {"line": "self.ff = nn.Sequential(nn.Linear(d_model, d_ff), nn.ReLU(), ...)", "highlight": "ff", "explanation": {"en": "Feed-forward network: expand to 4x dimension then compress back. d_ff is typically 4*d_model"}},
+        {"line": "x = self.norm2(x + self.dropout(ff_out))", "highlight": "ff_residual", "explanation": {"en": "Second residual + norm. Each transformer block: attention+residual+norm, then ff+residual+norm"}},
+        {"line": "x = self.embedding(x) * math.sqrt(self.d_model)", "highlight": "scale_embed", "explanation": {"en": "Scale embeddings by sqrt(d_model) to match positional encoding magnitude"}},
+        {"line": "for layer in self.layers: x = layer(x, mask)", "highlight": "stacked", "explanation": {"en": "Stack N transformer blocks. Each refines representations. GPT-3 uses 96 layers!"}}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "transformer_arch",
+      "structure_type": "transformer",
+      "layers": [
+        {"name": "Input Tokens", "nodes": ["[CLS] The cat sat [SEP]"], "type": "input"},
+        {"name": "Embedding + Positional", "nodes": ["128-dim vectors with position info"], "type": "embedding"},
+        {"name": "Transformer Block x4", "nodes": ["MultiHead Attn -> Add&Norm -> FF -> Add&Norm"], "type": "transformer"},
+        {"name": "Output Projection", "nodes": ["vocab_size logits per position"], "type": "output"}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_d_model",
+      "variable": "d_model",
+      "value": "128",
+      "data_type": "int",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_heads",
+      "variable": "num_heads",
+      "value": "8 (each 16-dim)",
+      "data_type": "int",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_params",
+      "variable": "total_params",
+      "value": "3,945,610",
+      "data_type": "int",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "transformer_flow",
+      "from": "tokens",
+      "to": "output",
+      "steps": ["Embed + Position", "Multi-Head Attn", "Add & Norm", "Feed-Forward", "Add & Norm", "Repeat N times", "Linear out"],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "rnn_vs_transformer",
+      "left": {"label": "RNN/LSTM", "content": "Sequential processing\nO(n) steps for n tokens\nVanishing gradients\nHard to parallelize"},
+      "right": {"label": "Transformer", "content": "Parallel processing\nO(1) attention connects any two tokens\nNo vanishing gradients\nHighly parallelizable on GPUs"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> model = MiniTransformer(vocab_size=10000)",
+        ">>> x = torch.randint(0, 10000, (2, 50))  # batch=2, seq=50",
+        ">>> out = model(x)",
+        ">>> out.shape",
+        "torch.Size([2, 50, 10000])",
+        ">>> sum(p.numel() for p in model.parameters())",
+        "3945610"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a mini-Transformer language model and train it to predict the next token on a small text corpus. Generate text by sampling from the trained model.",
+        "ta": "ஒரு சிறிய உரை தொகுப்பில் அடுத்த token-ஐ கணிக்க பயிற்சி செய்யும் mini-Transformer மொழி மாதிரியை உருவாக்குங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\nimport math\n\n# Simple tokenized corpus (word-level)\ntext = 'the cat sat on the mat the dog ran in the park the bird flew over the tree'\ntokens = text.split()\nvocab = {w: i for i, w in enumerate(sorted(set(tokens)))}\nidx_to_word = {i: w for w, i in vocab.items()}\nencoded = torch.tensor([vocab[t] for t in tokens])\n\n# TODO: Create input-target pairs (predict next word)\n# TODO: Build MiniTransformer with causal mask\n# TODO: Train for 200 epochs\n# TODO: Generate text starting from 'the'\n",
+      "expected_output": "Generated: the cat sat on the mat the dog ran...",
+      "hints": {
+        "en": [
+          "Input: encoded[:-1], Target: encoded[1:]",
+          "Create causal mask: torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()",
+          "Use CrossEntropyLoss with output reshaped to (seq_len, vocab_size)",
+          "For generation, feed tokens one at a time with the mask"
+        ],
+        "ta": [
+          "Input: encoded[:-1], Target: encoded[1:]",
+          "Causal mask: torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why do Transformers need positional encoding?",
+        "ta": "Transformers-க்கு ஏன் positional encoding தேவை?"
+      },
+      "options": {
+        "en": ["To reduce computation", "Self-attention has no notion of order; positional encoding adds position information", "To increase model size", "To handle different languages"],
+        "ta": ["கணக்கீட்டைக் குறைக்க", "Self-attention-க்கு வரிசை பற்றிய எண்ணம் இல்லை; positional encoding நிலை தகவலைச் சேர்க்கிறது", "மாதிரி அளவை அதிகரிக்க", "வெவ்வேறு மொழிகளைக் கையாள"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the purpose of the feed-forward network in each Transformer block?",
+        "ta": "ஒவ்வொரு Transformer block-லும் feed-forward network-ன் நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": ["To compute attention", "To add non-linear transformation and increase model capacity per position", "To encode positions", "To reduce dimensions"],
+        "ta": ["Attention கணக்கிட", "ஒவ்வொரு நிலையிலும் non-linear transformation மற்றும் மாதிரி திறனை அதிகரிக்க", "நிலைகளை குறியாக்க", "பரிமாணங்களைக் குறைக்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is a causal mask in a decoder Transformer?",
+        "ta": "Decoder Transformer-ல் causal mask என்ன?"
+      },
+      "options": {
+        "en": ["It masks out padding tokens", "It prevents each position from attending to future positions", "It masks out rare words", "It removes attention entirely"],
+        "ta": ["Padding tokens-ஐ மறைக்கிறது", "ஒவ்வொரு நிலையும் எதிர்கால நிலைகளுக்கு கவனம் செலுத்துவதைத் தடுக்கிறது", "அரிதான வார்த்தைகளை மறைக்கிறது", "Attention-ஐ முழுமையாக நீக்குகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["transformer", "positional_encoding", "multi_head_attention", "layer_norm", "encoder_decoder", "causal_mask"],
+    "concepts_required": ["attention_mechanism", "self_attention"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 45,
+    "real_world_application": ["language_models", "machine_translation", "gpt", "bert"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

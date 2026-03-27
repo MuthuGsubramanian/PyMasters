@@ -1,0 +1,252 @@
+{
+  "id": "heaps",
+  "topic": "heaps",
+  "track": "dsa",
+  "module": "tree_structures",
+  "order": 9,
+  "title": {
+    "en": "Heaps: Priority Made Easy",
+    "ta": "குவியல்கள்: முன்னுரிமை எளிதாக"
+  },
+  "description": {
+    "en": "Master min-heaps and max-heaps using Python's heapq module. Understand heap operations and build a priority queue.",
+    "ta": "Python-ன் heapq module பயன்படுத்தி min-heaps மற்றும் max-heaps கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Emergency Room\n\nVaathiyaar simulates a hospital ER. \"The sickest patient is seen first — not the one who arrived first. That's a heap!\"\n\n### What is a Heap?\n- A **complete binary tree** stored as an array\n- **Min-heap**: Parent ≤ Children (smallest at root)\n- **Max-heap**: Parent ≥ Children (largest at root)\n- Insert and extract are both **O(log n)**\n- Getting the min/max is **O(1)**\n\n### Python's heapq Module\n\n```python\nimport heapq\n\n# Min-heap operations\nnums = [5, 3, 8, 1, 2]\nheapq.heapify(nums)        # Convert list to min-heap: O(n)\nprint(nums)                 # [1, 2, 8, 5, 3]\n\nheapq.heappush(nums, 0)    # Insert 0: O(log n)\nprint(heapq.heappop(nums)) # Extract min (0): O(log n)\n\n# Get k smallest/largest\ndata = [10, 4, 5, 8, 6, 11, 26]\nprint(heapq.nsmallest(3, data))  # [4, 5, 6]\nprint(heapq.nlargest(3, data))   # [26, 11, 10]\n```\n\n### Max-Heap Trick\n\n```python\n# Python only has min-heap, negate values for max-heap\nmax_heap = []\nfor val in [3, 1, 4, 1, 5]:\n    heapq.heappush(max_heap, -val)\n\nlargest = -heapq.heappop(max_heap)  # 5\n```\n\n> **Key Concept:** Heaps are perfect for \"top K\" problems. Need the 3 largest? Use a min-heap of size 3!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "emergency_room",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Heap",
+          "children": [
+            "Complete binary tree",
+            "Min-heap / Max-heap",
+            "heapq module",
+            "O(log n) insert/extract",
+            "O(1) peek min/max"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_heap",
+      "steps": [
+        {
+          "line": "import heapq",
+          "highlight": "heapq",
+          "explanation": {
+            "en": "Import Python's built-in heap module — implements min-heap",
+            "ta": "Python-ன் built-in heap module-ஐ இறக்குமதி செய்யுங்கள் — min-heap-ஐ செயல்படுத்தும்"
+          }
+        },
+        {
+          "line": "nums = [5, 3, 8, 1, 2]",
+          "highlight": "nums",
+          "explanation": {
+            "en": "Start with an unsorted list",
+            "ta": "வரிசைப்படுத்தப்படாத பட்டியலுடன் தொடங்குங்கள்"
+          }
+        },
+        {
+          "line": "heapq.heapify(nums)",
+          "highlight": "heapify",
+          "explanation": {
+            "en": "Convert list to min-heap in-place — O(n) time!",
+            "ta": "பட்டியலை min-heap ஆக in-place மாற்றுங்கள் — O(n) நேரம்!"
+          }
+        },
+        {
+          "line": "print(nums)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Output: [1, 2, 8, 5, 3] — smallest element (1) is at index 0",
+            "ta": "வெளியீடு: [1, 2, 8, 5, 3] — சிறிய உறுப்பு (1) index 0 ல் உள்ளது"
+          }
+        },
+        {
+          "line": "heapq.heappush(nums, 0)",
+          "highlight": "heappush",
+          "explanation": {
+            "en": "Push 0 into the heap — it bubbles up to become the new min",
+            "ta": "0 ஐ heap-ல் push செய்யுங்கள் — புதிய min ஆக மேலே எழும்"
+          }
+        },
+        {
+          "line": "smallest = heapq.heappop(nums)",
+          "highlight": "heappop",
+          "explanation": {
+            "en": "Pop the smallest element (0) — heap restructures in O(log n)",
+            "ta": "சிறிய உறுப்பை (0) pop செய்யுங்கள் — heap O(log n) ல் மறுகட்டமைக்கும்"
+          }
+        },
+        {
+          "line": "print(smallest)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Output: 0 — the minimum was extracted",
+            "ta": "வெளியீடு: 0 — குறைந்தபட்சம் பிரித்தெடுக்கப்பட்டது"
+          }
+        },
+        {
+          "line": "# Top K problem",
+          "highlight": "Top K",
+          "explanation": {
+            "en": "A classic heap application: find the K largest elements",
+            "ta": "ஒரு பாரம்பரிய heap பயன்பாடு: K பெரிய உறுப்புகளை கண்டறியுங்கள்"
+          }
+        },
+        {
+          "line": "data = [10, 4, 5, 8, 6, 11, 26]",
+          "highlight": "data",
+          "explanation": {
+            "en": "Sample data to find top K elements from",
+            "ta": "top K உறுப்புகளை கண்டறிய மாதிரி தரவு"
+          }
+        },
+        {
+          "line": "top3 = heapq.nlargest(3, data)",
+          "highlight": "nlargest",
+          "explanation": {
+            "en": "Get the 3 largest: [26, 11, 10] — uses a heap internally",
+            "ta": "3 பெரியவை பெறுங்கள்: [26, 11, 10] — உள்நாட்டில் heap பயன்படுத்தும்"
+          }
+        },
+        {
+          "line": "bottom3 = heapq.nsmallest(3, data)",
+          "highlight": "nsmallest",
+          "explanation": {
+            "en": "Get the 3 smallest: [4, 5, 6]",
+            "ta": "3 சிறியவை பெறுங்கள்: [4, 5, 6]"
+          }
+        },
+        {
+          "line": "print(top3, bottom3)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Output: [26, 11, 10] [4, 5, 6]",
+            "ta": "வெளியீடு: [26, 11, 10] [4, 5, 6]"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "heap_visual",
+      "structure_type": "list",
+      "initial_state": [5, 3, 8, 1, 2],
+      "animations": [
+        {"action": "remove", "index": 0, "value": "heapify"},
+        {"action": "add", "index": 0, "value": 1},
+        {"action": "add", "index": 5, "value": 0},
+        {"action": "remove", "index": 0}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_min",
+      "variable": "heap[0]",
+      "value": 1,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_size",
+      "variable": "len(heap)",
+      "value": 5,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "[1, 2, 8, 5, 3]",
+        "0",
+        "[26, 11, 10]",
+        "[4, 5, 6]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use heapq to find the K-th largest element in a list and to merge K sorted lists into one sorted list.",
+        "ta": "ஒரு பட்டியலில் K-வது பெரிய உறுப்பை கண்டறிய heapq பயன்படுத்துங்கள், K வரிசைப்படுத்தப்பட்ட பட்டியல்களை ஒன்றாக இணைக்கவும்."
+      },
+      "starter_code": "import heapq\n\ndef kth_largest(nums, k):\n    # Find the k-th largest element\n    pass\n\ndef merge_sorted_lists(lists):\n    # Merge multiple sorted lists into one\n    pass\n\nprint(kth_largest([3, 1, 4, 1, 5, 9, 2, 6], 3))\nprint(merge_sorted_lists([[1, 4, 7], [2, 5, 8], [3, 6, 9]]))",
+      "expected_output": "5\n[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+      "hints": {
+        "en": [
+          "kth_largest: use heapq.nlargest(k, nums)[-1]",
+          "merge_sorted: use heapq.merge(*lists) and convert to list",
+          "Alternative: maintain a min-heap of size k for kth_largest"
+        ],
+        "ta": [
+          "kth_largest: heapq.nlargest(k, nums)[-1] பயன்படுத்துங்கள்",
+          "merge_sorted: heapq.merge(*lists) பயன்படுத்தி list ஆக மாற்றுங்கள்",
+          "மாற்று: kth_largest-க்கு k அளவு min-heap பராமரிக்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In a min-heap, where is the smallest element?",
+        "ta": "min-heap-ல், சிறிய உறுப்பு எங்கே இருக்கும்?"
+      },
+      "options": {
+        "en": ["At the last index", "At a random position", "At the root (index 0)", "It varies"],
+        "ta": ["கடைசி index-ல்", "சீரற்ற நிலையில்", "Root-ல் (index 0)", "மாறுபடும்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the time complexity of heapq.heapify()?",
+        "ta": "heapq.heapify()-ன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n log n)", "O(n)", "O(log n)", "O(1)"],
+        "ta": ["O(n log n)", "O(n)", "O(log n)", "O(1)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you implement a max-heap using Python's heapq (which is a min-heap)?",
+        "ta": "Python-ன் heapq (min-heap) பயன்படுத்தி max-heap-ஐ எவ்வாறு செயல்படுத்துவீர்கள்?"
+      },
+      "options": {
+        "en": ["Use heapq.maxheap()", "Sort the list in reverse", "Negate all values before pushing", "It's not possible"],
+        "ta": ["heapq.maxheap() பயன்படுத்துங்கள்", "பட்டியலை தலைகீழாக வரிசைப்படுத்துங்கள்", "push செய்யும் முன் அனைத்து மதிப்புகளையும் எதிர்மறையாக்குங்கள்", "சாத்தியமில்லை"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["heap", "min_heap", "max_heap", "heapq", "priority_queue"],
+    "concepts_required": ["binary_tree", "lists"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["task_scheduling", "median_finding", "top_k_problems"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

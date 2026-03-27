@@ -1,0 +1,191 @@
+{
+  "id": "dl_loss_functions",
+  "topic": "loss_functions",
+  "track": "deep_learning_complete",
+  "module": "neural_network_foundations",
+  "order": 5,
+  "title": {
+    "en": "Loss Functions: Measuring How Wrong You Are",
+    "ta": "இழப்பு செயல்பாடுகள்: நீங்கள் எவ்வளவு தவறு என்பதை அளவிடுதல்"
+  },
+  "description": {
+    "en": "Understand MSE, Cross-Entropy, and custom loss functions — the compass that guides neural network learning.",
+    "ta": "MSE, Cross-Entropy, மற்றும் தனிப்பயன் இழப்பு செயல்பாடுகளைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Scorecard\n\nVaathiyaar holds up a scorecard. \"How do you know if your student is improving? You measure the gap between their answer and the correct answer. That's exactly what a loss function does for a neural network.\"\n\n### Loss = How Wrong the Network Is\n\n**MSE (Mean Squared Error):** For regression\n```python\nimport torch\nimport torch.nn as nn\n\npredictions = torch.tensor([2.5, 0.0, 2.1, 7.8])\ntargets = torch.tensor([3.0, -0.5, 2.0, 7.5])\n\nmse_loss = nn.MSELoss()\nloss = mse_loss(predictions, targets)\nprint(f'MSE Loss: {loss.item():.4f}')  # 0.1025\n```\n\n**Cross-Entropy:** For classification\n```python\nlogits = torch.tensor([[2.0, 1.0, 0.1]])  # raw scores\ntarget = torch.tensor([0])  # correct class is 0\n\nce_loss = nn.CrossEntropyLoss()\nloss = ce_loss(logits, target)\nprint(f'CE Loss: {loss.item():.4f}')  # 0.4170\n```\n\n**BCE (Binary Cross-Entropy):** For binary classification\n```python\npreds = torch.tensor([0.9, 0.1, 0.8])\ntargets = torch.tensor([1.0, 0.0, 1.0])\n\nbce_loss = nn.BCELoss()\nloss = bce_loss(preds, targets)\nprint(f'BCE Loss: {loss.item():.4f}')  # 0.1269\n```\n\n> **Rule:** Regression → MSE/MAE | Binary classification → BCE | Multi-class → CrossEntropy",
+    "ta": "## வாத்தியாரின் மதிப்பெண் அட்டை\n\nவாத்தியார் ஒரு மதிப்பெண் அட்டையைக் காட்டுகிறார். \"உங்கள் மாணவர் முன்னேறுகிறாரா என்பதை எப்படி அறிவீர்கள்? அவர்களின் பதிலுக்கும் சரியான பதிலுக்கும் இடையிலான இடைவெளியை அளவிடுவீர்கள். நரம்பியல் நெட்வொர்க்கிற்கு இழப்பு செயல்பாடு அதையே செய்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "scorecard",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "loss_concepts",
+      "nodes": [
+        {
+          "label": "Loss Functions",
+          "children": [
+            "MSE (regression)",
+            "MAE (regression)",
+            "CrossEntropy (multi-class)",
+            "BCE (binary)",
+            "Custom Losses"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "loss_code",
+      "steps": [
+        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch"}},
+        {"line": "import torch.nn as nn", "highlight": "nn", "explanation": {"en": "Import neural network module with loss functions"}},
+        {"line": "predictions = torch.tensor([2.5, 0.0, 2.1, 7.8])", "highlight": "predictions", "explanation": {"en": "Model's predicted values for 4 samples"}},
+        {"line": "targets = torch.tensor([3.0, -0.5, 2.0, 7.5])", "highlight": "targets", "explanation": {"en": "True target values we want to match"}},
+        {"line": "mse_loss = nn.MSELoss()", "highlight": "MSELoss", "explanation": {"en": "MSE = mean of (prediction - target)^2. Penalizes large errors heavily"}},
+        {"line": "loss = mse_loss(predictions, targets)", "highlight": "loss", "explanation": {"en": "Compute MSE: ((2.5-3)^2 + (0-(-0.5))^2 + (2.1-2)^2 + (7.8-7.5)^2) / 4"}},
+        {"line": "logits = torch.tensor([[2.0, 1.0, 0.1]])", "highlight": "logits", "explanation": {"en": "Raw network outputs for 3 classes (before softmax)"}},
+        {"line": "target = torch.tensor([0])", "highlight": "target", "explanation": {"en": "True class index is 0. CrossEntropyLoss expects class indices, not one-hot"}},
+        {"line": "ce_loss = nn.CrossEntropyLoss()", "highlight": "CrossEntropyLoss", "explanation": {"en": "Cross-entropy includes softmax internally. Higher confidence in wrong class = higher loss"}},
+        {"line": "loss = ce_loss(logits, target)", "highlight": "loss", "explanation": {"en": "Computes -log(softmax(logits)[target_class]). Lower loss when model is confident and correct"}},
+        {"line": "preds = torch.tensor([0.9, 0.1, 0.8])", "highlight": "preds", "explanation": {"en": "Binary predictions (already through sigmoid, range 0-1)"}},
+        {"line": "bce_loss = nn.BCELoss()", "highlight": "BCELoss", "explanation": {"en": "Binary cross-entropy for yes/no decisions per sample"}}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "loss_comparison",
+      "left": {"label": "MSE Loss", "content": "For regression tasks\nPenalizes large errors quadratically\nAlways positive\nUnit: squared units of target"},
+      "right": {"label": "Cross-Entropy Loss", "content": "For classification tasks\n-log(probability of true class)\nPenalizes confident wrong answers heavily\nUnit: nats (natural log)"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_mse",
+      "variable": "mse_loss",
+      "value": "0.1025",
+      "data_type": "float",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_ce",
+      "variable": "ce_loss",
+      "value": "0.4170",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_bce",
+      "variable": "bce_loss",
+      "value": "0.1269",
+      "data_type": "float",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "loss_flow",
+      "from": "predictions",
+      "to": "loss_value",
+      "steps": ["predictions", "vs targets", "compute difference", "aggregate (mean)", "scalar loss"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> mse_loss(predictions, targets)",
+        "tensor(0.1025)",
+        ">>> ce_loss(logits, target)",
+        "tensor(0.4170)",
+        ">>> bce_loss(preds, binary_targets)",
+        "tensor(0.1269)",
+        ">>> # Custom loss: Huber loss (smooth L1)",
+        ">>> huber = nn.SmoothL1Loss()",
+        ">>> huber(predictions, targets)",
+        "tensor(0.0887)"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "score_pulse",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a custom weighted loss function that gives 3x penalty for under-predicting (prediction < target) vs over-predicting. Train a simple regression network using your custom loss on synthetic data.",
+        "ta": "குறைவாக கணிப்பதற்கு 3 மடங்கு அபராதம் அளிக்கும் தனிப்பயன் எடையிடப்பட்ட இழப்பு செயல்பாட்டை செயல்படுத்துங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\ndef asymmetric_loss(predictions, targets):\n    diff = predictions - targets\n    # TODO: Apply 3x weight when prediction < target (under-prediction)\n    # Hint: use torch.where(condition, value_if_true, value_if_false)\n    pass\n\n# Synthetic data\ntorch.manual_seed(42)\nX = torch.linspace(0, 10, 100).unsqueeze(1)\ny = 2 * X + 1 + torch.randn_like(X) * 0.5\n\nmodel = nn.Linear(1, 1)\noptimizer = torch.optim.SGD(model.parameters(), lr=0.01)\n\n# TODO: Train with your custom loss for 500 epochs\n",
+      "expected_output": "Epoch 500 - Custom Loss: 0.32, Predictions tend to over-predict (conservative)",
+      "hints": {
+        "en": [
+          "weight = torch.where(diff < 0, torch.tensor(3.0), torch.tensor(1.0))",
+          "loss = (weight * diff ** 2).mean()",
+          "The model will learn to slightly over-predict to avoid the heavier penalty"
+        ],
+        "ta": [
+          "weight = torch.where(diff < 0, torch.tensor(3.0), torch.tensor(1.0))",
+          "loss = (weight * diff ** 2).mean()"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which loss function is typically used for multi-class classification?",
+        "ta": "பல வகுப்பு வகைப்பாட்டிற்கு பொதுவாக எந்த இழப்பு செயல்பாடு பயன்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": ["MSELoss", "BCELoss", "CrossEntropyLoss", "L1Loss"],
+        "ta": ["MSELoss", "BCELoss", "CrossEntropyLoss", "L1Loss"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does nn.CrossEntropyLoss() include internally that you don't need to add?",
+        "ta": "nn.CrossEntropyLoss() உள்ளே என்ன உள்ளடக்கியுள்ளது, நீங்கள் சேர்க்க வேண்டியதில்லை?"
+      },
+      "options": {
+        "en": ["ReLU activation", "Softmax + negative log likelihood", "Dropout", "Batch normalization"],
+        "ta": ["ReLU செயல்பாடு", "Softmax + எதிர்மறை log likelihood", "Dropout", "Batch normalization"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If MSE loss is 0.25, what is the average absolute error approximately?",
+        "ta": "MSE இழப்பு 0.25 எனில், சராசரி முழுமையான பிழை தோராயமாக என்ன?"
+      },
+      "options": {
+        "en": ["0.0625", "0.25", "0.5", "1.0"],
+        "ta": ["0.0625", "0.25", "0.5", "1.0"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["mse_loss", "cross_entropy", "bce_loss", "custom_loss", "huber_loss"],
+    "concepts_required": ["forward_pass", "activation_functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["regression", "classification"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

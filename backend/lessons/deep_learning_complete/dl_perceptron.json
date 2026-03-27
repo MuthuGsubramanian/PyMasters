@@ -1,0 +1,197 @@
+{
+  "id": "dl_perceptron",
+  "topic": "perceptron",
+  "track": "deep_learning_complete",
+  "module": "neural_network_foundations",
+  "order": 1,
+  "title": {
+    "en": "The Perceptron: Your First Artificial Neuron",
+    "ta": "பெர்செப்ட்ரான்: உங்கள் முதல் செயற்கை நியூரான்"
+  },
+  "description": {
+    "en": "Understand how a single neuron computes a weighted sum, adds bias, and applies an activation function to make decisions.",
+    "ta": "ஒரு நியூரான் எவ்வாறு எடையிடப்பட்ட தொகையைக் கணக்கிடுகிறது, பயாஸ் சேர்க்கிறது, செயல்பாட்டு செயல்பாட்டைப் பயன்படுத்துகிறது என்பதைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Neural Workshop\n\nVaathiyaar opens a dusty old circuit board. \"See this tiny node?\" he taps it gently. \"This is a perceptron — the simplest artificial neuron. It takes inputs, multiplies each by a weight, sums them up, adds a bias, and passes the result through an activation function. Just like how your brain's neuron fires or stays silent.\"\n\n### What is a Perceptron?\n- Takes multiple inputs (x1, x2, ...)\n- Each input has a weight (w1, w2, ...)\n- Computes weighted sum: z = w1*x1 + w2*x2 + ... + bias\n- Applies activation function: output = activation(z)\n\n### The Step Function\nThe simplest activation: output 1 if z >= 0, else 0.\n\n```python\nimport torch\nimport torch.nn as nn\n\nclass Perceptron(nn.Module):\n    def __init__(self, input_size):\n        super().__init__()\n        self.linear = nn.Linear(input_size, 1)\n    \n    def forward(self, x):\n        return torch.sigmoid(self.linear(x))\n\nmodel = Perceptron(2)\nx = torch.tensor([1.0, 0.5])\noutput = model(x)\nprint(f'Output: {output.item():.4f}')\n```\n\n> **Key Insight:** A single perceptron can only learn linearly separable patterns. That's why we need networks!",
+    "ta": "## வாத்தியாரின் நரம்பியல் பட்டறை\n\nவாத்தியார் ஒரு பழைய சர்க்யூட் போர்டைத் திறக்கிறார். \"இந்த சிறிய முனையைப் பாருங்கள்\" என்று மெதுவாகத் தட்டுகிறார். \"இது ஒரு பெர்செப்ட்ரான் — எளிமையான செயற்கை நியூரான். இது உள்ளீடுகளை எடுத்து, ஒவ்வொன்றையும் எடையால் பெருக்கி, கூட்டி, பயாஸ் சேர்த்து, செயல்பாட்டு செயல்பாட்டின் வழியாக அனுப்புகிறது.\"\n\n### பெர்செப்ட்ரான் என்றால் என்ன?\n- பல உள்ளீடுகளை எடுக்கிறது (x1, x2, ...)\n- ஒவ்வொரு உள்ளீட்டிற்கும் எடை உள்ளது (w1, w2, ...)\n- எடையிடப்பட்ட தொகை: z = w1*x1 + w2*x2 + ... + bias\n- செயல்பாட்டு செயல்பாடு: output = activation(z)"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "neural_workshop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "perceptron_concepts",
+      "nodes": [
+        {
+          "label": "Perceptron",
+          "children": [
+            "Inputs (x)",
+            "Weights (w)",
+            "Bias (b)",
+            "Weighted Sum (z)",
+            "Activation Function",
+            "Output"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "DataStructure",
+      "id": "neuron_architecture",
+      "structure_type": "neuron_diagram",
+      "layers": [
+        {"name": "Inputs", "nodes": ["x1=1.0", "x2=0.5"]},
+        {"name": "Weights", "nodes": ["w1=0.3", "w2=-0.8"]},
+        {"name": "Sum", "nodes": ["z = 0.3*1.0 + (-0.8)*0.5 + 0.1 = 0.0"]},
+        {"name": "Activation", "nodes": ["sigmoid(0.0) = 0.5"]},
+        {"name": "Output", "nodes": ["0.5"]}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "perceptron_code",
+      "steps": [
+        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch for tensor operations and neural network building"}},
+        {"line": "import torch.nn as nn", "highlight": "nn", "explanation": {"en": "Import neural network module with pre-built layers"}},
+        {"line": "class Perceptron(nn.Module):", "highlight": "Perceptron", "explanation": {"en": "Define a custom neural network class inheriting from nn.Module"}},
+        {"line": "    def __init__(self, input_size):", "highlight": "__init__", "explanation": {"en": "Constructor takes number of input features"}},
+        {"line": "        super().__init__()", "highlight": "super", "explanation": {"en": "Initialize the parent nn.Module class"}},
+        {"line": "        self.linear = nn.Linear(input_size, 1)", "highlight": "nn.Linear", "explanation": {"en": "Create a linear layer: computes w*x + b with input_size weights and 1 output"}},
+        {"line": "    def forward(self, x):", "highlight": "forward", "explanation": {"en": "Define how data flows through the network"}},
+        {"line": "        return torch.sigmoid(self.linear(x))", "highlight": "sigmoid", "explanation": {"en": "Pass weighted sum through sigmoid activation to get output between 0 and 1"}},
+        {"line": "model = Perceptron(2)", "highlight": "model", "explanation": {"en": "Create a perceptron that takes 2 inputs"}},
+        {"line": "x = torch.tensor([1.0, 0.5])", "highlight": "tensor", "explanation": {"en": "Create input tensor with two features"}},
+        {"line": "output = model(x)", "highlight": "output", "explanation": {"en": "Run forward pass: weights * inputs + bias, then sigmoid"}},
+        {"line": "print(f'Output: {output.item():.4f}')", "highlight": "print", "explanation": {"en": "Print the perceptron's output as a scalar value"}}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_weights",
+      "variable": "weights",
+      "value": "[0.3, -0.8]",
+      "data_type": "tensor",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_bias",
+      "variable": "bias",
+      "value": "0.1",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_output",
+      "variable": "output",
+      "value": "0.5",
+      "data_type": "float",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "data_flow",
+      "from": "inputs",
+      "to": "output",
+      "steps": ["x1, x2", "w1*x1 + w2*x2", "+ bias", "sigmoid(z)", "output"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> model = Perceptron(2)",
+        ">>> x = torch.tensor([1.0, 0.5])",
+        ">>> output = model(x)",
+        ">>> print(f'Output: {output.item():.4f}')",
+        "Output: 0.5249",
+        ">>> print(dict(model.named_parameters()))",
+        "{'linear.weight': tensor([[ 0.3017, -0.7981]]), 'linear.bias': tensor([0.1035])}"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "neuron_pulse",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a perceptron that learns the AND gate. Train it on all four input combinations (0,0), (0,1), (1,0), (1,1) with expected outputs 0, 0, 0, 1. Use BCELoss and SGD optimizer.",
+        "ta": "AND கேட்டைக் கற்கும் பெர்செப்ட்ரானை உருவாக்குங்கள். நான்கு உள்ளீட்டு சேர்க்கைகளில் பயிற்சி அளியுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\nclass Perceptron(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.linear = nn.Linear(2, 1)\n    \n    def forward(self, x):\n        return torch.sigmoid(self.linear(x))\n\n# Training data: AND gate\nX = torch.tensor([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])\ny = torch.tensor([[0.0], [0.0], [0.0], [1.0]])\n\nmodel = Perceptron()\ncriterion = nn.BCELoss()\noptimizer = torch.optim.SGD(model.parameters(), lr=0.5)\n\n# TODO: Train for 1000 epochs and print final predictions\n",
+      "expected_output": "Predictions after training:\n[0, 0] -> 0.03\n[0, 1] -> 0.12\n[1, 0] -> 0.12\n[1, 1] -> 0.85",
+      "hints": {
+        "en": [
+          "Use a for loop: for epoch in range(1000):",
+          "Inside the loop: output = model(X), loss = criterion(output, y)",
+          "Call optimizer.zero_grad(), loss.backward(), optimizer.step()",
+          "After training, run model(X) to see predictions"
+        ],
+        "ta": [
+          "for loop பயன்படுத்துங்கள்: for epoch in range(1000):",
+          "Loop உள்: output = model(X), loss = criterion(output, y)",
+          "optimizer.zero_grad(), loss.backward(), optimizer.step() அழையுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a perceptron compute before applying the activation function?",
+        "ta": "செயல்பாட்டு செயல்பாட்டைப் பயன்படுத்துவதற்கு முன் பெர்செப்ட்ரான் என்ன கணக்கிடுகிறது?"
+      },
+      "options": {
+        "en": ["The average of inputs", "The weighted sum of inputs plus bias", "The maximum input value", "The product of all inputs"],
+        "ta": ["உள்ளீடுகளின் சராசரி", "உள்ளீடுகளின் எடையிடப்பட்ட தொகை + பயாஸ்", "அதிகபட்ச உள்ளீட்டு மதிப்பு", "அனைத்து உள்ளீடுகளின் பெருக்கல்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the output range of the sigmoid activation function?",
+        "ta": "சிக்மாய்ட் செயல்பாட்டு செயல்பாட்டின் வெளியீட்டு வரம்பு என்ன?"
+      },
+      "options": {
+        "en": ["(-1, 1)", "(0, 1)", "(0, infinity)", "(-infinity, infinity)"],
+        "ta": ["(-1, 1)", "(0, 1)", "(0, முடிவிலி)", "(-முடிவிலி, முடிவிலி)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which problem can a single perceptron NOT solve?",
+        "ta": "ஒரு பெர்செப்ட்ரானால் எந்த சிக்கலை தீர்க்க முடியாது?"
+      },
+      "options": {
+        "en": ["AND gate", "OR gate", "XOR gate", "NOT gate"],
+        "ta": ["AND கேட்", "OR கேட்", "XOR கேட்", "NOT கேட்"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["perceptron", "weights", "bias", "activation_function", "sigmoid"],
+    "concepts_required": ["python_basics", "numpy_basics"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["binary_classification"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

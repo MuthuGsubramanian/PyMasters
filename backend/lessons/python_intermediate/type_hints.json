@@ -1,0 +1,266 @@
+{
+  "id": "type_hints",
+  "topic": "type_hints",
+  "track": "python_intermediate",
+  "module": "code_quality",
+  "order": 18,
+  "title": {
+    "en": "Type Hints: Self-Documenting Code",
+    "ta": "Type Hints: சுய-ஆவணப்படுத்தும் குறியீடு"
+  },
+  "description": {
+    "en": "Learn Python type annotations — basic types, Optional, Union, List, Dict, and how type hints improve code quality without runtime enforcement.",
+    "ta": "Python type annotations — அடிப்படை types, Optional, Union, List, Dict, type hints எவ்வாறு குறியீட்டு தரத்தை மேம்படுத்துகின்றன என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## Vaathiyaar's Label Maker\n\nVaathiyaar sticks labels on everything in the classroom. \"Python doesn't REQUIRE type annotations, but they make your code **self-documenting**. When you see `def greet(name: str) -> str`, you instantly know what goes in and what comes out!\"\n\n### Why Type Hints?\n- **Documentation**: Functions explain themselves\n- **IDE support**: Better autocomplete and error detection\n- **Tools**: mypy can catch type errors before runtime\n- **Not enforced**: Python ignores them at runtime\n\n### Basic Syntax\n\n```python\ndef greet(name: str, times: int = 1) -> str:\n    return (f'Hello, {name}! ' * times).strip()\n\nage: int = 25\nscores: list[float] = [95.5, 87.3]\n```\n\n### Common Types\n\n| Annotation | Meaning |\n|-----------|----------|\n| `str`, `int`, `float`, `bool` | Basic types |\n| `list[int]` | List of integers |\n| `dict[str, int]` | Dict with str keys, int values |\n| `Optional[str]` | str or None |\n| `Union[int, str]` | int or str |\n| `tuple[int, str]` | Tuple of int and str |\n\n> **Key Concept:** Type hints are **metadata** — Python does NOT enforce them. Use tools like `mypy` to check them. They cost nothing at runtime but save hours of debugging."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "label_maker",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Type Hints",
+          "children": [
+            "Basic types (str, int)",
+            "Collections (list[int])",
+            "Optional[T]",
+            "Union[T1, T2]",
+            "Return type -> T"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from typing import Optional, Union",
+          "highlight": "typing",
+          "explanation": {
+            "en": "Import special types from the typing module"
+          }
+        },
+        {
+          "line": "def greet(name: str, excited: bool = False) -> str:",
+          "highlight": ": str",
+          "explanation": {
+            "en": "name is str, excited is bool with default, returns str"
+          }
+        },
+        {
+          "line": "    if excited:",
+          "highlight": "excited",
+          "explanation": {
+            "en": "Check the boolean parameter"
+          }
+        },
+        {
+          "line": "        return f'HELLO, {name.upper()}!!!'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return an excited greeting"
+          }
+        },
+        {
+          "line": "    return f'Hello, {name}.'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return a calm greeting"
+          }
+        },
+        {
+          "line": "print(greet('Vaathiyaar', excited=True))",
+          "highlight": "greet(",
+          "explanation": {
+            "en": "HELLO, VAATHIYAAR!!!"
+          }
+        },
+        {
+          "line": "def average(numbers: list[float]) -> float:",
+          "highlight": "list[float]",
+          "explanation": {
+            "en": "Parameter is a list of floats, returns a float"
+          }
+        },
+        {
+          "line": "    return sum(numbers) / len(numbers)",
+          "highlight": "return",
+          "explanation": {
+            "en": "Calculate and return the average"
+          }
+        },
+        {
+          "line": "print(average([90.5, 85.0, 92.3]))",
+          "highlight": "average(",
+          "explanation": {
+            "en": "89.26666..."
+          }
+        },
+        {
+          "line": "def find_user(user_id: int) -> Optional[str]:",
+          "highlight": "Optional[str]",
+          "explanation": {
+            "en": "Optional[str] means: returns str OR None"
+          }
+        },
+        {
+          "line": "    users = {1: 'Alice', 2: 'Bob'}",
+          "highlight": "users",
+          "explanation": {
+            "en": "Simple user lookup dictionary"
+          }
+        },
+        {
+          "line": "    return users.get(user_id)",
+          "highlight": ".get",
+          "explanation": {
+            "en": "Returns the name or None if not found"
+          }
+        },
+        {
+          "line": "print(find_user(1))",
+          "highlight": "find_user",
+          "explanation": {
+            "en": "'Alice'"
+          }
+        },
+        {
+          "line": "print(find_user(99))",
+          "highlight": "find_user",
+          "explanation": {
+            "en": "None — user not found"
+          }
+        },
+        {
+          "line": "def process(value: Union[int, str]) -> str:",
+          "highlight": "Union[int, str]",
+          "explanation": {
+            "en": "Union means: accepts int OR str"
+          }
+        },
+        {
+          "line": "    return f'Got: {value} (type: {type(value).__name__})'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Show what was received and its type"
+          }
+        },
+        {
+          "line": "print(process(42))",
+          "highlight": "process(42)",
+          "explanation": {
+            "en": "Got: 42 (type: int)"
+          }
+        },
+        {
+          "line": "print(process('hello'))",
+          "highlight": "process('hello')",
+          "explanation": {
+            "en": "Got: hello (type: str)"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_result",
+      "variable": "greet result",
+      "value": "HELLO, VAATHIYAAR!!!",
+      "data_type": "str",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "HELLO, VAATHIYAAR!!!",
+        "89.26666666666667",
+        "Alice",
+        "None",
+        "Got: 42 (type: int)",
+        "Got: hello (type: str)"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function merge_dicts that takes two dict[str, int] parameters and returns a merged dict[str, int] where overlapping keys sum their values. Add type hints to everything.",
+        "ta": "இரண்டு dict[str, int] parameters எடுத்து, ஒன்றிணைந்த dict[str, int] திருப்பும் merge_dicts செயல்பாடு எழுதுங்கள். அனைத்திற்கும் type hints சேர்க்கவும்."
+      },
+      "starter_code": "def merge_dicts(a: dict[str, int], b: dict[str, int]) -> dict[str, int]:\n    result = a.copy()\n    for key, value in b.items():\n        result[key] = result.get(key, 0) + value\n    return result\n\nx: dict[str, int] = {'a': 1, 'b': 2}\ny: dict[str, int] = {'b': 3, 'c': 4}\nprint(merge_dicts(x, y))",
+      "expected_output": "{'a': 1, 'b': 5, 'c': 4}",
+      "hints": {
+        "en": [
+          "Copy dict a first with a.copy()",
+          "Loop through b and add values",
+          "Use .get(key, 0) for safe default",
+          "Return type is dict[str, int]"
+        ],
+        "ta": [
+          "முதலில் a.copy() மூலம் dict a-ஐ நகலெடுக்கவும்",
+          "b வழியாக loop செய்து values சேர்க்கவும்",
+          ".get(key, 0) பாதுகாப்பான default-க்கு பயன்படுத்தவும்",
+          "Return type dict[str, int]"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Does Python enforce type hints at runtime?",
+        "ta": "Python runtime-ல் type hints-ஐ அமல்படுத்துமா?"
+      },
+      "options": {
+        "en": ["Yes, always", "No, they are metadata only", "Only in strict mode", "Only for functions"],
+        "ta": ["ஆம், எப்போதும்", "இல்லை, metadata மட்டுமே", "strict mode-ல் மட்டும்", "functions-க்கு மட்டும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does Optional[str] mean?",
+        "ta": "Optional[str] என்றால் என்ன?"
+      },
+      "options": {
+        "en": ["Only str", "str or None", "str or int", "Empty string"],
+        "ta": ["str மட்டும்", "str அல்லது None", "str அல்லது int", "வெற்று string"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What tool checks type hints without running the code?",
+        "ta": "குறியீட்டை இயக்காமல் type hints சரிபார்க்கும் கருவி எது?"
+      },
+      "options": {
+        "en": ["pylint", "mypy", "pytest", "black"],
+        "ta": ["pylint", "mypy", "pytest", "black"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["type_hints", "annotations", "Optional", "Union", "typing_module"],
+    "concepts_required": ["functions", "variables", "data_types"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 20,
+    "real_world_application": ["code_documentation", "IDE_support", "static_analysis"],
+    "category": "code_quality",
+    "path_memberships": ["python_intermediate"]
+  }
+}

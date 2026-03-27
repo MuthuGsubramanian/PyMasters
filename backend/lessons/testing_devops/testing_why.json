@@ -1,0 +1,253 @@
+{
+  "id": "testing_why",
+  "topic": "testing_why",
+  "track": "testing_devops",
+  "module": "testing_foundations",
+  "order": 1,
+  "title": {
+    "en": "Why Test? The Test Pyramid",
+    "ta": "ஏன் சோதிக்க வேண்டும்? சோதனை பிரமிட்"
+  },
+  "description": {
+    "en": "Understand why testing matters, explore different test types, and learn the test pyramid strategy for building reliable software.",
+    "ta": "சோதனை ஏன் முக்கியம் என்பதைப் புரிந்துகொள்ளுங்கள், வெவ்வேறு சோதனை வகைகளை ஆராயுங்கள், நம்பகமான மென்பொருளை உருவாக்குவதற்கான சோதனை பிரமிட் உத்தியைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 50,
+  "story_variants": {
+    "en": "## Vaathiyaar's Quality Gate\n\nVaathiyaar walks into the PyMasters workshop holding a broken calculator app. \"Students, this calculator says 2 + 2 = 5. The developer shipped it without testing. Don't be that developer.\"\n\n### Why Test?\n- **Catch bugs early** — before users find them\n- **Enable refactoring** — change code confidently\n- **Document behaviour** — tests show how code should work\n- **Save time** — manual testing doesn't scale\n\n### Types of Tests\n\n| Type | Scope | Speed | Example |\n|------|-------|-------|---------|\n| Unit | Single function | Fast | `test_add()` |\n| Integration | Multiple modules | Medium | `test_api_and_db()` |\n| End-to-End | Full system | Slow | `test_user_checkout()` |\n\n### The Test Pyramid\n\n```\n        /  E2E  \\        ← Few, slow, expensive\n       / Integration \\    ← Some, moderate\n      /    Unit Tests   \\ ← Many, fast, cheap\n```\n\n> **Key Concept:** Write many unit tests, fewer integration tests, and even fewer E2E tests. This pyramid gives the best balance of speed and confidence."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "quality_gate",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "test_types_map",
+      "nodes": [
+        {
+          "label": "Testing",
+          "children": [
+            "Unit Tests",
+            "Integration Tests",
+            "End-to-End Tests",
+            "Test Pyramid"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "first_test_code",
+      "steps": [
+        {
+          "line": "def add(a, b):",
+          "highlight": "add",
+          "explanation": {
+            "en": "Define a simple function we want to test"
+          }
+        },
+        {
+          "line": "    return a + b",
+          "highlight": "return",
+          "explanation": {
+            "en": "The function returns the sum of two numbers"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Blank line separates production code from test code"
+          }
+        },
+        {
+          "line": "def test_add():",
+          "highlight": "test_add",
+          "explanation": {
+            "en": "Test functions start with 'test_' by convention"
+          }
+        },
+        {
+          "line": "    assert add(2, 3) == 5",
+          "highlight": "assert",
+          "explanation": {
+            "en": "assert checks that add(2,3) returns 5 — fails if not"
+          }
+        },
+        {
+          "line": "    assert add(-1, 1) == 0",
+          "highlight": "assert",
+          "explanation": {
+            "en": "Test edge case: negative number plus positive equals zero"
+          }
+        },
+        {
+          "line": "    assert add(0, 0) == 0",
+          "highlight": "assert",
+          "explanation": {
+            "en": "Test boundary: adding two zeros should return zero"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now let's test a broken function to see what happens"
+          }
+        },
+        {
+          "line": "def broken_add(a, b):",
+          "highlight": "broken_add",
+          "explanation": {
+            "en": "A buggy version of add that has a mistake"
+          }
+        },
+        {
+          "line": "    return a * b  # Bug! Should be a + b",
+          "highlight": "a * b",
+          "explanation": {
+            "en": "This multiplies instead of adding — a common typo"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Let's write a test that catches this bug"
+          }
+        },
+        {
+          "line": "def test_broken_add():",
+          "highlight": "test_broken_add",
+          "explanation": {
+            "en": "This test will expose the bug in broken_add"
+          }
+        },
+        {
+          "line": "    assert broken_add(2, 3) == 5  # FAILS! Returns 6",
+          "highlight": "FAILS",
+          "explanation": {
+            "en": "2 * 3 = 6, not 5 — the test catches the multiplication bug"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "pass_vs_fail",
+      "left": {
+        "label": "Test PASSING",
+        "content": "$ python -m pytest test_math.py\n\ntest_math.py::test_add PASSED\n\n1 passed in 0.01s",
+        "status": "pass"
+      },
+      "right": {
+        "label": "Test FAILING",
+        "content": "$ python -m pytest test_math.py\n\ntest_math.py::test_broken_add FAILED\n\nAssertionError: assert 6 == 5\n\n1 failed in 0.02s",
+        "status": "fail"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "test_output",
+      "output": [
+        "$ python -m pytest test_math.py -v",
+        "======================== test session starts ========================",
+        "collected 2 items",
+        "",
+        "test_math.py::test_add PASSED                                [ 50%]",
+        "test_math.py::test_broken_add FAILED                         [100%]",
+        "",
+        "=========================== FAILURES ============================",
+        "_________________________ test_broken_add _________________________",
+        "",
+        ">       assert broken_add(2, 3) == 5",
+        "E       assert 6 == 5",
+        "E        +  where 6 = broken_add(2, 3)",
+        "",
+        "=================== 1 failed, 1 passed in 0.03s ==================="
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "test_pyramid",
+      "structure_type": "pyramid",
+      "layers": [
+        { "label": "E2E Tests", "count": "Few", "color": "#ff6b6b" },
+        { "label": "Integration Tests", "count": "Some", "color": "#ffd93d" },
+        { "label": "Unit Tests", "count": "Many", "color": "#6bcf7f" }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `multiply(a, b)` and a test function `test_multiply()` with at least 3 assert statements testing different inputs including zero and negative numbers.",
+        "ta": "`multiply(a, b)` என்ற செயல்பாட்டையும், குறைந்தது 3 assert கூற்றுகளுடன் `test_multiply()` சோதனை செயல்பாட்டையும் எழுதுங்கள்."
+      },
+      "starter_code": "def multiply(a, b):\n    # Write your function here\n    pass\n\ndef test_multiply():\n    # Write at least 3 assertions\n    assert multiply(2, 3) == 6\n    # Add more assertions here\n    pass\n\ntest_multiply()\nprint('All tests passed!')",
+      "expected_output": "All tests passed!",
+      "hints": {
+        "en": [
+          "multiply should return a * b",
+          "Test with zero: multiply(0, 5) should be 0",
+          "Test with negatives: multiply(-2, 3) should be -6"
+        ],
+        "ta": [
+          "multiply a * b திருப்ப வேண்டும்",
+          "பூஜ்ஜியத்துடன் சோதிக்கவும்: multiply(0, 5) 0 ஆக இருக்க வேண்டும்",
+          "எதிர்மறையுடன் சோதிக்கவும்: multiply(-2, 3) -6 ஆக இருக்க வேண்டும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which type of test is at the BASE of the test pyramid?",
+        "ta": "சோதனை பிரமிட்டின் அடிப்பகுதியில் எந்த வகை சோதனை உள்ளது?"
+      },
+      "options": {
+        "en": ["End-to-End tests", "Integration tests", "Unit tests", "Manual tests"],
+        "ta": ["End-to-End சோதனைகள்", "Integration சோதனைகள்", "Unit சோதனைகள்", "Manual சோதனைகள்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does the `assert` keyword do in Python?",
+        "ta": "Python-ல் `assert` keyword என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Prints a message", "Raises AssertionError if the condition is False", "Returns True always", "Skips the test"],
+        "ta": ["ஒரு செய்தியை அச்சிடும்", "நிபந்தனை False ஆக இருந்தால் AssertionError எழுப்பும்", "எப்போதும் True திருப்பும்", "சோதனையைத் தவிர்க்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why should you write MORE unit tests than E2E tests?",
+        "ta": "E2E சோதனைகளை விட அதிக unit சோதனைகள் ஏன் எழுத வேண்டும்?"
+      },
+      "options": {
+        "en": ["Unit tests look cooler", "Unit tests are fast, cheap, and pinpoint bugs precisely", "E2E tests are not useful", "There is no difference"],
+        "ta": ["Unit சோதனைகள் அழகாக இருக்கும்", "Unit சோதனைகள் வேகமானவை, மலிவானவை, பிழைகளை துல்லியமாக கண்டறியும்", "E2E சோதனைகள் பயனற்றவை", "வேறுபாடு இல்லை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["testing_basics", "test_pyramid", "assert", "test_types"],
+    "concepts_required": ["functions"],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 20,
+    "real_world_application": ["qa_engineering", "software_reliability"],
+    "category": "testing",
+    "path_memberships": ["testing_devops"]
+  }
+}

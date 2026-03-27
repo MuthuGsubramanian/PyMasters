@@ -1,0 +1,259 @@
+{
+  "id": "dynamic_programming",
+  "topic": "dynamic_programming",
+  "track": "dsa",
+  "module": "recursion_dp",
+  "order": 17,
+  "title": {
+    "en": "Dynamic Programming: Solving Overlapping Subproblems",
+    "ta": "Dynamic Programming: மேலெழுந்த துணைச்சிக்கல்களை தீர்த்தல்"
+  },
+  "description": {
+    "en": "Master bottom-up tabulation for classic DP problems — coin change, knapsack, and longest common subsequence.",
+    "ta": "பாரம்பரிய DP சிக்கல்களுக்கான bottom-up tabulation கற்றுக்கொள்ளுங்கள் — coin change, knapsack, longest common subsequence."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Coin Puzzle\n\nVaathiyaar places coins on the table: 1, 5, and 10. \"Make exactly 13 using the fewest coins. Don't guess — build the answer step by step. That's Dynamic Programming!\"\n\n### The DP Framework\n1. **Define subproblems** — What is dp[i]?\n2. **Find recurrence** — How does dp[i] relate to smaller subproblems?\n3. **Set base cases** — What are the trivial solutions?\n4. **Fill the table** — Bottom-up, smallest to largest\n5. **Extract answer** — Usually dp[n]\n\n### Coin Change Problem\n\n```python\ndef coin_change(coins, amount):\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0  # base case: 0 coins needed for amount 0\n\n    for i in range(1, amount + 1):\n        for coin in coins:\n            if coin <= i and dp[i - coin] + 1 < dp[i]:\n                dp[i] = dp[i - coin] + 1\n\n    return dp[amount] if dp[amount] != float('inf') else -1\n\nprint(coin_change([1, 5, 10], 13))  # 4 (10+1+1+1)\n```\n\n### 0/1 Knapsack\n\n```python\ndef knapsack(weights, values, capacity):\n    n = len(weights)\n    dp = [[0] * (capacity + 1) for _ in range(n + 1)]\n\n    for i in range(1, n + 1):\n        for w in range(capacity + 1):\n            dp[i][w] = dp[i-1][w]  # don't take item i\n            if weights[i-1] <= w:\n                take = dp[i-1][w - weights[i-1]] + values[i-1]\n                dp[i][w] = max(dp[i][w], take)\n\n    return dp[n][capacity]\n```\n\n### Longest Common Subsequence\n\n```python\ndef lcs(s1, s2):\n    m, n = len(s1), len(s2)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s1[i-1] == s2[j-1]:\n                dp[i][j] = dp[i-1][j-1] + 1\n            else:\n                dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n\n    return dp[m][n]\n```\n\n> **Key Concept:** DP = recursion + memoization turned into iteration. If a problem has **overlapping subproblems** and **optimal substructure**, DP applies."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "coin_puzzle",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Dynamic Programming",
+          "children": [
+            "Overlapping Subproblems",
+            "Optimal Substructure",
+            "Bottom-up Tabulation",
+            "State Transition",
+            "Space Optimization"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_dp",
+      "steps": [
+        {
+          "line": "def coin_change(coins, amount):",
+          "highlight": "coin_change",
+          "explanation": {
+            "en": "Find minimum coins needed to make the given amount",
+            "ta": "கொடுக்கப்பட்ட தொகையை உருவாக்க குறைந்தபட்ச நாணயங்களை கண்டறியுங்கள்"
+          }
+        },
+        {
+          "line": "    dp = [float('inf')] * (amount + 1)",
+          "highlight": "dp",
+          "explanation": {
+            "en": "dp[i] = minimum coins for amount i. Initialize all to infinity",
+            "ta": "dp[i] = தொகை i-க்கு குறைந்தபட்ச நாணயங்கள். அனைத்தையும் infinity ஆக துவக்குங்கள்"
+          }
+        },
+        {
+          "line": "    dp[0] = 0",
+          "highlight": "dp[0]",
+          "explanation": {
+            "en": "Base case: 0 coins needed to make amount 0",
+            "ta": "Base case: தொகை 0 செய்ய 0 நாணயங்கள் தேவை"
+          }
+        },
+        {
+          "line": "    for i in range(1, amount + 1):",
+          "highlight": "for i",
+          "explanation": {
+            "en": "Build solution for each amount from 1 to target",
+            "ta": "1 முதல் இலக்கு வரை ஒவ்வொரு தொகைக்கும் தீர்வை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "        for coin in coins:",
+          "highlight": "for coin",
+          "explanation": {
+            "en": "Try each coin denomination",
+            "ta": "ஒவ்வொரு நாணய மதிப்பையும் முயற்சிக்கவும்"
+          }
+        },
+        {
+          "line": "            if coin <= i and dp[i - coin] + 1 < dp[i]:",
+          "highlight": "dp[i - coin] + 1",
+          "explanation": {
+            "en": "If using this coin gives fewer total coins, update dp[i]",
+            "ta": "இந்த நாணயத்தை பயன்படுத்துவது குறைவான மொத்த நாணயங்களைக் கொடுத்தால், dp[i]-ஐ புதுப்பிக்கவும்"
+          }
+        },
+        {
+          "line": "                dp[i] = dp[i - coin] + 1",
+          "highlight": "dp[i]",
+          "explanation": {
+            "en": "Take this coin (1) + best solution for remaining amount",
+            "ta": "இந்த நாணயத்தை எடுக்கவும் (1) + மீதமுள்ள தொகைக்கு சிறந்த தீர்வு"
+          }
+        },
+        {
+          "line": "print(coin_change([1, 5, 10], 13))",
+          "highlight": "print",
+          "explanation": {
+            "en": "Output: 4 — one 10 and three 1s",
+            "ta": "வெளியீடு: 4 — ஒரு 10 மற்றும் மூன்று 1 கள்"
+          }
+        },
+        {
+          "line": "def lcs(s1, s2):",
+          "highlight": "lcs",
+          "explanation": {
+            "en": "Find longest common subsequence between two strings",
+            "ta": "இரண்டு சரங்களுக்கு இடையே longest common subsequence கண்டறியுங்கள்"
+          }
+        },
+        {
+          "line": "    dp = [[0] * (n + 1) for _ in range(m + 1)]",
+          "highlight": "dp",
+          "explanation": {
+            "en": "2D table: dp[i][j] = LCS length for s1[:i] and s2[:j]",
+            "ta": "2D table: dp[i][j] = s1[:i] மற்றும் s2[:j]-க்கு LCS நீளம்"
+          }
+        },
+        {
+          "line": "            if s1[i-1] == s2[j-1]:",
+          "highlight": "==",
+          "explanation": {
+            "en": "Characters match — extend the LCS by 1",
+            "ta": "எழுத்துகள் பொருந்துகின்றன — LCS-ஐ 1 ஆல் நீட்டுங்கள்"
+          }
+        },
+        {
+          "line": "                dp[i][j] = dp[i-1][j-1] + 1",
+          "highlight": "dp[i-1][j-1] + 1",
+          "explanation": {
+            "en": "Take diagonal value + 1 (both characters included in LCS)",
+            "ta": "diagonal மதிப்பு + 1 எடுக்கவும் (இரண்டு எழுத்துகளும் LCS-ல் சேர்க்கப்படும்)"
+          }
+        },
+        {
+          "line": "                dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
+          "highlight": "max",
+          "explanation": {
+            "en": "Characters don't match — take the better of skipping either character",
+            "ta": "எழுத்துகள் பொருந்தவில்லை — ஒரு எழுத்தை தவிர்ப்பதில் சிறந்ததை எடுக்கவும்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "dp_flow",
+      "steps": [
+        {"label": "Define dp[i] meaning", "active": true},
+        {"label": "Find recurrence relation", "active": true},
+        {"label": "Set base cases", "active": true},
+        {"label": "Fill table bottom-up", "active": true},
+        {"label": "Return dp[n]", "active": true}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_dp",
+      "variable": "dp[13]",
+      "value": 4,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_coins",
+      "variable": "coins",
+      "value": "[1, 5, 10]",
+      "data_type": "list",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "coin_change([1,5,10], 13) = 4",
+        "knapsack([2,3,4,5], [3,4,5,6], 8) = 10",
+        "lcs('ABCBDAB', 'BDCAB') = 4",
+        "dp table filled in O(n*amount) time"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Solve the coin change problem and the longest common subsequence problem. For LCS, also reconstruct the actual subsequence from the DP table.",
+        "ta": "coin change சிக்கலையும் longest common subsequence சிக்கலையும் தீர்க்கவும். LCS-க்கு, DP table-லிருந்து உண்மையான subsequence-ஐயும் மீட்டெடுக்கவும்."
+      },
+      "starter_code": "def coin_change(coins, amount):\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0\n    for i in range(1, amount + 1):\n        for coin in coins:\n            if coin <= i:\n                dp[i] = min(dp[i], dp[i - coin] + 1)\n    return dp[amount] if dp[amount] != float('inf') else -1\n\ndef lcs_with_string(s1, s2):\n    # Return both the length and the actual subsequence\n    pass\n\nprint(coin_change([1, 5, 10], 13))\nprint(coin_change([2], 3))\nlength, subseq = lcs_with_string('ABCBDAB', 'BDCAB')\nprint(f'LCS length: {length}, sequence: {subseq}')",
+      "expected_output": "4\n-1\nLCS length: 4, sequence: BCAB",
+      "hints": {
+        "en": [
+          "For LCS reconstruction: trace back from dp[m][n] to dp[0][0]",
+          "If s1[i-1]==s2[j-1], include char and go diagonal",
+          "Otherwise, go in direction of larger dp value"
+        ],
+        "ta": [
+          "LCS reconstruction-க்கு: dp[m][n] லிருந்து dp[0][0] வரை பின்னோக்கி trace செய்யுங்கள்",
+          "s1[i-1]==s2[j-1] என்றால், char-ஐ சேர்த்து diagonal செல்லுங்கள்",
+          "இல்லையெனில், பெரிய dp மதிப்பு திசையில் செல்லுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What two properties must a problem have for DP to apply?",
+        "ta": "DP பொருந்த ஒரு சிக்கலுக்கு எந்த இரண்டு பண்புகள் இருக்க வேண்டும்?"
+      },
+      "options": {
+        "en": ["Sorting and searching", "Overlapping subproblems and optimal substructure", "Recursion and iteration", "Graphs and trees"],
+        "ta": ["Sorting மற்றும் searching", "Overlapping subproblems மற்றும் optimal substructure", "Recursion மற்றும் iteration", "Graphs மற்றும் trees"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the time complexity of the coin change DP solution for amount A with C coin types?",
+        "ta": "A தொகைக்கு C நாணய வகைகளுடன் coin change DP தீர்வின் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(A)", "O(A × C)", "O(A²)", "O(2^A)"],
+        "ta": ["O(A)", "O(A × C)", "O(A²)", "O(2^A)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the difference between top-down and bottom-up DP?",
+        "ta": "top-down மற்றும் bottom-up DP இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": ["Top-down is faster", "Top-down uses recursion+cache, bottom-up uses iteration+table", "They produce different answers", "Bottom-up uses more memory"],
+        "ta": ["Top-down வேகமானது", "Top-down recursion+cache, bottom-up iteration+table பயன்படுத்தும்", "வெவ்வேறு விடைகளை உருவாக்கும்", "Bottom-up அதிக நினைவகம் பயன்படுத்தும்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dynamic_programming", "tabulation", "coin_change", "knapsack", "lcs"],
+    "concepts_required": ["recursion", "memoization", "arrays"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["resource_optimization", "text_diffing", "financial_planning"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

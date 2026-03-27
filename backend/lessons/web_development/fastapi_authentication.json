@@ -1,0 +1,240 @@
+{
+  "id": "fastapi_authentication",
+  "topic": "fastapi_authentication",
+  "track": "web_development",
+  "module": "fastapi_framework",
+  "order": 13,
+  "title": {
+    "en": "FastAPI Authentication: JWT, OAuth2 & Security",
+    "ta": "FastAPI அங்கீகாரம்: JWT, OAuth2 & பாதுகாப்பு"
+  },
+  "description": {
+    "en": "Implement token-based authentication with JWT, OAuth2 password flow, and dependency injection for protected routes.",
+    "ta": "JWT, OAuth2 கடவுச்சொல் ஓட்டம் மற்றும் பாதுகாக்கப்பட்ட வழிகளுக்கான சார்பு செலுத்துதல் மூலம் டோக்கன் அடிப்படையிலான அங்கீகாரத்தை செயல்படுத்துங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## The Security Checkpoint\n\nVaathiyaar shows an airport security layout. \"APIs don't have cookies like websites. Instead, they use **tokens** — a digital passport that proves who you are. The most popular token format is **JWT** (JSON Web Token).\"\n\n### Sessions vs Tokens\n\n| Feature | Sessions (cookies) | Tokens (JWT) |\n|---------|-------------------|---------------|\n| Storage | Server-side | Client-side |\n| Scalable | Needs shared store | Stateless |\n| Mobile | Awkward | Perfect |\n| Security | CSRF risk | XSS risk |\n\n### JWT Structure\n```\nheader.payload.signature\n\nHeader:  {\"alg\": \"HS256\", \"typ\": \"JWT\"}\nPayload: {\"sub\": \"user123\", \"exp\": 1711555200}\nSignature: HMAC-SHA256(header + payload, SECRET_KEY)\n```\n\n### OAuth2 Password Flow\n1. User sends username + password to `/token`\n2. Server verifies credentials\n3. Server creates JWT and returns it\n4. Client sends JWT in `Authorization: Bearer <token>` header\n5. Server validates JWT on each request\n\n> **Key Concept:** JWTs are self-contained — the server doesn't need to store them. The server just verifies the signature to ensure the token wasn't tampered with. But this means you can't revoke them easily — use short expiry times."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "security_checkpoint",
+      "duration_ms": 4000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "jwt_flow",
+      "steps": [
+        "Client sends POST /token with username + password",
+        "Server verifies credentials against database",
+        "Server creates JWT with user info + expiry",
+        "Server returns {access_token: 'eyJ...', token_type: 'bearer'}",
+        "Client stores token (localStorage/memory)",
+        "Client sends Authorization: Bearer eyJ... with requests",
+        "Server decodes JWT and extracts user identity",
+        "Server checks expiry and grants/denies access"
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "auth_overview",
+      "nodes": [
+        {
+          "label": "FastAPI Auth",
+          "children": [
+            "OAuth2PasswordBearer (scheme)",
+            "JWT (python-jose)",
+            "Password Hashing (passlib)",
+            "Depends() (protected routes)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "jwt_demo",
+      "steps": [
+        {
+          "line": "from fastapi import FastAPI, Depends, HTTPException, status\nfrom fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm",
+          "highlight": "OAuth2PasswordBearer",
+          "explanation": {
+            "en": "OAuth2PasswordBearer tells FastAPI to expect a Bearer token"
+          }
+        },
+        {
+          "line": "from jose import JWTError, jwt\nfrom passlib.context import CryptContext\nfrom datetime import datetime, timedelta\nfrom pydantic import BaseModel",
+          "highlight": "jose",
+          "explanation": {
+            "en": "python-jose for JWT encoding/decoding, passlib for password hashing"
+          }
+        },
+        {
+          "line": "SECRET_KEY = 'your-256-bit-secret-change-in-production'\nALGORITHM = 'HS256'\nACCESS_TOKEN_EXPIRE_MINUTES = 30",
+          "highlight": "SECRET_KEY",
+          "explanation": {
+            "en": "Configure JWT: secret key for signing, algorithm, and token lifetime"
+          }
+        },
+        {
+          "line": "pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')\noauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')",
+          "highlight": "bcrypt",
+          "explanation": {
+            "en": "bcrypt for hashing passwords; oauth2_scheme extracts tokens from headers"
+          }
+        },
+        {
+          "line": "# Fake user database\nfake_users_db = {\n    'pymaster': {\n        'username': 'pymaster',\n        'hashed_password': pwd_context.hash('secret123'),\n        'email': 'py@master.com',\n        'is_active': True\n    }\n}",
+          "highlight": "fake_users_db",
+          "explanation": {
+            "en": "Simulated user database — in production, use a real database"
+          }
+        },
+        {
+          "line": "class Token(BaseModel):\n    access_token: str\n    token_type: str\n\nclass TokenData(BaseModel):\n    username: str | None = None",
+          "highlight": "Token",
+          "explanation": {
+            "en": "Pydantic models for token response and token payload"
+          }
+        },
+        {
+          "line": "def verify_password(plain_password, hashed_password):\n    return pwd_context.verify(plain_password, hashed_password)\n\ndef get_password_hash(password):\n    return pwd_context.hash(password)",
+          "highlight": "verify",
+          "explanation": {
+            "en": "Helper functions to hash and verify passwords with bcrypt"
+          }
+        },
+        {
+          "line": "def create_access_token(data: dict, expires_delta: timedelta | None = None):\n    to_encode = data.copy()\n    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))\n    to_encode.update({'exp': expire})\n    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)",
+          "highlight": "jwt.encode",
+          "explanation": {
+            "en": "Create a JWT with user data and expiry timestamp"
+          }
+        },
+        {
+          "line": "async def get_current_user(token: str = Depends(oauth2_scheme)):\n    credentials_exception = HTTPException(\n        status_code=status.HTTP_401_UNAUTHORIZED,\n        detail='Could not validate credentials',\n        headers={'WWW-Authenticate': 'Bearer'},\n    )\n    try:\n        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n        username: str = payload.get('sub')\n        if username is None:\n            raise credentials_exception\n    except JWTError:\n        raise credentials_exception\n    user = fake_users_db.get(username)\n    if user is None:\n        raise credentials_exception\n    return user",
+          "highlight": "jwt.decode",
+          "explanation": {
+            "en": "Dependency: decode JWT, extract username, look up user, return or 401"
+          }
+        },
+        {
+          "line": "app = FastAPI()\n\n@app.post('/token', response_model=Token)\nasync def login(form_data: OAuth2PasswordRequestForm = Depends()):\n    user = fake_users_db.get(form_data.username)\n    if not user or not verify_password(form_data.password, user['hashed_password']):\n        raise HTTPException(status_code=400, detail='Incorrect username or password')\n    access_token = create_access_token(\n        data={'sub': user['username']},\n        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)\n    )\n    return {'access_token': access_token, 'token_type': 'bearer'}",
+          "highlight": "/token",
+          "explanation": {
+            "en": "Login endpoint: verify credentials, return JWT"
+          }
+        },
+        {
+          "line": "@app.get('/users/me')\nasync def read_users_me(current_user: dict = Depends(get_current_user)):\n    return {'username': current_user['username'], 'email': current_user['email']}",
+          "highlight": "Depends(get_current_user)",
+          "explanation": {
+            "en": "Protected endpoint: only accessible with valid JWT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_jwt",
+      "variable": "access_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "data_type": "str",
+      "color": "#E91E63"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_payload",
+      "variable": "payload",
+      "value": "{\"sub\": \"pymaster\", \"exp\": 1711555200}",
+      "data_type": "dict",
+      "color": "#FF9800"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ curl -X POST http://localhost:8000/token -d 'username=pymaster&password=secret123'",
+        "{\"access_token\":\"eyJhbGciOiJIUzI1NiIs...\",\"token_type\":\"bearer\"}",
+        "",
+        "$ curl http://localhost:8000/users/me -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIs...'",
+        "{\"username\":\"pymaster\",\"email\":\"py@master.com\"}",
+        "",
+        "$ curl http://localhost:8000/users/me",
+        "{\"detail\":\"Not authenticated\"}"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a complete JWT authentication system with FastAPI: create a /register endpoint that hashes and stores passwords, a /token endpoint that returns JWTs, and a /profile endpoint protected by the token. Test that unauthenticated requests return 401.",
+        "ta": "FastAPI மூலம் முழுமையான JWT அங்கீகார அமைப்பை செயல்படுத்துங்கள்: கடவுச்சொற்களை ஹாஷ் செய்து சேமிக்கும் /register எண்ட்பாயிண்ட், JWT-களை திருப்பும் /token எண்ட்பாயிண்ட், மற்றும் டோக்கனால் பாதுகாக்கப்பட்ட /profile எண்ட்பாயிண்ட்."
+      },
+      "starter_code": "from fastapi import FastAPI, Depends, HTTPException, status\nfrom fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm\nfrom jose import jwt\nfrom passlib.context import CryptContext\nfrom datetime import datetime, timedelta\nfrom pydantic import BaseModel\n\nSECRET_KEY = 'your-secret'\nALGORITHM = 'HS256'\npwd_context = CryptContext(schemes=['bcrypt'])\noauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')\n\nusers_db = {}\napp = FastAPI()\n\nclass UserRegister(BaseModel):\n    username: str\n    password: str\n    email: str\n\n@app.post('/register')\ndef register(user: UserRegister):\n    if user.username in users_db:\n        raise HTTPException(status_code=400, detail='Username taken')\n    users_db[user.username] = {\n        'username': user.username,\n        'hashed_password': pwd_context.hash(user.password),\n        'email': user.email\n    }\n    return {'message': f'User {user.username} created'}\n\n@app.post('/token')\ndef login(form_data: OAuth2PasswordRequestForm = Depends()):\n    user = users_db.get(form_data.username)\n    if not user or not pwd_context.verify(form_data.password, user['hashed_password']):\n        raise HTTPException(status_code=401, detail='Bad credentials')\n    token = jwt.encode({'sub': user['username'], 'exp': datetime.utcnow() + timedelta(hours=1)}, SECRET_KEY)\n    return {'access_token': token, 'token_type': 'bearer'}\n\n@app.get('/profile')\ndef profile(token: str = Depends(oauth2_scheme)):\n    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n    user = users_db.get(payload['sub'])\n    return {'username': user['username'], 'email': user['email']}",
+      "expected_output": "POST /register → {\"message\": \"User pymaster created\"}\nPOST /token → {\"access_token\": \"eyJ...\", \"token_type\": \"bearer\"}\nGET /profile → {\"username\": \"pymaster\", \"email\": \"py@master.com\"}",
+      "hints": {
+        "en": [
+          "Use passlib's CryptContext for bcrypt hashing",
+          "jwt.encode() creates the token, jwt.decode() validates it",
+          "OAuth2PasswordRequestForm expects username and password as form data",
+          "Depends(oauth2_scheme) extracts the Bearer token from the header"
+        ],
+        "ta": [
+          "bcrypt ஹாஷிங்கிற்கு passlib-ன் CryptContext பயன்படுத்துங்கள்",
+          "jwt.encode() டோக்கனை உருவாக்குகிறது, jwt.decode() சரிபார்க்கிறது",
+          "OAuth2PasswordRequestForm படிவ தரவாக username மற்றும் password எதிர்பார்க்கிறது",
+          "Depends(oauth2_scheme) தலைப்பிலிருந்து Bearer டோக்கனைப் பிரித்தெடுக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What are the three parts of a JWT?",
+        "ta": "JWT-ன் மூன்று பகுதிகள் என்ன?"
+      },
+      "options": {
+        "en": ["Username, password, email", "Header, payload, signature", "Token, refresh, expiry", "Key, value, hash"],
+        "ta": ["பயனர்பெயர், கடவுச்சொல், மின்னஞ்சல்", "தலைப்பு, பேலோட், கையொப்பம்", "டோக்கன், புதுப்பிப்பு, காலாவதி", "சாவி, மதிப்பு, ஹாஷ்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why can't you easily revoke a JWT once issued?",
+        "ta": "வழங்கப்பட்ட JWT-ஐ ஏன் எளிதாக ரத்து செய்ய முடியாது?"
+      },
+      "options": {
+        "en": ["JWTs are encrypted", "JWTs are stateless — the server doesn't track them", "JWTs require a database", "JWTs are stored on the server"],
+        "ta": ["JWT-கள் குறியாக்கம் செய்யப்பட்டவை", "JWT-கள் நிலையற்றவை — சேவையகம் அவற்றைக் கண்காணிக்காது", "JWT-களுக்கு தரவுத்தளம் தேவை", "JWT-கள் சேவையகத்தில் சேமிக்கப்படுகின்றன"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In FastAPI, what does OAuth2PasswordBearer(tokenUrl='token') do?",
+        "ta": "FastAPI-ல், OAuth2PasswordBearer(tokenUrl='token') என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates a new user", "Defines the scheme that extracts Bearer tokens from the Authorization header", "Hashes the password", "Connects to the database"],
+        "ta": ["புதிய பயனரை உருவாக்குகிறது", "Authorization தலைப்பிலிருந்து Bearer டோக்கன்களைப் பிரித்தெடுக்கும் திட்டத்தை வரையறுக்கிறது", "கடவுச்சொல்லை ஹாஷ் செய்கிறது", "தரவுத்தளத்துடன் இணைக்கிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["jwt_authentication", "oauth2", "password_hashing", "protected_routes"],
+    "concepts_required": ["fastapi_basics", "http_headers"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 40,
+    "real_world_application": ["api_security", "user_auth"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

@@ -1,0 +1,337 @@
+{
+  "id": "oop_composition",
+  "topic": "oop_composition",
+  "track": "python_intermediate",
+  "module": "object_oriented_programming",
+  "order": 3,
+  "title": {
+    "en": "Composition: Has-a vs Is-a",
+    "ta": "கலவை: Has-a எதிர் Is-a"
+  },
+  "description": {
+    "en": "Learn when to use composition over inheritance. Build flexible designs where objects contain other objects rather than extending them.",
+    "ta": "பரம்பரைக்கு பதிலாக எப்போது கலவை பயன்படுத்த வேண்டும் என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Lego Workshop\n\nVaathiyaar holds up a Lego car. \"This car isn't a wheel, and it isn't an engine. It **has** wheels and it **has** an engine. That's composition — building complex objects by combining simpler ones.\"\n\n### Inheritance vs Composition\n\n| Relationship | Keyword | Example |\n|-------------|---------|----------|\n| **Is-a** | Inheritance | Dog **is a** Animal |\n| **Has-a** | Composition | Car **has a** Engine |\n\n### When to Use Composition\n- When the relationship is \"has-a\" not \"is-a\"\n- When you want to swap parts at runtime\n- When inheritance would create a deep, fragile hierarchy\n\n```python\nclass Engine:\n    def __init__(self, horsepower):\n        self.hp = horsepower\n\nclass Car:\n    def __init__(self, brand, engine):\n        self.brand = brand\n        self.engine = engine  # composition!\n```\n\n> **Key Concept:** Favor composition over inheritance. It leads to more flexible, testable, and maintainable code. If you can express a relationship as \"has-a\", use composition."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "lego_workshop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Composition",
+          "children": [
+            "Has-a relationship",
+            "Objects inside objects",
+            "Flexible design",
+            "Runtime swapping"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class Engine:",
+          "highlight": "Engine",
+          "explanation": {
+            "en": "Define a simple Engine class — a component"
+          }
+        },
+        {
+          "line": "    def __init__(self, horsepower):",
+          "highlight": "horsepower",
+          "explanation": {
+            "en": "Engine takes horsepower as a parameter"
+          }
+        },
+        {
+          "line": "        self.hp = horsepower",
+          "highlight": "self.hp",
+          "explanation": {
+            "en": "Store horsepower as an attribute"
+          }
+        },
+        {
+          "line": "    def start(self):",
+          "highlight": "start",
+          "explanation": {
+            "en": "Define behavior for the engine"
+          }
+        },
+        {
+          "line": "        return f'Engine roars with {self.hp}hp!'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return a descriptive string"
+          }
+        },
+        {
+          "line": "class GPS:",
+          "highlight": "GPS",
+          "explanation": {
+            "en": "Another component class — GPS navigation"
+          }
+        },
+        {
+          "line": "    def __init__(self, brand):",
+          "highlight": "brand",
+          "explanation": {
+            "en": "GPS has its own brand attribute"
+          }
+        },
+        {
+          "line": "        self.brand = brand",
+          "highlight": "self.brand",
+          "explanation": {
+            "en": "Store the GPS brand"
+          }
+        },
+        {
+          "line": "    def navigate(self, dest):",
+          "highlight": "navigate",
+          "explanation": {
+            "en": "GPS has its own method to navigate"
+          }
+        },
+        {
+          "line": "        return f'{self.brand} GPS: Navigating to {dest}'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Returns navigation instruction"
+          }
+        },
+        {
+          "line": "class Car:",
+          "highlight": "Car",
+          "explanation": {
+            "en": "Car uses composition — it HAS an engine and a GPS"
+          }
+        },
+        {
+          "line": "    def __init__(self, brand, engine, gps):",
+          "highlight": "engine, gps",
+          "explanation": {
+            "en": "Car receives component objects as parameters"
+          }
+        },
+        {
+          "line": "        self.brand = brand",
+          "highlight": "self.brand",
+          "explanation": {
+            "en": "Store the car brand"
+          }
+        },
+        {
+          "line": "        self.engine = engine",
+          "highlight": "self.engine",
+          "explanation": {
+            "en": "Composition: Car HAS an Engine"
+          }
+        },
+        {
+          "line": "        self.gps = gps",
+          "highlight": "self.gps",
+          "explanation": {
+            "en": "Composition: Car HAS a GPS"
+          }
+        },
+        {
+          "line": "    def drive(self, destination):",
+          "highlight": "drive",
+          "explanation": {
+            "en": "Car delegates to its components"
+          }
+        },
+        {
+          "line": "        print(self.engine.start())",
+          "highlight": "self.engine",
+          "explanation": {
+            "en": "Delegate starting to the Engine component"
+          }
+        },
+        {
+          "line": "        print(self.gps.navigate(destination))",
+          "highlight": "self.gps",
+          "explanation": {
+            "en": "Delegate navigation to the GPS component"
+          }
+        },
+        {
+          "line": "e = Engine(200)",
+          "highlight": "Engine(200)",
+          "explanation": {
+            "en": "Create an engine component with 200hp"
+          }
+        },
+        {
+          "line": "g = GPS('Garmin')",
+          "highlight": "GPS(",
+          "explanation": {
+            "en": "Create a GPS component"
+          }
+        },
+        {
+          "line": "car = Car('Honda', e, g)",
+          "highlight": "Car(",
+          "explanation": {
+            "en": "Compose the Car from its parts"
+          }
+        },
+        {
+          "line": "car.drive('Chennai')",
+          "highlight": "drive",
+          "explanation": {
+            "en": "Car delegates work to its components"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_engine",
+      "variable": "e",
+      "value": "Engine(hp=200)",
+      "data_type": "Engine",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_gps",
+      "variable": "g",
+      "value": "GPS(brand='Garmin')",
+      "data_type": "GPS",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_car",
+      "variable": "car",
+      "value": "Car(brand='Honda', engine=Engine, gps=GPS)",
+      "data_type": "Car",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Engine roars with 200hp!",
+        "Garmin GPS: Navigating to Chennai"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "car",
+          "value": "Car instance",
+          "type": "Car",
+          "address": "0x01"
+        },
+        {
+          "name": "car.engine",
+          "value": "Engine instance -> 0x02",
+          "type": "Engine",
+          "address": "0x02"
+        },
+        {
+          "name": "car.gps",
+          "value": "GPS instance -> 0x03",
+          "type": "GPS",
+          "address": "0x03"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a class Battery with a charge attribute and a status() method. Create a class Phone that HAS a Battery. Phone should have a check_battery() method that delegates to Battery's status(). Create a phone and check its battery.",
+        "ta": "Battery வகுப்பை charge attribute மற்றும் status() முறையுடன் உருவாக்குங்கள். Phone வகுப்பை Battery-ஐ கொண்டிருக்க உருவாக்குங்கள். Phone-ல் check_battery() முறை Battery-ன் status()-க்கு delegate செய்ய வேண்டும்."
+      },
+      "starter_code": "class Battery:\n    def __init__(self, charge):\n        self.charge = charge\n\n    def status(self):\n        return f'Battery: {self.charge}%'\n\nclass Phone:\n    def __init__(self, model, battery):\n        # store model and battery\n        pass\n\n    def check_battery(self):\n        # delegate to battery.status()\n        pass\n\nb = Battery(85)\np = Phone('Pixel', b)\nprint(p.check_battery())",
+      "expected_output": "Battery: 85%",
+      "hints": {
+        "en": [
+          "Store battery with self.battery = battery",
+          "In check_battery, return self.battery.status()",
+          "This is delegation — Phone delegates to Battery"
+        ],
+        "ta": [
+          "self.battery = battery மூலம் சேமியுங்கள்",
+          "check_battery-ல் return self.battery.status() பயன்படுத்துங்கள்",
+          "இது delegation — Phone Battery-க்கு delegate செய்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which relationship does composition represent?",
+        "ta": "கலவை எந்த உறவை குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["Is-a", "Has-a", "Uses-a", "None of these"],
+        "ta": ["Is-a", "Has-a", "Uses-a", "இவற்றில் எதுவுமில்லை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is composition often preferred over inheritance?",
+        "ta": "பரம்பரையை விட கலவை ஏன் அடிக்கடி விரும்பப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It's faster to execute",
+          "It uses less memory",
+          "It's more flexible and avoids deep hierarchies",
+          "It doesn't require classes"
+        ],
+        "ta": [
+          "இது செயல்படுத்த வேகமானது",
+          "இது குறைவான நினைவகத்தை பயன்படுத்துகிறது",
+          "இது மிகவும் நெகிழ்வானது மற்றும் ஆழமான படிநிலைகளை தவிர்க்கிறது",
+          "இதற்கு வகுப்புகள் தேவையில்லை"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In Car(brand, engine), what design pattern is being used when Car calls engine.start()?",
+        "ta": "Car(brand, engine)-ல், Car engine.start() அழைக்கும்போது எந்த வடிவமைப்பு முறை பயன்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": ["Inheritance", "Delegation", "Polymorphism", "Abstraction"],
+        "ta": ["பரம்பரை", "பிரதிநிதித்துவம்", "பல்லுருவாக்கம்", "சுருக்கம்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["composition", "has_a_relationship", "delegation", "object_composition"],
+    "concepts_required": ["classes", "objects", "inheritance"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["software_architecture", "component_design"],
+    "category": "oop",
+    "path_memberships": ["python_intermediate"]
+  }
+}

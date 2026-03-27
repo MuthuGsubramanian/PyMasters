@@ -1,0 +1,213 @@
+{
+  "id": "ml_pipelines",
+  "topic": "ml_pipelines",
+  "track": "machine_learning",
+  "module": "production",
+  "order": 20,
+  "title": {
+    "en": "ML Pipelines: Automate Everything",
+    "ta": "ML பைப்லைன்கள்: எல்லாவற்றையும் தானியக்கமாக்குங்கள்"
+  },
+  "description": {
+    "en": "Build reproducible ML workflows using sklearn Pipeline and ColumnTransformer to chain preprocessing and modeling into a single, deployable object.",
+    "ta": "முன்செயலாக்கம் மற்றும் மாடலிங்கை ஒற்றை, வரிசைப்படுத்தக்கூடிய பொருளாக இணைக்க sklearn Pipeline மற்றும் ColumnTransformer பயன்படுத்தி மீண்டும் உருவாக்கக்கூடிய ML பணிப்பாய்வுகளை உருவாக்குங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Assembly Line\n\nVaathiyaar unveils a conveyor belt. \"Right now you do preprocessing by hand, then fit, then predict. But what if you forget a step? What if train and test get different preprocessing? Pipelines solve all of that.\"\n\n### Why Pipelines?\n- **No data leakage**: fit_transform on train, transform on test — automatically\n- **Reproducibility**: One object contains the entire workflow\n- **Deployment**: Serialize one pipeline object, not five separate objects\n- **Grid search**: Tune preprocessing AND model hyperparameters together\n\n### ColumnTransformer\nApply different transformations to different column types:\n- Numerical: impute median → scale\n- Categorical: impute mode → one-hot encode\n\n```python\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import StandardScaler, OneHotEncoder\nfrom sklearn.impute import SimpleImputer\nfrom sklearn.ensemble import RandomForestClassifier\nimport pandas as pd\nimport numpy as np\n\ndf = pd.DataFrame({\n    'age': [25, np.nan, 35, 28, 42],\n    'salary': [50000, 60000, np.nan, 55000, 70000],\n    'city': ['Chennai', 'Mumbai', 'Chennai', None, 'Delhi'],\n    'target': [0, 1, 0, 1, 1]\n})\n\nnumeric_features = ['age', 'salary']\ncategorical_features = ['city']\n\nnumeric_transformer = Pipeline(steps=[\n    ('imputer', SimpleImputer(strategy='median')),\n    ('scaler', StandardScaler())\n])\n\ncategorical_transformer = Pipeline(steps=[\n    ('imputer', SimpleImputer(strategy='most_frequent')),\n    ('onehot', OneHotEncoder(handle_unknown='ignore'))\n])\n\npreprocessor = ColumnTransformer(transformers=[\n    ('num', numeric_transformer, numeric_features),\n    ('cat', categorical_transformer, categorical_features)\n])\n\nfull_pipeline = Pipeline(steps=[\n    ('preprocessor', preprocessor),\n    ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))\n])\n\nX = df.drop('target', axis=1)\ny = df['target']\nfull_pipeline.fit(X, y)\nprint(f'Pipeline score: {full_pipeline.score(X, y):.3f}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "conveyor_belt",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "pipeline_map",
+      "nodes": [
+        {
+          "label": "Pipeline",
+          "children": ["Steps (ordered)", "fit/predict interface", "Prevents data leakage"]
+        },
+        {
+          "label": "ColumnTransformer",
+          "children": ["Numeric pipeline", "Categorical pipeline", "Passthrough columns"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "pipeline_flow",
+      "stages": [
+        { "label": "Raw DataFrame", "icon": "table", "color": "#e74c3c" },
+        { "label": "ColumnTransformer", "icon": "split", "color": "#f39c12" },
+        { "label": "Numeric: Impute→Scale", "icon": "numbers", "color": "#3498db" },
+        { "label": "Categorical: Impute→Encode", "icon": "tags", "color": "#9b59b6" },
+        { "label": "Combined Features", "icon": "merge", "color": "#2ecc71" },
+        { "label": "RandomForest", "icon": "tree", "color": "#1abc9c" },
+        { "label": "Prediction", "icon": "target", "color": "#e67e22" }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pipeline_code",
+      "steps": [
+        {
+          "line": "from sklearn.pipeline import Pipeline",
+          "highlight": "Pipeline",
+          "explanation": { "en": "Import Pipeline — chains multiple steps into a single estimator" }
+        },
+        {
+          "line": "from sklearn.compose import ColumnTransformer",
+          "highlight": "ColumnTransformer",
+          "explanation": { "en": "ColumnTransformer applies different transformations to different columns" }
+        },
+        {
+          "line": "from sklearn.preprocessing import StandardScaler, OneHotEncoder",
+          "highlight": "OneHotEncoder",
+          "explanation": { "en": "Scaler for numbers, OneHotEncoder for categories" }
+        },
+        {
+          "line": "from sklearn.impute import SimpleImputer",
+          "highlight": "SimpleImputer",
+          "explanation": { "en": "Handles missing values — median for numbers, most_frequent for categories" }
+        },
+        {
+          "line": "numeric_features = ['age', 'salary']",
+          "highlight": "numeric_features",
+          "explanation": { "en": "Define which columns are numerical" }
+        },
+        {
+          "line": "categorical_features = ['city']",
+          "highlight": "categorical_features",
+          "explanation": { "en": "Define which columns are categorical" }
+        },
+        {
+          "line": "numeric_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='median')), ('scaler', StandardScaler())])",
+          "highlight": "numeric_transformer",
+          "explanation": { "en": "Numeric pipeline: fill missing with median, then scale to mean=0/std=1" }
+        },
+        {
+          "line": "categorical_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore'))])",
+          "highlight": "categorical_transformer",
+          "explanation": { "en": "Categorical pipeline: fill missing with mode, then one-hot encode" }
+        },
+        {
+          "line": "preprocessor = ColumnTransformer(transformers=[('num', numeric_transformer, numeric_features), ('cat', categorical_transformer, categorical_features)])",
+          "highlight": "ColumnTransformer",
+          "explanation": { "en": "Combine both pipelines — each applied to its respective columns" }
+        },
+        {
+          "line": "full_pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))])",
+          "highlight": "full_pipeline",
+          "explanation": { "en": "Full pipeline: preprocess + classify in one object" }
+        },
+        {
+          "line": "full_pipeline.fit(X, y)",
+          "highlight": "fit",
+          "explanation": { "en": "One call fits everything: imputers, scaler, encoder, and the model" }
+        },
+        {
+          "line": "predictions = full_pipeline.predict(X)",
+          "highlight": "predict",
+          "explanation": { "en": "One call preprocesses AND predicts — no manual steps needed" }
+        },
+        {
+          "line": "from sklearn.model_selection import cross_val_score; scores = cross_val_score(full_pipeline, X, y, cv=3)",
+          "highlight": "cross_val_score",
+          "explanation": { "en": "Cross-validate the ENTIRE pipeline — no data leakage possible" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_steps",
+      "variable": "pipeline_steps",
+      "value": "['preprocessor', 'classifier']",
+      "data_type": "list",
+      "color": "#3498db"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Pipeline steps: ['preprocessor', 'classifier']",
+        "Pipeline score: 1.000",
+        "Pipeline can be serialized as a single object!",
+        "Cross-validation with pipeline: no data leakage!"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a complete pipeline for the Titanic-style data: numeric columns (age, fare) get median imputation + scaling, categorical columns (sex, embarked) get mode imputation + one-hot encoding. Use a LogisticRegression classifier. Print cross-validation accuracy.",
+        "ta": "Titanic-நடை தரவுக்கு முழுமையான பைப்லைனை உருவாக்குங்கள்: எண் நெடுவரிசைகள் median imputation + scaling பெறும், வகைப்பாடு நெடுவரிசைகள் mode imputation + one-hot encoding பெறும். LogisticRegression பயன்படுத்துங்கள்."
+      },
+      "starter_code": "import pandas as pd\nimport numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import StandardScaler, OneHotEncoder\nfrom sklearn.impute import SimpleImputer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import cross_val_score\n\ndf = pd.DataFrame({\n    'age': [22, 38, 26, np.nan, 35, np.nan, 54, 2, 27, 14],\n    'fare': [7.25, 71.28, 7.92, 53.1, 8.05, 8.46, 51.86, 21.08, 11.13, 30.07],\n    'sex': ['male', 'female', 'female', 'female', 'male', 'male', 'male', 'male', 'female', 'female'],\n    'embarked': ['S', 'C', 'S', 'S', 'S', None, 'S', 'S', 'S', 'C'],\n    'survived': [0, 1, 1, 1, 0, 0, 0, 0, 1, 1]\n})\n\nX = df.drop('survived', axis=1)\ny = df['survived']\n\nnum_transformer = Pipeline([('imputer', SimpleImputer(strategy=___)), ('scaler', StandardScaler())])\ncat_transformer = Pipeline([('imputer', SimpleImputer(strategy=___)), ('onehot', OneHotEncoder(handle_unknown='ignore'))])\n\npreprocessor = ColumnTransformer([\n    ('num', num_transformer, ['age', 'fare']),\n    ('cat', cat_transformer, ['sex', 'embarked'])\n])\n\npipeline = Pipeline([('prep', preprocessor), ('clf', LogisticRegression(random_state=42))])\nscores = cross_val_score(pipeline, X, y, cv=3)\nprint(f'CV Accuracy: {scores.mean():.3f}')",
+      "expected_output": "CV Accuracy: 0.800",
+      "hints": {
+        "en": [
+          "strategy='median' for numeric, strategy='most_frequent' for categorical",
+          "ColumnTransformer routes each column type to its pipeline",
+          "cross_val_score with the full pipeline prevents data leakage"
+        ],
+        "ta": [
+          "எண்ணுக்கு strategy='median', வகைப்பாட்டுக்கு strategy='most_frequent'",
+          "ColumnTransformer ஒவ்வொரு நெடுவரிசை வகையையும் அதன் பைப்லைனுக்கு வழிநடத்துகிறது",
+          "முழு பைப்லைனுடன் cross_val_score தரவு கசிவைத் தடுக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main advantage of using a Pipeline over manual preprocessing?",
+        "ta": "கைமுறை முன்செயலாக்கத்தை விட Pipeline பயன்படுத்துவதன் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["It is faster", "It prevents data leakage and ensures reproducibility", "It uses less memory", "It automatically selects features"],
+        "ta": ["இது வேகமானது", "தரவு கசிவைத் தடுத்து மீண்டும் உருவாக்கக்கூடியதை உறுதிசெய்கிறது", "குறைவான நினைவகம் பயன்படுத்துகிறது", "தானாகவே அம்சங்களைத் தேர்ந்தெடுக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does ColumnTransformer do?",
+        "ta": "ColumnTransformer என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Renames columns", "Applies different preprocessing pipelines to different column subsets", "Removes columns", "Creates new columns automatically"],
+        "ta": ["நெடுவரிசைகளை மறுபெயரிடுகிறது", "வெவ்வேறு நெடுவரிசை துணைக்குழுக்களுக்கு வெவ்வேறு முன்செயலாக்க பைப்லைன்களை பயன்படுத்துகிறது", "நெடுவரிசைகளை நீக்குகிறது", "தானாகவே புதிய நெடுவரிசைகளை உருவாக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Can you use GridSearchCV with a Pipeline to tune both preprocessing and model hyperparameters?",
+        "ta": "முன்செயலாக்கம் மற்றும் மாடல் hyperparameters இரண்டையும் டியூன் செய்ய Pipeline உடன் GridSearchCV பயன்படுத்த முடியுமா?"
+      },
+      "options": {
+        "en": ["No, they must be tuned separately", "Yes, using double-underscore notation like 'classifier__n_estimators'", "Only model hyperparameters can be tuned", "Only with RandomizedSearchCV"],
+        "ta": ["இல்லை, தனித்தனியாக டியூன் செய்ய வேண்டும்", "ஆம், 'classifier__n_estimators' போன்ற இரட்டை-அடிக்கோடு குறியீட்டைப் பயன்படுத்தி", "மாடல் hyperparameters மட்டுமே டியூன் செய்ய முடியும்", "RandomizedSearchCV உடன் மட்டுமே"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sklearn_pipeline", "column_transformer", "data_leakage_prevention", "reproducibility"],
+    "concepts_required": ["preprocessing", "model_training", "cross_validation"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["production_ml", "mlops", "automated_workflows"],
+    "category": "machine_learning",
+    "path_memberships": ["production"]
+  }
+}

@@ -1,0 +1,300 @@
+{
+  "id": "collections_module",
+  "topic": "collections_module",
+  "track": "python_intermediate",
+  "module": "standard_library",
+  "order": 15,
+  "title": {
+    "en": "collections: Counter, defaultdict, namedtuple & deque",
+    "ta": "collections: Counter, defaultdict, namedtuple & deque"
+  },
+  "description": {
+    "en": "Master Python's collections module — Counter for counting, defaultdict for missing keys, namedtuple for lightweight objects, and deque for fast queues.",
+    "ta": "Python-ன் collections module-ல் தேர்ச்சி — Counter, defaultdict, namedtuple, deque."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Special Toolbox\n\nVaathiyaar opens a toolbox with compartments. \"You know lists and dicts. But Python has **specialized containers** that solve common problems more elegantly. Why reinvent the wheel?\"\n\n### The collections Module\n\n| Class | Problem It Solves |\n|-------|-------------------|\n| `Counter` | Count occurrences of items |\n| `defaultdict` | Dict that auto-creates missing keys |\n| `namedtuple` | Lightweight immutable objects |\n| `deque` | Fast append/pop from both ends |\n\n### Counter Example\n\n```python\nfrom collections import Counter\nwords = ['apple', 'banana', 'apple', 'cherry', 'banana', 'apple']\ncount = Counter(words)\nprint(count.most_common(2))  # [('apple', 3), ('banana', 2)]\n```\n\n> **Key Concept:** `defaultdict(list)` means \"if a key doesn't exist, create it with an empty list.\" No more `if key not in dict` checks!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "toolbox",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "collections",
+          "children": [
+            "Counter (counting)",
+            "defaultdict (auto-keys)",
+            "namedtuple (light objects)",
+            "deque (fast queue)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from collections import Counter, defaultdict, namedtuple, deque",
+          "highlight": "collections",
+          "explanation": {
+            "en": "Import all four specialized containers"
+          }
+        },
+        {
+          "line": "votes = ['Alice', 'Bob', 'Alice', 'Charlie', 'Alice', 'Bob']",
+          "highlight": "votes",
+          "explanation": {
+            "en": "A list of votes to count"
+          }
+        },
+        {
+          "line": "tally = Counter(votes)",
+          "highlight": "Counter",
+          "explanation": {
+            "en": "Counter counts occurrences automatically"
+          }
+        },
+        {
+          "line": "print(tally)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Counter({'Alice': 3, 'Bob': 2, 'Charlie': 1})"
+          }
+        },
+        {
+          "line": "print(tally.most_common(2))",
+          "highlight": "most_common",
+          "explanation": {
+            "en": "[('Alice', 3), ('Bob', 2)] — top 2 by count"
+          }
+        },
+        {
+          "line": "groups = defaultdict(list)",
+          "highlight": "defaultdict(list)",
+          "explanation": {
+            "en": "defaultdict auto-creates a list for missing keys"
+          }
+        },
+        {
+          "line": "students = [('Math', 'Alice'), ('Science', 'Bob'), ('Math', 'Charlie')]",
+          "highlight": "students",
+          "explanation": {
+            "en": "Student-subject pairs to group"
+          }
+        },
+        {
+          "line": "for subject, student in students:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop through each pair"
+          }
+        },
+        {
+          "line": "    groups[subject].append(student)",
+          "highlight": ".append",
+          "explanation": {
+            "en": "No KeyError! defaultdict creates the list automatically"
+          }
+        },
+        {
+          "line": "print(dict(groups))",
+          "highlight": "print",
+          "explanation": {
+            "en": "{'Math': ['Alice', 'Charlie'], 'Science': ['Bob']}"
+          }
+        },
+        {
+          "line": "Point = namedtuple('Point', ['x', 'y'])",
+          "highlight": "namedtuple",
+          "explanation": {
+            "en": "Create a lightweight class with named fields"
+          }
+        },
+        {
+          "line": "p = Point(3, 4)",
+          "highlight": "Point(3, 4)",
+          "explanation": {
+            "en": "Create a Point instance — immutable like a tuple"
+          }
+        },
+        {
+          "line": "print(f'x={p.x}, y={p.y}')",
+          "highlight": "p.x",
+          "explanation": {
+            "en": "Access fields by name — much clearer than tuple[0]"
+          }
+        },
+        {
+          "line": "dq = deque([1, 2, 3], maxlen=5)",
+          "highlight": "deque",
+          "explanation": {
+            "en": "deque — double-ended queue with optional max length"
+          }
+        },
+        {
+          "line": "dq.appendleft(0)",
+          "highlight": "appendleft",
+          "explanation": {
+            "en": "O(1) append to the LEFT — lists are O(n) for this!"
+          }
+        },
+        {
+          "line": "dq.append(4)",
+          "highlight": "append",
+          "explanation": {
+            "en": "O(1) append to the right"
+          }
+        },
+        {
+          "line": "print(list(dq))",
+          "highlight": "print",
+          "explanation": {
+            "en": "[0, 1, 2, 3, 4]"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_counter",
+      "variable": "tally",
+      "value": "Counter({'Alice': 3, 'Bob': 2, 'Charlie': 1})",
+      "data_type": "Counter",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_point",
+      "variable": "p",
+      "value": "Point(x=3, y=4)",
+      "data_type": "Point",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Counter({'Alice': 3, 'Bob': 2, 'Charlie': 1})",
+        "[('Alice', 3), ('Bob', 2)]",
+        "{'Math': ['Alice', 'Charlie'], 'Science': ['Bob']}",
+        "x=3, y=4",
+        "[0, 1, 2, 3, 4]"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "deque_visual",
+      "structure_type": "deque",
+      "data": [0, 1, 2, 3, 4],
+      "highlight_cells": [0, 4]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Count the frequency of each character in the string 'mississippi' using Counter. Print the 3 most common characters.",
+        "ta": "Counter பயன்படுத்தி 'mississippi' சரத்தில் ஒவ்வொரு எழுத்தின் அதிர்வெண்ணை எண்ணுங்கள். 3 மிகவும் பொதுவான எழுத்துகளை அச்சிடுங்கள்."
+      },
+      "starter_code": "from collections import Counter\n\ntext = 'mississippi'\nchar_count = Counter(text)\nprint(char_count.most_common(3))",
+      "expected_output": "[('i', 4), ('s', 4), ('p', 2)]",
+      "hints": {
+        "en": [
+          "Counter can take any iterable — a string works!",
+          "Each character becomes a key with its count",
+          "most_common(3) returns the top 3"
+        ],
+        "ta": [
+          "Counter எந்த iterable-ஐயும் எடுக்கலாம் — string வேலை செய்யும்!",
+          "ஒவ்வொரு எழுத்தும் key ஆகும், அதன் எண்ணிக்கை value",
+          "most_common(3) மேல் 3 திருப்பும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does defaultdict(list) do when you access a missing key?",
+        "ta": "காணாத key-ஐ அணுகும்போது defaultdict(list) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Raises KeyError",
+          "Returns None",
+          "Creates the key with an empty list as value",
+          "Ignores the access"
+        ],
+        "ta": [
+          "KeyError எழுப்புகிறது",
+          "None திருப்புகிறது",
+          "வெற்று பட்டியலுடன் key-ஐ உருவாக்குகிறது",
+          "அணுகலை புறக்கணிக்கிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why use deque over list for queue operations?",
+        "ta": "queue செயல்பாடுகளுக்கு list-க்கு பதிலாக deque ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "deque uses less memory",
+          "deque has O(1) operations on both ends",
+          "deque is simpler",
+          "list doesn't support append"
+        ],
+        "ta": [
+          "deque குறைவான நினைவகம் பயன்படுத்தும்",
+          "deque இரு முனைகளிலும் O(1) செயல்பாடுகள்",
+          "deque எளிமையானது",
+          "list append ஆதரிக்காது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is a namedtuple?",
+        "ta": "namedtuple என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "A mutable dictionary",
+          "An immutable tuple with named fields",
+          "A list with names",
+          "A class with methods"
+        ],
+        "ta": [
+          "மாற்றக்கூடிய அகராதி",
+          "பெயரிட்ட புலங்களைக் கொண்ட மாற்ற முடியாத tuple",
+          "பெயர்களைக் கொண்ட பட்டியல்",
+          "முறைகளைக் கொண்ட வகுப்பு"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["Counter", "defaultdict", "namedtuple", "deque", "collections"],
+    "concepts_required": ["dictionaries", "lists", "tuples"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["data_analysis", "caching", "queue_processing"],
+    "category": "standard_library",
+    "path_memberships": ["python_intermediate"]
+  }
+}

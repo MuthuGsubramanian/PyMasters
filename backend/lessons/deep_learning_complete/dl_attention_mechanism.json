@@ -1,0 +1,198 @@
+{
+  "id": "dl_attention_mechanism",
+  "topic": "attention_mechanism",
+  "track": "deep_learning_complete",
+  "module": "attention_and_transformers",
+  "order": 18,
+  "title": {
+    "en": "Attention Mechanism: Focus on What Matters",
+    "ta": "கவனம் செலுத்தும் வழிமுறை: முக்கியமானவற்றில் கவனம் செலுத்துங்கள்"
+  },
+  "description": {
+    "en": "Understand attention scores, self-attention, and Query/Key/Value mechanism that revolutionized sequence processing.",
+    "ta": "வரிசை செயலாக்கத்தில் புரட்சி செய்த attention scores, self-attention, மற்றும் Query/Key/Value வழிமுறையைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 85,
+  "story_variants": {
+    "en": "## Vaathiyaar's Spotlight\n\nVaathiyaar shines a spotlight on a crowded room. \"When you read 'The cat sat on the mat because it was tired', which word does 'it' refer to? You attend to 'cat', not 'mat'. Attention lets the model do the same.\"\n\n### Self-Attention: Query, Key, Value\n\n```python\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nimport math\n\nclass SelfAttention(nn.Module):\n    def __init__(self, embed_dim):\n        super().__init__()\n        self.W_q = nn.Linear(embed_dim, embed_dim)  # Query\n        self.W_k = nn.Linear(embed_dim, embed_dim)  # Key\n        self.W_v = nn.Linear(embed_dim, embed_dim)  # Value\n        self.scale = math.sqrt(embed_dim)\n    \n    def forward(self, x):\n        Q = self.W_q(x)  # What am I looking for?\n        K = self.W_k(x)  # What do I contain?\n        V = self.W_v(x)  # What information do I provide?\n        \n        # Attention scores: how much should each position attend to each other?\n        scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale\n        attention_weights = F.softmax(scores, dim=-1)\n        \n        # Weighted sum of values\n        output = torch.matmul(attention_weights, V)\n        return output, attention_weights\n\n# Example: batch=1, seq_len=5, embed_dim=8\nx = torch.randn(1, 5, 8)\nattn = SelfAttention(8)\noutput, weights = attn(x)\n\nprint(f'Input shape: {x.shape}')          # [1, 5, 8]\nprint(f'Output shape: {output.shape}')     # [1, 5, 8]\nprint(f'Attention weights: {weights.shape}') # [1, 5, 5]\nprint(f'Weights sum per row: {weights.sum(dim=-1)}')  # all 1.0\n```\n\n### Multi-Head Attention\n\n```python\nclass MultiHeadAttention(nn.Module):\n    def __init__(self, embed_dim, num_heads):\n        super().__init__()\n        self.num_heads = num_heads\n        self.head_dim = embed_dim // num_heads\n        self.attention = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)\n    \n    def forward(self, x):\n        output, weights = self.attention(x, x, x)  # self-attention: Q=K=V=x\n        return output, weights\n\nmha = MultiHeadAttention(embed_dim=64, num_heads=8)\nx = torch.randn(2, 10, 64)  # batch=2, seq=10, dim=64\nout, w = mha(x)\nprint(f'Multi-head output: {out.shape}')  # [2, 10, 64]\n```\n\n> **Key Insight:** Attention lets each token look at ALL other tokens and decide which are relevant. This is why transformers process sequences so well — no information bottleneck!",
+    "ta": "## வாத்தியாரின் ஸ்பாட்லைட்\n\nவாத்தியார் நிறைந்த அறையில் ஸ்பாட்லைட் பாய்ச்சுகிறார். \"'The cat sat on the mat because it was tired' என்று படிக்கும்போது, 'it' எந்த வார்த்தையைக் குறிக்கிறது? நீங்கள் 'cat'-ல் கவனம் செலுத்துகிறீர்கள், 'mat' அல்ல. Attention மாதிரிக்கு அதையே செய்ய அனுமதிக்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "spotlight",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "attention_concepts",
+      "nodes": [
+        {
+          "label": "Attention",
+          "children": [
+            "Query (what I'm looking for)",
+            "Key (what I contain)",
+            "Value (what I provide)",
+            "Attention Scores",
+            "Softmax Weights",
+            "Multi-Head Attention"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "attention_code",
+      "steps": [
+        {"line": "self.W_q = nn.Linear(embed_dim, embed_dim)", "highlight": "W_q", "explanation": {"en": "Query projection: 'What am I looking for?' Each token creates a query vector"}},
+        {"line": "self.W_k = nn.Linear(embed_dim, embed_dim)", "highlight": "W_k", "explanation": {"en": "Key projection: 'What do I contain?' Each token advertises its content"}},
+        {"line": "self.W_v = nn.Linear(embed_dim, embed_dim)", "highlight": "W_v", "explanation": {"en": "Value projection: 'What info do I provide?' The actual content to aggregate"}},
+        {"line": "Q = self.W_q(x)", "highlight": "Q", "explanation": {"en": "Project all tokens to query space. Shape: [batch, seq_len, embed_dim]"}},
+        {"line": "scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale", "highlight": "scores", "explanation": {"en": "Dot product of Q and K gives attention scores. Scale by sqrt(d) for stability"}},
+        {"line": "attention_weights = F.softmax(scores, dim=-1)", "highlight": "softmax", "explanation": {"en": "Softmax normalizes scores to probabilities. Each row sums to 1.0"}},
+        {"line": "output = torch.matmul(attention_weights, V)", "highlight": "output", "explanation": {"en": "Weighted sum of values: each token gets a blend of all tokens weighted by attention"}},
+        {"line": "self.attention = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)", "highlight": "MultiheadAttention", "explanation": {"en": "PyTorch built-in: runs multiple attention heads in parallel, each learning different patterns"}},
+        {"line": "output, weights = self.attention(x, x, x)", "highlight": "self_attention", "explanation": {"en": "Self-attention: Q=K=V=x. Each token attends to all tokens in the same sequence"}},
+        {"line": "# 8 heads of dim 8 each = 64 total (same as single head of 64)", "highlight": "heads", "explanation": {"en": "Multi-head: instead of one 64-dim attention, use 8 parallel 8-dim attentions. Different perspectives!"}}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "attention_matrix",
+      "structure_type": "attention_heatmap",
+      "layers": [
+        {"name": "Token", "nodes": ["The", "cat", "sat", "on", "it"]},
+        {"name": "Attention from 'it'", "nodes": ["0.05", "0.70", "0.10", "0.05", "0.10"]},
+        {"name": "Interpretation", "nodes": ["low", "HIGH (referent!)", "low", "low", "self"]}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_scores",
+      "variable": "attention_scores",
+      "value": "[[0.05, 0.70, 0.10, 0.05, 0.10]]",
+      "data_type": "tensor[1,5]",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_scale",
+      "variable": "scale",
+      "value": "sqrt(8) = 2.83",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "attention_flow",
+      "from": "input",
+      "to": "attended_output",
+      "steps": ["x -> Q, K, V", "Q @ K^T / sqrt(d)", "Softmax -> weights", "weights @ V", "attended output"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "MemoryStack",
+      "id": "qkv_computation",
+      "slots": [
+        {"name": "Input x", "value": "[1, 5, 8]", "type": "tensor", "address": "embed_dim=8"},
+        {"name": "Q = W_q(x)", "value": "[1, 5, 8]", "type": "tensor", "address": "queries"},
+        {"name": "K = W_k(x)", "value": "[1, 5, 8]", "type": "tensor", "address": "keys"},
+        {"name": "V = W_v(x)", "value": "[1, 5, 8]", "type": "tensor", "address": "values"},
+        {"name": "scores = Q@K^T/scale", "value": "[1, 5, 5]", "type": "tensor", "address": "attention_matrix"},
+        {"name": "output = softmax(scores)@V", "value": "[1, 5, 8]", "type": "tensor", "address": "attended"}
+      ]
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> attn = SelfAttention(8)",
+        ">>> x = torch.randn(1, 5, 8)",
+        ">>> output, weights = attn(x)",
+        ">>> output.shape",
+        "torch.Size([1, 5, 8])",
+        ">>> weights[0]",
+        "tensor([[0.21, 0.19, 0.20, 0.21, 0.19],",
+        "        [0.18, 0.23, 0.20, 0.19, 0.20],",
+        "        ...])"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "spotlight_beam",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement self-attention from scratch (no nn.MultiheadAttention) and visualize the attention weights as a heatmap for the sentence 'the cat sat on the mat'. Show which words attend to which.",
+        "ta": "Self-attention-ஐ scratch-லிருந்து செயல்படுத்தி, 'the cat sat on the mat' வாக்கியத்திற்கான attention weights-ஐ காட்சிப்படுத்துங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nimport math\n\n# Simple word embeddings\nwords = ['the', 'cat', 'sat', 'on', 'the', 'mat']\nvocab = {w: i for i, w in enumerate(set(words))}\nembed = nn.Embedding(len(vocab), 16)\n\n# Encode sentence\nindices = torch.tensor([vocab[w] for w in words]).unsqueeze(0)\nx = embed(indices)  # [1, 6, 16]\n\n# TODO: Implement self-attention (Q, K, V projections)\n# TODO: Compute attention weights\n# TODO: Print attention matrix showing which words attend to which\n",
+      "expected_output": "Attention from 'cat': the=0.12, cat=0.25, sat=0.18, on=0.15, the=0.12, mat=0.18",
+      "hints": {
+        "en": [
+          "W_q, W_k, W_v = nn.Linear(16, 16) for each",
+          "scores = Q @ K.T / sqrt(16)",
+          "weights = F.softmax(scores, dim=-1)",
+          "Print weights[0] to see the 6x6 attention matrix"
+        ],
+        "ta": [
+          "ஒவ்வொன்றுக்கும் W_q, W_k, W_v = nn.Linear(16, 16)",
+          "6x6 attention matrix-ஐ பார்க்க weights[0] அச்சிடுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In self-attention, what do Q, K, and V stand for?",
+        "ta": "Self-attention-ல், Q, K, V என்ன குறிக்கின்றன?"
+      },
+      "options": {
+        "en": ["Quick, Kind, Vast", "Query, Key, Value", "Quantize, Kernel, Vector", "Queue, Keep, Validate"],
+        "ta": ["Quick, Kind, Vast", "Query, Key, Value", "Quantize, Kernel, Vector", "Queue, Keep, Validate"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do we divide attention scores by sqrt(d)?",
+        "ta": "Attention scores-ஐ ஏன் sqrt(d)-ஆல் வகுக்கிறோம்?"
+      },
+      "options": {
+        "en": ["To speed up computation", "To prevent dot products from growing too large, which makes softmax too peaked", "To reduce memory usage", "It's just a convention with no effect"],
+        "ta": ["கணக்கீட்டை வேகப்படுத்த", "Dot products மிகவும் பெரியதாகாமல் தடுக்க, softmax அதிகமாக peaked ஆகாமல்", "நினைவகப் பயன்பாட்டைக் குறைக்க", "எந்த விளைவும் இல்லாத மரபு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the advantage of multi-head attention over single-head?",
+        "ta": "Single-head-ஐ விட multi-head attention-ன் நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["Uses fewer parameters", "Each head can learn different attention patterns (syntax, semantics, etc.)", "It's faster", "It requires less training data"],
+        "ta": ["குறைவான அளவுருக்களைப் பயன்படுத்துகிறது", "ஒவ்வொரு head-ம் வெவ்வேறு attention patterns கற்க முடியும்", "வேகமானது", "குறைவான பயிற்சி தரவு தேவை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["self_attention", "query_key_value", "attention_scores", "multi_head_attention", "scaled_dot_product"],
+    "concepts_required": ["rnn_intro", "matrix_multiplication"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["transformers", "nlp", "machine_translation"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

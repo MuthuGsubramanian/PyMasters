@@ -1,0 +1,267 @@
+{
+  "id": "graphs_advanced",
+  "topic": "graphs_advanced",
+  "track": "dsa",
+  "module": "graph_structures",
+  "order": 11,
+  "title": {
+    "en": "Advanced Graphs: Shortest Paths & More",
+    "ta": "மேம்பட்ட வரைபடங்கள்: குறுகிய பாதைகள் & மேலும்"
+  },
+  "description": {
+    "en": "Master Dijkstra's algorithm, topological sort, and cycle detection in directed graphs.",
+    "ta": "Dijkstra வழிமுறை, topological sort மற்றும் directed graph-களில் cycle detection கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's GPS Navigation\n\nVaathiyaar opens a GPS app. \"Roads have different distances. How do we find the **shortest** total distance? That's Dijkstra!\"\n\n### Dijkstra's Algorithm\n- Finds shortest path from source to all other nodes\n- Works on **weighted graphs** with **non-negative** edges\n- Uses a **priority queue** (min-heap)\n- Time: O((V + E) log V)\n\n```python\nimport heapq\n\ndef dijkstra(graph, start):\n    distances = {node: float('inf') for node in graph}\n    distances[start] = 0\n    pq = [(0, start)]  # (distance, node)\n    visited = set()\n\n    while pq:\n        dist, node = heapq.heappop(pq)\n        if node in visited:\n            continue\n        visited.add(node)\n        for neighbor, weight in graph[node]:\n            new_dist = dist + weight\n            if new_dist < distances[neighbor]:\n                distances[neighbor] = new_dist\n                heapq.heappush(pq, (new_dist, neighbor))\n    return distances\n```\n\n### Topological Sort (DAG only)\n\n```python\ndef topological_sort(graph):\n    visited = set()\n    stack = []\n\n    def dfs(node):\n        visited.add(node)\n        for neighbor in graph.get(node, []):\n            if neighbor not in visited:\n                dfs(neighbor)\n        stack.append(node)\n\n    for node in graph:\n        if node not in visited:\n            dfs(node)\n    return stack[::-1]\n```\n\n> **Key Concept:** Dijkstra is greedy — it always picks the unvisited node with the smallest known distance. Topological sort only works on DAGs (Directed Acyclic Graphs)."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "gps_navigation",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Advanced Graphs",
+          "children": [
+            "Dijkstra's Algorithm",
+            "Topological Sort",
+            "Cycle Detection",
+            "Weighted Edges",
+            "Priority Queue"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_dijkstra",
+      "steps": [
+        {
+          "line": "import heapq",
+          "highlight": "heapq",
+          "explanation": {
+            "en": "We need a min-heap for Dijkstra's priority queue",
+            "ta": "Dijkstra-ன் priority queue-க்கு min-heap தேவை"
+          }
+        },
+        {
+          "line": "def dijkstra(graph, start):",
+          "highlight": "dijkstra",
+          "explanation": {
+            "en": "Find shortest distances from start to all other nodes",
+            "ta": "start-லிருந்து மற்ற அனைத்து முனைகளுக்கும் குறுகிய தூரங்களை கண்டறியுங்கள்"
+          }
+        },
+        {
+          "line": "    distances = {node: float('inf') for node in graph}",
+          "highlight": "distances",
+          "explanation": {
+            "en": "Initialize all distances to infinity — we haven't found paths yet",
+            "ta": "அனைத்து தூரங்களையும் முடிவிலியாக துவக்குங்கள் — பாதைகளை கண்டறியவில்லை"
+          }
+        },
+        {
+          "line": "    distances[start] = 0",
+          "highlight": "distances[start]",
+          "explanation": {
+            "en": "Distance from start to itself is 0",
+            "ta": "start-லிருந்து தன்னைக்கே தூரம் 0"
+          }
+        },
+        {
+          "line": "    pq = [(0, start)]",
+          "highlight": "pq",
+          "explanation": {
+            "en": "Priority queue starts with (distance=0, start_node)",
+            "ta": "Priority queue (distance=0, start_node) உடன் தொடங்கும்"
+          }
+        },
+        {
+          "line": "    while pq:",
+          "highlight": "while",
+          "explanation": {
+            "en": "Process nodes until priority queue is empty",
+            "ta": "Priority queue காலியாகும் வரை முனைகளை செயலாக்குங்கள்"
+          }
+        },
+        {
+          "line": "        dist, node = heapq.heappop(pq)",
+          "highlight": "heappop",
+          "explanation": {
+            "en": "Pop the node with smallest known distance — greedy choice!",
+            "ta": "சிறிய அறியப்பட்ட தூரத்துடன் முனையை pop செய்யுங்கள் — greedy தேர்வு!"
+          }
+        },
+        {
+          "line": "        if node in visited:",
+          "highlight": "visited",
+          "explanation": {
+            "en": "Skip if already finalized — we found a shorter path earlier",
+            "ta": "ஏற்கனவே இறுதியாக்கப்பட்டிருந்தால் தவிர்க்கவும்"
+          }
+        },
+        {
+          "line": "        for neighbor, weight in graph[node]:",
+          "highlight": "neighbor",
+          "explanation": {
+            "en": "Check all neighbors and their edge weights",
+            "ta": "அனைத்து அண்டை முனைகளையும் அவற்றின் edge weights-ஐ சரிபார்க்கவும்"
+          }
+        },
+        {
+          "line": "            new_dist = dist + weight",
+          "highlight": "new_dist",
+          "explanation": {
+            "en": "Calculate total distance through current node",
+            "ta": "தற்போதைய முனை வழியாக மொத்த தூரத்தை கணக்கிடுங்கள்"
+          }
+        },
+        {
+          "line": "            if new_dist < distances[neighbor]:",
+          "highlight": "<",
+          "explanation": {
+            "en": "If this path is shorter than the known distance, update!",
+            "ta": "இந்த பாதை அறியப்பட்ட தூரத்தை விட குறுகியதாக இருந்தால், புதுப்பிக்கவும்!"
+          }
+        },
+        {
+          "line": "                distances[neighbor] = new_dist",
+          "highlight": "distances",
+          "explanation": {
+            "en": "Record the new shorter distance",
+            "ta": "புதிய குறுகிய தூரத்தை பதிவு செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "                heapq.heappush(pq, (new_dist, neighbor))",
+          "highlight": "heappush",
+          "explanation": {
+            "en": "Add neighbor to priority queue with updated distance",
+            "ta": "புதுப்பிக்கப்பட்ட தூரத்துடன் அண்டை முனையை priority queue-ல் சேர்க்கவும்"
+          }
+        },
+        {
+          "line": "    return distances",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return dict of shortest distances from start to every node",
+            "ta": "start-லிருந்து ஒவ்வொரு முனைக்கும் குறுகிய தூரங்களின் dict-ஐ திருப்புங்கள்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "dijkstra_flow",
+      "steps": [
+        {"label": "Initialize distances to inf", "active": true},
+        {"label": "Set start distance = 0", "active": true},
+        {"label": "Pick unvisited node with min distance", "active": true},
+        {"label": "Update neighbors if shorter path found", "active": true},
+        {"label": "Repeat until all visited", "active": true}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_distances",
+      "variable": "distances",
+      "value": "{'A':0, 'B':1, 'C':3, 'D':4}",
+      "data_type": "dict",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_pq",
+      "variable": "pq",
+      "value": "[]",
+      "data_type": "list",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Dijkstra from A: {'A': 0, 'B': 1, 'C': 3, 'D': 4, 'E': 2}",
+        "Shortest A→D: 4",
+        "Topological sort: ['A', 'B', 'C', 'D', 'E']",
+        "Cycle detected: False"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement Dijkstra's algorithm for a weighted graph and also implement cycle detection for a directed graph using DFS coloring.",
+        "ta": "weighted graph-க்கு Dijkstra வழிமுறையை செயல்படுத்துங்கள், DFS coloring பயன்படுத்தி directed graph-ல் cycle detection செயல்படுத்துங்கள்."
+      },
+      "starter_code": "import heapq\n\ndef dijkstra(graph, start):\n    distances = {node: float('inf') for node in graph}\n    distances[start] = 0\n    pq = [(0, start)]\n    visited = set()\n    while pq:\n        dist, node = heapq.heappop(pq)\n        if node in visited:\n            continue\n        visited.add(node)\n        for neighbor, weight in graph[node]:\n            new_dist = dist + weight\n            if new_dist < distances[neighbor]:\n                distances[neighbor] = new_dist\n                heapq.heappush(pq, (new_dist, neighbor))\n    return distances\n\ndef has_cycle(graph):\n    # Implement cycle detection using DFS coloring\n    # WHITE=0 (unvisited), GRAY=1 (in progress), BLACK=2 (done)\n    pass\n\nweighted_graph = {\n    'A': [('B', 1), ('C', 4)],\n    'B': [('C', 2), ('D', 5)],\n    'C': [('D', 1)],\n    'D': []\n}\n\nprint(dijkstra(weighted_graph, 'A'))\n\ncyclic = {'A': ['B'], 'B': ['C'], 'C': ['A']}\nacyclic = {'A': ['B'], 'B': ['C'], 'C': []}\nprint(has_cycle(cyclic))\nprint(has_cycle(acyclic))",
+      "expected_output": "{'A': 0, 'B': 1, 'C': 3, 'D': 4}\nTrue\nFalse",
+      "hints": {
+        "en": [
+          "DFS coloring: GRAY node finding a GRAY neighbor means cycle",
+          "Mark node GRAY when entering, BLACK when all neighbors done",
+          "For Dijkstra, the code is already provided — study how it works"
+        ],
+        "ta": [
+          "DFS coloring: GRAY முனை GRAY அண்டை முனையை கண்டறிந்தால் cycle",
+          "நுழையும்போது GRAY, அனைத்து அண்டை முனைகள் முடிந்ததும் BLACK குறிக்கவும்",
+          "Dijkstra-க்கு code ஏற்கனவே வழங்கப்பட்டுள்ளது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What type of graphs does Dijkstra's algorithm work on?",
+        "ta": "Dijkstra வழிமுறை எந்த வகை graph-களில் வேலை செய்யும்?"
+      },
+      "options": {
+        "en": ["Only unweighted graphs", "Graphs with negative weights", "Graphs with non-negative weights", "Only trees"],
+        "ta": ["எடையற்ற graph-கள் மட்டும்", "எதிர்மறை எடை graph-கள்", "எதிர்மறையற்ற எடை graph-கள்", "மரங்கள் மட்டும்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does topological sort require?",
+        "ta": "Topological sort-க்கு என்ன தேவை?"
+      },
+      "options": {
+        "en": ["Weighted edges", "A directed acyclic graph (DAG)", "An undirected graph", "A complete graph"],
+        "ta": ["எடையுள்ள விளிம்புகள்", "directed acyclic graph (DAG)", "undirected graph", "complete graph"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What data structure does Dijkstra use for efficiently selecting the next node?",
+        "ta": "அடுத்த முனையை திறமையாக தேர்ந்தெடுக்க Dijkstra எந்த தரவு கட்டமைப்பைப் பயன்படுத்தும்?"
+      },
+      "options": {
+        "en": ["Stack", "Queue", "Priority Queue (Min-Heap)", "Linked List"],
+        "ta": ["Stack", "Queue", "Priority Queue (Min-Heap)", "Linked List"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dijkstra", "topological_sort", "cycle_detection", "weighted_graphs"],
+    "concepts_required": ["graphs_basics", "heaps", "bfs", "dfs"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["gps_navigation", "dependency_resolution", "network_routing"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

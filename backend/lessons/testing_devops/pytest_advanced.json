@@ -1,0 +1,261 @@
+{
+  "id": "pytest_advanced",
+  "topic": "pytest_advanced",
+  "track": "testing_devops",
+  "module": "testing_foundations",
+  "order": 4,
+  "title": {
+    "en": "Advanced pytest: Mocking & Monkeypatch",
+    "ta": "மேம்பட்ட pytest: Mocking & Monkeypatch"
+  },
+  "description": {
+    "en": "Learn to mock external dependencies, use monkeypatch for isolated tests, organize with conftest.py, and extend pytest with plugins.",
+    "ta": "வெளிப்புற dependencies-ஐ mock செய்யவும், monkeypatch-உடன் isolated சோதனைகள் எழுதவும், conftest.py-உடன் ஒழுங்கமைக்கவும், plugins-உடன் pytest-ஐ விரிவாக்கவும் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Stunt Double\n\nVaathiyaar shows a movie poster. \"In films, the hero doesn't jump off buildings — a stunt double does. In testing, when your code calls an API, database, or file system, you don't call the real thing. You use a **mock** — a stunt double for your dependencies.\"\n\n### Mocking with unittest.mock\n- `Mock()` — creates a fake object that records calls\n- `patch()` — replaces a real object with a mock temporarily\n- `MagicMock()` — Mock with magic methods pre-configured\n- `mock.return_value` — set what the mock returns\n\n### monkeypatch: pytest's Way\n- `monkeypatch.setattr()` — replace attributes/functions\n- `monkeypatch.setenv()` — set environment variables\n- `monkeypatch.delenv()` — remove environment variables\n- Automatically reverted after each test\n\n### conftest.py\n- Shared fixtures live in `conftest.py`\n- No import needed — pytest discovers it automatically\n- Can exist at multiple directory levels\n\n> **Key Concept:** Never let tests depend on external systems. Mock the boundary, test the logic. Your tests should pass even on an airplane with no internet."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "stunt_double",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "mock_map",
+      "nodes": [
+        {
+          "label": "Test Isolation",
+          "children": [
+            "Mock objects",
+            "monkeypatch",
+            "conftest.py",
+            "Plugins"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "mock_code",
+      "steps": [
+        {
+          "line": "import requests",
+          "highlight": "requests",
+          "explanation": {
+            "en": "Our code uses requests to call an external API"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Define a function that depends on an external API"
+          }
+        },
+        {
+          "line": "def get_weather(city):",
+          "highlight": "get_weather",
+          "explanation": {
+            "en": "Function that fetches weather data from an API"
+          }
+        },
+        {
+          "line": "    response = requests.get(f'https://api.weather.com/{city}')",
+          "highlight": "requests.get",
+          "explanation": {
+            "en": "Makes an HTTP GET request — we do NOT want this in tests"
+          }
+        },
+        {
+          "line": "    data = response.json()",
+          "highlight": ".json()",
+          "explanation": {
+            "en": "Parse the JSON response"
+          }
+        },
+        {
+          "line": "    return data['temperature']",
+          "highlight": "temperature",
+          "explanation": {
+            "en": "Extract and return the temperature value"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now let's mock the API call in our test"
+          }
+        },
+        {
+          "line": "from unittest.mock import patch, MagicMock",
+          "highlight": "patch, MagicMock",
+          "explanation": {
+            "en": "Import patch (to replace) and MagicMock (fake object)"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Write a test that mocks the API call"
+          }
+        },
+        {
+          "line": "@patch('weather.requests.get')",
+          "highlight": "@patch",
+          "explanation": {
+            "en": "Replace requests.get with a mock during this test only"
+          }
+        },
+        {
+          "line": "def test_get_weather(mock_get):",
+          "highlight": "mock_get",
+          "explanation": {
+            "en": "The mock is injected as a parameter to the test function"
+          }
+        },
+        {
+          "line": "    mock_get.return_value.json.return_value = {'temperature': 25}",
+          "highlight": "return_value",
+          "explanation": {
+            "en": "Configure: when .json() is called, return our fake data"
+          }
+        },
+        {
+          "line": "    result = get_weather('Chennai')",
+          "highlight": "get_weather",
+          "explanation": {
+            "en": "Call the function — it uses the mock instead of real HTTP"
+          }
+        },
+        {
+          "line": "    assert result == 25",
+          "highlight": "== 25",
+          "explanation": {
+            "en": "Verify the function correctly extracted temperature from response"
+          }
+        },
+        {
+          "line": "    mock_get.assert_called_once_with('https://api.weather.com/Chennai')",
+          "highlight": "assert_called_once_with",
+          "explanation": {
+            "en": "Verify the mock was called with the correct URL"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "mock_vs_real",
+      "left": {
+        "label": "Without Mock (BAD)",
+        "content": "def test_weather():\n    # REAL API call!\n    # Slow, flaky, needs internet\n    result = get_weather('Chennai')\n    assert result > 0  # brittle",
+        "status": "fail"
+      },
+      "right": {
+        "label": "With Mock (GOOD)",
+        "content": "@patch('weather.requests.get')\ndef test_weather(mock_get):\n    mock_get.return_value.json\\\n        .return_value = {'temperature': 25}\n    assert get_weather('Chennai') == 25",
+        "status": "pass"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "mock_output",
+      "output": [
+        "$ pytest test_weather.py -v",
+        "======================== test session starts ========================",
+        "collected 2 items",
+        "",
+        "test_weather.py::test_get_weather PASSED                      [ 50%]",
+        "test_weather.py::test_monkeypatch_env PASSED                  [100%]",
+        "",
+        "========================= 2 passed in 0.02s ========================"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "conftest_structure",
+      "structure_type": "tree",
+      "layers": [
+        { "label": "tests/", "count": "root", "color": "#4f8ef7" },
+        { "label": "conftest.py", "count": "shared fixtures", "color": "#6bcf7f" },
+        { "label": "test_api.py", "count": "uses fixtures", "color": "#ffd93d" },
+        { "label": "test_db.py", "count": "uses fixtures", "color": "#ffd93d" }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `fetch_user(user_id)` that calls `requests.get()`. Then write a test using `@patch` that mocks the API and asserts the function returns the correct username from the mocked response.",
+        "ta": "`requests.get()` அழைக்கும் `fetch_user(user_id)` செயல்பாடு எழுதுங்கள். பிறகு `@patch` பயன்படுத்தி API-ஐ mock செய்து சரியான username திருப்பப்படுகிறதா என்று assert செய்யும் test எழுதுங்கள்."
+      },
+      "starter_code": "import requests\nfrom unittest.mock import patch\n\ndef fetch_user(user_id):\n    response = requests.get(f'https://api.example.com/users/{user_id}')\n    return response.json()['name']\n\n@patch('__main__.requests.get')\ndef test_fetch_user(mock_get):\n    # Configure mock to return {'name': 'Muthu'}\n    # Call fetch_user(1)\n    # Assert result == 'Muthu'\n    pass",
+      "expected_output": "1 passed",
+      "hints": {
+        "en": [
+          "Set mock_get.return_value.json.return_value = {'name': 'Muthu'}",
+          "Call result = fetch_user(1)",
+          "Assert result == 'Muthu'"
+        ],
+        "ta": [
+          "mock_get.return_value.json.return_value = {'name': 'Muthu'} அமைக்கவும்",
+          "result = fetch_user(1) அழைக்கவும்",
+          "result == 'Muthu' என்று assert செய்யவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does @patch do in a test?",
+        "ta": "சோதனையில் @patch என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Installs a package", "Temporarily replaces an object with a mock", "Skips the test", "Patches a bug in the code"],
+        "ta": ["ஒரு package-ஐ நிறுவும்", "ஒரு object-ஐ தற்காலிகமாக mock-உடன் மாற்றும்", "சோதனையைத் தவிர்க்கும்", "code-ல் உள்ள bug-ஐ சரிசெய்யும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is conftest.py used for?",
+        "ta": "conftest.py எதற்குப் பயன்படுகிறது?"
+      },
+      "options": {
+        "en": ["Configuring Python version", "Sharing fixtures across test files without importing", "Running tests in parallel", "Storing test results"],
+        "ta": ["Python version-ஐ configure செய்ய", "import செய்யாமல் test files-க்கிடையே fixtures-ஐ பகிர", "Tests-ஐ parallel-ல் இயக்க", "Test results-ஐ சேமிக்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does monkeypatch.setattr() do?",
+        "ta": "monkeypatch.setattr() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Permanently changes an attribute", "Temporarily replaces an attribute, reverted after test", "Deletes an attribute", "Creates a new class"],
+        "ta": ["ஒரு attribute-ஐ நிரந்தரமாக மாற்றும்", "ஒரு attribute-ஐ தற்காலிகமாக மாற்றும், சோதனைக்குப் பிறகு மீட்டமைக்கும்", "ஒரு attribute-ஐ நீக்கும்", "ஒரு புதிய class உருவாக்கும்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["mocking", "monkeypatch", "conftest", "patch", "MagicMock"],
+    "concepts_required": ["pytest", "functions", "classes"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["api_testing", "test_isolation"],
+    "category": "testing",
+    "path_memberships": ["testing_devops"]
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "id": "deployment_basics",
+  "topic": "deployment_basics",
+  "track": "web_development",
+  "module": "devops_foundations",
+  "order": 18,
+  "title": {
+    "en": "Deployment Basics: Taking Your App Live",
+    "ta": "வரிசைப்படுத்தல் அடிப்படைகள்: உங்கள் பயன்பாட்டை நேரடியாக்குதல்"
+  },
+  "description": {
+    "en": "Learn to deploy Python web apps — WSGI/ASGI servers, Gunicorn, Nginx reverse proxy, environment variables, and hosting platforms.",
+    "ta": "Python வலை பயன்பாடுகளை வரிசைப்படுத்தக் கற்றுக்கொள்ளுங்கள் — WSGI/ASGI சேவையகங்கள், Gunicorn, Nginx reverse proxy, சுற்றுச்சூழல் மாறிகள் மற்றும் ஹோஸ்டிங் தளங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## From Garage to Showroom\n\nVaathiyaar drives a car out of a garage. \"Your app works on localhost — great! But nobody else can see it. **Deployment** is moving your app from the garage (your laptop) to the showroom (a server everyone can access).\"\n\n### The Deployment Stack\n\n```\nInternet → Nginx (reverse proxy) → Gunicorn (app server) → Flask/Django/FastAPI\n```\n\n### WSGI vs ASGI\n\n| Protocol | For | Servers | Frameworks |\n|----------|-----|---------|------------|\n| **WSGI** | Synchronous | Gunicorn, uWSGI | Flask, Django |\n| **ASGI** | Async | Uvicorn, Daphne | FastAPI, Django Channels |\n\n### Why Not Just `python app.py`?\n- Dev server is **single-threaded**\n- No SSL/HTTPS support\n- No static file serving\n- No process management\n- Will crash and not restart\n\n### Hosting Options\n\n| Platform | Type | Best For |\n|----------|------|----------|\n| **Railway/Render** | PaaS | Quick deploys, small apps |\n| **DigitalOcean/AWS EC2** | VPS | Full control |\n| **Google Cloud Run** | Serverless | Auto-scaling |\n| **Heroku** | PaaS | Beginners |\n| **Vercel** | Edge | Frontend + API |\n\n> **Key Concept:** Never deploy with the development server. Use Gunicorn (WSGI) or Uvicorn (ASGI) behind Nginx. Use environment variables for secrets. Use HTTPS in production."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "garage_to_showroom",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "deployment_overview",
+      "nodes": [
+        {
+          "label": "Deployment",
+          "children": [
+            "App Server (Gunicorn/Uvicorn)",
+            "Reverse Proxy (Nginx)",
+            "Environment Variables",
+            "HTTPS (SSL/TLS)",
+            "Process Manager (systemd)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "deployment_demo",
+      "steps": [
+        {
+          "line": "# Step 1: Prepare your app for production\n# requirements.txt\nflask==3.0.0\ngunicorn==21.2.0\npython-dotenv==1.0.0",
+          "highlight": "requirements.txt",
+          "explanation": {
+            "en": "Pin your dependencies with exact versions for reproducible builds"
+          }
+        },
+        {
+          "line": "# Step 2: Use environment variables for configuration\nimport os\nfrom dotenv import load_dotenv\n\nload_dotenv()  # Load from .env file\n\nSECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback')\nDATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///app.db')\nDEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'",
+          "highlight": "os.environ",
+          "explanation": {
+            "en": "Never hardcode secrets — read from environment variables"
+          }
+        },
+        {
+          "line": "# .env file (DO NOT commit to git!)\n# SECRET_KEY=your-super-secret-production-key\n# DATABASE_URL=postgresql://user:pass@host:5432/dbname\n# DEBUG=false",
+          "highlight": ".env",
+          "explanation": {
+            "en": "Store secrets in .env locally; use platform secrets in production"
+          }
+        },
+        {
+          "line": "# Step 3: Create WSGI entry point\n# wsgi.py\nfrom app import create_app\n\napplication = create_app()\n\nif __name__ == '__main__':\n    application.run()",
+          "highlight": "wsgi.py",
+          "explanation": {
+            "en": "WSGI entry point — Gunicorn imports 'application' from this file"
+          }
+        },
+        {
+          "line": "# Step 4: Run with Gunicorn (WSGI)\n# $ gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4",
+          "highlight": "gunicorn",
+          "explanation": {
+            "en": "Gunicorn spawns 4 worker processes — handles concurrent requests"
+          }
+        },
+        {
+          "line": "# For FastAPI (ASGI):\n# $ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4",
+          "highlight": "uvicorn",
+          "explanation": {
+            "en": "Uvicorn for ASGI apps — async support with multiple workers"
+          }
+        },
+        {
+          "line": "# Step 5: Nginx reverse proxy configuration\n# /etc/nginx/sites-available/myapp\nserver {\n    listen 80;\n    server_name myapp.com;\n\n    location / {\n        proxy_pass http://127.0.0.1:8000;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n    }\n\n    location /static/ {\n        alias /var/www/myapp/static/;\n    }\n}",
+          "highlight": "proxy_pass",
+          "explanation": {
+            "en": "Nginx forwards requests to Gunicorn and serves static files directly"
+          }
+        },
+        {
+          "line": "# Step 6: Systemd service for auto-restart\n# /etc/systemd/system/myapp.service\n[Unit]\nDescription=MyApp Gunicorn Service\nAfter=network.target\n\n[Service]\nUser=www-data\nWorkingDirectory=/var/www/myapp\nExecStart=/var/www/myapp/venv/bin/gunicorn wsgi:application --bind 127.0.0.1:8000 --workers 4\nRestart=always\n\n[Install]\nWantedBy=multi-user.target",
+          "highlight": "Restart=always",
+          "explanation": {
+            "en": "Systemd restarts your app if it crashes — production reliability"
+          }
+        },
+        {
+          "line": "# Step 7: Enable HTTPS with Let's Encrypt\n# $ sudo certbot --nginx -d myapp.com",
+          "highlight": "certbot",
+          "explanation": {
+            "en": "Certbot auto-configures Nginx with free SSL certificates"
+          }
+        },
+        {
+          "line": "# Alternative: Deploy to Railway/Render\n# Procfile\nweb: gunicorn wsgi:application --bind 0.0.0.0:$PORT",
+          "highlight": "Procfile",
+          "explanation": {
+            "en": "PaaS platforms use a Procfile to know how to start your app"
+          }
+        },
+        {
+          "line": "# .gitignore — critical for deployment\n.env\n*.pyc\n__pycache__/\nvenv/\n*.db\n.DS_Store",
+          "highlight": ".gitignore",
+          "explanation": {
+            "en": "Never commit secrets, compiled files, or local databases"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_workers",
+      "variable": "workers",
+      "value": 4,
+      "data_type": "int",
+      "color": "#FF9800"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_port",
+      "variable": "PORT",
+      "value": 8000,
+      "data_type": "int",
+      "color": "#2196F3"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4",
+        "[2026-03-27 10:00:00 +0000] [12345] [INFO] Starting gunicorn 21.2.0",
+        "[2026-03-27 10:00:00 +0000] [12345] [INFO] Listening at: http://0.0.0.0:8000",
+        "[2026-03-27 10:00:00 +0000] [12345] [INFO] Using worker: sync",
+        "[2026-03-27 10:00:00 +0000] [12346] [INFO] Booting worker with pid: 12346",
+        "[2026-03-27 10:00:00 +0000] [12347] [INFO] Booting worker with pid: 12347",
+        "[2026-03-27 10:00:00 +0000] [12348] [INFO] Booting worker with pid: 12348",
+        "[2026-03-27 10:00:00 +0000] [12349] [INFO] Booting worker with pid: 12349"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Prepare a Flask app for production deployment: create a proper project structure with wsgi.py, configure environment variables for SECRET_KEY and DATABASE_URL, create a requirements.txt, write a Procfile for PaaS deployment, and a Gunicorn command for VPS deployment.",
+        "ta": "உற்பத்தி வரிசைப்படுத்தலுக்கு Flask பயன்பாட்டைத் தயார் செய்யுங்கள்: wsgi.py உடன் சரியான திட்ட கட்டமைப்பை உருவாக்குங்கள்."
+      },
+      "starter_code": "# wsgi.py\nfrom app import create_app\n\napplication = create_app()\n\n# app/__init__.py\nimport os\nfrom flask import Flask\nfrom dotenv import load_dotenv\n\nload_dotenv()\n\ndef create_app():\n    app = Flask(__name__)\n    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key')\n    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')\n    app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'\n\n    @app.route('/')\n    def home():\n        return {'status': 'running', 'debug': app.config['DEBUG']}\n\n    return app\n\n# Procfile\n# web: gunicorn wsgi:application --bind 0.0.0.0:$PORT\n\n# Terminal commands:\n# $ pip freeze > requirements.txt\n# $ gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4\n# $ export SECRET_KEY='production-secret-key-here'",
+      "expected_output": "Gunicorn starts with 4 workers, serving the app on port 8000",
+      "hints": {
+        "en": [
+          "Use os.environ.get() with fallback defaults for all config",
+          "Create wsgi.py as the entry point for Gunicorn",
+          "Use --workers flag to set number of Gunicorn processes",
+          "Never set DEBUG=True in production"
+        ],
+        "ta": [
+          "அனைத்து உள்ளமைவிற்கும் இயல்புநிலை பின்னடைவுடன் os.environ.get() பயன்படுத்துங்கள்",
+          "Gunicorn-க்கான நுழைவு புள்ளியாக wsgi.py உருவாக்குங்கள்",
+          "Gunicorn செயல்முறைகளின் எண்ணிக்கையை அமைக்க --workers பயன்படுத்துங்கள்",
+          "உற்பத்தியில் ஒருபோதும் DEBUG=True அமைக்காதீர்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why should you NOT use Flask's built-in development server in production?",
+        "ta": "உற்பத்தியில் Flask-ன் உள்ளமைந்த மேம்பாட்டு சேவையகத்தை ஏன் பயன்படுத்தக் கூடாது?"
+      },
+      "options": {
+        "en": ["It's too expensive", "It's single-threaded, has no SSL, and isn't designed for concurrent traffic", "It doesn't support Python 3", "It requires a special license"],
+        "ta": ["மிகவும் விலை உயர்ந்தது", "ஒற்றை-நூல், SSL இல்லை, மற்றும் ஒரே நேரத்தில் பல போக்குவரத்துக்காக வடிவமைக்கப்படவில்லை", "Python 3-ஐ ஆதரிக்காது", "சிறப்பு உரிமம் தேவை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the role of Nginx in a typical deployment?",
+        "ta": "வழக்கமான வரிசைப்படுத்தலில் Nginx-ன் பங்கு என்ன?"
+      },
+      "options": {
+        "en": ["It runs Python code", "It acts as a reverse proxy, handles SSL, and serves static files", "It creates the database", "It manages environment variables"],
+        "ta": ["Python குறியீட்டை இயக்குகிறது", "reverse proxy ஆக செயல்படுகிறது, SSL கையாளுகிறது, நிலையான கோப்புகளை வழங்குகிறது", "தரவுத்தளத்தை உருவாக்குகிறது", "சுற்றுச்சூழல் மாறிகளை நிர்வகிக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Where should you store secrets like API keys in production?",
+        "ta": "உற்பத்தியில் API விசைகள் போன்ற ரகசியங்களை எங்கே சேமிக்க வேண்டும்?"
+      },
+      "options": {
+        "en": ["In the source code", "In environment variables or a secrets manager", "In a public config file", "In HTML comments"],
+        "ta": ["மூலக் குறியீட்டில்", "சுற்றுச்சூழல் மாறிகள் அல்லது ரகசிய மேலாளரில்", "பொது உள்ளமைவு கோப்பில்", "HTML குறிப்புகளில்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["wsgi_asgi", "gunicorn", "nginx", "environment_variables", "deployment"],
+    "concepts_required": ["flask_basics", "http_fundamentals"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 35,
+    "real_world_application": ["web_hosting", "devops"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

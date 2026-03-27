@@ -1,0 +1,200 @@
+{
+  "id": "dl_rnn_text_generation",
+  "topic": "rnn_text_generation",
+  "track": "deep_learning_complete",
+  "module": "recurrent_networks",
+  "order": 17,
+  "title": {
+    "en": "Text Generation: Character-Level RNN",
+    "ta": "உரை உருவாக்கம்: எழுத்து-நிலை RNN"
+  },
+  "description": {
+    "en": "Build a character-level LSTM that learns to generate text by predicting the next character in a sequence.",
+    "ta": "வரிசையில் அடுத்த எழுத்தை கணிப்பதன் மூலம் உரையை உருவாக்கக் கற்கும் எழுத்து-நிலை LSTM-ஐ உருவாக்குங்கள்."
+  },
+  "xp_reward": 85,
+  "story_variants": {
+    "en": "## Vaathiyaar's Typewriter\n\nVaathiyaar sits at an old typewriter. \"After reading thousands of pages, your brain can predict the next word. Given 'The cat sat on the', you think 'mat'. A character-level RNN does the same — one character at a time.\"\n\n### Character-Level Text Generation\n\n```python\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# Sample text corpus\ntext = \"\"\"To be or not to be that is the question whether tis nobler in the mind\nto suffer the slings and arrows of outrageous fortune or to take arms against\na sea of troubles and by opposing end them\"\"\"\n\n# Build character vocabulary\nchars = sorted(set(text))\nchar_to_idx = {c: i for i, c in enumerate(chars)}\nidx_to_char = {i: c for i, c in enumerate(chars)}\nvocab_size = len(chars)\n\nprint(f'Vocabulary: {vocab_size} unique characters')\nprint(f'Characters: {chars}')\n\n# Encode text\nencoded = torch.tensor([char_to_idx[c] for c in text], dtype=torch.long)\n\n# Create training sequences\ndef make_batches(data, seq_len=40, batch_size=32):\n    num_batches = len(data) // (seq_len * batch_size)\n    data = data[:num_batches * seq_len * batch_size]\n    data = data.view(batch_size, -1)\n    for i in range(0, data.size(1) - seq_len, seq_len):\n        x = data[:, i:i+seq_len]\n        y = data[:, i+1:i+seq_len+1]\n        yield x, y\n\n# Model\nclass CharRNN(nn.Module):\n    def __init__(self, vocab_size, embed_dim, hidden_dim, num_layers):\n        super().__init__()\n        self.embedding = nn.Embedding(vocab_size, embed_dim)\n        self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers,\n                           batch_first=True, dropout=0.2)\n        self.fc = nn.Linear(hidden_dim, vocab_size)\n    \n    def forward(self, x, hidden=None):\n        x = self.embedding(x)\n        output, hidden = self.lstm(x, hidden)\n        logits = self.fc(output)\n        return logits, hidden\n\nmodel = CharRNN(vocab_size, embed_dim=64, hidden_dim=128, num_layers=2)\ncriterion = nn.CrossEntropyLoss()\noptimizer = torch.optim.Adam(model.parameters(), lr=0.002)\n\n# Generation function\ndef generate(model, start_str, length=200, temperature=0.8):\n    model.eval()\n    chars_generated = list(start_str)\n    x = torch.tensor([[char_to_idx[c] for c in start_str]])\n    hidden = None\n    \n    with torch.no_grad():\n        for _ in range(length):\n            logits, hidden = model(x, hidden)\n            logits = logits[0, -1] / temperature\n            probs = F.softmax(logits, dim=0)\n            next_idx = torch.multinomial(probs, 1).item()\n            chars_generated.append(idx_to_char[next_idx])\n            x = torch.tensor([[next_idx]])\n    \n    return ''.join(chars_generated)\n\nprint(generate(model, 'to ', length=100))\n```\n\n> **Temperature:** Controls randomness. Low (0.2) = conservative/repetitive. High (1.5) = creative/chaotic. 0.8 is a good default.",
+    "ta": "## வாத்தியாரின் தட்டச்சு இயந்திரம்\n\nவாத்தியார் ஒரு பழைய தட்டச்சு இயந்திரத்தில் அமர்கிறார். \"ஆயிரக்கணக்கான பக்கங்களைப் படித்த பிறகு, உங்கள் மூளை அடுத்த வார்த்தையை கணிக்க முடியும். ஒரு எழுத்து-நிலை RNN அதையே செய்கிறது — ஒரு நேரத்தில் ஒரு எழுத்து.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "typewriter",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "textgen_concepts",
+      "nodes": [
+        {
+          "label": "Text Generation",
+          "children": [
+            "Character Vocabulary",
+            "Embedding Layer",
+            "LSTM Sequence Model",
+            "Next-Character Prediction",
+            "Temperature Sampling",
+            "Autoregressive Generation"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "textgen_code",
+      "steps": [
+        {"line": "chars = sorted(set(text))", "highlight": "chars", "explanation": {"en": "Build vocabulary from all unique characters in the text corpus"}},
+        {"line": "char_to_idx = {c: i for i, c in enumerate(chars)}", "highlight": "char_to_idx", "explanation": {"en": "Map each character to a unique integer index for the model"}},
+        {"line": "encoded = torch.tensor([char_to_idx[c] for c in text])", "highlight": "encode", "explanation": {"en": "Convert entire text to a tensor of integer indices"}},
+        {"line": "self.embedding = nn.Embedding(vocab_size, embed_dim)", "highlight": "Embedding", "explanation": {"en": "Each character index becomes a 64-dim vector. Network learns these representations"}},
+        {"line": "self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers, ...)", "highlight": "LSTM", "explanation": {"en": "2-layer LSTM processes character embeddings and maintains memory"}},
+        {"line": "self.fc = nn.Linear(hidden_dim, vocab_size)", "highlight": "fc", "explanation": {"en": "Output layer predicts probability distribution over all characters"}},
+        {"line": "logits = logits[0, -1] / temperature", "highlight": "temperature", "explanation": {"en": "Temperature scales logits before softmax. Low=peaked (conservative), high=flat (creative)"}},
+        {"line": "probs = F.softmax(logits, dim=0)", "highlight": "softmax", "explanation": {"en": "Convert scaled logits to probability distribution over characters"}},
+        {"line": "next_idx = torch.multinomial(probs, 1).item()", "highlight": "multinomial", "explanation": {"en": "Sample next character from the probability distribution (not always argmax for variety)"}},
+        {"line": "x = torch.tensor([[next_idx]])", "highlight": "autoregressive", "explanation": {"en": "Feed generated character back as input for next prediction. This is autoregressive generation"}}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "generation_flow",
+      "from": "seed_text",
+      "to": "generated_text",
+      "steps": ["'to ' (seed)", "Embed chars", "LSTM process", "Predict next char", "Sample 'b'", "Feed back", "Predict next...", "200 chars generated"],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_vocab",
+      "variable": "vocab_size",
+      "value": "28",
+      "data_type": "int",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_temperature",
+      "variable": "temperature",
+      "value": "0.8",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_generated",
+      "variable": "generated",
+      "value": "to be or not to b...",
+      "data_type": "str",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "MemoryStack",
+      "id": "char_sequence",
+      "slots": [
+        {"name": "Input: 't'", "value": "idx=20, embed=[0.3,...]", "type": "char", "address": "t=0"},
+        {"name": "Input: 'o'", "value": "idx=15, embed=[0.1,...]", "type": "char", "address": "t=1"},
+        {"name": "Input: ' '", "value": "idx=0, embed=[-0.2,...]", "type": "char", "address": "t=2"},
+        {"name": "Predict: 'b'", "value": "prob=0.35, sampled", "type": "output", "address": "t=3"},
+        {"name": "Predict: 'e'", "value": "prob=0.42, sampled", "type": "output", "address": "t=4"}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "temperature_comparison",
+      "left": {"label": "Temperature = 0.2", "content": "to be or not to be that is the question whether tis nobler in the mind to"},
+      "right": {"label": "Temperature = 1.5", "content": "to bnx qr fot us bemthau ix rhe qvosriom wlerhet sis nxgler on rhe mind"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Vocabulary: 28 unique characters",
+        "Epoch 10: Loss=2.34",
+        "Epoch 50: Loss=1.12",
+        "Epoch 100: Loss=0.78",
+        "--- Generated text (temp=0.8) ---",
+        "to be or not to be that is the question",
+        "whether tis nobler in the mind to suffer",
+        "the slings and arrows of outrageous..."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "typewriter_keys",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a character-level LSTM text generator trained on Python code. Use a snippet of Python code as training data. Generate synthetic Python-like code and experiment with different temperature values.",
+        "ta": "Python code-ல் பயிற்சி பெற்ற எழுத்து-நிலை LSTM உரை உருவாக்கியை உருவாக்குங்கள். வெவ்வேறு temperature மதிப்புகளை சோதியுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\ncode = '''\ndef hello(name):\n    print(f\"Hello, {name}!\")\n    return True\n\ndef add(a, b):\n    result = a + b\n    print(f\"Sum: {result}\")\n    return result\n\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n'''\n\nchars = sorted(set(code))\nchar_to_idx = {c: i for i, c in enumerate(chars)}\nidx_to_char = {i: c for c, i in char_to_idx.items()}\n\n# TODO: Build CharRNN model\n# TODO: Train on the code snippet\n# TODO: Generate with temperature 0.3, 0.8, 1.2\n",
+      "expected_output": "temp=0.3: def hello(name):\\n    print(f\"Hello...\ntemp=1.2: def aclod(bame):\\n    rrint(f\"Sum...",
+      "hints": {
+        "en": [
+          "Create sequences where input is code[i:i+seq_len] and target is code[i+1:i+seq_len+1]",
+          "Use CrossEntropyLoss — reshape output to (batch*seq_len, vocab_size)",
+          "For generation, detach hidden state between generate calls",
+          "Lower temperature produces more recognizable code"
+        ],
+        "ta": [
+          "உள்ளீடு code[i:i+seq_len], இலக்கு code[i+1:i+seq_len+1]",
+          "குறைந்த temperature அதிக அடையாளம் காணக்கூடிய code உருவாக்குகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does temperature control in text generation?",
+        "ta": "உரை உருவாக்கத்தில் temperature என்ன கட்டுப்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["Training speed", "The randomness/creativity of generated text", "Model size", "Vocabulary size"],
+        "ta": ["பயிற்சி வேகம்", "உருவாக்கப்பட்ட உரையின் சீரற்ற தன்மை/படைப்பாற்றல்", "மாதிரி அளவு", "சொல்வளம் அளவு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is 'autoregressive' generation?",
+        "ta": "'Autoregressive' உருவாக்கம் என்ன?"
+      },
+      "options": {
+        "en": ["Generating all characters at once", "Using each generated output as input for the next step", "Generating text in reverse", "Using a pre-defined template"],
+        "ta": ["அனைத்து எழுத்துக்களையும் ஒரே நேரத்தில் உருவாக்குவது", "ஒவ்வொரு உருவாக்கப்பட்ட வெளியீட்டையும் அடுத்த படிக்கான உள்ளீடாகப் பயன்படுத்துவது", "உரையை தலைகீழாக உருவாக்குவது", "முன் வரையறுக்கப்பட்ட வார்ப்புருவைப் பயன்படுத்துவது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do we use torch.multinomial() instead of argmax for generation?",
+        "ta": "உருவாக்கத்தில் argmax-க்கு பதிலாக ஏன் torch.multinomial() பயன்படுத்துகிறோம்?"
+      },
+      "options": {
+        "en": ["It's faster", "Sampling adds variety and prevents repetitive output", "Argmax doesn't work with text", "Multinomial uses less memory"],
+        "ta": ["வேகமானது", "மாதிரி எடுத்தல் வகைமையை சேர்த்து, மீண்டும் மீண்டும் வரும் வெளியீட்டைத் தடுக்கிறது", "Argmax உரையுடன் வேலை செய்யாது", "Multinomial குறைந்த நினைவகம் பயன்படுத்துகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["text_generation", "character_level_rnn", "temperature_sampling", "autoregressive", "embedding"],
+    "concepts_required": ["lstm_gru", "rnn_intro"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 40,
+    "real_world_application": ["chatbots", "creative_writing", "code_generation"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

@@ -1,0 +1,303 @@
+{
+  "id": "anthropic_api_basics",
+  "topic": "anthropic_api_basics",
+  "track": "ai_fundamentals",
+  "module": "api_integration",
+  "order": 6,
+  "title": {
+    "en": "Anthropic API: Building with Claude",
+    "ta": "Anthropic API: Claude உடன் உருவாக்குதல்"
+  },
+  "description": {
+    "en": "Learn to use the Anthropic API — Claude's messages API, tool use, and how it differs from OpenAI.",
+    "ta": "Anthropic API பயன்படுத்தக் கற்றுக்கொள்ளுங்கள் — Claude-ன் messages API, tool use, OpenAI-யிலிருந்து வேறுபாடுகள்."
+  },
+  "xp_reward": 70,
+  "next_unlock": "langchain_intro",
+  "story_variants": {
+    "en": "## Vaathiyaar Meets Claude\n\nVaathiyaar pulls up a second terminal beside the OpenAI one. \"Students, in the real world, you don't marry one API. The best engineers know multiple models. Claude by Anthropic is known for careful reasoning, long context windows (200K tokens!), and excellent instruction following. Let's learn its API.\"\n\n### Claude vs GPT — Key Differences\n\n| Feature | OpenAI | Anthropic |\n|---------|--------|----------|\n| System prompt | In messages array | Separate `system` parameter |\n| Model naming | gpt-4o, gpt-4o-mini | claude-sonnet-4-20250514, claude-haiku-4-20250414 |\n| Tool use | function_calling | tool_use blocks |\n| Context window | 128K tokens | 200K tokens |\n| Streaming | Same pattern | Similar with events |\n\n### Tool Use (Function Calling)\n\nClaude can call your Python functions! Define tools and Claude decides when to use them.\n\n> **Key Insight:** Claude's system prompt goes in a separate parameter, not inside the messages array. This is the most common mistake when switching from OpenAI.",
+    "ta": "## வாத்தியார் Claude-ஐ சந்திக்கிறார்\n\nவாத்தியார் OpenAI terminal-க்கு அருகில் இரண்டாவது terminal-ஐ திறக்கிறார். \"மாணவர்களே, உண்மையான உலகில், நீங்கள் ஒரே API-யை மட்டும் பயன்படுத்த வேண்டியதில்லை. சிறந்த பொறியாளர்கள் பல மாதிரிகளை அறிவார்கள்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "dual_terminals",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "claude_api_map",
+      "nodes": [
+        {
+          "label": "Anthropic API",
+          "children": [
+            "Messages API (main endpoint)",
+            "System prompt (separate param)",
+            "Tool Use (function calling)",
+            "200K context window"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "claude_code",
+      "steps": [
+        {
+          "line": "import anthropic",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the Anthropic client library — install with: pip install anthropic"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Create the client — it reads ANTHROPIC_API_KEY from environment"
+          }
+        },
+        {
+          "line": "client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize the client — never hardcode your API key"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's make a basic message call to Claude"
+          }
+        },
+        {
+          "line": "# Basic message to Claude",
+          "highlight": "comment",
+          "explanation": {
+            "en": "The messages.create() method is Claude's main endpoint"
+          }
+        },
+        {
+          "line": "message = client.messages.create(",
+          "highlight": "message",
+          "explanation": {
+            "en": "Call the messages API — similar to OpenAI but with key differences"
+          }
+        },
+        {
+          "line": "    model='claude-sonnet-4-20250514',",
+          "highlight": "model",
+          "explanation": {
+            "en": "Claude Sonnet is the balanced model — fast and capable"
+          }
+        },
+        {
+          "line": "    max_tokens=1024,",
+          "highlight": "max_tokens",
+          "explanation": {
+            "en": "max_tokens is REQUIRED in Claude API — unlike OpenAI where it's optional"
+          }
+        },
+        {
+          "line": "    system='You are a Python expert. Give concise answers with code examples.',",
+          "highlight": "system",
+          "explanation": {
+            "en": "IMPORTANT: system prompt is a separate parameter, NOT in messages array"
+          }
+        },
+        {
+          "line": "    messages=[",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Messages array contains only user and assistant turns"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'How do I read a CSV file in Python?'}",
+          "highlight": "user",
+          "explanation": {
+            "en": "User message with our question"
+          }
+        },
+        {
+          "line": "    ]",
+          "highlight": "",
+          "explanation": {
+            "en": "Close the messages array"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "API call is made to Claude"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Claude's response structure is slightly different from OpenAI"
+          }
+        },
+        {
+          "line": "# Extract response — different from OpenAI!",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Claude uses content blocks instead of choices"
+          }
+        },
+        {
+          "line": "print(message.content[0].text)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Access text via message.content[0].text — not choices[0].message.content"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "openai_vs_claude",
+      "left_label": "OpenAI Request",
+      "right_label": "Anthropic Request",
+      "left_content": "{\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a Python expert.\"},\n    {\"role\": \"user\", \"content\": \"Read a CSV?\"}\n  ]\n}",
+      "right_content": "{\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are a Python expert.\",\n  \"messages\": [\n    {\"role\": \"user\", \"content\": \"Read a CSV?\"}\n  ]\n}",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_claude_model",
+      "variable": "model",
+      "value": "claude-sonnet-4-20250514",
+      "data_type": "str",
+      "color": "#d97706"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> print(message.content[0].text)",
+        "Here's how to read a CSV file in Python:",
+        "",
+        "```python",
+        "import csv",
+        "",
+        "with open('data.csv', 'r') as file:",
+        "    reader = csv.DictReader(file)",
+        "    for row in reader:",
+        "        print(row)",
+        "```",
+        "",
+        ">>> # Check usage",
+        ">>> print(f'Input tokens: {message.usage.input_tokens}')",
+        "Input tokens: 28",
+        ">>> print(f'Output tokens: {message.usage.output_tokens}')",
+        "Output tokens: 95"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a script that calls the Anthropic API with a system prompt that makes Claude act as a code reviewer. Send a piece of Python code for review. Print the review and token usage. Include error handling for missing API key.",
+        "ta": "Claude-ஐ code reviewer ஆக செயல்பட வைக்கும் system prompt உடன் Anthropic API-ஐ அழைக்கும் script எழுதுங்கள். Python code-ஐ review-க்கு அனுப்புங்கள்."
+      },
+      "starter_code": "import os\nimport anthropic\n\nif not os.getenv('ANTHROPIC_API_KEY'):\n    print('Error: Set ANTHROPIC_API_KEY environment variable')\nelse:\n    client = anthropic.Anthropic()\n    \n    code_to_review = '''\ndef calc(x,y):\n    r=x+y\n    return r\n    '''\n    \n    # Make the API call with system prompt for code review\n    # Your code here\n    \n    # Print the review\n    # Print token usage",
+      "expected_output": "Review: (Claude's code review)\nInput tokens: (number)\nOutput tokens: (number)",
+      "hints": {
+        "en": [
+          "System prompt goes as a separate parameter: system='You are a code reviewer...'",
+          "max_tokens is required — use 1024",
+          "Response text is at message.content[0].text",
+          "Usage is at message.usage.input_tokens and .output_tokens"
+        ],
+        "ta": [
+          "System prompt தனி parameter: system='You are a code reviewer...'",
+          "max_tokens கட்டாயம் — 1024 பயன்படுத்துங்கள்",
+          "பதில் message.content[0].text-ல் உள்ளது",
+          "Usage message.usage-ல் உள்ளது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In the Anthropic API, where does the system prompt go?",
+        "ta": "Anthropic API-ல் system prompt எங்கே போகிறது?"
+      },
+      "options": {
+        "en": [
+          "Inside the messages array as role: 'system'",
+          "As a separate 'system' parameter",
+          "In the model name",
+          "It's not supported"
+        ],
+        "ta": [
+          "messages array-ல் role: 'system' ஆக",
+          "தனி 'system' parameter ஆக",
+          "model name-ல்",
+          "ஆதரிக்கப்படவில்லை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is unique about max_tokens in the Anthropic API?",
+        "ta": "Anthropic API-ல் max_tokens-ன் தனித்துவம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "It's not supported",
+          "It defaults to unlimited",
+          "It's required — you must specify it",
+          "It only accepts even numbers"
+        ],
+        "ta": [
+          "ஆதரிக்கப்படவில்லை",
+          "வரம்பற்றதாக இயல்புநிலை",
+          "கட்டாயம் — நீங்கள் குறிப்பிட வேண்டும்",
+          "இரட்டை எண்களை மட்டுமே ஏற்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "How do you access Claude's response text?",
+        "ta": "Claude-ன் பதில் உரையை எவ்வாறு அணுகுவது?"
+      },
+      "options": {
+        "en": [
+          "response.choices[0].message.content",
+          "response.text",
+          "message.content[0].text",
+          "message.output"
+        ],
+        "ta": [
+          "response.choices[0].message.content",
+          "response.text",
+          "message.content[0].text",
+          "message.output"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["anthropic_api", "claude_messages", "tool_use", "api_comparison"],
+    "concepts_required": ["openai_api_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["multi_model_apps", "ai_integration"],
+    "category": "ai_api",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "id": "dl_autoencoders",
+  "topic": "autoencoders",
+  "track": "deep_learning_complete",
+  "module": "generative_models",
+  "order": 23,
+  "title": {
+    "en": "Autoencoders: Compress, Encode & Generate",
+    "ta": "ஆட்டோஎன்கோடர்கள்: சுருக்கு, குறியாக்கு & உருவாக்கு"
+  },
+  "description": {
+    "en": "Build autoencoders and variational autoencoders (VAE) to learn compressed representations, detect anomalies, and generate new data.",
+    "ta": "சுருக்கப்பட்ட பிரதிநிதித்துவங்களைக் கற்க, முரண்பாடுகளைக் கண்டறிய, புதிய தரவை உருவாக்க autoencoders மற்றும் VAE-களை உருவாக்குங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Compression Machine\n\nVaathiyaar feeds a photograph into a machine. It comes out as a tiny code, then the machine reconstructs the photograph from that code. \"An autoencoder learns to compress data into a small latent space and then reconstruct it. The bottleneck forces it to learn the essence.\"\n\n### Standard Autoencoder\n\n```python\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nclass Autoencoder(nn.Module):\n    def __init__(self, input_dim=784, latent_dim=32):\n        super().__init__()\n        # Encoder: compress input to latent space\n        self.encoder = nn.Sequential(\n            nn.Linear(input_dim, 256),\n            nn.ReLU(),\n            nn.Linear(256, 128),\n            nn.ReLU(),\n            nn.Linear(128, latent_dim)\n        )\n        # Decoder: reconstruct from latent space\n        self.decoder = nn.Sequential(\n            nn.Linear(latent_dim, 128),\n            nn.ReLU(),\n            nn.Linear(128, 256),\n            nn.ReLU(),\n            nn.Linear(256, input_dim),\n            nn.Sigmoid()  # output in [0, 1]\n        )\n    \n    def forward(self, x):\n        z = self.encoder(x)   # encode\n        x_hat = self.decoder(z)  # decode\n        return x_hat, z\n\n# Training: reconstruct the input\nmodel = Autoencoder(784, 32)\noptimizer = torch.optim.Adam(model.parameters(), lr=0.001)\n\nfor epoch in range(100):\n    x = torch.rand(64, 784)  # batch of 64 images\n    x_hat, z = model(x)\n    loss = F.mse_loss(x_hat, x)  # reconstruction loss\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()\n```\n\n### Variational Autoencoder (VAE)\n\n```python\nclass VAE(nn.Module):\n    def __init__(self, input_dim=784, latent_dim=16):\n        super().__init__()\n        self.encoder = nn.Sequential(\n            nn.Linear(input_dim, 256), nn.ReLU(),\n            nn.Linear(256, 128), nn.ReLU()\n        )\n        self.fc_mu = nn.Linear(128, latent_dim)\n        self.fc_logvar = nn.Linear(128, latent_dim)\n        self.decoder = nn.Sequential(\n            nn.Linear(latent_dim, 128), nn.ReLU(),\n            nn.Linear(128, 256), nn.ReLU(),\n            nn.Linear(256, input_dim), nn.Sigmoid()\n        )\n    \n    def encode(self, x):\n        h = self.encoder(x)\n        return self.fc_mu(h), self.fc_logvar(h)\n    \n    def reparameterize(self, mu, logvar):\n        std = torch.exp(0.5 * logvar)\n        eps = torch.randn_like(std)\n        return mu + eps * std  # sample z\n    \n    def forward(self, x):\n        mu, logvar = self.encode(x)\n        z = self.reparameterize(mu, logvar)\n        x_hat = self.decoder(z)\n        return x_hat, mu, logvar\n\ndef vae_loss(x_hat, x, mu, logvar):\n    recon_loss = F.binary_cross_entropy(x_hat, x, reduction='sum')\n    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())\n    return recon_loss + kl_loss\n```\n\n> **AE vs VAE:** Standard AE learns deterministic codes. VAE learns a probability distribution, allowing smooth interpolation and meaningful generation!",
+    "ta": "## வாத்தியாரின் சுருக்க இயந்திரம்\n\nவாத்தியார் ஒரு புகைப்படத்தை இயந்திரத்தில் செலுத்துகிறார். அது சிறிய குறியீடாக வருகிறது, பிறகு இயந்திரம் அந்த குறியீட்டிலிருந்து புகைப்படத்தை மீண்டும் உருவாக்குகிறது. \"ஒரு autoencoder தரவை சிறிய latent space-ல் சுருக்கவும், பிறகு மீண்டும் உருவாக்கவும் கற்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "compression_machine",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ae_concepts",
+      "nodes": [
+        {
+          "label": "Autoencoders",
+          "children": [
+            "Encoder (compress)",
+            "Latent Space (bottleneck)",
+            "Decoder (reconstruct)",
+            "VAE (probabilistic)",
+            "KL Divergence Loss",
+            "Reparameterization Trick"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "ae_code",
+      "steps": [
+        {"line": "self.encoder = nn.Sequential(nn.Linear(784, 256), nn.ReLU(), ..., nn.Linear(128, 32))", "highlight": "encoder", "explanation": {"en": "Encoder: compress 784 pixels to 32-dim latent code. 24.5x compression ratio!"}},
+        {"line": "self.decoder = nn.Sequential(nn.Linear(32, 128), ..., nn.Linear(256, 784), nn.Sigmoid())", "highlight": "decoder", "explanation": {"en": "Decoder: expand 32-dim code back to 784 pixels. Sigmoid ensures output in [0,1]"}},
+        {"line": "z = self.encoder(x)", "highlight": "z", "explanation": {"en": "Latent code z: the compressed representation. Contains the 'essence' of the input"}},
+        {"line": "loss = F.mse_loss(x_hat, x)", "highlight": "recon_loss", "explanation": {"en": "Reconstruction loss: how different is the output from the input? Lower = better compression"}},
+        {"line": "self.fc_mu = nn.Linear(128, latent_dim)", "highlight": "mu", "explanation": {"en": "VAE: instead of a single code, output mean (mu) of a Gaussian distribution"}},
+        {"line": "self.fc_logvar = nn.Linear(128, latent_dim)", "highlight": "logvar", "explanation": {"en": "VAE: also output log variance. Together (mu, logvar) define a probability distribution"}},
+        {"line": "eps = torch.randn_like(std); z = mu + eps * std", "highlight": "reparameterize", "explanation": {"en": "Reparameterization trick: sample z = mu + eps*std. Makes sampling differentiable!"}},
+        {"line": "kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())", "highlight": "kl_loss", "explanation": {"en": "KL divergence: pushes the learned distribution toward standard normal N(0,1)"}},
+        {"line": "return recon_loss + kl_loss", "highlight": "total_loss", "explanation": {"en": "VAE loss = reconstruction quality + regularization of latent space"}},
+        {"line": "# Generation: sample z ~ N(0,1), decode!", "highlight": "generate", "explanation": {"en": "After training, sample random z from N(0,1) and pass through decoder to generate new data"}}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "ae_architecture",
+      "structure_type": "autoencoder",
+      "layers": [
+        {"name": "Input", "nodes": ["784 pixels"], "type": "input"},
+        {"name": "Encoder", "nodes": ["784 -> 256 -> 128 -> 32"], "type": "encoder"},
+        {"name": "Latent (z)", "nodes": ["32-dim code"], "type": "bottleneck"},
+        {"name": "Decoder", "nodes": ["32 -> 128 -> 256 -> 784"], "type": "decoder"},
+        {"name": "Output", "nodes": ["784 pixels (reconstructed)"], "type": "output"}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_latent",
+      "variable": "latent_dim",
+      "value": "32",
+      "data_type": "int",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_recon_loss",
+      "variable": "recon_loss",
+      "value": "0.012",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_kl_loss",
+      "variable": "kl_loss",
+      "value": "8.45",
+      "data_type": "float",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "ae_vs_vae",
+      "left": {"label": "Autoencoder", "content": "Deterministic latent code\nGood for compression/denoising\nLatent space may have gaps\nCannot generate new data easily"},
+      "right": {"label": "VAE", "content": "Probabilistic latent distribution\nSmooth, continuous latent space\nCan interpolate between samples\nCan generate new data by sampling z~N(0,1)"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "ae_flow",
+      "from": "input",
+      "to": "reconstruction",
+      "steps": ["Input x", "Encode", "Latent z (32-dim)", "Decode", "Reconstruct x_hat", "Compare x vs x_hat"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> model = Autoencoder(784, 32)",
+        ">>> x = torch.rand(64, 784)",
+        ">>> x_hat, z = model(x)",
+        ">>> z.shape",
+        "torch.Size([64, 32])",
+        ">>> F.mse_loss(x_hat, x)",
+        "tensor(0.0123)",
+        ">>> # VAE generation:",
+        ">>> z_sample = torch.randn(16, 16)",
+        ">>> generated = vae.decoder(z_sample)  # new images!"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "compression_wave",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a VAE that learns to reconstruct and generate 2D data points from a mixture of 4 Gaussians. Train it, then generate new samples and verify they match the original distribution.",
+        "ta": "4 Gaussians-ன் கலவையிலிருந்து 2D data points-ஐ மீண்டும் உருவாக்கி உருவாக்கும் VAE-ஐ உருவாக்குங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# 4 Gaussian clusters\ndef generate_data(n=1000):\n    centers = torch.tensor([[2,2],[-2,2],[2,-2],[-2,-2]], dtype=torch.float32)\n    labels = torch.randint(0, 4, (n,))\n    data = centers[labels] + torch.randn(n, 2) * 0.3\n    return data\n\nreal_data = generate_data(2000)\n\nclass VAE2D(nn.Module):\n    def __init__(self, latent_dim=2):\n        super().__init__()\n        # TODO: Encoder -> mu, logvar\n        # TODO: Decoder -> reconstructed 2D points\n        pass\n    \n    def reparameterize(self, mu, logvar):\n        std = torch.exp(0.5 * logvar)\n        return mu + torch.randn_like(std) * std\n    \n    def forward(self, x):\n        pass\n\n# TODO: Train VAE with reconstruction + KL loss\n# TODO: Generate 500 new samples from N(0,1) and compare distribution\n",
+      "expected_output": "Epoch 200: Recon Loss=0.15, KL Loss=2.3\nGenerated samples match the 4-cluster pattern!",
+      "hints": {
+        "en": [
+          "Encoder: Linear(2,64) -> ReLU -> fc_mu(64,2), fc_logvar(64,2)",
+          "Decoder: Linear(2,64) -> ReLU -> Linear(64,2)",
+          "VAE loss = MSE reconstruction + KL divergence",
+          "Sample z from N(0,1) and decode to generate new points"
+        ],
+        "ta": [
+          "Encoder: Linear(2,64) -> ReLU -> fc_mu(64,2), fc_logvar(64,2)",
+          "VAE loss = MSE reconstruction + KL divergence"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the bottleneck in an autoencoder?",
+        "ta": "Autoencoder-ல் bottleneck என்ன?"
+      },
+      "options": {
+        "en": ["The slowest layer", "The latent layer with fewer dimensions than input, forcing compression", "The output layer", "The loss function"],
+        "ta": ["மெதுவான அடுக்கு", "உள்ளீட்டை விட குறைவான பரிமாணங்கள் கொண்ட latent அடுக்கு, சுருக்கத்தை கட்டாயப்படுத்துகிறது", "வெளியீட்டு அடுக்கு", "இழப்பு செயல்பாடு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the reparameterization trick in VAE?",
+        "ta": "VAE-ல் reparameterization trick என்ன?"
+      },
+      "options": {
+        "en": ["Changing the learning rate", "Expressing z = mu + eps*std so sampling is differentiable", "Removing the decoder", "Using a different loss function"],
+        "ta": ["Learning rate-ஐ மாற்றுவது", "z = mu + eps*std என வெளிப்படுத்துவதால் sampling வகையிடக்கூடியது", "Decoder-ஐ அகற்றுவது", "வேறு இழப்பு செயல்பாட்டைப் பயன்படுத்துவது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the KL divergence loss encourage in a VAE?",
+        "ta": "VAE-ல் KL divergence loss என்ன ஊக்குவிக்கிறது?"
+      },
+      "options": {
+        "en": ["Faster training", "The latent distribution to be close to standard normal N(0,1)", "Larger latent space", "Better image quality"],
+        "ta": ["வேகமான பயிற்சி", "Latent distribution நிலையான இயல்பான N(0,1)-க்கு நெருக்கமாக இருக்க", "பெரிய latent space", "சிறந்த பட தரம்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["autoencoder", "vae", "latent_space", "kl_divergence", "reparameterization_trick", "reconstruction_loss"],
+    "concepts_required": ["pytorch_training", "loss_functions"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["anomaly_detection", "data_generation", "dimensionality_reduction"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

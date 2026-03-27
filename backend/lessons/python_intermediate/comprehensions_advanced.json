@@ -1,0 +1,285 @@
+{
+  "id": "comprehensions_advanced",
+  "topic": "comprehensions_advanced",
+  "track": "python_intermediate",
+  "module": "data_processing",
+  "order": 10,
+  "title": {
+    "en": "Advanced Comprehensions: Dicts, Sets & Nested Magic",
+    "ta": "மேம்பட்ட Comprehensions: Dicts, Sets & உள்ளமை மாயம்"
+  },
+  "description": {
+    "en": "Go beyond list comprehensions — master dict comprehensions, set comprehensions, nested comprehensions, and conditional filtering.",
+    "ta": "list comprehensions-ஐ தாண்டி — dict comprehensions, set comprehensions, nested comprehensions, conditional filtering ஆகியவற்றில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Assembly Line\n\nVaathiyaar shows a factory assembly line. \"List comprehensions are one conveyor belt. But what if you need to produce dictionaries, sets, or process a grid? Advanced comprehensions are your multi-lane assembly line!\"\n\n### Types of Comprehensions\n\n| Type | Syntax | Output |\n|------|--------|--------|\n| List | `[expr for x in iterable]` | `list` |\n| Dict | `{key: val for x in iterable}` | `dict` |\n| Set | `{expr for x in iterable}` | `set` |\n| Generator | `(expr for x in iterable)` | `generator` |\n\n### Conditional Comprehensions\n\n```python\n# Filter: only include if condition is True\nevens = [x for x in range(10) if x % 2 == 0]\n\n# Transform: if-else in the expression\nlabels = ['even' if x % 2 == 0 else 'odd' for x in range(5)]\n```\n\n> **Key Concept:** The `if` at the END is a filter (skip items). The `if-else` at the START is a transform (change items). Don't confuse them!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "assembly_line",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Comprehensions",
+          "children": [
+            "Dict {k:v for...}",
+            "Set {x for...}",
+            "Nested [... for... for...]",
+            "Conditional if/else",
+            "Generator (x for...)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "names = ['alice', 'bob', 'charlie']",
+          "highlight": "names",
+          "explanation": {
+            "en": "Start with a list of names"
+          }
+        },
+        {
+          "line": "name_lengths = {name: len(name) for name in names}",
+          "highlight": "{name: len(name)",
+          "explanation": {
+            "en": "DICT comprehension — creates {name: length} pairs"
+          }
+        },
+        {
+          "line": "print(name_lengths)",
+          "highlight": "print",
+          "explanation": {
+            "en": "{'alice': 5, 'bob': 3, 'charlie': 7}"
+          }
+        },
+        {
+          "line": "words = ['hello', 'world', 'hello', 'python', 'world']",
+          "highlight": "words",
+          "explanation": {
+            "en": "A list with duplicate words"
+          }
+        },
+        {
+          "line": "unique_lengths = {len(w) for w in words}",
+          "highlight": "{len(w)",
+          "explanation": {
+            "en": "SET comprehension — automatically removes duplicates"
+          }
+        },
+        {
+          "line": "print(unique_lengths)",
+          "highlight": "print",
+          "explanation": {
+            "en": "{5, 6} — only unique lengths"
+          }
+        },
+        {
+          "line": "scores = {'alice': 85, 'bob': 42, 'charlie': 91, 'dave': 38}",
+          "highlight": "scores",
+          "explanation": {
+            "en": "A dictionary of student scores"
+          }
+        },
+        {
+          "line": "passed = {k: v for k, v in scores.items() if v >= 50}",
+          "highlight": "if v >= 50",
+          "explanation": {
+            "en": "Dict comprehension with FILTER — only passing scores"
+          }
+        },
+        {
+          "line": "print(passed)",
+          "highlight": "print",
+          "explanation": {
+            "en": "{'alice': 85, 'charlie': 91} — bob and dave filtered out"
+          }
+        },
+        {
+          "line": "matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]",
+          "highlight": "matrix",
+          "explanation": {
+            "en": "A 3x3 matrix (list of lists)"
+          }
+        },
+        {
+          "line": "flat = [num for row in matrix for num in row]",
+          "highlight": "for row in matrix for num in row",
+          "explanation": {
+            "en": "NESTED comprehension — flatten the matrix into one list"
+          }
+        },
+        {
+          "line": "print(flat)",
+          "highlight": "print",
+          "explanation": {
+            "en": "[1, 2, 3, 4, 5, 6, 7, 8, 9]"
+          }
+        },
+        {
+          "line": "transposed = [[row[i] for row in matrix] for i in range(3)]",
+          "highlight": "row[i] for row",
+          "explanation": {
+            "en": "Transpose: rows become columns"
+          }
+        },
+        {
+          "line": "print(transposed)",
+          "highlight": "print",
+          "explanation": {
+            "en": "[[1, 4, 7], [2, 5, 8], [3, 6, 9]]"
+          }
+        },
+        {
+          "line": "grades = ['A' if s >= 90 else 'B' if s >= 70 else 'F' for s in [95, 80, 45]]",
+          "highlight": "'A' if",
+          "explanation": {
+            "en": "if-else in expression position — transforms each value"
+          }
+        },
+        {
+          "line": "print(grades)",
+          "highlight": "print",
+          "explanation": {
+            "en": "['A', 'B', 'F']"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_dict",
+      "variable": "name_lengths",
+      "value": "{'alice': 5, 'bob': 3, 'charlie': 7}",
+      "data_type": "dict",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_set",
+      "variable": "unique_lengths",
+      "value": "{5, 6}",
+      "data_type": "set",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "{'alice': 5, 'bob': 3, 'charlie': 7}",
+        "{5, 6}",
+        "{'alice': 85, 'charlie': 91}",
+        "[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+        "[[1, 4, 7], [2, 5, 8], [3, 6, 9]]",
+        "['A', 'B', 'F']"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "matrix_visual",
+      "structure_type": "matrix",
+      "data": [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+      "highlight_cells": []
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Given a list of words, create a dict comprehension that maps each word to its reversed form, but only for words longer than 3 characters. Print the result.",
+        "ta": "சொற்களின் பட்டியல் கொடுக்கப்பட்டால், ஒவ்வொரு சொல்லையும் அதன் தலைகீழ் வடிவத்திற்கு dict comprehension மூலம் map செய்யுங்கள், 3 எழுத்துகளுக்கு மேல் உள்ள சொற்களுக்கு மட்டும்."
+      },
+      "starter_code": "words = ['hi', 'hello', 'hey', 'python', 'go']\n# Create dict comprehension: {word: reversed_word} for words > 3 chars\nresult = # your code here\nprint(result)",
+      "expected_output": "{'hello': 'olleh', 'python': 'nohtyp'}",
+      "hints": {
+        "en": [
+          "Reverse a string with word[::-1]",
+          "Filter with if len(word) > 3",
+          "{word: word[::-1] for word in words if len(word) > 3}"
+        ],
+        "ta": [
+          "word[::-1] மூலம் சரத்தை தலைகீழாக்குங்கள்",
+          "if len(word) > 3 மூலம் வடிகட்டுங்கள்",
+          "{word: word[::-1] for word in words if len(word) > 3}"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does {x**2 for x in [1,2,2,3]} produce?",
+        "ta": "{x**2 for x in [1,2,2,3]} என்ன உருவாக்கும்?"
+      },
+      "options": {
+        "en": ["[1, 4, 4, 9]", "{1, 4, 9}", "{1: 1, 2: 4, 3: 9}", "Error"],
+        "ta": ["[1, 4, 4, 9]", "{1, 4, 9}", "{1: 1, 2: 4, 3: 9}", "பிழை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Where does the 'if' go for filtering vs transforming?",
+        "ta": "filtering மற்றும் transforming-க்கு 'if' எங்கே போகும்?"
+      },
+      "options": {
+        "en": [
+          "Filter: end, Transform: start (as if-else)",
+          "Filter: start, Transform: end",
+          "Both go at the end",
+          "Both go at the start"
+        ],
+        "ta": [
+          "Filter: இறுதியில், Transform: தொடக்கத்தில் (if-else ஆக)",
+          "Filter: தொடக்கத்தில், Transform: இறுதியில்",
+          "இரண்டும் இறுதியில்",
+          "இரண்டும் தொடக்கத்தில்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does [num for row in matrix for num in row] do?",
+        "ta": "[num for row in matrix for num in row] என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Creates a matrix",
+          "Flattens a 2D list into 1D",
+          "Transposes the matrix",
+          "Raises an error"
+        ],
+        "ta": [
+          "matrix உருவாக்குகிறது",
+          "2D பட்டியலை 1D-ஆக தட்டையாக்குகிறது",
+          "matrix-ஐ transpose செய்கிறது",
+          "பிழை எழுப்புகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dict_comprehension", "set_comprehension", "nested_comprehension", "conditional_comprehension"],
+    "concepts_required": ["list_comprehension", "dictionaries", "sets", "loops"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["data_transformation", "data_cleaning"],
+    "category": "data_processing",
+    "path_memberships": ["python_intermediate"]
+  }
+}

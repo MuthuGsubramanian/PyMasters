@@ -1,0 +1,274 @@
+{
+  "id": "big_o_complexity",
+  "topic": "big_o_complexity",
+  "track": "dsa",
+  "module": "complexity_analysis",
+  "order": 1,
+  "title": {
+    "en": "Big O Notation: Measuring Algorithm Speed",
+    "ta": "Big O குறியீடு: வழிமுறை வேகத்தை அளவிடுதல்"
+  },
+  "description": {
+    "en": "Understand time and space complexity using Big O notation. Learn to analyze how algorithms scale with input size.",
+    "ta": "Big O குறியீட்டைப் பயன்படுத்தி நேர மற்றும் இட சிக்கலை புரிந்துகொள்ளுங்கள். உள்ளீட்டு அளவுடன் வழிமுறைகள் எவ்வாறு அளவிடப்படுகின்றன என்பதை கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Speed Challenge\n\nVaathiyaar walks into the classroom with two stopwatches. \"Today we measure speed — not yours, but your code's!\"\n\n### What is Big O?\n- A mathematical notation to describe algorithm efficiency\n- Measures how runtime grows as input size increases\n- Focuses on the **worst case** scenario\n- Ignores constants and lower-order terms\n\n### Common Complexities\n\n| Big O | Name | Example |\n|-------|------|--------|\n| `O(1)` | Constant | Dictionary lookup |\n| `O(log n)` | Logarithmic | Binary search |\n| `O(n)` | Linear | Loop through list |\n| `O(n log n)` | Linearithmic | Merge sort |\n| `O(n²)` | Quadratic | Nested loops |\n| `O(2ⁿ)` | Exponential | Recursive fibonacci |\n\n### Analyzing Code\n\n```python\n# O(1) — constant time\ndef get_first(items):\n    return items[0]\n\n# O(n) — linear time\ndef find_max(items):\n    max_val = items[0]\n    for item in items:\n        if item > max_val:\n            max_val = item\n    return max_val\n\n# O(n²) — quadratic time\ndef has_duplicates(items):\n    for i in range(len(items)):\n        for j in range(i + 1, len(items)):\n            if items[i] == items[j]:\n                return True\n    return False\n```\n\n> **Key Concept:** Big O tells you how your code **scales**. An O(n²) algorithm might be fine for 100 items but catastrophic for 1,000,000."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "stopwatch_race",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Big O Notation",
+          "children": [
+            "Time Complexity",
+            "Space Complexity",
+            "Worst Case",
+            "Growth Rate"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_complexity",
+      "steps": [
+        {
+          "line": "import time",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the time module to measure execution speed",
+            "ta": "செயல்படுத்தும் வேகத்தை அளவிட time module-ஐ இறக்குமதி செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "def constant_time(items):",
+          "highlight": "constant_time",
+          "explanation": {
+            "en": "O(1) — always takes the same time regardless of input size",
+            "ta": "O(1) — உள்ளீட்டு அளவைப் பொருட்படுத்தாமல் எப்போதும் ஒரே நேரம் எடுக்கும்"
+          }
+        },
+        {
+          "line": "    return items[0]",
+          "highlight": "items[0]",
+          "explanation": {
+            "en": "Accessing by index is instant — one operation no matter the list size",
+            "ta": "குறியீட்டால் அணுகுவது உடனடி — பட்டியல் அளவு எதுவாக இருந்தாலும் ஒரே செயல்"
+          }
+        },
+        {
+          "line": "def linear_time(items):",
+          "highlight": "linear_time",
+          "explanation": {
+            "en": "O(n) — time grows proportionally with input size",
+            "ta": "O(n) — நேரம் உள்ளீட்டு அளவுக்கு விகிதாசாரமாக வளரும்"
+          }
+        },
+        {
+          "line": "    total = 0",
+          "highlight": "total",
+          "explanation": {
+            "en": "Initialize an accumulator variable",
+            "ta": "ஒரு திரட்டி மாறியை துவக்குங்கள்"
+          }
+        },
+        {
+          "line": "    for item in items:",
+          "highlight": "for",
+          "explanation": {
+            "en": "This loop visits every element once — n iterations for n items",
+            "ta": "இந்த loop ஒவ்வொரு உறுப்பையும் ஒருமுறை பார்க்கும் — n உருப்படிகளுக்கு n சுழற்சிகள்"
+          }
+        },
+        {
+          "line": "        total += item",
+          "highlight": "total += item",
+          "explanation": {
+            "en": "Each iteration does O(1) work, but we do it n times = O(n)",
+            "ta": "ஒவ்வொரு சுழற்சியும் O(1) வேலை செய்யும், ஆனால் n முறை = O(n)"
+          }
+        },
+        {
+          "line": "    return total",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the computed sum after visiting all elements",
+            "ta": "அனைத்து உறுப்புகளையும் பார்வையிட்ட பிறகு கணக்கிடப்பட்ட தொகையை திருப்புங்கள்"
+          }
+        },
+        {
+          "line": "def quadratic_time(items):",
+          "highlight": "quadratic_time",
+          "explanation": {
+            "en": "O(n²) — nested loops multiply the iterations",
+            "ta": "O(n²) — உள்ளமைக்கப்பட்ட loops சுழற்சிகளை பெருக்குகின்றன"
+          }
+        },
+        {
+          "line": "    for i in range(len(items)):",
+          "highlight": "for i",
+          "explanation": {
+            "en": "Outer loop runs n times",
+            "ta": "வெளி loop n முறை இயங்கும்"
+          }
+        },
+        {
+          "line": "        for j in range(i+1, len(items)):",
+          "highlight": "for j",
+          "explanation": {
+            "en": "Inner loop runs up to n times for each outer iteration — total ~n² comparisons",
+            "ta": "ஒவ்வொரு வெளி சுழற்சிக்கும் உள் loop n முறை வரை இயங்கும் — மொத்தம் ~n² ஒப்பீடுகள்"
+          }
+        },
+        {
+          "line": "            if items[i] == items[j]:",
+          "highlight": "==",
+          "explanation": {
+            "en": "Compare every pair — this is what makes it O(n²)",
+            "ta": "ஒவ்வொரு ஜோடியையும் ஒப்பிடுங்கள் — இதுதான் O(n²) ஆக்குகிறது"
+          }
+        },
+        {
+          "line": "data = [1, 2, 3, 4, 5]",
+          "highlight": "data",
+          "explanation": {
+            "en": "Create a small test list with 5 elements",
+            "ta": "5 உறுப்புகளுடன் ஒரு சிறிய சோதனை பட்டியலை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "print(constant_time(data))",
+          "highlight": "print",
+          "explanation": {
+            "en": "Prints 1 — accessed in O(1) time",
+            "ta": "1 அச்சிடும் — O(1) நேரத்தில் அணுகப்பட்டது"
+          }
+        },
+        {
+          "line": "print(linear_time(data))",
+          "highlight": "print",
+          "explanation": {
+            "en": "Prints 15 — summed all elements in O(n) time",
+            "ta": "15 அச்சிடும் — O(n) நேரத்தில் அனைத்து உறுப்புகளையும் கூட்டியது"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_n",
+      "variable": "n",
+      "value": 5,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_ops",
+      "variable": "operations",
+      "value": "O(1)=1, O(n)=5, O(n²)=25",
+      "data_type": "str",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "1",
+        "15",
+        "O(1): 1 operation",
+        "O(n): 5 operations",
+        "O(n²): 25 operations"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "complexity_comparison",
+      "comparisons": [
+        {"label": "O(1)", "values": [1, 1, 1, 1], "color": "#4ff7a4"},
+        {"label": "O(n)", "values": [10, 100, 1000, 10000], "color": "#f7d44f"},
+        {"label": "O(n²)", "values": [100, 10000, 1000000, 100000000], "color": "#f74f4f"}
+      ],
+      "x_labels": ["n=10", "n=100", "n=1000", "n=10000"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write three functions: one O(1) that returns the last element, one O(n) that counts even numbers, and one O(n²) that finds all pairs summing to a target. Test each with a sample list.",
+        "ta": "மூன்று செயல்பாடுகளை எழுதுங்கள்: கடைசி உறுப்பை திருப்பும் O(1), இரட்டை எண்களை எண்ணும் O(n), மற்றும் இலக்குக்கு கூட்டும் அனைத்து ஜோடிகளை கண்டறியும் O(n²)."
+      },
+      "starter_code": "def get_last(items):\n    # O(1) - return the last element\n    pass\n\ndef count_evens(items):\n    # O(n) - count even numbers\n    pass\n\ndef pair_sum(items, target):\n    # O(n^2) - find all pairs that sum to target\n    pass\n\ndata = [1, 2, 3, 4, 5, 6, 7, 8]\nprint(get_last(data))\nprint(count_evens(data))\nprint(pair_sum(data, 9))",
+      "expected_output": "8\n4\n[(1, 8), (2, 7), (3, 6), (4, 5)]",
+      "hints": {
+        "en": [
+          "For O(1), use items[-1] to get the last element",
+          "For O(n), loop through and check item % 2 == 0",
+          "For O(n²), use nested loops: for i, for j where j > i"
+        ],
+        "ta": [
+          "O(1) க்கு, கடைசி உறுப்பை பெற items[-1] பயன்படுத்துங்கள்",
+          "O(n) க்கு, loop மூலம் item % 2 == 0 சரிபார்க்கவும்",
+          "O(n²) க்கு, உள்ளமைக்கப்பட்ட loops பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the time complexity of accessing an element by index in a list?",
+        "ta": "ஒரு பட்டியலில் குறியீட்டால் ஒரு உறுப்பை அணுகுவதன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(1)", "O(log n)", "O(n²)"],
+        "ta": ["O(n)", "O(1)", "O(log n)", "O(n²)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which Big O notation represents the worst scalability?",
+        "ta": "எந்த Big O குறியீடு மிக மோசமான அளவிடுதலைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["O(n)", "O(n log n)", "O(1)", "O(2ⁿ)"],
+        "ta": ["O(n)", "O(n log n)", "O(1)", "O(2ⁿ)"]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What is the time complexity of a nested loop where both loops iterate over n elements?",
+        "ta": "இரண்டு loops-ம் n உறுப்புகளை சுழற்சிக்கும் உள்ளமைக்கப்பட்ட loop-ன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(2n)", "O(n²)", "O(n log n)"],
+        "ta": ["O(n)", "O(2n)", "O(n²)", "O(n log n)"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["big_o_notation", "time_complexity", "space_complexity"],
+    "concepts_required": ["loops", "functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["performance_optimization", "algorithm_selection"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

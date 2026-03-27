@@ -1,0 +1,293 @@
+{
+  "id": "prompt_engineering_advanced",
+  "topic": "prompt_engineering_advanced",
+  "track": "ai_fundamentals",
+  "module": "prompt_engineering",
+  "order": 3,
+  "title": {
+    "en": "Advanced Prompt Engineering: System Prompts & Control",
+    "ta": "மேம்பட்ட Prompt பொறியியல்: System Prompts & கட்டுப்பாடு"
+  },
+  "description": {
+    "en": "Learn system prompts, temperature control, and structured output techniques to precisely control LLM behavior.",
+    "ta": "LLM நடத்தையை துல்லியமாகக் கட்டுப்படுத்த system prompts, temperature control, structured output நுட்பங்களைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "next_unlock": "llm_how_they_work",
+  "story_variants": {
+    "en": "## Vaathiyaar's Control Room\n\nVaathiyaar stands before a mixing console with labeled knobs. \"Students, prompting is not just about what you ask — it's about how you configure the AI before it answers. Think of the system prompt as setting the AI's personality, and temperature as its creativity dial.\"\n\n### System Prompts\n\nA **system prompt** sets the AI's role, constraints, and behavior BEFORE the conversation starts.\n\n```python\nmessages = [\n    {'role': 'system', 'content': 'You are a Tamil-English translator. Only output translations, nothing else.'},\n    {'role': 'user', 'content': 'நான் Python கற்றுக்கொள்கிறேன்'}\n]\n```\n\n### Temperature Control\n\n| Temperature | Behavior | Use Case |\n|------------|----------|----------|\n| 0.0 | Deterministic, focused | Code generation, math |\n| 0.5 | Balanced | General conversation |\n| 1.0 | Creative, varied | Brainstorming, stories |\n| 1.5+ | Wild, unpredictable | Rarely useful |\n\n### Structured Output\n\nForce the AI to respond in a specific format:\n```\nRespond ONLY in valid JSON with keys: sentiment, confidence, reasoning\n```\n\n> **Key Insight:** The combination of system prompt + temperature + output format gives you precise control over any LLM.",
+    "ta": "## வாத்தியாரின் கட்டுப்பாட்டு அறை\n\nவாத்தியார் பெயரிடப்பட்ட குமிழ்கள் உள்ள ஒரு கலவை கன்சோலின் முன் நிற்கிறார். \"மாணவர்களே, prompting என்பது நீங்கள் என்ன கேட்கிறீர்கள் என்பது மட்டுமல்ல — AI பதிலளிக்கும் முன் அதை எவ்வாறு கட்டமைக்கிறீர்கள் என்பதும் முக்கியம்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "control_room",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "control_concepts",
+      "nodes": [
+        {
+          "label": "LLM Control Parameters",
+          "children": [
+            "System Prompt (role/personality)",
+            "Temperature (creativity)",
+            "Max Tokens (length limit)",
+            "Output Format (JSON/structured)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "advanced_prompt_code",
+      "steps": [
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the OpenAI client library"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize the client with your API key from environment"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's build a precisely controlled API call"
+          }
+        },
+        {
+          "line": "system_prompt = '''You are a Python code reviewer.",
+          "highlight": "system_prompt",
+          "explanation": {
+            "en": "The system prompt defines the AI's role — here, a code reviewer"
+          }
+        },
+        {
+          "line": "Rules: 1) Only review Python code",
+          "highlight": "rules",
+          "explanation": {
+            "en": "Add specific constraints to narrow the AI's behavior"
+          }
+        },
+        {
+          "line": "2) Rate code 1-10 for readability",
+          "highlight": "rating",
+          "explanation": {
+            "en": "Define expected output format within the system prompt"
+          }
+        },
+        {
+          "line": "3) Respond in JSON: {\"score\": int, \"issues\": list, \"suggestion\": str}'''",
+          "highlight": "json_format",
+          "explanation": {
+            "en": "Force JSON output by specifying the exact schema in the system prompt"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now make the API call with temperature control"
+          }
+        },
+        {
+          "line": "response = client.chat.completions.create(",
+          "highlight": "response",
+          "explanation": {
+            "en": "Create a chat completion with full parameter control"
+          }
+        },
+        {
+          "line": "    model='gpt-4o-mini',",
+          "highlight": "model",
+          "explanation": {
+            "en": "Choose the model — gpt-4o-mini is fast and affordable"
+          }
+        },
+        {
+          "line": "    temperature=0.2,",
+          "highlight": "temperature",
+          "explanation": {
+            "en": "Low temperature for consistent, deterministic code reviews"
+          }
+        },
+        {
+          "line": "    max_tokens=500,",
+          "highlight": "max_tokens",
+          "explanation": {
+            "en": "Limit response length to control costs and keep output focused"
+          }
+        },
+        {
+          "line": "    messages=[",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Messages array contains system prompt and user message"
+          }
+        },
+        {
+          "line": "        {'role': 'system', 'content': system_prompt},",
+          "highlight": "system",
+          "explanation": {
+            "en": "System message sets behavior — always goes first"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'Review: x=1;y=2;print(x+y)'}",
+          "highlight": "user",
+          "explanation": {
+            "en": "User message contains the actual code to review"
+          }
+        },
+        {
+          "line": "    ]",
+          "highlight": "",
+          "explanation": {
+            "en": "Close the messages array"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "The API returns a structured JSON response as specified"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "temperature_comparison",
+      "left_label": "Temperature 0.0 (Deterministic)",
+      "right_label": "Temperature 1.0 (Creative)",
+      "left_content": "{\n  \"score\": 4,\n  \"issues\": [\"no spaces around operators\", \"multiple statements on one line\"],\n  \"suggestion\": \"Use separate lines and add spaces: x = 1\"\n}",
+      "right_content": "{\n  \"score\": 3,\n  \"issues\": [\"cramped formatting hurts readability\", \"no variable naming context\", \"semicolons are unpythonic\"],\n  \"suggestion\": \"Break it up! Give those variables room to breathe.\"\n}",
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_temp",
+      "variable": "temperature",
+      "value": 0.2,
+      "data_type": "float",
+      "color": "#ef4444"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> import json",
+        ">>> result = json.loads(response.choices[0].message.content)",
+        ">>> print(json.dumps(result, indent=2))",
+        "{",
+        "  \"score\": 4,",
+        "  \"issues\": [",
+        "    \"no spaces around operators\",",
+        "    \"multiple statements on one line\",",
+        "    \"no descriptive variable names\"",
+        "  ],",
+        "  \"suggestion\": \"Use separate lines and add spaces around operators\"",
+        "}"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a system prompt and message list for a Python tutor AI that explains errors in simple terms, always gives corrected code, and responds in JSON format with keys: error_explanation, corrected_code, tip. Set temperature to 0.3.",
+        "ta": "பிழைகளை எளிய சொற்களில் விளக்கும், எப்போதும் திருத்தப்பட்ட குறியீட்டை வழங்கும், JSON வடிவத்தில் பதிலளிக்கும் Python tutor AI க்கு system prompt மற்றும் message list எழுதுங்கள்."
+      },
+      "starter_code": "# Build the messages list for a Python tutor AI\nsystem_prompt = \"\"\"You are a friendly Python tutor.\n# Add your rules here\n\"\"\"\n\ntemperature = 0.3\n\nmessages = [\n    {'role': 'system', 'content': system_prompt},\n    {'role': 'user', 'content': 'Why does this fail? print(Hello)'}\n]\n\n# Print the configuration\nprint(f'System prompt: {system_prompt}')\nprint(f'Temperature: {temperature}')\nprint(f'Messages: {messages}')",
+      "expected_output": "(System prompt with rules, temperature 0.3, properly structured messages)",
+      "hints": {
+        "en": [
+          "Add rules like: 1) Explain errors in simple terms",
+          "Specify JSON format: {error_explanation, corrected_code, tip}",
+          "Low temperature (0.3) for consistent educational content"
+        ],
+        "ta": [
+          "விதிகளைச் சேர்க்கவும்: 1) பிழைகளை எளிய சொற்களில் விளக்குங்கள்",
+          "JSON வடிவத்தைக் குறிப்பிடுங்கள்",
+          "நிலையான கல்வி உள்ளடக்கத்திற்கு குறைந்த temperature (0.3)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a system prompt do?",
+        "ta": "System prompt என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Trains the model on new data",
+          "Sets the AI's role and behavior before conversation",
+          "Increases the model's accuracy permanently",
+          "Connects to a database"
+        ],
+        "ta": [
+          "மாதிரியை புதிய தரவில் பயிற்சி செய்கிறது",
+          "உரையாடலுக்கு முன் AI-ன் பங்கையும் நடத்தையையும் அமைக்கிறது",
+          "மாதிரியின் துல்லியத்தை நிரந்தரமாக அதிகரிக்கிறது",
+          "தரவுத்தளத்துடன் இணைக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What temperature value would you use for generating Python code?",
+        "ta": "Python குறியீடு உருவாக்க எந்த temperature மதிப்பைப் பயன்படுத்துவீர்கள்?"
+      },
+      "options": {
+        "en": ["1.5", "1.0", "0.0 - 0.2", "0.8"],
+        "ta": ["1.5", "1.0", "0.0 - 0.2", "0.8"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "How can you force an LLM to respond in JSON format?",
+        "ta": "JSON வடிவத்தில் பதிலளிக்க LLM-ஐ எவ்வாறு கட்டாயப்படுத்தலாம்?"
+      },
+      "options": {
+        "en": [
+          "It's impossible",
+          "Specify the JSON schema in the system prompt",
+          "Set temperature to 0",
+          "Use a different programming language"
+        ],
+        "ta": [
+          "இது சாத்தியமில்லை",
+          "System prompt-ல் JSON schema-வைக் குறிப்பிடுங்கள்",
+          "Temperature-ஐ 0 ஆக அமையுங்கள்",
+          "வேறு நிரலாக்க மொழியைப் பயன்படுத்துங்கள்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["system_prompts", "temperature", "max_tokens", "structured_output"],
+    "concepts_required": ["prompt_engineering_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["api_integration", "chatbot_design"],
+    "category": "ai_core",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "id": "dimensionality_reduction",
+  "topic": "dimensionality_reduction",
+  "track": "machine_learning",
+  "module": "unsupervised_learning",
+  "order": 17,
+  "title": {
+    "en": "Dimensionality Reduction: PCA, t-SNE & UMAP",
+    "ta": "பரிமாண குறைப்பு: PCA, t-SNE & UMAP"
+  },
+  "description": {
+    "en": "Reduce high-dimensional data for visualization and speedup using PCA for linear projection, t-SNE for local structure, and UMAP for balanced global/local preservation.",
+    "ta": "நேரியல் ப்ரொஜெக்ஷனுக்கு PCA, உள்ளூர் கட்டமைப்புக்கு t-SNE, மற்றும் சமநிலையான உலகளாவிய/உள்ளூர் பாதுகாப்புக்கு UMAP பயன்படுத்தி உயர் பரிமாண தரவைக் குறைக்கவும்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Shadow Theater\n\nVaathiyaar shines a light on a 3D sculpture. \"The shadow on the wall is 2D, but it still captures the shape's essence. That's dimensionality reduction — projecting high-dimensional data into fewer dimensions while preserving the important structure.\"\n\n### PCA (Principal Component Analysis)\n- Finds directions of maximum variance\n- Linear transformation — fast and exact\n- Best for: preprocessing, noise removal, visualization\n\n### t-SNE\n- Non-linear — preserves local neighborhood structure\n- Great for visualization of clusters\n- Slow on large datasets, not for preprocessing\n\n### UMAP\n- Faster than t-SNE, preserves both local and global structure\n- Can be used for preprocessing (unlike t-SNE)\n\n```python\nfrom sklearn.decomposition import PCA\nfrom sklearn.manifold import TSNE\nfrom sklearn.datasets import load_digits\nfrom sklearn.preprocessing import StandardScaler\nimport numpy as np\n\nX, y = load_digits(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\n# PCA\npca = PCA(n_components=2)\nX_pca = pca.fit_transform(X_scaled)\nprint(f'PCA explained variance: {pca.explained_variance_ratio_.sum():.3f}')\n\n# How many components for 95% variance?\npca_full = PCA(n_components=0.95)\nX_95 = pca_full.fit_transform(X_scaled)\nprint(f'Components for 95% variance: {pca_full.n_components_}')\n\n# t-SNE\ntsne = TSNE(n_components=2, random_state=42, perplexity=30)\nX_tsne = tsne.fit_transform(X_scaled)\nprint(f't-SNE output shape: {X_tsne.shape}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "shadow_theater",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "dimred_map",
+      "nodes": [
+        {
+          "label": "Dimensionality Reduction",
+          "children": ["PCA (linear)", "t-SNE (non-linear)", "UMAP (non-linear)"]
+        },
+        {
+          "label": "PCA",
+          "children": ["Eigenvalues", "Eigenvectors", "Explained Variance", "Components"]
+        },
+        {
+          "label": "Use Cases",
+          "children": ["Visualization", "Noise Reduction", "Feature Compression", "Preprocessing"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "dimred_comparison",
+      "models": [
+        { "name": "PCA", "strengths": "Fast, exact, invertible, good for preprocessing", "weaknesses": "Linear only" },
+        { "name": "t-SNE", "strengths": "Excellent cluster visualization", "weaknesses": "Slow, non-deterministic, only for visualization" },
+        { "name": "UMAP", "strengths": "Fast, preserves global structure, good for preprocessing", "weaknesses": "Requires umap-learn package" }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "dimred_code",
+      "steps": [
+        {
+          "line": "from sklearn.decomposition import PCA",
+          "highlight": "PCA",
+          "explanation": { "en": "Import PCA — the most fundamental dimensionality reduction technique" }
+        },
+        {
+          "line": "from sklearn.manifold import TSNE",
+          "highlight": "TSNE",
+          "explanation": { "en": "Import t-SNE for non-linear visualization" }
+        },
+        {
+          "line": "from sklearn.datasets import load_digits",
+          "highlight": "load_digits",
+          "explanation": { "en": "Digits dataset: 64 features (8x8 pixel images) — too many to visualize directly" }
+        },
+        {
+          "line": "X, y = load_digits(return_X_y=True)",
+          "highlight": "X, y",
+          "explanation": { "en": "1797 handwritten digit images with 64 pixel features each" }
+        },
+        {
+          "line": "X_scaled = StandardScaler().fit_transform(X)",
+          "highlight": "StandardScaler",
+          "explanation": { "en": "Scale features — PCA is affected by feature scales" }
+        },
+        {
+          "line": "pca = PCA(n_components=2)",
+          "highlight": "n_components=2",
+          "explanation": { "en": "Reduce 64 dimensions to 2 for visualization" }
+        },
+        {
+          "line": "X_pca = pca.fit_transform(X_scaled)",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Project data onto the 2 principal components (directions of max variance)" }
+        },
+        {
+          "line": "print(f'Explained variance: {pca.explained_variance_ratio_}')",
+          "highlight": "explained_variance_ratio_",
+          "explanation": { "en": "How much of the original information each component captures" }
+        },
+        {
+          "line": "print(f'Total explained: {pca.explained_variance_ratio_.sum():.3f}')",
+          "highlight": "sum",
+          "explanation": { "en": "2 components capture about 22% of total variance — some info is lost" }
+        },
+        {
+          "line": "pca_95 = PCA(n_components=0.95)",
+          "highlight": "0.95",
+          "explanation": { "en": "Automatically select enough components to explain 95% of variance" }
+        },
+        {
+          "line": "X_95 = pca_95.fit_transform(X_scaled)",
+          "highlight": "fit_transform",
+          "explanation": { "en": "PCA automatically determines how many components are needed" }
+        },
+        {
+          "line": "print(f'Components for 95% variance: {pca_95.n_components_}')",
+          "highlight": "n_components_",
+          "explanation": { "en": "About 28 components needed to explain 95% — down from 64!" }
+        },
+        {
+          "line": "tsne = TSNE(n_components=2, random_state=42, perplexity=30)",
+          "highlight": "perplexity=30",
+          "explanation": { "en": "t-SNE: perplexity controls the balance between local and global structure" }
+        },
+        {
+          "line": "X_tsne = tsne.fit_transform(X_scaled)",
+          "highlight": "fit_transform",
+          "explanation": { "en": "t-SNE creates beautiful cluster separations — ideal for visualization" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_orig_dims",
+      "variable": "original_dims",
+      "value": 64,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_pca_dims",
+      "variable": "pca_95_dims",
+      "value": 28,
+      "data_type": "int",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Original dimensions: 64",
+        "PCA 2D explained variance: 0.224",
+        "Components for 95% variance: 28",
+        "t-SNE output shape: (1797, 2)"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Load the iris dataset (4 features). Apply PCA to reduce to 2D, print explained variance per component. Then apply PCA with n_components=0.99 and see how many components are kept.",
+        "ta": "iris தரவுத்தொகுப்பை (4 அம்சங்கள்) ஏற்றுங்கள். 2D ஆகக் குறைக்க PCA பயன்படுத்தி, ஒவ்வொரு கூறுக்கும் விளக்கப்பட்ட மாற்றத்தை அச்சிடுங்கள். பின்னர் n_components=0.99 உடன் PCA பயன்படுத்தி எத்தனை கூறுகள் வைக்கப்படுகின்றன என்று பாருங்கள்."
+      },
+      "starter_code": "from sklearn.decomposition import PCA\nfrom sklearn.datasets import load_iris\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_iris(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\n# PCA to 2D\npca = PCA(n_components=___)\nX_2d = pca.fit_transform(X_scaled)\nprint(f'Explained variance per component: {pca.explained_variance_ratio_.round(3)}')\nprint(f'Total: {pca.explained_variance_ratio_.sum():.3f}')\n\n# PCA for 99% variance\npca_99 = PCA(n_components=___)\nX_99 = pca_99.fit_transform(X_scaled)\nprint(f'Components for 99% variance: {pca_99.n_components_}')",
+      "expected_output": "Explained variance per component: [0.729 0.229]\nTotal: 0.958\nComponents for 99% variance: 3",
+      "hints": {
+        "en": [
+          "n_components=2 for 2D visualization",
+          "n_components=0.99 automatically selects components",
+          "Iris only needs 3 of 4 components for 99% variance"
+        ],
+        "ta": [
+          "2D காட்சிப்படுத்தலுக்கு n_components=2",
+          "n_components=0.99 தானாகவே கூறுகளைத் தேர்ந்தெடுக்கிறது",
+          "Iris-க்கு 99% மாற்றத்திற்கு 4 கூறுகளில் 3 மட்டும் தேவை"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does PCA maximize?",
+        "ta": "PCA என்ன அதிகப்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["Accuracy", "Variance along principal components", "Number of clusters", "Training speed"],
+        "ta": ["துல்லியம்", "முதன்மை கூறுகளில் மாற்றம்", "கிளஸ்டர்களின் எண்ணிக்கை", "பயிற்சி வேகம்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is t-SNE not suitable for preprocessing before ML training?",
+        "ta": "ML பயிற்சிக்கு முன் முன்செயலாக்கத்திற்கு t-SNE ஏன் பொருத்தமானது அல்ல?"
+      },
+      "options": {
+        "en": ["It is too fast", "It is non-parametric — cannot transform new unseen data", "It always reduces to 1D", "It requires labels"],
+        "ta": ["இது மிகவும் வேகமானது", "இது அளவுரு அற்றது — புதிய தரவை மாற்ற முடியாது", "எப்போதும் 1D ஆகக் குறைக்கிறது", "பெயர்கள் தேவை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If PCA with n_components=0.95 returns 10 components from 50 original features, what does this mean?",
+        "ta": "50 அசல் அம்சங்களிலிருந்து n_components=0.95 உடன் PCA 10 கூறுகளை திருப்பினால், இதன் பொருள் என்ன?"
+      },
+      "options": {
+        "en": ["10 features are most important", "10 components capture 95% of the total variance", "50 features are reduced to 10 randomly", "The model is 95% accurate"],
+        "ta": ["10 அம்சங்கள் மிக முக்கியமானவை", "10 கூறுகள் மொத்த மாற்றத்தின் 95% ஐ கைப்பற்றுகின்றன", "50 அம்சங்கள் சீரற்ற முறையில் 10 ஆகக் குறைக்கப்படுகின்றன", "மாடல் 95% துல்லியமானது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["pca", "tsne", "umap", "explained_variance", "dimensionality_reduction"],
+    "concepts_required": ["numpy_basics", "feature_scaling"],
+    "difficulty": "advanced",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 35,
+    "real_world_application": ["data_visualization", "image_compression", "noise_reduction"],
+    "category": "machine_learning",
+    "path_memberships": ["unsupervised_learning"]
+  }
+}

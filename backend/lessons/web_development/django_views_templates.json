@@ -1,0 +1,233 @@
+{
+  "id": "django_views_templates",
+  "topic": "django_views_templates",
+  "track": "web_development",
+  "module": "django_framework",
+  "order": 8,
+  "title": {
+    "en": "Django Views & Templates: Rendering Pages",
+    "ta": "Django பார்வைகள் & வார்ப்புருக்கள்: பக்கங்களை வழங்குதல்"
+  },
+  "description": {
+    "en": "Build dynamic web pages with Django views, URL routing, template inheritance, and the Jinja2-like template language.",
+    "ta": "Django பார்வைகள், URL ரூட்டிங், வார்ப்புரு மரபுரிமை மற்றும் Jinja2 போன்ற வார்ப்புரு மொழியுடன் மாறும் வலை பக்கங்களை உருவாக்குங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## The Printing Press\n\nVaathiyaar holds up two pages. \"A **view** decides WHAT data to show. A **template** decides HOW to show it. The view is the brain, the template is the face.\"\n\n### Function-Based Views (FBV)\n```python\ndef post_list(request):\n    posts = Post.objects.all()\n    return render(request, 'blog/post_list.html', {'posts': posts})\n```\n\n### Class-Based Views (CBV)\n```python\nclass PostListView(ListView):\n    model = Post\n    template_name = 'blog/post_list.html'\n    context_object_name = 'posts'\n```\n\n### Template Language\n\n| Syntax | Purpose | Example |\n|--------|---------|----------|\n| `{{ var }}` | Output a variable | `{{ post.title }}` |\n| `{% tag %}` | Logic tags | `{% for post in posts %}` |\n| `{% if %}` | Conditionals | `{% if user.is_authenticated %}` |\n| `{{ var\\|filter }}` | Transform output | `{{ text\\|truncatewords:30 }}` |\n| `{% extends %}` | Inheritance | `{% extends 'base.html' %}` |\n| `{% block %}` | Overridable sections | `{% block content %}` |\n\n### Template Inheritance\n```\nbase.html          ← Master layout (nav, footer)\n  └── post_list.html  ← Extends base, fills {% block content %}\n      └── post_detail.html ← Also extends base\n```\n\n> **Key Concept:** Template inheritance eliminates code duplication. Define the layout once in base.html, then override only the parts that change in child templates."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "printing_press",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "views_templates_overview",
+      "nodes": [
+        {
+          "label": "Views & Templates",
+          "children": [
+            "Function-Based Views",
+            "Class-Based Views",
+            "Template Language ({{ }}, {% %})",
+            "Template Inheritance"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "views_demo",
+      "steps": [
+        {
+          "line": "# blog/views.py",
+          "highlight": "views.py",
+          "explanation": {
+            "en": "Views live in views.py — each view handles a specific URL"
+          }
+        },
+        {
+          "line": "from django.shortcuts import render, get_object_or_404\nfrom django.views.generic import ListView, DetailView\nfrom .models import Post",
+          "highlight": "render",
+          "explanation": {
+            "en": "Import render (template + context → HTML) and generic views"
+          }
+        },
+        {
+          "line": "def post_list(request):\n    posts = Post.objects.filter(is_published=True).order_by('-published')\n    return render(request, 'blog/post_list.html', {'posts': posts})",
+          "highlight": "render",
+          "explanation": {
+            "en": "Function view: query posts, pass them to template as context"
+          }
+        },
+        {
+          "line": "def post_detail(request, pk):\n    post = get_object_or_404(Post, pk=pk, is_published=True)\n    return render(request, 'blog/post_detail.html', {'post': post})",
+          "highlight": "get_object_or_404",
+          "explanation": {
+            "en": "Get a single post or return 404 if not found"
+          }
+        },
+        {
+          "line": "# Class-based equivalent — less code, same result",
+          "highlight": "Class-based",
+          "explanation": {
+            "en": "CBVs provide common patterns with minimal code"
+          }
+        },
+        {
+          "line": "class PostListView(ListView):\n    model = Post\n    template_name = 'blog/post_list.html'\n    context_object_name = 'posts'\n    ordering = ['-published']",
+          "highlight": "ListView",
+          "explanation": {
+            "en": "ListView auto-queries all objects and passes them to the template"
+          }
+        },
+        {
+          "line": "# blog/urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.PostListView.as_view(), name='post-list'),\n    path('post/<int:pk>/', views.post_detail, name='post-detail'),\n]",
+          "highlight": "<int:pk>",
+          "explanation": {
+            "en": "URL captures the post ID as an integer parameter 'pk'"
+          }
+        },
+        {
+          "line": "<!-- templates/blog/base.html -->",
+          "highlight": "base.html",
+          "explanation": {
+            "en": "The base template defines the overall page structure"
+          }
+        },
+        {
+          "line": "<!DOCTYPE html>\n<html>\n<head><title>{% block title %}PyMasters Blog{% endblock %}</title></head>\n<body>\n  <nav><a href=\"{% url 'post-list' %}\">Home</a></nav>\n  <main>{% block content %}{% endblock %}</main>\n  <footer>&copy; 2026 PyMasters</footer>\n</body>\n</html>",
+          "highlight": "{% block content %}",
+          "explanation": {
+            "en": "{% block %} defines overridable sections — child templates fill these"
+          }
+        },
+        {
+          "line": "<!-- templates/blog/post_list.html -->",
+          "highlight": "post_list.html",
+          "explanation": {
+            "en": "Child template extends base and fills the content block"
+          }
+        },
+        {
+          "line": "{% extends 'blog/base.html' %}\n{% block title %}All Posts{% endblock %}\n{% block content %}\n  <h1>Blog Posts</h1>\n  {% for post in posts %}\n    <article>\n      <h2><a href=\"{% url 'post-detail' post.pk %}\">{{ post.title }}</a></h2>\n      <p>By {{ post.author.name }} | {{ post.published|date:'M d, Y' }}</p>\n      <p>{{ post.content|truncatewords:30 }}</p>\n    </article>\n  {% empty %}\n    <p>No posts yet.</p>\n  {% endfor %}\n{% endblock %}",
+          "highlight": "{% extends %}",
+          "explanation": {
+            "en": "extends inherits layout; for loop iterates posts; filters format output"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_context",
+      "variable": "context",
+      "value": "{'posts': QuerySet[Post1, Post2, ...]}",
+      "data_type": "dict",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_template",
+      "variable": "template_name",
+      "value": "blog/post_list.html",
+      "data_type": "str",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "GET /blog/ HTTP/1.1 → 200 OK",
+        "",
+        "<html>",
+        "<head><title>All Posts</title></head>",
+        "<body>",
+        "  <nav><a href='/blog/'>Home</a></nav>",
+        "  <main>",
+        "    <h1>Blog Posts</h1>",
+        "    <article>",
+        "      <h2><a href='/blog/post/1/'>Learn Django</a></h2>",
+        "      <p>By Vaathiyaar | Mar 27, 2026</p>",
+        "    </article>",
+        "  </main>",
+        "</body>",
+        "</html>"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a Django view and template for a product catalog. Write a function-based view that queries all products and renders a template. The template should extend a base template and display each product's name, price, and whether it's in stock.",
+        "ta": "தயாரிப்பு பட்டியலுக்கான Django பார்வை மற்றும் வார்ப்புருவை உருவாக்குங்கள். அனைத்து தயாரிப்புகளையும் வினவி வார்ப்புருவை வழங்கும் செயல்பாட்டு பார்வையை எழுதுங்கள்."
+      },
+      "starter_code": "# shop/views.py\nfrom django.shortcuts import render\nfrom .models import Product\n\ndef product_list(request):\n    products = Product.objects.filter(is_active=True).order_by('name')\n    return render(request, 'shop/product_list.html', {'products': products})\n\n# templates/shop/product_list.html\n# {% extends 'base.html' %}\n# {% block content %}\n#   <h1>Products</h1>\n#   {% for product in products %}\n#     <div class=\"product\">\n#       <h3>{{ product.name }}</h3>\n#       <p>${{ product.price }}</p>\n#       {% if product.in_stock %}\n#         <span class=\"badge-green\">In Stock</span>\n#       {% else %}\n#         <span class=\"badge-red\">Out of Stock</span>\n#       {% endif %}\n#     </div>\n#   {% empty %}\n#     <p>No products available.</p>\n#   {% endfor %}\n# {% endblock %}",
+      "expected_output": "A rendered HTML page listing all active products with stock status",
+      "hints": {
+        "en": [
+          "render() takes request, template path, and context dict",
+          "Use {% extends %} for template inheritance",
+          "{% for %} with {% empty %} handles empty querysets",
+          "{% if %} lets you conditionally show content"
+        ],
+        "ta": [
+          "render() கோரிக்கை, வார்ப்புரு பாதை மற்றும் சூழல் dict எடுக்கும்",
+          "வார்ப்புரு மரபுரிமைக்கு {% extends %} பயன்படுத்துங்கள்",
+          "{% for %} + {% empty %} வெற்று குவரிசெட்களைக் கையாளும்",
+          "{% if %} நிபந்தனையுடன் உள்ளடக்கத்தைக் காட்ட அனுமதிக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the purpose of {% extends 'base.html' %} in a Django template?",
+        "ta": "Django வார்ப்புருவில் {% extends 'base.html' %} நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": ["Creates a new HTML file", "Inherits the layout from base.html", "Imports a Python module", "Deletes the base template"],
+        "ta": ["புதிய HTML கோப்பை உருவாக்குகிறது", "base.html-லிருந்து தளவமைப்பை மரபுரிமையாகப் பெறுகிறது", "Python தொகுதியை இறக்குமதி செய்கிறது", "அடிப்படை வார்ப்புருவை நீக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does get_object_or_404() do?",
+        "ta": "get_object_or_404() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Returns None if not found", "Returns the object or raises a 404 HTTP error", "Creates the object if not found", "Redirects to the homepage"],
+        "ta": ["கிடைக்கவில்லை என்றால் None திருப்புகிறது", "பொருளைத் திருப்புகிறது அல்லது 404 HTTP பிழையை எழுப்புகிறது", "கிடைக்கவில்லை என்றால் பொருளை உருவாக்குகிறது", "முகப்பு பக்கத்திற்கு திருப்பி விடுகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does {{ post.title|truncatewords:10 }} do in a template?",
+        "ta": "வார்ப்புருவில் {{ post.title|truncatewords:10 }} என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Removes the first 10 words", "Displays only the first 10 words with '...'", "Repeats the title 10 times", "Makes the title 10 characters long"],
+        "ta": ["முதல் 10 சொற்களை நீக்குகிறது", "முதல் 10 சொற்களை '...' உடன் காட்டுகிறது", "தலைப்பை 10 முறை திரும்பக் காட்டுகிறது", "தலைப்பை 10 எழுத்துகள் நீளமாக்குகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["django_views", "templates", "template_inheritance", "url_routing"],
+    "concepts_required": ["django_models", "django_project_structure"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["web_pages", "content_display"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

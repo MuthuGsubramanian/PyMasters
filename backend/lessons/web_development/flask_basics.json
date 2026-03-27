@@ -1,0 +1,260 @@
+{
+  "id": "flask_basics",
+  "topic": "flask_basics",
+  "track": "web_development",
+  "module": "flask_framework",
+  "order": 3,
+  "title": {
+    "en": "Flask Basics: Your First Web App",
+    "ta": "Flask அடிப்படைகள்: உங்கள் முதல் வலை பயன்பாடு"
+  },
+  "description": {
+    "en": "Build your first web application with Flask — learn routes, templates, and request handling.",
+    "ta": "Flask மூலம் உங்கள் முதல் வலை பயன்பாட்டை உருவாக்குங்கள் — வழிகள், வார்ப்புருக்கள் மற்றும் கோரிக்கை கையாளுதலைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## The Tiny Workshop\n\nVaathiyaar opens his laptop. \"Flask is like a tiny workshop — minimal tools, maximum flexibility. Unlike Django's grand factory, Flask gives you a hammer and says 'build whatever you want.'\"\n\n### Why Flask?\n- **Lightweight** — Minimal boilerplate to get started\n- **Flexible** — Choose your own database, template engine, etc.\n- **Perfect for learning** — See exactly how web apps work\n- **Production-ready** — Powers Pinterest, LinkedIn, Netflix tools\n\n### Core Concepts\n\n| Concept | What It Does |\n|---------|-------------|\n| `Flask()` | Creates your application |\n| `@app.route()` | Maps a URL to a function |\n| `render_template()` | Renders HTML with Jinja2 |\n| `request` | Access incoming request data |\n| `url_for()` | Generate URLs dynamically |\n\n### Project Structure\n```\nmy_app/\n  app.py          # Main application\n  templates/      # HTML files\n    index.html\n    about.html\n  static/         # CSS, JS, images\n    style.css\n```\n\n> **Key Concept:** Flask follows the WSGI standard. A route decorator binds a URL path to a Python function — when someone visits that URL, Flask calls your function and returns the result as an HTTP response."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "workshop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "flask_structure",
+      "nodes": [
+        {
+          "label": "Flask App",
+          "children": [
+            "Routes (@app.route)",
+            "Templates (Jinja2)",
+            "Static Files (CSS/JS)",
+            "Request/Response Cycle"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "flask_app_demo",
+      "steps": [
+        {
+          "line": "from flask import Flask, render_template, request, jsonify",
+          "highlight": "Flask",
+          "explanation": {
+            "en": "Import Flask and helper functions"
+          }
+        },
+        {
+          "line": "app = Flask(__name__)",
+          "highlight": "Flask(__name__)",
+          "explanation": {
+            "en": "Create the Flask application instance — __name__ helps Flask find templates"
+          }
+        },
+        {
+          "line": "@app.route('/')",
+          "highlight": "@app.route",
+          "explanation": {
+            "en": "Register a route for the homepage URL '/'"
+          }
+        },
+        {
+          "line": "def home():",
+          "highlight": "home",
+          "explanation": {
+            "en": "This function runs when someone visits the homepage"
+          }
+        },
+        {
+          "line": "    return render_template('index.html', title='PyMasters')",
+          "highlight": "render_template",
+          "explanation": {
+            "en": "Render an HTML template and pass 'title' as a variable to it"
+          }
+        },
+        {
+          "line": "@app.route('/greet/<name>')",
+          "highlight": "<name>",
+          "explanation": {
+            "en": "Dynamic route — <name> captures part of the URL as a variable"
+          }
+        },
+        {
+          "line": "def greet(name):",
+          "highlight": "name",
+          "explanation": {
+            "en": "The captured URL segment is passed as a function parameter"
+          }
+        },
+        {
+          "line": "    return f'<h1>Hello, {name}!</h1>'",
+          "highlight": "f'<h1>",
+          "explanation": {
+            "en": "Return HTML directly — Flask wraps it in an HTTP response"
+          }
+        },
+        {
+          "line": "@app.route('/api/data', methods=['GET', 'POST'])",
+          "highlight": "methods",
+          "explanation": {
+            "en": "This route accepts both GET and POST requests"
+          }
+        },
+        {
+          "line": "def api_data():",
+          "highlight": "api_data",
+          "explanation": {
+            "en": "A route that behaves differently based on the HTTP method"
+          }
+        },
+        {
+          "line": "    if request.method == 'POST':",
+          "highlight": "request.method",
+          "explanation": {
+            "en": "Check if the incoming request is a POST"
+          }
+        },
+        {
+          "line": "        data = request.get_json()",
+          "highlight": "get_json()",
+          "explanation": {
+            "en": "Parse the JSON body from the POST request"
+          }
+        },
+        {
+          "line": "        return jsonify({'received': data, 'status': 'ok'}), 201",
+          "highlight": "jsonify",
+          "explanation": {
+            "en": "Return JSON response with 201 status code"
+          }
+        },
+        {
+          "line": "    return jsonify({'message': 'Send me a POST!'})",
+          "highlight": "jsonify",
+          "explanation": {
+            "en": "For GET requests, return a simple JSON message"
+          }
+        },
+        {
+          "line": "if __name__ == '__main__':",
+          "highlight": "__main__",
+          "explanation": {
+            "en": "Only run the server when executing this file directly"
+          }
+        },
+        {
+          "line": "    app.run(debug=True, port=5000)",
+          "highlight": "debug=True",
+          "explanation": {
+            "en": "Start the dev server on port 5000 with auto-reload on code changes"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_app",
+      "variable": "app",
+      "value": "<Flask 'app'>",
+      "data_type": "Flask",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_route",
+      "variable": "request.method",
+      "value": "GET",
+      "data_type": "str",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        " * Serving Flask app 'app'",
+        " * Debug mode: on",
+        " * Running on http://127.0.0.1:5000",
+        " * Restarting with stat",
+        " * Debugger is active!",
+        "127.0.0.1 - - [27/Mar/2026 10:00:00] \"GET / HTTP/1.1\" 200 -",
+        "127.0.0.1 - - [27/Mar/2026 10:00:05] \"GET /greet/PyMaster HTTP/1.1\" 200 -"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a Flask app with three routes: a homepage that returns 'Welcome to PyMasters!', a '/hello/<name>' route that greets the user by name, and a '/square/<int:num>' route that returns the square of a number as JSON.",
+        "ta": "மூன்று வழிகளுடன் Flask பயன்பாட்டை உருவாக்குங்கள்: 'Welcome to PyMasters!' திரும்பும் முகப்பு பக்கம், பெயரால் வாழ்த்தும் '/hello/<name>' வழி, மற்றும் எண்ணின் வர்க்கத்தை JSON ஆகத் திருப்பும் '/square/<int:num>' வழி."
+      },
+      "starter_code": "from flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    return 'Welcome to PyMasters!'\n\n@app.route('/hello/<name>')\ndef hello(name):\n    return f'Hello, {name}! Welcome to Flask.'\n\n@app.route('/square/<int:num>')\ndef square(num):\n    return jsonify({'number': num, 'square': num ** 2})\n\nif __name__ == '__main__':\n    app.run(debug=True)",
+      "expected_output": "Visit /square/5 → {\"number\": 5, \"square\": 25}",
+      "hints": {
+        "en": [
+          "Use @app.route('/path') to create a route",
+          "<name> captures a string from the URL",
+          "<int:num> captures an integer from the URL",
+          "jsonify() converts a dict to a JSON response"
+        ],
+        "ta": [
+          "வழி உருவாக்க @app.route('/path') பயன்படுத்துங்கள்",
+          "<name> URL-லிருந்து சரத்தைப் பிடிக்கிறது",
+          "<int:num> URL-லிருந்து முழு எண்ணைப் பிடிக்கிறது",
+          "jsonify() dict-ஐ JSON பதிலாக மாற்றுகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does @app.route('/') do in Flask?",
+        "ta": "Flask-ல் @app.route('/') என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates a database table", "Maps the homepage URL to a function", "Imports a module", "Starts the server"],
+        "ta": ["தரவுத்தள அட்டவணையை உருவாக்குகிறது", "முகப்பு URL-ஐ செயல்பாட்டுடன் இணைக்கிறது", "தொகுதியை இறக்குமதி செய்கிறது", "சேவையகத்தை தொடங்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you capture a variable from the URL in Flask?",
+        "ta": "Flask-ல் URL-லிருந்து மாறியை எவ்வாறு பிடிப்பது?"
+      },
+      "options": {
+        "en": ["@app.route('/user?id=1')", "@app.route('/user/<id>')", "@app.route('/user/{id}')", "@app.route('/user/:id')"],
+        "ta": ["@app.route('/user?id=1')", "@app.route('/user/<id>')", "@app.route('/user/{id}')", "@app.route('/user/:id')"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does debug=True do when running a Flask app?",
+        "ta": "Flask பயன்பாட்டை இயக்கும்போது debug=True என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Makes the app faster", "Enables auto-reload and detailed error pages", "Disables all logging", "Connects to production database"],
+        "ta": ["பயன்பாட்டை வேகமாக்குகிறது", "தானியங்கி மறுஏற்றம் மற்றும் விரிவான பிழை பக்கங்களை இயக்குகிறது", "அனைத்து பதிவுகளையும் முடக்குகிறது", "உற்பத்தி தரவுத்தளத்துடன் இணைக்கிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["flask_routes", "templates", "request_handling", "dynamic_urls"],
+    "concepts_required": ["http_methods", "python_functions"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["web_apps", "prototyping"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

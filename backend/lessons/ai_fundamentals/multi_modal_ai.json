@@ -1,0 +1,316 @@
+{
+  "id": "multi_modal_ai",
+  "topic": "multi_modal_ai",
+  "track": "ai_fundamentals",
+  "module": "ai_applications",
+  "order": 15,
+  "title": {
+    "en": "Multi-Modal AI: Vision, Images & Documents",
+    "ta": "Multi-Modal AI: பார்வை, படங்கள் & ஆவணங்கள்"
+  },
+  "description": {
+    "en": "Use vision APIs to analyze images, extract text from documents, and combine text with visual understanding.",
+    "ta": "படங்களை பகுப்பாய்வு செய்ய, ஆவணங்களிலிருந்து உரையை பிரித்தெடுக்க, உரையை visual புரிதலுடன் இணைக்க vision API-களைப் பயன்படுத்துங்கள்."
+  },
+  "xp_reward": 65,
+  "next_unlock": "ai_safety_ethics",
+  "story_variants": {
+    "en": "## Vaathiyaar's Vision Lab\n\nVaathiyaar holds up a photograph. \"Students, until recently, LLMs could only process text. Now they can SEE. GPT-4o, Claude 3.5 Sonnet — they understand images, charts, screenshots, handwritten notes. This is multi-modal AI.\"\n\n### What is Multi-Modal AI?\n\nAI that processes multiple types of input:\n- **Text + Image** → Describe what's in a photo\n- **Text + Document** → Extract data from invoices, receipts\n- **Text + Code Screenshot** → Convert screenshot to working code\n- **Text + Chart** → Analyze and explain data visualizations\n\n### Use Cases\n\n| Input | Task | Example |\n|-------|------|---------|\n| Photo | Description | 'A cat sitting on a laptop' |\n| Receipt | Data extraction | '{total: 450, items: [...]}' |\n| Chart | Analysis | 'Sales grew 23% in Q3' |\n| Screenshot | Code generation | Convert mockup to HTML |\n| Handwriting | OCR | Extract handwritten text |\n\n> **Key Insight:** Multi-modal AI turns unstructured visual data into structured, actionable information. This is transformative for document processing workflows.",
+    "ta": "## வாத்தியாரின் Vision Lab\n\nவாத்தியார் ஒரு புகைப்படத்தை உயர்த்திக் காட்டுகிறார். \"மாணவர்களே, சமீப காலம் வரை LLM-கள் text-ஐ மட்டுமே செயலாக்க முடிந்தது. இப்போது அவை பார்க்கவும் முடியும்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "vision_lab",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "multimodal_concepts",
+      "nodes": [
+        {
+          "label": "Multi-Modal Inputs",
+          "children": [
+            "Text (prompts, questions)",
+            "Images (photos, screenshots)",
+            "Documents (PDFs, invoices)",
+            "Charts (data visualizations)"
+          ]
+        },
+        {
+          "label": "Tasks",
+          "children": [
+            "Image description",
+            "Data extraction",
+            "OCR (text from images)",
+            "Visual QA (questions about images)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "vision_code",
+      "steps": [
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import OpenAI — vision is built into the chat completions API"
+          }
+        },
+        {
+          "line": "import base64",
+          "highlight": "import",
+          "explanation": {
+            "en": "base64 encoding for sending local images to the API"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's analyze an image with GPT-4o"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize the client"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Method 1: Analyze an image from a URL"
+          }
+        },
+        {
+          "line": "# Method 1: Image from URL",
+          "highlight": "comment",
+          "explanation": {
+            "en": "The simplest way — pass an image URL directly"
+          }
+        },
+        {
+          "line": "response = client.chat.completions.create(",
+          "highlight": "response",
+          "explanation": {
+            "en": "Same chat completions API — vision is not a separate endpoint"
+          }
+        },
+        {
+          "line": "    model='gpt-4o',",
+          "highlight": "model",
+          "explanation": {
+            "en": "GPT-4o supports vision natively — no special setup needed"
+          }
+        },
+        {
+          "line": "    messages=[{",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Messages can contain both text and image content"
+          }
+        },
+        {
+          "line": "        'role': 'user',",
+          "highlight": "role",
+          "explanation": {
+            "en": "User message with mixed content types"
+          }
+        },
+        {
+          "line": "        'content': [",
+          "highlight": "content",
+          "explanation": {
+            "en": "Content is now a LIST of items — text and images"
+          }
+        },
+        {
+          "line": "            {'type': 'text', 'text': 'What is in this image? Extract any text.'},",
+          "highlight": "text",
+          "explanation": {
+            "en": "Text part — your question about the image"
+          }
+        },
+        {
+          "line": "            {'type': 'image_url', 'image_url': {'url': 'https://example.com/receipt.jpg'}}",
+          "highlight": "image_url",
+          "explanation": {
+            "en": "Image part — pass a URL to any image"
+          }
+        },
+        {
+          "line": "        ]",
+          "highlight": "",
+          "explanation": {
+            "en": "Close the content array"
+          }
+        },
+        {
+          "line": "    }],",
+          "highlight": "",
+          "explanation": {
+            "en": "Close the message"
+          }
+        },
+        {
+          "line": "    max_tokens=500",
+          "highlight": "max_tokens",
+          "explanation": {
+            "en": "Limit response length"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "The model analyzes the image and returns a text description"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "vision_request_response",
+      "left_label": "Request (image + question)",
+      "right_label": "Response (structured analysis)",
+      "left_content": "{\n  \"model\": \"gpt-4o\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": [\n      {\"type\": \"text\", \"text\": \"Extract all items and total from this receipt. Return JSON.\"},\n      {\"type\": \"image_url\", \"image_url\": {\"url\": \"receipt.jpg\"}}\n    ]\n  }]\n}",
+      "right_content": "{\n  \"store\": \"Saravana Stores\",\n  \"items\": [\n    {\"name\": \"Rice 5kg\", \"price\": 350},\n    {\"name\": \"Dal 1kg\", \"price\": 120},\n    {\"name\": \"Oil 1L\", \"price\": 180}\n  ],\n  \"total\": 650,\n  \"date\": \"2026-03-27\"\n}",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_modality",
+      "variable": "input_type",
+      "value": "text + image",
+      "data_type": "str",
+      "color": "#8b5cf6"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> print(response.choices[0].message.content)",
+        "This image shows a receipt from Saravana Stores. Items:",
+        "- Rice 5kg: ₹350",
+        "- Dal 1kg: ₹120",
+        "- Oil 1L: ₹180",
+        "Total: ₹650",
+        "",
+        ">>> # Method 2: Local image with base64",
+        ">>> with open('screenshot.png', 'rb') as f:",
+        "...     image_data = base64.b64encode(f.read()).decode('utf-8')",
+        ">>> # Use: {'url': f'data:image/png;base64,{image_data}'}",
+        "",
+        ">>> # Claude vision (slightly different syntax)",
+        ">>> # claude_msg = {'type': 'image', 'source': {",
+        ">>> #     'type': 'base64', 'media_type': 'image/png', 'data': image_data",
+        ">>> # }}"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function called analyze_image that takes an image URL and a question, sends them to the GPT-4o vision API, and returns the response. Add support for both URL and local file (base64) inputs. Test with a descriptive question.",
+        "ta": "image URL மற்றும் question எடுத்து GPT-4o vision API-க்கு அனுப்பி response-ஐ திருப்பி அனுப்பும் analyze_image function எழுதுங்கள். URL மற்றும் local file (base64) inputs இரண்டையும் ஆதரிக்கவும்."
+      },
+      "starter_code": "from openai import OpenAI\nimport base64\nimport os\n\nclient = OpenAI()\n\ndef analyze_image(image_source: str, question: str) -> str:\n    \"\"\"Analyze an image with GPT-4o vision.\n    image_source: URL or local file path\n    question: what to ask about the image\n    \"\"\"\n    # Determine if it's a URL or local file\n    if image_source.startswith('http'):\n        image_content = {'type': 'image_url', 'image_url': {'url': image_source}}\n    else:\n        # Read and base64 encode local file\n        # Your code here\n        pass\n    \n    # Make API call\n    # Return response text\n    pass\n\n# Test\nresult = analyze_image('https://example.com/chart.png', 'Describe this chart')\nprint(result)",
+      "expected_output": "(Description of the image content)",
+      "hints": {
+        "en": [
+          "For local files: base64.b64encode(open(path, 'rb').read()).decode('utf-8')",
+          "Use f'data:image/png;base64,{encoded}' as the URL for base64 images",
+          "Content is a list: [text_item, image_item]"
+        ],
+        "ta": [
+          "Local files-க்கு: base64.b64encode(open(path, 'rb').read()).decode('utf-8')",
+          "base64 images-க்கு URL: f'data:image/png;base64,{encoded}'",
+          "Content ஒரு list: [text_item, image_item]"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "How do you send an image to GPT-4o for analysis?",
+        "ta": "GPT-4o-க்கு படத்தை பகுப்பாய்விற்கு எவ்வாறு அனுப்புவது?"
+      },
+      "options": {
+        "en": [
+          "Upload it to a separate vision endpoint",
+          "Include it in the content array as an image_url type",
+          "Attach it as a file to the API request",
+          "Convert it to text first"
+        ],
+        "ta": [
+          "தனி vision endpoint-க்கு upload செய்யுங்கள்",
+          "content array-ல் image_url type ஆக சேர்க்கவும்",
+          "API request-க்கு file ஆக இணைக்கவும்",
+          "முதலில் text-ஆக மாற்றுங்கள்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you send a local image file to the vision API?",
+        "ta": "Local image file-ஐ vision API-க்கு எவ்வாறு அனுப்புவது?"
+      },
+      "options": {
+        "en": [
+          "Pass the file path directly",
+          "Base64 encode the image and use a data URI",
+          "Convert it to PDF first",
+          "Upload to a cloud storage service"
+        ],
+        "ta": [
+          "file path-ஐ நேரடியாக pass செய்யுங்கள்",
+          "படத்தை Base64 encode செய்து data URI பயன்படுத்துங்கள்",
+          "முதலில் PDF-ஆக மாற்றுங்கள்",
+          "Cloud storage service-க்கு upload செய்யுங்கள்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which of these is NOT a common use case for multi-modal AI?",
+        "ta": "இவற்றில் multi-modal AI-க்கு பொதுவான பயன்பாடு அல்லாதது எது?"
+      },
+      "options": {
+        "en": [
+          "Extracting data from receipts",
+          "Describing photos",
+          "Training new models",
+          "Converting screenshots to code"
+        ],
+        "ta": [
+          "ரசீதுகளிலிருந்து தரவு பிரித்தெடுத்தல்",
+          "புகைப்படங்களை விவரித்தல்",
+          "புதிய மாதிரிகளை பயிற்சி செய்தல்",
+          "Screenshots-ஐ code-ஆக மாற்றுதல்"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["vision_api", "multi_modal", "image_analysis", "document_understanding"],
+    "concepts_required": ["openai_api_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["document_processing", "visual_qa", "receipt_scanning"],
+    "category": "ai_applications",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

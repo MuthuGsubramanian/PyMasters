@@ -1,0 +1,250 @@
+{
+  "id": "linear_regression",
+  "topic": "linear_regression",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 8,
+  "title": {
+    "en": "Linear Regression: Drawing the Best Line",
+    "ta": "நேரியல் பின்னடைவு: சிறந்த கோட்டை வரைதல்"
+  },
+  "description": {
+    "en": "Understand ordinary least squares, gradient descent, the cost function, and how to fit, evaluate, and interpret a linear regression model.",
+    "ta": "சாதாரண குறைந்தபட்ச சதுரங்கள், சாய்வு இறங்கு, செலவு செயல்பாடு, மற்றும் நேரியல் பின்னடைவு மாடலை பொருத்துதல், மதிப்பீடு செய்தல், விளக்குதல் ஆகியவற்றைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Line of Best Fit\n\nVaathiyaar draws a scatter plot on the board. \"There are thousands of lines you could draw through these points. Linear regression finds the ONE line that minimizes the total error.\"\n\n### The Math Behind It\n\n**Model**: y = mx + b (or y = w1*x1 + w2*x2 + ... + b)\n\n**Cost Function (MSE)**:\nJ(w, b) = (1/n) * sum((y_pred - y_actual)^2)\n\n**Goal**: Find w and b that minimize J\n\n**Two approaches**:\n1. **OLS (Ordinary Least Squares)**: Closed-form solution using linear algebra\n2. **Gradient Descent**: Iteratively update weights in the direction of steepest descent\n\n```python\nimport numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error, r2_score\n\n# Generate data: y = 3x + 7 + noise\nnp.random.seed(42)\nX = np.random.rand(100, 1) * 10\ny = 3 * X.flatten() + 7 + np.random.randn(100) * 2\n\n# Fit model\nmodel = LinearRegression()\nmodel.fit(X, y)\n\nprint(f'Slope (w): {model.coef_[0]:.2f}')      # ~3.0\nprint(f'Intercept (b): {model.intercept_:.2f}')  # ~7.0\nprint(f'R² Score: {model.score(X, y):.4f}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "scatter_plot",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "lr_map",
+      "nodes": [
+        {
+          "label": "Linear Regression",
+          "children": ["y = wx + b", "Cost Function (MSE)", "Gradient Descent", "OLS"]
+        },
+        {
+          "label": "Evaluation",
+          "children": ["R² Score", "MSE", "RMSE", "MAE"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "lr_code",
+      "steps": [
+        {
+          "line": "import numpy as np",
+          "highlight": "numpy",
+          "explanation": { "en": "Import NumPy for numerical operations" }
+        },
+        {
+          "line": "from sklearn.linear_model import LinearRegression",
+          "highlight": "LinearRegression",
+          "explanation": { "en": "Import the linear regression model from scikit-learn" }
+        },
+        {
+          "line": "from sklearn.metrics import mean_squared_error, r2_score",
+          "highlight": "metrics",
+          "explanation": { "en": "Import evaluation metrics: MSE measures error, R² measures fit quality" }
+        },
+        {
+          "line": "np.random.seed(42)",
+          "highlight": "seed",
+          "explanation": { "en": "Set random seed for reproducibility — same data every run" }
+        },
+        {
+          "line": "X = np.random.rand(100, 1) * 10",
+          "highlight": "X",
+          "explanation": { "en": "Generate 100 random feature values between 0 and 10" }
+        },
+        {
+          "line": "y = 3 * X.flatten() + 7 + np.random.randn(100) * 2",
+          "highlight": "y",
+          "explanation": { "en": "True relationship: y = 3x + 7 plus Gaussian noise (std=2)" }
+        },
+        {
+          "line": "model = LinearRegression()",
+          "highlight": "LinearRegression()",
+          "explanation": { "en": "Create model instance — it will use OLS to find the best line" }
+        },
+        {
+          "line": "model.fit(X, y)",
+          "highlight": "fit",
+          "explanation": { "en": "Fit the model — finds the slope and intercept that minimize MSE" }
+        },
+        {
+          "line": "print(f'Slope (w): {model.coef_[0]:.4f}')",
+          "highlight": "coef_",
+          "explanation": { "en": "The learned slope ~3.0 — close to the true value of 3" }
+        },
+        {
+          "line": "print(f'Intercept (b): {model.intercept_:.4f}')",
+          "highlight": "intercept_",
+          "explanation": { "en": "The learned intercept ~7.0 — close to the true value of 7" }
+        },
+        {
+          "line": "y_pred = model.predict(X)",
+          "highlight": "predict",
+          "explanation": { "en": "Generate predictions for all training data points" }
+        },
+        {
+          "line": "mse = mean_squared_error(y, y_pred)",
+          "highlight": "mse",
+          "explanation": { "en": "MSE: average of squared differences between actual and predicted" }
+        },
+        {
+          "line": "r2 = r2_score(y, y_pred)",
+          "highlight": "r2",
+          "explanation": { "en": "R²: fraction of variance explained — 1.0 is perfect, 0.0 is baseline" }
+        },
+        {
+          "line": "print(f'MSE: {mse:.4f}, R²: {r2:.4f}')",
+          "highlight": "print",
+          "explanation": { "en": "Low MSE and high R² confirm the model captured the true pattern" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_slope",
+      "variable": "slope",
+      "value": 2.98,
+      "data_type": "float",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_intercept",
+      "variable": "intercept",
+      "value": 7.15,
+      "data_type": "float",
+      "color": "#3498db"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_r2",
+      "variable": "r2_score",
+      "value": 0.96,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Slope (w): 2.9815",
+        "Intercept (b): 7.1520",
+        "MSE: 3.8124",
+        "R²: 0.9582"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Generate data following y = 5x1 - 2x2 + 10 with noise. Fit a LinearRegression with 2 features, print the coefficients, and verify they are close to [5, -2] with intercept ~10.",
+        "ta": "y = 5x1 - 2x2 + 10 முறையைப் பின்பற்றும் தரவை நாய்ஸுடன் உருவாக்குங்கள். 2 அம்சங்களுடன் LinearRegression பொருத்தி, குணகங்களை அச்சிட்டு, அவை [5, -2] மற்றும் intercept ~10 க்கு நெருக்கமாக உள்ளதா சரிபார்க்கவும்."
+      },
+      "starter_code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\n\nnp.random.seed(42)\nX = np.random.rand(200, 2) * 10\ny = 5 * X[:, 0] - 2 * X[:, 1] + 10 + np.random.randn(200)\n\nmodel = LinearRegression()\nmodel.___(X, y)\n\nprint(f'Coefficients: {model.___}')\nprint(f'Intercept: {model.___:.2f}')\nprint(f'R² Score: {model.score(X, y):.4f}')",
+      "expected_output": "Coefficients: [ 4.99 -2.01]\nIntercept: 10.12\nR² Score: 0.9965",
+      "hints": {
+        "en": [
+          "Use model.fit(X, y) to train",
+          "Coefficients are in model.coef_",
+          "Intercept is model.intercept_"
+        ],
+        "ta": [
+          "பயிற்சிக்கு model.fit(X, y) பயன்படுத்துங்கள்",
+          "குணகங்கள் model.coef_ -ல் உள்ளன",
+          "இடைமறிப்பு model.intercept_ ஆகும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the cost function (MSE) measure in linear regression?",
+        "ta": "நேரியல் பின்னடைவில் செலவு செயல்பாடு (MSE) என்ன அளவிடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "The slope of the line",
+          "The average squared difference between predictions and actual values",
+          "The number of data points",
+          "The correlation between features"
+        ],
+        "ta": [
+          "கோட்டின் சாய்வு",
+          "கணிப்புகள் மற்றும் உண்மையான மதிப்புகளுக்கு இடையிலான சராசரி சதுர வேறுபாடு",
+          "தரவு புள்ளிகளின் எண்ணிக்கை",
+          "அம்சங்களுக்கு இடையிலான தொடர்பு"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does an R² score of 0.85 mean?",
+        "ta": "R² மதிப்பெண் 0.85 என்றால் என்ன பொருள்?"
+      },
+      "options": {
+        "en": [
+          "The model is 85% accurate",
+          "85% of the variance in y is explained by the model",
+          "The model has 85 features",
+          "The training set is 85% of total data"
+        ],
+        "ta": [
+          "மாடல் 85% துல்லியமானது",
+          "y-ல் உள்ள மாற்றத்தின் 85% மாடலால் விளக்கப்படுகிறது",
+          "மாடலில் 85 அம்சங்கள் உள்ளன",
+          "பயிற்சி தொகுப்பு மொத்த தரவின் 85%"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In gradient descent, what happens if the learning rate is too large?",
+        "ta": "gradient descent-ல், கற்றல் விகிதம் மிகவும் பெரியதாக இருந்தால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The model converges faster",
+          "The model overshoots the minimum and may diverge",
+          "The model underfits",
+          "Nothing changes"
+        ],
+        "ta": [
+          "மாடல் வேகமாக ஒருங்கிணைகிறது",
+          "மாடல் குறைந்தபட்சத்தை தாண்டி விலகலாம்",
+          "மாடல் குறைவாக பொருந்துகிறது",
+          "எதுவும் மாறாது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["linear_regression", "ols", "gradient_descent", "cost_function", "r2_score"],
+    "concepts_required": ["numpy_basics", "train_test_split"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["house_price_prediction", "sales_forecasting", "trend_analysis"],
+    "category": "machine_learning",
+    "path_memberships": ["supervised_learning"]
+  }
+}

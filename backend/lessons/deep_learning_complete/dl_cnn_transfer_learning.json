@@ -1,0 +1,189 @@
+{
+  "id": "dl_cnn_transfer_learning",
+  "topic": "cnn_transfer_learning",
+  "track": "deep_learning_complete",
+  "module": "convolutional_networks",
+  "order": 14,
+  "title": {
+    "en": "Transfer Learning: Standing on Giants' Shoulders",
+    "ta": "டிரான்ஸ்ஃபர் லேர்னிங்: மாபெரும் தோள்களில் நிற்றல்"
+  },
+  "description": {
+    "en": "Use pre-trained models like ResNet and fine-tune them for custom tasks with minimal data and training time.",
+    "ta": "ResNet போன்ற முன்-பயிற்சி பெற்ற மாதிரிகளைப் பயன்படுத்தி, குறைந்தபட்ச தரவு மற்றும் பயிற்சி நேரத்துடன் தனிப்பயன் பணிகளுக்கு fine-tune செய்யுங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Shortcut\n\nVaathiyaar shows a child who already knows to ride a bicycle. \"Teaching this child to ride a motorcycle is much easier than teaching from scratch. Transfer learning is the same — take a model trained on millions of images and adapt it to your specific task.\"\n\n### Transfer Learning Strategy\n\n1. Load a pre-trained model (trained on ImageNet: 1.2M images, 1000 classes)\n2. Freeze early layers (they detect universal features: edges, textures)\n3. Replace the final classification layer\n4. Fine-tune on your dataset\n\n```python\nimport torch\nimport torch.nn as nn\nimport torchvision.models as models\n\n# Load pre-trained ResNet-18\nmodel = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)\n\n# Freeze all layers\nfor param in model.parameters():\n    param.requires_grad = False\n\n# Replace the final fully connected layer\nnum_features = model.fc.in_features  # 512\nmodel.fc = nn.Sequential(\n    nn.Linear(num_features, 128),\n    nn.ReLU(),\n    nn.Dropout(0.3),\n    nn.Linear(128, 5)  # 5 custom classes\n)\n\n# Only train the new layers\noptimizer = torch.optim.Adam(model.fc.parameters(), lr=0.001)\ncriterion = nn.CrossEntropyLoss()\n\nprint(f'Total parameters: {sum(p.numel() for p in model.parameters()):,}')\nprint(f'Trainable: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}')\n\n# Training loop (same as before)\nmodel.train()\nfor epoch in range(10):\n    for images, labels in train_loader:\n        optimizer.zero_grad()\n        outputs = model(images)\n        loss = criterion(outputs, labels)\n        loss.backward()\n        optimizer.step()\n```\n\n### Fine-tuning (Unfreeze some layers)\n```python\n# After initial training, unfreeze last few layers for fine-tuning\nfor param in model.layer4.parameters():\n    param.requires_grad = True\n\noptimizer = torch.optim.Adam([\n    {'params': model.layer4.parameters(), 'lr': 1e-4},  # low lr for pre-trained\n    {'params': model.fc.parameters(), 'lr': 1e-3}       # higher lr for new layers\n])\n```\n\n> **Key Insight:** With transfer learning, you can achieve 95%+ accuracy on custom datasets with just a few hundred images!",
+    "ta": "## வாத்தியாரின் குறுக்கு வழி\n\nவாத்தியார் ஏற்கனவே சைக்கிள் ஓட்ட தெரிந்த குழந்தையைக் காட்டுகிறார். \"இந்த குழந்தைக்கு மோட்டார்சைக்கிள் ஓட்ட கற்றுக்கொடுப்பது புதிதாக கற்றுக்கொடுப்பதை விட மிகவும் எளிது. டிரான்ஸ்ஃபர் லேர்னிங் அதே போன்றது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "giants_shoulders",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "transfer_concepts",
+      "nodes": [
+        {
+          "label": "Transfer Learning",
+          "children": [
+            "Pre-trained Models",
+            "Feature Extraction",
+            "Fine-tuning",
+            "Freezing Layers",
+            "Domain Adaptation",
+            "Learning Rate Strategy"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "transfer_code",
+      "steps": [
+        {"line": "model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)", "highlight": "resnet18", "explanation": {"en": "Load ResNet-18 pre-trained on ImageNet (1.2M images, 1000 classes). Already knows edges, textures, objects"}},
+        {"line": "for param in model.parameters(): param.requires_grad = False", "highlight": "freeze", "explanation": {"en": "Freeze all layers — don't update pre-trained weights during training"}},
+        {"line": "num_features = model.fc.in_features", "highlight": "in_features", "explanation": {"en": "Get the input size of the original final layer (512 for ResNet-18)"}},
+        {"line": "model.fc = nn.Sequential(..., nn.Linear(128, 5))", "highlight": "replace", "explanation": {"en": "Replace the 1000-class head with our 5-class head. Only these new layers will train"}},
+        {"line": "optimizer = torch.optim.Adam(model.fc.parameters(), lr=0.001)", "highlight": "fc.parameters", "explanation": {"en": "Only optimize the new fc layers — saves time and memory"}},
+        {"line": "# Trainable: 66,181 out of 11,243,717 total", "highlight": "efficiency", "explanation": {"en": "Only 0.6% of parameters are trainable! 99.4% leverage pre-trained knowledge"}},
+        {"line": "for param in model.layer4.parameters(): param.requires_grad = True", "highlight": "unfreeze", "explanation": {"en": "Fine-tuning: unfreeze the last conv block to adapt features to our domain"}},
+        {"line": "{'params': model.layer4.parameters(), 'lr': 1e-4}", "highlight": "differential_lr", "explanation": {"en": "Use lower learning rate for pre-trained layers to avoid destroying learned features"}},
+        {"line": "{'params': model.fc.parameters(), 'lr': 1e-3}", "highlight": "higher_lr", "explanation": {"en": "Higher learning rate for new layers that need to learn from scratch"}},
+        {"line": "# 10 epochs is often enough with transfer learning!", "highlight": "fast", "explanation": {"en": "Transfer learning converges much faster than training from scratch — often 5-15 epochs"}}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "resnet_frozen",
+      "structure_type": "neural_network",
+      "layers": [
+        {"name": "Conv1 (frozen)", "nodes": ["7x7, stride 2"], "type": "frozen"},
+        {"name": "Layer1 (frozen)", "nodes": ["2 ResBlocks"], "type": "frozen"},
+        {"name": "Layer2 (frozen)", "nodes": ["2 ResBlocks"], "type": "frozen"},
+        {"name": "Layer3 (frozen)", "nodes": ["2 ResBlocks"], "type": "frozen"},
+        {"name": "Layer4 (fine-tune)", "nodes": ["2 ResBlocks"], "type": "finetune"},
+        {"name": "FC (new)", "nodes": ["512->128->5"], "type": "trainable"}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "transfer_comparison",
+      "left": {"label": "Training from Scratch", "content": "Need: 50,000+ images\nTime: hours/days\nAccuracy: ~85%\nEpochs: 100+"},
+      "right": {"label": "Transfer Learning", "content": "Need: 500 images\nTime: minutes\nAccuracy: ~95%\nEpochs: 10"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_total_params",
+      "variable": "total_params",
+      "value": "11,243,717",
+      "data_type": "int",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_trainable",
+      "variable": "trainable_params",
+      "value": "66,181",
+      "data_type": "int",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "transfer_flow",
+      "from": "pretrained",
+      "to": "custom_model",
+      "steps": ["Load ResNet-18", "Freeze all layers", "Replace FC head", "Train FC only", "Unfreeze layer4", "Fine-tune with low lr"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)",
+        ">>> # Feature extraction (FC only)",
+        "Epoch 1: Loss=1.23, Acc=62.5%",
+        "Epoch 5: Loss=0.34, Acc=89.2%",
+        "Epoch 10: Loss=0.12, Acc=94.8%",
+        ">>> # Fine-tuning (layer4 + FC)",
+        "Epoch 11: Loss=0.08, Acc=96.2%",
+        "Epoch 15: Loss=0.04, Acc=97.5%"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use a pre-trained ResNet-18 to classify a synthetic dataset of 5 categories. Implement both feature extraction (frozen backbone) and fine-tuning (unfreezing last block). Compare accuracy.",
+        "ta": "5 வகைகளின் synthetic dataset-ஐ வகைப்படுத்த pre-trained ResNet-18 பயன்படுத்துங்கள். Feature extraction மற்றும் fine-tuning இரண்டையும் செயல்படுத்தி, துல்லியத்தை ஒப்பிடுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\nimport torchvision.models as models\n\n# Synthetic data (simulating small custom dataset)\ntorch.manual_seed(42)\nX_train = torch.randn(200, 3, 224, 224)  # 200 images\ny_train = torch.randint(0, 5, (200,))     # 5 classes\nX_test = torch.randn(50, 3, 224, 224)\ny_test = torch.randint(0, 5, (50,))\n\n# TODO: Load pre-trained ResNet-18\n# TODO: Freeze all parameters\n# TODO: Replace model.fc for 5 classes\n# TODO: Train with feature extraction for 5 epochs\n# TODO: Unfreeze layer4 and fine-tune for 5 more epochs\n# TODO: Compare accuracy at each stage\n",
+      "expected_output": "Feature extraction accuracy: 78%\nAfter fine-tuning accuracy: 92%",
+      "hints": {
+        "en": [
+          "model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)",
+          "model.fc = nn.Linear(512, 5) for 5 classes",
+          "Use differential learning rates when fine-tuning",
+          "Create simple DataLoader from tensors using TensorDataset"
+        ],
+        "ta": [
+          "model.fc = nn.Linear(512, 5) 5 வகுப்புகளுக்கு",
+          "Fine-tuning செய்யும்போது differential learning rates பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why do we freeze early layers in transfer learning?",
+        "ta": "Transfer learning-ல் ஏன் ஆரம்ப அடுக்குகளை freeze செய்கிறோம்?"
+      },
+      "options": {
+        "en": ["To save disk space", "Early layers detect universal features (edges, textures) useful for all tasks", "To prevent the model from learning", "Early layers are always incorrect"],
+        "ta": ["வட்டு இடத்தை சேமிக்க", "ஆரம்ப அடுக்குகள் அனைத்து பணிகளுக்கும் பயனுள்ள உலகளாவிய அம்சங்களைக் கண்டறிகின்றன", "மாதிரி கற்பதைத் தடுக்க", "ஆரம்ப அடுக்குகள் எப்போதும் தவறானவை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the recommended learning rate strategy for fine-tuning?",
+        "ta": "Fine-tuning-க்கு பரிந்துரைக்கப்படும் learning rate உத்தி என்ன?"
+      },
+      "options": {
+        "en": ["Same high lr for all layers", "Lower lr for pre-trained layers, higher lr for new layers", "No learning rate needed", "Highest lr for the first layer"],
+        "ta": ["அனைத்து அடுக்குகளுக்கும் ஒரே உயர்ந்த lr", "Pre-trained அடுக்குகளுக்கு குறைந்த lr, புதிய அடுக்குகளுக்கு உயர்ந்த lr", "Learning rate தேவையில்லை", "முதல் அடுக்குக்கு உயர்ந்த lr"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How many images do you typically need for effective transfer learning?",
+        "ta": "பயனுள்ள transfer learning-க்கு பொதுவாக எத்தனை படங்கள் தேவை?"
+      },
+      "options": {
+        "en": ["Millions", "Hundreds to a few thousand per class", "Exactly 10", "Zero (no data needed)"],
+        "ta": ["மில்லியன்கள்", "ஒரு வகுப்புக்கு நூற்றுக்கணக்கான முதல் சில ஆயிரங்கள்", "சரியாக 10", "பூஜ்ஜியம் (தரவு தேவையில்லை)"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["transfer_learning", "fine_tuning", "feature_extraction", "pretrained_models", "differential_lr"],
+    "concepts_required": ["cnn_architectures", "pytorch_training"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["medical_imaging", "custom_classification", "few_shot_learning"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

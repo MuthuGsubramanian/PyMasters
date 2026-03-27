@@ -1,0 +1,339 @@
+{
+  "id": "ai_app_deployment",
+  "topic": "ai_app_deployment",
+  "track": "ai_fundamentals",
+  "module": "ai_advanced",
+  "order": 18,
+  "title": {
+    "en": "AI App Deployment: Serving, APIs & Cost Optimization",
+    "ta": "AI App Deployment: Serving, APIs & செலவு மேம்படுத்தல்"
+  },
+  "description": {
+    "en": "Ship your AI app to production — learn API wrappers with FastAPI, cost optimization strategies, caching, and monitoring.",
+    "ta": "உங்கள் AI app-ஐ production-க்கு அனுப்புங்கள் — FastAPI உடன் API wrappers, செலவு optimization உத்திகள், caching, monitoring கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Vaathiyaar's Launch Pad\n\nVaathiyaar stands before a rocket control panel. \"Students, building an AI demo is easy. Deploying it for REAL USERS who pay REAL MONEY — that's the challenge. Today you'll learn to wrap your AI in a FastAPI server, optimize costs, add caching, and monitor everything.\"\n\n### The Production Checklist\n\n1. **API Wrapper** — Wrap your AI logic in a FastAPI endpoint\n2. **Cost Control** — Cache responses, use cheaper models when possible\n3. **Rate Limiting** — Prevent abuse and control costs\n4. **Error Handling** — Graceful fallbacks when the AI API is down\n5. **Monitoring** — Track latency, token usage, error rates\n6. **Security** — API keys, authentication, input validation\n\n### Cost Optimization Strategies\n\n| Strategy | Savings | Effort |\n|----------|---------|--------|\n| Cache common queries | 40-60% | Low |\n| Use gpt-4o-mini for simple tasks | 90% vs gpt-4o | Low |\n| Reduce max_tokens | 10-30% | Low |\n| Batch requests | 20-40% | Medium |\n| Self-host open-source models | 70-90% | High |\n\n> **Key Insight:** The #1 cost optimization is caching. If 100 users ask the same question, you should call the LLM once and cache the result.",
+    "ta": "## வாத்தியாரின் Launch Pad\n\nவாத்தியார் ஒரு rocket control panel முன் நிற்கிறார். \"மாணவர்களே, AI demo உருவாக்குவது எளிது. உண்மையான பயனர்களுக்கு deploy செய்வது — அதுதான் சவால்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "launch_pad",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "deployment_concepts",
+      "nodes": [
+        {
+          "label": "Production AI App",
+          "children": [
+            "FastAPI wrapper",
+            "Response caching",
+            "Rate limiting",
+            "Error handling",
+            "Monitoring & logging"
+          ]
+        },
+        {
+          "label": "Cost Optimization",
+          "children": [
+            "Cache common queries",
+            "Use cheaper models",
+            "Reduce max_tokens",
+            "Batch requests"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "deployment_code",
+      "steps": [
+        {
+          "line": "from fastapi import FastAPI, HTTPException",
+          "highlight": "import",
+          "explanation": {
+            "en": "FastAPI for building the API server — fast, typed, auto-documented"
+          }
+        },
+        {
+          "line": "from pydantic import BaseModel",
+          "highlight": "import",
+          "explanation": {
+            "en": "Pydantic for request/response validation"
+          }
+        },
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "OpenAI client for the AI backend"
+          }
+        },
+        {
+          "line": "from functools import lru_cache",
+          "highlight": "import",
+          "explanation": {
+            "en": "lru_cache for simple in-memory response caching"
+          }
+        },
+        {
+          "line": "import time",
+          "highlight": "import",
+          "explanation": {
+            "en": "Time for latency tracking"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Define the app and models"
+          }
+        },
+        {
+          "line": "app = FastAPI(title='PyMasters AI API')",
+          "highlight": "app",
+          "explanation": {
+            "en": "Create the FastAPI application"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize OpenAI client once — reused across requests"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Define request and response models"
+          }
+        },
+        {
+          "line": "class ChatRequest(BaseModel):",
+          "highlight": "class",
+          "explanation": {
+            "en": "Typed request model — FastAPI validates automatically"
+          }
+        },
+        {
+          "line": "    message: str",
+          "highlight": "message",
+          "explanation": {
+            "en": "The user's message"
+          }
+        },
+        {
+          "line": "    model: str = 'gpt-4o-mini'",
+          "highlight": "model",
+          "explanation": {
+            "en": "Default to the cheapest model — override for complex tasks"
+          }
+        },
+        {
+          "line": "    max_tokens: int = 500",
+          "highlight": "max_tokens",
+          "explanation": {
+            "en": "Limit response length to control costs"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now the cached AI call function"
+          }
+        },
+        {
+          "line": "class ChatResponse(BaseModel):",
+          "highlight": "class",
+          "explanation": {
+            "en": "Typed response model"
+          }
+        },
+        {
+          "line": "    reply: str",
+          "highlight": "reply",
+          "explanation": {
+            "en": "The AI's response text"
+          }
+        },
+        {
+          "line": "    tokens_used: int",
+          "highlight": "tokens",
+          "explanation": {
+            "en": "Track token usage for cost monitoring"
+          }
+        },
+        {
+          "line": "    latency_ms: float",
+          "highlight": "latency",
+          "explanation": {
+            "en": "Response time in milliseconds"
+          }
+        },
+        {
+          "line": "    cached: bool = False",
+          "highlight": "cached",
+          "explanation": {
+            "en": "Whether this response came from cache"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cost_comparison",
+      "left_label": "Without Optimization",
+      "right_label": "With Optimization",
+      "left_content": "Model: gpt-4o ($2.50/1M input)\nNo caching: 10,000 calls/day\nmax_tokens: 2000 (default)\nMonthly cost: ~$750\n\n# Every request hits the API\n# No monitoring, no fallbacks\n# One model for all tasks",
+      "right_content": "Model: gpt-4o-mini ($0.15/1M input)\nCaching: 60% hit rate → 4,000 calls/day\nmax_tokens: 500 (optimized)\nMonthly cost: ~$18\n\n# 97.6% cost reduction!\n# Cache common queries\n# Monitor & alert on anomalies",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_savings",
+      "variable": "cost_reduction",
+      "value": "97.6%",
+      "data_type": "str",
+      "color": "#22c55e"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_monthly",
+      "variable": "monthly_cost",
+      "value": "$18",
+      "data_type": "str",
+      "color": "#3b82f6"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Run the server",
+        ">>> # $ uvicorn main:app --reload",
+        "",
+        ">>> # Test with curl",
+        ">>> # curl -X POST http://localhost:8000/chat \\",
+        ">>> #   -H 'Content-Type: application/json' \\",
+        ">>> #   -d '{\"message\": \"What is Python?\"}'",
+        "",
+        "{",
+        "  \"reply\": \"Python is a high-level programming language...\",",
+        "  \"tokens_used\": 87,",
+        "  \"latency_ms\": 1234.5,",
+        "  \"cached\": false",
+        "}",
+        "",
+        ">>> # Second identical request — served from cache!",
+        "{",
+        "  \"reply\": \"Python is a high-level programming language...\",",
+        "  \"tokens_used\": 0,",
+        "  \"latency_ms\": 2.1,",
+        "  \"cached\": true",
+        "}",
+        "",
+        ">>> # API docs auto-generated at http://localhost:8000/docs"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a complete FastAPI AI app with: 1) A /chat endpoint that takes a message and returns an AI response, 2) Simple dictionary-based caching, 3) Request logging with timestamp and token count, 4) A /stats endpoint that shows total requests, cache hit rate, and total tokens used.",
+        "ta": "முழுமையான FastAPI AI app உருவாக்குங்கள்: 1) message எடுத்து AI response திருப்பி அனுப்பும் /chat endpoint, 2) Dictionary-based caching, 3) timestamp மற்றும் token count உடன் request logging, 4) மொத்த requests, cache hit rate, tokens காட்டும் /stats endpoint."
+      },
+      "starter_code": "from fastapi import FastAPI\nfrom pydantic import BaseModel\nfrom openai import OpenAI\nimport time\n\napp = FastAPI()\nclient = OpenAI()\n\n# Simple cache\ncache = {}\nstats = {'total_requests': 0, 'cache_hits': 0, 'total_tokens': 0}\n\nclass ChatRequest(BaseModel):\n    message: str\n\nclass ChatResponse(BaseModel):\n    reply: str\n    cached: bool\n    latency_ms: float\n\n@app.post('/chat', response_model=ChatResponse)\nasync def chat(request: ChatRequest):\n    stats['total_requests'] += 1\n    start = time.time()\n    \n    # Check cache first\n    # If not cached, call OpenAI\n    # Update stats\n    # Return response\n    pass\n\n@app.get('/stats')\nasync def get_stats():\n    # Return stats with cache hit rate\n    pass\n\n# Run: uvicorn main:app --reload",
+      "expected_output": "POST /chat -> {reply, cached, latency_ms}\nGET /stats -> {total_requests, cache_hits, hit_rate, total_tokens}",
+      "hints": {
+        "en": [
+          "Check cache with: if request.message in cache",
+          "Cache hit rate = cache_hits / total_requests * 100",
+          "Use time.time() before and after the API call for latency",
+          "Store OpenAI response in cache[request.message]"
+        ],
+        "ta": [
+          "Cache சரிபார்: if request.message in cache",
+          "Cache hit rate = cache_hits / total_requests * 100",
+          "Latency-க்கு API call-க்கு முன்/பின் time.time() பயன்படுத்துங்கள்",
+          "cache[request.message]-ல் OpenAI response சேமியுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the #1 cost optimization for AI APIs?",
+        "ta": "AI API-களுக்கான #1 செலவு optimization என்ன?"
+      },
+      "options": {
+        "en": [
+          "Using the most expensive model",
+          "Caching common queries",
+          "Removing error handling",
+          "Increasing max_tokens"
+        ],
+        "ta": [
+          "மிக விலையுயர்ந்த model-ஐ பயன்படுத்துவது",
+          "பொதுவான queries-ஐ caching செய்வது",
+          "Error handling-ஐ நீக்குவது",
+          "max_tokens-ஐ அதிகரிப்பது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use FastAPI for AI app deployment?",
+        "ta": "AI app deployment-க்கு FastAPI ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "It's the only option",
+          "It's fast, has automatic validation, and generates API docs",
+          "It's cheaper than Flask",
+          "It includes built-in AI models"
+        ],
+        "ta": [
+          "இது ஒரே விருப்பம்",
+          "வேகமானது, automatic validation உள்ளது, API docs உருவாக்குகிறது",
+          "Flask-ஐ விட மலிவானது",
+          "Built-in AI models உள்ளது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How much can you save by switching from gpt-4o to gpt-4o-mini for simple tasks?",
+        "ta": "எளிய பணிகளுக்கு gpt-4o-விலிருந்து gpt-4o-mini-க்கு மாறுவதன் மூலம் எவ்வளவு சேமிக்கலாம்?"
+      },
+      "options": {
+        "en": ["10%", "50%", "About 90%", "No savings"],
+        "ta": ["10%", "50%", "சுமார் 90%", "சேமிப்பு இல்லை"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["fastapi", "ai_deployment", "cost_optimization", "caching", "monitoring"],
+    "concepts_required": ["openai_api_basics", "structured_output"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 40,
+    "real_world_application": ["production_deployment", "startup_ai"],
+    "category": "ai_advanced",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

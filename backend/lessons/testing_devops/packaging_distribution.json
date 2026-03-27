@@ -1,0 +1,269 @@
+{
+  "id": "packaging_distribution",
+  "topic": "packaging_distribution",
+  "track": "testing_devops",
+  "module": "packaging",
+  "order": 10,
+  "title": {
+    "en": "Packaging & Publishing to PyPI",
+    "ta": "Packaging & PyPI-ல் வெளியிடுதல்"
+  },
+  "description": {
+    "en": "Learn to package Python projects with pyproject.toml, build distributions, and publish to PyPI so anyone can pip install your library.",
+    "ta": "pyproject.toml-உடன் Python projects-ஐ package செய்யவும், distributions build செய்யவும், PyPI-ல் publish செய்யவும் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Gift Wrapping\n\nVaathiyaar wraps a box with ribbon. \"You've built a useful Python library. But right now it lives only on your laptop. To share it with the world, you need to **package** it — wrap it up nicely so anyone can `pip install` it.\"\n\n### The Modern Way: pyproject.toml\n- Replaced setup.py as the standard (PEP 621)\n- Single file for project metadata, dependencies, and build config\n- Used by pip, build, and all modern tools\n\n### Project Structure\n```\nmy-library/\n├── pyproject.toml\n├── README.md\n├── LICENSE\n├── src/\n│   └── mylib/\n│       ├── __init__.py\n│       └── core.py\n└── tests/\n    └── test_core.py\n```\n\n### Build & Publish\n```bash\npip install build twine\npython -m build          # Creates dist/ with .tar.gz and .whl\ntwine upload dist/*      # Upload to PyPI\n```\n\n### Versioning\n- Follow Semantic Versioning: MAJOR.MINOR.PATCH\n- 1.0.0 → 1.0.1 (bug fix)\n- 1.0.0 → 1.1.0 (new feature, backward compatible)\n- 1.0.0 → 2.0.0 (breaking change)\n\n> **Key Concept:** Packaging transforms your project from 'code on my laptop' to 'installable library on PyPI'. Anyone in the world can then `pip install yourlib`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "gift_wrapping",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "packaging_map",
+      "nodes": [
+        {
+          "label": "Python Packaging",
+          "children": [
+            "pyproject.toml",
+            "src/ layout",
+            "python -m build",
+            "twine upload",
+            "PyPI"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pyproject_steps",
+      "steps": [
+        {
+          "line": "[build-system]",
+          "highlight": "build-system",
+          "explanation": {
+            "en": "Define which build backend to use"
+          }
+        },
+        {
+          "line": "requires = [\"setuptools>=68.0\", \"wheel\"]",
+          "highlight": "setuptools",
+          "explanation": {
+            "en": "Build requires setuptools and wheel packages"
+          }
+        },
+        {
+          "line": "build-backend = \"setuptools.build_meta\"",
+          "highlight": "build_meta",
+          "explanation": {
+            "en": "Use setuptools as the build backend"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now define your project metadata"
+          }
+        },
+        {
+          "line": "[project]",
+          "highlight": "project",
+          "explanation": {
+            "en": "Project metadata section — name, version, description"
+          }
+        },
+        {
+          "line": "name = \"pymasters-utils\"",
+          "highlight": "pymasters-utils",
+          "explanation": {
+            "en": "Package name on PyPI — must be unique globally"
+          }
+        },
+        {
+          "line": "version = \"1.0.0\"",
+          "highlight": "1.0.0",
+          "explanation": {
+            "en": "Semantic version: MAJOR.MINOR.PATCH"
+          }
+        },
+        {
+          "line": "description = \"Utility functions for PyMasters\"",
+          "highlight": "description",
+          "explanation": {
+            "en": "Short one-line description shown on PyPI"
+          }
+        },
+        {
+          "line": "requires-python = \">=3.10\"",
+          "highlight": ">=3.10",
+          "explanation": {
+            "en": "Minimum Python version required"
+          }
+        },
+        {
+          "line": "dependencies = [\"requests>=2.28\", \"click>=8.0\"]",
+          "highlight": "dependencies",
+          "explanation": {
+            "en": "Runtime dependencies — pip installs these automatically"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Add optional dependencies for development"
+          }
+        },
+        {
+          "line": "[project.optional-dependencies]",
+          "highlight": "optional-dependencies",
+          "explanation": {
+            "en": "Extra dependency groups installed with pip install mylib[dev]"
+          }
+        },
+        {
+          "line": "dev = [\"pytest>=7.0\", \"ruff>=0.1\"]",
+          "highlight": "dev",
+          "explanation": {
+            "en": "Dev dependencies: pip install pymasters-utils[dev]"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Configure entry points for CLI commands"
+          }
+        },
+        {
+          "line": "[project.scripts]",
+          "highlight": "scripts",
+          "explanation": {
+            "en": "Create CLI commands that users can run after install"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "project_tree",
+      "structure_type": "tree",
+      "layers": [
+        { "label": "my-library/", "count": "root", "color": "#4f8ef7" },
+        { "label": "pyproject.toml", "count": "metadata", "color": "#6bcf7f" },
+        { "label": "src/mylib/", "count": "source code", "color": "#ffd93d" },
+        { "label": "tests/", "count": "test files", "color": "#a66bf7" },
+        { "label": "dist/", "count": "built packages", "color": "#ff6b6b" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "build_output",
+      "output": [
+        "$ python -m build",
+        "* Creating venv isolated environment...",
+        "* Installing packages in isolated environment...",
+        "* Building sdist...",
+        "* Building wheel...",
+        "Successfully built pymasters_utils-1.0.0.tar.gz",
+        "Successfully built pymasters_utils-1.0.0-py3-none-any.whl",
+        "",
+        "$ ls dist/",
+        "pymasters_utils-1.0.0-py3-none-any.whl",
+        "pymasters_utils-1.0.0.tar.gz",
+        "",
+        "$ twine upload dist/*",
+        "Uploading pymasters_utils-1.0.0-py3-none-any.whl...",
+        "Uploading pymasters_utils-1.0.0.tar.gz...",
+        "View at: https://pypi.org/project/pymasters-utils/1.0.0/"
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_version",
+      "variable": "version",
+      "value": "1.0.0 (MAJOR.MINOR.PATCH)",
+      "data_type": "semver",
+      "color": "#4ff7a4"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a pyproject.toml for a library called 'mathutils' version 0.1.0, requiring Python >=3.10, with numpy as a dependency and pytest as a dev dependency.",
+        "ta": "'mathutils' என்ற library-க்கு version 0.1.0, Python >=3.10, numpy dependency, pytest dev dependency-உடன் pyproject.toml எழுதுங்கள்."
+      },
+      "starter_code": "# pyproject.toml\n[build-system]\nrequires = [\"setuptools>=68.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = # package name?\nversion = # version?\ndescription = \"Math utility functions\"\nrequires-python = # minimum version?\ndependencies = [\n    # runtime deps?\n]\n\n[project.optional-dependencies]\ndev = [\n    # dev deps?\n]",
+      "expected_output": "Valid pyproject.toml with all fields filled",
+      "hints": {
+        "en": [
+          "name = \"mathutils\"",
+          "version = \"0.1.0\"",
+          "requires-python = \">=3.10\"",
+          "dependencies = [\"numpy>=1.24\"]",
+          "dev = [\"pytest>=7.0\"]"
+        ],
+        "ta": [
+          "name = \"mathutils\"",
+          "version = \"0.1.0\"",
+          "requires-python = \">=3.10\"",
+          "dependencies = [\"numpy>=1.24\"]",
+          "dev = [\"pytest>=7.0\"]"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What file has replaced setup.py as the modern standard for Python packaging?",
+        "ta": "Python packaging-க்கான நவீன standard-ஆக setup.py-ஐ எந்த file மாற்றியது?"
+      },
+      "options": {
+        "en": ["setup.cfg", "pyproject.toml", "package.json", "Pipfile"],
+        "ta": ["setup.cfg", "pyproject.toml", "package.json", "Pipfile"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What tool uploads built packages to PyPI?",
+        "ta": "Build செய்யப்பட்ட packages-ஐ PyPI-க்கு upload செய்ய எந்த tool பயன்படுகிறது?"
+      },
+      "options": {
+        "en": ["pip", "build", "twine", "setuptools"],
+        "ta": ["pip", "build", "twine", "setuptools"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In semantic versioning 2.3.1, what does the '3' represent?",
+        "ta": "Semantic versioning 2.3.1-ல், '3' எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["Major version", "Minor version (new features, backward compatible)", "Patch version", "Build number"],
+        "ta": ["Major version", "Minor version (புதிய அம்சங்கள், பின்தங்கிய இணக்கம்)", "Patch version", "Build number"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["pyproject_toml", "packaging", "pypi", "semver", "twine"],
+    "concepts_required": ["modules", "pip"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["open_source", "library_development"],
+    "category": "devops",
+    "path_memberships": ["testing_devops"]
+  }
+}

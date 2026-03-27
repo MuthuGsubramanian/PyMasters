@@ -1,0 +1,212 @@
+{
+  "id": "ml_what_is_it",
+  "topic": "what_is_machine_learning",
+  "track": "machine_learning",
+  "module": "ml_foundations",
+  "order": 1,
+  "title": {
+    "en": "What is Machine Learning?",
+    "ta": "இயந்திர கற்றல் என்றால் என்ன?"
+  },
+  "description": {
+    "en": "Discover the three pillars of ML: supervised learning (learning from labeled data), unsupervised learning (finding hidden patterns), and reinforcement learning (learning from rewards).",
+    "ta": "ML-ன் மூன்று தூண்களைக் கண்டறியுங்கள்: மேற்பார்வையிடப்பட்ட கற்றல், மேற்பார்வையிடப்படாத கற்றல், மற்றும் வலுவூட்டல் கற்றல்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's ML Workshop\n\nVaathiyaar opens a new wing of the PyMasters academy. \"Today,\" he says, \"we teach the computer to learn on its own.\"\n\n### Three Ways Machines Learn\n\n**1. Supervised Learning** — You give the machine labeled examples.\n- Input: photos labeled 'cat' or 'dog'\n- The machine learns the mapping from input to label\n- Examples: classification, regression\n\n**2. Unsupervised Learning** — No labels, just raw data.\n- The machine finds hidden patterns and groupings\n- Examples: clustering, dimensionality reduction\n\n**3. Reinforcement Learning** — Learn by trial and error.\n- An agent takes actions in an environment\n- Gets rewards or penalties\n- Examples: game-playing AI, robotics\n\n```python\n# Supervised: predict house price from features\nfrom sklearn.linear_model import LinearRegression\nmodel = LinearRegression()\nmodel.fit(X_train, y_train)  # labeled data\n\n# Unsupervised: group customers\nfrom sklearn.cluster import KMeans\nkmeans = KMeans(n_clusters=3)\nkmeans.fit(X)  # no labels needed\n```\n\n> **Key Insight:** The type of learning depends on whether you have labels and what outcome you want."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "ml_workshop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ml_types_map",
+      "nodes": [
+        {
+          "label": "Machine Learning",
+          "children": [
+            "Supervised (labeled data)",
+            "Unsupervised (no labels)",
+            "Reinforcement (rewards)"
+          ]
+        },
+        {
+          "label": "Supervised",
+          "children": ["Classification", "Regression"]
+        },
+        {
+          "label": "Unsupervised",
+          "children": ["Clustering", "Dimensionality Reduction"]
+        },
+        {
+          "label": "Reinforcement",
+          "children": ["Agent", "Environment", "Reward Signal"]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "ml_code_intro",
+      "steps": [
+        {
+          "line": "from sklearn.linear_model import LinearRegression",
+          "highlight": "LinearRegression",
+          "explanation": { "en": "Import a supervised learning model for regression tasks" }
+        },
+        {
+          "line": "from sklearn.cluster import KMeans",
+          "highlight": "KMeans",
+          "explanation": { "en": "Import an unsupervised learning model for clustering" }
+        },
+        {
+          "line": "import numpy as np",
+          "highlight": "numpy",
+          "explanation": { "en": "NumPy provides the numerical arrays ML models consume" }
+        },
+        {
+          "line": "X_train = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])",
+          "highlight": "X_train",
+          "explanation": { "en": "Create training features — each row is a sample with 2 features" }
+        },
+        {
+          "line": "y_train = np.array([3, 7, 11, 15])",
+          "highlight": "y_train",
+          "explanation": { "en": "Create labels — the target values we want to predict" }
+        },
+        {
+          "line": "reg = LinearRegression()",
+          "highlight": "reg",
+          "explanation": { "en": "Instantiate the supervised model — no learning yet" }
+        },
+        {
+          "line": "reg.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train the model: it learns the relationship between X and y" }
+        },
+        {
+          "line": "prediction = reg.predict(np.array([[9, 10]]))",
+          "highlight": "predict",
+          "explanation": { "en": "Use the trained model to predict the label for new data" }
+        },
+        {
+          "line": "print(f'Prediction: {prediction[0]:.2f}')",
+          "highlight": "print",
+          "explanation": { "en": "Display the predicted value — the model generalizes from training data" }
+        },
+        {
+          "line": "kmeans = KMeans(n_clusters=2, random_state=42)",
+          "highlight": "KMeans",
+          "explanation": { "en": "Instantiate an unsupervised model — it will find 2 groups" }
+        },
+        {
+          "line": "kmeans.fit(X_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Fit without labels — the algorithm discovers structure on its own" }
+        },
+        {
+          "line": "print(f'Cluster labels: {kmeans.labels_}')",
+          "highlight": "labels_",
+          "explanation": { "en": "Each sample is assigned to a cluster — no human labels needed" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_prediction",
+      "variable": "prediction",
+      "value": 19.0,
+      "data_type": "float",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_clusters",
+      "variable": "kmeans.labels_",
+      "value": "[0, 0, 1, 1]",
+      "data_type": "ndarray",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Prediction: 19.00",
+        "Cluster labels: [0 0 1 1]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a simple supervised learning example: generate X as numbers 1-10 reshaped to a column, y as X*2+1. Fit a LinearRegression and predict the value for X=15.",
+        "ta": "ஒரு எளிய மேற்பார்வை கற்றல் எடுத்துக்காட்டை உருவாக்குங்கள்: X ஐ 1-10 எண்களாக உருவாக்கி, y ஐ X*2+1 ஆக அமைத்து, LinearRegression பொருத்தி X=15 க்கு கணிக்கவும்."
+      },
+      "starter_code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\n\n# Create training data\nX = np.arange(1, 11).reshape(-1, 1)\ny = X.flatten() * 2 + 1\n\n# Create and train model\nmodel = ___\nmodel.___(___, ___)\n\n# Predict for X=15\nresult = model.predict(np.array([[15]]))\nprint(f'Prediction for X=15: {result[0]:.2f}')",
+      "expected_output": "Prediction for X=15: 31.00",
+      "hints": {
+        "en": [
+          "Create the model with LinearRegression()",
+          "Train with model.fit(X, y)",
+          "The pattern is y = 2*X + 1, so for X=15, y should be 31"
+        ],
+        "ta": [
+          "LinearRegression() மூலம் மாடலை உருவாக்குங்கள்",
+          "model.fit(X, y) மூலம் பயிற்சி அளியுங்கள்",
+          "y = 2*X + 1 என்ற முறை, எனவே X=15 க்கு y 31 ஆக இருக்க வேண்டும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which type of ML uses labeled training data?",
+        "ta": "எந்த வகை ML பெயரிடப்பட்ட பயிற்சி தரவைப் பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["Unsupervised Learning", "Supervised Learning", "Reinforcement Learning", "Transfer Learning"],
+        "ta": ["மேற்பார்வையிடப்படாத கற்றல்", "மேற்பார்வையிடப்பட்ட கற்றல்", "வலுவூட்டல் கற்றல்", "பரிமாற்ற கற்றல்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "K-Means clustering is an example of which type of learning?",
+        "ta": "K-Means கிளஸ்டரிங் எந்த வகை கற்றலுக்கு உதாரணம்?"
+      },
+      "options": {
+        "en": ["Supervised Learning", "Reinforcement Learning", "Unsupervised Learning", "Semi-supervised Learning"],
+        "ta": ["மேற்பார்வையிடப்பட்ட கற்றல்", "வலுவூட்டல் கற்றல்", "மேற்பார்வையிடப்படாத கற்றல்", "அரை-மேற்பார்வை கற்றல்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In reinforcement learning, what does the agent receive after taking an action?",
+        "ta": "வலுவூட்டல் கற்றலில், ஒரு செயலைச் செய்த பிறகு முகவர் என்ன பெறுகிறார்?"
+      },
+      "options": {
+        "en": ["Labeled data", "A reward or penalty", "A cluster assignment", "A regression coefficient"],
+        "ta": ["பெயரிடப்பட்ட தரவு", "வெகுமதி அல்லது தண்டனை", "கிளஸ்டர் ஒதுக்கீடு", "பின்னடைவு குணகம்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["supervised_learning", "unsupervised_learning", "reinforcement_learning", "sklearn_basics"],
+    "concepts_required": ["python_basics"],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["spam_detection", "recommendation_systems", "game_ai"],
+    "category": "machine_learning",
+    "path_memberships": ["ml_fundamentals"]
+  }
+}

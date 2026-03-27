@@ -1,0 +1,242 @@
+{
+  "id": "django_forms_auth",
+  "topic": "django_forms_auth",
+  "track": "web_development",
+  "module": "django_framework",
+  "order": 9,
+  "title": {
+    "en": "Django Forms & Authentication: User Management",
+    "ta": "Django படிவங்கள் & அங்கீகாரம்: பயனர் மேலாண்மை"
+  },
+  "description": {
+    "en": "Build user registration, login, and profile forms using Django's built-in authentication system and form classes.",
+    "ta": "Django-வின் உள்ளமைந்த அங்கீகார அமைப்பு மற்றும் படிவ வகுப்புகளைப் பயன்படுத்தி பயனர் பதிவு, உள்நுழைவு மற்றும் சுயவிவர படிவங்களை உருவாக்குங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## The Membership Office\n\nVaathiyaar opens a membership ledger. \"Django already has a complete authentication system built in — User model, login views, password hashing, session management. You don't build it from scratch; you **extend** it.\"\n\n### Django's Auth System (Built In!)\n- `User` model with username, email, password\n- `authenticate()` and `login()` functions\n- `@login_required` decorator\n- Password hashing with PBKDF2\n- Session management\n- Permission system\n\n### Django Forms\n\n| Form Type | Purpose |\n|-----------|--------|\n| `forms.Form` | Standalone form (no model) |\n| `forms.ModelForm` | Form auto-generated from a model |\n| `UserCreationForm` | Built-in registration form |\n| `AuthenticationForm` | Built-in login form |\n\n### The Registration Flow\n1. User visits `/register/`\n2. Django renders `UserCreationForm`\n3. User submits username + password (x2)\n4. Django validates (password strength, uniqueness)\n5. Creates User with hashed password\n6. Redirects to login\n\n> **Key Concept:** Django's auth system handles password hashing, session cookies, and CSRF protection automatically. You focus on the user experience, not the security plumbing."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "membership_office",
+      "duration_ms": 4000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "registration_flow",
+      "steps": [
+        "User visits /register/",
+        "Django renders UserCreationForm",
+        "User fills form and submits",
+        "form.is_valid() checks all rules",
+        "form.save() creates User with hashed password",
+        "Redirect to /login/",
+        "User logs in with credentials",
+        "Django creates session cookie"
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "auth_overview",
+      "nodes": [
+        {
+          "label": "Django Auth",
+          "children": [
+            "User Model (built-in)",
+            "Forms (Creation, Login)",
+            "Views (login, logout)",
+            "Decorators (@login_required)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "auth_demo",
+      "steps": [
+        {
+          "line": "# users/forms.py",
+          "highlight": "forms.py",
+          "explanation": {
+            "en": "Create custom forms by extending Django's built-in forms"
+          }
+        },
+        {
+          "line": "from django import forms\nfrom django.contrib.auth.models import User\nfrom django.contrib.auth.forms import UserCreationForm",
+          "highlight": "UserCreationForm",
+          "explanation": {
+            "en": "UserCreationForm provides username + password1 + password2 fields"
+          }
+        },
+        {
+          "line": "class RegisterForm(UserCreationForm):\n    email = forms.EmailField(required=True)\n    first_name = forms.CharField(max_length=50)",
+          "highlight": "RegisterForm",
+          "explanation": {
+            "en": "Extend UserCreationForm to add email and first_name fields"
+          }
+        },
+        {
+          "line": "    class Meta:\n        model = User\n        fields = ['username', 'email', 'first_name', 'password1', 'password2']",
+          "highlight": "Meta",
+          "explanation": {
+            "en": "Meta tells Django which model and fields this form handles"
+          }
+        },
+        {
+          "line": "# users/views.py",
+          "highlight": "views.py",
+          "explanation": {
+            "en": "Views handle the registration and profile logic"
+          }
+        },
+        {
+          "line": "from django.shortcuts import render, redirect\nfrom django.contrib import messages\nfrom django.contrib.auth import login, authenticate, logout\nfrom django.contrib.auth.decorators import login_required\nfrom .forms import RegisterForm",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Import Django's messages framework for flash messages"
+          }
+        },
+        {
+          "line": "def register(request):\n    if request.method == 'POST':\n        form = RegisterForm(request.POST)\n        if form.is_valid():\n            user = form.save()\n            messages.success(request, f'Account created for {user.username}!')\n            return redirect('login')\n    else:\n        form = RegisterForm()\n    return render(request, 'users/register.html', {'form': form})",
+          "highlight": "form.save()",
+          "explanation": {
+            "en": "form.save() creates the User with hashed password automatically"
+          }
+        },
+        {
+          "line": "def login_view(request):\n    if request.method == 'POST':\n        username = request.POST['username']\n        password = request.POST['password']\n        user = authenticate(request, username=username, password=password)\n        if user is not None:\n            login(request, user)\n            return redirect('dashboard')\n        else:\n            messages.error(request, 'Invalid credentials')\n    return render(request, 'users/login.html')",
+          "highlight": "authenticate",
+          "explanation": {
+            "en": "authenticate() checks credentials; login() creates the session"
+          }
+        },
+        {
+          "line": "@login_required\ndef dashboard(request):\n    return render(request, 'users/dashboard.html', {'user': request.user})",
+          "highlight": "@login_required",
+          "explanation": {
+            "en": "Only authenticated users can access the dashboard"
+          }
+        },
+        {
+          "line": "def logout_view(request):\n    logout(request)\n    messages.info(request, 'You have been logged out.')\n    return redirect('login')",
+          "highlight": "logout",
+          "explanation": {
+            "en": "logout() destroys the session and logs out the user"
+          }
+        },
+        {
+          "line": "# users/urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('register/', views.register, name='register'),\n    path('login/', views.login_view, name='login'),\n    path('logout/', views.logout_view, name='logout'),\n    path('dashboard/', views.dashboard, name='dashboard'),\n]",
+          "highlight": "urlpatterns",
+          "explanation": {
+            "en": "Wire up all auth-related URLs"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_user",
+      "variable": "request.user",
+      "value": "<User: pymaster>",
+      "data_type": "User",
+      "color": "#9C27B0"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_authenticated",
+      "variable": "request.user.is_authenticated",
+      "value": true,
+      "data_type": "bool",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> from django.contrib.auth.models import User",
+        ">>> user = User.objects.create_user('pymaster', 'py@master.com', 'securepass123')",
+        ">>> user.username",
+        "'pymaster'",
+        ">>> user.check_password('securepass123')",
+        "True",
+        ">>> user.is_authenticated",
+        "True",
+        ">>> User.objects.count()",
+        "1"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a custom registration form that extends UserCreationForm with email and bio fields. Write a view that handles both GET (show form) and POST (validate and save). Include proper error handling with Django messages.",
+        "ta": "email மற்றும் bio புலங்களுடன் UserCreationForm-ஐ விரிவுபடுத்தும் தனிப்பயன் பதிவு படிவத்தை உருவாக்குங்கள்."
+      },
+      "starter_code": "from django import forms\nfrom django.contrib.auth.models import User\nfrom django.contrib.auth.forms import UserCreationForm\nfrom django.shortcuts import render, redirect\nfrom django.contrib import messages\n\nclass RegisterForm(UserCreationForm):\n    email = forms.EmailField(required=True)\n    bio = forms.CharField(widget=forms.Textarea, required=False)\n\n    class Meta:\n        model = User\n        fields = ['username', 'email', 'password1', 'password2', 'bio']\n\ndef register(request):\n    if request.method == 'POST':\n        form = RegisterForm(request.POST)\n        if form.is_valid():\n            user = form.save()\n            messages.success(request, f'Welcome, {user.username}! Please log in.')\n            return redirect('login')\n        else:\n            messages.error(request, 'Please fix the errors below.')\n    else:\n        form = RegisterForm()\n    return render(request, 'register.html', {'form': form})",
+      "expected_output": "Successful registration redirects to login with success message",
+      "hints": {
+        "en": [
+          "Extend UserCreationForm and add extra fields",
+          "form.is_valid() runs all validators including password strength",
+          "form.save() creates the User object and hashes the password",
+          "Use messages.success/error to provide user feedback"
+        ],
+        "ta": [
+          "UserCreationForm-ஐ விரிவுபடுத்தி கூடுதல் புலங்களைச் சேர்க்கவும்",
+          "form.is_valid() கடவுச்சொல் வலிமை உட்பட அனைத்து சரிபார்ப்புகளையும் இயக்குகிறது",
+          "form.save() User பொருளை உருவாக்கி கடவுச்சொல்லை ஹாஷ் செய்கிறது",
+          "பயனர் கருத்துக்களை வழங்க messages.success/error பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does Django's UserCreationForm provide by default?",
+        "ta": "Django-வின் UserCreationForm இயல்பாக என்ன வழங்குகிறது?"
+      },
+      "options": {
+        "en": ["Only a username field", "Username, password, and password confirmation with validation", "Email and phone number fields", "A complete profile form"],
+        "ta": ["பயனர்பெயர் புலம் மட்டும்", "சரிபார்ப்புடன் பயனர்பெயர், கடவுச்சொல் மற்றும் கடவுச்சொல் உறுதிப்படுத்தல்", "மின்னஞ்சல் மற்றும் தொலைபேசி எண் புலங்கள்", "முழுமையான சுயவிவர படிவம்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the difference between authenticate() and login() in Django?",
+        "ta": "Django-ல் authenticate() மற்றும் login() இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": ["They do the same thing", "authenticate() verifies credentials; login() creates the session", "login() verifies credentials; authenticate() creates the session", "authenticate() is for API; login() is for web"],
+        "ta": ["அவை ஒரே வேலையைச் செய்கின்றன", "authenticate() நற்சான்றிதழ்களை சரிபார்க்கிறது; login() அமர்வை உருவாக்குகிறது", "login() நற்சான்றிதழ்களை சரிபார்க்கிறது; authenticate() அமர்வை உருவாக்குகிறது", "authenticate() API-க்கு; login() வலைக்கு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In a Django ModelForm, what does the Meta class specify?",
+        "ta": "Django ModelForm-ல், Meta வகுப்பு எதைக் குறிப்பிடுகிறது?"
+      },
+      "options": {
+        "en": ["The database connection string", "The model and fields the form should use", "The URL pattern for the form", "The CSS styling for the form"],
+        "ta": ["தரவுத்தள இணைப்பு சரம்", "படிவம் பயன்படுத்த வேண்டிய மாதிரி மற்றும் புலங்கள்", "படிவத்தின் URL வடிவம்", "படிவத்தின் CSS வடிவமைப்பு"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["django_forms", "user_registration", "django_auth", "model_forms"],
+    "concepts_required": ["django_views", "django_models"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["user_management", "web_forms"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

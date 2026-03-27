@@ -1,0 +1,312 @@
+{
+  "id": "regex_advanced",
+  "topic": "regex_advanced",
+  "track": "python_intermediate",
+  "module": "text_processing",
+  "order": 12,
+  "title": {
+    "en": "Advanced Regex: Groups, Lookahead & Substitution",
+    "ta": "மேம்பட்ட Regex: குழுக்கள், Lookahead & மாற்றீடு"
+  },
+  "description": {
+    "en": "Master named groups, lookahead/lookbehind assertions, re.sub for substitution, and compiled patterns for performance.",
+    "ta": "named groups, lookahead/lookbehind assertions, re.sub மாற்றீடு, compiled patterns ஆகியவற்றில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Advanced Decoder\n\nVaathiyaar upgrades the magnifying glass to a high-tech scanner. \"Basic regex finds patterns. Advanced regex **transforms** text, **extracts** structured data, and handles edge cases with lookahead and lookbehind.\"\n\n### Advanced Features\n\n| Feature | Syntax | Purpose |\n|---------|--------|----------|\n| Named Group | `(?P<name>...)` | Label captured groups |\n| Lookahead | `(?=...)` | Match only if followed by |\n| Lookbehind | `(?<=...)` | Match only if preceded by |\n| Non-capturing | `(?:...)` | Group without capturing |\n| `re.sub` | `re.sub(pattern, repl, text)` | Find and replace |\n| `re.compile` | `re.compile(pattern)` | Pre-compile for speed |\n\n### Named Groups\n\n```python\npattern = r'(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})'\nmatch = re.search(pattern, '2025-03-27')\nprint(match.group('year'))  # 2025\n```\n\n> **Key Concept:** Named groups make your regex self-documenting. Instead of `match.group(1)`, use `match.group('year')` — much clearer for maintenance."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "decoder_scanner",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Advanced Regex",
+          "children": [
+            "Named groups (?P<>)",
+            "Lookahead (?=)",
+            "Lookbehind (?<=)",
+            "re.sub (replace)",
+            "re.compile (speed)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import re",
+          "highlight": "re",
+          "explanation": {
+            "en": "Import the regex module"
+          }
+        },
+        {
+          "line": "log = '2025-03-27 ERROR: Connection timeout at 192.168.1.1'",
+          "highlight": "log",
+          "explanation": {
+            "en": "A sample log line with date, level, and IP"
+          }
+        },
+        {
+          "line": "pattern = r'(?P<date>\\d{4}-\\d{2}-\\d{2}) (?P<level>\\w+): (?P<msg>.+)'",
+          "highlight": "?P<date>",
+          "explanation": {
+            "en": "Named groups label each captured part"
+          }
+        },
+        {
+          "line": "m = re.search(pattern, log)",
+          "highlight": "search",
+          "explanation": {
+            "en": "Search for the pattern in the log"
+          }
+        },
+        {
+          "line": "print(m.group('date'))",
+          "highlight": "'date'",
+          "explanation": {
+            "en": "Access by NAME instead of number — much clearer"
+          }
+        },
+        {
+          "line": "print(m.group('level'))",
+          "highlight": "'level'",
+          "explanation": {
+            "en": "Get the log level: 'ERROR'"
+          }
+        },
+        {
+          "line": "print(m.groupdict())",
+          "highlight": "groupdict",
+          "explanation": {
+            "en": "Get ALL named groups as a dictionary"
+          }
+        },
+        {
+          "line": "prices = 'Apple $3.99, Banana $1.50, Cherry $5.00'",
+          "highlight": "prices",
+          "explanation": {
+            "en": "Text with prices to transform"
+          }
+        },
+        {
+          "line": "lookahead = re.findall(r'\\w+(?=\\s\\$)', prices)",
+          "highlight": "(?=",
+          "explanation": {
+            "en": "LOOKAHEAD: find words followed by ' $' — but don't include ' $'"
+          }
+        },
+        {
+          "line": "print(lookahead)",
+          "highlight": "print",
+          "explanation": {
+            "en": "['Apple', 'Banana', 'Cherry'] — only the fruit names"
+          }
+        },
+        {
+          "line": "lookbehind = re.findall(r'(?<=\\$)\\d+\\.\\d{2}', prices)",
+          "highlight": "(?<=",
+          "explanation": {
+            "en": "LOOKBEHIND: find numbers preceded by $ — but don't include $"
+          }
+        },
+        {
+          "line": "print(lookbehind)",
+          "highlight": "print",
+          "explanation": {
+            "en": "['3.99', '1.50', '5.00'] — just the amounts"
+          }
+        },
+        {
+          "line": "censored = re.sub(r'\\d{3}-\\d{4}', 'XXX-XXXX', 'Call 555-1234 or 800-5678')",
+          "highlight": "re.sub",
+          "explanation": {
+            "en": "re.sub replaces ALL matches with the replacement string"
+          }
+        },
+        {
+          "line": "print(censored)",
+          "highlight": "print",
+          "explanation": {
+            "en": "'Call XXX-XXXX or XXX-XXXX' — phone numbers censored!"
+          }
+        },
+        {
+          "line": "email_pat = re.compile(r'[\\w.]+@[\\w.]+')",
+          "highlight": "re.compile",
+          "explanation": {
+            "en": "Compile pattern ONCE for reuse — faster for repeated use"
+          }
+        },
+        {
+          "line": "found = email_pat.findall('a@b.com and c@d.com')",
+          "highlight": ".findall",
+          "explanation": {
+            "en": "Use the compiled pattern's methods directly"
+          }
+        },
+        {
+          "line": "print(found)",
+          "highlight": "print",
+          "explanation": {
+            "en": "['a@b.com', 'c@d.com']"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_groupdict",
+      "variable": "m.groupdict()",
+      "value": "{'date': '2025-03-27', 'level': 'ERROR', 'msg': '...'}",
+      "data_type": "dict",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_lookahead",
+      "variable": "lookahead",
+      "value": "['Apple', 'Banana', 'Cherry']",
+      "data_type": "list",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "2025-03-27",
+        "ERROR",
+        "{'date': '2025-03-27', 'level': 'ERROR', 'msg': 'Connection timeout at 192.168.1.1'}",
+        "['Apple', 'Banana', 'Cherry']",
+        "['3.99', '1.50', '5.00']",
+        "Call XXX-XXXX or XXX-XXXX",
+        "['a@b.com', 'c@d.com']"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "regex_visual",
+      "structure_type": "table",
+      "data": {
+        "headers": ["Assertion", "Direction", "Included in match?"],
+        "rows": [
+          ["(?=...)", "Forward (lookahead)", "No"],
+          ["(?<=...)", "Backward (lookbehind)", "No"],
+          ["(?!...)", "Negative lookahead", "No"],
+          ["(?<!...)", "Negative lookbehind", "No"]
+        ]
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use re.sub with a function to convert all prices like $XX.XX to euros by multiplying by 0.92. E.g., '$10.00' becomes 'EUR 9.20'.",
+        "ta": "re.sub-ஐ function-உடன் பயன்படுத்தி $XX.XX போன்ற அனைத்து விலைகளையும் 0.92 பெருக்கி euros-ஆக மாற்றுங்கள்."
+      },
+      "starter_code": "import re\n\ndef to_euros(match):\n    usd = float(match.group(1))\n    eur = usd * 0.92\n    return f'EUR {eur:.2f}'\n\ntext = 'Laptop $999.99, Mouse $29.99, Keyboard $79.99'\nresult = re.sub(r'\\$(\\d+\\.\\d{2})', to_euros, text)\nprint(result)",
+      "expected_output": "Laptop EUR 919.99, Mouse EUR 27.59, Keyboard EUR 73.59",
+      "hints": {
+        "en": [
+          "re.sub can take a function as the replacement",
+          "The function receives a Match object",
+          "Use match.group(1) to get the captured price",
+          "Convert to float, multiply by 0.92, format with :.2f"
+        ],
+        "ta": [
+          "re.sub replacement-ஆக function எடுக்கலாம்",
+          "function Match object பெறும்",
+          "match.group(1) மூலம் விலையை எடுக்கவும்",
+          "float-ஆக மாற்றி, 0.92 பெருக்கி, :.2f-ஆல் format செய்யவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does (?P<name>\\d+) do?",
+        "ta": "(?P<name>\\d+) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Matches the literal text 'name'",
+          "Creates a named capture group called 'name'",
+          "Makes the group non-capturing",
+          "Defines a lookahead"
+        ],
+        "ta": [
+          "'name' என்ற எழுத்தை பொருத்துகிறது",
+          "'name' என்ற named capture group உருவாக்குகிறது",
+          "group-ஐ non-capturing ஆக்குகிறது",
+          "lookahead வரையறுக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does a lookahead (?=...) do?",
+        "ta": "lookahead (?=...) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Matches and includes the pattern",
+          "Matches only if followed by the pattern, but doesn't include it",
+          "Matches only if preceded by the pattern",
+          "Replaces the pattern"
+        ],
+        "ta": [
+          "pattern-ஐ பொருத்தி உள்ளடக்குகிறது",
+          "pattern தொடர்ந்தால் மட்டும் பொருத்துகிறது, ஆனால் உள்ளடக்காது",
+          "pattern முன்னால் இருந்தால் மட்டும் பொருத்துகிறது",
+          "pattern-ஐ மாற்றுகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the advantage of re.compile()?",
+        "ta": "re.compile()-ன் நன்மை என்ன?"
+      },
+      "options": {
+        "en": [
+          "Makes patterns case-insensitive",
+          "Pre-compiles pattern for faster repeated use",
+          "Allows multiline matching",
+          "Required for all regex operations"
+        ],
+        "ta": [
+          "patterns-ஐ case-insensitive ஆக்குகிறது",
+          "மீண்டும் பயன்படுத்த pattern-ஐ முன்-தொகுக்கிறது",
+          "multiline matching அனுமதிக்கிறது",
+          "அனைத்து regex செயல்பாடுகளுக்கும் தேவை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["named_groups", "lookahead", "lookbehind", "re_sub", "re_compile"],
+    "concepts_required": ["regex_basics", "re_module"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["log_parsing", "data_extraction", "text_transformation"],
+    "category": "text_processing",
+    "path_memberships": ["python_intermediate"]
+  }
+}

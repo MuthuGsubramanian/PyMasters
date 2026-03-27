@@ -1,0 +1,333 @@
+{
+  "id": "vector_databases",
+  "topic": "vector_databases",
+  "track": "ai_fundamentals",
+  "module": "rag",
+  "order": 11,
+  "title": {
+    "en": "Vector Databases: ChromaDB, Pinecone & Beyond",
+    "ta": "Vector Databases: ChromaDB, Pinecone & மேலும்"
+  },
+  "description": {
+    "en": "Learn to store, query, and manage vector embeddings using ChromaDB and Pinecone for production RAG systems.",
+    "ta": "Production RAG அமைப்புகளுக்கு ChromaDB மற்றும் Pinecone பயன்படுத்தி vector embeddings-ஐ சேமிக்க, வினவ, நிர்வகிக்கக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "next_unlock": "building_chatbots",
+  "story_variants": {
+    "en": "## Vaathiyaar's Vector Vault\n\nVaathiyaar opens a massive vault door. \"Students, embeddings are useless if you can't search them fast. A vector database is a specialized storage system designed to find the nearest neighbors to any query vector — among millions of vectors — in milliseconds.\"\n\n### Vector DB Landscape\n\n| Database | Type | Best For | Cost |\n|----------|------|----------|------|\n| FAISS | Library (in-memory) | Prototyping, small datasets | Free |\n| ChromaDB | Embedded DB | Local apps, medium datasets | Free |\n| Pinecone | Cloud service | Production, large scale | Paid |\n| Weaviate | Self-hosted/cloud | Full-text + vector search | Free/Paid |\n\n### Key Operations\n\n1. **Create collection** — Name your vector store\n2. **Add documents** — Embed and store text + metadata\n3. **Query** — Find similar documents\n4. **Filter** — Combine vector search with metadata filters\n5. **Delete** — Remove documents by ID or filter\n\n> **Key Insight:** For most projects, start with ChromaDB (free, local). Move to Pinecone when you need cloud scale and managed infrastructure.",
+    "ta": "## வாத்தியாரின் Vector Vault\n\nவாத்தியார் ஒரு பெரிய vault கதவை திறக்கிறார். \"மாணவர்களே, embeddings-ஐ வேகமாகத் தேட முடியாவிட்டால் அவை பயனற்றவை. Vector database என்பது query vector-க்கு அருகிலுள்ள neighbours-ஐ மில்லி வினாடிகளில் கண்டுபிடிக்கும் சிறப்பு சேமிப்பு அமைப்பு.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "vector_vault",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "vectordb_concepts",
+      "nodes": [
+        {
+          "label": "Vector Database Operations",
+          "children": [
+            "Create Collection",
+            "Add (embed + store)",
+            "Query (similarity search)",
+            "Filter (metadata)",
+            "Delete"
+          ]
+        },
+        {
+          "label": "Options",
+          "children": [
+            "FAISS (in-memory)",
+            "ChromaDB (local)",
+            "Pinecone (cloud)",
+            "Weaviate (hybrid)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "chromadb_code",
+      "steps": [
+        {
+          "line": "import chromadb",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import ChromaDB — install with: pip install chromadb"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Create a ChromaDB client and collection"
+          }
+        },
+        {
+          "line": "# Create a persistent ChromaDB client",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Persistent means data survives across program restarts"
+          }
+        },
+        {
+          "line": "client = chromadb.PersistentClient(path='./chroma_db')",
+          "highlight": "client",
+          "explanation": {
+            "en": "Data stored in ./chroma_db folder — no server needed"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Create or get a collection — like a table in SQL"
+          }
+        },
+        {
+          "line": "collection = client.get_or_create_collection(",
+          "highlight": "collection",
+          "explanation": {
+            "en": "A collection groups related vectors together"
+          }
+        },
+        {
+          "line": "    name='python_docs',",
+          "highlight": "name",
+          "explanation": {
+            "en": "Name your collection — use descriptive names"
+          }
+        },
+        {
+          "line": "    metadata={'description': 'Python documentation chunks'}",
+          "highlight": "metadata",
+          "explanation": {
+            "en": "Add metadata to describe the collection"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "Collection is ready for use"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Add documents with metadata"
+          }
+        },
+        {
+          "line": "# Add documents — ChromaDB auto-embeds with its default model",
+          "highlight": "comment",
+          "explanation": {
+            "en": "ChromaDB has a built-in embedding model — no API key needed for basics"
+          }
+        },
+        {
+          "line": "collection.add(",
+          "highlight": "add",
+          "explanation": {
+            "en": "Add documents, IDs, and metadata in one call"
+          }
+        },
+        {
+          "line": "    documents=['Python lists are ordered collections',",
+          "highlight": "doc1",
+          "explanation": {
+            "en": "First document text — ChromaDB embeds it automatically"
+          }
+        },
+        {
+          "line": "               'Dictionaries store key-value pairs',",
+          "highlight": "doc2",
+          "explanation": {
+            "en": "Second document text"
+          }
+        },
+        {
+          "line": "               'Decorators modify function behavior'],",
+          "highlight": "doc3",
+          "explanation": {
+            "en": "Third document text"
+          }
+        },
+        {
+          "line": "    ids=['doc1', 'doc2', 'doc3'],",
+          "highlight": "ids",
+          "explanation": {
+            "en": "Each document needs a unique ID for updates and deletion"
+          }
+        },
+        {
+          "line": "    metadatas=[{'topic': 'data_structures'}, {'topic': 'data_structures'}, {'topic': 'functions'}]",
+          "highlight": "metadatas",
+          "explanation": {
+            "en": "Metadata enables filtered queries — search within a specific topic"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "Documents are embedded and stored"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "collection_viz",
+      "structure_type": "vector",
+      "data": {
+        "doc1_lists": [0.85, 0.22, 0.45],
+        "doc2_dicts": [0.78, 0.31, 0.52],
+        "doc3_decorators": [0.15, 0.88, 0.67],
+        "query": [0.82, 0.25, 0.48]
+      },
+      "visualization": "vector_space",
+      "caption": "Query about 'collections' is closest to doc1 (lists) and doc2 (dictionaries)"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_count",
+      "variable": "collection.count()",
+      "value": 3,
+      "data_type": "int",
+      "color": "#a855f7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Query the collection",
+        ">>> results = collection.query(",
+        "...     query_texts=['What are Python collections?'],",
+        "...     n_results=2",
+        "... )",
+        ">>> for doc, dist in zip(results['documents'][0], results['distances'][0]):",
+        "...     print(f'{dist:.4f}: {doc}')",
+        "0.3421: Python lists are ordered collections",
+        "0.5123: Dictionaries store key-value pairs",
+        "",
+        ">>> # Query with metadata filter",
+        ">>> results = collection.query(",
+        "...     query_texts=['How do I modify behavior?'],",
+        "...     n_results=1,",
+        "...     where={'topic': 'functions'}",
+        "... )",
+        ">>> print(results['documents'][0][0])",
+        "Decorators modify function behavior",
+        "",
+        ">>> print(f'Total documents: {collection.count()}')",
+        "Total documents: 3"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a mini documentation search system with ChromaDB: Add 5 Python concept descriptions with metadata (topic, difficulty). Write a search function that accepts a query and optional topic filter. Test with 3 different queries.",
+        "ta": "ChromaDB உடன் mini documentation search system உருவாக்குங்கள்: metadata (topic, difficulty) உடன் 5 Python concept descriptions சேர்க்கவும். Query மற்றும் optional topic filter ஏற்கும் search function எழுதுங்கள்."
+      },
+      "starter_code": "import chromadb\n\nclient = chromadb.Client()  # in-memory for practice\ncollection = client.create_collection('python_concepts')\n\n# Add 5 Python concepts with metadata\n# Your code here\n\ndef search(query: str, topic: str = None, n: int = 2):\n    \"\"\"Search Python concepts, optionally filtered by topic.\"\"\"\n    # Your code here\n    pass\n\n# Test searches\nprint('--- Search: loops ---')\nprint(search('How do loops work?'))\nprint('--- Search: data structures ---')\nprint(search('storing data', topic='data_structures'))",
+      "expected_output": "(Relevant Python concepts for each query)",
+      "hints": {
+        "en": [
+          "Use collection.add() with documents, ids, and metadatas",
+          "Use collection.query() with query_texts and n_results",
+          "For filtering: where={'topic': topic} when topic is not None"
+        ],
+        "ta": [
+          "collection.add() documents, ids, metadatas உடன் பயன்படுத்துங்கள்",
+          "collection.query() query_texts மற்றும் n_results உடன் பயன்படுத்துங்கள்",
+          "Filtering: topic None அல்லாதபோது where={'topic': topic}"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "When should you use ChromaDB vs Pinecone?",
+        "ta": "ChromaDB vs Pinecone எப்போது பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "ChromaDB for cloud, Pinecone for local",
+          "ChromaDB for local/small projects, Pinecone for production/scale",
+          "They are identical",
+          "Pinecone is always better"
+        ],
+        "ta": [
+          "ChromaDB cloud-க்கு, Pinecone local-க்கு",
+          "ChromaDB local/சிறிய projects-க்கு, Pinecone production/scale-க்கு",
+          "அவை ஒரே மாதிரியானவை",
+          "Pinecone எப்போதும் சிறந்தது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the 'where' parameter do in a ChromaDB query?",
+        "ta": "ChromaDB query-ல் 'where' parameter என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Specifies the database location",
+          "Filters results by metadata before similarity search",
+          "Chooses which embedding model to use",
+          "Sets the output format"
+        ],
+        "ta": [
+          "தரவுத்தள இருப்பிடத்தைக் குறிப்பிடுகிறது",
+          "Similarity search-க்கு முன் metadata மூலம் முடிவுகளை வடிகட்டுகிறது",
+          "எந்த embedding model பயன்படுத்த வேண்டும் என்பதைத் தேர்வு செய்கிறது",
+          "வெளியீட்டு வடிவமைப்பை அமைக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does each document in a vector database need a unique ID?",
+        "ta": "Vector database-ல் ஒவ்வொரு ஆவணத்திற்கும் ஏன் unique ID தேவை?"
+      },
+      "options": {
+        "en": [
+          "For billing purposes",
+          "To enable updates, deletions, and deduplication",
+          "To make queries faster",
+          "It's optional and not important"
+        ],
+        "ta": [
+          "கட்டண நோக்கங்களுக்காக",
+          "புதுப்பிப்புகள், நீக்குதல்கள், மற்றும் deduplication செயல்படுத்த",
+          "வினவல்களை வேகப்படுத்த",
+          "இது விருப்பமானது, முக்கியமில்லை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["chromadb", "pinecone", "vector_databases", "metadata_filtering"],
+    "concepts_required": ["embeddings_similarity", "rag_fundamentals"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["document_search", "recommendation_systems"],
+    "category": "ai_rag",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "id": "clustering_advanced",
+  "topic": "clustering_advanced",
+  "track": "machine_learning",
+  "module": "unsupervised_learning",
+  "order": 16,
+  "title": {
+    "en": "Advanced Clustering: DBSCAN, Hierarchical & GMM",
+    "ta": "மேம்பட்ட கிளஸ்டரிங்: DBSCAN, படிநிலை & GMM"
+  },
+  "description": {
+    "en": "Go beyond K-Means with density-based clustering (DBSCAN), hierarchical agglomerative clustering, and Gaussian Mixture Models for soft assignments.",
+    "ta": "K-Means-ஐ தாண்டி அடர்த்தி அடிப்படையிலான கிளஸ்டரிங் (DBSCAN), படிநிலை திரட்டு கிளஸ்டரிங், மற்றும் மென்மையான ஒதுக்கீடுகளுக்கான காஸியன் கலவை மாடல்களை கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Three Strategies\n\nVaathiyaar reveals three different sorting tables. \"K-Means assumes round groups. But what if your groups are crescent-shaped? Or nested? Or you don't even know how many groups there are?\"\n\n### DBSCAN (Density-Based)\n- No need to specify K!\n- Finds clusters of arbitrary shape\n- Labels outliers as noise (-1)\n- Key params: eps (neighborhood radius), min_samples\n\n### Hierarchical Clustering\n- Builds a tree (dendrogram) of merges\n- Cut the tree at any height to get different numbers of clusters\n- Linkage methods: ward, complete, average, single\n\n### Gaussian Mixture Models (GMM)\n- Soft clustering: each point gets a probability of belonging to each cluster\n- Can model elliptical clusters (unlike K-Means which assumes spherical)\n\n```python\nfrom sklearn.cluster import DBSCAN, AgglomerativeClustering\nfrom sklearn.mixture import GaussianMixture\nfrom sklearn.datasets import make_moons\nimport numpy as np\n\n# Non-spherical data\nX, y = make_moons(n_samples=300, noise=0.1, random_state=42)\n\n# DBSCAN\ndb = DBSCAN(eps=0.2, min_samples=5)\ndb_labels = db.fit_predict(X)\nprint(f'DBSCAN clusters: {len(set(db_labels)) - (1 if -1 in db_labels else 0)}')\nprint(f'Noise points: {(db_labels == -1).sum()}')\n\n# Hierarchical\nagg = AgglomerativeClustering(n_clusters=2, linkage='ward')\nagg_labels = agg.fit_predict(X)\n\n# GMM\ngmm = GaussianMixture(n_components=2, random_state=42)\ngmm_labels = gmm.fit_predict(X)\nprint(f'GMM probabilities (first 3): {gmm.predict_proba(X[:3]).round(3)}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "three_strategies",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "advanced_cluster_map",
+      "nodes": [
+        {
+          "label": "Advanced Clustering",
+          "children": ["DBSCAN", "Hierarchical", "GMM"]
+        },
+        {
+          "label": "DBSCAN",
+          "children": ["eps", "min_samples", "Noise detection", "Arbitrary shapes"]
+        },
+        {
+          "label": "GMM",
+          "children": ["Soft assignments", "Probability per cluster", "Elliptical clusters", "BIC/AIC for model selection"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "clustering_comparison",
+      "models": [
+        { "name": "K-Means", "strengths": "Fast, scalable", "weaknesses": "Assumes spherical clusters, needs K" },
+        { "name": "DBSCAN", "strengths": "Any shape, finds outliers, no K needed", "weaknesses": "Sensitive to eps/min_samples" },
+        { "name": "Hierarchical", "strengths": "Dendrogram visualization, no K needed upfront", "weaknesses": "Slow on large data" },
+        { "name": "GMM", "strengths": "Soft assignments, elliptical clusters", "weaknesses": "Assumes Gaussian, needs n_components" }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "adv_cluster_code",
+      "steps": [
+        {
+          "line": "from sklearn.cluster import DBSCAN, AgglomerativeClustering",
+          "highlight": "DBSCAN",
+          "explanation": { "en": "Import density-based and hierarchical clustering algorithms" }
+        },
+        {
+          "line": "from sklearn.mixture import GaussianMixture",
+          "highlight": "GaussianMixture",
+          "explanation": { "en": "Import GMM for probabilistic soft clustering" }
+        },
+        {
+          "line": "from sklearn.datasets import make_moons",
+          "highlight": "make_moons",
+          "explanation": { "en": "Generate crescent-shaped data — K-Means fails on this shape" }
+        },
+        {
+          "line": "X, y = make_moons(n_samples=300, noise=0.1, random_state=42)",
+          "highlight": "make_moons",
+          "explanation": { "en": "300 points in two interlocking crescents — a classic non-linear clustering test" }
+        },
+        {
+          "line": "db = DBSCAN(eps=0.2, min_samples=5)",
+          "highlight": "eps=0.2",
+          "explanation": { "en": "eps: maximum distance between neighbors; min_samples: minimum points to form a cluster" }
+        },
+        {
+          "line": "db_labels = db.fit_predict(X)",
+          "highlight": "fit_predict",
+          "explanation": { "en": "Fit and assign clusters in one step — label -1 means noise/outlier" }
+        },
+        {
+          "line": "n_clusters = len(set(db_labels)) - (1 if -1 in db_labels else 0)",
+          "highlight": "n_clusters",
+          "explanation": { "en": "Count real clusters (excluding noise label -1)" }
+        },
+        {
+          "line": "print(f'DBSCAN found {n_clusters} clusters, {(db_labels==-1).sum()} noise points')",
+          "highlight": "print",
+          "explanation": { "en": "DBSCAN finds 2 crescents and identifies noise points automatically" }
+        },
+        {
+          "line": "agg = AgglomerativeClustering(n_clusters=2, linkage='ward')",
+          "highlight": "ward",
+          "explanation": { "en": "Ward linkage minimizes variance when merging clusters — most common choice" }
+        },
+        {
+          "line": "agg_labels = agg.fit_predict(X)",
+          "highlight": "fit_predict",
+          "explanation": { "en": "Hierarchical clustering: starts with each point as its own cluster, merges bottom-up" }
+        },
+        {
+          "line": "gmm = GaussianMixture(n_components=2, random_state=42)",
+          "highlight": "n_components=2",
+          "explanation": { "en": "GMM with 2 Gaussian components — each models one cluster" }
+        },
+        {
+          "line": "gmm.fit(X)",
+          "highlight": "fit",
+          "explanation": { "en": "Fit: learn the mean, covariance, and weight of each Gaussian component" }
+        },
+        {
+          "line": "probas = gmm.predict_proba(X[:3])",
+          "highlight": "predict_proba",
+          "explanation": { "en": "Soft assignment: each point gets a probability for each cluster" }
+        },
+        {
+          "line": "print(f'GMM BIC: {gmm.bic(X):.0f}')",
+          "highlight": "bic",
+          "explanation": { "en": "BIC helps choose the optimal number of components — lower is better" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_dbscan_clusters",
+      "variable": "dbscan_clusters",
+      "value": 2,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_noise",
+      "variable": "noise_points",
+      "value": 5,
+      "data_type": "int",
+      "color": "#f39c12"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "DBSCAN found 2 clusters, 5 noise points",
+        "Hierarchical: 2 clusters",
+        "GMM probabilities (first 3):",
+        "[[0.997 0.003]",
+        " [0.002 0.998]",
+        " [0.985 0.015]]",
+        "GMM BIC: 542"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Generate make_moons data. Apply KMeans(2), DBSCAN(eps=0.3), and GaussianMixture(2). Compare which correctly identifies the two moon shapes by printing the cluster assignments for the first 5 points.",
+        "ta": "make_moons தரவை உருவாக்குங்கள். KMeans(2), DBSCAN(eps=0.3), மற்றும் GaussianMixture(2) பயன்படுத்துங்கள். முதல் 5 புள்ளிகளுக்கான கிளஸ்டர் ஒதுக்கீடுகளை அச்சிட்டு ஒப்பிடுங்கள்."
+      },
+      "starter_code": "from sklearn.cluster import KMeans, DBSCAN\nfrom sklearn.mixture import GaussianMixture\nfrom sklearn.datasets import make_moons\nfrom sklearn.metrics import adjusted_rand_score\n\nX, y_true = make_moons(n_samples=300, noise=0.1, random_state=42)\n\n# K-Means\nkm_labels = KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X)\n\n# DBSCAN\ndb_labels = DBSCAN(eps=___, min_samples=5).fit_predict(X)\n\n# GMM\ngmm_labels = GaussianMixture(n_components=___, random_state=42).fit_predict(X)\n\nfor name, labels in [('KMeans', km_labels), ('DBSCAN', db_labels), ('GMM', gmm_labels)]:\n    ari = adjusted_rand_score(y_true, labels)\n    print(f'{name:12s}: ARI={ari:.3f}')",
+      "expected_output": "KMeans      : ARI=0.456\nDBSCAN      : ARI=0.952\nGMM         : ARI=0.456",
+      "hints": {
+        "en": [
+          "eps=0.3 works well for the moons data",
+          "n_components=2 for GMM",
+          "DBSCAN should have the highest ARI because moons are non-spherical"
+        ],
+        "ta": [
+          "moons தரவுக்கு eps=0.3 நன்றாக வேலை செய்கிறது",
+          "GMM க்கு n_components=2",
+          "DBSCAN அதிகபட்ச ARI கொண்டிருக்க வேண்டும் ஏனெனில் moons கோள வடிவமற்றவை"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does DBSCAN label as -1?",
+        "ta": "DBSCAN -1 என்று எதை குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["The first cluster", "Noise/outlier points", "The centroid", "Missing values"],
+        "ta": ["முதல் கிளஸ்டர்", "நாய்ஸ்/வெளிப்புற புள்ளிகள்", "மையப்புள்ளி", "விடுபட்ட மதிப்புகள்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the key advantage of GMM over K-Means?",
+        "ta": "K-Means-ஐ விட GMM-ன் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["It is faster", "It provides soft (probabilistic) cluster assignments", "It needs fewer parameters", "It always finds the correct K"],
+        "ta": ["இது வேகமானது", "மென்மையான (நிகழ்தகவு) கிளஸ்டர் ஒதுக்கீடுகளை வழங்குகிறது", "குறைவான அளவுருக்கள் தேவை", "சரியான K ஐ எப்போதும் கண்டுபிடிக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When would DBSCAN outperform K-Means?",
+        "ta": "எப்போது DBSCAN K-Means-ஐ விட சிறப்பாக செயல்படும்?"
+      },
+      "options": {
+        "en": ["When clusters are perfectly spherical", "When clusters have arbitrary shapes and there are outliers", "When you know the exact number of clusters", "When data is very high-dimensional"],
+        "ta": ["கிளஸ்டர்கள் சரியான கோள வடிவமாக இருக்கும்போது", "கிளஸ்டர்கள் தன்னிச்சையான வடிவங்கள் கொண்டிருக்கும்போது மற்றும் வெளிப்புற மதிப்புகள் இருக்கும்போது", "கிளஸ்டர்களின் சரியான எண்ணிக்கை தெரிந்தால்", "தரவு மிகவும் உயர் பரிமாணமாக இருக்கும்போது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dbscan", "hierarchical_clustering", "gmm", "density_clustering", "soft_clustering"],
+    "concepts_required": ["kmeans", "clustering_basics"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["anomaly_detection", "spatial_analysis", "market_segmentation"],
+    "category": "machine_learning",
+    "path_memberships": ["unsupervised_learning"]
+  }
+}
