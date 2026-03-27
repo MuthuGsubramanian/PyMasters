@@ -8,7 +8,8 @@ import ChatBar from '../components/ChatBar';
 import api from '../api';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
-    Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare
+    Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
+    Bot, Gamepad2, Wrench
 } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -82,6 +83,12 @@ const TRACK_META = {
         accent: '#f59e0b',
         gradient: 'from-amber-500/10 to-orange-500/5',
     },
+    fun_automation: {
+        name: 'Fun & Automation',
+        icon: <Wrench size={16} />,
+        accent: '#f97316',
+        gradient: 'from-orange-500/10 to-amber-500/5',
+    },
     generated: {
         name: 'Custom Modules',
         icon: <Sparkles size={16} />,
@@ -90,12 +97,39 @@ const TRACK_META = {
     },
 };
 
-const TRACK_ORDER = ['python_fundamentals', 'ai_ml_foundations', 'deep_learning', 'generated'];
+const DEFAULT_TRACK_ORDER = ['python_fundamentals', 'fun_automation', 'ai_ml_foundations', 'deep_learning', 'generated'];
+
+const PROFILE_WELCOME = {
+    hobby: {
+        title: 'Your Fun & Automation Lab',
+        subtitle: 'Build cool scripts, automate boring stuff, and have fun with Python!',
+        icon: <Gamepad2 size={14} />,
+        color: 'border-orange-200 bg-orange-50 text-orange-600',
+    },
+    ai_ml: {
+        title: 'Your AI & Data Science Path',
+        subtitle: 'Master the tools that power intelligent machines and data analysis.',
+        icon: <Bot size={14} />,
+        color: 'border-purple-200 bg-purple-50 text-purple-600',
+    },
+    career: {
+        title: 'Your Career Accelerator',
+        subtitle: 'Build a rock-solid Python foundation for your professional growth.',
+        icon: <Zap size={14} />,
+        color: 'border-cyan-200 bg-cyan-50 text-cyan-600',
+    },
+    general: {
+        title: 'Your Learning Journey',
+        subtitle: 'Explore Python from fundamentals to advanced topics at your own pace.',
+        icon: <BookOpen size={14} />,
+        color: 'border-purple-200 bg-purple-50 text-purple-600',
+    },
+};
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: select — lesson list grouped by track
 // ──────────────────────────────────────────────────────────────────────────────
-function LessonSelect({ lessons, onSelectLesson, loading, language }) {
+function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint = 'general', primaryTracks = null }) {
     const [expandedTrack, setExpandedTrack] = useState(null);
 
     const grouped = {};
@@ -105,10 +139,17 @@ function LessonSelect({ lessons, onSelectLesson, loading, language }) {
         grouped[track].push(lesson);
     });
 
-    const presentTracks = TRACK_ORDER.filter((t) => grouped[t]?.length > 0);
+    // Use backend-provided track order if available, otherwise default
+    const trackOrder = primaryTracks && primaryTracks.length > 0
+        ? [...primaryTracks, ...DEFAULT_TRACK_ORDER.filter(t => !primaryTracks.includes(t))]
+        : DEFAULT_TRACK_ORDER;
+
+    const presentTracks = trackOrder.filter((t) => grouped[t]?.length > 0);
     Object.keys(grouped).forEach((t) => {
         if (!presentTracks.includes(t)) presentTracks.push(t);
     });
+
+    const welcome = PROFILE_WELCOME[profileHint] || PROFILE_WELCOME.general;
 
     // Auto-expand first track
     useEffect(() => {
@@ -120,14 +161,12 @@ function LessonSelect({ lessons, onSelectLesson, loading, language }) {
     return (
         <div className="animate-fade-in space-y-8 max-w-3xl mx-auto">
             <header className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-200 bg-purple-50 text-purple-600 text-xs font-bold tracking-wider uppercase">
-                    <BookOpen size={12} />
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold tracking-wider uppercase ${welcome.color}`}>
+                    {welcome.icon}
                     Classroom
                 </div>
-                <h1 className="text-3xl font-bold font-display text-slate-900">Choose Your Lesson</h1>
-                <p className="text-slate-500">
-                    Select a lesson below. Vaathiyaar will guide you with step-by-step visual animations.
-                </p>
+                <h1 className="text-3xl font-bold font-display text-slate-900">{welcome.title}</h1>
+                <p className="text-slate-500">{welcome.subtitle}</p>
             </header>
 
             {loading ? (
@@ -648,6 +687,8 @@ export default function Classroom() {
     const [lessonsLoading, setLessonsLoading] = useState(true);
     const [currentLesson, setCurrentLesson] = useState(null);
     const [phase, setPhase] = useState('select');
+    const [profileHint, setProfileHint] = useState('general');
+    const [primaryTracks, setPrimaryTracks] = useState(null);
 
     const [chatMessages, setChatMessages] = useState([]);
     const [chatLoading, setChatLoading] = useState(false);
@@ -664,7 +705,11 @@ export default function Classroom() {
         const params = user?.id ? `?user_id=${user.id}` : '';
         api
             .get(`/classroom/lessons${params}`)
-            .then((r) => setLessons(r.data.lessons ?? r.data))
+            .then((r) => {
+                setLessons(r.data.lessons ?? r.data);
+                if (r.data.profile_hint) setProfileHint(r.data.profile_hint);
+                if (r.data.primary_tracks) setPrimaryTracks(r.data.primary_tracks);
+            })
             .catch(() => setLessons([]))
             .finally(() => setLessonsLoading(false));
     }, [user]);
@@ -907,6 +952,8 @@ export default function Classroom() {
                                 onSelectLesson={handleSelectLesson}
                                 loading={lessonsLoading}
                                 language={language}
+                                profileHint={profileHint}
+                                primaryTracks={primaryTracks}
                             />
                         </motion.div>
                     )}
