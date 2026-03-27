@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "file_io",
   "order": 1,
-  "title": { "en": "Reading Files: The Library Archive" },
-  "description": { "en": "Learn to open and read files in Python using open(), read modes, and the safe 'with' statement." },
+  "title": {
+    "en": "Reading Files: The Library Archive"
+  },
+  "description": {
+    "en": "Learn to open and read files in Python using open(), read modes, and the safe 'with' statement."
+  },
   "xp_reward": 50,
   "next_unlock": "fileio_writing",
   "story_variants": {
     "en": "## The Library Archive\n\nA librarian opens a book, reads what they need, then **closes** the book and puts it back. Leaving books open everywhere causes chaos.\n\nPython file I/O follows the same discipline — always close what you open. The `with` statement does this automatically.\n\n### Opening Files\n```python\nf = open('filename.txt', 'r')   # old way — must close manually\nf.close()\n\nwith open('filename.txt', 'r') as f:  # better — auto-close\n    content = f.read()\n```\n\n### Read Modes\n\n| Mode | Meaning |\n|------|---------|\n| `'r'` | read (default) |\n| `'rb'` | read binary |\n| `'r+'` | read + write |\n\n### Reading Methods\n\n| Method | Returns |\n|--------|---------|\n| `f.read()` | entire file as string |\n| `f.readline()` | one line |\n| `f.readlines()` | list of all lines |\n| `for line in f:` | iterate line by line |\n\n> **Best practice:** Always use `with open(...)` — it guarantees the file is closed even if an exception occurs."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -23,22 +32,53 @@
     {
       "type": "TerminalOutput",
       "id": "output",
-      "lines": ["Hello, PyMasters!", "Line 2 content", "3 lines read"]
+      "lines": [
+        "Hello, PyMasters!",
+        "Line 2 content",
+        "3 lines read"
+      ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Using a 'with' block, write code to open 'sample.txt' and read all its lines into a list called 'lines'." },
+      "instruction": {
+        "en": "Using a 'with' block, write code to open 'sample.txt' and read all its lines into a list called 'lines'."
+      },
       "expected_output": "list of lines",
       "hints": [
-        { "en": "with open('sample.txt', 'r') as f:" },
-        { "en": "    lines = f.readlines()" },
-        { "en": "lines will be a list of strings, each ending with \\n" }
+        {
+          "en": "with open('sample.txt', 'r') as f:"
+        },
+        {
+          "en": "    lines = f.readlines()"
+        },
+        {
+          "en": "lines will be a list of strings, each ending with \\n"
+        }
       ],
       "test_code": "import tempfile, os\nwith tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp:\n    tmp.write('line1\\nline2\\nline3\\n')\n    tmp_name = tmp.name\nwith open(tmp_name, 'r') as f:\n    lines = f.readlines()\nassert len(lines) == 3\nassert lines[0].strip() == 'line1'\nos.unlink(tmp_name)"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "file_reading"
+    ],
+    "concepts_required": [
+      "error_handling"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

@@ -29,23 +29,31 @@
         {
           "line": "groups = df.groupby('dept')",
           "highlight": "groupby",
-          "explanation": { "en": "Creates a GroupBy object — data is split by dept value" }
+          "explanation": {
+            "en": "Creates a GroupBy object — data is split by dept value"
+          }
         },
         {
           "line": "print(groups['salary'].mean())",
           "highlight": "mean",
-          "explanation": { "en": "Compute mean salary for each department group" },
+          "explanation": {
+            "en": "Compute mean salary for each department group"
+          },
           "output": "dept\nEng      92500.0\nHR       60000.0\nSales    52500.0"
         },
         {
           "line": "summary = df.groupby('dept')['salary'].agg(['mean','max'])",
           "highlight": "agg",
-          "explanation": { "en": ".agg() runs multiple aggregation functions at once" }
+          "explanation": {
+            "en": ".agg() runs multiple aggregation functions at once"
+          }
         },
         {
           "line": "pivot = pd.pivot_table(df, values='salary', index='dept', aggfunc='mean')",
           "highlight": "pivot_table",
-          "explanation": { "en": "pivot_table gives a 2-D cross-tabulation summary" }
+          "explanation": {
+            "en": "pivot_table gives a 2-D cross-tabulation summary"
+          }
         }
       ]
     },
@@ -53,19 +61,40 @@
       "type": "ConceptMap",
       "id": "split_apply_combine",
       "nodes": [
-        { "id": "split", "label": "SPLIT by dept" },
-        { "id": "apply", "label": "APPLY mean/sum" },
-        { "id": "combine", "label": "COMBINE results" }
+        {
+          "id": "split",
+          "label": "SPLIT by dept"
+        },
+        {
+          "id": "apply",
+          "label": "APPLY mean/sum"
+        },
+        {
+          "id": "combine",
+          "label": "COMBINE results"
+        }
       ],
       "edges": [
-        { "from": "split", "to": "apply" },
-        { "from": "apply", "to": "combine" }
+        {
+          "from": "split",
+          "to": "apply"
+        },
+        {
+          "from": "apply",
+          "to": "combine"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "groupby_output",
-      "output": ["dept", "Eng      92500.0", "HR       60000.0", "Sales    52500.0", "Name: salary, dtype: float64"]
+      "output": [
+        "dept",
+        "Eng      92500.0",
+        "HR       60000.0",
+        "Sales    52500.0",
+        "Name: salary, dtype: float64"
+      ]
     }
   ],
   "practice_challenges": [
@@ -74,7 +103,9 @@
         "en": "Create a DataFrame `sales` with columns `region` (strings), `product` (strings), and `revenue` (numbers). Use `groupby` to compute `regional_totals` — the total revenue per region."
       },
       "hints": [
-        { "en": "regional_totals = sales.groupby('region')['revenue'].sum()" }
+        {
+          "en": "regional_totals = sales.groupby('region')['revenue'].sum()"
+        }
       ],
       "test_code": "import pandas as pd\nassert isinstance(sales, pd.DataFrame)\nassert set(['region','product','revenue']).issubset(sales.columns)\nexpected = sales.groupby('region')['revenue'].sum()\nassert regional_totals.equals(expected), 'regional_totals must be total revenue per region'"
     },
@@ -83,12 +114,30 @@
         "en": "Using the same `sales` DataFrame, create `summary` with columns `total` (sum of revenue) and `avg` (mean of revenue) per region using `.agg()`."
       },
       "hints": [
-        { "en": "summary = sales.groupby('region')['revenue'].agg(total='sum', avg='mean')" },
-        { "en": "Or: sales.groupby('region').agg(total=('revenue','sum'), avg=('revenue','mean'))" }
+        {
+          "en": "summary = sales.groupby('region')['revenue'].agg(total='sum', avg='mean')"
+        },
+        {
+          "en": "Or: sales.groupby('region').agg(total=('revenue','sum'), avg=('revenue','mean'))"
+        }
       ],
       "test_code": "import pandas as pd\nassert 'total' in summary.columns, 'summary must have a total column'\nassert 'avg' in summary.columns, 'summary must have an avg column'\nassert summary['total'].sum() == sales['revenue'].sum(), 'totals must match overall sum'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "pandas_grouping"
+    ],
+    "concepts_required": [
+      "pandas_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

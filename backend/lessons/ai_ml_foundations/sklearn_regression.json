@@ -29,28 +29,38 @@
         {
           "line": "model = LinearRegression()",
           "highlight": "LinearRegression",
-          "explanation": { "en": "Instantiate the linear regression model — no hyperparameters needed for basic usage" }
+          "explanation": {
+            "en": "Instantiate the linear regression model — no hyperparameters needed for basic usage"
+          }
         },
         {
           "line": "model.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Learn the best-fit line: find optimal coefficients and intercept" }
+          "explanation": {
+            "en": "Learn the best-fit line: find optimal coefficients and intercept"
+          }
         },
         {
           "line": "preds = model.predict(X_test)",
           "highlight": "predict",
-          "explanation": { "en": "Apply the learned line equation to new X values" }
+          "explanation": {
+            "en": "Apply the learned line equation to new X values"
+          }
         },
         {
           "line": "print(r2_score(y_test, preds))",
           "highlight": "r2_score",
-          "explanation": { "en": "R² close to 1.0 means the model explains nearly all variance" },
+          "explanation": {
+            "en": "R² close to 1.0 means the model explains nearly all variance"
+          },
           "output": "0.9823"
         },
         {
           "line": "print(model.coef_)",
           "highlight": "coef_",
-          "explanation": { "en": "The learned slope(s) — one per feature" },
+          "explanation": {
+            "en": "The learned slope(s) — one per feature"
+          },
           "output": "[2.98]"
         }
       ]
@@ -74,7 +84,13 @@
     {
       "type": "TerminalOutput",
       "id": "regression_output",
-      "output": ["R²  : 0.9823", "MSE : 27.4", "RMSE: 5.23", "Coef: [2.98]", "Bias: 7.12"]
+      "output": [
+        "R²  : 0.9823",
+        "MSE : 27.4",
+        "RMSE: 5.23",
+        "Coef: [2.98]",
+        "Bias: 7.12"
+      ]
     }
   ],
   "practice_challenges": [
@@ -83,8 +99,12 @@
         "en": "Load the `california_housing` dataset from `sklearn.datasets`. Train a `LinearRegression` model and compute `r2` and `rmse` on the test set."
       },
       "hints": [
-        { "en": "from sklearn.datasets import fetch_california_housing" },
-        { "en": "rmse = mean_squared_error(y_test, preds, squared=False) or np.sqrt(mean_squared_error(...))" }
+        {
+          "en": "from sklearn.datasets import fetch_california_housing"
+        },
+        {
+          "en": "rmse = mean_squared_error(y_test, preds, squared=False) or np.sqrt(mean_squared_error(...))"
+        }
       ],
       "test_code": "import numpy as np\nfrom sklearn.metrics import r2_score, mean_squared_error\nassert isinstance(r2, float), 'r2 must be a float'\nassert 0 < r2 < 1, 'r2 should be between 0 and 1 for this dataset'\nassert rmse > 0, 'rmse must be positive'"
     },
@@ -93,12 +113,36 @@
         "en": "Create a polynomial regression pipeline of degree 3 called `poly_pipeline`. Fit it to your training data and compare its R² to the plain linear regression model."
       },
       "hints": [
-        { "en": "from sklearn.preprocessing import PolynomialFeatures; from sklearn.pipeline import Pipeline" },
-        { "en": "poly_pipeline = Pipeline([('poly', PolynomialFeatures(degree=3)), ('lr', LinearRegression())])" }
+        {
+          "en": "from sklearn.preprocessing import PolynomialFeatures; from sklearn.pipeline import Pipeline"
+        },
+        {
+          "en": "poly_pipeline = Pipeline([('poly', PolynomialFeatures(degree=3)), ('lr', LinearRegression())])"
+        }
       ],
       "test_code": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.linear_model import LinearRegression\nassert isinstance(poly_pipeline, Pipeline), 'poly_pipeline must be a sklearn Pipeline'\nsteps = dict(poly_pipeline.steps)\nassert 'poly' in steps or any(isinstance(s, PolynomialFeatures) for s in steps.values()), 'must include PolynomialFeatures'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "linear_regression",
+      "ml_fundamentals",
+      "train_test_split"
+    ],
+    "concepts_required": [
+      "numpy_basics",
+      "pandas_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "price prediction",
+      "forecasting"
+    ],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

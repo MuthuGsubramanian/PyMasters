@@ -26,19 +26,58 @@
       "type": "ConceptMap",
       "id": "perceptron_diagram",
       "nodes": [
-        {"id": "x1", "label": "Input x₁", "color": "#4f8ef7"},
-        {"id": "x2", "label": "Input x₂", "color": "#4f8ef7"},
-        {"id": "w1", "label": "Weight w₁", "color": "#f7914f"},
-        {"id": "w2", "label": "Weight w₂", "color": "#f7914f"},
-        {"id": "sum", "label": "Σ (sum + bias)", "color": "#a44ff7"},
-        {"id": "out", "label": "Output ŷ", "color": "#4fc97a"}
+        {
+          "id": "x1",
+          "label": "Input x₁",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "x2",
+          "label": "Input x₂",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "w1",
+          "label": "Weight w₁",
+          "color": "#f7914f"
+        },
+        {
+          "id": "w2",
+          "label": "Weight w₂",
+          "color": "#f7914f"
+        },
+        {
+          "id": "sum",
+          "label": "Σ (sum + bias)",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "out",
+          "label": "Output ŷ",
+          "color": "#4fc97a"
+        }
       ],
       "edges": [
-        {"from": "x1", "to": "w1"},
-        {"from": "x2", "to": "w2"},
-        {"from": "w1", "to": "sum"},
-        {"from": "w2", "to": "sum"},
-        {"from": "sum", "to": "out"}
+        {
+          "from": "x1",
+          "to": "w1"
+        },
+        {
+          "from": "x2",
+          "to": "w2"
+        },
+        {
+          "from": "w1",
+          "to": "sum"
+        },
+        {
+          "from": "w2",
+          "to": "sum"
+        },
+        {
+          "from": "sum",
+          "to": "out"
+        }
       ]
     },
     {
@@ -48,27 +87,37 @@
         {
           "line": "inputs  = [1, 1]",
           "highlight": "inputs",
-          "explanation": {"en": "Two input features: study_hours=1, sleep=1"}
+          "explanation": {
+            "en": "Two input features: study_hours=1, sleep=1"
+          }
         },
         {
           "line": "weights = [0.6, 0.4]",
           "highlight": "weights",
-          "explanation": {"en": "study_hours gets weight 0.6, sleep gets weight 0.4"}
+          "explanation": {
+            "en": "study_hours gets weight 0.6, sleep gets weight 0.4"
+          }
         },
         {
           "line": "bias    = -0.5",
           "highlight": "bias",
-          "explanation": {"en": "Bias shifts the decision threshold"}
+          "explanation": {
+            "en": "Bias shifts the decision threshold"
+          }
         },
         {
           "line": "total = sum(x*w for x,w in zip(inputs, weights)) + bias",
           "highlight": "total",
-          "explanation": {"en": "Weighted sum: 1*0.6 + 1*0.4 - 0.5 = 0.5"}
+          "explanation": {
+            "en": "Weighted sum: 1*0.6 + 1*0.4 - 0.5 = 0.5"
+          }
         },
         {
           "line": "output = 1 if total >= 0 else 0",
           "highlight": "output",
-          "explanation": {"en": "0.5 >= 0 so output is 1 (PASS)"},
+          "explanation": {
+            "en": "0.5 >= 0 so output is 1 (PASS)"
+          },
           "output": "1"
         }
       ]
@@ -77,7 +126,10 @@
       "type": "VariableBox",
       "id": "box_weights",
       "variable": "weights",
-      "value": [0.6, 0.4],
+      "value": [
+        0.6,
+        0.4
+      ],
       "data_type": "list",
       "color": "#f7914f"
     },
@@ -92,12 +144,21 @@
     {
       "type": "FlowArrow",
       "id": "flow_decision",
-      "steps": ["Inputs", "× Weights", "+ Bias", "Step Function", "0 or 1"]
+      "steps": [
+        "Inputs",
+        "× Weights",
+        "+ Bias",
+        "Step Function",
+        "0 or 1"
+      ]
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["total = 0.5", "output = 1  # PASS"]
+      "output": [
+        "total = 0.5",
+        "output = 1  # PASS"
+      ]
     }
   ],
   "practice_challenges": [
@@ -107,13 +168,33 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Use zip(inputs, weights) to pair each input with its weight"},
-        {"en": "Compute: total = sum(x*w for x,w in zip(inputs, weights)) + bias"},
-        {"en": "Return 1 if total >= 0, else return 0"}
+        {
+          "en": "Use zip(inputs, weights) to pair each input with its weight"
+        },
+        {
+          "en": "Compute: total = sum(x*w for x,w in zip(inputs, weights)) + bias"
+        },
+        {
+          "en": "Return 1 if total >= 0, else return 0"
+        }
       ],
       "test_code": "assert perceptron([2, 3], [0.5, -0.5], 0) == 0, 'expected 0: 2*0.5 + 3*(-0.5) + 0 = -0.5'\nassert perceptron([1, 1], [0.6, 0.4], -0.5) == 1, 'expected 1'\nassert perceptron([0, 0], [1.0, 1.0], -0.1) == 0, 'expected 0 when inputs are zero and bias is negative'\nassert perceptron([0, 0], [1.0, 1.0], 0.1) == 1, 'expected 1 when bias pushes above threshold'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "perceptron"
+    ],
+    "concepts_required": [
+      "numpy_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

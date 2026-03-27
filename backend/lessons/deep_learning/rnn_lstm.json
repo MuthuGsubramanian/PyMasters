@@ -26,40 +26,121 @@
       "type": "ConceptMap",
       "id": "lstm_gates",
       "nodes": [
-        {"id": "x_t", "label": "Input x_t", "color": "#4f8ef7"},
-        {"id": "h_prev", "label": "h_{t-1}", "color": "#f7914f"},
-        {"id": "forget", "label": "Forget Gate f_t", "color": "#e74c3c"},
-        {"id": "input_g", "label": "Input Gate i_t", "color": "#4fc97a"},
-        {"id": "output_g", "label": "Output Gate o_t", "color": "#a44ff7"},
-        {"id": "cell", "label": "Cell State C_t", "color": "#f7914f"},
-        {"id": "hidden", "label": "Hidden State h_t", "color": "#4f8ef7"}
+        {
+          "id": "x_t",
+          "label": "Input x_t",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "h_prev",
+          "label": "h_{t-1}",
+          "color": "#f7914f"
+        },
+        {
+          "id": "forget",
+          "label": "Forget Gate f_t",
+          "color": "#e74c3c"
+        },
+        {
+          "id": "input_g",
+          "label": "Input Gate i_t",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "output_g",
+          "label": "Output Gate o_t",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "cell",
+          "label": "Cell State C_t",
+          "color": "#f7914f"
+        },
+        {
+          "id": "hidden",
+          "label": "Hidden State h_t",
+          "color": "#4f8ef7"
+        }
       ],
       "edges": [
-        {"from": "x_t", "to": "forget"},
-        {"from": "h_prev", "to": "forget"},
-        {"from": "x_t", "to": "input_g"},
-        {"from": "h_prev", "to": "input_g"},
-        {"from": "x_t", "to": "output_g"},
-        {"from": "h_prev", "to": "output_g"},
-        {"from": "forget", "to": "cell", "label": "erase"},
-        {"from": "input_g", "to": "cell", "label": "write"},
-        {"from": "cell", "to": "hidden"},
-        {"from": "output_g", "to": "hidden"}
+        {
+          "from": "x_t",
+          "to": "forget"
+        },
+        {
+          "from": "h_prev",
+          "to": "forget"
+        },
+        {
+          "from": "x_t",
+          "to": "input_g"
+        },
+        {
+          "from": "h_prev",
+          "to": "input_g"
+        },
+        {
+          "from": "x_t",
+          "to": "output_g"
+        },
+        {
+          "from": "h_prev",
+          "to": "output_g"
+        },
+        {
+          "from": "forget",
+          "to": "cell",
+          "label": "erase"
+        },
+        {
+          "from": "input_g",
+          "to": "cell",
+          "label": "write"
+        },
+        {
+          "from": "cell",
+          "to": "hidden"
+        },
+        {
+          "from": "output_g",
+          "to": "hidden"
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "gate_comparison",
       "items": [
-        {"label": "Forget Gate", "value": "σ(W_f[h,x]+b)", "color": "#e74c3c", "note": "0=forget, 1=keep"},
-        {"label": "Input Gate", "value": "σ(W_i[h,x]+b)", "color": "#4fc97a", "note": "What to write"},
-        {"label": "Output Gate", "value": "σ(W_o[h,x]+b)", "color": "#a44ff7", "note": "What to expose"}
+        {
+          "label": "Forget Gate",
+          "value": "σ(W_f[h,x]+b)",
+          "color": "#e74c3c",
+          "note": "0=forget, 1=keep"
+        },
+        {
+          "label": "Input Gate",
+          "value": "σ(W_i[h,x]+b)",
+          "color": "#4fc97a",
+          "note": "What to write"
+        },
+        {
+          "label": "Output Gate",
+          "value": "σ(W_o[h,x]+b)",
+          "color": "#a44ff7",
+          "note": "What to expose"
+        }
       ]
     },
     {
       "type": "FlowArrow",
       "id": "cell_flow",
-      "steps": ["C_{t-1}", "× Forget Gate", "+ Input × Candidate", "= C_t", "× Output Gate → h_t"]
+      "steps": [
+        "C_{t-1}",
+        "× Forget Gate",
+        "+ Input × Candidate",
+        "= C_t",
+        "× Output Gate → h_t"
+      ]
     },
     {
       "type": "CodeStepper",
@@ -68,27 +149,37 @@
         {
           "line": "f_t = sigmoid(W_f @ concat(h_prev, x_t) + b_f)",
           "highlight": "f_t",
-          "explanation": {"en": "Forget gate: decides what to erase from cell state"}
+          "explanation": {
+            "en": "Forget gate: decides what to erase from cell state"
+          }
         },
         {
           "line": "i_t = sigmoid(W_i @ concat(h_prev, x_t) + b_i)",
           "highlight": "i_t",
-          "explanation": {"en": "Input gate: controls new information flow"}
+          "explanation": {
+            "en": "Input gate: controls new information flow"
+          }
         },
         {
           "line": "C_tilde = tanh(W_C @ concat(h_prev, x_t) + b_C)",
           "highlight": "C_tilde",
-          "explanation": {"en": "Candidate values to potentially add"}
+          "explanation": {
+            "en": "Candidate values to potentially add"
+          }
         },
         {
           "line": "C_t = f_t * C_prev + i_t * C_tilde",
           "highlight": "C_t",
-          "explanation": {"en": "New cell state: erase old + write new"}
+          "explanation": {
+            "en": "New cell state: erase old + write new"
+          }
         },
         {
           "line": "h_t = sigmoid(W_o @ concat(h_prev, x_t)) * tanh(C_t)",
           "highlight": "h_t",
-          "explanation": {"en": "Hidden state: gated read from cell state"},
+          "explanation": {
+            "en": "Hidden state: gated read from cell state"
+          },
           "output": "LSTM step complete"
         }
       ]
@@ -96,7 +187,11 @@
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["Forget gate: f=[0.9, 0.1, 0.8] (keep most, erase dim 1)", "Input gate:  i=[0.2, 0.95, 0.3] (write mostly to dim 1)", "New cell:    C=[old*0.9, new*0.95, old*0.8+new*0.3]"]
+      "output": [
+        "Forget gate: f=[0.9, 0.1, 0.8] (keep most, erase dim 1)",
+        "Input gate:  i=[0.2, 0.95, 0.3] (write mostly to dim 1)",
+        "New cell:    C=[old*0.9, new*0.95, old*0.8+new*0.3]"
+      ]
     }
   ],
   "practice_challenges": [
@@ -106,13 +201,33 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Concatenate: combined = np.concatenate([h_prev, x_t])"},
-        {"en": "Linear: z = W_f @ combined + b_f"},
-        {"en": "Sigmoid: return 1 / (1 + np.exp(-z))"}
+        {
+          "en": "Concatenate: combined = np.concatenate([h_prev, x_t])"
+        },
+        {
+          "en": "Linear: z = W_f @ combined + b_f"
+        },
+        {
+          "en": "Sigmoid: return 1 / (1 + np.exp(-z))"
+        }
       ],
       "test_code": "import numpy as np\nnp.random.seed(0)\nh = np.array([0.5, -0.3])\nx = np.array([1.0, 0.0])\nW_f = np.random.randn(2, 4)\nb_f = np.zeros(2)\nf = forget_gate(h, x, W_f, b_f)\nassert f.shape == (2,), f'Expected shape (2,), got {f.shape}'\nassert np.all(f >= 0) and np.all(f <= 1), 'Forget gate must be in [0,1] (sigmoid output)'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "lstm_gru"
+    ],
+    "concepts_required": [
+      "rnn_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

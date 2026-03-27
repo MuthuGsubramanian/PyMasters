@@ -26,9 +26,24 @@
       "type": "ComparisonPanel",
       "id": "loss_comparison",
       "items": [
-        {"label": "MSE", "value": "Σ(y−ŷ)²/N", "color": "#4f8ef7", "note": "Regression tasks"},
-        {"label": "Binary CE", "value": "−Σ[y·log(ŷ)+(1−y)·log(1−ŷ)]/N", "color": "#e74c3c", "note": "Binary classification"},
-        {"label": "Categorical CE", "value": "−Σ yᵢ·log(ŷᵢ)", "color": "#a44ff7", "note": "Multi-class classification"}
+        {
+          "label": "MSE",
+          "value": "Σ(y−ŷ)²/N",
+          "color": "#4f8ef7",
+          "note": "Regression tasks"
+        },
+        {
+          "label": "Binary CE",
+          "value": "−Σ[y·log(ŷ)+(1−y)·log(1−ŷ)]/N",
+          "color": "#e74c3c",
+          "note": "Binary classification"
+        },
+        {
+          "label": "Categorical CE",
+          "value": "−Σ yᵢ·log(ŷᵢ)",
+          "color": "#a44ff7",
+          "note": "Multi-class classification"
+        }
       ]
     },
     {
@@ -38,23 +53,31 @@
         {
           "line": "y_true = [1, 0, 1, 1]",
           "highlight": "y_true",
-          "explanation": {"en": "True labels"}
+          "explanation": {
+            "en": "True labels"
+          }
         },
         {
           "line": "y_pred = [0.9, 0.1, 0.8, 0.3]",
           "highlight": "y_pred",
-          "explanation": {"en": "Model predicted probabilities"}
+          "explanation": {
+            "en": "Model predicted probabilities"
+          }
         },
         {
           "line": "mse_val = mse(y_true, y_pred)",
           "highlight": "mse_val",
-          "explanation": {"en": "Compute MSE: average squared differences"},
+          "explanation": {
+            "en": "Compute MSE: average squared differences"
+          },
           "output": "MSE = 0.0775"
         },
         {
           "line": "bce_val = binary_cross_entropy(y_true, y_pred)",
           "highlight": "bce_val",
-          "explanation": {"en": "Compute BCE: heavily penalises confident wrong predictions"},
+          "explanation": {
+            "en": "Compute BCE: heavily penalises confident wrong predictions"
+          },
           "output": "BCE = 0.3677"
         }
       ]
@@ -65,22 +88,52 @@
       "label": "Loss Values by Confidence",
       "structure": "table",
       "data": [
-        ["Prediction", "True", "MSE", "BCE"],
-        ["0.95", "1", "0.002", "0.051"],
-        ["0.50", "1", "0.250", "0.693"],
-        ["0.05", "1", "0.902", "2.996"]
+        [
+          "Prediction",
+          "True",
+          "MSE",
+          "BCE"
+        ],
+        [
+          "0.95",
+          "1",
+          "0.002",
+          "0.051"
+        ],
+        [
+          "0.50",
+          "1",
+          "0.250",
+          "0.693"
+        ],
+        [
+          "0.05",
+          "1",
+          "0.902",
+          "2.996"
+        ]
       ],
       "color": "#4f8ef7"
     },
     {
       "type": "FlowArrow",
       "id": "loss_flow",
-      "steps": ["Predictions ŷ", "Compare to y", "Compute Loss", "Gradient ∂L/∂ŷ", "Backpropagate"]
+      "steps": [
+        "Predictions ŷ",
+        "Compare to y",
+        "Compute Loss",
+        "Gradient ∂L/∂ŷ",
+        "Backpropagate"
+      ]
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["MSE  = 0.0775", "BCE  = 0.3677", "Bad prediction (0.05 for true=1): BCE = 2.996"]
+      "output": [
+        "MSE  = 0.0775",
+        "BCE  = 0.3677",
+        "Bad prediction (0.05 for true=1): BCE = 2.996"
+      ]
     }
   ],
   "practice_challenges": [
@@ -90,13 +143,33 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "MSE: sum of (true - pred)^2, divided by N"},
-        {"en": "BCE: -mean(y*log(p+eps) + (1-y)*log(1-p+eps))"},
-        {"en": "Perfect predictions should give very low BCE, near 0"}
+        {
+          "en": "MSE: sum of (true - pred)^2, divided by N"
+        },
+        {
+          "en": "BCE: -mean(y*log(p+eps) + (1-y)*log(1-p+eps))"
+        },
+        {
+          "en": "Perfect predictions should give very low BCE, near 0"
+        }
       ],
       "test_code": "import math\nassert abs(mse([1,0,1], [1,0,1]) - 0.0) < 1e-9, 'perfect predictions: MSE=0'\nassert abs(mse([1,0], [0,1]) - 1.0) < 1e-9, 'worst case: MSE=1'\nbce_good = binary_cross_entropy([1], [0.999])\nbce_bad  = binary_cross_entropy([1], [0.001])\nassert bce_good < bce_bad, 'confident correct should have lower BCE'\nassert bce_good < 0.01, 'BCE near 0 for correct confident prediction'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "loss_functions"
+    ],
+    "concepts_required": [
+      "forward_pass"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

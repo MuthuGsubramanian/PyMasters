@@ -26,27 +26,79 @@
       "type": "ConceptMap",
       "id": "rnn_cell_map",
       "nodes": [
-        {"id": "xt", "label": "Input x_t", "color": "#4f8ef7"},
-        {"id": "h_prev", "label": "h_{t-1} (memory)", "color": "#f7914f"},
-        {"id": "Wx", "label": "W_x · x_t", "color": "#a44ff7"},
-        {"id": "Wh", "label": "W_h · h_{t-1}", "color": "#a44ff7"},
-        {"id": "sum", "label": "Sum + bias", "color": "#4fc97a"},
-        {"id": "tanh", "label": "tanh", "color": "#e74c3c"},
-        {"id": "h_new", "label": "h_t (new state)", "color": "#f7914f"}
+        {
+          "id": "xt",
+          "label": "Input x_t",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "h_prev",
+          "label": "h_{t-1} (memory)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "Wx",
+          "label": "W_x · x_t",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "Wh",
+          "label": "W_h · h_{t-1}",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "sum",
+          "label": "Sum + bias",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "tanh",
+          "label": "tanh",
+          "color": "#e74c3c"
+        },
+        {
+          "id": "h_new",
+          "label": "h_t (new state)",
+          "color": "#f7914f"
+        }
       ],
       "edges": [
-        {"from": "xt", "to": "Wx"},
-        {"from": "h_prev", "to": "Wh"},
-        {"from": "Wx", "to": "sum"},
-        {"from": "Wh", "to": "sum"},
-        {"from": "sum", "to": "tanh"},
-        {"from": "tanh", "to": "h_new"}
+        {
+          "from": "xt",
+          "to": "Wx"
+        },
+        {
+          "from": "h_prev",
+          "to": "Wh"
+        },
+        {
+          "from": "Wx",
+          "to": "sum"
+        },
+        {
+          "from": "Wh",
+          "to": "sum"
+        },
+        {
+          "from": "sum",
+          "to": "tanh"
+        },
+        {
+          "from": "tanh",
+          "to": "h_new"
+        }
       ]
     },
     {
       "type": "FlowArrow",
       "id": "sequence_flow",
-      "steps": ["x_0", "h_0 → h_1", "x_1 → h_2", "x_2 → h_3", "x_3 → output"]
+      "steps": [
+        "x_0",
+        "h_0 → h_1",
+        "x_1 → h_2",
+        "x_2 → h_3",
+        "x_3 → output"
+      ]
     },
     {
       "type": "CodeStepper",
@@ -55,22 +107,30 @@
         {
           "line": "h = np.zeros(4)   # initial hidden state",
           "highlight": "h",
-          "explanation": {"en": "Start with zero hidden state"}
+          "explanation": {
+            "en": "Start with zero hidden state"
+          }
         },
         {
           "line": "for x_t in sequence:",
           "highlight": "for",
-          "explanation": {"en": "Process each element of the sequence"}
+          "explanation": {
+            "en": "Process each element of the sequence"
+          }
         },
         {
           "line": "    h = np.tanh(W_h @ h + W_x @ x_t + b)",
           "highlight": "tanh",
-          "explanation": {"en": "Update hidden state — blends old memory with new input"}
+          "explanation": {
+            "en": "Update hidden state — blends old memory with new input"
+          }
         },
         {
           "line": "output = W_out @ h",
           "highlight": "output",
-          "explanation": {"en": "Final hidden state summarises the whole sequence"},
+          "explanation": {
+            "en": "Final hidden state summarises the whole sequence"
+          },
           "output": "Sequence encoded"
         }
       ]
@@ -79,16 +139,33 @@
       "type": "MemoryStack",
       "id": "time_steps",
       "frames": [
-        {"label": "h_3 (final state)", "color": "#4fc97a"},
-        {"label": "h_2", "color": "#f7914f"},
-        {"label": "h_1", "color": "#f7914f"},
-        {"label": "h_0 = zeros", "color": "#4f8ef7"}
+        {
+          "label": "h_3 (final state)",
+          "color": "#4fc97a"
+        },
+        {
+          "label": "h_2",
+          "color": "#f7914f"
+        },
+        {
+          "label": "h_1",
+          "color": "#f7914f"
+        },
+        {
+          "label": "h_0 = zeros",
+          "color": "#4f8ef7"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["t=0: h=[0.46, -0.12, 0.33, 0.71]", "t=1: h=[0.81, -0.34, 0.22, 0.56]", "t=2: h=[0.92, -0.61, 0.44, 0.38]", "t=3: h=[0.77, -0.55, 0.51, 0.29]"]
+      "output": [
+        "t=0: h=[0.46, -0.12, 0.33, 0.71]",
+        "t=1: h=[0.81, -0.34, 0.22, 0.56]",
+        "t=2: h=[0.92, -0.61, 0.44, 0.38]",
+        "t=3: h=[0.77, -0.55, 0.51, 0.29]"
+      ]
     }
   ],
   "practice_challenges": [
@@ -98,13 +175,34 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Start with h = h_init"},
-        {"en": "For each x_t: h = np.tanh(W_h @ h + W_x @ x_t + b)"},
-        {"en": "Return h after the loop"}
+        {
+          "en": "Start with h = h_init"
+        },
+        {
+          "en": "For each x_t: h = np.tanh(W_h @ h + W_x @ x_t + b)"
+        },
+        {
+          "en": "Return h after the loop"
+        }
       ],
       "test_code": "import numpy as np\nnp.random.seed(42)\nsequence = [np.array([1.0, 0.0]), np.array([0.0, 1.0])]\nW_x = np.eye(3, 2)\nW_h = np.eye(3)\nb   = np.zeros(3)\nh0  = np.zeros(3)\nresult = rnn_forward(sequence, W_x, W_h, b, h0)\nassert result.shape == (3,), f'Expected shape (3,), got {result.shape}'\nassert np.all(result >= -1) and np.all(result <= 1), 'tanh output must be in [-1,1]'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "rnn_basics"
+    ],
+    "concepts_required": [
+      "multilayer_network",
+      "pytorch_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

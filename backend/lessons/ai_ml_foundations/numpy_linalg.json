@@ -29,29 +29,39 @@
         {
           "line": "v1 = np.array([1, 2, 3])",
           "highlight": "np.array",
-          "explanation": { "en": "A 1-D vector" }
+          "explanation": {
+            "en": "A 1-D vector"
+          }
         },
         {
           "line": "print(np.dot(v1, v2))",
           "highlight": "np.dot",
-          "explanation": { "en": "Dot product: sum of element-wise products" },
+          "explanation": {
+            "en": "Dot product: sum of element-wise products"
+          },
           "output": "32"
         },
         {
           "line": "C = A @ B",
           "highlight": "@",
-          "explanation": { "en": "@ is Python's matrix multiplication operator (PEP 465)" }
+          "explanation": {
+            "en": "@ is Python's matrix multiplication operator (PEP 465)"
+          }
         },
         {
           "line": "print(C)",
           "highlight": "print",
-          "explanation": { "en": "Result of 2x2 matrix multiplication" },
+          "explanation": {
+            "en": "Result of 2x2 matrix multiplication"
+          },
           "output": "[[19 22]\n [43 50]]"
         },
         {
           "line": "x = np.linalg.solve(A, b)",
           "highlight": "np.linalg.solve",
-          "explanation": { "en": "Efficiently solves the linear system Ax = b" },
+          "explanation": {
+            "en": "Efficiently solves the linear system Ax = b"
+          },
           "output": "[1. 3.]"
         }
       ]
@@ -60,14 +70,32 @@
       "type": "DataStructure",
       "id": "matrix_A",
       "structure_type": "matrix",
-      "data": [[1, 2], [3, 4]],
+      "data": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
       "highlight_color": "#f7914f"
     },
     {
       "type": "DataStructure",
       "id": "matrix_B",
       "structure_type": "matrix",
-      "data": [[5, 6], [7, 8]],
+      "data": [
+        [
+          5,
+          6
+        ],
+        [
+          7,
+          8
+        ]
+      ],
       "highlight_color": "#4f8ef7"
     },
     {
@@ -80,7 +108,13 @@
     {
       "type": "TerminalOutput",
       "id": "linalg_output",
-      "output": ["dot(v1,v2) = 32", "A @ B =", "[[19 22]", " [43 50]]", "solve(A,b) = [1. 3.]"]
+      "output": [
+        "dot(v1,v2) = 32",
+        "A @ B =",
+        "[[19 22]",
+        " [43 50]]",
+        "solve(A,b) = [1. 3.]"
+      ]
     }
   ],
   "practice_challenges": [
@@ -89,8 +123,12 @@
         "en": "Create two 3x3 matrices `P` and `Q` of your choice and compute their matrix product `R = P @ Q`."
       },
       "hints": [
-        { "en": "P = np.array([[...],[...],[...]])" },
-        { "en": "R = P @ Q" }
+        {
+          "en": "P = np.array([[...],[...],[...]])"
+        },
+        {
+          "en": "R = P @ Q"
+        }
       ],
       "test_code": "import numpy as np\nassert isinstance(P, np.ndarray) and P.shape == (3,3), 'P must be 3x3'\nassert isinstance(Q, np.ndarray) and Q.shape == (3,3), 'Q must be 3x3'\nassert np.allclose(R, P @ Q), 'R must equal P @ Q'"
     },
@@ -99,13 +137,33 @@
         "en": "Solve the system: 3x + y = 9, x + 2y = 8. Store the coefficient matrix as `A`, the right-hand side as `b`, and the solution as `sol`."
       },
       "hints": [
-        { "en": "A = np.array([[3, 1], [1, 2]])" },
-        { "en": "b = np.array([9, 8])" },
-        { "en": "sol = np.linalg.solve(A, b)" }
+        {
+          "en": "A = np.array([[3, 1], [1, 2]])"
+        },
+        {
+          "en": "b = np.array([9, 8])"
+        },
+        {
+          "en": "sol = np.linalg.solve(A, b)"
+        }
       ],
       "test_code": "import numpy as np\nassert A.shape == (2, 2), 'A must be 2x2'\nassert b.shape == (2,), 'b must have 2 elements'\nassert np.allclose(sol, [2., 3.]), 'solution should be x=2, y=3'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "numpy_linalg"
+    ],
+    "concepts_required": [
+      "numpy_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

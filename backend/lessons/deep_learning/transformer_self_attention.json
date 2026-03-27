@@ -26,29 +26,102 @@
       "type": "ConceptMap",
       "id": "self_attention_map",
       "nodes": [
-        {"id": "X", "label": "Input X (seq×d_model)", "color": "#4f8ef7"},
-        {"id": "WQ", "label": "W_Q projection", "color": "#f7914f"},
-        {"id": "WK", "label": "W_K projection", "color": "#f7914f"},
-        {"id": "WV", "label": "W_V projection", "color": "#f7914f"},
-        {"id": "Q", "label": "Q (seq×d_k)", "color": "#4fc97a"},
-        {"id": "K", "label": "K (seq×d_k)", "color": "#4fc97a"},
-        {"id": "V", "label": "V (seq×d_v)", "color": "#4fc97a"},
-        {"id": "attn", "label": "Attention(Q,K,V)", "color": "#a44ff7"},
-        {"id": "WO", "label": "W_O concat", "color": "#e74c3c"},
-        {"id": "out", "label": "Output (seq×d_model)", "color": "#4f8ef7"}
+        {
+          "id": "X",
+          "label": "Input X (seq×d_model)",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "WQ",
+          "label": "W_Q projection",
+          "color": "#f7914f"
+        },
+        {
+          "id": "WK",
+          "label": "W_K projection",
+          "color": "#f7914f"
+        },
+        {
+          "id": "WV",
+          "label": "W_V projection",
+          "color": "#f7914f"
+        },
+        {
+          "id": "Q",
+          "label": "Q (seq×d_k)",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "K",
+          "label": "K (seq×d_k)",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "V",
+          "label": "V (seq×d_v)",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "attn",
+          "label": "Attention(Q,K,V)",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "WO",
+          "label": "W_O concat",
+          "color": "#e74c3c"
+        },
+        {
+          "id": "out",
+          "label": "Output (seq×d_model)",
+          "color": "#4f8ef7"
+        }
       ],
       "edges": [
-        {"from": "X", "to": "WQ"},
-        {"from": "X", "to": "WK"},
-        {"from": "X", "to": "WV"},
-        {"from": "WQ", "to": "Q"},
-        {"from": "WK", "to": "K"},
-        {"from": "WV", "to": "V"},
-        {"from": "Q", "to": "attn"},
-        {"from": "K", "to": "attn"},
-        {"from": "V", "to": "attn"},
-        {"from": "attn", "to": "WO"},
-        {"from": "WO", "to": "out"}
+        {
+          "from": "X",
+          "to": "WQ"
+        },
+        {
+          "from": "X",
+          "to": "WK"
+        },
+        {
+          "from": "X",
+          "to": "WV"
+        },
+        {
+          "from": "WQ",
+          "to": "Q"
+        },
+        {
+          "from": "WK",
+          "to": "K"
+        },
+        {
+          "from": "WV",
+          "to": "V"
+        },
+        {
+          "from": "Q",
+          "to": "attn"
+        },
+        {
+          "from": "K",
+          "to": "attn"
+        },
+        {
+          "from": "V",
+          "to": "attn"
+        },
+        {
+          "from": "attn",
+          "to": "WO"
+        },
+        {
+          "from": "WO",
+          "to": "out"
+        }
       ]
     },
     {
@@ -57,18 +130,40 @@
       "label": "Multi-Head Attention Config (GPT-2 Small)",
       "structure": "table",
       "data": [
-        ["Parameter", "Value"],
-        ["d_model", "768"],
-        ["n_heads", "12"],
-        ["d_k per head", "64"],
-        ["Total Q/K/V params", "3 × 768 × 768 = 1,769,472"]
+        [
+          "Parameter",
+          "Value"
+        ],
+        [
+          "d_model",
+          "768"
+        ],
+        [
+          "n_heads",
+          "12"
+        ],
+        [
+          "d_k per head",
+          "64"
+        ],
+        [
+          "Total Q/K/V params",
+          "3 × 768 × 768 = 1,769,472"
+        ]
       ],
       "color": "#4f8ef7"
     },
     {
       "type": "FlowArrow",
       "id": "mha_flow",
-      "steps": ["Input X", "Linear → Q,K,V", "Split into h heads", "Each head: Attention", "Concat heads", "Linear W_O → Output"]
+      "steps": [
+        "Input X",
+        "Linear → Q,K,V",
+        "Split into h heads",
+        "Each head: Attention",
+        "Concat heads",
+        "Linear W_O → Output"
+      ]
     },
     {
       "type": "CodeStepper",
@@ -77,27 +172,37 @@
         {
           "line": "Q = X @ W_Q  # project to query space",
           "highlight": "Q",
-          "explanation": {"en": "Each row asks: 'what am I looking for?'"}
+          "explanation": {
+            "en": "Each row asks: 'what am I looking for?'"
+          }
         },
         {
           "line": "K = X @ W_K  # project to key space",
           "highlight": "K",
-          "explanation": {"en": "Each row says: 'I contain this information'"}
+          "explanation": {
+            "en": "Each row says: 'I contain this information'"
+          }
         },
         {
           "line": "V = X @ W_V  # project to value space",
           "highlight": "V",
-          "explanation": {"en": "Each row says: 'here is my content'"}
+          "explanation": {
+            "en": "Each row says: 'here is my content'"
+          }
         },
         {
           "line": "scores = Q @ K.T / sqrt(d_k)",
           "highlight": "scores",
-          "explanation": {"en": "Every token compares with every other token: O(n²) complexity"}
+          "explanation": {
+            "en": "Every token compares with every other token: O(n²) complexity"
+          }
         },
         {
           "line": "output = softmax(scores) @ V",
           "highlight": "output",
-          "explanation": {"en": "Weighted blend of all value vectors"},
+          "explanation": {
+            "en": "Weighted blend of all value vectors"
+          },
           "output": "Contextualised embeddings"
         }
       ]
@@ -105,7 +210,12 @@
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["Input shape:  (10, 512)", "Q,K,V shape: (10, 64) each per head", "Scores shape: (10, 10) — full attention matrix", "Output shape: (10, 512)"]
+      "output": [
+        "Input shape:  (10, 512)",
+        "Q,K,V shape: (10, 64) each per head",
+        "Scores shape: (10, 10) — full attention matrix",
+        "Output shape: (10, 512)"
+      ]
     }
   ],
   "practice_challenges": [
@@ -115,13 +225,33 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Use np.tril(np.ones((n, n), dtype=bool)) for the lower triangle"},
-        {"en": "Position (i,j) should be True if j <= i (can see current and past tokens)"},
-        {"en": "For a 4-token sequence: row 0 sees only token 0, row 3 sees tokens 0-3"}
+        {
+          "en": "Use np.tril(np.ones((n, n), dtype=bool)) for the lower triangle"
+        },
+        {
+          "en": "Position (i,j) should be True if j <= i (can see current and past tokens)"
+        },
+        {
+          "en": "For a 4-token sequence: row 0 sees only token 0, row 3 sees tokens 0-3"
+        }
       ],
       "test_code": "import numpy as np\nmask = causal_mask(4)\nassert mask.shape == (4, 4), f'Expected (4,4), got {mask.shape}'\nassert mask[0, 0] == True, 'Token 0 should see itself'\nassert mask[0, 1] == False, 'Token 0 should NOT see token 1'\nassert mask[3, 0] == True, 'Token 3 can see token 0'\nassert mask[3, 3] == True, 'Token 3 can see itself'\nassert np.sum(mask) == 4*5//2, 'Lower triangle has n*(n+1)/2 True values'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "attention_mechanism"
+    ],
+    "concepts_required": [
+      "attention_mechanism"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

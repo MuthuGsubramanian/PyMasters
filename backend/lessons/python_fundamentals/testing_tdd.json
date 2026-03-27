@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "testing",
   "order": 2,
-  "title": { "en": "TDD: Write the Test First" },
-  "description": { "en": "Master Test-Driven Development — the red-green-refactor cycle that drives cleaner design and higher confidence in your code." },
+  "title": {
+    "en": "TDD: Write the Test First"
+  },
+  "description": {
+    "en": "Master Test-Driven Development — the red-green-refactor cycle that drives cleaner design and higher confidence in your code."
+  },
   "xp_reward": 50,
   "next_unlock": "pkg_imports",
   "story_variants": {
     "en": "## Write the Test First\n\nMost programmers write code first, then tests (if at all). **TDD flips this**: write a failing test first, then write just enough code to make it pass, then clean up.\n\n### The Red-Green-Refactor Cycle\n\n| Phase | Action | Status |\n|-------|--------|--------|\n| Red | Write failing test | test fails (red) |\n| Green | Write minimal code | test passes (green) |\n| Refactor | Clean up code | tests still green |\n\n> **Why write failing tests first?** It forces you to think about the interface before the implementation. You design from the user's perspective.\n\n### TDD Benefits\n- Tests document intended behaviour\n- Prevents over-engineering (only write what tests require)\n- Regression safety — refactor freely\n- Catches bugs at the moment they're introduced\n\n### TDD in Practice\n1. `pytest` runs — 1 test FAILS (red)\n2. Write the simplest code to pass it\n3. `pytest` runs — all tests PASS (green)\n4. Refactor for clarity\n5. Repeat for next feature\n\n> **Rule:** Never write production code without a failing test that requires it."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -23,24 +32,53 @@
     {
       "type": "FlowArrow",
       "id": "tdd_cycle",
-      "label": { "en": "Red → Green → Refactor → Red →..." },
+      "label": {
+        "en": "Red → Green → Refactor → Red →..."
+      },
       "direction": "right",
       "branch": "cycle"
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Using TDD, implement a 'Queue' class with enqueue and dequeue methods. Write and pass tests for both operations." },
+      "instruction": {
+        "en": "Using TDD, implement a 'Queue' class with enqueue and dequeue methods. Write and pass tests for both operations."
+      },
       "expected_output": "All tests pass",
       "hints": [
-        { "en": "Start with: class Queue: def __init__(self): self._data = []" },
-        { "en": "enqueue appends to the end; dequeue removes from the front (index 0)" },
-        { "en": "Test: q.enqueue(1); q.enqueue(2); assert q.dequeue() == 1" }
+        {
+          "en": "Start with: class Queue: def __init__(self): self._data = []"
+        },
+        {
+          "en": "enqueue appends to the end; dequeue removes from the front (index 0)"
+        },
+        {
+          "en": "Test: q.enqueue(1); q.enqueue(2); assert q.dequeue() == 1"
+        }
       ],
       "test_code": "class Queue:\n    def __init__(self):\n        self._data = []\n    def enqueue(self, item):\n        self._data.append(item)\n    def dequeue(self):\n        return self._data.pop(0)\n    def __len__(self):\n        return len(self._data)\nq = Queue()\nq.enqueue(1)\nq.enqueue(2)\nq.enqueue(3)\nassert q.dequeue() == 1\nassert q.dequeue() == 2\nassert len(q) == 1"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "tdd"
+    ],
+    "concepts_required": [
+      "pytest_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

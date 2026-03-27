@@ -29,17 +29,23 @@
         {
           "line": "examples = [(\"Great product!\", \"Positive\"), (\"Broken on arrival\", \"Negative\")]",
           "highlight": "examples",
-          "explanation": { "en": "Few-shot examples: (input, expected_output) pairs" }
+          "explanation": {
+            "en": "Few-shot examples: (input, expected_output) pairs"
+          }
         },
         {
           "line": "example_text = '\\n'.join(f'Review: {r}\\nLabel: {l}' for r,l in examples)",
           "highlight": "join",
-          "explanation": { "en": "Format examples into the prompt body" }
+          "explanation": {
+            "en": "Format examples into the prompt body"
+          }
         },
         {
           "line": "prompt = f'{instruction}\\n\\n{example_text}\\n\\nNow classify:\\nReview: {query}\\nLabel:'",
           "highlight": "f-string",
-          "explanation": { "en": "Insert examples before the actual query" }
+          "explanation": {
+            "en": "Insert examples before the actual query"
+          }
         }
       ]
     },
@@ -61,21 +67,48 @@
       "type": "ConceptMap",
       "id": "cot_map",
       "nodes": [
-        { "id": "problem", "label": "Problem" },
-        { "id": "step1", "label": "Step 1: decompose" },
-        { "id": "step2", "label": "Step 2: intermediate calc" },
-        { "id": "step3", "label": "Step 3: final answer" }
+        {
+          "id": "problem",
+          "label": "Problem"
+        },
+        {
+          "id": "step1",
+          "label": "Step 1: decompose"
+        },
+        {
+          "id": "step2",
+          "label": "Step 2: intermediate calc"
+        },
+        {
+          "id": "step3",
+          "label": "Step 3: final answer"
+        }
       ],
       "edges": [
-        { "from": "problem", "to": "step1" },
-        { "from": "step1", "to": "step2" },
-        { "from": "step2", "to": "step3" }
+        {
+          "from": "problem",
+          "to": "step1"
+        },
+        {
+          "from": "step1",
+          "to": "step2"
+        },
+        {
+          "from": "step2",
+          "to": "step3"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "few_shot_output",
-      "output": ["Few-shot → Model matches example format", "CoT: 'Let's think step by step:'", "  Step 1: 12 × £0.50 = £6.00", "  Step 2: £10.00 - £6.00 = £4.00", "  Answer: Alice gets £4.00 change"]
+      "output": [
+        "Few-shot → Model matches example format",
+        "CoT: 'Let's think step by step:'",
+        "  Step 1: 12 × £0.50 = £6.00",
+        "  Step 2: £10.00 - £6.00 = £4.00",
+        "  Answer: Alice gets £4.00 change"
+      ]
     }
   ],
   "practice_challenges": [
@@ -84,8 +117,12 @@
         "en": "Write a Python string called `few_shot_prompt` that uses at least 3 examples to classify programming languages as 'compiled', 'interpreted', or 'both'. Then include a query for 'Python'."
       },
       "hints": [
-        { "en": "Examples: Language: C → Type: compiled; Language: JavaScript → Type: interpreted" },
-        { "en": "End with: Language: Python\\nType:" }
+        {
+          "en": "Examples: Language: C → Type: compiled; Language: JavaScript → Type: interpreted"
+        },
+        {
+          "en": "End with: Language: Python\\nType:"
+        }
       ],
       "test_code": "assert isinstance(few_shot_prompt, str), 'few_shot_prompt must be a string'\nassert few_shot_prompt.count('Language:') >= 4, 'need at least 3 examples + 1 query'\nassert 'Python' in few_shot_prompt, 'prompt must include query for Python'\nassert any(t in few_shot_prompt for t in ['compiled', 'interpreted']), 'must include example labels'"
     },
@@ -94,12 +131,30 @@
         "en": "Write a chain-of-thought prompt string called `cot_prompt` that asks the model to solve: 'A train travels at 80 mph. How long does it take to travel 200 miles?' Include the instruction 'Think step by step:' to trigger CoT reasoning."
       },
       "hints": [
-        { "en": "Include the phrase 'step by step' in your prompt" },
-        { "en": "Provide the problem clearly before the CoT trigger" }
+        {
+          "en": "Include the phrase 'step by step' in your prompt"
+        },
+        {
+          "en": "Provide the problem clearly before the CoT trigger"
+        }
       ],
       "test_code": "assert isinstance(cot_prompt, str), 'cot_prompt must be a string'\nassert 'step' in cot_prompt.lower(), 'prompt must include step-by-step instruction'\nassert '80' in cot_prompt and '200' in cot_prompt, 'prompt must contain the problem numbers'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "prompt_advanced"
+    ],
+    "concepts_required": [
+      "prompt_engineering"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

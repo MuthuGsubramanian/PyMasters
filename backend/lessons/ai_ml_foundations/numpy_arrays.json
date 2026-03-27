@@ -29,28 +29,38 @@
         {
           "line": "import numpy as np",
           "highlight": "numpy",
-          "explanation": { "en": "Import NumPy with the conventional alias np" }
+          "explanation": {
+            "en": "Import NumPy with the conventional alias np"
+          }
         },
         {
           "line": "a = np.array([1, 2, 3, 4])",
           "highlight": "np.array",
-          "explanation": { "en": "Create a 1-D array from a Python list" }
+          "explanation": {
+            "en": "Create a 1-D array from a Python list"
+          }
         },
         {
           "line": "b = np.array([[1, 2], [3, 4]])",
           "highlight": "np.array",
-          "explanation": { "en": "Create a 2-D array (matrix) from nested lists" }
+          "explanation": {
+            "en": "Create a 2-D array (matrix) from nested lists"
+          }
         },
         {
           "line": "print(b.shape)",
           "highlight": "shape",
-          "explanation": { "en": "shape is a tuple: (rows, columns)" },
+          "explanation": {
+            "en": "shape is a tuple: (rows, columns)"
+          },
           "output": "(2, 2)"
         },
         {
           "line": "print(b.dtype)",
           "highlight": "dtype",
-          "explanation": { "en": "dtype tells us the numeric type stored in memory" },
+          "explanation": {
+            "en": "dtype tells us the numeric type stored in memory"
+          },
           "output": "int64"
         }
       ]
@@ -59,8 +69,20 @@
       "type": "DataStructure",
       "id": "array_visual",
       "structure_type": "matrix",
-      "data": [[1, 2], [3, 4]],
-      "labels": ["row 0", "row 1"],
+      "data": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "labels": [
+        "row 0",
+        "row 1"
+      ],
       "highlight_color": "#f7914f"
     },
     {
@@ -80,7 +102,12 @@
     {
       "type": "TerminalOutput",
       "id": "shape_output",
-      "output": ["b.shape → (2, 2)", "b.dtype → int64", "b.ndim  → 2", "b.size  → 4"]
+      "output": [
+        "b.shape → (2, 2)",
+        "b.dtype → int64",
+        "b.ndim  → 2",
+        "b.size  → 4"
+      ]
     },
     {
       "type": "ParticleEffect",
@@ -95,9 +122,15 @@
         "en": "Create a NumPy array called `matrix` that is a 3x3 array of integers from 1 to 9. Then print its shape and dtype."
       },
       "hints": [
-        { "en": "Use np.array([[1,2,3],[4,5,6],[7,8,9]])" },
-        { "en": "Access shape with matrix.shape" },
-        { "en": "Access dtype with matrix.dtype" }
+        {
+          "en": "Use np.array([[1,2,3],[4,5,6],[7,8,9]])"
+        },
+        {
+          "en": "Access shape with matrix.shape"
+        },
+        {
+          "en": "Access dtype with matrix.dtype"
+        }
       ],
       "test_code": "import numpy as np\nassert isinstance(matrix, np.ndarray), 'matrix must be a numpy array'\nassert matrix.shape == (3, 3), 'matrix must be 3x3'\nassert matrix.size == 9, 'matrix must have 9 elements'"
     },
@@ -106,12 +139,31 @@
         "en": "Create a 1-D array called `evens` containing even numbers from 0 to 20 (inclusive) using `np.arange`."
       },
       "hints": [
-        { "en": "np.arange(start, stop, step) — stop is exclusive" },
-        { "en": "np.arange(0, 22, 2)" }
+        {
+          "en": "np.arange(start, stop, step) — stop is exclusive"
+        },
+        {
+          "en": "np.arange(0, 22, 2)"
+        }
       ],
       "test_code": "import numpy as np\nassert isinstance(evens, np.ndarray), 'evens must be a numpy array'\nassert len(evens) == 11, 'evens should have 11 elements (0,2,...,20)'\nassert evens[0] == 0 and evens[-1] == 20, 'evens must start at 0 and end at 20'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "numpy_basics"
+    ],
+    "concepts_required": [
+      "lists",
+      "for_loops"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

@@ -29,28 +29,38 @@
         {
           "line": "a = np.array([1, 2, 3, 4])",
           "highlight": "np.array",
-          "explanation": { "en": "1-D array, shape (4,)" }
+          "explanation": {
+            "en": "1-D array, shape (4,)"
+          }
         },
         {
           "line": "result = a * 10",
           "highlight": "* 10",
-          "explanation": { "en": "Scalar 10 is broadcast to match shape (4,)" },
+          "explanation": {
+            "en": "Scalar 10 is broadcast to match shape (4,)"
+          },
           "output": "[10 20 30 40]"
         },
         {
           "line": "matrix = np.array([[1,2,3],[4,5,6]])",
           "highlight": "np.array",
-          "explanation": { "en": "2-D array, shape (2, 3)" }
+          "explanation": {
+            "en": "2-D array, shape (2, 3)"
+          }
         },
         {
           "line": "row = np.array([10, 20, 30])",
           "highlight": "np.array",
-          "explanation": { "en": "1-D array, shape (3,) — will be broadcast across rows" }
+          "explanation": {
+            "en": "1-D array, shape (3,) — will be broadcast across rows"
+          }
         },
         {
           "line": "print(matrix + row)",
           "highlight": "+",
-          "explanation": { "en": "row is virtually repeated for each row of matrix" },
+          "explanation": {
+            "en": "row is virtually repeated for each row of matrix"
+          },
           "output": "[[11 22 33]\n [14 25 36]]"
         }
       ]
@@ -59,26 +69,57 @@
       "type": "DataStructure",
       "id": "broadcast_visual",
       "structure_type": "matrix",
-      "data": [[1, 2, 3], [4, 5, 6]],
+      "data": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
       "highlight_color": "#a44ff7"
     },
     {
       "type": "ConceptMap",
       "id": "rules_map",
       "nodes": [
-        { "id": "rule1", "label": "Prepend 1s to smaller shape" },
-        { "id": "rule2", "label": "Stretch dim-1 axes" },
-        { "id": "rule3", "label": "Error if incompatible" }
+        {
+          "id": "rule1",
+          "label": "Prepend 1s to smaller shape"
+        },
+        {
+          "id": "rule2",
+          "label": "Stretch dim-1 axes"
+        },
+        {
+          "id": "rule3",
+          "label": "Error if incompatible"
+        }
       ],
       "edges": [
-        { "from": "rule1", "to": "rule2" },
-        { "from": "rule2", "to": "rule3" }
+        {
+          "from": "rule1",
+          "to": "rule2"
+        },
+        {
+          "from": "rule2",
+          "to": "rule3"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "broadcast_output",
-      "output": ["a * 10 → [10 20 30 40]", "matrix + row →", "[[11 22 33]", " [14 25 36]]"]
+      "output": [
+        "a * 10 → [10 20 30 40]",
+        "matrix + row →",
+        "[[11 22 33]",
+        " [14 25 36]]"
+      ]
     }
   ],
   "practice_challenges": [
@@ -87,8 +128,12 @@
         "en": "Create a (4, 3) matrix called `m` of your choice. Subtract a 1-D array `offsets = np.array([1, 2, 3])` from it (broadcasting along rows). Store the result in `result`."
       },
       "hints": [
-        { "en": "offsets has shape (3,), m has shape (4, 3) — they are compatible for broadcasting" },
-        { "en": "result = m - offsets" }
+        {
+          "en": "offsets has shape (3,), m has shape (4, 3) — they are compatible for broadcasting"
+        },
+        {
+          "en": "result = m - offsets"
+        }
       ],
       "test_code": "import numpy as np\nassert isinstance(m, np.ndarray) and m.shape == (4, 3), 'm must be shape (4,3)'\noffsets = np.array([1, 2, 3])\nassert np.array_equal(result, m - offsets), 'result must equal m - offsets'"
     },
@@ -97,12 +142,30 @@
         "en": "Given `x = np.array([[1],[2],[3]])` (shape 3x1) and `y = np.array([10, 20, 30, 40])` (shape 4,), compute `z = x + y`. What is its shape?"
       },
       "hints": [
-        { "en": "x has shape (3,1) and y has shape (4,) → y becomes (1,4) → result is (3,4)" },
-        { "en": "z = x + y" }
+        {
+          "en": "x has shape (3,1) and y has shape (4,) → y becomes (1,4) → result is (3,4)"
+        },
+        {
+          "en": "z = x + y"
+        }
       ],
       "test_code": "import numpy as np\nx = np.array([[1],[2],[3]])\ny = np.array([10, 20, 30, 40])\nassert z.shape == (3, 4), 'z must have shape (3, 4)'\nassert z[0, 0] == 11 and z[2, 3] == 43, 'check broadcast values'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "numpy_basics"
+    ],
+    "concepts_required": [
+      "numpy_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

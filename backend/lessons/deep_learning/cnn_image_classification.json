@@ -25,29 +25,91 @@
     {
       "type": "FlowArrow",
       "id": "pipeline_flow",
-      "steps": ["MNIST Images", "Conv2d+ReLU", "MaxPool2d", "Conv2d+ReLU", "MaxPool2d", "Flatten", "Linear+Softmax", "Digit (0-9)"]
+      "steps": [
+        "MNIST Images",
+        "Conv2d+ReLU",
+        "MaxPool2d",
+        "Conv2d+ReLU",
+        "MaxPool2d",
+        "Flatten",
+        "Linear+Softmax",
+        "Digit (0-9)"
+      ]
     },
     {
       "type": "ConceptMap",
       "id": "cnn_map",
       "nodes": [
-        {"id": "input", "label": "Input (1×28×28)", "color": "#4f8ef7"},
-        {"id": "conv1", "label": "Conv2d(1→32)", "color": "#f7914f"},
-        {"id": "pool1", "label": "MaxPool(2×2)", "color": "#a44ff7"},
-        {"id": "conv2", "label": "Conv2d(32→64)", "color": "#f7914f"},
-        {"id": "pool2", "label": "MaxPool(2×2)", "color": "#a44ff7"},
-        {"id": "flat", "label": "Flatten", "color": "#4fc97a"},
-        {"id": "fc", "label": "Linear(1600→128)", "color": "#4f8ef7"},
-        {"id": "out", "label": "Linear(128→10)", "color": "#e74c3c"}
+        {
+          "id": "input",
+          "label": "Input (1×28×28)",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "conv1",
+          "label": "Conv2d(1→32)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "pool1",
+          "label": "MaxPool(2×2)",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "conv2",
+          "label": "Conv2d(32→64)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "pool2",
+          "label": "MaxPool(2×2)",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "flat",
+          "label": "Flatten",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "fc",
+          "label": "Linear(1600→128)",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "out",
+          "label": "Linear(128→10)",
+          "color": "#e74c3c"
+        }
       ],
       "edges": [
-        {"from": "input", "to": "conv1"},
-        {"from": "conv1", "to": "pool1"},
-        {"from": "pool1", "to": "conv2"},
-        {"from": "conv2", "to": "pool2"},
-        {"from": "pool2", "to": "flat"},
-        {"from": "flat", "to": "fc"},
-        {"from": "fc", "to": "out"}
+        {
+          "from": "input",
+          "to": "conv1"
+        },
+        {
+          "from": "conv1",
+          "to": "pool1"
+        },
+        {
+          "from": "pool1",
+          "to": "conv2"
+        },
+        {
+          "from": "conv2",
+          "to": "pool2"
+        },
+        {
+          "from": "pool2",
+          "to": "flat"
+        },
+        {
+          "from": "flat",
+          "to": "fc"
+        },
+        {
+          "from": "fc",
+          "to": "out"
+        }
       ]
     },
     {
@@ -57,27 +119,37 @@
         {
           "line": "model = SimpleCNN()",
           "highlight": "model",
-          "explanation": {"en": "Instantiate our CNN"}
+          "explanation": {
+            "en": "Instantiate our CNN"
+          }
         },
         {
           "line": "optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)",
           "highlight": "optimizer",
-          "explanation": {"en": "Adam optimizer with learning rate 0.001"}
+          "explanation": {
+            "en": "Adam optimizer with learning rate 0.001"
+          }
         },
         {
           "line": "outputs = model(images)",
           "highlight": "outputs",
-          "explanation": {"en": "Forward pass: images through the CNN"}
+          "explanation": {
+            "en": "Forward pass: images through the CNN"
+          }
         },
         {
           "line": "loss = criterion(outputs, labels)",
           "highlight": "loss",
-          "explanation": {"en": "Cross-entropy loss against true labels"}
+          "explanation": {
+            "en": "Cross-entropy loss against true labels"
+          }
         },
         {
           "line": "loss.backward(); optimizer.step()",
           "highlight": "backward",
-          "explanation": {"en": "Backprop gradients and update weights"},
+          "explanation": {
+            "en": "Backprop gradients and update weights"
+          },
           "output": "Epoch 1: loss=0.25, acc=97.5%"
         }
       ]
@@ -85,7 +157,11 @@
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["Epoch 1: loss=0.2504, acc=97.52%", "Epoch 5: loss=0.0501, acc=99.01%", "Epoch 10: loss=0.0198, acc=99.21%"]
+      "output": [
+        "Epoch 1: loss=0.2504, acc=97.52%",
+        "Epoch 5: loss=0.0501, acc=99.01%",
+        "Epoch 10: loss=0.0198, acc=99.21%"
+      ]
     }
   ],
   "practice_challenges": [
@@ -95,13 +171,38 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Conv2d params = (kernel_size^2 * in_channels + 1) * out_channels"},
-        {"en": "Conv1: (3^2 * 1 + 1) * 32 = 320"},
-        {"en": "Conv2: (3^2 * 32 + 1) * 64 = 18496"}
+        {
+          "en": "Conv2d params = (kernel_size^2 * in_channels + 1) * out_channels"
+        },
+        {
+          "en": "Conv1: (3^2 * 1 + 1) * 32 = 320"
+        },
+        {
+          "en": "Conv2: (3^2 * 32 + 1) * 64 = 18496"
+        }
       ],
       "test_code": "assert count_conv_params(1, 32, 3) == 320, f'Conv1 params: {count_conv_params(1,32,3)}'\nassert count_conv_params(32, 64, 3) == 18496, f'Conv2 params: {count_conv_params(32,64,3)}'\ntotal_conv = count_conv_params(1, 32, 3) + count_conv_params(32, 64, 3)\nassert total_conv == 18816, 'Total conv params'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "image_classification",
+      "transfer_learning"
+    ],
+    "concepts_required": [
+      "cnn_architectures",
+      "pytorch_training"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [
+      "medical imaging",
+      "autonomous driving"
+    ],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

@@ -34,7 +34,14 @@
       "type": "ConceptMap",
       "id": "concept_overview",
       "nodes": [
-        { "label": "Variable", "children": ["Name (label)", "Value (contents)", "Type (auto)"] }
+        {
+          "label": "Variable",
+          "children": [
+            "Name (label)",
+            "Value (contents)",
+            "Type (auto)"
+          ]
+        }
       ],
       "duration_ms": 3000
     },
@@ -42,10 +49,38 @@
       "type": "CodeStepper",
       "id": "code_intro",
       "steps": [
-        { "line": "name = 'PyMaster'", "highlight": "name", "explanation": { "en": "Create a variable called name and store a string", "ta": "name என்ற மாறியை உருவாக்கி ஒரு சரத்தைச் சேமிக்கவும்" } },
-        { "line": "age = 25", "highlight": "age", "explanation": { "en": "Create a variable called age holding an integer", "ta": "age என்ற மாறியை உருவாக்கி ஒரு முழு எண்ணைச் சேமிக்கவும்" } },
-        { "line": "pi = 3.14", "highlight": "pi", "explanation": { "en": "Create a variable called pi holding a float", "ta": "pi என்ற மாறியை உருவாக்கி ஒரு தசம எண்ணைச் சேமிக்கவும்" } },
-        { "line": "print(f'Hello, {name}! Age: {age}, Pi: {pi}')", "highlight": "print", "explanation": { "en": "Use an f-string to display all three values", "ta": "f-string பயன்படுத்தி மூன்று மதிப்புகளையும் காட்டுங்கள்" } }
+        {
+          "line": "name = 'PyMaster'",
+          "highlight": "name",
+          "explanation": {
+            "en": "Create a variable called name and store a string",
+            "ta": "name என்ற மாறியை உருவாக்கி ஒரு சரத்தைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "age = 25",
+          "highlight": "age",
+          "explanation": {
+            "en": "Create a variable called age holding an integer",
+            "ta": "age என்ற மாறியை உருவாக்கி ஒரு முழு எண்ணைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "pi = 3.14",
+          "highlight": "pi",
+          "explanation": {
+            "en": "Create a variable called pi holding a float",
+            "ta": "pi என்ற மாறியை உருவாக்கி ஒரு தசம எண்ணைச் சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "print(f'Hello, {name}! Age: {age}, Pi: {pi}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Use an f-string to display all three values",
+            "ta": "f-string பயன்படுத்தி மூன்று மதிப்புகளையும் காட்டுங்கள்"
+          }
+        }
       ]
     },
     {
@@ -75,15 +110,32 @@
     {
       "type": "Terminal",
       "id": "output_display",
-      "output": ["Hello, PyMaster! Age: 25, Pi: 3.14"]
+      "output": [
+        "Hello, PyMaster! Age: 25, Pi: 3.14"
+      ]
     },
     {
       "type": "MemoryStack",
       "id": "memory_view",
       "slots": [
-        { "name": "name", "value": "'PyMaster'", "type": "str", "address": "0x01" },
-        { "name": "age", "value": "25", "type": "int", "address": "0x02" },
-        { "name": "pi", "value": "3.14", "type": "float", "address": "0x03" }
+        {
+          "name": "name",
+          "value": "'PyMaster'",
+          "type": "str",
+          "address": "0x01"
+        },
+        {
+          "name": "age",
+          "value": "25",
+          "type": "int",
+          "address": "0x02"
+        },
+        {
+          "name": "pi",
+          "value": "3.14",
+          "type": "float",
+          "address": "0x03"
+        }
       ]
     },
     {
@@ -96,7 +148,10 @@
   "content_sections": [
     {
       "type": "story",
-      "title": { "en": "The Story", "ta": "கதை" },
+      "title": {
+        "en": "The Story",
+        "ta": "கதை"
+      },
       "body": {
         "en": "Welcome to the PyMasters Warehouse! Imagine rows upon rows of shelves, each holding a labeled box. You are the warehouse manager. Your job is to create boxes, label them, and put things inside. In the programming world, these boxes are called variables. The label on each box is the variable name, and the contents inside are the value. Today you will learn to create three types of boxes: one for words (strings), one for whole numbers (integers), and one for decimal numbers (floats).",
         "ta": "PyMasters கிடங்கிற்கு வரவேற்கிறோம்! வரிசையாக அலமாரிகள் நிறைந்த ஒரு பெரிய இடத்தை கற்பனை செய்யுங்கள் — ஒவ்வொன்றிலும் பெயரிடப்பட்ட பெட்டிகள் உள்ளன. நீங்கள் கிடங்கின் மேலாளர். பெட்டிகளை உருவாக்குவதும், பெயரிடுவதும், உள்ளே பொருட்களை வைப்பதும் உங்கள் வேலை. நிரலாக்க உலகில், இந்தப் பெட்டிகளை மாறிகள் என்கிறோம். ஒவ்வொரு பெட்டியின் பெயரே மாறியின் பெயர், உள்ளே இருப்பது மதிப்பு. இன்று மூன்று வகைப் பெட்டிகளை உருவாக்கக் கற்றுக்கொள்வீர்கள்: சொற்களுக்கு (strings), முழு எண்களுக்கு (integers), தசம எண்களுக்கு (floats)."
@@ -105,7 +160,10 @@
     },
     {
       "type": "concept",
-      "title": { "en": "How Variables Work", "ta": "மாறிகள் எவ்வாறு வேலை செய்கின்றன" },
+      "title": {
+        "en": "How Variables Work",
+        "ta": "மாறிகள் எவ்வாறு வேலை செய்கின்றன"
+      },
       "body": {
         "en": "A variable is created the moment you assign a value to it using the `=` operator. Python does not need you to declare the type — it figures it out automatically. Strings use quotes (`'hello'` or `\"hello\"`), integers are plain numbers (`42`), and floats have a decimal point (`3.14`). Variable names must start with a letter or underscore, can contain letters, digits, and underscores, and are case-sensitive (`Name` and `name` are different). You can reassign a variable at any time — the old value is simply replaced.",
         "ta": "`=` ஆபரேட்டரைப் பயன்படுத்தி ஒரு மதிப்பை ஒதுக்கும்போது மாறி உருவாகிறது. Python-ல் வகையை அறிவிக்க வேண்டியதில்லை — அது தானாகவே கண்டுபிடிக்கும். சரங்கள் மேற்கோள் குறிகளுக்குள் இருக்கும் (`'hello'` அல்லது `\"hello\"`), முழு எண்கள் வெறும் எண்கள் (`42`), தசம எண்களில் புள்ளி இருக்கும் (`3.14`). மாறிப் பெயர்கள் எழுத்து அல்லது அடிக்கோடுடன் தொடங்க வேண்டும், எழுத்துகள், இலக்கங்கள், அடிக்கோடுகளைக் கொண்டிருக்கலாம், மேலும் பெரிய/சிறிய எழுத்து வேறுபாடு முக்கியம் (`Name` மற்றும் `name` வேறுபட்டவை)."
@@ -119,9 +177,30 @@
           "type": "CodeStepper",
           "id": "guided_code",
           "steps": [
-            { "line": "name = 'PyMaster'", "highlight": "name", "explanation": { "en": "A box labeled 'name' appears with 'PyMaster' inside", "ta": "'name' என்ற பெட்டி தோன்றுகிறது, உள்ளே 'PyMaster' உள்ளது" } },
-            { "line": "age = 25", "highlight": "age", "explanation": { "en": "A box labeled 'age' appears with 25 inside", "ta": "'age' என்ற பெட்டி தோன்றுகிறது, உள்ளே 25 உள்ளது" } },
-            { "line": "pi = 3.14", "highlight": "pi", "explanation": { "en": "A box labeled 'pi' appears with 3.14 inside", "ta": "'pi' என்ற பெட்டி தோன்றுகிறது, உள்ளே 3.14 உள்ளது" } }
+            {
+              "line": "name = 'PyMaster'",
+              "highlight": "name",
+              "explanation": {
+                "en": "A box labeled 'name' appears with 'PyMaster' inside",
+                "ta": "'name' என்ற பெட்டி தோன்றுகிறது, உள்ளே 'PyMaster' உள்ளது"
+              }
+            },
+            {
+              "line": "age = 25",
+              "highlight": "age",
+              "explanation": {
+                "en": "A box labeled 'age' appears with 25 inside",
+                "ta": "'age' என்ற பெட்டி தோன்றுகிறது, உள்ளே 25 உள்ளது"
+              }
+            },
+            {
+              "line": "pi = 3.14",
+              "highlight": "pi",
+              "explanation": {
+                "en": "A box labeled 'pi' appears with 3.14 inside",
+                "ta": "'pi' என்ற பெட்டி தோன்றுகிறது, உள்ளே 3.14 உள்ளது"
+              }
+            }
           ]
         },
         {
@@ -227,8 +306,18 @@
         "ta": "Python-ல் 3.14-ன் தரவு வகை என்ன?"
       },
       "options": {
-        "en": ["int", "str", "float", "bool"],
-        "ta": ["int", "str", "float", "bool"]
+        "en": [
+          "int",
+          "str",
+          "float",
+          "bool"
+        ],
+        "ta": [
+          "int",
+          "str",
+          "float",
+          "bool"
+        ]
       },
       "correct": 2
     },
@@ -238,8 +327,18 @@
         "ta": "பின்வருவனவற்றில் சரியான Python மாறிப் பெயர் எது?"
       },
       "options": {
-        "en": ["2fast", "my-variable", "my_variable", "class"],
-        "ta": ["2fast", "my-variable", "my_variable", "class"]
+        "en": [
+          "2fast",
+          "my-variable",
+          "my_variable",
+          "class"
+        ],
+        "ta": [
+          "2fast",
+          "my-variable",
+          "my_variable",
+          "class"
+        ]
       },
       "correct": 2
     },
@@ -249,8 +348,18 @@
         "ta": "`x = 5` என்று எழுதிவிட்டு பிறகு `x = 10` என்று எழுதினால் என்ன நடக்கும்?"
       },
       "options": {
-        "en": ["An error occurs", "x holds both 5 and 10", "x holds 10 (old value replaced)", "x holds 5 (second assignment ignored)"],
-        "ta": ["பிழை ஏற்படும்", "x-ல் 5 மற்றும் 10 இரண்டும் இருக்கும்", "x-ல் 10 இருக்கும் (பழைய மதிப்பு மாற்றப்படும்)", "x-ல் 5 இருக்கும் (இரண்டாவது ஒதுக்கீடு புறக்கணிக்கப்படும்)"]
+        "en": [
+          "An error occurs",
+          "x holds both 5 and 10",
+          "x holds 10 (old value replaced)",
+          "x holds 5 (second assignment ignored)"
+        ],
+        "ta": [
+          "பிழை ஏற்படும்",
+          "x-ல் 5 மற்றும் 10 இரண்டும் இருக்கும்",
+          "x-ல் 10 இருக்கும் (பழைய மதிப்பு மாற்றப்படும்)",
+          "x-ல் 5 இருக்கும் (இரண்டாவது ஒதுக்கீடு புறக்கணிக்கப்படும்)"
+        ]
       },
       "correct": 2
     },
@@ -260,8 +369,18 @@
         "ta": "`type('hello')` என்ன திருப்பி அனுப்பும்?"
       },
       "options": {
-        "en": ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'list'>"],
-        "ta": ["<class 'int'>", "<class 'str'>", "<class 'float'>", "<class 'list'>"]
+        "en": [
+          "<class 'int'>",
+          "<class 'str'>",
+          "<class 'float'>",
+          "<class 'list'>"
+        ],
+        "ta": [
+          "<class 'int'>",
+          "<class 'str'>",
+          "<class 'float'>",
+          "<class 'list'>"
+        ]
       },
       "correct": 1
     }
@@ -299,5 +418,17 @@
         }
       ]
     }
-  ]
+  ],
+  "tags": {
+    "concepts_taught": [
+      "variables"
+    ],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

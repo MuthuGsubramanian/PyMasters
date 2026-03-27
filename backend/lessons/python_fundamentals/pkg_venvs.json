@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "packaging",
   "order": 2,
-  "title": { "en": "Virtual Environments: The Isolated Lab" },
-  "description": { "en": "Master virtual environments, pip, and requirements.txt — keep project dependencies isolated and reproducible across machines." },
+  "title": {
+    "en": "Virtual Environments: The Isolated Lab"
+  },
+  "description": {
+    "en": "Master virtual environments, pip, and requirements.txt — keep project dependencies isolated and reproducible across machines."
+  },
   "xp_reward": 50,
   "next_unlock": null,
   "story_variants": {
     "en": "## The Isolated Lab\n\nA **chemistry lab** keeps experiments isolated — you wouldn't want chemicals from Experiment A contaminating Experiment B. Each project gets its own contained workspace.\n\nPython **virtual environments** do the same for dependencies.\n\n### Why Virtual Environments?\n\n| Problem | Solution |\n|---------|----------|\n| Project A needs Django 3.2 | separate venv for A |\n| Project B needs Django 4.2 | separate venv for B |\n| \"Works on my machine\" | requirements.txt |\n\n### Creating and Using a venv\n\n```bash\npython -m venv venv          # create\nsource venv/bin/activate     # activate (Unix)\nvenv\\Scripts\\activate        # activate (Windows)\npip install requests         # install package\npip freeze > requirements.txt  # save deps\npip install -r requirements.txt  # restore on new machine\ndeactivate                   # leave venv\n```\n\n### pip Commands\n\n| Command | Action |\n|---------|--------|\n| `pip install pkg` | install latest |\n| `pip install pkg==1.2.3` | pin version |\n| `pip list` | show installed |\n| `pip show pkg` | info about pkg |\n| `pip uninstall pkg` | remove |\n\n> **Always** commit `requirements.txt` (or `pyproject.toml`) to version control. **Never** commit the `venv/` folder itself — it's machine-specific and huge."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -30,30 +39,65 @@
         "(myproject_env) $ pip freeze > requirements.txt"
       ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Write the terminal commands (as a string) to create a venv called 'env', activate it on Linux/Mac, and install 'pytest'." },
+      "instruction": {
+        "en": "Write the terminal commands (as a string) to create a venv called 'env', activate it on Linux/Mac, and install 'pytest'."
+      },
       "expected_output": "correct venv workflow",
       "hints": [
-        { "en": "python -m venv env" },
-        { "en": "source env/bin/activate" },
-        { "en": "pip install pytest" }
+        {
+          "en": "python -m venv env"
+        },
+        {
+          "en": "source env/bin/activate"
+        },
+        {
+          "en": "pip install pytest"
+        }
       ],
       "test_code": "steps = [\n    'python -m venv env',\n    'source env/bin/activate',\n    'pip install pytest'\n]\nassert 'python -m venv env' in steps\nassert any('activate' in s for s in steps)\nassert any('pytest' in s for s in steps)"
     },
     {
-      "instruction": { "en": "Given a requirements.txt content string, parse it into a list of package names (ignore version pins)." },
+      "instruction": {
+        "en": "Given a requirements.txt content string, parse it into a list of package names (ignore version pins)."
+      },
       "expected_output": "['requests', 'flask', 'pytest']",
       "hints": [
-        { "en": "Split on '==' and take the first part" },
-        { "en": "Strip whitespace from each line" },
-        { "en": "Filter out empty lines" }
+        {
+          "en": "Split on '==' and take the first part"
+        },
+        {
+          "en": "Strip whitespace from each line"
+        },
+        {
+          "en": "Filter out empty lines"
+        }
       ],
       "test_code": "req_txt = 'requests==2.31.0\\nflask==3.0.0\\npytest==7.4.0\\n'\npkgs = [line.split('==')[0].strip() for line in req_txt.strip().splitlines()]\nassert pkgs == ['requests', 'flask', 'pytest']"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "virtual_envs"
+    ],
+    "concepts_required": [
+      "modules_imports"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

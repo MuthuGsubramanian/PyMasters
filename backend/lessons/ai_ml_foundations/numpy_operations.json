@@ -29,29 +29,39 @@
         {
           "line": "a = np.array([1, 2, 3, 4])",
           "highlight": "np.array",
-          "explanation": { "en": "Create a simple integer array" }
+          "explanation": {
+            "en": "Create a simple integer array"
+          }
         },
         {
           "line": "b = np.array([10, 20, 30, 40])",
           "highlight": "np.array",
-          "explanation": { "en": "Create a second array of the same shape" }
+          "explanation": {
+            "en": "Create a second array of the same shape"
+          }
         },
         {
           "line": "print(a + b)",
           "highlight": "+",
-          "explanation": { "en": "Add each corresponding pair of elements" },
+          "explanation": {
+            "en": "Add each corresponding pair of elements"
+          },
           "output": "[11 22 33 44]"
         },
         {
           "line": "print(a ** 2)",
           "highlight": "**",
-          "explanation": { "en": "Square every element in a" },
+          "explanation": {
+            "en": "Square every element in a"
+          },
           "output": "[ 1  4  9 16]"
         },
         {
           "line": "print(m.sum(axis=0))",
           "highlight": "axis=0",
-          "explanation": { "en": "Sum down each column" },
+          "explanation": {
+            "en": "Sum down each column"
+          },
           "output": "[5 7 9]"
         }
       ]
@@ -60,7 +70,18 @@
       "type": "DataStructure",
       "id": "matrix_agg",
       "structure_type": "matrix",
-      "data": [[1, 2, 3], [4, 5, 6]],
+      "data": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
       "highlight_color": "#4f8ef7"
     },
     {
@@ -80,7 +101,13 @@
     {
       "type": "TerminalOutput",
       "id": "agg_output",
-      "output": ["sum → 21", "mean → 3.5", "min → 1", "max → 6", "std → 1.708..."]
+      "output": [
+        "sum → 21",
+        "mean → 3.5",
+        "min → 1",
+        "max → 6",
+        "std → 1.708..."
+      ]
     }
   ],
   "practice_challenges": [
@@ -89,8 +116,12 @@
         "en": "Create a 2-D NumPy array called `scores` with shape (3, 4) filled with integers of your choice. Compute `row_means` as the mean of each row."
       },
       "hints": [
-        { "en": "Use np.array([...]) with nested lists to create a 3x4 matrix" },
-        { "en": "row_means = scores.mean(axis=1) gives a mean per row" }
+        {
+          "en": "Use np.array([...]) with nested lists to create a 3x4 matrix"
+        },
+        {
+          "en": "row_means = scores.mean(axis=1) gives a mean per row"
+        }
       ],
       "test_code": "import numpy as np\nassert isinstance(scores, np.ndarray), 'scores must be a numpy array'\nassert scores.shape == (3, 4), 'scores must be shape (3, 4)'\nassert isinstance(row_means, np.ndarray), 'row_means must be a numpy array'\nassert row_means.shape == (3,), 'row_means must have 3 values (one per row)'"
     },
@@ -99,12 +130,30 @@
         "en": "Given `arr = np.array([-3, -1, 0, 2, 5])`, create `abs_arr` using np.abs and `squared` by squaring arr."
       },
       "hints": [
-        { "en": "abs_arr = np.abs(arr)" },
-        { "en": "squared = arr ** 2" }
+        {
+          "en": "abs_arr = np.abs(arr)"
+        },
+        {
+          "en": "squared = arr ** 2"
+        }
       ],
       "test_code": "import numpy as np\narr = np.array([-3, -1, 0, 2, 5])\nassert np.array_equal(abs_arr, np.abs(arr)), 'abs_arr must be the absolute values'\nassert np.array_equal(squared, arr**2), 'squared must be arr squared'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "numpy_basics"
+    ],
+    "concepts_required": [
+      "numpy_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

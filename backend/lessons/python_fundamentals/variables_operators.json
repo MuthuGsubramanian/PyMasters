@@ -148,9 +148,15 @@
       },
       "expected_output": "153.93791\nTrue",
       "hints": [
-        { "en": "Use ** for exponentiation: radius ** 2 squares the radius" },
-        { "en": "Multiply by 3.14159 to get the area of the circle" },
-        { "en": "Use > to compare: area > 100 returns True or False" }
+        {
+          "en": "Use ** for exponentiation: radius ** 2 squares the radius"
+        },
+        {
+          "en": "Multiply by 3.14159 to get the area of the circle"
+        },
+        {
+          "en": "Use > to compare: area > 100 returns True or False"
+        }
       ],
       "test_code": "radius = 7\narea = 3.14159 * radius ** 2\nassert abs(area - 153.93791) < 0.0001, f'Expected ~153.93791 but got {area}'\nassert area > 100, 'Area should be greater than 100'"
     },
@@ -160,13 +166,34 @@
       },
       "expected_output": "20\nTrue",
       "hints": [
-        { "en": "x -= 5 is shorthand for x = x - 5" },
-        { "en": "x *= 2 is shorthand for x = x * 2" },
-        { "en": "x % 2 == 0 returns True if x has no remainder when divided by 2 (even number)" }
+        {
+          "en": "x -= 5 is shorthand for x = x - 5"
+        },
+        {
+          "en": "x *= 2 is shorthand for x = x * 2"
+        },
+        {
+          "en": "x % 2 == 0 returns True if x has no remainder when divided by 2 (even number)"
+        }
       ],
       "test_code": "x = 15\nx -= 5\nx *= 2\nassert x == 20, f'Expected x to be 20 but got {x}'\nassert x % 2 == 0, 'x should be even'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "operators"
+    ],
+    "concepts_required": [
+      "variables",
+      "data_types"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

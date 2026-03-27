@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "advanced",
   "order": 1,
-  "title": { "en": "Decorators: The Gift Wrapper" },
-  "description": { "en": "Learn to write decorators that wrap functions with extra behaviour — logging, timing, caching — without changing the original code." },
+  "title": {
+    "en": "Decorators: The Gift Wrapper"
+  },
+  "description": {
+    "en": "Learn to write decorators that wrap functions with extra behaviour — logging, timing, caching — without changing the original code."
+  },
   "xp_reward": 50,
   "next_unlock": "adv_generators",
   "story_variants": {
     "en": "## The Gift Wrapper\n\nA **gift wrapper** takes any present and wraps it — adding a bow, paper, and ribbon — without changing what's inside. The gift remains the same; the presentation is enhanced.\n\nPython **decorators** wrap functions: add logging, timing, authentication — without touching the original function.\n\n### How Decorators Work\n```python\n@my_decorator\ndef my_function():\n    ...\n# Equivalent to:\nmy_function = my_decorator(my_function)\n```\n\n### Anatomy of a Decorator\n\n| Part | Role |\n|------|------|\n| outer function | takes function as argument |\n| `wrapper` inner function | the wrapping logic |\n| `*args, **kwargs` | pass through any arguments |\n| `functools.wraps` | preserve original function metadata |\n\n> **Always use `functools.wraps(func)`** on your wrapper — it preserves `__name__`, `__doc__`, and other metadata that tools and debuggers rely on.\n\n### Common Use Cases\n- `@timer` — measure execution time\n- `@retry` — retry on failure\n- `@login_required` — check auth before executing\n- `@cache` / `@lru_cache` — memoize results"
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -24,23 +33,60 @@
       "type": "ConceptMap",
       "id": "decorator_flow",
       "nodes": [
-        { "label": "@timer wraps slow_sum", "children": ["start timer", "call original slow_sum()", "stop timer", "return result"] }
+        {
+          "label": "@timer wraps slow_sum",
+          "children": [
+            "start timer",
+            "call original slow_sum()",
+            "stop timer",
+            "return result"
+          ]
+        }
       ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Write a decorator 'logger' that prints 'Calling: <function_name>' before calling the function and 'Done: <function_name>' after." },
+      "instruction": {
+        "en": "Write a decorator 'logger' that prints 'Calling: <function_name>' before calling the function and 'Done: <function_name>' after."
+      },
       "expected_output": "Calling: greet\nHello!\nDone: greet",
       "hints": [
-        { "en": "def logger(func): def wrapper(*args, **kwargs): ..." },
-        { "en": "print(f'Calling: {func.__name__}') before the call" },
-        { "en": "Don't forget @functools.wraps(func) on wrapper" }
+        {
+          "en": "def logger(func): def wrapper(*args, **kwargs): ..."
+        },
+        {
+          "en": "print(f'Calling: {func.__name__}') before the call"
+        },
+        {
+          "en": "Don't forget @functools.wraps(func) on wrapper"
+        }
       ],
       "test_code": "import functools\nlog = []\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        log.append(f'Calling: {func.__name__}')\n        result = func(*args, **kwargs)\n        log.append(f'Done: {func.__name__}')\n        return result\n    return wrapper\n@logger\ndef add(a, b):\n    return a + b\nadd(2, 3)\nassert log == ['Calling: add', 'Done: add']"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "decorators",
+      "decorator_patterns"
+    ],
+    "concepts_required": [
+      "closures",
+      "functions_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

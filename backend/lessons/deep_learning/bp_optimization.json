@@ -26,27 +26,77 @@
       "type": "ComparisonPanel",
       "id": "optimizer_panel",
       "items": [
-        {"label": "SGD", "value": "w -= η·g", "color": "#4f8ef7", "note": "Simple, no memory"},
-        {"label": "Momentum", "value": "v = βv - ηg; w += v", "color": "#f7914f", "note": "Smooth, faster"},
-        {"label": "Adam", "value": "Adaptive + Momentum", "color": "#4fc97a", "note": "Best of both worlds"}
+        {
+          "label": "SGD",
+          "value": "w -= η·g",
+          "color": "#4f8ef7",
+          "note": "Simple, no memory"
+        },
+        {
+          "label": "Momentum",
+          "value": "v = βv - ηg; w += v",
+          "color": "#f7914f",
+          "note": "Smooth, faster"
+        },
+        {
+          "label": "Adam",
+          "value": "Adaptive + Momentum",
+          "color": "#4fc97a",
+          "note": "Best of both worlds"
+        }
       ]
     },
     {
       "type": "ConceptMap",
       "id": "adam_map",
       "nodes": [
-        {"id": "grad", "label": "Gradient g", "color": "#e74c3c"},
-        {"id": "m1", "label": "1st Moment (mean)", "color": "#f7914f"},
-        {"id": "m2", "label": "2nd Moment (variance)", "color": "#4f8ef7"},
-        {"id": "bc", "label": "Bias Correction", "color": "#a44ff7"},
-        {"id": "update", "label": "Weight Update", "color": "#4fc97a"}
+        {
+          "id": "grad",
+          "label": "Gradient g",
+          "color": "#e74c3c"
+        },
+        {
+          "id": "m1",
+          "label": "1st Moment (mean)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "m2",
+          "label": "2nd Moment (variance)",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "bc",
+          "label": "Bias Correction",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "update",
+          "label": "Weight Update",
+          "color": "#4fc97a"
+        }
       ],
       "edges": [
-        {"from": "grad", "to": "m1"},
-        {"from": "grad", "to": "m2"},
-        {"from": "m1", "to": "bc"},
-        {"from": "m2", "to": "bc"},
-        {"from": "bc", "to": "update"}
+        {
+          "from": "grad",
+          "to": "m1"
+        },
+        {
+          "from": "grad",
+          "to": "m2"
+        },
+        {
+          "from": "m1",
+          "to": "bc"
+        },
+        {
+          "from": "m2",
+          "to": "bc"
+        },
+        {
+          "from": "bc",
+          "to": "update"
+        }
       ]
     },
     {
@@ -56,27 +106,37 @@
         {
           "line": "m, v, t = 0.0, 0.0, 0",
           "highlight": "m, v, t",
-          "explanation": {"en": "Initialise moment estimates and time step"}
+          "explanation": {
+            "en": "Initialise moment estimates and time step"
+          }
         },
         {
           "line": "g = 2.0  # example gradient",
           "highlight": "g",
-          "explanation": {"en": "Gradient at this step"}
+          "explanation": {
+            "en": "Gradient at this step"
+          }
         },
         {
           "line": "m = 0.9 * m + 0.1 * g",
           "highlight": "m",
-          "explanation": {"en": "Update first moment (exponential moving average of gradient)"}
+          "explanation": {
+            "en": "Update first moment (exponential moving average of gradient)"
+          }
         },
         {
           "line": "v = 0.999 * v + 0.001 * g**2",
           "highlight": "v",
-          "explanation": {"en": "Update second moment (exponential moving average of squared gradient)"}
+          "explanation": {
+            "en": "Update second moment (exponential moving average of squared gradient)"
+          }
         },
         {
           "line": "w -= 0.001 * m_hat / (v_hat**0.5 + 1e-8)",
           "highlight": "w",
-          "explanation": {"en": "Adaptive update: large variance → small step"},
+          "explanation": {
+            "en": "Adaptive update: large variance → small step"
+          },
           "output": "w updated"
         }
       ]
@@ -84,12 +144,22 @@
     {
       "type": "FlowArrow",
       "id": "optim_flow",
-      "steps": ["Gradient g", "First Moment m", "Second Moment v", "Bias Correct", "Update w"]
+      "steps": [
+        "Gradient g",
+        "First Moment m",
+        "Second Moment v",
+        "Bias Correct",
+        "Update w"
+      ]
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["SGD:      convergence in ~500 steps", "Momentum: convergence in ~200 steps", "Adam:     convergence in ~100 steps"]
+      "output": [
+        "SGD:      convergence in ~500 steps",
+        "Momentum: convergence in ~200 steps",
+        "Adam:     convergence in ~100 steps"
+      ]
     }
   ],
   "practice_challenges": [
@@ -99,13 +169,34 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Momentum: v_new = beta*v + (1-beta)*g; w_new = w - lr * v_new"},
-        {"en": "Adam first moment: m = b1*m + (1-b1)*g"},
-        {"en": "Adam second moment: v = b2*v + (1-b2)*g**2"}
+        {
+          "en": "Momentum: v_new = beta*v + (1-beta)*g; w_new = w - lr * v_new"
+        },
+        {
+          "en": "Adam first moment: m = b1*m + (1-b1)*g"
+        },
+        {
+          "en": "Adam second moment: v = b2*v + (1-b2)*g**2"
+        }
       ],
       "test_code": "w0, g0, v0 = 5.0, 2.0, 0.0\nw1, v1 = sgd_with_momentum(w0, g0, v0)\nassert v1 == 0.9*0.0 + 0.1*2.0, 'velocity update wrong'\nassert abs(w1 - (5.0 - 0.01 * v1)) < 1e-9, 'weight update wrong'\n\nw2, m2, v2 = adam_step(5.0, 2.0, 0.0, 0.0, 1)\nassert m2 > 0, 'first moment must be positive after positive gradient'\nassert v2 > 0, 'second moment must be positive'\nassert w2 < 5.0, 'weight should decrease for positive gradient'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "gradient_descent_dl",
+      "regularization_dl"
+    ],
+    "concepts_required": [
+      "backpropagation"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

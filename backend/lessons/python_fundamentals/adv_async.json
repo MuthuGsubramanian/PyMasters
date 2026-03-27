@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "advanced",
   "order": 4,
-  "title": { "en": "Async/Await: The Multitasking Chef" },
-  "description": { "en": "Learn async/await and asyncio basics — how Python handles concurrent I/O without threads by switching tasks while waiting." },
+  "title": {
+    "en": "Async/Await: The Multitasking Chef"
+  },
+  "description": {
+    "en": "Learn async/await and asyncio basics — how Python handles concurrent I/O without threads by switching tasks while waiting."
+  },
   "xp_reward": 50,
   "next_unlock": "adv_threading",
   "story_variants": {
     "en": "## The Multitasking Chef\n\nA skilled chef doesn't stand idle while water boils — they **chop vegetables** while waiting, then come back to add pasta. Multiple tasks progress simultaneously, but only one hand moves at a time.\n\nPython's `async/await` works the same way: while one task **awaits** a slow operation (network, disk), another task runs.\n\n### Sync vs Async\n\n| Feature | Synchronous | Asynchronous |\n|---------|-------------|------------------|\n| Waiting | blocks everything | switches to other tasks |\n| Best for | CPU work | I/O-bound work |\n| Keyword | — | `async def`, `await` |\n\n### Key Concepts\n\n- `async def` — defines a coroutine function\n- `await` — pause here, let others run\n- `asyncio.run()` — start the event loop\n- `asyncio.gather()` — run coroutines concurrently\n\n> **When to use async:** Network requests, database queries, file I/O — anything where you spend time *waiting*. For CPU-heavy work, use `multiprocessing` instead.\n\n### Event Loop\nThe **event loop** is the chef's brain — it schedules tasks, detects when waits finish, and resumes coroutines at the right moment."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -23,34 +32,73 @@
     {
       "type": "FlowArrow",
       "id": "async_flow",
-      "label": { "en": "event loop switches between coroutines at each await" },
+      "label": {
+        "en": "event loop switches between coroutines at each await"
+      },
       "direction": "right",
       "branch": "concurrent"
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Write an async function 'greet_async(name)' that awaits asyncio.sleep(0) and then returns 'Hello, {name}'." },
+      "instruction": {
+        "en": "Write an async function 'greet_async(name)' that awaits asyncio.sleep(0) and then returns 'Hello, {name}'."
+      },
       "expected_output": "Hello, World",
       "hints": [
-        { "en": "async def greet_async(name):" },
-        { "en": "await asyncio.sleep(0)" },
-        { "en": "return f'Hello, {name}'" }
+        {
+          "en": "async def greet_async(name):"
+        },
+        {
+          "en": "await asyncio.sleep(0)"
+        },
+        {
+          "en": "return f'Hello, {name}'"
+        }
       ],
       "test_code": "import asyncio\nasync def greet_async(name):\n    await asyncio.sleep(0)\n    return f'Hello, {name}'\nresult = asyncio.run(greet_async('World'))\nassert result == 'Hello, World'"
     },
     {
-      "instruction": { "en": "Use asyncio.gather to run two coroutines concurrently: one returning 'A' after sleep(0), one returning 'B' after sleep(0)." },
+      "instruction": {
+        "en": "Use asyncio.gather to run two coroutines concurrently: one returning 'A' after sleep(0), one returning 'B' after sleep(0)."
+      },
       "expected_output": "['A', 'B']",
       "hints": [
-        { "en": "async def task_a(): await asyncio.sleep(0); return 'A'" },
-        { "en": "results = await asyncio.gather(task_a(), task_b())" },
-        { "en": "asyncio.run(main()) will give ['A', 'B']" }
+        {
+          "en": "async def task_a(): await asyncio.sleep(0); return 'A'"
+        },
+        {
+          "en": "results = await asyncio.gather(task_a(), task_b())"
+        },
+        {
+          "en": "asyncio.run(main()) will give ['A', 'B']"
+        }
       ],
       "test_code": "import asyncio\nasync def task_a():\n    await asyncio.sleep(0)\n    return 'A'\nasync def task_b():\n    await asyncio.sleep(0)\n    return 'B'\nasync def main():\n    return await asyncio.gather(task_a(), task_b())\nresult = asyncio.run(main())\nassert result == ['A', 'B']"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "async_basics",
+      "async_advanced"
+    ],
+    "concepts_required": [
+      "functions_basics",
+      "generators"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "control_flow",
   "order": 4,
-  "title": { "en": "Comprehensions: The Factory Conveyor Belt" },
-  "description": { "en": "Build lists, dicts, and sets in one expressive line using Python comprehensions — the conveyor belt of data transformation." },
+  "title": {
+    "en": "Comprehensions: The Factory Conveyor Belt"
+  },
+  "description": {
+    "en": "Build lists, dicts, and sets in one expressive line using Python comprehensions — the conveyor belt of data transformation."
+  },
   "xp_reward": 50,
   "next_unlock": "functions_basics",
   "story_variants": {
     "en": "## The Factory Conveyor Belt\n\nPicture a **factory conveyor belt**: raw parts go in one end, get processed, and finished products come out the other — all in a single, continuous flow.\n\nPython **comprehensions** are exactly that: a one-line factory for building collections.\n\n### List Comprehension\n```\n[expression for item in iterable if condition]\n```\n\n### Types of Comprehensions\n\n| Type | Syntax | Output |\n|------|--------|--------|\n| List | `[x*2 for x in range(5)]` | `[0,2,4,6,8]` |\n| Dict | `{k: v for k, v in pairs}` | `{...}` |\n| Set | `{x**2 for x in nums}` | `{...}` |\n\n> **Key insight:** A comprehension is syntactic sugar for a for loop that builds a collection. Choose readability — if the logic is complex, a regular loop is clearer.\n\n### When to Use\n- Transforming every item in a sequence\n- Filtering a collection with a condition\n- Building a lookup dictionary quickly\n- Removing duplicates with a set comprehension"
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -24,7 +33,13 @@
       "type": "DataStructure",
       "id": "list_visual",
       "structure": "list",
-      "items": [1, 4, 9, 16, 25],
+      "items": [
+        1,
+        4,
+        9,
+        16,
+        25
+      ],
       "label": "squares"
     },
     {
@@ -34,30 +49,69 @@
         "language": "python"
       }
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Use a list comprehension to create a list of cubes of numbers 1 to 6." },
+      "instruction": {
+        "en": "Use a list comprehension to create a list of cubes of numbers 1 to 6."
+      },
       "expected_output": "[1, 8, 27, 64, 125, 216]",
       "hints": [
-        { "en": "The expression is n**3" },
-        { "en": "Use range(1, 7) for numbers 1-6" },
-        { "en": "Syntax: [n**3 for n in range(1, 7)]" }
+        {
+          "en": "The expression is n**3"
+        },
+        {
+          "en": "Use range(1, 7) for numbers 1-6"
+        },
+        {
+          "en": "Syntax: [n**3 for n in range(1, 7)]"
+        }
       ],
       "test_code": "cubes = [n**3 for n in range(1, 7)]\nassert cubes == [1, 8, 27, 64, 125, 216]"
     },
     {
-      "instruction": { "en": "Use a dict comprehension to map each word to its length from the list ['cat', 'elephant', 'ox']." },
+      "instruction": {
+        "en": "Use a dict comprehension to map each word to its length from the list ['cat', 'elephant', 'ox']."
+      },
       "expected_output": "{'cat': 3, 'elephant': 8, 'ox': 2}",
       "hints": [
-        { "en": "Key is the word, value is len(word)" },
-        { "en": "Syntax: {w: len(w) for w in words}" },
-        { "en": "The list is ['cat', 'elephant', 'ox']" }
+        {
+          "en": "Key is the word, value is len(word)"
+        },
+        {
+          "en": "Syntax: {w: len(w) for w in words}"
+        },
+        {
+          "en": "The list is ['cat', 'elephant', 'ox']"
+        }
       ],
       "test_code": "words = ['cat', 'elephant', 'ox']\nd = {w: len(w) for w in words}\nassert d == {'cat': 3, 'elephant': 8, 'ox': 2}"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "list_comprehension",
+      "dict_comprehension",
+      "set_comprehension"
+    ],
+    "concepts_required": [
+      "lists",
+      "for_loops",
+      "dictionaries"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }
