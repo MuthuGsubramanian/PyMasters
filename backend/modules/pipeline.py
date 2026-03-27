@@ -155,24 +155,115 @@ def stage_2_narrative(job_id, outline, user_id):
 
 
 def stage_3_animation(job_id, outline, narrative):
-    """Stage 3: Select animation template and compose the animation_sequence."""
+    """Stage 3: Select animation template and generate visual flow animations via AI.
+
+    Uses the template as a scaffold, then calls Vaathiyaar to generate:
+    - ExecutionVisualizer data (code + executionSteps with variables per line)
+    - FlowDiagram data (nodes + edges + executionPath)
+    - LoopVisualizer data (if loop-related topic)
+    """
     _update_job_status(job_id, "stage_3_animation")
 
     topic = outline.get("module", outline.get("title", ""))
+    title = outline.get("title", topic)
     template_key = get_template_for_topic(topic)
     template = CONCEPT_TEMPLATES[template_key]
     base_sequence = template["sequence"]
+    visual_prompt = template.get("visual_flow_prompt", "")
+    story_en = narrative.get("en", "") if isinstance(narrative, dict) else str(narrative)
 
-    # Compose a richer animation sequence with ids and durations
+    # Build the base animation sequence with ids and durations
     animation_sequence = []
     for i, item in enumerate(base_sequence):
         step = dict(item)
         step["id"] = f"{item['type'].lower()}_{i + 1}"
         step["duration_ms"] = 3000 if item["type"] == "StoryCard" else 2500
-        # Remove placeholder props dict for cleaner output
         if "props" in step and step["props"] == {}:
             del step["props"]
         animation_sequence.append(step)
+
+    # Ask AI to generate visual flow data for ExecutionVisualizer, FlowDiagram, LoopVisualizer
+    ai_prompt = (
+        f"You are generating visual animation data for a PyMasters lesson titled: '{title}'\n"
+        f"Topic: {topic}\n"
+        f"Template type: {template_key}\n"
+        f"Story content (for context): {story_en[:500]}\n\n"
+        f"Specific instruction: {visual_prompt}\n\n"
+        "Generate a JSON object with these keys (include only the ones relevant to this topic):\n\n"
+        "1. 'execution_visualizer': {\n"
+        '   "code": "actual Python code (3-8 lines)",\n'
+        '   "executionSteps": [\n'
+        '     {"line": 1, "variables": {"x": 5}, "output": "", "description": "Assign x = 5"},\n'
+        '     ... (one step per line execution, including loop iterations)\n'
+        "   ]\n"
+        "}\n\n"
+        "2. 'flow_diagram': {\n"
+        '   "nodes": [{"id": "start", "label": "Start", "type": "start"}, ...],\n'
+        '   "edges": [{"from": "start", "to": "next", "label": ""}, ...],\n'
+        '   "executionPath": ["start", "next", ...],\n'
+        '   "variables": {"varName": [val_at_step0, val_at_step1, ...]}\n'
+        "}\n\n"
+        "3. 'loop_visualizer' (only if topic involves loops): {\n"
+        '   "loopType": "for" | "while" | "for_range",\n'
+        '   "variable": "i",\n'
+        '   "collection": ["item1", "item2"] (or null for for_range),\n'
+        '   "rangeStart": 0, "rangeEnd": 5, "rangeStep": 1 (for for_range),\n'
+        '   "code": "for i in range(5):\\n    print(i)",\n'
+        '   "iterations": [{"value": 0, "output": "0", "description": "First iteration"}, ...]\n'
+        "}\n\n"
+        "Rules:\n"
+        "- Use REAL, RUNNABLE Python code\n"
+        "- ExecutionVisualizer must have 5-15 executionSteps\n"
+        "- FlowDiagram must have 4-10 nodes\n"
+        "- Node types: start, end, process, decision, io\n"
+        "- Respond with ONLY a valid JSON object. No extra text."
+    )
+
+    try:
+        response = call_vaathiyaar(
+            user_message=ai_prompt,
+            lesson_context={"pipeline_stage": "animation", "outline": outline},
+            temperature=0.4,
+            max_tokens=2000,
+        )
+
+        raw = response.get("message", "")
+        visual_data = _extract_json(raw)
+
+        # Inject AI-generated visual flow data into the appropriate animation steps
+        if visual_data:
+            for step in animation_sequence:
+                stype = step["type"]
+
+                if stype == "ExecutionVisualizer" and "execution_visualizer" in visual_data:
+                    ev = visual_data["execution_visualizer"]
+                    step["code"] = ev.get("code", "")
+                    step["executionSteps"] = ev.get("executionSteps", [])
+                    step["speed"] = "normal"
+
+                elif stype == "FlowDiagram" and "flow_diagram" in visual_data:
+                    fd = visual_data["flow_diagram"]
+                    step["nodes"] = fd.get("nodes", [])
+                    step["edges"] = fd.get("edges", [])
+                    step["executionPath"] = fd.get("executionPath", [])
+                    step["variables"] = fd.get("variables", {})
+                    step["speed"] = "normal"
+
+                elif stype == "LoopVisualizer" and "loop_visualizer" in visual_data:
+                    lv = visual_data["loop_visualizer"]
+                    step["loopType"] = lv.get("loopType", "for")
+                    step["variable"] = lv.get("variable", "i")
+                    step["collection"] = lv.get("collection")
+                    step["rangeStart"] = lv.get("rangeStart", 0)
+                    step["rangeEnd"] = lv.get("rangeEnd", 5)
+                    step["rangeStep"] = lv.get("rangeStep", 1)
+                    step["code"] = lv.get("code", "")
+                    step["iterations"] = lv.get("iterations", [])
+                    step["speed"] = "normal"
+
+    except Exception as e:
+        print(f"Stage 3 AI visual generation failed: {e}")
+        # Continue with base template — visual components will use empty props as fallback
 
     result = {
         "template_key": template_key,
