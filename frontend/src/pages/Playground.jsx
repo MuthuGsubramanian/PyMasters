@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
 import api from '../api';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
-import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check } from 'lucide-react';
+import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2 } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enhanced thinking bubble with waveform
@@ -34,13 +34,6 @@ function ThinkingBubble() {
                     <span className="text-xs text-purple-400 ml-1">Vaathiyaar is thinking...</span>
                 </div>
             </div>
-            <style>{`
-                @keyframes waveform {
-                    0% { height: 4px; opacity: 0.4; }
-                    50% { height: 16px; opacity: 1; }
-                    100% { height: 4px; opacity: 0.4; }
-                }
-            `}</style>
         </div>
     );
 }
@@ -59,7 +52,8 @@ function CopyButton({ text }) {
     return (
         <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-400 hover:text-slate-200 transition-all duration-200"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-400 hover:text-slate-200 transition-all duration-200"
+            title="Copy code"
         >
             {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
         </button>
@@ -67,41 +61,115 @@ function CopyButton({ text }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Markdown components with copy-able code blocks
+// "Copy to Terminal" button for injecting code into the editor
 // ──────────────────────────────────────────────────────────────────────────────
-const markdownComponents = {
-    h2: ({children}) => <h2 className="text-base font-bold text-slate-900 mt-3 mb-1">{children}</h2>,
-    h3: ({children}) => <h3 className="text-sm font-bold text-slate-800 mt-2 mb-1">{children}</h3>,
-    p: ({children}) => <p className="text-sm text-slate-700 mb-2 leading-relaxed">{children}</p>,
-    ul: ({children}) => <ul className="list-disc list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ul>,
-    ol: ({children}) => <ol className="list-decimal list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ol>,
-    code: ({children, className}) => className
-        ? (
-            <div className="relative group my-3">
-                <pre className="bg-[#0d1117] text-slate-300 p-4 rounded-xl text-xs font-mono overflow-x-auto border border-slate-700/50 shadow-lg">
-                    <code>{children}</code>
-                </pre>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <CopyButton text={String(children)} />
-                </div>
+function CopyToTerminalButton({ text, onInject }) {
+    const [injected, setInjected] = useState(false);
+    const handleInject = () => {
+        onInject(text);
+        setInjected(true);
+        setTimeout(() => setInjected(false), 2000);
+    };
+    return (
+        <button
+            onClick={handleInject}
+            className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-all duration-200 flex items-center gap-1"
+            title="Copy to Terminal"
+        >
+            {injected ? <Check size={12} /> : <><Terminal size={12} /><span className="text-[10px] font-medium">Terminal</span></>}
+        </button>
+    );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// "Apply Fix" button — replaces editor content with the suggested code
+// ──────────────────────────────────────────────────────────────────────────────
+function ApplyFixButton({ text, onInject }) {
+    const [applied, setApplied] = useState(false);
+    const handleApply = () => {
+        onInject(text);
+        setApplied(true);
+        setTimeout(() => setApplied(false), 2000);
+    };
+    return (
+        <button
+            onClick={handleApply}
+            className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 hover:text-amber-300 transition-all duration-200 flex items-center gap-1"
+            title="Apply Fix to Terminal"
+        >
+            {applied ? <Check size={12} /> : <><ArrowRight size={12} /><span className="text-[10px] font-medium">Apply Fix</span></>}
+        </button>
+    );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Build markdown components with code injection support
+// ──────────────────────────────────────────────────────────────────────────────
+function buildMarkdownComponents(onInjectCode, hasExistingCode) {
+    return {
+        h2: ({children}) => <h2 className="text-base font-bold text-slate-900 mt-3 mb-1">{children}</h2>,
+        h3: ({children}) => <h3 className="text-sm font-bold text-slate-800 mt-2 mb-1">{children}</h3>,
+        p: ({children}) => <p className="text-sm text-slate-700 mb-2 leading-relaxed">{children}</p>,
+        ul: ({children}) => <ul className="list-disc list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ul>,
+        ol: ({children}) => <ol className="list-decimal list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ol>,
+        code: ({children, className}) => {
+            const isPythonBlock = className && (className.includes('python') || className.includes('language-python') || className.includes('language-py'));
+            const isCodeBlock = !!className;
+
+            if (isCodeBlock) {
+                const codeText = String(children).replace(/\n$/, '');
+                return (
+                    <div className="relative group my-3">
+                        <pre className="bg-[#0d1117] text-slate-300 p-4 rounded-xl text-xs font-mono overflow-x-auto border border-slate-700/50 shadow-lg">
+                            <code>{children}</code>
+                        </pre>
+                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <CopyButton text={codeText} />
+                            {isPythonBlock && (
+                                <>
+                                    <CopyToTerminalButton text={codeText} onInject={onInjectCode} />
+                                    {hasExistingCode && (
+                                        <ApplyFixButton text={codeText} onInject={onInjectCode} />
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+            return <code className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
+        },
+        table: ({children}) => (
+            <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 shadow-sm">
+                <table className="text-sm w-full">{children}</table>
             </div>
-        ) : <code className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
-    table: ({children}) => (
-        <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 shadow-sm">
-            <table className="text-sm w-full">{children}</table>
+        ),
+        thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
+        tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
+        tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+        th: ({children}) => (
+            <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
+        ),
+        td: ({children}) => (
+            <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
+        ),
+        strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
+    };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Line numbers component for the code editor
+// ──────────────────────────────────────────────────────────────────────────────
+function LineNumbers({ code }) {
+    const lineCount = Math.max(code.split('\n').length, 1);
+    return (
+        <div className="select-none text-right pr-3 pt-4 pb-4 text-slate-600 text-xs font-mono leading-[1.625rem] min-w-[3rem] border-r border-slate-700/50">
+            {Array.from({ length: lineCount }, (_, i) => (
+                <div key={i + 1}>{i + 1}</div>
+            ))}
         </div>
-    ),
-    thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
-    tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
-    tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
-    th: ({children}) => (
-        <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
-    ),
-    td: ({children}) => (
-        <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
-    ),
-    strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
-};
+    );
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Main Playground page
@@ -109,7 +177,9 @@ const markdownComponents = {
 export default function Playground() {
     const { user } = useAuth();
     const chatEndRef = useRef(null);
+    const editorRef = useRef(null);
 
+    // Chat state
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(null);
@@ -117,6 +187,11 @@ export default function Playground() {
     const [conversationId, setConversationId] = useState(null);
     const [conversations, setConversations] = useState([]);
     const [showSidebar, setShowSidebar] = useState(false);
+
+    // Code terminal state
+    const [code, setCode] = useState('# Write Python code here...\n\n');
+    const [output, setOutput] = useState('');
+    const [running, setRunning] = useState(false);
 
     useEffect(() => {
         if (user?.id) {
@@ -287,16 +362,84 @@ export default function Playground() {
         }
     };
 
+    // ── Code terminal actions ──────────────────────────────────────────────
+    const handleRunCode = async () => {
+        if (!code.trim() || running) return;
+        setRunning(true);
+        setOutput('>>> Running...\n');
+        try {
+            const res = await api.post('/classroom/evaluate', {
+                user_id: user?.id,
+                code: code,
+                expected_output: '',
+                topic: 'playground',
+            });
+            const result = res.data;
+            if (result.actual_output !== undefined && result.actual_output !== null) {
+                setOutput(String(result.actual_output));
+            } else if (result.error) {
+                setOutput(`Error:\n${result.error}`);
+            } else {
+                setOutput('(no output)');
+            }
+        } catch (err) {
+            setOutput(`Execution error: ${err.response?.data?.detail || err.message}`);
+        } finally {
+            setRunning(false);
+        }
+    };
+
+    const handleClearTerminal = () => {
+        setCode('# Write Python code here...\n\n');
+        setOutput('');
+    };
+
+    const handleSendToVaathiyaar = () => {
+        const codeContent = code.trim();
+        if (!codeContent) return;
+        const message = `Can you review this code?\n\`\`\`python\n${codeContent}\n\`\`\``;
+        handleSend(message);
+    };
+
+    const handleInjectCode = useCallback((newCode) => {
+        setCode(newCode);
+        if (editorRef.current) {
+            editorRef.current.focus();
+        }
+    }, []);
+
+    // Handle Tab key in editor
+    const handleEditorKeyDown = (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const { selectionStart, selectionEnd } = e.target;
+            const newCode = code.substring(0, selectionStart) + '    ' + code.substring(selectionEnd);
+            setCode(newCode);
+            // Restore cursor position after state update
+            requestAnimationFrame(() => {
+                if (editorRef.current) {
+                    editorRef.current.selectionStart = selectionStart + 4;
+                    editorRef.current.selectionEnd = selectionStart + 4;
+                }
+            });
+        }
+    };
+
     const remaining = credits?.remaining_prompts ?? 0;
     const total = credits?.total_prompts ?? 0;
     const remainingPct = total > 0 ? Math.min((remaining / total) * 100, 100) : 0;
     const exhausted = credits && remaining <= 0 && !creditsLoading;
 
+    const hasExistingCode = code.trim() !== '' && code.trim() !== '# Write Python code here...';
+
+    const mdComponents = buildMarkdownComponents(handleInjectCode, hasExistingCode);
+
     return (
-        <div className="min-h-screen pb-40 flex flex-col">
+        <div className="h-screen flex flex-col overflow-hidden">
             <VaathiyaarMessage />
-            {/* Header */}
-            <header className="space-y-4 mb-6">
+
+            {/* ── Header ────────────────────────────────────────────────────── */}
+            <header className="flex-shrink-0 px-6 pt-4 pb-3 space-y-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-400/20">
@@ -304,7 +447,7 @@ export default function Playground() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold font-display text-slate-900">Playground</h1>
-                            <p className="text-sm text-slate-500">Free-form chat with Vaathiyaar</p>
+                            <p className="text-xs text-slate-500">Chat with Vaathiyaar + Live Code Terminal</p>
                         </div>
                     </div>
 
@@ -354,7 +497,7 @@ export default function Playground() {
                 )}
             </header>
 
-            {/* Conversation History Sidebar */}
+            {/* ── Conversation History Sidebar ─────────────────────────────── */}
             <AnimatePresence>
                 {showSidebar && (
                     <motion.div
@@ -419,12 +562,12 @@ export default function Playground() {
                 )}
             </AnimatePresence>
 
-            {/* Exhausted banner */}
+            {/* ── Exhausted banner ─────────────────────────────────────────── */}
             {exhausted && (
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 mb-6 flex items-start gap-4"
+                    className="mx-6 rounded-2xl p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 mb-2 flex items-start gap-4 flex-shrink-0"
                 >
                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-lg select-none">
                         {'🔒'}
@@ -439,114 +582,225 @@ export default function Playground() {
                 </motion.div>
             )}
 
-            {/* Chat messages */}
-            <div className="flex-1 space-y-4 max-w-2xl mx-auto w-full px-4">
-                {messages.length === 0 && !loading && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center py-20"
-                    >
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-cyan-100 border border-purple-200/50 flex items-center justify-center text-4xl mx-auto mb-5 select-none shadow-lg shadow-purple-100/50">
-                            {'🧑‍🏫'}
+            {/* ── Main Content: 2-column layout ───────────────────────────── */}
+            <div className="flex-1 grid grid-cols-5 gap-4 px-6 pb-2 min-h-0 overflow-hidden">
+
+                {/* ── Left Panel: Vaathiyaar Chat ────────────────────────── */}
+                <div className="col-span-2 flex flex-col min-h-0 rounded-2xl border border-slate-200/80 bg-white/60 backdrop-blur-sm shadow-sm overflow-hidden">
+                    {/* Panel header with macOS dots */}
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200/60 bg-slate-50/80 flex-shrink-0">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-red-400" />
+                            <div className="w-3 h-3 rounded-full bg-amber-400" />
+                            <div className="w-3 h-3 rounded-full bg-green-400" />
                         </div>
-                        <h2 className="text-xl font-bold text-slate-800 mb-2 font-display">
-                            {user?.name || user?.username
-                                ? `Hey ${user.name || user.username}, ask me anything!`
-                                : 'Ask Vaathiyaar anything!'}
-                        </h2>
-                        <p className="text-sm text-slate-500 max-w-md mx-auto mb-6 leading-relaxed">
-                            This is your free-form playground. Ask about Python concepts, debug code,
-                            explore ideas, or just have a conversation about programming.
-                        </p>
-                        {/* Quick start suggestions */}
-                        <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
-                            {[
-                                'Explain list comprehensions',
-                                'How do decorators work?',
-                                'Debug my code',
-                                'Python vs JavaScript',
-                            ].map(suggestion => (
-                                <button
-                                    key={suggestion}
-                                    onClick={() => handleSend(suggestion)}
-                                    className="text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 hover:bg-purple-100 transition-all duration-200 hover:scale-[1.02]"
-                                >
-                                    {suggestion}
-                                </button>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
+                        <span className="text-xs font-semibold text-slate-500 ml-2 flex items-center gap-1.5">
+                            {'🧑‍🏫'} Vaathiyaar Chat
+                        </span>
+                    </div>
 
-                <AnimatePresence initial={false}>
-                    {messages.map((msg, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.25 }}
-                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                            {msg.role === 'assistant' ? (
-                                <div className="flex items-start gap-3 max-w-[85%]">
-                                    <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-sm select-none mt-1 shadow-md shadow-purple-300/20">
-                                        {'🧑‍🏫'}
-                                    </div>
-                                    <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-purple-500/40 text-slate-800 text-sm leading-relaxed">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                            {msg.content}
-                                        </ReactMarkdown>
-                                        {msg._isStreaming && (
-                                            <span className="inline-block w-[2px] h-4 bg-purple-400 ml-0.5 align-middle"
-                                                style={{ animation: 'blink 0.8s steps(2) infinite' }}
-                                            />
-                                        )}
-                                    </div>
+                    {/* Chat messages area */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {messages.length === 0 && !loading && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-center py-12"
+                            >
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-cyan-100 border border-purple-200/50 flex items-center justify-center text-3xl mx-auto mb-4 select-none shadow-lg shadow-purple-100/50">
+                                    {'🧑‍🏫'}
                                 </div>
-                            ) : (
-                                <div className="max-w-[75%] bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-2xl rounded-br-none px-5 py-3 text-sm leading-relaxed shadow-lg shadow-cyan-500/20">
-                                    {msg.content}
+                                <h2 className="text-lg font-bold text-slate-800 mb-2 font-display">
+                                    {user?.name || user?.username
+                                        ? `Hey ${user.name || user.username}!`
+                                        : 'Ask Vaathiyaar anything!'}
+                                </h2>
+                                <p className="text-xs text-slate-500 max-w-xs mx-auto mb-5 leading-relaxed">
+                                    Ask about Python concepts, debug code, explore ideas, or send your code for review.
+                                </p>
+                                {/* Quick start suggestions */}
+                                <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
+                                    {[
+                                        'Explain list comprehensions',
+                                        'How do decorators work?',
+                                        'Debug my code',
+                                        'Python vs JavaScript',
+                                    ].map(suggestion => (
+                                        <button
+                                            key={suggestion}
+                                            onClick={() => handleSend(suggestion)}
+                                            className="text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 hover:bg-purple-100 transition-all duration-200 hover:scale-[1.02]"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
                                 </div>
-                            )}
-                        </motion.div>
-                    ))}
-
-                    {loading && !messages.some(m => m._isStreaming) && (
-                        <motion.div
-                            key="thinking"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            <ThinkingBubble />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <div ref={chatEndRef} />
-            </div>
-
-            {/* Fixed chat bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-50">
-                <div className="h-10 bg-gradient-to-t from-[#f0f4f8] to-transparent pointer-events-none" />
-                <div className="bg-[#f0f4f8] px-4 pb-4">
-                    <div className="max-w-2xl mx-auto">
-                        {exhausted ? (
-                            <div className="panel rounded-2xl px-5 py-3.5 border border-amber-200 bg-amber-50/50 text-center text-sm text-amber-700 font-medium">
-                                No prompts remaining. Earn more XP in the Classroom!
-                            </div>
-                        ) : (
-                            <ChatBar
-                                onSend={handleSend}
-                                loading={loading}
-                                placeholder="Ask Vaathiyaar anything..."
-                            />
+                            </motion.div>
                         )}
+
+                        <AnimatePresence initial={false}>
+                            {messages.map((msg, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.25 }}
+                                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    {msg.role === 'assistant' ? (
+                                        <div className="flex items-start gap-2.5 max-w-[90%]">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-xs select-none mt-1 shadow-md shadow-purple-300/20">
+                                                {'🧑‍🏫'}
+                                            </div>
+                                            <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-purple-500/40 text-slate-800 text-sm leading-relaxed min-w-0">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                                                    {msg.content}
+                                                </ReactMarkdown>
+                                                {msg._isStreaming && (
+                                                    <span className="inline-block w-[2px] h-4 bg-purple-400 ml-0.5 align-middle"
+                                                        style={{ animation: 'blink 0.8s steps(2) infinite' }}
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="max-w-[80%] bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-2xl rounded-br-none px-4 py-2.5 text-sm leading-relaxed shadow-lg shadow-cyan-500/20">
+                                            {msg.content}
+                                        </div>
+                                    )}
+                                </motion.div>
+                            ))}
+
+                            {loading && !messages.some(m => m._isStreaming) && (
+                                <motion.div
+                                    key="thinking"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                >
+                                    <ThinkingBubble />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div ref={chatEndRef} />
+                    </div>
+                </div>
+
+                {/* ── Right Panel: Live Code Terminal ─────────────────────── */}
+                <div className="col-span-3 flex flex-col min-h-0 rounded-2xl border border-slate-700/30 bg-[#0d1117] shadow-xl overflow-hidden">
+                    {/* Panel header with macOS dots */}
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/50 bg-[#161b22] flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-full bg-red-400" />
+                                <div className="w-3 h-3 rounded-full bg-amber-400" />
+                                <div className="w-3 h-3 rounded-full bg-green-400" />
+                            </div>
+                            <span className="text-xs font-semibold text-slate-400 ml-2 flex items-center gap-1.5">
+                                <Terminal size={12} />
+                                code.py
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-600 font-mono">Python 3</span>
+                        </div>
+                    </div>
+
+                    {/* Code editor area */}
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex-1 flex min-h-0 overflow-hidden" style={{ minHeight: '40%' }}>
+                            <LineNumbers code={code} />
+                            <textarea
+                                ref={editorRef}
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                onKeyDown={handleEditorKeyDown}
+                                spellCheck={false}
+                                className="flex-1 bg-transparent text-[#e6edf3] text-sm font-mono p-4 resize-none outline-none leading-[1.625rem] overflow-y-auto placeholder-slate-600"
+                                style={{ caretColor: '#39d353', tabSize: 4 }}
+                                placeholder="# Write Python code here..."
+                            />
+                        </div>
+
+                        {/* Output panel */}
+                        <div className="flex-shrink-0 border-t border-slate-700/50" style={{ maxHeight: '35%' }}>
+                            <div className="flex items-center gap-2 px-4 py-1.5 bg-[#161b22] border-b border-slate-700/30">
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Output</span>
+                                {running && (
+                                    <Loader2 size={10} className="text-green-400 animate-spin" />
+                                )}
+                            </div>
+                            <div className="overflow-y-auto p-4 font-mono text-xs leading-relaxed" style={{ maxHeight: 'calc(100% - 28px)' }}>
+                                {output ? (
+                                    <pre className={`whitespace-pre-wrap break-words ${
+                                        output.startsWith('Error') || output.startsWith('Execution error')
+                                            ? 'text-red-400'
+                                            : 'text-green-400'
+                                    }`}>
+                                        {output}
+                                    </pre>
+                                ) : (
+                                    <span className="text-slate-600 italic">Run your code to see output here...</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-slate-700/50 bg-[#161b22] flex-shrink-0">
+                            <button
+                                onClick={handleRunCode}
+                                disabled={running || !code.trim()}
+                                className={`flex items-center gap-1.5 text-xs font-bold text-white rounded-xl px-4 py-2 transition-all duration-300 ${
+                                    running
+                                        ? 'bg-green-600 animate-pulse cursor-wait'
+                                        : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-green-500/20'
+                                } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                            >
+                                {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+                                {running ? 'Running...' : 'Run Code'}
+                            </button>
+                            <button
+                                onClick={handleClearTerminal}
+                                className="flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 hover:bg-slate-700 hover:text-slate-300 transition-all duration-200"
+                            >
+                                <Trash2 size={13} />
+                                Clear
+                            </button>
+                            <div className="flex-1" />
+                            <button
+                                onClick={handleSendToVaathiyaar}
+                                disabled={!code.trim() || loading}
+                                className="flex items-center gap-1.5 text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/30 rounded-xl px-3 py-2 hover:bg-purple-500/20 hover:text-purple-200 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <Send size={13} />
+                                Send to Vaathiyaar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            {/* ── Chat Input Bar (full width) ─────────────────────────────── */}
+            <div className="flex-shrink-0 px-6 py-3 bg-gradient-to-t from-[#f0f4f8] to-transparent">
+                {exhausted ? (
+                    <div className="panel rounded-2xl px-5 py-3.5 border border-amber-200 bg-amber-50/50 text-center text-sm text-amber-700 font-medium">
+                        No prompts remaining. Earn more XP in the Classroom!
+                    </div>
+                ) : (
+                    <ChatBar
+                        onSend={handleSend}
+                        loading={loading}
+                        placeholder="Ask Vaathiyaar anything..."
+                    />
+                )}
+            </div>
+
             <style>{`
+                @keyframes waveform {
+                    0% { height: 4px; opacity: 0.4; }
+                    50% { height: 16px; opacity: 1; }
+                    100% { height: 4px; opacity: 0.4; }
+                }
                 @keyframes blink {
                     0%, 49% { opacity: 1; }
                     50%, 100% { opacity: 0; }

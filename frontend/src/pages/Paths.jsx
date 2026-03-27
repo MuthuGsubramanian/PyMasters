@@ -81,7 +81,7 @@ function DifficultyBadge({ level }) {
 }
 
 // ─── Path Card ──────────────────────────────────────────────────────────────
-function PathCard({ path, index, onClick }) {
+function PathCard({ path, index, onClick, isRecommended }) {
     const progress = path.progress_pct ?? 0;
     const started = progress > 0;
 
@@ -101,6 +101,12 @@ function PathCard({ path, index, onClick }) {
         >
             <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="p-5">
+                {isRecommended && (
+                    <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
+                        <Sparkles size={12} className="text-amber-500 flex-shrink-0" />
+                        <span className="text-[10px] font-bold tracking-wide">Vaathiyaar recommends this for you!</span>
+                    </div>
+                )}
                 <div className="flex items-start justify-between mb-3">
                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100 flex items-center justify-center text-xl select-none group-hover:scale-110 transition-transform duration-300">
                         {icon}
@@ -190,16 +196,16 @@ function PathList() {
                 <div>
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-600 text-xs font-bold tracking-wider uppercase mb-3">
                         <Map size={12} />
-                        Learning Paths
+                        Evolution
                     </div>
                     <motion.h1
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-3xl font-bold mb-1 font-display"
                     >
-                        Learning Paths
+                        Evolution
                     </motion.h1>
-                    <p className="text-slate-500">AI-adaptive journeys tailored to your goals.</p>
+                    <p className="text-slate-500">Your AI learning journey, tailored to your goals.</p>
                 </div>
             </header>
 
@@ -262,6 +268,7 @@ function PathList() {
                                 key={path.id}
                                 path={path}
                                 index={idx}
+                                isRecommended={idx === 0}
                                 onClick={() => navigate(`/dashboard/paths/${path.id}`)}
                             />
                         ))}
@@ -415,7 +422,7 @@ function PathDetail() {
                 className="mb-6 flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 transition-colors group"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                Back to Learning Paths
+                Back to Evolution
             </button>
 
             {/* Header */}

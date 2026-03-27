@@ -10,7 +10,7 @@ import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench
+    Bot, Gamepad2, Wrench, Globe2, Cpu
 } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -90,6 +90,48 @@ const TRACK_META = {
         accent: '#f97316',
         gradient: 'from-orange-500/10 to-amber-500/5',
     },
+    python_intermediate: {
+        name: 'Python Intermediate',
+        icon: <Code2 size={16} />,
+        accent: '#8b5cf6',
+        gradient: 'from-violet-500/10 to-purple-500/5',
+    },
+    web_development: {
+        name: 'Web Development',
+        icon: <Globe2 size={16} />,
+        accent: '#3b82f6',
+        gradient: 'from-blue-500/10 to-indigo-500/5',
+    },
+    dsa: {
+        name: 'Data Structures & Algorithms',
+        icon: <Cpu size={16} />,
+        accent: '#ec4899',
+        gradient: 'from-pink-500/10 to-rose-500/5',
+    },
+    ai_fundamentals: {
+        name: 'AI Fundamentals',
+        icon: <Bot size={16} />,
+        accent: '#6366f1',
+        gradient: 'from-indigo-500/10 to-violet-500/5',
+    },
+    machine_learning: {
+        name: 'Machine Learning',
+        icon: <Brain size={16} />,
+        accent: '#7c3aed',
+        gradient: 'from-purple-500/10 to-violet-500/5',
+    },
+    deep_learning_complete: {
+        name: 'Deep Learning & Neural Networks',
+        icon: <Layers size={16} />,
+        accent: '#f59e0b',
+        gradient: 'from-amber-500/10 to-orange-500/5',
+    },
+    testing_devops: {
+        name: 'Testing & DevOps',
+        icon: <Zap size={16} />,
+        accent: '#10b981',
+        gradient: 'from-emerald-500/10 to-green-500/5',
+    },
     generated: {
         name: 'Custom Modules',
         icon: <Sparkles size={16} />,
@@ -98,7 +140,13 @@ const TRACK_META = {
     },
 };
 
-const DEFAULT_TRACK_ORDER = ['python_fundamentals', 'fun_automation', 'ai_ml_foundations', 'deep_learning', 'generated'];
+const DEFAULT_TRACK_ORDER = [
+    'python_fundamentals', 'python_intermediate', 'fun_automation',
+    'web_development', 'dsa',
+    'ai_fundamentals', 'ai_ml_foundations', 'machine_learning',
+    'deep_learning', 'deep_learning_complete',
+    'testing_devops', 'generated'
+];
 
 const PROFILE_WELCOME = {
     hobby: {
