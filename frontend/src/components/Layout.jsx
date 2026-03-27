@@ -5,7 +5,6 @@ import {
     Map,
     GraduationCap,
     LogOut,
-    Hexagon,
     Sparkles,
     Zap,
     Trophy,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import PymastersIcon from '../assets/pymasters-icon.svg';
 
 export default function Layout() {
     const { user, logout } = useAuth();
@@ -45,9 +45,9 @@ export default function Layout() {
                 {/* Brand */}
                 <div className="h-16 flex items-center gap-3 px-6 border-b border-black/[0.05]">
                     <div className="relative group cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
-                        <div className="relative bg-gradient-to-br from-cyan-400 to-blue-600 w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 transition-transform duration-300 group-hover:scale-110">
-                            <Hexagon size={18} strokeWidth={2.5} />
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" />
+                        <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
+                            <img src={PymastersIcon} alt="PyMasters" className="w-6 h-6" style={{ filter: 'brightness(2)' }} />
                         </div>
                     </div>
                     <span className="font-display font-bold text-lg text-slate-900 tracking-tight">PYMASTERS</span>
