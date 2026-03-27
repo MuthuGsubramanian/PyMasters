@@ -448,18 +448,45 @@ export default function Onboarding() {
                 console.error('Onboarding submit failed:', err);
             }
 
-            addMsg(makeMsg('vaathiyaar', username
-                ? `${username}, you're all set! Let's begin your Python journey! 🚀`
-                : "You're all set! Let's begin your Python journey! 🚀"
-            ));
-            setDone(true);
-            setBusy(false);
-
             // Mark onboarding complete in local user state
             updateUser({ onboarding_completed: true, preferred_language: newAnswers.preferred_language || 'en' });
 
-            await delay(1500);
-            navigate('/dashboard/classroom');
+            // Fetch path recommendation
+            let recommendedPath = null;
+            try {
+                const recRes = await api.get(`/paths/recommend?user_id=${user?.id}`);
+                recommendedPath = recRes.data;
+            } catch (e) {
+                console.log('Path recommendation not available:', e);
+            }
+
+            if (recommendedPath && recommendedPath.id) {
+                addMsg(makeMsg('vaathiyaar', username
+                    ? `${username}, based on everything you told me, I've found the perfect learning path for you! 🎯`
+                    : "Based on everything you told me, I've found the perfect learning path for you! 🎯"
+                ));
+                await delay(600);
+                const lessons = recommendedPath.lesson_sequence
+                    ? JSON.parse(recommendedPath.lesson_sequence).length
+                    : '?';
+                addMsg(makeMsg('vaathiyaar',
+                    `**${recommendedPath.name}**\n\n${recommendedPath.description || ''}\n\n` +
+                    `📚 ${lessons} lessons · ⏱️ ~${recommendedPath.estimated_hours || '?'} hours · ` +
+                    `${recommendedPath.difficulty_start} → ${recommendedPath.difficulty_end}`,
+                    { isPathRecommendation: true, pathId: recommendedPath.id }
+                ));
+                setDone(true);
+                setBusy(false);
+            } else {
+                addMsg(makeMsg('vaathiyaar', username
+                    ? `${username}, you're all set! Let's begin your Python journey! 🚀`
+                    : "You're all set! Let's begin your Python journey! 🚀"
+                ));
+                setDone(true);
+                setBusy(false);
+                await delay(1500);
+                navigate('/dashboard/classroom');
+            }
         }
     };
 
@@ -490,6 +517,40 @@ export default function Onboarding() {
                             return (
                                 <div key={msg.id} className="space-y-3">
                                     <VaathiyaarBubble text={msg.content} />
+
+                                    {/* Path recommendation action buttons */}
+                                    {done && msg.isPathRecommendation && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: 0.3 }}
+                                            className="flex flex-wrap gap-2 pl-12"
+                                        >
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        await api.post(`/paths/${msg.pathId}/start`, { user_id: user?.id });
+                                                    } catch (e) { console.log('Path start:', e); }
+                                                    navigate(`/dashboard/paths/${msg.pathId}`);
+                                                }}
+                                                className="px-5 py-2.5 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500 text-white hover:bg-cyan-600 transition-all duration-200 shadow-lg shadow-cyan-500/20"
+                                            >
+                                                🚀 Start This Path
+                                            </button>
+                                            <button
+                                                onClick={() => navigate('/dashboard/paths')}
+                                                className="px-5 py-2.5 rounded-full text-sm font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all duration-200"
+                                            >
+                                                Browse All Paths
+                                            </button>
+                                            <button
+                                                onClick={() => navigate('/dashboard/classroom')}
+                                                className="px-5 py-2.5 rounded-full text-sm font-medium border border-transparent text-slate-500 hover:text-slate-700 transition-all duration-200"
+                                            >
+                                                Skip for now →
+                                            </button>
+                                        </motion.div>
+                                    )}
 
                                     {/* Render interactive widget only for the currently active question */}
                                     {!done && msg.questionIndex === activeQuestionIndex && (
