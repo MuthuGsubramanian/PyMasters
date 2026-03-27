@@ -715,25 +715,15 @@ export default function Playground() {
 
                         {/* Output panel */}
                         <div className="flex-shrink-0 border-t border-slate-700/50" style={{ maxHeight: '35%' }}>
-                            <div className="flex items-center gap-2 px-4 py-1.5 bg-[#161b22] border-b border-slate-700/30">
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Output</span>
-                                {running && (
-                                    <Loader2 size={10} className="text-green-400 animate-spin" />
-                                )}
-                            </div>
-                            <div className="overflow-y-auto p-4 font-mono text-xs leading-relaxed" style={{ maxHeight: 'calc(100% - 28px)' }}>
-                                {output ? (
-                                    <pre className={`whitespace-pre-wrap break-words ${
-                                        output.startsWith('Error') || output.startsWith('Execution error')
-                                            ? 'text-red-400'
-                                            : 'text-green-400'
-                                    }`}>
-                                        {output}
-                                    </pre>
-                                ) : (
-                                    <span className="text-slate-600 italic">Run your code to see output here...</span>
-                                )}
-                            </div>
+                            <OutputPanel
+                                output={output}
+                                error=""
+                                running={running}
+                                executionTime={executionTime}
+                                onClear={() => { setOutput(''); setExecutionTime(null); }}
+                                onAskAI={handleAskAIForHelp}
+                                code={code}
+                            />
                         </div>
 
                         {/* Action buttons */}
