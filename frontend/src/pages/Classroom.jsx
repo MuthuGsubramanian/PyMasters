@@ -376,6 +376,10 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const speedMultiplier = lesson.speed_multiplier ?? 1.0;
     const sequence = lesson.animation_sequence ?? [];
 
+    // Animation replay key — increment to re-mount and replay all animations
+    const [animKey, setAnimKey] = useState(0);
+    const replayAnimations = () => setAnimKey(k => k + 1);
+
     // Extract visual flow components DIRECTLY (bypass AnimationRenderer)
     const visualFlowTypes = new Set(['ExecutionVisualizer', 'execution_visualizer', 'FlowDiagram', 'flow_diagram', 'LoopVisualizer', 'loop_visualizer']);
     const visualFlowItems = sequence.filter(s => visualFlowTypes.has(s.type));
@@ -428,12 +432,21 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     <span className="text-[11px] text-slate-400 font-mono ml-2">
                         {resolveText(lesson.active_title || lesson.title, language)}
                     </span>
-                    <div className="ml-auto flex items-center gap-1.5">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                        </span>
-                        <span className="text-[10px] text-green-400/80">visual mode</span>
+                    <div className="ml-auto flex items-center gap-3">
+                        <button
+                            onClick={replayAnimations}
+                            className="flex items-center gap-1.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-lg px-3 py-1.5 hover:bg-cyan-500/20 hover:text-cyan-200 transition-all duration-200"
+                        >
+                            <RotateCcw size={11} />
+                            Run Animation
+                        </button>
+                        <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                            </span>
+                            <span className="text-[10px] text-green-400/80">visual mode</span>
+                        </div>
                     </div>
                 </div>
 
@@ -445,6 +458,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         {/* Vaathiyaar story */}
                         {storyPrimitives.length > 0 ? (
                             <AnimationRenderer
+                                key={`story-${animKey}`}
                                 sequence={storyPrimitives}
                                 storyContent={storyContent}
                                 speedMultiplier={speedMultiplier}
@@ -464,6 +478,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                     Execution Flow
                                 </div>
                                 <FlowDiagram
+                                    key={`flow-${animKey}`}
                                     nodes={flowDiagram.nodes || []}
                                     edges={flowDiagram.edges || []}
                                     executionPath={flowDiagram.executionPath || []}
@@ -485,6 +500,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                     Loop Iteration
                                 </div>
                                 <LoopVisualizer
+                                    key={`loop-${animKey}`}
                                     loopType={loopViz.loopType || 'for'}
                                     collection={loopViz.collection}
                                     variable={loopViz.variable || 'i'}
@@ -506,6 +522,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                     Step-by-Step Execution
                                 </div>
                                 <ExecutionVisualizer
+                                    key={`exec-${animKey}`}
                                     code={executionViz.code || ''}
                                     executionSteps={executionViz.executionSteps || []}
                                     speed={executionViz.speed || 'normal'}
@@ -521,6 +538,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                     Code Walkthrough
                                 </div>
                                 <AnimationRenderer
+                                    key={`legacy-${animKey}`}
                                     sequence={legacyAnimPrimitives}
                                     storyContent={storyContent}
                                     speedMultiplier={speedMultiplier}
@@ -540,7 +558,6 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 <Play size={18} fill="currentColor" />
                 Start Practice
             </button>
-            )}
         </div>
     );
 }
