@@ -35,22 +35,38 @@ export default function NotificationBell() {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.key === 'Escape') setOpen(false);
+        };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, []);
+
     const handleClick = async (notif) => {
         if (!notif.read) {
-            await markNotificationRead(notif.id, user.id);
-            setUnreadCount(c => Math.max(0, c - 1));
-            setNotifications(prev =>
-                prev.map(n => n.id === notif.id ? { ...n, read: true } : n)
-            );
+            try {
+                await markNotificationRead(notif.id, user.id);
+                setUnreadCount(c => Math.max(0, c - 1));
+                setNotifications(prev =>
+                    prev.map(n => n.id === notif.id ? { ...n, read: true } : n)
+                );
+            } catch (err) {
+                console.error('Failed to mark notification as read:', err);
+            }
         }
         if (notif.link) navigate(notif.link);
         setOpen(false);
     };
 
     const handleMarkAllRead = async () => {
-        await markAllNotificationsRead(user.id);
-        setUnreadCount(0);
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        try {
+            await markAllNotificationsRead(user.id);
+            setUnreadCount(0);
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        } catch (err) {
+            console.error('Failed to mark all notifications as read:', err);
+        }
     };
 
     if (!user) return null;
@@ -103,7 +119,16 @@ export default function NotificationBell() {
                                         <div className={!notif.read ? '' : 'ml-5'}>
                                             <p className="text-sm font-medium text-slate-800">{notif.title}</p>
                                             <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{notif.message}</p>
-                                            <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.created_at).toLocaleDateString()}</p>
+                                            <p className="text-[10px] text-slate-400 mt-1">{(() => {
+    const d = new Date(notif.created_at);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return d.toLocaleDateString();
+})()}</p>
                                         </div>
                                     </div>
                                 </button>

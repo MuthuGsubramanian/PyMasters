@@ -518,6 +518,8 @@ export default function Home() {
     const statsRef = useRef(null);
     const statsInView = useInView(statsRef, { once: true, margin: '-80px' });
 
+    useEffect(() => { document.title = 'PyMasters — Learn Python with AI'; }, []);
+
     return (
         <div className="min-h-screen bg-[#020617] text-slate-100 relative overflow-x-hidden font-sans selection:bg-purple-500/30 selection:text-white">
 
@@ -531,7 +533,8 @@ export default function Home() {
                         <img src={PymastersIcon} alt="PyMasters" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(124,58,237,0.8)] transition-transform duration-300 group-hover:scale-110" />
                         <span className="font-display font-bold text-xl tracking-tight text-white">PYMASTERS</span>
                     </div>
-                    <div className="flex items-center gap-4">
+                    {/* Desktop nav buttons */}
+                    <div className="hidden sm:flex items-center gap-4">
                         {user ? (
                             <button
                                 onClick={() => navigate('/dashboard/classroom')}
@@ -559,6 +562,15 @@ export default function Home() {
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700" />
                         </button>
                     </div>
+                    {/* Mobile CTA */}
+                    <button
+                        onClick={() => navigate(ctaTarget)}
+                        className="sm:hidden inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white"
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)' }}
+                    >
+                        {user ? 'Dashboard' : 'Start'}
+                        <ArrowRight size={14} />
+                    </button>
                 </div>
             </nav>
 
@@ -753,7 +765,7 @@ export default function Home() {
                     >
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-bold tracking-wider uppercase mb-6">
                             <Layers size={12} />
-                            3 Tracks · 74 Lessons
+                            {TRACKS.length} Tracks · {TRACKS.reduce((sum, t) => sum + t.lessons, 0)} Lessons
                         </div>
                         <h2 className="text-3xl sm:text-5xl font-bold font-display text-white mb-4">
                             Your Complete<br />
@@ -884,8 +896,8 @@ export default function Home() {
                 <div className="relative max-w-5xl mx-auto">
                     <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-10 lg:p-14">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 divide-y-2 divide-white/0 lg:divide-y-0 lg:divide-x lg:divide-white/[0.06]">
-                            <StatItem value={74} suffix="" label="Total Lessons" shouldCount={statsInView} />
-                            <StatItem value={3} suffix="" label="Tracks" shouldCount={statsInView} />
+                            <StatItem value={TRACKS.reduce((sum, t) => sum + t.lessons, 0)} suffix="" label="Total Lessons" shouldCount={statsInView} />
+                            <StatItem value={TRACKS.length} suffix="" label="Tracks" shouldCount={statsInView} />
                             <StatItem value={10} suffix="+" label="Modules" shouldCount={statsInView} />
                             <div className="text-center group">
                                 <div className="text-4xl lg:text-5xl font-bold font-display text-white mb-1 flex items-center justify-center gap-2 transition-transform duration-300 group-hover:scale-110">
@@ -924,7 +936,7 @@ export default function Home() {
                             </span>
                         </h2>
                         <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                            Join thousands of learners mastering Python with the help of Vaathiyaar, your AI-powered guide.
+                            Start your Python journey today — with Vaathiyaar, your AI-powered guide, by your side.
                         </p>
                         <button
                             onClick={() => navigate(ctaTarget)}

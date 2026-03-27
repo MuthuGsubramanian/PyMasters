@@ -13,7 +13,7 @@ def _get_db_path():
 
 
 class PreferenceUpdate(BaseModel):
-    user_id: int
+    user_id: str
     channel: str
     type: str
     enabled: bool
@@ -23,7 +23,7 @@ class PreferenceUpdate(BaseModel):
 
 @router.get("")
 async def get_notifications(
-    user_id: int = Query(...),
+    user_id: str = Query(...),
     unread_only: bool = Query(False),
     limit: int = Query(20),
     offset: int = Query(0),
@@ -65,7 +65,7 @@ async def get_notifications(
 
 
 @router.put("/{notification_id}/read")
-async def mark_read(notification_id: int, user_id: int = Query(...)):
+async def mark_read(notification_id: str, user_id: str = Query(...)):
     conn = sqlite3.connect(_get_db_path())
     cursor = conn.execute(
         "UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?",
@@ -80,7 +80,7 @@ async def mark_read(notification_id: int, user_id: int = Query(...)):
 
 
 @router.patch("/read-all")
-async def mark_all_read(user_id: int = Query(...)):
+async def mark_all_read(user_id: str = Query(...)):
     conn = sqlite3.connect(_get_db_path())
     conn.execute(
         "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0",
@@ -92,7 +92,7 @@ async def mark_all_read(user_id: int = Query(...)):
 
 
 @router.get("/preferences")
-async def get_preferences(user_id: int = Query(...)):
+async def get_preferences(user_id: str = Query(...)):
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     rows = conn.execute(

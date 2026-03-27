@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser, registerUser } from '../api';
@@ -8,6 +8,8 @@ import clsx from 'clsx';
 import PymastersIcon from '../assets/pymasters-icon.svg';
 
 export default function Login() {
+    useEffect(() => { document.title = 'Sign In — PyMasters'; }, []);
+
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [username, setUsername] = useState('');
@@ -22,8 +24,6 @@ export default function Login() {
         e.preventDefault();
         setError('');
         setLoading(true);
-
-        await new Promise(r => setTimeout(r, 800));
 
         try {
             let data;
@@ -40,7 +40,7 @@ export default function Login() {
 
             // Success animation before navigating
             setSuccess(true);
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise(r => setTimeout(r, 300));
 
             login(data);
             if (isNewUser || !data.onboarding_completed) {
@@ -130,7 +130,7 @@ export default function Login() {
                 </div>
 
                 {/* Card */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-8 shadow-2xl shadow-black/20">
+                <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-8 shadow-2xl shadow-black/20">
                     <AnimatePresence mode="wait">
                         {error && (
                             <motion.div
@@ -170,13 +170,15 @@ export default function Login() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Username</label>
+                            <label htmlFor="username" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Username</label>
                             <div className="relative group">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
                                 <input
+                                    id="username"
                                     type="text"
                                     value={username}
                                     onChange={e => setUsername(e.target.value)}
+                                    autoComplete="username"
                                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
                                     placeholder="Enter your username"
                                     required
@@ -185,13 +187,15 @@ export default function Login() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Password</label>
+                            <label htmlFor="password" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Password</label>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
                                 <input
+                                    id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
+                                    autoComplete={isLogin ? "current-password" : "new-password"}
                                     className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
                                     placeholder="Enter your password"
                                     required
@@ -199,6 +203,7 @@ export default function Login() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -212,18 +217,28 @@ export default function Login() {
                                     animate={{ opacity: 1, height: 'auto' }}
                                     className="pt-1.5"
                                 >
-                                    <div className="flex gap-1">
-                                        {[1,2,3,4].map(i => (
-                                            <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                                                password.length >= i * 2
-                                                    ? password.length >= 8 ? 'bg-green-400' : password.length >= 4 ? 'bg-amber-400' : 'bg-red-400'
-                                                    : 'bg-white/[0.06]'
-                                            }`} />
-                                        ))}
-                                    </div>
-                                    <p className="text-[10px] mt-1 text-slate-500">
-                                        {password.length < 4 ? 'Too short' : password.length < 8 ? 'Getting better...' : 'Strong password!'}
-                                    </p>
+                                    {(() => {
+                                        const hasUpper = /[A-Z]/.test(password);
+                                        const hasLower = /[a-z]/.test(password);
+                                        const hasNum = /\d/.test(password);
+                                        const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+                                        const checks = [password.length >= 4, password.length >= 6, hasUpper || hasSpecial, password.length >= 8 && (hasNum || hasSpecial)];
+                                        const strength = checks.filter(Boolean).length;
+                                        const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-green-400'];
+                                        const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+                                        return (
+                                            <>
+                                                <div className="flex gap-1">
+                                                    {[0,1,2,3].map(i => (
+                                                        <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                                                            i < strength ? colors[strength - 1] : 'bg-white/[0.06]'
+                                                        }`} />
+                                                    ))}
+                                                </div>
+                                                <p className="text-[10px] mt-1 text-slate-500">{labels[strength - 1] || 'Too short'}</p>
+                                            </>
+                                        );
+                                    })()}
                                 </motion.div>
                             )}
                         </div>

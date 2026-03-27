@@ -6,6 +6,31 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+// Attach auth token to all requests
+api.interceptors.request.use((config) => {
+  try {
+    const userData = JSON.parse(localStorage.getItem('pm_user'));
+    if (userData?.token) {
+      config.headers.Authorization = `Bearer ${userData.token}`;
+    }
+  } catch {}
+  return config;
+});
+
+// Handle 401 responses — clear stale session
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('pm_user');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const loginUser = (username, password) => api.post('/auth/login', { username, password });
 export const registerUser = (username, password, name) => api.post('/auth/register', { username, password, name });
 export const runCode = (code) => api.post('/run', { code });
@@ -45,5 +70,16 @@ export const getModuleStatus = (jobId) =>
     api.get(`/modules/status/${jobId}`);
 export const getGeneratedModules = (userId) =>
     api.get(`/modules/generated/${userId}`);
+
+// Helper for raw fetch calls (streaming endpoints)
+export function getAuthHeaders() {
+  try {
+    const userData = JSON.parse(localStorage.getItem('pm_user'));
+    if (userData?.token) {
+      return { Authorization: `Bearer ${userData.token}` };
+    }
+  } catch {}
+  return {};
+}
 
 export default api;

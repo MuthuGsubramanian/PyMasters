@@ -22,12 +22,14 @@ export function AuthProvider({ children }) {
     };
 
     const updateProgress = (points, unlocked) => {
+        if (!user) return;
         const updated = { ...user, points, unlocked };
         setUser(updated);
         localStorage.setItem('pm_user', JSON.stringify(updated));
     };
 
     const updateUser = (data) => {
+        if (!user) return;
         const updated = { ...user, ...data };
         setUser(updated);
         localStorage.setItem('pm_user', JSON.stringify(updated));

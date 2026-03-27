@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
-import api from '../api';
+import api, { getAuthHeaders, requestModule } from '../api';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
@@ -640,8 +640,14 @@ function PracticePhase({
                     className="w-full bg-[#0d1117] text-slate-300 font-mono text-sm p-5 resize-none focus:outline-none leading-relaxed min-h-[200px] placeholder-slate-600"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
+                    onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                            e.preventDefault();
+                            onRun?.();
+                        }
+                    }}
                     spellCheck={false}
-                    placeholder="# Write your code here..."
+                    placeholder="# Write your code here... (Ctrl+Enter to run)"
                 />
             </div>
 
@@ -652,9 +658,7 @@ function PracticePhase({
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
                         Output
                     </div>
-                    <pre className="p-4 font-mono text-sm text-green-300/90 whitespace-pre-wrap bg-[#0d1117] max-h-40 overflow-auto">
-                        {output}
-                    </pre>
+                    <pre className="p-4 font-mono text-sm text-green-300/90 whitespace-pre-wrap bg-[#0d1117] max-h-40 overflow-auto">{output}</pre>
                 </div>
             )}
 
@@ -800,6 +804,8 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
 export default function Classroom() {
     const { user } = useAuth();
 
+    useEffect(() => { document.title = 'Classroom — PyMasters'; }, []);
+
     const [profile, setProfile] = useState(null);
     useEffect(() => {
         if (user?.id) {
@@ -919,7 +925,7 @@ export default function Classroom() {
         try {
             const response = await fetch(`${api.defaults.baseURL}/classroom/chat/stream`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
                 body: JSON.stringify({
                     user_id: user?.id,
                     message,
@@ -929,6 +935,10 @@ export default function Classroom() {
                     username: user?.name || user?.username,
                 }),
             });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -1177,7 +1187,6 @@ export default function Classroom() {
                                             <button
                                                 onClick={async () => {
                                                     try {
-                                                        const { requestModule } = await import('../api');
                                                         await requestModule(user.id, msg._topic);
                                                         setChatMessages(prev => prev.map(m =>
                                                             m === msg ? { role: 'assistant', content: `Great! I'm preparing a custom lesson on "${msg._topic}" for you. You'll get a notification when it's ready!` } : m

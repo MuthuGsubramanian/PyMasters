@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -8,7 +9,9 @@ import {
     Sparkles,
     Zap,
     Trophy,
-    ChevronRight
+    ChevronRight,
+    Menu,
+    X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -18,6 +21,7 @@ export default function Layout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     if (!user) return <Outlet />;
 
@@ -40,10 +44,27 @@ export default function Layout() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-[var(--bg-deep)] text-slate-600 font-sans">
+            {/* Mobile header bar */}
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white/95 backdrop-blur-xl border-b border-black/[0.05] flex items-center justify-between px-4">
+                <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors" aria-label="Open menu">
+                    <Menu size={20} className="text-slate-600" />
+                </button>
+                <span className="font-display font-bold text-slate-900 tracking-tight">PYMASTERS</span>
+                <div className="w-9" /> {/* Spacer for centering */}
+            </div>
+
+            {/* Mobile overlay */}
+            {sidebarOpen && (
+                <div className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-[270px] flex flex-col border-r border-black/[0.05] bg-white/95 backdrop-blur-xl">
+            <aside className={`fixed lg:relative z-50 lg:z-auto w-[270px] flex flex-col border-r border-black/[0.05] bg-white/95 backdrop-blur-xl h-full transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 {/* Brand */}
                 <div className="h-16 flex items-center gap-3 px-6 border-b border-black/[0.05]">
+                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 transition-colors mr-1" aria-label="Close menu">
+                        <X size={18} className="text-slate-400" />
+                    </button>
                     <div className="relative group cursor-pointer" onClick={() => navigate('/')}>
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" />
                         <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
@@ -104,7 +125,7 @@ export default function Layout() {
                         return (
                             <button
                                 key={item.path}
-                                onClick={() => navigate(item.path)}
+                                onClick={() => { navigate(item.path); setSidebarOpen(false); }}
                                 className={clsx(
                                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-300 group relative",
                                     isActive
@@ -170,7 +191,7 @@ export default function Layout() {
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-slate-50 via-[#f0f4f8] to-[#e8eef4]">
+            <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-slate-50 via-[#f0f4f8] to-[#e8eef4] pt-14 lg:pt-0">
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                     style={{
                         backgroundImage: `
