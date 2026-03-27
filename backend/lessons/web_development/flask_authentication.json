@@ -186,6 +186,125 @@
         ">>> check_password_hash(hashed, 'wrongpassword')",
         "False"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_flask_auth",
+      "title": "Password Hashing and Verification",
+      "code": "from werkzeug.security import generate_password_hash, check_password_hash\n\npassword = 'secret123'\nhashed = generate_password_hash(password)\nprint(f'Hash: {hashed[:50]}...')\ncorrect = check_password_hash(hashed, 'secret123')\nwrong = check_password_hash(hashed, 'wrong')\nprint(f'Correct: {correct}')\nprint(f'Wrong: {wrong}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import password hashing from werkzeug (bundled with Flask)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "password": "secret123"
+          },
+          "output": "",
+          "explanation": "The plain-text password -- NEVER store this directly"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "hashed": "pbkdf2:sha256:260000$..."
+          },
+          "output": "",
+          "explanation": "generate_password_hash adds random salt and hashes"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Hash: pbkdf2:sha256:260000$UxK7xOzR$e3b0c44298...",
+          "explanation": "Hash includes algorithm, iterations, salt, and hash"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "correct": true
+          },
+          "output": "",
+          "explanation": "check_password_hash re-hashes with stored salt to compare"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "wrong": false
+          },
+          "output": "",
+          "explanation": "Wrong password produces different hash -- fails"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "...Correct: True",
+          "explanation": "Correct password matches"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "...Wrong: False",
+          "explanation": "Wrong password rejected"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_auth_flow",
+      "title": "Authentication Flow",
+      "nodes": [
+        {
+          "id": "login",
+          "label": "User Enters\nCredentials",
+          "type": "start"
+        },
+        {
+          "id": "lookup",
+          "label": "Find User\nin Database",
+          "type": "process"
+        },
+        {
+          "id": "verify",
+          "label": "Check Password\nHash",
+          "type": "decision"
+        },
+        {
+          "id": "session",
+          "label": "Create Session\nlogin_user()",
+          "type": "process"
+        },
+        {
+          "id": "protected",
+          "label": "Access Protected\nRoutes",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "login",
+          "to": "lookup",
+          "label": "POST /login"
+        },
+        {
+          "from": "lookup",
+          "to": "verify",
+          "label": "User found"
+        },
+        {
+          "from": "verify",
+          "to": "session",
+          "label": "Match"
+        },
+        {
+          "from": "session",
+          "to": "protected",
+          "label": "Cookie set"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -219,8 +338,18 @@
         "ta": "தரவுத்தளத்தில் எளிய உரை கடவுச்சொற்களை ஏன் ஒருபோதும் சேமிக்கக் கூடாது?"
       },
       "options": {
-        "en": ["They take too much storage space", "If the database is breached, all passwords are exposed", "Plain text is slower to read", "Python doesn't support plain text"],
-        "ta": ["அவை அதிக சேமிப்பு இடத்தை எடுக்கும்", "தரவுத்தளம் மீறப்பட்டால், அனைத்து கடவுச்சொற்களும் வெளிப்படும்", "எளிய உரையைப் படிப்பது மெதுவாக இருக்கும்", "Python எளிய உரையை ஆதரிக்காது"]
+        "en": [
+          "They take too much storage space",
+          "If the database is breached, all passwords are exposed",
+          "Plain text is slower to read",
+          "Python doesn't support plain text"
+        ],
+        "ta": [
+          "அவை அதிக சேமிப்பு இடத்தை எடுக்கும்",
+          "தரவுத்தளம் மீறப்பட்டால், அனைத்து கடவுச்சொற்களும் வெளிப்படும்",
+          "எளிய உரையைப் படிப்பது மெதுவாக இருக்கும்",
+          "Python எளிய உரையை ஆதரிக்காது"
+        ]
       },
       "correct": 1
     },
@@ -230,8 +359,18 @@
         "ta": "Flask-Login-ல் @login_required என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Hashes the user's password", "Redirects unauthenticated users to the login page", "Creates a new user account", "Encrypts the database"],
-        "ta": ["பயனரின் கடவுச்சொல்லை ஹாஷ் செய்கிறது", "அங்கீகரிக்கப்படாத பயனர்களை உள்நுழைவு பக்கத்திற்கு திருப்பி விடுகிறது", "புதிய பயனர் கணக்கை உருவாக்குகிறது", "தரவுத்தளத்தை குறியாக்குகிறது"]
+        "en": [
+          "Hashes the user's password",
+          "Redirects unauthenticated users to the login page",
+          "Creates a new user account",
+          "Encrypts the database"
+        ],
+        "ta": [
+          "பயனரின் கடவுச்சொல்லை ஹாஷ் செய்கிறது",
+          "அங்கீகரிக்கப்படாத பயனர்களை உள்நுழைவு பக்கத்திற்கு திருப்பி விடுகிறது",
+          "புதிய பயனர் கணக்கை உருவாக்குகிறது",
+          "தரவுத்தளத்தை குறியாக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -241,20 +380,44 @@
         "ta": "கடவுச்சொல் ஹாஷை 'சால்ட்டிங்' செய்வதன் நோக்கம் என்ன?"
       },
       "options": {
-        "en": ["To make the hash shorter", "To ensure identical passwords produce different hashes", "To speed up the hashing process", "To make the password recoverable"],
-        "ta": ["ஹாஷை குறுகியதாக்க", "ஒரே கடவுச்சொற்கள் வெவ்வேறு ஹாஷ்களை உருவாக்குவதை உறுதி செய்ய", "ஹாஷிங் செயல்முறையை விரைவுபடுத்த", "கடவுச்சொல்லை மீட்டெடுக்கக்கூடியதாக்க"]
+        "en": [
+          "To make the hash shorter",
+          "To ensure identical passwords produce different hashes",
+          "To speed up the hashing process",
+          "To make the password recoverable"
+        ],
+        "ta": [
+          "ஹாஷை குறுகியதாக்க",
+          "ஒரே கடவுச்சொற்கள் வெவ்வேறு ஹாஷ்களை உருவாக்குவதை உறுதி செய்ய",
+          "ஹாஷிங் செயல்முறையை விரைவுபடுத்த",
+          "கடவுச்சொல்லை மீட்டெடுக்கக்கூடியதாக்க"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["password_hashing", "flask_login", "sessions", "protected_routes"],
-    "concepts_required": ["flask_routes", "flask_forms", "sqlalchemy"],
+    "concepts_taught": [
+      "password_hashing",
+      "flask_login",
+      "sessions",
+      "protected_routes"
+    ],
+    "concepts_required": [
+      "flask_routes",
+      "flask_forms",
+      "sqlalchemy"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["user_auth", "web_security"],
+    "real_world_application": [
+      "user_auth",
+      "web_security"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

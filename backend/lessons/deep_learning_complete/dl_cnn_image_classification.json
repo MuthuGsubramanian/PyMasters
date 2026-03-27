@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "classification_code",
       "steps": [
-        {"line": "transforms.RandomHorizontalFlip()", "highlight": "augmentation", "explanation": {"en": "Randomly flip images horizontally — doubles effective training data"}},
-        {"line": "transforms.RandomCrop(32, padding=4)", "highlight": "crop", "explanation": {"en": "Pad image by 4 pixels, then randomly crop back to 32x32. Teaches spatial invariance"}},
-        {"line": "transforms.Normalize((0.4914, 0.4822, 0.4465), ...)", "highlight": "normalize", "explanation": {"en": "Normalize to zero mean and unit variance per channel. Uses CIFAR-10 dataset statistics"}},
-        {"line": "train_loader = DataLoader(train_set, batch_size=128, shuffle=True)", "highlight": "DataLoader", "explanation": {"en": "Load 128 images per batch, shuffle each epoch for better training"}},
-        {"line": "nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU()", "highlight": "conv_block", "explanation": {"en": "Standard CNN block: convolution -> batch norm -> activation. Repeated throughout"}},
-        {"line": "nn.Dropout2d(0.25)", "highlight": "Dropout2d", "explanation": {"en": "2D dropout: zeros entire feature maps randomly. Better than regular dropout for CNNs"}},
-        {"line": "nn.Linear(128 * 4 * 4, 256)", "highlight": "classifier", "explanation": {"en": "After 3 pools: 32->16->8->4. So 128 channels x 4x4 = 2048 features flatten to 256"}},
-        {"line": "scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)", "highlight": "scheduler", "explanation": {"en": "Halve learning rate every 20 epochs for fine-tuning in later stages"}},
-        {"line": "_, predicted = outputs.max(1)", "highlight": "prediction", "explanation": {"en": "Get class with highest score. max(1) returns (values, indices) along dim 1"}},
-        {"line": "correct += predicted.eq(labels).sum().item()", "highlight": "accuracy", "explanation": {"en": "Count how many predictions match true labels across all batches"}}
+        {
+          "line": "transforms.RandomHorizontalFlip()",
+          "highlight": "augmentation",
+          "explanation": {
+            "en": "Randomly flip images horizontally — doubles effective training data"
+          }
+        },
+        {
+          "line": "transforms.RandomCrop(32, padding=4)",
+          "highlight": "crop",
+          "explanation": {
+            "en": "Pad image by 4 pixels, then randomly crop back to 32x32. Teaches spatial invariance"
+          }
+        },
+        {
+          "line": "transforms.Normalize((0.4914, 0.4822, 0.4465), ...)",
+          "highlight": "normalize",
+          "explanation": {
+            "en": "Normalize to zero mean and unit variance per channel. Uses CIFAR-10 dataset statistics"
+          }
+        },
+        {
+          "line": "train_loader = DataLoader(train_set, batch_size=128, shuffle=True)",
+          "highlight": "DataLoader",
+          "explanation": {
+            "en": "Load 128 images per batch, shuffle each epoch for better training"
+          }
+        },
+        {
+          "line": "nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU()",
+          "highlight": "conv_block",
+          "explanation": {
+            "en": "Standard CNN block: convolution -> batch norm -> activation. Repeated throughout"
+          }
+        },
+        {
+          "line": "nn.Dropout2d(0.25)",
+          "highlight": "Dropout2d",
+          "explanation": {
+            "en": "2D dropout: zeros entire feature maps randomly. Better than regular dropout for CNNs"
+          }
+        },
+        {
+          "line": "nn.Linear(128 * 4 * 4, 256)",
+          "highlight": "classifier",
+          "explanation": {
+            "en": "After 3 pools: 32->16->8->4. So 128 channels x 4x4 = 2048 features flatten to 256"
+          }
+        },
+        {
+          "line": "scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)",
+          "highlight": "scheduler",
+          "explanation": {
+            "en": "Halve learning rate every 20 epochs for fine-tuning in later stages"
+          }
+        },
+        {
+          "line": "_, predicted = outputs.max(1)",
+          "highlight": "prediction",
+          "explanation": {
+            "en": "Get class with highest score. max(1) returns (values, indices) along dim 1"
+          }
+        },
+        {
+          "line": "correct += predicted.eq(labels).sum().item()",
+          "highlight": "accuracy",
+          "explanation": {
+            "en": "Count how many predictions match true labels across all batches"
+          }
+        }
       ]
     },
     {
@@ -64,12 +124,42 @@
       "id": "cnn_layers",
       "structure_type": "cnn_pipeline",
       "layers": [
-        {"name": "Input", "nodes": ["3x32x32 (RGB image)"]},
-        {"name": "Conv Block 1", "nodes": ["32x32x32 -> Pool -> 32x16x16"]},
-        {"name": "Conv Block 2", "nodes": ["64x16x16 -> Pool -> 64x8x8"]},
-        {"name": "Conv Block 3", "nodes": ["128x8x8 -> Pool -> 128x4x4"]},
-        {"name": "Flatten", "nodes": ["2048"]},
-        {"name": "FC + Output", "nodes": ["256 -> 10 classes"]}
+        {
+          "name": "Input",
+          "nodes": [
+            "3x32x32 (RGB image)"
+          ]
+        },
+        {
+          "name": "Conv Block 1",
+          "nodes": [
+            "32x32x32 -> Pool -> 32x16x16"
+          ]
+        },
+        {
+          "name": "Conv Block 2",
+          "nodes": [
+            "64x16x16 -> Pool -> 64x8x8"
+          ]
+        },
+        {
+          "name": "Conv Block 3",
+          "nodes": [
+            "128x8x8 -> Pool -> 128x4x4"
+          ]
+        },
+        {
+          "name": "Flatten",
+          "nodes": [
+            "2048"
+          ]
+        },
+        {
+          "name": "FC + Output",
+          "nodes": [
+            "256 -> 10 classes"
+          ]
+        }
       ],
       "duration_ms": 4000
     },
@@ -92,8 +182,14 @@
     {
       "type": "ComparisonPanel",
       "id": "augmentation_comparison",
-      "left": {"label": "Without Augmentation", "content": "Test accuracy: 82%\nOverfitting after epoch 20\nTrain-test gap: 15%"},
-      "right": {"label": "With Augmentation", "content": "Test accuracy: 88.5%\nStable training for 50 epochs\nTrain-test gap: 4%"},
+      "left": {
+        "label": "Without Augmentation",
+        "content": "Test accuracy: 82%\nOverfitting after epoch 20\nTrain-test gap: 15%"
+      },
+      "right": {
+        "label": "With Augmentation",
+        "content": "Test accuracy: 88.5%\nStable training for 50 epochs\nTrain-test gap: 4%"
+      },
       "duration_ms": 3000
     },
     {
@@ -101,7 +197,14 @@
       "id": "pipeline_flow",
       "from": "raw_images",
       "to": "predictions",
-      "steps": ["Load CIFAR-10", "Augment & Normalize", "Batch (128)", "CNN Forward", "Loss & Backward", "Evaluate"],
+      "steps": [
+        "Load CIFAR-10",
+        "Augment & Normalize",
+        "Batch (128)",
+        "CNN Forward",
+        "Loss & Backward",
+        "Evaluate"
+      ],
       "duration_ms": 3000
     },
     {
@@ -115,6 +218,107 @@
         "Epoch 30: Loss=0.1987, Test Acc=85.80%",
         "Epoch 40: Loss=0.1234, Test Acc=87.60%",
         "Epoch 49: Loss=0.0923, Test Acc=88.50%"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_cnn_clf",
+      "code": "import torch\nimport torch.nn as nn\n\nclass SimpleCNN(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.features = nn.Sequential(\n            nn.Conv2d(3, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),\n            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),\n        )\n        self.classifier = nn.Sequential(\n            nn.Linear(64 * 8 * 8, 128), nn.ReLU(), nn.Dropout(0.5),\n            nn.Linear(128, 10)\n        )\n\n    def forward(self, x):\n        x = self.features(x)\n        x = x.view(x.size(0), -1)\n        return self.classifier(x)\n\nmodel = SimpleCNN()\nx = torch.randn(4, 3, 32, 32)  # CIFAR-10 size\nprint(f'Output: {model(x).shape}')",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "features": "2 conv blocks"
+          },
+          "output": "",
+          "explanation": "Feature extractor: Conv->ReLU->Pool repeated"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "conv1": "3->32 channels"
+          },
+          "output": "",
+          "explanation": "First conv: RGB (3ch) to 32 feature maps"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "conv2": "32->64 channels"
+          },
+          "output": "",
+          "explanation": "Second conv: 32 to 64 feature maps"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "fc1": "64*8*8 -> 128"
+          },
+          "output": "",
+          "explanation": "Flatten and classify: 4096 -> 128 -> 10"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "x": "(4, 3, 32, 32)"
+          },
+          "output": "",
+          "explanation": "Forward: batch of 4 RGB 32x32 images"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "x_flat": "(4, 4096)"
+          },
+          "output": "",
+          "explanation": "Flatten: (4, 64, 8, 8) -> (4, 4096)"
+        },
+        {
+          "line": 23,
+          "variables": {},
+          "output": "Output: torch.Size([4, 10])",
+          "explanation": "10 class logits for each image (CIFAR-10)"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_cnn_training",
+      "title": "CNN Training on CIFAR-10",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 1,
+          "state": {
+            "train_loss": 2.15,
+            "val_acc": "18%"
+          },
+          "description": "Random weights — near chance (10%)"
+        },
+        {
+          "iteration": 5,
+          "state": {
+            "train_loss": 1.42,
+            "val_acc": "48%"
+          },
+          "description": "Learning basic features"
+        },
+        {
+          "iteration": 10,
+          "state": {
+            "train_loss": 0.98,
+            "val_acc": "64%"
+          },
+          "description": "Detecting edges and textures"
+        },
+        {
+          "iteration": 20,
+          "state": {
+            "train_loss": 0.65,
+            "val_acc": "75%"
+          },
+          "description": "Higher-level patterns emerging"
+        }
       ]
     }
   ],
@@ -147,8 +351,18 @@
         "ta": "பயிற்சி மற்றும் சோதனைக்கு ஏன் வெவ்வேறு transforms பயன்படுத்துகிறோம்?"
       },
       "options": {
-        "en": ["To save computation time", "Training uses augmentation for regularization; test uses only normalization for fair evaluation", "Testing needs more augmentation", "There's no reason, it's just convention"],
-        "ta": ["கணக்கீட்டு நேரத்தை சேமிக்க", "பயிற்சி ரெகுலரைசேஷனுக்கு augmentation பயன்படுத்துகிறது; சோதனை நியாயமான மதிப்பீட்டிற்கு normalization மட்டும் பயன்படுத்துகிறது", "சோதனைக்கு அதிக augmentation தேவை", "காரணம் இல்லை, இது மரபு"]
+        "en": [
+          "To save computation time",
+          "Training uses augmentation for regularization; test uses only normalization for fair evaluation",
+          "Testing needs more augmentation",
+          "There's no reason, it's just convention"
+        ],
+        "ta": [
+          "கணக்கீட்டு நேரத்தை சேமிக்க",
+          "பயிற்சி ரெகுலரைசேஷனுக்கு augmentation பயன்படுத்துகிறது; சோதனை நியாயமான மதிப்பீட்டிற்கு normalization மட்டும் பயன்படுத்துகிறது",
+          "சோதனைக்கு அதிக augmentation தேவை",
+          "காரணம் இல்லை, இது மரபு"
+        ]
       },
       "correct": 1
     },
@@ -158,8 +372,18 @@
         "ta": "Dropout2d வழக்கமான Dropout-லிருந்து எப்படி வேறுபடுகிறது?"
       },
       "options": {
-        "en": ["Drops twice as many neurons", "Drops entire feature map channels instead of individual values", "Only works on 2D data", "Drops layers instead of neurons"],
-        "ta": ["இரு மடங்கு நியூரான்களை நீக்குகிறது", "தனிப்பட்ட மதிப்புகளுக்கு பதிலாக முழு feature map channels-ஐ நீக்குகிறது", "2D தரவில் மட்டுமே வேலை செய்கிறது", "நியூரான்களுக்கு பதிலாக அடுக்குகளை நீக்குகிறது"]
+        "en": [
+          "Drops twice as many neurons",
+          "Drops entire feature map channels instead of individual values",
+          "Only works on 2D data",
+          "Drops layers instead of neurons"
+        ],
+        "ta": [
+          "இரு மடங்கு நியூரான்களை நீக்குகிறது",
+          "தனிப்பட்ட மதிப்புகளுக்கு பதிலாக முழு feature map channels-ஐ நீக்குகிறது",
+          "2D தரவில் மட்டுமே வேலை செய்கிறது",
+          "நியூரான்களுக்கு பதிலாக அடுக்குகளை நீக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -169,20 +393,45 @@
         "ta": "dataset mean மற்றும் std உடன் transforms.Normalize()-ன் நோக்கம் என்ன?"
       },
       "options": {
-        "en": ["To resize images", "To center pixel values around 0 with unit variance for stable training", "To convert to grayscale", "To reduce file size"],
-        "ta": ["படங்களை மறுஅளவிட", "நிலையான பயிற்சிக்காக pixel மதிப்புகளை 0-ஐ மையமாக வைக்க", "grayscale-க்கு மாற்ற", "கோப்பு அளவைக் குறைக்க"]
+        "en": [
+          "To resize images",
+          "To center pixel values around 0 with unit variance for stable training",
+          "To convert to grayscale",
+          "To reduce file size"
+        ],
+        "ta": [
+          "படங்களை மறுஅளவிட",
+          "நிலையான பயிற்சிக்காக pixel மதிப்புகளை 0-ஐ மையமாக வைக்க",
+          "grayscale-க்கு மாற்ற",
+          "கோப்பு அளவைக் குறைக்க"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["image_classification", "data_augmentation", "cifar10", "cnn_pipeline", "dropout2d"],
-    "concepts_required": ["cnn_intro", "cnn_architectures", "pytorch_training"],
+    "concepts_taught": [
+      "image_classification",
+      "data_augmentation",
+      "cifar10",
+      "cnn_pipeline",
+      "dropout2d"
+    ],
+    "concepts_required": [
+      "cnn_intro",
+      "cnn_architectures",
+      "pytorch_training"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "project",
     "estimated_minutes": 40,
-    "real_world_application": ["image_recognition", "product_classification"],
+    "real_world_application": [
+      "image_recognition",
+      "product_classification"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

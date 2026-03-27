@@ -200,14 +200,89 @@
       "id": "regex_visual",
       "structure_type": "table",
       "data": {
-        "headers": ["Assertion", "Direction", "Included in match?"],
+        "headers": [
+          "Assertion",
+          "Direction",
+          "Included in match?"
+        ],
         "rows": [
-          ["(?=...)", "Forward (lookahead)", "No"],
-          ["(?<=...)", "Backward (lookbehind)", "No"],
-          ["(?!...)", "Negative lookahead", "No"],
-          ["(?<!...)", "Negative lookbehind", "No"]
+          [
+            "(?=...)",
+            "Forward (lookahead)",
+            "No"
+          ],
+          [
+            "(?<=...)",
+            "Backward (lookbehind)",
+            "No"
+          ],
+          [
+            "(?!...)",
+            "Negative lookahead",
+            "No"
+          ],
+          [
+            "(?<!...)",
+            "Negative lookbehind",
+            "No"
+          ]
         ]
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import re\n\nlog = '2025-03-27 ERROR: Connection timeout'\npattern = r'(?P<date>\\d{4}-\\d{2}-\\d{2}) (?P<level>\\w+):'\nm = re.search(pattern, log)\nprint(m.group('date'))\nprint(m.group('level'))\n\ntext = 'Call 555-1234 or 800-5678'\ncensored = re.sub(r'\\d{3}-\\d{4}', 'XXX-XXXX', text)\nprint(censored)",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "log": "'2025-03-27 ERROR: Connection timeout'"
+          },
+          "output": "",
+          "description": "A log line to parse with named groups"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "description": "Pattern with named groups: (?P<date>...) (?P<level>...)"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "m": "Match object"
+          },
+          "output": "",
+          "description": "Search finds the pattern in the log"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "2025-03-27",
+          "description": "Access by group name 'date' instead of index"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "ERROR",
+          "description": "Access 'level' group - much clearer than group(2)"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "",
+          "description": "re.sub finds and replaces ALL matches"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "censored": "'Call XXX-XXXX or XXX-XXXX'"
+          },
+          "output": "Call XXX-XXXX or XXX-XXXX",
+          "description": "Both phone numbers replaced"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -300,13 +375,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["named_groups", "lookahead", "lookbehind", "re_sub", "re_compile"],
-    "concepts_required": ["regex_basics", "re_module"],
+    "concepts_taught": [
+      "named_groups",
+      "lookahead",
+      "lookbehind",
+      "re_sub",
+      "re_compile"
+    ],
+    "concepts_required": [
+      "regex_basics",
+      "re_module"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["log_parsing", "data_extraction", "text_transformation"],
+    "real_world_application": [
+      "log_parsing",
+      "data_extraction",
+      "text_transformation"
+    ],
     "category": "text_processing",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

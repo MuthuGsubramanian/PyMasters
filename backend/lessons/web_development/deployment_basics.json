@@ -153,6 +153,123 @@
         "[2026-03-27 10:00:00 +0000] [12348] [INFO] Booting worker with pid: 12348",
         "[2026-03-27 10:00:00 +0000] [12349] [INFO] Booting worker with pid: 12349"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_deployment",
+      "title": "Production Config with Env Vars",
+      "code": "import os\nfrom dotenv import load_dotenv\n\nload_dotenv()\nSECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback')\nDATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///app.db')\nDEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'\nprint(f'DB: {DATABASE_URL}')\nprint(f'Debug: {DEBUG}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import os for environment variables"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "Import dotenv for .env file"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "explanation": "load_dotenv reads .env in dev"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "SECRET_KEY": "prod-secret..."
+          },
+          "output": "",
+          "explanation": "Read SECRET_KEY with fallback"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "DATABASE_URL": "postgresql://..."
+          },
+          "output": "",
+          "explanation": "SQLite in dev, PostgreSQL in prod"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "DEBUG": false
+          },
+          "output": "",
+          "explanation": "Always False in production"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "DB: postgresql://...",
+          "explanation": "Confirm production DB"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "...Debug: False",
+          "explanation": "Debug off in production"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_deploy_stack",
+      "title": "Production Deployment Stack",
+      "nodes": [
+        {
+          "id": "internet",
+          "label": "Internet",
+          "type": "start"
+        },
+        {
+          "id": "nginx",
+          "label": "Nginx\nReverse Proxy",
+          "type": "process"
+        },
+        {
+          "id": "gunicorn",
+          "label": "Gunicorn\n4 Workers",
+          "type": "process"
+        },
+        {
+          "id": "app",
+          "label": "Python App",
+          "type": "process"
+        },
+        {
+          "id": "db",
+          "label": "PostgreSQL",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "internet",
+          "to": "nginx",
+          "label": "HTTPS"
+        },
+        {
+          "from": "nginx",
+          "to": "gunicorn",
+          "label": "proxy_pass"
+        },
+        {
+          "from": "gunicorn",
+          "to": "app",
+          "label": "WSGI"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "label": "SQL"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -186,8 +303,18 @@
         "ta": "உற்பத்தியில் Flask-ன் உள்ளமைந்த மேம்பாட்டு சேவையகத்தை ஏன் பயன்படுத்தக் கூடாது?"
       },
       "options": {
-        "en": ["It's too expensive", "It's single-threaded, has no SSL, and isn't designed for concurrent traffic", "It doesn't support Python 3", "It requires a special license"],
-        "ta": ["மிகவும் விலை உயர்ந்தது", "ஒற்றை-நூல், SSL இல்லை, மற்றும் ஒரே நேரத்தில் பல போக்குவரத்துக்காக வடிவமைக்கப்படவில்லை", "Python 3-ஐ ஆதரிக்காது", "சிறப்பு உரிமம் தேவை"]
+        "en": [
+          "It's too expensive",
+          "It's single-threaded, has no SSL, and isn't designed for concurrent traffic",
+          "It doesn't support Python 3",
+          "It requires a special license"
+        ],
+        "ta": [
+          "மிகவும் விலை உயர்ந்தது",
+          "ஒற்றை-நூல், SSL இல்லை, மற்றும் ஒரே நேரத்தில் பல போக்குவரத்துக்காக வடிவமைக்கப்படவில்லை",
+          "Python 3-ஐ ஆதரிக்காது",
+          "சிறப்பு உரிமம் தேவை"
+        ]
       },
       "correct": 1
     },
@@ -197,8 +324,18 @@
         "ta": "வழக்கமான வரிசைப்படுத்தலில் Nginx-ன் பங்கு என்ன?"
       },
       "options": {
-        "en": ["It runs Python code", "It acts as a reverse proxy, handles SSL, and serves static files", "It creates the database", "It manages environment variables"],
-        "ta": ["Python குறியீட்டை இயக்குகிறது", "reverse proxy ஆக செயல்படுகிறது, SSL கையாளுகிறது, நிலையான கோப்புகளை வழங்குகிறது", "தரவுத்தளத்தை உருவாக்குகிறது", "சுற்றுச்சூழல் மாறிகளை நிர்வகிக்கிறது"]
+        "en": [
+          "It runs Python code",
+          "It acts as a reverse proxy, handles SSL, and serves static files",
+          "It creates the database",
+          "It manages environment variables"
+        ],
+        "ta": [
+          "Python குறியீட்டை இயக்குகிறது",
+          "reverse proxy ஆக செயல்படுகிறது, SSL கையாளுகிறது, நிலையான கோப்புகளை வழங்குகிறது",
+          "தரவுத்தளத்தை உருவாக்குகிறது",
+          "சுற்றுச்சூழல் மாறிகளை நிர்வகிக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -208,20 +345,44 @@
         "ta": "உற்பத்தியில் API விசைகள் போன்ற ரகசியங்களை எங்கே சேமிக்க வேண்டும்?"
       },
       "options": {
-        "en": ["In the source code", "In environment variables or a secrets manager", "In a public config file", "In HTML comments"],
-        "ta": ["மூலக் குறியீட்டில்", "சுற்றுச்சூழல் மாறிகள் அல்லது ரகசிய மேலாளரில்", "பொது உள்ளமைவு கோப்பில்", "HTML குறிப்புகளில்"]
+        "en": [
+          "In the source code",
+          "In environment variables or a secrets manager",
+          "In a public config file",
+          "In HTML comments"
+        ],
+        "ta": [
+          "மூலக் குறியீட்டில்",
+          "சுற்றுச்சூழல் மாறிகள் அல்லது ரகசிய மேலாளரில்",
+          "பொது உள்ளமைவு கோப்பில்",
+          "HTML குறிப்புகளில்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["wsgi_asgi", "gunicorn", "nginx", "environment_variables", "deployment"],
-    "concepts_required": ["flask_basics", "http_fundamentals"],
+    "concepts_taught": [
+      "wsgi_asgi",
+      "gunicorn",
+      "nginx",
+      "environment_variables",
+      "deployment"
+    ],
+    "concepts_required": [
+      "flask_basics",
+      "http_fundamentals"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 35,
-    "real_world_application": ["web_hosting", "devops"],
+    "real_world_application": [
+      "web_hosting",
+      "devops"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

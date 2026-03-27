@@ -184,7 +184,11 @@
       "type": "VariableBox",
       "id": "box_post",
       "variable": "new_post",
-      "value": {"title": "Hello REST", "body": "Learning APIs", "userId": 1},
+      "value": {
+        "title": "Hello REST",
+        "body": "Learning APIs",
+        "userId": 1
+      },
       "data_type": "dict",
       "color": "#FF9800"
     },
@@ -197,6 +201,164 @@
         "Updated: 200",
         "Deleted: 200"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_rest_crud",
+      "title": "REST CRUD Operations",
+      "code": "import requests\nBASE = 'https://jsonplaceholder.typicode.com'\n\nresp = requests.post(f'{BASE}/posts', json={'title': 'Hello', 'body': 'World', 'userId': 1})\nprint(f'CREATE: {resp.status_code}')\nresp = requests.get(f'{BASE}/posts/1')\nprint(f'READ: {resp.status_code}')\nresp = requests.put(f'{BASE}/posts/1', json={'title': 'Updated'})\nprint(f'UPDATE: {resp.status_code}')\nresp = requests.delete(f'{BASE}/posts/1')\nprint(f'DELETE: {resp.status_code}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import requests library"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "BASE": "https://jsonplaceholder.typicode.com"
+          },
+          "output": "",
+          "explanation": "Base URL for testing"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "resp": "<Response [201]>"
+          },
+          "output": "",
+          "explanation": "POST creates new resource"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "CREATE: 201",
+          "explanation": "201 Created"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "resp": "<Response [200]>"
+          },
+          "output": "",
+          "explanation": "GET retrieves resource"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "...READ: 200",
+          "explanation": "200 OK with data"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "resp": "<Response [200]>"
+          },
+          "output": "",
+          "explanation": "PUT replaces resource"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "...UPDATE: 200",
+          "explanation": "200 Updated"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "resp": "<Response [200]>"
+          },
+          "output": "",
+          "explanation": "DELETE removes resource"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "...DELETE: 200",
+          "explanation": "200 Deleted"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_rest_crud",
+      "title": "REST API CRUD Flow",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "API Client",
+          "type": "start"
+        },
+        {
+          "id": "post",
+          "label": "POST /resource\nCreate",
+          "type": "process"
+        },
+        {
+          "id": "get",
+          "label": "GET /resource/id\nRead",
+          "type": "process"
+        },
+        {
+          "id": "put",
+          "label": "PUT /resource/id\nUpdate",
+          "type": "process"
+        },
+        {
+          "id": "delete",
+          "label": "DELETE /resource/id\nRemove",
+          "type": "process"
+        },
+        {
+          "id": "server",
+          "label": "Server Database",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "post",
+          "label": "JSON"
+        },
+        {
+          "from": "post",
+          "to": "server",
+          "label": "201"
+        },
+        {
+          "from": "client",
+          "to": "get",
+          "label": ""
+        },
+        {
+          "from": "get",
+          "to": "server",
+          "label": "200"
+        },
+        {
+          "from": "client",
+          "to": "put",
+          "label": "JSON"
+        },
+        {
+          "from": "put",
+          "to": "server",
+          "label": "200"
+        },
+        {
+          "from": "client",
+          "to": "delete",
+          "label": ""
+        },
+        {
+          "from": "delete",
+          "to": "server",
+          "label": "204"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -230,8 +392,18 @@
         "ta": "REST என்பதன் முழு வடிவம் என்ன?"
       },
       "options": {
-        "en": ["Remote Execution State Transfer", "Representational State Transfer", "Request-Event-Server-Transfer", "Resource Entity State Technology"],
-        "ta": ["Remote Execution State Transfer", "Representational State Transfer", "Request-Event-Server-Transfer", "Resource Entity State Technology"]
+        "en": [
+          "Remote Execution State Transfer",
+          "Representational State Transfer",
+          "Request-Event-Server-Transfer",
+          "Resource Entity State Technology"
+        ],
+        "ta": [
+          "Remote Execution State Transfer",
+          "Representational State Transfer",
+          "Request-Event-Server-Transfer",
+          "Resource Entity State Technology"
+        ]
       },
       "correct": 1
     },
@@ -241,8 +413,18 @@
         "ta": "புதிய வளத்தை உருவாக்க எந்த HTTP முறையைப் பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["GET", "PUT", "POST", "DELETE"],
-        "ta": ["GET", "PUT", "POST", "DELETE"]
+        "en": [
+          "GET",
+          "PUT",
+          "POST",
+          "DELETE"
+        ],
+        "ta": [
+          "GET",
+          "PUT",
+          "POST",
+          "DELETE"
+        ]
       },
       "correct": 2
     },
@@ -252,20 +434,43 @@
         "ta": "REST-ல், '/api/users/5' URL பொதுவாக எதைக் குறிக்கிறது?"
       },
       "options": {
-        "en": ["The 5th page of users", "A specific user with id 5", "5 users from the API", "The 5th API version"],
-        "ta": ["பயனர்களின் 5வது பக்கம்", "id 5 கொண்ட குறிப்பிட்ட பயனர்", "API-லிருந்து 5 பயனர்கள்", "5வது API பதிப்பு"]
+        "en": [
+          "The 5th page of users",
+          "A specific user with id 5",
+          "5 users from the API",
+          "The 5th API version"
+        ],
+        "ta": [
+          "பயனர்களின் 5வது பக்கம்",
+          "id 5 கொண்ட குறிப்பிட்ட பயனர்",
+          "API-லிருந்து 5 பயனர்கள்",
+          "5வது API பதிப்பு"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["rest_principles", "crud_operations", "json_format", "api_design"],
-    "concepts_required": ["http_methods", "status_codes"],
+    "concepts_taught": [
+      "rest_principles",
+      "crud_operations",
+      "json_format",
+      "api_design"
+    ],
+    "concepts_required": [
+      "http_methods",
+      "status_codes"
+    ],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["api_development", "web_services"],
+    "real_world_application": [
+      "api_development",
+      "web_services"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

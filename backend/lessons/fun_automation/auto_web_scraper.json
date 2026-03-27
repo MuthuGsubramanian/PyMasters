@@ -96,6 +96,111 @@
         "4. The fastest web framework benchmarks 2025",
         "5. Understanding async/await in 5 minutes"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import requests\nfrom bs4 import BeautifulSoup\n\nurl = 'https://news.ycombinator.com'\nresponse = requests.get(url)\nprint(f'Status: {response.status_code}')\n\nsoup = BeautifulSoup(response.text, 'html.parser')\ntitles = soup.select('.titleline > a')\n\nfor i, title in enumerate(titles[:5], 1):\n    print(f'{i}. {title.text}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import requests for HTTP calls"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "url": "'https://news.ycombinator.com'"
+          },
+          "output": "",
+          "description": "Target URL to scrape"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "response": "Response(200)"
+          },
+          "output": "",
+          "description": "Send GET request, receive HTML response"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "Status: 200",
+          "description": "200 = success"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "soup": "BeautifulSoup object"
+          },
+          "output": "",
+          "description": "Parse HTML into navigable tree"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "titles": "30 elements"
+          },
+          "output": "",
+          "description": "CSS selector finds all headline links"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "1. Show HN: Python Learning Platform\n2. Why Python Rules\n3. AI Breakthrough\n4. Web Framework Benchmarks\n5. Async in 5 Minutes",
+          "description": "Print first 5 headlines"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "scraping_loop",
+      "iterable": "titles[:5]",
+      "iterations": [
+        {
+          "index": 1,
+          "value": "title element",
+          "variables": {
+            "title.text": "Show HN: Python Learning Platform"
+          },
+          "description": "Extract text from first headline"
+        },
+        {
+          "index": 2,
+          "value": "title element",
+          "variables": {
+            "title.text": "Why Python Rules"
+          },
+          "description": "Extract second headline"
+        },
+        {
+          "index": 3,
+          "value": "title element",
+          "variables": {
+            "title.text": "AI Breakthrough"
+          },
+          "description": "Extract third headline"
+        },
+        {
+          "index": 4,
+          "value": "title element",
+          "variables": {
+            "title.text": "Web Framework Benchmarks"
+          },
+          "description": "Extract fourth headline"
+        },
+        {
+          "index": 5,
+          "value": "title element",
+          "variables": {
+            "title.text": "Async in 5 Minutes"
+          },
+          "description": "Extract fifth headline"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

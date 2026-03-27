@@ -151,6 +151,55 @@
         "Reduction factor: 4×",
         "Strongest activations preserved"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cnn_pool",
+      "code": "import torch\nimport torch.nn as nn\n\nx = torch.tensor([[[[1, 2, 3, 4],\n                    [5, 6, 7, 8],\n                    [9, 10, 11, 12],\n                    [13, 14, 15, 16]]]], dtype=torch.float32)\n\nmax_pool = nn.MaxPool2d(kernel_size=2, stride=2)\navg_pool = nn.AvgPool2d(kernel_size=2, stride=2)\n\nprint(f'Input shape: {x.shape}')\nprint(f'MaxPool:\\n{max_pool(x)}')\nprint(f'AvgPool:\\n{avg_pool(x)}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "x": "4x4 matrix"
+          },
+          "output": "",
+          "explanation": "4x4 feature map with values 1-16"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "max_pool": "MaxPool2d(2, 2)"
+          },
+          "output": "",
+          "explanation": "Max pooling: take maximum in each 2x2 window"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "avg_pool": "AvgPool2d(2, 2)"
+          },
+          "output": "",
+          "explanation": "Average pooling: take mean in each 2x2 window"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Input shape: torch.Size([1, 1, 4, 4])",
+          "explanation": "4x4 spatial input"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "MaxPool:\ntensor([[[[ 6.,  8.],\n          [14., 16.]]]])",
+          "explanation": "Max of each 2x2: [6,8,14,16] — keeps strongest activations"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "AvgPool:\ntensor([[[[ 3.5,  5.5],\n          [11.5, 13.5]]]])",
+          "explanation": "Average of each 2x2 — smoother downsampling"
+        }
+      ]
     }
   ],
   "practice_challenges": [

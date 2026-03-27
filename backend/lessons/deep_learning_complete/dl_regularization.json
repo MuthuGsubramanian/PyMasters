@@ -47,23 +47,89 @@
       "type": "CodeStepper",
       "id": "reg_code",
       "steps": [
-        {"line": "nn.Dropout(0.3)", "highlight": "Dropout", "explanation": {"en": "Randomly zeroes 30% of neurons during training. Forces redundancy in learned features"}},
-        {"line": "nn.BatchNorm1d(64)", "highlight": "BatchNorm1d", "explanation": {"en": "Normalizes activations across the batch. Stabilizes training and acts as mild regularizer"}},
-        {"line": "weight_decay=1e-4", "highlight": "weight_decay", "explanation": {"en": "L2 regularization: adds penalty for large weights. Keeps weights small and smooth"}},
-        {"line": "model.train()", "highlight": "train", "explanation": {"en": "Enable training mode: dropout active, batch norm uses batch statistics"}},
-        {"line": "model.eval()", "highlight": "eval", "explanation": {"en": "Enable eval mode: dropout disabled, batch norm uses running statistics"}},
-        {"line": "best_val_loss = float('inf')", "highlight": "best_val_loss", "explanation": {"en": "Track best validation loss for early stopping"}},
-        {"line": "patience = 10", "highlight": "patience", "explanation": {"en": "Stop if validation loss doesn't improve for 10 consecutive epochs"}},
-        {"line": "if val_loss < best_val_loss:", "highlight": "if", "explanation": {"en": "Check if current epoch improved validation performance"}},
-        {"line": "    torch.save(model.state_dict(), 'best_model.pth')", "highlight": "save", "explanation": {"en": "Save best model weights — we'll load these after training"}},
-        {"line": "    patience_counter += 1", "highlight": "patience_counter", "explanation": {"en": "No improvement — increment counter toward early stop"}}
+        {
+          "line": "nn.Dropout(0.3)",
+          "highlight": "Dropout",
+          "explanation": {
+            "en": "Randomly zeroes 30% of neurons during training. Forces redundancy in learned features"
+          }
+        },
+        {
+          "line": "nn.BatchNorm1d(64)",
+          "highlight": "BatchNorm1d",
+          "explanation": {
+            "en": "Normalizes activations across the batch. Stabilizes training and acts as mild regularizer"
+          }
+        },
+        {
+          "line": "weight_decay=1e-4",
+          "highlight": "weight_decay",
+          "explanation": {
+            "en": "L2 regularization: adds penalty for large weights. Keeps weights small and smooth"
+          }
+        },
+        {
+          "line": "model.train()",
+          "highlight": "train",
+          "explanation": {
+            "en": "Enable training mode: dropout active, batch norm uses batch statistics"
+          }
+        },
+        {
+          "line": "model.eval()",
+          "highlight": "eval",
+          "explanation": {
+            "en": "Enable eval mode: dropout disabled, batch norm uses running statistics"
+          }
+        },
+        {
+          "line": "best_val_loss = float('inf')",
+          "highlight": "best_val_loss",
+          "explanation": {
+            "en": "Track best validation loss for early stopping"
+          }
+        },
+        {
+          "line": "patience = 10",
+          "highlight": "patience",
+          "explanation": {
+            "en": "Stop if validation loss doesn't improve for 10 consecutive epochs"
+          }
+        },
+        {
+          "line": "if val_loss < best_val_loss:",
+          "highlight": "if",
+          "explanation": {
+            "en": "Check if current epoch improved validation performance"
+          }
+        },
+        {
+          "line": "    torch.save(model.state_dict(), 'best_model.pth')",
+          "highlight": "save",
+          "explanation": {
+            "en": "Save best model weights — we'll load these after training"
+          }
+        },
+        {
+          "line": "    patience_counter += 1",
+          "highlight": "patience_counter",
+          "explanation": {
+            "en": "No improvement — increment counter toward early stop"
+          }
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "overfit_comparison",
-      "left": {"label": "Without Regularization", "content": "Train acc: 99.8%\nTest acc: 72.3%\nGap: 27.5% (overfitting!)"},
-      "right": {"label": "With Regularization", "content": "Train acc: 92.1%\nTest acc: 89.7%\nGap: 2.4% (generalized!)"},
+      "left": {
+        "label": "Without Regularization",
+        "content": "Train acc: 99.8%\nTest acc: 72.3%\nGap: 27.5% (overfitting!)"
+      },
+      "right": {
+        "label": "With Regularization",
+        "content": "Train acc: 92.1%\nTest acc: 89.7%\nGap: 2.4% (generalized!)"
+      },
       "duration_ms": 3000
     },
     {
@@ -71,9 +137,35 @@
       "id": "dropout_visual",
       "structure_type": "neural_network",
       "layers": [
-        {"name": "Input", "nodes": ["x1", "x2", "x3", "x4"], "type": "input"},
-        {"name": "Hidden (dropout)", "nodes": ["h1", "X", "h3", "X", "h5"], "type": "hidden", "note": "X = dropped"},
-        {"name": "Output", "nodes": ["y"], "type": "output"}
+        {
+          "name": "Input",
+          "nodes": [
+            "x1",
+            "x2",
+            "x3",
+            "x4"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Hidden (dropout)",
+          "nodes": [
+            "h1",
+            "X",
+            "h3",
+            "X",
+            "h5"
+          ],
+          "type": "hidden",
+          "note": "X = dropped"
+        },
+        {
+          "name": "Output",
+          "nodes": [
+            "y"
+          ],
+          "type": "output"
+        }
       ],
       "duration_ms": 3000
     },
@@ -115,6 +207,73 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_regularization",
+      "code": "import torch\nimport torch.nn as nn\n\nmodel = nn.Sequential(\n    nn.Linear(10, 64),\n    nn.ReLU(),\n    nn.Dropout(0.3),\n    nn.Linear(64, 32),\n    nn.BatchNorm1d(32),\n    nn.ReLU(),\n    nn.Linear(32, 2)\n)\n\n# L2 regularization via weight_decay\noptimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)\n\nmodel.train()  # dropout active\nx = torch.randn(16, 10)\nout_train = model(x)\nprint(f'Train mode output shape: {out_train.shape}')\n\nmodel.eval()  # dropout disabled\nout_eval = model(x)\nprint(f'Eval mode output shape: {out_eval.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "model": "10->64->32->2"
+          },
+          "output": "",
+          "explanation": "Network with Dropout and BatchNorm for regularization"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "dropout": "0.3"
+          },
+          "output": "",
+          "explanation": "Dropout: randomly zero 30% of neurons during training"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "batchnorm": "BatchNorm1d(32)"
+          },
+          "output": "",
+          "explanation": "BatchNorm: normalize activations for stable training"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "weight_decay": "1e-4"
+          },
+          "output": "",
+          "explanation": "L2 regularization: penalize large weights"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "mode": "train"
+          },
+          "output": "",
+          "explanation": "model.train(): dropout active, BN uses batch stats"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "Train mode output shape: torch.Size([16, 2])",
+          "explanation": "Some neurons randomly dropped — prevents co-adaptation"
+        },
+        {
+          "line": 22,
+          "variables": {
+            "mode": "eval"
+          },
+          "output": "",
+          "explanation": "model.eval(): dropout off, BN uses running stats"
+        },
+        {
+          "line": 24,
+          "variables": {},
+          "output": "Eval mode output shape: torch.Size([16, 2])",
+          "explanation": "All neurons active — deterministic output"
+        }
+      ]
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish_effect",
       "effect": "shield_glow",
@@ -150,8 +309,18 @@
         "ta": "பயிற்சியின் போது dropout என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Removes layers from the network", "Randomly zeroes a fraction of neuron outputs", "Reduces the learning rate", "Removes training samples"],
-        "ta": ["நெட்வொர்க்கிலிருந்து அடுக்குகளை அகற்றுகிறது", "நியூரான் வெளியீடுகளின் ஒரு பகுதியை சீரற்ற முறையில் பூஜ்ஜியமாக்குகிறது", "Learning rate-ஐ குறைக்கிறது", "பயிற்சி மாதிரிகளை அகற்றுகிறது"]
+        "en": [
+          "Removes layers from the network",
+          "Randomly zeroes a fraction of neuron outputs",
+          "Reduces the learning rate",
+          "Removes training samples"
+        ],
+        "ta": [
+          "நெட்வொர்க்கிலிருந்து அடுக்குகளை அகற்றுகிறது",
+          "நியூரான் வெளியீடுகளின் ஒரு பகுதியை சீரற்ற முறையில் பூஜ்ஜியமாக்குகிறது",
+          "Learning rate-ஐ குறைக்கிறது",
+          "பயிற்சி மாதிரிகளை அகற்றுகிறது"
+        ]
       },
       "correct": 1
     },
@@ -161,8 +330,18 @@
         "ta": "சரிபார்ப்புக்கு முன் ஏன் model.eval() அழைக்க வேண்டும்?"
       },
       "options": {
-        "en": ["To speed up computation", "To disable dropout and use running stats for batch norm", "To save memory", "To enable gradient computation"],
-        "ta": ["கணக்கீட்டை வேகப்படுத்த", "Dropout-ஐ முடக்கி batch norm-க்கு running stats பயன்படுத்த", "நினைவகத்தை சேமிக்க", "சாய்வு கணக்கீட்டை இயக்க"]
+        "en": [
+          "To speed up computation",
+          "To disable dropout and use running stats for batch norm",
+          "To save memory",
+          "To enable gradient computation"
+        ],
+        "ta": [
+          "கணக்கீட்டை வேகப்படுத்த",
+          "Dropout-ஐ முடக்கி batch norm-க்கு running stats பயன்படுத்த",
+          "நினைவகத்தை சேமிக்க",
+          "சாய்வு கணக்கீட்டை இயக்க"
+        ]
       },
       "correct": 1
     },
@@ -172,20 +351,45 @@
         "ta": "ஆப்டிமைசரில் weight_decay என்ன செயல்படுத்துகிறது?"
       },
       "options": {
-        "en": ["L1 regularization", "L2 regularization", "Dropout", "Early stopping"],
-        "ta": ["L1 ரெகுலரைசேஷன்", "L2 ரெகுலரைசேஷன்", "Dropout", "Early stopping"]
+        "en": [
+          "L1 regularization",
+          "L2 regularization",
+          "Dropout",
+          "Early stopping"
+        ],
+        "ta": [
+          "L1 ரெகுலரைசேஷன்",
+          "L2 ரெகுலரைசேஷன்",
+          "Dropout",
+          "Early stopping"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["dropout", "l1_regularization", "l2_regularization", "batch_normalization", "early_stopping", "overfitting"],
-    "concepts_required": ["gradient_descent", "training_loop"],
+    "concepts_taught": [
+      "dropout",
+      "l1_regularization",
+      "l2_regularization",
+      "batch_normalization",
+      "early_stopping",
+      "overfitting"
+    ],
+    "concepts_required": [
+      "gradient_descent",
+      "training_loop"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["model_generalization", "production_models"],
+    "real_world_application": [
+      "model_generalization",
+      "production_models"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

@@ -156,11 +156,31 @@
       "type": "FlowArrow",
       "id": "pr_flow",
       "stages": [
-        { "label": "Branch", "icon": "git-branch", "color": "#4f8ef7" },
-        { "label": "Commit", "icon": "save", "color": "#6bcf7f" },
-        { "label": "Push", "icon": "upload", "color": "#ffd93d" },
-        { "label": "PR Review", "icon": "eye", "color": "#a66bf7" },
-        { "label": "Merge", "icon": "merge", "color": "#4ff7a4" }
+        {
+          "label": "Branch",
+          "icon": "git-branch",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "Commit",
+          "icon": "save",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "Push",
+          "icon": "upload",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "PR Review",
+          "icon": "eye",
+          "color": "#a66bf7"
+        },
+        {
+          "label": "Merge",
+          "icon": "merge",
+          "color": "#4ff7a4"
+        }
       ]
     },
     {
@@ -193,6 +213,123 @@
         "content": "* Add login form\n* Add auth logic\n* Previous commit\n(clean, linear, no merge commit)",
         "status": "pass"
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_git",
+      "title": "Git Branch and Merge",
+      "code": "# $ git checkout -b feature/login\n# $ git add auth.py\n# $ git commit -m 'Add login'\n# $ git checkout main\n# $ git merge feature/login\n# $ git push origin main",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "branch": "feature/login"
+          },
+          "output": "Switched to new branch",
+          "explanation": "Create and switch to feature branch"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "staged": [
+              "auth.py"
+            ]
+          },
+          "output": "",
+          "explanation": "Stage file for commit"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "[feature/login abc123] Add login",
+          "explanation": "Commit with message"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "branch": "main"
+          },
+          "output": "Switched to 'main'",
+          "explanation": "Switch back to main"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Merge made by 'ort'",
+          "explanation": "Merge feature into main"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "main -> main",
+          "explanation": "Push to remote"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_git_flow",
+      "title": "Git Feature Branch Workflow",
+      "nodes": [
+        {
+          "id": "main",
+          "label": "main Branch",
+          "type": "start"
+        },
+        {
+          "id": "branch",
+          "label": "Feature Branch",
+          "type": "process"
+        },
+        {
+          "id": "develop",
+          "label": "Commit Code",
+          "type": "process"
+        },
+        {
+          "id": "pr",
+          "label": "Pull Request",
+          "type": "decision"
+        },
+        {
+          "id": "merge",
+          "label": "Merge",
+          "type": "process"
+        },
+        {
+          "id": "deploy",
+          "label": "Deploy",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "main",
+          "to": "branch",
+          "label": "checkout -b"
+        },
+        {
+          "from": "branch",
+          "to": "develop",
+          "label": "Work"
+        },
+        {
+          "from": "develop",
+          "to": "pr",
+          "label": "Push"
+        },
+        {
+          "from": "pr",
+          "to": "merge",
+          "label": "Approved"
+        },
+        {
+          "from": "merge",
+          "to": "deploy",
+          "label": "CI/CD"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -226,8 +363,18 @@
         "ta": "'git checkout -b feature/login' என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Deletes the branch", "Creates a new branch AND switches to it", "Merges the branch", "Pushes the branch"],
-        "ta": ["Branch-ஐ நீக்கும்", "புதிய branch-ஐ உருவாக்கி அதற்கு switch செய்யும்", "Branch-ஐ merge செய்யும்", "Branch-ஐ push செய்யும்"]
+        "en": [
+          "Deletes the branch",
+          "Creates a new branch AND switches to it",
+          "Merges the branch",
+          "Pushes the branch"
+        ],
+        "ta": [
+          "Branch-ஐ நீக்கும்",
+          "புதிய branch-ஐ உருவாக்கி அதற்கு switch செய்யும்",
+          "Branch-ஐ merge செய்யும்",
+          "Branch-ஐ push செய்யும்"
+        ]
       },
       "correct": 1
     },
@@ -237,8 +384,18 @@
         "ta": "Merge-ஐ விட rebase-ன் நன்மை என்ன?"
       },
       "options": {
-        "en": ["It's always safer", "It creates a clean, linear commit history", "It preserves all merge commits", "It's faster"],
-        "ta": ["எப்போதும் பாதுகாப்பானது", "சுத்தமான, நேர்க்கோட்டு commit history உருவாக்கும்", "அனைத்து merge commits-ஐயும் பாதுகாக்கும்", "வேகமானது"]
+        "en": [
+          "It's always safer",
+          "It creates a clean, linear commit history",
+          "It preserves all merge commits",
+          "It's faster"
+        ],
+        "ta": [
+          "எப்போதும் பாதுகாப்பானது",
+          "சுத்தமான, நேர்க்கோட்டு commit history உருவாக்கும்",
+          "அனைத்து merge commits-ஐயும் பாதுகாக்கும்",
+          "வேகமானது"
+        ]
       },
       "correct": 1
     },
@@ -248,20 +405,43 @@
         "ta": "Push செய்யும்போது --force-க்கு பதிலாக --force-with-lease ஏன் பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["It's faster", "It fails if someone else pushed to the branch, preventing data loss", "It doesn't require authentication", "There is no difference"],
-        "ta": ["வேகமானது", "வேறொருவர் branch-க்கு push செய்திருந்தால் தோல்வியடையும், data loss-ஐ தடுக்கும்", "authentication தேவையில்லை", "வேறுபாடு இல்லை"]
+        "en": [
+          "It's faster",
+          "It fails if someone else pushed to the branch, preventing data loss",
+          "It doesn't require authentication",
+          "There is no difference"
+        ],
+        "ta": [
+          "வேகமானது",
+          "வேறொருவர் branch-க்கு push செய்திருந்தால் தோல்வியடையும், data loss-ஐ தடுக்கும்",
+          "authentication தேவையில்லை",
+          "வேறுபாடு இல்லை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["git_branching", "pull_requests", "rebase", "merge", "conventional_commits"],
-    "concepts_required": ["git_basics"],
+    "concepts_taught": [
+      "git_branching",
+      "pull_requests",
+      "rebase",
+      "merge",
+      "conventional_commits"
+    ],
+    "concepts_required": [
+      "git_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["team_collaboration", "open_source"],
+    "real_world_application": [
+      "team_collaboration",
+      "open_source"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

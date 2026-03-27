@@ -201,6 +201,51 @@
         "  \"suggestion\": \"Use separate lines and add spaces around operators\"",
         "}"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_prompt_engineering_advanced",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\n# Few-shot prompting: teach by example\nmessages = [\n    {'role':'system','content':'Classify sentiment.'},\n    {'role':'user','content':'I love this product!'},\n    {'role':'assistant','content':'positive'},\n    {'role':'user','content':'It broke after one day.'},\n    {'role':'assistant','content':'negative'},\n    {'role':'user','content':'The package arrived on time.'}\n]\nresponse = client.chat.completions.create(\n    model='gpt-4o-mini', messages=messages\n)\nprint(response.choices[0].message.content)",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "technique": "few-shot prompting"
+          },
+          "output": "",
+          "explanation": "Provide examples to teach AI the exact pattern"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "example1": "I love this! => positive"
+          },
+          "output": "",
+          "explanation": "First example teaches positive sentiment format"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "example2": "It broke => negative"
+          },
+          "output": "",
+          "explanation": "Second example teaches negative format"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "query": "Package arrived on time"
+          },
+          "output": "",
+          "explanation": "Now classify this unseen input"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "neutral",
+          "explanation": "AI learned the pattern — correctly classifies as neutral"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -253,8 +298,18 @@
         "ta": "Python குறியீடு உருவாக்க எந்த temperature மதிப்பைப் பயன்படுத்துவீர்கள்?"
       },
       "options": {
-        "en": ["1.5", "1.0", "0.0 - 0.2", "0.8"],
-        "ta": ["1.5", "1.0", "0.0 - 0.2", "0.8"]
+        "en": [
+          "1.5",
+          "1.0",
+          "0.0 - 0.2",
+          "0.8"
+        ],
+        "ta": [
+          "1.5",
+          "1.0",
+          "0.0 - 0.2",
+          "0.8"
+        ]
       },
       "correct": 2
     },
@@ -281,13 +336,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["system_prompts", "temperature", "max_tokens", "structured_output"],
-    "concepts_required": ["prompt_engineering_basics"],
+    "concepts_taught": [
+      "system_prompts",
+      "temperature",
+      "max_tokens",
+      "structured_output"
+    ],
+    "concepts_required": [
+      "prompt_engineering_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["api_integration", "chatbot_design"],
+    "real_world_application": [
+      "api_integration",
+      "chatbot_design"
+    ],
     "category": "ai_core",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

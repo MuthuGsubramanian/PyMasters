@@ -47,9 +47,31 @@
       "id": "network_architecture",
       "structure_type": "neural_network",
       "layers": [
-        {"name": "Input", "nodes": ["x1", "x2"], "type": "input"},
-        {"name": "Hidden", "nodes": ["h1", "h2", "h3", "h4"], "type": "hidden"},
-        {"name": "Output", "nodes": ["y"], "type": "output"}
+        {
+          "name": "Input",
+          "nodes": [
+            "x1",
+            "x2"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Hidden",
+          "nodes": [
+            "h1",
+            "h2",
+            "h3",
+            "h4"
+          ],
+          "type": "hidden"
+        },
+        {
+          "name": "Output",
+          "nodes": [
+            "y"
+          ],
+          "type": "output"
+        }
       ],
       "connections": "fully_connected",
       "duration_ms": 4000
@@ -58,31 +80,140 @@
       "type": "CodeStepper",
       "id": "mlp_code",
       "steps": [
-        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch framework"}},
-        {"line": "import torch.nn as nn", "highlight": "nn", "explanation": {"en": "Import neural network module"}},
-        {"line": "class MultiLayerNet(nn.Module):", "highlight": "MultiLayerNet", "explanation": {"en": "Define a multi-layer network class"}},
-        {"line": "    self.layer1 = nn.Linear(input_size, hidden_size)", "highlight": "layer1", "explanation": {"en": "First layer maps inputs to hidden neurons (2 -> 4)"}},
-        {"line": "    self.relu = nn.ReLU()", "highlight": "ReLU", "explanation": {"en": "ReLU activation adds non-linearity between layers"}},
-        {"line": "    self.layer2 = nn.Linear(hidden_size, output_size)", "highlight": "layer2", "explanation": {"en": "Second layer maps hidden neurons to output (4 -> 1)"}},
-        {"line": "    x = self.relu(self.layer1(x))", "highlight": "forward", "explanation": {"en": "Forward pass: input through layer1, then ReLU activation"}},
-        {"line": "    x = self.sigmoid(self.layer2(x))", "highlight": "sigmoid", "explanation": {"en": "Then through layer2 and sigmoid for final probability"}},
-        {"line": "model = MultiLayerNet(2, 4, 1)", "highlight": "model", "explanation": {"en": "Create network: 2 inputs, 4 hidden neurons, 1 output"}},
-        {"line": "criterion = nn.BCELoss()", "highlight": "BCELoss", "explanation": {"en": "Binary Cross-Entropy loss for binary classification"}},
-        {"line": "optimizer = torch.optim.Adam(model.parameters(), lr=0.1)", "highlight": "Adam", "explanation": {"en": "Adam optimizer with learning rate 0.1"}},
-        {"line": "for epoch in range(2000):", "highlight": "epoch", "explanation": {"en": "Train for 2000 epochs to learn XOR pattern"}},
-        {"line": "    loss.backward()", "highlight": "backward", "explanation": {"en": "Compute gradients via backpropagation through all layers"}},
-        {"line": "    optimizer.step()", "highlight": "step", "explanation": {"en": "Update all weights and biases in both layers"}}
+        {
+          "line": "import torch",
+          "highlight": "torch",
+          "explanation": {
+            "en": "Import PyTorch framework"
+          }
+        },
+        {
+          "line": "import torch.nn as nn",
+          "highlight": "nn",
+          "explanation": {
+            "en": "Import neural network module"
+          }
+        },
+        {
+          "line": "class MultiLayerNet(nn.Module):",
+          "highlight": "MultiLayerNet",
+          "explanation": {
+            "en": "Define a multi-layer network class"
+          }
+        },
+        {
+          "line": "    self.layer1 = nn.Linear(input_size, hidden_size)",
+          "highlight": "layer1",
+          "explanation": {
+            "en": "First layer maps inputs to hidden neurons (2 -> 4)"
+          }
+        },
+        {
+          "line": "    self.relu = nn.ReLU()",
+          "highlight": "ReLU",
+          "explanation": {
+            "en": "ReLU activation adds non-linearity between layers"
+          }
+        },
+        {
+          "line": "    self.layer2 = nn.Linear(hidden_size, output_size)",
+          "highlight": "layer2",
+          "explanation": {
+            "en": "Second layer maps hidden neurons to output (4 -> 1)"
+          }
+        },
+        {
+          "line": "    x = self.relu(self.layer1(x))",
+          "highlight": "forward",
+          "explanation": {
+            "en": "Forward pass: input through layer1, then ReLU activation"
+          }
+        },
+        {
+          "line": "    x = self.sigmoid(self.layer2(x))",
+          "highlight": "sigmoid",
+          "explanation": {
+            "en": "Then through layer2 and sigmoid for final probability"
+          }
+        },
+        {
+          "line": "model = MultiLayerNet(2, 4, 1)",
+          "highlight": "model",
+          "explanation": {
+            "en": "Create network: 2 inputs, 4 hidden neurons, 1 output"
+          }
+        },
+        {
+          "line": "criterion = nn.BCELoss()",
+          "highlight": "BCELoss",
+          "explanation": {
+            "en": "Binary Cross-Entropy loss for binary classification"
+          }
+        },
+        {
+          "line": "optimizer = torch.optim.Adam(model.parameters(), lr=0.1)",
+          "highlight": "Adam",
+          "explanation": {
+            "en": "Adam optimizer with learning rate 0.1"
+          }
+        },
+        {
+          "line": "for epoch in range(2000):",
+          "highlight": "epoch",
+          "explanation": {
+            "en": "Train for 2000 epochs to learn XOR pattern"
+          }
+        },
+        {
+          "line": "    loss.backward()",
+          "highlight": "backward",
+          "explanation": {
+            "en": "Compute gradients via backpropagation through all layers"
+          }
+        },
+        {
+          "line": "    optimizer.step()",
+          "highlight": "step",
+          "explanation": {
+            "en": "Update all weights and biases in both layers"
+          }
+        }
       ]
     },
     {
       "type": "MemoryStack",
       "id": "layer_computation",
       "slots": [
-        {"name": "Input", "value": "[1.0, 0.0]", "type": "tensor", "address": "Layer 0"},
-        {"name": "Hidden (pre-activation)", "value": "[0.3, -0.5, 0.8, 0.1]", "type": "tensor", "address": "Layer 1"},
-        {"name": "Hidden (post-ReLU)", "value": "[0.3, 0.0, 0.8, 0.1]", "type": "tensor", "address": "Layer 1"},
-        {"name": "Output (pre-sigmoid)", "value": "[0.62]", "type": "tensor", "address": "Layer 2"},
-        {"name": "Output (post-sigmoid)", "value": "[0.65]", "type": "tensor", "address": "Layer 2"}
+        {
+          "name": "Input",
+          "value": "[1.0, 0.0]",
+          "type": "tensor",
+          "address": "Layer 0"
+        },
+        {
+          "name": "Hidden (pre-activation)",
+          "value": "[0.3, -0.5, 0.8, 0.1]",
+          "type": "tensor",
+          "address": "Layer 1"
+        },
+        {
+          "name": "Hidden (post-ReLU)",
+          "value": "[0.3, 0.0, 0.8, 0.1]",
+          "type": "tensor",
+          "address": "Layer 1"
+        },
+        {
+          "name": "Output (pre-sigmoid)",
+          "value": "[0.62]",
+          "type": "tensor",
+          "address": "Layer 2"
+        },
+        {
+          "name": "Output (post-sigmoid)",
+          "value": "[0.65]",
+          "type": "tensor",
+          "address": "Layer 2"
+        }
       ]
     },
     {
@@ -98,14 +229,29 @@
       "id": "data_flow",
       "from": "input_layer",
       "to": "output_layer",
-      "steps": ["[x1, x2]", "Linear(2,4)", "ReLU", "Linear(4,1)", "Sigmoid", "output"],
+      "steps": [
+        "[x1, x2]",
+        "Linear(2,4)",
+        "ReLU",
+        "Linear(4,1)",
+        "Sigmoid",
+        "output"
+      ],
       "duration_ms": 3000
     },
     {
       "type": "ComparisonPanel",
       "id": "xor_comparison",
-      "left": {"label": "Single Perceptron", "content": "Cannot solve XOR — draws one straight line", "result": "FAILS"},
-      "right": {"label": "Multilayer Network", "content": "Solves XOR — hidden layer creates curved boundary", "result": "SUCCEEDS"},
+      "left": {
+        "label": "Single Perceptron",
+        "content": "Cannot solve XOR — draws one straight line",
+        "result": "FAILS"
+      },
+      "right": {
+        "label": "Multilayer Network",
+        "content": "Solves XOR — hidden layer creates curved boundary",
+        "result": "SUCCEEDS"
+      },
       "duration_ms": 3000
     },
     {
@@ -117,6 +263,107 @@
         ">>> print(model(X).detach().numpy().flatten())",
         "[0.02, 0.98, 0.97, 0.03]",
         ">>> # XOR solved! [0,0]->0, [0,1]->1, [1,0]->1, [1,1]->0"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_mlp",
+      "code": "import torch\nimport torch.nn as nn\n\n# XOR problem — not linearly separable\nX = torch.tensor([[0,0],[0,1],[1,0],[1,1]], dtype=torch.float32)\ny = torch.tensor([[0],[1],[1],[0]], dtype=torch.float32)\n\nmodel = nn.Sequential(\n    nn.Linear(2, 4),\n    nn.ReLU(),\n    nn.Linear(4, 1),\n    nn.Sigmoid()\n)\n\ncriterion = nn.BCELoss()\noptimizer = torch.optim.Adam(model.parameters(), lr=0.1)\n\nfor epoch in range(1000):\n    pred = model(X)\n    loss = criterion(pred, y)\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()\n\nprint(f'Final predictions: {model(X).detach().round().flatten().tolist()}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "X": "[[0,0],[0,1],[1,0],[1,1]]"
+          },
+          "output": "",
+          "explanation": "XOR inputs — single perceptron cannot solve this"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "y": "[[0],[1],[1],[0]]"
+          },
+          "output": "",
+          "explanation": "XOR outputs — need hidden layer"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "model": "2->4->1 with ReLU+Sigmoid"
+          },
+          "output": "",
+          "explanation": "Hidden layer with 4 neurons breaks linearity"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "criterion": "BCELoss"
+          },
+          "output": "",
+          "explanation": "Binary cross-entropy for binary classification"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "epoch": "0, loss ~0.69"
+          },
+          "output": "",
+          "explanation": "Start training — loss near -log(0.5)"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "epoch": "500, loss ~0.01"
+          },
+          "output": "",
+          "explanation": "Mid training — model learning XOR pattern"
+        },
+        {
+          "line": 24,
+          "variables": {},
+          "output": "Final predictions: [0.0, 1.0, 1.0, 0.0]",
+          "explanation": "MLP solves XOR! Hidden layer creates nonlinear decision boundary"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_xor_training",
+      "title": "XOR Training Epochs",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 0,
+          "state": {
+            "loss": 0.693,
+            "predictions": "[0.5, 0.5, 0.5, 0.5]"
+          },
+          "description": "Random weights — predicts 0.5 for everything"
+        },
+        {
+          "iteration": 100,
+          "state": {
+            "loss": 0.312,
+            "predictions": "[0.3, 0.7, 0.6, 0.4]"
+          },
+          "description": "Starting to separate classes"
+        },
+        {
+          "iteration": 500,
+          "state": {
+            "loss": 0.012,
+            "predictions": "[0.02, 0.98, 0.97, 0.03]"
+          },
+          "description": "Nearly perfect separation"
+        },
+        {
+          "iteration": 1000,
+          "state": {
+            "loss": 0.002,
+            "predictions": "[0.0, 1.0, 1.0, 0.0]"
+          },
+          "description": "XOR solved!"
+        }
       ]
     }
   ],
@@ -149,8 +396,18 @@
         "ta": "நரம்பியல் நெட்வொர்க்கில் மறைந்த அடுக்குகளின் முதன்மை நோக்கம் என்ன?"
       },
       "options": {
-        "en": ["To slow down training", "To learn non-linear intermediate representations", "To reduce the number of parameters", "To store training data"],
-        "ta": ["பயிற்சியை மெதுவாக்குவது", "நேரியல் அல்லாத இடைநிலை பிரதிநிதித்துவங்களைக் கற்பது", "அளவுருக்களின் எண்ணிக்கையைக் குறைப்பது", "பயிற்சி தரவைச் சேமிப்பது"]
+        "en": [
+          "To slow down training",
+          "To learn non-linear intermediate representations",
+          "To reduce the number of parameters",
+          "To store training data"
+        ],
+        "ta": [
+          "பயிற்சியை மெதுவாக்குவது",
+          "நேரியல் அல்லாத இடைநிலை பிரதிநிதித்துவங்களைக் கற்பது",
+          "அளவுருக்களின் எண்ணிக்கையைக் குறைப்பது",
+          "பயிற்சி தரவைச் சேமிப்பது"
+        ]
       },
       "correct": 1
     },
@@ -160,8 +417,18 @@
         "ta": "[2, 4, 1] அடுக்குகள் கொண்ட நெட்வொர்க்கில் மொத்தம் எத்தனை பயிற்சியளிக்கக்கூடிய அளவுருக்கள் உள்ளன?"
       },
       "options": {
-        "en": ["7", "12", "17", "8"],
-        "ta": ["7", "12", "17", "8"]
+        "en": [
+          "7",
+          "12",
+          "17",
+          "8"
+        ],
+        "ta": [
+          "7",
+          "12",
+          "17",
+          "8"
+        ]
       },
       "correct": 2
     },
@@ -171,20 +438,43 @@
         "ta": "ஒரு பெர்செப்ட்ரானால் ஏன் XOR-ஐ தீர்க்க முடியாது?"
       },
       "options": {
-        "en": ["XOR has too many inputs", "XOR is not linearly separable", "XOR requires floating point numbers", "XOR needs more than one output"],
-        "ta": ["XOR-க்கு அதிக உள்ளீடுகள் உள்ளன", "XOR நேரியல் பிரிக்கக்கூடியது அல்ல", "XOR-க்கு மிதவை எண்கள் தேவை", "XOR-க்கு ஒன்றுக்கு மேற்பட்ட வெளியீடுகள் தேவை"]
+        "en": [
+          "XOR has too many inputs",
+          "XOR is not linearly separable",
+          "XOR requires floating point numbers",
+          "XOR needs more than one output"
+        ],
+        "ta": [
+          "XOR-க்கு அதிக உள்ளீடுகள் உள்ளன",
+          "XOR நேரியல் பிரிக்கக்கூடியது அல்ல",
+          "XOR-க்கு மிதவை எண்கள் தேவை",
+          "XOR-க்கு ஒன்றுக்கு மேற்பட்ட வெளியீடுகள் தேவை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["multilayer_perceptron", "hidden_layers", "network_architecture", "xor_problem"],
-    "concepts_required": ["perceptron", "activation_function"],
+    "concepts_taught": [
+      "multilayer_perceptron",
+      "hidden_layers",
+      "network_architecture",
+      "xor_problem"
+    ],
+    "concepts_required": [
+      "perceptron",
+      "activation_function"
+    ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["pattern_recognition", "classification"],
+    "real_world_application": [
+      "pattern_recognition",
+      "classification"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

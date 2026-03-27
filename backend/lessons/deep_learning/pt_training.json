@@ -179,6 +179,157 @@
         "Epoch 50: train=0.0112, val=0.0198",
         "Model saved to model.pt"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pt_training",
+      "code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\nX = torch.randn(100, 3)\ny = (X[:, 0] + X[:, 1] * 2 > 0).long()\n\nmodel = nn.Sequential(nn.Linear(3, 8), nn.ReLU(), nn.Linear(8, 2))\ncriterion = nn.CrossEntropyLoss()\noptimizer = torch.optim.Adam(model.parameters(), lr=0.01)\n\nfor epoch in range(50):\n    pred = model(X)\n    loss = criterion(pred, y)\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()\n    if epoch % 10 == 0:\n        acc = (pred.argmax(1) == y).float().mean()\n        print(f'Epoch {epoch}: loss={loss.item():.4f}, acc={acc:.3f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "X.shape": "(100, 3)"
+          },
+          "output": "",
+          "explanation": "100 samples with 3 features"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "y": "binary labels"
+          },
+          "output": "",
+          "explanation": "Classification target"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "model": "3->8->2"
+          },
+          "output": "",
+          "explanation": "Small 2-layer network"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "loss": "~0.69"
+          },
+          "output": "",
+          "explanation": "Initial loss near -log(0.5) = random guessing"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "",
+          "explanation": "Zero gradients, backprop, update weights"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "Epoch 0: loss=0.6931, acc=0.520\nEpoch 10: loss=0.3245, acc=0.870\nEpoch 20: loss=0.1523, acc=0.940\nEpoch 40: loss=0.0612, acc=0.980",
+          "explanation": "Steady improvement in accuracy"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_pt_training",
+      "title": "PyTorch Training Progress",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 0,
+          "state": {
+            "loss": 0.693,
+            "accuracy": "52%"
+          },
+          "description": "Random initialization"
+        },
+        {
+          "iteration": 10,
+          "state": {
+            "loss": 0.325,
+            "accuracy": "87%"
+          },
+          "description": "Rapid learning phase"
+        },
+        {
+          "iteration": 30,
+          "state": {
+            "loss": 0.098,
+            "accuracy": "96%"
+          },
+          "description": "Fine-tuning"
+        },
+        {
+          "iteration": 49,
+          "state": {
+            "loss": 0.045,
+            "accuracy": "98%"
+          },
+          "description": "Converged"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_pt_training",
+      "title": "Training Loop Flow",
+      "nodes": [
+        {
+          "id": "fwd",
+          "label": "pred = model(X)",
+          "type": "start"
+        },
+        {
+          "id": "loss",
+          "label": "loss = criterion(pred, y)",
+          "type": "process"
+        },
+        {
+          "id": "zero",
+          "label": "optimizer.zero_grad()",
+          "type": "process"
+        },
+        {
+          "id": "bwd",
+          "label": "loss.backward()",
+          "type": "process"
+        },
+        {
+          "id": "step",
+          "label": "optimizer.step()",
+          "type": "process"
+        },
+        {
+          "id": "next",
+          "label": "Next Epoch",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "fwd",
+          "to": "loss"
+        },
+        {
+          "from": "loss",
+          "to": "zero"
+        },
+        {
+          "from": "zero",
+          "to": "bwd"
+        },
+        {
+          "from": "bwd",
+          "to": "step"
+        },
+        {
+          "from": "step",
+          "to": "next"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

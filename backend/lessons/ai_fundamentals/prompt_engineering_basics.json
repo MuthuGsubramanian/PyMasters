@@ -186,6 +186,49 @@
         "Step 3: Final price = 800 - 200 = ₹600",
         "The final price is ₹600."
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_prompt_engineering_basics",
+      "code": "from openai import OpenAI\nclient = OpenAI()\n\n# Bad prompt — vague, no constraints\nresponse1 = client.chat.completions.create(\n    model='gpt-4o-mini',\n    messages=[{'role':'user','content':'Tell me about Python'}]\n)\nprint('Bad:', response1.choices[0].message.content[:60])\n\n# Good prompt — role + specifics + format\nresponse2 = client.chat.completions.create(\n    model='gpt-4o-mini',\n    messages=[\n        {'role':'system','content':'You are a Python tutor for beginners.'},\n        {'role':'user','content':'Explain list comprehensions in 3 bullet points.'}\n    ]\n)\nprint('Good:', response2.choices[0].message.content[:100])",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "prompt": "Tell me about Python"
+          },
+          "output": "",
+          "explanation": "Vague prompt — no role, level, or format specified"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Bad: Python is a high-level programming language that...",
+          "explanation": "Generic, unfocused response — not useful"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "system": "Python tutor for beginners"
+          },
+          "output": "",
+          "explanation": "System message sets AI's ROLE and audience"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "user": "3 bullet points"
+          },
+          "output": "",
+          "explanation": "Clear topic + format constraint"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "Good: - List comprehensions create lists in one line...",
+          "explanation": "Focused, formatted, right level — much better!"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -276,13 +319,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["zero_shot", "few_shot", "chain_of_thought", "prompt_engineering"],
-    "concepts_required": ["what_is_ai"],
+    "concepts_taught": [
+      "zero_shot",
+      "few_shot",
+      "chain_of_thought",
+      "prompt_engineering"
+    ],
+    "concepts_required": [
+      "what_is_ai"
+    ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["chatbot_interaction", "ai_productivity"],
+    "real_world_application": [
+      "chatbot_interaction",
+      "ai_productivity"
+    ],
     "category": "ai_core",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

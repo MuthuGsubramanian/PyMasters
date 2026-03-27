@@ -155,11 +155,36 @@
       "type": "MemoryStack",
       "id": "call_stack",
       "slots": [
-        {"name": "factorial(5)", "value": "5 * factorial(4)", "type": "frame", "address": "0x01"},
-        {"name": "factorial(4)", "value": "4 * factorial(3)", "type": "frame", "address": "0x02"},
-        {"name": "factorial(3)", "value": "3 * factorial(2)", "type": "frame", "address": "0x03"},
-        {"name": "factorial(2)", "value": "2 * factorial(1)", "type": "frame", "address": "0x04"},
-        {"name": "factorial(1)", "value": "returns 1", "type": "frame", "address": "0x05"}
+        {
+          "name": "factorial(5)",
+          "value": "5 * factorial(4)",
+          "type": "frame",
+          "address": "0x01"
+        },
+        {
+          "name": "factorial(4)",
+          "value": "4 * factorial(3)",
+          "type": "frame",
+          "address": "0x02"
+        },
+        {
+          "name": "factorial(3)",
+          "value": "3 * factorial(2)",
+          "type": "frame",
+          "address": "0x03"
+        },
+        {
+          "name": "factorial(2)",
+          "value": "2 * factorial(1)",
+          "type": "frame",
+          "address": "0x04"
+        },
+        {
+          "name": "factorial(1)",
+          "value": "returns 1",
+          "type": "frame",
+          "address": "0x05"
+        }
       ]
     },
     {
@@ -186,6 +211,84 @@
         "fibonacci(10) = 55",
         "sum_list([1,2,3,4,5]) = 15",
         "Call stack depth for factorial(5): 5 frames"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_recursion_fundamentals",
+      "code": "def factorial(n):\n    if n <= 1: return 1\n    return n * factorial(n - 1)\n\ndef fibonacci(n):\n    if n <= 1: return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\nprint(f'5! = {factorial(5)}')\nprint(f'fib(7) = {fibonacci(7)}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "n": 5
+          },
+          "output": "",
+          "explanation": "Call factorial(5). Need 5 * factorial(4)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "n": 4
+          },
+          "output": "",
+          "explanation": "factorial(4) = 4 * factorial(3). Stack grows"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "n": 3
+          },
+          "output": "",
+          "explanation": "factorial(3) = 3 * factorial(2). Going deeper"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "n": 2
+          },
+          "output": "",
+          "explanation": "factorial(2) = 2 * factorial(1)"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "n": 1,
+            "return": 1
+          },
+          "output": "",
+          "explanation": "BASE CASE hit! n=1, return 1. Stack unwinds"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "return": "2*1=2"
+          },
+          "output": "",
+          "explanation": "Unwind: factorial(2) = 2*1 = 2"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "return": "3*2=6"
+          },
+          "output": "",
+          "explanation": "Unwind: factorial(3) = 3*2 = 6"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "return": "5*24=120"
+          },
+          "output": "5! = 120",
+          "explanation": "factorial(5) = 5*24 = 120. 5 stack frames used"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "fib(7) = 13",
+          "explanation": "fibonacci(7)=13 but made 41 calls! O(2^n) — very slow"
+        }
       ]
     }
   ],
@@ -218,8 +321,18 @@
         "ta": "recursive function-க்கு base case இல்லாவிட்டால் என்ன நடக்கும்?"
       },
       "options": {
-        "en": ["It returns None", "It causes a RecursionError (stack overflow)", "It runs forever silently", "Python adds one automatically"],
-        "ta": ["None திருப்பும்", "RecursionError (stack overflow) ஏற்படும்", "அமைதியாக எப்போதும் இயங்கும்", "Python தானாக ஒன்றை சேர்க்கும்"]
+        "en": [
+          "It returns None",
+          "It causes a RecursionError (stack overflow)",
+          "It runs forever silently",
+          "Python adds one automatically"
+        ],
+        "ta": [
+          "None திருப்பும்",
+          "RecursionError (stack overflow) ஏற்படும்",
+          "அமைதியாக எப்போதும் இயங்கும்",
+          "Python தானாக ஒன்றை சேர்க்கும்"
+        ]
       },
       "correct": 1
     },
@@ -229,8 +342,18 @@
         "ta": "naive recursive fibonacci-ன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(n²)", "O(2ⁿ)", "O(log n)"],
-        "ta": ["O(n)", "O(n²)", "O(2ⁿ)", "O(log n)"]
+        "en": [
+          "O(n)",
+          "O(n²)",
+          "O(2ⁿ)",
+          "O(log n)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(n²)",
+          "O(2ⁿ)",
+          "O(log n)"
+        ]
       },
       "correct": 2
     },
@@ -240,20 +363,44 @@
         "ta": "Python-ன் default recursion limit என்ன?"
       },
       "options": {
-        "en": ["100", "1000", "10000", "No limit"],
-        "ta": ["100", "1000", "10000", "வரம்பு இல்லை"]
+        "en": [
+          "100",
+          "1000",
+          "10000",
+          "No limit"
+        ],
+        "ta": [
+          "100",
+          "1000",
+          "10000",
+          "வரம்பு இல்லை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["recursion", "base_case", "call_stack", "recursive_thinking"],
-    "concepts_required": ["functions", "conditionals"],
+    "concepts_taught": [
+      "recursion",
+      "base_case",
+      "call_stack",
+      "recursive_thinking"
+    ],
+    "concepts_required": [
+      "functions",
+      "conditionals"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["tree_traversal", "fractal_generation", "backtracking"],
+    "real_world_application": [
+      "tree_traversal",
+      "fractal_generation",
+      "backtracking"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

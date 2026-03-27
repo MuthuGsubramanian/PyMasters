@@ -47,18 +47,90 @@
       "type": "CodeStepper",
       "id": "training_code",
       "steps": [
-        {"line": "class SyntheticDataset(Dataset):", "highlight": "Dataset", "explanation": {"en": "Custom dataset inherits from torch Dataset. Must implement __len__ and __getitem__"}},
-        {"line": "    def __getitem__(self, idx):", "highlight": "__getitem__", "explanation": {"en": "Returns one sample (features, label) by index. DataLoader calls this automatically"}},
-        {"line": "train_set, val_set = random_split(dataset, [800, 200])", "highlight": "random_split", "explanation": {"en": "Split 1000 samples: 800 for training, 200 for validation"}},
-        {"line": "train_loader = DataLoader(train_set, batch_size=32, shuffle=True)", "highlight": "DataLoader", "explanation": {"en": "DataLoader batches data, shuffles each epoch, handles iteration"}},
-        {"line": "model.train()", "highlight": "train", "explanation": {"en": "Set model to training mode: enables dropout and batch norm training behavior"}},
-        {"line": "for X_batch, y_batch in train_loader:", "highlight": "batch", "explanation": {"en": "Iterate over mini-batches. Each batch has 32 samples"}},
-        {"line": "    pred = model(X_batch)", "highlight": "forward", "explanation": {"en": "Forward pass on the batch: [32, 10] -> [32, 2]"}},
-        {"line": "    loss = criterion(pred, y_batch)", "highlight": "loss", "explanation": {"en": "Compute cross-entropy loss between predictions and true labels"}},
-        {"line": "    optimizer.zero_grad(); loss.backward(); optimizer.step()", "highlight": "update", "explanation": {"en": "The sacred trio: clear grads, compute grads, update weights"}},
-        {"line": "model.eval()", "highlight": "eval", "explanation": {"en": "Set model to eval mode: disables dropout, uses running batch norm stats"}},
-        {"line": "with torch.no_grad():", "highlight": "no_grad", "explanation": {"en": "Disable gradient computation during validation — saves memory and time"}},
-        {"line": "    correct += (pred.argmax(1) == y_batch).sum().item()", "highlight": "accuracy", "explanation": {"en": "Count correct predictions: argmax gives predicted class, compare with true labels"}}
+        {
+          "line": "class SyntheticDataset(Dataset):",
+          "highlight": "Dataset",
+          "explanation": {
+            "en": "Custom dataset inherits from torch Dataset. Must implement __len__ and __getitem__"
+          }
+        },
+        {
+          "line": "    def __getitem__(self, idx):",
+          "highlight": "__getitem__",
+          "explanation": {
+            "en": "Returns one sample (features, label) by index. DataLoader calls this automatically"
+          }
+        },
+        {
+          "line": "train_set, val_set = random_split(dataset, [800, 200])",
+          "highlight": "random_split",
+          "explanation": {
+            "en": "Split 1000 samples: 800 for training, 200 for validation"
+          }
+        },
+        {
+          "line": "train_loader = DataLoader(train_set, batch_size=32, shuffle=True)",
+          "highlight": "DataLoader",
+          "explanation": {
+            "en": "DataLoader batches data, shuffles each epoch, handles iteration"
+          }
+        },
+        {
+          "line": "model.train()",
+          "highlight": "train",
+          "explanation": {
+            "en": "Set model to training mode: enables dropout and batch norm training behavior"
+          }
+        },
+        {
+          "line": "for X_batch, y_batch in train_loader:",
+          "highlight": "batch",
+          "explanation": {
+            "en": "Iterate over mini-batches. Each batch has 32 samples"
+          }
+        },
+        {
+          "line": "    pred = model(X_batch)",
+          "highlight": "forward",
+          "explanation": {
+            "en": "Forward pass on the batch: [32, 10] -> [32, 2]"
+          }
+        },
+        {
+          "line": "    loss = criterion(pred, y_batch)",
+          "highlight": "loss",
+          "explanation": {
+            "en": "Compute cross-entropy loss between predictions and true labels"
+          }
+        },
+        {
+          "line": "    optimizer.zero_grad(); loss.backward(); optimizer.step()",
+          "highlight": "update",
+          "explanation": {
+            "en": "The sacred trio: clear grads, compute grads, update weights"
+          }
+        },
+        {
+          "line": "model.eval()",
+          "highlight": "eval",
+          "explanation": {
+            "en": "Set model to eval mode: disables dropout, uses running batch norm stats"
+          }
+        },
+        {
+          "line": "with torch.no_grad():",
+          "highlight": "no_grad",
+          "explanation": {
+            "en": "Disable gradient computation during validation — saves memory and time"
+          }
+        },
+        {
+          "line": "    correct += (pred.argmax(1) == y_batch).sum().item()",
+          "highlight": "accuracy",
+          "explanation": {
+            "en": "Count correct predictions: argmax gives predicted class, compare with true labels"
+          }
+        }
       ]
     },
     {
@@ -66,7 +138,16 @@
       "id": "pipeline_flow",
       "from": "data",
       "to": "trained_model",
-      "steps": ["Dataset", "DataLoader (batch=32)", "model.train()", "forward + loss", "backward + step", "model.eval()", "validate", "next epoch"],
+      "steps": [
+        "Dataset",
+        "DataLoader (batch=32)",
+        "model.train()",
+        "forward + loss",
+        "backward + step",
+        "model.eval()",
+        "validate",
+        "next epoch"
+      ],
       "duration_ms": 4000
     },
     {
@@ -98,10 +179,34 @@
       "id": "batch_visual",
       "structure_type": "data_pipeline",
       "layers": [
-        {"name": "Full Dataset", "nodes": ["1000 samples"]},
-        {"name": "Train/Val Split", "nodes": ["800 train", "200 val"]},
-        {"name": "Batches", "nodes": ["Batch 1 (32)", "Batch 2 (32)", "...", "Batch 25 (32)"]},
-        {"name": "Model", "nodes": ["Forward -> Loss -> Backward -> Step"]}
+        {
+          "name": "Full Dataset",
+          "nodes": [
+            "1000 samples"
+          ]
+        },
+        {
+          "name": "Train/Val Split",
+          "nodes": [
+            "800 train",
+            "200 val"
+          ]
+        },
+        {
+          "name": "Batches",
+          "nodes": [
+            "Batch 1 (32)",
+            "Batch 2 (32)",
+            "...",
+            "Batch 25 (32)"
+          ]
+        },
+        {
+          "name": "Model",
+          "nodes": [
+            "Forward -> Loss -> Backward -> Step"
+          ]
+        }
       ],
       "duration_ms": 3000
     },
@@ -115,6 +220,206 @@
         "Epoch 30: Train Loss=0.0976, Val Loss=0.1012, Val Acc=95.50%",
         "Epoch 40: Train Loss=0.0821, Val Loss=0.0934, Val Acc=96.50%"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_training",
+      "code": "import torch\nimport torch.nn as nn\nfrom torch.utils.data import DataLoader, TensorDataset\n\nX = torch.randn(200, 5)\ny = (X[:, 0] * 2 + X[:, 1] > 0).long()\n\ndataset = TensorDataset(X, y)\nloader = DataLoader(dataset, batch_size=32, shuffle=True)\n\nmodel = nn.Sequential(nn.Linear(5, 16), nn.ReLU(), nn.Linear(16, 2))\ncriterion = nn.CrossEntropyLoss()\noptimizer = torch.optim.Adam(model.parameters(), lr=0.01)\n\nfor epoch in range(20):\n    for X_batch, y_batch in loader:\n        pred = model(X_batch)\n        loss = criterion(pred, y_batch)\n        optimizer.zero_grad()\n        loss.backward()\n        optimizer.step()\n    if epoch % 5 == 0:\n        acc = (model(X).argmax(1) == y).float().mean()\n        print(f'Epoch {epoch}: loss={loss.item():.4f}, acc={acc:.3f}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "X.shape": "(200, 5)"
+          },
+          "output": "",
+          "explanation": "200 samples with 5 features"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "dataset": "TensorDataset(200)"
+          },
+          "output": "",
+          "explanation": "Wrap tensors in Dataset for DataLoader"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "loader": "7 batches of 32"
+          },
+          "output": "",
+          "explanation": "DataLoader batches and shuffles data"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "model": "5->16->2"
+          },
+          "output": "",
+          "explanation": "Simple 2-layer classifier"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "pred.shape": "(32, 2)"
+          },
+          "output": "",
+          "explanation": "Forward pass: batch of 32 -> 2 class logits"
+        },
+        {
+          "line": 19,
+          "variables": {},
+          "output": "",
+          "explanation": "Zero gradients -> compute grads -> update weights"
+        },
+        {
+          "line": 23,
+          "variables": {},
+          "output": "Epoch 0: loss=0.6832, acc=0.625\nEpoch 5: loss=0.3214, acc=0.890\nEpoch 10: loss=0.1456, acc=0.945\nEpoch 15: loss=0.0823, acc=0.965",
+          "explanation": "Accuracy improves each epoch"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_training_epochs",
+      "title": "Training Epoch Progress",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 0,
+          "state": {
+            "loss": 0.683,
+            "accuracy": "62.5%"
+          },
+          "description": "Random weights — near chance"
+        },
+        {
+          "iteration": 5,
+          "state": {
+            "loss": 0.321,
+            "accuracy": "89.0%"
+          },
+          "description": "Rapid improvement"
+        },
+        {
+          "iteration": 10,
+          "state": {
+            "loss": 0.146,
+            "accuracy": "94.5%"
+          },
+          "description": "Fine-tuning decision boundary"
+        },
+        {
+          "iteration": 15,
+          "state": {
+            "loss": 0.082,
+            "accuracy": "96.5%"
+          },
+          "description": "Converging"
+        },
+        {
+          "iteration": 19,
+          "state": {
+            "loss": 0.054,
+            "accuracy": "97.5%"
+          },
+          "description": "Near convergence"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_training_pipeline",
+      "title": "PyTorch Training Pipeline",
+      "nodes": [
+        {
+          "id": "data",
+          "label": "Dataset + DataLoader",
+          "type": "start"
+        },
+        {
+          "id": "batch",
+          "label": "Get Batch",
+          "type": "process"
+        },
+        {
+          "id": "fwd",
+          "label": "Forward Pass",
+          "type": "process"
+        },
+        {
+          "id": "loss",
+          "label": "Compute Loss",
+          "type": "process"
+        },
+        {
+          "id": "zero",
+          "label": "zero_grad()",
+          "type": "process"
+        },
+        {
+          "id": "bwd",
+          "label": "loss.backward()",
+          "type": "process"
+        },
+        {
+          "id": "step",
+          "label": "optimizer.step()",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "More batches?",
+          "type": "decision"
+        },
+        {
+          "id": "epoch",
+          "label": "Next Epoch",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "data",
+          "to": "batch"
+        },
+        {
+          "from": "batch",
+          "to": "fwd"
+        },
+        {
+          "from": "fwd",
+          "to": "loss"
+        },
+        {
+          "from": "loss",
+          "to": "zero"
+        },
+        {
+          "from": "zero",
+          "to": "bwd"
+        },
+        {
+          "from": "bwd",
+          "to": "step"
+        },
+        {
+          "from": "step",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "batch",
+          "label": "Yes"
+        },
+        {
+          "from": "check",
+          "to": "epoch",
+          "label": "No"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -152,8 +457,18 @@
         "ta": "தனிப்பயன் PyTorch Dataset உருவாக்கும்போது தேவையான இரண்டு முறைகள் என்ன?"
       },
       "options": {
-        "en": ["train() and eval()", "__len__() and __getitem__()", "forward() and backward()", "fit() and predict()"],
-        "ta": ["train() மற்றும் eval()", "__len__() மற்றும் __getitem__()", "forward() மற்றும் backward()", "fit() மற்றும் predict()"]
+        "en": [
+          "train() and eval()",
+          "__len__() and __getitem__()",
+          "forward() and backward()",
+          "fit() and predict()"
+        ],
+        "ta": [
+          "train() மற்றும் eval()",
+          "__len__() மற்றும் __getitem__()",
+          "forward() மற்றும் backward()",
+          "fit() மற்றும் predict()"
+        ]
       },
       "correct": 1
     },
@@ -163,8 +478,18 @@
         "ta": "சரிபார்ப்பின் போது ஏன் torch.no_grad() பயன்படுத்துகிறோம்?"
       },
       "options": {
-        "en": ["To make predictions more accurate", "To save memory and computation by not tracking gradients", "To enable dropout", "To shuffle the data"],
-        "ta": ["கணிப்புகளை மேலும் துல்லியமாக்க", "சாய்வுகளைக் கண்காணிக்காமல் நினைவகம் மற்றும் கணக்கீட்டை சேமிக்க", "Dropout-ஐ இயக்க", "தரவை கலைக்க"]
+        "en": [
+          "To make predictions more accurate",
+          "To save memory and computation by not tracking gradients",
+          "To enable dropout",
+          "To shuffle the data"
+        ],
+        "ta": [
+          "கணிப்புகளை மேலும் துல்லியமாக்க",
+          "சாய்வுகளைக் கண்காணிக்காமல் நினைவகம் மற்றும் கணக்கீட்டை சேமிக்க",
+          "Dropout-ஐ இயக்க",
+          "தரவை கலைக்க"
+        ]
       },
       "correct": 1
     },
@@ -174,20 +499,46 @@
         "ta": "DataLoader-ல் shuffle=True என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Shuffles the model weights", "Randomizes the order of samples each epoch to reduce overfitting", "Shuffles the layer order", "Mixes training and validation data"],
-        "ta": ["மாதிரி எடைகளை கலைக்கிறது", "ஒவ்வொரு சகாப்தத்திலும் மாதிரிகளின் வரிசையை சீரற்ற முறையில் மாற்றுகிறது", "அடுக்கு வரிசையை கலைக்கிறது", "பயிற்சி மற்றும் சரிபார்ப்பு தரவை கலக்கிறது"]
+        "en": [
+          "Shuffles the model weights",
+          "Randomizes the order of samples each epoch to reduce overfitting",
+          "Shuffles the layer order",
+          "Mixes training and validation data"
+        ],
+        "ta": [
+          "மாதிரி எடைகளை கலைக்கிறது",
+          "ஒவ்வொரு சகாப்தத்திலும் மாதிரிகளின் வரிசையை சீரற்ற முறையில் மாற்றுகிறது",
+          "அடுக்கு வரிசையை கலைக்கிறது",
+          "பயிற்சி மற்றும் சரிபார்ப்பு தரவை கலக்கிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["dataset", "dataloader", "training_loop", "validation", "loss_tracking", "model_checkpoint"],
-    "concepts_required": ["pytorch_basics", "gradient_descent", "regularization"],
+    "concepts_taught": [
+      "dataset",
+      "dataloader",
+      "training_loop",
+      "validation",
+      "loss_tracking",
+      "model_checkpoint"
+    ],
+    "concepts_required": [
+      "pytorch_basics",
+      "gradient_descent",
+      "regularization"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["model_training", "ml_pipeline"],
+    "real_world_application": [
+      "model_training",
+      "ml_pipeline"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

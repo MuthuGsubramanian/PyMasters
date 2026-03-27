@@ -147,11 +147,28 @@
       "type": "DataStructure",
       "id": "array_visual",
       "structure_type": "list",
-      "initial_state": [10, 20, 30, 40, 50],
+      "initial_state": [
+        10,
+        20,
+        30,
+        40,
+        50
+      ],
       "animations": [
-        {"action": "add", "index": 5, "value": 60},
-        {"action": "add", "index": 0, "value": 5},
-        {"action": "remove", "index": 6}
+        {
+          "action": "add",
+          "index": 5,
+          "value": 60
+        },
+        {
+          "action": "add",
+          "index": 0,
+          "value": 5
+        },
+        {
+          "action": "remove",
+          "index": 6
+        }
       ]
     },
     {
@@ -178,6 +195,117 @@
         "[20, 30, 40]",
         "racecar palindrome: True",
         "hello-world"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_arrays_strings",
+      "code": "arr = [10, 20, 30, 40, 50]\nfirst = arr[0]\nlast = arr[-1]\nprint(f'First: {first}, Last: {last}')\n\narr.append(60)\nprint(f'After append: {arr}')\n\narr.insert(0, 5)\nprint(f'After insert at 0: {arr}')\n\ns = 'racecar'\nis_palindrome = s == s[::-1]\nprint(f'{s} palindrome: {is_palindrome}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "arr": [
+              10,
+              20,
+              30,
+              40,
+              50
+            ]
+          },
+          "output": "",
+          "explanation": "Create list with 5 elements stored in contiguous memory"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "arr": [
+              10,
+              20,
+              30,
+              40,
+              50
+            ],
+            "first": 10
+          },
+          "output": "",
+          "explanation": "arr[0] = 10. Index access is O(1) — direct memory offset"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "first": 10,
+            "last": 50
+          },
+          "output": "",
+          "explanation": "arr[-1] = 50. Negative indexing also O(1)"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "First: 10, Last: 50",
+          "explanation": "Both accessed instantly regardless of array size"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "arr": [
+              10,
+              20,
+              30,
+              40,
+              50,
+              60
+            ]
+          },
+          "output": "",
+          "explanation": "append(60) adds to end in amortized O(1)"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "After append: [10, 20, 30, 40, 50, 60]",
+          "explanation": "Array grew by one element at the end"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "arr": [
+              5,
+              10,
+              20,
+              30,
+              40,
+              50,
+              60
+            ]
+          },
+          "output": "",
+          "explanation": "insert(0, 5) shifts ALL elements right — O(n)!"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "After insert at 0: [5, 10, 20, 30, 40, 50, 60]",
+          "explanation": "6 elements had to shift for this one insert"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "s": "racecar"
+          },
+          "output": "",
+          "explanation": "Strings are immutable — every operation creates new string"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "s": "racecar",
+            "is_palindrome": true
+          },
+          "output": "racecar palindrome: True",
+          "explanation": "s[::-1] = 'racecar'. Reversed equals original => palindrome!"
+        }
       ]
     }
   ],
@@ -210,8 +338,18 @@
         "ta": "Python பட்டியலின் தொடக்கத்தில் ஒரு உறுப்பை செருகுவதன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(1)", "O(n)", "O(log n)", "O(n²)"],
-        "ta": ["O(1)", "O(n)", "O(log n)", "O(n²)"]
+        "en": [
+          "O(1)",
+          "O(n)",
+          "O(log n)",
+          "O(n²)"
+        ],
+        "ta": [
+          "O(1)",
+          "O(n)",
+          "O(log n)",
+          "O(n²)"
+        ]
       },
       "correct": 1
     },
@@ -221,8 +359,18 @@
         "ta": "'hello'[::-1] என்ன திருப்பும்?"
       },
       "options": {
-        "en": ["'hello'", "'olleh'", "'h'", "Error"],
-        "ta": ["'hello'", "'olleh'", "'h'", "Error"]
+        "en": [
+          "'hello'",
+          "'olleh'",
+          "'h'",
+          "Error"
+        ],
+        "ta": [
+          "'hello'",
+          "'olleh'",
+          "'h'",
+          "Error"
+        ]
       },
       "correct": 1
     },
@@ -232,20 +380,44 @@
         "ta": "Python சரத்தில் s[0] = 'H' ஏன் செய்ய முடியாது?"
       },
       "options": {
-        "en": ["Strings don't support indexing", "Strings are immutable", "Index 0 doesn't exist", "You need parentheses"],
-        "ta": ["சரங்கள் குறியீட்டை ஆதரிக்காது", "சரங்கள் மாற்ற முடியாதவை", "குறியீடு 0 இல்லை", "அடைப்புக்குறிகள் தேவை"]
+        "en": [
+          "Strings don't support indexing",
+          "Strings are immutable",
+          "Index 0 doesn't exist",
+          "You need parentheses"
+        ],
+        "ta": [
+          "சரங்கள் குறியீட்டை ஆதரிக்காது",
+          "சரங்கள் மாற்ற முடியாதவை",
+          "குறியீடு 0 இல்லை",
+          "அடைப்புக்குறிகள் தேவை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["arrays", "strings", "slicing", "indexing", "palindrome"],
-    "concepts_required": ["variables", "loops"],
+    "concepts_taught": [
+      "arrays",
+      "strings",
+      "slicing",
+      "indexing",
+      "palindrome"
+    ],
+    "concepts_required": [
+      "variables",
+      "loops"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["data_processing", "text_manipulation"],
+    "real_world_application": [
+      "data_processing",
+      "text_manipulation"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

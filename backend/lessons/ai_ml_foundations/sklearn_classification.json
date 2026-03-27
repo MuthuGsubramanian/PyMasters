@@ -126,6 +126,120 @@
         "   class 1       0.93      0.93      0.93",
         "   class 2       0.93      0.93      0.93"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_sklearn_clf",
+      "code": "from sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.metrics import accuracy_score, classification_report\n\nX, y = load_iris(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nclf = DecisionTreeClassifier(max_depth=3, random_state=42)\nclf.fit(X_train, y_train)\ny_pred = clf.predict(X_test)\nprint(f'Accuracy: {accuracy_score(y_test, y_pred):.2f}')\nprint(classification_report(y_test, y_pred))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Load Iris dataset — 150 samples, 4 features, 3 classes"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(150, 4)",
+            "y.shape": "(150,)"
+          },
+          "output": "",
+          "explanation": "X = features (sepal/petal length/width), y = species labels"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "X_train.shape": "(120, 4)",
+            "X_test.shape": "(30, 4)"
+          },
+          "output": "",
+          "explanation": "80/20 split with stratification"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "clf": "DecisionTreeClassifier(max_depth=3)"
+          },
+          "output": "",
+          "explanation": "Create tree with max depth 3 to prevent overfitting"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "fitted": true
+          },
+          "output": "",
+          "explanation": "Train tree — learns split rules from training data"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "y_pred": "array of 30 predictions"
+          },
+          "output": "",
+          "explanation": "Predict classes for test set"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "accuracy": "0.97"
+          },
+          "output": "Accuracy: 0.97",
+          "explanation": "97% of test predictions were correct"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_clf_pipeline",
+      "title": "Classification Pipeline",
+      "nodes": [
+        {
+          "id": "data",
+          "label": "Load Dataset",
+          "type": "start"
+        },
+        {
+          "id": "split",
+          "label": "Train/Test Split",
+          "type": "process"
+        },
+        {
+          "id": "train",
+          "label": "Fit Classifier",
+          "type": "process"
+        },
+        {
+          "id": "predict",
+          "label": "Predict on Test",
+          "type": "process"
+        },
+        {
+          "id": "eval",
+          "label": "Evaluate Metrics",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "data",
+          "to": "split"
+        },
+        {
+          "from": "split",
+          "to": "train"
+        },
+        {
+          "from": "train",
+          "to": "predict"
+        },
+        {
+          "from": "predict",
+          "to": "eval"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

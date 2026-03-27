@@ -165,9 +165,21 @@
       "structure_type": "list",
       "initial_state": [],
       "animations": [
-        {"action": "add", "index": 0, "value": 3},
-        {"action": "add", "index": 0, "value": 2},
-        {"action": "add", "index": 0, "value": 1}
+        {
+          "action": "add",
+          "index": 0,
+          "value": 3
+        },
+        {
+          "action": "add",
+          "index": 0,
+          "value": 2
+        },
+        {
+          "action": "add",
+          "index": 0,
+          "value": 1
+        }
       ]
     },
     {
@@ -194,6 +206,91 @@
         "Length: 3",
         "Prepend 0: 0 -> 1 -> 2 -> 3 -> None",
         "Delete 2: 0 -> 1 -> 3 -> None"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_linked_lists",
+      "code": "class Node:\n    def __init__(self, data):\n        self.data = data\n        self.next = None\n\nhead = Node(1)\nhead.next = Node(2)\nhead.next.next = Node(3)\n\ncurrent = head\nwhile current:\n    print(current.data, end=' -> ')\n    current = current.next\nprint('None')\n\nnew_node = Node(0)\nnew_node.next = head\nhead = new_node\nprint(f'After prepend: {head.data}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "head": "Node(1)"
+          },
+          "output": "",
+          "explanation": "Create first node with data=1, next=None"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "head.next": "Node(2)"
+          },
+          "output": "",
+          "explanation": "Link head to second node: 1 -> 2"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "explanation": "Chain: 1 -> 2 -> 3 -> None. Three nodes linked"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "current": "Node(1)"
+          },
+          "output": "",
+          "explanation": "Start traversal at head"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "current": "Node(2)"
+          },
+          "output": "1 -> ",
+          "explanation": "Print 1, move to next node"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "current": "Node(3)"
+          },
+          "output": "1 -> 2 -> ",
+          "explanation": "Print 2, move to next node"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "current": "None"
+          },
+          "output": "1 -> 2 -> 3 -> None",
+          "explanation": "Print 3, current becomes None — traversal complete"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "new_node": "Node(0)"
+          },
+          "output": "",
+          "explanation": "Create new node to prepend"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "new_node.next": "Node(1)"
+          },
+          "output": "",
+          "explanation": "Point new node to old head — O(1), no shifting!"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "head": "Node(0)"
+          },
+          "output": "After prepend: 0",
+          "explanation": "Update head. Chain: 0 -> 1 -> 2 -> 3 -> None"
+        }
       ]
     }
   ],
@@ -226,8 +323,18 @@
         "ta": "ஒற்றை இணைப்பு பட்டியலின் தலையில் செருகுவதன் நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(1)", "O(log n)", "O(n²)"],
-        "ta": ["O(n)", "O(1)", "O(log n)", "O(n²)"]
+        "en": [
+          "O(n)",
+          "O(1)",
+          "O(log n)",
+          "O(n²)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(1)",
+          "O(log n)",
+          "O(n²)"
+        ]
       },
       "correct": 1
     },
@@ -237,8 +344,18 @@
         "ta": "ஒற்றை இணைப்பு பட்டியலில் கடைசி முனையின் 'next' pointer எதை சுட்டிக்காட்டுகிறது?"
       },
       "options": {
-        "en": ["The head node", "The previous node", "None", "Itself"],
-        "ta": ["தலை முனை", "முந்தைய முனை", "None", "தன்னையே"]
+        "en": [
+          "The head node",
+          "The previous node",
+          "None",
+          "Itself"
+        ],
+        "ta": [
+          "தலை முனை",
+          "முந்தைய முனை",
+          "None",
+          "தன்னையே"
+        ]
       },
       "correct": 2
     },
@@ -248,20 +365,43 @@
         "ta": "அணியுடன் ஒப்பிடும்போது இணைப்பு பட்டியலின் முக்கிய குறைபாடு என்ன?"
       },
       "options": {
-        "en": ["Cannot store data", "No random access (O(n) to reach index)", "Fixed size", "Cannot be sorted"],
-        "ta": ["தரவை சேமிக்க முடியாது", "சீரற்ற அணுகல் இல்லை (குறியீட்டை அடைய O(n))", "நிலையான அளவு", "வரிசைப்படுத்த முடியாது"]
+        "en": [
+          "Cannot store data",
+          "No random access (O(n) to reach index)",
+          "Fixed size",
+          "Cannot be sorted"
+        ],
+        "ta": [
+          "தரவை சேமிக்க முடியாது",
+          "சீரற்ற அணுகல் இல்லை (குறியீட்டை அடைய O(n))",
+          "நிலையான அளவு",
+          "வரிசைப்படுத்த முடியாது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["linked_list", "nodes", "pointers", "traversal"],
-    "concepts_required": ["classes", "loops"],
+    "concepts_taught": [
+      "linked_list",
+      "nodes",
+      "pointers",
+      "traversal"
+    ],
+    "concepts_required": [
+      "classes",
+      "loops"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["undo_systems", "browser_history"],
+    "real_world_application": [
+      "undo_systems",
+      "browser_history"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

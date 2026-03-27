@@ -164,6 +164,63 @@
         "sigmoid(0) = 0.5",
         "softmax([2,1,0.5]) = [0.626, 0.230, 0.144]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_nn_activation",
+      "code": "import numpy as np\n\ndef sigmoid(x): return 1 / (1 + np.exp(-x))\ndef relu(x): return np.maximum(0, x)\ndef tanh_fn(x): return np.tanh(x)\n\nx = np.array([-3, -1, 0, 1, 3])\nprint(f'Input:   {x}')\nprint(f'Sigmoid: {np.round(sigmoid(x), 3)}')\nprint(f'ReLU:    {relu(x)}')\nprint(f'Tanh:    {np.round(tanh_fn(x), 3)}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "sigmoid": "1/(1+exp(-x))"
+          },
+          "output": "",
+          "explanation": "Sigmoid squashes any value to range (0, 1)"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "relu": "max(0, x)"
+          },
+          "output": "",
+          "explanation": "ReLU: passes positive values, blocks negative"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "tanh": "range (-1, 1)"
+          },
+          "output": "",
+          "explanation": "Tanh: zero-centered version of sigmoid"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "x": "[-3, -1, 0, 1, 3]"
+          },
+          "output": "",
+          "explanation": "Test inputs spanning negative and positive"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Sigmoid: [0.047 0.269 0.5   0.731 0.953]",
+          "explanation": "Negative -> near 0, positive -> near 1, 0 -> 0.5"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "ReLU:    [0 0 0 1 3]",
+          "explanation": "Negatives become 0, positives pass through"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Tanh:    [-0.995 -0.762  0.     0.762  0.995]",
+          "explanation": "Similar to sigmoid but centered at 0"
+        }
+      ]
     }
   ],
   "practice_challenges": [

@@ -39,6 +39,45 @@
       "branch": "exception"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "def safe_divide(a, b):\n    try:\n        result = a / b\n    except ZeroDivisionError:\n        print('Cannot divide by zero!')\n        return None\n    return result\nprint(safe_divide(10, 2))\nprint(safe_divide(10, 0))",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define safe_divide function with try/except" },
+        { "line": 8, "variables": { "a": 10, "b": 2 }, "output": "", "description": "Call safe_divide(10, 2)" },
+        { "line": 3, "variables": { "a": 10, "b": 2, "result": 5.0 }, "output": "", "description": "Division succeeds: 10 / 2 = 5.0" },
+        { "line": 7, "variables": { "a": 10, "b": 2, "result": 5.0 }, "output": "5.0", "description": "Return 5.0, print it" },
+        { "line": 9, "variables": { "a": 10, "b": 0 }, "output": "5.0", "description": "Call safe_divide(10, 0)" },
+        { "line": 3, "variables": { "a": 10, "b": 0 }, "output": "5.0", "description": "Division raises ZeroDivisionError!" },
+        { "line": 4, "variables": { "a": 10, "b": 0 }, "output": "5.0\nCannot divide by zero!", "description": "except catches ZeroDivisionError, prints message" },
+        { "line": 6, "variables": { "a": 10, "b": 0 }, "output": "5.0\nCannot divide by zero!\nNone", "description": "Return None, print it" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "try block", "type": "start" },
+        { "id": "risky", "label": "Execute risky code", "type": "process" },
+        { "id": "check", "label": "Exception raised?", "type": "decision" },
+        { "id": "except", "label": "except: handle error", "type": "process" },
+        { "id": "else", "label": "else: no error path", "type": "process" },
+        { "id": "finally", "label": "finally: always runs", "type": "process" },
+        { "id": "end", "label": "Continue program", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "risky" },
+        { "from": "risky", "to": "check" },
+        { "from": "check", "to": "except" },
+        { "from": "check", "to": "else" },
+        { "from": "except", "to": "finally" },
+        { "from": "else", "to": "finally" },
+        { "from": "finally", "to": "end" }
+      ],
+      "executionPath": ["start", "risky", "check", "except", "finally", "end"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

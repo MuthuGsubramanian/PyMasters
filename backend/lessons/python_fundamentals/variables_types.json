@@ -148,6 +148,21 @@
       "color": "#f74fa4"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "count = 10\nprint(type(count))\nprice = 9.99\nprint(type(price))\ngreeting = 'Hello!'\nis_active = True\nresult = None\nprint(type(result))",
+      "executionSteps": [
+        { "line": 1, "variables": { "count": 10 }, "output": "", "description": "Assign integer 10 to count" },
+        { "line": 2, "variables": { "count": 10 }, "output": "<class 'int'>", "description": "Print type of count -- it is int" },
+        { "line": 3, "variables": { "count": 10, "price": 9.99 }, "output": "<class 'int'>", "description": "Assign float 9.99 to price" },
+        { "line": 4, "variables": { "count": 10, "price": 9.99 }, "output": "<class 'int'>\n<class 'float'>", "description": "Print type of price -- it is float" },
+        { "line": 5, "variables": { "count": 10, "price": 9.99, "greeting": "Hello!" }, "output": "<class 'int'>\n<class 'float'>", "description": "Assign string 'Hello!' to greeting" },
+        { "line": 6, "variables": { "count": 10, "price": 9.99, "greeting": "Hello!", "is_active": true }, "output": "<class 'int'>\n<class 'float'>", "description": "Assign boolean True to is_active" },
+        { "line": 7, "variables": { "count": 10, "price": 9.99, "greeting": "Hello!", "is_active": true, "result": null }, "output": "<class 'int'>\n<class 'float'>", "description": "Assign None to result -- represents no value" },
+        { "line": 8, "variables": { "count": 10, "price": 9.99, "greeting": "Hello!", "is_active": true, "result": null }, "output": "<class 'int'>\n<class 'float'>\n<class 'NoneType'>", "description": "Print type of result -- it is NoneType" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ComparisonPanel",
       "id": "mutable_vs_immutable",
       "left": {

@@ -86,6 +86,107 @@
         "DBSCAN labels[:5]: [0 0 1 2 0]",
         "Noise points: 3"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_sklearn_cluster",
+      "code": "from sklearn.datasets import make_blobs\nfrom sklearn.cluster import KMeans\nfrom sklearn.metrics import silhouette_score\nimport numpy as np\n\nX, y_true = make_blobs(n_samples=300, centers=3, random_state=42)\nkmeans = KMeans(n_clusters=3, random_state=42, n_init=10)\nkmeans.fit(X)\nlabels = kmeans.labels_\nprint(f'Inertia: {kmeans.inertia_:.2f}')\nprint(f'Silhouette: {silhouette_score(X, labels):.3f}')\nprint(f'Centroids:\\n{kmeans.cluster_centers_}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import make_blobs for synthetic clustered data"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(300, 2)"
+          },
+          "output": "",
+          "explanation": "Generate 300 points in 3 clusters"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "kmeans": "KMeans(n_clusters=3)"
+          },
+          "output": "",
+          "explanation": "Create KMeans with 3 clusters, 10 random initializations"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "fitted": true
+          },
+          "output": "",
+          "explanation": "Fit: iteratively assign points to nearest centroid, update centroids"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "labels": "[0, 1, 2, 0, ...]"
+          },
+          "output": "",
+          "explanation": "Each point gets a cluster label (0, 1, or 2)"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "inertia": "178.43"
+          },
+          "output": "Inertia: 178.43",
+          "explanation": "Inertia = sum of squared distances to nearest centroid (lower = tighter)"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "silhouette": "0.729"
+          },
+          "output": "Silhouette: 0.729",
+          "explanation": "Silhouette score: -1 to 1, higher means well-separated clusters"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_kmeans_iterations",
+      "title": "K-Means Iteration Loop",
+      "loopVariable": "iteration",
+      "iterations": [
+        {
+          "iteration": 1,
+          "state": {
+            "centroids": "random init",
+            "inertia": 892.5
+          },
+          "description": "Random centroid placement"
+        },
+        {
+          "iteration": 2,
+          "state": {
+            "centroids": "shifted",
+            "inertia": 412.3
+          },
+          "description": "Reassign points, update centroids"
+        },
+        {
+          "iteration": 3,
+          "state": {
+            "centroids": "converging",
+            "inertia": 215.8
+          },
+          "description": "Centroids move toward cluster centers"
+        },
+        {
+          "iteration": 4,
+          "state": {
+            "centroids": "stable",
+            "inertia": 178.4
+          },
+          "description": "Converged — centroids stop moving"
+        }
+      ]
     }
   ],
   "practice_challenges": [

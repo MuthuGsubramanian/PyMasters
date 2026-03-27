@@ -225,6 +225,56 @@
         ">>> print(parsed.sentiment)",
         "positive"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_structured_output",
+      "code": "from openai import OpenAI\nimport json\nclient = OpenAI()\n\nresponse = client.chat.completions.create(\n    model='gpt-4o-mini',\n    messages=[{'role':'user',\n        'content':'Extract name, age, skills: \"Alice is 30, knows Python and SQL\"'}],\n    response_format={'type':'json_object'}\n)\n\ndata = json.loads(response.choices[0].message.content)\nprint(f'Name: {data[\"name\"]}')\nprint(f'Skills: {data[\"skills\"]}')",
+      "executionSteps": [
+        {
+          "line": 8,
+          "variables": {
+            "content": "Extract name, age, skills..."
+          },
+          "output": "",
+          "explanation": "Tell AI exactly what fields to extract"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "response_format": "json_object"
+          },
+          "output": "",
+          "explanation": "Force JSON output — guaranteed parseable"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "data": {
+              "name": "Alice",
+              "age": 30,
+              "skills": [
+                "Python",
+                "SQL"
+              ]
+            }
+          },
+          "output": "",
+          "explanation": "json.loads safely parses response to dict"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "Name: Alice",
+          "explanation": "Access structured data by key"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Skills: ['Python', 'SQL']",
+          "explanation": "AI extracts structured data from natural language"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -315,13 +365,25 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["json_mode", "function_calling", "pydantic_llm", "structured_output"],
-    "concepts_required": ["openai_api_basics"],
+    "concepts_taught": [
+      "json_mode",
+      "function_calling",
+      "pydantic_llm",
+      "structured_output"
+    ],
+    "concepts_required": [
+      "openai_api_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["data_extraction", "api_integration"],
+    "real_world_application": [
+      "data_extraction",
+      "api_integration"
+    ],
     "category": "ai_applications",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

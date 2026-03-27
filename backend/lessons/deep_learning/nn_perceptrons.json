@@ -159,6 +159,144 @@
         "total = 0.5",
         "output = 1  # PASS"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_nn_perceptrons",
+      "code": "import numpy as np\n\ndef perceptron(inputs, weights, bias):\n    total = sum(x * w for x, w in zip(inputs, weights))\n    return 1 if (total + bias) >= 0 else 0\n\n# Test with AND gate\nw = [0.5, 0.5]\nb = -0.7\nfor inp in [[0,0], [0,1], [1,0], [1,1]]:\n    result = perceptron(inp, w, b)\n    print(f'{inp} -> {result}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "function": "perceptron"
+          },
+          "output": "",
+          "explanation": "Single neuron: weighted sum + bias + threshold"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "total": "sum of x*w pairs"
+          },
+          "output": "",
+          "explanation": "Linear combination of inputs and weights"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "activation": "step function"
+          },
+          "output": "",
+          "explanation": "Output 1 if total+bias >= 0, else 0"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "w": "[0.5, 0.5]",
+            "b": "-0.7"
+          },
+          "output": "",
+          "explanation": "Weights and bias for AND gate"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "inp": "[0,0]",
+            "total": "-0.7"
+          },
+          "output": "[0, 0] -> 0",
+          "explanation": "0*0.5 + 0*0.5 - 0.7 = -0.7 < 0"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "inp": "[0,1]",
+            "total": "-0.2"
+          },
+          "output": "[0, 1] -> 0",
+          "explanation": "0*0.5 + 1*0.5 - 0.7 = -0.2 < 0"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "inp": "[1,0]",
+            "total": "-0.2"
+          },
+          "output": "[1, 0] -> 0",
+          "explanation": "1*0.5 + 0*0.5 - 0.7 = -0.2 < 0"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "inp": "[1,1]",
+            "total": "0.3"
+          },
+          "output": "[1, 1] -> 1",
+          "explanation": "1*0.5 + 1*0.5 - 0.7 = 0.3 >= 0 -> AND!"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_nn_perceptron",
+      "title": "Perceptron Decision Flow",
+      "nodes": [
+        {
+          "id": "x1",
+          "label": "Input x1",
+          "type": "start"
+        },
+        {
+          "id": "x2",
+          "label": "Input x2",
+          "type": "start"
+        },
+        {
+          "id": "wsum",
+          "label": "Weighted Sum + Bias",
+          "type": "process"
+        },
+        {
+          "id": "threshold",
+          "label": ">= 0?",
+          "type": "decision"
+        },
+        {
+          "id": "one",
+          "label": "Output: 1",
+          "type": "end"
+        },
+        {
+          "id": "zero",
+          "label": "Output: 0",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "x1",
+          "to": "wsum"
+        },
+        {
+          "from": "x2",
+          "to": "wsum"
+        },
+        {
+          "from": "wsum",
+          "to": "threshold"
+        },
+        {
+          "from": "threshold",
+          "to": "one",
+          "label": "Yes"
+        },
+        {
+          "from": "threshold",
+          "to": "zero",
+          "label": "No"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

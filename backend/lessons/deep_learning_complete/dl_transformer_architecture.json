@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "transformer_code",
       "steps": [
-        {"line": "pe[:, 0::2] = torch.sin(position * div_term)", "highlight": "sin", "explanation": {"en": "Positional encoding: sine waves of different frequencies encode token position. Even indices use sin"}},
-        {"line": "pe[:, 1::2] = torch.cos(position * div_term)", "highlight": "cos", "explanation": {"en": "Odd indices use cos. This gives unique position-dependent patterns the model can learn from"}},
-        {"line": "self.attention = nn.MultiheadAttention(d_model, num_heads, batch_first=True)", "highlight": "attention", "explanation": {"en": "Multi-head self-attention: 8 parallel attention heads each learning different patterns"}},
-        {"line": "self.norm1 = nn.LayerNorm(d_model)", "highlight": "LayerNorm", "explanation": {"en": "Layer normalization: normalizes across features (not batch). Stabilizes transformer training"}},
-        {"line": "attn_out, _ = self.attention(x, x, x, attn_mask=mask)", "highlight": "self_attn", "explanation": {"en": "Self-attention: Q=K=V=x. Optional mask for causal (decoder) or padding masking"}},
-        {"line": "x = self.norm1(x + self.dropout(attn_out))", "highlight": "residual", "explanation": {"en": "Residual connection (x + attn_out) followed by layer norm. Same as ResNet idea!"}},
-        {"line": "self.ff = nn.Sequential(nn.Linear(d_model, d_ff), nn.ReLU(), ...)", "highlight": "ff", "explanation": {"en": "Feed-forward network: expand to 4x dimension then compress back. d_ff is typically 4*d_model"}},
-        {"line": "x = self.norm2(x + self.dropout(ff_out))", "highlight": "ff_residual", "explanation": {"en": "Second residual + norm. Each transformer block: attention+residual+norm, then ff+residual+norm"}},
-        {"line": "x = self.embedding(x) * math.sqrt(self.d_model)", "highlight": "scale_embed", "explanation": {"en": "Scale embeddings by sqrt(d_model) to match positional encoding magnitude"}},
-        {"line": "for layer in self.layers: x = layer(x, mask)", "highlight": "stacked", "explanation": {"en": "Stack N transformer blocks. Each refines representations. GPT-3 uses 96 layers!"}}
+        {
+          "line": "pe[:, 0::2] = torch.sin(position * div_term)",
+          "highlight": "sin",
+          "explanation": {
+            "en": "Positional encoding: sine waves of different frequencies encode token position. Even indices use sin"
+          }
+        },
+        {
+          "line": "pe[:, 1::2] = torch.cos(position * div_term)",
+          "highlight": "cos",
+          "explanation": {
+            "en": "Odd indices use cos. This gives unique position-dependent patterns the model can learn from"
+          }
+        },
+        {
+          "line": "self.attention = nn.MultiheadAttention(d_model, num_heads, batch_first=True)",
+          "highlight": "attention",
+          "explanation": {
+            "en": "Multi-head self-attention: 8 parallel attention heads each learning different patterns"
+          }
+        },
+        {
+          "line": "self.norm1 = nn.LayerNorm(d_model)",
+          "highlight": "LayerNorm",
+          "explanation": {
+            "en": "Layer normalization: normalizes across features (not batch). Stabilizes transformer training"
+          }
+        },
+        {
+          "line": "attn_out, _ = self.attention(x, x, x, attn_mask=mask)",
+          "highlight": "self_attn",
+          "explanation": {
+            "en": "Self-attention: Q=K=V=x. Optional mask for causal (decoder) or padding masking"
+          }
+        },
+        {
+          "line": "x = self.norm1(x + self.dropout(attn_out))",
+          "highlight": "residual",
+          "explanation": {
+            "en": "Residual connection (x + attn_out) followed by layer norm. Same as ResNet idea!"
+          }
+        },
+        {
+          "line": "self.ff = nn.Sequential(nn.Linear(d_model, d_ff), nn.ReLU(), ...)",
+          "highlight": "ff",
+          "explanation": {
+            "en": "Feed-forward network: expand to 4x dimension then compress back. d_ff is typically 4*d_model"
+          }
+        },
+        {
+          "line": "x = self.norm2(x + self.dropout(ff_out))",
+          "highlight": "ff_residual",
+          "explanation": {
+            "en": "Second residual + norm. Each transformer block: attention+residual+norm, then ff+residual+norm"
+          }
+        },
+        {
+          "line": "x = self.embedding(x) * math.sqrt(self.d_model)",
+          "highlight": "scale_embed",
+          "explanation": {
+            "en": "Scale embeddings by sqrt(d_model) to match positional encoding magnitude"
+          }
+        },
+        {
+          "line": "for layer in self.layers: x = layer(x, mask)",
+          "highlight": "stacked",
+          "explanation": {
+            "en": "Stack N transformer blocks. Each refines representations. GPT-3 uses 96 layers!"
+          }
+        }
       ]
     },
     {
@@ -64,10 +124,34 @@
       "id": "transformer_arch",
       "structure_type": "transformer",
       "layers": [
-        {"name": "Input Tokens", "nodes": ["[CLS] The cat sat [SEP]"], "type": "input"},
-        {"name": "Embedding + Positional", "nodes": ["128-dim vectors with position info"], "type": "embedding"},
-        {"name": "Transformer Block x4", "nodes": ["MultiHead Attn -> Add&Norm -> FF -> Add&Norm"], "type": "transformer"},
-        {"name": "Output Projection", "nodes": ["vocab_size logits per position"], "type": "output"}
+        {
+          "name": "Input Tokens",
+          "nodes": [
+            "[CLS] The cat sat [SEP]"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Embedding + Positional",
+          "nodes": [
+            "128-dim vectors with position info"
+          ],
+          "type": "embedding"
+        },
+        {
+          "name": "Transformer Block x4",
+          "nodes": [
+            "MultiHead Attn -> Add&Norm -> FF -> Add&Norm"
+          ],
+          "type": "transformer"
+        },
+        {
+          "name": "Output Projection",
+          "nodes": [
+            "vocab_size logits per position"
+          ],
+          "type": "output"
+        }
       ],
       "duration_ms": 4000
     },
@@ -100,14 +184,28 @@
       "id": "transformer_flow",
       "from": "tokens",
       "to": "output",
-      "steps": ["Embed + Position", "Multi-Head Attn", "Add & Norm", "Feed-Forward", "Add & Norm", "Repeat N times", "Linear out"],
+      "steps": [
+        "Embed + Position",
+        "Multi-Head Attn",
+        "Add & Norm",
+        "Feed-Forward",
+        "Add & Norm",
+        "Repeat N times",
+        "Linear out"
+      ],
       "duration_ms": 4000
     },
     {
       "type": "ComparisonPanel",
       "id": "rnn_vs_transformer",
-      "left": {"label": "RNN/LSTM", "content": "Sequential processing\nO(n) steps for n tokens\nVanishing gradients\nHard to parallelize"},
-      "right": {"label": "Transformer", "content": "Parallel processing\nO(1) attention connects any two tokens\nNo vanishing gradients\nHighly parallelizable on GPUs"},
+      "left": {
+        "label": "RNN/LSTM",
+        "content": "Sequential processing\nO(n) steps for n tokens\nVanishing gradients\nHard to parallelize"
+      },
+      "right": {
+        "label": "Transformer",
+        "content": "Parallel processing\nO(1) attention connects any two tokens\nNo vanishing gradients\nHighly parallelizable on GPUs"
+      },
       "duration_ms": 3000
     },
     {
@@ -122,6 +220,154 @@
         ">>> sum(p.numel() for p in model.parameters())",
         "3945610"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_transformer",
+      "code": "import torch\nimport torch.nn as nn\n\n# Transformer Encoder Layer\nencoder_layer = nn.TransformerEncoderLayer(\n    d_model=64, nhead=8, dim_feedforward=256, batch_first=True\n)\nencoder = nn.TransformerEncoder(encoder_layer, num_layers=2)\n\nx = torch.randn(4, 10, 64)  # batch=4, seq=10, d_model=64\noutput = encoder(x)\nprint(f'Input:  {x.shape}')\nprint(f'Output: {output.shape}')\n\n# Full transformer\ntransformer = nn.Transformer(d_model=64, nhead=8, num_encoder_layers=2,\n                              num_decoder_layers=2, batch_first=True)\nsrc = torch.randn(4, 10, 64)\ntgt = torch.randn(4, 5, 64)\nout = transformer(src, tgt)\nprint(f'Transformer output: {out.shape}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "encoder_layer": "d=64, 8 heads, ff=256"
+          },
+          "output": "",
+          "explanation": "Single encoder layer: self-attention + feedforward"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "encoder": "2 stacked layers"
+          },
+          "output": "",
+          "explanation": "Stack 2 encoder layers for deeper processing"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "x.shape": "(4, 10, 64)"
+          },
+          "output": "",
+          "explanation": "Batch of 4, sequence length 10, model dim 64"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Output: torch.Size([4, 10, 64])",
+          "explanation": "Same shape — self-attention enriches each position with context"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "transformer": "full enc-dec"
+          },
+          "output": "",
+          "explanation": "Full transformer: encoder + decoder with cross-attention"
+        },
+        {
+          "line": 18,
+          "variables": {
+            "src": "(4, 10, 64)",
+            "tgt": "(4, 5, 64)"
+          },
+          "output": "",
+          "explanation": "Source seq=10, target seq=5"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "Transformer output: torch.Size([4, 5, 64])",
+          "explanation": "Output matches target length — decoder attends to encoder output"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_transformer",
+      "title": "Transformer Architecture",
+      "nodes": [
+        {
+          "id": "src",
+          "label": "Source Sequence",
+          "type": "start"
+        },
+        {
+          "id": "pos_enc",
+          "label": "Positional Encoding",
+          "type": "process"
+        },
+        {
+          "id": "self_attn",
+          "label": "Self-Attention (Encoder)",
+          "type": "process"
+        },
+        {
+          "id": "ff1",
+          "label": "Feed-Forward",
+          "type": "process"
+        },
+        {
+          "id": "tgt",
+          "label": "Target Sequence",
+          "type": "start"
+        },
+        {
+          "id": "masked_attn",
+          "label": "Masked Self-Attention",
+          "type": "process"
+        },
+        {
+          "id": "cross_attn",
+          "label": "Cross-Attention",
+          "type": "process"
+        },
+        {
+          "id": "ff2",
+          "label": "Feed-Forward",
+          "type": "process"
+        },
+        {
+          "id": "output",
+          "label": "Output Logits",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "src",
+          "to": "pos_enc"
+        },
+        {
+          "from": "pos_enc",
+          "to": "self_attn"
+        },
+        {
+          "from": "self_attn",
+          "to": "ff1"
+        },
+        {
+          "from": "tgt",
+          "to": "masked_attn"
+        },
+        {
+          "from": "masked_attn",
+          "to": "cross_attn"
+        },
+        {
+          "from": "ff1",
+          "to": "cross_attn",
+          "label": "encoder output"
+        },
+        {
+          "from": "cross_attn",
+          "to": "ff2"
+        },
+        {
+          "from": "ff2",
+          "to": "output"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -153,8 +399,18 @@
         "ta": "Transformers-க்கு ஏன் positional encoding தேவை?"
       },
       "options": {
-        "en": ["To reduce computation", "Self-attention has no notion of order; positional encoding adds position information", "To increase model size", "To handle different languages"],
-        "ta": ["கணக்கீட்டைக் குறைக்க", "Self-attention-க்கு வரிசை பற்றிய எண்ணம் இல்லை; positional encoding நிலை தகவலைச் சேர்க்கிறது", "மாதிரி அளவை அதிகரிக்க", "வெவ்வேறு மொழிகளைக் கையாள"]
+        "en": [
+          "To reduce computation",
+          "Self-attention has no notion of order; positional encoding adds position information",
+          "To increase model size",
+          "To handle different languages"
+        ],
+        "ta": [
+          "கணக்கீட்டைக் குறைக்க",
+          "Self-attention-க்கு வரிசை பற்றிய எண்ணம் இல்லை; positional encoding நிலை தகவலைச் சேர்க்கிறது",
+          "மாதிரி அளவை அதிகரிக்க",
+          "வெவ்வேறு மொழிகளைக் கையாள"
+        ]
       },
       "correct": 1
     },
@@ -164,8 +420,18 @@
         "ta": "ஒவ்வொரு Transformer block-லும் feed-forward network-ன் நோக்கம் என்ன?"
       },
       "options": {
-        "en": ["To compute attention", "To add non-linear transformation and increase model capacity per position", "To encode positions", "To reduce dimensions"],
-        "ta": ["Attention கணக்கிட", "ஒவ்வொரு நிலையிலும் non-linear transformation மற்றும் மாதிரி திறனை அதிகரிக்க", "நிலைகளை குறியாக்க", "பரிமாணங்களைக் குறைக்க"]
+        "en": [
+          "To compute attention",
+          "To add non-linear transformation and increase model capacity per position",
+          "To encode positions",
+          "To reduce dimensions"
+        ],
+        "ta": [
+          "Attention கணக்கிட",
+          "ஒவ்வொரு நிலையிலும் non-linear transformation மற்றும் மாதிரி திறனை அதிகரிக்க",
+          "நிலைகளை குறியாக்க",
+          "பரிமாணங்களைக் குறைக்க"
+        ]
       },
       "correct": 1
     },
@@ -175,20 +441,47 @@
         "ta": "Decoder Transformer-ல் causal mask என்ன?"
       },
       "options": {
-        "en": ["It masks out padding tokens", "It prevents each position from attending to future positions", "It masks out rare words", "It removes attention entirely"],
-        "ta": ["Padding tokens-ஐ மறைக்கிறது", "ஒவ்வொரு நிலையும் எதிர்கால நிலைகளுக்கு கவனம் செலுத்துவதைத் தடுக்கிறது", "அரிதான வார்த்தைகளை மறைக்கிறது", "Attention-ஐ முழுமையாக நீக்குகிறது"]
+        "en": [
+          "It masks out padding tokens",
+          "It prevents each position from attending to future positions",
+          "It masks out rare words",
+          "It removes attention entirely"
+        ],
+        "ta": [
+          "Padding tokens-ஐ மறைக்கிறது",
+          "ஒவ்வொரு நிலையும் எதிர்கால நிலைகளுக்கு கவனம் செலுத்துவதைத் தடுக்கிறது",
+          "அரிதான வார்த்தைகளை மறைக்கிறது",
+          "Attention-ஐ முழுமையாக நீக்குகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["transformer", "positional_encoding", "multi_head_attention", "layer_norm", "encoder_decoder", "causal_mask"],
-    "concepts_required": ["attention_mechanism", "self_attention"],
+    "concepts_taught": [
+      "transformer",
+      "positional_encoding",
+      "multi_head_attention",
+      "layer_norm",
+      "encoder_decoder",
+      "causal_mask"
+    ],
+    "concepts_required": [
+      "attention_mechanism",
+      "self_attention"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 45,
-    "real_world_application": ["language_models", "machine_translation", "gpt", "bert"],
+    "real_world_application": [
+      "language_models",
+      "machine_translation",
+      "gpt",
+      "bert"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

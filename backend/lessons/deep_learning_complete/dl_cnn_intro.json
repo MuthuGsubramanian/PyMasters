@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "cnn_code",
       "steps": [
-        {"line": "conv = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, padding=1)", "highlight": "Conv2d", "explanation": {"en": "Create a conv layer: 1 input channel (grayscale), 16 filters of size 3x3, padding=1 to keep size"}},
-        {"line": "pool = nn.MaxPool2d(kernel_size=2, stride=2)", "highlight": "MaxPool2d", "explanation": {"en": "Max pooling: take the max value in each 2x2 window, halving spatial dimensions"}},
-        {"line": "image = torch.randn(1, 1, 28, 28)", "highlight": "image", "explanation": {"en": "Batch of 1 grayscale image, 28x28 pixels. Shape: [batch, channels, height, width]"}},
-        {"line": "features = conv(image)", "highlight": "conv", "explanation": {"en": "Apply 16 filters: each 3x3 filter slides across 28x28 image producing one 28x28 feature map"}},
-        {"line": "activated = relu(features)", "highlight": "relu", "explanation": {"en": "ReLU: keep positive activations (detected features), zero out negatives"}},
-        {"line": "pooled = pool(activated)", "highlight": "pool", "explanation": {"en": "Max pool halves dimensions: 28x28 -> 14x14. Reduces computation and adds translation invariance"}},
-        {"line": "print(f'After conv: {features.shape}')", "highlight": "shape", "explanation": {"en": "16 feature maps of 28x28 each. With padding=1 and kernel=3, output size = input size"}},
-        {"line": "print(f'After pool: {pooled.shape}')", "highlight": "shape", "explanation": {"en": "Still 16 feature maps but now 14x14. Spatial information compressed by 2x"}},
-        {"line": "# Conv parameters: 1*16*3*3 + 16 = 160", "highlight": "parameters", "explanation": {"en": "16 filters x (1 channel x 3x3 kernel) + 16 biases = 160 learnable parameters"}},
-        {"line": "# Fully connected equivalent: 28*28*16 = 12544 weights per neuron!", "highlight": "comparison", "explanation": {"en": "Weight sharing makes CNNs vastly more efficient than fully connected layers for images"}}
+        {
+          "line": "conv = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, padding=1)",
+          "highlight": "Conv2d",
+          "explanation": {
+            "en": "Create a conv layer: 1 input channel (grayscale), 16 filters of size 3x3, padding=1 to keep size"
+          }
+        },
+        {
+          "line": "pool = nn.MaxPool2d(kernel_size=2, stride=2)",
+          "highlight": "MaxPool2d",
+          "explanation": {
+            "en": "Max pooling: take the max value in each 2x2 window, halving spatial dimensions"
+          }
+        },
+        {
+          "line": "image = torch.randn(1, 1, 28, 28)",
+          "highlight": "image",
+          "explanation": {
+            "en": "Batch of 1 grayscale image, 28x28 pixels. Shape: [batch, channels, height, width]"
+          }
+        },
+        {
+          "line": "features = conv(image)",
+          "highlight": "conv",
+          "explanation": {
+            "en": "Apply 16 filters: each 3x3 filter slides across 28x28 image producing one 28x28 feature map"
+          }
+        },
+        {
+          "line": "activated = relu(features)",
+          "highlight": "relu",
+          "explanation": {
+            "en": "ReLU: keep positive activations (detected features), zero out negatives"
+          }
+        },
+        {
+          "line": "pooled = pool(activated)",
+          "highlight": "pool",
+          "explanation": {
+            "en": "Max pool halves dimensions: 28x28 -> 14x14. Reduces computation and adds translation invariance"
+          }
+        },
+        {
+          "line": "print(f'After conv: {features.shape}')",
+          "highlight": "shape",
+          "explanation": {
+            "en": "16 feature maps of 28x28 each. With padding=1 and kernel=3, output size = input size"
+          }
+        },
+        {
+          "line": "print(f'After pool: {pooled.shape}')",
+          "highlight": "shape",
+          "explanation": {
+            "en": "Still 16 feature maps but now 14x14. Spatial information compressed by 2x"
+          }
+        },
+        {
+          "line": "# Conv parameters: 1*16*3*3 + 16 = 160",
+          "highlight": "parameters",
+          "explanation": {
+            "en": "16 filters x (1 channel x 3x3 kernel) + 16 biases = 160 learnable parameters"
+          }
+        },
+        {
+          "line": "# Fully connected equivalent: 28*28*16 = 12544 weights per neuron!",
+          "highlight": "comparison",
+          "explanation": {
+            "en": "Weight sharing makes CNNs vastly more efficient than fully connected layers for images"
+          }
+        }
       ]
     },
     {
@@ -64,10 +124,34 @@
       "id": "conv_visual",
       "structure_type": "cnn_layers",
       "layers": [
-        {"name": "Input", "nodes": ["1x28x28 (grayscale)"], "type": "input"},
-        {"name": "Conv2d(1,16,3)", "nodes": ["16x28x28 (16 feature maps)"], "type": "conv"},
-        {"name": "ReLU", "nodes": ["16x28x28 (activated)"], "type": "activation"},
-        {"name": "MaxPool2d(2)", "nodes": ["16x14x14 (downsampled)"], "type": "pool"}
+        {
+          "name": "Input",
+          "nodes": [
+            "1x28x28 (grayscale)"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Conv2d(1,16,3)",
+          "nodes": [
+            "16x28x28 (16 feature maps)"
+          ],
+          "type": "conv"
+        },
+        {
+          "name": "ReLU",
+          "nodes": [
+            "16x28x28 (activated)"
+          ],
+          "type": "activation"
+        },
+        {
+          "name": "MaxPool2d(2)",
+          "nodes": [
+            "16x14x14 (downsampled)"
+          ],
+          "type": "pool"
+        }
       ],
       "duration_ms": 4000
     },
@@ -75,9 +159,24 @@
       "type": "MemoryStack",
       "id": "shape_tracking",
       "slots": [
-        {"name": "Input Image", "value": "[1, 1, 28, 28]", "type": "tensor", "address": "784 values"},
-        {"name": "After Conv", "value": "[1, 16, 28, 28]", "type": "tensor", "address": "12,544 values"},
-        {"name": "After Pool", "value": "[1, 16, 14, 14]", "type": "tensor", "address": "3,136 values"}
+        {
+          "name": "Input Image",
+          "value": "[1, 1, 28, 28]",
+          "type": "tensor",
+          "address": "784 values"
+        },
+        {
+          "name": "After Conv",
+          "value": "[1, 16, 28, 28]",
+          "type": "tensor",
+          "address": "12,544 values"
+        },
+        {
+          "name": "After Pool",
+          "value": "[1, 16, 14, 14]",
+          "type": "tensor",
+          "address": "3,136 values"
+        }
       ]
     },
     {
@@ -101,7 +200,14 @@
       "id": "cnn_flow",
       "from": "image",
       "to": "features",
-      "steps": ["Input image", "3x3 filter slides", "Element-wise multiply", "Sum values", "Feature map", "Pool to reduce"],
+      "steps": [
+        "Input image",
+        "3x3 filter slides",
+        "Element-wise multiply",
+        "Sum values",
+        "Feature map",
+        "Pool to reduce"
+      ],
       "duration_ms": 3000
     },
     {
@@ -119,6 +225,141 @@
         ">>> sum(p.numel() for p in conv.parameters())",
         "160"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_cnn_intro",
+      "code": "import torch\nimport torch.nn as nn\n\n# Single convolution layer\nconv = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, padding=1)\ninput_img = torch.randn(1, 1, 28, 28)  # batch, channels, H, W\noutput = conv(input_img)\nprint(f'Input shape:  {input_img.shape}')\nprint(f'Output shape: {output.shape}')\n\n# Pooling\npool = nn.MaxPool2d(kernel_size=2, stride=2)\npooled = pool(output)\nprint(f'After pooling: {pooled.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "conv": "Conv2d(1, 16, 3, padding=1)"
+          },
+          "output": "",
+          "explanation": "16 filters of size 3x3, same padding"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "input_img.shape": "(1, 1, 28, 28)"
+          },
+          "output": "",
+          "explanation": "1 grayscale 28x28 image"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "output.shape": "(1, 16, 28, 28)"
+          },
+          "output": "",
+          "explanation": "16 feature maps, same spatial size (padding=1)"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Input shape:  torch.Size([1, 1, 28, 28])",
+          "explanation": "Single channel input"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Output shape: torch.Size([1, 16, 28, 28])",
+          "explanation": "Each filter detects a different feature (edge, corner, etc.)"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "pool": "MaxPool2d(2, 2)"
+          },
+          "output": "",
+          "explanation": "Max pooling: take max in 2x2 window, stride 2"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "After pooling: torch.Size([1, 16, 14, 14])",
+          "explanation": "Spatial size halved: 28->14, reduces computation"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_cnn_arch",
+      "title": "CNN Layer Pipeline",
+      "nodes": [
+        {
+          "id": "img",
+          "label": "Input Image (1x28x28)",
+          "type": "start"
+        },
+        {
+          "id": "conv1",
+          "label": "Conv2d (16 filters)",
+          "type": "process"
+        },
+        {
+          "id": "relu1",
+          "label": "ReLU",
+          "type": "process"
+        },
+        {
+          "id": "pool1",
+          "label": "MaxPool2d (14x14)",
+          "type": "process"
+        },
+        {
+          "id": "conv2",
+          "label": "Conv2d (32 filters)",
+          "type": "process"
+        },
+        {
+          "id": "pool2",
+          "label": "MaxPool2d (7x7)",
+          "type": "process"
+        },
+        {
+          "id": "flat",
+          "label": "Flatten",
+          "type": "process"
+        },
+        {
+          "id": "fc",
+          "label": "Fully Connected",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "img",
+          "to": "conv1"
+        },
+        {
+          "from": "conv1",
+          "to": "relu1"
+        },
+        {
+          "from": "relu1",
+          "to": "pool1"
+        },
+        {
+          "from": "pool1",
+          "to": "conv2"
+        },
+        {
+          "from": "conv2",
+          "to": "pool2"
+        },
+        {
+          "from": "pool2",
+          "to": "flat"
+        },
+        {
+          "from": "flat",
+          "to": "fc"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -156,8 +397,18 @@
         "ta": "பட செயலாக்கத்தில் முழு இணைக்கப்பட்ட அடுக்குகளை விட கன்வொல்யூஷனல் அடுக்குகளின் முக்கிய நன்மை என்ன?"
       },
       "options": {
-        "en": ["They are faster to train", "Weight sharing reduces parameters and captures spatial patterns", "They use more memory", "They can only process images"],
-        "ta": ["பயிற்சி வேகமானது", "எடை பகிர்வு அளவுருக்களைக் குறைத்து இடஞ்சார் வடிவங்களைப் பிடிக்கிறது", "அதிக நினைவகம் பயன்படுத்துகின்றன", "படங்களை மட்டுமே செயலாக்க முடியும்"]
+        "en": [
+          "They are faster to train",
+          "Weight sharing reduces parameters and captures spatial patterns",
+          "They use more memory",
+          "They can only process images"
+        ],
+        "ta": [
+          "பயிற்சி வேகமானது",
+          "எடை பகிர்வு அளவுருக்களைக் குறைத்து இடஞ்சார் வடிவங்களைப் பிடிக்கிறது",
+          "அதிக நினைவகம் பயன்படுத்துகின்றன",
+          "படங்களை மட்டுமே செயலாக்க முடியும்"
+        ]
       },
       "correct": 1
     },
@@ -167,8 +418,18 @@
         "ta": "28x28 feature map-க்கு MaxPool2d(2, 2) என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Doubles the size to 56x56", "Reduces to 14x14 by taking max in each 2x2 window", "Keeps the size at 28x28", "Reduces to 7x7"],
-        "ta": ["அளவை 56x56-க்கு இரட்டிப்பாக்குகிறது", "ஒவ்வொரு 2x2 சாளரத்திலும் max எடுத்து 14x14-க்கு குறைக்கிறது", "அளவை 28x28-ல் வைக்கிறது", "7x7-க்கு குறைக்கிறது"]
+        "en": [
+          "Doubles the size to 56x56",
+          "Reduces to 14x14 by taking max in each 2x2 window",
+          "Keeps the size at 28x28",
+          "Reduces to 7x7"
+        ],
+        "ta": [
+          "அளவை 56x56-க்கு இரட்டிப்பாக்குகிறது",
+          "ஒவ்வொரு 2x2 சாளரத்திலும் max எடுத்து 14x14-க்கு குறைக்கிறது",
+          "அளவை 28x28-ல் வைக்கிறது",
+          "7x7-க்கு குறைக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -178,20 +439,45 @@
         "ta": "Conv2d அடுக்கு in_channels=3, out_channels=32, kernel_size=3 கொண்டிருந்தால், எத்தனை அளவுருக்கள் உள்ளன?"
       },
       "options": {
-        "en": ["288", "896", "864", "320"],
-        "ta": ["288", "896", "864", "320"]
+        "en": [
+          "288",
+          "896",
+          "864",
+          "320"
+        ],
+        "ta": [
+          "288",
+          "896",
+          "864",
+          "320"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["convolution", "filters", "feature_maps", "pooling", "stride", "padding"],
-    "concepts_required": ["pytorch_basics", "forward_pass"],
+    "concepts_taught": [
+      "convolution",
+      "filters",
+      "feature_maps",
+      "pooling",
+      "stride",
+      "padding"
+    ],
+    "concepts_required": [
+      "pytorch_basics",
+      "forward_pass"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "visual",
     "estimated_minutes": 30,
-    "real_world_application": ["image_recognition", "computer_vision"],
+    "real_world_application": [
+      "image_recognition",
+      "computer_vision"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

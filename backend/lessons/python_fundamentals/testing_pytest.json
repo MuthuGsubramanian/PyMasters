@@ -39,6 +39,19 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "def add(a, b):\n    return a + b\ndef test_add_positive():\n    assert add(2, 3) == 5\ndef test_add_negative():\n    assert add(-1, 1) == 0\ntest_add_positive()\ntest_add_negative()\nprint('All tests passed!')",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define the add function" },
+        { "line": 3, "variables": {}, "output": "", "description": "Define test for positive numbers" },
+        { "line": 5, "variables": {}, "output": "", "description": "Define test for negative numbers" },
+        { "line": 7, "variables": {}, "output": "", "description": "Run test_add_positive: add(2,3)=5, assert 5==5 passes" },
+        { "line": 8, "variables": {}, "output": "", "description": "Run test_add_negative: add(-1,1)=0, assert 0==0 passes" },
+        { "line": 9, "variables": {}, "output": "All tests passed!", "description": "Both assertions passed -- no errors raised" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

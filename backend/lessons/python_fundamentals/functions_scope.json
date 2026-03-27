@@ -63,6 +63,40 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "x = 'global'\ndef outer():\n    x = 'enclosing'\n    def inner():\n        x = 'local'\n        print(x)\n    inner()\n    print(x)\nouter()\nprint(x)",
+      "executionSteps": [
+        { "line": 1, "variables": { "x": "global" }, "output": "", "description": "Assign 'global' to x in global scope" },
+        { "line": 9, "variables": { "x": "global" }, "output": "", "description": "Call outer() -- enters outer function scope" },
+        { "line": 3, "variables": { "x": "global", "outer.x": "enclosing" }, "output": "", "description": "Create local x = 'enclosing' in outer scope" },
+        { "line": 7, "variables": { "x": "global", "outer.x": "enclosing" }, "output": "", "description": "Call inner() -- enters inner function scope" },
+        { "line": 5, "variables": { "x": "global", "outer.x": "enclosing", "inner.x": "local" }, "output": "", "description": "Create local x = 'local' in inner scope" },
+        { "line": 6, "variables": { "x": "global", "outer.x": "enclosing", "inner.x": "local" }, "output": "local", "description": "Print inner's local x: 'local'" },
+        { "line": 8, "variables": { "x": "global", "outer.x": "enclosing" }, "output": "local\nenclosing", "description": "Back in outer -- print outer's x: 'enclosing'" },
+        { "line": 10, "variables": { "x": "global" }, "output": "local\nenclosing\nglobal", "description": "Back in global -- print global x: 'global'" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "global", "label": "Global scope: x = 'global'", "type": "start" },
+        { "id": "outer", "label": "outer(): x = 'enclosing'", "type": "process" },
+        { "id": "inner", "label": "inner(): x = 'local'", "type": "process" },
+        { "id": "lookup", "label": "LEGB lookup: Local -> Enclosing -> Global -> Built-in", "type": "process" },
+        { "id": "end", "label": "End", "type": "end" }
+      ],
+      "edges": [
+        { "from": "global", "to": "outer" },
+        { "from": "outer", "to": "inner" },
+        { "from": "inner", "to": "lookup" },
+        { "from": "lookup", "to": "end" }
+      ],
+      "executionPath": ["global", "outer", "inner", "lookup", "end"],
+      "variables": { "x (global)": "global", "x (outer)": "enclosing", "x (inner)": "local" },
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

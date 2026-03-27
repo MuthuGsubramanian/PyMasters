@@ -163,12 +163,33 @@
       "type": "DataStructure",
       "id": "bst_visual",
       "structure_type": "dict",
-      "initial_state": {"5": {"left": "3", "right": "7"}},
+      "initial_state": {
+        "5": {
+          "left": "3",
+          "right": "7"
+        }
+      },
       "animations": [
-        {"action": "add", "index": "1", "value": "left of 3"},
-        {"action": "add", "index": "4", "value": "right of 3"},
-        {"action": "add", "index": "6", "value": "left of 7"},
-        {"action": "add", "index": "8", "value": "right of 7"}
+        {
+          "action": "add",
+          "index": "1",
+          "value": "left of 3"
+        },
+        {
+          "action": "add",
+          "index": "4",
+          "value": "right of 3"
+        },
+        {
+          "action": "add",
+          "index": "6",
+          "value": "left of 7"
+        },
+        {
+          "action": "add",
+          "index": "8",
+          "value": "right of 7"
+        }
       ]
     },
     {
@@ -197,6 +218,136 @@
         "Search 9: False (3 comparisons)",
         "Min: 1, Max: 8"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_binary_search_trees",
+      "code": "class TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = self.right = None\n\ndef insert(root, val):\n    if not root: return TreeNode(val)\n    if val < root.val: root.left = insert(root.left, val)\n    elif val > root.val: root.right = insert(root.right, val)\n    return root\n\ndef search(root, val):\n    if not root: return False\n    if val == root.val: return True\n    elif val < root.val: return search(root.left, val)\n    else: return search(root.right, val)\n\nroot = None\nfor v in [5, 3, 7, 1, 4, 6, 8]:\n    root = insert(root, v)\nprint(search(root, 4))\nprint(search(root, 9))",
+      "executionSteps": [
+        {
+          "line": 18,
+          "variables": {
+            "root": null
+          },
+          "output": "",
+          "explanation": "Start with empty BST"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "root.val": 5
+          },
+          "output": "",
+          "explanation": "Insert 5 as root — first element becomes root"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "root.left.val": 3
+          },
+          "output": "",
+          "explanation": "Insert 3: 3<5, goes left. BST property maintained"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "root.right.val": 7
+          },
+          "output": "",
+          "explanation": "Insert 7: 7>5, goes right. Tree balanced so far"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "",
+          "explanation": "After all inserts: BST with 7 nodes, height=2"
+        },
+        {
+          "line": 21,
+          "variables": {
+            "val": 4
+          },
+          "output": "",
+          "explanation": "Search 4: root(5)->left(3)->right(4)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "root.val": 4
+          },
+          "output": "True",
+          "explanation": "Found 4 in 3 comparisons (log2(7) approx 3)"
+        },
+        {
+          "line": 22,
+          "variables": {
+            "val": 9
+          },
+          "output": "",
+          "explanation": "Search 9: root(5)->right(7)->right(8)->right(None)"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "False",
+          "explanation": "Reached None — 9 not in tree. 3 comparisons"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_binary_search_trees",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Search for value",
+          "next": [
+            "compare"
+          ]
+        },
+        {
+          "id": "compare",
+          "label": "Compare with current node",
+          "next": [
+            "found",
+            "go_left",
+            "go_right"
+          ]
+        },
+        {
+          "id": "found",
+          "label": "Equal => Found!",
+          "next": []
+        },
+        {
+          "id": "go_left",
+          "label": "Smaller => Go Left",
+          "next": [
+            "check_null"
+          ]
+        },
+        {
+          "id": "go_right",
+          "label": "Larger => Go Right",
+          "next": [
+            "check_null"
+          ]
+        },
+        {
+          "id": "check_null",
+          "label": "Node exists?",
+          "next": [
+            "compare",
+            "not_found"
+          ]
+        },
+        {
+          "id": "not_found",
+          "label": "None => Not Found",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -228,8 +379,18 @@
         "ta": "BST பண்பு என்ன?"
       },
       "options": {
-        "en": ["All left nodes are even, right are odd", "Left < Parent < Right for every node", "The tree must be complete", "Nodes are stored in an array"],
-        "ta": ["இடது முனைகள் இரட்டை, வலது ஒற்றை", "ஒவ்வொரு முனைக்கும் Left < Parent < Right", "மரம் முழுமையாக இருக்க வேண்டும்", "முனைகள் அணியில் சேமிக்கப்படும்"]
+        "en": [
+          "All left nodes are even, right are odd",
+          "Left < Parent < Right for every node",
+          "The tree must be complete",
+          "Nodes are stored in an array"
+        ],
+        "ta": [
+          "இடது முனைகள் இரட்டை, வலது ஒற்றை",
+          "ஒவ்வொரு முனைக்கும் Left < Parent < Right",
+          "மரம் முழுமையாக இருக்க வேண்டும்",
+          "முனைகள் அணியில் சேமிக்கப்படும்"
+        ]
       },
       "correct": 1
     },
@@ -239,8 +400,18 @@
         "ta": "BST-ன் inorder traversal என்ன உருவாக்கும்?"
       },
       "options": {
-        "en": ["Random order", "Reverse sorted order", "Sorted order", "Level order"],
-        "ta": ["சீரற்ற வரிசை", "தலைகீழ் வரிசை", "வரிசைப்படுத்தப்பட்ட வரிசை", "நிலை வரிசை"]
+        "en": [
+          "Random order",
+          "Reverse sorted order",
+          "Sorted order",
+          "Level order"
+        ],
+        "ta": [
+          "சீரற்ற வரிசை",
+          "தலைகீழ் வரிசை",
+          "வரிசைப்படுத்தப்பட்ட வரிசை",
+          "நிலை வரிசை"
+        ]
       },
       "correct": 2
     },
@@ -250,20 +421,44 @@
         "ta": "BST search எப்போது O(n) ஆக மோசமடையும்?"
       },
       "options": {
-        "en": ["When the tree is balanced", "When the tree is skewed (like a linked list)", "When values are strings", "Never"],
-        "ta": ["மரம் சமநிலையில் இருக்கும்போது", "மரம் சாய்ந்திருக்கும்போது (linked list போல)", "மதிப்புகள் சரங்களாக இருக்கும்போது", "ஒருபோதும் இல்லை"]
+        "en": [
+          "When the tree is balanced",
+          "When the tree is skewed (like a linked list)",
+          "When values are strings",
+          "Never"
+        ],
+        "ta": [
+          "மரம் சமநிலையில் இருக்கும்போது",
+          "மரம் சாய்ந்திருக்கும்போது (linked list போல)",
+          "மதிப்புகள் சரங்களாக இருக்கும்போது",
+          "ஒருபோதும் இல்லை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["bst", "binary_search_tree", "tree_insert", "tree_search"],
-    "concepts_required": ["binary_tree", "recursion"],
+    "concepts_taught": [
+      "bst",
+      "binary_search_tree",
+      "tree_insert",
+      "tree_search"
+    ],
+    "concepts_required": [
+      "binary_tree",
+      "recursion"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["database_indexing", "autocomplete", "range_queries"],
+    "real_world_application": [
+      "database_indexing",
+      "autocomplete",
+      "range_queries"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

@@ -30,15 +30,29 @@
       "nodes": [
         {
           "label": "Data Cleaning",
-          "children": ["Missing Values", "Outliers", "Encoding", "Scaling"]
+          "children": [
+            "Missing Values",
+            "Outliers",
+            "Encoding",
+            "Scaling"
+          ]
         },
         {
           "label": "Missing Values",
-          "children": ["Drop rows", "Fill with mean/median", "Fill with mode", "Interpolate"]
+          "children": [
+            "Drop rows",
+            "Fill with mean/median",
+            "Fill with mode",
+            "Interpolate"
+          ]
         },
         {
           "label": "Encoding",
-          "children": ["Label Encoding", "One-Hot Encoding", "Ordinal Encoding"]
+          "children": [
+            "Label Encoding",
+            "One-Hot Encoding",
+            "Ordinal Encoding"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -50,72 +64,100 @@
         {
           "line": "import pandas as pd; import numpy as np",
           "highlight": "import",
-          "explanation": { "en": "Import pandas and numpy for data manipulation" }
+          "explanation": {
+            "en": "Import pandas and numpy for data manipulation"
+          }
         },
         {
           "line": "df = pd.DataFrame({'age': [25, np.nan, 35, 28, np.nan], 'salary': [50000, 60000, np.nan, 55000, 70000], 'city': ['Chennai', 'Mumbai', 'Chennai', None, 'Delhi']})",
           "highlight": "np.nan",
-          "explanation": { "en": "Create sample data with missing values — np.nan and None represent missing data" }
+          "explanation": {
+            "en": "Create sample data with missing values — np.nan and None represent missing data"
+          }
         },
         {
           "line": "print(df.isnull().sum())",
           "highlight": "isnull",
-          "explanation": { "en": "Count missing values per column — first step in any data cleaning" }
+          "explanation": {
+            "en": "Count missing values per column — first step in any data cleaning"
+          }
         },
         {
           "line": "print(f'Missing %: {(df.isnull().sum() / len(df) * 100).round(1)}')",
           "highlight": "Missing %",
-          "explanation": { "en": "Calculate missing percentage — helps decide drop vs impute strategy" }
+          "explanation": {
+            "en": "Calculate missing percentage — helps decide drop vs impute strategy"
+          }
         },
         {
           "line": "df['age'].fillna(df['age'].median(), inplace=True)",
           "highlight": "fillna",
-          "explanation": { "en": "Fill missing ages with median — robust to outliers unlike mean" }
+          "explanation": {
+            "en": "Fill missing ages with median — robust to outliers unlike mean"
+          }
         },
         {
           "line": "df['salary'].fillna(df['salary'].mean(), inplace=True)",
           "highlight": "mean",
-          "explanation": { "en": "Fill missing salary with mean — appropriate when distribution is normal" }
+          "explanation": {
+            "en": "Fill missing salary with mean — appropriate when distribution is normal"
+          }
         },
         {
           "line": "df['city'].fillna(df['city'].mode()[0], inplace=True)",
           "highlight": "mode",
-          "explanation": { "en": "Fill missing city with most frequent value (mode)" }
+          "explanation": {
+            "en": "Fill missing city with most frequent value (mode)"
+          }
         },
         {
           "line": "from sklearn.preprocessing import LabelEncoder",
           "highlight": "LabelEncoder",
-          "explanation": { "en": "Import encoder to convert text categories to numbers" }
+          "explanation": {
+            "en": "Import encoder to convert text categories to numbers"
+          }
         },
         {
           "line": "le = LabelEncoder()",
           "highlight": "le",
-          "explanation": { "en": "Create encoder instance" }
+          "explanation": {
+            "en": "Create encoder instance"
+          }
         },
         {
           "line": "df['city_encoded'] = le.fit_transform(df['city'])",
           "highlight": "fit_transform",
-          "explanation": { "en": "Chennai=0, Delhi=1, Mumbai=2 — alphabetical label assignment" }
+          "explanation": {
+            "en": "Chennai=0, Delhi=1, Mumbai=2 — alphabetical label assignment"
+          }
         },
         {
           "line": "from sklearn.preprocessing import StandardScaler",
           "highlight": "StandardScaler",
-          "explanation": { "en": "Import scaler to normalize numerical features" }
+          "explanation": {
+            "en": "Import scaler to normalize numerical features"
+          }
         },
         {
           "line": "scaler = StandardScaler()",
           "highlight": "scaler",
-          "explanation": { "en": "StandardScaler transforms to mean=0, std=1" }
+          "explanation": {
+            "en": "StandardScaler transforms to mean=0, std=1"
+          }
         },
         {
           "line": "df[['age_scaled', 'salary_scaled']] = scaler.fit_transform(df[['age', 'salary']])",
           "highlight": "fit_transform",
-          "explanation": { "en": "Scale age and salary — now both features are on the same scale" }
+          "explanation": {
+            "en": "Scale age and salary — now both features are on the same scale"
+          }
         },
         {
           "line": "print(df[['age_scaled', 'salary_scaled']].describe())",
           "highlight": "describe",
-          "explanation": { "en": "Verify: mean should be ~0 and std ~1 after scaling" }
+          "explanation": {
+            "en": "Verify: mean should be ~0 and std ~1 after scaling"
+          }
         }
       ]
     },
@@ -152,6 +194,117 @@
         "3  28.0  55000.0  Chennai           0       0.00         -0.51",
         "4  28.0  70000.0    Delhi           1       0.00          1.62"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_data_cleaning",
+      "code": "import pandas as pd\nimport numpy as np\n\ndf = pd.DataFrame({\n    'age': [25, np.nan, 35, 28, np.nan],\n    'salary': [50000, 60000, np.nan, 55000, 70000],\n    'city': ['NYC', 'LA', 'NYC', None, 'LA']\n})\nprint(df.isnull().sum())\ndf['age'].fillna(df['age'].median(), inplace=True)\ndf['salary'].fillna(df['salary'].mean(), inplace=True)\ndf['city'].fillna(df['city'].mode()[0], inplace=True)\nprint(df.isnull().sum())\nprint(df)",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "df": "5 rows, 3 cols with NaN"
+          },
+          "output": "",
+          "explanation": "Create DataFrame with missing values"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "age       2\nsalary    1\ncity      1",
+          "explanation": "Count NaN per column — age has 2 missing"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "age_median": "28.0"
+          },
+          "output": "",
+          "explanation": "Fill missing age with median (robust to outliers)"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "salary_mean": "58750.0"
+          },
+          "output": "",
+          "explanation": "Fill missing salary with mean"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "city_mode": "NYC"
+          },
+          "output": "",
+          "explanation": "Fill missing city with mode (most frequent)"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "age       0\nsalary    0\ncity      0",
+          "explanation": "All missing values handled"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_cleaning_pipeline",
+      "title": "Data Cleaning Pipeline",
+      "nodes": [
+        {
+          "id": "raw",
+          "label": "Raw Data",
+          "type": "start"
+        },
+        {
+          "id": "missing",
+          "label": "Handle Missing Values",
+          "type": "process"
+        },
+        {
+          "id": "outliers",
+          "label": "Detect Outliers",
+          "type": "process"
+        },
+        {
+          "id": "encode",
+          "label": "Encode Categoricals",
+          "type": "process"
+        },
+        {
+          "id": "scale",
+          "label": "Scale Features",
+          "type": "process"
+        },
+        {
+          "id": "clean",
+          "label": "Clean Dataset",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "raw",
+          "to": "missing"
+        },
+        {
+          "from": "missing",
+          "to": "outliers"
+        },
+        {
+          "from": "outliers",
+          "to": "encode"
+        },
+        {
+          "from": "encode",
+          "to": "scale"
+        },
+        {
+          "from": "scale",
+          "to": "clean"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -242,13 +395,27 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["missing_values", "outlier_detection", "label_encoding", "one_hot_encoding", "feature_scaling"],
-    "concepts_required": ["pandas_basics", "numpy_basics"],
+    "concepts_taught": [
+      "missing_values",
+      "outlier_detection",
+      "label_encoding",
+      "one_hot_encoding",
+      "feature_scaling"
+    ],
+    "concepts_required": [
+      "pandas_basics",
+      "numpy_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["data_preprocessing", "etl_pipelines"],
+    "real_world_application": [
+      "data_preprocessing",
+      "etl_pipelines"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["ml_fundamentals"]
+    "path_memberships": [
+      "ml_fundamentals"
+    ]
   }
 }

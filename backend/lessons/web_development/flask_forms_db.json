@@ -216,6 +216,133 @@
         ">>> student.age",
         "22"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_flask_forms",
+      "title": "Form Validation and Database Save",
+      "code": "from flask_wtf import FlaskForm\nfrom wtforms import StringField\nfrom wtforms.validators import DataRequired, Length\n\nclass StudentForm(FlaskForm):\n    name = StringField('Name', validators=[DataRequired(), Length(min=2, max=100)])\n\nform = StudentForm(data={'name': 'Alice'})\nis_valid = form.validate()\nprint(f'Valid: {is_valid}')\nprint(f'Errors: {form.errors}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import FlaskForm base class for form definitions"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "Import StringField for text input fields"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "Import validators: DataRequired and Length"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "StudentForm": "<class>"
+          },
+          "output": "",
+          "explanation": "Define form class -- each attribute becomes an HTML form field"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "form": "<StudentForm name='Alice'>"
+          },
+          "output": "",
+          "explanation": "Create form with name='Alice'"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "is_valid": true
+          },
+          "output": "",
+          "explanation": "validate() runs all validators -- 'Alice' passes DataRequired and Length"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Valid: True",
+          "explanation": "Form is valid, safe to save to database"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Valid: True\nErrors: {}",
+          "explanation": "No validation errors"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_form_submit",
+      "title": "Form Submission Flow",
+      "nodes": [
+        {
+          "id": "user",
+          "label": "User Fills\nForm",
+          "type": "start"
+        },
+        {
+          "id": "submit",
+          "label": "POST /register",
+          "type": "process"
+        },
+        {
+          "id": "csrf",
+          "label": "CSRF Token\nCheck",
+          "type": "decision"
+        },
+        {
+          "id": "validate",
+          "label": "WTForms\nValidation",
+          "type": "decision"
+        },
+        {
+          "id": "save",
+          "label": "SQLAlchemy\ndb.session.add()",
+          "type": "process"
+        },
+        {
+          "id": "redirect",
+          "label": "Redirect with\nFlash Message",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "user",
+          "to": "submit",
+          "label": "Click submit"
+        },
+        {
+          "from": "submit",
+          "to": "csrf",
+          "label": "POST data"
+        },
+        {
+          "from": "csrf",
+          "to": "validate",
+          "label": "Token valid"
+        },
+        {
+          "from": "validate",
+          "to": "save",
+          "label": "Fields pass"
+        },
+        {
+          "from": "save",
+          "to": "redirect",
+          "label": "Committed"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -249,8 +376,18 @@
         "ta": "Flask-WTF-ல் validate_on_submit() என்ன சரிபார்க்கிறது?"
       },
       "options": {
-        "en": ["Only if the form was submitted", "Only if validators pass", "If it's a POST request AND all validators pass", "If the database connection is active"],
-        "ta": ["படிவம் சமர்ப்பிக்கப்பட்டதா மட்டும்", "சரிபார்ப்பாளர்கள் தேர்ச்சி பெற்றதா மட்டும்", "POST கோரிக்கையா மற்றும் அனைத்து சரிபார்ப்பாளர்களும் தேர்ச்சி பெற்றதா", "தரவுத்தள இணைப்பு செயலில் உள்ளதா"]
+        "en": [
+          "Only if the form was submitted",
+          "Only if validators pass",
+          "If it's a POST request AND all validators pass",
+          "If the database connection is active"
+        ],
+        "ta": [
+          "படிவம் சமர்ப்பிக்கப்பட்டதா மட்டும்",
+          "சரிபார்ப்பாளர்கள் தேர்ச்சி பெற்றதா மட்டும்",
+          "POST கோரிக்கையா மற்றும் அனைத்து சரிபார்ப்பாளர்களும் தேர்ச்சி பெற்றதா",
+          "தரவுத்தள இணைப்பு செயலில் உள்ளதா"
+        ]
       },
       "correct": 2
     },
@@ -260,8 +397,18 @@
         "ta": "SQLAlchemy-ல், db.session.commit() என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates the database file", "Saves all pending changes to the database", "Deletes all records", "Rolls back changes"],
-        "ta": ["தரவுத்தள கோப்பை உருவாக்குகிறது", "நிலுவையில் உள்ள அனைத்து மாற்றங்களையும் தரவுத்தளத்தில் சேமிக்கிறது", "அனைத்து பதிவுகளையும் நீக்குகிறது", "மாற்றங்களை திரும்பப் பெறுகிறது"]
+        "en": [
+          "Creates the database file",
+          "Saves all pending changes to the database",
+          "Deletes all records",
+          "Rolls back changes"
+        ],
+        "ta": [
+          "தரவுத்தள கோப்பை உருவாக்குகிறது",
+          "நிலுவையில் உள்ள அனைத்து மாற்றங்களையும் தரவுத்தளத்தில் சேமிக்கிறது",
+          "அனைத்து பதிவுகளையும் நீக்குகிறது",
+          "மாற்றங்களை திரும்பப் பெறுகிறது"
+        ]
       },
       "correct": 1
     },
@@ -271,20 +418,43 @@
         "ta": "Flask-WTF படிவங்களில் SECRET_KEY ஏன் தேவை?"
       },
       "options": {
-        "en": ["To encrypt the database", "For CSRF token protection", "To hash passwords", "To enable debug mode"],
-        "ta": ["தரவுத்தளத்தை குறியாக்க", "CSRF டோக்கன் பாதுகாப்பிற்கு", "கடவுச்சொற்களை ஹாஷ் செய்ய", "பிழைத்திருத்த பயன்முறையை இயக்க"]
+        "en": [
+          "To encrypt the database",
+          "For CSRF token protection",
+          "To hash passwords",
+          "To enable debug mode"
+        ],
+        "ta": [
+          "தரவுத்தளத்தை குறியாக்க",
+          "CSRF டோக்கன் பாதுகாப்பிற்கு",
+          "கடவுச்சொற்களை ஹாஷ் செய்ய",
+          "பிழைத்திருத்த பயன்முறையை இயக்க"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["wtforms", "sqlalchemy", "form_validation", "database_orm"],
-    "concepts_required": ["flask_routes", "http_methods"],
+    "concepts_taught": [
+      "wtforms",
+      "sqlalchemy",
+      "form_validation",
+      "database_orm"
+    ],
+    "concepts_required": [
+      "flask_routes",
+      "http_methods"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["user_registration", "data_collection"],
+    "real_world_application": [
+      "user_registration",
+      "data_collection"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

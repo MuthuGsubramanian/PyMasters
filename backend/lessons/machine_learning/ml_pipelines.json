@@ -30,11 +30,19 @@
       "nodes": [
         {
           "label": "Pipeline",
-          "children": ["Steps (ordered)", "fit/predict interface", "Prevents data leakage"]
+          "children": [
+            "Steps (ordered)",
+            "fit/predict interface",
+            "Prevents data leakage"
+          ]
         },
         {
           "label": "ColumnTransformer",
-          "children": ["Numeric pipeline", "Categorical pipeline", "Passthrough columns"]
+          "children": [
+            "Numeric pipeline",
+            "Categorical pipeline",
+            "Passthrough columns"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -43,13 +51,41 @@
       "type": "FlowArrow",
       "id": "pipeline_flow",
       "stages": [
-        { "label": "Raw DataFrame", "icon": "table", "color": "#e74c3c" },
-        { "label": "ColumnTransformer", "icon": "split", "color": "#f39c12" },
-        { "label": "Numeric: Impute→Scale", "icon": "numbers", "color": "#3498db" },
-        { "label": "Categorical: Impute→Encode", "icon": "tags", "color": "#9b59b6" },
-        { "label": "Combined Features", "icon": "merge", "color": "#2ecc71" },
-        { "label": "RandomForest", "icon": "tree", "color": "#1abc9c" },
-        { "label": "Prediction", "icon": "target", "color": "#e67e22" }
+        {
+          "label": "Raw DataFrame",
+          "icon": "table",
+          "color": "#e74c3c"
+        },
+        {
+          "label": "ColumnTransformer",
+          "icon": "split",
+          "color": "#f39c12"
+        },
+        {
+          "label": "Numeric: Impute→Scale",
+          "icon": "numbers",
+          "color": "#3498db"
+        },
+        {
+          "label": "Categorical: Impute→Encode",
+          "icon": "tags",
+          "color": "#9b59b6"
+        },
+        {
+          "label": "Combined Features",
+          "icon": "merge",
+          "color": "#2ecc71"
+        },
+        {
+          "label": "RandomForest",
+          "icon": "tree",
+          "color": "#1abc9c"
+        },
+        {
+          "label": "Prediction",
+          "icon": "target",
+          "color": "#e67e22"
+        }
       ],
       "duration_ms": 5000
     },
@@ -60,67 +96,93 @@
         {
           "line": "from sklearn.pipeline import Pipeline",
           "highlight": "Pipeline",
-          "explanation": { "en": "Import Pipeline — chains multiple steps into a single estimator" }
+          "explanation": {
+            "en": "Import Pipeline — chains multiple steps into a single estimator"
+          }
         },
         {
           "line": "from sklearn.compose import ColumnTransformer",
           "highlight": "ColumnTransformer",
-          "explanation": { "en": "ColumnTransformer applies different transformations to different columns" }
+          "explanation": {
+            "en": "ColumnTransformer applies different transformations to different columns"
+          }
         },
         {
           "line": "from sklearn.preprocessing import StandardScaler, OneHotEncoder",
           "highlight": "OneHotEncoder",
-          "explanation": { "en": "Scaler for numbers, OneHotEncoder for categories" }
+          "explanation": {
+            "en": "Scaler for numbers, OneHotEncoder for categories"
+          }
         },
         {
           "line": "from sklearn.impute import SimpleImputer",
           "highlight": "SimpleImputer",
-          "explanation": { "en": "Handles missing values — median for numbers, most_frequent for categories" }
+          "explanation": {
+            "en": "Handles missing values — median for numbers, most_frequent for categories"
+          }
         },
         {
           "line": "numeric_features = ['age', 'salary']",
           "highlight": "numeric_features",
-          "explanation": { "en": "Define which columns are numerical" }
+          "explanation": {
+            "en": "Define which columns are numerical"
+          }
         },
         {
           "line": "categorical_features = ['city']",
           "highlight": "categorical_features",
-          "explanation": { "en": "Define which columns are categorical" }
+          "explanation": {
+            "en": "Define which columns are categorical"
+          }
         },
         {
           "line": "numeric_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='median')), ('scaler', StandardScaler())])",
           "highlight": "numeric_transformer",
-          "explanation": { "en": "Numeric pipeline: fill missing with median, then scale to mean=0/std=1" }
+          "explanation": {
+            "en": "Numeric pipeline: fill missing with median, then scale to mean=0/std=1"
+          }
         },
         {
           "line": "categorical_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore'))])",
           "highlight": "categorical_transformer",
-          "explanation": { "en": "Categorical pipeline: fill missing with mode, then one-hot encode" }
+          "explanation": {
+            "en": "Categorical pipeline: fill missing with mode, then one-hot encode"
+          }
         },
         {
           "line": "preprocessor = ColumnTransformer(transformers=[('num', numeric_transformer, numeric_features), ('cat', categorical_transformer, categorical_features)])",
           "highlight": "ColumnTransformer",
-          "explanation": { "en": "Combine both pipelines — each applied to its respective columns" }
+          "explanation": {
+            "en": "Combine both pipelines — each applied to its respective columns"
+          }
         },
         {
           "line": "full_pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))])",
           "highlight": "full_pipeline",
-          "explanation": { "en": "Full pipeline: preprocess + classify in one object" }
+          "explanation": {
+            "en": "Full pipeline: preprocess + classify in one object"
+          }
         },
         {
           "line": "full_pipeline.fit(X, y)",
           "highlight": "fit",
-          "explanation": { "en": "One call fits everything: imputers, scaler, encoder, and the model" }
+          "explanation": {
+            "en": "One call fits everything: imputers, scaler, encoder, and the model"
+          }
         },
         {
           "line": "predictions = full_pipeline.predict(X)",
           "highlight": "predict",
-          "explanation": { "en": "One call preprocesses AND predicts — no manual steps needed" }
+          "explanation": {
+            "en": "One call preprocesses AND predicts — no manual steps needed"
+          }
         },
         {
           "line": "from sklearn.model_selection import cross_val_score; scores = cross_val_score(full_pipeline, X, y, cv=3)",
           "highlight": "cross_val_score",
-          "explanation": { "en": "Cross-validate the ENTIRE pipeline — no data leakage possible" }
+          "explanation": {
+            "en": "Cross-validate the ENTIRE pipeline — no data leakage possible"
+          }
         }
       ]
     },
@@ -141,6 +203,120 @@
         "Pipeline can be serialized as a single object!",
         "Cross-validation with pipeline: no data leakage!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_ml_pipelines",
+      "code": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.datasets import load_iris\nfrom sklearn.model_selection import cross_val_score\n\nX, y = load_iris(return_X_y=True)\n\npipe = Pipeline([\n    ('scaler', StandardScaler()),\n    ('pca', PCA(n_components=2)),\n    ('classifier', LogisticRegression())\n])\n\nscores = cross_val_score(pipe, X, y, cv=5)\nprint(f'CV Scores: {scores}')\nprint(f'Mean: {scores.mean():.3f}')",
+      "executionSteps": [
+        {
+          "line": 8,
+          "variables": {
+            "X.shape": "(150, 4)"
+          },
+          "output": "",
+          "explanation": "Iris dataset with 4 features"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "pipe": "Pipeline(3 steps)"
+          },
+          "output": "",
+          "explanation": "Chain: Scale -> PCA -> Classify in one object"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "step_1": "StandardScaler"
+          },
+          "output": "",
+          "explanation": "Step 1: Normalize features to mean=0, std=1"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "step_2": "PCA(2)"
+          },
+          "output": "",
+          "explanation": "Step 2: Reduce 4D to 2D"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "step_3": "LogisticRegression"
+          },
+          "output": "",
+          "explanation": "Step 3: Classify using logistic regression"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "scores": "[0.97, 0.97, 0.93, 0.93, 0.97]"
+          },
+          "output": "CV Scores: [0.97 0.97 0.93 0.93 0.97]",
+          "explanation": "Each fold: fit scaler+PCA on train, transform test — no leakage"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "mean": "0.953"
+          },
+          "output": "Mean: 0.953",
+          "explanation": "95.3% — pipeline prevents data leakage automatically"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_pipeline",
+      "title": "sklearn Pipeline Flow",
+      "nodes": [
+        {
+          "id": "data",
+          "label": "Raw Data",
+          "type": "start"
+        },
+        {
+          "id": "scale",
+          "label": "StandardScaler",
+          "type": "process"
+        },
+        {
+          "id": "pca",
+          "label": "PCA (n=2)",
+          "type": "process"
+        },
+        {
+          "id": "clf",
+          "label": "LogisticRegression",
+          "type": "process"
+        },
+        {
+          "id": "pred",
+          "label": "Predictions",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "data",
+          "to": "scale"
+        },
+        {
+          "from": "scale",
+          "to": "pca"
+        },
+        {
+          "from": "pca",
+          "to": "clf"
+        },
+        {
+          "from": "clf",
+          "to": "pred"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -172,8 +348,18 @@
         "ta": "கைமுறை முன்செயலாக்கத்தை விட Pipeline பயன்படுத்துவதன் முக்கிய நன்மை என்ன?"
       },
       "options": {
-        "en": ["It is faster", "It prevents data leakage and ensures reproducibility", "It uses less memory", "It automatically selects features"],
-        "ta": ["இது வேகமானது", "தரவு கசிவைத் தடுத்து மீண்டும் உருவாக்கக்கூடியதை உறுதிசெய்கிறது", "குறைவான நினைவகம் பயன்படுத்துகிறது", "தானாகவே அம்சங்களைத் தேர்ந்தெடுக்கிறது"]
+        "en": [
+          "It is faster",
+          "It prevents data leakage and ensures reproducibility",
+          "It uses less memory",
+          "It automatically selects features"
+        ],
+        "ta": [
+          "இது வேகமானது",
+          "தரவு கசிவைத் தடுத்து மீண்டும் உருவாக்கக்கூடியதை உறுதிசெய்கிறது",
+          "குறைவான நினைவகம் பயன்படுத்துகிறது",
+          "தானாகவே அம்சங்களைத் தேர்ந்தெடுக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -183,8 +369,18 @@
         "ta": "ColumnTransformer என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Renames columns", "Applies different preprocessing pipelines to different column subsets", "Removes columns", "Creates new columns automatically"],
-        "ta": ["நெடுவரிசைகளை மறுபெயரிடுகிறது", "வெவ்வேறு நெடுவரிசை துணைக்குழுக்களுக்கு வெவ்வேறு முன்செயலாக்க பைப்லைன்களை பயன்படுத்துகிறது", "நெடுவரிசைகளை நீக்குகிறது", "தானாகவே புதிய நெடுவரிசைகளை உருவாக்குகிறது"]
+        "en": [
+          "Renames columns",
+          "Applies different preprocessing pipelines to different column subsets",
+          "Removes columns",
+          "Creates new columns automatically"
+        ],
+        "ta": [
+          "நெடுவரிசைகளை மறுபெயரிடுகிறது",
+          "வெவ்வேறு நெடுவரிசை துணைக்குழுக்களுக்கு வெவ்வேறு முன்செயலாக்க பைப்லைன்களை பயன்படுத்துகிறது",
+          "நெடுவரிசைகளை நீக்குகிறது",
+          "தானாகவே புதிய நெடுவரிசைகளை உருவாக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -194,20 +390,45 @@
         "ta": "முன்செயலாக்கம் மற்றும் மாடல் hyperparameters இரண்டையும் டியூன் செய்ய Pipeline உடன் GridSearchCV பயன்படுத்த முடியுமா?"
       },
       "options": {
-        "en": ["No, they must be tuned separately", "Yes, using double-underscore notation like 'classifier__n_estimators'", "Only model hyperparameters can be tuned", "Only with RandomizedSearchCV"],
-        "ta": ["இல்லை, தனித்தனியாக டியூன் செய்ய வேண்டும்", "ஆம், 'classifier__n_estimators' போன்ற இரட்டை-அடிக்கோடு குறியீட்டைப் பயன்படுத்தி", "மாடல் hyperparameters மட்டுமே டியூன் செய்ய முடியும்", "RandomizedSearchCV உடன் மட்டுமே"]
+        "en": [
+          "No, they must be tuned separately",
+          "Yes, using double-underscore notation like 'classifier__n_estimators'",
+          "Only model hyperparameters can be tuned",
+          "Only with RandomizedSearchCV"
+        ],
+        "ta": [
+          "இல்லை, தனித்தனியாக டியூன் செய்ய வேண்டும்",
+          "ஆம், 'classifier__n_estimators' போன்ற இரட்டை-அடிக்கோடு குறியீட்டைப் பயன்படுத்தி",
+          "மாடல் hyperparameters மட்டுமே டியூன் செய்ய முடியும்",
+          "RandomizedSearchCV உடன் மட்டுமே"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["sklearn_pipeline", "column_transformer", "data_leakage_prevention", "reproducibility"],
-    "concepts_required": ["preprocessing", "model_training", "cross_validation"],
+    "concepts_taught": [
+      "sklearn_pipeline",
+      "column_transformer",
+      "data_leakage_prevention",
+      "reproducibility"
+    ],
+    "concepts_required": [
+      "preprocessing",
+      "model_training",
+      "cross_validation"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["production_ml", "mlops", "automated_workflows"],
+    "real_world_application": [
+      "production_ml",
+      "mlops",
+      "automated_workflows"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["production"]
+    "path_memberships": [
+      "production"
+    ]
   }
 }

@@ -177,10 +177,148 @@
       "id": "test_pyramid",
       "structure_type": "pyramid",
       "layers": [
-        { "label": "E2E Tests", "count": "Few", "color": "#ff6b6b" },
-        { "label": "Integration Tests", "count": "Some", "color": "#ffd93d" },
-        { "label": "Unit Tests", "count": "Many", "color": "#6bcf7f" }
+        {
+          "label": "E2E Tests",
+          "count": "Few",
+          "color": "#ff6b6b"
+        },
+        {
+          "label": "Integration Tests",
+          "count": "Some",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "Unit Tests",
+          "count": "Many",
+          "color": "#6bcf7f"
+        }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_testing_why",
+      "title": "Why Tests Catch Bugs Early",
+      "code": "def add(a, b):\n    return a + b\n\ndef test_add():\n    assert add(2, 3) == 5\n    assert add(-1, 1) == 0\n    assert add(0, 0) == 0\n\ntest_add()\nprint('All tests passed!')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Define a simple add function"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "explanation": "Test function verifies add() with multiple inputs"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "result": 5
+          },
+          "output": "",
+          "explanation": "add(2,3) == 5 passes"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "result": 0
+          },
+          "output": "",
+          "explanation": "add(-1,1) == 0 passes"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "result": 0
+          },
+          "output": "",
+          "explanation": "Edge case: add(0,0) == 0 passes"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "explanation": "Run test -- all assertions pass"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "All tests passed!",
+          "explanation": "If any assert failed, we'd get AssertionError"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_tdd_cycle_why",
+      "title": "TDD Red-Green-Refactor Cycle",
+      "nodes": [
+        {
+          "id": "write",
+          "label": "Write Test\n(Should Fail)",
+          "type": "start"
+        },
+        {
+          "id": "red",
+          "label": "RED\nFails",
+          "type": "decision"
+        },
+        {
+          "id": "code",
+          "label": "Write Minimum\nCode",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN\nPasses",
+          "type": "decision"
+        },
+        {
+          "id": "refactor",
+          "label": "REFACTOR\nClean Up",
+          "type": "process"
+        },
+        {
+          "id": "done",
+          "label": "All Pass",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "write",
+          "to": "red",
+          "label": "Run"
+        },
+        {
+          "from": "red",
+          "to": "code",
+          "label": "Expected"
+        },
+        {
+          "from": "code",
+          "to": "green",
+          "label": "Run"
+        },
+        {
+          "from": "green",
+          "to": "refactor",
+          "label": "Pass"
+        },
+        {
+          "from": "refactor",
+          "to": "done",
+          "label": "Run"
+        },
+        {
+          "from": "done",
+          "to": "write",
+          "label": "Next"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -212,8 +350,18 @@
         "ta": "சோதனை பிரமிட்டின் அடிப்பகுதியில் எந்த வகை சோதனை உள்ளது?"
       },
       "options": {
-        "en": ["End-to-End tests", "Integration tests", "Unit tests", "Manual tests"],
-        "ta": ["End-to-End சோதனைகள்", "Integration சோதனைகள்", "Unit சோதனைகள்", "Manual சோதனைகள்"]
+        "en": [
+          "End-to-End tests",
+          "Integration tests",
+          "Unit tests",
+          "Manual tests"
+        ],
+        "ta": [
+          "End-to-End சோதனைகள்",
+          "Integration சோதனைகள்",
+          "Unit சோதனைகள்",
+          "Manual சோதனைகள்"
+        ]
       },
       "correct": 2
     },
@@ -223,8 +371,18 @@
         "ta": "Python-ல் `assert` keyword என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Prints a message", "Raises AssertionError if the condition is False", "Returns True always", "Skips the test"],
-        "ta": ["ஒரு செய்தியை அச்சிடும்", "நிபந்தனை False ஆக இருந்தால் AssertionError எழுப்பும்", "எப்போதும் True திருப்பும்", "சோதனையைத் தவிர்க்கும்"]
+        "en": [
+          "Prints a message",
+          "Raises AssertionError if the condition is False",
+          "Returns True always",
+          "Skips the test"
+        ],
+        "ta": [
+          "ஒரு செய்தியை அச்சிடும்",
+          "நிபந்தனை False ஆக இருந்தால் AssertionError எழுப்பும்",
+          "எப்போதும் True திருப்பும்",
+          "சோதனையைத் தவிர்க்கும்"
+        ]
       },
       "correct": 1
     },
@@ -234,20 +392,42 @@
         "ta": "E2E சோதனைகளை விட அதிக unit சோதனைகள் ஏன் எழுத வேண்டும்?"
       },
       "options": {
-        "en": ["Unit tests look cooler", "Unit tests are fast, cheap, and pinpoint bugs precisely", "E2E tests are not useful", "There is no difference"],
-        "ta": ["Unit சோதனைகள் அழகாக இருக்கும்", "Unit சோதனைகள் வேகமானவை, மலிவானவை, பிழைகளை துல்லியமாக கண்டறியும்", "E2E சோதனைகள் பயனற்றவை", "வேறுபாடு இல்லை"]
+        "en": [
+          "Unit tests look cooler",
+          "Unit tests are fast, cheap, and pinpoint bugs precisely",
+          "E2E tests are not useful",
+          "There is no difference"
+        ],
+        "ta": [
+          "Unit சோதனைகள் அழகாக இருக்கும்",
+          "Unit சோதனைகள் வேகமானவை, மலிவானவை, பிழைகளை துல்லியமாக கண்டறியும்",
+          "E2E சோதனைகள் பயனற்றவை",
+          "வேறுபாடு இல்லை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["testing_basics", "test_pyramid", "assert", "test_types"],
-    "concepts_required": ["functions"],
+    "concepts_taught": [
+      "testing_basics",
+      "test_pyramid",
+      "assert",
+      "test_types"
+    ],
+    "concepts_required": [
+      "functions"
+    ],
     "difficulty": "beginner",
     "engagement_type": "conceptual",
     "estimated_minutes": 20,
-    "real_world_application": ["qa_engineering", "software_reliability"],
+    "real_world_application": [
+      "qa_engineering",
+      "software_reliability"
+    ],
     "category": "testing",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

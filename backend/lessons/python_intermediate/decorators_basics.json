@@ -194,6 +194,124 @@
         "label": "With @timer Decorator",
         "code": "@timer\ndef add(a, b):\n    return a + b\n\nresult = add(10, 20)\n# add took 0.0000s"
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import functools\n\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f'Calling {func.__name__}')\n        result = func(*args, **kwargs)\n        print(f'Done: {result}')\n        return result\n    return wrapper\n\n@logger\ndef add(a, b):\n    return a + b\n\nresult = add(5, 3)",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Define logger decorator - takes a function as argument"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "description": "wrapper accepts any args via *args, **kwargs"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "add": "wrapper (decorated)"
+          },
+          "output": "",
+          "description": "@logger applies: add = logger(add), add now points to wrapper"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Calling add",
+          "description": "Calling add(5,3) actually calls wrapper(5,3) - prints log"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "result": 8
+          },
+          "output": "Done: 8",
+          "description": "wrapper calls original add(5,3)=8, logs result"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "result": 8
+          },
+          "output": "",
+          "description": "wrapper returns 8 - the original return value is preserved"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "add(5, 3)",
+          "type": "start"
+        },
+        {
+          "id": "wrapper",
+          "label": "wrapper(*args) runs",
+          "type": "process"
+        },
+        {
+          "id": "before",
+          "label": "print('Calling add')",
+          "type": "process"
+        },
+        {
+          "id": "original",
+          "label": "Original add(5, 3)",
+          "type": "process"
+        },
+        {
+          "id": "after",
+          "label": "print('Done: 8')",
+          "type": "process"
+        },
+        {
+          "id": "return",
+          "label": "return 8",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "wrapper"
+        },
+        {
+          "from": "wrapper",
+          "to": "before"
+        },
+        {
+          "from": "before",
+          "to": "original"
+        },
+        {
+          "from": "original",
+          "to": "after"
+        },
+        {
+          "from": "after",
+          "to": "return"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "wrapper",
+        "before",
+        "original",
+        "after",
+        "return"
+      ],
+      "variables": {
+        "func.__name__": "add"
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -286,13 +404,30 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["decorators", "higher_order_functions", "functools_wraps", "closure", "at_syntax"],
-    "concepts_required": ["functions", "closures", "args_kwargs"],
+    "concepts_taught": [
+      "decorators",
+      "higher_order_functions",
+      "functools_wraps",
+      "closure",
+      "at_syntax"
+    ],
+    "concepts_required": [
+      "functions",
+      "closures",
+      "args_kwargs"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["logging", "authentication", "caching", "timing"],
+    "real_world_application": [
+      "logging",
+      "authentication",
+      "caching",
+      "timing"
+    ],
     "category": "functional",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

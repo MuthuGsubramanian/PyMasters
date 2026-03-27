@@ -188,6 +188,155 @@
       "value": "RED -> GREEN -> REFACTOR -> REPEAT",
       "data_type": "workflow",
       "color": "#ff6b6b"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_tdd",
+      "title": "TDD Red-Green-Refactor",
+      "code": "# RED: Write failing test\ndef test_is_palindrome():\n    assert is_palindrome('racecar') == True\n    assert is_palindrome('hello') == False\n\n# GREEN: Minimal code\ndef is_palindrome(s):\n    return s == s[::-1]\n\ntest_is_palindrome()\nprint('All pass!')",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "RED: Write test first -- function doesn't exist yet"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "Assert racecar is palindrome"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "explanation": "Assert hello is NOT palindrome"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "explanation": "GREEN: Simplest implementation"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "s": "racecar",
+            "reversed": "racecar"
+          },
+          "output": "",
+          "explanation": "Compare string with reverse"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "",
+          "explanation": "Run tests"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "result": true
+          },
+          "output": "",
+          "explanation": "racecar == racecar: PASS"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "result": false
+          },
+          "output": "",
+          "explanation": "hello != olleh: PASS"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "All pass!",
+          "explanation": "Ready to refactor"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_tdd_full",
+      "title": "TDD Red-Green-Refactor Cycle",
+      "nodes": [
+        {
+          "id": "req",
+          "label": "Requirement",
+          "type": "start"
+        },
+        {
+          "id": "test",
+          "label": "Write Test",
+          "type": "process"
+        },
+        {
+          "id": "red",
+          "label": "RED\nFails",
+          "type": "decision"
+        },
+        {
+          "id": "code",
+          "label": "Write Code",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN\nPasses",
+          "type": "decision"
+        },
+        {
+          "id": "refactor",
+          "label": "REFACTOR",
+          "type": "process"
+        },
+        {
+          "id": "done",
+          "label": "Commit",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "req",
+          "to": "test",
+          "label": "Think"
+        },
+        {
+          "from": "test",
+          "to": "red",
+          "label": "Run"
+        },
+        {
+          "from": "red",
+          "to": "code",
+          "label": "Expected"
+        },
+        {
+          "from": "code",
+          "to": "green",
+          "label": "Run"
+        },
+        {
+          "from": "green",
+          "to": "refactor",
+          "label": "Clean"
+        },
+        {
+          "from": "refactor",
+          "to": "done",
+          "label": "Pass"
+        },
+        {
+          "from": "done",
+          "to": "req",
+          "label": "Next"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -219,8 +368,18 @@
         "ta": "TDD cycle-ன் சரியான வரிசை என்ன?"
       },
       "options": {
-        "en": ["Green-Red-Refactor", "Red-Green-Refactor", "Refactor-Red-Green", "Code-Test-Deploy"],
-        "ta": ["Green-Red-Refactor", "Red-Green-Refactor", "Refactor-Red-Green", "Code-Test-Deploy"]
+        "en": [
+          "Green-Red-Refactor",
+          "Red-Green-Refactor",
+          "Refactor-Red-Green",
+          "Code-Test-Deploy"
+        ],
+        "ta": [
+          "Green-Red-Refactor",
+          "Red-Green-Refactor",
+          "Refactor-Red-Green",
+          "Code-Test-Deploy"
+        ]
       },
       "correct": 1
     },
@@ -230,8 +389,18 @@
         "ta": "RED கட்டத்தில் என்ன நடக்க வேண்டும்?"
       },
       "options": {
-        "en": ["All tests pass", "You write a failing test", "You delete old code", "You deploy to production"],
-        "ta": ["அனைத்து சோதனைகளும் pass ஆகும்", "நீங்கள் ஒரு failing test எழுதுவீர்கள்", "நீங்கள் பழைய code-ஐ நீக்குவீர்கள்", "நீங்கள் production-க்கு deploy செய்வீர்கள்"]
+        "en": [
+          "All tests pass",
+          "You write a failing test",
+          "You delete old code",
+          "You deploy to production"
+        ],
+        "ta": [
+          "அனைத்து சோதனைகளும் pass ஆகும்",
+          "நீங்கள் ஒரு failing test எழுதுவீர்கள்",
+          "நீங்கள் பழைய code-ஐ நீக்குவீர்கள்",
+          "நீங்கள் production-க்கு deploy செய்வீர்கள்"
+        ]
       },
       "correct": 1
     },
@@ -241,20 +410,42 @@
         "ta": "GREEN கட்டத்தில் ஏன் குறைந்தபட்ச code எழுத வேண்டும்?"
       },
       "options": {
-        "en": ["To save typing", "To ensure every line of code is justified by a test", "Because Python is slow", "To avoid bugs in the test"],
-        "ta": ["typing-ஐ சேமிக்க", "ஒவ்வொரு code வரியும் ஒரு test-ஆல் நியாயப்படுத்தப்படுவதை உறுதிசெய்ய", "Python மெதுவாக இருப்பதால்", "Test-ல் bugs-ஐ தவிர்க்க"]
+        "en": [
+          "To save typing",
+          "To ensure every line of code is justified by a test",
+          "Because Python is slow",
+          "To avoid bugs in the test"
+        ],
+        "ta": [
+          "typing-ஐ சேமிக்க",
+          "ஒவ்வொரு code வரியும் ஒரு test-ஆல் நியாயப்படுத்தப்படுவதை உறுதிசெய்ய",
+          "Python மெதுவாக இருப்பதால்",
+          "Test-ல் bugs-ஐ தவிர்க்க"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["tdd", "red_green_refactor", "test_first"],
-    "concepts_required": ["pytest", "functions"],
+    "concepts_taught": [
+      "tdd",
+      "red_green_refactor",
+      "test_first"
+    ],
+    "concepts_required": [
+      "pytest",
+      "functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["agile_development", "software_design"],
+    "real_world_application": [
+      "agile_development",
+      "software_design"
+    ],
     "category": "testing",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

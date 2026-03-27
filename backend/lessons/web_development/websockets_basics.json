@@ -159,6 +159,137 @@
         "INFO: WebSocket connection closed: alice",
         "BROADCAST: alice left the chat."
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_websockets",
+      "title": "WebSocket Chat Server",
+      "code": "from fastapi import FastAPI, WebSocket, WebSocketDisconnect\n\napp = FastAPI()\nconnected = []\n\n@app.websocket('/ws/{username}')\nasync def chat(websocket: WebSocket, username: str):\n    await websocket.accept()\n    connected.append(websocket)\n    try:\n        while True:\n            data = await websocket.receive_text()\n            for ws in connected:\n                await ws.send_text(f'{username}: {data}')\n    except WebSocketDisconnect:\n        connected.remove(websocket)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import FastAPI WebSocket support"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "connected": []
+          },
+          "output": "",
+          "explanation": "Track active connections"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "WebSocket route with username"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "connected": [
+              "ws1"
+            ]
+          },
+          "output": "",
+          "explanation": "Accept connection and add to list"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "",
+          "explanation": "Loop forever receiving messages"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "data": "Hello!"
+          },
+          "output": "",
+          "explanation": "Wait for text message from client"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "alice: Hello!",
+          "explanation": "Broadcast to all connected clients"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "connected": []
+          },
+          "output": "",
+          "explanation": "Remove on disconnect"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_websocket_flow",
+      "title": "WebSocket Connection Lifecycle",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "Client\nnew WebSocket()",
+          "type": "start"
+        },
+        {
+          "id": "upgrade",
+          "label": "HTTP Upgrade",
+          "type": "process"
+        },
+        {
+          "id": "accept",
+          "label": "Server Accepts\n101",
+          "type": "process"
+        },
+        {
+          "id": "connected",
+          "label": "Persistent\nConnection",
+          "type": "process"
+        },
+        {
+          "id": "bidirectional",
+          "label": "Bidirectional\nMessages",
+          "type": "process"
+        },
+        {
+          "id": "close",
+          "label": "Connection\nClosed",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "upgrade",
+          "label": "Upgrade"
+        },
+        {
+          "from": "upgrade",
+          "to": "accept",
+          "label": "Agree"
+        },
+        {
+          "from": "accept",
+          "to": "connected",
+          "label": "ws://"
+        },
+        {
+          "from": "connected",
+          "to": "bidirectional",
+          "label": "send/recv"
+        },
+        {
+          "from": "bidirectional",
+          "to": "close",
+          "label": "close()"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -192,8 +323,18 @@
         "ta": "HTTP polling-ஐ விட WebSockets-ன் முக்கிய நன்மை என்ன?"
       },
       "options": {
-        "en": ["WebSockets are more secure", "WebSockets maintain a persistent bidirectional connection with lower latency", "WebSockets work without a server", "WebSockets don't need any protocol"],
-        "ta": ["WebSockets மிகவும் பாதுகாப்பானவை", "WebSockets குறைந்த தாமதத்துடன் நிலையான இருதிசை இணைப்பை பராமரிக்கின்றன", "WebSockets சேவையகம் இல்லாமல் வேலை செய்கின்றன", "WebSockets-க்கு எந்த நெறிமுறையும் தேவையில்லை"]
+        "en": [
+          "WebSockets are more secure",
+          "WebSockets maintain a persistent bidirectional connection with lower latency",
+          "WebSockets work without a server",
+          "WebSockets don't need any protocol"
+        ],
+        "ta": [
+          "WebSockets மிகவும் பாதுகாப்பானவை",
+          "WebSockets குறைந்த தாமதத்துடன் நிலையான இருதிசை இணைப்பை பராமரிக்கின்றன",
+          "WebSockets சேவையகம் இல்லாமல் வேலை செய்கின்றன",
+          "WebSockets-க்கு எந்த நெறிமுறையும் தேவையில்லை"
+        ]
       },
       "correct": 1
     },
@@ -203,8 +344,18 @@
         "ta": "வெற்றிகரமான WebSocket மேம்படுத்தலை எந்த HTTP நிலை குறியீடு குறிக்கிறது?"
       },
       "options": {
-        "en": ["200 OK", "101 Switching Protocols", "301 Moved", "204 No Content"],
-        "ta": ["200 OK", "101 Switching Protocols", "301 Moved", "204 No Content"]
+        "en": [
+          "200 OK",
+          "101 Switching Protocols",
+          "301 Moved",
+          "204 No Content"
+        ],
+        "ta": [
+          "200 OK",
+          "101 Switching Protocols",
+          "301 Moved",
+          "204 No Content"
+        ]
       },
       "correct": 1
     },
@@ -214,20 +365,44 @@
         "ta": "எப்போது WebSockets பயன்படுத்தக் கூடாது?"
       },
       "options": {
-        "en": ["Real-time chat applications", "Live dashboard updates", "Simple CRUD REST APIs with infrequent updates", "Multiplayer games"],
-        "ta": ["நிகழ்நேர அரட்டை பயன்பாடுகள்", "நிகழ்நேர டாஷ்போர்டு புதுப்பிப்புகள்", "அரிதான புதுப்பிப்புகளுடன் எளிய CRUD REST API-கள்", "பல் வீரர் விளையாட்டுகள்"]
+        "en": [
+          "Real-time chat applications",
+          "Live dashboard updates",
+          "Simple CRUD REST APIs with infrequent updates",
+          "Multiplayer games"
+        ],
+        "ta": [
+          "நிகழ்நேர அரட்டை பயன்பாடுகள்",
+          "நிகழ்நேர டாஷ்போர்டு புதுப்பிப்புகள்",
+          "அரிதான புதுப்பிப்புகளுடன் எளிய CRUD REST API-கள்",
+          "பல் வீரர் விளையாட்டுகள்"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["websockets", "real_time", "bidirectional_communication", "connection_management"],
-    "concepts_required": ["http_fundamentals", "async_python"],
+    "concepts_taught": [
+      "websockets",
+      "real_time",
+      "bidirectional_communication",
+      "connection_management"
+    ],
+    "concepts_required": [
+      "http_fundamentals",
+      "async_python"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 30,
-    "real_world_application": ["chat_apps", "live_dashboards", "gaming"],
+    "real_world_application": [
+      "chat_apps",
+      "live_dashboards",
+      "gaming"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

@@ -30,11 +30,21 @@
       "nodes": [
         {
           "label": "Linear Regression",
-          "children": ["y = wx + b", "Cost Function (MSE)", "Gradient Descent", "OLS"]
+          "children": [
+            "y = wx + b",
+            "Cost Function (MSE)",
+            "Gradient Descent",
+            "OLS"
+          ]
         },
         {
           "label": "Evaluation",
-          "children": ["R² Score", "MSE", "RMSE", "MAE"]
+          "children": [
+            "R² Score",
+            "MSE",
+            "RMSE",
+            "MAE"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,72 +56,100 @@
         {
           "line": "import numpy as np",
           "highlight": "numpy",
-          "explanation": { "en": "Import NumPy for numerical operations" }
+          "explanation": {
+            "en": "Import NumPy for numerical operations"
+          }
         },
         {
           "line": "from sklearn.linear_model import LinearRegression",
           "highlight": "LinearRegression",
-          "explanation": { "en": "Import the linear regression model from scikit-learn" }
+          "explanation": {
+            "en": "Import the linear regression model from scikit-learn"
+          }
         },
         {
           "line": "from sklearn.metrics import mean_squared_error, r2_score",
           "highlight": "metrics",
-          "explanation": { "en": "Import evaluation metrics: MSE measures error, R² measures fit quality" }
+          "explanation": {
+            "en": "Import evaluation metrics: MSE measures error, R² measures fit quality"
+          }
         },
         {
           "line": "np.random.seed(42)",
           "highlight": "seed",
-          "explanation": { "en": "Set random seed for reproducibility — same data every run" }
+          "explanation": {
+            "en": "Set random seed for reproducibility — same data every run"
+          }
         },
         {
           "line": "X = np.random.rand(100, 1) * 10",
           "highlight": "X",
-          "explanation": { "en": "Generate 100 random feature values between 0 and 10" }
+          "explanation": {
+            "en": "Generate 100 random feature values between 0 and 10"
+          }
         },
         {
           "line": "y = 3 * X.flatten() + 7 + np.random.randn(100) * 2",
           "highlight": "y",
-          "explanation": { "en": "True relationship: y = 3x + 7 plus Gaussian noise (std=2)" }
+          "explanation": {
+            "en": "True relationship: y = 3x + 7 plus Gaussian noise (std=2)"
+          }
         },
         {
           "line": "model = LinearRegression()",
           "highlight": "LinearRegression()",
-          "explanation": { "en": "Create model instance — it will use OLS to find the best line" }
+          "explanation": {
+            "en": "Create model instance — it will use OLS to find the best line"
+          }
         },
         {
           "line": "model.fit(X, y)",
           "highlight": "fit",
-          "explanation": { "en": "Fit the model — finds the slope and intercept that minimize MSE" }
+          "explanation": {
+            "en": "Fit the model — finds the slope and intercept that minimize MSE"
+          }
         },
         {
           "line": "print(f'Slope (w): {model.coef_[0]:.4f}')",
           "highlight": "coef_",
-          "explanation": { "en": "The learned slope ~3.0 — close to the true value of 3" }
+          "explanation": {
+            "en": "The learned slope ~3.0 — close to the true value of 3"
+          }
         },
         {
           "line": "print(f'Intercept (b): {model.intercept_:.4f}')",
           "highlight": "intercept_",
-          "explanation": { "en": "The learned intercept ~7.0 — close to the true value of 7" }
+          "explanation": {
+            "en": "The learned intercept ~7.0 — close to the true value of 7"
+          }
         },
         {
           "line": "y_pred = model.predict(X)",
           "highlight": "predict",
-          "explanation": { "en": "Generate predictions for all training data points" }
+          "explanation": {
+            "en": "Generate predictions for all training data points"
+          }
         },
         {
           "line": "mse = mean_squared_error(y, y_pred)",
           "highlight": "mse",
-          "explanation": { "en": "MSE: average of squared differences between actual and predicted" }
+          "explanation": {
+            "en": "MSE: average of squared differences between actual and predicted"
+          }
         },
         {
           "line": "r2 = r2_score(y, y_pred)",
           "highlight": "r2",
-          "explanation": { "en": "R²: fraction of variance explained — 1.0 is perfect, 0.0 is baseline" }
+          "explanation": {
+            "en": "R²: fraction of variance explained — 1.0 is perfect, 0.0 is baseline"
+          }
         },
         {
           "line": "print(f'MSE: {mse:.4f}, R²: {r2:.4f}')",
           "highlight": "print",
-          "explanation": { "en": "Low MSE and high R² confirm the model captured the true pattern" }
+          "explanation": {
+            "en": "Low MSE and high R² confirm the model captured the true pattern"
+          }
         }
       ]
     },
@@ -147,6 +185,85 @@
         "Intercept (b): 7.1520",
         "MSE: 3.8124",
         "R²: 0.9582"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_linear_reg",
+      "code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error, r2_score\n\nnp.random.seed(42)\nX = np.random.rand(100, 1) * 10\ny = 3 * X.flatten() + 7 + np.random.randn(100) * 2\n\nmodel = LinearRegression()\nmodel.fit(X, y)\ny_pred = model.predict(X)\n\nprint(f'Slope: {model.coef_[0]:.4f}')\nprint(f'Intercept: {model.intercept_:.4f}')\nprint(f'MSE: {mean_squared_error(y, y_pred):.4f}')\nprint(f'R2: {r2_score(y, y_pred):.4f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "seed": "42"
+          },
+          "output": "",
+          "explanation": "Fix random state for reproducibility"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(100, 1)"
+          },
+          "output": "",
+          "explanation": "100 data points, feature values 0-10"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "y": "3*X + 7 + noise"
+          },
+          "output": "",
+          "explanation": "True relationship: slope=3, intercept=7, noise std=2"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "model": "LinearRegression()"
+          },
+          "output": "",
+          "explanation": "Create OLS linear regression model"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "fitted": true
+          },
+          "output": "",
+          "explanation": "Fit minimizes sum of squared residuals"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "slope": "2.9815"
+          },
+          "output": "Slope: 2.9815",
+          "explanation": "Learned slope close to true value of 3"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "intercept": "7.1520"
+          },
+          "output": "Intercept: 7.1520",
+          "explanation": "Learned intercept close to true value of 7"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "MSE": "3.8124"
+          },
+          "output": "MSE: 3.8124",
+          "explanation": "Mean squared error — average squared residual"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "R2": "0.9582"
+          },
+          "output": "R2: 0.9582",
+          "explanation": "R2 near 1: model explains 95.8% of variance"
+        }
       ]
     }
   ],
@@ -238,13 +355,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["linear_regression", "ols", "gradient_descent", "cost_function", "r2_score"],
-    "concepts_required": ["numpy_basics", "train_test_split"],
+    "concepts_taught": [
+      "linear_regression",
+      "ols",
+      "gradient_descent",
+      "cost_function",
+      "r2_score"
+    ],
+    "concepts_required": [
+      "numpy_basics",
+      "train_test_split"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["house_price_prediction", "sales_forecasting", "trend_analysis"],
+    "real_world_application": [
+      "house_price_prediction",
+      "sales_forecasting",
+      "trend_analysis"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["supervised_learning"]
+    "path_memberships": [
+      "supervised_learning"
+    ]
   }
 }

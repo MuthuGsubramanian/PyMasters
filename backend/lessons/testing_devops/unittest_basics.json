@@ -188,6 +188,132 @@
         "",
         "OK"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_unittest",
+      "title": "unittest TestCase in Action",
+      "code": "import unittest\n\nclass Calculator:\n    def add(self, a, b): return a + b\n\nclass TestCalc(unittest.TestCase):\n    def setUp(self):\n        self.calc = Calculator()\n    def test_add_positive(self):\n        self.assertEqual(self.calc.add(2, 3), 5)\n    def test_add_negative(self):\n        self.assertEqual(self.calc.add(-1, -1), -2)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import unittest"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "Class to test"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "TestCase class with assertion methods"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "explanation": "setUp runs BEFORE each test"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "self.calc": "<Calculator>"
+          },
+          "output": "",
+          "explanation": "Fresh Calculator for each test"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "result": 5
+          },
+          "output": "test_add_positive ... ok",
+          "explanation": "assertEqual: 2+3 == 5 passes"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "result": -2
+          },
+          "output": "test_add_negative ... ok",
+          "explanation": "assertEqual: -1+-1 == -2 passes"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_unittest_tdd",
+      "title": "TDD Red-Green-Refactor Cycle",
+      "nodes": [
+        {
+          "id": "write",
+          "label": "Write Test",
+          "type": "start"
+        },
+        {
+          "id": "red",
+          "label": "RED\nFails",
+          "type": "decision"
+        },
+        {
+          "id": "code",
+          "label": "Implement",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN\nPasses",
+          "type": "decision"
+        },
+        {
+          "id": "refactor",
+          "label": "REFACTOR",
+          "type": "process"
+        },
+        {
+          "id": "done",
+          "label": "Ship It",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "write",
+          "to": "red",
+          "label": "Run"
+        },
+        {
+          "from": "red",
+          "to": "code",
+          "label": "Expected"
+        },
+        {
+          "from": "code",
+          "to": "green",
+          "label": "Run"
+        },
+        {
+          "from": "green",
+          "to": "refactor",
+          "label": "Clean"
+        },
+        {
+          "from": "refactor",
+          "to": "done",
+          "label": "Pass"
+        },
+        {
+          "from": "done",
+          "to": "write",
+          "label": "Next"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -219,8 +345,18 @@
         "ta": "unittest பயன்படுத்தும்போது test classes எதிலிருந்து inherit செய்ய வேண்டும்?"
       },
       "options": {
-        "en": ["object", "unittest.TestCase", "unittest.TestSuite", "test.Base"],
-        "ta": ["object", "unittest.TestCase", "unittest.TestSuite", "test.Base"]
+        "en": [
+          "object",
+          "unittest.TestCase",
+          "unittest.TestSuite",
+          "test.Base"
+        ],
+        "ta": [
+          "object",
+          "unittest.TestCase",
+          "unittest.TestSuite",
+          "test.Base"
+        ]
       },
       "correct": 1
     },
@@ -230,8 +366,18 @@
         "ta": "setUp() எப்போது இயங்கும்?"
       },
       "options": {
-        "en": ["Once before all tests", "Before EACH test method", "After each test method", "Only when tests fail"],
-        "ta": ["அனைத்து சோதனைகளுக்கு முன் ஒரு முறை", "ஒவ்வொரு test method-க்கு முன்", "ஒவ்வொரு test method-க்குப் பின்", "சோதனைகள் தோல்வியடையும்போது மட்டும்"]
+        "en": [
+          "Once before all tests",
+          "Before EACH test method",
+          "After each test method",
+          "Only when tests fail"
+        ],
+        "ta": [
+          "அனைத்து சோதனைகளுக்கு முன் ஒரு முறை",
+          "ஒவ்வொரு test method-க்கு முன்",
+          "ஒவ்வொரு test method-க்குப் பின்",
+          "சோதனைகள் தோல்வியடையும்போது மட்டும்"
+        ]
       },
       "correct": 1
     },
@@ -241,20 +387,45 @@
         "ta": "எந்த assertion ஒரு exception எழுப்பப்படுகிறதா என்று சரிபார்க்கும்?"
       },
       "options": {
-        "en": ["assertEqual", "assertTrue", "assertRaises", "assertIn"],
-        "ta": ["assertEqual", "assertTrue", "assertRaises", "assertIn"]
+        "en": [
+          "assertEqual",
+          "assertTrue",
+          "assertRaises",
+          "assertIn"
+        ],
+        "ta": [
+          "assertEqual",
+          "assertTrue",
+          "assertRaises",
+          "assertIn"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["unittest", "TestCase", "assertions", "setUp", "tearDown"],
-    "concepts_required": ["classes", "functions", "testing_basics"],
+    "concepts_taught": [
+      "unittest",
+      "TestCase",
+      "assertions",
+      "setUp",
+      "tearDown"
+    ],
+    "concepts_required": [
+      "classes",
+      "functions",
+      "testing_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["qa_engineering", "test_automation"],
+    "real_world_application": [
+      "qa_engineering",
+      "test_automation"
+    ],
     "category": "testing",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

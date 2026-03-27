@@ -207,11 +207,26 @@
       "type": "FlowArrow",
       "id": "finetuning_flow",
       "nodes": [
-        {"label": "Prepare JSONL Data (50-100 examples)", "type": "input"},
-        {"label": "Upload File to OpenAI", "type": "process"},
-        {"label": "Create Fine-Tuning Job", "type": "process"},
-        {"label": "Wait for Training (~30 min)", "type": "process"},
-        {"label": "Use Custom Model (ft:gpt-4o-mini:...)", "type": "output"}
+        {
+          "label": "Prepare JSONL Data (50-100 examples)",
+          "type": "input"
+        },
+        {
+          "label": "Upload File to OpenAI",
+          "type": "process"
+        },
+        {
+          "label": "Create Fine-Tuning Job",
+          "type": "process"
+        },
+        {
+          "label": "Wait for Training (~30 min)",
+          "type": "process"
+        },
+        {
+          "label": "Use Custom Model (ft:gpt-4o-mini:...)",
+          "type": "output"
+        }
       ],
       "direction": "horizontal",
       "duration_ms": 4000
@@ -250,6 +265,51 @@
         "...     model='ft:gpt-4o-mini:my-org::abc123',  # your custom model!",
         "...     messages=[{'role': 'user', 'content': 'What is a generator?'}]",
         "... )"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_fine_tuning_basics",
+      "code": "# Fine-tuning training data format (JSONL)\ntraining_examples = [\n    {'messages': [\n        {'role':'system','content':'Classify support tickets.'},\n        {'role':'user','content':'My payment failed'},\n        {'role':'assistant','content':'billing'}\n    ]},\n    {'messages': [\n        {'role':'system','content':'Classify support tickets.'},\n        {'role':'user','content':'Cannot login'},\n        {'role':'assistant','content':'authentication'}\n    ]}\n]\n\n# Upload data and create fine-tune job\n# client.fine_tuning.jobs.create(training_file=file_id, model='gpt-4o-mini')\nprint('Fine-tuning: teach model YOUR specific patterns')\nprint('Need 10-100+ examples for good results')",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "format": "JSONL"
+          },
+          "output": "",
+          "explanation": "Training data: system + user + expected response"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "example": "payment failed => billing"
+          },
+          "output": "",
+          "explanation": "Each example teaches your classification scheme"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "example": "Cannot login => authentication"
+          },
+          "output": "",
+          "explanation": "More examples = better fine-tuned model"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "model": "gpt-4o-mini"
+          },
+          "output": "",
+          "explanation": "Creates custom model trained on your data"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "Fine-tuning: teach model YOUR specific patterns",
+          "explanation": "Use when: consistent format, domain expertise needed"
+        }
       ]
     }
   ],
@@ -324,20 +384,43 @@
         "ta": "Fine-tuning training data-க்கு OpenAI எந்த format தேவைப்படுகிறது?"
       },
       "options": {
-        "en": ["CSV", "JSONL (one JSON object per line)", "XML", "YAML"],
-        "ta": ["CSV", "JSONL (ஒரு வரிக்கு ஒரு JSON object)", "XML", "YAML"]
+        "en": [
+          "CSV",
+          "JSONL (one JSON object per line)",
+          "XML",
+          "YAML"
+        ],
+        "ta": [
+          "CSV",
+          "JSONL (ஒரு வரிக்கு ஒரு JSON object)",
+          "XML",
+          "YAML"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["fine_tuning", "lora", "training_data", "jsonl"],
-    "concepts_required": ["openai_api_basics", "prompt_engineering_advanced"],
+    "concepts_taught": [
+      "fine_tuning",
+      "lora",
+      "training_data",
+      "jsonl"
+    ],
+    "concepts_required": [
+      "openai_api_basics",
+      "prompt_engineering_advanced"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["custom_models", "domain_adaptation"],
+    "real_world_application": [
+      "custom_models",
+      "domain_adaptation"
+    ],
     "category": "ai_advanced",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

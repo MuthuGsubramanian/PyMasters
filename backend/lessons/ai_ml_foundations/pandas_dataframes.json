@@ -117,6 +117,55 @@
         "1     Bob   30   92.0",
         "2 Charlie   35   78.3"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pandas_df",
+      "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Charlie'],\n    'age': [25, 30, 35],\n    'salary': [50000, 60000, 70000]\n})\nprint(df.shape)\nprint(df.dtypes)\nprint(df.describe())\nprint(df['salary'].mean())",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import pandas"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "df": "DataFrame(3 rows x 3 cols)"
+          },
+          "output": "",
+          "explanation": "Create DataFrame from dictionary — keys become column names"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "df.shape": "(3, 3)"
+          },
+          "output": "(3, 3)",
+          "explanation": "3 rows, 3 columns"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "name      object\nage        int64\nsalary     int64",
+          "explanation": "Each column has a dtype — object means string"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "         age    salary\ncount   3.0    3.0\nmean   30.0  60000.0\nstd     5.0  10000.0",
+          "explanation": "describe() gives stats for numeric columns"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "mean_salary": "60000.0"
+          },
+          "output": "60000.0",
+          "explanation": "Column mean: (50000+60000+70000)/3"
+        }
+      ]
     }
   ],
   "practice_challenges": [

@@ -108,6 +108,83 @@
         "max → 6",
         "std → 1.708..."
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_numpy_ops",
+      "code": "import numpy as np\n\na = np.array([1, 2, 3, 4])\nb = np.array([10, 20, 30, 40])\nprint(a + b)\nprint(a * b)\nprint(a ** 2)\nprint(np.sqrt(b))\nprint(np.sum(a))\nprint(np.mean(b))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import NumPy"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "a": "[1, 2, 3, 4]"
+          },
+          "output": "",
+          "explanation": "Create array a"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "b": "[10, 20, 30, 40]"
+          },
+          "output": "",
+          "explanation": "Create array b"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "a + b": "[11, 22, 33, 44]"
+          },
+          "output": "[11 22 33 44]",
+          "explanation": "Element-wise addition — no loop needed"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "a * b": "[10, 40, 90, 160]"
+          },
+          "output": "[ 10  40  90 160]",
+          "explanation": "Element-wise multiplication"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "a ** 2": "[1, 4, 9, 16]"
+          },
+          "output": "[ 1  4  9 16]",
+          "explanation": "Element-wise squaring"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "np.sqrt(b)": "[3.16, 4.47, 5.48, 6.32]"
+          },
+          "output": "[3.16227766 4.47213595 5.47722558 6.32455532]",
+          "explanation": "Element-wise square root"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "np.sum(a)": "10"
+          },
+          "output": "10",
+          "explanation": "Sum all elements: 1+2+3+4 = 10"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "np.mean(b)": "25.0"
+          },
+          "output": "25.0",
+          "explanation": "Mean: (10+20+30+40)/4 = 25.0"
+        }
+      ]
     }
   ],
   "practice_challenges": [

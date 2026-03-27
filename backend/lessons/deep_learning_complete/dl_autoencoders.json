@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "ae_code",
       "steps": [
-        {"line": "self.encoder = nn.Sequential(nn.Linear(784, 256), nn.ReLU(), ..., nn.Linear(128, 32))", "highlight": "encoder", "explanation": {"en": "Encoder: compress 784 pixels to 32-dim latent code. 24.5x compression ratio!"}},
-        {"line": "self.decoder = nn.Sequential(nn.Linear(32, 128), ..., nn.Linear(256, 784), nn.Sigmoid())", "highlight": "decoder", "explanation": {"en": "Decoder: expand 32-dim code back to 784 pixels. Sigmoid ensures output in [0,1]"}},
-        {"line": "z = self.encoder(x)", "highlight": "z", "explanation": {"en": "Latent code z: the compressed representation. Contains the 'essence' of the input"}},
-        {"line": "loss = F.mse_loss(x_hat, x)", "highlight": "recon_loss", "explanation": {"en": "Reconstruction loss: how different is the output from the input? Lower = better compression"}},
-        {"line": "self.fc_mu = nn.Linear(128, latent_dim)", "highlight": "mu", "explanation": {"en": "VAE: instead of a single code, output mean (mu) of a Gaussian distribution"}},
-        {"line": "self.fc_logvar = nn.Linear(128, latent_dim)", "highlight": "logvar", "explanation": {"en": "VAE: also output log variance. Together (mu, logvar) define a probability distribution"}},
-        {"line": "eps = torch.randn_like(std); z = mu + eps * std", "highlight": "reparameterize", "explanation": {"en": "Reparameterization trick: sample z = mu + eps*std. Makes sampling differentiable!"}},
-        {"line": "kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())", "highlight": "kl_loss", "explanation": {"en": "KL divergence: pushes the learned distribution toward standard normal N(0,1)"}},
-        {"line": "return recon_loss + kl_loss", "highlight": "total_loss", "explanation": {"en": "VAE loss = reconstruction quality + regularization of latent space"}},
-        {"line": "# Generation: sample z ~ N(0,1), decode!", "highlight": "generate", "explanation": {"en": "After training, sample random z from N(0,1) and pass through decoder to generate new data"}}
+        {
+          "line": "self.encoder = nn.Sequential(nn.Linear(784, 256), nn.ReLU(), ..., nn.Linear(128, 32))",
+          "highlight": "encoder",
+          "explanation": {
+            "en": "Encoder: compress 784 pixels to 32-dim latent code. 24.5x compression ratio!"
+          }
+        },
+        {
+          "line": "self.decoder = nn.Sequential(nn.Linear(32, 128), ..., nn.Linear(256, 784), nn.Sigmoid())",
+          "highlight": "decoder",
+          "explanation": {
+            "en": "Decoder: expand 32-dim code back to 784 pixels. Sigmoid ensures output in [0,1]"
+          }
+        },
+        {
+          "line": "z = self.encoder(x)",
+          "highlight": "z",
+          "explanation": {
+            "en": "Latent code z: the compressed representation. Contains the 'essence' of the input"
+          }
+        },
+        {
+          "line": "loss = F.mse_loss(x_hat, x)",
+          "highlight": "recon_loss",
+          "explanation": {
+            "en": "Reconstruction loss: how different is the output from the input? Lower = better compression"
+          }
+        },
+        {
+          "line": "self.fc_mu = nn.Linear(128, latent_dim)",
+          "highlight": "mu",
+          "explanation": {
+            "en": "VAE: instead of a single code, output mean (mu) of a Gaussian distribution"
+          }
+        },
+        {
+          "line": "self.fc_logvar = nn.Linear(128, latent_dim)",
+          "highlight": "logvar",
+          "explanation": {
+            "en": "VAE: also output log variance. Together (mu, logvar) define a probability distribution"
+          }
+        },
+        {
+          "line": "eps = torch.randn_like(std); z = mu + eps * std",
+          "highlight": "reparameterize",
+          "explanation": {
+            "en": "Reparameterization trick: sample z = mu + eps*std. Makes sampling differentiable!"
+          }
+        },
+        {
+          "line": "kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())",
+          "highlight": "kl_loss",
+          "explanation": {
+            "en": "KL divergence: pushes the learned distribution toward standard normal N(0,1)"
+          }
+        },
+        {
+          "line": "return recon_loss + kl_loss",
+          "highlight": "total_loss",
+          "explanation": {
+            "en": "VAE loss = reconstruction quality + regularization of latent space"
+          }
+        },
+        {
+          "line": "# Generation: sample z ~ N(0,1), decode!",
+          "highlight": "generate",
+          "explanation": {
+            "en": "After training, sample random z from N(0,1) and pass through decoder to generate new data"
+          }
+        }
       ]
     },
     {
@@ -64,11 +124,41 @@
       "id": "ae_architecture",
       "structure_type": "autoencoder",
       "layers": [
-        {"name": "Input", "nodes": ["784 pixels"], "type": "input"},
-        {"name": "Encoder", "nodes": ["784 -> 256 -> 128 -> 32"], "type": "encoder"},
-        {"name": "Latent (z)", "nodes": ["32-dim code"], "type": "bottleneck"},
-        {"name": "Decoder", "nodes": ["32 -> 128 -> 256 -> 784"], "type": "decoder"},
-        {"name": "Output", "nodes": ["784 pixels (reconstructed)"], "type": "output"}
+        {
+          "name": "Input",
+          "nodes": [
+            "784 pixels"
+          ],
+          "type": "input"
+        },
+        {
+          "name": "Encoder",
+          "nodes": [
+            "784 -> 256 -> 128 -> 32"
+          ],
+          "type": "encoder"
+        },
+        {
+          "name": "Latent (z)",
+          "nodes": [
+            "32-dim code"
+          ],
+          "type": "bottleneck"
+        },
+        {
+          "name": "Decoder",
+          "nodes": [
+            "32 -> 128 -> 256 -> 784"
+          ],
+          "type": "decoder"
+        },
+        {
+          "name": "Output",
+          "nodes": [
+            "784 pixels (reconstructed)"
+          ],
+          "type": "output"
+        }
       ],
       "duration_ms": 4000
     },
@@ -99,8 +189,14 @@
     {
       "type": "ComparisonPanel",
       "id": "ae_vs_vae",
-      "left": {"label": "Autoencoder", "content": "Deterministic latent code\nGood for compression/denoising\nLatent space may have gaps\nCannot generate new data easily"},
-      "right": {"label": "VAE", "content": "Probabilistic latent distribution\nSmooth, continuous latent space\nCan interpolate between samples\nCan generate new data by sampling z~N(0,1)"},
+      "left": {
+        "label": "Autoencoder",
+        "content": "Deterministic latent code\nGood for compression/denoising\nLatent space may have gaps\nCannot generate new data easily"
+      },
+      "right": {
+        "label": "VAE",
+        "content": "Probabilistic latent distribution\nSmooth, continuous latent space\nCan interpolate between samples\nCan generate new data by sampling z~N(0,1)"
+      },
       "duration_ms": 3000
     },
     {
@@ -108,7 +204,14 @@
       "id": "ae_flow",
       "from": "input",
       "to": "reconstruction",
-      "steps": ["Input x", "Encode", "Latent z (32-dim)", "Decode", "Reconstruct x_hat", "Compare x vs x_hat"],
+      "steps": [
+        "Input x",
+        "Encode",
+        "Latent z (32-dim)",
+        "Decode",
+        "Reconstruct x_hat",
+        "Compare x vs x_hat"
+      ],
       "duration_ms": 3000
     },
     {
@@ -126,6 +229,120 @@
         ">>> z_sample = torch.randn(16, 16)",
         ">>> generated = vae.decoder(z_sample)  # new images!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_autoencoder",
+      "code": "import torch\nimport torch.nn as nn\n\nclass Autoencoder(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.encoder = nn.Sequential(\n            nn.Linear(784, 128), nn.ReLU(),\n            nn.Linear(128, 32), nn.ReLU(),\n            nn.Linear(32, 8)   # latent space\n        )\n        self.decoder = nn.Sequential(\n            nn.Linear(8, 32), nn.ReLU(),\n            nn.Linear(32, 128), nn.ReLU(),\n            nn.Linear(128, 784), nn.Sigmoid()\n        )\n    def forward(self, x):\n        z = self.encoder(x)\n        return self.decoder(z), z\n\nmodel = Autoencoder()\nx = torch.randn(4, 784)  # 4 flattened 28x28 images\nrecon, latent = model(x)\nprint(f'Input: {x.shape}, Latent: {latent.shape}, Recon: {recon.shape}')",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "encoder": "784->128->32->8"
+          },
+          "output": "",
+          "explanation": "Encoder compresses 784 dims to 8-dim latent space"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "decoder": "8->32->128->784"
+          },
+          "output": "",
+          "explanation": "Decoder reconstructs from latent representation"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "latent_dim": "8"
+          },
+          "output": "",
+          "explanation": "Bottleneck: forces network to learn essential features"
+        },
+        {
+          "line": 22,
+          "variables": {
+            "x.shape": "(4, 784)"
+          },
+          "output": "",
+          "explanation": "4 flattened MNIST images"
+        },
+        {
+          "line": 24,
+          "variables": {},
+          "output": "Input: torch.Size([4, 784]), Latent: torch.Size([4, 8]), Recon: torch.Size([4, 784])",
+          "explanation": "784 -> 8 -> 784: compress and reconstruct"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_autoencoder",
+      "title": "Autoencoder Architecture",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "Input (784)",
+          "type": "start"
+        },
+        {
+          "id": "enc1",
+          "label": "Encoder: 784->128",
+          "type": "process"
+        },
+        {
+          "id": "enc2",
+          "label": "128->32->8",
+          "type": "process"
+        },
+        {
+          "id": "latent",
+          "label": "Latent Space (8)",
+          "type": "decision"
+        },
+        {
+          "id": "dec1",
+          "label": "Decoder: 8->32",
+          "type": "process"
+        },
+        {
+          "id": "dec2",
+          "label": "32->128->784",
+          "type": "process"
+        },
+        {
+          "id": "output",
+          "label": "Reconstruction (784)",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "input",
+          "to": "enc1"
+        },
+        {
+          "from": "enc1",
+          "to": "enc2"
+        },
+        {
+          "from": "enc2",
+          "to": "latent"
+        },
+        {
+          "from": "latent",
+          "to": "dec1"
+        },
+        {
+          "from": "dec1",
+          "to": "dec2"
+        },
+        {
+          "from": "dec2",
+          "to": "output"
+        }
+      ],
+      "animated": true
     },
     {
       "type": "ParticleEffect",
@@ -163,8 +380,18 @@
         "ta": "Autoencoder-ல் bottleneck என்ன?"
       },
       "options": {
-        "en": ["The slowest layer", "The latent layer with fewer dimensions than input, forcing compression", "The output layer", "The loss function"],
-        "ta": ["மெதுவான அடுக்கு", "உள்ளீட்டை விட குறைவான பரிமாணங்கள் கொண்ட latent அடுக்கு, சுருக்கத்தை கட்டாயப்படுத்துகிறது", "வெளியீட்டு அடுக்கு", "இழப்பு செயல்பாடு"]
+        "en": [
+          "The slowest layer",
+          "The latent layer with fewer dimensions than input, forcing compression",
+          "The output layer",
+          "The loss function"
+        ],
+        "ta": [
+          "மெதுவான அடுக்கு",
+          "உள்ளீட்டை விட குறைவான பரிமாணங்கள் கொண்ட latent அடுக்கு, சுருக்கத்தை கட்டாயப்படுத்துகிறது",
+          "வெளியீட்டு அடுக்கு",
+          "இழப்பு செயல்பாடு"
+        ]
       },
       "correct": 1
     },
@@ -174,8 +401,18 @@
         "ta": "VAE-ல் reparameterization trick என்ன?"
       },
       "options": {
-        "en": ["Changing the learning rate", "Expressing z = mu + eps*std so sampling is differentiable", "Removing the decoder", "Using a different loss function"],
-        "ta": ["Learning rate-ஐ மாற்றுவது", "z = mu + eps*std என வெளிப்படுத்துவதால் sampling வகையிடக்கூடியது", "Decoder-ஐ அகற்றுவது", "வேறு இழப்பு செயல்பாட்டைப் பயன்படுத்துவது"]
+        "en": [
+          "Changing the learning rate",
+          "Expressing z = mu + eps*std so sampling is differentiable",
+          "Removing the decoder",
+          "Using a different loss function"
+        ],
+        "ta": [
+          "Learning rate-ஐ மாற்றுவது",
+          "z = mu + eps*std என வெளிப்படுத்துவதால் sampling வகையிடக்கூடியது",
+          "Decoder-ஐ அகற்றுவது",
+          "வேறு இழப்பு செயல்பாட்டைப் பயன்படுத்துவது"
+        ]
       },
       "correct": 1
     },
@@ -185,20 +422,46 @@
         "ta": "VAE-ல் KL divergence loss என்ன ஊக்குவிக்கிறது?"
       },
       "options": {
-        "en": ["Faster training", "The latent distribution to be close to standard normal N(0,1)", "Larger latent space", "Better image quality"],
-        "ta": ["வேகமான பயிற்சி", "Latent distribution நிலையான இயல்பான N(0,1)-க்கு நெருக்கமாக இருக்க", "பெரிய latent space", "சிறந்த பட தரம்"]
+        "en": [
+          "Faster training",
+          "The latent distribution to be close to standard normal N(0,1)",
+          "Larger latent space",
+          "Better image quality"
+        ],
+        "ta": [
+          "வேகமான பயிற்சி",
+          "Latent distribution நிலையான இயல்பான N(0,1)-க்கு நெருக்கமாக இருக்க",
+          "பெரிய latent space",
+          "சிறந்த பட தரம்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["autoencoder", "vae", "latent_space", "kl_divergence", "reparameterization_trick", "reconstruction_loss"],
-    "concepts_required": ["pytorch_training", "loss_functions"],
+    "concepts_taught": [
+      "autoencoder",
+      "vae",
+      "latent_space",
+      "kl_divergence",
+      "reparameterization_trick",
+      "reconstruction_loss"
+    ],
+    "concepts_required": [
+      "pytorch_training",
+      "loss_functions"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["anomaly_detection", "data_generation", "dimensionality_reduction"],
+    "real_world_application": [
+      "anomaly_detection",
+      "data_generation",
+      "dimensionality_reduction"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

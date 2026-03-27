@@ -139,6 +139,145 @@
         "  tiangolo/fastapi - 75,890 stars",
         "  python/cpython - 62,345 stars"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_api_consume",
+      "title": "API Consumption with Error Handling",
+      "code": "import requests\n\ntry:\n    resp = requests.get('https://api.github.com/search/repositories',\n        params={'q': 'python', 'per_page': 3}, timeout=10)\n    resp.raise_for_status()\n    data = resp.json()\n    for repo in data['items']:\n        print(f'{repo[\"full_name\"]}: {repo[\"stargazers_count\"]} stars')\nexcept requests.exceptions.Timeout:\n    print('Timed out')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import requests"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "try/except for error handling"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "resp": "<Response [200]>"
+          },
+          "output": "",
+          "explanation": "GET with params and timeout"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "raise_for_status throws on 4xx/5xx"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "data": {
+              "total_count": 1234567
+            }
+          },
+          "output": "",
+          "explanation": "Parse JSON response"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "repo": {
+              "full_name": "TheAlgorithms/Python"
+            }
+          },
+          "output": "TheAlgorithms/Python: 187432 stars",
+          "explanation": "First result"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "repo": {
+              "full_name": "pallets/flask"
+            }
+          },
+          "output": "...pallets/flask: 68123 stars",
+          "explanation": "Second result"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "repo": {
+              "full_name": "django/django"
+            }
+          },
+          "output": "...django/django: 79456 stars",
+          "explanation": "Third result"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_api_flow",
+      "title": "API Request with Error Handling",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Build Request",
+          "type": "start"
+        },
+        {
+          "id": "send",
+          "label": "Send with\nTimeout",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "Status OK?",
+          "type": "decision"
+        },
+        {
+          "id": "parse",
+          "label": "Parse JSON",
+          "type": "process"
+        },
+        {
+          "id": "success",
+          "label": "Process Data",
+          "type": "end"
+        },
+        {
+          "id": "error",
+          "label": "Handle Error",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "send",
+          "label": "requests.get()"
+        },
+        {
+          "from": "send",
+          "to": "check",
+          "label": "Response"
+        },
+        {
+          "from": "check",
+          "to": "parse",
+          "label": "200"
+        },
+        {
+          "from": "check",
+          "to": "error",
+          "label": "4xx/5xx"
+        },
+        {
+          "from": "parse",
+          "to": "success",
+          "label": "Data"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -172,8 +311,18 @@
         "ta": "response.raise_for_status() என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Returns the status code", "Raises an HTTPError exception for 4xx/5xx responses", "Prints the status code", "Retries the request"],
-        "ta": ["நிலை குறியீட்டை திருப்புகிறது", "4xx/5xx பதில்களுக்கு HTTPError விதிவிலக்கை எழுப்புகிறது", "நிலை குறியீட்டை அச்சிடுகிறது", "கோரிக்கையை மீண்டும் முயற்சிக்கிறது"]
+        "en": [
+          "Returns the status code",
+          "Raises an HTTPError exception for 4xx/5xx responses",
+          "Prints the status code",
+          "Retries the request"
+        ],
+        "ta": [
+          "நிலை குறியீட்டை திருப்புகிறது",
+          "4xx/5xx பதில்களுக்கு HTTPError விதிவிலக்கை எழுப்புகிறது",
+          "நிலை குறியீட்டை அச்சிடுகிறது",
+          "கோரிக்கையை மீண்டும் முயற்சிக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -183,8 +332,18 @@
         "ta": "கோரிக்கைகளில் ஏன் எப்போதும் timeout அமைக்க வேண்டும்?"
       },
       "options": {
-        "en": ["To make requests faster", "To prevent your program from hanging indefinitely if the server doesn't respond", "To limit the response size", "To add authentication"],
-        "ta": ["கோரிக்கைகளை வேகமாக்க", "சேவையகம் பதிலளிக்கவில்லை என்றால் உங்கள் நிரல் முடிவில்லாமல் நிற்பதைத் தடுக்க", "பதில் அளவை வரம்பிட", "அங்கீகாரத்தைச் சேர்க்க"]
+        "en": [
+          "To make requests faster",
+          "To prevent your program from hanging indefinitely if the server doesn't respond",
+          "To limit the response size",
+          "To add authentication"
+        ],
+        "ta": [
+          "கோரிக்கைகளை வேகமாக்க",
+          "சேவையகம் பதிலளிக்கவில்லை என்றால் உங்கள் நிரல் முடிவில்லாமல் நிற்பதைத் தடுக்க",
+          "பதில் அளவை வரம்பிட",
+          "அங்கீகாரத்தைச் சேர்க்க"
+        ]
       },
       "correct": 1
     },
@@ -194,20 +353,44 @@
         "ta": "அதிவேக பின்வாங்கல் என்றால் என்ன?"
       },
       "options": {
-        "en": ["Sending requests as fast as possible", "Waiting increasingly longer between retries (1s, 2s, 4s, 8s...)", "Reducing the payload size each time", "Using multiple API keys"],
-        "ta": ["கோரிக்கைகளை முடிந்தவரை வேகமாக அனுப்புவது", "மறு முயற்சிகளுக்கு இடையே அதிக நேரம் காத்திருப்பது (1s, 2s, 4s, 8s...)", "ஒவ்வொரு முறையும் பேலோட் அளவைக் குறைப்பது", "பல API விசைகளைப் பயன்படுத்துவது"]
+        "en": [
+          "Sending requests as fast as possible",
+          "Waiting increasingly longer between retries (1s, 2s, 4s, 8s...)",
+          "Reducing the payload size each time",
+          "Using multiple API keys"
+        ],
+        "ta": [
+          "கோரிக்கைகளை முடிந்தவரை வேகமாக அனுப்புவது",
+          "மறு முயற்சிகளுக்கு இடையே அதிக நேரம் காத்திருப்பது (1s, 2s, 4s, 8s...)",
+          "ஒவ்வொரு முறையும் பேலோட் அளவைக் குறைப்பது",
+          "பல API விசைகளைப் பயன்படுத்துவது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["requests_library", "api_authentication", "pagination", "error_handling", "rate_limiting"],
-    "concepts_required": ["http_methods", "json_format"],
+    "concepts_taught": [
+      "requests_library",
+      "api_authentication",
+      "pagination",
+      "error_handling",
+      "rate_limiting"
+    ],
+    "concepts_required": [
+      "http_methods",
+      "json_format"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["data_collection", "api_integration"],
+    "real_world_application": [
+      "data_collection",
+      "api_integration"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

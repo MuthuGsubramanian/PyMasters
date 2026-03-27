@@ -51,6 +51,31 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "def countdown(n):\n    while n > 0:\n        yield n\n        n -= 1\ngen = countdown(3)\nprint(next(gen))\nprint(next(gen))\nprint(next(gen))\nfor val in countdown(5):\n    print(val, end=' ')",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define generator function with yield" },
+        { "line": 5, "variables": { "gen": "generator(countdown, n=3)" }, "output": "", "description": "countdown(3) returns a generator object (no code runs yet)" },
+        { "line": 6, "variables": { "gen": "paused at yield, n=2" }, "output": "3", "description": "next(gen) runs until yield, returns 3, pauses" },
+        { "line": 7, "variables": { "gen": "paused at yield, n=1" }, "output": "3\n2", "description": "next(gen) resumes, n decrements to 1, yields 2" },
+        { "line": 8, "variables": { "gen": "paused at yield, n=0" }, "output": "3\n2\n1", "description": "next(gen) resumes, yields 1, n becomes 0" },
+        { "line": 9, "variables": { "val": 5 }, "output": "3\n2\n1\n5 ", "description": "for loop auto-calls next() on new generator" },
+        { "line": 9, "variables": { "val": 4 }, "output": "3\n2\n1\n5 4 ", "description": "Loop continues: yields 4" },
+        { "line": 9, "variables": { "val": 3 }, "output": "3\n2\n1\n5 4 3 ", "description": "Yields 3" },
+        { "line": 9, "variables": { "val": 2 }, "output": "3\n2\n1\n5 4 3 2 ", "description": "Yields 2" },
+        { "line": 9, "variables": { "val": 1 }, "output": "3\n2\n1\n5 4 3 2 1 ", "description": "Yields 1, then StopIteration ends the loop" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "iterable": [3, 2, 1],
+      "expression": "yield n",
+      "result": [3, 2, 1],
+      "label": "countdown(3) yields values on demand",
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

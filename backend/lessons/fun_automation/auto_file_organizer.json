@@ -165,6 +165,107 @@
         "Created folder: Code (8 files)",
         "Done! Desktop is clean!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "from pathlib import Path\nimport shutil\n\nCATEGORIES = {\n    'Images': ['.jpg', '.png', '.gif'],\n    'Docs': ['.pdf', '.txt', '.docx'],\n    'Code': ['.py', '.js', '.html'],\n}\n\nsource = Path('Downloads')\nfor file in source.iterdir():\n    if file.is_file():\n        ext = file.suffix.lower()\n        for cat, exts in CATEGORIES.items():\n            if ext in exts:\n                dest = source / cat\n                dest.mkdir(exist_ok=True)\n                shutil.move(str(file), str(dest))\n                print(f'{file.name} -> {cat}/')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "CATEGORIES": "{'Images':[...], 'Docs':[...], 'Code':[...]}"
+          },
+          "output": "",
+          "description": "Map folder names to file extensions"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "",
+          "description": "Loop through all items in Downloads folder"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "file": "photo.jpg"
+          },
+          "output": "",
+          "description": "Check if item is a file (skip directories)"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "ext": ".jpg"
+          },
+          "output": "",
+          "description": "Get lowercase extension"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "cat": "Images"
+          },
+          "output": "",
+          "description": ".jpg found in Images extensions"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "",
+          "description": "Create Images/ folder if it doesn't exist"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "photo.jpg -> Images/",
+          "description": "Move file to its category folder"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "file_sorting",
+      "iterable": "source.iterdir()",
+      "iterations": [
+        {
+          "index": 0,
+          "value": "photo.jpg",
+          "variables": {
+            "ext": ".jpg",
+            "category": "Images"
+          },
+          "description": "photo.jpg -> Images/"
+        },
+        {
+          "index": 1,
+          "value": "report.pdf",
+          "variables": {
+            "ext": ".pdf",
+            "category": "Docs"
+          },
+          "description": "report.pdf -> Docs/"
+        },
+        {
+          "index": 2,
+          "value": "script.py",
+          "variables": {
+            "ext": ".py",
+            "category": "Code"
+          },
+          "description": "script.py -> Code/"
+        },
+        {
+          "index": 3,
+          "value": "video.mp4",
+          "variables": {
+            "ext": ".mp4",
+            "category": "Other"
+          },
+          "description": "video.mp4 -> no matching category"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

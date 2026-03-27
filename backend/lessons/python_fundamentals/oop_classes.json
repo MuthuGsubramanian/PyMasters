@@ -46,6 +46,38 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Dog:\n    species = 'Canis familiaris'\n    def __init__(self, name, breed):\n        self.name = name\n        self.breed = breed\n    def bark(self):\n        return f'{self.name} says: Woof!'\nrex = Dog('Rex', 'Labrador')\nbella = Dog('Bella', 'Poodle')\nprint(rex.bark())\nprint(bella.name)\nprint(Dog.species)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define the Dog class blueprint" },
+        { "line": 8, "variables": { "rex": "Dog(name='Rex', breed='Labrador')" }, "output": "", "description": "Create rex instance -- __init__ sets name and breed" },
+        { "line": 9, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "", "description": "Create bella instance -- separate object, own attributes" },
+        { "line": 10, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "Rex says: Woof!", "description": "Call rex.bark() -- self refers to rex" },
+        { "line": 11, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "Rex says: Woof!\nBella", "description": "Access bella.name instance attribute" },
+        { "line": 12, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "Rex says: Woof!\nBella\nCanis familiaris", "description": "Access class variable shared by all Dog instances" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "class_def", "label": "class Dog (blueprint)", "type": "start" },
+        { "id": "init", "label": "__init__(self, name, breed)", "type": "process" },
+        { "id": "instance", "label": "rex = Dog('Rex', 'Lab')", "type": "process" },
+        { "id": "method", "label": "rex.bark() calls method", "type": "process" },
+        { "id": "result", "label": "Returns 'Rex says: Woof!'", "type": "end" }
+      ],
+      "edges": [
+        { "from": "class_def", "to": "init" },
+        { "from": "init", "to": "instance" },
+        { "from": "instance", "to": "method" },
+        { "from": "method", "to": "result" }
+      ],
+      "executionPath": ["class_def", "init", "instance", "method", "result"],
+      "variables": { "self.name": "Rex", "self.breed": "Labrador" },
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

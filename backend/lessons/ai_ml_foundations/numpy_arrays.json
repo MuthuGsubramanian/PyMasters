@@ -110,6 +110,84 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "id": "ev_numpy_arrays",
+      "code": "import numpy as np\n\na = np.array([1, 2, 3, 4])\nb = np.array([[1, 2], [3, 4]])\nprint(a.shape)\nprint(b.shape)\nprint(b.dtype)\nprint(b.ndim)\nreshaped = np.arange(12).reshape(3, 4)\nprint(reshaped)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import NumPy library"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "a": "array([1, 2, 3, 4])"
+          },
+          "output": "",
+          "explanation": "Create 1-D array from list"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": "array([1, 2, 3, 4])",
+            "b": "array([[1, 2], [3, 4]])"
+          },
+          "output": "",
+          "explanation": "Create 2-D array (matrix) from nested lists"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "a.shape": "(4,)"
+          },
+          "output": "(4,)",
+          "explanation": "1-D array has shape (4,) — one dimension with 4 elements"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "b.shape": "(2, 2)"
+          },
+          "output": "(2, 2)",
+          "explanation": "2-D array has shape (2, 2) — 2 rows, 2 columns"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "b.dtype": "int64"
+          },
+          "output": "int64",
+          "explanation": "dtype tells us elements are 64-bit integers"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "b.ndim": "2"
+          },
+          "output": "2",
+          "explanation": "ndim = number of dimensions (axes)"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "reshaped": "array([[ 0,  1,  2,  3],\n       [ 4,  5,  6,  7],\n       [ 8,  9, 10, 11]])"
+          },
+          "output": "",
+          "explanation": "Reshape flat 12-element array into 3x4 matrix"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "reshaped.shape": "(3, 4)"
+          },
+          "output": "[[ 0  1  2  3]\n [ 4  5  6  7]\n [ 8  9 10 11]]",
+          "explanation": "Print reshaped matrix — data fills row by row"
+        }
+      ]
+    },
+    {
       "type": "ParticleEffect",
       "id": "celebration",
       "trigger": "on_complete",

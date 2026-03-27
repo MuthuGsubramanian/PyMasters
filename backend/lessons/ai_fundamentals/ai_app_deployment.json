@@ -245,6 +245,104 @@
         "",
         ">>> # API docs auto-generated at http://localhost:8000/docs"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_ai_app_deployment",
+      "code": "from fastapi import FastAPI\nfrom openai import OpenAI\n\napp = FastAPI()\nclient = OpenAI()\n\n@app.post('/chat')\nasync def chat(message: str):\n    response = client.chat.completions.create(\n        model='gpt-4o-mini',\n        messages=[{'role':'user','content': message}],\n        max_tokens=200\n    )\n    return {'reply': response.choices[0].message.content}\n\n# uvicorn main:app --host 0.0.0.0 --port 8000\nprint('AI API ready at http://localhost:8000')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "app": "FastAPI()"
+          },
+          "output": "",
+          "explanation": "FastAPI creates production-ready REST API"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "endpoint": "POST /chat"
+          },
+          "output": "",
+          "explanation": "Endpoint accepts user messages"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "model": "gpt-4o-mini"
+          },
+          "output": "",
+          "explanation": "Forward to LLM API inside your endpoint"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "max_tokens": 200
+          },
+          "output": "",
+          "explanation": "Limit response for cost control"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "",
+          "explanation": "Return JSON — standard REST pattern"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "AI API ready at http://localhost:8000",
+          "explanation": "Deploy with uvicorn + rate limiting + auth"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_ai_app_deployment",
+      "nodes": [
+        {
+          "id": "user",
+          "label": "User request",
+          "next": [
+            "api"
+          ]
+        },
+        {
+          "id": "api",
+          "label": "FastAPI endpoint",
+          "next": [
+            "validate"
+          ]
+        },
+        {
+          "id": "validate",
+          "label": "Validate & rate-limit",
+          "next": [
+            "llm"
+          ]
+        },
+        {
+          "id": "llm",
+          "label": "Call LLM API",
+          "next": [
+            "cache"
+          ]
+        },
+        {
+          "id": "cache",
+          "label": "Cache response",
+          "next": [
+            "respond"
+          ]
+        },
+        {
+          "id": "respond",
+          "label": "Return JSON",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -320,20 +418,44 @@
         "ta": "எளிய பணிகளுக்கு gpt-4o-விலிருந்து gpt-4o-mini-க்கு மாறுவதன் மூலம் எவ்வளவு சேமிக்கலாம்?"
       },
       "options": {
-        "en": ["10%", "50%", "About 90%", "No savings"],
-        "ta": ["10%", "50%", "சுமார் 90%", "சேமிப்பு இல்லை"]
+        "en": [
+          "10%",
+          "50%",
+          "About 90%",
+          "No savings"
+        ],
+        "ta": [
+          "10%",
+          "50%",
+          "சுமார் 90%",
+          "சேமிப்பு இல்லை"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["fastapi", "ai_deployment", "cost_optimization", "caching", "monitoring"],
-    "concepts_required": ["openai_api_basics", "structured_output"],
+    "concepts_taught": [
+      "fastapi",
+      "ai_deployment",
+      "cost_optimization",
+      "caching",
+      "monitoring"
+    ],
+    "concepts_required": [
+      "openai_api_basics",
+      "structured_output"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 40,
-    "real_world_application": ["production_deployment", "startup_ai"],
+    "real_world_application": [
+      "production_deployment",
+      "startup_ai"
+    ],
     "category": "ai_advanced",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

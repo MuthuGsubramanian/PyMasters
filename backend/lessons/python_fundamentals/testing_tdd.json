@@ -39,6 +39,38 @@
       "branch": "cycle"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Stack:\n    def __init__(self):\n        self._data = []\n    def push(self, item):\n        self._data.append(item)\n    def pop(self):\n        return self._data.pop()\n    def __len__(self):\n        return len(self._data)\ns = Stack()\ns.push(1)\ns.push(2)\nprint(len(s))\nprint(s.pop())\nprint(len(s))",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define Stack class (TDD: written to pass tests)" },
+        { "line": 9, "variables": { "s": "Stack([])" }, "output": "", "description": "Create empty Stack instance" },
+        { "line": 10, "variables": { "s": "Stack([1])" }, "output": "", "description": "Push 1 onto the stack" },
+        { "line": 11, "variables": { "s": "Stack([1, 2])" }, "output": "", "description": "Push 2 onto the stack" },
+        { "line": 12, "variables": { "s": "Stack([1, 2])" }, "output": "2", "description": "len(s) returns 2 -- two items on stack" },
+        { "line": 13, "variables": { "s": "Stack([1])" }, "output": "2\n2", "description": "pop() removes and returns 2 (last in, first out)" },
+        { "line": 14, "variables": { "s": "Stack([1])" }, "output": "2\n2\n1", "description": "len(s) is now 1 after popping" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "red", "label": "RED: Write failing test", "type": "process" },
+        { "id": "green", "label": "GREEN: Write code to pass", "type": "process" },
+        { "id": "refactor", "label": "REFACTOR: Clean up", "type": "process" },
+        { "id": "repeat", "label": "Repeat", "type": "end" }
+      ],
+      "edges": [
+        { "from": "red", "to": "green" },
+        { "from": "green", "to": "refactor" },
+        { "from": "refactor", "to": "repeat" },
+        { "from": "repeat", "to": "red" }
+      ],
+      "executionPath": ["red", "green", "refactor", "repeat"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

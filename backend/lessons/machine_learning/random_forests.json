@@ -30,11 +30,20 @@
       "nodes": [
         {
           "label": "Random Forest",
-          "children": ["Bagging", "Feature Randomness", "Majority Vote", "Feature Importance"]
+          "children": [
+            "Bagging",
+            "Feature Randomness",
+            "Majority Vote",
+            "Feature Importance"
+          ]
         },
         {
           "label": "Ensemble Methods",
-          "children": ["Bagging (Random Forest)", "Boosting (XGBoost)", "Stacking"]
+          "children": [
+            "Bagging (Random Forest)",
+            "Boosting (XGBoost)",
+            "Stacking"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,62 +55,86 @@
         {
           "line": "from sklearn.ensemble import RandomForestClassifier",
           "highlight": "RandomForestClassifier",
-          "explanation": { "en": "Import the random forest — an ensemble of decision trees" }
+          "explanation": {
+            "en": "Import the random forest — an ensemble of decision trees"
+          }
         },
         {
           "line": "from sklearn.datasets import load_wine",
           "highlight": "load_wine",
-          "explanation": { "en": "Wine dataset: 178 samples, 13 chemical features, 3 classes" }
+          "explanation": {
+            "en": "Wine dataset: 178 samples, 13 chemical features, 3 classes"
+          }
         },
         {
           "line": "X, y = load_wine(return_X_y=True)",
           "highlight": "X, y",
-          "explanation": { "en": "Load features and target labels" }
+          "explanation": {
+            "en": "Load features and target labels"
+          }
         },
         {
           "line": "feature_names = load_wine().feature_names",
           "highlight": "feature_names",
-          "explanation": { "en": "Store feature names for importance analysis later" }
+          "explanation": {
+            "en": "Store feature names for importance analysis later"
+          }
         },
         {
           "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
           "highlight": "train_test_split",
-          "explanation": { "en": "Standard 80/20 split" }
+          "explanation": {
+            "en": "Standard 80/20 split"
+          }
         },
         {
           "line": "rf = RandomForestClassifier(n_estimators=100, random_state=42)",
           "highlight": "n_estimators=100",
-          "explanation": { "en": "Create a forest of 100 decision trees" }
+          "explanation": {
+            "en": "Create a forest of 100 decision trees"
+          }
         },
         {
           "line": "rf.fit(X_train, y_train)",
           "highlight": "fit",
-          "explanation": { "en": "Train all 100 trees — each on a different bootstrap sample" }
+          "explanation": {
+            "en": "Train all 100 trees — each on a different bootstrap sample"
+          }
         },
         {
           "line": "print(f'Train Accuracy: {rf.score(X_train, y_train):.3f}')",
           "highlight": "Train",
-          "explanation": { "en": "Training accuracy — usually very high for random forests" }
+          "explanation": {
+            "en": "Training accuracy — usually very high for random forests"
+          }
         },
         {
           "line": "print(f'Test Accuracy: {rf.score(X_test, y_test):.3f}')",
           "highlight": "Test",
-          "explanation": { "en": "Test accuracy — the real measure of generalization" }
+          "explanation": {
+            "en": "Test accuracy — the real measure of generalization"
+          }
         },
         {
           "line": "importances = rf.feature_importances_",
           "highlight": "feature_importances_",
-          "explanation": { "en": "Each feature gets an importance score — how much it helps reduce impurity" }
+          "explanation": {
+            "en": "Each feature gets an importance score — how much it helps reduce impurity"
+          }
         },
         {
           "line": "import numpy as np; top_idx = np.argsort(importances)[::-1][:5]",
           "highlight": "argsort",
-          "explanation": { "en": "Sort features by importance — find the top 5 most important" }
+          "explanation": {
+            "en": "Sort features by importance — find the top 5 most important"
+          }
         },
         {
           "line": "for i in top_idx: print(f'{feature_names[i]}: {importances[i]:.4f}')",
           "highlight": "print",
-          "explanation": { "en": "Display top features — these drive the model's decisions most" }
+          "explanation": {
+            "en": "Display top features — these drive the model's decisions most"
+          }
         }
       ]
     },
@@ -134,6 +167,59 @@
         "proline: 0.1198",
         "od280/od315_of_diluted_wines: 0.0821"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_random_forests",
+      "code": "from sklearn.ensemble import RandomForestClassifier\nfrom sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\nimport numpy as np\n\nX, y = load_iris(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nrf = RandomForestClassifier(n_estimators=100, max_depth=4, random_state=42)\nrf.fit(X_train, y_train)\nprint(f'Accuracy: {rf.score(X_test, y_test):.3f}')\nimportances = rf.feature_importances_\nfor name, imp in zip(load_iris().feature_names, importances):\n    print(f'{name}: {imp:.3f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(150, 4)"
+          },
+          "output": "",
+          "explanation": "Load Iris dataset"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "n_estimators": "100"
+          },
+          "output": "",
+          "explanation": "Create forest with 100 decision trees"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "rf": "fitted"
+          },
+          "output": "",
+          "explanation": "Each tree trained on bootstrap sample with random feature subsets"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "accuracy": "1.000"
+          },
+          "output": "Accuracy: 1.000",
+          "explanation": "Perfect test accuracy — ensemble reduces overfitting"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "importances": "[0.09, 0.03, 0.44, 0.44]"
+          },
+          "output": "",
+          "explanation": "Feature importance from mean decrease in impurity"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "sepal length: 0.093\nsepal width: 0.025\npetal length: 0.441\npetal width: 0.441",
+          "explanation": "Petal features dominate — most useful for classification"
+        }
+      ]
     }
   ],
   "practice_challenges": [
@@ -165,8 +251,18 @@
         "ta": "கூட்டு கற்றலில் பேக்கிங் என்றால் என்ன?"
       },
       "options": {
-        "en": ["Training models in sequence", "Training models on random subsets with replacement and averaging", "Using a single large tree", "Removing outliers"],
-        "ta": ["மாடல்களை வரிசையாகப் பயிற்சி செய்தல்", "மாற்றீட்டுடன் சீரற்ற துணைக்குழுக்களில் மாடல்களைப் பயிற்சித்து சராசரி எடுத்தல்", "ஒற்றை பெரிய மரத்தைப் பயன்படுத்துதல்", "வெளிப்புற மதிப்புகளை நீக்குதல்"]
+        "en": [
+          "Training models in sequence",
+          "Training models on random subsets with replacement and averaging",
+          "Using a single large tree",
+          "Removing outliers"
+        ],
+        "ta": [
+          "மாடல்களை வரிசையாகப் பயிற்சி செய்தல்",
+          "மாற்றீட்டுடன் சீரற்ற துணைக்குழுக்களில் மாடல்களைப் பயிற்சித்து சராசரி எடுத்தல்",
+          "ஒற்றை பெரிய மரத்தைப் பயன்படுத்துதல்",
+          "வெளிப்புற மதிப்புகளை நீக்குதல்"
+        ]
       },
       "correct": 1
     },
@@ -176,8 +272,18 @@
         "ta": "ரேண்டம் ஃபாரஸ்ட் ஒவ்வொரு பிரிப்பிலும் அம்சங்களின் ஒரு துணைக்குழுவை மட்டும் ஏன் கருதுகிறது?"
       },
       "options": {
-        "en": ["To save memory", "To decorrelate trees so they make different errors", "To speed up prediction", "To reduce the number of features"],
-        "ta": ["நினைவகத்தை சேமிக்க", "மரங்கள் வெவ்வேறு பிழைகளை செய்ய தொடர்பின்மையாக்க", "கணிப்பை வேகப்படுத்த", "அம்சங்களின் எண்ணிக்கையைக் குறைக்க"]
+        "en": [
+          "To save memory",
+          "To decorrelate trees so they make different errors",
+          "To speed up prediction",
+          "To reduce the number of features"
+        ],
+        "ta": [
+          "நினைவகத்தை சேமிக்க",
+          "மரங்கள் வெவ்வேறு பிழைகளை செய்ய தொடர்பின்மையாக்க",
+          "கணிப்பை வேகப்படுத்த",
+          "அம்சங்களின் எண்ணிக்கையைக் குறைக்க"
+        ]
       },
       "correct": 1
     },
@@ -187,20 +293,44 @@
         "ta": "ரேண்டம் ஃபாரஸ்ட்டில் feature_importances_ என்ன குறிக்கிறது?"
       },
       "options": {
-        "en": ["The weight of each feature in the linear model", "How much each feature contributes to reducing impurity across all trees", "The correlation between features", "The number of times each feature is used"],
-        "ta": ["நேரியல் மாடலில் ஒவ்வொரு அம்சத்தின் எடை", "அனைத்து மரங்களிலும் அசுத்தத்தைக் குறைக்க ஒவ்வொரு அம்சம் எவ்வளவு பங்களிக்கிறது", "அம்சங்களுக்கு இடையிலான தொடர்பு", "ஒவ்வொரு அம்சமும் பயன்படுத்தப்படும் எண்ணிக்கை"]
+        "en": [
+          "The weight of each feature in the linear model",
+          "How much each feature contributes to reducing impurity across all trees",
+          "The correlation between features",
+          "The number of times each feature is used"
+        ],
+        "ta": [
+          "நேரியல் மாடலில் ஒவ்வொரு அம்சத்தின் எடை",
+          "அனைத்து மரங்களிலும் அசுத்தத்தைக் குறைக்க ஒவ்வொரு அம்சம் எவ்வளவு பங்களிக்கிறது",
+          "அம்சங்களுக்கு இடையிலான தொடர்பு",
+          "ஒவ்வொரு அம்சமும் பயன்படுத்தப்படும் எண்ணிக்கை"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["random_forests", "bagging", "ensemble_methods", "feature_importance"],
-    "concepts_required": ["decision_trees", "train_test_split"],
+    "concepts_taught": [
+      "random_forests",
+      "bagging",
+      "ensemble_methods",
+      "feature_importance"
+    ],
+    "concepts_required": [
+      "decision_trees",
+      "train_test_split"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["fraud_detection", "recommendation", "feature_selection"],
+    "real_world_application": [
+      "fraud_detection",
+      "recommendation",
+      "feature_selection"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["supervised_learning"]
+    "path_memberships": [
+      "supervised_learning"
+    ]
   }
 }

@@ -47,23 +47,89 @@
       "type": "CodeStepper",
       "id": "optimization_code",
       "steps": [
-        {"line": "quantized = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)", "highlight": "quantize", "explanation": {"en": "Dynamic quantization: convert float32 weights to int8 at runtime. 4x smaller, faster inference"}},
-        {"line": "# Original: 803 KB, Quantized: 210 KB", "highlight": "size", "explanation": {"en": "Nearly 4x size reduction! Int8 uses 1 byte vs float32's 4 bytes per weight"}},
-        {"line": "prune.l1_unstructured(model.fc1, name='weight', amount=0.3)", "highlight": "prune", "explanation": {"en": "Remove 30% of weights with smallest absolute values. Sets them to zero"}},
-        {"line": "sparsity = torch.sum(model.fc1.weight == 0) / model.fc1.weight.nelement()", "highlight": "sparsity", "explanation": {"en": "Check what fraction of weights are zero. More sparsity = smaller effective model"}},
-        {"line": "prune.remove(model.fc1, 'weight')", "highlight": "permanent", "explanation": {"en": "Make pruning permanent: remove the pruning hooks and apply the mask to weights"}},
-        {"line": "torch.onnx.export(model, dummy_input, 'model.onnx', ...)", "highlight": "onnx", "explanation": {"en": "Export to ONNX: universal format readable by TensorRT, CoreML, ONNX Runtime, etc."}},
-        {"line": "dynamic_axes={'input': {0: 'batch_size'}}", "highlight": "dynamic", "explanation": {"en": "Allow variable batch size in ONNX model. Essential for production serving"}},
-        {"line": "scripted = torch.jit.script(model)", "highlight": "jit", "explanation": {"en": "TorchScript: compile model for C++ runtime. Removes Python dependency for deployment"}},
-        {"line": "scripted.save('model_scripted.pt')", "highlight": "save_jit", "explanation": {"en": "Save scripted model. Can be loaded in C++ or mobile without Python"}},
-        {"line": "# Profile: torch.profiler.profile()", "highlight": "profile", "explanation": {"en": "Use PyTorch profiler to find bottlenecks: which layers take most time/memory?"}}
+        {
+          "line": "quantized = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)",
+          "highlight": "quantize",
+          "explanation": {
+            "en": "Dynamic quantization: convert float32 weights to int8 at runtime. 4x smaller, faster inference"
+          }
+        },
+        {
+          "line": "# Original: 803 KB, Quantized: 210 KB",
+          "highlight": "size",
+          "explanation": {
+            "en": "Nearly 4x size reduction! Int8 uses 1 byte vs float32's 4 bytes per weight"
+          }
+        },
+        {
+          "line": "prune.l1_unstructured(model.fc1, name='weight', amount=0.3)",
+          "highlight": "prune",
+          "explanation": {
+            "en": "Remove 30% of weights with smallest absolute values. Sets them to zero"
+          }
+        },
+        {
+          "line": "sparsity = torch.sum(model.fc1.weight == 0) / model.fc1.weight.nelement()",
+          "highlight": "sparsity",
+          "explanation": {
+            "en": "Check what fraction of weights are zero. More sparsity = smaller effective model"
+          }
+        },
+        {
+          "line": "prune.remove(model.fc1, 'weight')",
+          "highlight": "permanent",
+          "explanation": {
+            "en": "Make pruning permanent: remove the pruning hooks and apply the mask to weights"
+          }
+        },
+        {
+          "line": "torch.onnx.export(model, dummy_input, 'model.onnx', ...)",
+          "highlight": "onnx",
+          "explanation": {
+            "en": "Export to ONNX: universal format readable by TensorRT, CoreML, ONNX Runtime, etc."
+          }
+        },
+        {
+          "line": "dynamic_axes={'input': {0: 'batch_size'}}",
+          "highlight": "dynamic",
+          "explanation": {
+            "en": "Allow variable batch size in ONNX model. Essential for production serving"
+          }
+        },
+        {
+          "line": "scripted = torch.jit.script(model)",
+          "highlight": "jit",
+          "explanation": {
+            "en": "TorchScript: compile model for C++ runtime. Removes Python dependency for deployment"
+          }
+        },
+        {
+          "line": "scripted.save('model_scripted.pt')",
+          "highlight": "save_jit",
+          "explanation": {
+            "en": "Save scripted model. Can be loaded in C++ or mobile without Python"
+          }
+        },
+        {
+          "line": "# Profile: torch.profiler.profile()",
+          "highlight": "profile",
+          "explanation": {
+            "en": "Use PyTorch profiler to find bottlenecks: which layers take most time/memory?"
+          }
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "size_comparison",
-      "left": {"label": "Original Model", "content": "Size: 803 KB\nPrecision: float32\nAll weights active\nPython only"},
-      "right": {"label": "Optimized Model", "content": "Size: 150 KB (quantized + pruned)\nPrecision: int8\n70% weights active\nONNX: runs anywhere"},
+      "left": {
+        "label": "Original Model",
+        "content": "Size: 803 KB\nPrecision: float32\nAll weights active\nPython only"
+      },
+      "right": {
+        "label": "Optimized Model",
+        "content": "Size: 150 KB (quantized + pruned)\nPrecision: int8\n70% weights active\nONNX: runs anywhere"
+      },
       "duration_ms": 3000
     },
     {
@@ -95,7 +161,13 @@
       "id": "optimization_flow",
       "from": "trained_model",
       "to": "deployed",
-      "steps": ["Train model", "Prune (30%)", "Quantize (int8)", "Export ONNX", "Deploy to edge/cloud"],
+      "steps": [
+        "Train model",
+        "Prune (30%)",
+        "Quantize (int8)",
+        "Export ONNX",
+        "Deploy to edge/cloud"
+      ],
       "duration_ms": 3000
     },
     {
@@ -103,10 +175,34 @@
       "id": "deployment_targets",
       "structure_type": "deployment",
       "layers": [
-        {"name": "ONNX Runtime", "nodes": ["Server, Cloud"], "type": "cloud"},
-        {"name": "TorchScript", "nodes": ["C++ Backend"], "type": "server"},
-        {"name": "CoreML", "nodes": ["iOS/macOS"], "type": "mobile"},
-        {"name": "TFLite (via ONNX)", "nodes": ["Android"], "type": "mobile"}
+        {
+          "name": "ONNX Runtime",
+          "nodes": [
+            "Server, Cloud"
+          ],
+          "type": "cloud"
+        },
+        {
+          "name": "TorchScript",
+          "nodes": [
+            "C++ Backend"
+          ],
+          "type": "server"
+        },
+        {
+          "name": "CoreML",
+          "nodes": [
+            "iOS/macOS"
+          ],
+          "type": "mobile"
+        },
+        {
+          "name": "TFLite (via ONNX)",
+          "nodes": [
+            "Android"
+          ],
+          "type": "mobile"
+        }
       ],
       "duration_ms": 3000
     },
@@ -124,6 +220,53 @@
         ">>> # Accuracy comparison",
         "Original accuracy: 97.2%",
         "Quantized accuracy: 96.8% (only -0.4%!)"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_model_opt",
+      "code": "import torch\nimport torch.nn as nn\n\nmodel = nn.Sequential(\n    nn.Linear(10, 64), nn.ReLU(),\n    nn.Linear(64, 32), nn.ReLU(),\n    nn.Linear(32, 2)\n)\n\n# Count parameters\ntotal_params = sum(p.numel() for p in model.parameters())\nprint(f'Total parameters: {total_params:,}')\n\n# TorchScript for deployment\nscripted = torch.jit.script(model)\nscripted.save('model_scripted.pt')\nprint('TorchScript model saved!')\n\n# Dynamic quantization\nquantized = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)\nprint(f'Quantized model ready for CPU inference')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "model": "10->64->32->2"
+          },
+          "output": "",
+          "explanation": "Simple classification network"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "total_params": "2818"
+          },
+          "output": "Total parameters: 2,818",
+          "explanation": "Count all trainable parameters"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "scripted": "TorchScript model"
+          },
+          "output": "",
+          "explanation": "JIT compile for optimized inference without Python"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "file": "model_scripted.pt"
+          },
+          "output": "TorchScript model saved!",
+          "explanation": "Saved model can be loaded in C++ or mobile"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "quantized": "INT8 model"
+          },
+          "output": "Quantized model ready for CPU inference",
+          "explanation": "INT8 quantization: ~4x smaller, ~2x faster on CPU"
+        }
       ]
     },
     {
@@ -162,8 +305,18 @@
         "ta": "Quantization மாதிரி எடைகளுக்கு என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Removes them", "Converts from float32 to int8, reducing precision but also size", "Doubles them", "Converts to strings"],
-        "ta": ["அகற்றுகிறது", "Float32-லிருந்து int8-க்கு மாற்றுகிறது, துல்லியத்தைக் குறைத்து அளவையும் குறைக்கிறது", "இரட்டிப்பாக்குகிறது", "சரங்களாக மாற்றுகிறது"]
+        "en": [
+          "Removes them",
+          "Converts from float32 to int8, reducing precision but also size",
+          "Doubles them",
+          "Converts to strings"
+        ],
+        "ta": [
+          "அகற்றுகிறது",
+          "Float32-லிருந்து int8-க்கு மாற்றுகிறது, துல்லியத்தைக் குறைத்து அளவையும் குறைக்கிறது",
+          "இரட்டிப்பாக்குகிறது",
+          "சரங்களாக மாற்றுகிறது"
+        ]
       },
       "correct": 1
     },
@@ -173,8 +326,18 @@
         "ta": "ONNX வடிவமைப்பின் நன்மை என்ன?"
       },
       "options": {
-        "en": ["It makes models more accurate", "It's a universal format that runs on any framework/platform", "It only works with PyTorch", "It increases model size"],
-        "ta": ["மாதிரிகளை மிகவும் துல்லியமாக ஆக்குகிறது", "எந்த framework/platform-லும் இயங்கும் உலகளாவிய வடிவமைப்பு", "PyTorch-உடன் மட்டுமே வேலை செய்கிறது", "மாதிரி அளவை அதிகரிக்கிறது"]
+        "en": [
+          "It makes models more accurate",
+          "It's a universal format that runs on any framework/platform",
+          "It only works with PyTorch",
+          "It increases model size"
+        ],
+        "ta": [
+          "மாதிரிகளை மிகவும் துல்லியமாக ஆக்குகிறது",
+          "எந்த framework/platform-லும் இயங்கும் உலகளாவிய வடிவமைப்பு",
+          "PyTorch-உடன் மட்டுமே வேலை செய்கிறது",
+          "மாதிரி அளவை அதிகரிக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -184,20 +347,46 @@
         "ta": "amount=0.5 உடன் pruning என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Removes 50% of layers", "Sets 50% of weights with smallest magnitude to zero", "Halves the learning rate", "Removes half the training data"],
-        "ta": ["50% அடுக்குகளை அகற்றுகிறது", "சிறிய அளவு கொண்ட 50% எடைகளை பூஜ்ஜியமாக அமைக்கிறது", "Learning rate-ஐ பாதியாகக் குறைக்கிறது", "பாதி பயிற்சி தரவை அகற்றுகிறது"]
+        "en": [
+          "Removes 50% of layers",
+          "Sets 50% of weights with smallest magnitude to zero",
+          "Halves the learning rate",
+          "Removes half the training data"
+        ],
+        "ta": [
+          "50% அடுக்குகளை அகற்றுகிறது",
+          "சிறிய அளவு கொண்ட 50% எடைகளை பூஜ்ஜியமாக அமைக்கிறது",
+          "Learning rate-ஐ பாதியாகக் குறைக்கிறது",
+          "பாதி பயிற்சி தரவை அகற்றுகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["quantization", "pruning", "onnx", "torchscript", "model_compression", "deployment"],
-    "concepts_required": ["pytorch_training", "pytorch_basics"],
+    "concepts_taught": [
+      "quantization",
+      "pruning",
+      "onnx",
+      "torchscript",
+      "model_compression",
+      "deployment"
+    ],
+    "concepts_required": [
+      "pytorch_training",
+      "pytorch_basics"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["edge_deployment", "mobile_ml", "production_serving"],
+    "real_world_application": [
+      "edge_deployment",
+      "mobile_ml",
+      "production_serving"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

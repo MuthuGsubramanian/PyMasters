@@ -43,6 +43,40 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Animal:\n    def __init__(self, name):\n        self.name = name\n    def speak(self):\n        return f'{self.name} makes a sound'\nclass Dog(Animal):\n    def speak(self):\n        return f'{self.name} says Woof!'\nd = Dog('Rex')\nprint(d.speak())\nprint(d.name)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define parent class Animal with name and speak()" },
+        { "line": 6, "variables": {}, "output": "", "description": "Define Dog that inherits from Animal" },
+        { "line": 9, "variables": { "d": "Dog(name='Rex')" }, "output": "", "description": "Create Dog instance -- inherits __init__ from Animal" },
+        { "line": 10, "variables": { "d": "Dog(name='Rex')" }, "output": "Rex says Woof!", "description": "Dog.speak() overrides Animal.speak()" },
+        { "line": 11, "variables": { "d": "Dog(name='Rex')" }, "output": "Rex says Woof!\nRex", "description": "d.name inherited from Animal.__init__" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "animal", "label": "Animal (parent)", "type": "start" },
+        { "id": "init", "label": "__init__(name)", "type": "process" },
+        { "id": "dog", "label": "Dog(Animal) inherits", "type": "process" },
+        { "id": "override", "label": "Dog.speak() overrides", "type": "process" },
+        { "id": "super", "label": "super().__init__(name)", "type": "process" },
+        { "id": "end", "label": "Instance ready", "type": "end" }
+      ],
+      "edges": [
+        { "from": "animal", "to": "init" },
+        { "from": "init", "to": "dog" },
+        { "from": "dog", "to": "override" },
+        { "from": "dog", "to": "super" },
+        { "from": "override", "to": "end" },
+        { "from": "super", "to": "end" }
+      ],
+      "executionPath": ["animal", "init", "dog", "super", "override", "end"],
+      "variables": { "self.name": "Rex" },
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

@@ -99,6 +99,69 @@
         "2  Charlie     92    True",
         "3    Diana     67    True"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pandas_filter",
+      "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Charlie', 'Diana'],\n    'age': [25, 30, 35, 28],\n    'dept': ['Eng', 'Sales', 'Eng', 'Sales']\n})\nmask = df['age'] > 28\nprint(mask)\nfiltered = df[mask]\nprint(filtered)\neng = df[df['dept'] == 'Eng']\nprint(eng)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import pandas"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "df": "DataFrame(4 rows x 3 cols)"
+          },
+          "output": "",
+          "explanation": "Create a 4-person employee DataFrame"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "mask": "[False, True, True, False]"
+          },
+          "output": "",
+          "explanation": "Boolean mask: True where age > 28"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "0    False\n1     True\n2     True\n3    False",
+          "explanation": "Series of True/False for each row"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "filtered": "DataFrame(2 rows)"
+          },
+          "output": "",
+          "explanation": "Apply mask to keep only matching rows"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "     name  age   dept\n1     Bob   30  Sales\n2  Charlie   35    Eng",
+          "explanation": "Only Bob (30) and Charlie (35) pass the filter"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "eng": "DataFrame(2 rows)"
+          },
+          "output": "",
+          "explanation": "Filter by string equality"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "     name  age dept\n0   Alice   25  Eng\n2  Charlie   35  Eng",
+          "explanation": "Only Engineering dept employees"
+        }
+      ]
     }
   ],
   "practice_challenges": [

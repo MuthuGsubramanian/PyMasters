@@ -170,6 +170,126 @@
         "After softmax: [0.18, 0.56, 0.26]",
         "Output: 0.18×V_the + 0.56×V_cat + 0.26×V_sat"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_transformer_attn",
+      "code": "import torch\nimport torch.nn.functional as F\nimport math\n\ndef attention(Q, K, V):\n    d_k = Q.size(-1)\n    scores = Q @ K.transpose(-2, -1) / math.sqrt(d_k)\n    weights = F.softmax(scores, dim=-1)\n    return weights @ V, weights\n\nQ = torch.randn(1, 4, 8)  # 4 queries, dim 8\nK = torch.randn(1, 4, 8)\nV = torch.randn(1, 4, 8)\n\nout, weights = attention(Q, K, V)\nprint(f'Output: {out.shape}')\nprint(f'Attention weights: {weights.shape}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "function": "attention(Q, K, V)"
+          },
+          "output": "",
+          "explanation": "Scaled dot-product attention"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "scores": "Q @ K^T / sqrt(8)"
+          },
+          "output": "",
+          "explanation": "Compute pairwise similarity, scale by sqrt(d_k)"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "weights": "softmax(scores)"
+          },
+          "output": "",
+          "explanation": "Convert to attention probabilities"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "output": "weights @ V"
+          },
+          "output": "",
+          "explanation": "Weighted combination of values"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "Output: torch.Size([1, 4, 8])",
+          "explanation": "Each query gets a context-aware representation"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "Attention weights: torch.Size([1, 4, 4])",
+          "explanation": "4x4 attention map: how much each query attends to each key"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_attn_flow",
+      "title": "Attention Computation Flow",
+      "nodes": [
+        {
+          "id": "q",
+          "label": "Query Q",
+          "type": "start"
+        },
+        {
+          "id": "k",
+          "label": "Key K",
+          "type": "start"
+        },
+        {
+          "id": "v",
+          "label": "Value V",
+          "type": "start"
+        },
+        {
+          "id": "qk",
+          "label": "Q @ K^T / sqrt(d)",
+          "type": "process"
+        },
+        {
+          "id": "sm",
+          "label": "Softmax",
+          "type": "process"
+        },
+        {
+          "id": "wv",
+          "label": "Weights @ V",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "Attended Output",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "q",
+          "to": "qk"
+        },
+        {
+          "from": "k",
+          "to": "qk"
+        },
+        {
+          "from": "qk",
+          "to": "sm"
+        },
+        {
+          "from": "sm",
+          "to": "wv"
+        },
+        {
+          "from": "v",
+          "to": "wv"
+        },
+        {
+          "from": "wv",
+          "to": "out"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

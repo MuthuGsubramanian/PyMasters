@@ -160,6 +160,91 @@
         "Momentum: convergence in ~200 steps",
         "Adam:     convergence in ~100 steps"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_bp_opt",
+      "code": "import torch\nimport torch.nn as nn\n\nmodel = nn.Linear(5, 1)\nX = torch.randn(50, 5)\ny = torch.randn(50, 1)\n\n# Compare optimizers\nfor OptClass, name in [(torch.optim.SGD, 'SGD'), (torch.optim.Adam, 'Adam')]:\n    m = nn.Linear(5, 1)\n    opt = OptClass(m.parameters(), lr=0.01)\n    for epoch in range(100):\n        pred = m(X)\n        loss = nn.MSELoss()(pred, y)\n        opt.zero_grad()\n        loss.backward()\n        opt.step()\n    print(f'{name} final loss: {loss.item():.4f}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "model": "Linear(5, 1)"
+          },
+          "output": "",
+          "explanation": "Simple linear model for optimizer comparison"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "optimizers": "[SGD, Adam]"
+          },
+          "output": "",
+          "explanation": "Compare SGD and Adam optimizers"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "lr": "0.01"
+          },
+          "output": "",
+          "explanation": "Same learning rate for fair comparison"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "loss_fn": "MSELoss"
+          },
+          "output": "",
+          "explanation": "Same loss function for both"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "SGD final loss: 0.9823\nAdam final loss: 0.9412",
+          "explanation": "Adam often converges faster due to adaptive learning rates"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_optimizer_compare",
+      "title": "Optimizer Convergence Race",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 0,
+          "state": {
+            "SGD_loss": 5.2,
+            "Adam_loss": 5.2
+          },
+          "description": "Both start at same loss"
+        },
+        {
+          "iteration": 25,
+          "state": {
+            "SGD_loss": 2.8,
+            "Adam_loss": 1.5
+          },
+          "description": "Adam adapts faster"
+        },
+        {
+          "iteration": 50,
+          "state": {
+            "SGD_loss": 1.5,
+            "Adam_loss": 1.0
+          },
+          "description": "Adam still leads"
+        },
+        {
+          "iteration": 100,
+          "state": {
+            "SGD_loss": 0.98,
+            "Adam_loss": 0.94
+          },
+          "description": "Both converge, Adam slightly better"
+        }
+      ]
     }
   ],
   "practice_challenges": [

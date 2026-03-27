@@ -186,6 +186,146 @@
         "127.0.0.1 - - [27/Mar/2026 10:00:00] \"GET / HTTP/1.1\" 200 -",
         "127.0.0.1 - - [27/Mar/2026 10:00:05] \"GET /greet/PyMaster HTTP/1.1\" 200 -"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_flask_basic",
+      "title": "Flask Route Handling Step by Step",
+      "code": "from flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    return 'Welcome to PyMasters!'\n\n@app.route('/square/<int:num>')\ndef square(num):\n    result = num ** 2\n    return jsonify({'number': num, 'square': result})",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import Flask and jsonify for creating the app and JSON responses"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "app": "<Flask 'app'>"
+          },
+          "output": "",
+          "explanation": "Create Flask app instance -- __name__ helps locate templates"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "routes": {
+              "/": "home"
+            }
+          },
+          "output": "",
+          "explanation": "Register '/' URL to the home() function via decorator"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Welcome to PyMasters!",
+          "explanation": "When GET / is requested, return this plain text string"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "routes": {
+              "/": "home",
+              "/square/<int:num>": "square"
+            }
+          },
+          "output": "",
+          "explanation": "Register dynamic route -- <int:num> captures an integer from URL"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "num": 5
+          },
+          "output": "",
+          "explanation": "Flask calls square(5) when someone visits /square/5"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "num": 5,
+            "result": 25
+          },
+          "output": "",
+          "explanation": "Calculate the square: 5 ** 2 = 25"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "num": 5,
+            "result": 25
+          },
+          "output": "{\"number\": 5, \"square\": 25}",
+          "explanation": "Return JSON response with jsonify"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_flask_routing",
+      "title": "Flask Request Routing Flow",
+      "nodes": [
+        {
+          "id": "browser",
+          "label": "Browser Request\nGET /square/5",
+          "type": "start"
+        },
+        {
+          "id": "wsgi",
+          "label": "WSGI Server\nReceives Request",
+          "type": "process"
+        },
+        {
+          "id": "flask",
+          "label": "Flask App\nURL Matching",
+          "type": "process"
+        },
+        {
+          "id": "route",
+          "label": "Route Match\n/square/<int:num>",
+          "type": "decision"
+        },
+        {
+          "id": "view",
+          "label": "View Function\nsquare(num=5)",
+          "type": "process"
+        },
+        {
+          "id": "response",
+          "label": "HTTP Response\n200 OK + JSON",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "browser",
+          "to": "wsgi",
+          "label": "HTTP"
+        },
+        {
+          "from": "wsgi",
+          "to": "flask",
+          "label": "environ"
+        },
+        {
+          "from": "flask",
+          "to": "route",
+          "label": "URL map"
+        },
+        {
+          "from": "route",
+          "to": "view",
+          "label": "num=5"
+        },
+        {
+          "from": "view",
+          "to": "response",
+          "label": "jsonify()"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -219,8 +359,18 @@
         "ta": "Flask-ல் @app.route('/') என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates a database table", "Maps the homepage URL to a function", "Imports a module", "Starts the server"],
-        "ta": ["தரவுத்தள அட்டவணையை உருவாக்குகிறது", "முகப்பு URL-ஐ செயல்பாட்டுடன் இணைக்கிறது", "தொகுதியை இறக்குமதி செய்கிறது", "சேவையகத்தை தொடங்குகிறது"]
+        "en": [
+          "Creates a database table",
+          "Maps the homepage URL to a function",
+          "Imports a module",
+          "Starts the server"
+        ],
+        "ta": [
+          "தரவுத்தள அட்டவணையை உருவாக்குகிறது",
+          "முகப்பு URL-ஐ செயல்பாட்டுடன் இணைக்கிறது",
+          "தொகுதியை இறக்குமதி செய்கிறது",
+          "சேவையகத்தை தொடங்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -230,8 +380,18 @@
         "ta": "Flask-ல் URL-லிருந்து மாறியை எவ்வாறு பிடிப்பது?"
       },
       "options": {
-        "en": ["@app.route('/user?id=1')", "@app.route('/user/<id>')", "@app.route('/user/{id}')", "@app.route('/user/:id')"],
-        "ta": ["@app.route('/user?id=1')", "@app.route('/user/<id>')", "@app.route('/user/{id}')", "@app.route('/user/:id')"]
+        "en": [
+          "@app.route('/user?id=1')",
+          "@app.route('/user/<id>')",
+          "@app.route('/user/{id}')",
+          "@app.route('/user/:id')"
+        ],
+        "ta": [
+          "@app.route('/user?id=1')",
+          "@app.route('/user/<id>')",
+          "@app.route('/user/{id}')",
+          "@app.route('/user/:id')"
+        ]
       },
       "correct": 1
     },
@@ -241,20 +401,43 @@
         "ta": "Flask பயன்பாட்டை இயக்கும்போது debug=True என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Makes the app faster", "Enables auto-reload and detailed error pages", "Disables all logging", "Connects to production database"],
-        "ta": ["பயன்பாட்டை வேகமாக்குகிறது", "தானியங்கி மறுஏற்றம் மற்றும் விரிவான பிழை பக்கங்களை இயக்குகிறது", "அனைத்து பதிவுகளையும் முடக்குகிறது", "உற்பத்தி தரவுத்தளத்துடன் இணைக்கிறது"]
+        "en": [
+          "Makes the app faster",
+          "Enables auto-reload and detailed error pages",
+          "Disables all logging",
+          "Connects to production database"
+        ],
+        "ta": [
+          "பயன்பாட்டை வேகமாக்குகிறது",
+          "தானியங்கி மறுஏற்றம் மற்றும் விரிவான பிழை பக்கங்களை இயக்குகிறது",
+          "அனைத்து பதிவுகளையும் முடக்குகிறது",
+          "உற்பத்தி தரவுத்தளத்துடன் இணைக்கிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["flask_routes", "templates", "request_handling", "dynamic_urls"],
-    "concepts_required": ["http_methods", "python_functions"],
+    "concepts_taught": [
+      "flask_routes",
+      "templates",
+      "request_handling",
+      "dynamic_urls"
+    ],
+    "concepts_required": [
+      "http_methods",
+      "python_functions"
+    ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["web_apps", "prototyping"],
+    "real_world_application": [
+      "web_apps",
+      "prototyping"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

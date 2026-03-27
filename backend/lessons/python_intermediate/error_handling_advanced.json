@@ -233,6 +233,143 @@
           "address": "0x03"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class AppError(Exception):\n    pass\n\nclass ValidationError(AppError):\n    def __init__(self, field, message):\n        self.field = field\n        super().__init__(f'{field}: {message}')\n\ndef validate_age(age):\n    if not isinstance(age, int) or age < 0:\n        raise ValidationError('age', f'Invalid: {age}')\n    return age\n\ntry:\n    validate_age(-5)\nexcept ValidationError as e:\n    print(f'Field: {e.field}')\n    print(f'Error: {e}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define base AppError - all app exceptions inherit from this"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "description": "ValidationError extends AppError with field attribute"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "description": "validate_age checks input and raises custom exception"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "age": -5
+          },
+          "output": "",
+          "description": "try: validate_age(-5) - age is negative"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "",
+          "description": "Condition true: raise ValidationError('age', 'Invalid: -5')"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "e": "ValidationError('age: Invalid: -5')"
+          },
+          "output": "",
+          "description": "except catches ValidationError, stores as e"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "Field: age",
+          "description": "Access custom .field attribute"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Error: age: Invalid: -5",
+          "description": "Full error message from super().__init__"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "validate_age(-5)",
+          "type": "start"
+        },
+        {
+          "id": "check",
+          "label": "age < 0?",
+          "type": "decision"
+        },
+        {
+          "id": "raise",
+          "label": "raise ValidationError",
+          "type": "process"
+        },
+        {
+          "id": "return",
+          "label": "return age",
+          "type": "process"
+        },
+        {
+          "id": "except",
+          "label": "except ValidationError",
+          "type": "process"
+        },
+        {
+          "id": "handle",
+          "label": "Print e.field, str(e)",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Error handled",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "raise",
+          "label": "Yes"
+        },
+        {
+          "from": "check",
+          "to": "return",
+          "label": "No"
+        },
+        {
+          "from": "raise",
+          "to": "except"
+        },
+        {
+          "from": "except",
+          "to": "handle"
+        },
+        {
+          "from": "handle",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "check",
+        "raise",
+        "except",
+        "handle",
+        "end"
+      ],
+      "variables": {},
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -325,13 +462,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["custom_exceptions", "exception_chaining", "raise_from", "traceback", "exception_hierarchy"],
-    "concepts_required": ["try_except", "classes", "inheritance"],
+    "concepts_taught": [
+      "custom_exceptions",
+      "exception_chaining",
+      "raise_from",
+      "traceback",
+      "exception_hierarchy"
+    ],
+    "concepts_required": [
+      "try_except",
+      "classes",
+      "inheritance"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["production_code", "API_error_handling", "logging"],
+    "real_world_application": [
+      "production_code",
+      "API_error_handling",
+      "logging"
+    ],
     "category": "error_handling",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

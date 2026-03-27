@@ -139,6 +139,64 @@
         "w.grad = 12.0  # for linear regression example",
         "b.grad =  4.0"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pt_autograd",
+      "code": "import torch\n\nx = torch.tensor(3.0, requires_grad=True)\ny = x ** 2 + 2 * x + 1  # y = x^2 + 2x + 1\ny.backward()  # dy/dx = 2x + 2\nprint(f'x = {x.item()}')\nprint(f'y = {y.item()}')\nprint(f'dy/dx = {x.grad.item()}')\n\n# Multi-variable\na = torch.tensor(2.0, requires_grad=True)\nb = torch.tensor(3.0, requires_grad=True)\nz = a**2 * b + b**3\nz.backward()\nprint(f'dz/da = {a.grad.item()}')\nprint(f'dz/db = {b.grad.item()}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "x": "3.0",
+            "requires_grad": true
+          },
+          "output": "",
+          "explanation": "Track gradients for x"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "y": "9 + 6 + 1 = 16"
+          },
+          "output": "",
+          "explanation": "Forward computation builds graph"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "x.grad": "8.0"
+          },
+          "output": "",
+          "explanation": "Backward: dy/dx = 2(3) + 2 = 8"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "dy/dx = 8.0",
+          "explanation": "Autograd computed derivative automatically"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "z": "4*3 + 27 = 39"
+          },
+          "output": "",
+          "explanation": "z = a^2*b + b^3"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "dz/da = 12.0",
+          "explanation": "dz/da = 2ab = 2*2*3 = 12"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "dz/db = 31.0",
+          "explanation": "dz/db = a^2 + 3b^2 = 4 + 27 = 31"
+        }
+      ]
     }
   ],
   "practice_challenges": [

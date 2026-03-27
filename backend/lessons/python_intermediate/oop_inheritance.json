@@ -198,6 +198,138 @@
           "address": "0x03"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class Animal:\n    def __init__(self, name):\n        self.name = name\n\n    def speak(self):\n        return f'{self.name} makes a sound'\n\nclass Dog(Animal):\n    def speak(self):\n        return f'{self.name} says Woof!'\n\nclass Cat(Animal):\n    def __init__(self, name, indoor):\n        super().__init__(name)\n        self.indoor = indoor\n\n    def speak(self):\n        return f'{self.name} says Meow!'\n\ndog = Dog('Rex')\ncat = Cat('Whiskers', True)\nprint(dog.speak())\nprint(cat.speak())\nprint(isinstance(dog, Animal))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define base class Animal with name attribute"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "description": "Dog inherits from Animal - gets __init__ and speak"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "",
+          "description": "Cat inherits from Animal with extra 'indoor' attribute"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "dog": "Dog(name='Rex')"
+          },
+          "output": "",
+          "description": "Dog('Rex') uses Animal's __init__ (inherited)"
+        },
+        {
+          "line": 21,
+          "variables": {
+            "cat": "Cat(name='Whiskers', indoor=True)"
+          },
+          "output": "",
+          "description": "Cat uses super().__init__ to set name, then sets indoor"
+        },
+        {
+          "line": 22,
+          "variables": {},
+          "output": "Rex says Woof!",
+          "description": "Dog's overridden speak() is called, not Animal's"
+        },
+        {
+          "line": 23,
+          "variables": {},
+          "output": "Whiskers says Meow!",
+          "description": "Cat's overridden speak() is called"
+        },
+        {
+          "line": 24,
+          "variables": {},
+          "output": "True",
+          "description": "Dog IS an Animal through inheritance"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "dog.speak()",
+          "type": "start"
+        },
+        {
+          "id": "check_dog",
+          "label": "Dog has speak()?",
+          "type": "decision"
+        },
+        {
+          "id": "dog_speak",
+          "label": "Dog.speak() -> 'Woof!'",
+          "type": "process"
+        },
+        {
+          "id": "check_animal",
+          "label": "Animal has speak()?",
+          "type": "decision"
+        },
+        {
+          "id": "animal_speak",
+          "label": "Animal.speak()",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Return result",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "check_dog"
+        },
+        {
+          "from": "check_dog",
+          "to": "dog_speak",
+          "label": "Yes"
+        },
+        {
+          "from": "check_dog",
+          "to": "check_animal",
+          "label": "No (MRO)"
+        },
+        {
+          "from": "check_animal",
+          "to": "animal_speak"
+        },
+        {
+          "from": "dog_speak",
+          "to": "end"
+        },
+        {
+          "from": "animal_speak",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "check_dog",
+        "dog_speak",
+        "end"
+      ],
+      "variables": {
+        "MRO": "Dog -> Animal -> object"
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -288,13 +420,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["inheritance", "super", "method_override", "MRO", "isinstance"],
-    "concepts_required": ["classes", "objects", "__init__", "self"],
+    "concepts_taught": [
+      "inheritance",
+      "super",
+      "method_override",
+      "MRO",
+      "isinstance"
+    ],
+    "concepts_required": [
+      "classes",
+      "objects",
+      "__init__",
+      "self"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["code_reuse", "class_hierarchies"],
+    "real_world_application": [
+      "code_reuse",
+      "class_hierarchies"
+    ],
     "category": "oop",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

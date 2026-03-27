@@ -190,6 +190,166 @@
         "",
         "========================= 5 passed in 0.03s ========================"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pytest_basics",
+      "title": "pytest Fixtures and Parametrize",
+      "code": "import pytest\n\ndef square(n): return n ** 2\n\n@pytest.fixture\ndef sample_list():\n    return [1, 2, 3, 4, 5]\n\ndef test_sum(sample_list):\n    assert sum(sample_list) == 15\n\n@pytest.mark.parametrize('n,expected', [(2,4),(3,9),(0,0),(-1,1)])\ndef test_square(n, expected):\n    assert square(n) == expected",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import pytest"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "Simple function to test"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "explanation": "@pytest.fixture for reusable setup"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "sample_list": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "output": "",
+          "explanation": "Returns fresh list per test"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "explanation": "pytest injects fixture by param name"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "sum": 15
+          },
+          "output": "test_sum PASSED",
+          "explanation": "Plain assert works in pytest"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "n": 2,
+            "expected": 4
+          },
+          "output": "test_square[2-4] PASSED",
+          "explanation": "Parametrize runs test 4 times"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "n": 3,
+            "expected": 9
+          },
+          "output": "test_square[3-9] PASSED",
+          "explanation": "3**2 == 9"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "n": 0,
+            "expected": 0
+          },
+          "output": "test_square[0-0] PASSED",
+          "explanation": "Edge case"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "n": -1,
+            "expected": 1
+          },
+          "output": "test_square[-1-1] PASSED",
+          "explanation": "(-1)**2 == 1"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_tdd_pytest",
+      "title": "TDD Red-Green-Refactor with pytest",
+      "nodes": [
+        {
+          "id": "write",
+          "label": "Write Failing\nTest",
+          "type": "start"
+        },
+        {
+          "id": "red",
+          "label": "RED\n1 FAILED",
+          "type": "decision"
+        },
+        {
+          "id": "code",
+          "label": "Implement",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN\n1 PASSED",
+          "type": "decision"
+        },
+        {
+          "id": "refactor",
+          "label": "REFACTOR",
+          "type": "process"
+        },
+        {
+          "id": "commit",
+          "label": "git commit",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "write",
+          "to": "red",
+          "label": "pytest"
+        },
+        {
+          "from": "red",
+          "to": "code",
+          "label": "Expected"
+        },
+        {
+          "from": "code",
+          "to": "green",
+          "label": "pytest"
+        },
+        {
+          "from": "green",
+          "to": "refactor",
+          "label": "Clean"
+        },
+        {
+          "from": "refactor",
+          "to": "commit",
+          "label": "Pass"
+        },
+        {
+          "from": "commit",
+          "to": "write",
+          "label": "Next"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -221,8 +381,18 @@
         "ta": "எந்த decorator pytest fixture உருவாக்கும்?"
       },
       "options": {
-        "en": ["@pytest.setup", "@pytest.fixture", "@pytest.mark.fixture", "@fixture"],
-        "ta": ["@pytest.setup", "@pytest.fixture", "@pytest.mark.fixture", "@fixture"]
+        "en": [
+          "@pytest.setup",
+          "@pytest.fixture",
+          "@pytest.mark.fixture",
+          "@fixture"
+        ],
+        "ta": [
+          "@pytest.setup",
+          "@pytest.fixture",
+          "@pytest.mark.fixture",
+          "@fixture"
+        ]
       },
       "correct": 1
     },
@@ -232,8 +402,18 @@
         "ta": "pytest ஒரு fixture-ஐ test function-க்குள் எப்படி செலுத்தும்?"
       },
       "options": {
-        "en": ["By calling setUp()", "By matching the parameter name to the fixture name", "By importing it explicitly", "By using self.fixture"],
-        "ta": ["setUp() அழைப்பதன் மூலம்", "parameter பெயரை fixture பெயருடன் பொருத்துவதன் மூலம்", "அதை வெளிப்படையாக import செய்வதன் மூலம்", "self.fixture பயன்படுத்துவதன் மூலம்"]
+        "en": [
+          "By calling setUp()",
+          "By matching the parameter name to the fixture name",
+          "By importing it explicitly",
+          "By using self.fixture"
+        ],
+        "ta": [
+          "setUp() அழைப்பதன் மூலம்",
+          "parameter பெயரை fixture பெயருடன் பொருத்துவதன் மூலம்",
+          "அதை வெளிப்படையாக import செய்வதன் மூலம்",
+          "self.fixture பயன்படுத்துவதன் மூலம்"
+        ]
       },
       "correct": 1
     },
@@ -243,20 +423,43 @@
         "ta": "@pytest.mark.parametrize என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Skips the test", "Runs the test once with default values", "Runs the same test with multiple sets of inputs", "Makes the test run in parallel"],
-        "ta": ["சோதனையைத் தவிர்க்கும்", "default values-உடன் சோதனையை ஒரு முறை இயக்கும்", "பல input sets-உடன் அதே சோதனையை இயக்கும்", "சோதனையை parallel-ல் இயக்கும்"]
+        "en": [
+          "Skips the test",
+          "Runs the test once with default values",
+          "Runs the same test with multiple sets of inputs",
+          "Makes the test run in parallel"
+        ],
+        "ta": [
+          "சோதனையைத் தவிர்க்கும்",
+          "default values-உடன் சோதனையை ஒரு முறை இயக்கும்",
+          "பல input sets-உடன் அதே சோதனையை இயக்கும்",
+          "சோதனையை parallel-ல் இயக்கும்"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["pytest", "fixtures", "parametrize", "markers"],
-    "concepts_required": ["functions", "testing_basics"],
+    "concepts_taught": [
+      "pytest",
+      "fixtures",
+      "parametrize",
+      "markers"
+    ],
+    "concepts_required": [
+      "functions",
+      "testing_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["test_automation", "ci_cd"],
+    "real_world_application": [
+      "test_automation",
+      "ci_cd"
+    ],
     "category": "testing",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

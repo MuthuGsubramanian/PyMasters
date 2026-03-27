@@ -134,6 +134,53 @@
         "BCE  = 0.3677",
         "Bad prediction (0.05 for true=1): BCE = 2.996"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_bp_loss",
+      "code": "import torch\nimport torch.nn as nn\n\n# MSE for regression\npred_r = torch.tensor([2.5, 0.0, 2.1])\ntrue_r = torch.tensor([3.0, -0.5, 2.0])\nmse = nn.MSELoss()(pred_r, true_r)\nprint(f'MSE: {mse.item():.4f}')\n\n# CrossEntropy for classification\nlogits = torch.tensor([[2.0, 1.0, 0.1]])\ntarget = torch.tensor([0])\nce = nn.CrossEntropyLoss()(logits, target)\nprint(f'CE: {ce.item():.4f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "pred_r": "[2.5, 0.0, 2.1]"
+          },
+          "output": "",
+          "explanation": "Regression predictions"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "true_r": "[3.0, -0.5, 2.0]"
+          },
+          "output": "",
+          "explanation": "True values"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "mse": "0.1167"
+          },
+          "output": "MSE: 0.1167",
+          "explanation": "MSE = mean((pred-true)^2) = (0.25+0.25+0.01)/3"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "logits": "[[2.0, 1.0, 0.1]]"
+          },
+          "output": "",
+          "explanation": "Raw scores for 3 classes"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "ce": "0.4170"
+          },
+          "output": "CE: 0.4170",
+          "explanation": "Cross-entropy: -log(softmax(logits)[target])"
+        }
+      ]
     }
   ],
   "practice_challenges": [

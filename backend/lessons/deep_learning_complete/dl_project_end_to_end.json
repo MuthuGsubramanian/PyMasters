@@ -47,16 +47,76 @@
       "type": "CodeStepper",
       "id": "project_code",
       "steps": [
-        {"line": "# STEP 1: DATA", "highlight": "data", "explanation": {"en": "Load FashionMNIST, apply augmentation (flip, rotate), normalize, split train/val/test"}},
-        {"line": "train_set, val_set = random_split(full_train, [50000, 10000])", "highlight": "split", "explanation": {"en": "Hold out 10K samples for validation. Never tune on test set!"}},
-        {"line": "# STEP 2: MODEL", "highlight": "model", "explanation": {"en": "CNN with BatchNorm, Dropout, two conv blocks + classifier. Production-quality architecture"}},
-        {"line": "nn.Conv2d(1, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU()", "highlight": "conv_block", "explanation": {"en": "Standard conv block pattern: Conv -> BN -> ReLU. Repeat throughout the network"}},
-        {"line": "# STEP 3: TRAINING", "highlight": "training", "explanation": {"en": "Adam + weight decay + ReduceLROnPlateau scheduler + best model checkpointing"}},
-        {"line": "scheduler = ReduceLROnPlateau(optimizer, patience=3, factor=0.5)", "highlight": "scheduler", "explanation": {"en": "Reduce LR by 50% if val loss doesn't improve for 3 epochs. Smart LR annealing"}},
-        {"line": "if val_acc > best_val_acc: torch.save(...)", "highlight": "checkpoint", "explanation": {"en": "Save only the best model. Load it for final evaluation, not the last epoch's model"}},
-        {"line": "# STEP 4: EVALUATION", "highlight": "eval", "explanation": {"en": "Evaluate on held-out test set. Report overall AND per-class accuracy"}},
-        {"line": "# STEP 5: OPTIMIZE & EXPORT", "highlight": "deploy", "explanation": {"en": "Quantize for size, export to ONNX for cross-platform deployment"}},
-        {"line": "torch.onnx.export(model_cpu, dummy, 'fashion_classifier.onnx', ...)", "highlight": "onnx", "explanation": {"en": "Final artifact: an ONNX model ready to serve in any production environment"}}
+        {
+          "line": "# STEP 1: DATA",
+          "highlight": "data",
+          "explanation": {
+            "en": "Load FashionMNIST, apply augmentation (flip, rotate), normalize, split train/val/test"
+          }
+        },
+        {
+          "line": "train_set, val_set = random_split(full_train, [50000, 10000])",
+          "highlight": "split",
+          "explanation": {
+            "en": "Hold out 10K samples for validation. Never tune on test set!"
+          }
+        },
+        {
+          "line": "# STEP 2: MODEL",
+          "highlight": "model",
+          "explanation": {
+            "en": "CNN with BatchNorm, Dropout, two conv blocks + classifier. Production-quality architecture"
+          }
+        },
+        {
+          "line": "nn.Conv2d(1, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU()",
+          "highlight": "conv_block",
+          "explanation": {
+            "en": "Standard conv block pattern: Conv -> BN -> ReLU. Repeat throughout the network"
+          }
+        },
+        {
+          "line": "# STEP 3: TRAINING",
+          "highlight": "training",
+          "explanation": {
+            "en": "Adam + weight decay + ReduceLROnPlateau scheduler + best model checkpointing"
+          }
+        },
+        {
+          "line": "scheduler = ReduceLROnPlateau(optimizer, patience=3, factor=0.5)",
+          "highlight": "scheduler",
+          "explanation": {
+            "en": "Reduce LR by 50% if val loss doesn't improve for 3 epochs. Smart LR annealing"
+          }
+        },
+        {
+          "line": "if val_acc > best_val_acc: torch.save(...)",
+          "highlight": "checkpoint",
+          "explanation": {
+            "en": "Save only the best model. Load it for final evaluation, not the last epoch's model"
+          }
+        },
+        {
+          "line": "# STEP 4: EVALUATION",
+          "highlight": "eval",
+          "explanation": {
+            "en": "Evaluate on held-out test set. Report overall AND per-class accuracy"
+          }
+        },
+        {
+          "line": "# STEP 5: OPTIMIZE & EXPORT",
+          "highlight": "deploy",
+          "explanation": {
+            "en": "Quantize for size, export to ONNX for cross-platform deployment"
+          }
+        },
+        {
+          "line": "torch.onnx.export(model_cpu, dummy, 'fashion_classifier.onnx', ...)",
+          "highlight": "onnx",
+          "explanation": {
+            "en": "Final artifact: an ONNX model ready to serve in any production environment"
+          }
+        }
       ]
     },
     {
@@ -64,7 +124,15 @@
       "id": "project_pipeline",
       "from": "raw_data",
       "to": "deployed_model",
-      "steps": ["Download data", "Augment & split", "Design CNN", "Train 30 epochs", "Evaluate per-class", "Quantize & ONNX", "Deploy!"],
+      "steps": [
+        "Download data",
+        "Augment & split",
+        "Design CNN",
+        "Train 30 epochs",
+        "Evaluate per-class",
+        "Quantize & ONNX",
+        "Deploy!"
+      ],
       "duration_ms": 5000
     },
     {
@@ -72,12 +140,42 @@
       "id": "model_architecture",
       "structure_type": "cnn_pipeline",
       "layers": [
-        {"name": "Input", "nodes": ["1x28x28 grayscale"]},
-        {"name": "Conv Block 1", "nodes": ["32x28x28 -> Pool -> 32x14x14"]},
-        {"name": "Conv Block 2", "nodes": ["64x14x14 -> Pool -> 64x7x7"]},
-        {"name": "Flatten", "nodes": ["3136"]},
-        {"name": "FC + BN + Dropout", "nodes": ["256"]},
-        {"name": "Output", "nodes": ["10 fashion classes"]}
+        {
+          "name": "Input",
+          "nodes": [
+            "1x28x28 grayscale"
+          ]
+        },
+        {
+          "name": "Conv Block 1",
+          "nodes": [
+            "32x28x28 -> Pool -> 32x14x14"
+          ]
+        },
+        {
+          "name": "Conv Block 2",
+          "nodes": [
+            "64x14x14 -> Pool -> 64x7x7"
+          ]
+        },
+        {
+          "name": "Flatten",
+          "nodes": [
+            "3136"
+          ]
+        },
+        {
+          "name": "FC + BN + Dropout",
+          "nodes": [
+            "256"
+          ]
+        },
+        {
+          "name": "Output",
+          "nodes": [
+            "10 fashion classes"
+          ]
+        }
       ],
       "duration_ms": 4000
     },
@@ -108,8 +206,14 @@
     {
       "type": "ComparisonPanel",
       "id": "before_after",
-      "left": {"label": "Before This Course", "content": "What is a neuron?\nWhat is a tensor?\nHow does training work?"},
-      "right": {"label": "After This Course", "content": "Built CNN from scratch\nTrained on real data\nDeployed production model\n25 lessons mastered!"},
+      "left": {
+        "label": "Before This Course",
+        "content": "What is a neuron?\nWhat is a tensor?\nHow does training work?"
+      },
+      "right": {
+        "label": "After This Course",
+        "content": "Built CNN from scratch\nTrained on real data\nDeployed production model\n25 lessons mastered!"
+      },
       "duration_ms": 3000
     },
     {
@@ -130,6 +234,164 @@
         "",
         "Model exported to fashion_classifier.onnx (1.2 MB)",
         "Ready for deployment!"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_e2e",
+      "code": "import torch\nimport torch.nn as nn\nfrom torch.utils.data import DataLoader, TensorDataset, random_split\n\n# Simulate image classification dataset\ntorch.manual_seed(42)\nX = torch.randn(1000, 1, 16, 16)\ny = (X.mean(dim=(1,2,3)) > 0).long()\n\n# Split\ndataset = TensorDataset(X, y)\ntrain_ds, val_ds, test_ds = random_split(dataset, [700, 150, 150])\ntrain_loader = DataLoader(train_ds, batch_size=32, shuffle=True)\n\n# Model\nmodel = nn.Sequential(\n    nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),\n    nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),\n    nn.Flatten(), nn.Linear(32*4*4, 64), nn.ReLU(), nn.Linear(64, 2)\n)\n\nprint(f'Dataset: {len(dataset)}, Train: {len(train_ds)}, Val: {len(val_ds)}')\nprint(f'Model params: {sum(p.numel() for p in model.parameters()):,}')",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "X.shape": "(1000, 1, 16, 16)"
+          },
+          "output": "",
+          "explanation": "1000 synthetic 16x16 grayscale images"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "split": "700/150/150"
+          },
+          "output": "",
+          "explanation": "Train/val/test split"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "model": "CNN classifier"
+          },
+          "output": "",
+          "explanation": "2 conv blocks + 2 FC layers"
+        },
+        {
+          "line": 22,
+          "variables": {},
+          "output": "Dataset: 1000, Train: 700, Val: 150",
+          "explanation": "Standard split for DL project"
+        },
+        {
+          "line": 23,
+          "variables": {},
+          "output": "Model params: 10,498",
+          "explanation": "Small model for 16x16 images"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_dl_e2e",
+      "title": "End-to-End DL Project Pipeline",
+      "nodes": [
+        {
+          "id": "data",
+          "label": "Prepare Dataset",
+          "type": "start"
+        },
+        {
+          "id": "split",
+          "label": "Train/Val/Test Split",
+          "type": "process"
+        },
+        {
+          "id": "model",
+          "label": "Design Architecture",
+          "type": "process"
+        },
+        {
+          "id": "train",
+          "label": "Training Loop",
+          "type": "process"
+        },
+        {
+          "id": "val",
+          "label": "Validate & Tune",
+          "type": "decision"
+        },
+        {
+          "id": "test",
+          "label": "Final Test Eval",
+          "type": "process"
+        },
+        {
+          "id": "deploy",
+          "label": "Export & Deploy",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "data",
+          "to": "split"
+        },
+        {
+          "from": "split",
+          "to": "model"
+        },
+        {
+          "from": "model",
+          "to": "train"
+        },
+        {
+          "from": "train",
+          "to": "val"
+        },
+        {
+          "from": "val",
+          "to": "train",
+          "label": "Tune"
+        },
+        {
+          "from": "val",
+          "to": "test",
+          "label": "Good enough"
+        },
+        {
+          "from": "test",
+          "to": "deploy"
+        }
+      ],
+      "animated": true
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_dl_e2e_training",
+      "title": "Project Training Progress",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 1,
+          "state": {
+            "train_loss": 0.693,
+            "val_acc": "52%"
+          },
+          "description": "Near random baseline"
+        },
+        {
+          "iteration": 10,
+          "state": {
+            "train_loss": 0.312,
+            "val_acc": "78%"
+          },
+          "description": "Model learning features"
+        },
+        {
+          "iteration": 20,
+          "state": {
+            "train_loss": 0.145,
+            "val_acc": "89%"
+          },
+          "description": "Good generalization"
+        },
+        {
+          "iteration": 30,
+          "state": {
+            "train_loss": 0.067,
+            "val_acc": "93%"
+          },
+          "description": "Ready for deployment"
+        }
       ]
     },
     {
@@ -168,8 +430,18 @@
         "ta": "Deep learning திட்ட குழாய்வழியின் சரியான வரிசை என்ன?"
       },
       "options": {
-        "en": ["Train -> Data -> Evaluate -> Deploy", "Data -> Model Design -> Train -> Evaluate -> Optimize -> Deploy", "Deploy -> Train -> Evaluate -> Data", "Model Design -> Data -> Deploy -> Train"],
-        "ta": ["Train -> Data -> Evaluate -> Deploy", "Data -> Model Design -> Train -> Evaluate -> Optimize -> Deploy", "Deploy -> Train -> Evaluate -> Data", "Model Design -> Data -> Deploy -> Train"]
+        "en": [
+          "Train -> Data -> Evaluate -> Deploy",
+          "Data -> Model Design -> Train -> Evaluate -> Optimize -> Deploy",
+          "Deploy -> Train -> Evaluate -> Data",
+          "Model Design -> Data -> Deploy -> Train"
+        ],
+        "ta": [
+          "Train -> Data -> Evaluate -> Deploy",
+          "Data -> Model Design -> Train -> Evaluate -> Optimize -> Deploy",
+          "Deploy -> Train -> Evaluate -> Data",
+          "Model Design -> Data -> Deploy -> Train"
+        ]
       },
       "correct": 1
     },
@@ -179,8 +451,18 @@
         "ta": "Test set-ல் ஏன் ஒருபோதும் hyperparameters-ஐ tune செய்யக்கூடாது?"
       },
       "options": {
-        "en": ["It's too slow", "It causes data leakage — your test evaluation won't reflect real-world performance", "The test set is too small", "It's impossible to do"],
-        "ta": ["மிகவும் மெதுவானது", "தரவு கசிவை ஏற்படுத்துகிறது — உங்கள் test மதிப்பீடு உண்மையான செயல்திறனை பிரதிபலிக்காது", "Test set மிகவும் சிறியது", "செய்ய இயலாது"]
+        "en": [
+          "It's too slow",
+          "It causes data leakage — your test evaluation won't reflect real-world performance",
+          "The test set is too small",
+          "It's impossible to do"
+        ],
+        "ta": [
+          "மிகவும் மெதுவானது",
+          "தரவு கசிவை ஏற்படுத்துகிறது — உங்கள் test மதிப்பீடு உண்மையான செயல்திறனை பிரதிபலிக்காது",
+          "Test set மிகவும் சிறியது",
+          "செய்ய இயலாது"
+        ]
       },
       "correct": 1
     },
@@ -190,20 +472,47 @@
         "ta": "ReduceLROnPlateau scheduler என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Increases learning rate when loss plateaus", "Reduces learning rate when a monitored metric stops improving", "Removes layers from the model", "Stops training immediately"],
-        "ta": ["Loss plateau ஆகும்போது learning rate-ஐ அதிகரிக்கிறது", "கண்காணிக்கப்படும் metric மேம்படாதபோது learning rate-ஐ குறைக்கிறது", "மாதிரியிலிருந்து அடுக்குகளை அகற்றுகிறது", "பயிற்சியை உடனடியாக நிறுத்துகிறது"]
+        "en": [
+          "Increases learning rate when loss plateaus",
+          "Reduces learning rate when a monitored metric stops improving",
+          "Removes layers from the model",
+          "Stops training immediately"
+        ],
+        "ta": [
+          "Loss plateau ஆகும்போது learning rate-ஐ அதிகரிக்கிறது",
+          "கண்காணிக்கப்படும் metric மேம்படாதபோது learning rate-ஐ குறைக்கிறது",
+          "மாதிரியிலிருந்து அடுக்குகளை அகற்றுகிறது",
+          "பயிற்சியை உடனடியாக நிறுத்துகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["end_to_end_project", "data_pipeline", "model_evaluation", "per_class_accuracy", "model_export", "deployment"],
-    "concepts_required": ["cnn_image_classification", "regularization", "model_optimization"],
+    "concepts_taught": [
+      "end_to_end_project",
+      "data_pipeline",
+      "model_evaluation",
+      "per_class_accuracy",
+      "model_export",
+      "deployment"
+    ],
+    "concepts_required": [
+      "cnn_image_classification",
+      "regularization",
+      "model_optimization"
+    ],
     "difficulty": "advanced",
     "engagement_type": "project",
     "estimated_minutes": 60,
-    "real_world_application": ["production_ml", "model_deployment", "mlops"],
+    "real_world_application": [
+      "production_ml",
+      "model_deployment",
+      "mlops"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

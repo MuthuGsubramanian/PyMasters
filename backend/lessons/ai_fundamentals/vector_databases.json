@@ -189,10 +189,26 @@
       "id": "collection_viz",
       "structure_type": "vector",
       "data": {
-        "doc1_lists": [0.85, 0.22, 0.45],
-        "doc2_dicts": [0.78, 0.31, 0.52],
-        "doc3_decorators": [0.15, 0.88, 0.67],
-        "query": [0.82, 0.25, 0.48]
+        "doc1_lists": [
+          0.85,
+          0.22,
+          0.45
+        ],
+        "doc2_dicts": [
+          0.78,
+          0.31,
+          0.52
+        ],
+        "doc3_decorators": [
+          0.15,
+          0.88,
+          0.67
+        ],
+        "query": [
+          0.82,
+          0.25,
+          0.48
+        ]
       },
       "visualization": "vector_space",
       "caption": "Query about 'collections' is closest to doc1 (lists) and doc2 (dictionaries)"
@@ -230,6 +246,59 @@
         "",
         ">>> print(f'Total documents: {collection.count()}')",
         "Total documents: 3"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_vector_databases",
+      "code": "import chromadb\n\nclient = chromadb.Client()\ncollection = client.create_collection('docs')\n\ncollection.add(\n    documents=['Python is great for AI',\n               'JavaScript runs in browsers',\n               'Python has excellent ML libraries'],\n    ids=['doc1', 'doc2', 'doc3']\n)\n\nresults = collection.query(\n    query_texts=['machine learning with Python'],\n    n_results=2\n)\nprint(results['documents'][0])",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "client": "ChromaDB"
+          },
+          "output": "",
+          "explanation": "ChromaDB: open-source vector database"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "collection": "docs"
+          },
+          "output": "",
+          "explanation": "Collections store documents + vectors"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "documents": 3
+          },
+          "output": "",
+          "explanation": "Add docs — ChromaDB auto-embeds them"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "query": "machine learning with Python"
+          },
+          "output": "",
+          "explanation": "Query embedded and compared to stored vectors"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "n_results": 2
+          },
+          "output": "",
+          "explanation": "Return top 2 most similar"
+        },
+        {
+          "line": 17,
+          "variables": {},
+          "output": "['Python has ML libraries', 'Python is great for AI']",
+          "explanation": "Python docs retrieved, JS filtered out by similarity"
+        }
       ]
     }
   ],
@@ -321,13 +390,26 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["chromadb", "pinecone", "vector_databases", "metadata_filtering"],
-    "concepts_required": ["embeddings_similarity", "rag_fundamentals"],
+    "concepts_taught": [
+      "chromadb",
+      "pinecone",
+      "vector_databases",
+      "metadata_filtering"
+    ],
+    "concepts_required": [
+      "embeddings_similarity",
+      "rag_fundamentals"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["document_search", "recommendation_systems"],
+    "real_world_application": [
+      "document_search",
+      "recommendation_systems"
+    ],
     "category": "ai_rag",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

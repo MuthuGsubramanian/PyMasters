@@ -192,6 +192,55 @@
         "Input gate:  i=[0.2, 0.95, 0.3] (write mostly to dim 1)",
         "New cell:    C=[old*0.9, new*0.95, old*0.8+new*0.3]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_rnn_lstm",
+      "code": "import torch\nimport torch.nn as nn\n\nlstm = nn.LSTM(input_size=10, hidden_size=32, num_layers=2, batch_first=True)\nx = torch.randn(4, 8, 10)  # batch=4, seq=8, features=10\noutput, (h_n, c_n) = lstm(x)\nprint(f'Output: {output.shape}')\nprint(f'Hidden: {h_n.shape}')\nprint(f'Cell:   {c_n.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "lstm": "LSTM(10, 32, 2 layers)"
+          },
+          "output": "",
+          "explanation": "LSTM with 2 stacked layers, 32 hidden units"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "x.shape": "(4, 8, 10)"
+          },
+          "output": "",
+          "explanation": "4 sequences of length 8"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "outputs": "output, hidden, cell"
+          },
+          "output": "",
+          "explanation": "LSTM has both hidden state AND cell state"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Output: torch.Size([4, 8, 32])",
+          "explanation": "32-dim output at each of 8 timesteps"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Hidden: torch.Size([2, 4, 32])",
+          "explanation": "Final hidden: 2 layers x batch=4 x 32"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Cell:   torch.Size([2, 4, 32])",
+          "explanation": "Cell state: LSTM's long-term memory"
+        }
+      ]
     }
   ],
   "practice_challenges": [

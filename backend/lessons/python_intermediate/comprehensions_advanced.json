@@ -191,8 +191,132 @@
       "type": "DataStructure",
       "id": "matrix_visual",
       "structure_type": "matrix",
-      "data": [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+      "data": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5,
+          6
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
       "highlight_cells": []
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "names = ['alice', 'bob', 'charlie']\nname_lengths = {name: len(name) for name in names}\nprint(name_lengths)\n\nscores = {'alice': 85, 'bob': 42, 'charlie': 91}\npassed = {k: v for k, v in scores.items() if v >= 50}\nprint(passed)\n\nmatrix = [[1, 2], [3, 4], [5, 6]]\nflat = [n for row in matrix for n in row]\nprint(flat)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "names": "['alice', 'bob', 'charlie']"
+          },
+          "output": "",
+          "description": "Create list of names"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "name_lengths": "{'alice': 5, 'bob': 3, 'charlie': 7}"
+          },
+          "output": "",
+          "description": "Dict comprehension: maps each name to its length"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "{'alice': 5, 'bob': 3, 'charlie': 7}",
+          "description": "Print the dict comprehension result"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "scores": "{'alice': 85, 'bob': 42, 'charlie': 91}"
+          },
+          "output": "",
+          "description": "Dictionary of student scores"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "passed": "{'alice': 85, 'charlie': 91}"
+          },
+          "output": "",
+          "description": "Dict comprehension with filter: only scores >= 50"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "{'alice': 85, 'charlie': 91}",
+          "description": "bob (42) filtered out"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "matrix": "[[1,2],[3,4],[5,6]]"
+          },
+          "output": "",
+          "description": "2D matrix (list of lists)"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "flat": "[1, 2, 3, 4, 5, 6]"
+          },
+          "output": "",
+          "description": "Nested comprehension flattens 2D to 1D"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "[1, 2, 3, 4, 5, 6]",
+          "description": "All sublists merged into one"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "dict_comprehension",
+      "iterable": "names = ['alice', 'bob', 'charlie']",
+      "iterations": [
+        {
+          "index": 0,
+          "value": "alice",
+          "variables": {
+            "name": "alice",
+            "len(name)": 5
+          },
+          "description": "'alice': 5 added to dict"
+        },
+        {
+          "index": 1,
+          "value": "bob",
+          "variables": {
+            "name": "bob",
+            "len(name)": 3
+          },
+          "description": "'bob': 3 added to dict"
+        },
+        {
+          "index": 2,
+          "value": "charlie",
+          "variables": {
+            "name": "charlie",
+            "len(name)": 7
+          },
+          "description": "'charlie': 7 added to dict"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -224,8 +348,18 @@
         "ta": "{x**2 for x in [1,2,2,3]} என்ன உருவாக்கும்?"
       },
       "options": {
-        "en": ["[1, 4, 4, 9]", "{1, 4, 9}", "{1: 1, 2: 4, 3: 9}", "Error"],
-        "ta": ["[1, 4, 4, 9]", "{1, 4, 9}", "{1: 1, 2: 4, 3: 9}", "பிழை"]
+        "en": [
+          "[1, 4, 4, 9]",
+          "{1, 4, 9}",
+          "{1: 1, 2: 4, 3: 9}",
+          "Error"
+        ],
+        "ta": [
+          "[1, 4, 4, 9]",
+          "{1, 4, 9}",
+          "{1: 1, 2: 4, 3: 9}",
+          "பிழை"
+        ]
       },
       "correct": 1
     },
@@ -273,13 +407,28 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["dict_comprehension", "set_comprehension", "nested_comprehension", "conditional_comprehension"],
-    "concepts_required": ["list_comprehension", "dictionaries", "sets", "loops"],
+    "concepts_taught": [
+      "dict_comprehension",
+      "set_comprehension",
+      "nested_comprehension",
+      "conditional_comprehension"
+    ],
+    "concepts_required": [
+      "list_comprehension",
+      "dictionaries",
+      "sets",
+      "loops"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["data_transformation", "data_cleaning"],
+    "real_world_application": [
+      "data_transformation",
+      "data_cleaning"
+    ],
     "category": "data_processing",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

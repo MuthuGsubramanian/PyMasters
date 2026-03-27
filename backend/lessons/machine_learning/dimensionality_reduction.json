@@ -30,15 +30,29 @@
       "nodes": [
         {
           "label": "Dimensionality Reduction",
-          "children": ["PCA (linear)", "t-SNE (non-linear)", "UMAP (non-linear)"]
+          "children": [
+            "PCA (linear)",
+            "t-SNE (non-linear)",
+            "UMAP (non-linear)"
+          ]
         },
         {
           "label": "PCA",
-          "children": ["Eigenvalues", "Eigenvectors", "Explained Variance", "Components"]
+          "children": [
+            "Eigenvalues",
+            "Eigenvectors",
+            "Explained Variance",
+            "Components"
+          ]
         },
         {
           "label": "Use Cases",
-          "children": ["Visualization", "Noise Reduction", "Feature Compression", "Preprocessing"]
+          "children": [
+            "Visualization",
+            "Noise Reduction",
+            "Feature Compression",
+            "Preprocessing"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -47,9 +61,21 @@
       "type": "ComparisonPanel",
       "id": "dimred_comparison",
       "models": [
-        { "name": "PCA", "strengths": "Fast, exact, invertible, good for preprocessing", "weaknesses": "Linear only" },
-        { "name": "t-SNE", "strengths": "Excellent cluster visualization", "weaknesses": "Slow, non-deterministic, only for visualization" },
-        { "name": "UMAP", "strengths": "Fast, preserves global structure, good for preprocessing", "weaknesses": "Requires umap-learn package" }
+        {
+          "name": "PCA",
+          "strengths": "Fast, exact, invertible, good for preprocessing",
+          "weaknesses": "Linear only"
+        },
+        {
+          "name": "t-SNE",
+          "strengths": "Excellent cluster visualization",
+          "weaknesses": "Slow, non-deterministic, only for visualization"
+        },
+        {
+          "name": "UMAP",
+          "strengths": "Fast, preserves global structure, good for preprocessing",
+          "weaknesses": "Requires umap-learn package"
+        }
       ],
       "duration_ms": 4000
     },
@@ -60,72 +86,100 @@
         {
           "line": "from sklearn.decomposition import PCA",
           "highlight": "PCA",
-          "explanation": { "en": "Import PCA — the most fundamental dimensionality reduction technique" }
+          "explanation": {
+            "en": "Import PCA — the most fundamental dimensionality reduction technique"
+          }
         },
         {
           "line": "from sklearn.manifold import TSNE",
           "highlight": "TSNE",
-          "explanation": { "en": "Import t-SNE for non-linear visualization" }
+          "explanation": {
+            "en": "Import t-SNE for non-linear visualization"
+          }
         },
         {
           "line": "from sklearn.datasets import load_digits",
           "highlight": "load_digits",
-          "explanation": { "en": "Digits dataset: 64 features (8x8 pixel images) — too many to visualize directly" }
+          "explanation": {
+            "en": "Digits dataset: 64 features (8x8 pixel images) — too many to visualize directly"
+          }
         },
         {
           "line": "X, y = load_digits(return_X_y=True)",
           "highlight": "X, y",
-          "explanation": { "en": "1797 handwritten digit images with 64 pixel features each" }
+          "explanation": {
+            "en": "1797 handwritten digit images with 64 pixel features each"
+          }
         },
         {
           "line": "X_scaled = StandardScaler().fit_transform(X)",
           "highlight": "StandardScaler",
-          "explanation": { "en": "Scale features — PCA is affected by feature scales" }
+          "explanation": {
+            "en": "Scale features — PCA is affected by feature scales"
+          }
         },
         {
           "line": "pca = PCA(n_components=2)",
           "highlight": "n_components=2",
-          "explanation": { "en": "Reduce 64 dimensions to 2 for visualization" }
+          "explanation": {
+            "en": "Reduce 64 dimensions to 2 for visualization"
+          }
         },
         {
           "line": "X_pca = pca.fit_transform(X_scaled)",
           "highlight": "fit_transform",
-          "explanation": { "en": "Project data onto the 2 principal components (directions of max variance)" }
+          "explanation": {
+            "en": "Project data onto the 2 principal components (directions of max variance)"
+          }
         },
         {
           "line": "print(f'Explained variance: {pca.explained_variance_ratio_}')",
           "highlight": "explained_variance_ratio_",
-          "explanation": { "en": "How much of the original information each component captures" }
+          "explanation": {
+            "en": "How much of the original information each component captures"
+          }
         },
         {
           "line": "print(f'Total explained: {pca.explained_variance_ratio_.sum():.3f}')",
           "highlight": "sum",
-          "explanation": { "en": "2 components capture about 22% of total variance — some info is lost" }
+          "explanation": {
+            "en": "2 components capture about 22% of total variance — some info is lost"
+          }
         },
         {
           "line": "pca_95 = PCA(n_components=0.95)",
           "highlight": "0.95",
-          "explanation": { "en": "Automatically select enough components to explain 95% of variance" }
+          "explanation": {
+            "en": "Automatically select enough components to explain 95% of variance"
+          }
         },
         {
           "line": "X_95 = pca_95.fit_transform(X_scaled)",
           "highlight": "fit_transform",
-          "explanation": { "en": "PCA automatically determines how many components are needed" }
+          "explanation": {
+            "en": "PCA automatically determines how many components are needed"
+          }
         },
         {
           "line": "print(f'Components for 95% variance: {pca_95.n_components_}')",
           "highlight": "n_components_",
-          "explanation": { "en": "About 28 components needed to explain 95% — down from 64!" }
+          "explanation": {
+            "en": "About 28 components needed to explain 95% — down from 64!"
+          }
         },
         {
           "line": "tsne = TSNE(n_components=2, random_state=42, perplexity=30)",
           "highlight": "perplexity=30",
-          "explanation": { "en": "t-SNE: perplexity controls the balance between local and global structure" }
+          "explanation": {
+            "en": "t-SNE: perplexity controls the balance between local and global structure"
+          }
         },
         {
           "line": "X_tsne = tsne.fit_transform(X_scaled)",
           "highlight": "fit_transform",
-          "explanation": { "en": "t-SNE creates beautiful cluster separations — ideal for visualization" }
+          "explanation": {
+            "en": "t-SNE creates beautiful cluster separations — ideal for visualization"
+          }
         }
       ]
     },
@@ -153,6 +207,63 @@
         "PCA 2D explained variance: 0.224",
         "Components for 95% variance: 28",
         "t-SNE output shape: (1797, 2)"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dim_reduction",
+      "code": "from sklearn.decomposition import PCA\nfrom sklearn.datasets import load_iris\nimport numpy as np\n\nX, y = load_iris(return_X_y=True)\nprint(f'Original shape: {X.shape}')\n\npca = PCA(n_components=2)\nX_2d = pca.fit_transform(X)\nprint(f'Reduced shape: {X_2d.shape}')\nprint(f'Explained variance: {pca.explained_variance_ratio_}')\nprint(f'Total variance kept: {sum(pca.explained_variance_ratio_):.1%}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "X.shape": "(150, 4)"
+          },
+          "output": "",
+          "explanation": "Iris: 4 features (sepal/petal length/width)"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "Original shape: (150, 4)",
+          "explanation": "4-dimensional data — can't visualize directly"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "n_components": "2"
+          },
+          "output": "",
+          "explanation": "Reduce to 2 dimensions for visualization"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "X_2d.shape": "(150, 2)"
+          },
+          "output": "",
+          "explanation": "Project 4D data onto top 2 principal components"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Reduced shape: (150, 2)",
+          "explanation": "Now 2D — can plot on scatter chart"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "ratios": "[0.726, 0.230]"
+          },
+          "output": "Explained variance: [0.72620033 0.23005396]",
+          "explanation": "PC1 captures 72.6%, PC2 captures 23.0% of variance"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Total variance kept: 95.6%",
+          "explanation": "2 components keep 95.6% of information — minimal loss"
+        }
       ]
     }
   ],
@@ -185,8 +296,18 @@
         "ta": "PCA என்ன அதிகப்படுத்துகிறது?"
       },
       "options": {
-        "en": ["Accuracy", "Variance along principal components", "Number of clusters", "Training speed"],
-        "ta": ["துல்லியம்", "முதன்மை கூறுகளில் மாற்றம்", "கிளஸ்டர்களின் எண்ணிக்கை", "பயிற்சி வேகம்"]
+        "en": [
+          "Accuracy",
+          "Variance along principal components",
+          "Number of clusters",
+          "Training speed"
+        ],
+        "ta": [
+          "துல்லியம்",
+          "முதன்மை கூறுகளில் மாற்றம்",
+          "கிளஸ்டர்களின் எண்ணிக்கை",
+          "பயிற்சி வேகம்"
+        ]
       },
       "correct": 1
     },
@@ -196,8 +317,18 @@
         "ta": "ML பயிற்சிக்கு முன் முன்செயலாக்கத்திற்கு t-SNE ஏன் பொருத்தமானது அல்ல?"
       },
       "options": {
-        "en": ["It is too fast", "It is non-parametric — cannot transform new unseen data", "It always reduces to 1D", "It requires labels"],
-        "ta": ["இது மிகவும் வேகமானது", "இது அளவுரு அற்றது — புதிய தரவை மாற்ற முடியாது", "எப்போதும் 1D ஆகக் குறைக்கிறது", "பெயர்கள் தேவை"]
+        "en": [
+          "It is too fast",
+          "It is non-parametric — cannot transform new unseen data",
+          "It always reduces to 1D",
+          "It requires labels"
+        ],
+        "ta": [
+          "இது மிகவும் வேகமானது",
+          "இது அளவுரு அற்றது — புதிய தரவை மாற்ற முடியாது",
+          "எப்போதும் 1D ஆகக் குறைக்கிறது",
+          "பெயர்கள் தேவை"
+        ]
       },
       "correct": 1
     },
@@ -207,20 +338,45 @@
         "ta": "50 அசல் அம்சங்களிலிருந்து n_components=0.95 உடன் PCA 10 கூறுகளை திருப்பினால், இதன் பொருள் என்ன?"
       },
       "options": {
-        "en": ["10 features are most important", "10 components capture 95% of the total variance", "50 features are reduced to 10 randomly", "The model is 95% accurate"],
-        "ta": ["10 அம்சங்கள் மிக முக்கியமானவை", "10 கூறுகள் மொத்த மாற்றத்தின் 95% ஐ கைப்பற்றுகின்றன", "50 அம்சங்கள் சீரற்ற முறையில் 10 ஆகக் குறைக்கப்படுகின்றன", "மாடல் 95% துல்லியமானது"]
+        "en": [
+          "10 features are most important",
+          "10 components capture 95% of the total variance",
+          "50 features are reduced to 10 randomly",
+          "The model is 95% accurate"
+        ],
+        "ta": [
+          "10 அம்சங்கள் மிக முக்கியமானவை",
+          "10 கூறுகள் மொத்த மாற்றத்தின் 95% ஐ கைப்பற்றுகின்றன",
+          "50 அம்சங்கள் சீரற்ற முறையில் 10 ஆகக் குறைக்கப்படுகின்றன",
+          "மாடல் 95% துல்லியமானது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["pca", "tsne", "umap", "explained_variance", "dimensionality_reduction"],
-    "concepts_required": ["numpy_basics", "feature_scaling"],
+    "concepts_taught": [
+      "pca",
+      "tsne",
+      "umap",
+      "explained_variance",
+      "dimensionality_reduction"
+    ],
+    "concepts_required": [
+      "numpy_basics",
+      "feature_scaling"
+    ],
     "difficulty": "advanced",
     "engagement_type": "conceptual",
     "estimated_minutes": 35,
-    "real_world_application": ["data_visualization", "image_compression", "noise_reduction"],
+    "real_world_application": [
+      "data_visualization",
+      "image_compression",
+      "noise_reduction"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["unsupervised_learning"]
+    "path_memberships": [
+      "unsupervised_learning"
+    ]
   }
 }

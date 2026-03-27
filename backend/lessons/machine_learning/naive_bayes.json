@@ -30,11 +30,20 @@
       "nodes": [
         {
           "label": "Naive Bayes",
-          "children": ["Bayes Theorem", "Independence Assumption", "Prior Probability", "Likelihood"]
+          "children": [
+            "Bayes Theorem",
+            "Independence Assumption",
+            "Prior Probability",
+            "Likelihood"
+          ]
         },
         {
           "label": "Variants",
-          "children": ["GaussianNB (continuous)", "MultinomialNB (counts)", "BernoulliNB (binary)"]
+          "children": [
+            "GaussianNB (continuous)",
+            "MultinomialNB (counts)",
+            "BernoulliNB (binary)"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -46,72 +55,100 @@
         {
           "line": "from sklearn.feature_extraction.text import CountVectorizer",
           "highlight": "CountVectorizer",
-          "explanation": { "en": "Converts text into a matrix of word counts — bag of words representation" }
+          "explanation": {
+            "en": "Converts text into a matrix of word counts — bag of words representation"
+          }
         },
         {
           "line": "from sklearn.naive_bayes import MultinomialNB",
           "highlight": "MultinomialNB",
-          "explanation": { "en": "Multinomial Naive Bayes — ideal for text classification with word counts" }
+          "explanation": {
+            "en": "Multinomial Naive Bayes — ideal for text classification with word counts"
+          }
         },
         {
           "line": "emails = ['free money click here winner', 'claim your prize now free', 'meeting tomorrow at 3pm', 'project report due friday', 'you won a free vacation', 'buy cheap products now', 'quarterly review scheduled', 'team lunch next week', 'free gift card click now', 'agenda for monday meeting']",
           "highlight": "emails",
-          "explanation": { "en": "Sample emails — mix of spam and legitimate messages" }
+          "explanation": {
+            "en": "Sample emails — mix of spam and legitimate messages"
+          }
         },
         {
           "line": "labels = [1, 1, 0, 0, 1, 1, 0, 0, 1, 0]",
           "highlight": "labels",
-          "explanation": { "en": "1 = spam, 0 = ham (not spam) — our training labels" }
+          "explanation": {
+            "en": "1 = spam, 0 = ham (not spam) — our training labels"
+          }
         },
         {
           "line": "vectorizer = CountVectorizer()",
           "highlight": "CountVectorizer",
-          "explanation": { "en": "Create the vectorizer — it will build a vocabulary from training text" }
+          "explanation": {
+            "en": "Create the vectorizer — it will build a vocabulary from training text"
+          }
         },
         {
           "line": "X = vectorizer.fit_transform(emails)",
           "highlight": "fit_transform",
-          "explanation": { "en": "Convert emails to a sparse matrix of word counts" }
+          "explanation": {
+            "en": "Convert emails to a sparse matrix of word counts"
+          }
         },
         {
           "line": "print(f'Vocabulary size: {len(vectorizer.vocabulary_)}')",
           "highlight": "vocabulary_",
-          "explanation": { "en": "Each unique word becomes a feature in the count matrix" }
+          "explanation": {
+            "en": "Each unique word becomes a feature in the count matrix"
+          }
         },
         {
           "line": "model = MultinomialNB()",
           "highlight": "MultinomialNB",
-          "explanation": { "en": "Create the Naive Bayes classifier" }
+          "explanation": {
+            "en": "Create the Naive Bayes classifier"
+          }
         },
         {
           "line": "model.fit(X, labels)",
           "highlight": "fit",
-          "explanation": { "en": "Train: compute P(word|spam) and P(word|ham) for each word" }
+          "explanation": {
+            "en": "Train: compute P(word|spam) and P(word|ham) for each word"
+          }
         },
         {
           "line": "test_emails = ['free money click', 'meeting agenda for tomorrow']",
           "highlight": "test_emails",
-          "explanation": { "en": "Two test emails — one looks spammy, one looks legitimate" }
+          "explanation": {
+            "en": "Two test emails — one looks spammy, one looks legitimate"
+          }
         },
         {
           "line": "X_test = vectorizer.transform(test_emails)",
           "highlight": "transform",
-          "explanation": { "en": "Convert test emails using the SAME vocabulary — transform, not fit_transform" }
+          "explanation": {
+            "en": "Convert test emails using the SAME vocabulary — transform, not fit_transform"
+          }
         },
         {
           "line": "predictions = model.predict(X_test)",
           "highlight": "predict",
-          "explanation": { "en": "Predict: compute posterior probability for each class using Bayes' theorem" }
+          "explanation": {
+            "en": "Predict: compute posterior probability for each class using Bayes' theorem"
+          }
         },
         {
           "line": "probas = model.predict_proba(X_test)",
           "highlight": "predict_proba",
-          "explanation": { "en": "Get the actual probability scores for ham vs spam" }
+          "explanation": {
+            "en": "Get the actual probability scores for ham vs spam"
+          }
         },
         {
           "line": "for email, pred, prob in zip(test_emails, predictions, probas): print(f'\"{email}\" -> {\"SPAM\" if pred else \"HAM\"} (conf: {prob.max():.2f})')",
           "highlight": "print",
-          "explanation": { "en": "Display prediction with confidence — Naive Bayes is fast and often well-calibrated" }
+          "explanation": {
+            "en": "Display prediction with confidence — Naive Bayes is fast and often well-calibrated"
+          }
         }
       ]
     },
@@ -138,6 +175,67 @@
         "Vocabulary size: 28",
         "\"free money click\" -> SPAM (conf: 0.97)",
         "\"meeting agenda for tomorrow\" -> HAM (conf: 0.95)"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_naive_bayes",
+      "code": "from sklearn.feature_extraction.text import CountVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\nfrom sklearn.metrics import accuracy_score\n\ntexts = ['free money now', 'meeting at 3pm', 'win free prize',\n         'project deadline', 'click here free', 'lunch tomorrow']\nlabels = [1, 0, 1, 0, 1, 0]  # 1=spam, 0=ham\n\nvectorizer = CountVectorizer()\nX = vectorizer.fit_transform(texts)\nprint(f'Vocabulary: {vectorizer.get_feature_names_out()}')\n\nmodel = MultinomialNB()\nmodel.fit(X, labels)\ntest = vectorizer.transform(['free tickets today'])\nprint(f'Prediction: {model.predict(test)[0]}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "texts": "6 messages"
+          },
+          "output": "",
+          "explanation": "Sample email texts — 3 spam, 3 ham"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "vectorizer": "CountVectorizer"
+          },
+          "output": "",
+          "explanation": "Convert text to word count vectors (bag of words)"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "X.shape": "(6, vocab_size)"
+          },
+          "output": "",
+          "explanation": "Each text becomes a sparse vector of word counts"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Vocabulary: ['3pm' 'at' 'click' 'deadline' 'free' ...]",
+          "explanation": "All unique words become features"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "model": "MultinomialNB"
+          },
+          "output": "",
+          "explanation": "Naive Bayes: P(spam|words) using Bayes theorem"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "fitted": true
+          },
+          "output": "",
+          "explanation": "Learns P(word|spam) and P(word|ham) from data"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "prediction": "1 (spam)"
+          },
+          "output": "Prediction: 1",
+          "explanation": "'free' strongly associated with spam class"
+        }
       ]
     }
   ],
@@ -170,8 +268,18 @@
         "ta": "நேவ் பேய்ஸில் 'நேவ்' அனுமானம் என்ன?"
       },
       "options": {
-        "en": ["The model is simple", "All features are conditionally independent given the class", "The data has no noise", "The prior probability is uniform"],
-        "ta": ["மாடல் எளிமையானது", "வகுப்பைக் கொடுத்தால் அனைத்து அம்சங்களும் நிபந்தனையுடன் சுதந்திரமானவை", "தரவில் நாய்ஸ் இல்லை", "முன் நிகழ்தகவு சீரானது"]
+        "en": [
+          "The model is simple",
+          "All features are conditionally independent given the class",
+          "The data has no noise",
+          "The prior probability is uniform"
+        ],
+        "ta": [
+          "மாடல் எளிமையானது",
+          "வகுப்பைக் கொடுத்தால் அனைத்து அம்சங்களும் நிபந்தனையுடன் சுதந்திரமானவை",
+          "தரவில் நாய்ஸ் இல்லை",
+          "முன் நிகழ்தகவு சீரானது"
+        ]
       },
       "correct": 1
     },
@@ -181,8 +289,18 @@
         "ta": "சொல் எண்ணிக்கைகள் கொண்ட உரை வகைப்பாட்டிற்கு எந்த நேவ் பேய்ஸ் வகை சிறந்தது?"
       },
       "options": {
-        "en": ["GaussianNB", "MultinomialNB", "BernoulliNB", "ComplementNB"],
-        "ta": ["GaussianNB", "MultinomialNB", "BernoulliNB", "ComplementNB"]
+        "en": [
+          "GaussianNB",
+          "MultinomialNB",
+          "BernoulliNB",
+          "ComplementNB"
+        ],
+        "ta": [
+          "GaussianNB",
+          "MultinomialNB",
+          "BernoulliNB",
+          "ComplementNB"
+        ]
       },
       "correct": 1
     },
@@ -192,20 +310,45 @@
         "ta": "CountVectorizer என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Counts the number of documents", "Converts text into a matrix of word count features", "Removes stop words only", "Trains a language model"],
-        "ta": ["ஆவணங்களின் எண்ணிக்கையை எண்ணுகிறது", "உரையை சொல் எண்ணிக்கை அம்ச அணியாக மாற்றுகிறது", "நிறுத்த சொற்களை மட்டும் நீக்குகிறது", "மொழி மாடலை பயிற்சிக்கிறது"]
+        "en": [
+          "Counts the number of documents",
+          "Converts text into a matrix of word count features",
+          "Removes stop words only",
+          "Trains a language model"
+        ],
+        "ta": [
+          "ஆவணங்களின் எண்ணிக்கையை எண்ணுகிறது",
+          "உரையை சொல் எண்ணிக்கை அம்ச அணியாக மாற்றுகிறது",
+          "நிறுத்த சொற்களை மட்டும் நீக்குகிறது",
+          "மொழி மாடலை பயிற்சிக்கிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["naive_bayes", "bayes_theorem", "text_classification", "count_vectorizer", "multinomial_nb"],
-    "concepts_required": ["classification_basics", "probability"],
+    "concepts_taught": [
+      "naive_bayes",
+      "bayes_theorem",
+      "text_classification",
+      "count_vectorizer",
+      "multinomial_nb"
+    ],
+    "concepts_required": [
+      "classification_basics",
+      "probability"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["spam_filtering", "sentiment_analysis", "document_classification"],
+    "real_world_application": [
+      "spam_filtering",
+      "sentiment_analysis",
+      "document_classification"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["supervised_learning"]
+    "path_memberships": [
+      "supervised_learning"
+    ]
   }
 }

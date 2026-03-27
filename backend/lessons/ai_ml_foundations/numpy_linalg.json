@@ -115,6 +115,75 @@
         " [43 50]]",
         "solve(A,b) = [1. 3.]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_numpy_linalg",
+      "code": "import numpy as np\n\nA = np.array([[1, 2], [3, 4]])\nB = np.array([[5, 6], [7, 8]])\nprint(A @ B)\nprint(np.linalg.det(A))\nprint(np.linalg.inv(A))\neigenvalues, eigenvectors = np.linalg.eig(A)\nprint(eigenvalues)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import NumPy"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "A": "[[1,2],[3,4]]"
+          },
+          "output": "",
+          "explanation": "Create 2x2 matrix A"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "B": "[[5,6],[7,8]]"
+          },
+          "output": "",
+          "explanation": "Create 2x2 matrix B"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "A @ B": "[[19,22],[43,50]]"
+          },
+          "output": "[[19 22]\n [43 50]]",
+          "explanation": "Matrix multiplication: row×col dot products"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "det(A)": "-2.0"
+          },
+          "output": "-2.0000000000000004",
+          "explanation": "Determinant: 1*4 - 2*3 = -2"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "inv(A)": "[[-2,1],[1.5,-0.5]]"
+          },
+          "output": "[[-2.   1. ]\n [ 1.5 -0.5]]",
+          "explanation": "Inverse matrix: A @ inv(A) = Identity"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "eigenvalues": "[-0.37, 5.37]"
+          },
+          "output": "",
+          "explanation": "Eigendecomposition: A*v = lambda*v"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "eigenvalues": "[-0.37228132, 5.37228132]"
+          },
+          "output": "[-0.37228132  5.37228132]",
+          "explanation": "Eigenvalues tell us about matrix scaling directions"
+        }
+      ]
     }
   ],
   "practice_challenges": [

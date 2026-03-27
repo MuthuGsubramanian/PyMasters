@@ -40,6 +40,20 @@
       "label": "point (immutable)"
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "point = (3, 7)\nprint(point[0])\nx, y = point\nprint(f'x={x}, y={y}')\ndef min_max(nums):\n    return min(nums), max(nums)\nlo, hi = min_max([5, 1, 8, 3])\nprint(lo, hi)",
+      "executionSteps": [
+        { "line": 1, "variables": { "point": "(3, 7)" }, "output": "", "description": "Create a tuple with two values" },
+        { "line": 2, "variables": { "point": "(3, 7)" }, "output": "3", "description": "Access first element at index 0" },
+        { "line": 3, "variables": { "point": "(3, 7)", "x": 3, "y": 7 }, "output": "3", "description": "Unpack tuple into x and y" },
+        { "line": 4, "variables": { "point": "(3, 7)", "x": 3, "y": 7 }, "output": "3\nx=3, y=7", "description": "Print unpacked values using f-string" },
+        { "line": 5, "variables": { "point": "(3, 7)", "x": 3, "y": 7 }, "output": "3\nx=3, y=7", "description": "Define function that returns a tuple" },
+        { "line": 7, "variables": { "point": "(3, 7)", "x": 3, "y": 7, "lo": 1, "hi": 8 }, "output": "3\nx=3, y=7", "description": "Call min_max and unpack tuple result into lo and hi" },
+        { "line": 8, "variables": { "point": "(3, 7)", "x": 3, "y": 7, "lo": 1, "hi": 8 }, "output": "3\nx=3, y=7\n1 8", "description": "Print lo=1 and hi=8" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

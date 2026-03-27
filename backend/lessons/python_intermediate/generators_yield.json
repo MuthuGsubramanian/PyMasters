@@ -214,6 +214,91 @@
         "label": "Generator (lazy)",
         "code": "nums = (x**2 for x in range(1000000))\n# ZERO values computed yet\n# ~200 bytes of RAM used"
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "def countdown(n):\n    print('Starting countdown')\n    while n > 0:\n        yield n\n        n -= 1\n    print('Liftoff!')\n\ngen = countdown(3)\nprint(next(gen))\nprint(next(gen))\nprint(next(gen))",
+      "executionSteps": [
+        {
+          "line": 8,
+          "variables": {
+            "gen": "<generator countdown>"
+          },
+          "output": "",
+          "description": "Create generator object - NO code runs yet!"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "n": 3
+          },
+          "output": "Starting countdown",
+          "description": "First next(): runs until first yield, prints 'Starting countdown'"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "3",
+          "description": "yield 3 - pauses generator, returns 3"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "n": 2
+          },
+          "output": "2",
+          "description": "Second next(): resumes after yield, n becomes 2, yields 2"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "n": 1
+          },
+          "output": "1",
+          "description": "Third next(): resumes, n becomes 1, yields 1"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "generator_yield",
+      "iterable": "countdown(3)",
+      "iterations": [
+        {
+          "index": 0,
+          "value": 3,
+          "variables": {
+            "n": 3
+          },
+          "description": "yield 3, pause"
+        },
+        {
+          "index": 1,
+          "value": 2,
+          "variables": {
+            "n": 2
+          },
+          "description": "resume, n-=1, yield 2, pause"
+        },
+        {
+          "index": 2,
+          "value": 1,
+          "variables": {
+            "n": 1
+          },
+          "description": "resume, n-=1, yield 1, pause"
+        },
+        {
+          "index": 3,
+          "value": "StopIteration",
+          "variables": {
+            "n": 0
+          },
+          "description": "resume, n-=1, while False, function returns"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -306,13 +391,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["generators", "yield", "generator_expressions", "lazy_evaluation", "next"],
-    "concepts_required": ["functions", "loops", "iterables"],
+    "concepts_taught": [
+      "generators",
+      "yield",
+      "generator_expressions",
+      "lazy_evaluation",
+      "next"
+    ],
+    "concepts_required": [
+      "functions",
+      "loops",
+      "iterables"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["large_file_processing", "data_streams", "memory_optimization"],
+    "real_world_application": [
+      "large_file_processing",
+      "data_streams",
+      "memory_optimization"
+    ],
     "category": "functional",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

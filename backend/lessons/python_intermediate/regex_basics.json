@@ -192,13 +192,98 @@
       "id": "pattern_visual",
       "structure_type": "table",
       "data": {
-        "headers": ["Function", "Behavior"],
+        "headers": [
+          "Function",
+          "Behavior"
+        ],
         "rows": [
-          ["re.match()", "Match at START only"],
-          ["re.search()", "Find FIRST match anywhere"],
-          ["re.findall()", "Find ALL matches as list"]
+          [
+            "re.match()",
+            "Match at START only"
+          ],
+          [
+            "re.search()",
+            "Find FIRST match anywhere"
+          ],
+          [
+            "re.findall()",
+            "Find ALL matches as list"
+          ]
         ]
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import re\n\ntext = 'Order #1234 on 2025-03-27 for $49.99'\nnumbers = re.findall(r'\\d+', text)\nprint(numbers)\n\nmatch = re.search(r'#(\\d+)', text)\nprint(f'Order: {match.group(1)}')\n\nresult = re.match(r'\\d+', 'abc123')\nprint(result)\n\nresult2 = re.search(r'\\d+', 'abc123')\nprint(result2.group())",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import the re module for regex"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "text": "'Order #1234 on 2025-03-27 for $49.99'"
+          },
+          "output": "",
+          "description": "Sample text with numbers, dates, prices"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "numbers": "['1234','2025','03','27','49','99']"
+          },
+          "output": "",
+          "description": "findall with \\d+ finds ALL digit sequences"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "['1234', '2025', '03', '27', '49', '99']",
+          "description": "Six number matches found"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "description": "search for #(digits) - parentheses capture group"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Order: 1234",
+          "description": "group(1) returns first capture group"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "result": "None"
+          },
+          "output": "",
+          "description": "re.match checks START only - 'abc' is not digits"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "None",
+          "description": "No match at start of string"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "",
+          "description": "re.search finds first match ANYWHERE"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "123",
+          "description": "Found '123' after 'abc'"
+        }
+      ],
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -289,13 +374,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["regex", "re_module", "match", "search", "findall", "patterns"],
-    "concepts_required": ["strings", "functions"],
+    "concepts_taught": [
+      "regex",
+      "re_module",
+      "match",
+      "search",
+      "findall",
+      "patterns"
+    ],
+    "concepts_required": [
+      "strings",
+      "functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["log_parsing", "data_validation", "web_scraping"],
+    "real_world_application": [
+      "log_parsing",
+      "data_validation",
+      "web_scraping"
+    ],
     "category": "text_processing",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

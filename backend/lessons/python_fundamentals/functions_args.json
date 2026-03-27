@@ -46,6 +46,41 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "def greet(name, greeting='Hello'):\n    return f'{greeting}, {name}!'\nprint(greet('Alice'))\nprint(greet('Bob', 'Hi'))\ndef total(*args):\n    return sum(args)\nprint(total(1, 2, 3))\ndef profile(**kwargs):\n    for k, v in kwargs.items():\n        print(f'{k}: {v}')\nprofile(name='Alice', age=30)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define greet with default parameter greeting='Hello'" },
+        { "line": 3, "variables": { "name": "Alice", "greeting": "Hello" }, "output": "Hello, Alice!", "description": "Call with 1 arg -- default greeting used" },
+        { "line": 4, "variables": { "name": "Bob", "greeting": "Hi" }, "output": "Hello, Alice!\nHi, Bob!", "description": "Call with 2 args -- default overridden to 'Hi'" },
+        { "line": 5, "variables": {}, "output": "Hello, Alice!\nHi, Bob!", "description": "Define total with *args to accept any number of positional args" },
+        { "line": 7, "variables": { "args": "(1, 2, 3)" }, "output": "Hello, Alice!\nHi, Bob!\n6", "description": "*args captures (1,2,3) as tuple, sum returns 6" },
+        { "line": 8, "variables": {}, "output": "Hello, Alice!\nHi, Bob!\n6", "description": "Define profile with **kwargs for keyword arguments" },
+        { "line": 11, "variables": { "kwargs": {"name": "Alice", "age": 30} }, "output": "Hello, Alice!\nHi, Bob!\n6\nname: Alice\nage: 30", "description": "**kwargs captures keyword args as dict, loop prints each" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "Function call", "type": "start" },
+        { "id": "positional", "label": "Match positional args", "type": "process" },
+        { "id": "defaults", "label": "Fill defaults for missing params", "type": "process" },
+        { "id": "args", "label": "Collect extras in *args", "type": "process" },
+        { "id": "kwargs", "label": "Collect keywords in **kwargs", "type": "process" },
+        { "id": "execute", "label": "Execute function body", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "positional" },
+        { "from": "positional", "to": "defaults" },
+        { "from": "defaults", "to": "args" },
+        { "from": "args", "to": "kwargs" },
+        { "from": "kwargs", "to": "execute" }
+      ],
+      "executionPath": ["start", "positional", "defaults", "args", "kwargs", "execute"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

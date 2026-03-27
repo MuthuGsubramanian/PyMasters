@@ -158,10 +158,30 @@
       "id": "embedding_vectors",
       "structure_type": "vector",
       "data": {
-        "king": [0.2, 0.8, 0.1, 0.9],
-        "queen": [0.2, 0.8, 0.9, 0.9],
-        "man": [0.1, 0.7, 0.1, 0.3],
-        "woman": [0.1, 0.7, 0.9, 0.3]
+        "king": [
+          0.2,
+          0.8,
+          0.1,
+          0.9
+        ],
+        "queen": [
+          0.2,
+          0.8,
+          0.9,
+          0.9
+        ],
+        "man": [
+          0.1,
+          0.7,
+          0.1,
+          0.3
+        ],
+        "woman": [
+          0.1,
+          0.7,
+          0.9,
+          0.3
+        ]
       },
       "visualization": "vector_space",
       "caption": "king - man + woman ≈ queen (vector arithmetic captures meaning)"
@@ -195,6 +215,113 @@
         "",
         "Cost for this text: $0.00000135"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_llm_how_they_work",
+      "code": "# Simplified tokenization\ntext = 'The cat sat on the mat'\ntokens = text.split()\nprint(f'Tokens: {tokens}')\nprint(f'Count: {len(tokens)}')\n\n# Next-token prediction (simplified)\nvocab_probs = {'cat':0.3, 'dog':0.15, 'sat':0.2, 'is':0.1}\nbest = max(vocab_probs, key=vocab_probs.get)\nprint(f'After \"The\", most likely: \"{best}\"')\n\n# Temperature effect\nprint('temp=0: deterministic (always highest prob)')\nprint('temp=1: proportional sampling (creative)')\nprint('temp=2: nearly random (chaotic)')",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "text": "The cat sat on the mat"
+          },
+          "output": "",
+          "explanation": "LLMs process text as tokens (words or subwords)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "tokens": [
+              "The",
+              "cat",
+              "sat",
+              "on",
+              "the",
+              "mat"
+            ]
+          },
+          "output": "Tokens: ['The', 'cat', 'sat', 'on', 'the', 'mat']",
+          "explanation": "Real tokenizers use BPE — split into subword units"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "vocab_probs": {
+              "cat": 0.3,
+              "dog": 0.15
+            }
+          },
+          "output": "",
+          "explanation": "LLM computes probability for every possible next token"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "After \"The\", most likely: \"cat\"",
+          "explanation": "Pick highest probability. Real LLMs: 100K+ token vocab"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "temp=0: deterministic",
+          "explanation": "Temperature controls randomness of token selection"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_llm_how_they_work",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "Input text (prompt)",
+          "next": [
+            "tokenize"
+          ]
+        },
+        {
+          "id": "tokenize",
+          "label": "Tokenize into subwords",
+          "next": [
+            "embed"
+          ]
+        },
+        {
+          "id": "embed",
+          "label": "Convert to embeddings",
+          "next": [
+            "attention"
+          ]
+        },
+        {
+          "id": "attention",
+          "label": "Transformer attention layers",
+          "next": [
+            "logits"
+          ]
+        },
+        {
+          "id": "logits",
+          "label": "Compute next-token probabilities",
+          "next": [
+            "sample"
+          ]
+        },
+        {
+          "id": "sample",
+          "label": "Sample with temperature",
+          "next": [
+            "output"
+          ]
+        },
+        {
+          "id": "output",
+          "label": "Output token, repeat",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -268,20 +395,42 @@
         "ta": "ஆங்கிலத்தில் தோராயமாக எத்தனை எழுத்துக்கள் ஒரு token-க்கு சமம்?"
       },
       "options": {
-        "en": ["1", "4", "10", "20"],
-        "ta": ["1", "4", "10", "20"]
+        "en": [
+          "1",
+          "4",
+          "10",
+          "20"
+        ],
+        "ta": [
+          "1",
+          "4",
+          "10",
+          "20"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["tokenization", "embeddings", "attention_mechanism", "transformer"],
-    "concepts_required": ["what_is_ai"],
+    "concepts_taught": [
+      "tokenization",
+      "embeddings",
+      "attention_mechanism",
+      "transformer"
+    ],
+    "concepts_required": [
+      "what_is_ai"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 30,
-    "real_world_application": ["cost_estimation", "model_selection"],
+    "real_world_application": [
+      "cost_estimation",
+      "model_selection"
+    ],
     "category": "ai_core",
-    "path_memberships": ["ai_fundamentals"]
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
   }
 }

@@ -43,6 +43,41 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "class Engine:\n    def __init__(self, hp):\n        self.hp = hp\n    def start(self):\n        return f'Engine ({self.hp}hp) started'\nclass GPS:\n    def navigate(self, dest):\n        return f'Navigating to {dest}'\nclass Car:\n    def __init__(self, brand, engine, gps):\n        self.brand = brand\n        self.engine = engine\n        self.gps = gps\nmy_car = Car('Tesla', Engine(300), GPS())\nprint(my_car.engine.start())\nprint(my_car.gps.navigate('Airport'))",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define Engine class with hp attribute" },
+        { "line": 6, "variables": {}, "output": "", "description": "Define GPS class with navigate method" },
+        { "line": 9, "variables": {}, "output": "", "description": "Define Car class using composition (has-a Engine, has-a GPS)" },
+        { "line": 14, "variables": { "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())" }, "output": "", "description": "Create Car by passing composed objects" },
+        { "line": 15, "variables": { "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())" }, "output": "Engine (300hp) started", "description": "Delegate to engine.start() -- composition in action" },
+        { "line": 16, "variables": { "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())" }, "output": "Engine (300hp) started\nNavigating to Airport", "description": "Delegate to gps.navigate() -- components are independent" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "car", "label": "Car (composed object)", "type": "start" },
+        { "id": "engine", "label": "self.engine = Engine(300)", "type": "process" },
+        { "id": "gps", "label": "self.gps = GPS()", "type": "process" },
+        { "id": "delegate_e", "label": "car.engine.start()", "type": "process" },
+        { "id": "delegate_g", "label": "car.gps.navigate()", "type": "process" },
+        { "id": "end", "label": "Flexible: swap components anytime", "type": "end" }
+      ],
+      "edges": [
+        { "from": "car", "to": "engine" },
+        { "from": "car", "to": "gps" },
+        { "from": "engine", "to": "delegate_e" },
+        { "from": "gps", "to": "delegate_g" },
+        { "from": "delegate_e", "to": "end" },
+        { "from": "delegate_g", "to": "end" }
+      ],
+      "executionPath": ["car", "engine", "delegate_e", "end"],
+      "variables": {},
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

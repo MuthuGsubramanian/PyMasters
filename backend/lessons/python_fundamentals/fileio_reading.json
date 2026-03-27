@@ -39,6 +39,20 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "with open('notes.txt', 'r') as f:\n    content = f.read()\nprint(len(content))\nwith open('notes.txt', 'r') as f:\n    lines = f.readlines()\nprint(len(lines))\nprint(lines[0].strip())",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Open 'notes.txt' in read mode using with statement" },
+        { "line": 2, "variables": { "content": "Hello\\nWorld\\n" }, "output": "", "description": "Read entire file contents into a string" },
+        { "line": 3, "variables": { "content": "Hello\\nWorld\\n" }, "output": "12", "description": "Print the length of the file contents" },
+        { "line": 4, "variables": { "content": "Hello\\nWorld\\n" }, "output": "12", "description": "Open the file again for line-by-line reading" },
+        { "line": 5, "variables": { "content": "Hello\\nWorld\\n", "lines": ["Hello\\n", "World\\n"] }, "output": "12", "description": "readlines() returns a list of lines" },
+        { "line": 6, "variables": { "content": "Hello\\nWorld\\n", "lines": ["Hello\\n", "World\\n"] }, "output": "12\n2", "description": "Print number of lines in the file" },
+        { "line": 7, "variables": { "content": "Hello\\nWorld\\n", "lines": ["Hello\\n", "World\\n"] }, "output": "12\n2\nHello", "description": "strip() removes trailing newline from first line" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

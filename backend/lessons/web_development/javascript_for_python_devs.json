@@ -154,6 +154,134 @@
         "> typeof null",
         "'object'  // Yes, this is a famous JS bug!"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_js_python",
+      "title": "JavaScript Array Methods vs Python",
+      "code": "const numbers = [1, 2, 3, 4, 5];\nconst doubled = numbers.map(n => n * 2);\nconst evens = numbers.filter(n => n % 2 === 0);\nconst sum = numbers.reduce((acc, n) => acc + n, 0);\nconsole.log('Doubled:', doubled);\nconsole.log('Evens:', evens);\nconsole.log('Sum:', sum);",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "numbers": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "output": "",
+          "explanation": "Create array -- like Python list"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "doubled": [
+              2,
+              4,
+              6,
+              8,
+              10
+            ]
+          },
+          "output": "",
+          "explanation": "map() like [n*2 for n in numbers]"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "evens": [
+              2,
+              4
+            ]
+          },
+          "output": "",
+          "explanation": "filter() like [n for n if n%2==0]"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "sum": 15
+          },
+          "output": "",
+          "explanation": "reduce() like sum() in Python"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Doubled: [2, 4, 6, 8, 10]",
+          "explanation": "console.log is JS print()"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "...Evens: [2, 4]",
+          "explanation": "Filtered results"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "...Sum: 15",
+          "explanation": "1+2+3+4+5 = 15"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_frontend_backend",
+      "title": "Frontend-Backend Communication",
+      "nodes": [
+        {
+          "id": "browser",
+          "label": "Browser (JS)",
+          "type": "start"
+        },
+        {
+          "id": "fetch",
+          "label": "fetch() API",
+          "type": "process"
+        },
+        {
+          "id": "server",
+          "label": "Python Server",
+          "type": "process"
+        },
+        {
+          "id": "db",
+          "label": "Database",
+          "type": "process"
+        },
+        {
+          "id": "dom",
+          "label": "Update DOM",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "browser",
+          "to": "fetch",
+          "label": "User action"
+        },
+        {
+          "from": "fetch",
+          "to": "server",
+          "label": "HTTP"
+        },
+        {
+          "from": "server",
+          "to": "db",
+          "label": "Query"
+        },
+        {
+          "from": "db",
+          "to": "dom",
+          "label": "JSON -> DOM"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -187,8 +315,18 @@
         "ta": "Python-ன் f'Hello {name}'-க்கு JavaScript சமம் என்ன?"
       },
       "options": {
-        "en": ["'Hello ' + name", "`Hello ${name}`", "f'Hello {name}'", "\"Hello #{name}\""],
-        "ta": ["'Hello ' + name", "`Hello ${name}`", "f'Hello {name}'", "\"Hello #{name}\""]
+        "en": [
+          "'Hello ' + name",
+          "`Hello ${name}`",
+          "f'Hello {name}'",
+          "\"Hello #{name}\""
+        ],
+        "ta": [
+          "'Hello ' + name",
+          "`Hello ${name}`",
+          "f'Hello {name}'",
+          "\"Hello #{name}\""
+        ]
       },
       "correct": 1
     },
@@ -198,8 +336,18 @@
         "ta": "JavaScript-ல் let மற்றும் const இடையே என்ன வேறுபாடு?"
       },
       "options": {
-        "en": ["No difference", "let can be reassigned, const cannot", "const is faster than let", "let is for numbers, const is for strings"],
-        "ta": ["வேறுபாடு இல்லை", "let மீண்டும் ஒதுக்கலாம், const ஒதுக்க முடியாது", "const let-ஐ விட வேகமானது", "let எண்களுக்கு, const சரங்களுக்கு"]
+        "en": [
+          "No difference",
+          "let can be reassigned, const cannot",
+          "const is faster than let",
+          "let is for numbers, const is for strings"
+        ],
+        "ta": [
+          "வேறுபாடு இல்லை",
+          "let மீண்டும் ஒதுக்கலாம், const ஒதுக்க முடியாது",
+          "const let-ஐ விட வேகமானது",
+          "let எண்களுக்கு, const சரங்களுக்கு"
+        ]
       },
       "correct": 1
     },
@@ -209,20 +357,43 @@
         "ta": "Python-ன் [x*2 for x in items] பட்டியல் புரிதலுக்கு சமமான JavaScript முறை எது?"
       },
       "options": {
-        "en": ["items.filter(x => x*2)", "items.map(x => x*2)", "items.reduce(x => x*2)", "items.forEach(x => x*2)"],
-        "ta": ["items.filter(x => x*2)", "items.map(x => x*2)", "items.reduce(x => x*2)", "items.forEach(x => x*2)"]
+        "en": [
+          "items.filter(x => x*2)",
+          "items.map(x => x*2)",
+          "items.reduce(x => x*2)",
+          "items.forEach(x => x*2)"
+        ],
+        "ta": [
+          "items.filter(x => x*2)",
+          "items.map(x => x*2)",
+          "items.reduce(x => x*2)",
+          "items.forEach(x => x*2)"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["javascript_basics", "dom_manipulation", "fetch_api", "arrow_functions"],
-    "concepts_required": ["python_functions", "python_data_structures"],
+    "concepts_taught": [
+      "javascript_basics",
+      "dom_manipulation",
+      "fetch_api",
+      "arrow_functions"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "python_data_structures"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 30,
-    "real_world_application": ["frontend_development", "full_stack"],
+    "real_world_application": [
+      "frontend_development",
+      "full_stack"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

@@ -155,10 +155,22 @@
       "type": "FlowArrow",
       "id": "bfs_flow",
       "steps": [
-        {"label": "Start at A", "active": true},
-        {"label": "Visit B, C (level 1)", "active": true},
-        {"label": "Visit D, E, F (level 2)", "active": true},
-        {"label": "All nodes visited!", "active": true}
+        {
+          "label": "Start at A",
+          "active": true
+        },
+        {
+          "label": "Visit B, C (level 1)",
+          "active": true
+        },
+        {
+          "label": "Visit D, E, F (level 2)",
+          "active": true
+        },
+        {
+          "label": "All nodes visited!",
+          "active": true
+        }
       ]
     },
     {
@@ -186,6 +198,182 @@
         "Nodes: 6, Edges: 7",
         "Is connected: True"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_graphs_basics",
+      "code": "from collections import deque\n\ngraph = {\n    'A': ['B', 'C'], 'B': ['A', 'D', 'E'],\n    'C': ['A', 'F'], 'D': ['B'],\n    'E': ['B', 'F'], 'F': ['C', 'E']\n}\n\ndef bfs(graph, start):\n    visited = set()\n    queue = deque([start])\n    visited.add(start)\n    order = []\n    while queue:\n        node = queue.popleft()\n        order.append(node)\n        for neighbor in graph[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append(neighbor)\n    return order\n\nprint(bfs(graph, 'A'))",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "graph": "6 nodes, 7 edges"
+          },
+          "output": "",
+          "explanation": "Adjacency list: each key maps to its neighbors"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "visited": [
+              "A"
+            ],
+            "queue": [
+              "A"
+            ]
+          },
+          "output": "",
+          "explanation": "BFS starts: mark A visited, add to queue"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node": "A",
+            "order": [
+              "A"
+            ]
+          },
+          "output": "",
+          "explanation": "Dequeue A, process it. Check neighbors B, C"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "queue": [
+              "B",
+              "C"
+            ],
+            "visited": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          "output": "",
+          "explanation": "Add B and C to queue (level 1 neighbors)"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node": "B",
+            "order": [
+              "A",
+              "B"
+            ]
+          },
+          "output": "",
+          "explanation": "Dequeue B. Neighbors: A(visited), D(new), E(new)"
+        },
+        {
+          "line": 20,
+          "variables": {
+            "queue": [
+              "C",
+              "D",
+              "E"
+            ]
+          },
+          "output": "",
+          "explanation": "Add D and E to queue (level 2)"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "node": "C",
+            "order": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          "output": "",
+          "explanation": "Dequeue C. Neighbor F is new"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "order": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F"
+            ]
+          },
+          "output": "",
+          "explanation": "Process remaining: D, E, F — no new neighbors"
+        },
+        {
+          "line": 23,
+          "variables": {},
+          "output": "['A', 'B', 'C', 'D', 'E', 'F']",
+          "explanation": "BFS visits level by level: A -> B,C -> D,E,F"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_graphs_basics",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start BFS at node",
+          "next": [
+            "enqueue"
+          ]
+        },
+        {
+          "id": "enqueue",
+          "label": "Add to queue, mark visited",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "loop",
+          "label": "Queue empty?",
+          "next": [
+            "done",
+            "dequeue"
+          ]
+        },
+        {
+          "id": "dequeue",
+          "label": "Dequeue front node",
+          "next": [
+            "process"
+          ]
+        },
+        {
+          "id": "process",
+          "label": "Process node, check neighbors",
+          "next": [
+            "neighbor_check"
+          ]
+        },
+        {
+          "id": "neighbor_check",
+          "label": "Neighbor visited?",
+          "next": [
+            "skip",
+            "enqueue"
+          ]
+        },
+        {
+          "id": "skip",
+          "label": "Skip (already visited)",
+          "next": [
+            "loop"
+          ]
+        },
+        {
+          "id": "done",
+          "label": "All reachable nodes visited",
+          "next": []
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -217,8 +405,18 @@
         "ta": "BFS எந்த தரவு கட்டமைப்பைப் பயன்படுத்துகிறது?"
       },
       "options": {
-        "en": ["Stack", "Queue", "Heap", "Hash table"],
-        "ta": ["Stack", "Queue", "Heap", "Hash table"]
+        "en": [
+          "Stack",
+          "Queue",
+          "Heap",
+          "Hash table"
+        ],
+        "ta": [
+          "Stack",
+          "Queue",
+          "Heap",
+          "Hash table"
+        ]
       },
       "correct": 1
     },
@@ -228,8 +426,18 @@
         "ta": "எந்த traversal எடையற்ற graph-ல் குறுகிய பாதையை கண்டறிய உத்தரவாதம் அளிக்கும்?"
       },
       "options": {
-        "en": ["DFS", "BFS", "Both", "Neither"],
-        "ta": ["DFS", "BFS", "இரண்டும்", "இரண்டும் இல்லை"]
+        "en": [
+          "DFS",
+          "BFS",
+          "Both",
+          "Neither"
+        ],
+        "ta": [
+          "DFS",
+          "BFS",
+          "இரண்டும்",
+          "இரண்டும் இல்லை"
+        ]
       },
       "correct": 1
     },
@@ -239,20 +447,45 @@
         "ta": "V முனைகள் மற்றும் E விளிம்புகள் கொண்ட graph-க்கு adjacency list-ன் இட சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(V²)", "O(V + E)", "O(E)", "O(V)"],
-        "ta": ["O(V²)", "O(V + E)", "O(E)", "O(V)"]
+        "en": [
+          "O(V²)",
+          "O(V + E)",
+          "O(E)",
+          "O(V)"
+        ],
+        "ta": [
+          "O(V²)",
+          "O(V + E)",
+          "O(E)",
+          "O(V)"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["graph", "adjacency_list", "bfs", "dfs"],
-    "concepts_required": ["dict", "queue", "recursion"],
+    "concepts_taught": [
+      "graph",
+      "adjacency_list",
+      "bfs",
+      "dfs"
+    ],
+    "concepts_required": [
+      "dict",
+      "queue",
+      "recursion"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["social_networks", "maps_navigation", "web_crawling"],
+    "real_world_application": [
+      "social_networks",
+      "maps_navigation",
+      "web_crawling"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

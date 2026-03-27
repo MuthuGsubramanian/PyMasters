@@ -30,19 +30,36 @@
       "nodes": [
         {
           "label": "Model Deployment",
-          "children": ["Serialization", "API Serving", "Experiment Tracking", "Monitoring"]
+          "children": [
+            "Serialization",
+            "API Serving",
+            "Experiment Tracking",
+            "Monitoring"
+          ]
         },
         {
           "label": "Serialization",
-          "children": ["pickle", "joblib", "ONNX"]
+          "children": [
+            "pickle",
+            "joblib",
+            "ONNX"
+          ]
         },
         {
           "label": "API Serving",
-          "children": ["FastAPI", "Flask", "gRPC"]
+          "children": [
+            "FastAPI",
+            "Flask",
+            "gRPC"
+          ]
         },
         {
           "label": "Tracking",
-          "children": ["MLflow", "Weights & Biases", "Neptune"]
+          "children": [
+            "MLflow",
+            "Weights & Biases",
+            "Neptune"
+          ]
         }
       ],
       "duration_ms": 3000
@@ -51,11 +68,31 @@
       "type": "FlowArrow",
       "id": "deploy_flow",
       "stages": [
-        { "label": "Train Model", "icon": "brain", "color": "#3498db" },
-        { "label": "Serialize (joblib)", "icon": "save", "color": "#2ecc71" },
-        { "label": "FastAPI Endpoint", "icon": "api", "color": "#9b59b6" },
-        { "label": "Client Request", "icon": "request", "color": "#e74c3c" },
-        { "label": "JSON Response", "icon": "response", "color": "#f39c12" }
+        {
+          "label": "Train Model",
+          "icon": "brain",
+          "color": "#3498db"
+        },
+        {
+          "label": "Serialize (joblib)",
+          "icon": "save",
+          "color": "#2ecc71"
+        },
+        {
+          "label": "FastAPI Endpoint",
+          "icon": "api",
+          "color": "#9b59b6"
+        },
+        {
+          "label": "Client Request",
+          "icon": "request",
+          "color": "#e74c3c"
+        },
+        {
+          "label": "JSON Response",
+          "icon": "response",
+          "color": "#f39c12"
+        }
       ],
       "duration_ms": 4000
     },
@@ -66,72 +103,100 @@
         {
           "line": "import joblib",
           "highlight": "joblib",
-          "explanation": { "en": "joblib is sklearn's recommended serialization — efficient for NumPy arrays" }
+          "explanation": {
+            "en": "joblib is sklearn's recommended serialization — efficient for NumPy arrays"
+          }
         },
         {
           "line": "from sklearn.ensemble import RandomForestClassifier",
           "highlight": "RandomForestClassifier",
-          "explanation": { "en": "Train a model that we will save and serve" }
+          "explanation": {
+            "en": "Train a model that we will save and serve"
+          }
         },
         {
           "line": "from sklearn.datasets import load_iris",
           "highlight": "load_iris",
-          "explanation": { "en": "Use Iris dataset for our example" }
+          "explanation": {
+            "en": "Use Iris dataset for our example"
+          }
         },
         {
           "line": "X, y = load_iris(return_X_y=True)",
           "highlight": "X, y",
-          "explanation": { "en": "Load training data" }
+          "explanation": {
+            "en": "Load training data"
+          }
         },
         {
           "line": "model = RandomForestClassifier(n_estimators=100, random_state=42); model.fit(X, y)",
           "highlight": "fit",
-          "explanation": { "en": "Train the model — in production, you'd use train/test split" }
+          "explanation": {
+            "en": "Train the model — in production, you'd use train/test split"
+          }
         },
         {
           "line": "joblib.dump(model, 'iris_model.joblib')",
           "highlight": "dump",
-          "explanation": { "en": "Serialize the trained model to a file — can be loaded anywhere" }
+          "explanation": {
+            "en": "Serialize the trained model to a file — can be loaded anywhere"
+          }
         },
         {
           "line": "loaded = joblib.load('iris_model.joblib')",
           "highlight": "load",
-          "explanation": { "en": "Load the model back — it has all learned parameters intact" }
+          "explanation": {
+            "en": "Load the model back — it has all learned parameters intact"
+          }
         },
         {
           "line": "print(loaded.predict([[5.1, 3.5, 1.4, 0.2]]))",
           "highlight": "predict",
-          "explanation": { "en": "The loaded model makes predictions just like the original" }
+          "explanation": {
+            "en": "The loaded model makes predictions just like the original"
+          }
         },
         {
           "line": "from fastapi import FastAPI",
           "highlight": "FastAPI",
-          "explanation": { "en": "FastAPI: modern, fast Python web framework with automatic docs" }
+          "explanation": {
+            "en": "FastAPI: modern, fast Python web framework with automatic docs"
+          }
         },
         {
           "line": "from pydantic import BaseModel",
           "highlight": "BaseModel",
-          "explanation": { "en": "Pydantic validates request data — catches bad input before it hits the model" }
+          "explanation": {
+            "en": "Pydantic validates request data — catches bad input before it hits the model"
+          }
         },
         {
           "line": "class IrisInput(BaseModel):\n    sepal_length: float\n    sepal_width: float\n    petal_length: float\n    petal_width: float",
           "highlight": "IrisInput",
-          "explanation": { "en": "Define the expected input schema — FastAPI auto-generates API docs from this" }
+          "explanation": {
+            "en": "Define the expected input schema — FastAPI auto-generates API docs from this"
+          }
         },
         {
           "line": "app = FastAPI(title='Iris Classifier'); model = joblib.load('iris_model.joblib')",
           "highlight": "app",
-          "explanation": { "en": "Create the API app and load the model at startup" }
+          "explanation": {
+            "en": "Create the API app and load the model at startup"
+          }
         },
         {
           "line": "@app.post('/predict')\ndef predict(data: IrisInput):\n    features = np.array([[data.sepal_length, data.sepal_width, data.petal_length, data.petal_width]])\n    pred = model.predict(features)[0]\n    return {'species': ['setosa','versicolor','virginica'][pred]}",
           "highlight": "/predict",
-          "explanation": { "en": "POST endpoint: receives JSON, runs model, returns prediction as JSON" }
+          "explanation": {
+            "en": "POST endpoint: receives JSON, runs model, returns prediction as JSON"
+          }
         },
         {
           "line": "# Run with: uvicorn app:app --host 0.0.0.0 --port 8000",
           "highlight": "uvicorn",
-          "explanation": { "en": "Start the server — API docs available at http://localhost:8000/docs" }
+          "explanation": {
+            "en": "Start the server — API docs available at http://localhost:8000/docs"
+          }
         }
       ]
     },
@@ -158,6 +223,61 @@
         "  -H 'Content-Type: application/json' \\",
         "  -d '{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}'",
         "{\"species\":\"setosa\",\"confidence\":1.0}"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_deployment",
+      "code": "import joblib\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.datasets import load_iris\nimport numpy as np\n\n# Train model\nX, y = load_iris(return_X_y=True)\nmodel = RandomForestClassifier(n_estimators=100, random_state=42)\nmodel.fit(X, y)\n\n# Save model\njoblib.dump(model, 'iris_model.joblib')\nprint('Model saved!')\n\n# Load and predict\nloaded_model = joblib.load('iris_model.joblib')\nsample = np.array([[5.1, 3.5, 1.4, 0.2]])\nprediction = loaded_model.predict(sample)\nprint(f'Prediction: {prediction[0]}')  # 0 = setosa",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "X.shape": "(150, 4)"
+          },
+          "output": "",
+          "explanation": "Train on full Iris dataset"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "model": "fitted RF"
+          },
+          "output": "",
+          "explanation": "Train RandomForest with 100 trees"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "file": "iris_model.joblib"
+          },
+          "output": "Model saved!",
+          "explanation": "Serialize model to disk with joblib"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "loaded_model": "RandomForestClassifier"
+          },
+          "output": "",
+          "explanation": "Load model back — exact same object"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "sample": "[[5.1, 3.5, 1.4, 0.2]]"
+          },
+          "output": "",
+          "explanation": "New flower measurements to classify"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "prediction": "0 (setosa)"
+          },
+          "output": "Prediction: 0",
+          "explanation": "Model predicts setosa — same as training time"
+        }
       ]
     }
   ],
@@ -190,8 +310,18 @@
         "ta": "sklearn மாடல்களுக்கு pickle ஐ விட joblib ஏன் விரும்பப்படுகிறது?"
       },
       "options": {
-        "en": ["It is more secure", "It is optimized for objects with large NumPy arrays", "It creates smaller files", "It works with all programming languages"],
-        "ta": ["இது மிகவும் பாதுகாப்பானது", "பெரிய NumPy அணிகள் கொண்ட பொருட்களுக்கு உகந்ததாக உள்ளது", "சிறிய கோப்புகளை உருவாக்குகிறது", "அனைத்து நிரலாக்க மொழிகளிலும் வேலை செய்கிறது"]
+        "en": [
+          "It is more secure",
+          "It is optimized for objects with large NumPy arrays",
+          "It creates smaller files",
+          "It works with all programming languages"
+        ],
+        "ta": [
+          "இது மிகவும் பாதுகாப்பானது",
+          "பெரிய NumPy அணிகள் கொண்ட பொருட்களுக்கு உகந்ததாக உள்ளது",
+          "சிறிய கோப்புகளை உருவாக்குகிறது",
+          "அனைத்து நிரலாக்க மொழிகளிலும் வேலை செய்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -201,8 +331,18 @@
         "ta": "Pydantic மாடல்களிலிருந்து FastAPI என்ன தானாக உருவாக்குகிறது?"
       },
       "options": {
-        "en": ["Machine learning models", "Interactive API documentation (Swagger/OpenAPI)", "Database tables", "Unit tests"],
-        "ta": ["இயந்திர கற்றல் மாடல்கள்", "ஊடாடும் API ஆவணங்கள் (Swagger/OpenAPI)", "தரவுத்தள அட்டவணைகள்", "அலகு சோதனைகள்"]
+        "en": [
+          "Machine learning models",
+          "Interactive API documentation (Swagger/OpenAPI)",
+          "Database tables",
+          "Unit tests"
+        ],
+        "ta": [
+          "இயந்திர கற்றல் மாடல்கள்",
+          "ஊடாடும் API ஆவணங்கள் (Swagger/OpenAPI)",
+          "தரவுத்தள அட்டவணைகள்",
+          "அலகு சோதனைகள்"
+        ]
       },
       "correct": 1
     },
@@ -212,20 +352,45 @@
         "ta": "மாடல் மட்டுமல்லாமல் முழு Pipeline (preprocessor + model) ஐ ஏன் சேமிக்க வேண்டும்?"
       },
       "options": {
-        "en": ["Pipelines are smaller", "To ensure new data gets the exact same preprocessing as training data", "Pipelines train faster", "It is required by FastAPI"],
-        "ta": ["Pipelines சிறியவை", "புதிய தரவு பயிற்சி தரவு போன்ற அதே முன்செயலாக்கத்தைப் பெறுவதை உறுதிசெய்ய", "Pipelines வேகமாக பயிற்சிக்கின்றன", "FastAPI ஆல் தேவைப்படுகிறது"]
+        "en": [
+          "Pipelines are smaller",
+          "To ensure new data gets the exact same preprocessing as training data",
+          "Pipelines train faster",
+          "It is required by FastAPI"
+        ],
+        "ta": [
+          "Pipelines சிறியவை",
+          "புதிய தரவு பயிற்சி தரவு போன்ற அதே முன்செயலாக்கத்தைப் பெறுவதை உறுதிசெய்ய",
+          "Pipelines வேகமாக பயிற்சிக்கின்றன",
+          "FastAPI ஆல் தேவைப்படுகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["model_serialization", "joblib", "fastapi_serving", "mlflow", "api_deployment"],
-    "concepts_required": ["ml_pipelines", "model_training"],
+    "concepts_taught": [
+      "model_serialization",
+      "joblib",
+      "fastapi_serving",
+      "mlflow",
+      "api_deployment"
+    ],
+    "concepts_required": [
+      "ml_pipelines",
+      "model_training"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 40,
-    "real_world_application": ["production_deployment", "microservices", "mlops"],
+    "real_world_application": [
+      "production_deployment",
+      "microservices",
+      "mlops"
+    ],
     "category": "machine_learning",
-    "path_memberships": ["production"]
+    "path_memberships": [
+      "production"
+    ]
   }
 }

@@ -161,6 +161,131 @@
         "$ curl http://localhost:8000/students/",
         "[{\"id\":1,\"name\":\"Alice\",\"age\":22,\"email\":\"alice@py.com\",\"grade\":95.5}]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_fastapi_intro",
+      "title": "FastAPI with Pydantic Validation",
+      "code": "from pydantic import BaseModel, Field\n\nclass Student(BaseModel):\n    name: str = Field(min_length=2)\n    age: int = Field(ge=10, le=120)\n    grade: float = 0.0\n\nstudent = Student(name='Alice', age=22, grade=95.5)\nprint(f'Name: {student.name}')\nprint(f'Dict: {student.model_dump()}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import Pydantic BaseModel and Field"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "Student": "<class>"
+          },
+          "output": "",
+          "explanation": "Define model -- type hints drive validation"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "explanation": "name: min 2 characters"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "explanation": "age: between 10 and 120"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "grade: defaults to 0.0"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "student": "Student(name='Alice', age=22, grade=95.5)"
+          },
+          "output": "",
+          "explanation": "Valid Student created"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Name: Alice",
+          "explanation": "Dot notation access"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Name: Alice\nDict: {'name': 'Alice', 'age': 22, 'grade': 95.5}",
+          "explanation": "model_dump() converts to dict"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_fastapi_flow",
+      "title": "FastAPI Request Processing",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "Client\nPOST /students/",
+          "type": "start"
+        },
+        {
+          "id": "uvicorn",
+          "label": "Uvicorn ASGI",
+          "type": "process"
+        },
+        {
+          "id": "fastapi",
+          "label": "FastAPI Router",
+          "type": "process"
+        },
+        {
+          "id": "pydantic",
+          "label": "Pydantic\nValidate",
+          "type": "decision"
+        },
+        {
+          "id": "handler",
+          "label": "Route Handler",
+          "type": "process"
+        },
+        {
+          "id": "response",
+          "label": "JSON 201",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "uvicorn",
+          "label": "JSON"
+        },
+        {
+          "from": "uvicorn",
+          "to": "fastapi",
+          "label": "ASGI"
+        },
+        {
+          "from": "fastapi",
+          "to": "pydantic",
+          "label": "Body"
+        },
+        {
+          "from": "pydantic",
+          "to": "handler",
+          "label": "Valid"
+        },
+        {
+          "from": "handler",
+          "to": "response",
+          "label": "Return"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -194,8 +319,18 @@
         "ta": "தானியங்கி தரவு சரிபார்ப்புக்கு FastAPI எதைப் பயன்படுத்துகிறது?"
       },
       "options": {
-        "en": ["Django Forms", "WTForms", "Pydantic models with type hints", "Manual if/else checks"],
-        "ta": ["Django Forms", "WTForms", "வகை குறிப்புகளுடன் Pydantic மாதிரிகள்", "கைமுறை if/else சோதனைகள்"]
+        "en": [
+          "Django Forms",
+          "WTForms",
+          "Pydantic models with type hints",
+          "Manual if/else checks"
+        ],
+        "ta": [
+          "Django Forms",
+          "WTForms",
+          "வகை குறிப்புகளுடன் Pydantic மாதிரிகள்",
+          "கைமுறை if/else சோதனைகள்"
+        ]
       },
       "correct": 2
     },
@@ -205,8 +340,18 @@
         "ta": "FastAPI-ல் தானாக உருவாக்கப்பட்ட API ஆவணங்களை எங்கே காணலாம்?"
       },
       "options": {
-        "en": ["/admin/", "/docs/ (Swagger UI)", "/api-docs/", "/readme/"],
-        "ta": ["/admin/", "/docs/ (Swagger UI)", "/api-docs/", "/readme/"]
+        "en": [
+          "/admin/",
+          "/docs/ (Swagger UI)",
+          "/api-docs/",
+          "/readme/"
+        ],
+        "ta": [
+          "/admin/",
+          "/docs/ (Swagger UI)",
+          "/api-docs/",
+          "/readme/"
+        ]
       },
       "correct": 1
     },
@@ -216,20 +361,43 @@
         "ta": "FastAPI பயன்பாடுகளை இயக்க பொதுவாக எந்த ASGI சேவையகம் பயன்படுத்தப்படுகிறது?"
       },
       "options": {
-        "en": ["Gunicorn", "Apache", "Uvicorn", "Nginx"],
-        "ta": ["Gunicorn", "Apache", "Uvicorn", "Nginx"]
+        "en": [
+          "Gunicorn",
+          "Apache",
+          "Uvicorn",
+          "Nginx"
+        ],
+        "ta": [
+          "Gunicorn",
+          "Apache",
+          "Uvicorn",
+          "Nginx"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["fastapi_basics", "pydantic", "async_routes", "auto_docs"],
-    "concepts_required": ["rest_api_concepts", "python_type_hints"],
+    "concepts_taught": [
+      "fastapi_basics",
+      "pydantic",
+      "async_routes",
+      "auto_docs"
+    ],
+    "concepts_required": [
+      "rest_api_concepts",
+      "python_type_hints"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["api_development", "microservices"],
+    "real_world_application": [
+      "api_development",
+      "microservices"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

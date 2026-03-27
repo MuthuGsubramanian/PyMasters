@@ -190,6 +190,119 @@
         "$ curl -X DELETE http://localhost:8000/items/1 -w '%{http_code}'",
         "204"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_fastapi_crud",
+      "title": "FastAPI CRUD with SQLAlchemy",
+      "code": "from sqlalchemy.orm import Session\nfrom models import Item\n\ndef create_item(item_data, db: Session):\n    db_item = Item(**item_data.model_dump())\n    db.add(db_item)\n    db.commit()\n    db.refresh(db_item)\n    return db_item",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import SQLAlchemy Session"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "item_data": "ItemCreate(name='Widget', price=9.99)"
+          },
+          "output": "",
+          "explanation": "Receives validated Pydantic data and DB session"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "db_item": "Item(name='Widget', price=9.99)"
+          },
+          "output": "",
+          "explanation": "model_dump() to dict, ** unpacks into constructor"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "db.add() stages for insertion"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "db_item": "Item(id=1)"
+          },
+          "output": "",
+          "explanation": "db.commit() executes INSERT"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "db_item": "Item(id=1, name='Widget')"
+          },
+          "output": "",
+          "explanation": "db.refresh() reloads auto-generated fields"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "{\"id\":1,\"name\":\"Widget\",\"price\":9.99}",
+          "explanation": "Return complete object"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_fastapi_crud",
+      "title": "FastAPI CRUD Flow",
+      "nodes": [
+        {
+          "id": "request",
+          "label": "POST /items/",
+          "type": "start"
+        },
+        {
+          "id": "depends",
+          "label": "Depends(get_db)",
+          "type": "process"
+        },
+        {
+          "id": "pydantic",
+          "label": "Pydantic\nValidate",
+          "type": "decision"
+        },
+        {
+          "id": "orm",
+          "label": "SQLAlchemy\nadd+commit",
+          "type": "process"
+        },
+        {
+          "id": "response",
+          "label": "JSON 201",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "request",
+          "to": "depends",
+          "label": "JSON"
+        },
+        {
+          "from": "depends",
+          "to": "pydantic",
+          "label": "Session"
+        },
+        {
+          "from": "pydantic",
+          "to": "orm",
+          "label": "Valid"
+        },
+        {
+          "from": "orm",
+          "to": "response",
+          "label": "Saved"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -223,8 +336,18 @@
         "ta": "FastAPI வழியில் Depends(get_db) என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates a new database", "Injects a database session into the route function", "Deletes the database", "Runs database migrations"],
-        "ta": ["புதிய தரவுத்தளத்தை உருவாக்குகிறது", "வழி செயல்பாட்டில் தரவுத்தள அமர்வை செலுத்துகிறது", "தரவுத்தளத்தை நீக்குகிறது", "தரவுத்தள இடம்பெயர்வுகளை இயக்குகிறது"]
+        "en": [
+          "Creates a new database",
+          "Injects a database session into the route function",
+          "Deletes the database",
+          "Runs database migrations"
+        ],
+        "ta": [
+          "புதிய தரவுத்தளத்தை உருவாக்குகிறது",
+          "வழி செயல்பாட்டில் தரவுத்தள அமர்வை செலுத்துகிறது",
+          "தரவுத்தளத்தை நீக்குகிறது",
+          "தரவுத்தள இடம்பெயர்வுகளை இயக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -234,8 +357,18 @@
         "ta": "புதுப்பிப்பு செயல்பாடுகளுக்கு model_dump(exclude_unset=True) ஏன் பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["To include all fields", "To only update fields that were explicitly sent in the request", "To remove the id field", "To convert to JSON string"],
-        "ta": ["அனைத்து புலங்களையும் சேர்க்க", "கோரிக்கையில் வெளிப்படையாக அனுப்பப்பட்ட புலங்களை மட்டும் புதுப்பிக்க", "id புலத்தை நீக்க", "JSON சரமாக மாற்ற"]
+        "en": [
+          "To include all fields",
+          "To only update fields that were explicitly sent in the request",
+          "To remove the id field",
+          "To convert to JSON string"
+        ],
+        "ta": [
+          "அனைத்து புலங்களையும் சேர்க்க",
+          "கோரிக்கையில் வெளிப்படையாக அனுப்பப்பட்ட புலங்களை மட்டும் புதுப்பிக்க",
+          "id புலத்தை நீக்க",
+          "JSON சரமாக மாற்ற"
+        ]
       },
       "correct": 1
     },
@@ -245,20 +378,44 @@
         "ta": "வெற்றிகரமாக நீக்கும்போது DELETE எந்த HTTP நிலை குறியீட்டை திருப்ப வேண்டும்?"
       },
       "options": {
-        "en": ["200 OK", "201 Created", "204 No Content", "404 Not Found"],
-        "ta": ["200 OK", "201 Created", "204 No Content", "404 Not Found"]
+        "en": [
+          "200 OK",
+          "201 Created",
+          "204 No Content",
+          "404 Not Found"
+        ],
+        "ta": [
+          "200 OK",
+          "201 Created",
+          "204 No Content",
+          "404 Not Found"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["fastapi_crud", "sqlalchemy_integration", "dependency_injection", "pydantic_schemas"],
-    "concepts_required": ["fastapi_basics", "rest_api_concepts", "database_sql_basics"],
+    "concepts_taught": [
+      "fastapi_crud",
+      "sqlalchemy_integration",
+      "dependency_injection",
+      "pydantic_schemas"
+    ],
+    "concepts_required": [
+      "fastapi_basics",
+      "rest_api_concepts",
+      "database_sql_basics"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 40,
-    "real_world_application": ["api_development", "backend_services"],
+    "real_world_application": [
+      "api_development",
+      "backend_services"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

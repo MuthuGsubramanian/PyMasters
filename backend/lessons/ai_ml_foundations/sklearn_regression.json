@@ -91,6 +91,130 @@
         "Coef: [2.98]",
         "Bias: 7.12"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_sklearn_reg",
+      "code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import mean_squared_error, r2_score\n\nnp.random.seed(42)\nX = np.random.rand(100, 1) * 10\ny = 2.5 * X.flatten() + 5 + np.random.randn(100)\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)\nmodel = LinearRegression().fit(X_train, y_train)\ny_pred = model.predict(X_test)\nprint(f'Coef: {model.coef_[0]:.2f}, Intercept: {model.intercept_:.2f}')\nprint(f'R2: {r2_score(y_test, y_pred):.4f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "seed": "42"
+          },
+          "output": "",
+          "explanation": "Fix random state for reproducibility"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "X.shape": "(100, 1)"
+          },
+          "output": "",
+          "explanation": "100 random feature values between 0 and 10"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "y": "2.5*X + 5 + noise"
+          },
+          "output": "",
+          "explanation": "True relationship: y = 2.5x + 5 with Gaussian noise"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "X_train.shape": "(80, 1)",
+            "X_test.shape": "(20, 1)"
+          },
+          "output": "",
+          "explanation": "80/20 train/test split"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "model": "fitted LinearRegression"
+          },
+          "output": "",
+          "explanation": "Fit model — finds best slope and intercept via OLS"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "y_pred": "20 predictions"
+          },
+          "output": "",
+          "explanation": "Predict on held-out test data"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "coef": "2.48",
+            "intercept": "5.12"
+          },
+          "output": "Coef: 2.48, Intercept: 5.12",
+          "explanation": "Learned weights close to true values (2.5, 5)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "R2": "0.9876"
+          },
+          "output": "R2: 0.9876",
+          "explanation": "R2 near 1 means model explains most variance"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_regression_pipeline",
+      "title": "Regression Pipeline",
+      "nodes": [
+        {
+          "id": "data",
+          "label": "Generate/Load Data",
+          "type": "start"
+        },
+        {
+          "id": "split",
+          "label": "Train/Test Split",
+          "type": "process"
+        },
+        {
+          "id": "fit",
+          "label": "model.fit(X_train, y_train)",
+          "type": "process"
+        },
+        {
+          "id": "pred",
+          "label": "model.predict(X_test)",
+          "type": "process"
+        },
+        {
+          "id": "eval",
+          "label": "MSE / R2 Score",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "data",
+          "to": "split"
+        },
+        {
+          "from": "split",
+          "to": "fit"
+        },
+        {
+          "from": "fit",
+          "to": "pred"
+        },
+        {
+          "from": "pred",
+          "to": "eval"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

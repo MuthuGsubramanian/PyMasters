@@ -157,11 +157,31 @@
       "id": "project_tree",
       "structure_type": "tree",
       "layers": [
-        { "label": "my-library/", "count": "root", "color": "#4f8ef7" },
-        { "label": "pyproject.toml", "count": "metadata", "color": "#6bcf7f" },
-        { "label": "src/mylib/", "count": "source code", "color": "#ffd93d" },
-        { "label": "tests/", "count": "test files", "color": "#a66bf7" },
-        { "label": "dist/", "count": "built packages", "color": "#ff6b6b" }
+        {
+          "label": "my-library/",
+          "count": "root",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "pyproject.toml",
+          "count": "metadata",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "src/mylib/",
+          "count": "source code",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "tests/",
+          "count": "test files",
+          "color": "#a66bf7"
+        },
+        {
+          "label": "dist/",
+          "count": "built packages",
+          "color": "#ff6b6b"
+        }
       ]
     },
     {
@@ -193,6 +213,123 @@
       "value": "1.0.0 (MAJOR.MINOR.PATCH)",
       "data_type": "semver",
       "color": "#4ff7a4"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_packaging",
+      "title": "Python Package Setup",
+      "code": "# pyproject.toml\n[project]\nname = 'my-package'\nversion = '1.0.0'\ndependencies = ['requests>=2.28']\n\n# $ python -m build\n# $ twine upload dist/*",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "explanation": "Project metadata section"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "name": "my-package"
+          },
+          "output": "",
+          "explanation": "Package name on PyPI"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "version": "1.0.0"
+          },
+          "output": "",
+          "explanation": "Semantic version"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "deps": [
+              "requests>=2.28"
+            ]
+          },
+          "output": "",
+          "explanation": "Auto-installed dependencies"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Building wheel...",
+          "explanation": "Create distributable"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Uploading to PyPI...",
+          "explanation": "Publish package"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_pkg_flow",
+      "title": "TDD for Package Publishing",
+      "nodes": [
+        {
+          "id": "test",
+          "label": "Write Tests\nfor API",
+          "type": "start"
+        },
+        {
+          "id": "red",
+          "label": "RED\nImport Fails",
+          "type": "decision"
+        },
+        {
+          "id": "code",
+          "label": "Implement",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN\nPasses",
+          "type": "decision"
+        },
+        {
+          "id": "build",
+          "label": "Build\npython -m build",
+          "type": "process"
+        },
+        {
+          "id": "publish",
+          "label": "Publish\ntwine upload",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "test",
+          "to": "red",
+          "label": "pytest"
+        },
+        {
+          "from": "red",
+          "to": "code",
+          "label": "Expected"
+        },
+        {
+          "from": "code",
+          "to": "green",
+          "label": "pytest"
+        },
+        {
+          "from": "green",
+          "to": "build",
+          "label": "All pass"
+        },
+        {
+          "from": "build",
+          "to": "publish",
+          "label": "Artifacts"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -228,8 +365,18 @@
         "ta": "Python packaging-க்கான நவீன standard-ஆக setup.py-ஐ எந்த file மாற்றியது?"
       },
       "options": {
-        "en": ["setup.cfg", "pyproject.toml", "package.json", "Pipfile"],
-        "ta": ["setup.cfg", "pyproject.toml", "package.json", "Pipfile"]
+        "en": [
+          "setup.cfg",
+          "pyproject.toml",
+          "package.json",
+          "Pipfile"
+        ],
+        "ta": [
+          "setup.cfg",
+          "pyproject.toml",
+          "package.json",
+          "Pipfile"
+        ]
       },
       "correct": 1
     },
@@ -239,8 +386,18 @@
         "ta": "Build செய்யப்பட்ட packages-ஐ PyPI-க்கு upload செய்ய எந்த tool பயன்படுகிறது?"
       },
       "options": {
-        "en": ["pip", "build", "twine", "setuptools"],
-        "ta": ["pip", "build", "twine", "setuptools"]
+        "en": [
+          "pip",
+          "build",
+          "twine",
+          "setuptools"
+        ],
+        "ta": [
+          "pip",
+          "build",
+          "twine",
+          "setuptools"
+        ]
       },
       "correct": 2
     },
@@ -250,20 +407,44 @@
         "ta": "Semantic versioning 2.3.1-ல், '3' எதைக் குறிக்கிறது?"
       },
       "options": {
-        "en": ["Major version", "Minor version (new features, backward compatible)", "Patch version", "Build number"],
-        "ta": ["Major version", "Minor version (புதிய அம்சங்கள், பின்தங்கிய இணக்கம்)", "Patch version", "Build number"]
+        "en": [
+          "Major version",
+          "Minor version (new features, backward compatible)",
+          "Patch version",
+          "Build number"
+        ],
+        "ta": [
+          "Major version",
+          "Minor version (புதிய அம்சங்கள், பின்தங்கிய இணக்கம்)",
+          "Patch version",
+          "Build number"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["pyproject_toml", "packaging", "pypi", "semver", "twine"],
-    "concepts_required": ["modules", "pip"],
+    "concepts_taught": [
+      "pyproject_toml",
+      "packaging",
+      "pypi",
+      "semver",
+      "twine"
+    ],
+    "concepts_required": [
+      "modules",
+      "pip"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["open_source", "library_development"],
+    "real_world_application": [
+      "open_source",
+      "library_development"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

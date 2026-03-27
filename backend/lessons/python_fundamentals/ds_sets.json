@@ -43,6 +43,21 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "fruits = {'apple', 'banana', 'cherry'}\nfruits.add('mango')\nfruits.add('apple')\nprint(len(fruits))\na = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\nprint(a & b)\nprint(a - b)",
+      "executionSteps": [
+        { "line": 1, "variables": { "fruits": "{apple, banana, cherry}" }, "output": "", "description": "Create a set with 3 fruits" },
+        { "line": 2, "variables": { "fruits": "{apple, banana, cherry, mango}" }, "output": "", "description": "Add 'mango' to the set" },
+        { "line": 3, "variables": { "fruits": "{apple, banana, cherry, mango}" }, "output": "", "description": "Try to add 'apple' again -- ignored, already in set" },
+        { "line": 4, "variables": { "fruits": "{apple, banana, cherry, mango}" }, "output": "4", "description": "len() returns 4 -- duplicates are not counted" },
+        { "line": 5, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}" }, "output": "4", "description": "Create set a with 1-4" },
+        { "line": 6, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}", "b": "{3, 4, 5, 6}" }, "output": "4", "description": "Create set b with 3-6" },
+        { "line": 7, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}", "b": "{3, 4, 5, 6}" }, "output": "4\n{3, 4}", "description": "Intersection: items in both a and b" },
+        { "line": 8, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}", "b": "{3, 4, 5, 6}" }, "output": "4\n{3, 4}\n{1, 2}", "description": "Difference: items in a but not in b" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "ParticleEffect",
       "id": "finish",
       "effect": "confetti",

@@ -162,6 +162,99 @@
         "Epoch 5: loss=0.0501, acc=99.01%",
         "Epoch 10: loss=0.0198, acc=99.21%"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cnn_clf",
+      "code": "import torch\nimport torch.nn as nn\n\nclass ImageClassifier(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.conv_layers = nn.Sequential(\n            nn.Conv2d(3, 32, 3, padding=1), nn.ReLU(),\n            nn.MaxPool2d(2),\n            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),\n            nn.MaxPool2d(2),\n        )\n        self.fc_layers = nn.Sequential(\n            nn.Flatten(),\n            nn.Linear(64*8*8, 128), nn.ReLU(),\n            nn.Dropout(0.5),\n            nn.Linear(128, 10)\n        )\n    def forward(self, x):\n        return self.fc_layers(self.conv_layers(x))\n\nmodel = ImageClassifier()\nx = torch.randn(8, 3, 32, 32)\nprint(f'Output: {model(x).shape}')",
+      "executionSteps": [
+        {
+          "line": 7,
+          "variables": {
+            "conv_layers": "2 conv blocks"
+          },
+          "output": "",
+          "explanation": "Feature extraction: Conv->ReLU->Pool x2"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "fc_layers": "Flatten->FC->Dropout->FC"
+          },
+          "output": "",
+          "explanation": "Classification head with dropout regularization"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "conv1": "3->32 channels"
+          },
+          "output": "",
+          "explanation": "First conv: RGB to 32 feature maps"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "fc1": "64*8*8=4096 -> 128"
+          },
+          "output": "",
+          "explanation": "Flatten spatial features to vector"
+        },
+        {
+          "line": 23,
+          "variables": {
+            "x.shape": "(8, 3, 32, 32)"
+          },
+          "output": "",
+          "explanation": "Batch of 8 RGB 32x32 images"
+        },
+        {
+          "line": 24,
+          "variables": {},
+          "output": "Output: torch.Size([8, 10])",
+          "explanation": "10 class scores per image"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "lv_cnn_img_train",
+      "title": "Image Classification Training",
+      "loopVariable": "epoch",
+      "iterations": [
+        {
+          "iteration": 1,
+          "state": {
+            "loss": 2.3,
+            "accuracy": "10%"
+          },
+          "description": "Random — 10% for 10 classes"
+        },
+        {
+          "iteration": 5,
+          "state": {
+            "loss": 1.55,
+            "accuracy": "42%"
+          },
+          "description": "Learning edges and textures"
+        },
+        {
+          "iteration": 15,
+          "state": {
+            "loss": 0.78,
+            "accuracy": "72%"
+          },
+          "description": "Recognizing shapes"
+        },
+        {
+          "iteration": 30,
+          "state": {
+            "loss": 0.42,
+            "accuracy": "85%"
+          },
+          "description": "Good classification"
+        }
+      ]
     }
   ],
   "practice_challenges": [

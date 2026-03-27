@@ -120,6 +120,146 @@
         "[[11 22 33]",
         " [14 25 36]]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_numpy_broadcast",
+      "code": "import numpy as np\n\na = np.array([[1, 2, 3],\n              [4, 5, 6]])\nscalar = 10\nprint(a + scalar)\nrow = np.array([100, 200, 300])\nprint(a + row)\ncol = np.array([[10], [20]])\nprint(a + col)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import NumPy"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "a": "[[1,2,3],[4,5,6]]",
+            "a.shape": "(2, 3)"
+          },
+          "output": "",
+          "explanation": "Create 2x3 matrix"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "scalar": "10"
+          },
+          "output": "",
+          "explanation": "A scalar value to add"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "result": "[[11,12,13],[14,15,16]]"
+          },
+          "output": "[[11 12 13]\n [14 15 16]]",
+          "explanation": "Scalar broadcasts to every element — shape () -> (2,3)"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "row": "[100,200,300]",
+            "row.shape": "(3,)"
+          },
+          "output": "",
+          "explanation": "1-D array with same number of columns"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "result": "[[101,202,303],[104,205,306]]"
+          },
+          "output": "[[101 202 303]\n [104 205 306]]",
+          "explanation": "Row broadcasts across rows — shape (3,) -> (2,3)"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "col": "[[10],[20]]",
+            "col.shape": "(2, 1)"
+          },
+          "output": "",
+          "explanation": "Column vector with same number of rows"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "result": "[[11,12,13],[24,25,26]]"
+          },
+          "output": "[[11 12 13]\n [24 25 26]]",
+          "explanation": "Column broadcasts across columns — shape (2,1) -> (2,3)"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_broadcast_rules",
+      "title": "Broadcasting Rules Flow",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Compare shapes right-to-left",
+          "type": "start"
+        },
+        {
+          "id": "check",
+          "label": "Dimensions equal OR one is 1?",
+          "type": "decision"
+        },
+        {
+          "id": "stretch",
+          "label": "Stretch dim of size 1",
+          "type": "process"
+        },
+        {
+          "id": "next",
+          "label": "Move to next dimension",
+          "type": "process"
+        },
+        {
+          "id": "ok",
+          "label": "Broadcasting OK",
+          "type": "end"
+        },
+        {
+          "id": "fail",
+          "label": "Shape mismatch error",
+          "type": "error"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "stretch",
+          "label": "Yes"
+        },
+        {
+          "from": "check",
+          "to": "fail",
+          "label": "No"
+        },
+        {
+          "from": "stretch",
+          "to": "next"
+        },
+        {
+          "from": "next",
+          "to": "check",
+          "label": "More dims"
+        },
+        {
+          "from": "next",
+          "to": "ok",
+          "label": "All done"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

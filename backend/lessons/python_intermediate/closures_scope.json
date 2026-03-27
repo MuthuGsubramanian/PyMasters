@@ -252,6 +252,144 @@
           "address": "0x04"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "def make_counter():\n    count = 0\n    def increment():\n        nonlocal count\n        count += 1\n        return count\n    return increment\n\ncounter = make_counter()\nprint(counter())\nprint(counter())\nprint(counter())",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define make_counter - a closure factory"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "count": 0
+          },
+          "output": "",
+          "description": "count=0 lives in make_counter's scope"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "increment is the inner function that forms the closure"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "counter": "<function increment>"
+          },
+          "output": "",
+          "description": "make_counter() returns increment - count is captured!"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "count": 1
+          },
+          "output": "1",
+          "description": "counter() calls increment, nonlocal count becomes 1"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "count": 2
+          },
+          "output": "2",
+          "description": "counter() again, count persists and becomes 2"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "count": 3
+          },
+          "output": "3",
+          "description": "count=3, closure remembers state between calls"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "make_counter()",
+          "type": "start"
+        },
+        {
+          "id": "create_count",
+          "label": "count = 0",
+          "type": "process"
+        },
+        {
+          "id": "define_inner",
+          "label": "def increment():",
+          "type": "process"
+        },
+        {
+          "id": "return_fn",
+          "label": "return increment",
+          "type": "process"
+        },
+        {
+          "id": "call1",
+          "label": "counter() -> 1",
+          "type": "process"
+        },
+        {
+          "id": "call2",
+          "label": "counter() -> 2",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "count persists in closure",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "create_count"
+        },
+        {
+          "from": "create_count",
+          "to": "define_inner"
+        },
+        {
+          "from": "define_inner",
+          "to": "return_fn"
+        },
+        {
+          "from": "return_fn",
+          "to": "call1"
+        },
+        {
+          "from": "call1",
+          "to": "call2"
+        },
+        {
+          "from": "call2",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "create_count",
+        "define_inner",
+        "return_fn",
+        "call1",
+        "call2",
+        "end"
+      ],
+      "variables": {
+        "count": "captured in closure"
+      },
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -285,8 +423,18 @@
         "ta": "LEGB-ல், 'E' எதைக் குறிக்கிறது?"
       },
       "options": {
-        "en": ["External", "Enclosing", "Evaluated", "Exception"],
-        "ta": ["External", "Enclosing", "Evaluated", "Exception"]
+        "en": [
+          "External",
+          "Enclosing",
+          "Evaluated",
+          "Exception"
+        ],
+        "ta": [
+          "External",
+          "Enclosing",
+          "Evaluated",
+          "Exception"
+        ]
       },
       "correct": 1
     },
@@ -296,8 +444,18 @@
         "ta": "enclosing scope-ல் ஒரு variable-ஐ மாற்ற எந்த keyword அனுமதிக்கிறது?"
       },
       "options": {
-        "en": ["global", "nonlocal", "local", "outer"],
-        "ta": ["global", "nonlocal", "local", "outer"]
+        "en": [
+          "global",
+          "nonlocal",
+          "local",
+          "outer"
+        ],
+        "ta": [
+          "global",
+          "nonlocal",
+          "local",
+          "outer"
+        ]
       },
       "correct": 1
     },
@@ -324,13 +482,29 @@
     }
   ],
   "tags": {
-    "concepts_taught": ["closures", "nonlocal", "LEGB_rule", "scope", "enclosing_scope"],
-    "concepts_required": ["functions", "variables", "nested_functions"],
+    "concepts_taught": [
+      "closures",
+      "nonlocal",
+      "LEGB_rule",
+      "scope",
+      "enclosing_scope"
+    ],
+    "concepts_required": [
+      "functions",
+      "variables",
+      "nested_functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 25,
-    "real_world_application": ["decorators", "callbacks", "state_management"],
+    "real_world_application": [
+      "decorators",
+      "callbacks",
+      "state_management"
+    ],
     "category": "functional",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

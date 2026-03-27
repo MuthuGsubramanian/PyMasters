@@ -47,23 +47,89 @@
       "type": "CodeStepper",
       "id": "bert_gpt_code",
       "steps": [
-        {"line": "# BERT: mask 15% of tokens, predict them", "highlight": "BERT", "explanation": {"en": "BERT pre-training: randomly mask words, model predicts them using bidirectional context"}},
-        {"line": "input_ids[mask] = mask_token_id", "highlight": "mask", "explanation": {"en": "Replace 15% of tokens with [MASK]. Model must use surrounding context to predict original word"}},
-        {"line": "labels[~mask] = -100", "highlight": "labels", "explanation": {"en": "Set non-masked positions to -100 (ignored by CrossEntropyLoss). Only train on masked tokens"}},
-        {"line": "encoder_layer = nn.TransformerEncoderLayer(...)", "highlight": "encoder", "explanation": {"en": "BERT uses encoder (bidirectional attention — each token sees all other tokens)"}},
-        {"line": "# GPT: predict next token, left-to-right", "highlight": "GPT", "explanation": {"en": "GPT pre-training: predict the next token given all previous tokens. Autoregressive."}},
-        {"line": "mask = nn.Transformer.generate_square_subsequent_mask(seq_len)", "highlight": "causal_mask", "explanation": {"en": "Causal mask: token at position i can only attend to positions 0..i (not future)"}},
-        {"line": "decoder_layer = nn.TransformerDecoderLayer(...)", "highlight": "decoder", "explanation": {"en": "GPT uses decoder with causal masking — each token only sees past tokens"}},
-        {"line": "cls_token = encoded[:, 0, :]", "highlight": "CLS", "explanation": {"en": "BERT fine-tuning: use [CLS] token (position 0) as the sentence representation"}},
-        {"line": "self.classifier = nn.Linear(256, num_classes)", "highlight": "classifier", "explanation": {"en": "Add a small classification head on top of the pre-trained model"}},
-        {"line": "# BERT: 110M params, GPT-3: 175B params", "highlight": "scale", "explanation": {"en": "Modern LLMs scale from millions to hundreds of billions of parameters"}}
+        {
+          "line": "# BERT: mask 15% of tokens, predict them",
+          "highlight": "BERT",
+          "explanation": {
+            "en": "BERT pre-training: randomly mask words, model predicts them using bidirectional context"
+          }
+        },
+        {
+          "line": "input_ids[mask] = mask_token_id",
+          "highlight": "mask",
+          "explanation": {
+            "en": "Replace 15% of tokens with [MASK]. Model must use surrounding context to predict original word"
+          }
+        },
+        {
+          "line": "labels[~mask] = -100",
+          "highlight": "labels",
+          "explanation": {
+            "en": "Set non-masked positions to -100 (ignored by CrossEntropyLoss). Only train on masked tokens"
+          }
+        },
+        {
+          "line": "encoder_layer = nn.TransformerEncoderLayer(...)",
+          "highlight": "encoder",
+          "explanation": {
+            "en": "BERT uses encoder (bidirectional attention — each token sees all other tokens)"
+          }
+        },
+        {
+          "line": "# GPT: predict next token, left-to-right",
+          "highlight": "GPT",
+          "explanation": {
+            "en": "GPT pre-training: predict the next token given all previous tokens. Autoregressive."
+          }
+        },
+        {
+          "line": "mask = nn.Transformer.generate_square_subsequent_mask(seq_len)",
+          "highlight": "causal_mask",
+          "explanation": {
+            "en": "Causal mask: token at position i can only attend to positions 0..i (not future)"
+          }
+        },
+        {
+          "line": "decoder_layer = nn.TransformerDecoderLayer(...)",
+          "highlight": "decoder",
+          "explanation": {
+            "en": "GPT uses decoder with causal masking — each token only sees past tokens"
+          }
+        },
+        {
+          "line": "cls_token = encoded[:, 0, :]",
+          "highlight": "CLS",
+          "explanation": {
+            "en": "BERT fine-tuning: use [CLS] token (position 0) as the sentence representation"
+          }
+        },
+        {
+          "line": "self.classifier = nn.Linear(256, num_classes)",
+          "highlight": "classifier",
+          "explanation": {
+            "en": "Add a small classification head on top of the pre-trained model"
+          }
+        },
+        {
+          "line": "# BERT: 110M params, GPT-3: 175B params",
+          "highlight": "scale",
+          "explanation": {
+            "en": "Modern LLMs scale from millions to hundreds of billions of parameters"
+          }
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "bert_vs_gpt",
-      "left": {"label": "BERT", "content": "Bidirectional (sees all tokens)\nPre-training: Masked LM\nBest for: classification, NER, QA\nEncoder-only architecture\nBERT-base: 110M params"},
-      "right": {"label": "GPT", "content": "Autoregressive (left-to-right)\nPre-training: Next token prediction\nBest for: text generation, chat\nDecoder-only architecture\nGPT-3: 175B params"},
+      "left": {
+        "label": "BERT",
+        "content": "Bidirectional (sees all tokens)\nPre-training: Masked LM\nBest for: classification, NER, QA\nEncoder-only architecture\nBERT-base: 110M params"
+      },
+      "right": {
+        "label": "GPT",
+        "content": "Autoregressive (left-to-right)\nPre-training: Next token prediction\nBest for: text generation, chat\nDecoder-only architecture\nGPT-3: 175B params"
+      },
       "duration_ms": 4000
     },
     {
@@ -71,10 +137,30 @@
       "id": "pretraining_visual",
       "structure_type": "comparison",
       "layers": [
-        {"name": "BERT Input", "nodes": ["The [MASK] sat on the [MASK]"]},
-        {"name": "BERT Output", "nodes": ["The cat sat on the mat"]},
-        {"name": "GPT Input", "nodes": ["The cat sat on the"]},
-        {"name": "GPT Output", "nodes": ["cat sat on the mat"]}
+        {
+          "name": "BERT Input",
+          "nodes": [
+            "The [MASK] sat on the [MASK]"
+          ]
+        },
+        {
+          "name": "BERT Output",
+          "nodes": [
+            "The cat sat on the mat"
+          ]
+        },
+        {
+          "name": "GPT Input",
+          "nodes": [
+            "The cat sat on the"
+          ]
+        },
+        {
+          "name": "GPT Output",
+          "nodes": [
+            "cat sat on the mat"
+          ]
+        }
       ],
       "duration_ms": 3000
     },
@@ -99,17 +185,43 @@
       "id": "finetune_flow",
       "from": "pretrained",
       "to": "task_specific",
-      "steps": ["Pre-train on huge corpus", "Freeze/unfreeze layers", "Add task head", "Fine-tune on small data", "Deploy"],
+      "steps": [
+        "Pre-train on huge corpus",
+        "Freeze/unfreeze layers",
+        "Add task head",
+        "Fine-tune on small data",
+        "Deploy"
+      ],
       "duration_ms": 3000
     },
     {
       "type": "MemoryStack",
       "id": "model_sizes",
       "slots": [
-        {"name": "BERT-base", "value": "110M params, 12 layers", "type": "encoder", "address": "768-dim"},
-        {"name": "BERT-large", "value": "340M params, 24 layers", "type": "encoder", "address": "1024-dim"},
-        {"name": "GPT-2", "value": "1.5B params, 48 layers", "type": "decoder", "address": "1600-dim"},
-        {"name": "GPT-3", "value": "175B params, 96 layers", "type": "decoder", "address": "12288-dim"}
+        {
+          "name": "BERT-base",
+          "value": "110M params, 12 layers",
+          "type": "encoder",
+          "address": "768-dim"
+        },
+        {
+          "name": "BERT-large",
+          "value": "340M params, 24 layers",
+          "type": "encoder",
+          "address": "1024-dim"
+        },
+        {
+          "name": "GPT-2",
+          "value": "1.5B params, 48 layers",
+          "type": "decoder",
+          "address": "1600-dim"
+        },
+        {
+          "name": "GPT-3",
+          "value": "175B params, 96 layers",
+          "type": "decoder",
+          "address": "12288-dim"
+        }
       ]
     },
     {
@@ -127,6 +239,51 @@
         ">>> # Fine-tuning for sentiment",
         ">>> model = BERTClassifier(pretrained_bert, num_classes=2)",
         ">>> # Train on 1000 labeled reviews -> 94% accuracy"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_dl_bert_gpt",
+      "code": "# Conceptual comparison of BERT vs GPT\n# BERT: Bidirectional Encoder Representations from Transformers\n# GPT: Generative Pre-trained Transformer\n\n# BERT: Masked Language Modeling\nsentence = 'The cat sat on the [MASK]'\n# BERT sees ALL tokens, predicts masked ones\n# Attention: each token attends to ALL others\n\n# GPT: Causal Language Modeling\nprompt = 'The cat sat on the'\n# GPT only sees LEFT context, predicts next token\n# Attention: each token attends to PREVIOUS tokens only\n\n# Key differences:\ncomparison = {\n    'BERT': {'direction': 'bidirectional', 'task': 'MLM', 'use': 'classification, NER'},\n    'GPT':  {'direction': 'left-to-right', 'task': 'CLM', 'use': 'text generation'}\n}\nfor model, info in comparison.items():\n    print(f\"{model}: {info['direction']}, {info['task']}, best for {info['use']}\")",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "sentence": "'The cat sat on the [MASK]'"
+          },
+          "output": "",
+          "explanation": "BERT masks random tokens and predicts them"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "attention": "bidirectional"
+          },
+          "output": "",
+          "explanation": "BERT sees full context — left AND right of [MASK]"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "prompt": "'The cat sat on the'"
+          },
+          "output": "",
+          "explanation": "GPT predicts next token given left context"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "attention": "causal (left-to-right)"
+          },
+          "output": "",
+          "explanation": "GPT uses causal mask — can only look at previous tokens"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "BERT: bidirectional, MLM, best for classification, NER\nGPT: left-to-right, CLM, best for text generation",
+          "explanation": "BERT excels at understanding, GPT excels at generation"
+        }
       ]
     }
   ],
@@ -159,8 +316,18 @@
         "ta": "BERT மற்றும் GPT முன்-பயிற்சியின் முக்கிய வேறுபாடு என்ன?"
       },
       "options": {
-        "en": ["BERT is bigger", "BERT uses masked LM (bidirectional); GPT uses next-token prediction (left-to-right)", "GPT uses CNNs", "There is no difference"],
-        "ta": ["BERT பெரியது", "BERT masked LM (bidirectional) பயன்படுத்துகிறது; GPT next-token prediction (left-to-right) பயன்படுத்துகிறது", "GPT CNN-களைப் பயன்படுத்துகிறது", "வேறுபாடு இல்லை"]
+        "en": [
+          "BERT is bigger",
+          "BERT uses masked LM (bidirectional); GPT uses next-token prediction (left-to-right)",
+          "GPT uses CNNs",
+          "There is no difference"
+        ],
+        "ta": [
+          "BERT பெரியது",
+          "BERT masked LM (bidirectional) பயன்படுத்துகிறது; GPT next-token prediction (left-to-right) பயன்படுத்துகிறது",
+          "GPT CNN-களைப் பயன்படுத்துகிறது",
+          "வேறுபாடு இல்லை"
+        ]
       },
       "correct": 1
     },
@@ -170,8 +337,18 @@
         "ta": "உரை வகைப்பாட்டுப் பணிக்கு, எந்த மாதிரி கட்டமைப்பு மிகவும் இயல்பானது?"
       },
       "options": {
-        "en": ["GPT (decoder)", "BERT (encoder)", "Both are equally suitable", "Neither works for classification"],
-        "ta": ["GPT (decoder)", "BERT (encoder)", "இரண்டும் சமமாக பொருத்தமானவை", "வகைப்பாட்டிற்கு எதுவும் வேலை செய்யாது"]
+        "en": [
+          "GPT (decoder)",
+          "BERT (encoder)",
+          "Both are equally suitable",
+          "Neither works for classification"
+        ],
+        "ta": [
+          "GPT (decoder)",
+          "BERT (encoder)",
+          "இரண்டும் சமமாக பொருத்தமானவை",
+          "வகைப்பாட்டிற்கு எதுவும் வேலை செய்யாது"
+        ]
       },
       "correct": 1
     },
@@ -181,20 +358,47 @@
         "ta": "முன்-பயிற்சி பெற்ற மாதிரியை fine-tune செய்வது என்ன பொருள்?"
       },
       "options": {
-        "en": ["Training from scratch on new data", "Continuing training on a specific task with a small dataset", "Deleting the model weights", "Increasing the model size"],
-        "ta": ["புதிய தரவில் scratch-லிருந்து பயிற்சி", "ஒரு குறிப்பிட்ட பணியில் சிறிய தரவுத்தொகுப்புடன் பயிற்சியைத் தொடர்தல்", "மாதிரி எடைகளை நீக்குதல்", "மாதிரி அளவை அதிகரித்தல்"]
+        "en": [
+          "Training from scratch on new data",
+          "Continuing training on a specific task with a small dataset",
+          "Deleting the model weights",
+          "Increasing the model size"
+        ],
+        "ta": [
+          "புதிய தரவில் scratch-லிருந்து பயிற்சி",
+          "ஒரு குறிப்பிட்ட பணியில் சிறிய தரவுத்தொகுப்புடன் பயிற்சியைத் தொடர்தல்",
+          "மாதிரி எடைகளை நீக்குதல்",
+          "மாதிரி அளவை அதிகரித்தல்"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["bert", "gpt", "masked_language_model", "causal_language_model", "fine_tuning", "pretraining"],
-    "concepts_required": ["transformer_architecture", "attention_mechanism"],
+    "concepts_taught": [
+      "bert",
+      "gpt",
+      "masked_language_model",
+      "causal_language_model",
+      "fine_tuning",
+      "pretraining"
+    ],
+    "concepts_required": [
+      "transformer_architecture",
+      "attention_mechanism"
+    ],
     "difficulty": "advanced",
     "engagement_type": "visual",
     "estimated_minutes": 40,
-    "real_world_application": ["nlp", "text_classification", "text_generation", "chatbots"],
+    "real_world_application": [
+      "nlp",
+      "text_classification",
+      "text_generation",
+      "chatbots"
+    ],
     "category": "deep_learning",
-    "path_memberships": ["deep_learning_complete"]
+    "path_memberships": [
+      "deep_learning_complete"
+    ]
   }
 }

@@ -133,6 +133,45 @@
         "  4. Format: how to respond",
         "  5. Constraints: limits"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_prompt_basics",
+      "code": "# Prompt Engineering Basics\nprompt_v1 = \"Tell me about Python\"\n# Too vague — LLM might talk about snakes!\n\nprompt_v2 = \"\"\"You are a Python tutor.\nExplain list comprehensions in 3 bullet points\nwith one code example for a beginner.\"\"\"\n# Specific role + format + audience\n\nprompt_v3 = \"\"\"Context: Student knows loops but not comprehensions.\nTask: Explain list comprehensions.\nFormat: 3 bullets + 1 code example.\nTone: Friendly, encouraging.\"\"\"",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": {
+            "prompt_v1": "\"Tell me about Python\""
+          },
+          "output": "",
+          "explanation": "Bad prompt: too vague, no constraints"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "prompt_v2": "role + task + format"
+          },
+          "output": "",
+          "explanation": "Better: assigns role, specifies format and audience"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "prompt_v3": "context + task + format + tone"
+          },
+          "output": "",
+          "explanation": "Best: structured with context, task, format, and tone"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "quality": "v1 < v2 < v3"
+          },
+          "output": "",
+          "explanation": "More structure = more predictable, higher quality output"
+        }
+      ]
     }
   ],
   "practice_challenges": [

@@ -156,6 +156,220 @@
         "",
         "Final Score: 2/2 — Perfect! 🏆"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "import random\n\nquestions = [\n    {'q': 'What is 2**10?', 'answer': '1024'},\n    {'q': 'Which is mutable: tuple or list?', 'answer': 'list'},\n    {'q': 'What does len() return?', 'answer': 'length'},\n]\n\nrandom.shuffle(questions)\nscore = 0\n\nfor i, q in enumerate(questions, 1):\n    print(f'Q{i}: {q[\"q\"]}')\n    answer = input('Answer: ')\n    if answer.lower() == q['answer'].lower():\n        score += 1\n        print('Correct!')\n    else:\n        print(f'Wrong! Answer: {q[\"answer\"]}')\n\nprint(f'Score: {score}/{len(questions)}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "questions": "[3 question dicts]"
+          },
+          "output": "",
+          "description": "List of question dictionaries with q and answer"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "description": "Shuffle randomizes question order each game"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "score": 0
+          },
+          "output": "",
+          "description": "Initialize score counter"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "i": 1,
+            "q": "{'q':'What is 2**10?',...}"
+          },
+          "output": "Q1: What is 2**10?",
+          "description": "Display first question"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "answer": "1024"
+          },
+          "output": "",
+          "description": "Player inputs '1024'"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "score": 1
+          },
+          "output": "Correct!",
+          "description": "Answer matches - score +1"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "i": 2
+          },
+          "output": "Q2: Which is mutable: tuple or list?",
+          "description": "Next question"
+        },
+        {
+          "line": 21,
+          "variables": {},
+          "output": "Score: 2/3",
+          "description": "Final score displayed"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "type_name": "quiz_loop",
+      "iterable": "questions (shuffled)",
+      "iterations": [
+        {
+          "index": 1,
+          "value": "What is 2**10?",
+          "variables": {
+            "answer": "1024",
+            "correct": true,
+            "score": 1
+          },
+          "description": "Player answers correctly, score = 1"
+        },
+        {
+          "index": 2,
+          "value": "Which is mutable?",
+          "variables": {
+            "answer": "list",
+            "correct": true,
+            "score": 2
+          },
+          "description": "Correct again, score = 2"
+        },
+        {
+          "index": 3,
+          "value": "What does len() return?",
+          "variables": {
+            "answer": "size",
+            "correct": false,
+            "score": 2
+          },
+          "description": "Wrong! Answer was 'length', score stays 2"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start Quiz",
+          "type": "start"
+        },
+        {
+          "id": "shuffle",
+          "label": "Shuffle questions",
+          "type": "process"
+        },
+        {
+          "id": "ask",
+          "label": "Display question",
+          "type": "process"
+        },
+        {
+          "id": "input",
+          "label": "Get player answer",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "Correct?",
+          "type": "decision"
+        },
+        {
+          "id": "right",
+          "label": "score += 1",
+          "type": "process"
+        },
+        {
+          "id": "wrong",
+          "label": "Show correct answer",
+          "type": "process"
+        },
+        {
+          "id": "more",
+          "label": "More questions?",
+          "type": "decision"
+        },
+        {
+          "id": "end",
+          "label": "Show final score",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "shuffle"
+        },
+        {
+          "from": "shuffle",
+          "to": "ask"
+        },
+        {
+          "from": "ask",
+          "to": "input"
+        },
+        {
+          "from": "input",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "right",
+          "label": "Yes"
+        },
+        {
+          "from": "check",
+          "to": "wrong",
+          "label": "No"
+        },
+        {
+          "from": "right",
+          "to": "more"
+        },
+        {
+          "from": "wrong",
+          "to": "more"
+        },
+        {
+          "from": "more",
+          "to": "ask",
+          "label": "Yes"
+        },
+        {
+          "from": "more",
+          "to": "end",
+          "label": "No"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "shuffle",
+        "ask",
+        "input",
+        "check",
+        "right",
+        "more",
+        "end"
+      ],
+      "variables": {},
+      "speed": "normal"
     }
   ],
   "practice_challenges": [

@@ -155,20 +155,63 @@
       "type": "MemoryStack",
       "id": "recursion_stack",
       "slots": [
-        {"name": "merge_sort([38,27,43,3,9,82,10])", "value": "split", "type": "frame", "address": "0x01"},
-        {"name": "merge_sort([38,27,43])", "value": "left half", "type": "frame", "address": "0x02"},
-        {"name": "merge_sort([38])", "value": "base case", "type": "frame", "address": "0x03"}
+        {
+          "name": "merge_sort([38,27,43,3,9,82,10])",
+          "value": "split",
+          "type": "frame",
+          "address": "0x01"
+        },
+        {
+          "name": "merge_sort([38,27,43])",
+          "value": "left half",
+          "type": "frame",
+          "address": "0x02"
+        },
+        {
+          "name": "merge_sort([38])",
+          "value": "base case",
+          "type": "frame",
+          "address": "0x03"
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "sort_comparison",
       "comparisons": [
-        {"label": "Merge Sort", "values": [33, 664, 9965], "color": "#4f8ef7"},
-        {"label": "Quick Sort (avg)", "values": [33, 664, 9965], "color": "#4ff7a4"},
-        {"label": "Bubble Sort", "values": [100, 10000, 1000000], "color": "#f74f4f"}
+        {
+          "label": "Merge Sort",
+          "values": [
+            33,
+            664,
+            9965
+          ],
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "Quick Sort (avg)",
+          "values": [
+            33,
+            664,
+            9965
+          ],
+          "color": "#4ff7a4"
+        },
+        {
+          "label": "Bubble Sort",
+          "values": [
+            100,
+            10000,
+            1000000
+          ],
+          "color": "#f74f4f"
+        }
       ],
-      "x_labels": ["n=10", "n=100", "n=1000"]
+      "x_labels": [
+        "n=10",
+        "n=100",
+        "n=1000"
+      ]
     },
     {
       "type": "VariableBox",
@@ -186,6 +229,230 @@
         "Merge sort: [3, 9, 10, 27, 38, 43, 82]",
         "Quick sort: [3, 9, 10, 27, 38, 43, 82]",
         "TimSort:    [3, 9, 10, 27, 38, 43, 82]"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_sorting_advanced",
+      "code": "def merge_sort(arr):\n    if len(arr) <= 1: return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)\n\ndef merge(left, right):\n    result, i, j = [], 0, 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i]); i += 1\n        else:\n            result.append(right[j]); j += 1\n    result.extend(left[i:])\n    result.extend(right[j:])\n    return result\n\narr = [38, 27, 43, 3, 9, 82, 10]\nprint(merge_sort(arr))",
+      "executionSteps": [
+        {
+          "line": 19,
+          "variables": {
+            "arr": [
+              38,
+              27,
+              43,
+              3,
+              9,
+              82,
+              10
+            ]
+          },
+          "output": "",
+          "explanation": "7 unsorted elements — divide and conquer begins"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "mid": 3
+          },
+          "output": "",
+          "explanation": "Split into [38,27,43] and [3,9,82,10]"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "left": [
+              27,
+              38,
+              43
+            ]
+          },
+          "output": "",
+          "explanation": "Left half recursively sorted"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "right": [
+              3,
+              9,
+              10,
+              82
+            ]
+          },
+          "output": "",
+          "explanation": "Right half recursively sorted"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "Now merge two sorted halves"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "result": [
+              3
+            ]
+          },
+          "output": "",
+          "explanation": "Compare 27 vs 3: take 3"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "result": [
+              3,
+              9,
+              10,
+              27
+            ]
+          },
+          "output": "",
+          "explanation": "Keep comparing, taking smaller element each time"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "result": [
+              3,
+              9,
+              10,
+              27,
+              38,
+              43,
+              82
+            ]
+          },
+          "output": "",
+          "explanation": "Extend with remaining elements"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "[3, 9, 10, 27, 38, 43, 82]",
+          "explanation": "Sorted! O(n log n) via divide-and-conquer"
+        }
+      ]
+    },
+    {
+      "type": "LoopVisualizer",
+      "id": "loop_viz_sorting_advanced",
+      "arrayLabel": "Merge Sort Merge Step",
+      "initialArray": [
+        27,
+        38,
+        43
+      ],
+      "iterations": [
+        {
+          "pass": "merge",
+          "comparing": [
+            0,
+            0
+          ],
+          "action": "pick_right",
+          "left": [
+            27,
+            38,
+            43
+          ],
+          "right": [
+            3,
+            9,
+            10,
+            82
+          ],
+          "result": [
+            3
+          ]
+        },
+        {
+          "pass": "merge",
+          "comparing": [
+            0,
+            1
+          ],
+          "action": "pick_right",
+          "result": [
+            3,
+            9
+          ]
+        },
+        {
+          "pass": "merge",
+          "comparing": [
+            0,
+            2
+          ],
+          "action": "pick_right",
+          "result": [
+            3,
+            9,
+            10
+          ]
+        },
+        {
+          "pass": "merge",
+          "comparing": [
+            0,
+            3
+          ],
+          "action": "pick_left",
+          "result": [
+            3,
+            9,
+            10,
+            27
+          ]
+        },
+        {
+          "pass": "merge",
+          "comparing": [
+            1,
+            3
+          ],
+          "action": "pick_left",
+          "result": [
+            3,
+            9,
+            10,
+            27,
+            38
+          ]
+        },
+        {
+          "pass": "merge",
+          "comparing": [
+            2,
+            3
+          ],
+          "action": "pick_left",
+          "result": [
+            3,
+            9,
+            10,
+            27,
+            38,
+            43
+          ]
+        },
+        {
+          "pass": "final",
+          "action": "extend",
+          "result": [
+            3,
+            9,
+            10,
+            27,
+            38,
+            43,
+            82
+          ]
+        }
       ]
     }
   ],
@@ -218,8 +485,18 @@
         "ta": "Merge sort-ன் மோசமான நிலை நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"],
-        "ta": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"]
+        "en": [
+          "O(n)",
+          "O(n log n)",
+          "O(n²)",
+          "O(log n)"
+        ],
+        "ta": [
+          "O(n)",
+          "O(n log n)",
+          "O(n²)",
+          "O(log n)"
+        ]
       },
       "correct": 1
     },
@@ -229,8 +506,18 @@
         "ta": "Python-ன் sorted() function எந்த sorting algorithm பயன்படுத்தும்?"
       },
       "options": {
-        "en": ["Quick sort", "Merge sort", "TimSort", "Heap sort"],
-        "ta": ["Quick sort", "Merge sort", "TimSort", "Heap sort"]
+        "en": [
+          "Quick sort",
+          "Merge sort",
+          "TimSort",
+          "Heap sort"
+        ],
+        "ta": [
+          "Quick sort",
+          "Merge sort",
+          "TimSort",
+          "Heap sort"
+        ]
       },
       "correct": 2
     },
@@ -240,20 +527,43 @@
         "ta": "Quick sort-ன் மோசமான நிலை நேர சிக்கல் என்ன?"
       },
       "options": {
-        "en": ["O(n log n)", "O(n²)", "O(n)", "O(2ⁿ)"],
-        "ta": ["O(n log n)", "O(n²)", "O(n)", "O(2ⁿ)"]
+        "en": [
+          "O(n log n)",
+          "O(n²)",
+          "O(n)",
+          "O(2ⁿ)"
+        ],
+        "ta": [
+          "O(n log n)",
+          "O(n²)",
+          "O(n)",
+          "O(2ⁿ)"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["merge_sort", "quick_sort", "timsort", "divide_and_conquer"],
-    "concepts_required": ["sorting_basics", "recursion"],
+    "concepts_taught": [
+      "merge_sort",
+      "quick_sort",
+      "timsort",
+      "divide_and_conquer"
+    ],
+    "concepts_required": [
+      "sorting_basics",
+      "recursion"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["database_sorting", "python_internals"],
+    "real_world_application": [
+      "database_sorting",
+      "python_internals"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

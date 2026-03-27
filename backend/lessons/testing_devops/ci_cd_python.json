@@ -155,12 +155,36 @@
       "type": "FlowArrow",
       "id": "pipeline_stages",
       "stages": [
-        { "label": "Checkout", "icon": "download", "color": "#4f8ef7" },
-        { "label": "Install ruff", "icon": "package", "color": "#6bcf7f" },
-        { "label": "ruff check", "icon": "search", "color": "#a66bf7" },
-        { "label": "ruff format", "icon": "align", "color": "#ffd93d" },
-        { "label": "pytest --cov", "icon": "check", "color": "#4ff7a4" },
-        { "label": "Upload Coverage", "icon": "upload", "color": "#ff6b6b" }
+        {
+          "label": "Checkout",
+          "icon": "download",
+          "color": "#4f8ef7"
+        },
+        {
+          "label": "Install ruff",
+          "icon": "package",
+          "color": "#6bcf7f"
+        },
+        {
+          "label": "ruff check",
+          "icon": "search",
+          "color": "#a66bf7"
+        },
+        {
+          "label": "ruff format",
+          "icon": "align",
+          "color": "#ffd93d"
+        },
+        {
+          "label": "pytest --cov",
+          "icon": "check",
+          "color": "#4ff7a4"
+        },
+        {
+          "label": "Upload Coverage",
+          "icon": "upload",
+          "color": "#ff6b6b"
+        }
       ]
     },
     {
@@ -195,6 +219,110 @@
         "content": "$ ruff check src/\nAll checks passed!\n\n$ ruff format --check src/\n2 files already formatted.",
         "status": "pass"
       }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_cicd_py",
+      "title": "Python CI with Coverage",
+      "code": "# GitHub Actions matrix testing\njobs:\n  test:\n    strategy:\n      matrix:\n        python-version: ['3.11', '3.12']\n    steps:\n      - run: pytest --cov=app tests/\n      - run: coverage report --fail-under=80",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "job": "test"
+          },
+          "output": "",
+          "explanation": "Define test job"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "strategy": "matrix"
+          },
+          "output": "",
+          "explanation": "Run on multiple Python versions"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "versions": [
+              "3.11",
+              "3.12"
+            ]
+          },
+          "output": "",
+          "explanation": "Test both 3.11 and 3.12"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "5 passed, coverage: 85%",
+          "explanation": "pytest with coverage"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "coverage": "85%"
+          },
+          "output": "Coverage: 85% >= 80% PASS",
+          "explanation": "Fail if coverage drops below 80%"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_py_cicd",
+      "title": "Python CI/CD Pipeline",
+      "nodes": [
+        {
+          "id": "push",
+          "label": "git push",
+          "type": "start"
+        },
+        {
+          "id": "setup",
+          "label": "Setup Python\n+ Install",
+          "type": "process"
+        },
+        {
+          "id": "lint",
+          "label": "Lint\nflake8",
+          "type": "decision"
+        },
+        {
+          "id": "test",
+          "label": "Test\npytest --cov",
+          "type": "decision"
+        },
+        {
+          "id": "deploy",
+          "label": "Deploy",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "push",
+          "to": "setup",
+          "label": "Trigger"
+        },
+        {
+          "from": "setup",
+          "to": "lint",
+          "label": "Ready"
+        },
+        {
+          "from": "lint",
+          "to": "test",
+          "label": "Clean"
+        },
+        {
+          "from": "test",
+          "to": "deploy",
+          "label": "Pass + cov>=80%"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -226,8 +354,18 @@
         "ta": "GitHub Actions job-ல் 'needs: lint' என்ன அர்த்தம்?"
       },
       "options": {
-        "en": ["The lint package is required", "This job only runs after the lint job succeeds", "Linting is optional", "Lint runs in parallel"],
-        "ta": ["lint package தேவை", "lint job வெற்றி பெற்ற பிறகு மட்டுமே இந்த job இயங்கும்", "Linting விருப்பமானது", "Lint parallel-ல் இயங்கும்"]
+        "en": [
+          "The lint package is required",
+          "This job only runs after the lint job succeeds",
+          "Linting is optional",
+          "Lint runs in parallel"
+        ],
+        "ta": [
+          "lint package தேவை",
+          "lint job வெற்றி பெற்ற பிறகு மட்டுமே இந்த job இயங்கும்",
+          "Linting விருப்பமானது",
+          "Lint parallel-ல் இயங்கும்"
+        ]
       },
       "correct": 1
     },
@@ -237,8 +375,18 @@
         "ta": "Matrix strategy என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Runs tests sequentially", "Creates parallel jobs for each combination in the matrix", "Compresses the workflow", "Only runs on failure"],
-        "ta": ["Tests-ஐ வரிசையாக இயக்கும்", "Matrix-ல் உள்ள ஒவ்வொரு combination-க்கும் parallel jobs உருவாக்கும்", "Workflow-ஐ சுருக்கும்", "தோல்வியில் மட்டும் இயங்கும்"]
+        "en": [
+          "Runs tests sequentially",
+          "Creates parallel jobs for each combination in the matrix",
+          "Compresses the workflow",
+          "Only runs on failure"
+        ],
+        "ta": [
+          "Tests-ஐ வரிசையாக இயக்கும்",
+          "Matrix-ல் உள்ள ஒவ்வொரு combination-க்கும் parallel jobs உருவாக்கும்",
+          "Workflow-ஐ சுருக்கும்",
+          "தோல்வியில் மட்டும் இயங்கும்"
+        ]
       },
       "correct": 1
     },
@@ -248,20 +396,44 @@
         "ta": "Workflow-ல் GitHub Secrets-ஐ எப்படி access செய்வீர்கள்?"
       },
       "options": {
-        "en": ["import secrets", "${{ secrets.SECRET_NAME }}", "os.environ['SECRET']", "github.secrets.get()"],
-        "ta": ["import secrets", "${{ secrets.SECRET_NAME }}", "os.environ['SECRET']", "github.secrets.get()"]
+        "en": [
+          "import secrets",
+          "${{ secrets.SECRET_NAME }}",
+          "os.environ['SECRET']",
+          "github.secrets.get()"
+        ],
+        "ta": [
+          "import secrets",
+          "${{ secrets.SECRET_NAME }}",
+          "os.environ['SECRET']",
+          "github.secrets.get()"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["python_ci", "linting", "coverage", "matrix_testing", "github_secrets"],
-    "concepts_required": ["ci_cd_basics", "pytest"],
+    "concepts_taught": [
+      "python_ci",
+      "linting",
+      "coverage",
+      "matrix_testing",
+      "github_secrets"
+    ],
+    "concepts_required": [
+      "ci_cd_basics",
+      "pytest"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["devops", "production_deployment"],
+    "real_world_application": [
+      "devops",
+      "production_deployment"
+    ],
     "category": "devops",
-    "path_memberships": ["testing_devops"]
+    "path_memberships": [
+      "testing_devops"
+    ]
   }
 }

@@ -171,6 +171,128 @@
         "Starting development server at http://127.0.0.1:8000/",
         "Quit the server with CTRL-BREAK."
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_django_intro",
+      "title": "Django View Request Handling",
+      "code": "from django.http import HttpResponse, JsonResponse\n\ndef home(request):\n    return HttpResponse('<h1>Welcome!</h1>')\n\ndef course_list(request):\n    courses = [{'name': 'Python', 'credits': 3}, {'name': 'Web Dev', 'credits': 4}]\n    return JsonResponse({'courses': courses})",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import Django response classes"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "request": "<HttpRequest GET />"
+          },
+          "output": "",
+          "explanation": "Django passes request object to every view"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "<h1>Welcome!</h1>",
+          "explanation": "Return HTML wrapped in HttpResponse"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "request": "<HttpRequest GET /courses/>"
+          },
+          "output": "",
+          "explanation": "Second view for /courses/"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "courses": [
+              {
+                "name": "Python"
+              },
+              {
+                "name": "Web Dev"
+              }
+            ]
+          },
+          "output": "",
+          "explanation": "Build list of courses"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "{\"courses\": [...]}",
+          "explanation": "JsonResponse serializes dict to JSON"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_django_request",
+      "title": "Django Request/Response Cycle",
+      "nodes": [
+        {
+          "id": "browser",
+          "label": "Browser\nGET /courses/",
+          "type": "start"
+        },
+        {
+          "id": "urls_project",
+          "label": "Project urls.py",
+          "type": "process"
+        },
+        {
+          "id": "urls_app",
+          "label": "App urls.py\npath() Match",
+          "type": "process"
+        },
+        {
+          "id": "middleware",
+          "label": "Middleware\n(auth, CSRF)",
+          "type": "process"
+        },
+        {
+          "id": "view",
+          "label": "View Function",
+          "type": "process"
+        },
+        {
+          "id": "response",
+          "label": "Response\nBack to Browser",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "browser",
+          "to": "urls_project",
+          "label": "HTTP"
+        },
+        {
+          "from": "urls_project",
+          "to": "urls_app",
+          "label": "include()"
+        },
+        {
+          "from": "urls_app",
+          "to": "middleware",
+          "label": "Matched"
+        },
+        {
+          "from": "middleware",
+          "to": "view",
+          "label": "Passed"
+        },
+        {
+          "from": "view",
+          "to": "response",
+          "label": "JSON"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -204,8 +326,18 @@
         "ta": "'python manage.py migrate' என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Creates a new Django app", "Applies database schema changes", "Starts the development server", "Creates a superuser"],
-        "ta": ["புதிய Django பயன்பாட்டை உருவாக்குகிறது", "தரவுத்தள அமைப்பு மாற்றங்களைப் பயன்படுத்துகிறது", "மேம்பாட்டு சேவையகத்தை தொடங்குகிறது", "சூப்பர் யூசரை உருவாக்குகிறது"]
+        "en": [
+          "Creates a new Django app",
+          "Applies database schema changes",
+          "Starts the development server",
+          "Creates a superuser"
+        ],
+        "ta": [
+          "புதிய Django பயன்பாட்டை உருவாக்குகிறது",
+          "தரவுத்தள அமைப்பு மாற்றங்களைப் பயன்படுத்துகிறது",
+          "மேம்பாட்டு சேவையகத்தை தொடங்குகிறது",
+          "சூப்பர் யூசரை உருவாக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -215,8 +347,18 @@
         "ta": "Django-வின் MTV முறையில், 'T' என்பது எதைக் குறிக்கிறது?"
       },
       "options": {
-        "en": ["Test", "Template", "Transfer", "Table"],
-        "ta": ["Test", "Template", "Transfer", "Table"]
+        "en": [
+          "Test",
+          "Template",
+          "Transfer",
+          "Table"
+        ],
+        "ta": [
+          "Test",
+          "Template",
+          "Transfer",
+          "Table"
+        ]
       },
       "correct": 1
     },
@@ -226,20 +368,43 @@
         "ta": "Django திட்டத்திற்கும் Django பயன்பாட்டிற்கும் என்ன வேறுபாடு?"
       },
       "options": {
-        "en": ["They are the same thing", "A project is the whole site; an app is a module within it", "An app contains multiple projects", "A project is for development; an app is for production"],
-        "ta": ["அவை ஒன்றே", "திட்டம் முழு தளம்; பயன்பாடு அதன் ஒரு தொகுதி", "ஒரு பயன்பாட்டில் பல திட்டங்கள் உள்ளன", "திட்டம் மேம்பாட்டிற்கு; பயன்பாடு உற்பத்திக்கு"]
+        "en": [
+          "They are the same thing",
+          "A project is the whole site; an app is a module within it",
+          "An app contains multiple projects",
+          "A project is for development; an app is for production"
+        ],
+        "ta": [
+          "அவை ஒன்றே",
+          "திட்டம் முழு தளம்; பயன்பாடு அதன் ஒரு தொகுதி",
+          "ஒரு பயன்பாட்டில் பல திட்டங்கள் உள்ளன",
+          "திட்டம் மேம்பாட்டிற்கு; பயன்பாடு உற்பத்திக்கு"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["django_project_structure", "manage_py", "mtv_pattern", "django_settings"],
-    "concepts_required": ["http_methods", "python_functions"],
+    "concepts_taught": [
+      "django_project_structure",
+      "manage_py",
+      "mtv_pattern",
+      "django_settings"
+    ],
+    "concepts_required": [
+      "http_methods",
+      "python_functions"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 30,
-    "real_world_application": ["web_apps", "enterprise_development"],
+    "real_world_application": [
+      "web_apps",
+      "enterprise_development"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

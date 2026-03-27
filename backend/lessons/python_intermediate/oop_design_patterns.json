@@ -226,6 +226,122 @@
           "address": "0x7f02"
         }
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "class Singleton:\n    _instance = None\n    def __new__(cls):\n        if cls._instance is None:\n            cls._instance = super().__new__(cls)\n        return cls._instance\n\na = Singleton()\nb = Singleton()\nprint(a is b)\nprint(id(a) == id(b))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "Singleton._instance": "None"
+          },
+          "output": "",
+          "description": "Define Singleton with class variable _instance = None"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "a": "Singleton@0x7f01",
+            "Singleton._instance": "Singleton@0x7f01"
+          },
+          "output": "",
+          "description": "First call: _instance is None, so create new instance"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "b": "Singleton@0x7f01"
+          },
+          "output": "",
+          "description": "Second call: _instance exists, return SAME instance"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "True",
+          "description": "a and b are the exact same object in memory"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "True",
+          "description": "Same memory address confirms singleton"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Singleton()",
+          "type": "start"
+        },
+        {
+          "id": "new",
+          "label": "__new__ called",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "_instance is None?",
+          "type": "decision"
+        },
+        {
+          "id": "create",
+          "label": "Create new instance",
+          "type": "process"
+        },
+        {
+          "id": "reuse",
+          "label": "Return existing instance",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Return instance",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "new"
+        },
+        {
+          "from": "new",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "create",
+          "label": "Yes"
+        },
+        {
+          "from": "check",
+          "to": "reuse",
+          "label": "No"
+        },
+        {
+          "from": "create",
+          "to": "end"
+        },
+        {
+          "from": "reuse",
+          "to": "end"
+        }
+      ],
+      "executionPath": [
+        "start",
+        "new",
+        "check",
+        "create",
+        "end"
+      ],
+      "variables": {},
+      "speed": "normal"
     }
   ],
   "practice_challenges": [
@@ -278,8 +394,18 @@
         "ta": "Factory pattern-ல், எந்த வகுப்பை நிகழ்வாக்குவது என்று யார் முடிவு செய்கிறார்?"
       },
       "options": {
-        "en": ["The client code", "The factory method", "The parent class", "Python interpreter"],
-        "ta": ["கிளையண்ட் குறியீடு", "தொழிற்சாலை முறை", "பெற்றோர் வகுப்பு", "Python மொழிமாற்றி"]
+        "en": [
+          "The client code",
+          "The factory method",
+          "The parent class",
+          "Python interpreter"
+        ],
+        "ta": [
+          "கிளையண்ட் குறியீடு",
+          "தொழிற்சாலை முறை",
+          "பெற்றோர் வகுப்பு",
+          "Python மொழிமாற்றி"
+        ]
       },
       "correct": 1
     },
@@ -289,20 +415,45 @@
         "ta": "நிலை மாற்றங்களை பல பொருள்களுக்கு தெரிவிக்க எந்த pattern சிறந்தது?"
       },
       "options": {
-        "en": ["Singleton", "Factory", "Observer", "Strategy"],
-        "ta": ["Singleton", "Factory", "Observer", "Strategy"]
+        "en": [
+          "Singleton",
+          "Factory",
+          "Observer",
+          "Strategy"
+        ],
+        "ta": [
+          "Singleton",
+          "Factory",
+          "Observer",
+          "Strategy"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["singleton", "factory", "observer", "strategy", "design_patterns"],
-    "concepts_required": ["classes", "inheritance", "composition"],
+    "concepts_taught": [
+      "singleton",
+      "factory",
+      "observer",
+      "strategy",
+      "design_patterns"
+    ],
+    "concepts_required": [
+      "classes",
+      "inheritance",
+      "composition"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "conceptual",
     "estimated_minutes": 35,
-    "real_world_application": ["software_architecture", "scalable_code"],
+    "real_world_application": [
+      "software_architecture",
+      "scalable_code"
+    ],
     "category": "oop",
-    "path_memberships": ["python_intermediate"]
+    "path_memberships": [
+      "python_intermediate"
+    ]
   }
 }

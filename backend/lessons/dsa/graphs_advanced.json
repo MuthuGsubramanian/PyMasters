@@ -163,11 +163,26 @@
       "type": "FlowArrow",
       "id": "dijkstra_flow",
       "steps": [
-        {"label": "Initialize distances to inf", "active": true},
-        {"label": "Set start distance = 0", "active": true},
-        {"label": "Pick unvisited node with min distance", "active": true},
-        {"label": "Update neighbors if shorter path found", "active": true},
-        {"label": "Repeat until all visited", "active": true}
+        {
+          "label": "Initialize distances to inf",
+          "active": true
+        },
+        {
+          "label": "Set start distance = 0",
+          "active": true
+        },
+        {
+          "label": "Pick unvisited node with min distance",
+          "active": true
+        },
+        {
+          "label": "Update neighbors if shorter path found",
+          "active": true
+        },
+        {
+          "label": "Repeat until all visited",
+          "active": true
+        }
       ]
     },
     {
@@ -195,6 +210,157 @@
         "Topological sort: ['A', 'B', 'C', 'D', 'E']",
         "Cycle detected: False"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_graphs_advanced",
+      "code": "import heapq\n\ndef dijkstra(graph, start):\n    dist = {n: float('inf') for n in graph}\n    dist[start] = 0\n    pq = [(0, start)]\n    visited = set()\n    while pq:\n        d, node = heapq.heappop(pq)\n        if node in visited: continue\n        visited.add(node)\n        for neighbor, weight in graph[node]:\n            new_d = d + weight\n            if new_d < dist[neighbor]:\n                dist[neighbor] = new_d\n                heapq.heappush(pq, (new_d, neighbor))\n    return dist\n\ngraph = {'A':[('B',1),('C',4)],'B':[('C',2),('D',5)],'C':[('D',1)],'D':[]}\nprint(dijkstra(graph, 'A'))",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "dist": {
+              "A": "inf",
+              "B": "inf",
+              "C": "inf",
+              "D": "inf"
+            }
+          },
+          "output": "",
+          "explanation": "Initialize all distances to infinity"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "dist": {
+              "A": 0
+            }
+          },
+          "output": "",
+          "explanation": "Source A has distance 0 to itself"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "d": 0,
+            "node": "A"
+          },
+          "output": "",
+          "explanation": "Pop A (dist=0). Check neighbors B(w=1), C(w=4)"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "dist": {
+              "A": 0,
+              "B": 1,
+              "C": 4
+            }
+          },
+          "output": "",
+          "explanation": "Update: B=0+1=1, C=0+4=4"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "d": 1,
+            "node": "B"
+          },
+          "output": "",
+          "explanation": "Pop B (dist=1). Check C(w=2), D(w=5)"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "dist": {
+              "A": 0,
+              "B": 1,
+              "C": 3,
+              "D": 6
+            }
+          },
+          "output": "",
+          "explanation": "C=min(4,1+2)=3 — shorter path found through B!"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "d": 3,
+            "node": "C"
+          },
+          "output": "",
+          "explanation": "Pop C (dist=3). Check D(w=1): 3+1=4 < 6"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "dist": {
+              "A": 0,
+              "B": 1,
+              "C": 3,
+              "D": 4
+            }
+          },
+          "output": "",
+          "explanation": "D=min(6,3+1)=4 — even shorter path via C!"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "{'A': 0, 'B': 1, 'C': 3, 'D': 4}",
+          "explanation": "All shortest paths found from A"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_diagram_graphs_advanced",
+      "nodes": [
+        {
+          "id": "init",
+          "label": "Set all distances = inf",
+          "next": [
+            "set_src"
+          ]
+        },
+        {
+          "id": "set_src",
+          "label": "Source distance = 0",
+          "next": [
+            "pop"
+          ]
+        },
+        {
+          "id": "pop",
+          "label": "Pop min-distance node from heap",
+          "next": [
+            "visited"
+          ]
+        },
+        {
+          "id": "visited",
+          "label": "Already visited?",
+          "next": [
+            "pop",
+            "process"
+          ]
+        },
+        {
+          "id": "process",
+          "label": "Check each neighbor",
+          "next": [
+            "relax"
+          ]
+        },
+        {
+          "id": "relax",
+          "label": "Shorter path? Update distance",
+          "next": [
+            "pop"
+          ]
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -226,8 +392,18 @@
         "ta": "Dijkstra வழிமுறை எந்த வகை graph-களில் வேலை செய்யும்?"
       },
       "options": {
-        "en": ["Only unweighted graphs", "Graphs with negative weights", "Graphs with non-negative weights", "Only trees"],
-        "ta": ["எடையற்ற graph-கள் மட்டும்", "எதிர்மறை எடை graph-கள்", "எதிர்மறையற்ற எடை graph-கள்", "மரங்கள் மட்டும்"]
+        "en": [
+          "Only unweighted graphs",
+          "Graphs with negative weights",
+          "Graphs with non-negative weights",
+          "Only trees"
+        ],
+        "ta": [
+          "எடையற்ற graph-கள் மட்டும்",
+          "எதிர்மறை எடை graph-கள்",
+          "எதிர்மறையற்ற எடை graph-கள்",
+          "மரங்கள் மட்டும்"
+        ]
       },
       "correct": 2
     },
@@ -237,8 +413,18 @@
         "ta": "Topological sort-க்கு என்ன தேவை?"
       },
       "options": {
-        "en": ["Weighted edges", "A directed acyclic graph (DAG)", "An undirected graph", "A complete graph"],
-        "ta": ["எடையுள்ள விளிம்புகள்", "directed acyclic graph (DAG)", "undirected graph", "complete graph"]
+        "en": [
+          "Weighted edges",
+          "A directed acyclic graph (DAG)",
+          "An undirected graph",
+          "A complete graph"
+        ],
+        "ta": [
+          "எடையுள்ள விளிம்புகள்",
+          "directed acyclic graph (DAG)",
+          "undirected graph",
+          "complete graph"
+        ]
       },
       "correct": 1
     },
@@ -248,20 +434,46 @@
         "ta": "அடுத்த முனையை திறமையாக தேர்ந்தெடுக்க Dijkstra எந்த தரவு கட்டமைப்பைப் பயன்படுத்தும்?"
       },
       "options": {
-        "en": ["Stack", "Queue", "Priority Queue (Min-Heap)", "Linked List"],
-        "ta": ["Stack", "Queue", "Priority Queue (Min-Heap)", "Linked List"]
+        "en": [
+          "Stack",
+          "Queue",
+          "Priority Queue (Min-Heap)",
+          "Linked List"
+        ],
+        "ta": [
+          "Stack",
+          "Queue",
+          "Priority Queue (Min-Heap)",
+          "Linked List"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["dijkstra", "topological_sort", "cycle_detection", "weighted_graphs"],
-    "concepts_required": ["graphs_basics", "heaps", "bfs", "dfs"],
+    "concepts_taught": [
+      "dijkstra",
+      "topological_sort",
+      "cycle_detection",
+      "weighted_graphs"
+    ],
+    "concepts_required": [
+      "graphs_basics",
+      "heaps",
+      "bfs",
+      "dfs"
+    ],
     "difficulty": "advanced",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["gps_navigation", "dependency_resolution", "network_routing"],
+    "real_world_application": [
+      "gps_navigation",
+      "dependency_resolution",
+      "network_routing"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

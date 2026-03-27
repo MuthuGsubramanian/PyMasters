@@ -159,6 +159,118 @@
         "</body>",
         "</html>"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_django_views",
+      "title": "Django View to Template Rendering",
+      "code": "from django.shortcuts import render\n\ndef post_list(request):\n    posts = Post.objects.filter(is_published=True)\n    context = {'posts': posts, 'title': 'Blog'}\n    return render(request, 'blog/post_list.html', context)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import render shortcut"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "request": "<HttpRequest GET /blog/>"
+          },
+          "output": "",
+          "explanation": "View receives request from URL dispatcher"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "posts": "<QuerySet [Post1, Post2]>"
+          },
+          "output": "",
+          "explanation": "Query DB for published posts"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "context": {
+              "posts": "QuerySet",
+              "title": "Blog"
+            }
+          },
+          "output": "",
+          "explanation": "Build context dict for template"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "HTML: <h1>Blog</h1>...",
+          "explanation": "render() loads template, fills variables, returns HttpResponse"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_django_template",
+      "title": "Django Template Rendering Flow",
+      "nodes": [
+        {
+          "id": "request",
+          "label": "HTTP Request",
+          "type": "start"
+        },
+        {
+          "id": "view",
+          "label": "View Function",
+          "type": "process"
+        },
+        {
+          "id": "orm",
+          "label": "ORM Query",
+          "type": "process"
+        },
+        {
+          "id": "context",
+          "label": "Build Context",
+          "type": "process"
+        },
+        {
+          "id": "template",
+          "label": "Template Engine",
+          "type": "process"
+        },
+        {
+          "id": "html",
+          "label": "HTML Response",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "request",
+          "to": "view",
+          "label": "URL match"
+        },
+        {
+          "from": "view",
+          "to": "orm",
+          "label": "Query"
+        },
+        {
+          "from": "orm",
+          "to": "context",
+          "label": "Data"
+        },
+        {
+          "from": "context",
+          "to": "template",
+          "label": "render()"
+        },
+        {
+          "from": "template",
+          "to": "html",
+          "label": "Filled"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -192,8 +304,18 @@
         "ta": "Django வார்ப்புருவில் {% extends 'base.html' %} நோக்கம் என்ன?"
       },
       "options": {
-        "en": ["Creates a new HTML file", "Inherits the layout from base.html", "Imports a Python module", "Deletes the base template"],
-        "ta": ["புதிய HTML கோப்பை உருவாக்குகிறது", "base.html-லிருந்து தளவமைப்பை மரபுரிமையாகப் பெறுகிறது", "Python தொகுதியை இறக்குமதி செய்கிறது", "அடிப்படை வார்ப்புருவை நீக்குகிறது"]
+        "en": [
+          "Creates a new HTML file",
+          "Inherits the layout from base.html",
+          "Imports a Python module",
+          "Deletes the base template"
+        ],
+        "ta": [
+          "புதிய HTML கோப்பை உருவாக்குகிறது",
+          "base.html-லிருந்து தளவமைப்பை மரபுரிமையாகப் பெறுகிறது",
+          "Python தொகுதியை இறக்குமதி செய்கிறது",
+          "அடிப்படை வார்ப்புருவை நீக்குகிறது"
+        ]
       },
       "correct": 1
     },
@@ -203,8 +325,18 @@
         "ta": "get_object_or_404() என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Returns None if not found", "Returns the object or raises a 404 HTTP error", "Creates the object if not found", "Redirects to the homepage"],
-        "ta": ["கிடைக்கவில்லை என்றால் None திருப்புகிறது", "பொருளைத் திருப்புகிறது அல்லது 404 HTTP பிழையை எழுப்புகிறது", "கிடைக்கவில்லை என்றால் பொருளை உருவாக்குகிறது", "முகப்பு பக்கத்திற்கு திருப்பி விடுகிறது"]
+        "en": [
+          "Returns None if not found",
+          "Returns the object or raises a 404 HTTP error",
+          "Creates the object if not found",
+          "Redirects to the homepage"
+        ],
+        "ta": [
+          "கிடைக்கவில்லை என்றால் None திருப்புகிறது",
+          "பொருளைத் திருப்புகிறது அல்லது 404 HTTP பிழையை எழுப்புகிறது",
+          "கிடைக்கவில்லை என்றால் பொருளை உருவாக்குகிறது",
+          "முகப்பு பக்கத்திற்கு திருப்பி விடுகிறது"
+        ]
       },
       "correct": 1
     },
@@ -214,20 +346,43 @@
         "ta": "வார்ப்புருவில் {{ post.title|truncatewords:10 }} என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Removes the first 10 words", "Displays only the first 10 words with '...'", "Repeats the title 10 times", "Makes the title 10 characters long"],
-        "ta": ["முதல் 10 சொற்களை நீக்குகிறது", "முதல் 10 சொற்களை '...' உடன் காட்டுகிறது", "தலைப்பை 10 முறை திரும்பக் காட்டுகிறது", "தலைப்பை 10 எழுத்துகள் நீளமாக்குகிறது"]
+        "en": [
+          "Removes the first 10 words",
+          "Displays only the first 10 words with '...'",
+          "Repeats the title 10 times",
+          "Makes the title 10 characters long"
+        ],
+        "ta": [
+          "முதல் 10 சொற்களை நீக்குகிறது",
+          "முதல் 10 சொற்களை '...' உடன் காட்டுகிறது",
+          "தலைப்பை 10 முறை திரும்பக் காட்டுகிறது",
+          "தலைப்பை 10 எழுத்துகள் நீளமாக்குகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["django_views", "templates", "template_inheritance", "url_routing"],
-    "concepts_required": ["django_models", "django_project_structure"],
+    "concepts_taught": [
+      "django_views",
+      "templates",
+      "template_inheritance",
+      "url_routing"
+    ],
+    "concepts_required": [
+      "django_models",
+      "django_project_structure"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 30,
-    "real_world_application": ["web_pages", "content_display"],
+    "real_world_application": [
+      "web_pages",
+      "content_display"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

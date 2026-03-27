@@ -216,6 +216,57 @@
         "Scores shape: (10, 10) — full attention matrix",
         "Output shape: (10, 512)"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_self_attention",
+      "code": "import torch\nimport torch.nn as nn\n\n# Multi-Head Self-Attention\nmha = nn.MultiheadAttention(embed_dim=64, num_heads=8, batch_first=True)\nx = torch.randn(2, 10, 64)  # batch=2, seq=10, dim=64\n\n# Self-attention: Q=K=V=x\nattn_output, attn_weights = mha(x, x, x)\nprint(f'Input: {x.shape}')\nprint(f'Output: {attn_output.shape}')\nprint(f'Attention weights: {attn_weights.shape}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": {
+            "mha": "MultiheadAttention(64, 8 heads)"
+          },
+          "output": "",
+          "explanation": "8 attention heads, each with dim 64/8 = 8"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "x.shape": "(2, 10, 64)"
+          },
+          "output": "",
+          "explanation": "2 sequences of 10 tokens, 64-dim embeddings"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "Q": "x",
+            "K": "x",
+            "V": "x"
+          },
+          "output": "",
+          "explanation": "Self-attention: query, key, value all come from same input"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Input: torch.Size([2, 10, 64])",
+          "explanation": "Each token is 64-dimensional"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Output: torch.Size([2, 10, 64])",
+          "explanation": "Same shape — each token enriched with context from all others"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Attention weights: torch.Size([2, 10, 10])",
+          "explanation": "10x10: each token's attention to every other token"
+        }
+      ]
     }
   ],
   "practice_challenges": [

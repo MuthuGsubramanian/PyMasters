@@ -145,6 +145,67 @@
         "Std:  0.026",
         "Best params: {'max_depth': 3, 'min_samples_split': 2}"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_sklearn_eval",
+      "code": "from sklearn.metrics import confusion_matrix, classification_report\nfrom sklearn.metrics import precision_score, recall_score, f1_score\nimport numpy as np\n\ny_true = [1, 0, 1, 1, 0, 1, 0, 0, 1, 0]\ny_pred = [1, 0, 1, 0, 0, 1, 1, 0, 1, 0]\n\ncm = confusion_matrix(y_true, y_pred)\nprint(f'Confusion Matrix:\\n{cm}')\nprint(f'Precision: {precision_score(y_true, y_pred):.2f}')\nprint(f'Recall: {recall_score(y_true, y_pred):.2f}')\nprint(f'F1: {f1_score(y_true, y_pred):.2f}')",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "y_true": "[1,0,1,1,0,1,0,0,1,0]"
+          },
+          "output": "",
+          "explanation": "Actual labels — 5 positive (1), 5 negative (0)"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "y_pred": "[1,0,1,0,0,1,1,0,1,0]"
+          },
+          "output": "",
+          "explanation": "Predicted labels — 2 errors: one FN, one FP"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "cm": "[[4,1],[1,4]]"
+          },
+          "output": "",
+          "explanation": "Build confusion matrix: TN=4, FP=1, FN=1, TP=4"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "Confusion Matrix:\n[[4 1]\n [1 4]]",
+          "explanation": "Rows = actual, Cols = predicted"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "precision": "0.80"
+          },
+          "output": "Precision: 0.80",
+          "explanation": "Precision = TP/(TP+FP) = 4/5 — 80% of positive predictions were correct"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "recall": "0.80"
+          },
+          "output": "Recall: 0.80",
+          "explanation": "Recall = TP/(TP+FN) = 4/5 — found 80% of actual positives"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "f1": "0.80"
+          },
+          "output": "F1: 0.80",
+          "explanation": "F1 = harmonic mean of precision and recall"
+        }
+      ]
     }
   ],
   "practice_challenges": [

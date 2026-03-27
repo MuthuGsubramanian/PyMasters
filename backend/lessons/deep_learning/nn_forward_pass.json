@@ -176,6 +176,121 @@
         "z2.shape = (2,)",
         "pred = [0.73, 0.27]"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_nn_fwd",
+      "code": "import numpy as np\n\ndef relu(x): return np.maximum(0, x)\ndef softmax(x): e = np.exp(x - np.max(x)); return e / e.sum()\n\nx = np.array([0.5, -0.3])\nW1 = np.array([[0.2, 0.8, -0.5], [0.7, -0.1, 0.3]])\nb1 = np.array([0.1, 0.0, -0.1])\nz1 = x @ W1 + b1\na1 = relu(z1)\n\nW2 = np.array([[0.5, -0.3], [0.2, 0.7], [-0.4, 0.1]])\nb2 = np.array([0.0, 0.0])\nz2 = a1 @ W2 + b2\nprobs = softmax(z2)\nprint(f'Class probabilities: {np.round(probs, 3)}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "x": "[0.5, -0.3]"
+          },
+          "output": "",
+          "explanation": "Input vector: 2 features"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "W1.shape": "(2, 3)"
+          },
+          "output": "",
+          "explanation": "Layer 1 weights: 2 inputs -> 3 neurons"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "z1": "[0.0, 0.43, -0.44]"
+          },
+          "output": "",
+          "explanation": "Linear transform: z = x @ W + b"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "a1": "[0.0, 0.43, 0.0]"
+          },
+          "output": "",
+          "explanation": "ReLU kills negative values"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "z2": "[0.086, 0.301]"
+          },
+          "output": "",
+          "explanation": "Second linear transform"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "probs": "[0.447, 0.553]"
+          },
+          "output": "Class probabilities: [0.447 0.553]",
+          "explanation": "Softmax: class 1 has 55.3% probability"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_nn_fwd",
+      "title": "Neural Network Forward Pass",
+      "nodes": [
+        {
+          "id": "in",
+          "label": "Input (2)",
+          "type": "start"
+        },
+        {
+          "id": "l1",
+          "label": "Linear: x@W1+b1",
+          "type": "process"
+        },
+        {
+          "id": "r1",
+          "label": "ReLU",
+          "type": "process"
+        },
+        {
+          "id": "l2",
+          "label": "Linear: a1@W2+b2",
+          "type": "process"
+        },
+        {
+          "id": "sm",
+          "label": "Softmax",
+          "type": "process"
+        },
+        {
+          "id": "out",
+          "label": "Probabilities",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "in",
+          "to": "l1"
+        },
+        {
+          "from": "l1",
+          "to": "r1"
+        },
+        {
+          "from": "r1",
+          "to": "l2"
+        },
+        {
+          "from": "l2",
+          "to": "sm"
+        },
+        {
+          "from": "sm",
+          "to": "out"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

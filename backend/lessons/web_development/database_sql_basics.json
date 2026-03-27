@@ -177,6 +177,134 @@
         "Alice grade updated to 98.0",
         "Charlie removed"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_sql_basics",
+      "title": "SQL CRUD with Python sqlite3",
+      "code": "import sqlite3\n\nconn = sqlite3.connect(':memory:')\nc = conn.cursor()\nc.execute('CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, grade REAL)')\nc.execute('INSERT INTO students VALUES (NULL, ?, ?)', ('Alice', 95.5))\nc.execute('INSERT INTO students VALUES (NULL, ?, ?)', ('Bob', 87.0))\nconn.commit()\nresults = c.execute('SELECT name, grade FROM students WHERE grade > ?', (90.0,)).fetchall()\nprint(f'High achievers: {results}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import sqlite3 -- built into Python"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "conn": "<Connection>"
+          },
+          "output": "",
+          "explanation": "Connect to in-memory database"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "c": "<Cursor>"
+          },
+          "output": "",
+          "explanation": "Create cursor for SQL execution"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "explanation": "CREATE TABLE with id, name, grade"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "explanation": "INSERT with ? placeholder prevents SQL injection"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "explanation": "Insert Bob with grade 87.0"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "explanation": "commit() saves changes"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "results": [
+              [
+                "Alice",
+                95.5
+              ]
+            ]
+          },
+          "output": "",
+          "explanation": "SELECT WHERE grade > 90 returns only Alice"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "High achievers: [('Alice', 95.5)]",
+          "explanation": "Print filtered results"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_sql_flow",
+      "title": "SQL Query Execution Flow",
+      "nodes": [
+        {
+          "id": "python",
+          "label": "Python Code\ncursor.execute()",
+          "type": "start"
+        },
+        {
+          "id": "parse",
+          "label": "SQL Parser",
+          "type": "process"
+        },
+        {
+          "id": "plan",
+          "label": "Query Planner",
+          "type": "process"
+        },
+        {
+          "id": "execute",
+          "label": "Execute Query",
+          "type": "process"
+        },
+        {
+          "id": "results",
+          "label": "Return Rows",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "python",
+          "to": "parse",
+          "label": "SQL"
+        },
+        {
+          "from": "parse",
+          "to": "plan",
+          "label": "AST"
+        },
+        {
+          "from": "plan",
+          "to": "execute",
+          "label": "Plan"
+        },
+        {
+          "from": "execute",
+          "to": "results",
+          "label": "Rows"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [
@@ -210,8 +338,18 @@
         "ta": "SQL வினவல்களில் மதிப்புகளைச் செருக ஏன் f-strings ஒருபோதும் பயன்படுத்தக் கூடாது?"
       },
       "options": {
-        "en": ["f-strings are slower", "f-strings can lead to SQL injection attacks", "f-strings don't work with SQLite", "f-strings make queries longer"],
-        "ta": ["f-strings மெதுவானவை", "f-strings SQL ஊசி தாக்குதல்களுக்கு வழிவகுக்கலாம்", "f-strings SQLite-உடன் வேலை செய்யாது", "f-strings வினவல்களை நீளமாக்குகின்றன"]
+        "en": [
+          "f-strings are slower",
+          "f-strings can lead to SQL injection attacks",
+          "f-strings don't work with SQLite",
+          "f-strings make queries longer"
+        ],
+        "ta": [
+          "f-strings மெதுவானவை",
+          "f-strings SQL ஊசி தாக்குதல்களுக்கு வழிவகுக்கலாம்",
+          "f-strings SQLite-உடன் வேலை செய்யாது",
+          "f-strings வினவல்களை நீளமாக்குகின்றன"
+        ]
       },
       "correct": 1
     },
@@ -221,8 +359,18 @@
         "ta": "SQL-ல் INNER JOIN என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Deletes matching rows from both tables", "Returns rows that have matching values in both tables", "Creates a new table", "Copies data from one table to another"],
-        "ta": ["இரு அட்டவணைகளிலிருந்தும் பொருந்தும் வரிசைகளை நீக்குகிறது", "இரு அட்டவணைகளிலும் பொருந்தும் மதிப்புகள் கொண்ட வரிசைகளைத் திருப்புகிறது", "புதிய அட்டவணையை உருவாக்குகிறது", "ஒரு அட்டவணையிலிருந்து மற்றொன்றுக்கு தரவை நகலெடுக்கிறது"]
+        "en": [
+          "Deletes matching rows from both tables",
+          "Returns rows that have matching values in both tables",
+          "Creates a new table",
+          "Copies data from one table to another"
+        ],
+        "ta": [
+          "இரு அட்டவணைகளிலிருந்தும் பொருந்தும் வரிசைகளை நீக்குகிறது",
+          "இரு அட்டவணைகளிலும் பொருந்தும் மதிப்புகள் கொண்ட வரிசைகளைத் திருப்புகிறது",
+          "புதிய அட்டவணையை உருவாக்குகிறது",
+          "ஒரு அட்டவணையிலிருந்து மற்றொன்றுக்கு தரவை நகலெடுக்கிறது"
+        ]
       },
       "correct": 1
     },
@@ -232,20 +380,43 @@
         "ta": "INSERT அறிக்கைகளை இயக்கிய பிறகு conn.commit() என்ன செய்கிறது?"
       },
       "options": {
-        "en": ["Closes the database connection", "Permanently saves the changes to the database", "Rolls back the changes", "Prints the inserted data"],
-        "ta": ["தரவுத்தள இணைப்பை மூடுகிறது", "மாற்றங்களை தரவுத்தளத்தில் நிரந்தரமாக சேமிக்கிறது", "மாற்றங்களை திரும்பப் பெறுகிறது", "செருகப்பட்ட தரவை அச்சிடுகிறது"]
+        "en": [
+          "Closes the database connection",
+          "Permanently saves the changes to the database",
+          "Rolls back the changes",
+          "Prints the inserted data"
+        ],
+        "ta": [
+          "தரவுத்தள இணைப்பை மூடுகிறது",
+          "மாற்றங்களை தரவுத்தளத்தில் நிரந்தரமாக சேமிக்கிறது",
+          "மாற்றங்களை திரும்பப் பெறுகிறது",
+          "செருகப்பட்ட தரவை அச்சிடுகிறது"
+        ]
       },
       "correct": 1
     }
   ],
   "tags": {
-    "concepts_taught": ["sql_basics", "sqlite", "postgresql", "joins", "crud_sql"],
-    "concepts_required": ["python_data_structures"],
+    "concepts_taught": [
+      "sql_basics",
+      "sqlite",
+      "postgresql",
+      "joins",
+      "crud_sql"
+    ],
+    "concepts_required": [
+      "python_data_structures"
+    ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
     "estimated_minutes": 35,
-    "real_world_application": ["data_storage", "backend_development"],
+    "real_world_application": [
+      "data_storage",
+      "backend_development"
+    ],
     "category": "web_development",
-    "path_memberships": ["web_development"]
+    "path_memberships": [
+      "web_development"
+    ]
   }
 }

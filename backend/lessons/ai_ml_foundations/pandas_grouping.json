@@ -95,6 +95,114 @@
         "Sales    52500.0",
         "Name: salary, dtype: float64"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pandas_grouping",
+      "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'dept': ['Eng', 'Sales', 'Eng', 'Sales', 'Eng'],\n    'salary': [80000, 60000, 90000, 65000, 85000]\n})\ngrouped = df.groupby('dept')['salary']\nprint(grouped.mean())\nprint(grouped.agg(['mean', 'min', 'max']))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import pandas"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "df": "DataFrame(5 rows x 2 cols)"
+          },
+          "output": "",
+          "explanation": "Create employee salary data"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "grouped": "DataFrameGroupBy object"
+          },
+          "output": "",
+          "explanation": "Group by dept, select salary column"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "Eng_mean": "85000.0",
+            "Sales_mean": "62500.0"
+          },
+          "output": "dept\nEng      85000.0\nSales    62500.0",
+          "explanation": "Mean salary per department"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "       mean    min    max\nEng   85000  80000  90000\nSales 62500  60000  65000",
+          "explanation": "Multiple aggregations at once with agg()"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_groupby_pipeline",
+      "title": "GroupBy Split-Apply-Combine",
+      "nodes": [
+        {
+          "id": "df",
+          "label": "Original DataFrame",
+          "type": "start"
+        },
+        {
+          "id": "split",
+          "label": "Split by group key",
+          "type": "process"
+        },
+        {
+          "id": "g1",
+          "label": "Group: Eng",
+          "type": "data"
+        },
+        {
+          "id": "g2",
+          "label": "Group: Sales",
+          "type": "data"
+        },
+        {
+          "id": "apply",
+          "label": "Apply agg function",
+          "type": "process"
+        },
+        {
+          "id": "combine",
+          "label": "Combine results",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "df",
+          "to": "split"
+        },
+        {
+          "from": "split",
+          "to": "g1"
+        },
+        {
+          "from": "split",
+          "to": "g2"
+        },
+        {
+          "from": "g1",
+          "to": "apply"
+        },
+        {
+          "from": "g2",
+          "to": "apply"
+        },
+        {
+          "from": "apply",
+          "to": "combine"
+        }
+      ],
+      "animated": true
     }
   ],
   "practice_challenges": [

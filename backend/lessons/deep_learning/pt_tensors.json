@@ -141,6 +141,57 @@
         "t @ t.T = tensor([[ 5., 11.], [11., 25.]])",
         "t.view(-1) = tensor([1., 2., 3., 4.])"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pt_tensors",
+      "code": "import torch\n\na = torch.tensor([1.0, 2.0, 3.0])\nb = torch.zeros(2, 3)\nc = torch.randn(3, 3)\nprint(f'a: {a}, dtype: {a.dtype}')\nprint(f'b:\\n{b}')\n\n# Operations\nprint(f'a + 10: {a + 10}')\nprint(f'a @ a (dot): {torch.dot(a, a)}')\nprint(f'c shape: {c.shape}, device: {c.device}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "a": "tensor([1., 2., 3.])"
+          },
+          "output": "",
+          "explanation": "Create tensor from Python list"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "b": "2x3 zeros tensor"
+          },
+          "output": "",
+          "explanation": "Zero-initialized 2x3 tensor"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "a: tensor([1., 2., 3.]), dtype: torch.float32",
+          "explanation": "Default dtype is float32"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "a+10": "tensor([11., 12., 13.])"
+          },
+          "output": "a + 10: tensor([11., 12., 13.])",
+          "explanation": "Broadcasting: scalar adds to every element"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "dot": "14.0"
+          },
+          "output": "a @ a (dot): 14.0",
+          "explanation": "Dot product: 1*1 + 2*2 + 3*3 = 14"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "c shape: torch.Size([3, 3]), device: cpu",
+          "explanation": "Tensors track shape and device (CPU/GPU)"
+        }
+      ]
     }
   ],
   "practice_challenges": [

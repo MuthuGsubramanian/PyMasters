@@ -149,10 +149,25 @@
       "structure_type": "list",
       "initial_state": [],
       "animations": [
-        {"action": "add", "index": 0, "value": "Alice"},
-        {"action": "add", "index": 1, "value": "Bob"},
-        {"action": "add", "index": 2, "value": "Charlie"},
-        {"action": "remove", "index": 0}
+        {
+          "action": "add",
+          "index": 0,
+          "value": "Alice"
+        },
+        {
+          "action": "add",
+          "index": 1,
+          "value": "Bob"
+        },
+        {
+          "action": "add",
+          "index": 2,
+          "value": "Charlie"
+        },
+        {
+          "action": "remove",
+          "index": 0
+        }
       ]
     },
     {
@@ -180,6 +195,112 @@
         "Priority 1: Urgent task",
         "Priority 2: Medium task",
         "Priority 3: Low task"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_queues",
+      "code": "from collections import deque\n\nq = deque()\nq.append('Alice')\nq.append('Bob')\nq.append('Charlie')\nprint(f'Queue: {list(q)}')\n\nfirst = q.popleft()\nprint(f'Served: {first}')\nprint(f'Queue now: {list(q)}')\n\nimport heapq\ntasks = []\nheapq.heappush(tasks, (3, 'Low'))\nheapq.heappush(tasks, (1, 'Urgent'))\nheapq.heappush(tasks, (2, 'Medium'))\nwhile tasks:\n    pri, task = heapq.heappop(tasks)\n    print(f'Priority {pri}: {task}')",
+      "executionSteps": [
+        {
+          "line": 3,
+          "variables": {
+            "q": []
+          },
+          "output": "",
+          "explanation": "Create empty deque for O(1) operations at both ends"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "q": [
+              "Alice"
+            ]
+          },
+          "output": "",
+          "explanation": "Enqueue Alice — she joins the back"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "q": [
+              "Alice",
+              "Bob",
+              "Charlie"
+            ]
+          },
+          "output": "Queue: ['Alice', 'Bob', 'Charlie']",
+          "explanation": "FIFO order: Alice will be served first"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "first": "Alice",
+            "q": [
+              "Bob",
+              "Charlie"
+            ]
+          },
+          "output": "Served: Alice",
+          "explanation": "popleft() removes from front in O(1). Alice served first!"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "tasks": [
+              [
+                3,
+                "Low"
+              ]
+            ]
+          },
+          "output": "",
+          "explanation": "Push task with priority 3 (lower number = higher priority)"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "tasks": [
+              [
+                1,
+                "Urgent"
+              ],
+              [
+                3,
+                "Low"
+              ]
+            ]
+          },
+          "output": "",
+          "explanation": "Urgent (pri=1) bubbles to top of min-heap"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "pri": 1,
+            "task": "Urgent"
+          },
+          "output": "Priority 1: Urgent",
+          "explanation": "Highest priority (lowest number) comes out first"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "pri": 2,
+            "task": "Medium"
+          },
+          "output": "Priority 2: Medium",
+          "explanation": "Medium priority next"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "pri": 3,
+            "task": "Low"
+          },
+          "output": "Priority 3: Low",
+          "explanation": "Lowest priority served last"
+        }
       ]
     }
   ],
@@ -212,8 +333,18 @@
         "ta": "FIFO என்றால் என்ன?"
       },
       "options": {
-        "en": ["First In First Out", "Fast In Fast Out", "First In Final Out", "Find In Find Out"],
-        "ta": ["First In First Out", "Fast In Fast Out", "First In Final Out", "Find In Find Out"]
+        "en": [
+          "First In First Out",
+          "Fast In Fast Out",
+          "First In Final Out",
+          "Find In Find Out"
+        ],
+        "ta": [
+          "First In First Out",
+          "Fast In Fast Out",
+          "First In Final Out",
+          "Find In Find Out"
+        ]
       },
       "correct": 0
     },
@@ -223,8 +354,18 @@
         "ta": "வரிசைகளுக்கு list-க்கு பதிலாக collections.deque ஐ ஏன் பயன்படுத்த வேண்டும்?"
       },
       "options": {
-        "en": ["deque uses less memory", "deque.popleft() is O(1) vs list.pop(0) is O(n)", "deque is sorted", "deque supports strings only"],
-        "ta": ["deque குறைவான நினைவகம் பயன்படுத்தும்", "deque.popleft() O(1), list.pop(0) O(n)", "deque வரிசைப்படுத்தப்பட்டது", "deque சரங்களை மட்டும் ஆதரிக்கும்"]
+        "en": [
+          "deque uses less memory",
+          "deque.popleft() is O(1) vs list.pop(0) is O(n)",
+          "deque is sorted",
+          "deque supports strings only"
+        ],
+        "ta": [
+          "deque குறைவான நினைவகம் பயன்படுத்தும்",
+          "deque.popleft() O(1), list.pop(0) O(n)",
+          "deque வரிசைப்படுத்தப்பட்டது",
+          "deque சரங்களை மட்டும் ஆதரிக்கும்"
+        ]
       },
       "correct": 1
     },
@@ -234,20 +375,44 @@
         "ta": "Priority queue-ல், எந்த உருப்படி முதலில் dequeue செய்யப்படும்?"
       },
       "options": {
-        "en": ["The newest item", "The oldest item", "The highest priority item", "A random item"],
-        "ta": ["புதிய உருப்படி", "பழைய உருப்படி", "அதிக முன்னுரிமை உருப்படி", "சீரற்ற உருப்படி"]
+        "en": [
+          "The newest item",
+          "The oldest item",
+          "The highest priority item",
+          "A random item"
+        ],
+        "ta": [
+          "புதிய உருப்படி",
+          "பழைய உருப்படி",
+          "அதிக முன்னுரிமை உருப்படி",
+          "சீரற்ற உருப்படி"
+        ]
       },
       "correct": 2
     }
   ],
   "tags": {
-    "concepts_taught": ["queue", "deque", "priority_queue", "fifo"],
-    "concepts_required": ["lists", "classes"],
+    "concepts_taught": [
+      "queue",
+      "deque",
+      "priority_queue",
+      "fifo"
+    ],
+    "concepts_required": [
+      "lists",
+      "classes"
+    ],
     "difficulty": "intermediate",
     "engagement_type": "hands_on",
     "estimated_minutes": 25,
-    "real_world_application": ["task_scheduling", "bfs", "print_queue"],
+    "real_world_application": [
+      "task_scheduling",
+      "bfs",
+      "print_queue"
+    ],
     "category": "dsa",
-    "path_memberships": ["dsa_track"]
+    "path_memberships": [
+      "dsa_track"
+    ]
   }
 }

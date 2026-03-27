@@ -79,6 +79,63 @@
         "2         11      200      Bob",
         "3         10      150    Alice"
       ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_pandas_merge",
+      "code": "import pandas as pd\n\nemployees = pd.DataFrame({'id': [1, 2, 3], 'name': ['Alice', 'Bob', 'Charlie']})\nsalaries = pd.DataFrame({'id': [1, 2, 4], 'salary': [70000, 80000, 90000]})\ninner = pd.merge(employees, salaries, on='id', how='inner')\nprint(inner)\nleft = pd.merge(employees, salaries, on='id', how='left')\nprint(left)",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Import pandas"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "employees": "DataFrame(3 rows)"
+          },
+          "output": "",
+          "explanation": "Employee table with ids 1, 2, 3"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "salaries": "DataFrame(3 rows)"
+          },
+          "output": "",
+          "explanation": "Salary table with ids 1, 2, 4"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "inner": "DataFrame(2 rows)"
+          },
+          "output": "",
+          "explanation": "Inner join: only matching ids (1, 2)"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "   id   name  salary\n0   1  Alice   70000\n1   2    Bob   80000",
+          "explanation": "id=3 and id=4 dropped — no match on both sides"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "left": "DataFrame(3 rows)"
+          },
+          "output": "",
+          "explanation": "Left join: keep all employees, fill missing salary with NaN"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "   id     name   salary\n0   1    Alice  70000.0\n1   2      Bob  80000.0\n2   3  Charlie      NaN",
+          "explanation": "Charlie has NaN salary — no matching id in salaries table"
+        }
+      ]
     }
   ],
   "practice_challenges": [
