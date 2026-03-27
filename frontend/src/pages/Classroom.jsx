@@ -15,6 +15,7 @@ import {
 import ExecutionVisualizer from '../components/animations/ExecutionVisualizer';
 import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
+import PythonEditor from '../components/PythonEditor';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -641,17 +642,11 @@ function PracticePhase({
                         {running ? 'Running...' : 'Run'}
                     </button>
                 </div>
-                <textarea
-                    className="w-full bg-[#0d1117] text-slate-300 font-mono text-sm p-5 resize-none focus:outline-none leading-relaxed min-h-[200px] placeholder-slate-600"
+                <PythonEditor
                     value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    onKeyDown={(e) => {
-                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                            e.preventDefault();
-                            onRun?.();
-                        }
-                    }}
-                    spellCheck={false}
+                    onChange={(val) => setCode(val)}
+                    onRun={onRun}
+                    height="200px"
                     placeholder="# Write your code here... (Ctrl+Enter to run)"
                 />
             </div>
