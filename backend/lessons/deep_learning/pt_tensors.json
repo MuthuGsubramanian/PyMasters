@@ -28,12 +28,42 @@
       "label": "Tensor Dimensions",
       "structure": "table",
       "data": [
-        ["Rank", "Name", "Shape Example", "Use Case"],
-        ["0", "Scalar", "()", "Loss value"],
-        ["1", "Vector", "(128,)", "Embedding"],
-        ["2", "Matrix", "(32, 512)", "Batch of embeddings"],
-        ["3", "3D Tensor", "(32, 10, 512)", "Batch of sequences"],
-        ["4", "4D Tensor", "(32, 3, 224, 224)", "Batch of images"]
+        [
+          "Rank",
+          "Name",
+          "Shape Example",
+          "Use Case"
+        ],
+        [
+          "0",
+          "Scalar",
+          "()",
+          "Loss value"
+        ],
+        [
+          "1",
+          "Vector",
+          "(128,)",
+          "Embedding"
+        ],
+        [
+          "2",
+          "Matrix",
+          "(32, 512)",
+          "Batch of embeddings"
+        ],
+        [
+          "3",
+          "3D Tensor",
+          "(32, 10, 512)",
+          "Batch of sequences"
+        ],
+        [
+          "4",
+          "4D Tensor",
+          "(32, 3, 224, 224)",
+          "Batch of images"
+        ]
       ],
       "color": "#4f8ef7"
     },
@@ -44,29 +74,39 @@
         {
           "line": "t = torch.tensor([[1.0, 2.0], [3.0, 4.0]])",
           "highlight": "t",
-          "explanation": {"en": "Create a 2×2 tensor from a Python list"}
+          "explanation": {
+            "en": "Create a 2×2 tensor from a Python list"
+          }
         },
         {
           "line": "print(t.shape, t.dtype)",
           "highlight": "shape",
-          "explanation": {"en": "Check shape and data type"},
+          "explanation": {
+            "en": "Check shape and data type"
+          },
           "output": "torch.Size([2, 2]) torch.float32"
         },
         {
           "line": "t_gpu = t.to('cuda')",
           "highlight": "cuda",
-          "explanation": {"en": "Move tensor to GPU for fast computation"}
+          "explanation": {
+            "en": "Move tensor to GPU for fast computation"
+          }
         },
         {
           "line": "result = t @ t.T",
           "highlight": "@",
-          "explanation": {"en": "Matrix multiplication: (2×2) @ (2×2) = (2×2)"},
+          "explanation": {
+            "en": "Matrix multiplication: (2×2) @ (2×2) = (2×2)"
+          },
           "output": "tensor([[5., 11.], [11., 25.]])"
         },
         {
           "line": "flat = t.view(-1)",
           "highlight": "view",
-          "explanation": {"en": "Flatten: shape (2,2) → (4,)"},
+          "explanation": {
+            "en": "Flatten: shape (2,2) → (4,)"
+          },
           "output": "tensor([1., 2., 3., 4.])"
         }
       ]
@@ -82,12 +122,25 @@
     {
       "type": "FlowArrow",
       "id": "tensor_flow",
-      "steps": ["Python Data", "torch.tensor()", "CPU Tensor", ".to('cuda')", "GPU Tensor", "@ operation", "Result"]
+      "steps": [
+        "Python Data",
+        "torch.tensor()",
+        "CPU Tensor",
+        ".to('cuda')",
+        "GPU Tensor",
+        "@ operation",
+        "Result"
+      ]
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["t.shape = torch.Size([2, 2])", "t.dtype = torch.float32", "t @ t.T = tensor([[ 5., 11.], [11., 25.]])", "t.view(-1) = tensor([1., 2., 3., 4.])"]
+      "output": [
+        "t.shape = torch.Size([2, 2])",
+        "t.dtype = torch.float32",
+        "t @ t.T = tensor([[ 5., 11.], [11., 25.]])",
+        "t.view(-1) = tensor([1., 2., 3., 4.])"
+      ]
     }
   ],
   "practice_challenges": [
@@ -97,13 +150,33 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Use torch.randn(rows, cols) to create random tensors"},
-        {"en": "Matrix multiply: C = A @ B"},
-        {"en": "Sum all elements: total = C.sum()"}
+        {
+          "en": "Use torch.randn(rows, cols) to create random tensors"
+        },
+        {
+          "en": "Matrix multiply: C = A @ B"
+        },
+        {
+          "en": "Sum all elements: total = C.sum()"
+        }
       ],
       "test_code": "import torch\nassert A.shape == (3, 4), f'A must be (3,4), got {A.shape}'\nassert B.shape == (4, 2), f'B must be (4,2), got {B.shape}'\nassert C.shape == (3, 2), f'C = A@B must be (3,2), got {C.shape}'\nassert total.shape == torch.Size([]), 'total must be a scalar'\nassert torch.allclose(C, A @ B), 'C must equal A @ B'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "pytorch_basics"
+    ],
+    "concepts_required": [
+      "numpy_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

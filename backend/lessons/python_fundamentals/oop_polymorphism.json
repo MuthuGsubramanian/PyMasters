@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "oop",
   "order": 3,
-  "title": { "en": "Polymorphism: The Universal Remote" },
-  "description": { "en": "Learn polymorphism and duck typing — how Python lets different objects respond to the same interface, regardless of their class." },
+  "title": {
+    "en": "Polymorphism: The Universal Remote"
+  },
+  "description": {
+    "en": "Learn polymorphism and duck typing — how Python lets different objects respond to the same interface, regardless of their class."
+  },
   "xp_reward": 50,
   "next_unlock": "oop_magic_methods",
   "story_variants": {
     "en": "## The Universal Remote\n\nA **universal remote** has a single PLAY button. Press it on your TV and it plays a show. Press it on your music player and it plays a song. Same button, different behaviour.\n\nThis is **polymorphism**: one interface, many implementations.\n\n### Two Faces of Polymorphism\n\n| Type | How |\n|------|-----|\n| Subtype | child class overrides parent method |\n| Duck typing | any object with the right method works |\n\n### Duck Typing\n> *\"If it walks like a duck and quacks like a duck, it's a duck.\"*\n\nPython doesn't care what class an object is — only whether it has the method being called.\n\n```python\ndef make_sound(animal):\n    print(animal.speak())  # works for Dog, Cat, any class with .speak()\n```\n\n> **Advantage:** Duck typing means you write flexible code that works with classes you haven't even written yet — as long as they follow the same interface.\n\n### Abstract Base Classes\nFor enforcing an interface, use `abc.ABC` and `@abstractmethod` to require subclasses to implement certain methods."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -24,33 +33,76 @@
       "type": "ConceptMap",
       "id": "poly_map",
       "nodes": [
-        { "label": "speak() interface", "children": ["Dog.speak()", "Cat.speak()", "Duck.speak()"] }
+        {
+          "label": "speak() interface",
+          "children": [
+            "Dog.speak()",
+            "Cat.speak()",
+            "Duck.speak()"
+          ]
+        }
       ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Create classes 'Circle' and 'Rectangle', each with an 'area()' method. Write a function 'total_area(shapes)' that sums all areas." },
+      "instruction": {
+        "en": "Create classes 'Circle' and 'Rectangle', each with an 'area()' method. Write a function 'total_area(shapes)' that sums all areas."
+      },
       "expected_output": "96.0",
       "hints": [
-        { "en": "Circle.area() = 3.14159 * r^2, Rectangle.area() = w * h" },
-        { "en": "total_area loops over shapes and sums shape.area()" },
-        { "en": "total_area([Rectangle(6, 8), Circle(2)]) ≈ 60.566..." }
+        {
+          "en": "Circle.area() = 3.14159 * r^2, Rectangle.area() = w * h"
+        },
+        {
+          "en": "total_area loops over shapes and sums shape.area()"
+        },
+        {
+          "en": "total_area([Rectangle(6, 8), Circle(2)]) ≈ 60.566..."
+        }
       ],
       "test_code": "class Circle:\n    def __init__(self, r): self.r = r\n    def area(self): return 3.14159 * self.r ** 2\nclass Rectangle:\n    def __init__(self, w, h): self.w = w; self.h = h\n    def area(self): return self.w * self.h\ndef total_area(shapes):\n    return sum(s.area() for s in shapes)\nresult = total_area([Rectangle(4, 6), Rectangle(5, 12)])\nassert result == 84.0"
     },
     {
-      "instruction": { "en": "Demonstrate duck typing: write a function 'describe(obj)' that calls obj.describe() if it exists, else returns 'no description'." },
+      "instruction": {
+        "en": "Demonstrate duck typing: write a function 'describe(obj)' that calls obj.describe() if it exists, else returns 'no description'."
+      },
       "expected_output": "A red apple",
       "hints": [
-        { "en": "Use hasattr(obj, 'describe') to check" },
-        { "en": "If True, return obj.describe(); else return 'no description'" },
-        { "en": "Create a class Apple with describe() returning 'A red apple'" }
+        {
+          "en": "Use hasattr(obj, 'describe') to check"
+        },
+        {
+          "en": "If True, return obj.describe(); else return 'no description'"
+        },
+        {
+          "en": "Create a class Apple with describe() returning 'A red apple'"
+        }
       ],
       "test_code": "def describe(obj):\n    if hasattr(obj, 'describe'):\n        return obj.describe()\n    return 'no description'\nclass Apple:\n    def describe(self): return 'A red apple'\nassert describe(Apple()) == 'A red apple'\nassert describe(42) == 'no description'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "abstract_classes",
+      "properties"
+    ],
+    "concepts_required": [
+      "inheritance"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

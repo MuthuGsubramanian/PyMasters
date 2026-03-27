@@ -152,11 +152,21 @@
       "id": "mutable_vs_immutable",
       "left": {
         "label": "Immutable (cannot change in-place)",
-        "items": ["int", "float", "str", "bool", "NoneType"]
+        "items": [
+          "int",
+          "float",
+          "str",
+          "bool",
+          "NoneType"
+        ]
       },
       "right": {
         "label": "Mutable (can change in-place)",
-        "items": ["list", "dict", "set"]
+        "items": [
+          "list",
+          "dict",
+          "set"
+        ]
       }
     }
   ],
@@ -167,13 +177,33 @@
       },
       "expected_output": "<class 'int'>\n<class 'float'>\n<class 'str'>\n<class 'bool'>\n<class 'NoneType'>",
       "hints": [
-        { "en": "Use a whole number for int: my_int = 7" },
-        { "en": "Use a decimal for float: my_float = 2.5" },
-        { "en": "Use quotes for str: my_str = 'hello'" }
+        {
+          "en": "Use a whole number for int: my_int = 7"
+        },
+        {
+          "en": "Use a decimal for float: my_float = 2.5"
+        },
+        {
+          "en": "Use quotes for str: my_str = 'hello'"
+        }
       ],
       "test_code": "assert type(my_int) == int, 'my_int must be an int'\nassert type(my_float) == float, 'my_float must be a float'\nassert type(my_str) == str, 'my_str must be a str'\nassert type(my_bool) == bool, 'my_bool must be a bool'\nassert my_none is None, 'my_none must be None'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "data_types"
+    ],
+    "concepts_required": [
+      "variables"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

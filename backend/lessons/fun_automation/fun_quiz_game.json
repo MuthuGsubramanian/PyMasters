@@ -26,44 +26,203 @@
     {
       "type": "CodeStepper",
       "steps": [
-        { "code": "import random", "explanation": { "en": "Import random to shuffle questions each round" } },
-        { "code": "", "explanation": { "en": "Define our quiz questions..." } },
-        { "code": "questions = [", "explanation": { "en": "A list of dictionaries — each holds a question, options, and the answer" } },
-        { "code": "    {'q': 'What is 2**10?', 'options': ['512', '1024', '2048'], 'answer': '1024'},", "explanation": { "en": "First question: 2 to the power of 10" } },
-        { "code": "    {'q': 'Which is mutable?', 'options': ['tuple', 'string', 'list'], 'answer': 'list'},", "explanation": { "en": "Testing knowledge of mutable vs immutable types" } },
-        { "code": "    {'q': 'What does len() return?', 'options': ['type', 'length', 'index'], 'answer': 'length'},", "explanation": { "en": "A built-in function question" } },
-        { "code": "]", "explanation": { "en": "Our question bank is ready!" } },
-        { "code": "", "explanation": { "en": "Now let's build the game loop..." } },
-        { "code": "random.shuffle(questions)", "explanation": { "en": "Randomize question order for replayability" } },
-        { "code": "score = 0", "explanation": { "en": "Initialize the player's score at 0" } },
-        { "code": "for i, q in enumerate(questions, 1):", "explanation": { "en": "Loop through questions with a counter starting at 1" } },
-        { "code": "    print(f'\\nQ{i}: {q[\"q\"]}')", "explanation": { "en": "Display the question number and text" } },
-        { "code": "    for j, opt in enumerate(q['options'], 1):", "explanation": { "en": "Display numbered options" } },
-        { "code": "        print(f'  {j}. {opt}')", "explanation": { "en": "Print each option indented", "output": "  1. 512" } },
-        { "code": "    answer = input('Your answer: ')", "explanation": { "en": "Get the player's answer via input()" } },
-        { "code": "    if answer == q['answer']:", "explanation": { "en": "Check if the answer matches" } },
-        { "code": "        score += 1", "explanation": { "en": "Correct! Add 1 to score", "output": "Correct! ✓" } },
-        { "code": "print(f'\\nFinal Score: {score}/{len(questions)}')", "explanation": { "en": "Display the final score!", "output": "Final Score: 3/3" } }
+        {
+          "code": "import random",
+          "explanation": {
+            "en": "Import random to shuffle questions each round"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Define our quiz questions..."
+          }
+        },
+        {
+          "code": "questions = [",
+          "explanation": {
+            "en": "A list of dictionaries — each holds a question, options, and the answer"
+          }
+        },
+        {
+          "code": "    {'q': 'What is 2**10?', 'options': ['512', '1024', '2048'], 'answer': '1024'},",
+          "explanation": {
+            "en": "First question: 2 to the power of 10"
+          }
+        },
+        {
+          "code": "    {'q': 'Which is mutable?', 'options': ['tuple', 'string', 'list'], 'answer': 'list'},",
+          "explanation": {
+            "en": "Testing knowledge of mutable vs immutable types"
+          }
+        },
+        {
+          "code": "    {'q': 'What does len() return?', 'options': ['type', 'length', 'index'], 'answer': 'length'},",
+          "explanation": {
+            "en": "A built-in function question"
+          }
+        },
+        {
+          "code": "]",
+          "explanation": {
+            "en": "Our question bank is ready!"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Now let's build the game loop..."
+          }
+        },
+        {
+          "code": "random.shuffle(questions)",
+          "explanation": {
+            "en": "Randomize question order for replayability"
+          }
+        },
+        {
+          "code": "score = 0",
+          "explanation": {
+            "en": "Initialize the player's score at 0"
+          }
+        },
+        {
+          "code": "for i, q in enumerate(questions, 1):",
+          "explanation": {
+            "en": "Loop through questions with a counter starting at 1"
+          }
+        },
+        {
+          "code": "    print(f'\\nQ{i}: {q[\"q\"]}')",
+          "explanation": {
+            "en": "Display the question number and text"
+          }
+        },
+        {
+          "code": "    for j, opt in enumerate(q['options'], 1):",
+          "explanation": {
+            "en": "Display numbered options"
+          }
+        },
+        {
+          "code": "        print(f'  {j}. {opt}')",
+          "explanation": {
+            "en": "Print each option indented",
+            "output": "  1. 512"
+          }
+        },
+        {
+          "code": "    answer = input('Your answer: ')",
+          "explanation": {
+            "en": "Get the player's answer via input()"
+          }
+        },
+        {
+          "code": "    if answer == q['answer']:",
+          "explanation": {
+            "en": "Check if the answer matches"
+          }
+        },
+        {
+          "code": "        score += 1",
+          "explanation": {
+            "en": "Correct! Add 1 to score",
+            "output": "Correct! ✓"
+          }
+        },
+        {
+          "code": "print(f'\\nFinal Score: {score}/{len(questions)}')",
+          "explanation": {
+            "en": "Display the final score!",
+            "output": "Final Score: 3/3"
+          }
+        }
       ]
     },
     {
       "type": "Terminal",
-      "output": ["=== PYTHON QUIZ GAME ===", "", "Q1: What is 2**10?", "  1. 512  2. 1024  3. 2048", "Your answer: 1024", "✓ Correct!", "", "Q2: Which is mutable?", "  1. tuple  2. string  3. list", "Your answer: list", "✓ Correct!", "", "Final Score: 2/2 — Perfect! 🏆"]
+      "output": [
+        "=== PYTHON QUIZ GAME ===",
+        "",
+        "Q1: What is 2**10?",
+        "  1. 512  2. 1024  3. 2048",
+        "Your answer: 1024",
+        "✓ Correct!",
+        "",
+        "Q2: Which is mutable?",
+        "  1. tuple  2. string  3. list",
+        "Your answer: list",
+        "✓ Correct!",
+        "",
+        "Final Score: 2/2 — Perfect! 🏆"
+      ]
     }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Create a list of 3 dictionaries, each with keys 'question' and 'answer'. Then loop through them and print each question." },
+      "instruction": {
+        "en": "Create a list of 3 dictionaries, each with keys 'question' and 'answer'. Then loop through them and print each question."
+      },
       "expected_output": "What is 1+1?\nWhat color is the sky?\nWhat language are we learning?",
       "hints": [
-        { "en": "Start with: quiz = [{'question': 'What is 1+1?', 'answer': '2'}, ...]" },
-        { "en": "Loop with: for item in quiz: print(item['question'])" }
+        {
+          "en": "Start with: quiz = [{'question': 'What is 1+1?', 'answer': '2'}, ...]"
+        },
+        {
+          "en": "Loop with: for item in quiz: print(item['question'])"
+        }
       ]
     }
   ],
   "quiz": [
-    { "q": "What does random.shuffle() do?", "options": ["Sorts a list", "Randomizes the order of a list in-place", "Picks a random element", "Creates a new shuffled copy"], "correct": 1 },
-    { "q": "What does enumerate(list, 1) do?", "options": ["Counts from 0", "Returns index-value pairs starting from 1", "Filters the list", "Reverses the list"], "correct": 1 },
-    { "q": "What does input() return?", "options": ["An integer", "A boolean", "Always a string", "Depends on what user types"], "correct": 2 }
-  ]
+    {
+      "q": "What does random.shuffle() do?",
+      "options": [
+        "Sorts a list",
+        "Randomizes the order of a list in-place",
+        "Picks a random element",
+        "Creates a new shuffled copy"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does enumerate(list, 1) do?",
+      "options": [
+        "Counts from 0",
+        "Returns index-value pairs starting from 1",
+        "Filters the list",
+        "Reverses the list"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does input() return?",
+      "options": [
+        "An integer",
+        "A boolean",
+        "Always a string",
+        "Depends on what user types"
+      ],
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "cli_tools"
+    ],
+    "concepts_required": [
+      "functions_basics",
+      "lists",
+      "conditionals"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "education",
+      "gamification"
+    ],
+    "category": "automation",
+    "path_memberships": []
+  }
 }

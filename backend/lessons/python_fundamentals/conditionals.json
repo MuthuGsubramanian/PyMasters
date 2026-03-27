@@ -34,7 +34,14 @@
       "type": "ConceptMap",
       "id": "concept_overview",
       "nodes": [
-        { "label": "Condition", "children": ["if (first check)", "elif (second check)", "else (catch-all)"] }
+        {
+          "label": "Condition",
+          "children": [
+            "if (first check)",
+            "elif (second check)",
+            "else (catch-all)"
+          ]
+        }
       ],
       "duration_ms": 3000
     },
@@ -42,13 +49,62 @@
       "type": "CodeStepper",
       "id": "code_intro",
       "steps": [
-        { "line": "signal = 'green'", "highlight": "signal", "explanation": { "en": "Set the traffic signal value", "ta": "போக்குவரத்து சிக்னல் மதிப்பை அமையுங்கள்" } },
-        { "line": "if signal == 'green':", "highlight": "if", "explanation": { "en": "Check if signal is green", "ta": "சிக்னல் பச்சையா என்று சோதிக்கவும்" } },
-        { "line": "    print('Go!')", "highlight": "print", "explanation": { "en": "Green is True — execute this branch", "ta": "பச்சை True — இந்தக் கிளையை இயக்கு" } },
-        { "line": "elif signal == 'yellow':", "highlight": "elif", "explanation": { "en": "If not green, check yellow", "ta": "பச்சை இல்லையென்றால், மஞ்சள் சோதி" } },
-        { "line": "    print('Slow down!')", "highlight": "print", "explanation": { "en": "Yellow branch output", "ta": "மஞ்சள் கிளை வெளியீடு" } },
-        { "line": "else:", "highlight": "else", "explanation": { "en": "Everything else — must be red", "ta": "மற்ற எல்லாம் — சிவப்பாக இருக்க வேண்டும்" } },
-        { "line": "    print('Stop!')", "highlight": "print", "explanation": { "en": "Red branch output", "ta": "சிவப்பு கிளை வெளியீடு" } }
+        {
+          "line": "signal = 'green'",
+          "highlight": "signal",
+          "explanation": {
+            "en": "Set the traffic signal value",
+            "ta": "போக்குவரத்து சிக்னல் மதிப்பை அமையுங்கள்"
+          }
+        },
+        {
+          "line": "if signal == 'green':",
+          "highlight": "if",
+          "explanation": {
+            "en": "Check if signal is green",
+            "ta": "சிக்னல் பச்சையா என்று சோதிக்கவும்"
+          }
+        },
+        {
+          "line": "    print('Go!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Green is True — execute this branch",
+            "ta": "பச்சை True — இந்தக் கிளையை இயக்கு"
+          }
+        },
+        {
+          "line": "elif signal == 'yellow':",
+          "highlight": "elif",
+          "explanation": {
+            "en": "If not green, check yellow",
+            "ta": "பச்சை இல்லையென்றால், மஞ்சள் சோதி"
+          }
+        },
+        {
+          "line": "    print('Slow down!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Yellow branch output",
+            "ta": "மஞ்சள் கிளை வெளியீடு"
+          }
+        },
+        {
+          "line": "else:",
+          "highlight": "else",
+          "explanation": {
+            "en": "Everything else — must be red",
+            "ta": "மற்ற எல்லாம் — சிவப்பாக இருக்க வேண்டும்"
+          }
+        },
+        {
+          "line": "    print('Stop!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Red branch output",
+            "ta": "சிவப்பு கிளை வெளியீடு"
+          }
+        }
       ]
     },
     {
@@ -62,21 +118,35 @@
     {
       "type": "FlowArrow",
       "id": "flow_true",
-      "label": { "en": "condition is True", "ta": "நிபந்தனை True" },
+      "label": {
+        "en": "condition is True",
+        "ta": "நிபந்தனை True"
+      },
       "direction": "down",
       "branch": "if"
     },
     {
       "type": "ComparisonPanel",
       "id": "comparison_signals",
-      "left": { "label": "signal == 'green'", "result": true },
-      "right": { "label": "signal == 'yellow'", "result": false },
-      "description": { "en": "Only the first True branch executes", "ta": "முதல் True கிளை மட்டுமே இயங்கும்" }
+      "left": {
+        "label": "signal == 'green'",
+        "result": true
+      },
+      "right": {
+        "label": "signal == 'yellow'",
+        "result": false
+      },
+      "description": {
+        "en": "Only the first True branch executes",
+        "ta": "முதல் True கிளை மட்டுமே இயங்கும்"
+      }
     },
     {
       "type": "Terminal",
       "id": "output_display",
-      "output": ["Go!"]
+      "output": [
+        "Go!"
+      ]
     },
     {
       "type": "ParticleEffect",
@@ -88,7 +158,10 @@
   "content_sections": [
     {
       "type": "story",
-      "title": { "en": "The Story", "ta": "கதை" },
+      "title": {
+        "en": "The Story",
+        "ta": "கதை"
+      },
       "body": {
         "en": "You are standing at the busiest intersection in PyCity. Three lights stare down at you: green, yellow, and red. Each light represents a different action. Your job as a pedestrian is simple: look at the light and decide what to do. Green means go, yellow means slow down, red means stop. Programs make decisions exactly the same way. Instead of traffic lights, they check conditions — is this value equal to that? Is this number greater than that? Based on the answer, they take one path or another.",
         "ta": "PyCity-ன் மிகவும் பரபரப்பான சாலைச் சந்திப்பில் நிற்கிறீர்கள். மூன்று விளக்குகள் உங்களைப் பார்க்கின்றன: பச்சை, மஞ்சள், சிவப்பு. ஒவ்வொரு விளக்கும் ஒரு வெவ்வேறு செயலைக் குறிக்கிறது. நடைபயணியாக உங்கள் வேலை எளிது: விளக்கைப் பாருங்கள், என்ன செய்ய வேண்டும் என்று முடிவு செய்யுங்கள். பச்சை என்றால் செல், மஞ்சள் என்றால் மெதுவாக, சிவப்பு என்றால் நில். நிரல்களும் இதேபோல் முடிவுகள் எடுக்கின்றன. போக்குவரத்து விளக்குகளுக்குப் பதிலாக, நிபந்தனைகளைச் சோதிக்கின்றன — இந்த மதிப்பு அதற்குச் சமமா? இந்த எண் அதைவிடப் பெரியதா?"
@@ -97,7 +170,10 @@
     },
     {
       "type": "concept",
-      "title": { "en": "How Conditionals Work", "ta": "நிபந்தனைகள் எவ்வாறு வேலை செய்கின்றன" },
+      "title": {
+        "en": "How Conditionals Work",
+        "ta": "நிபந்தனைகள் எவ்வாறு வேலை செய்கின்றன"
+      },
       "body": {
         "en": "Python evaluates conditions from top to bottom. The `if` statement checks the first condition. If it is True, that block runs and everything below is skipped. If it is False, Python moves to `elif` (short for 'else if') and checks the next condition. You can have as many `elif` blocks as you need. The `else` block at the end is optional — it runs only when none of the above conditions were True. Important: use `==` for comparison (not `=` which is assignment). Indentation matters — everything indented under an `if` belongs to that block.",
         "ta": "Python நிபந்தனைகளை மேலிருந்து கீழாக மதிப்பிடுகிறது. `if` அறிக்கை முதல் நிபந்தனையைச் சோதிக்கிறது. True என்றால், அந்தத் தொகுதி இயங்கும், கீழே உள்ளவை தவிர்க்கப்படும். False என்றால், Python `elif`-க்குச் சென்று அடுத்த நிபந்தனையைச் சோதிக்கும். உங்களுக்கு எத்தனை `elif` தொகுதிகள் வேண்டுமானாலும் இருக்கலாம். கடைசியில் உள்ள `else` தொகுதி விருப்பமானது — மேலே உள்ள நிபந்தனைகள் எதுவும் True இல்லாதபோது மட்டுமே இயங்கும். முக்கியம்: ஒப்பிடுவதற்கு `==` பயன்படுத்துங்கள் (`=` ஒதுக்கீடு). உள்தள்ளல் முக்கியம் — `if`-ன் கீழ் உள்தள்ளப்பட்ட அனைத்தும் அந்தத் தொகுதிக்கு உரியவை."
@@ -111,15 +187,39 @@
           "type": "CodeStepper",
           "id": "guided_flow",
           "steps": [
-            { "line": "signal = 'green'", "highlight": "signal", "explanation": { "en": "The signal is set to green", "ta": "சிக்னல் பச்சையாக அமைக்கப்பட்டது" } },
-            { "line": "if signal == 'green':  # True!", "highlight": "if", "explanation": { "en": "This condition is True, so we enter this block", "ta": "இந்த நிபந்தனை True, எனவே இந்தத் தொகுதிக்குள் நுழைகிறோம்" } },
-            { "line": "    print('Go!')", "highlight": "print", "explanation": { "en": "This line executes!", "ta": "இந்த வரி இயங்குகிறது!" } }
+            {
+              "line": "signal = 'green'",
+              "highlight": "signal",
+              "explanation": {
+                "en": "The signal is set to green",
+                "ta": "சிக்னல் பச்சையாக அமைக்கப்பட்டது"
+              }
+            },
+            {
+              "line": "if signal == 'green':  # True!",
+              "highlight": "if",
+              "explanation": {
+                "en": "This condition is True, so we enter this block",
+                "ta": "இந்த நிபந்தனை True, எனவே இந்தத் தொகுதிக்குள் நுழைகிறோம்"
+              }
+            },
+            {
+              "line": "    print('Go!')",
+              "highlight": "print",
+              "explanation": {
+                "en": "This line executes!",
+                "ta": "இந்த வரி இயங்குகிறது!"
+              }
+            }
           ]
         },
         {
           "type": "FlowArrow",
           "id": "flow_demo",
-          "label": { "en": "True -> execute block", "ta": "True -> தொகுதியை இயக்கு" },
+          "label": {
+            "en": "True -> execute block",
+            "ta": "True -> தொகுதியை இயக்கு"
+          },
           "direction": "down",
           "branch": "if"
         }
@@ -202,8 +302,18 @@
         "ta": "முதல் நிபந்தனை False ஆனால் இரண்டாவது நிபந்தனையைச் சோதிக்க எந்த முக்கிய சொல்லைப் பயன்படுத்துவீர்கள்?"
       },
       "options": {
-        "en": ["else", "elif", "then", "and"],
-        "ta": ["else", "elif", "then", "and"]
+        "en": [
+          "else",
+          "elif",
+          "then",
+          "and"
+        ],
+        "ta": [
+          "else",
+          "elif",
+          "then",
+          "and"
+        ]
       },
       "correct": 1
     },
@@ -255,8 +365,18 @@
         "ta": "இந்தக் குறியீடு என்ன அச்சிடும்?\n```\nx = 15\nif x > 20:\n    print('big')\nelif x > 10:\n    print('medium')\nelse:\n    print('small')\n```"
       },
       "options": {
-        "en": ["big", "medium", "small", "big and medium"],
-        "ta": ["big", "medium", "small", "big மற்றும் medium"]
+        "en": [
+          "big",
+          "medium",
+          "small",
+          "big and medium"
+        ],
+        "ta": [
+          "big",
+          "medium",
+          "small",
+          "big மற்றும் medium"
+        ]
       },
       "correct": 1
     }
@@ -294,5 +414,21 @@
         }
       ]
     }
-  ]
+  ],
+  "tags": {
+    "concepts_taught": [
+      "conditionals",
+      "boolean_logic"
+    ],
+    "concepts_required": [
+      "variables",
+      "operators"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

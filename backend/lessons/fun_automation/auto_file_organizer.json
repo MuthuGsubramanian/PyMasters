@@ -26,51 +26,212 @@
     {
       "type": "CodeStepper",
       "steps": [
-        { "code": "import os, shutil", "explanation": { "en": "Import os for directory operations and shutil for moving files" } },
-        { "code": "from pathlib import Path", "explanation": { "en": "Import Path for clean file path handling" } },
-        { "code": "", "explanation": { "en": "Now let's define our file categories..." } },
-        { "code": "CATEGORIES = {", "explanation": { "en": "Create a dictionary mapping category names to file extensions" } },
-        { "code": "    'Images': ['.jpg', '.png', '.gif', '.svg'],", "explanation": { "en": "Image files go into the Images folder" } },
-        { "code": "    'Documents': ['.pdf', '.docx', '.txt', '.xlsx'],", "explanation": { "en": "Document files go into Documents" } },
-        { "code": "    'Videos': ['.mp4', '.mov', '.avi'],", "explanation": { "en": "Video files go into Videos" } },
-        { "code": "    'Code': ['.py', '.js', '.html', '.css'],", "explanation": { "en": "Code files get their own folder too!" } },
-        { "code": "}", "explanation": { "en": "Dictionary complete — each key is a folder, values are extensions" } },
-        { "code": "", "explanation": { "en": "Now let's scan and organize..." } },
-        { "code": "source = Path('~/Downloads').expanduser()", "explanation": { "en": "Point to the Downloads folder (works on any OS)" } },
-        { "code": "for file in source.iterdir():", "explanation": { "en": "Loop through every item in the directory" } },
-        { "code": "    if file.is_file():", "explanation": { "en": "Only process files, skip subdirectories" } },
-        { "code": "        ext = file.suffix.lower()", "explanation": { "en": "Get the file extension in lowercase (.jpg, .pdf, etc.)" } },
-        { "code": "        for category, extensions in CATEGORIES.items():", "explanation": { "en": "Check each category to find where this file belongs" } },
-        { "code": "            if ext in extensions:", "explanation": { "en": "Match found! This file belongs in this category" } },
-        { "code": "                dest = source / category", "explanation": { "en": "Build the destination path (e.g., Downloads/Images)" } },
-        { "code": "                dest.mkdir(exist_ok=True)", "explanation": { "en": "Create the folder if it doesn't exist yet" } },
-        { "code": "                shutil.move(str(file), str(dest))", "explanation": { "en": "Move the file into its category folder!", "output": "File organized!" } }
+        {
+          "code": "import os, shutil",
+          "explanation": {
+            "en": "Import os for directory operations and shutil for moving files"
+          }
+        },
+        {
+          "code": "from pathlib import Path",
+          "explanation": {
+            "en": "Import Path for clean file path handling"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Now let's define our file categories..."
+          }
+        },
+        {
+          "code": "CATEGORIES = {",
+          "explanation": {
+            "en": "Create a dictionary mapping category names to file extensions"
+          }
+        },
+        {
+          "code": "    'Images': ['.jpg', '.png', '.gif', '.svg'],",
+          "explanation": {
+            "en": "Image files go into the Images folder"
+          }
+        },
+        {
+          "code": "    'Documents': ['.pdf', '.docx', '.txt', '.xlsx'],",
+          "explanation": {
+            "en": "Document files go into Documents"
+          }
+        },
+        {
+          "code": "    'Videos': ['.mp4', '.mov', '.avi'],",
+          "explanation": {
+            "en": "Video files go into Videos"
+          }
+        },
+        {
+          "code": "    'Code': ['.py', '.js', '.html', '.css'],",
+          "explanation": {
+            "en": "Code files get their own folder too!"
+          }
+        },
+        {
+          "code": "}",
+          "explanation": {
+            "en": "Dictionary complete — each key is a folder, values are extensions"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Now let's scan and organize..."
+          }
+        },
+        {
+          "code": "source = Path('~/Downloads').expanduser()",
+          "explanation": {
+            "en": "Point to the Downloads folder (works on any OS)"
+          }
+        },
+        {
+          "code": "for file in source.iterdir():",
+          "explanation": {
+            "en": "Loop through every item in the directory"
+          }
+        },
+        {
+          "code": "    if file.is_file():",
+          "explanation": {
+            "en": "Only process files, skip subdirectories"
+          }
+        },
+        {
+          "code": "        ext = file.suffix.lower()",
+          "explanation": {
+            "en": "Get the file extension in lowercase (.jpg, .pdf, etc.)"
+          }
+        },
+        {
+          "code": "        for category, extensions in CATEGORIES.items():",
+          "explanation": {
+            "en": "Check each category to find where this file belongs"
+          }
+        },
+        {
+          "code": "            if ext in extensions:",
+          "explanation": {
+            "en": "Match found! This file belongs in this category"
+          }
+        },
+        {
+          "code": "                dest = source / category",
+          "explanation": {
+            "en": "Build the destination path (e.g., Downloads/Images)"
+          }
+        },
+        {
+          "code": "                dest.mkdir(exist_ok=True)",
+          "explanation": {
+            "en": "Create the folder if it doesn't exist yet"
+          }
+        },
+        {
+          "code": "                shutil.move(str(file), str(dest))",
+          "explanation": {
+            "en": "Move the file into its category folder!",
+            "output": "File organized!"
+          }
+        }
       ]
     },
     {
       "type": "DataStructure",
       "structure": "dict",
-      "data": ["Images: 45 files", "Documents: 23 files", "Videos: 12 files", "Code: 8 files"],
+      "data": [
+        "Images: 45 files",
+        "Documents: 23 files",
+        "Videos: 12 files",
+        "Code: 8 files"
+      ],
       "duration_ms": 3000
     },
     {
       "type": "Terminal",
-      "output": ["Scanning Downloads folder...", "Found 88 files to organize", "Created folder: Images (45 files)", "Created folder: Documents (23 files)", "Created folder: Videos (12 files)", "Created folder: Code (8 files)", "Done! Desktop is clean!"]
+      "output": [
+        "Scanning Downloads folder...",
+        "Found 88 files to organize",
+        "Created folder: Images (45 files)",
+        "Created folder: Documents (23 files)",
+        "Created folder: Videos (12 files)",
+        "Created folder: Code (8 files)",
+        "Done! Desktop is clean!"
+      ]
     }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Write a script that prints the extension of each file in a list. Use a for loop and string slicing or the .split() method." },
+      "instruction": {
+        "en": "Write a script that prints the extension of each file in a list. Use a for loop and string slicing or the .split() method."
+      },
       "expected_output": ".jpg\n.pdf\n.py\n.mp4",
       "hints": [
-        { "en": "Use a list like files = ['photo.jpg', 'report.pdf', 'script.py', 'movie.mp4']" },
-        { "en": "You can get the extension with file.split('.')[-1] or file[file.rfind('.'):]" }
+        {
+          "en": "Use a list like files = ['photo.jpg', 'report.pdf', 'script.py', 'movie.mp4']"
+        },
+        {
+          "en": "You can get the extension with file.split('.')[-1] or file[file.rfind('.'):]"
+        }
       ]
     }
   ],
   "quiz": [
-    { "q": "Which module is used to move files in Python?", "options": ["os", "shutil", "pathlib", "sys"], "correct": 1 },
-    { "q": "What does Path.iterdir() return?", "options": ["A string of all files", "An iterator of Path objects", "A list of filenames", "The file count"], "correct": 1 },
-    { "q": "What does exist_ok=True do in mkdir()?", "options": ["Creates parent directories", "Skips if folder already exists", "Overwrites existing folder", "Raises an error"], "correct": 1 }
-  ]
+    {
+      "q": "Which module is used to move files in Python?",
+      "options": [
+        "os",
+        "shutil",
+        "pathlib",
+        "sys"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does Path.iterdir() return?",
+      "options": [
+        "A string of all files",
+        "An iterator of Path objects",
+        "A list of filenames",
+        "The file count"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does exist_ok=True do in mkdir()?",
+      "options": [
+        "Creates parent directories",
+        "Skips if folder already exists",
+        "Overwrites existing folder",
+        "Raises an error"
+      ],
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "file_automation"
+    ],
+    "concepts_required": [
+      "file_reading",
+      "file_writing",
+      "modules_imports"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "file management",
+      "system administration"
+    ],
+    "category": "automation",
+    "path_memberships": []
+  }
 }

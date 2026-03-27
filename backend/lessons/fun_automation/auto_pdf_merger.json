@@ -26,40 +26,169 @@
     {
       "type": "CodeStepper",
       "steps": [
-        { "code": "from PyPDF2 import PdfReader, PdfWriter", "explanation": { "en": "Import PDF reader and writer classes" } },
-        { "code": "import sys", "explanation": { "en": "Import sys to accept command-line arguments" } },
-        { "code": "", "explanation": { "en": "Set up the merger..." } },
-        { "code": "files = ['chapter1.pdf', 'chapter2.pdf', 'chapter3.pdf']", "explanation": { "en": "List of PDF files to merge" } },
-        { "code": "writer = PdfWriter()", "explanation": { "en": "Create a new empty PDF writer — this will hold all merged pages" } },
-        { "code": "for pdf_file in files:", "explanation": { "en": "Loop through each PDF file" } },
-        { "code": "    reader = PdfReader(pdf_file)", "explanation": { "en": "Open and read the current PDF" } },
-        { "code": "    for page in reader.pages:", "explanation": { "en": "Loop through every page in this PDF" } },
-        { "code": "        writer.add_page(page)", "explanation": { "en": "Add each page to our merged PDF" } },
-        { "code": "    print(f'Added {len(reader.pages)} pages from {pdf_file}')", "explanation": { "en": "Log progress for each file", "output": "Added 5 pages from chapter1.pdf" } },
-        { "code": "", "explanation": { "en": "Save the final merged PDF..." } },
-        { "code": "with open('merged.pdf', 'wb') as output:", "explanation": { "en": "Open a new file in write-binary mode" } },
-        { "code": "    writer.write(output)", "explanation": { "en": "Write all merged pages to the output file" } },
-        { "code": "print(f'Done! Merged {len(files)} files')", "explanation": { "en": "All done!", "output": "Done! Merged 3 files → merged.pdf" } }
+        {
+          "code": "from PyPDF2 import PdfReader, PdfWriter",
+          "explanation": {
+            "en": "Import PDF reader and writer classes"
+          }
+        },
+        {
+          "code": "import sys",
+          "explanation": {
+            "en": "Import sys to accept command-line arguments"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Set up the merger..."
+          }
+        },
+        {
+          "code": "files = ['chapter1.pdf', 'chapter2.pdf', 'chapter3.pdf']",
+          "explanation": {
+            "en": "List of PDF files to merge"
+          }
+        },
+        {
+          "code": "writer = PdfWriter()",
+          "explanation": {
+            "en": "Create a new empty PDF writer — this will hold all merged pages"
+          }
+        },
+        {
+          "code": "for pdf_file in files:",
+          "explanation": {
+            "en": "Loop through each PDF file"
+          }
+        },
+        {
+          "code": "    reader = PdfReader(pdf_file)",
+          "explanation": {
+            "en": "Open and read the current PDF"
+          }
+        },
+        {
+          "code": "    for page in reader.pages:",
+          "explanation": {
+            "en": "Loop through every page in this PDF"
+          }
+        },
+        {
+          "code": "        writer.add_page(page)",
+          "explanation": {
+            "en": "Add each page to our merged PDF"
+          }
+        },
+        {
+          "code": "    print(f'Added {len(reader.pages)} pages from {pdf_file}')",
+          "explanation": {
+            "en": "Log progress for each file",
+            "output": "Added 5 pages from chapter1.pdf"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Save the final merged PDF..."
+          }
+        },
+        {
+          "code": "with open('merged.pdf', 'wb') as output:",
+          "explanation": {
+            "en": "Open a new file in write-binary mode"
+          }
+        },
+        {
+          "code": "    writer.write(output)",
+          "explanation": {
+            "en": "Write all merged pages to the output file"
+          }
+        },
+        {
+          "code": "print(f'Done! Merged {len(files)} files')",
+          "explanation": {
+            "en": "All done!",
+            "output": "Done! Merged 3 files → merged.pdf"
+          }
+        }
       ]
     },
     {
       "type": "Terminal",
-      "output": ["Merging PDFs...", "Added 5 pages from chapter1.pdf", "Added 8 pages from chapter2.pdf", "Added 3 pages from chapter3.pdf", "Done! Merged 3 files → merged.pdf (16 pages total)"]
+      "output": [
+        "Merging PDFs...",
+        "Added 5 pages from chapter1.pdf",
+        "Added 8 pages from chapter2.pdf",
+        "Added 3 pages from chapter3.pdf",
+        "Done! Merged 3 files → merged.pdf (16 pages total)"
+      ]
     }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Write a program that opens a file called 'data.txt' in write mode, writes 3 lines to it, then reads and prints the contents." },
+      "instruction": {
+        "en": "Write a program that opens a file called 'data.txt' in write mode, writes 3 lines to it, then reads and prints the contents."
+      },
       "expected_output": "Line 1\nLine 2\nLine 3",
       "hints": [
-        { "en": "Use: with open('data.txt', 'w') as f: to write" },
-        { "en": "Then: with open('data.txt', 'r') as f: to read" }
+        {
+          "en": "Use: with open('data.txt', 'w') as f: to write"
+        },
+        {
+          "en": "Then: with open('data.txt', 'r') as f: to read"
+        }
       ]
     }
   ],
   "quiz": [
-    { "q": "What does 'wb' mode mean in open()?", "options": ["Write binary", "Write backup", "Web browser", "Wide buffer"], "correct": 0 },
-    { "q": "What is a context manager (with statement)?", "options": ["A loop construct", "Auto-manages resource open/close", "A class decorator", "An import alias"], "correct": 1 },
-    { "q": "What does PdfWriter.add_page() do?", "options": ["Creates a new PDF", "Adds a page to the writer's output", "Reads a page", "Deletes a page"], "correct": 1 }
-  ]
+    {
+      "q": "What does 'wb' mode mean in open()?",
+      "options": [
+        "Write binary",
+        "Write backup",
+        "Web browser",
+        "Wide buffer"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "What is a context manager (with statement)?",
+      "options": [
+        "A loop construct",
+        "Auto-manages resource open/close",
+        "A class decorator",
+        "An import alias"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does PdfWriter.add_page() do?",
+      "options": [
+        "Creates a new PDF",
+        "Adds a page to the writer's output",
+        "Reads a page",
+        "Deletes a page"
+      ],
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "pdf_automation"
+    ],
+    "concepts_required": [
+      "file_reading",
+      "modules_imports"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "document management",
+      "reporting"
+    ],
+    "category": "automation",
+    "path_memberships": []
+  }
 }

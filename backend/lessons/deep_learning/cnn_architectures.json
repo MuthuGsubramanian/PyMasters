@@ -26,30 +26,79 @@
       "type": "ConceptMap",
       "id": "arch_timeline",
       "nodes": [
-        {"id": "lenet", "label": "LeNet (1998)", "color": "#4f8ef7"},
-        {"id": "alexnet", "label": "AlexNet (2012)", "color": "#f7914f"},
-        {"id": "vgg", "label": "VGG (2014)", "color": "#a44ff7"},
-        {"id": "resnet", "label": "ResNet (2015)", "color": "#4fc97a"}
+        {
+          "id": "lenet",
+          "label": "LeNet (1998)",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "alexnet",
+          "label": "AlexNet (2012)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "vgg",
+          "label": "VGG (2014)",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "resnet",
+          "label": "ResNet (2015)",
+          "color": "#4fc97a"
+        }
       ],
       "edges": [
-        {"from": "lenet", "to": "alexnet", "label": "GPU + ReLU"},
-        {"from": "alexnet", "to": "vgg", "label": "Deeper + 3×3"},
-        {"from": "vgg", "to": "resnet", "label": "Skip connections"}
+        {
+          "from": "lenet",
+          "to": "alexnet",
+          "label": "GPU + ReLU"
+        },
+        {
+          "from": "alexnet",
+          "to": "vgg",
+          "label": "Deeper + 3×3"
+        },
+        {
+          "from": "vgg",
+          "to": "resnet",
+          "label": "Skip connections"
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "arch_comparison",
       "items": [
-        {"label": "LeNet", "value": "5 layers, 60K params", "color": "#4f8ef7", "note": "Digits only"},
-        {"label": "VGG-16", "value": "16 layers, 138M params", "color": "#f7914f", "note": "Simple but huge"},
-        {"label": "ResNet-50", "value": "50 layers, 25M params", "color": "#4fc97a", "note": "Skip connections"}
+        {
+          "label": "LeNet",
+          "value": "5 layers, 60K params",
+          "color": "#4f8ef7",
+          "note": "Digits only"
+        },
+        {
+          "label": "VGG-16",
+          "value": "16 layers, 138M params",
+          "color": "#f7914f",
+          "note": "Simple but huge"
+        },
+        {
+          "label": "ResNet-50",
+          "value": "50 layers, 25M params",
+          "color": "#4fc97a",
+          "note": "Skip connections"
+        }
       ]
     },
     {
       "type": "FlowArrow",
       "id": "resnet_flow",
-      "steps": ["Input x", "Conv + BN + ReLU", "Conv + BN", "Add identity x", "ReLU → output"]
+      "steps": [
+        "Input x",
+        "Conv + BN + ReLU",
+        "Conv + BN",
+        "Add identity x",
+        "ReLU → output"
+      ]
     },
     {
       "type": "CodeStepper",
@@ -58,22 +107,30 @@
         {
           "line": "identity = x  # save input",
           "highlight": "identity",
-          "explanation": {"en": "Store input before transformation"}
+          "explanation": {
+            "en": "Store input before transformation"
+          }
         },
         {
           "line": "x = relu(batch_norm(conv(x)))",
           "highlight": "x",
-          "explanation": {"en": "First conv-bn-relu in residual block"}
+          "explanation": {
+            "en": "First conv-bn-relu in residual block"
+          }
         },
         {
           "line": "x = batch_norm(conv(x))",
           "highlight": "x",
-          "explanation": {"en": "Second conv-bn (no relu yet)"}
+          "explanation": {
+            "en": "Second conv-bn (no relu yet)"
+          }
         },
         {
           "line": "x = relu(x + identity)",
           "highlight": "identity",
-          "explanation": {"en": "Add skip connection then activate — gradients flow both paths!"},
+          "explanation": {
+            "en": "Add skip connection then activate — gradients flow both paths!"
+          },
           "output": "Residual output"
         }
       ]
@@ -81,7 +138,12 @@
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["LeNet: 60K params → handwriting", "VGG: 138M params → ImageNet 7.3%", "ResNet-50: 25M params → ImageNet 5.25%", "Skip connections: solved vanishing gradients"]
+      "output": [
+        "LeNet: 60K params → handwriting",
+        "VGG: 138M params → ImageNet 7.3%",
+        "ResNet-50: 25M params → ImageNet 5.25%",
+        "Skip connections: solved vanishing gradients"
+      ]
     }
   ],
   "practice_challenges": [
@@ -91,13 +153,33 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Conv params = (kernel_h × kernel_w × in_channels + 1) × out_channels"},
-        {"en": "FC params = in_features × out_features + out_features (bias)"},
-        {"en": "Conv1: (5*5*1+1)*6 = 156"}
+        {
+          "en": "Conv params = (kernel_h × kernel_w × in_channels + 1) × out_channels"
+        },
+        {
+          "en": "FC params = in_features × out_features + out_features (bias)"
+        },
+        {
+          "en": "Conv1: (5*5*1+1)*6 = 156"
+        }
       ],
       "test_code": "conv1_params = (5*5*1 + 1) * 6\nconv2_params = (5*5*6 + 1) * 16\nfc1_params   = 400*120 + 120\nfc2_params   = 120*84 + 84\nfc3_params   = 84*10 + 10\ntotal = conv1_params + conv2_params + fc1_params + fc2_params + fc3_params\nassert total == lenet_params, f'Expected {total}, got {lenet_params}'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "cnn_architectures"
+    ],
+    "concepts_required": [
+      "cnn_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

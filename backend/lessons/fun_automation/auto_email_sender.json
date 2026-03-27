@@ -26,37 +26,151 @@
     {
       "type": "CodeStepper",
       "steps": [
-        { "code": "import smtplib", "explanation": { "en": "Import the SMTP library for sending emails" } },
-        { "code": "from email.mime.text import MIMEText", "explanation": { "en": "Import MIMEText to create email content" } },
-        { "code": "", "explanation": { "en": "Let's set up our email..." } },
-        { "code": "contacts = ['alice@example.com', 'bob@example.com']", "explanation": { "en": "List of people to email" } },
-        { "code": "for recipient in contacts:", "explanation": { "en": "Loop through each contact" } },
-        { "code": "    name = recipient.split('@')[0].title()", "explanation": { "en": "Extract the name from the email address", "output": "Alice" } },
-        { "code": "    body = f'Hi {name}, Happy Birthday! 🎂'", "explanation": { "en": "Create a personalized message using f-strings" } },
-        { "code": "    msg = MIMEText(body)", "explanation": { "en": "Wrap the body in a MIME email object" } },
-        { "code": "    msg['Subject'] = 'Happy Birthday!'", "explanation": { "en": "Set the email subject line" } },
-        { "code": "    msg['To'] = recipient", "explanation": { "en": "Set the recipient address" } },
-        { "code": "    print(f'Sent to {name}!')", "explanation": { "en": "Confirm each email was sent!", "output": "Sent to Alice!" } }
+        {
+          "code": "import smtplib",
+          "explanation": {
+            "en": "Import the SMTP library for sending emails"
+          }
+        },
+        {
+          "code": "from email.mime.text import MIMEText",
+          "explanation": {
+            "en": "Import MIMEText to create email content"
+          }
+        },
+        {
+          "code": "",
+          "explanation": {
+            "en": "Let's set up our email..."
+          }
+        },
+        {
+          "code": "contacts = ['alice@example.com', 'bob@example.com']",
+          "explanation": {
+            "en": "List of people to email"
+          }
+        },
+        {
+          "code": "for recipient in contacts:",
+          "explanation": {
+            "en": "Loop through each contact"
+          }
+        },
+        {
+          "code": "    name = recipient.split('@')[0].title()",
+          "explanation": {
+            "en": "Extract the name from the email address",
+            "output": "Alice"
+          }
+        },
+        {
+          "code": "    body = f'Hi {name}, Happy Birthday! 🎂'",
+          "explanation": {
+            "en": "Create a personalized message using f-strings"
+          }
+        },
+        {
+          "code": "    msg = MIMEText(body)",
+          "explanation": {
+            "en": "Wrap the body in a MIME email object"
+          }
+        },
+        {
+          "code": "    msg['Subject'] = 'Happy Birthday!'",
+          "explanation": {
+            "en": "Set the email subject line"
+          }
+        },
+        {
+          "code": "    msg['To'] = recipient",
+          "explanation": {
+            "en": "Set the recipient address"
+          }
+        },
+        {
+          "code": "    print(f'Sent to {name}!')",
+          "explanation": {
+            "en": "Confirm each email was sent!",
+            "output": "Sent to Alice!"
+          }
+        }
       ]
     },
     {
       "type": "Terminal",
-      "output": ["Connecting to SMTP server...", "Authenticated successfully", "Sending to Alice... Done!", "Sending to Bob... Done!", "2 emails sent in 1.2 seconds"]
+      "output": [
+        "Connecting to SMTP server...",
+        "Authenticated successfully",
+        "Sending to Alice... Done!",
+        "Sending to Bob... Done!",
+        "2 emails sent in 1.2 seconds"
+      ]
     }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Create a list of 3 names and use a for loop with an f-string to print a personalized greeting for each: 'Hello, {name}! Welcome to PyMasters.'" },
+      "instruction": {
+        "en": "Create a list of 3 names and use a for loop with an f-string to print a personalized greeting for each: 'Hello, {name}! Welcome to PyMasters.'"
+      },
       "expected_output": "Hello, Alice! Welcome to PyMasters.\nHello, Bob! Welcome to PyMasters.\nHello, Charlie! Welcome to PyMasters.",
       "hints": [
-        { "en": "Start with: names = ['Alice', 'Bob', 'Charlie']" },
-        { "en": "Use: print(f'Hello, {name}! Welcome to PyMasters.')" }
+        {
+          "en": "Start with: names = ['Alice', 'Bob', 'Charlie']"
+        },
+        {
+          "en": "Use: print(f'Hello, {name}! Welcome to PyMasters.')"
+        }
       ]
     }
   ],
   "quiz": [
-    { "q": "What Python module is used to send emails?", "options": ["email", "smtplib", "requests", "socket"], "correct": 1 },
-    { "q": "What does MIMEText do?", "options": ["Encrypts the email", "Creates a plain text email message", "Compresses the email", "Validates the email address"], "correct": 1 },
-    { "q": "Why should you use App Passwords instead of your real password?", "options": ["They're faster", "They're more secure and can be revoked", "They bypass 2FA", "Gmail requires them"], "correct": 1 }
-  ]
+    {
+      "q": "What Python module is used to send emails?",
+      "options": [
+        "email",
+        "smtplib",
+        "requests",
+        "socket"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does MIMEText do?",
+      "options": [
+        "Encrypts the email",
+        "Creates a plain text email message",
+        "Compresses the email",
+        "Validates the email address"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Why should you use App Passwords instead of your real password?",
+      "options": [
+        "They're faster",
+        "They're more secure and can be revoked",
+        "They bypass 2FA",
+        "Gmail requires them"
+      ],
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "email_automation"
+    ],
+    "concepts_required": [
+      "functions_basics",
+      "error_handling"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "notifications",
+      "marketing"
+    ],
+    "category": "automation",
+    "path_memberships": []
+  }
 }

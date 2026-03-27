@@ -25,24 +25,67 @@
     {
       "type": "FlowArrow",
       "id": "lm_flow",
-      "steps": ["'h'", "Embed → LSTM", "'e' predicted", "Feed back 'e'", "'l' predicted", "... → 'hello'"]
+      "steps": [
+        "'h'",
+        "Embed → LSTM",
+        "'e' predicted",
+        "Feed back 'e'",
+        "'l' predicted",
+        "... → 'hello'"
+      ]
     },
     {
       "type": "ConceptMap",
       "id": "charlm_map",
       "nodes": [
-        {"id": "char", "label": "Character 'h'", "color": "#4f8ef7"},
-        {"id": "embed", "label": "Embedding (32d)", "color": "#f7914f"},
-        {"id": "lstm", "label": "LSTM (128 hidden)", "color": "#a44ff7"},
-        {"id": "linear", "label": "Linear (vocab_size)", "color": "#4fc97a"},
-        {"id": "sample", "label": "Sample Next Char", "color": "#e74c3c"}
+        {
+          "id": "char",
+          "label": "Character 'h'",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "embed",
+          "label": "Embedding (32d)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "lstm",
+          "label": "LSTM (128 hidden)",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "linear",
+          "label": "Linear (vocab_size)",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "sample",
+          "label": "Sample Next Char",
+          "color": "#e74c3c"
+        }
       ],
       "edges": [
-        {"from": "char", "to": "embed"},
-        {"from": "embed", "to": "lstm"},
-        {"from": "lstm", "to": "linear"},
-        {"from": "linear", "to": "sample"},
-        {"from": "sample", "to": "char", "label": "feed back"}
+        {
+          "from": "char",
+          "to": "embed"
+        },
+        {
+          "from": "embed",
+          "to": "lstm"
+        },
+        {
+          "from": "lstm",
+          "to": "linear"
+        },
+        {
+          "from": "linear",
+          "to": "sample"
+        },
+        {
+          "from": "sample",
+          "to": "char",
+          "label": "feed back"
+        }
       ]
     },
     {
@@ -51,15 +94,42 @@
       "label": "Character Vocabulary",
       "structure": "table",
       "data": [
-        ["Char", "Index"],
-        [" ", "0"],
-        ["d", "1"],
-        ["e", "2"],
-        ["h", "3"],
-        ["l", "4"],
-        ["o", "5"],
-        ["r", "6"],
-        ["w", "7"]
+        [
+          "Char",
+          "Index"
+        ],
+        [
+          " ",
+          "0"
+        ],
+        [
+          "d",
+          "1"
+        ],
+        [
+          "e",
+          "2"
+        ],
+        [
+          "h",
+          "3"
+        ],
+        [
+          "l",
+          "4"
+        ],
+        [
+          "o",
+          "5"
+        ],
+        [
+          "r",
+          "6"
+        ],
+        [
+          "w",
+          "7"
+        ]
       ],
       "color": "#4f8ef7"
     },
@@ -70,22 +140,30 @@
         {
           "line": "seed = 'h'",
           "highlight": "seed",
-          "explanation": {"en": "Start generation from the character 'h'"}
+          "explanation": {
+            "en": "Start generation from the character 'h'"
+          }
         },
         {
           "line": "logits, hidden = model(embed('h'), None)",
           "highlight": "logits",
-          "explanation": {"en": "First forward pass — get distribution over next chars"}
+          "explanation": {
+            "en": "First forward pass — get distribution over next chars"
+          }
         },
         {
           "line": "probs = softmax(logits / temperature)",
           "highlight": "probs",
-          "explanation": {"en": "Convert to probability with temperature scaling"}
+          "explanation": {
+            "en": "Convert to probability with temperature scaling"
+          }
         },
         {
           "line": "next_char = sample(probs)",
           "highlight": "next_char",
-          "explanation": {"en": "Sample stochastically — 'e' with high probability"},
+          "explanation": {
+            "en": "Sample stochastically — 'e' with high probability"
+          },
           "output": "Generated: 'hello world'"
         }
       ]
@@ -93,7 +171,11 @@
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["Epoch  10: loss=2.31 | 'hxqzmw...'", "Epoch  50: loss=1.52 | 'helo wold'", "Epoch 200: loss=0.31 | 'hello world'"]
+      "output": [
+        "Epoch  10: loss=2.31 | 'hxqzmw...'",
+        "Epoch  50: loss=1.52 | 'helo wold'",
+        "Epoch 200: loss=0.31 | 'hello world'"
+      ]
     }
   ],
   "practice_challenges": [
@@ -103,13 +185,37 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "vocab = sorted(set(text))"},
-        {"en": "char2idx = {c: i for i, c in enumerate(vocab)}"},
-        {"en": "idx2char = {i: c for c, i in char2idx.items()}"}
+        {
+          "en": "vocab = sorted(set(text))"
+        },
+        {
+          "en": "char2idx = {c: i for i, c in enumerate(vocab)}"
+        },
+        {
+          "en": "idx2char = {i: c for c, i in char2idx.items()}"
+        }
       ],
       "test_code": "c2i, i2c = build_vocab('hello')\nassert set(c2i.keys()) == {'h','e','l','o'}, 'vocab should have unique chars'\nassert len(c2i) == 4, 'hello has 4 unique chars'\nassert i2c[c2i['h']] == 'h', 'round-trip: idx->char->idx should work'\nassert c2i['e'] < c2i['h'], 'e comes before h alphabetically'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "text_generation"
+    ],
+    "concepts_required": [
+      "lstm_gru",
+      "pytorch_training"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [
+      "chatbots",
+      "content creation"
+    ],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

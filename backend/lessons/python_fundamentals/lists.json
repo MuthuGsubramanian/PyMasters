@@ -34,7 +34,15 @@
       "type": "ConceptMap",
       "id": "concept_overview",
       "nodes": [
-        { "label": "List", "children": ["Ordered collection", "Zero-indexed", "Mutable (can change)", "Methods: append, pop, insert, len"] }
+        {
+          "label": "List",
+          "children": [
+            "Ordered collection",
+            "Zero-indexed",
+            "Mutable (can change)",
+            "Methods: append, pop, insert, len"
+          ]
+        }
       ],
       "duration_ms": 3000
     },
@@ -42,17 +50,49 @@
       "type": "CodeStepper",
       "id": "code_intro",
       "steps": [
-        { "line": "fruits = ['apple', 'banana', 'cherry']", "highlight": "fruits", "explanation": { "en": "Create a list with 3 items", "ta": "3 உறுப்புகளுடன் ஒரு பட்டியலை உருவாக்கு" } },
-        { "line": "fruits.append('date')", "highlight": "append", "explanation": { "en": "Add 'date' as a 4th compartment at the end", "ta": "'date'-ஐ 4வது பெட்டியாக இறுதியில் சேர்" } },
-        { "line": "print(fruits[0])", "highlight": "fruits[0]", "explanation": { "en": "Access the first item (index 0)", "ta": "முதல் உறுப்பை அணுகு (குறியீடு 0)" } },
-        { "line": "print(len(fruits))", "highlight": "len", "explanation": { "en": "len() returns the total number of items", "ta": "len() மொத்த உறுப்புகளின் எண்ணிக்கையைத் தருகிறது" } }
+        {
+          "line": "fruits = ['apple', 'banana', 'cherry']",
+          "highlight": "fruits",
+          "explanation": {
+            "en": "Create a list with 3 items",
+            "ta": "3 உறுப்புகளுடன் ஒரு பட்டியலை உருவாக்கு"
+          }
+        },
+        {
+          "line": "fruits.append('date')",
+          "highlight": "append",
+          "explanation": {
+            "en": "Add 'date' as a 4th compartment at the end",
+            "ta": "'date'-ஐ 4வது பெட்டியாக இறுதியில் சேர்"
+          }
+        },
+        {
+          "line": "print(fruits[0])",
+          "highlight": "fruits[0]",
+          "explanation": {
+            "en": "Access the first item (index 0)",
+            "ta": "முதல் உறுப்பை அணுகு (குறியீடு 0)"
+          }
+        },
+        {
+          "line": "print(len(fruits))",
+          "highlight": "len",
+          "explanation": {
+            "en": "len() returns the total number of items",
+            "ta": "len() மொத்த உறுப்புகளின் எண்ணிக்கையைத் தருகிறது"
+          }
+        }
       ]
     },
     {
       "type": "DataStructure",
       "id": "list_visual",
       "structure": "list",
-      "items": ["apple", "banana", "cherry"],
+      "items": [
+        "apple",
+        "banana",
+        "cherry"
+      ],
       "pending_append": "date",
       "color": "#e74c3c"
     },
@@ -67,23 +107,55 @@
     {
       "type": "Terminal",
       "id": "output_display",
-      "output": ["apple", "4"]
+      "output": [
+        "apple",
+        "4"
+      ]
     },
     {
       "type": "ComparisonPanel",
       "id": "comparison_methods",
-      "left": { "label": ".append('date')", "result": "adds to end" },
-      "right": { "label": ".insert(1, 'date')", "result": "adds at index 1" },
-      "description": { "en": "Two ways to add items to a list", "ta": "பட்டியலில் உறுப்புகளைச் சேர்க்க இரண்டு வழிகள்" }
+      "left": {
+        "label": ".append('date')",
+        "result": "adds to end"
+      },
+      "right": {
+        "label": ".insert(1, 'date')",
+        "result": "adds at index 1"
+      },
+      "description": {
+        "en": "Two ways to add items to a list",
+        "ta": "பட்டியலில் உறுப்புகளைச் சேர்க்க இரண்டு வழிகள்"
+      }
     },
     {
       "type": "MemoryStack",
       "id": "memory_view",
       "slots": [
-        { "name": "fruits[0]", "value": "'apple'", "type": "str", "address": "0x20" },
-        { "name": "fruits[1]", "value": "'banana'", "type": "str", "address": "0x21" },
-        { "name": "fruits[2]", "value": "'cherry'", "type": "str", "address": "0x22" },
-        { "name": "fruits[3]", "value": "'date'", "type": "str", "address": "0x23" }
+        {
+          "name": "fruits[0]",
+          "value": "'apple'",
+          "type": "str",
+          "address": "0x20"
+        },
+        {
+          "name": "fruits[1]",
+          "value": "'banana'",
+          "type": "str",
+          "address": "0x21"
+        },
+        {
+          "name": "fruits[2]",
+          "value": "'cherry'",
+          "type": "str",
+          "address": "0x22"
+        },
+        {
+          "name": "fruits[3]",
+          "value": "'date'",
+          "type": "str",
+          "address": "0x23"
+        }
       ]
     },
     {
@@ -96,7 +168,10 @@
   "content_sections": [
     {
       "type": "story",
-      "title": { "en": "The Story", "ta": "கதை" },
+      "title": {
+        "en": "The Story",
+        "ta": "கதை"
+      },
       "body": {
         "en": "The PyMasters Express is the longest train in PyCity. Unlike normal trains with fixed compartments, this train can grow and shrink on the fly. The conductor manages it all: need more space? Add a compartment at the back with `.append()`. Too many compartments? Remove the last one with `.pop()`. Need to squeeze a compartment in between? Use `.insert()`. Every compartment has a number painted on its side, starting from 0. Passengers (which are really data items) board by their compartment number. The conductor always knows how many compartments there are thanks to `len()`. Today you will learn to be the conductor of your own PyMasters Express!",
         "ta": "PyMasters Express, PyCity-ன் மிக நீளமான ரயில். நிலையான பெட்டிகள் கொண்ட சாதாரண ரயில்களைப் போலல்லாமல், இந்த ரயில் தேவைக்கேற்ப வளரவும் சுருங்கவும் முடியும். வண்டிக் காப்பாளர் அனைத்தையும் நிர்வகிக்கிறார்: மேலும் இடம் வேண்டுமா? `.append()`-ஆல் பின்புறத்தில் ஒரு பெட்டியைச் சேருங்கள். அதிகமான பெட்டிகளா? `.pop()`-ஆல் கடைசியை நீக்குங்கள். இடையில் ஒரு பெட்டியைச் செருக வேண்டுமா? `.insert()` பயன்படுத்துங்கள். ஒவ்வொரு பெட்டியின் பக்கத்திலும் 0-ல் தொடங்கும் எண் எழுதப்பட்டிருக்கும். பயணிகள் (உண்மையில் தரவு உறுப்புகள்) தங்கள் பெட்டி எண்ணின்படி ஏறுவார்கள். `len()` மூலம் எத்தனை பெட்டிகள் உள்ளன என்று வண்டிக் காப்பாளருக்கு எப்போதும் தெரியும். இன்று உங்கள் சொந்த PyMasters Express-ன் வண்டிக் காப்பாளராகக் கற்றுக்கொள்வீர்கள்!"
@@ -105,7 +180,10 @@
     },
     {
       "type": "concept",
-      "title": { "en": "How Lists Work", "ta": "பட்டியல்கள் எவ்வாறு வேலை செய்கின்றன" },
+      "title": {
+        "en": "How Lists Work",
+        "ta": "பட்டியல்கள் எவ்வாறு வேலை செய்கின்றன"
+      },
       "body": {
         "en": "A list is an ordered, mutable collection of items. Create one with square brackets: `fruits = ['apple', 'banana', 'cherry']`. Items are accessed by index starting at 0: `fruits[0]` returns 'apple'. Negative indexes count from the end: `fruits[-1]` returns the last item. Key methods: `.append(item)` adds to the end, `.insert(index, item)` adds at a specific position, `.pop()` removes the last item (or `.pop(index)` removes at a position), `.remove(item)` removes by value. `len(list)` returns the number of items. Lists can hold mixed types: `[1, 'two', 3.0, True]` is perfectly valid.",
         "ta": "பட்டியல் என்பது வரிசைப்படுத்தப்பட்ட, மாற்றக்கூடிய உறுப்புகளின் தொகுப்பு. சதுர அடைப்புகளால் உருவாக்குங்கள்: `fruits = ['apple', 'banana', 'cherry']`. உறுப்புகள் 0-ல் தொடங்கும் குறியீட்டால் அணுகப்படும்: `fruits[0]` 'apple' தருகிறது. எதிர்மறை குறியீடுகள் இறுதியிலிருந்து எண்ணும்: `fruits[-1]` கடைசி உறுப்பைத் தருகிறது. முக்கிய முறைகள்: `.append(item)` இறுதியில் சேர்க்கிறது, `.insert(index, item)` குறிப்பிட்ட இடத்தில் சேர்க்கிறது, `.pop()` கடைசி உறுப்பை நீக்குகிறது, `.remove(item)` மதிப்பால் நீக்குகிறது. `len(list)` உறுப்புகளின் எண்ணிக்கையைத் தருகிறது."
@@ -119,7 +197,11 @@
           "type": "DataStructure",
           "id": "list_demo",
           "structure": "list",
-          "items": ["apple", "banana", "cherry"],
+          "items": [
+            "apple",
+            "banana",
+            "cherry"
+          ],
           "pending_append": "date",
           "color": "#e74c3c"
         },
@@ -127,9 +209,30 @@
           "type": "CodeStepper",
           "id": "guided_list",
           "steps": [
-            { "line": "fruits = ['apple', 'banana', 'cherry']", "highlight": "fruits", "explanation": { "en": "Train starts with 3 compartments", "ta": "ரயில் 3 பெட்டிகளுடன் தொடங்குகிறது" } },
-            { "line": "fruits.append('date')", "highlight": "append", "explanation": { "en": "A new compartment is added at the back!", "ta": "பின்புறத்தில் புதிய பெட்டி சேர்க்கப்படுகிறது!" } },
-            { "line": "print(fruits[0])  # 'apple'", "highlight": "fruits[0]", "explanation": { "en": "Peek into compartment 0", "ta": "பெட்டி 0 உள்ளே பாருங்கள்" } }
+            {
+              "line": "fruits = ['apple', 'banana', 'cherry']",
+              "highlight": "fruits",
+              "explanation": {
+                "en": "Train starts with 3 compartments",
+                "ta": "ரயில் 3 பெட்டிகளுடன் தொடங்குகிறது"
+              }
+            },
+            {
+              "line": "fruits.append('date')",
+              "highlight": "append",
+              "explanation": {
+                "en": "A new compartment is added at the back!",
+                "ta": "பின்புறத்தில் புதிய பெட்டி சேர்க்கப்படுகிறது!"
+              }
+            },
+            {
+              "line": "print(fruits[0])  # 'apple'",
+              "highlight": "fruits[0]",
+              "explanation": {
+                "en": "Peek into compartment 0",
+                "ta": "பெட்டி 0 உள்ளே பாருங்கள்"
+              }
+            }
           ]
         }
       ]
@@ -213,8 +316,18 @@
         "ta": "Python பட்டியலின் முதல் உறுப்பை அணுக எந்த குறியீட்டைப் பயன்படுத்துவீர்கள்?"
       },
       "options": {
-        "en": ["1", "0", "-1", "first"],
-        "ta": ["1", "0", "-1", "first"]
+        "en": [
+          "1",
+          "0",
+          "-1",
+          "first"
+        ],
+        "ta": [
+          "1",
+          "0",
+          "-1",
+          "first"
+        ]
       },
       "correct": 1
     },
@@ -224,8 +337,18 @@
         "ta": "Python பட்டியலின் இறுதியில் புதிய உறுப்பைச் சேர்க்க எந்த முறையைப் பயன்படுத்துவீர்கள்?"
       },
       "options": {
-        "en": [".add()", ".insert()", ".append()", ".push()"],
-        "ta": [".add()", ".insert()", ".append()", ".push()"]
+        "en": [
+          ".add()",
+          ".insert()",
+          ".append()",
+          ".push()"
+        ],
+        "ta": [
+          ".add()",
+          ".insert()",
+          ".append()",
+          ".push()"
+        ]
       },
       "correct": 2
     },
@@ -235,8 +358,18 @@
         "ta": "`fruits = ['apple', 'banana', 'cherry']` என்றால் `fruits[-1]` என்ன தருகிறது?"
       },
       "options": {
-        "en": ["'apple'", "'banana'", "'cherry'", "Error"],
-        "ta": ["'apple'", "'banana'", "'cherry'", "பிழை"]
+        "en": [
+          "'apple'",
+          "'banana'",
+          "'cherry'",
+          "Error"
+        ],
+        "ta": [
+          "'apple'",
+          "'banana'",
+          "'cherry'",
+          "பிழை"
+        ]
       },
       "correct": 2
     },
@@ -246,8 +379,18 @@
         "ta": "`len(['a', 'b', 'c', 'd'])` என்ன தருகிறது?"
       },
       "options": {
-        "en": ["3", "4", "5", "0"],
-        "ta": ["3", "4", "5", "0"]
+        "en": [
+          "3",
+          "4",
+          "5",
+          "0"
+        ],
+        "ta": [
+          "3",
+          "4",
+          "5",
+          "0"
+        ]
       },
       "correct": 1
     }
@@ -285,5 +428,22 @@
         }
       ]
     }
-  ]
+  ],
+  "tags": {
+    "concepts_taught": [
+      "lists",
+      "list_methods",
+      "list_slicing"
+    ],
+    "concepts_required": [
+      "variables",
+      "for_loops"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

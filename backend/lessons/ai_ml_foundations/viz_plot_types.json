@@ -29,22 +29,30 @@
         {
           "line": "sns.barplot(data=df_cat, x='city', y='pop')",
           "highlight": "barplot",
-          "explanation": { "en": "Bar chart: compare discrete categories — perfect for sales, counts, etc." }
+          "explanation": {
+            "en": "Bar chart: compare discrete categories — perfect for sales, counts, etc."
+          }
         },
         {
           "line": "plt.plot(years, values, marker='o')",
           "highlight": "plot",
-          "explanation": { "en": "Line chart: show how a value changes continuously over time" }
+          "explanation": {
+            "en": "Line chart: show how a value changes continuously over time"
+          }
         },
         {
           "line": "sns.histplot(df['value'], kde=True)",
           "highlight": "histplot",
-          "explanation": { "en": "Histogram: reveal the shape and spread of a single variable" }
+          "explanation": {
+            "en": "Histogram: reveal the shape and spread of a single variable"
+          }
         },
         {
           "line": "sns.heatmap(corr, annot=True, cmap='coolwarm')",
           "highlight": "heatmap",
-          "explanation": { "en": "Heatmap: show pairwise correlations across many numeric features" }
+          "explanation": {
+            "en": "Heatmap: show pairwise correlations across many numeric features"
+          }
         }
       ]
     },
@@ -52,19 +60,52 @@
       "type": "ConceptMap",
       "id": "chart_decision_map",
       "nodes": [
-        { "id": "q", "label": "What is your goal?" },
-        { "id": "compare", "label": "Compare → Bar" },
-        { "id": "distribute", "label": "Distribute → Hist/Box" },
-        { "id": "relate", "label": "Relate → Scatter/Heatmap" },
-        { "id": "trend", "label": "Trend → Line" },
-        { "id": "compose", "label": "Compose → Pie/Stacked" }
+        {
+          "id": "q",
+          "label": "What is your goal?"
+        },
+        {
+          "id": "compare",
+          "label": "Compare → Bar"
+        },
+        {
+          "id": "distribute",
+          "label": "Distribute → Hist/Box"
+        },
+        {
+          "id": "relate",
+          "label": "Relate → Scatter/Heatmap"
+        },
+        {
+          "id": "trend",
+          "label": "Trend → Line"
+        },
+        {
+          "id": "compose",
+          "label": "Compose → Pie/Stacked"
+        }
       ],
       "edges": [
-        { "from": "q", "to": "compare" },
-        { "from": "q", "to": "distribute" },
-        { "from": "q", "to": "relate" },
-        { "from": "q", "to": "trend" },
-        { "from": "q", "to": "compose" }
+        {
+          "from": "q",
+          "to": "compare"
+        },
+        {
+          "from": "q",
+          "to": "distribute"
+        },
+        {
+          "from": "q",
+          "to": "relate"
+        },
+        {
+          "from": "q",
+          "to": "trend"
+        },
+        {
+          "from": "q",
+          "to": "compose"
+        }
       ]
     },
     {
@@ -84,7 +125,13 @@
     {
       "type": "TerminalOutput",
       "id": "chart_output",
-      "output": ["Bar → categories", "Line → time series", "Scatter → relationships", "Hist → distributions", "Heatmap → correlations"]
+      "output": [
+        "Bar → categories",
+        "Line → time series",
+        "Scatter → relationships",
+        "Hist → distributions",
+        "Heatmap → correlations"
+      ]
     }
   ],
   "practice_challenges": [
@@ -93,8 +140,12 @@
         "en": "You have a dataset with columns `month` (Jan-Dec) and `temperature` (floats). What chart type is most appropriate? Write code to create it using matplotlib, storing the figure in `fig` and axes in `ax`."
       },
       "hints": [
-        { "en": "Temperature over months is a time trend → use a line chart" },
-        { "en": "fig, ax = plt.subplots(); ax.plot(months, temperatures)" }
+        {
+          "en": "Temperature over months is a time trend → use a line chart"
+        },
+        {
+          "en": "fig, ax = plt.subplots(); ax.plot(months, temperatures)"
+        }
       ],
       "test_code": "import matplotlib\nassert fig is not None, 'fig must be assigned'\nassert ax is not None, 'ax must be assigned'"
     },
@@ -103,12 +154,31 @@
         "en": "Create a DataFrame `scores_df` with `subject` and `score` columns (4+ subjects). Create a horizontal bar chart (use `plt.barh`) to compare the scores. Store axes in `ax`."
       },
       "hints": [
-        { "en": "fig, ax = plt.subplots()" },
-        { "en": "ax.barh(scores_df['subject'], scores_df['score'])" }
+        {
+          "en": "fig, ax = plt.subplots()"
+        },
+        {
+          "en": "ax.barh(scores_df['subject'], scores_df['score'])"
+        }
       ],
       "test_code": "import pandas as pd\nassert isinstance(scores_df, pd.DataFrame)\nassert 'subject' in scores_df.columns and 'score' in scores_df.columns\nassert len(scores_df) >= 4, 'Need at least 4 subjects'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "matplotlib_basics",
+      "data_visualization"
+    ],
+    "concepts_required": [
+      "matplotlib_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

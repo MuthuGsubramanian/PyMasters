@@ -29,27 +29,37 @@
         {
           "line": "import matplotlib.pyplot as plt",
           "highlight": "matplotlib",
-          "explanation": { "en": "Import matplotlib's pyplot module — plt is the convention" }
+          "explanation": {
+            "en": "Import matplotlib's pyplot module — plt is the convention"
+          }
         },
         {
           "line": "plt.figure(figsize=(8, 4))",
           "highlight": "figsize",
-          "explanation": { "en": "Create a figure canvas of width 8 inches, height 4 inches" }
+          "explanation": {
+            "en": "Create a figure canvas of width 8 inches, height 4 inches"
+          }
         },
         {
           "line": "plt.plot(x, y, color='steelblue', label='sin(x)')",
           "highlight": "plt.plot",
-          "explanation": { "en": "Draw a line plot connecting (x, y) points" }
+          "explanation": {
+            "en": "Draw a line plot connecting (x, y) points"
+          }
         },
         {
           "line": "plt.title('Sine Wave')",
           "highlight": "title",
-          "explanation": { "en": "Add a title at the top of the chart" }
+          "explanation": {
+            "en": "Add a title at the top of the chart"
+          }
         },
         {
           "line": "plt.legend()",
           "highlight": "legend",
-          "explanation": { "en": "Show a legend using the label= strings from each plot call" }
+          "explanation": {
+            "en": "Show a legend using the label= strings from each plot call"
+          }
         }
       ]
     },
@@ -57,25 +67,63 @@
       "type": "ConceptMap",
       "id": "figure_anatomy",
       "nodes": [
-        { "id": "figure", "label": "Figure (canvas)" },
-        { "id": "axes", "label": "Axes (subplot)" },
-        { "id": "title", "label": "Title" },
-        { "id": "xlabel", "label": "X Label" },
-        { "id": "ylabel", "label": "Y Label" },
-        { "id": "legend", "label": "Legend" }
+        {
+          "id": "figure",
+          "label": "Figure (canvas)"
+        },
+        {
+          "id": "axes",
+          "label": "Axes (subplot)"
+        },
+        {
+          "id": "title",
+          "label": "Title"
+        },
+        {
+          "id": "xlabel",
+          "label": "X Label"
+        },
+        {
+          "id": "ylabel",
+          "label": "Y Label"
+        },
+        {
+          "id": "legend",
+          "label": "Legend"
+        }
       ],
       "edges": [
-        { "from": "figure", "to": "axes" },
-        { "from": "axes", "to": "title" },
-        { "from": "axes", "to": "xlabel" },
-        { "from": "axes", "to": "ylabel" },
-        { "from": "axes", "to": "legend" }
+        {
+          "from": "figure",
+          "to": "axes"
+        },
+        {
+          "from": "axes",
+          "to": "title"
+        },
+        {
+          "from": "axes",
+          "to": "xlabel"
+        },
+        {
+          "from": "axes",
+          "to": "ylabel"
+        },
+        {
+          "from": "axes",
+          "to": "legend"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "plot_output",
-      "output": ["[Figure: Sine Wave displayed]", "x-axis: 0 to 10", "y-axis: -1 to 1", "Legend: sin(x)"]
+      "output": [
+        "[Figure: Sine Wave displayed]",
+        "x-axis: 0 to 10",
+        "y-axis: -1 to 1",
+        "Legend: sin(x)"
+      ]
     }
   ],
   "practice_challenges": [
@@ -84,8 +132,12 @@
         "en": "Create a bar chart showing monthly sales data. Define `months = ['Jan','Feb','Mar','Apr']` and `sales = [1200, 1500, 900, 1800]`. Plot them and set a title and axis labels."
       },
       "hints": [
-        { "en": "Use plt.bar(months, sales)" },
-        { "en": "Add plt.title(), plt.xlabel('Month'), plt.ylabel('Sales')" }
+        {
+          "en": "Use plt.bar(months, sales)"
+        },
+        {
+          "en": "Add plt.title(), plt.xlabel('Month'), plt.ylabel('Sales')"
+        }
       ],
       "test_code": "months = ['Jan','Feb','Mar','Apr']\nsales = [1200, 1500, 900, 1800]\nassert len(months) == 4, 'months must have 4 entries'\nassert len(sales) == 4, 'sales must have 4 entries'\nassert max(sales) == 1800, 'April should be peak sales'"
     },
@@ -94,13 +146,35 @@
         "en": "Create a figure with two subplots side by side (1 row, 2 columns). Plot `y = x**2` on the left and `y = x**3` on the right, each with a title. Use `x = np.linspace(-5, 5, 100)`."
       },
       "hints": [
-        { "en": "fig, axes = plt.subplots(1, 2, figsize=(10,4))" },
-        { "en": "axes[0].plot(x, x**2)" },
-        { "en": "axes[0].set_title('Quadratic')" }
+        {
+          "en": "fig, axes = plt.subplots(1, 2, figsize=(10,4))"
+        },
+        {
+          "en": "axes[0].plot(x, x**2)"
+        },
+        {
+          "en": "axes[0].set_title('Quadratic')"
+        }
       ],
       "test_code": "import numpy as np\nx = np.linspace(-5, 5, 100)\nassert len(x) == 100, 'x must have 100 points'\nassert x[0] == -5 and x[-1] == 5, 'x must span -5 to 5'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "matplotlib_basics",
+      "data_visualization"
+    ],
+    "concepts_required": [
+      "numpy_basics",
+      "lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "advanced",
   "order": 3,
-  "title": { "en": "Iterators: The Conveyor Belt Control System" },
-  "description": { "en": "Understand __iter__ and __next__, build custom iterators, and master itertools for powerful sequence manipulation." },
+  "title": {
+    "en": "Iterators: The Conveyor Belt Control System"
+  },
+  "description": {
+    "en": "Understand __iter__ and __next__, build custom iterators, and master itertools for powerful sequence manipulation."
+  },
   "xp_reward": 50,
   "next_unlock": "adv_async",
   "story_variants": {
     "en": "## The Conveyor Belt Control System\n\nA factory **conveyor belt** has a control panel: press NEXT to advance one item, and a STOP light when everything has been processed.\n\nPython's iterator protocol is that control panel: `__next__()` advances the belt; `StopIteration` is the stop light.\n\n### The Iterator Protocol\n\n| Method | Role |\n|--------|------|\n| `__iter__(self)` | return the iterator (usually `self`) |\n| `__next__(self)` | return next value or raise `StopIteration` |\n\n### Iterable vs Iterator\n- **Iterable:** has `__iter__`, can be looped (list, string, dict)\n- **Iterator:** has `__next__`, remembers its position\n- An iterator is always an iterable, but not vice-versa\n\n### itertools highlights\n\n| Function | Does |\n|----------|------|\n| `chain(a, b)` | combine iterables |\n| `cycle(iterable)` | repeat forever |\n| `islice(it, n)` | take first n items |\n| `zip_longest(a, b)` | zip with fill value |\n| `combinations(it, r)` | all r-length combos |\n\n> **For loops** call `iter()` then `next()` repeatedly — understanding this demystifies all Python iteration."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -23,24 +32,54 @@
     {
       "type": "FlowArrow",
       "id": "iter_protocol",
-      "label": { "en": "for loop calls __iter__ then __next__ repeatedly" },
+      "label": {
+        "en": "for loop calls __iter__ then __next__ repeatedly"
+      },
       "direction": "right",
       "branch": "sequential"
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Create an iterator class 'FibIterator' that yields the first n Fibonacci numbers." },
+      "instruction": {
+        "en": "Create an iterator class 'FibIterator' that yields the first n Fibonacci numbers."
+      },
       "expected_output": "[0, 1, 1, 2, 3, 5, 8]",
       "hints": [
-        { "en": "Track self.a, self.b = 0, 1 and self.count" },
-        { "en": "In __next__, yield a, then a, b = b, a+b" },
-        { "en": "Raise StopIteration when count reaches n" }
+        {
+          "en": "Track self.a, self.b = 0, 1 and self.count"
+        },
+        {
+          "en": "In __next__, yield a, then a, b = b, a+b"
+        },
+        {
+          "en": "Raise StopIteration when count reaches n"
+        }
       ],
       "test_code": "class FibIterator:\n    def __init__(self, n):\n        self.n = n\n        self.count = 0\n        self.a, self.b = 0, 1\n    def __iter__(self): return self\n    def __next__(self):\n        if self.count >= self.n:\n            raise StopIteration\n        val = self.a\n        self.a, self.b = self.b, self.a + self.b\n        self.count += 1\n        return val\nassert list(FibIterator(7)) == [0, 1, 1, 2, 3, 5, 8]"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "iterators"
+    ],
+    "concepts_required": [
+      "for_loops",
+      "classes_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

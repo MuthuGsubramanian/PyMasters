@@ -29,22 +29,30 @@
         {
           "line": "import seaborn as sns",
           "highlight": "seaborn",
-          "explanation": { "en": "Import seaborn — conventionally aliased as sns" }
+          "explanation": {
+            "en": "Import seaborn — conventionally aliased as sns"
+          }
         },
         {
           "line": "sns.histplot(data=df, x='age', kde=True)",
           "highlight": "histplot",
-          "explanation": { "en": "Histogram with an optional KDE curve overlay — one line of code!" }
+          "explanation": {
+            "en": "Histogram with an optional KDE curve overlay — one line of code!"
+          }
         },
         {
           "line": "sns.boxplot(data=df, x='dept', y='salary')",
           "highlight": "boxplot",
-          "explanation": { "en": "Compare salary distributions across departments" }
+          "explanation": {
+            "en": "Compare salary distributions across departments"
+          }
         },
         {
           "line": "sns.heatmap(corr, annot=True, cmap='coolwarm')",
           "highlight": "heatmap",
-          "explanation": { "en": "Correlation heatmap — colour intensity shows strength of relationship" }
+          "explanation": {
+            "en": "Correlation heatmap — colour intensity shows strength of relationship"
+          }
         }
       ]
     },
@@ -65,7 +73,11 @@
     {
       "type": "TerminalOutput",
       "id": "seaborn_output",
-      "output": ["[histplot: distribution of age with KDE]", "[boxplot: salary per department]", "[heatmap: correlation matrix]"]
+      "output": [
+        "[histplot: distribution of age with KDE]",
+        "[boxplot: salary per department]",
+        "[heatmap: correlation matrix]"
+      ]
     }
   ],
   "practice_challenges": [
@@ -74,8 +86,12 @@
         "en": "Create a DataFrame `iris_df` with columns `sepal_length`, `sepal_width`, and `species` (at least 3 species with several rows each). Plot a seaborn boxplot comparing `sepal_length` across species."
       },
       "hints": [
-        { "en": "sns.boxplot(data=iris_df, x='species', y='sepal_length')" },
-        { "en": "You can use sns.load_dataset('iris') if available" }
+        {
+          "en": "sns.boxplot(data=iris_df, x='species', y='sepal_length')"
+        },
+        {
+          "en": "You can use sns.load_dataset('iris') if available"
+        }
       ],
       "test_code": "import pandas as pd\nassert isinstance(iris_df, pd.DataFrame)\nassert 'sepal_length' in iris_df.columns\nassert 'species' in iris_df.columns\nassert iris_df['species'].nunique() >= 2, 'Need at least 2 species'"
     },
@@ -84,11 +100,28 @@
         "en": "Using the same `iris_df`, create a scatter plot with `sepal_length` on x, `sepal_width` on y, and `species` as the `hue`. Store the axes object in `ax`."
       },
       "hints": [
-        { "en": "ax = sns.scatterplot(data=iris_df, x='sepal_length', y='sepal_width', hue='species')" }
+        {
+          "en": "ax = sns.scatterplot(data=iris_df, x='sepal_length', y='sepal_width', hue='species')"
+        }
       ],
       "test_code": "import matplotlib\nassert ax is not None, 'ax must be assigned'\nassert hasattr(ax, 'get_xlabel'), 'ax must be a matplotlib Axes'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "seaborn_basics"
+    ],
+    "concepts_required": [
+      "matplotlib_basics",
+      "pandas_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

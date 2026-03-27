@@ -25,26 +25,80 @@
     {
       "type": "FlowArrow",
       "id": "training_loop_flow",
-      "steps": ["model.train()", "zero_grad()", "Forward Pass", "Compute Loss", "loss.backward()", "optimizer.step()", "Repeat"]
+      "steps": [
+        "model.train()",
+        "zero_grad()",
+        "Forward Pass",
+        "Compute Loss",
+        "loss.backward()",
+        "optimizer.step()",
+        "Repeat"
+      ]
     },
     {
       "type": "ConceptMap",
       "id": "training_map",
       "nodes": [
-        {"id": "data", "label": "Training Data", "color": "#4f8ef7"},
-        {"id": "model", "label": "nn.Module", "color": "#f7914f"},
-        {"id": "loss", "label": "Loss Function", "color": "#e74c3c"},
-        {"id": "backward", "label": "Autograd .backward()", "color": "#a44ff7"},
-        {"id": "optim", "label": "Optimizer .step()", "color": "#4fc97a"},
-        {"id": "params", "label": "Updated Params", "color": "#f7914f"}
+        {
+          "id": "data",
+          "label": "Training Data",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "model",
+          "label": "nn.Module",
+          "color": "#f7914f"
+        },
+        {
+          "id": "loss",
+          "label": "Loss Function",
+          "color": "#e74c3c"
+        },
+        {
+          "id": "backward",
+          "label": "Autograd .backward()",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "optim",
+          "label": "Optimizer .step()",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "params",
+          "label": "Updated Params",
+          "color": "#f7914f"
+        }
       ],
       "edges": [
-        {"from": "data", "to": "model", "label": "forward"},
-        {"from": "model", "to": "loss", "label": "predictions"},
-        {"from": "loss", "to": "backward"},
-        {"from": "backward", "to": "optim", "label": "gradients"},
-        {"from": "optim", "to": "params"},
-        {"from": "params", "to": "model", "label": "update"}
+        {
+          "from": "data",
+          "to": "model",
+          "label": "forward"
+        },
+        {
+          "from": "model",
+          "to": "loss",
+          "label": "predictions"
+        },
+        {
+          "from": "loss",
+          "to": "backward"
+        },
+        {
+          "from": "backward",
+          "to": "optim",
+          "label": "gradients"
+        },
+        {
+          "from": "optim",
+          "to": "params"
+        },
+        {
+          "from": "params",
+          "to": "model",
+          "label": "update"
+        }
       ]
     },
     {
@@ -54,27 +108,37 @@
         {
           "line": "model = MLP(10, 64, 1)",
           "highlight": "model",
-          "explanation": {"en": "Instantiate the model with 10 inputs, 64 hidden, 1 output"}
+          "explanation": {
+            "en": "Instantiate the model with 10 inputs, 64 hidden, 1 output"
+          }
         },
         {
           "line": "optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)",
           "highlight": "optimizer",
-          "explanation": {"en": "Adam will manage all model.parameters()"}
+          "explanation": {
+            "en": "Adam will manage all model.parameters()"
+          }
         },
         {
           "line": "optimizer.zero_grad()",
           "highlight": "zero_grad",
-          "explanation": {"en": "Must clear gradients from previous step"}
+          "explanation": {
+            "en": "Must clear gradients from previous step"
+          }
         },
         {
           "line": "loss = criterion(model(X_train), y_train)",
           "highlight": "loss",
-          "explanation": {"en": "Forward pass + loss in one line"}
+          "explanation": {
+            "en": "Forward pass + loss in one line"
+          }
         },
         {
           "line": "loss.backward(); optimizer.step()",
           "highlight": "backward",
-          "explanation": {"en": "Backprop then update all parameters"},
+          "explanation": {
+            "en": "Backprop then update all parameters"
+          },
           "output": "Epoch 0: train=0.9142, val=0.8991"
         }
       ]
@@ -83,17 +147,38 @@
       "type": "MemoryStack",
       "id": "mlp_stack",
       "frames": [
-        {"label": "Linear(64 → 1)", "color": "#4fc97a"},
-        {"label": "ReLU", "color": "#a44ff7"},
-        {"label": "Linear(64 → 64)", "color": "#f7914f"},
-        {"label": "ReLU", "color": "#a44ff7"},
-        {"label": "Linear(10 → 64)", "color": "#f7914f"}
+        {
+          "label": "Linear(64 → 1)",
+          "color": "#4fc97a"
+        },
+        {
+          "label": "ReLU",
+          "color": "#a44ff7"
+        },
+        {
+          "label": "Linear(64 → 64)",
+          "color": "#f7914f"
+        },
+        {
+          "label": "ReLU",
+          "color": "#a44ff7"
+        },
+        {
+          "label": "Linear(10 → 64)",
+          "color": "#f7914f"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["Epoch  0: train=0.9142, val=0.8991", "Epoch 10: train=0.3451, val=0.3612", "Epoch 20: train=0.1203, val=0.1345", "Epoch 50: train=0.0112, val=0.0198", "Model saved to model.pt"]
+      "output": [
+        "Epoch  0: train=0.9142, val=0.8991",
+        "Epoch 10: train=0.3451, val=0.3612",
+        "Epoch 20: train=0.1203, val=0.1345",
+        "Epoch 50: train=0.0112, val=0.0198",
+        "Model saved to model.pt"
+      ]
     }
   ],
   "practice_challenges": [
@@ -103,13 +188,34 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Use nn.Sequential(nn.Linear(in_f, hidden), nn.ReLU(), nn.Linear(hidden, out_f))"},
-        {"en": "Call super().__init__() in __init__"},
-        {"en": "forward(x) should just call self.net(x)"}
+        {
+          "en": "Use nn.Sequential(nn.Linear(in_f, hidden), nn.ReLU(), nn.Linear(hidden, out_f))"
+        },
+        {
+          "en": "Call super().__init__() in __init__"
+        },
+        {
+          "en": "forward(x) should just call self.net(x)"
+        }
       ],
       "test_code": "import torch\nimport torch.nn as nn\nnet = TwoLayerNet(4, 8, 1)\nassert isinstance(net, nn.Module), 'Must be an nn.Module'\nx = torch.randn(5, 4)  # batch of 5 samples, 4 features\nout = net(x)\nassert out.shape == (5, 1), f'Expected (5,1), got {out.shape}'\nparams = sum(p.numel() for p in net.parameters())\nassert params == (4*8+8) + (8*1+1), f'Parameter count wrong: {params}'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "pytorch_training"
+    ],
+    "concepts_required": [
+      "pytorch_basics",
+      "gradient_descent_dl"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

@@ -29,17 +29,23 @@
         {
           "line": "stacked = pd.concat([df1, df2], ignore_index=True)",
           "highlight": "pd.concat",
-          "explanation": { "en": "Vertically stack two DataFrames; reset index with ignore_index=True" }
+          "explanation": {
+            "en": "Vertically stack two DataFrames; reset index with ignore_index=True"
+          }
         },
         {
           "line": "result = pd.merge(orders, customers, on='cust_id', how='left')",
           "highlight": "pd.merge",
-          "explanation": { "en": "Left join: keep all orders, attach customer info where available" }
+          "explanation": {
+            "en": "Left join: keep all orders, attach customer info where available"
+          }
         },
         {
           "line": "joined = df_a.join(df_b)",
           "highlight": ".join",
-          "explanation": { "en": "Index-based join: align on row labels" }
+          "explanation": {
+            "en": "Index-based join: align on row labels"
+          }
         }
       ]
     },
@@ -67,7 +73,12 @@
     {
       "type": "TerminalOutput",
       "id": "merge_output",
-      "output": ["order_id  cust_id  amount   name", "1         10      100    Alice", "2         11      200      Bob", "3         10      150    Alice"]
+      "output": [
+        "order_id  cust_id  amount   name",
+        "1         10      100    Alice",
+        "2         11      200      Bob",
+        "3         10      150    Alice"
+      ]
     }
   ],
   "practice_challenges": [
@@ -76,7 +87,9 @@
         "en": "Create two DataFrames: `employees` (emp_id, name) and `salaries` (emp_id, salary). Merge them on `emp_id` using an inner join and store the result in `merged`."
       },
       "hints": [
-        { "en": "merged = pd.merge(employees, salaries, on='emp_id', how='inner')" }
+        {
+          "en": "merged = pd.merge(employees, salaries, on='emp_id', how='inner')"
+        }
       ],
       "test_code": "import pandas as pd\nassert isinstance(employees, pd.DataFrame) and 'emp_id' in employees.columns\nassert isinstance(salaries, pd.DataFrame) and 'salary' in salaries.columns\nassert isinstance(merged, pd.DataFrame)\nassert 'name' in merged.columns and 'salary' in merged.columns, 'merged must have both name and salary'"
     },
@@ -85,11 +98,27 @@
         "en": "Create three DataFrames `q1`, `q2`, `q3` each with columns `product` and `units_sold` for a different quarter. Stack them into one DataFrame called `annual` using `pd.concat`."
       },
       "hints": [
-        { "en": "annual = pd.concat([q1, q2, q3], ignore_index=True)" }
+        {
+          "en": "annual = pd.concat([q1, q2, q3], ignore_index=True)"
+        }
       ],
       "test_code": "import pandas as pd\nassert isinstance(annual, pd.DataFrame)\nassert len(annual) == len(q1) + len(q2) + len(q3), 'annual must contain all rows from all quarters'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "pandas_merging"
+    ],
+    "concepts_required": [
+      "pandas_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

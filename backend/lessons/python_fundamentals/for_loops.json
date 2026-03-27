@@ -34,7 +34,15 @@
       "type": "ConceptMap",
       "id": "concept_overview",
       "nodes": [
-        { "label": "for loop", "children": ["loop variable (i)", "iterable (range)", "body (indented block)", "terminates when done"] }
+        {
+          "label": "for loop",
+          "children": [
+            "loop variable (i)",
+            "iterable (range)",
+            "body (indented block)",
+            "terminates when done"
+          ]
+        }
       ],
       "duration_ms": 3000
     },
@@ -42,34 +50,130 @@
       "type": "CodeStepper",
       "id": "code_intro",
       "steps": [
-        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Start the loop \u2014 i will go from 0 to 4", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf\u0baf\u0bc8\u0ba4\u0bcd \u0ba4\u0bca\u0b9f\u0b99\u0bcd\u0b95\u0bc1 \u2014 i 0 \u0bae\u0bc1\u0ba4\u0bb2\u0bcd 4 \u0bb5\u0bb0\u0bc8 \u0b9a\u0bc6\u0bb2\u0bcd\u0bb2\u0bc1\u0bae\u0bcd" } },
-        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 0: Print 'Delivering to house 0'", "ta": "i = 0: 'Delivering to house 0' \u0b85\u0b9a\u0bcd\u0b9a\u0bbf\u0b9f\u0bc1" }, "output": "Delivering to house 0" },
-        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 1", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 1 \u0b86\u0b95\u0bbf\u0bb1\u0ba4\u0bc1" } },
-        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 1: Print 'Delivering to house 1'", "ta": "i = 1: 'Delivering to house 1' \u0b85\u0b9a\u0bcd\u0b9a\u0bbf\u0b9f\u0bc1" }, "output": "Delivering to house 1" },
-        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 2", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 2 \u0b86\u0b95\u0bbf\u0bb1\u0ba4\u0bc1" } },
-        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 2: Print 'Delivering to house 2'", "ta": "i = 2: 'Delivering to house 2' \u0b85\u0b9a\u0bcd\u0b9a\u0bbf\u0b9f\u0bc1" }, "output": "Delivering to house 2" },
-        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 3", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 3 \u0b86\u0b95\u0bbf\u0bb1\u0ba4\u0bc1" } },
-        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 3: Almost done!", "ta": "i = 3: \u0b95\u0bbf\u0b9f\u0bcd\u0b9f\u0ba4\u0bcd\u0ba4\u0b9f\u0bcd\u0b9f \u0bae\u0bc1\u0b9f\u0bbf\u0baf\u0bc1\u0bae\u0bcd!" }, "output": "Delivering to house 3" },
-        { "line": "for i in range(5):", "highlight": "for", "explanation": { "en": "Loop back \u2014 i becomes 4 (last iteration)", "ta": "\u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0ba4\u0bbf\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1 \u2014 i 4 (\u0b95\u0b9f\u0bc8\u0b9a\u0bbf \u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf)" } },
-        { "line": "    print(f'Delivering to house {i}')", "highlight": "print", "explanation": { "en": "i = 4: Last house! All letters delivered!", "ta": "i = 4: \u0b95\u0b9f\u0bc8\u0b9a\u0bbf \u0bb5\u0bc0\u0b9f\u0bc1! \u0b85\u0ba9\u0bc8\u0ba4\u0bcd\u0ba4\u0bc1 \u0b95\u0b9f\u0bbf\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bc1\u0bae\u0bcd \u0bb5\u0bbf\u0ba8\u0bbf\u0baf\u0bcb\u0b95\u0bbf\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba9!" }, "output": "Delivering to house 4" },
-        { "line": "# Loop complete!", "explanation": { "en": "range(5) is exhausted \u2014 loop ends. 5 houses visited!", "ta": "range(5) \u0bae\u0bc1\u0b9f\u0bbf\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1 \u2014 \u0b9a\u0bc1\u0bb4\u0bb1\u0bcd\u0b9a\u0bbf \u0bae\u0bc1\u0b9f\u0bbf\u0b95\u0bbf\u0bb1\u0ba4\u0bc1. 5 \u0bb5\u0bc0\u0b9f\u0bc1\u0b95\u0bb3\u0bcd \u0baa\u0bbe\u0bb0\u0bcd\u0bb5\u0bc8\u0baf\u0bbf\u0b9f\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba9!" } }
+        {
+          "line": "for i in range(5):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Start the loop — i will go from 0 to 4",
+            "ta": "சுழற்சியைத் தொடங்கு — i 0 முதல் 4 வரை செல்லும்"
+          }
+        },
+        {
+          "line": "    print(f'Delivering to house {i}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "i = 0: Print 'Delivering to house 0'",
+            "ta": "i = 0: 'Delivering to house 0' அச்சிடு"
+          },
+          "output": "Delivering to house 0"
+        },
+        {
+          "line": "for i in range(5):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop back — i becomes 1",
+            "ta": "சுழற்சி திரும்பு — i 1 ஆகிறது"
+          }
+        },
+        {
+          "line": "    print(f'Delivering to house {i}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "i = 1: Print 'Delivering to house 1'",
+            "ta": "i = 1: 'Delivering to house 1' அச்சிடு"
+          },
+          "output": "Delivering to house 1"
+        },
+        {
+          "line": "for i in range(5):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop back — i becomes 2",
+            "ta": "சுழற்சி திரும்பு — i 2 ஆகிறது"
+          }
+        },
+        {
+          "line": "    print(f'Delivering to house {i}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "i = 2: Print 'Delivering to house 2'",
+            "ta": "i = 2: 'Delivering to house 2' அச்சிடு"
+          },
+          "output": "Delivering to house 2"
+        },
+        {
+          "line": "for i in range(5):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop back — i becomes 3",
+            "ta": "சுழற்சி திரும்பு — i 3 ஆகிறது"
+          }
+        },
+        {
+          "line": "    print(f'Delivering to house {i}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "i = 3: Almost done!",
+            "ta": "i = 3: கிட்டத்தட்ட முடியும்!"
+          },
+          "output": "Delivering to house 3"
+        },
+        {
+          "line": "for i in range(5):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop back — i becomes 4 (last iteration)",
+            "ta": "சுழற்சி திரும்பு — i 4 (கடைசி சுழற்சி)"
+          }
+        },
+        {
+          "line": "    print(f'Delivering to house {i}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "i = 4: Last house! All letters delivered!",
+            "ta": "i = 4: கடைசி வீடு! அனைத்து கடிதங்களும் விநியோகிக்கப்பட்டன!"
+          },
+          "output": "Delivering to house 4"
+        },
+        {
+          "line": "# Loop complete!",
+          "explanation": {
+            "en": "range(5) is exhausted — loop ends. 5 houses visited!",
+            "ta": "range(5) முடிந்தது — சுழற்சி முடிகிறது. 5 வீடுகள் பார்வையிடப்பட்டன!"
+          }
+        }
       ]
     },
     {
       "type": "VariableBox",
       "id": "box_i",
       "variable": "i",
-      "values": [0, 1, 2, 3, 4]
+      "values": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
     },
     {
       "type": "Terminal",
       "id": "output_display",
-      "output": ["Delivering to house 0", "Delivering to house 1", "Delivering to house 2", "Delivering to house 3", "Delivering to house 4"]
+      "output": [
+        "Delivering to house 0",
+        "Delivering to house 1",
+        "Delivering to house 2",
+        "Delivering to house 3",
+        "Delivering to house 4"
+      ]
     },
     {
       "type": "FlowArrow",
       "id": "loop_back",
-      "label": { "en": "loop back if i < 5", "ta": "i < 5 என்றால் சுழற்சி திரும்பு" },
+      "label": {
+        "en": "loop back if i < 5",
+        "ta": "i < 5 என்றால் சுழற்சி திரும்பு"
+      },
       "direction": "up",
       "branch": "loop"
     },
@@ -77,11 +181,36 @@
       "type": "MemoryStack",
       "id": "memory_view",
       "slots": [
-        { "name": "i (iteration 0)", "value": "0", "type": "int", "address": "0x10" },
-        { "name": "i (iteration 1)", "value": "1", "type": "int", "address": "0x10" },
-        { "name": "i (iteration 2)", "value": "2", "type": "int", "address": "0x10" },
-        { "name": "i (iteration 3)", "value": "3", "type": "int", "address": "0x10" },
-        { "name": "i (iteration 4)", "value": "4", "type": "int", "address": "0x10" }
+        {
+          "name": "i (iteration 0)",
+          "value": "0",
+          "type": "int",
+          "address": "0x10"
+        },
+        {
+          "name": "i (iteration 1)",
+          "value": "1",
+          "type": "int",
+          "address": "0x10"
+        },
+        {
+          "name": "i (iteration 2)",
+          "value": "2",
+          "type": "int",
+          "address": "0x10"
+        },
+        {
+          "name": "i (iteration 3)",
+          "value": "3",
+          "type": "int",
+          "address": "0x10"
+        },
+        {
+          "name": "i (iteration 4)",
+          "value": "4",
+          "type": "int",
+          "address": "0x10"
+        }
       ]
     },
     {
@@ -94,7 +223,10 @@
   "content_sections": [
     {
       "type": "story",
-      "title": { "en": "The Story", "ta": "கதை" },
+      "title": {
+        "en": "The Story",
+        "ta": "கதை"
+      },
       "body": {
         "en": "Rajan is the most reliable postman in PyCity. Rain or shine, he delivers letters to every house on his route. His route has 5 houses, numbered 0 through 4. He starts at house 0, pushes the letter through the slot, walks to house 1, pushes another letter, and continues until he reaches house 4. He never skips, never revisits, and never delivers out of order. When the last letter is delivered, he heads home satisfied. This is exactly what a `for` loop does — it takes a sequence of items and visits each one, performing the same action at every stop.",
         "ta": "ராஜன் PyCity-ன் மிகவும் நம்பகமான தபால்காரன். மழையானாலும் வெயிலானாலும், தனது பாதையில் உள்ள ஒவ்வொரு வீட்டிற்கும் கடிதங்களை விநியோகிக்கிறார். அவரது பாதையில் 5 வீடுகள் உள்ளன, 0 முதல் 4 வரை எண்ணிடப்பட்டுள்ளன. வீடு 0-ல் தொடங்கி, கடிதத்தை உள்ளே தள்ளி, வீடு 1-க்கு நடந்து, மற்றொரு கடிதத்தை விநியோகித்து, வீடு 4 வரை தொடர்கிறார். ஒருபோதும் தவிர்ப்பதில்லை, ஒருபோதும் மீண்டும் செல்வதில்லை, ஒருபோதும் வரிசை தவறுவதில்லை. கடைசி கடிதம் விநியோகிக்கப்பட்டதும், திருப்தியுடன் வீட்டிற்குச் செல்கிறார். `for` சுழற்சி சரியாக இதையே செய்கிறது."
@@ -103,7 +235,10 @@
     },
     {
       "type": "concept",
-      "title": { "en": "How For Loops Work", "ta": "For சுழற்சிகள் எவ்வாறு வேலை செய்கின்றன" },
+      "title": {
+        "en": "How For Loops Work",
+        "ta": "For சுழற்சிகள் எவ்வாறு வேலை செய்கின்றன"
+      },
       "body": {
         "en": "A `for` loop repeats a block of code for each item in a sequence. The syntax is: `for variable in sequence:` followed by an indented body. `range(n)` generates numbers from 0 to n-1. You can also use `range(start, stop)` to begin at a different number, or `range(start, stop, step)` to skip by a step size. The loop variable updates automatically on each iteration. You can loop over anything iterable — ranges, strings, lists, and more. The indented block runs once for every item, and when the sequence is exhausted, the loop ends.",
         "ta": "`for` சுழற்சி ஒரு வரிசையில் உள்ள ஒவ்வொரு உறுப்புக்கும் ஒரு குறியீட்டுத் தொகுதியை மீண்டும் மீண்டும் இயக்குகிறது. தொடரியல்: `for variable in sequence:` அதன் பிறகு உள்தள்ளப்பட்ட உடல். `range(n)` 0 முதல் n-1 வரை எண்களை உருவாக்குகிறது. வேறு எண்ணில் தொடங்க `range(start, stop)`, படி அளவால் தாவ `range(start, stop, step)` பயன்படுத்தலாம். சுழற்சி மாறி ஒவ்வொரு சுழற்சியிலும் தானாகவே புதுப்பிக்கப்படுகிறது. ranges, strings, lists போன்ற எந்த iterable-லும் சுழற்சி செய்யலாம்."
@@ -117,16 +252,47 @@
           "type": "CodeStepper",
           "id": "guided_loop",
           "steps": [
-            { "line": "for i in range(5):  # i = 0", "highlight": "for", "explanation": { "en": "First iteration: i is 0", "ta": "முதல் சுழற்சி: i 0 ஆக உள்ளது" } },
-            { "line": "    print(f'House {i}')  # House 0", "highlight": "print", "explanation": { "en": "Deliver to house 0", "ta": "வீடு 0-க்கு விநியோகி" } },
-            { "line": "for i in range(5):  # i = 1", "highlight": "for", "explanation": { "en": "Second iteration: i is now 1", "ta": "இரண்டாவது சுழற்சி: i இப்போது 1" } },
-            { "line": "    print(f'House {i}')  # House 1", "highlight": "print", "explanation": { "en": "Deliver to house 1", "ta": "வீடு 1-க்கு விநியோகி" } }
+            {
+              "line": "for i in range(5):  # i = 0",
+              "highlight": "for",
+              "explanation": {
+                "en": "First iteration: i is 0",
+                "ta": "முதல் சுழற்சி: i 0 ஆக உள்ளது"
+              }
+            },
+            {
+              "line": "    print(f'House {i}')  # House 0",
+              "highlight": "print",
+              "explanation": {
+                "en": "Deliver to house 0",
+                "ta": "வீடு 0-க்கு விநியோகி"
+              }
+            },
+            {
+              "line": "for i in range(5):  # i = 1",
+              "highlight": "for",
+              "explanation": {
+                "en": "Second iteration: i is now 1",
+                "ta": "இரண்டாவது சுழற்சி: i இப்போது 1"
+              }
+            },
+            {
+              "line": "    print(f'House {i}')  # House 1",
+              "highlight": "print",
+              "explanation": {
+                "en": "Deliver to house 1",
+                "ta": "வீடு 1-க்கு விநியோகி"
+              }
+            }
           ]
         },
         {
           "type": "FlowArrow",
           "id": "loop_demo",
-          "label": { "en": "loop back to for", "ta": "for-க்குத் திரும்பு" },
+          "label": {
+            "en": "loop back to for",
+            "ta": "for-க்குத் திரும்பு"
+          },
           "direction": "up",
           "branch": "loop"
         }
@@ -211,8 +377,18 @@
         "ta": "range(3) என்ன உருவாக்குகிறது?"
       },
       "options": {
-        "en": ["1, 2, 3", "0, 1, 2", "0, 1, 2, 3", "1, 2"],
-        "ta": ["1, 2, 3", "0, 1, 2", "0, 1, 2, 3", "1, 2"]
+        "en": [
+          "1, 2, 3",
+          "0, 1, 2",
+          "0, 1, 2, 3",
+          "1, 2"
+        ],
+        "ta": [
+          "1, 2, 3",
+          "0, 1, 2",
+          "0, 1, 2, 3",
+          "1, 2"
+        ]
       },
       "correct": 1
     },
@@ -222,8 +398,18 @@
         "ta": "`for i in range(4):` இன் உடல் எத்தனை முறை இயங்கும்?"
       },
       "options": {
-        "en": ["3 times", "4 times", "5 times", "0 times"],
-        "ta": ["3 முறை", "4 முறை", "5 முறை", "0 முறை"]
+        "en": [
+          "3 times",
+          "4 times",
+          "5 times",
+          "0 times"
+        ],
+        "ta": [
+          "3 முறை",
+          "4 முறை",
+          "5 முறை",
+          "0 முறை"
+        ]
       },
       "correct": 1
     },
@@ -233,8 +419,18 @@
         "ta": "`range(2, 8, 2)` என்ன உருவாக்குகிறது?"
       },
       "options": {
-        "en": ["2, 4, 6", "2, 4, 6, 8", "2, 3, 4, 5, 6, 7", "0, 2, 4, 6"],
-        "ta": ["2, 4, 6", "2, 4, 6, 8", "2, 3, 4, 5, 6, 7", "0, 2, 4, 6"]
+        "en": [
+          "2, 4, 6",
+          "2, 4, 6, 8",
+          "2, 3, 4, 5, 6, 7",
+          "0, 2, 4, 6"
+        ],
+        "ta": [
+          "2, 4, 6",
+          "2, 4, 6, 8",
+          "2, 3, 4, 5, 6, 7",
+          "0, 2, 4, 6"
+        ]
       },
       "correct": 0
     },
@@ -244,8 +440,18 @@
         "ta": "`for i in range(5):` இன் கடைசி சுழற்சியில் `i` இன் மதிப்பு என்ன?"
       },
       "options": {
-        "en": ["5", "4", "0", "None"],
-        "ta": ["5", "4", "0", "None"]
+        "en": [
+          "5",
+          "4",
+          "0",
+          "None"
+        ],
+        "ta": [
+          "5",
+          "4",
+          "0",
+          "None"
+        ]
       },
       "correct": 1
     }
@@ -283,5 +489,20 @@
         }
       ]
     }
-  ]
+  ],
+  "tags": {
+    "concepts_taught": [
+      "for_loops",
+      "loop_control"
+    ],
+    "concepts_required": [
+      "conditionals"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

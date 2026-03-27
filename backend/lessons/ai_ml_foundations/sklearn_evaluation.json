@@ -29,23 +29,31 @@
         {
           "line": "scores = cross_val_score(clf, X, y, cv=5)",
           "highlight": "cross_val_score",
-          "explanation": { "en": "Runs 5-fold CV: 5 train-test splits, returns 5 accuracy scores" }
+          "explanation": {
+            "en": "Runs 5-fold CV: 5 train-test splits, returns 5 accuracy scores"
+          }
         },
         {
           "line": "print(scores.mean(), scores.std())",
           "highlight": "mean",
-          "explanation": { "en": "Average score ± std gives honest performance estimate" },
+          "explanation": {
+            "en": "Average score ± std gives honest performance estimate"
+          },
           "output": "0.960 ± 0.026"
         },
         {
           "line": "cm = confusion_matrix(y_test, preds)",
           "highlight": "confusion_matrix",
-          "explanation": { "en": "2-D matrix: rows = actual class, cols = predicted class" }
+          "explanation": {
+            "en": "2-D matrix: rows = actual class, cols = predicted class"
+          }
         },
         {
           "line": "grid = GridSearchCV(clf, params, cv=5)",
           "highlight": "GridSearchCV",
-          "explanation": { "en": "Try every combination of hyperparameters and pick the best" }
+          "explanation": {
+            "en": "Try every combination of hyperparameters and pick the best"
+          }
         }
       ]
     },
@@ -53,33 +61,90 @@
       "type": "DataStructure",
       "id": "confusion_matrix_vis",
       "structure_type": "matrix",
-      "data": [[10, 1, 0], [0, 9, 1], [0, 0, 9]],
+      "data": [
+        [
+          10,
+          1,
+          0
+        ],
+        [
+          0,
+          9,
+          1
+        ],
+        [
+          0,
+          0,
+          9
+        ]
+      ],
       "highlight_color": "#a44ff7"
     },
     {
       "type": "ConceptMap",
       "id": "metrics_map",
       "nodes": [
-        { "id": "tp", "label": "True Positive (TP)" },
-        { "id": "fp", "label": "False Positive (FP)" },
-        { "id": "fn", "label": "False Negative (FN)" },
-        { "id": "precision", "label": "Precision = TP/(TP+FP)" },
-        { "id": "recall", "label": "Recall = TP/(TP+FN)" },
-        { "id": "f1", "label": "F1 = 2*P*R/(P+R)" }
+        {
+          "id": "tp",
+          "label": "True Positive (TP)"
+        },
+        {
+          "id": "fp",
+          "label": "False Positive (FP)"
+        },
+        {
+          "id": "fn",
+          "label": "False Negative (FN)"
+        },
+        {
+          "id": "precision",
+          "label": "Precision = TP/(TP+FP)"
+        },
+        {
+          "id": "recall",
+          "label": "Recall = TP/(TP+FN)"
+        },
+        {
+          "id": "f1",
+          "label": "F1 = 2*P*R/(P+R)"
+        }
       ],
       "edges": [
-        { "from": "tp", "to": "precision" },
-        { "from": "fp", "to": "precision" },
-        { "from": "tp", "to": "recall" },
-        { "from": "fn", "to": "recall" },
-        { "from": "precision", "to": "f1" },
-        { "from": "recall", "to": "f1" }
+        {
+          "from": "tp",
+          "to": "precision"
+        },
+        {
+          "from": "fp",
+          "to": "precision"
+        },
+        {
+          "from": "tp",
+          "to": "recall"
+        },
+        {
+          "from": "fn",
+          "to": "recall"
+        },
+        {
+          "from": "precision",
+          "to": "f1"
+        },
+        {
+          "from": "recall",
+          "to": "f1"
+        }
       ]
     },
     {
       "type": "TerminalOutput",
       "id": "cv_output",
-      "output": ["CV scores: [0.97 0.93 1.00 0.97 0.93]", "Mean: 0.960", "Std:  0.026", "Best params: {'max_depth': 3, 'min_samples_split': 2}"]
+      "output": [
+        "CV scores: [0.97 0.93 1.00 0.97 0.93]",
+        "Mean: 0.960",
+        "Std:  0.026",
+        "Best params: {'max_depth': 3, 'min_samples_split': 2}"
+      ]
     }
   ],
   "practice_challenges": [
@@ -88,9 +153,15 @@
         "en": "Load the breast cancer dataset from sklearn. Run 10-fold cross-validation with a `RandomForestClassifier(n_estimators=100)`. Store the 10 scores in `cv_scores` and compute `mean_cv` as the mean."
       },
       "hints": [
-        { "en": "from sklearn.datasets import load_breast_cancer" },
-        { "en": "cv_scores = cross_val_score(rf, X, y, cv=10)" },
-        { "en": "mean_cv = cv_scores.mean()" }
+        {
+          "en": "from sklearn.datasets import load_breast_cancer"
+        },
+        {
+          "en": "cv_scores = cross_val_score(rf, X, y, cv=10)"
+        },
+        {
+          "en": "mean_cv = cv_scores.mean()"
+        }
       ],
       "test_code": "import numpy as np\nassert len(cv_scores) == 10, 'cv_scores must have 10 fold scores'\nassert isinstance(mean_cv, float), 'mean_cv must be a float'\nassert 0.9 < mean_cv <= 1.0, 'RF on breast cancer should exceed 0.9'"
     },
@@ -99,13 +170,35 @@
         "en": "Train a `DecisionTreeClassifier` on the iris dataset. Compute its confusion matrix stored in `cm`. Which two classes are most often confused?"
       },
       "hints": [
-        { "en": "from sklearn.metrics import confusion_matrix" },
-        { "en": "cm = confusion_matrix(y_test, preds)" },
-        { "en": "Off-diagonal elements show misclassifications" }
+        {
+          "en": "from sklearn.metrics import confusion_matrix"
+        },
+        {
+          "en": "cm = confusion_matrix(y_test, preds)"
+        },
+        {
+          "en": "Off-diagonal elements show misclassifications"
+        }
       ],
       "test_code": "import numpy as np\nassert cm.shape == (3, 3), 'confusion matrix must be 3x3 for iris (3 classes)'\nassert cm.diagonal().sum() > 0, 'diagonal must have correct predictions'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "model_evaluation",
+      "bias_variance"
+    ],
+    "concepts_required": [
+      "ml_fundamentals",
+      "train_test_split"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

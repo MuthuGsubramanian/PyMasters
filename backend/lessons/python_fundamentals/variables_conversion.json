@@ -110,11 +110,21 @@
       "id": "before_after",
       "left": {
         "label": "Before conversion",
-        "items": ["'25'  (str)", "88   (int)", "42   (int)", "0    (int)"]
+        "items": [
+          "'25'  (str)",
+          "88   (int)",
+          "42   (int)",
+          "0    (int)"
+        ]
       },
       "right": {
         "label": "After conversion",
-        "items": ["25   (int)", "88.0 (float)", "'42' (str)", "False (bool)"]
+        "items": [
+          "25   (int)",
+          "88.0 (float)",
+          "'42' (str)",
+          "False (bool)"
+        ]
       }
     },
     {
@@ -134,9 +144,15 @@
       },
       "expected_output": "10.0",
       "hints": [
-        { "en": "Use int() to convert num_str to an integer: int(num_str)" },
-        { "en": "Use float() to convert base to a float: float(base)" },
-        { "en": "Add the two converted values and print the result" }
+        {
+          "en": "Use int() to convert num_str to an integer: int(num_str)"
+        },
+        {
+          "en": "Use float() to convert base to a float: float(base)"
+        },
+        {
+          "en": "Add the two converted values and print the result"
+        }
       ],
       "test_code": "num_str = '7'\nbase = 3\nconverted_num = int(num_str)\nconverted_base = float(base)\nresult = converted_num + converted_base\nassert result == 10.0, f'Expected 10.0 but got {result}'\nassert type(result) == float, 'Result must be a float'"
     },
@@ -146,13 +162,34 @@
       },
       "expected_output": "False\nTrue",
       "hints": [
-        { "en": "bool(0) evaluates to False because 0 is a falsy value" },
-        { "en": "bool(5) evaluates to True because any non-zero number is truthy" },
-        { "en": "Use print() to display the results" }
+        {
+          "en": "bool(0) evaluates to False because 0 is a falsy value"
+        },
+        {
+          "en": "bool(5) evaluates to True because any non-zero number is truthy"
+        },
+        {
+          "en": "Use print() to display the results"
+        }
       ],
       "test_code": "assert bool(0) == False, 'bool(0) must be False'\nassert bool(5) == True, 'bool(5) must be True'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "type_conversion"
+    ],
+    "concepts_required": [
+      "variables",
+      "data_types"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

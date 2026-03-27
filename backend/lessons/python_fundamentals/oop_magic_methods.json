@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "oop",
   "order": 4,
-  "title": { "en": "Magic Methods: The Hidden Operators" },
-  "description": { "en": "Unlock __str__, __repr__, __len__, __eq__ and more — the dunder methods that make your objects behave like built-in Python types." },
+  "title": {
+    "en": "Magic Methods: The Hidden Operators"
+  },
+  "description": {
+    "en": "Unlock __str__, __repr__, __len__, __eq__ and more — the dunder methods that make your objects behave like built-in Python types."
+  },
   "xp_reward": 50,
   "next_unlock": "oop_composition",
   "story_variants": {
     "en": "## The Hidden Operators\n\nWhen you write `len([1, 2, 3])`, Python secretly calls `list.__len__([1, 2, 3])`. Every operator and built-in function has a **magic method** (dunder = double-underscore) behind it.\n\nDefine these on your own class to make it behave like a native Python type.\n\n### Key Magic Methods\n\n| Method | Triggered by | Use |\n|--------|-------------|-----|\n| `__init__` | `MyClass()` | constructor |\n| `__str__` | `str(obj)`, `print()` | user-friendly string |\n| `__repr__` | `repr(obj)`, REPL | developer string |\n| `__len__` | `len(obj)` | length |\n| `__eq__` | `obj1 == obj2` | equality |\n| `__lt__` | `obj1 < obj2` | less-than |\n| `__add__` | `obj1 + obj2` | addition |\n| `__contains__` | `x in obj` | membership |\n\n> **Rule of thumb:** Always define `__repr__` — it helps debugging. Define `__str__` for user-facing display. They can differ.\n\n### Operator Overloading\nBy defining `__add__`, `__mul__` etc., you can make `Vector(1,2) + Vector(3,4)` return `Vector(4,6)`."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -23,33 +32,74 @@
     {
       "type": "ComparisonPanel",
       "id": "dunder_ops",
-      "left": { "label": "You write", "code": "print(v1)\nv1 + v2\nv1 == v2\nlen(v1)" },
-      "right": { "label": "Python calls", "code": "v1.__str__()\nv1.__add__(v2)\nv1.__eq__(v2)\nv1.__len__()" }
+      "left": {
+        "label": "You write",
+        "code": "print(v1)\nv1 + v2\nv1 == v2\nlen(v1)"
+      },
+      "right": {
+        "label": "Python calls",
+        "code": "v1.__str__()\nv1.__add__(v2)\nv1.__eq__(v2)\nv1.__len__()"
+      }
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Create a class 'Book' with title and pages. Add __str__ returning 'Title (N pages)' and __lt__ comparing by page count." },
+      "instruction": {
+        "en": "Create a class 'Book' with title and pages. Add __str__ returning 'Title (N pages)' and __lt__ comparing by page count."
+      },
       "expected_output": "Python 101 (300 pages)",
       "hints": [
-        { "en": "def __str__(self): return f'{self.title} ({self.pages} pages)'" },
-        { "en": "def __lt__(self, other): return self.pages < other.pages" },
-        { "en": "str(Book('Python 101', 300)) == 'Python 101 (300 pages)'" }
+        {
+          "en": "def __str__(self): return f'{self.title} ({self.pages} pages)'"
+        },
+        {
+          "en": "def __lt__(self, other): return self.pages < other.pages"
+        },
+        {
+          "en": "str(Book('Python 101', 300)) == 'Python 101 (300 pages)'"
+        }
       ],
       "test_code": "class Book:\n    def __init__(self, title, pages):\n        self.title = title\n        self.pages = pages\n    def __str__(self):\n        return f'{self.title} ({self.pages} pages)'\n    def __lt__(self, other):\n        return self.pages < other.pages\nb1 = Book('Python 101', 300)\nb2 = Book('Deep Learning', 800)\nassert str(b1) == 'Python 101 (300 pages)'\nassert b1 < b2"
     },
     {
-      "instruction": { "en": "Create a class 'Bag' that wraps a list. Add __len__ and __contains__ so len() and 'in' work on it." },
+      "instruction": {
+        "en": "Create a class 'Bag' that wraps a list. Add __len__ and __contains__ so len() and 'in' work on it."
+      },
       "expected_output": "3 True",
       "hints": [
-        { "en": "def __init__(self): self.items = []" },
-        { "en": "def __len__(self): return len(self.items)" },
-        { "en": "def __contains__(self, item): return item in self.items" }
+        {
+          "en": "def __init__(self): self.items = []"
+        },
+        {
+          "en": "def __len__(self): return len(self.items)"
+        },
+        {
+          "en": "def __contains__(self, item): return item in self.items"
+        }
       ],
       "test_code": "class Bag:\n    def __init__(self):\n        self.items = []\n    def add(self, item):\n        self.items.append(item)\n    def __len__(self):\n        return len(self.items)\n    def __contains__(self, item):\n        return item in self.items\nb = Bag()\nb.add('apple'); b.add('banana'); b.add('cherry')\nassert len(b) == 3\nassert 'banana' in b\nassert 'grape' not in b"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "magic_methods"
+    ],
+    "concepts_required": [
+      "classes_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

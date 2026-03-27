@@ -29,22 +29,30 @@
         {
           "line": "mask = df['score'] > 70",
           "highlight": "> 70",
-          "explanation": { "en": "This creates a Series: [True, False, True, False, ...]" }
+          "explanation": {
+            "en": "This creates a Series: [True, False, True, False, ...]"
+          }
         },
         {
           "line": "passed = df[mask]",
           "highlight": "df[mask]",
-          "explanation": { "en": "Only rows where mask is True are kept" }
+          "explanation": {
+            "en": "Only rows where mask is True are kept"
+          }
         },
         {
           "line": "high_pass = df[(df['passed']==True) & (df['score']>85)]",
           "highlight": "&",
-          "explanation": { "en": "& means both conditions must be True" }
+          "explanation": {
+            "en": "& means both conditions must be True"
+          }
         },
         {
           "line": "result = df.query('score > 70')",
           "highlight": "query",
-          "explanation": { "en": ".query() is often cleaner than boolean indexing for simple conditions" }
+          "explanation": {
+            "en": ".query() is often cleaner than boolean indexing for simple conditions"
+          }
         }
       ]
     },
@@ -52,13 +60,45 @@
       "type": "DataStructure",
       "id": "filter_table",
       "structure_type": "table",
-      "data": [["name", "score", "passed"], ["Alice", 88, true], ["Bob", 45, false], ["Charlie", 92, true], ["Diana", 67, true]],
+      "data": [
+        [
+          "name",
+          "score",
+          "passed"
+        ],
+        [
+          "Alice",
+          88,
+          true
+        ],
+        [
+          "Bob",
+          45,
+          false
+        ],
+        [
+          "Charlie",
+          92,
+          true
+        ],
+        [
+          "Diana",
+          67,
+          true
+        ]
+      ],
       "highlight_color": "#4faf7f"
     },
     {
       "type": "TerminalOutput",
       "id": "filter_output",
-      "output": ["After score > 70:", "      name  score  passed", "0    Alice     88    True", "2  Charlie     92    True", "3    Diana     67    True"]
+      "output": [
+        "After score > 70:",
+        "      name  score  passed",
+        "0    Alice     88    True",
+        "2  Charlie     92    True",
+        "3    Diana     67    True"
+      ]
     }
   ],
   "practice_challenges": [
@@ -67,8 +107,12 @@
         "en": "Given a DataFrame `df` with columns `product`, `price`, and `in_stock`, filter to get `affordable` (price < 100 AND in_stock is True)."
       },
       "hints": [
-        { "en": "affordable = df[(df['price'] < 100) & (df['in_stock'] == True)]" },
-        { "en": "Remember parentheses around each condition" }
+        {
+          "en": "affordable = df[(df['price'] < 100) & (df['in_stock'] == True)]"
+        },
+        {
+          "en": "Remember parentheses around each condition"
+        }
       ],
       "test_code": "import pandas as pd\nassert isinstance(df, pd.DataFrame), 'df must be a DataFrame'\nassert 'price' in df.columns and 'in_stock' in df.columns\nexpected = df[(df['price'] < 100) & (df['in_stock'] == True)]\nassert len(affordable) == len(expected), 'affordable must match the expected filter result'"
     },
@@ -77,11 +121,28 @@
         "en": "Using `.query()`, filter the same `df` to get `expensive` — products costing more than 200. Store the result in `expensive`."
       },
       "hints": [
-        { "en": "expensive = df.query('price > 200')" }
+        {
+          "en": "expensive = df.query('price > 200')"
+        }
       ],
       "test_code": "import pandas as pd\nexpected = df[df['price'] > 200]\nassert len(expensive) == len(expected), 'expensive must contain all rows where price > 200'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "pandas_basics",
+      "data_cleaning"
+    ],
+    "concepts_required": [
+      "pandas_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [],
+    "category": "data_science",
+    "path_memberships": []
+  }
 }

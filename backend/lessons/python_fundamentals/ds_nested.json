@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "data_structures",
   "order": 5,
-  "title": { "en": "Nested Structures: The Organization Chart" },
-  "description": { "en": "Work with nested lists, dicts, and mixed structures to represent real-world data like JSON records and hierarchical data." },
+  "title": {
+    "en": "Nested Structures: The Organization Chart"
+  },
+  "description": {
+    "en": "Work with nested lists, dicts, and mixed structures to represent real-world data like JSON records and hierarchical data."
+  },
   "xp_reward": 50,
   "next_unlock": "oop_classes",
   "story_variants": {
     "en": "## The Organization Chart\n\nA company org chart is **nested**: the CEO has departments, each department has teams, each team has employees. Real data is rarely flat.\n\nPython lets you nest any data structures inside each other.\n\n### Common Nested Patterns\n\n| Structure | Example |\n|-----------|---------|\n| List of dicts | `[{'name': 'Alice'}, {'name': 'Bob'}]` |\n| Dict of lists | `{'math': [90, 85], 'english': [78, 92]}` |\n| Dict of dicts | `{'user1': {'age': 25, 'city': 'NYC'}}` |\n| Mixed | JSON API responses |\n\n### Accessing Nested Data\n```python\ndata['users'][0]['name']   # chain indexing\n```\n\n> **Tip:** Use `.get()` at each level to avoid KeyErrors when navigating uncertain structures: `data.get('users', [])` before indexing.\n\n### Real-World Example\nJSON from a web API is nested dicts and lists. Understanding nested structures means you can parse any API response or config file."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -24,32 +33,77 @@
       "type": "DataStructure",
       "id": "nested_visual",
       "structure": "nested",
-      "items": [{ "name": "Alice", "grade": 90 }, { "name": "Bob", "grade": 85 }]
+      "items": [
+        {
+          "name": "Alice",
+          "grade": 90
+        },
+        {
+          "name": "Bob",
+          "grade": 85
+        }
+      ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Given a list of product dicts with 'name' and 'price', find the most expensive product's name." },
+      "instruction": {
+        "en": "Given a list of product dicts with 'name' and 'price', find the most expensive product's name."
+      },
       "expected_output": "Laptop",
       "hints": [
-        { "en": "Use max() with a key function" },
-        { "en": "max(products, key=lambda p: p['price'])" },
-        { "en": "Then access ['name'] on the result" }
+        {
+          "en": "Use max() with a key function"
+        },
+        {
+          "en": "max(products, key=lambda p: p['price'])"
+        },
+        {
+          "en": "Then access ['name'] on the result"
+        }
       ],
       "test_code": "products = [{'name': 'Mouse', 'price': 25}, {'name': 'Laptop', 'price': 999}, {'name': 'USB Hub', 'price': 15}]\nmost_expensive = max(products, key=lambda p: p['price'])\nassert most_expensive['name'] == 'Laptop'"
     },
     {
-      "instruction": { "en": "Group this list [('Alice', 'A'), ('Bob', 'B'), ('Carol', 'A')] into a dict where keys are grades and values are lists of student names." },
+      "instruction": {
+        "en": "Group this list [('Alice', 'A'), ('Bob', 'B'), ('Carol', 'A')] into a dict where keys are grades and values are lists of student names."
+      },
       "expected_output": "{'A': ['Alice', 'Carol'], 'B': ['Bob']}",
       "hints": [
-        { "en": "Start with an empty dict: groups = {}" },
-        { "en": "For each (name, grade), append to groups[grade]" },
-        { "en": "Use groups.setdefault(grade, []).append(name)" }
+        {
+          "en": "Start with an empty dict: groups = {}"
+        },
+        {
+          "en": "For each (name, grade), append to groups[grade]"
+        },
+        {
+          "en": "Use groups.setdefault(grade, []).append(name)"
+        }
       ],
       "test_code": "data = [('Alice', 'A'), ('Bob', 'B'), ('Carol', 'A')]\ngroups = {}\nfor name, grade in data:\n    groups.setdefault(grade, []).append(name)\nassert groups == {'A': ['Alice', 'Carol'], 'B': ['Bob']}"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "nested_structures"
+    ],
+    "concepts_required": [
+      "lists",
+      "dictionaries"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

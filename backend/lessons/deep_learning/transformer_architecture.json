@@ -26,36 +26,103 @@
       "type": "ConceptMap",
       "id": "transformer_map",
       "nodes": [
-        {"id": "embed", "label": "Input Embeddings + PE", "color": "#4f8ef7"},
-        {"id": "self_attn", "label": "Multi-Head Self-Attn", "color": "#f7914f"},
-        {"id": "add1", "label": "Add & LayerNorm", "color": "#a44ff7"},
-        {"id": "ffn", "label": "Feed-Forward (MLP)", "color": "#f7914f"},
-        {"id": "add2", "label": "Add & LayerNorm", "color": "#a44ff7"},
-        {"id": "repeat", "label": "Repeat N times", "color": "#4fc97a"},
-        {"id": "output", "label": "Output", "color": "#e74c3c"}
+        {
+          "id": "embed",
+          "label": "Input Embeddings + PE",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "self_attn",
+          "label": "Multi-Head Self-Attn",
+          "color": "#f7914f"
+        },
+        {
+          "id": "add1",
+          "label": "Add & LayerNorm",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "ffn",
+          "label": "Feed-Forward (MLP)",
+          "color": "#f7914f"
+        },
+        {
+          "id": "add2",
+          "label": "Add & LayerNorm",
+          "color": "#a44ff7"
+        },
+        {
+          "id": "repeat",
+          "label": "Repeat N times",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "output",
+          "label": "Output",
+          "color": "#e74c3c"
+        }
       ],
       "edges": [
-        {"from": "embed", "to": "self_attn"},
-        {"from": "self_attn", "to": "add1"},
-        {"from": "add1", "to": "ffn"},
-        {"from": "ffn", "to": "add2"},
-        {"from": "add2", "to": "repeat"},
-        {"from": "repeat", "to": "output"}
+        {
+          "from": "embed",
+          "to": "self_attn"
+        },
+        {
+          "from": "self_attn",
+          "to": "add1"
+        },
+        {
+          "from": "add1",
+          "to": "ffn"
+        },
+        {
+          "from": "ffn",
+          "to": "add2"
+        },
+        {
+          "from": "add2",
+          "to": "repeat"
+        },
+        {
+          "from": "repeat",
+          "to": "output"
+        }
       ]
     },
     {
       "type": "ComparisonPanel",
       "id": "bert_gpt",
       "items": [
-        {"label": "BERT", "value": "Encoder only, bidirectional", "color": "#4f8ef7", "note": "Understanding tasks"},
-        {"label": "GPT", "value": "Decoder only, causal", "color": "#4fc97a", "note": "Generation tasks"},
-        {"label": "T5/BART", "value": "Encoder + Decoder", "color": "#f7914f", "note": "Translation, summarisation"}
+        {
+          "label": "BERT",
+          "value": "Encoder only, bidirectional",
+          "color": "#4f8ef7",
+          "note": "Understanding tasks"
+        },
+        {
+          "label": "GPT",
+          "value": "Decoder only, causal",
+          "color": "#4fc97a",
+          "note": "Generation tasks"
+        },
+        {
+          "label": "T5/BART",
+          "value": "Encoder + Decoder",
+          "color": "#f7914f",
+          "note": "Translation, summarisation"
+        }
       ]
     },
     {
       "type": "FlowArrow",
       "id": "transformer_flow",
-      "steps": ["Tokens", "Embed + PE", "N × [Attn + FFN]", "Representation", "Task Head → Output"]
+      "steps": [
+        "Tokens",
+        "Embed + PE",
+        "N × [Attn + FFN]",
+        "Representation",
+        "Task Head → Output"
+      ]
     },
     {
       "type": "CodeStepper",
@@ -64,22 +131,30 @@
         {
           "line": "x = embedding(tokens) + positional_encoding",
           "highlight": "x",
-          "explanation": {"en": "Combine token meaning with positional information"}
+          "explanation": {
+            "en": "Combine token meaning with positional information"
+          }
         },
         {
           "line": "for _ in range(N_layers):",
           "highlight": "N_layers",
-          "explanation": {"en": "Stack N identical transformer blocks"}
+          "explanation": {
+            "en": "Stack N identical transformer blocks"
+          }
         },
         {
           "line": "    x = layer_norm(x + self_attention(x))",
           "highlight": "self_attention",
-          "explanation": {"en": "Attend + residual + normalise"}
+          "explanation": {
+            "en": "Attend + residual + normalise"
+          }
         },
         {
           "line": "    x = layer_norm(x + feed_forward(x))",
           "highlight": "feed_forward",
-          "explanation": {"en": "MLP sub-layer + residual + normalise"},
+          "explanation": {
+            "en": "MLP sub-layer + residual + normalise"
+          },
           "output": "Contextualised representation"
         }
       ]
@@ -90,18 +165,52 @@
       "label": "Model Scale Comparison",
       "structure": "table",
       "data": [
-        ["Model", "Params", "Layers", "Heads", "d_model"],
-        ["BERT-base", "110M", "12", "12", "768"],
-        ["GPT-2", "117M", "12", "12", "768"],
-        ["GPT-3", "175B", "96", "96", "12288"],
-        ["GPT-4", "~1T?", "~120", "~128", "~25600"]
+        [
+          "Model",
+          "Params",
+          "Layers",
+          "Heads",
+          "d_model"
+        ],
+        [
+          "BERT-base",
+          "110M",
+          "12",
+          "12",
+          "768"
+        ],
+        [
+          "GPT-2",
+          "117M",
+          "12",
+          "12",
+          "768"
+        ],
+        [
+          "GPT-3",
+          "175B",
+          "96",
+          "96",
+          "12288"
+        ],
+        [
+          "GPT-4",
+          "~1T?",
+          "~120",
+          "~128",
+          "~25600"
+        ]
       ],
       "color": "#4f8ef7"
     },
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["BERT-base: 110M params, encoder-only", "GPT-2: 117M params, decoder-only (causal)", "Transformer block: Attn + FFN + 2× LayerNorm + 2× Residual"]
+      "output": [
+        "BERT-base: 110M params, encoder-only",
+        "GPT-2: 117M params, decoder-only (causal)",
+        "Transformer block: Attn + FFN + 2× LayerNorm + 2× Residual"
+      ]
     }
   ],
   "practice_challenges": [
@@ -111,13 +220,37 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "mean = x.mean(axis=-1, keepdims=True)"},
-        {"en": "std = x.std(axis=-1, keepdims=True)"},
-        {"en": "return (x - mean) / (std + eps)"}
+        {
+          "en": "mean = x.mean(axis=-1, keepdims=True)"
+        },
+        {
+          "en": "std = x.std(axis=-1, keepdims=True)"
+        },
+        {
+          "en": "return (x - mean) / (std + eps)"
+        }
       ],
       "test_code": "import numpy as np\nx = np.array([[1.0, 2.0, 3.0, 4.0], [10.0, 20.0, 30.0, 40.0]])\nout = layer_norm(x)\nassert out.shape == x.shape, 'Output shape must match input'\nassert abs(out[0].mean()) < 1e-5, 'Mean of normalised row should be ~0'\nassert abs(out[0].std() - 1.0) < 0.1, 'Std of normalised row should be ~1'\nassert abs(out[1].mean()) < 1e-5, 'Second row also normalised independently'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "transformer_architecture",
+      "bert_gpt"
+    ],
+    "concepts_required": [
+      "attention_mechanism"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [
+      "translation",
+      "search engines"
+    ],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

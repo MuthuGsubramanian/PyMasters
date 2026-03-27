@@ -24,6 +24,8 @@ from routes.classroom import router as classroom_router
 from routes.playground import router as playground_router
 from routes.notifications import router as notifications_router
 from routes.modules import router as modules_router
+from routes.graph import router as graph_router
+from routes.messages import router as messages_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -296,6 +298,117 @@ def init_db():
             )
         """)
 
+        # ── Knowledge Graph tables ────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS concepts (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                difficulty TEXT NOT NULL,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS concept_edges (
+                from_concept TEXT NOT NULL REFERENCES concepts(id),
+                to_concept TEXT NOT NULL REFERENCES concepts(id),
+                relationship TEXT NOT NULL DEFAULT 'requires',
+                weight REAL DEFAULT 1.0,
+                PRIMARY KEY (from_concept, to_concept)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lesson_concepts (
+                lesson_id TEXT NOT NULL,
+                concept_id TEXT NOT NULL REFERENCES concepts(id),
+                role TEXT NOT NULL DEFAULT 'teaches',
+                depth TEXT DEFAULT 'moderate',
+                PRIMARY KEY (lesson_id, concept_id, role)
+            )
+        """)
+
+        # ── Learning Paths tables ─────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS learning_paths (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                icon TEXT,
+                difficulty_start TEXT,
+                difficulty_end TEXT,
+                category TEXT,
+                estimated_hours INTEGER,
+                lesson_sequence TEXT NOT NULL,
+                concepts_covered TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_learning_paths (
+                user_id TEXT NOT NULL,
+                path_id TEXT NOT NULL REFERENCES learning_paths(id),
+                status TEXT DEFAULT 'active',
+                current_position INTEGER DEFAULT 0,
+                adapted_sequence TEXT,
+                skipped_lessons TEXT,
+                inserted_lessons TEXT,
+                started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_activity TIMESTAMP,
+                completed_at TIMESTAMP,
+                PRIMARY KEY (user_id, path_id)
+            )
+        """)
+
+        # ── Vaathiyaar proactive messages ─────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pending_vaathiyaar_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                message TEXT NOT NULL,
+                message_type TEXT NOT NULL,
+                action_data TEXT,
+                delivered BOOLEAN DEFAULT 0,
+                dismissed BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lesson_insertions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                path_id TEXT,
+                lesson_id TEXT NOT NULL,
+                position INTEGER,
+                reason TEXT NOT NULL,
+                concept_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS path_adaptation_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                path_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                details TEXT,
+                lesson_affected TEXT,
+                concept_trigger TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_concepts_category ON concepts(category)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lesson_concepts_lesson ON lesson_concepts(lesson_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lesson_concepts_concept ON lesson_concepts(concept_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_paths_user ON user_learning_paths(user_id, status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pending_msgs_user ON pending_vaathiyaar_messages(user_id, delivered)")
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
@@ -306,6 +419,13 @@ def init_db():
                 "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?)",
                 [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", 0]
             )
+
+        # Seed knowledge graph concepts
+        try:
+            from graph.concepts import seed_concepts
+            seed_concepts(DB_PATH)
+        except Exception as e:
+            print(f"Graph seed: {e}")
 
         conn.commit()
 
@@ -331,6 +451,8 @@ app.include_router(classroom_router)
 app.include_router(playground_router)
 app.include_router(notifications_router)
 app.include_router(modules_router)
+app.include_router(graph_router)
+app.include_router(messages_router)
 
 # --- CORS ---
 origins = [

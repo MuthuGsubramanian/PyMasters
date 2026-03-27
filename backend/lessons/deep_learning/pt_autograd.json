@@ -26,17 +26,51 @@
       "type": "ConceptMap",
       "id": "autograd_graph",
       "nodes": [
-        {"id": "x", "label": "x=3 (requires_grad)", "color": "#4f8ef7"},
-        {"id": "pow", "label": "x² operation", "color": "#f7914f"},
-        {"id": "y", "label": "y=9", "color": "#4fc97a"},
-        {"id": "backward", "label": ".backward()", "color": "#e74c3c"},
-        {"id": "grad", "label": "x.grad = 6.0", "color": "#a44ff7"}
+        {
+          "id": "x",
+          "label": "x=3 (requires_grad)",
+          "color": "#4f8ef7"
+        },
+        {
+          "id": "pow",
+          "label": "x² operation",
+          "color": "#f7914f"
+        },
+        {
+          "id": "y",
+          "label": "y=9",
+          "color": "#4fc97a"
+        },
+        {
+          "id": "backward",
+          "label": ".backward()",
+          "color": "#e74c3c"
+        },
+        {
+          "id": "grad",
+          "label": "x.grad = 6.0",
+          "color": "#a44ff7"
+        }
       ],
       "edges": [
-        {"from": "x", "to": "pow", "label": "forward"},
-        {"from": "pow", "to": "y"},
-        {"from": "y", "to": "backward"},
-        {"from": "backward", "to": "grad", "label": "chain rule"}
+        {
+          "from": "x",
+          "to": "pow",
+          "label": "forward"
+        },
+        {
+          "from": "pow",
+          "to": "y"
+        },
+        {
+          "from": "y",
+          "to": "backward"
+        },
+        {
+          "from": "backward",
+          "to": "grad",
+          "label": "chain rule"
+        }
       ]
     },
     {
@@ -46,22 +80,30 @@
         {
           "line": "x = torch.tensor(3.0, requires_grad=True)",
           "highlight": "requires_grad",
-          "explanation": {"en": "Tell PyTorch to track operations on x"}
+          "explanation": {
+            "en": "Tell PyTorch to track operations on x"
+          }
         },
         {
           "line": "y = x ** 2   # builds computation graph",
           "highlight": "y",
-          "explanation": {"en": "PyTorch records: y was produced by squaring x"}
+          "explanation": {
+            "en": "PyTorch records: y was produced by squaring x"
+          }
         },
         {
           "line": "y.backward() # traverse graph backward",
           "highlight": "backward",
-          "explanation": {"en": "Trigger automatic differentiation"}
+          "explanation": {
+            "en": "Trigger automatic differentiation"
+          }
         },
         {
           "line": "print(x.grad) # dy/dx = 2x = 6",
           "highlight": "grad",
-          "explanation": {"en": "Gradient of y w.r.t. x at x=3 is 2×3=6"},
+          "explanation": {
+            "en": "Gradient of y w.r.t. x at x=3 is 2×3=6"
+          },
           "output": "tensor(6.)"
         }
       ]
@@ -69,7 +111,13 @@
     {
       "type": "FlowArrow",
       "id": "backprop_flow",
-      "steps": ["Forward: x → y=f(x)", "Compute loss", ".backward()", "Chain rule traversal", "x.grad populated"]
+      "steps": [
+        "Forward: x → y=f(x)",
+        "Compute loss",
+        ".backward()",
+        "Chain rule traversal",
+        "x.grad populated"
+      ]
     },
     {
       "type": "VariableBox",
@@ -82,7 +130,15 @@
     {
       "type": "TerminalOutput",
       "id": "output_display",
-      "output": ["x = 3.0", "y = x^2 = 9.0", "y.backward()", "x.grad = 6.0  # dy/dx = 2x = 2*3 = 6", "", "w.grad = 12.0  # for linear regression example", "b.grad =  4.0"]
+      "output": [
+        "x = 3.0",
+        "y = x^2 = 9.0",
+        "y.backward()",
+        "x.grad = 6.0  # dy/dx = 2x = 2*3 = 6",
+        "",
+        "w.grad = 12.0  # for linear regression example",
+        "b.grad =  4.0"
+      ]
     }
   ],
   "practice_challenges": [
@@ -92,13 +148,34 @@
       },
       "expected_output": "",
       "hints": [
-        {"en": "Set requires_grad=True on w and b (not x or y_true)"},
-        {"en": "Compute: y_hat = w * x + b, then L = (y_hat - y_true)**2"},
-        {"en": "Call L.backward() to populate w.grad and b.grad"}
+        {
+          "en": "Set requires_grad=True on w and b (not x or y_true)"
+        },
+        {
+          "en": "Compute: y_hat = w * x + b, then L = (y_hat - y_true)**2"
+        },
+        {
+          "en": "Call L.backward() to populate w.grad and b.grad"
+        }
       ],
       "test_code": "import torch\nw_val, b_val, x_val, y_val = 2.0, 0.5, 4.0, 10.0\ny_hat_val = w_val * x_val + b_val  # = 8.5\n# dL/dw = 2*(y_hat - y_true)*x = 2*(8.5-10)*4 = -12\n# dL/db = 2*(y_hat - y_true)*1 = 2*(8.5-10) = -3\nassert abs(float(w.grad) - (-12.0)) < 1e-4, f'w.grad should be -12, got {float(w.grad)}'\nassert abs(float(b.grad) - (-3.0)) < 1e-4, f'b.grad should be -3, got {float(b.grad)}'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "pytorch_basics"
+    ],
+    "concepts_required": [
+      "pytorch_basics",
+      "backpropagation"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "theory",
+    "estimated_minutes": 30,
+    "real_world_application": [],
+    "category": "deep_learning",
+    "path_memberships": []
+  }
 }

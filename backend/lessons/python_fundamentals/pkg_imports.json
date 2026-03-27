@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "packaging",
   "order": 1,
-  "title": { "en": "Imports & Packages: The Library Card System" },
-  "description": { "en": "Master Python's import system — modules, packages, __name__, relative imports, and how Python finds code." },
+  "title": {
+    "en": "Imports & Packages: The Library Card System"
+  },
+  "description": {
+    "en": "Master Python's import system — modules, packages, __name__, relative imports, and how Python finds code."
+  },
   "xp_reward": 50,
   "next_unlock": "pkg_venvs",
   "story_variants": {
     "en": "## The Library Card System\n\nA library has thousands of books organized by section. To use a book, you **check it out** — bring it to your table where you can read it. You don't carry the whole library everywhere.\n\nPython's `import` system works the same way: check out the code you need, use it in your module.\n\n### Import Forms\n\n| Syntax | Use |\n|--------|-----|\n| `import math` | import module, use `math.sqrt()` |\n| `from math import sqrt` | import one name, use `sqrt()` |\n| `from math import *` | import all (avoid this!) |\n| `import numpy as np` | alias |\n\n### __name__ and __main__\n```python\nif __name__ == '__main__':\n    main()   # only runs when executed directly, not imported\n```\n\n### Package Structure\n```\nmy_package/\n    __init__.py    # makes it a package\n    utils.py\n    models.py\n```\n\n> **Python's search order (sys.path):** current directory → PYTHONPATH → standard library → site-packages. Understanding this prevents confusing import errors.\n\n### Relative Imports\n```python\nfrom . import sibling_module       # same package\nfrom .. import parent_package_item # parent package\n```"
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -24,33 +33,75 @@
       "type": "ConceptMap",
       "id": "import_map",
       "nodes": [
-        { "label": "import system", "children": ["stdlib (math, os, json)", "third-party (numpy, requests)", "your own modules"] }
+        {
+          "label": "import system",
+          "children": [
+            "stdlib (math, os, json)",
+            "third-party (numpy, requests)",
+            "your own modules"
+          ]
+        }
       ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Import 'random' and use random.choice() to pick a random element from ['rock', 'paper', 'scissors']." },
+      "instruction": {
+        "en": "Import 'random' and use random.choice() to pick a random element from ['rock', 'paper', 'scissors']."
+      },
       "expected_output": "one of: rock, paper, scissors",
       "hints": [
-        { "en": "import random" },
-        { "en": "random.choice(['rock', 'paper', 'scissors'])" },
-        { "en": "The result is a string from the list" }
+        {
+          "en": "import random"
+        },
+        {
+          "en": "random.choice(['rock', 'paper', 'scissors'])"
+        },
+        {
+          "en": "The result is a string from the list"
+        }
       ],
       "test_code": "import random\nchoices = ['rock', 'paper', 'scissors']\nresult = random.choice(choices)\nassert result in choices"
     },
     {
-      "instruction": { "en": "Use collections.Counter to count characters in 'hello world' and assert 'l' appears 3 times." },
+      "instruction": {
+        "en": "Use collections.Counter to count characters in 'hello world' and assert 'l' appears 3 times."
+      },
       "expected_output": "Counter shows l:3",
       "hints": [
-        { "en": "from collections import Counter" },
-        { "en": "c = Counter('hello world')" },
-        { "en": "c['l'] gives the count of 'l'" }
+        {
+          "en": "from collections import Counter"
+        },
+        {
+          "en": "c = Counter('hello world')"
+        },
+        {
+          "en": "c['l'] gives the count of 'l'"
+        }
       ],
       "test_code": "from collections import Counter\nc = Counter('hello world')\nassert c['l'] == 3\nassert c['o'] == 2"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "modules_imports"
+    ],
+    "concepts_required": [
+      "functions_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }

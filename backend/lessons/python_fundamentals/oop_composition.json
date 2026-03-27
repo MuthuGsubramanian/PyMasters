@@ -4,15 +4,24 @@
   "track": "python_fundamentals",
   "module": "oop",
   "order": 5,
-  "title": { "en": "Composition: Building with LEGO Bricks" },
-  "description": { "en": "Learn composition vs inheritance — how to build complex objects by combining simpler ones, like snapping LEGO bricks together." },
+  "title": {
+    "en": "Composition: Building with LEGO Bricks"
+  },
+  "description": {
+    "en": "Learn composition vs inheritance — how to build complex objects by combining simpler ones, like snapping LEGO bricks together."
+  },
   "xp_reward": 50,
   "next_unlock": "fileio_reading",
   "story_variants": {
     "en": "## Building with LEGO Bricks\n\n**Inheritance** is like buying a pre-assembled kit — you get everything the parent has. **Composition** is like LEGO — you snap together the exact bricks you need.\n\n### The Golden Rule\n> **Favour composition over inheritance**\n\nUse inheritance for strict **is-a** relationships. Use composition for **has-a** relationships.\n\n### Is-a vs Has-a\n\n| Relationship | Approach | Example |\n|--------------|----------|---------|\n| Car **is-a** Vehicle | Inheritance | `class Car(Vehicle)` |\n| Car **has-a** Engine | Composition | `self.engine = Engine()` |\n| Car **has-a** GPS | Composition | `self.gps = GPS()` |\n\n### Why Composition Wins\n- More flexible — swap components at runtime\n- Avoids fragile base class problem\n- Easier to test components in isolation\n- Deep inheritance chains are hard to follow\n\n> **Pattern:** Dependency injection — pass components into `__init__` rather than creating them inside. This makes testing easy and components swappable."
   },
   "animation_sequence": [
-    { "type": "StoryCard", "id": "intro", "content": "story_variant", "duration_ms": 4000 },
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "duration_ms": 4000
+    },
     {
       "type": "CodeStepper",
       "props": {
@@ -24,23 +33,56 @@
       "type": "ConceptMap",
       "id": "composition_map",
       "nodes": [
-        { "label": "Car (has-a)", "children": ["Engine", "GPS"] }
+        {
+          "label": "Car (has-a)",
+          "children": [
+            "Engine",
+            "GPS"
+          ]
+        }
       ]
     },
-    { "type": "ParticleEffect", "id": "finish", "effect": "confetti", "duration_ms": 1500 }
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
   ],
   "practice_challenges": [
     {
-      "instruction": { "en": "Create classes 'Battery' (with capacity) and 'Phone' (with brand) where Phone HAS-A Battery. Phone.info() returns 'Brand: X, Battery: Ymah'." },
+      "instruction": {
+        "en": "Create classes 'Battery' (with capacity) and 'Phone' (with brand) where Phone HAS-A Battery. Phone.info() returns 'Brand: X, Battery: Ymah'."
+      },
       "expected_output": "Brand: Apple, Battery: 3000mah",
       "hints": [
-        { "en": "class Battery: def __init__(self, capacity): self.capacity = capacity" },
-        { "en": "class Phone: def __init__(self, brand, battery): self.brand = brand; self.battery = battery" },
-        { "en": "def info(self): return f'Brand: {self.brand}, Battery: {self.battery.capacity}mah'" }
+        {
+          "en": "class Battery: def __init__(self, capacity): self.capacity = capacity"
+        },
+        {
+          "en": "class Phone: def __init__(self, brand, battery): self.brand = brand; self.battery = battery"
+        },
+        {
+          "en": "def info(self): return f'Brand: {self.brand}, Battery: {self.battery.capacity}mah'"
+        }
       ],
       "test_code": "class Battery:\n    def __init__(self, capacity):\n        self.capacity = capacity\nclass Phone:\n    def __init__(self, brand, battery):\n        self.brand = brand\n        self.battery = battery\n    def info(self):\n        return f'Brand: {self.brand}, Battery: {self.battery.capacity}mah'\np = Phone('Apple', Battery(3000))\nassert p.info() == 'Brand: Apple, Battery: 3000mah'"
     }
   ],
   "generated": false,
-  "speed_multiplier": 1.0
+  "speed_multiplier": 1.0,
+  "tags": {
+    "concepts_taught": [
+      "composition"
+    ],
+    "concepts_required": [
+      "classes_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [],
+    "category": "python_core",
+    "path_memberships": []
+  }
 }
