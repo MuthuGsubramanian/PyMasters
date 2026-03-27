@@ -382,7 +382,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
         lesson.active_story || resolveText(lesson.story_variants, language);
 
     const speedMultiplier = lesson.speed_multiplier ?? 1.0;
-    const sequence = lesson.animation_sequence ?? [];
+    const sequence = Array.isArray(lesson.animation_sequence) ? lesson.animation_sequence : [];
 
     // Animation replay key — increment to re-mount and replay all animations
     const [animKey, setAnimKey] = useState(0);
@@ -702,11 +702,12 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
         resolveText(evalResult?.feedback, language) ||
         (success ? 'Great job!' : 'Keep trying — you can do it!');
 
-    const animationSeq = evalResult?.feedback?.animation;
+    const rawAnimation = evalResult?.feedback?.animation;
+    const animationSeq = Array.isArray(rawAnimation) ? rawAnimation : null;
 
     return (
         <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
-            {animationSeq && (
+            {animationSeq && animationSeq.length > 0 && (
                 <AnimationRenderer
                     sequence={animationSeq}
                     storyContent=""
