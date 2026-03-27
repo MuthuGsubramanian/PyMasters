@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { getModules, getModule, completeModule, getCompletions } from '../api';
+import { getModules, getModule, completeModule, getCompletions, recordSignal } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -453,6 +453,13 @@ export function ModuleViewer() {
 
         const passed = correctCount === module.quiz.length;
 
+        recordSignal({
+            user_id: user.id,
+            signal_type: 'quiz_attempt',
+            topic: module.id,
+            value: { module_id: module.id, score: correctCount, total: module.quiz.length, passed },
+        }).catch(() => {});
+
         if (passed) {
             try {
                 const res = await completeModule(user.id, module.id, correctCount);
@@ -554,7 +561,10 @@ export function ModuleViewer() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setQuizMode(true)} className="btn-neo btn-neo-primary gap-2">
+                                        <button onClick={() => {
+                                            recordSignal({ user_id: user.id, signal_type: 'quiz_started', topic: module.id, value: { module_id: module.id } }).catch(() => {});
+                                            setQuizMode(true);
+                                        }} className="btn-neo btn-neo-primary gap-2">
                                             Start Quiz
                                             <ChevronRight size={18} />
                                         </button>

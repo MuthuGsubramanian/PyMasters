@@ -20,7 +20,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
-import api from '../api';
+import api, { recordSignal } from '../api';
 import KnowledgeMap from '../components/KnowledgeMap';
 
 // ─── Animated Number Counter ────────────────────────────────────────────────
@@ -366,6 +366,12 @@ function PathDetail() {
         setStarting(true);
         try {
             await api.post(`/paths/${pathId}/start`, { user_id: user.id });
+            recordSignal({
+                user_id: user?.id,
+                signal_type: 'path_started',
+                topic: pathId,
+                value: { path_id: pathId },
+            }).catch(() => {});
             // Reload progress
             const res = await api.get(`/paths/${pathId}/progress?user_id=${user.id}`);
             setProgress(res.data?.progress || res.data);

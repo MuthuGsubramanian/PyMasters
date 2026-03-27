@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
-import api, { getAuthHeaders, requestModule, getCompletions } from '../api';
+import api, { getAuthHeaders, requestModule, getCompletions, recordSignal } from '../api';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
@@ -876,6 +876,12 @@ export default function Classroom() {
             const res = await api.get(`/classroom/lesson/${lesson.id}${params}`);
             const data = res.data.lesson ?? res.data;
             setCurrentLesson(data);
+            recordSignal({
+                user_id: user?.id,
+                signal_type: 'lesson_viewed',
+                topic: lesson.id,
+                value: { lesson_id: lesson.id, track: lesson.track || '' },
+            }).catch(() => {});
             setPhase('intro');
             setChatMessages([]);
             setCode('');
@@ -947,6 +953,7 @@ export default function Classroom() {
                     phase,
                     language,
                     username: user?.name || user?.username,
+                    history: chatMessages.filter(m => !m._isStreaming).slice(-5).map(m => ({ role: m.role, content: m.content })),
                 }),
             });
 
