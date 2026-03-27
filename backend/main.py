@@ -647,5 +647,24 @@ def complete_module(sub: QuizSubmission):
     finally:
         conn.close()
 
+@app.get("/api/content/completions/{user_id}")
+def get_completions(user_id: str):
+    """Return all completed lesson/module IDs for a user."""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        rows = conn.execute(
+            "SELECT lesson_id, completed_at, xp_awarded FROM lesson_completions WHERE user_id = ? ORDER BY completed_at DESC",
+            [user_id],
+        ).fetchall()
+    finally:
+        conn.close()
+
+    return {
+        "completions": [
+            {"lesson_id": r[0], "completed_at": r[1], "xp_awarded": r[2]}
+            for r in rows
+        ]
+    }
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
