@@ -1,0 +1,60 @@
+{
+  "id": "auto_web_scraper",
+  "topic": "web_scraping",
+  "track": "fun_automation",
+  "module": "automation_basics",
+  "order": 2,
+  "title": {
+    "en": "Web Scraper: Extract Data Like a Pro",
+    "ta": "வெப் ஸ்கிரேப்பர்: ஒரு நிபுணரைப் போல தரவை பிரிக்கவும்"
+  },
+  "description": {
+    "en": "Build a Python script that scrapes website data — prices, headlines, or any structured content. Automate your research!",
+    "ta": "விலைகள், தலைப்புகள் அல்லது கட்டமைக்கப்பட்ட உள்ளடக்கத்தை ஸ்கிரேப் செய்யும் Python ஸ்கிரிப்ட் உருவாக்குங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Become a Data Detective!\n\nEver wanted to track product prices, collect news headlines, or gather sports scores automatically? That's **web scraping** — and Python is perfect for it.\n\n### What You'll Learn\n- HTTP requests with the `requests` library\n- Parsing HTML with `BeautifulSoup`\n- Extracting specific data using CSS selectors\n- Saving scraped data to a file\n\n### How Web Scraping Works\n1. **Request** — Fetch the HTML of a webpage\n2. **Parse** — Turn raw HTML into a navigable tree\n3. **Select** — Find the exact elements you need\n4. **Extract** — Pull out text, links, or attributes\n\n> **Pro tip:** Always check a website's `robots.txt` and Terms of Service before scraping. Be ethical!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "content": "story_variant",
+      "visual_theme": "microscope",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "steps": [
+        { "code": "import requests", "explanation": { "en": "Import requests to fetch web pages" } },
+        { "code": "from bs4 import BeautifulSoup", "explanation": { "en": "Import BeautifulSoup to parse HTML" } },
+        { "code": "", "explanation": { "en": "Let's scrape some headlines..." } },
+        { "code": "url = 'https://news.ycombinator.com'", "explanation": { "en": "Target URL — Hacker News front page" } },
+        { "code": "response = requests.get(url)", "explanation": { "en": "Send a GET request and store the response", "output": "Status: 200 OK" } },
+        { "code": "soup = BeautifulSoup(response.text, 'html.parser')", "explanation": { "en": "Parse the HTML into a BeautifulSoup object" } },
+        { "code": "titles = soup.select('.titleline > a')", "explanation": { "en": "Use CSS selector to find all headline links" } },
+        { "code": "for title in titles[:5]:", "explanation": { "en": "Loop through the first 5 headlines" } },
+        { "code": "    print(title.text)", "explanation": { "en": "Print each headline text!", "output": "Show HN: I built a Python learning platform" } }
+      ]
+    },
+    {
+      "type": "Terminal",
+      "output": ["Fetching https://news.ycombinator.com...", "Status: 200 OK", "Found 30 headlines", "1. Show HN: I built a Python learning platform", "2. Why Python is eating the world", "3. New breakthrough in AI training efficiency", "4. The fastest web framework benchmarks 2025", "5. Understanding async/await in 5 minutes"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Create a dictionary with 3 website names as keys and their URLs as values. Then print each name and URL using a for loop." },
+      "expected_output": "Google: https://google.com\nGitHub: https://github.com\nPython: https://python.org",
+      "hints": [
+        { "en": "Create: sites = {'Google': 'https://google.com', ...}" },
+        { "en": "Loop with: for name, url in sites.items():" }
+      ]
+    }
+  ],
+  "quiz": [
+    { "q": "What does requests.get(url) return?", "options": ["A string of HTML", "A Response object", "A dictionary", "A BeautifulSoup object"], "correct": 1 },
+    { "q": "What is BeautifulSoup used for?", "options": ["Making HTTP requests", "Parsing and navigating HTML", "Running JavaScript", "Creating websites"], "correct": 1 },
+    { "q": "What does .select() use to find elements?", "options": ["XPath", "CSS selectors", "Regular expressions", "JSON paths"], "correct": 1 }
+  ]
+}

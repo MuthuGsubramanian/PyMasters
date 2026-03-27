@@ -1,0 +1,65 @@
+{
+  "id": "auto_pdf_merger",
+  "topic": "pdf_automation",
+  "track": "fun_automation",
+  "module": "automation_intermediate",
+  "order": 6,
+  "title": {
+    "en": "PDF Merger: Combine Documents Instantly",
+    "ta": "PDF இணைப்பாளர்: ஆவணங்களை உடனடியாக இணைக்கவும்"
+  },
+  "description": {
+    "en": "Build a tool that merges multiple PDF files into one — perfect for reports, invoices, or study notes.",
+    "ta": "பல PDF கோப்புகளை ஒன்றாக இணைக்கும் கருவியை உருவாக்குங்கள் — அறிக்கைகள், விலைப்பட்டியல்கள் அல்லது படிப்பு குறிப்புகளுக்கு சரியானது."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## Merge PDFs Like a Boss\n\nYou've got 10 PDF invoices that need to become one file. Or 5 chapters of notes to combine before an exam. Doing it manually? That's what non-programmers do.\n\n### What You'll Learn\n- Installing packages with `pip`\n- Working with `PyPDF2` library\n- File I/O with context managers (`with` statement)\n- Command-line arguments with `sys.argv`\n\n### The Plan\n1. Accept a list of PDF filenames\n2. Open each PDF and read its pages\n3. Add all pages to a new PDF writer\n4. Save the merged result\n\n> **Practical value:** This is a tool you'll genuinely use. Many paid apps charge $5/month for this — you'll build it in 15 lines!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "content": "story_variant",
+      "visual_theme": "magic",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "steps": [
+        { "code": "from PyPDF2 import PdfReader, PdfWriter", "explanation": { "en": "Import PDF reader and writer classes" } },
+        { "code": "import sys", "explanation": { "en": "Import sys to accept command-line arguments" } },
+        { "code": "", "explanation": { "en": "Set up the merger..." } },
+        { "code": "files = ['chapter1.pdf', 'chapter2.pdf', 'chapter3.pdf']", "explanation": { "en": "List of PDF files to merge" } },
+        { "code": "writer = PdfWriter()", "explanation": { "en": "Create a new empty PDF writer — this will hold all merged pages" } },
+        { "code": "for pdf_file in files:", "explanation": { "en": "Loop through each PDF file" } },
+        { "code": "    reader = PdfReader(pdf_file)", "explanation": { "en": "Open and read the current PDF" } },
+        { "code": "    for page in reader.pages:", "explanation": { "en": "Loop through every page in this PDF" } },
+        { "code": "        writer.add_page(page)", "explanation": { "en": "Add each page to our merged PDF" } },
+        { "code": "    print(f'Added {len(reader.pages)} pages from {pdf_file}')", "explanation": { "en": "Log progress for each file", "output": "Added 5 pages from chapter1.pdf" } },
+        { "code": "", "explanation": { "en": "Save the final merged PDF..." } },
+        { "code": "with open('merged.pdf', 'wb') as output:", "explanation": { "en": "Open a new file in write-binary mode" } },
+        { "code": "    writer.write(output)", "explanation": { "en": "Write all merged pages to the output file" } },
+        { "code": "print(f'Done! Merged {len(files)} files')", "explanation": { "en": "All done!", "output": "Done! Merged 3 files → merged.pdf" } }
+      ]
+    },
+    {
+      "type": "Terminal",
+      "output": ["Merging PDFs...", "Added 5 pages from chapter1.pdf", "Added 8 pages from chapter2.pdf", "Added 3 pages from chapter3.pdf", "Done! Merged 3 files → merged.pdf (16 pages total)"]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": { "en": "Write a program that opens a file called 'data.txt' in write mode, writes 3 lines to it, then reads and prints the contents." },
+      "expected_output": "Line 1\nLine 2\nLine 3",
+      "hints": [
+        { "en": "Use: with open('data.txt', 'w') as f: to write" },
+        { "en": "Then: with open('data.txt', 'r') as f: to read" }
+      ]
+    }
+  ],
+  "quiz": [
+    { "q": "What does 'wb' mode mean in open()?", "options": ["Write binary", "Write backup", "Web browser", "Wide buffer"], "correct": 0 },
+    { "q": "What is a context manager (with statement)?", "options": ["A loop construct", "Auto-manages resource open/close", "A class decorator", "An import alias"], "correct": 1 },
+    { "q": "What does PdfWriter.add_page() do?", "options": ["Creates a new PDF", "Adds a page to the writer's output", "Reads a page", "Deletes a page"], "correct": 1 }
+  ]
+}

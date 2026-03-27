@@ -309,10 +309,18 @@ def chat_stream(request: ChatRequest):
 @router.get("/lessons")
 async def list_lessons(user_id: int = None):
     """
-    List all available lessons (metadata only: id, title, description, xp_reward, topic, track, module, order).
-    Returns an empty list if the lessons directory doesn't exist yet.
-    If user_id is provided, also includes generated lessons from the database and filters/sorts
-    lessons based on the user's onboarding profile (skill_level, goal).
+    List all available lessons, personalized to the user's onboarding profile.
+
+    Routing logic based on motivation & goal:
+    - hobby / automation / games  → fun_automation track first, then python_fundamentals
+    - ai_ml / data_science        → ai_ml_foundations + deep_learning tracks prioritized
+    - career_switch / work        → python_fundamentals first (solid foundation)
+    - student                     → python_fundamentals first, all tracks visible
+
+    Skill level further refines visibility:
+    - beginner    → only beginner-friendly tracks shown as recommended
+    - intermediate → most tracks visible
+    - advanced    → everything visible
     """
     if not LESSONS_DIR.exists():
         return {"lessons": []}
@@ -321,27 +329,75 @@ async def list_lessons(user_id: int = None):
         lessons = _list_all_lessons(user_id=user_id)
 
         if user_id:
-            # Get user profile for filtering
             try:
                 conn = sqlite3.connect(_get_db_path())
                 conn.row_factory = sqlite3.Row
                 profile = conn.execute(
-                    "SELECT skill_level, goal FROM user_profiles WHERE user_id = ?", [user_id]
+                    "SELECT skill_level, goal, motivation FROM user_profiles WHERE user_id = ?",
+                    [user_id],
                 ).fetchone()
                 conn.close()
 
                 if profile:
                     skill_level = profile["skill_level"] or "beginner"
+                    goal = profile["goal"] or ""
+                    motivation = profile["motivation"] or ""
 
-                    # Define track visibility by skill level
-                    track_order = {
-                        "beginner": ["python_fundamentals"],
-                        "intermediate": ["python_fundamentals", "ai_ml_foundations"],
-                        "advanced": ["python_fundamentals", "ai_ml_foundations", "deep_learning"],
+                    # Parse comma-separated multi-select values
+                    goals = set(g.strip() for g in goal.split(",") if g.strip())
+                    motivations = set(m.strip() for m in motivation.split(",") if m.strip())
+
+                    # ── Determine primary track order based on motivation + goal ──
+
+                    # Check if user is hobby/fun/automation oriented
+                    is_hobby = bool(
+                        motivations & {"hobby"}
+                        or goals & {"automation", "games"}
+                    )
+                    # Check if user is AI/ML/Data Science oriented
+                    is_ai_ml = bool(
+                        motivations & {"ai_ml", "data_science"}
+                        or goals & {"ai_ml", "data_science"}
+                    )
+                    # Check if user is career/work oriented
+                    is_career = bool(
+                        motivations & {"career_switch", "work"}
+                        or goals & {"web"}
+                    )
+
+                    # Build prioritized track list based on profile
+                    if is_hobby:
+                        # Fun/automation users see fun_automation first, then fundamentals
+                        primary_tracks = ["fun_automation", "python_fundamentals"]
+                        secondary_tracks = ["ai_ml_foundations", "deep_learning"]
+                    elif is_ai_ml:
+                        # AI/ML users see fundamentals → AI/ML → Deep Learning
+                        primary_tracks = ["python_fundamentals", "ai_ml_foundations", "deep_learning"]
+                        secondary_tracks = ["fun_automation"]
+                    elif is_career:
+                        # Career-focused: solid fundamentals first, then everything else
+                        primary_tracks = ["python_fundamentals"]
+                        secondary_tracks = ["fun_automation", "ai_ml_foundations", "deep_learning"]
+                    else:
+                        # Student / unknown: balanced view — fundamentals first
+                        primary_tracks = ["python_fundamentals", "fun_automation"]
+                        secondary_tracks = ["ai_ml_foundations", "deep_learning"]
+
+                    # ── Apply skill level visibility filter ──
+
+                    skill_visible = {
+                        "beginner": {"python_fundamentals", "fun_automation"},
+                        "intermediate": {"python_fundamentals", "fun_automation", "ai_ml_foundations"},
+                        "advanced": {"python_fundamentals", "fun_automation", "ai_ml_foundations", "deep_learning"},
                     }
-                    visible_tracks = track_order.get(skill_level, ["python_fundamentals"])
+                    visible_tracks = skill_visible.get(skill_level, {"python_fundamentals", "fun_automation"})
 
-                    # Mark lessons as recommended or locked
+                    # Always add primary tracks to visible (so hobby beginners see fun_automation)
+                    for t in primary_tracks:
+                        visible_tracks.add(t)
+
+                    # ── Mark recommended / locked ──
+
                     for lesson in lessons:
                         track = lesson.get("track", "")
                         if track in visible_tracks or track == "generated":
@@ -349,13 +405,12 @@ async def list_lessons(user_id: int = None):
                         else:
                             lesson["recommended"] = False
 
-                    # Guarantee at least 3 recommended lessons — if the user's
-                    # visible tracks don't have enough, promote from next tracks
+                    # Guarantee at least 3 recommended lessons
                     MIN_RECOMMENDED = 3
                     recommended_count = sum(1 for l in lessons if l.get("recommended"))
                     if recommended_count < MIN_RECOMMENDED:
-                        all_tracks = ["python_fundamentals", "ai_ml_foundations", "deep_learning"]
-                        for fallback_track in all_tracks:
+                        all_tracks_fallback = primary_tracks + secondary_tracks
+                        for fallback_track in all_tracks_fallback:
                             if recommended_count >= MIN_RECOMMENDED:
                                 break
                             for lesson in lessons:
@@ -365,13 +420,31 @@ async def list_lessons(user_id: int = None):
                                     lesson["recommended"] = True
                                     recommended_count += 1
 
-                    # Sort: recommended first, then by track order, then by module order
-                    track_priority = {t: i for i, t in enumerate(["python_fundamentals", "ai_ml_foundations", "deep_learning", "generated"])}
+                    # ── Sort: recommended first, primary tracks first, then order ──
+
+                    all_ordered_tracks = primary_tracks + secondary_tracks + ["generated"]
+                    track_priority = {t: i for i, t in enumerate(all_ordered_tracks)}
+
                     lessons.sort(key=lambda l: (
                         0 if l.get("recommended") else 1,
                         track_priority.get(l.get("track", ""), 99),
                         l.get("order", 0),
                     ))
+
+                    # ── Add profile_hint for frontend personalization ──
+                    profile_hint = "general"
+                    if is_hobby:
+                        profile_hint = "hobby"
+                    elif is_ai_ml:
+                        profile_hint = "ai_ml"
+                    elif is_career:
+                        profile_hint = "career"
+
+                    return {
+                        "lessons": lessons,
+                        "profile_hint": profile_hint,
+                        "primary_tracks": primary_tracks,
+                    }
             except Exception:
                 pass
 
