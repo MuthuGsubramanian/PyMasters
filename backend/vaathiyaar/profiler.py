@@ -197,11 +197,13 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT user_id, motivation, prior_experience, known_languages,
-                   learning_style, goal, time_commitment, preferred_language,
-                   skill_level, diagnostic_score, onboarding_completed, created_at
-            FROM user_profiles
-            WHERE user_id = ?
+            SELECT up.user_id, up.motivation, up.prior_experience, up.known_languages,
+                   up.learning_style, up.goal, up.time_commitment, up.preferred_language,
+                   up.skill_level, up.diagnostic_score, up.onboarding_completed, up.created_at,
+                   u.username, u.name
+            FROM user_profiles up
+            LEFT JOIN users u ON u.id = up.user_id
+            WHERE up.user_id = ?
         """, [user_id])
         row = cursor.fetchone()
 
@@ -221,6 +223,8 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
             "diagnostic_score": row[9],
             "onboarding_completed": row[10],
             "created_at": row[11],
+            "username": row[12],
+            "name": row[13],
         }
         profile["skill_level"] = profile.get("skill_level") or "beginner"
     finally:
