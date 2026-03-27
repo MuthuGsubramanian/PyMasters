@@ -1,0 +1,267 @@
+{
+  "id": "linked_lists",
+  "topic": "linked_lists",
+  "track": "dsa",
+  "module": "linear_structures",
+  "order": 3,
+  "title": {
+    "en": "Linked Lists: Chain of Nodes",
+    "ta": "இணைப்பு பட்டியல்கள்: முனைகளின் சங்கிலி"
+  },
+  "description": {
+    "en": "Build singly and doubly linked lists from scratch. Understand node-based data structures and pointer manipulation.",
+    "ta": "ஒற்றை மற்றும் இரட்டை இணைப்பு பட்டியல்களை புதிதாக உருவாக்குங்கள். முனை அடிப்படையிலான தரவு கட்டமைப்புகளை புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Paper Chain\n\nVaathiyaar holds up a paper chain. \"Each link knows only the next one. To find the 5th link, you must start at the first and follow the chain!\"\n\n### What is a Linked List?\n- A sequence of **nodes** connected by **pointers**\n- Each node holds **data** and a **reference** to the next node\n- No random access — must traverse from the head\n- Dynamic size — no need to declare capacity upfront\n\n### Singly Linked List\n\n```python\nclass Node:\n    def __init__(self, data):\n        self.data = data\n        self.next = None\n\nclass LinkedList:\n    def __init__(self):\n        self.head = None\n\n    def append(self, data):\n        new_node = Node(data)\n        if not self.head:\n            self.head = new_node\n            return\n        current = self.head\n        while current.next:\n            current = current.next\n        current.next = new_node\n\n    def display(self):\n        elements = []\n        current = self.head\n        while current:\n            elements.append(str(current.data))\n            current = current.next\n        return ' -> '.join(elements)\n```\n\n### List vs Linked List\n\n| Operation | List | Linked List |\n|-----------|------|-------------|\n| Access by index | O(1) | O(n) |\n| Append | O(1)* | O(n)** |\n| Insert at head | O(n) | O(1) |\n| Delete at head | O(n) | O(1) |\n\n*amortized, **O(1) if tail pointer maintained\n\n> **Key Concept:** Linked lists shine when you need frequent insertions/deletions at the beginning. Lists win for random access."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "paper_chain",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Linked List",
+          "children": [
+            "Node (data + next)",
+            "Head pointer",
+            "Traversal O(n)",
+            "Insert at head O(1)",
+            "No random access"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_linkedlist",
+      "steps": [
+        {
+          "line": "class Node:",
+          "highlight": "Node",
+          "explanation": {
+            "en": "Define the Node class — the building block of our linked list",
+            "ta": "Node class-ஐ வரையறுக்கவும் — நமது இணைப்பு பட்டியலின் கட்டுமானத் தொகுதி"
+          }
+        },
+        {
+          "line": "    def __init__(self, data):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Each node is initialized with data and a next pointer",
+            "ta": "ஒவ்வொரு முனையும் data மற்றும் next pointer உடன் துவக்கப்படும்"
+          }
+        },
+        {
+          "line": "        self.data = data",
+          "highlight": "self.data",
+          "explanation": {
+            "en": "Store the actual value in this node",
+            "ta": "இந்த முனையில் உண்மையான மதிப்பை சேமிக்கவும்"
+          }
+        },
+        {
+          "line": "        self.next = None",
+          "highlight": "self.next",
+          "explanation": {
+            "en": "Initially, this node points to nothing (end of chain)",
+            "ta": "ஆரம்பத்தில், இந்த முனை எதையும் சுட்டிக்காட்டாது (சங்கிலியின் முடிவு)"
+          }
+        },
+        {
+          "line": "class LinkedList:",
+          "highlight": "LinkedList",
+          "explanation": {
+            "en": "The LinkedList class manages the chain of nodes",
+            "ta": "LinkedList class முனைகளின் சங்கிலியை நிர்வகிக்கும்"
+          }
+        },
+        {
+          "line": "    def __init__(self):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Start with an empty list — head is None",
+            "ta": "காலி பட்டியலுடன் தொடங்குங்கள் — head None ஆக இருக்கும்"
+          }
+        },
+        {
+          "line": "        self.head = None",
+          "highlight": "self.head",
+          "explanation": {
+            "en": "The head pointer is our entry point to the list",
+            "ta": "head pointer பட்டியலுக்கான நமது நுழைவு புள்ளி"
+          }
+        },
+        {
+          "line": "    def prepend(self, data):",
+          "highlight": "prepend",
+          "explanation": {
+            "en": "Insert at the beginning — O(1) operation!",
+            "ta": "தொடக்கத்தில் செருகுங்கள் — O(1) செயல்பாடு!"
+          }
+        },
+        {
+          "line": "        new_node = Node(data)",
+          "highlight": "new_node",
+          "explanation": {
+            "en": "Create a new node with the given data",
+            "ta": "கொடுக்கப்பட்ட தரவுடன் ஒரு புதிய முனையை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "        new_node.next = self.head",
+          "highlight": "new_node.next",
+          "explanation": {
+            "en": "Point new node to current head — linking it into the chain",
+            "ta": "புதிய முனையை தற்போதைய head-க்கு சுட்டவும் — சங்கிலியில் இணைக்கவும்"
+          }
+        },
+        {
+          "line": "        self.head = new_node",
+          "highlight": "self.head",
+          "explanation": {
+            "en": "Update head to the new node — it's now the first element",
+            "ta": "head-ஐ புதிய முனைக்கு புதுப்பிக்கவும் — இது இப்போது முதல் உறுப்பு"
+          }
+        },
+        {
+          "line": "ll = LinkedList()",
+          "highlight": "ll",
+          "explanation": {
+            "en": "Create an empty linked list",
+            "ta": "காலி இணைப்பு பட்டியலை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "for val in [3, 2, 1]:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Add 3, 2, 1 using prepend — list becomes 1 -> 2 -> 3",
+            "ta": "prepend பயன்படுத்தி 3, 2, 1 சேர்க்கவும் — பட்டியல் 1 -> 2 -> 3 ஆகும்"
+          }
+        },
+        {
+          "line": "    ll.prepend(val)",
+          "highlight": "prepend",
+          "explanation": {
+            "en": "Each prepend is O(1) — just update two pointers",
+            "ta": "ஒவ்வொரு prepend-ம் O(1) — இரண்டு pointers-ஐ புதுப்பிக்கவும்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "linkedlist_visual",
+      "structure_type": "list",
+      "initial_state": [],
+      "animations": [
+        {"action": "add", "index": 0, "value": 3},
+        {"action": "add", "index": 0, "value": 2},
+        {"action": "add", "index": 0, "value": 1}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_head",
+      "variable": "head",
+      "value": "Node(1)",
+      "data_type": "Node",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_chain",
+      "variable": "chain",
+      "value": "1 -> 2 -> 3 -> None",
+      "data_type": "str",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "1 -> 2 -> 3 -> None",
+        "Length: 3",
+        "Prepend 0: 0 -> 1 -> 2 -> 3 -> None",
+        "Delete 2: 0 -> 1 -> 3 -> None"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a complete LinkedList class with append, prepend, delete, search, and display methods. Then reverse the linked list in-place.",
+        "ta": "append, prepend, delete, search மற்றும் display methods உடன் ஒரு முழுமையான LinkedList class-ஐ செயல்படுத்துங்கள். பின்னர் இணைப்பு பட்டியலை in-place தலைகீழாக மாற்றுங்கள்."
+      },
+      "starter_code": "class Node:\n    def __init__(self, data):\n        self.data = data\n        self.next = None\n\nclass LinkedList:\n    def __init__(self):\n        self.head = None\n\n    def append(self, data):\n        # Add to end\n        pass\n\n    def prepend(self, data):\n        # Add to beginning\n        pass\n\n    def delete(self, data):\n        # Delete first occurrence\n        pass\n\n    def reverse(self):\n        # Reverse in-place\n        pass\n\n    def display(self):\n        elements = []\n        current = self.head\n        while current:\n            elements.append(str(current.data))\n            current = current.next\n        return ' -> '.join(elements)\n\nll = LinkedList()\nfor v in [1, 2, 3, 4, 5]:\n    ll.append(v)\nprint(ll.display())\nll.reverse()\nprint(ll.display())",
+      "expected_output": "1 -> 2 -> 3 -> 4 -> 5\n5 -> 4 -> 3 -> 2 -> 1",
+      "hints": {
+        "en": [
+          "For append: traverse to the last node, then set its .next",
+          "For prepend: create node, point it to head, update head",
+          "For reverse: use three pointers — prev, current, next_node"
+        ],
+        "ta": [
+          "append-க்கு: கடைசி முனைக்கு சென்று .next-ஐ அமைக்கவும்",
+          "prepend-க்கு: முனையை உருவாக்கி head-க்கு சுட்டி head-ஐ புதுப்பிக்கவும்",
+          "reverse-க்கு: மூன்று pointers பயன்படுத்துங்கள் — prev, current, next_node"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the time complexity of inserting at the head of a singly linked list?",
+        "ta": "ஒற்றை இணைப்பு பட்டியலின் தலையில் செருகுவதன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(1)", "O(log n)", "O(n²)"],
+        "ta": ["O(n)", "O(1)", "O(log n)", "O(n²)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the last node's 'next' pointer point to in a singly linked list?",
+        "ta": "ஒற்றை இணைப்பு பட்டியலில் கடைசி முனையின் 'next' pointer எதை சுட்டிக்காட்டுகிறது?"
+      },
+      "options": {
+        "en": ["The head node", "The previous node", "None", "Itself"],
+        "ta": ["தலை முனை", "முந்தைய முனை", "None", "தன்னையே"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the main disadvantage of a linked list compared to an array?",
+        "ta": "அணியுடன் ஒப்பிடும்போது இணைப்பு பட்டியலின் முக்கிய குறைபாடு என்ன?"
+      },
+      "options": {
+        "en": ["Cannot store data", "No random access (O(n) to reach index)", "Fixed size", "Cannot be sorted"],
+        "ta": ["தரவை சேமிக்க முடியாது", "சீரற்ற அணுகல் இல்லை (குறியீட்டை அடைய O(n))", "நிலையான அளவு", "வரிசைப்படுத்த முடியாது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["linked_list", "nodes", "pointers", "traversal"],
+    "concepts_required": ["classes", "loops"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["undo_systems", "browser_history"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

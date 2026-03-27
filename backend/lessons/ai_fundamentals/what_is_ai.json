@@ -1,0 +1,247 @@
+{
+  "id": "what_is_ai",
+  "topic": "what_is_ai",
+  "track": "ai_fundamentals",
+  "module": "ai_foundations",
+  "order": 1,
+  "title": {
+    "en": "What is AI? A Journey Through Intelligence",
+    "ta": "AI என்றால் என்ன? நுண்ணறிவின் வழியே ஒரு பயணம்"
+  },
+  "description": {
+    "en": "Explore the history of artificial intelligence, understand the different types of AI, and survey the current landscape of AI technologies.",
+    "ta": "செயற்கை நுண்ணறிவின் வரலாற்றை ஆராயுங்கள், AI-ன் வெவ்வேறு வகைகளைப் புரிந்துகொள்ளுங்கள், தற்போதைய AI தொழில்நுட்ப நிலப்பரப்பை கணக்கெடுங்கள்."
+  },
+  "xp_reward": 50,
+  "next_unlock": "prompt_engineering_basics",
+  "story_variants": {
+    "en": "## Vaathiyaar's AI Chronicle\n\nVaathiyaar stands before a timeline stretching from 1950 to 2026. \"Students, AI is not new — it began when Alan Turing asked 'Can machines think?' in 1950. Let me walk you through the most fascinating journey in computing history.\"\n\n### The Three Waves of AI\n\n**Wave 1 — Symbolic AI (1956-1990s)**\n- Rule-based systems, expert systems\n- \"If X then Y\" logic\n- Good at chess, bad at conversation\n\n**Wave 2 — Machine Learning (1990s-2017)**\n- Learn patterns from data\n- Neural networks, decision trees\n- Spam filters, recommendation engines\n\n**Wave 3 — Generative AI (2017-present)**\n- Transformers and attention mechanism\n- GPT, Claude, DALL-E, Stable Diffusion\n- Creates text, images, code, music\n\n### Types of AI\n\n| Type | Description | Example |\n|------|-------------|--------|\n| Narrow AI (ANI) | One specific task | Chess engine, spam filter |\n| General AI (AGI) | Human-level reasoning | Does not exist yet |\n| Super AI (ASI) | Beyond human | Theoretical only |\n\n> **Key Insight:** Everything you use today — ChatGPT, Claude, Copilot — is Narrow AI. Extremely capable at specific tasks, but not general intelligence.",
+    "ta": "## வாத்தியாரின் AI வரலாறு\n\nவாத்தியார் 1950 முதல் 2026 வரை நீண்ட ஒரு காலவரிசையின் முன் நிற்கிறார். \"மாணவர்களே, AI புதியது அல்ல — 1950-ல் அலன் டூரிங் 'இயந்திரங்கள் சிந்திக்க முடியுமா?' என்று கேட்டபோது தொடங்கியது.\"\n\n### AI-ன் மூன்று அலைகள்\n\n**அலை 1 — குறியீட்டு AI (1956-1990கள்)**\n- விதிமுறை அடிப்படையிலான அமைப்புகள்\n- \"X என்றால் Y\" தர்க்கம்\n\n**அலை 2 — இயந்திர கற்றல் (1990கள்-2017)**\n- தரவிலிருந்து வடிவங்களைக் கற்றல்\n- நரம்பு வலையமைப்புகள்\n\n**அலை 3 — உருவாக்கும் AI (2017-தற்போது)**\n- Transformers மற்றும் கவனிப்பு வழிமுறை\n- உரை, படங்கள், குறியீடு உருவாக்குகிறது"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "ai_timeline",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ai_types_map",
+      "nodes": [
+        {
+          "label": "Artificial Intelligence",
+          "children": [
+            "Narrow AI (ANI)",
+            "General AI (AGI)",
+            "Super AI (ASI)"
+          ]
+        },
+        {
+          "label": "Current AI Landscape",
+          "children": [
+            "Large Language Models",
+            "Computer Vision",
+            "Robotics",
+            "Generative AI"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "ai_demo_code",
+      "steps": [
+        {
+          "line": "# Traditional programming vs AI",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's see the fundamental difference between traditional code and AI"
+          }
+        },
+        {
+          "line": "# Traditional: explicit rules",
+          "highlight": "comment",
+          "explanation": {
+            "en": "In traditional programming, the developer writes every rule"
+          }
+        },
+        {
+          "line": "def is_spam_traditional(email):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Define a function with hand-coded rules for spam detection"
+          }
+        },
+        {
+          "line": "    keywords = ['buy now', 'free', 'winner', 'click here']",
+          "highlight": "keywords",
+          "explanation": {
+            "en": "Manually list every spam keyword — tedious and incomplete"
+          }
+        },
+        {
+          "line": "    return any(kw in email.lower() for kw in keywords)",
+          "highlight": "return",
+          "explanation": {
+            "en": "Check if any keyword is found — misses creative spammers"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's see the AI approach"
+          }
+        },
+        {
+          "line": "# AI approach: learn from data",
+          "highlight": "comment",
+          "explanation": {
+            "en": "AI learns patterns from thousands of examples instead of hand-coded rules"
+          }
+        },
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import an AI client — we'll learn this API in detail later"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Create a connection to the AI service"
+          }
+        },
+        {
+          "line": "response = client.chat.completions.create(",
+          "highlight": "response",
+          "explanation": {
+            "en": "Ask the AI to classify the email — it understands context and nuance"
+          }
+        },
+        {
+          "line": "    model='gpt-4o-mini',",
+          "highlight": "model",
+          "explanation": {
+            "en": "Choose which AI model to use — different models have different capabilities"
+          }
+        },
+        {
+          "line": "    messages=[{'role': 'user', 'content': f'Is this spam? {email}'}]",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Send the email text and ask the AI to classify it"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "The AI returns its classification based on patterns learned from millions of examples"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_ai_type",
+      "variable": "ai_type",
+      "value": "Narrow AI (ANI)",
+      "data_type": "str",
+      "color": "#7c3aed"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_model",
+      "variable": "model_name",
+      "value": "gpt-4o-mini",
+      "data_type": "str",
+      "color": "#059669"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> is_spam_traditional('You are the WINNER! Click here!')",
+        "True",
+        "",
+        ">>> # But the AI approach understands context:",
+        ">>> # 'Congratulations on winning the science fair!'",
+        ">>> # AI correctly identifies this as NOT spam",
+        ">>> # while rule-based would flag 'winning' as spam"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a dictionary that categorizes AI applications into three types: 'narrow_ai', 'general_ai', and 'generative_ai'. Add at least 2 examples for narrow_ai and generative_ai. Print each category with its examples.",
+        "ta": "AI பயன்பாடுகளை மூன்று வகைகளாக வகைப்படுத்தும் அகராதியை உருவாக்குங்கள்: 'narrow_ai', 'general_ai', 'generative_ai'. narrow_ai மற்றும் generative_ai க்கு குறைந்தது 2 எடுத்துக்காட்டுகள் சேர்க்கவும்."
+      },
+      "starter_code": "# Categorize AI applications\nai_categories = {\n    'narrow_ai': [],\n    'general_ai': [],\n    'generative_ai': []\n}\n\n# Add examples to each category\n# Your code here\n\n# Print each category\nfor category, examples in ai_categories.items():\n    print(f'{category}: {examples}')",
+      "expected_output": "narrow_ai: ['spam filter', 'chess engine']\ngeneral_ai: ['does not exist yet']\ngenerative_ai: ['ChatGPT', 'DALL-E']",
+      "hints": {
+        "en": [
+          "Use list append or direct assignment: ai_categories['narrow_ai'] = ['spam filter', 'chess engine']",
+          "General AI doesn't exist yet — you can note that",
+          "Generative AI examples: ChatGPT, Claude, DALL-E, Stable Diffusion"
+        ],
+        "ta": [
+          "list append அல்லது நேரடி ஒதுக்கீடு பயன்படுத்துங்கள்",
+          "General AI இன்னும் இல்லை — அதைக் குறிப்பிடலாம்",
+          "Generative AI எடுத்துக்காட்டுகள்: ChatGPT, Claude, DALL-E"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "When did the field of AI officially begin?",
+        "ta": "AI துறை அதிகாரப்பூர்வமாக எப்போது தொடங்கியது?"
+      },
+      "options": {
+        "en": ["2022", "1956", "2017", "1990"],
+        "ta": ["2022", "1956", "2017", "1990"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What type of AI is ChatGPT?",
+        "ta": "ChatGPT எந்த வகை AI?"
+      },
+      "options": {
+        "en": ["Artificial General Intelligence", "Narrow AI", "Super AI", "Symbolic AI"],
+        "ta": ["பொது செயற்கை நுண்ணறிவு", "குறுகிய AI", "சூப்பர் AI", "குறியீட்டு AI"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which architecture powers modern LLMs like GPT and Claude?",
+        "ta": "GPT மற்றும் Claude போன்ற நவீன LLM-களை எந்த கட்டமைப்பு இயக்குகிறது?"
+      },
+      "options": {
+        "en": ["Decision Trees", "Recurrent Neural Networks", "Transformers", "Support Vector Machines"],
+        "ta": ["முடிவு மரங்கள்", "மீண்டும் வரும் நரம்பு வலையமைப்புகள்", "Transformers", "Support Vector Machines"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["ai_history", "ai_types", "narrow_ai", "generative_ai"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 20,
+    "real_world_application": ["understanding_ai_landscape"],
+    "category": "ai_core",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "id": "random_forests",
+  "topic": "random_forests",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 11,
+  "title": {
+    "en": "Random Forests: Wisdom of the Crowd",
+    "ta": "ரேண்டம் ஃபாரஸ்ட்கள்: கூட்டத்தின் ஞானம்"
+  },
+  "description": {
+    "en": "Learn ensemble methods, bagging, how random forests combine multiple decision trees, and how to interpret feature importance scores.",
+    "ta": "கூட்டு முறைகள், பேக்கிங், ரேண்டம் ஃபாரஸ்ட்கள் பல முடிவு மரங்களை எவ்வாறு இணைக்கின்றன, மற்றும் அம்ச முக்கியத்துவ மதிப்பெண்களை விளக்குதல்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Council of Trees\n\nVaathiyaar gathers 100 students. \"One student might guess wrong. But if 100 students vote, the majority is usually right. That's ensemble learning — many weak learners become one strong learner.\"\n\n### How Random Forests Work\n\n**Bagging (Bootstrap Aggregating)**:\n1. Create N random subsets of data (with replacement)\n2. Train one decision tree on each subset\n3. Each tree also sees a random subset of features\n4. Final prediction = majority vote (classification) or average (regression)\n\n**Why it works**: Each tree makes different errors. Averaging cancels out individual mistakes.\n\n```python\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.datasets import load_wine\nfrom sklearn.model_selection import train_test_split\nimport numpy as np\n\nX, y = load_wine(return_X_y=True)\nfeature_names = load_wine().feature_names\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nrf = RandomForestClassifier(n_estimators=100, random_state=42)\nrf.fit(X_train, y_train)\n\nprint(f'Accuracy: {rf.score(X_test, y_test):.3f}')\n\n# Feature importance\nimportances = rf.feature_importances_\nfor name, imp in sorted(zip(feature_names, importances), key=lambda x: -x[1])[:5]:\n    print(f'{name}: {imp:.4f}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "forest_council",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rf_map",
+      "nodes": [
+        {
+          "label": "Random Forest",
+          "children": ["Bagging", "Feature Randomness", "Majority Vote", "Feature Importance"]
+        },
+        {
+          "label": "Ensemble Methods",
+          "children": ["Bagging (Random Forest)", "Boosting (XGBoost)", "Stacking"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rf_code",
+      "steps": [
+        {
+          "line": "from sklearn.ensemble import RandomForestClassifier",
+          "highlight": "RandomForestClassifier",
+          "explanation": { "en": "Import the random forest — an ensemble of decision trees" }
+        },
+        {
+          "line": "from sklearn.datasets import load_wine",
+          "highlight": "load_wine",
+          "explanation": { "en": "Wine dataset: 178 samples, 13 chemical features, 3 classes" }
+        },
+        {
+          "line": "X, y = load_wine(return_X_y=True)",
+          "highlight": "X, y",
+          "explanation": { "en": "Load features and target labels" }
+        },
+        {
+          "line": "feature_names = load_wine().feature_names",
+          "highlight": "feature_names",
+          "explanation": { "en": "Store feature names for importance analysis later" }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
+          "highlight": "train_test_split",
+          "explanation": { "en": "Standard 80/20 split" }
+        },
+        {
+          "line": "rf = RandomForestClassifier(n_estimators=100, random_state=42)",
+          "highlight": "n_estimators=100",
+          "explanation": { "en": "Create a forest of 100 decision trees" }
+        },
+        {
+          "line": "rf.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train all 100 trees — each on a different bootstrap sample" }
+        },
+        {
+          "line": "print(f'Train Accuracy: {rf.score(X_train, y_train):.3f}')",
+          "highlight": "Train",
+          "explanation": { "en": "Training accuracy — usually very high for random forests" }
+        },
+        {
+          "line": "print(f'Test Accuracy: {rf.score(X_test, y_test):.3f}')",
+          "highlight": "Test",
+          "explanation": { "en": "Test accuracy — the real measure of generalization" }
+        },
+        {
+          "line": "importances = rf.feature_importances_",
+          "highlight": "feature_importances_",
+          "explanation": { "en": "Each feature gets an importance score — how much it helps reduce impurity" }
+        },
+        {
+          "line": "import numpy as np; top_idx = np.argsort(importances)[::-1][:5]",
+          "highlight": "argsort",
+          "explanation": { "en": "Sort features by importance — find the top 5 most important" }
+        },
+        {
+          "line": "for i in top_idx: print(f'{feature_names[i]}: {importances[i]:.4f}')",
+          "highlight": "print",
+          "explanation": { "en": "Display top features — these drive the model's decisions most" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_n_trees",
+      "variable": "n_estimators",
+      "value": 100,
+      "data_type": "int",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_accuracy",
+      "variable": "test_accuracy",
+      "value": 1.0,
+      "data_type": "float",
+      "color": "#3498db"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Train Accuracy: 1.000",
+        "Test Accuracy: 1.000",
+        "Top 5 Feature Importances:",
+        "color_intensity: 0.1823",
+        "flavanoids: 0.1574",
+        "alcohol: 0.1321",
+        "proline: 0.1198",
+        "od280/od315_of_diluted_wines: 0.0821"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Compare a single DecisionTree with a RandomForest (50, 100, 200 trees) on the breast cancer dataset. Print test accuracy for each and the top 3 features from the best forest.",
+        "ta": "மார்பக புற்றுநோய் தரவுத்தொகுப்பில் ஒற்றை DecisionTree-ஐ RandomForest (50, 100, 200 மரங்கள்) உடன் ஒப்பிடுங்கள். ஒவ்வொன்றிற்கும் சோதனை துல்லியத்தை அச்சிட்டு, சிறந்த ஃபாரஸ்ட்டின் முதல் 3 அம்சங்களைக் காட்டுங்கள்."
+      },
+      "starter_code": "from sklearn.datasets import load_breast_cancer\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import train_test_split\nimport numpy as np\n\ndata = load_breast_cancer()\nX_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.2, random_state=42)\n\n# Single tree\ndt = DecisionTreeClassifier(random_state=42)\ndt.fit(X_train, y_train)\nprint(f'Decision Tree: {dt.score(X_test, y_test):.3f}')\n\n# Random forests\nfor n in [50, 100, 200]:\n    rf = RandomForestClassifier(n_estimators=___, random_state=42)\n    rf.fit(X_train, y_train)\n    print(f'RF (n={n}): {rf.score(X_test, y_test):.3f}')\n\n# Top 3 features from RF-200\ntop_idx = np.argsort(rf.feature_importances_)[::-1][:3]\nfor i in top_idx:\n    print(f'{data.feature_names[i]}: {rf.feature_importances_[i]:.4f}')",
+      "expected_output": "Decision Tree: 0.956\nRF (n=50): 0.965\nRF (n=100): 0.965\nRF (n=200): 0.974",
+      "hints": {
+        "en": [
+          "Set n_estimators=n in the loop",
+          "Random forests almost always outperform single trees",
+          "More trees generally help but with diminishing returns"
+        ],
+        "ta": [
+          "வளையத்தில் n_estimators=n அமைக்கவும்",
+          "ரேண்டம் ஃபாரஸ்ட்கள் ஒற்றை மரங்களை கிட்டத்தட்ட எப்போதும் மிஞ்சும்",
+          "அதிக மரங்கள் பொதுவாக உதவும் ஆனால் குறைந்து வரும் பலன்களுடன்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is bagging in ensemble learning?",
+        "ta": "கூட்டு கற்றலில் பேக்கிங் என்றால் என்ன?"
+      },
+      "options": {
+        "en": ["Training models in sequence", "Training models on random subsets with replacement and averaging", "Using a single large tree", "Removing outliers"],
+        "ta": ["மாடல்களை வரிசையாகப் பயிற்சி செய்தல்", "மாற்றீட்டுடன் சீரற்ற துணைக்குழுக்களில் மாடல்களைப் பயிற்சித்து சராசரி எடுத்தல்", "ஒற்றை பெரிய மரத்தைப் பயன்படுத்துதல்", "வெளிப்புற மதிப்புகளை நீக்குதல்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does a random forest consider only a subset of features at each split?",
+        "ta": "ரேண்டம் ஃபாரஸ்ட் ஒவ்வொரு பிரிப்பிலும் அம்சங்களின் ஒரு துணைக்குழுவை மட்டும் ஏன் கருதுகிறது?"
+      },
+      "options": {
+        "en": ["To save memory", "To decorrelate trees so they make different errors", "To speed up prediction", "To reduce the number of features"],
+        "ta": ["நினைவகத்தை சேமிக்க", "மரங்கள் வெவ்வேறு பிழைகளை செய்ய தொடர்பின்மையாக்க", "கணிப்பை வேகப்படுத்த", "அம்சங்களின் எண்ணிக்கையைக் குறைக்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does feature_importances_ represent in a random forest?",
+        "ta": "ரேண்டம் ஃபாரஸ்ட்டில் feature_importances_ என்ன குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["The weight of each feature in the linear model", "How much each feature contributes to reducing impurity across all trees", "The correlation between features", "The number of times each feature is used"],
+        "ta": ["நேரியல் மாடலில் ஒவ்வொரு அம்சத்தின் எடை", "அனைத்து மரங்களிலும் அசுத்தத்தைக் குறைக்க ஒவ்வொரு அம்சம் எவ்வளவு பங்களிக்கிறது", "அம்சங்களுக்கு இடையிலான தொடர்பு", "ஒவ்வொரு அம்சமும் பயன்படுத்தப்படும் எண்ணிக்கை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["random_forests", "bagging", "ensemble_methods", "feature_importance"],
+    "concepts_required": ["decision_trees", "train_test_split"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["fraud_detection", "recommendation", "feature_selection"],
+    "category": "machine_learning",
+    "path_memberships": ["supervised_learning"]
+  }
+}

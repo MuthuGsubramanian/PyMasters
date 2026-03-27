@@ -1,0 +1,203 @@
+{
+  "id": "dl_model_optimization",
+  "topic": "model_optimization",
+  "track": "deep_learning_complete",
+  "module": "deployment",
+  "order": 24,
+  "title": {
+    "en": "Model Optimization: Quantization, Pruning & ONNX",
+    "ta": "மாதிரி உகப்பாக்கம்: குவாண்டைசேஷன், ப்ருனிங் & ONNX"
+  },
+  "description": {
+    "en": "Optimize trained models for production: reduce size with quantization, speed up with pruning, and export to ONNX for cross-platform deployment.",
+    "ta": "பயிற்சி பெற்ற மாதிரிகளை உற்பத்திக்கு உகப்பாக்குங்கள்: quantization-ல் அளவைக் குறையுங்கள், pruning-ல் வேகப்படுத்துங்கள், ONNX-க்கு ஏற்றுமதி செய்யுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Deployment Day\n\nVaathiyaar holds a giant model and a tiny phone. \"Your 200MB model won't fit on a phone. Today we learn to make it smaller, faster, and portable — without sacrificing much accuracy.\"\n\n### Quantization: Shrink with Precision\n\n```python\nimport torch\nimport torch.nn as nn\nimport torch.quantization as quant\n\n# Original model\nclass SimpleNet(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.fc1 = nn.Linear(784, 256)\n        self.relu = nn.ReLU()\n        self.fc2 = nn.Linear(256, 10)\n    \n    def forward(self, x):\n        return self.fc2(self.relu(self.fc1(x)))\n\nmodel = SimpleNet()\nmodel.eval()\n\n# Dynamic quantization: float32 -> int8\nquantized_model = torch.quantization.quantize_dynamic(\n    model, {nn.Linear}, dtype=torch.qint8\n)\n\n# Compare sizes\ndef model_size(model):\n    torch.save(model.state_dict(), '/tmp/temp.pth')\n    import os\n    size = os.path.getsize('/tmp/temp.pth')\n    return size / 1024  # KB\n\nprint(f'Original: {model_size(model):.1f} KB')\nprint(f'Quantized: {model_size(quantized_model):.1f} KB')\n```\n\n### Pruning: Remove Unimportant Weights\n\n```python\nimport torch.nn.utils.prune as prune\n\n# Prune 30% of weights with lowest magnitude\nprune.l1_unstructured(model.fc1, name='weight', amount=0.3)\n\n# Check sparsity\nsparsity = 100. * float(torch.sum(model.fc1.weight == 0)) / model.fc1.weight.nelement()\nprint(f'Sparsity: {sparsity:.1f}%')  # 30.0%\n\n# Make pruning permanent\nprune.remove(model.fc1, 'weight')\n```\n\n### ONNX Export\n\n```python\nimport torch.onnx\n\nmodel.eval()\ndummy_input = torch.randn(1, 784)\n\ntorch.onnx.export(\n    model, dummy_input, 'model.onnx',\n    input_names=['input'], output_names=['output'],\n    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}\n)\nprint('Model exported to ONNX!')\n```\n\n> **Key Insight:** Quantization typically reduces model size by 4x (float32 -> int8) with less than 1% accuracy loss. Pruning can achieve 90% sparsity with minimal degradation!",
+    "ta": "## வாத்தியாரின் வரிசைப்படுத்தல் நாள்\n\nவாத்தியார் ஒரு பெரிய மாதிரி மற்றும் சிறிய தொலைபேசியை வைத்திருக்கிறார். \"உங்கள் 200MB மாதிரி தொலைபேசியில் பொருந்தாது. இன்று அதை சிறியதாக, வேகமாக, எடுத்துச் செல்லக்கூடியதாக மாற்ற கற்கிறோம்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "deployment_day",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "optimization_concepts",
+      "nodes": [
+        {
+          "label": "Model Optimization",
+          "children": [
+            "Quantization (float32->int8)",
+            "Pruning (remove weights)",
+            "Knowledge Distillation",
+            "ONNX Export",
+            "TorchScript (JIT)",
+            "Model Profiling"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "optimization_code",
+      "steps": [
+        {"line": "quantized = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)", "highlight": "quantize", "explanation": {"en": "Dynamic quantization: convert float32 weights to int8 at runtime. 4x smaller, faster inference"}},
+        {"line": "# Original: 803 KB, Quantized: 210 KB", "highlight": "size", "explanation": {"en": "Nearly 4x size reduction! Int8 uses 1 byte vs float32's 4 bytes per weight"}},
+        {"line": "prune.l1_unstructured(model.fc1, name='weight', amount=0.3)", "highlight": "prune", "explanation": {"en": "Remove 30% of weights with smallest absolute values. Sets them to zero"}},
+        {"line": "sparsity = torch.sum(model.fc1.weight == 0) / model.fc1.weight.nelement()", "highlight": "sparsity", "explanation": {"en": "Check what fraction of weights are zero. More sparsity = smaller effective model"}},
+        {"line": "prune.remove(model.fc1, 'weight')", "highlight": "permanent", "explanation": {"en": "Make pruning permanent: remove the pruning hooks and apply the mask to weights"}},
+        {"line": "torch.onnx.export(model, dummy_input, 'model.onnx', ...)", "highlight": "onnx", "explanation": {"en": "Export to ONNX: universal format readable by TensorRT, CoreML, ONNX Runtime, etc."}},
+        {"line": "dynamic_axes={'input': {0: 'batch_size'}}", "highlight": "dynamic", "explanation": {"en": "Allow variable batch size in ONNX model. Essential for production serving"}},
+        {"line": "scripted = torch.jit.script(model)", "highlight": "jit", "explanation": {"en": "TorchScript: compile model for C++ runtime. Removes Python dependency for deployment"}},
+        {"line": "scripted.save('model_scripted.pt')", "highlight": "save_jit", "explanation": {"en": "Save scripted model. Can be loaded in C++ or mobile without Python"}},
+        {"line": "# Profile: torch.profiler.profile()", "highlight": "profile", "explanation": {"en": "Use PyTorch profiler to find bottlenecks: which layers take most time/memory?"}}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "size_comparison",
+      "left": {"label": "Original Model", "content": "Size: 803 KB\nPrecision: float32\nAll weights active\nPython only"},
+      "right": {"label": "Optimized Model", "content": "Size: 150 KB (quantized + pruned)\nPrecision: int8\n70% weights active\nONNX: runs anywhere"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_original_size",
+      "variable": "original_size",
+      "value": "803 KB",
+      "data_type": "str",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_quantized_size",
+      "variable": "quantized_size",
+      "value": "210 KB",
+      "data_type": "str",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_accuracy_drop",
+      "variable": "accuracy_drop",
+      "value": "<1%",
+      "data_type": "str",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "optimization_flow",
+      "from": "trained_model",
+      "to": "deployed",
+      "steps": ["Train model", "Prune (30%)", "Quantize (int8)", "Export ONNX", "Deploy to edge/cloud"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "DataStructure",
+      "id": "deployment_targets",
+      "structure_type": "deployment",
+      "layers": [
+        {"name": "ONNX Runtime", "nodes": ["Server, Cloud"], "type": "cloud"},
+        {"name": "TorchScript", "nodes": ["C++ Backend"], "type": "server"},
+        {"name": "CoreML", "nodes": ["iOS/macOS"], "type": "mobile"},
+        {"name": "TFLite (via ONNX)", "nodes": ["Android"], "type": "mobile"}
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Quantization",
+        "Original size: 803.2 KB",
+        "Quantized size: 210.4 KB (3.8x smaller!)",
+        ">>> # Pruning",
+        "Sparsity after pruning: 30.0%",
+        ">>> # ONNX Export",
+        "Model exported to model.onnx",
+        ">>> # Accuracy comparison",
+        "Original accuracy: 97.2%",
+        "Quantized accuracy: 96.8% (only -0.4%!)"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "deployment_launch",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Take a trained MNIST classifier, apply progressive pruning (10%, 30%, 50%, 70%, 90%), measure accuracy at each level, and find the maximum pruning that maintains >95% accuracy. Then quantize and export to ONNX.",
+        "ta": "பயிற்சி பெற்ற MNIST வகைப்படுத்தியை எடுத்து, படிப்படியான pruning பயன்படுத்தி, ஒவ்வொரு நிலையிலும் துல்லியத்தை அளவிடுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.utils.prune as prune\n\nclass MNISTNet(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.fc1 = nn.Linear(784, 256)\n        self.fc2 = nn.Linear(256, 128)\n        self.fc3 = nn.Linear(128, 10)\n    \n    def forward(self, x):\n        x = torch.relu(self.fc1(x))\n        x = torch.relu(self.fc2(x))\n        return self.fc3(x)\n\nmodel = MNISTNet()\n# Pretend model is trained...\n\n# TODO: Apply pruning at 10%, 30%, 50%, 70%, 90%\n# TODO: Measure accuracy at each level\n# TODO: Quantize the best pruned model\n# TODO: Export to ONNX\n",
+      "expected_output": "10% pruning: 97.1%\n30% pruning: 96.8%\n50% pruning: 96.2%\n70% pruning: 95.1%\n90% pruning: 89.3%\nBest: 70% pruning (95.1% > 95% threshold)",
+      "hints": {
+        "en": [
+          "Loop through amounts: [0.1, 0.3, 0.5, 0.7, 0.9]",
+          "Apply prune.l1_unstructured to each Linear layer",
+          "Re-evaluate accuracy after each pruning level",
+          "Quantize with torch.quantization.quantize_dynamic"
+        ],
+        "ta": [
+          "amounts: [0.1, 0.3, 0.5, 0.7, 0.9] வழியாக loop செய்யுங்கள்",
+          "ஒவ்வொரு pruning நிலைக்குப் பிறகும் துல்லியத்தை மறு மதிப்பீடு செய்யுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does quantization do to model weights?",
+        "ta": "Quantization மாதிரி எடைகளுக்கு என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Removes them", "Converts from float32 to int8, reducing precision but also size", "Doubles them", "Converts to strings"],
+        "ta": ["அகற்றுகிறது", "Float32-லிருந்து int8-க்கு மாற்றுகிறது, துல்லியத்தைக் குறைத்து அளவையும் குறைக்கிறது", "இரட்டிப்பாக்குகிறது", "சரங்களாக மாற்றுகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the advantage of ONNX format?",
+        "ta": "ONNX வடிவமைப்பின் நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["It makes models more accurate", "It's a universal format that runs on any framework/platform", "It only works with PyTorch", "It increases model size"],
+        "ta": ["மாதிரிகளை மிகவும் துல்லியமாக ஆக்குகிறது", "எந்த framework/platform-லும் இயங்கும் உலகளாவிய வடிவமைப்பு", "PyTorch-உடன் மட்டுமே வேலை செய்கிறது", "மாதிரி அளவை அதிகரிக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does pruning with amount=0.5 do?",
+        "ta": "amount=0.5 உடன் pruning என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Removes 50% of layers", "Sets 50% of weights with smallest magnitude to zero", "Halves the learning rate", "Removes half the training data"],
+        "ta": ["50% அடுக்குகளை அகற்றுகிறது", "சிறிய அளவு கொண்ட 50% எடைகளை பூஜ்ஜியமாக அமைக்கிறது", "Learning rate-ஐ பாதியாகக் குறைக்கிறது", "பாதி பயிற்சி தரவை அகற்றுகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["quantization", "pruning", "onnx", "torchscript", "model_compression", "deployment"],
+    "concepts_required": ["pytorch_training", "pytorch_basics"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["edge_deployment", "mobile_ml", "production_serving"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

@@ -1,0 +1,259 @@
+{
+  "id": "recursion_fundamentals",
+  "topic": "recursion_fundamentals",
+  "track": "dsa",
+  "module": "recursion_dp",
+  "order": 15,
+  "title": {
+    "en": "Recursion: Functions That Call Themselves",
+    "ta": "Recursion: தன்னையே அழைக்கும் செயல்பாடுகள்"
+  },
+  "description": {
+    "en": "Understand recursive thinking, base cases, and the call stack. Solve classic problems using recursion.",
+    "ta": "recursive சிந்தனை, base cases மற்றும் call stack புரிந்துகொள்ளுங்கள். recursion பயன்படுத்தி பாரம்பரிய சிக்கல்களை தீர்க்கவும்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Russian Dolls\n\nVaathiyaar opens a Russian nesting doll. \"Open it, find a smaller one inside. Open that, find another. Keep going until you find the tiny solid doll. That's recursion — a function calls itself until it hits the **base case**!\"\n\n### Anatomy of Recursion\n1. **Base case** — When to stop (prevents infinite recursion)\n2. **Recursive case** — Break problem into smaller subproblem\n3. **Progress** — Each call must move toward the base case\n\n### Classic Examples\n\n```python\n# Factorial: n! = n × (n-1)!\ndef factorial(n):\n    if n <= 1:          # base case\n        return 1\n    return n * factorial(n - 1)  # recursive case\n\n# Fibonacci: fib(n) = fib(n-1) + fib(n-2)\ndef fibonacci(n):\n    if n <= 1:          # base case\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\n# Sum of a list\ndef sum_list(arr):\n    if not arr:         # base case: empty list\n        return 0\n    return arr[0] + sum_list(arr[1:])  # first + sum of rest\n```\n\n### The Call Stack\n\n```\nfactorial(4)\n  → 4 * factorial(3)\n    → 3 * factorial(2)\n      → 2 * factorial(1)\n        → returns 1        ← base case hit!\n      → returns 2 * 1 = 2\n    → returns 3 * 2 = 6\n  → returns 4 * 6 = 24\n```\n\n> **Key Concept:** Every recursive function can be written iteratively, but some problems (trees, fractals, backtracking) are **naturally** recursive."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "russian_dolls",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Recursion",
+          "children": [
+            "Base Case",
+            "Recursive Case",
+            "Call Stack",
+            "Stack Overflow",
+            "Recursive thinking"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_recursion",
+      "steps": [
+        {
+          "line": "def factorial(n):",
+          "highlight": "factorial",
+          "explanation": {
+            "en": "Compute n! recursively — n × (n-1) × ... × 1",
+            "ta": "n!-ஐ recursively கணக்கிடுங்கள் — n × (n-1) × ... × 1"
+          }
+        },
+        {
+          "line": "    if n <= 1:",
+          "highlight": "n <= 1",
+          "explanation": {
+            "en": "Base case: 0! = 1! = 1. Without this, recursion never stops!",
+            "ta": "Base case: 0! = 1! = 1. இது இல்லாமல், recursion நிற்காது!"
+          }
+        },
+        {
+          "line": "        return 1",
+          "highlight": "return 1",
+          "explanation": {
+            "en": "Return 1 — this starts the 'unwinding' of the call stack",
+            "ta": "1 திருப்புங்கள் — இது call stack-ன் 'unwinding'-ஐ தொடங்கும்"
+          }
+        },
+        {
+          "line": "    return n * factorial(n - 1)",
+          "highlight": "factorial(n - 1)",
+          "explanation": {
+            "en": "Recursive case: multiply n by factorial of (n-1)",
+            "ta": "Recursive case: n ஐ (n-1)-ன் factorial ஆல் பெருக்குங்கள்"
+          }
+        },
+        {
+          "line": "print(factorial(5))",
+          "highlight": "print",
+          "explanation": {
+            "en": "5! = 5×4×3×2×1 = 120",
+            "ta": "5! = 5×4×3×2×1 = 120"
+          }
+        },
+        {
+          "line": "def fibonacci(n):",
+          "highlight": "fibonacci",
+          "explanation": {
+            "en": "Fibonacci: each number is sum of the two before it",
+            "ta": "Fibonacci: ஒவ்வொரு எண்ணும் அதற்கு முன் உள்ள இரண்டின் கூட்டு"
+          }
+        },
+        {
+          "line": "    if n <= 1:",
+          "highlight": "n <= 1",
+          "explanation": {
+            "en": "Base cases: fib(0) = 0, fib(1) = 1",
+            "ta": "Base cases: fib(0) = 0, fib(1) = 1"
+          }
+        },
+        {
+          "line": "        return n",
+          "highlight": "return n",
+          "explanation": {
+            "en": "Return n itself for base cases (0 or 1)",
+            "ta": "Base cases-க்கு (0 அல்லது 1) n-ஐ அப்படியே திருப்புங்கள்"
+          }
+        },
+        {
+          "line": "    return fibonacci(n-1) + fibonacci(n-2)",
+          "highlight": "fibonacci(n-1) + fibonacci(n-2)",
+          "explanation": {
+            "en": "Two recursive calls! This is O(2ⁿ) — very slow for large n",
+            "ta": "இரண்டு recursive calls! இது O(2ⁿ) — பெரிய n-க்கு மிகவும் மெதுவானது"
+          }
+        },
+        {
+          "line": "print(fibonacci(10))",
+          "highlight": "print",
+          "explanation": {
+            "en": "fib(10) = 55, but it made 177 function calls to get there!",
+            "ta": "fib(10) = 55, ஆனால் அங்கு செல்ல 177 function calls செய்தது!"
+          }
+        },
+        {
+          "line": "def sum_list(arr):",
+          "highlight": "sum_list",
+          "explanation": {
+            "en": "Recursively sum a list: first element + sum of the rest",
+            "ta": "பட்டியலை recursively கூட்டுங்கள்: முதல் உறுப்பு + மீதியின் கூட்டு"
+          }
+        },
+        {
+          "line": "    if not arr:",
+          "highlight": "not arr",
+          "explanation": {
+            "en": "Base case: empty list sums to 0",
+            "ta": "Base case: காலி பட்டியலின் கூட்டு 0"
+          }
+        },
+        {
+          "line": "    return arr[0] + sum_list(arr[1:])",
+          "highlight": "arr[1:]",
+          "explanation": {
+            "en": "Take first element, recursively sum the rest — list shrinks each call",
+            "ta": "முதல் உறுப்பை எடுத்து, மீதியை recursively கூட்டுங்கள்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "call_stack",
+      "slots": [
+        {"name": "factorial(5)", "value": "5 * factorial(4)", "type": "frame", "address": "0x01"},
+        {"name": "factorial(4)", "value": "4 * factorial(3)", "type": "frame", "address": "0x02"},
+        {"name": "factorial(3)", "value": "3 * factorial(2)", "type": "frame", "address": "0x03"},
+        {"name": "factorial(2)", "value": "2 * factorial(1)", "type": "frame", "address": "0x04"},
+        {"name": "factorial(1)", "value": "returns 1", "type": "frame", "address": "0x05"}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_n",
+      "variable": "n",
+      "value": 5,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_result",
+      "variable": "factorial(5)",
+      "value": 120,
+      "data_type": "int",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "factorial(5) = 120",
+        "fibonacci(10) = 55",
+        "sum_list([1,2,3,4,5]) = 15",
+        "Call stack depth for factorial(5): 5 frames"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write recursive functions for: (1) power(base, exp), (2) reverse a string, (3) check if a string is a palindrome. Each must have a clear base case.",
+        "ta": "recursive functions எழுதுங்கள்: (1) power(base, exp), (2) சரத்தை தலைகீழாக மாற்றுங்கள், (3) palindrome சரிபார்ப்பு."
+      },
+      "starter_code": "def power(base, exp):\n    # base^exp using recursion\n    pass\n\ndef reverse_string(s):\n    # Reverse string recursively\n    pass\n\ndef is_palindrome(s):\n    # Check palindrome recursively\n    pass\n\nprint(power(2, 10))\nprint(reverse_string('hello'))\nprint(is_palindrome('racecar'))\nprint(is_palindrome('hello'))",
+      "expected_output": "1024\nolleh\nTrue\nFalse",
+      "hints": {
+        "en": [
+          "power: base case exp==0 returns 1, else base * power(base, exp-1)",
+          "reverse: base case len<=1 returns s, else reverse(s[1:]) + s[0]",
+          "palindrome: base case len<=1 returns True, else s[0]==s[-1] and is_palindrome(s[1:-1])"
+        ],
+        "ta": [
+          "power: base case exp==0 1 திருப்பும், இல்லையெனில் base * power(base, exp-1)",
+          "reverse: base case len<=1 s திருப்பும், இல்லையெனில் reverse(s[1:]) + s[0]",
+          "palindrome: base case len<=1 True திருப்பும், இல்லையெனில் s[0]==s[-1] and is_palindrome(s[1:-1])"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What happens if a recursive function has no base case?",
+        "ta": "recursive function-க்கு base case இல்லாவிட்டால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": ["It returns None", "It causes a RecursionError (stack overflow)", "It runs forever silently", "Python adds one automatically"],
+        "ta": ["None திருப்பும்", "RecursionError (stack overflow) ஏற்படும்", "அமைதியாக எப்போதும் இயங்கும்", "Python தானாக ஒன்றை சேர்க்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the time complexity of naive recursive fibonacci?",
+        "ta": "naive recursive fibonacci-ன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(n²)", "O(2ⁿ)", "O(log n)"],
+        "ta": ["O(n)", "O(n²)", "O(2ⁿ)", "O(log n)"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is Python's default recursion limit?",
+        "ta": "Python-ன் default recursion limit என்ன?"
+      },
+      "options": {
+        "en": ["100", "1000", "10000", "No limit"],
+        "ta": ["100", "1000", "10000", "வரம்பு இல்லை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["recursion", "base_case", "call_stack", "recursive_thinking"],
+    "concepts_required": ["functions", "conditionals"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["tree_traversal", "fractal_generation", "backtracking"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

@@ -1,0 +1,343 @@
+{
+  "id": "fine_tuning_basics",
+  "topic": "fine_tuning_basics",
+  "track": "ai_fundamentals",
+  "module": "ai_advanced",
+  "order": 17,
+  "title": {
+    "en": "Fine-Tuning Basics: When & How to Customize Models",
+    "ta": "Fine-Tuning அடிப்படைகள்: எப்போது & எப்படி மாதிரிகளைத் தனிப்பயனாக்குவது"
+  },
+  "description": {
+    "en": "Learn when fine-tuning makes sense, how to prepare training data, and understand LoRA — the efficient way to customize LLMs.",
+    "ta": "Fine-tuning எப்போது அர்த்தமுள்ளது, training data எவ்வாறு தயாரிப்பது, LoRA — LLM-களைத் தனிப்பயனாக்குவதற்கான திறமையான வழி ஆகியவற்றைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "next_unlock": "ai_app_deployment",
+  "story_variants": {
+    "en": "## Vaathiyaar's Training Grounds\n\nVaathiyaar draws a spectrum on the board. \"Students, fine-tuning is like teaching a smart employee your company's specific way of doing things. They already know how to code — you just need to teach them YOUR coding style, YOUR naming conventions. But it's expensive and risky. Let me tell you when it's worth it.\"\n\n### The Decision Framework\n\n```\nDo you need custom behavior?  →  Try prompt engineering first\nPrompt engineering not enough? →  Try RAG next\nRAG not enough?               →  THEN consider fine-tuning\n```\n\n### When to Fine-Tune\n\n| Fine-Tune | Don't Fine-Tune |\n|-----------|----------------|\n| Consistent style/tone | One-off tasks |\n| Domain-specific jargon | General knowledge |\n| Classification accuracy | Creative writing |\n| Reduce token usage | When data is limited (<100 examples) |\n\n### LoRA (Low-Rank Adaptation)\n\nInstead of changing ALL model weights (billions), LoRA adds small trainable matrices:\n- **Full fine-tune**: Changes 7B+ parameters. GPU costs: $$$$\n- **LoRA**: Changes ~1M parameters. GPU costs: $\n- **QLoRA**: LoRA + quantization. Runs on consumer GPUs!\n\n> **Key Insight:** 90% of the time, prompt engineering + RAG is enough. Fine-tune only when you need consistent behavior that prompts alone can't achieve.",
+    "ta": "## வாத்தியாரின் பயிற்சி மைதானம்\n\nவாத்தியார் பலகையில் ஒரு spectrum வரைகிறார். \"மாணவர்களே, fine-tuning என்பது ஒரு புத்திசாலி ஊழியருக்கு உங்கள் நிறுவனத்தின் குறிப்பிட்ட வழிமுறையைக் கற்பிப்பது போன்றது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "training_grounds",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "finetuning_concepts",
+      "nodes": [
+        {
+          "label": "Fine-Tuning Decision",
+          "children": [
+            "1. Try Prompt Engineering first",
+            "2. Try RAG next",
+            "3. Fine-tune as last resort"
+          ]
+        },
+        {
+          "label": "Fine-Tuning Methods",
+          "children": [
+            "Full fine-tune (expensive)",
+            "LoRA (efficient)",
+            "QLoRA (runs on consumer GPUs)",
+            "OpenAI fine-tuning API"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "finetuning_code",
+      "steps": [
+        {
+          "line": "import json",
+          "highlight": "import",
+          "explanation": {
+            "en": "JSON for preparing training data in the required format"
+          }
+        },
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "OpenAI client for the fine-tuning API"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 1: Prepare training data in JSONL format"
+          }
+        },
+        {
+          "line": "# Step 1: Prepare training data",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Training data must be in JSONL format — one JSON object per line"
+          }
+        },
+        {
+          "line": "training_data = [",
+          "highlight": "training_data",
+          "explanation": {
+            "en": "List of training examples — each is a conversation"
+          }
+        },
+        {
+          "line": "    {'messages': [",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Each example follows the chat messages format"
+          }
+        },
+        {
+          "line": "        {'role': 'system', 'content': 'You are PyMasters, a Python tutor. Reply in a friendly, concise style with Tamil analogies.'},",
+          "highlight": "system",
+          "explanation": {
+            "en": "System prompt teaches the model the desired personality"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'What is a decorator?'},",
+          "highlight": "user",
+          "explanation": {
+            "en": "Example user question"
+          }
+        },
+        {
+          "line": "        {'role': 'assistant', 'content': 'A decorator is like a mehndi design on a function — it adds beauty (extra behavior) without changing the hand (original function) underneath! Use @decorator_name above a function definition.'}",
+          "highlight": "assistant",
+          "explanation": {
+            "en": "Desired response — this is what the model learns to imitate"
+          }
+        },
+        {
+          "line": "    ]},",
+          "highlight": "",
+          "explanation": {
+            "en": "End of first training example"
+          }
+        },
+        {
+          "line": "    {'messages': [",
+          "highlight": "messages2",
+          "explanation": {
+            "en": "Second training example — more examples = better fine-tuning"
+          }
+        },
+        {
+          "line": "        {'role': 'system', 'content': 'You are PyMasters, a Python tutor. Reply in a friendly, concise style with Tamil analogies.'},",
+          "highlight": "system2",
+          "explanation": {
+            "en": "Same system prompt in every example for consistency"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'Explain list vs tuple.'},",
+          "highlight": "user2",
+          "explanation": {
+            "en": "Another user question"
+          }
+        },
+        {
+          "line": "        {'role': 'assistant', 'content': 'Think of a list like a tiffin box — you can add/remove items anytime. A tuple is like a sealed lunch packet — once packed, you cannot change it! Lists use [], tuples use ().'}",
+          "highlight": "assistant2",
+          "explanation": {
+            "en": "Response with the desired teaching style and Tamil analogy"
+          }
+        },
+        {
+          "line": "    ]}",
+          "highlight": "",
+          "explanation": {
+            "en": "Need at least 10 examples, recommend 50-100 for good results"
+          }
+        },
+        {
+          "line": "]",
+          "highlight": "",
+          "explanation": {
+            "en": "Training data ready"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 2: Save as JSONL file"
+          }
+        },
+        {
+          "line": "# Step 2: Save as JSONL",
+          "highlight": "comment",
+          "explanation": {
+            "en": "JSONL = one JSON object per line, not a JSON array"
+          }
+        },
+        {
+          "line": "with open('training.jsonl', 'w') as f:",
+          "highlight": "file",
+          "explanation": {
+            "en": "Create the training file"
+          }
+        },
+        {
+          "line": "    for example in training_data:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Write each example as a single line"
+          }
+        },
+        {
+          "line": "        f.write(json.dumps(example) + '\\n')",
+          "highlight": "write",
+          "explanation": {
+            "en": "json.dumps converts dict to string, add newline between examples"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "finetuning_flow",
+      "nodes": [
+        {"label": "Prepare JSONL Data (50-100 examples)", "type": "input"},
+        {"label": "Upload File to OpenAI", "type": "process"},
+        {"label": "Create Fine-Tuning Job", "type": "process"},
+        {"label": "Wait for Training (~30 min)", "type": "process"},
+        {"label": "Use Custom Model (ft:gpt-4o-mini:...)", "type": "output"}
+      ],
+      "direction": "horizontal",
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_examples",
+      "variable": "num_examples",
+      "value": 50,
+      "data_type": "int",
+      "color": "#f59e0b"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Step 3: Upload training file",
+        ">>> client = OpenAI()",
+        ">>> file = client.files.create(",
+        "...     file=open('training.jsonl', 'rb'),",
+        "...     purpose='fine-tune'",
+        "... )",
+        ">>> print(f'File ID: {file.id}')",
+        "File ID: file-abc123",
+        "",
+        ">>> # Step 4: Create fine-tuning job",
+        ">>> job = client.fine_tuning.jobs.create(",
+        "...     training_file=file.id,",
+        "...     model='gpt-4o-mini-2024-07-18'",
+        "... )",
+        ">>> print(f'Job ID: {job.id}, Status: {job.status}')",
+        "Job ID: ftjob-xyz789, Status: running",
+        "",
+        ">>> # Step 5: Use your fine-tuned model",
+        ">>> response = client.chat.completions.create(",
+        "...     model='ft:gpt-4o-mini:my-org::abc123',  # your custom model!",
+        "...     messages=[{'role': 'user', 'content': 'What is a generator?'}]",
+        "... )"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a training dataset of 5 examples for fine-tuning a Python tutor that always explains concepts using food analogies. Save it as JSONL format. Write a validation function that checks each example has the correct format (system, user, assistant messages).",
+        "ta": "எப்போதும் உணவு ஒப்புமைகளைப் பயன்படுத்தி கருத்துக்களை விளக்கும் Python tutor-ஐ fine-tune செய்ய 5 எடுத்துக்காட்டுகளின் training dataset உருவாக்குங்கள். JSONL format-ல் சேமியுங்கள்."
+      },
+      "starter_code": "import json\n\ndef create_training_example(user_q, assistant_a):\n    \"\"\"Create a single training example.\"\"\"\n    return {\n        'messages': [\n            {'role': 'system', 'content': 'You are a Python tutor who explains every concept using food analogies.'},\n            {'role': 'user', 'content': user_q},\n            {'role': 'assistant', 'content': assistant_a}\n        ]\n    }\n\n# Create 5 training examples\nexamples = [\n    create_training_example(\n        'What is a variable?',\n        # Your food analogy explanation here\n    ),\n    # Add 4 more examples\n]\n\ndef validate_dataset(data):\n    \"\"\"Validate training data format.\"\"\"\n    # Check each example has correct format\n    pass\n\n# Save as JSONL\nwith open('food_tutor.jsonl', 'w') as f:\n    for ex in examples:\n        f.write(json.dumps(ex) + '\\n')\n\nprint(f'Created {len(examples)} training examples')\nvalidate_dataset(examples)",
+      "expected_output": "Created 5 training examples\nAll examples valid!",
+      "hints": {
+        "en": [
+          "Food analogies: variable = labeled jar, list = buffet tray, dict = menu card",
+          "Each example must have exactly 3 messages: system, user, assistant",
+          "Validation: check 'messages' key exists and has 3 items with correct roles"
+        ],
+        "ta": [
+          "உணவு ஒப்புமைகள்: variable = பெயரிடப்பட்ட ஜாடி, list = buffet tray, dict = menu card",
+          "ஒவ்வொரு எடுத்துக்காட்டிலும் 3 messages இருக்க வேண்டும்: system, user, assistant",
+          "Validation: 'messages' key உள்ளதா, 3 items சரியான roles-உடன் உள்ளதா சரிபார்க்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What should you try BEFORE fine-tuning a model?",
+        "ta": "மாதிரியை fine-tune செய்வதற்கு முன் என்ன முயற்சிக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Deploy to production immediately",
+          "Prompt engineering, then RAG",
+          "Train from scratch",
+          "Use a different programming language"
+        ],
+        "ta": [
+          "உடனடியாக production-க்கு deploy செய்யுங்கள்",
+          "Prompt engineering, பிறகு RAG",
+          "புதிதாகப் பயிற்சி செய்யுங்கள்",
+          "வேறு நிரலாக்க மொழியைப் பயன்படுத்துங்கள்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is LoRA in the context of fine-tuning?",
+        "ta": "Fine-tuning சூழலில் LoRA என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "A new AI model",
+          "Low-Rank Adaptation — trains small matrices instead of all weights",
+          "A data format",
+          "A cloud service"
+        ],
+        "ta": [
+          "புதிய AI model",
+          "Low-Rank Adaptation — அனைத்து weights-க்கும் பதிலாக சிறிய matrices-ஐ train செய்கிறது",
+          "ஒரு data format",
+          "ஒரு cloud service"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What format does OpenAI require for fine-tuning training data?",
+        "ta": "Fine-tuning training data-க்கு OpenAI எந்த format தேவைப்படுகிறது?"
+      },
+      "options": {
+        "en": ["CSV", "JSONL (one JSON object per line)", "XML", "YAML"],
+        "ta": ["CSV", "JSONL (ஒரு வரிக்கு ஒரு JSON object)", "XML", "YAML"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["fine_tuning", "lora", "training_data", "jsonl"],
+    "concepts_required": ["openai_api_basics", "prompt_engineering_advanced"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["custom_models", "domain_adaptation"],
+    "category": "ai_advanced",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

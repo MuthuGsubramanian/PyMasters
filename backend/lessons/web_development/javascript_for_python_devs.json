@@ -1,0 +1,228 @@
+{
+  "id": "javascript_for_python_devs",
+  "topic": "javascript_for_python_devs",
+  "track": "web_development",
+  "module": "frontend_foundations",
+  "order": 15,
+  "title": {
+    "en": "JavaScript for Python Developers",
+    "ta": "Python டெவலப்பர்களுக்கான JavaScript"
+  },
+  "description": {
+    "en": "Learn JavaScript basics from a Python perspective — variables, functions, arrays, objects, DOM manipulation, and fetch API.",
+    "ta": "Python கண்ணோட்டத்தில் JavaScript அடிப்படைகளைக் கற்றுக்கொள்ளுங்கள் — மாறிகள், செயல்பாடுகள், வரிசைகள், பொருள்கள், DOM கையாளுதல் மற்றும் fetch API."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## The Cousin Language\n\nVaathiyaar writes two code snippets side by side. \"JavaScript is Python's cousin who lives in the browser. They share many ideas — variables, functions, loops, objects — but the syntax is different. If you know Python, you can learn JS fast.\"\n\n### Python vs JavaScript\n\n| Concept | Python | JavaScript |\n|---------|--------|------------|\n| Variables | `name = 'Alice'` | `let name = 'Alice'` |\n| Constants | `NAME = 'Alice'` (convention) | `const NAME = 'Alice'` |\n| Print | `print('hello')` | `console.log('hello')` |\n| Lists/Arrays | `[1, 2, 3]` | `[1, 2, 3]` |\n| Dicts/Objects | `{'key': 'val'}` | `{key: 'val'}` |\n| Functions | `def add(a, b):` | `function add(a, b) {` |\n| Lambda | `lambda x: x * 2` | `(x) => x * 2` |\n| For loop | `for x in items:` | `for (let x of items) {` |\n| None/null | `None` | `null` / `undefined` |\n| f-strings | `f'Hello {name}'` | `` `Hello ${name}` `` |\n\n### JavaScript Extras\n- **`let`** — block-scoped variable (can reassign)\n- **`const`** — block-scoped constant (cannot reassign)\n- **`var`** — old-style, avoid it (function-scoped)\n- **Arrow functions** — `(x) => x * 2` (like lambda)\n- **Promises & async/await** — just like Python's asyncio\n\n> **Key Concept:** JavaScript runs in the browser AND on the server (Node.js). As a Python web dev, you'll use JS for frontend interactivity — form validation, dynamic content, API calls from the browser."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "side_by_side",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "js_overview",
+      "nodes": [
+        {
+          "label": "JavaScript Basics",
+          "children": [
+            "Variables (let, const)",
+            "Functions & Arrow Functions",
+            "Arrays & Objects",
+            "DOM Manipulation",
+            "Fetch API (HTTP calls)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "js_demo",
+      "steps": [
+        {
+          "line": "// Variables — let (mutable) vs const (immutable reference)",
+          "highlight": "let",
+          "explanation": {
+            "en": "JS uses let and const instead of Python's plain assignment"
+          }
+        },
+        {
+          "line": "let name = 'PyMaster';       // like: name = 'PyMaster'\nconst PI = 3.14159;          // like: PI = 3.14159 (but truly constant)\nlet scores = [95, 87, 92];   // like: scores = [95, 87, 92]",
+          "highlight": "const",
+          "explanation": {
+            "en": "const prevents reassignment; let allows it; both are block-scoped"
+          }
+        },
+        {
+          "line": "// Objects — like Python dicts but keys don't need quotes\nconst student = {\n    name: 'Alice',\n    age: 22,\n    grades: [90, 85, 95],\n    isActive: true\n};",
+          "highlight": "student",
+          "explanation": {
+            "en": "JS objects are like Python dicts — but use dot notation: student.name"
+          }
+        },
+        {
+          "line": "console.log(student.name);        // 'Alice' — dot notation\nconsole.log(student['age']);       // 22 — bracket notation (like Python)",
+          "highlight": "console.log",
+          "explanation": {
+            "en": "console.log is JS's print() — dot or bracket notation for access"
+          }
+        },
+        {
+          "line": "// Functions — regular and arrow\nfunction greet(name) {\n    return `Hello, ${name}!`;     // Template literal = f-string\n}",
+          "highlight": "function",
+          "explanation": {
+            "en": "Regular function — note curly braces {} instead of colons"
+          }
+        },
+        {
+          "line": "const greetArrow = (name) => `Hello, ${name}!`;  // Arrow function = lambda",
+          "highlight": "=>",
+          "explanation": {
+            "en": "Arrow functions are like Python lambda but can have multiple lines"
+          }
+        },
+        {
+          "line": "// Array methods — like Python list comprehensions\nconst numbers = [1, 2, 3, 4, 5];\nconst doubled = numbers.map(n => n * 2);        // [2, 4, 6, 8, 10]\nconst evens = numbers.filter(n => n % 2 === 0); // [2, 4]\nconst sum = numbers.reduce((acc, n) => acc + n, 0); // 15",
+          "highlight": "map",
+          "explanation": {
+            "en": "map/filter/reduce are JS equivalents of Python's comprehensions"
+          }
+        },
+        {
+          "line": "// DOM Manipulation — interacting with HTML\nconst heading = document.querySelector('h1');\nheading.textContent = 'Welcome to PyMasters!';",
+          "highlight": "querySelector",
+          "explanation": {
+            "en": "Select HTML elements by CSS selector and modify them"
+          }
+        },
+        {
+          "line": "const button = document.querySelector('#submit-btn');\nbutton.addEventListener('click', () => {\n    console.log('Button clicked!');\n});",
+          "highlight": "addEventListener",
+          "explanation": {
+            "en": "Attach event handlers — runs the arrow function when button is clicked"
+          }
+        },
+        {
+          "line": "// Fetch API — making HTTP requests from the browser\nasync function getUsers() {\n    const response = await fetch('https://api.example.com/users');\n    const data = await response.json();\n    console.log(data);\n}",
+          "highlight": "fetch",
+          "explanation": {
+            "en": "fetch() is the browser's requests.get() — uses async/await like Python"
+          }
+        },
+        {
+          "line": "// POST request with fetch\nasync function createUser(userData) {\n    const response = await fetch('https://api.example.com/users', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(userData)\n    });\n    return await response.json();\n}",
+          "highlight": "JSON.stringify",
+          "explanation": {
+            "en": "POST with fetch — JSON.stringify is like json.dumps() in Python"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "python_vs_js",
+      "left_label": "Python",
+      "right_label": "JavaScript",
+      "left_content": "name = 'Alice'\nscores = [90, 85, 95]\nstudent = {'name': 'Alice', 'age': 22}\n\ndef greet(name):\n    return f'Hello, {name}!'\n\ndoubled = [x * 2 for x in scores]\nprint(greet('Alice'))",
+      "right_content": "let name = 'Alice';\nlet scores = [90, 85, 95];\nlet student = {name: 'Alice', age: 22};\n\nfunction greet(name) {\n    return `Hello, ${name}!`;\n}\n\nlet doubled = scores.map(x => x * 2);\nconsole.log(greet('Alice'));"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_let",
+      "variable": "let name",
+      "value": "PyMaster",
+      "data_type": "string",
+      "color": "#F7DF1E"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "> let name = 'PyMaster'",
+        "> console.log(`Hello, ${name}!`)",
+        "Hello, PyMaster!",
+        "> [1,2,3,4,5].map(n => n * 2)",
+        "[2, 4, 6, 8, 10]",
+        "> [1,2,3,4,5].filter(n => n % 2 === 0)",
+        "[2, 4]",
+        "> typeof null",
+        "'object'  // Yes, this is a famous JS bug!"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write JavaScript equivalents of these Python operations: (1) Create an array of numbers 1-10, (2) Filter to only even numbers, (3) Map to their squares, (4) Reduce to find the sum. Then use fetch() to call an API endpoint and display the result.",
+        "ta": "இந்த Python செயல்பாடுகளுக்கு சமமான JavaScript-ஐ எழுதுங்கள்: (1) 1-10 எண் வரிசை, (2) இரட்டை எண்களை வடிகட்டுங்கள், (3) வர்க்கங்களுக்கு map செய்யுங்கள், (4) கூட்டுத்தொகையை reduce செய்யுங்கள்."
+      },
+      "starter_code": "// 1. Create array of 1-10\nconst numbers = Array.from({length: 10}, (_, i) => i + 1);\nconsole.log('Numbers:', numbers);\n\n// 2. Filter even numbers\nconst evens = numbers.filter(n => n % 2 === 0);\nconsole.log('Evens:', evens);\n\n// 3. Square the even numbers\nconst squares = evens.map(n => n ** 2);\nconsole.log('Squares:', squares);\n\n// 4. Sum them up\nconst total = squares.reduce((sum, n) => sum + n, 0);\nconsole.log('Sum of squares of evens:', total);\n\n// 5. Fetch API call\nasync function fetchData() {\n    try {\n        const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');\n        const post = await response.json();\n        console.log('Post title:', post.title);\n    } catch (error) {\n        console.error('Error:', error);\n    }\n}\nfetchData();",
+      "expected_output": "Numbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\nEvens: [2, 4, 6, 8, 10]\nSquares: [4, 16, 36, 64, 100]\nSum of squares of evens: 220",
+      "hints": {
+        "en": [
+          "Array.from() creates arrays — like Python's range()",
+          "filter() is like [x for x in list if condition]",
+          "map() is like [f(x) for x in list]",
+          "reduce() is like functools.reduce()"
+        ],
+        "ta": [
+          "Array.from() வரிசைகளை உருவாக்குகிறது — Python-ன் range() போன்றது",
+          "filter() என்பது [x for x in list if condition] போன்றது",
+          "map() என்பது [f(x) for x in list] போன்றது",
+          "reduce() என்பது functools.reduce() போன்றது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the JavaScript equivalent of Python's f'Hello {name}'?",
+        "ta": "Python-ன் f'Hello {name}'-க்கு JavaScript சமம் என்ன?"
+      },
+      "options": {
+        "en": ["'Hello ' + name", "`Hello ${name}`", "f'Hello {name}'", "\"Hello #{name}\""],
+        "ta": ["'Hello ' + name", "`Hello ${name}`", "f'Hello {name}'", "\"Hello #{name}\""]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the difference between let and const in JavaScript?",
+        "ta": "JavaScript-ல் let மற்றும் const இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": ["No difference", "let can be reassigned, const cannot", "const is faster than let", "let is for numbers, const is for strings"],
+        "ta": ["வேறுபாடு இல்லை", "let மீண்டும் ஒதுக்கலாம், const ஒதுக்க முடியாது", "const let-ஐ விட வேகமானது", "let எண்களுக்கு, const சரங்களுக்கு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which JavaScript method is equivalent to Python's list comprehension [x*2 for x in items]?",
+        "ta": "Python-ன் [x*2 for x in items] பட்டியல் புரிதலுக்கு சமமான JavaScript முறை எது?"
+      },
+      "options": {
+        "en": ["items.filter(x => x*2)", "items.map(x => x*2)", "items.reduce(x => x*2)", "items.forEach(x => x*2)"],
+        "ta": ["items.filter(x => x*2)", "items.map(x => x*2)", "items.reduce(x => x*2)", "items.forEach(x => x*2)"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["javascript_basics", "dom_manipulation", "fetch_api", "arrow_functions"],
+    "concepts_required": ["python_functions", "python_data_structures"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 30,
+    "real_world_application": ["frontend_development", "full_stack"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

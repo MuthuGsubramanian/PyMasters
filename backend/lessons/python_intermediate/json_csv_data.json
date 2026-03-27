@@ -1,0 +1,319 @@
+{
+  "id": "json_csv_data",
+  "topic": "json_csv_data",
+  "track": "python_intermediate",
+  "module": "data_processing",
+  "order": 17,
+  "title": {
+    "en": "JSON & CSV: Reading and Writing Data Files",
+    "ta": "JSON & CSV: தரவுக் கோப்புகளைப் படித்தல் மற்றும் எழுதுதல்"
+  },
+  "description": {
+    "en": "Master json.loads/dumps for JSON data and csv reader/writer for tabular data — the two most common data formats.",
+    "ta": "JSON தரவுக்கு json.loads/dumps, அட்டவணை தரவுக்கு csv reader/writer — இரண்டு மிகவும் பொதுவான தரவு வடிவங்களில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Data Warehouse\n\nVaathiyaar walks through a data warehouse. \"Every API returns JSON. Every spreadsheet exports CSV. If you can read and write these two formats, you can talk to almost any system in the world!\"\n\n### JSON vs CSV\n\n| Feature | JSON | CSV |\n|---------|------|-----|\n| Structure | Nested, hierarchical | Flat, tabular |\n| Types | strings, numbers, bools, nulls, arrays, objects | Everything is a string |\n| Use case | APIs, configs | Spreadsheets, databases |\n| Python module | `json` | `csv` |\n\n### Key Functions\n\n| Function | Direction | Purpose |\n|----------|-----------|----------|\n| `json.dumps(obj)` | Python -> JSON string | Serialize |\n| `json.loads(s)` | JSON string -> Python | Deserialize |\n| `json.dump(obj, f)` | Python -> JSON file | Write to file |\n| `json.load(f)` | JSON file -> Python | Read from file |\n\n> **Key Concept:** `dumps` and `loads` work with **strings**. `dump` and `load` (no 's') work with **files**. The 's' stands for 'string'!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "data_warehouse",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Data Formats",
+          "children": [
+            "JSON (json module)",
+            "CSV (csv module)",
+            "Serialize (Python -> file)",
+            "Deserialize (file -> Python)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import json",
+          "highlight": "json",
+          "explanation": {
+            "en": "Import the json module for JSON operations"
+          }
+        },
+        {
+          "line": "data = {'name': 'Vaathiyaar', 'age': 45, 'skills': ['Python', 'Teaching']}",
+          "highlight": "data",
+          "explanation": {
+            "en": "A Python dictionary to convert to JSON"
+          }
+        },
+        {
+          "line": "json_str = json.dumps(data, indent=2)",
+          "highlight": "dumps",
+          "explanation": {
+            "en": "dumps = dump to String. indent=2 for pretty printing"
+          }
+        },
+        {
+          "line": "print(json_str)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Pretty-printed JSON string"
+          }
+        },
+        {
+          "line": "parsed = json.loads(json_str)",
+          "highlight": "loads",
+          "explanation": {
+            "en": "loads = load from String. Converts JSON back to Python dict"
+          }
+        },
+        {
+          "line": "print(f\"Name: {parsed['name']}\")",
+          "highlight": "parsed",
+          "explanation": {
+            "en": "Access data like a normal Python dictionary"
+          }
+        },
+        {
+          "line": "with open('data.json', 'w') as f:",
+          "highlight": "open",
+          "explanation": {
+            "en": "Open a file for writing JSON"
+          }
+        },
+        {
+          "line": "    json.dump(data, f, indent=2)",
+          "highlight": "dump",
+          "explanation": {
+            "en": "dump (no 's') writes directly to a FILE"
+          }
+        },
+        {
+          "line": "with open('data.json') as f:",
+          "highlight": "open",
+          "explanation": {
+            "en": "Open the file for reading"
+          }
+        },
+        {
+          "line": "    loaded = json.load(f)",
+          "highlight": "load",
+          "explanation": {
+            "en": "load (no 's') reads from a FILE"
+          }
+        },
+        {
+          "line": "print(f'Loaded: {loaded}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Same dictionary we started with"
+          }
+        },
+        {
+          "line": "import csv",
+          "highlight": "csv",
+          "explanation": {
+            "en": "Import the csv module for CSV operations"
+          }
+        },
+        {
+          "line": "with open('students.csv', 'w', newline='') as f:",
+          "highlight": "newline=''",
+          "explanation": {
+            "en": "Open for writing — newline='' prevents double line breaks"
+          }
+        },
+        {
+          "line": "    writer = csv.writer(f)",
+          "highlight": "writer",
+          "explanation": {
+            "en": "Create a CSV writer object"
+          }
+        },
+        {
+          "line": "    writer.writerow(['Name', 'Grade', 'City'])",
+          "highlight": "writerow",
+          "explanation": {
+            "en": "Write the header row"
+          }
+        },
+        {
+          "line": "    writer.writerows([['Alice', 85, 'Chennai'], ['Bob', 92, 'Mumbai']])",
+          "highlight": "writerows",
+          "explanation": {
+            "en": "Write multiple data rows at once"
+          }
+        },
+        {
+          "line": "with open('students.csv') as f:",
+          "highlight": "open",
+          "explanation": {
+            "en": "Open the CSV for reading"
+          }
+        },
+        {
+          "line": "    reader = csv.DictReader(f)",
+          "highlight": "DictReader",
+          "explanation": {
+            "en": "DictReader treats first row as headers — each row is a dict!"
+          }
+        },
+        {
+          "line": "    for row in reader:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Iterate through rows as dictionaries"
+          }
+        },
+        {
+          "line": "        print(f\"{row['Name']}: {row['Grade']}\")",
+          "highlight": "row['Name']",
+          "explanation": {
+            "en": "Access columns by header name — very clean!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_json",
+      "variable": "json_str",
+      "value": "{\"name\": \"Vaathiyaar\", ...}",
+      "data_type": "str (JSON)",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_parsed",
+      "variable": "parsed",
+      "value": "{'name': 'Vaathiyaar', 'age': 45, ...}",
+      "data_type": "dict",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "{",
+        "  \"name\": \"Vaathiyaar\",",
+        "  \"age\": 45,",
+        "  \"skills\": [\"Python\", \"Teaching\"]",
+        "}",
+        "Name: Vaathiyaar",
+        "Alice: 85",
+        "Bob: 92"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a list of 3 product dictionaries with 'name' and 'price' keys. Write them to a JSON file, then read back and print the most expensive product.",
+        "ta": "'name' மற்றும் 'price' keys உடன் 3 product dictionaries பட்டியல் உருவாக்குங்கள். JSON file-ல் எழுதி, மீண்டும் படித்து மிகவும் விலையுயர்ந்த product-ஐ அச்சிடுங்கள்."
+      },
+      "starter_code": "import json\n\nproducts = [\n    {'name': 'Laptop', 'price': 999},\n    {'name': 'Mouse', 'price': 29},\n    {'name': 'Keyboard', 'price': 79}\n]\n\nwith open('products.json', 'w') as f:\n    json.dump(products, f, indent=2)\n\nwith open('products.json') as f:\n    loaded = json.load(f)\n\nexpensive = max(loaded, key=lambda p: p['price'])\nprint(f'Most expensive: {expensive[\"name\"]} (${expensive[\"price\"]})')",
+      "expected_output": "Most expensive: Laptop ($999)",
+      "hints": {
+        "en": [
+          "Use json.dump(data, file) to write",
+          "Use json.load(file) to read",
+          "Use max() with a key function to find highest price",
+          "lambda p: p['price'] extracts the price for comparison"
+        ],
+        "ta": [
+          "json.dump(data, file) எழுத பயன்படுத்துங்கள்",
+          "json.load(file) படிக்க பயன்படுத்துங்கள்",
+          "max()-ஐ key function-உடன் பயன்படுத்தி அதிக விலை கண்டுபிடியுங்கள்",
+          "lambda p: p['price'] ஒப்பிடுவதற்கு விலையை எடுக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the difference between json.dump and json.dumps?",
+        "ta": "json.dump மற்றும் json.dumps இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": [
+          "No difference",
+          "dump writes to a file, dumps returns a string",
+          "dumps writes to a file, dump returns a string",
+          "dump is faster"
+        ],
+        "ta": [
+          "வேறுபாடு இல்லை",
+          "dump file-ல் எழுதுகிறது, dumps string திருப்புகிறது",
+          "dumps file-ல் எழுதுகிறது, dump string திருப்புகிறது",
+          "dump வேகமானது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does csv.DictReader do differently from csv.reader?",
+        "ta": "csv.DictReader csv.reader-லிருந்து என்ன வித்தியாசமாக செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Reads faster",
+          "Returns each row as a dictionary with header keys",
+          "Only reads JSON files",
+          "Creates named tuples"
+        ],
+        "ta": [
+          "வேகமாக படிக்கிறது",
+          "ஒவ்வொரு row-ஐயும் header keys உடன் dictionary-ஆக திருப்புகிறது",
+          "JSON files மட்டுமே படிக்கும்",
+          "named tuples உருவாக்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use newline='' when opening a CSV file for writing?",
+        "ta": "CSV file-ஐ எழுத open செய்யும்போது newline='' ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "To write faster",
+          "To prevent double newlines on Windows",
+          "Required by Python syntax",
+          "To enable Unicode"
+        ],
+        "ta": [
+          "வேகமாக எழுத",
+          "Windows-ல் இரட்டை newlines தடுக்க",
+          "Python தொடரியல் தேவை",
+          "Unicode இயக்க"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["json", "csv", "serialization", "deserialization", "DictReader"],
+    "concepts_required": ["dictionaries", "files", "lists"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["api_integration", "data_import_export", "configuration"],
+    "category": "data_processing",
+    "path_memberships": ["python_intermediate"]
+  }
+}

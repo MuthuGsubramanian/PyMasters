@@ -1,0 +1,298 @@
+{
+  "id": "decorators_basics",
+  "topic": "decorators_basics",
+  "track": "python_intermediate",
+  "module": "decorators_and_closures",
+  "order": 6,
+  "title": {
+    "en": "Decorators: Wrapping Functions with Superpowers",
+    "ta": "அலங்கரிப்பான்கள்: செயல்பாடுகளுக்கு வல்லமை தருவது"
+  },
+  "description": {
+    "en": "Learn how decorators work under the hood — functions that take functions, the @syntax sugar, and functools.wraps for preserving metadata.",
+    "ta": "அலங்கரிப்பான்கள் எவ்வாறு உள்ளே வேலை செய்கின்றன — செயல்பாடுகளை எடுக்கும் செயல்பாடுகள், @syntax, functools.wraps ஆகியவற்றைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Gift Wrapper\n\nVaathiyaar holds up a plain box, then wraps it in shiny paper. \"The gift inside hasn't changed — but now it has something extra. A **decorator** wraps a function with extra behavior, without modifying the original function.\"\n\n### What is a Decorator?\n- A function that takes another function and extends its behavior\n- Uses the `@decorator` syntax above a function definition\n- The original function is passed as an argument\n\n### How Decorators Work\n\n```python\ndef timer(func):\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)\n        print(f'{func.__name__} took {time.time()-start:.2f}s')\n        return result\n    return wrapper\n\n@timer\ndef slow_add(a, b):\n    time.sleep(1)\n    return a + b\n```\n\n### The @syntax is Sugar For:\n\n| Syntax | Equivalent |\n|--------|------------|\n| `@timer` above `def slow_add` | `slow_add = timer(slow_add)` |\n| `@login_required` | `view = login_required(view)` |\n\n> **Key Concept:** Always use `@functools.wraps(func)` in your wrapper to preserve the original function's `__name__` and `__doc__`. Without it, debugging becomes confusing."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "gift_wrapper",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Decorator",
+          "children": [
+            "Higher-order function",
+            "@syntax sugar",
+            "Wrapper function",
+            "functools.wraps",
+            "*args, **kwargs"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import functools",
+          "highlight": "functools",
+          "explanation": {
+            "en": "Import functools for the wraps decorator"
+          }
+        },
+        {
+          "line": "import time",
+          "highlight": "time",
+          "explanation": {
+            "en": "Import time for our timer decorator example"
+          }
+        },
+        {
+          "line": "def timer(func):",
+          "highlight": "timer",
+          "explanation": {
+            "en": "Define a decorator — it takes a function as its argument"
+          }
+        },
+        {
+          "line": "    @functools.wraps(func)",
+          "highlight": "@functools.wraps",
+          "explanation": {
+            "en": "Preserve the original function's name and docstring"
+          }
+        },
+        {
+          "line": "    def wrapper(*args, **kwargs):",
+          "highlight": "wrapper",
+          "explanation": {
+            "en": "The wrapper accepts ANY arguments using *args, **kwargs"
+          }
+        },
+        {
+          "line": "        start = time.time()",
+          "highlight": "time.time()",
+          "explanation": {
+            "en": "Record start time before calling the function"
+          }
+        },
+        {
+          "line": "        result = func(*args, **kwargs)",
+          "highlight": "func(*args",
+          "explanation": {
+            "en": "Call the ORIGINAL function with all its arguments"
+          }
+        },
+        {
+          "line": "        elapsed = time.time() - start",
+          "highlight": "elapsed",
+          "explanation": {
+            "en": "Calculate how long the function took"
+          }
+        },
+        {
+          "line": "        print(f'{func.__name__} took {elapsed:.4f}s')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the timing info — the extra behavior we added"
+          }
+        },
+        {
+          "line": "        return result",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the original function's result unchanged"
+          }
+        },
+        {
+          "line": "    return wrapper",
+          "highlight": "return wrapper",
+          "explanation": {
+            "en": "Return the enhanced wrapper function"
+          }
+        },
+        {
+          "line": "@timer",
+          "highlight": "@timer",
+          "explanation": {
+            "en": "Apply decorator — equivalent to: add = timer(add)"
+          }
+        },
+        {
+          "line": "def add(a, b):",
+          "highlight": "add",
+          "explanation": {
+            "en": "Define a simple function to decorate"
+          }
+        },
+        {
+          "line": "    return a + b",
+          "highlight": "return",
+          "explanation": {
+            "en": "The original logic — untouched by the decorator"
+          }
+        },
+        {
+          "line": "result = add(10, 20)",
+          "highlight": "add(10, 20)",
+          "explanation": {
+            "en": "Call add — but now wrapper runs first, adding timing"
+          }
+        },
+        {
+          "line": "print(f'Result: {result}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "The return value is still the same: 30"
+          }
+        },
+        {
+          "line": "print(f'Function name: {add.__name__}')",
+          "highlight": "__name__",
+          "explanation": {
+            "en": "Thanks to @wraps, __name__ is still 'add', not 'wrapper'"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_result",
+      "variable": "result",
+      "value": 30,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "add took 0.0000s",
+        "Result: 30",
+        "Function name: add"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "before": {
+        "label": "Without Decorator",
+        "code": "def add(a, b):\n    return a + b\n\nresult = add(10, 20)\n# No timing info!"
+      },
+      "after": {
+        "label": "With @timer Decorator",
+        "code": "@timer\ndef add(a, b):\n    return a + b\n\nresult = add(10, 20)\n# add took 0.0000s"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a decorator called 'logger' that prints 'Calling <function_name>' before the function runs and 'Done with <function_name>' after. Use @functools.wraps. Apply it to a greet(name) function.",
+        "ta": "'logger' என்ற decorator உருவாக்குங்கள் — செயல்பாடு இயங்கும் முன் 'Calling <function_name>' அச்சிடும், பின் 'Done with <function_name>' அச்சிடும்."
+      },
+      "starter_code": "import functools\n\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        # print Calling message\n        # call original function\n        # print Done message\n        # return result\n        pass\n    return wrapper\n\n@logger\ndef greet(name):\n    return f'Hello, {name}!'\n\nresult = greet('Vaathiyaar')\nprint(result)",
+      "expected_output": "Calling greet\nDone with greet\nHello, Vaathiyaar!",
+      "hints": {
+        "en": [
+          "print(f'Calling {func.__name__}')",
+          "result = func(*args, **kwargs)",
+          "print(f'Done with {func.__name__}')",
+          "return result"
+        ],
+        "ta": [
+          "print(f'Calling {func.__name__}')",
+          "result = func(*args, **kwargs)",
+          "print(f'Done with {func.__name__}')",
+          "return result"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is @timer above a function equivalent to?",
+        "ta": "ஒரு செயல்பாட்டின் மேலே @timer என்பது எதற்கு சமம்?"
+      },
+      "options": {
+        "en": [
+          "timer = func(timer)",
+          "func = timer(func)",
+          "timer()",
+          "func.timer()"
+        ],
+        "ta": [
+          "timer = func(timer)",
+          "func = timer(func)",
+          "timer()",
+          "func.timer()"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why should you use @functools.wraps(func)?",
+        "ta": "@functools.wraps(func) ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "To make the decorator faster",
+          "To preserve the original function's name and docstring",
+          "To make the decorator work with classes",
+          "It's required by Python syntax"
+        ],
+        "ta": [
+          "decorator-ஐ வேகமாக்க",
+          "அசல் செயல்பாட்டின் பெயர் மற்றும் docstring-ஐ பாதுகாக்க",
+          "வகுப்புகளுடன் decorator வேலை செய்ய",
+          "Python தொடரியல் தேவை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does *args, **kwargs in a wrapper function allow?",
+        "ta": "wrapper செயல்பாட்டில் *args, **kwargs என்ன அனுமதிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Only positional arguments",
+          "Only keyword arguments",
+          "Any combination of arguments to pass through",
+          "No arguments at all"
+        ],
+        "ta": [
+          "நிலை வாதங்கள் மட்டும்",
+          "keyword வாதங்கள் மட்டும்",
+          "எந்த வாதக் கலவையும் கடந்து செல்ல",
+          "வாதங்களே இல்லை"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["decorators", "higher_order_functions", "functools_wraps", "closure", "at_syntax"],
+    "concepts_required": ["functions", "closures", "args_kwargs"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["logging", "authentication", "caching", "timing"],
+    "category": "functional",
+    "path_memberships": ["python_intermediate"]
+  }
+}

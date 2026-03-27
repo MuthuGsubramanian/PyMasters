@@ -1,0 +1,259 @@
+{
+  "id": "sorting_advanced",
+  "topic": "sorting_advanced",
+  "track": "dsa",
+  "module": "sorting_searching",
+  "order": 13,
+  "title": {
+    "en": "Advanced Sorting: Merge Sort, Quick Sort & TimSort",
+    "ta": "மேம்பட்ட வரிசைப்படுத்தல்: Merge Sort, Quick Sort & TimSort"
+  },
+  "description": {
+    "en": "Master O(n log n) sorting algorithms. Understand divide-and-conquer strategy and Python's built-in TimSort.",
+    "ta": "O(n log n) sorting algorithms கற்றுக்கொள்ளுங்கள். divide-and-conquer உத்தியையும் Python-ன் built-in TimSort-ஐயும் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Divide & Conquer\n\nVaathiyaar splits a messy stack of exams into two halves. \"Sort each half separately, then merge them. This is **divide and conquer** — and it's O(n log n)!\"\n\n### Merge Sort\n\n```python\ndef merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)\n\ndef merge(left, right):\n    result = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    result.extend(left[i:])\n    result.extend(right[j:])\n    return result\n```\n\n### Quick Sort\n\n```python\ndef quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + middle + quick_sort(right)\n```\n\n### Python's TimSort\n\n```python\n# Python's sorted() and list.sort() use TimSort\n# - Hybrid of merge sort and insertion sort\n# - O(n log n) worst case\n# - O(n) on nearly sorted data\n# - Stable sort\ndata = [3, 1, 4, 1, 5, 9, 2, 6]\nsorted_data = sorted(data)          # returns new list\ndata.sort()                          # sorts in-place\n```\n\n> **Key Concept:** Merge sort is stable and always O(n log n). Quick sort is O(n log n) average but O(n²) worst case. TimSort combines the best of both!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "divide_conquer",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Advanced Sorting",
+          "children": [
+            "Merge Sort — O(n log n)",
+            "Quick Sort — O(n log n) avg",
+            "TimSort — Python built-in",
+            "Divide and Conquer",
+            "Stable vs Unstable"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_mergesort",
+      "steps": [
+        {
+          "line": "def merge_sort(arr):",
+          "highlight": "merge_sort",
+          "explanation": {
+            "en": "Merge sort: divide array in half, sort each, merge results",
+            "ta": "Merge sort: array-ஐ பாதியாக பிரித்து, ஒவ்வொன்றையும் sort செய்து, முடிவுகளை merge செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "    if len(arr) <= 1:",
+          "highlight": "len(arr) <= 1",
+          "explanation": {
+            "en": "Base case: array of 0 or 1 elements is already sorted",
+            "ta": "அடிப்படை நிலை: 0 அல்லது 1 உறுப்புகளின் array ஏற்கனவே வரிசையில் உள்ளது"
+          }
+        },
+        {
+          "line": "    mid = len(arr) // 2",
+          "highlight": "mid",
+          "explanation": {
+            "en": "Find the middle point to divide the array",
+            "ta": "array-ஐ பிரிக்க நடுப்புள்ளியை கண்டறியுங்கள்"
+          }
+        },
+        {
+          "line": "    left = merge_sort(arr[:mid])",
+          "highlight": "left",
+          "explanation": {
+            "en": "Recursively sort the left half",
+            "ta": "இடது பாதியை recursively sort செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "    right = merge_sort(arr[mid:])",
+          "highlight": "right",
+          "explanation": {
+            "en": "Recursively sort the right half",
+            "ta": "வலது பாதியை recursively sort செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "    return merge(left, right)",
+          "highlight": "merge",
+          "explanation": {
+            "en": "Merge the two sorted halves into one sorted array",
+            "ta": "இரண்டு sorted பகுதிகளை ஒரு sorted array-ல் merge செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "def merge(left, right):",
+          "highlight": "merge",
+          "explanation": {
+            "en": "Merge function: combine two sorted arrays into one",
+            "ta": "Merge function: இரண்டு sorted arrays-ஐ ஒன்றாக இணைக்கவும்"
+          }
+        },
+        {
+          "line": "    while i < len(left) and j < len(right):",
+          "highlight": "while",
+          "explanation": {
+            "en": "Compare elements from both arrays, pick the smaller one",
+            "ta": "இரண்டு arrays-லிருந்தும் உறுப்புகளை ஒப்பிட்டு, சிறியதை தேர்ந்தெடுக்கவும்"
+          }
+        },
+        {
+          "line": "def quick_sort(arr):",
+          "highlight": "quick_sort",
+          "explanation": {
+            "en": "Quick sort: pick a pivot, partition into smaller/equal/larger",
+            "ta": "Quick sort: pivot தேர்ந்தெடுத்து, சிறிய/சம/பெரிய பகுதிகளாக பிரிக்கவும்"
+          }
+        },
+        {
+          "line": "    pivot = arr[len(arr) // 2]",
+          "highlight": "pivot",
+          "explanation": {
+            "en": "Choose middle element as pivot — avoids worst case on sorted input",
+            "ta": "நடு உறுப்பை pivot ஆக தேர்ந்தெடுக்கவும் — sorted input-ல் மோசமான நிலையை தவிர்க்கும்"
+          }
+        },
+        {
+          "line": "    left = [x for x in arr if x < pivot]",
+          "highlight": "left",
+          "explanation": {
+            "en": "Elements smaller than pivot go to left partition",
+            "ta": "pivot-ஐ விட சிறிய உறுப்புகள் இடது பகுதிக்கு செல்லும்"
+          }
+        },
+        {
+          "line": "    return quick_sort(left) + middle + quick_sort(right)",
+          "highlight": "return",
+          "explanation": {
+            "en": "Recursively sort partitions and concatenate: sorted!",
+            "ta": "பகுதிகளை recursively sort செய்து இணைக்கவும்: sorted!"
+          }
+        },
+        {
+          "line": "sorted_data = sorted([3, 1, 4, 1, 5, 9])",
+          "highlight": "sorted",
+          "explanation": {
+            "en": "Python's sorted() uses TimSort — O(n log n), stable, optimized",
+            "ta": "Python-ன் sorted() TimSort பயன்படுத்தும் — O(n log n), stable, optimized"
+          }
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "recursion_stack",
+      "slots": [
+        {"name": "merge_sort([38,27,43,3,9,82,10])", "value": "split", "type": "frame", "address": "0x01"},
+        {"name": "merge_sort([38,27,43])", "value": "left half", "type": "frame", "address": "0x02"},
+        {"name": "merge_sort([38])", "value": "base case", "type": "frame", "address": "0x03"}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "sort_comparison",
+      "comparisons": [
+        {"label": "Merge Sort", "values": [33, 664, 9965], "color": "#4f8ef7"},
+        {"label": "Quick Sort (avg)", "values": [33, 664, 9965], "color": "#4ff7a4"},
+        {"label": "Bubble Sort", "values": [100, 10000, 1000000], "color": "#f74f4f"}
+      ],
+      "x_labels": ["n=10", "n=100", "n=1000"]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_result",
+      "variable": "sorted",
+      "value": "[3, 9, 10, 27, 38, 43, 82]",
+      "data_type": "list",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Original: [38, 27, 43, 3, 9, 82, 10]",
+        "Merge sort: [3, 9, 10, 27, 38, 43, 82]",
+        "Quick sort: [3, 9, 10, 27, 38, 43, 82]",
+        "TimSort:    [3, 9, 10, 27, 38, 43, 82]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement merge sort and quick sort from scratch. Compare their performance by counting recursive calls on the same input.",
+        "ta": "Merge sort மற்றும் quick sort-ஐ புதிதாக செயல்படுத்துங்கள். ஒரே உள்ளீட்டில் recursive calls-ஐ எண்ணி அவற்றின் செயல்திறனை ஒப்பிடுங்கள்."
+      },
+      "starter_code": "def merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)\n\ndef merge(left, right):\n    # Implement the merge function\n    pass\n\ndef quick_sort(arr):\n    # Implement quick sort with middle pivot\n    pass\n\ndata = [38, 27, 43, 3, 9, 82, 10]\nprint(merge_sort(data))\nprint(quick_sort(data))\nprint(sorted(data))  # Python's TimSort",
+      "expected_output": "[3, 9, 10, 27, 38, 43, 82]\n[3, 9, 10, 27, 38, 43, 82]\n[3, 9, 10, 27, 38, 43, 82]",
+      "hints": {
+        "en": [
+          "Merge: use two pointers, compare and append smaller element",
+          "Don't forget to extend with remaining elements after the while loop",
+          "Quick sort: partition with list comprehensions is the cleanest approach"
+        ],
+        "ta": [
+          "Merge: இரு pointers பயன்படுத்தி, சிறிய உறுப்பை ஒப்பிட்டு சேர்க்கவும்",
+          "while loop-க்குப் பிறகு மீதமுள்ள உறுப்புகளை extend செய்ய மறக்காதீர்கள்",
+          "Quick sort: list comprehensions உடன் partition செய்வது சிறந்தது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the worst-case time complexity of merge sort?",
+        "ta": "Merge sort-ன் மோசமான நிலை நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"],
+        "ta": ["O(n)", "O(n log n)", "O(n²)", "O(log n)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What sorting algorithm does Python's sorted() function use?",
+        "ta": "Python-ன் sorted() function எந்த sorting algorithm பயன்படுத்தும்?"
+      },
+      "options": {
+        "en": ["Quick sort", "Merge sort", "TimSort", "Heap sort"],
+        "ta": ["Quick sort", "Merge sort", "TimSort", "Heap sort"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is quick sort's worst-case time complexity?",
+        "ta": "Quick sort-ன் மோசமான நிலை நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(n log n)", "O(n²)", "O(n)", "O(2ⁿ)"],
+        "ta": ["O(n log n)", "O(n²)", "O(n)", "O(2ⁿ)"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["merge_sort", "quick_sort", "timsort", "divide_and_conquer"],
+    "concepts_required": ["sorting_basics", "recursion"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["database_sorting", "python_internals"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

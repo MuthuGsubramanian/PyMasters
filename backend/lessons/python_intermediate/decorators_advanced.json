@@ -1,0 +1,308 @@
+{
+  "id": "decorators_advanced",
+  "topic": "decorators_advanced",
+  "track": "python_intermediate",
+  "module": "decorators_and_closures",
+  "order": 7,
+  "title": {
+    "en": "Advanced Decorators: Classes, Parameters & Stacking",
+    "ta": "மேம்பட்ட அலங்கரிப்பான்கள்: வகுப்புகள், அளவுருக்கள் & அடுக்குதல்"
+  },
+  "description": {
+    "en": "Learn class decorators, parameterized decorators (decorator factories), stacking multiple decorators, and real-world patterns like retry and cache.",
+    "ta": "வகுப்பு அலங்கரிப்பான்கள், அளவுரு அலங்கரிப்பான்கள், பல அலங்கரிப்பான்களை அடுக்குதல் ஆகியவற்றைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Nested Gift Boxes\n\nVaathiyaar shows a gift box inside another gift box inside yet another. \"What if your decorator itself needs configuration? You need a **decorator factory** — a function that RETURNS a decorator!\"\n\n### Parameterized Decorators\n\nA decorator factory adds one more layer of nesting:\n\n```python\ndef repeat(n):           # factory takes config\n    def decorator(func):  # actual decorator\n        def wrapper(*args, **kwargs):\n            for _ in range(n):\n                result = func(*args, **kwargs)\n            return result\n        return wrapper\n    return decorator       # return the decorator\n\n@repeat(3)  # repeat is called first, returns decorator\ndef say_hello():\n    print('Hello!')\n```\n\n### Stacking Decorators\n\n| Stack Order | Execution |\n|------------|------------|\n| `@decorator_a` | Applied LAST (outermost) |\n| `@decorator_b` | Applied FIRST (innermost) |\n| `def func()` | Original function |\n\n> **Key Concept:** When stacking decorators, they apply bottom-up: `@a @b def f` means `f = a(b(f))`. The bottom decorator wraps the function first, then the next one wraps that result."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "nested_boxes",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Advanced Decorators",
+          "children": [
+            "Parameterized (factory)",
+            "Class decorators",
+            "Stacking (@a @b)",
+            "Real-world: retry, cache"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import functools",
+          "highlight": "functools",
+          "explanation": {
+            "en": "Import functools for wraps"
+          }
+        },
+        {
+          "line": "def repeat(n):",
+          "highlight": "repeat(n)",
+          "explanation": {
+            "en": "This is a DECORATOR FACTORY — it takes a parameter and returns a decorator"
+          }
+        },
+        {
+          "line": "    def decorator(func):",
+          "highlight": "decorator",
+          "explanation": {
+            "en": "This is the actual decorator — takes the function"
+          }
+        },
+        {
+          "line": "        @functools.wraps(func)",
+          "highlight": "@functools.wraps",
+          "explanation": {
+            "en": "Preserve original function metadata"
+          }
+        },
+        {
+          "line": "        def wrapper(*args, **kwargs):",
+          "highlight": "wrapper",
+          "explanation": {
+            "en": "The wrapper that adds repeated execution"
+          }
+        },
+        {
+          "line": "            for i in range(n):",
+          "highlight": "range(n)",
+          "explanation": {
+            "en": "n comes from the factory's closure — repeat the function n times"
+          }
+        },
+        {
+          "line": "                result = func(*args, **kwargs)",
+          "highlight": "func(",
+          "explanation": {
+            "en": "Call the original function each time"
+          }
+        },
+        {
+          "line": "            return result",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the last call's result"
+          }
+        },
+        {
+          "line": "        return wrapper",
+          "highlight": "return wrapper",
+          "explanation": {
+            "en": "Decorator returns the wrapper"
+          }
+        },
+        {
+          "line": "    return decorator",
+          "highlight": "return decorator",
+          "explanation": {
+            "en": "Factory returns the decorator — three levels of functions!"
+          }
+        },
+        {
+          "line": "@repeat(3)",
+          "highlight": "@repeat(3)",
+          "explanation": {
+            "en": "repeat(3) runs first, returns a decorator, which then wraps greet"
+          }
+        },
+        {
+          "line": "def greet(name):",
+          "highlight": "greet",
+          "explanation": {
+            "en": "The original function to be decorated"
+          }
+        },
+        {
+          "line": "    print(f'Hello, {name}!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "This will print 3 times because of @repeat(3)"
+          }
+        },
+        {
+          "line": "greet('Vaathiyaar')",
+          "highlight": "greet(",
+          "explanation": {
+            "en": "Call greet — it will execute 3 times"
+          }
+        },
+        {
+          "line": "class CountCalls:",
+          "highlight": "CountCalls",
+          "explanation": {
+            "en": "A CLASS-based decorator — uses __call__ to be callable"
+          }
+        },
+        {
+          "line": "    def __init__(self, func):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Receives the decorated function and stores it"
+          }
+        },
+        {
+          "line": "        self.func = func",
+          "highlight": "self.func",
+          "explanation": {
+            "en": "Store the original function"
+          }
+        },
+        {
+          "line": "        self.count = 0",
+          "highlight": "self.count",
+          "explanation": {
+            "en": "Initialize call counter to zero"
+          }
+        },
+        {
+          "line": "    def __call__(self, *args, **kwargs):",
+          "highlight": "__call__",
+          "explanation": {
+            "en": "__call__ makes this class instance callable like a function"
+          }
+        },
+        {
+          "line": "        self.count += 1",
+          "highlight": "self.count",
+          "explanation": {
+            "en": "Increment counter each time the function is called"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_n",
+      "variable": "n (closure)",
+      "value": 3,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Hello, Vaathiyaar!",
+        "Hello, Vaathiyaar!",
+        "Hello, Vaathiyaar!"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "before": {
+        "label": "Simple Decorator",
+        "code": "def decorator(func):\n    def wrapper(*args):\n        # one level\n        return func(*args)\n    return wrapper"
+      },
+      "after": {
+        "label": "Parameterized Decorator",
+        "code": "def factory(param):       # level 1\n    def decorator(func):  # level 2\n        def wrapper(*args):# level 3\n            return func(*args)\n        return wrapper\n    return decorator"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a parameterized decorator @validate_type(expected_type) that checks if the first argument to the decorated function matches the expected type. If not, raise TypeError. Test with a function that expects an int.",
+        "ta": "@validate_type(expected_type) என்ற parameterized decorator உருவாக்குங்கள். decorated செயல்பாட்டின் முதல் argument எதிர்பார்க்கும் type-உடன் பொருந்துகிறதா சரிபார்க்கவும்."
+      },
+      "starter_code": "import functools\n\ndef validate_type(expected_type):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            if not isinstance(args[0], expected_type):\n                raise TypeError(f'Expected {expected_type.__name__}')\n            return func(*args, **kwargs)\n        return wrapper\n    return decorator\n\n@validate_type(int)\ndef double(x):\n    return x * 2\n\nprint(double(5))\ntry:\n    print(double('hello'))\nexcept TypeError as e:\n    print(f'Error: {e}')",
+      "expected_output": "10\nError: Expected int",
+      "hints": {
+        "en": [
+          "The factory (validate_type) takes expected_type",
+          "The decorator takes func",
+          "The wrapper checks isinstance(args[0], expected_type)",
+          "Raise TypeError if the check fails"
+        ],
+        "ta": [
+          "factory (validate_type) expected_type எடுக்கும்",
+          "decorator func எடுக்கும்",
+          "wrapper isinstance(args[0], expected_type) சரிபார்க்கும்",
+          "சரிபார்ப்பு தோல்வியுற்றால் TypeError எழுப்பும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "How many levels of functions does a parameterized decorator have?",
+        "ta": "parameterized decorator-ல் எத்தனை நிலை செயல்பாடுகள் உள்ளன?"
+      },
+      "options": {
+        "en": ["1", "2", "3", "4"],
+        "ta": ["1", "2", "3", "4"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With @a and @b stacked, what is the execution order?",
+        "ta": "@a மற்றும் @b அடுக்கியிருந்தால், செயல்படுத்தும் வரிசை என்ன?"
+      },
+      "options": {
+        "en": [
+          "a wraps first, then b",
+          "b wraps first, then a wraps b's result",
+          "Both wrap simultaneously",
+          "Only a is applied"
+        ],
+        "ta": [
+          "a முதலில் wraps, பின் b",
+          "b முதலில் wraps, பின் a b-ன் முடிவை wraps",
+          "இரண்டும் ஒரே நேரத்தில் wrap",
+          "a மட்டும் பயன்படுத்தப்படும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What makes a class work as a decorator?",
+        "ta": "ஒரு வகுப்பை decorator-ஆக வேலை செய்ய வைப்பது எது?"
+      },
+      "options": {
+        "en": [
+          "__init__ only",
+          "__call__ method",
+          "__str__ method",
+          "__new__ method"
+        ],
+        "ta": [
+          "__init__ மட்டும்",
+          "__call__ முறை",
+          "__str__ முறை",
+          "__new__ முறை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["parameterized_decorators", "class_decorators", "decorator_stacking", "decorator_factory"],
+    "concepts_required": ["decorators", "closures", "functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["retry_logic", "caching", "access_control"],
+    "category": "functional",
+    "path_memberships": ["python_intermediate"]
+  }
+}

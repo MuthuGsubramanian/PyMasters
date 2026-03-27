@@ -1,0 +1,188 @@
+{
+  "id": "dl_gradient_descent",
+  "topic": "gradient_descent",
+  "track": "deep_learning_complete",
+  "module": "training_fundamentals",
+  "order": 7,
+  "title": {
+    "en": "Gradient Descent & Optimizers: Finding the Valley",
+    "ta": "கிரேடியன்ட் டிசென்ட் & ஆப்டிமைசர்கள்: பள்ளத்தாக்கைக் கண்டுபிடித்தல்"
+  },
+  "description": {
+    "en": "Master SGD, momentum, Adam, and learning rate scheduling — the algorithms that drive neural network training.",
+    "ta": "SGD, momentum, Adam, மற்றும் learning rate scheduling ஆகியவற்றில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Mountain Hike\n\nVaathiyaar stands on a foggy mountain. \"You can't see the valley, but you can feel the slope under your feet. Step downhill — that's gradient descent. The question is: how big should each step be?\"\n\n### Optimizers Compared\n\n```python\nimport torch\nimport torch.nn as nn\n\n# Simple model\nmodel = nn.Linear(10, 1)\n\n# SGD: basic gradient descent\nsgd = torch.optim.SGD(model.parameters(), lr=0.01)\n\n# SGD + Momentum: accelerates in consistent direction\nsgd_m = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)\n\n# Adam: adaptive learning rate per parameter\nadam = torch.optim.Adam(model.parameters(), lr=0.001)\n\n# Training loop with any optimizer\nX = torch.randn(100, 10)\ny = torch.randn(100, 1)\ncriterion = nn.MSELoss()\n\noptimizer = torch.optim.Adam(model.parameters(), lr=0.001)\nfor epoch in range(500):\n    pred = model(X)\n    loss = criterion(pred, y)\n    optimizer.zero_grad()  # clear old gradients\n    loss.backward()         # compute new gradients\n    optimizer.step()        # update weights\n    if epoch % 100 == 0:\n        print(f'Epoch {epoch}, Loss: {loss.item():.4f}')\n```\n\n### Learning Rate: The Step Size\n- Too high → overshoots, loss explodes\n- Too low → painfully slow, gets stuck\n- Just right → smooth convergence\n\n> **Rule of thumb:** Start with Adam(lr=0.001). It works well for most problems.",
+    "ta": "## வாத்தியாரின் மலை நடை\n\nவாத்தியார் மூடுபனி மலையில் நிற்கிறார். \"பள்ளத்தாக்கைப் பார்க்க முடியாது, ஆனால் உங்கள் காலடியில் சரிவை உணர முடியும். கீழே நடங்கள் — அதுதான் கிரேடியன்ட் டிசென்ட். கேள்வி: ஒவ்வொரு அடியும் எவ்வளவு பெரியதாக இருக்க வேண்டும்?\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "mountain_descent",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "optimizer_concepts",
+      "nodes": [
+        {
+          "label": "Gradient Descent",
+          "children": [
+            "SGD (vanilla)",
+            "Momentum",
+            "RMSprop",
+            "Adam (adaptive)",
+            "Learning Rate",
+            "Learning Rate Scheduling"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "optimizer_code",
+      "steps": [
+        {"line": "import torch", "highlight": "torch", "explanation": {"en": "Import PyTorch"}},
+        {"line": "model = nn.Linear(10, 1)", "highlight": "model", "explanation": {"en": "Simple linear model: 10 inputs, 1 output (11 parameters)"}},
+        {"line": "sgd = torch.optim.SGD(model.parameters(), lr=0.01)", "highlight": "SGD", "explanation": {"en": "Vanilla SGD: w = w - lr * gradient. Simple but can be slow"}},
+        {"line": "sgd_m = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)", "highlight": "momentum", "explanation": {"en": "Momentum: accumulates velocity from past gradients. Rolls faster downhill"}},
+        {"line": "adam = torch.optim.Adam(model.parameters(), lr=0.001)", "highlight": "Adam", "explanation": {"en": "Adam: adaptive lr per parameter + momentum. Best general-purpose optimizer"}},
+        {"line": "optimizer.zero_grad()", "highlight": "zero_grad", "explanation": {"en": "CRITICAL: Clear accumulated gradients. Without this, gradients accumulate across epochs"}},
+        {"line": "loss.backward()", "highlight": "backward", "explanation": {"en": "Compute gradients for all parameters via backpropagation"}},
+        {"line": "optimizer.step()", "highlight": "step", "explanation": {"en": "Update all weights using the computed gradients and optimizer algorithm"}},
+        {"line": "scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)", "highlight": "StepLR", "explanation": {"en": "Reduce learning rate by 50% every 100 epochs for fine-tuning"}},
+        {"line": "scheduler.step()", "highlight": "scheduler.step", "explanation": {"en": "Call after optimizer.step() to update learning rate according to schedule"}}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_loss_epoch0",
+      "variable": "loss (epoch 0)",
+      "value": "1.2345",
+      "data_type": "float",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_loss_epoch200",
+      "variable": "loss (epoch 200)",
+      "value": "0.1823",
+      "data_type": "float",
+      "color": "#f7914f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_loss_epoch500",
+      "variable": "loss (epoch 500)",
+      "value": "0.0034",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "optimizer_comparison",
+      "left": {"label": "SGD", "content": "Simple w = w - lr*grad\nFast per step\nNeeds careful lr tuning\nCan get stuck in saddle points"},
+      "right": {"label": "Adam", "content": "Adaptive lr per parameter\nBuilt-in momentum\nWorks well out of the box\nDefault: lr=0.001"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "training_loop",
+      "from": "start",
+      "to": "convergence",
+      "steps": ["forward pass", "compute loss", "zero_grad()", "backward()", "step()", "repeat"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Training with Adam optimizer",
+        "Epoch 0, Loss: 1.2345",
+        "Epoch 100, Loss: 0.4521",
+        "Epoch 200, Loss: 0.1823",
+        "Epoch 300, Loss: 0.0412",
+        "Epoch 400, Loss: 0.0089",
+        "Epoch 500, Loss: 0.0034"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "valley_reached",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Compare SGD, SGD+Momentum, and Adam on fitting a sine wave. Train each for 1000 epochs and plot their loss curves to see which converges fastest.",
+        "ta": "SGD, SGD+Momentum, மற்றும் Adam ஆகியவற்றை சைன் அலையை பொருத்துவதில் ஒப்பிடுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\nX = torch.linspace(0, 6.28, 200).unsqueeze(1)\ny = torch.sin(X)\n\ndef make_model():\n    return nn.Sequential(nn.Linear(1, 32), nn.ReLU(), nn.Linear(32, 32), nn.ReLU(), nn.Linear(32, 1))\n\ncriterion = nn.MSELoss()\nresults = {}\n\nfor name, opt_fn in [('SGD', lambda p: torch.optim.SGD(p, lr=0.01)),\n                      ('SGD+Mom', lambda p: torch.optim.SGD(p, lr=0.01, momentum=0.9)),\n                      ('Adam', lambda p: torch.optim.Adam(p, lr=0.001))]:\n    model = make_model()\n    optimizer = opt_fn(model.parameters())\n    losses = []\n    # TODO: Train for 1000 epochs, record loss each epoch\n    results[name] = losses\n\n# TODO: Print final losses for each optimizer\n",
+      "expected_output": "SGD final loss: 0.15\nSGD+Mom final loss: 0.02\nAdam final loss: 0.001",
+      "hints": {
+        "en": [
+          "Standard loop: pred = model(X), loss = criterion(pred, y)",
+          "optimizer.zero_grad(), loss.backward(), optimizer.step()",
+          "losses.append(loss.item())",
+          "Adam will typically converge fastest"
+        ],
+        "ta": [
+          "நிலையான loop: pred = model(X), loss = criterion(pred, y)",
+          "Adam பொதுவாக வேகமாக ஒருங்கிணையும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What happens if you forget to call optimizer.zero_grad()?",
+        "ta": "optimizer.zero_grad() அழைக்க மறந்தால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": ["Nothing, it's optional", "Gradients accumulate from previous batches, causing incorrect updates", "The model weights freeze", "Training runs faster"],
+        "ta": ["ஒன்றும் நடக்காது, இது விருப்பமானது", "முந்தைய தொகுதிகளிலிருந்து சாய்வுகள் குவிந்து தவறான புதுப்பிப்புகளை ஏற்படுத்தும்", "மாதிரி எடைகள் உறைந்துவிடும்", "பயிற்சி வேகமாக இயங்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the learning rate control?",
+        "ta": "Learning rate என்ன கட்டுப்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["The number of layers", "The size of weight updates at each step", "The batch size", "The number of epochs"],
+        "ta": ["அடுக்குகளின் எண்ணிக்கை", "ஒவ்வொரு படியிலும் எடை புதுப்பிப்புகளின் அளவு", "தொகுதி அளவு", "சகாப்தங்களின் எண்ணிக்கை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is Adam often the default optimizer choice?",
+        "ta": "Adam ஏன் பொதுவாக இயல்புநிலை ஆப்டிமைசர் தேர்வாக உள்ளது?"
+      },
+      "options": {
+        "en": ["It uses the least memory", "It adapts learning rate per parameter and includes momentum", "It's the fastest to compute", "It guarantees finding the global minimum"],
+        "ta": ["குறைந்த நினைவகம் பயன்படுத்துகிறது", "ஒவ்வொரு அளவுருவுக்கும் learning rate-ஐ தகவமைத்து momentum சேர்க்கிறது", "கணக்கிட வேகமானது", "உலகளாவிய குறைந்தபட்சத்தைக் கண்டுபிடிக்க உத்தரவாதம் அளிக்கிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sgd", "momentum", "adam", "learning_rate", "lr_scheduler", "optimizer"],
+    "concepts_required": ["backpropagation", "gradients"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["model_training", "hyperparameter_tuning"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

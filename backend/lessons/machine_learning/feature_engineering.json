@@ -1,0 +1,249 @@
+{
+  "id": "feature_engineering",
+  "topic": "feature_engineering",
+  "track": "machine_learning",
+  "module": "data_preparation",
+  "order": 6,
+  "title": {
+    "en": "Feature Engineering: Crafting Better Inputs",
+    "ta": "அம்ச பொறியியல்: சிறந்த உள்ளீடுகளை வடிவமைத்தல்"
+  },
+  "description": {
+    "en": "Learn feature selection, creation, polynomial features, and interaction terms to give your ML models the best possible inputs.",
+    "ta": "உங்கள் ML மாடல்களுக்கு சிறந்த உள்ளீடுகளை வழங்க அம்ச தேர்வு, உருவாக்கம், பல்லுறுப்புக்கோவை அம்சங்கள், மற்றும் தொடர்பு விதிமுறைகளைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Feature Workshop\n\nVaathiyaar reveals a workbench full of tools. \"A model is only as smart as its features. Raw data is clay — you must shape it into something useful.\"\n\n### Feature Engineering Techniques\n\n**1. Feature Creation**\n```python\nimport pandas as pd\nimport numpy as np\n\ndf = pd.DataFrame({\n    'length': [10, 20, 15, 25],\n    'width': [5, 8, 6, 10],\n    'date': pd.to_datetime(['2024-01-15', '2024-06-20', '2024-03-10', '2024-12-01'])\n})\n\n# Create new features\ndf['area'] = df['length'] * df['width']\ndf['ratio'] = df['length'] / df['width']\ndf['month'] = df['date'].dt.month\ndf['is_summer'] = df['month'].isin([6, 7, 8]).astype(int)\n```\n\n**2. Polynomial Features**\n```python\nfrom sklearn.preprocessing import PolynomialFeatures\npoly = PolynomialFeatures(degree=2, include_bias=False)\nX_poly = poly.fit_transform(df[['length', 'width']])\n# Creates: length, width, length^2, length*width, width^2\n```\n\n**3. Feature Selection**\n```python\nfrom sklearn.feature_selection import SelectKBest, f_classif\nselector = SelectKBest(f_classif, k=3)\nX_selected = selector.fit_transform(X, y)\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "feature_workshop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "feature_map",
+      "nodes": [
+        {
+          "label": "Feature Engineering",
+          "children": ["Feature Creation", "Polynomial Features", "Feature Selection", "Interaction Terms"]
+        },
+        {
+          "label": "Feature Selection",
+          "children": ["SelectKBest", "Correlation", "Mutual Information", "Recursive Elimination"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "feature_code",
+      "steps": [
+        {
+          "line": "import pandas as pd; import numpy as np",
+          "highlight": "import",
+          "explanation": { "en": "Import core libraries for data manipulation" }
+        },
+        {
+          "line": "df = pd.DataFrame({'length': [10, 20, 15, 25], 'width': [5, 8, 6, 10], 'price': [100, 320, 180, 500]})",
+          "highlight": "DataFrame",
+          "explanation": { "en": "Create sample data — length and width of products with prices" }
+        },
+        {
+          "line": "df['area'] = df['length'] * df['width']",
+          "highlight": "area",
+          "explanation": { "en": "Create area feature — combines two features into a more informative one" }
+        },
+        {
+          "line": "df['ratio'] = df['length'] / df['width']",
+          "highlight": "ratio",
+          "explanation": { "en": "Create aspect ratio — captures the shape relationship" }
+        },
+        {
+          "line": "df['log_price'] = np.log1p(df['price'])",
+          "highlight": "log1p",
+          "explanation": { "en": "Log-transform skewed features — log1p handles zero values safely" }
+        },
+        {
+          "line": "df['length_bin'] = pd.cut(df['length'], bins=3, labels=['small', 'medium', 'large'])",
+          "highlight": "cut",
+          "explanation": { "en": "Bin continuous features into categories — useful for tree-based models" }
+        },
+        {
+          "line": "from sklearn.preprocessing import PolynomialFeatures",
+          "highlight": "PolynomialFeatures",
+          "explanation": { "en": "Import tool for creating polynomial and interaction features" }
+        },
+        {
+          "line": "poly = PolynomialFeatures(degree=2, include_bias=False)",
+          "highlight": "degree=2",
+          "explanation": { "en": "Degree 2 creates x1, x2, x1^2, x1*x2, x2^2" }
+        },
+        {
+          "line": "X_poly = poly.fit_transform(df[['length', 'width']])",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Transform 2 features into 5 polynomial features" }
+        },
+        {
+          "line": "print(f'Original features: 2, Polynomial features: {X_poly.shape[1]}')",
+          "highlight": "shape",
+          "explanation": { "en": "Polynomial expansion: 2 features become 5 features" }
+        },
+        {
+          "line": "from sklearn.feature_selection import SelectKBest, f_regression",
+          "highlight": "SelectKBest",
+          "explanation": { "en": "Import feature selector — keeps the K most informative features" }
+        },
+        {
+          "line": "selector = SelectKBest(f_regression, k=3)",
+          "highlight": "k=3",
+          "explanation": { "en": "Select top 3 features based on F-statistic with the target" }
+        },
+        {
+          "line": "X_selected = selector.fit_transform(X_poly, df['price'])",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Fit selector and keep only the 3 best features out of 5" }
+        },
+        {
+          "line": "print(f'Selected features: {X_selected.shape[1]}')",
+          "highlight": "Selected",
+          "explanation": { "en": "From 5 polynomial features down to 3 — only the most useful survive" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_orig_features",
+      "variable": "original_features",
+      "value": 2,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_poly_features",
+      "variable": "polynomial_features",
+      "value": 5,
+      "data_type": "int",
+      "color": "#3498db"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_selected",
+      "variable": "selected_features",
+      "value": 3,
+      "data_type": "int",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Original features: 2, Polynomial features: 5",
+        "Feature names: ['length', 'width', 'length^2', 'length width', 'width^2']",
+        "Selected features: 3"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a DataFrame with 'height' and 'weight' columns. Engineer a 'bmi' feature (weight/height^2), a 'category' feature binning BMI into underweight/normal/overweight, and use PolynomialFeatures(degree=2) on height and weight.",
+        "ta": "'height' மற்றும் 'weight' நெடுவரிசைகளுடன் DataFrame உருவாக்குங்கள். BMI அம்சம் (weight/height^2), BMI ஐ underweight/normal/overweight ஆக வகைப்படுத்தும் அம்சம், மற்றும் height மற்றும் weight மீது PolynomialFeatures(degree=2) பயன்படுத்துங்கள்."
+      },
+      "starter_code": "import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import PolynomialFeatures\n\ndf = pd.DataFrame({\n    'height': [1.70, 1.80, 1.65, 1.75, 1.60],\n    'weight': [65, 90, 55, 80, 50]\n})\n\n# Create BMI feature\ndf['bmi'] = df[___] / (df[___] ** 2)\n\n# Bin BMI into categories\ndf['category'] = pd.cut(df['bmi'], bins=[0, 18.5, 25, 100], labels=['underweight', 'normal', 'overweight'])\n\n# Polynomial features\npoly = PolynomialFeatures(degree=___, include_bias=False)\nX_poly = poly.fit_transform(df[['height', 'weight']])\nprint(f'Polynomial features: {X_poly.shape[1]}')\nprint(df[['bmi', 'category']])",
+      "expected_output": "Polynomial features: 5\n        bmi    category\n0  22.49      normal\n1  27.78  overweight\n2  20.20      normal\n3  26.12  overweight\n4  19.53      normal",
+      "hints": {
+        "en": [
+          "BMI = weight / (height ** 2)",
+          "pd.cut() bins continuous values into categories",
+          "PolynomialFeatures(degree=2) creates 5 features from 2 inputs"
+        ],
+        "ta": [
+          "BMI = weight / (height ** 2)",
+          "pd.cut() தொடர் மதிப்புகளை வகைகளாக பிரிக்கிறது",
+          "PolynomialFeatures(degree=2) 2 உள்ளீடுகளிலிருந்து 5 அம்சங்களை உருவாக்குகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does PolynomialFeatures(degree=2) create from features [x1, x2]?",
+        "ta": "[x1, x2] அம்சங்களிலிருந்து PolynomialFeatures(degree=2) என்ன உருவாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "x1, x2 only",
+          "x1, x2, x1^2, x1*x2, x2^2",
+          "x1^2, x2^2 only",
+          "x1*x2 only"
+        ],
+        "ta": [
+          "x1, x2 மட்டும்",
+          "x1, x2, x1^2, x1*x2, x2^2",
+          "x1^2, x2^2 மட்டும்",
+          "x1*x2 மட்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why would you log-transform a feature?",
+        "ta": "ஒரு அம்சத்தை ஏன் log-transform செய்வீர்கள்?"
+      },
+      "options": {
+        "en": [
+          "To make it categorical",
+          "To reduce right-skewness and compress large values",
+          "To remove missing values",
+          "To increase the number of features"
+        ],
+        "ta": [
+          "வகைப்பாடாக மாற்ற",
+          "வலது-சாய்வைக் குறைக்கவும் பெரிய மதிப்புகளை சுருக்கவும்",
+          "விடுபட்ட மதிப்புகளை நீக்க",
+          "அம்சங்களின் எண்ணிக்கையை அதிகரிக்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does SelectKBest do?",
+        "ta": "SelectKBest என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Creates K new features",
+          "Selects the K features most correlated with the target",
+          "Removes K outliers",
+          "Trains K different models"
+        ],
+        "ta": [
+          "K புதிய அம்சங்களை உருவாக்குகிறது",
+          "இலக்குடன் மிகவும் தொடர்புடைய K அம்சங்களைத் தேர்ந்தெடுக்கிறது",
+          "K வெளிப்புற மதிப்புகளை நீக்குகிறது",
+          "K வெவ்வேறு மாடல்களை பயிற்சிக்கிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["feature_creation", "polynomial_features", "feature_selection", "binning", "log_transform"],
+    "concepts_required": ["pandas_basics", "numpy_basics", "data_cleaning"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["feature_stores", "data_pipelines"],
+    "category": "machine_learning",
+    "path_memberships": ["ml_fundamentals"]
+  }
+}

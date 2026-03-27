@@ -1,0 +1,318 @@
+{
+  "id": "generators_yield",
+  "topic": "generators_yield",
+  "track": "python_intermediate",
+  "module": "iterators_and_generators",
+  "order": 8,
+  "title": {
+    "en": "Generators & yield: Lazy Sequences on Demand",
+    "ta": "ஜெனரேட்டர்கள் & yield: தேவைக்கேற்ப சோம்பல் வரிசைகள்"
+  },
+  "description": {
+    "en": "Learn how generators produce values lazily with yield, generator expressions, and why they are memory-efficient for large datasets.",
+    "ta": "yield மூலம் ஜெனரேட்டர்கள் எவ்வாறு சோம்பலாக மதிப்புகளை உருவாக்குகின்றன, ஜெனரேட்டர் expressions, பெரிய தரவுத்தொகுப்புகளுக்கு நினைவக-திறன் ஆகியவற்றைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Magic Tap\n\nVaathiyaar turns on a tap. \"This tap doesn't store all the water in a bucket first — it gives you water **on demand**, one drop at a time. That's what a generator does with values!\"\n\n### List vs Generator\n\n| Feature | List | Generator |\n|---------|------|------------|\n| Memory | Stores ALL items | Stores ONE at a time |\n| Creation | `[x for x in range(1M)]` | `(x for x in range(1M))` |\n| Speed | Fast access by index | Must iterate sequentially |\n| Reusable | Yes | No — exhausted after one pass |\n\n### The yield Keyword\n\n```python\ndef countdown(n):\n    while n > 0:\n        yield n    # pause here, give n, resume later\n        n -= 1\n\nfor num in countdown(3):\n    print(num)  # 3, 2, 1\n```\n\n> **Key Concept:** `yield` pauses the function and returns a value. When `next()` is called again, it resumes right where it left off. The function's local variables are preserved between yields!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magic_tap",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Generator",
+          "children": [
+            "yield keyword",
+            "Lazy evaluation",
+            "Generator expression",
+            "next() / for loop",
+            "Memory efficient"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "def fibonacci(limit):",
+          "highlight": "fibonacci",
+          "explanation": {
+            "en": "Define a generator function for Fibonacci numbers"
+          }
+        },
+        {
+          "line": "    a, b = 0, 1",
+          "highlight": "a, b",
+          "explanation": {
+            "en": "Initialize the first two Fibonacci numbers"
+          }
+        },
+        {
+          "line": "    while a < limit:",
+          "highlight": "while",
+          "explanation": {
+            "en": "Keep generating while under the limit"
+          }
+        },
+        {
+          "line": "        yield a",
+          "highlight": "yield",
+          "explanation": {
+            "en": "YIELD a — pause here, give the value, wait for next request"
+          }
+        },
+        {
+          "line": "        a, b = b, a + b",
+          "highlight": "a, b = b, a + b",
+          "explanation": {
+            "en": "When resumed, compute the next Fibonacci number"
+          }
+        },
+        {
+          "line": "gen = fibonacci(10)",
+          "highlight": "fibonacci(10)",
+          "explanation": {
+            "en": "Create a generator object — NO values computed yet!"
+          }
+        },
+        {
+          "line": "print(type(gen))",
+          "highlight": "type",
+          "explanation": {
+            "en": "It's a <class 'generator'>, not a list"
+          }
+        },
+        {
+          "line": "print(next(gen))",
+          "highlight": "next",
+          "explanation": {
+            "en": "next() resumes the generator — gets 0 (first yield)"
+          }
+        },
+        {
+          "line": "print(next(gen))",
+          "highlight": "next",
+          "explanation": {
+            "en": "next() again — resumes after yield, gets 1"
+          }
+        },
+        {
+          "line": "print(next(gen))",
+          "highlight": "next",
+          "explanation": {
+            "en": "Gets 1 again (0+1=1)"
+          }
+        },
+        {
+          "line": "print(list(fibonacci(50)))",
+          "highlight": "list(",
+          "explanation": {
+            "en": "list() exhausts the generator, collecting all values"
+          }
+        },
+        {
+          "line": "squares_gen = (x**2 for x in range(5))",
+          "highlight": "(x**2",
+          "explanation": {
+            "en": "Generator EXPRESSION — like a list comp but with parentheses"
+          }
+        },
+        {
+          "line": "print(list(squares_gen))",
+          "highlight": "list(",
+          "explanation": {
+            "en": "Convert generator to list to see all values"
+          }
+        },
+        {
+          "line": "import sys",
+          "highlight": "sys",
+          "explanation": {
+            "en": "Import sys to check memory usage"
+          }
+        },
+        {
+          "line": "big_list = [x for x in range(100000)]",
+          "highlight": "[x",
+          "explanation": {
+            "en": "List comprehension — stores ALL 100K items in memory"
+          }
+        },
+        {
+          "line": "big_gen = (x for x in range(100000))",
+          "highlight": "(x",
+          "explanation": {
+            "en": "Generator expression — stores almost nothing"
+          }
+        },
+        {
+          "line": "print(f'List: {sys.getsizeof(big_list)} bytes')",
+          "highlight": "getsizeof",
+          "explanation": {
+            "en": "List uses ~800KB of memory"
+          }
+        },
+        {
+          "line": "print(f'Gen:  {sys.getsizeof(big_gen)} bytes')",
+          "highlight": "getsizeof",
+          "explanation": {
+            "en": "Generator uses only ~200 bytes — massive difference!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_gen",
+      "variable": "gen",
+      "value": "<generator fibonacci at 0x...>",
+      "data_type": "generator",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_squares",
+      "variable": "squares_gen",
+      "value": "<generator expr at 0x...>",
+      "data_type": "generator",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "<class 'generator'>",
+        "0",
+        "1",
+        "1",
+        "[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]",
+        "[0, 1, 4, 9, 16]",
+        "List: 800984 bytes",
+        "Gen:  200 bytes"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "before": {
+        "label": "List (eager)",
+        "code": "nums = [x**2 for x in range(1000000)]\n# ALL 1M values in memory NOW\n# ~8MB of RAM used"
+      },
+      "after": {
+        "label": "Generator (lazy)",
+        "code": "nums = (x**2 for x in range(1000000))\n# ZERO values computed yet\n# ~200 bytes of RAM used"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a generator function called even_numbers(limit) that yields even numbers from 0 up to (but not including) limit. Use it to print even numbers below 10.",
+        "ta": "even_numbers(limit) என்ற generator function உருவாக்குங்கள், 0-லிருந்து limit வரை (உள்ளடக்காமல்) இரட்டை எண்களை yield செய்யும். 10-க்கு கீழ் இரட்டை எண்களை அச்சிட பயன்படுத்துங்கள்."
+      },
+      "starter_code": "def even_numbers(limit):\n    # yield even numbers from 0 to limit\n    pass\n\nfor num in even_numbers(10):\n    print(num)",
+      "expected_output": "0\n2\n4\n6\n8",
+      "hints": {
+        "en": [
+          "Start with n = 0",
+          "Use while n < limit",
+          "yield n, then n += 2",
+          "Or: for n in range(0, limit, 2): yield n"
+        ],
+        "ta": [
+          "n = 0 உடன் தொடங்குங்கள்",
+          "while n < limit பயன்படுத்துங்கள்",
+          "yield n, பின் n += 2",
+          "அல்லது: for n in range(0, limit, 2): yield n"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does yield do in a generator function?",
+        "ta": "generator function-ல் yield என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Terminates the function permanently",
+          "Pauses the function and returns a value",
+          "Creates a list",
+          "Raises an exception"
+        ],
+        "ta": [
+          "செயல்பாட்டை நிரந்தரமாக நிறுத்துகிறது",
+          "செயல்பாட்டை இடைநிறுத்தி மதிப்பை திருப்பி அனுப்புகிறது",
+          "பட்டியலை உருவாக்குகிறது",
+          "விதிவிலக்கை எழுப்புகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which uses less memory for 1 million numbers?",
+        "ta": "1 மில்லியன் எண்களுக்கு எது குறைவான நினைவகம் பயன்படுத்தும்?"
+      },
+      "options": {
+        "en": [
+          "[x for x in range(1000000)]",
+          "(x for x in range(1000000))",
+          "Both use the same",
+          "Neither uses memory"
+        ],
+        "ta": [
+          "[x for x in range(1000000)]",
+          "(x for x in range(1000000))",
+          "இரண்டும் ஒரே அளவு பயன்படுத்தும்",
+          "இரண்டும் நினைவகம் பயன்படுத்தாது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What happens when a generator is exhausted?",
+        "ta": "ஒரு generator தீர்ந்துவிட்டால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It restarts from the beginning",
+          "It raises StopIteration",
+          "It returns None forever",
+          "It raises ValueError"
+        ],
+        "ta": [
+          "தொடக்கத்திலிருந்து மீண்டும் தொடங்கும்",
+          "StopIteration எழுப்பும்",
+          "என்றென்றும் None திருப்பும்",
+          "ValueError எழுப்பும்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["generators", "yield", "generator_expressions", "lazy_evaluation", "next"],
+    "concepts_required": ["functions", "loops", "iterables"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["large_file_processing", "data_streams", "memory_optimization"],
+    "category": "functional",
+    "path_memberships": ["python_intermediate"]
+  }
+}

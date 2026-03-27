@@ -1,0 +1,250 @@
+{
+  "id": "searching",
+  "topic": "searching",
+  "track": "dsa",
+  "module": "sorting_searching",
+  "order": 14,
+  "title": {
+    "en": "Searching: Finding the Needle",
+    "ta": "தேடல்: ஊசியைக் கண்டுபிடிப்பது"
+  },
+  "description": {
+    "en": "Master linear search, binary search, and Python's bisect module. Understand when and how to apply each approach.",
+    "ta": "linear search, binary search, Python-ன் bisect module கற்றுக்கொள்ளுங்கள். ஒவ்வொன்றையும் எப்போது எவ்வாறு பயன்படுத்துவது என்பதைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Dictionary Lookup\n\nVaathiyaar holds up a dictionary. \"Do you flip page by page? No! You open to the middle and decide if the word is before or after. That's binary search!\"\n\n### Linear Search — O(n)\n\n```python\ndef linear_search(arr, target):\n    for i, val in enumerate(arr):\n        if val == target:\n            return i\n    return -1\n```\n\n### Binary Search — O(log n)\nRequires a **sorted** array.\n\n```python\ndef binary_search(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1\n```\n\n### Python's bisect Module\n\n```python\nimport bisect\n\nsorted_list = [1, 3, 5, 7, 9, 11]\n\n# Find insertion point\npos = bisect.bisect_left(sorted_list, 6)   # 3\nprint(pos)  # 6 would go at index 3\n\n# Insert while maintaining sort\nbisect.insort(sorted_list, 6)\nprint(sorted_list)  # [1, 3, 5, 6, 7, 9, 11]\n```\n\n> **Key Concept:** Binary search halves the search space each step. For 1,000,000 elements, it needs only ~20 comparisons!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "dictionary_lookup",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Searching",
+          "children": [
+            "Linear Search O(n)",
+            "Binary Search O(log n)",
+            "bisect module",
+            "Sorted requirement",
+            "Search space halving"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_search",
+      "steps": [
+        {
+          "line": "def binary_search(arr, target):",
+          "highlight": "binary_search",
+          "explanation": {
+            "en": "Binary search works on sorted arrays — O(log n) time",
+            "ta": "Binary search sorted arrays-ல் வேலை செய்யும் — O(log n) நேரம்"
+          }
+        },
+        {
+          "line": "    left, right = 0, len(arr) - 1",
+          "highlight": "left, right",
+          "explanation": {
+            "en": "Initialize two pointers at the start and end of the array",
+            "ta": "array-ன் தொடக்கத்திலும் முடிவிலும் இரு pointers-ஐ துவக்குங்கள்"
+          }
+        },
+        {
+          "line": "    while left <= right:",
+          "highlight": "while",
+          "explanation": {
+            "en": "Continue while search space is not empty",
+            "ta": "தேடல் இடம் காலியாகாத வரை தொடருங்கள்"
+          }
+        },
+        {
+          "line": "        mid = (left + right) // 2",
+          "highlight": "mid",
+          "explanation": {
+            "en": "Find the middle index — this is what we check",
+            "ta": "நடு index-ஐ கண்டறியுங்கள் — இதைத்தான் சரிபார்க்கிறோம்"
+          }
+        },
+        {
+          "line": "        if arr[mid] == target:",
+          "highlight": "==",
+          "explanation": {
+            "en": "Found it! Return the index",
+            "ta": "கண்டறியப்பட்டது! index-ஐ திருப்புங்கள்"
+          }
+        },
+        {
+          "line": "            return mid",
+          "highlight": "return",
+          "explanation": {
+            "en": "Target found at position mid",
+            "ta": "Target mid நிலையில் கண்டறியப்பட்டது"
+          }
+        },
+        {
+          "line": "        elif arr[mid] < target:",
+          "highlight": "<",
+          "explanation": {
+            "en": "Target is larger — it must be in the right half",
+            "ta": "Target பெரியது — வலது பாதியில் இருக்க வேண்டும்"
+          }
+        },
+        {
+          "line": "            left = mid + 1",
+          "highlight": "left",
+          "explanation": {
+            "en": "Discard left half — move left pointer past mid",
+            "ta": "இடது பாதியை நிராகரிக்கவும் — left pointer-ஐ mid-க்கு அப்பால் நகர்த்துங்கள்"
+          }
+        },
+        {
+          "line": "        else:",
+          "highlight": "else",
+          "explanation": {
+            "en": "Target is smaller — it must be in the left half",
+            "ta": "Target சிறியது — இடது பாதியில் இருக்க வேண்டும்"
+          }
+        },
+        {
+          "line": "            right = mid - 1",
+          "highlight": "right",
+          "explanation": {
+            "en": "Discard right half — move right pointer before mid",
+            "ta": "வலது பாதியை நிராகரிக்கவும் — right pointer-ஐ mid-க்கு முன் நகர்த்துங்கள்"
+          }
+        },
+        {
+          "line": "arr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]",
+          "highlight": "arr",
+          "explanation": {
+            "en": "A sorted array with 10 elements",
+            "ta": "10 உறுப்புகளுடன் sorted array"
+          }
+        },
+        {
+          "line": "result = binary_search(arr, 23)",
+          "highlight": "binary_search",
+          "explanation": {
+            "en": "Search for 23: mid=16→right half→mid=38→left half→mid=23→found at index 5!",
+            "ta": "23 தேடுங்கள்: mid=16→வலது→mid=38→இடது→mid=23→index 5 ல் கண்டறிந்தது!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "binary_search_flow",
+      "steps": [
+        {"label": "Array: [2,5,8,12,16,23,38,56,72,91]", "active": true},
+        {"label": "Step 1: mid=16, target>16 → go right", "active": true},
+        {"label": "Step 2: mid=38, target<38 → go left", "active": true},
+        {"label": "Step 3: mid=23, FOUND!", "active": true}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_left",
+      "variable": "left",
+      "value": 5,
+      "data_type": "int",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_right",
+      "variable": "right",
+      "value": 5,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Linear search for 23: found at index 5 (6 comparisons)",
+        "Binary search for 23: found at index 5 (3 comparisons)",
+        "bisect_left(arr, 23) = 5",
+        "For n=1000000: linear=500000 avg, binary=20 max"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement binary search iteratively and recursively. Then use it to solve: given a sorted array and a target, find the first and last position of the target.",
+        "ta": "Binary search-ஐ iteratively மற்றும் recursively செயல்படுத்துங்கள். sorted array-ல் target-ன் முதல் மற்றும் கடைசி நிலையை கண்டறியுங்கள்."
+      },
+      "starter_code": "def binary_search(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1\n\ndef find_first_last(arr, target):\n    # Find first and last occurrence of target\n    pass\n\nprint(binary_search([1, 3, 5, 7, 9], 7))\narr = [1, 2, 2, 2, 3, 4, 5]\nprint(find_first_last(arr, 2))",
+      "expected_output": "3\n(1, 3)",
+      "hints": {
+        "en": [
+          "For first occurrence: when found, keep searching left (right = mid - 1)",
+          "For last occurrence: when found, keep searching right (left = mid + 1)",
+          "Use two separate binary searches — one biased left, one biased right"
+        ],
+        "ta": [
+          "முதல் நிகழ்வுக்கு: கண்டறியப்பட்டால், இடதுபுறம் தொடர்ந்து தேடுங்கள்",
+          "கடைசி நிகழ்வுக்கு: கண்டறியப்பட்டால், வலதுபுறம் தொடர்ந்து தேடுங்கள்",
+          "இரண்டு தனித்தனி binary searches பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the prerequisite for binary search to work?",
+        "ta": "Binary search வேலை செய்ய என்ன முன்நிபந்தனை?"
+      },
+      "options": {
+        "en": ["Array must be of even length", "Array must be sorted", "Array must contain unique elements", "Array must be small"],
+        "ta": ["Array இரட்டை நீளமாக இருக்க வேண்டும்", "Array sorted ஆக இருக்க வேண்டும்", "Array தனித்துவ உறுப்புகளைக் கொண்டிருக்க வேண்டும்", "Array சிறியதாக இருக்க வேண்டும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How many comparisons does binary search need for an array of 1024 elements?",
+        "ta": "1024 உறுப்புகள் கொண்ட array-க்கு binary search எத்தனை ஒப்பீடுகள் தேவை?"
+      },
+      "options": {
+        "en": ["1024", "512", "10", "100"],
+        "ta": ["1024", "512", "10", "100"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does bisect.insort(list, val) do?",
+        "ta": "bisect.insort(list, val) என்ன செய்யும்?"
+      },
+      "options": {
+        "en": ["Sorts the entire list", "Inserts val at the end", "Inserts val while maintaining sorted order", "Returns the insertion index"],
+        "ta": ["முழு list-ஐயும் sort செய்யும்", "val-ஐ முடிவில் செருகும்", "sorted order-ஐ பராமரித்தவாறு val-ஐ செருகும்", "insertion index-ஐ திருப்பும்"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["linear_search", "binary_search", "bisect"],
+    "concepts_required": ["lists", "loops", "sorting"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["database_lookup", "autocomplete", "spell_check"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

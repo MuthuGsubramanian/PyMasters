@@ -1,0 +1,260 @@
+{
+  "id": "unittest_basics",
+  "topic": "unittest_basics",
+  "track": "testing_devops",
+  "module": "testing_foundations",
+  "order": 2,
+  "title": {
+    "en": "unittest: Python's Built-in Test Framework",
+    "ta": "unittest: Python-ன் உள்ளமைந்த சோதனை கட்டமைப்பு"
+  },
+  "description": {
+    "en": "Master the unittest module — TestCase classes, assertion methods, setUp/tearDown, and running test suites from the command line.",
+    "ta": "unittest module-ஐ கற்றுக்கொள்ளுங்கள் — TestCase classes, assertion methods, setUp/tearDown, மற்றும் command line-ல் இருந்து test suites இயக்குவது."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## Vaathiyaar's Inspection Checklist\n\nVaathiyaar pulls out a clipboard. \"In a factory, every product goes through an inspection line. Each inspector checks one thing — weight, colour, size. In Python, `unittest` is your inspection line. Each `TestCase` is an inspector.\"\n\n### The unittest Module\n- Part of Python's standard library — no install needed\n- Based on Java's JUnit framework\n- Uses classes that inherit from `unittest.TestCase`\n- Rich set of assertion methods beyond plain `assert`\n\n### Key Assertion Methods\n\n| Method | Checks |\n|--------|--------|\n| `assertEqual(a, b)` | a == b |\n| `assertNotEqual(a, b)` | a != b |\n| `assertTrue(x)` | bool(x) is True |\n| `assertFalse(x)` | bool(x) is False |\n| `assertRaises(Exc)` | Exception is raised |\n| `assertIn(a, b)` | a in b |\n\n### setUp and tearDown\n- `setUp()` runs BEFORE each test method\n- `tearDown()` runs AFTER each test method\n- Perfect for creating/cleaning test data\n\n> **Key Concept:** unittest gives you structured, repeatable inspections for your code. Each test method is independent — setUp ensures a fresh start every time."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "inspection_line",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "unittest_map",
+      "nodes": [
+        {
+          "label": "unittest.TestCase",
+          "children": [
+            "setUp()",
+            "tearDown()",
+            "test_methods()",
+            "assert*()"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "unittest_code",
+      "steps": [
+        {
+          "line": "import unittest",
+          "highlight": "unittest",
+          "explanation": {
+            "en": "Import the built-in unittest module — no pip install needed"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now define the code we want to test"
+          }
+        },
+        {
+          "line": "class BankAccount:",
+          "highlight": "BankAccount",
+          "explanation": {
+            "en": "A simple class representing a bank account with balance"
+          }
+        },
+        {
+          "line": "    def __init__(self, owner, balance=0):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Initialize account with owner name and optional starting balance"
+          }
+        },
+        {
+          "line": "        self.owner = owner",
+          "highlight": "self.owner",
+          "explanation": {
+            "en": "Store the owner name as an instance attribute"
+          }
+        },
+        {
+          "line": "        self.balance = balance",
+          "highlight": "self.balance",
+          "explanation": {
+            "en": "Store the balance, defaulting to 0"
+          }
+        },
+        {
+          "line": "    def deposit(self, amount):",
+          "highlight": "deposit",
+          "explanation": {
+            "en": "Method to add money to the account"
+          }
+        },
+        {
+          "line": "        if amount <= 0:",
+          "highlight": "amount <= 0",
+          "explanation": {
+            "en": "Guard clause: reject zero or negative deposits"
+          }
+        },
+        {
+          "line": "            raise ValueError('Deposit must be positive')",
+          "highlight": "ValueError",
+          "explanation": {
+            "en": "Raise an error for invalid deposit amounts"
+          }
+        },
+        {
+          "line": "        self.balance += amount",
+          "highlight": "+=",
+          "explanation": {
+            "en": "Add the amount to the current balance"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now let's write the test class"
+          }
+        },
+        {
+          "line": "class TestBankAccount(unittest.TestCase):",
+          "highlight": "TestBankAccount",
+          "explanation": {
+            "en": "Test class inherits from unittest.TestCase — this is required"
+          }
+        },
+        {
+          "line": "    def setUp(self):",
+          "highlight": "setUp",
+          "explanation": {
+            "en": "setUp runs before EACH test — creates a fresh account every time"
+          }
+        },
+        {
+          "line": "        self.account = BankAccount('Muthu', 100)",
+          "highlight": "BankAccount('Muthu', 100)",
+          "explanation": {
+            "en": "Create a test account with 100 balance for each test"
+          }
+        },
+        {
+          "line": "    def test_initial_balance(self):",
+          "highlight": "test_initial_balance",
+          "explanation": {
+            "en": "Test method names MUST start with 'test_' to be discovered"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "assert_vs_assertequal",
+      "left": {
+        "label": "Plain assert",
+        "content": "assert add(2, 3) == 5\n# Unhelpful error:\n# AssertionError",
+        "status": "warn"
+      },
+      "right": {
+        "label": "assertEqual",
+        "content": "self.assertEqual(add(2, 3), 5)\n# Helpful error:\n# AssertionError: 6 != 5",
+        "status": "pass"
+      }
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_account",
+      "variable": "self.account",
+      "value": "BankAccount('Muthu', 100)",
+      "data_type": "BankAccount",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "unittest_output",
+      "output": [
+        "$ python -m unittest test_bank.py -v",
+        "test_deposit (test_bank.TestBankAccount) ... ok",
+        "test_initial_balance (test_bank.TestBankAccount) ... ok",
+        "test_invalid_deposit (test_bank.TestBankAccount) ... ok",
+        "test_owner (test_bank.TestBankAccount) ... ok",
+        "",
+        "----------------------------------------------------------------------",
+        "Ran 4 tests in 0.002s",
+        "",
+        "OK"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a `TestBankAccount` class with setUp creating an account with balance 100. Write tests for: initial balance, deposit of 50 making balance 150, and assertRaises for negative deposit.",
+        "ta": "100 balance-உடன் setUp உருவாக்கும் `TestBankAccount` class எழுதுங்கள். ஆரம்ப balance, 50 deposit செய்து balance 150 ஆவது, எதிர்மறை deposit-க்கு assertRaises ஆகியவற்றிற்கு சோதனைகள் எழுதுங்கள்."
+      },
+      "starter_code": "import unittest\n\nclass BankAccount:\n    def __init__(self, owner, balance=0):\n        self.owner = owner\n        self.balance = balance\n\n    def deposit(self, amount):\n        if amount <= 0:\n            raise ValueError('Deposit must be positive')\n        self.balance += amount\n\nclass TestBankAccount(unittest.TestCase):\n    def setUp(self):\n        # Create account with balance 100\n        pass\n\n    def test_initial_balance(self):\n        # Check balance is 100\n        pass\n\n    def test_deposit(self):\n        # Deposit 50, check balance is 150\n        pass\n\n    def test_invalid_deposit(self):\n        # Use assertRaises for negative deposit\n        pass\n\nif __name__ == '__main__':\n    unittest.main()",
+      "expected_output": "Ran 3 tests in 0.001s\n\nOK",
+      "hints": {
+        "en": [
+          "In setUp: self.account = BankAccount('Test', 100)",
+          "Use self.assertEqual(self.account.balance, 100)",
+          "For assertRaises: with self.assertRaises(ValueError): self.account.deposit(-10)"
+        ],
+        "ta": [
+          "setUp-ல்: self.account = BankAccount('Test', 100)",
+          "self.assertEqual(self.account.balance, 100) பயன்படுத்துங்கள்",
+          "assertRaises-க்கு: with self.assertRaises(ValueError): self.account.deposit(-10)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What must test classes inherit from when using unittest?",
+        "ta": "unittest பயன்படுத்தும்போது test classes எதிலிருந்து inherit செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": ["object", "unittest.TestCase", "unittest.TestSuite", "test.Base"],
+        "ta": ["object", "unittest.TestCase", "unittest.TestSuite", "test.Base"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When does setUp() run?",
+        "ta": "setUp() எப்போது இயங்கும்?"
+      },
+      "options": {
+        "en": ["Once before all tests", "Before EACH test method", "After each test method", "Only when tests fail"],
+        "ta": ["அனைத்து சோதனைகளுக்கு முன் ஒரு முறை", "ஒவ்வொரு test method-க்கு முன்", "ஒவ்வொரு test method-க்குப் பின்", "சோதனைகள் தோல்வியடையும்போது மட்டும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which assertion checks that an exception is raised?",
+        "ta": "எந்த assertion ஒரு exception எழுப்பப்படுகிறதா என்று சரிபார்க்கும்?"
+      },
+      "options": {
+        "en": ["assertEqual", "assertTrue", "assertRaises", "assertIn"],
+        "ta": ["assertEqual", "assertTrue", "assertRaises", "assertIn"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["unittest", "TestCase", "assertions", "setUp", "tearDown"],
+    "concepts_required": ["classes", "functions", "testing_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["qa_engineering", "test_automation"],
+    "category": "testing",
+    "path_memberships": ["testing_devops"]
+  }
+}

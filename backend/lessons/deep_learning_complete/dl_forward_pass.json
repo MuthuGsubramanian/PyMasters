@@ -1,0 +1,193 @@
+{
+  "id": "dl_forward_pass",
+  "topic": "forward_pass",
+  "track": "deep_learning_complete",
+  "module": "neural_network_foundations",
+  "order": 4,
+  "title": {
+    "en": "Forward Pass: Data Flowing Through the Network",
+    "ta": "ஃபார்வர்ட் பாஸ்: நெட்வொர்க் வழியாக தரவு பாய்தல்"
+  },
+  "description": {
+    "en": "Trace how input data transforms layer by layer through matrix multiplications and activations to produce predictions.",
+    "ta": "உள்ளீட்டு தரவு அணி பெருக்கல்கள் மற்றும் செயல்பாடுகள் மூலம் அடுக்கு அடுக்காக எவ்வாறு மாறுகிறது என்பதைக் கண்காணியுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Assembly Line\n\nVaathiyaar walks through a factory. \"Each station transforms the product. Raw metal enters, a polished widget exits. The forward pass is the same — raw numbers enter, predictions exit.\"\n\n### The Forward Pass Step by Step\n\n1. **Input:** Raw features as a tensor\n2. **Layer 1:** Matrix multiply + bias → activation\n3. **Layer 2:** Matrix multiply + bias → activation\n4. **Output:** Final prediction\n\n```python\nimport torch\nimport torch.nn as nn\n\n# Manual forward pass to see the math\ntorch.manual_seed(42)\n\n# Input: batch of 3 samples, 2 features each\nX = torch.tensor([[1.0, 2.0],\n                  [3.0, 4.0],\n                  [5.0, 6.0]])\n\n# Layer 1: 2 inputs -> 3 hidden neurons\nW1 = torch.randn(2, 3)  # weight matrix\nb1 = torch.zeros(3)      # bias vector\n\n# Layer 2: 3 hidden -> 1 output\nW2 = torch.randn(3, 1)\nb2 = torch.zeros(1)\n\n# Forward pass\nz1 = X @ W1 + b1          # matrix multiply + bias\na1 = torch.relu(z1)        # activation\nz2 = a1 @ W2 + b2          # second layer\noutput = torch.sigmoid(z2)  # final output\n\nprint(f'Input shape: {X.shape}')      # [3, 2]\nprint(f'Hidden shape: {a1.shape}')    # [3, 3]\nprint(f'Output shape: {output.shape}') # [3, 1]\nprint(f'Predictions:\\n{output}')\n```\n\n> **Key Insight:** The forward pass is just a chain of matrix multiplications and element-wise activations. The `@` operator is matrix multiply in PyTorch!",
+    "ta": "## வாத்தியாரின் அசெம்பிளி லைன்\n\nவாத்தியார் ஒரு தொழிற்சாலை வழியாக நடக்கிறார். \"ஒவ்வொரு நிலையமும் பொருளை மாற்றுகிறது. கச்சா உலோகம் உள்ளே செல்கிறது, மெருகூட்டப்பட்ட பொருள் வெளியே வருகிறது. ஃபார்வர்ட் பாஸ் அதே போன்றது — கச்சா எண்கள் உள்ளே செல்கின்றன, கணிப்புகள் வெளியே வருகின்றன.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "assembly_line",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "forward_concepts",
+      "nodes": [
+        {
+          "label": "Forward Pass",
+          "children": [
+            "Matrix Multiplication (@)",
+            "Bias Addition (+)",
+            "Activation Function",
+            "Batch Processing",
+            "Shape Transformation"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "forward_code",
+      "steps": [
+        {"line": "X = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])", "highlight": "X", "explanation": {"en": "Input batch: 3 samples, each with 2 features. Shape: [3, 2]"}},
+        {"line": "W1 = torch.randn(2, 3)", "highlight": "W1", "explanation": {"en": "Weight matrix for layer 1: maps 2 inputs to 3 hidden neurons. Shape: [2, 3]"}},
+        {"line": "b1 = torch.zeros(3)", "highlight": "b1", "explanation": {"en": "Bias vector for 3 hidden neurons, initialized to zeros"}},
+        {"line": "z1 = X @ W1 + b1", "highlight": "@", "explanation": {"en": "Matrix multiply [3,2] @ [2,3] = [3,3], then add bias. This is the pre-activation"}},
+        {"line": "a1 = torch.relu(z1)", "highlight": "relu", "explanation": {"en": "Apply ReLU: negative values become 0, positive stay. Shape still [3,3]"}},
+        {"line": "W2 = torch.randn(3, 1)", "highlight": "W2", "explanation": {"en": "Weight matrix for layer 2: maps 3 hidden to 1 output. Shape: [3, 1]"}},
+        {"line": "z2 = a1 @ W2 + b2", "highlight": "z2", "explanation": {"en": "Matrix multiply [3,3] @ [3,1] = [3,1]. One prediction per sample"}},
+        {"line": "output = torch.sigmoid(z2)", "highlight": "sigmoid", "explanation": {"en": "Sigmoid squashes output to (0,1) for probability interpretation"}},
+        {"line": "print(f'Input shape: {X.shape}')", "highlight": "shape", "explanation": {"en": "Shape tracking is critical: [batch_size, features] at each layer"}},
+        {"line": "print(f'Predictions:\\n{output}')", "highlight": "output", "explanation": {"en": "Final predictions: one probability per sample in the batch"}}
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "shape_tracking",
+      "slots": [
+        {"name": "X (Input)", "value": "shape [3, 2]", "type": "tensor", "address": "Layer 0"},
+        {"name": "z1 = X @ W1 + b1", "value": "shape [3, 3]", "type": "tensor", "address": "Layer 1 pre"},
+        {"name": "a1 = relu(z1)", "value": "shape [3, 3]", "type": "tensor", "address": "Layer 1 post"},
+        {"name": "z2 = a1 @ W2 + b2", "value": "shape [3, 1]", "type": "tensor", "address": "Layer 2 pre"},
+        {"name": "output = sigmoid(z2)", "value": "shape [3, 1]", "type": "tensor", "address": "Layer 2 post"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "data_flow",
+      "from": "input",
+      "to": "output",
+      "steps": ["X [3,2]", "@ W1 [2,3]", "+ b1", "ReLU", "@ W2 [3,1]", "+ b2", "Sigmoid", "output [3,1]"],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_z1",
+      "variable": "z1",
+      "value": "[[0.47, -1.23, 0.89], ...]",
+      "data_type": "tensor[3,3]",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_a1",
+      "variable": "a1 (after ReLU)",
+      "value": "[[0.47, 0.0, 0.89], ...]",
+      "data_type": "tensor[3,3]",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_output",
+      "variable": "output",
+      "value": "[[0.62], [0.34], [0.78]]",
+      "data_type": "tensor[3,1]",
+      "color": "#45b7d1"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> X.shape",
+        "torch.Size([3, 2])",
+        ">>> z1 = X @ W1 + b1",
+        ">>> z1.shape",
+        "torch.Size([3, 3])",
+        ">>> a1 = torch.relu(z1)",
+        ">>> output = torch.sigmoid(a1 @ W2 + b2)",
+        ">>> output",
+        "tensor([[0.6225], [0.3389], [0.7812]])"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "data_stream",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a manual forward pass (no nn.Module) for a 3-layer network: input(4) -> hidden(8) -> hidden(4) -> output(2). Use ReLU for hidden layers and softmax for output. Track and print shapes at every step.",
+        "ta": "3-அடுக்கு நெட்வொர்க்கிற்கு கைமுறை ஃபார்வர்ட் பாஸ் செயல்படுத்துங்கள். ஒவ்வொரு படியிலும் வடிவங்களைக் கண்காணியுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nX = torch.randn(5, 4)  # 5 samples, 4 features\n\n# Initialize weights and biases\nW1 = torch.randn(4, 8) * 0.1\nb1 = torch.zeros(8)\nW2 = torch.randn(8, 4) * 0.1\nb2 = torch.zeros(4)\nW3 = torch.randn(4, 2) * 0.1\nb3 = torch.zeros(2)\n\n# TODO: Forward pass - compute z1, a1, z2, a2, z3, output\n# TODO: Print shape at each step\n",
+      "expected_output": "X: [5, 4] -> z1: [5, 8] -> a1: [5, 8] -> z2: [5, 4] -> a2: [5, 4] -> z3: [5, 2] -> output: [5, 2]",
+      "hints": {
+        "en": [
+          "z1 = X @ W1 + b1, then a1 = F.relu(z1)",
+          "z2 = a1 @ W2 + b2, then a2 = F.relu(z2)",
+          "z3 = a2 @ W3 + b3, then output = F.softmax(z3, dim=1)",
+          "Use .shape to print dimensions at each step"
+        ],
+        "ta": [
+          "z1 = X @ W1 + b1, பிறகு a1 = F.relu(z1)",
+          "ஒவ்வொரு படியிலும் .shape பயன்படுத்தி அளவுகளை அச்சிடுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "If input X has shape [32, 10] and weight W has shape [10, 5], what is the shape of X @ W?",
+        "ta": "உள்ளீடு X-ன் வடிவம் [32, 10] மற்றும் எடை W-ன் வடிவம் [10, 5] எனில், X @ W-ன் வடிவம் என்ன?"
+      },
+      "options": {
+        "en": ["[32, 10]", "[10, 5]", "[32, 5]", "[5, 32]"],
+        "ta": ["[32, 10]", "[10, 5]", "[32, 5]", "[5, 32]"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What happens during the forward pass?",
+        "ta": "ஃபார்வர்ட் பாஸ் போது என்ன நடக்கிறது?"
+      },
+      "options": {
+        "en": ["Weights are updated", "Gradients are computed", "Input data flows through layers to produce output", "Loss function is minimized"],
+        "ta": ["எடைகள் புதுப்பிக்கப்படுகின்றன", "சாய்வுகள் கணக்கிடப்படுகின்றன", "உள்ளீட்டு தரவு அடுக்குகள் வழியாக பாய்ந்து வெளியீட்டை உருவாக்குகிறது", "இழப்பு செயல்பாடு குறைக்கப்படுகிறது"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why do we apply activation functions between layers?",
+        "ta": "அடுக்குகளுக்கு இடையே ஏன் செயல்பாட்டு செயல்பாடுகளைப் பயன்படுத்துகிறோம்?"
+      },
+      "options": {
+        "en": ["To speed up computation", "To introduce non-linearity so the network can learn complex patterns", "To reduce memory usage", "To normalize the outputs"],
+        "ta": ["கணக்கீட்டை வேகப்படுத்த", "நெட்வொர்க் சிக்கலான வடிவங்களைக் கற்க நேரியல் அல்லாத தன்மையை அறிமுகப்படுத்த", "நினைவகப் பயன்பாட்டைக் குறைக்க", "வெளியீடுகளை இயல்பாக்க"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["forward_pass", "matrix_multiplication", "shape_tracking", "batch_processing"],
+    "concepts_required": ["multilayer_network", "activation_functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["inference", "prediction"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

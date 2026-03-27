@@ -1,0 +1,254 @@
+{
+  "id": "data_cleaning",
+  "topic": "data_cleaning",
+  "track": "machine_learning",
+  "module": "data_preparation",
+  "order": 5,
+  "title": {
+    "en": "Data Cleaning: Garbage In, Garbage Out",
+    "ta": "தரவு சுத்தம்: குப்பை உள்ளே, குப்பை வெளியே"
+  },
+  "description": {
+    "en": "Handle missing values, detect and treat outliers, encode categorical variables, and scale numerical features to prepare clean data for ML models.",
+    "ta": "விடுபட்ட மதிப்புகளை கையாளுதல், வெளிப்புற மதிப்புகளை கண்டறிதல், வகைப்பாடு மாறிகளை குறியீடாக்குதல், மற்றும் ML மாடல்களுக்கு சுத்தமான தரவை தயாரிக்க எண் அம்சங்களை அளவிடுதல்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Cleaning Crew\n\nVaathiyaar hands each student a mop. \"Your model is only as good as your data. Today we clean the mess.\"\n\n### The Four Pillars of Data Cleaning\n\n**1. Missing Values**\n```python\nimport pandas as pd\nimport numpy as np\n\ndf = pd.DataFrame({\n    'age': [25, np.nan, 35, 28, np.nan],\n    'salary': [50000, 60000, np.nan, 55000, 70000],\n    'city': ['Chennai', 'Mumbai', 'Chennai', None, 'Delhi']\n})\n\n# Check missing\nprint(df.isnull().sum())\n\n# Fill numerical with median\ndf['age'].fillna(df['age'].median(), inplace=True)\ndf['salary'].fillna(df['salary'].mean(), inplace=True)\n\n# Fill categorical with mode\ndf['city'].fillna(df['city'].mode()[0], inplace=True)\n```\n\n**2. Outlier Detection**\n```python\nfrom scipy import stats\nz_scores = np.abs(stats.zscore(df[['age', 'salary']]))\ndf_clean = df[(z_scores < 3).all(axis=1)]\n```\n\n**3. Encoding Categoricals**\n```python\nfrom sklearn.preprocessing import LabelEncoder, OneHotEncoder\nle = LabelEncoder()\ndf['city_encoded'] = le.fit_transform(df['city'])\n```\n\n**4. Feature Scaling**\n```python\nfrom sklearn.preprocessing import StandardScaler, MinMaxScaler\nscaler = StandardScaler()\ndf[['age_scaled', 'salary_scaled']] = scaler.fit_transform(df[['age', 'salary']])\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "cleaning_crew",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cleaning_map",
+      "nodes": [
+        {
+          "label": "Data Cleaning",
+          "children": ["Missing Values", "Outliers", "Encoding", "Scaling"]
+        },
+        {
+          "label": "Missing Values",
+          "children": ["Drop rows", "Fill with mean/median", "Fill with mode", "Interpolate"]
+        },
+        {
+          "label": "Encoding",
+          "children": ["Label Encoding", "One-Hot Encoding", "Ordinal Encoding"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cleaning_code",
+      "steps": [
+        {
+          "line": "import pandas as pd; import numpy as np",
+          "highlight": "import",
+          "explanation": { "en": "Import pandas and numpy for data manipulation" }
+        },
+        {
+          "line": "df = pd.DataFrame({'age': [25, np.nan, 35, 28, np.nan], 'salary': [50000, 60000, np.nan, 55000, 70000], 'city': ['Chennai', 'Mumbai', 'Chennai', None, 'Delhi']})",
+          "highlight": "np.nan",
+          "explanation": { "en": "Create sample data with missing values — np.nan and None represent missing data" }
+        },
+        {
+          "line": "print(df.isnull().sum())",
+          "highlight": "isnull",
+          "explanation": { "en": "Count missing values per column — first step in any data cleaning" }
+        },
+        {
+          "line": "print(f'Missing %: {(df.isnull().sum() / len(df) * 100).round(1)}')",
+          "highlight": "Missing %",
+          "explanation": { "en": "Calculate missing percentage — helps decide drop vs impute strategy" }
+        },
+        {
+          "line": "df['age'].fillna(df['age'].median(), inplace=True)",
+          "highlight": "fillna",
+          "explanation": { "en": "Fill missing ages with median — robust to outliers unlike mean" }
+        },
+        {
+          "line": "df['salary'].fillna(df['salary'].mean(), inplace=True)",
+          "highlight": "mean",
+          "explanation": { "en": "Fill missing salary with mean — appropriate when distribution is normal" }
+        },
+        {
+          "line": "df['city'].fillna(df['city'].mode()[0], inplace=True)",
+          "highlight": "mode",
+          "explanation": { "en": "Fill missing city with most frequent value (mode)" }
+        },
+        {
+          "line": "from sklearn.preprocessing import LabelEncoder",
+          "highlight": "LabelEncoder",
+          "explanation": { "en": "Import encoder to convert text categories to numbers" }
+        },
+        {
+          "line": "le = LabelEncoder()",
+          "highlight": "le",
+          "explanation": { "en": "Create encoder instance" }
+        },
+        {
+          "line": "df['city_encoded'] = le.fit_transform(df['city'])",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Chennai=0, Delhi=1, Mumbai=2 — alphabetical label assignment" }
+        },
+        {
+          "line": "from sklearn.preprocessing import StandardScaler",
+          "highlight": "StandardScaler",
+          "explanation": { "en": "Import scaler to normalize numerical features" }
+        },
+        {
+          "line": "scaler = StandardScaler()",
+          "highlight": "scaler",
+          "explanation": { "en": "StandardScaler transforms to mean=0, std=1" }
+        },
+        {
+          "line": "df[['age_scaled', 'salary_scaled']] = scaler.fit_transform(df[['age', 'salary']])",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Scale age and salary — now both features are on the same scale" }
+        },
+        {
+          "line": "print(df[['age_scaled', 'salary_scaled']].describe())",
+          "highlight": "describe",
+          "explanation": { "en": "Verify: mean should be ~0 and std ~1 after scaling" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_missing",
+      "variable": "missing_count",
+      "value": "age:2, salary:1, city:1",
+      "data_type": "Series",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_age_median",
+      "variable": "age_median",
+      "value": 28.0,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "age       2",
+        "salary    1",
+        "city      1",
+        "dtype: int64",
+        "",
+        "After cleaning:",
+        "   age   salary     city  city_encoded  age_scaled  salary_scaled",
+        "0  25.0  50000.0  Chennai           0      -1.07         -1.22",
+        "1  28.0  60000.0   Mumbai           2       0.00          0.20",
+        "2  35.0  58750.0  Chennai           0       1.43         -0.09",
+        "3  28.0  55000.0  Chennai           0       0.00         -0.51",
+        "4  28.0  70000.0    Delhi           1       0.00          1.62"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Given a DataFrame with missing values, fill numerical columns with median, categorical with mode, then apply one-hot encoding to the 'color' column using pd.get_dummies().",
+        "ta": "விடுபட்ட மதிப்புகள் உள்ள DataFrame-ல், எண் நெடுவரிசைகளை இடைநிலை மதிப்புடன் நிரப்பி, வகைப்பாட்டை முறையுடன் நிரப்பி, pd.get_dummies() பயன்படுத்தி 'color' நெடுவரிசைக்கு one-hot encoding செய்யுங்கள்."
+      },
+      "starter_code": "import pandas as pd\nimport numpy as np\n\ndf = pd.DataFrame({\n    'price': [100, np.nan, 300, 250, np.nan],\n    'weight': [1.5, 2.0, np.nan, 1.8, 2.5],\n    'color': ['red', 'blue', 'red', None, 'green']\n})\n\n# Fill missing values\ndf['price'].fillna(df['price'].___(), inplace=True)\ndf['weight'].fillna(df['weight'].___(), inplace=True)\ndf['color'].fillna(df['color'].___()[0], inplace=True)\n\n# One-hot encode\ndf_encoded = pd.get_dummies(df, columns=[___])\nprint(df_encoded)",
+      "expected_output": "   price  weight  color_blue  color_green  color_red\n0  100.0    1.50       False        False       True\n1  250.0    2.00        True        False      False\n2  300.0    1.80       False        False       True\n3  250.0    1.80       False        False       True\n4  250.0    2.50       False         True      False",
+      "hints": {
+        "en": [
+          "Use .median() for numerical columns",
+          "Use .mode() for categorical columns",
+          "pd.get_dummies(df, columns=['color']) creates one-hot columns"
+        ],
+        "ta": [
+          "எண் நெடுவரிசைகளுக்கு .median() பயன்படுத்துங்கள்",
+          "வகைப்பாடு நெடுவரிசைகளுக்கு .mode() பயன்படுத்துங்கள்",
+          "pd.get_dummies(df, columns=['color']) one-hot நெடுவரிசைகளை உருவாக்குகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is median preferred over mean for filling missing numerical values?",
+        "ta": "விடுபட்ட எண் மதிப்புகளை நிரப்ப சராசரியை விட இடைநிலை ஏன் விரும்பப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Median is always larger",
+          "Median is robust to outliers",
+          "Median is faster to compute",
+          "Median preserves the original distribution"
+        ],
+        "ta": [
+          "இடைநிலை எப்போதும் பெரியது",
+          "இடைநிலை வெளிப்புற மதிப்புகளுக்கு உறுதியானது",
+          "இடைநிலை கணக்கிட வேகமானது",
+          "இடைநிலை அசல் விநியோகத்தை பாதுகாக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the purpose of one-hot encoding?",
+        "ta": "one-hot encoding-ன் நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "To remove missing values",
+          "To convert categorical variables into binary columns",
+          "To scale features between 0 and 1",
+          "To detect outliers"
+        ],
+        "ta": [
+          "விடுபட்ட மதிப்புகளை நீக்க",
+          "வகைப்பாடு மாறிகளை இருமை நெடுவரிசைகளாக மாற்ற",
+          "அம்சங்களை 0 மற்றும் 1 இடையே அளவிட",
+          "வெளிப்புற மதிப்புகளை கண்டறிய"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does StandardScaler transform the data to?",
+        "ta": "StandardScaler தரவை எதற்கு மாற்றுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Range [0, 1]",
+          "Mean=0, Standard Deviation=1",
+          "Range [-1, 1]",
+          "Logarithmic scale"
+        ],
+        "ta": [
+          "வீச்சு [0, 1]",
+          "சராசரி=0, நிலையான விலகல்=1",
+          "வீச்சு [-1, 1]",
+          "மடக்கை அளவு"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["missing_values", "outlier_detection", "label_encoding", "one_hot_encoding", "feature_scaling"],
+    "concepts_required": ["pandas_basics", "numpy_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["data_preprocessing", "etl_pipelines"],
+    "category": "machine_learning",
+    "path_memberships": ["ml_fundamentals"]
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "id": "naive_bayes",
+  "topic": "naive_bayes",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 14,
+  "title": {
+    "en": "Naive Bayes: Probability-Powered Classification",
+    "ta": "நேவ் பேய்ஸ்: நிகழ்தகவு அடிப்படையிலான வகைப்பாடு"
+  },
+  "description": {
+    "en": "Learn Bayes' theorem, the 'naive' independence assumption, and how to build fast text classifiers with MultinomialNB and GaussianNB.",
+    "ta": "பேய்ஸ் தேற்றம், 'நேவ்' சுதந்திர அனுமானம், மற்றும் MultinomialNB மற்றும் GaussianNB மூலம் வேகமான உரை வகைப்படுத்திகளை உருவாக்குதல்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Probability Game\n\nVaathiyaar holds up an email. \"Given that this email contains the words 'free', 'winner', and 'click', what is the probability it's spam? Bayes' theorem gives us the answer.\"\n\n### Bayes' Theorem\nP(Spam | words) = P(words | Spam) * P(Spam) / P(words)\n\n### The 'Naive' Assumption\nNaive Bayes assumes all features are **independent** given the class. This is almost never true in reality, but it works surprisingly well!\n\n### Variants\n- **GaussianNB**: For continuous features (assumes normal distribution)\n- **MultinomialNB**: For word counts (text classification)\n- **BernoulliNB**: For binary features\n\n```python\nfrom sklearn.feature_extraction.text import CountVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import classification_report\n\n# Sample text data\nemails = [\n    'free money click here winner', 'claim your prize now free',\n    'meeting tomorrow at 3pm', 'project report due friday',\n    'you won a free vacation', 'buy cheap products now',\n    'quarterly review scheduled', 'team lunch next week',\n    'free gift card click now', 'agenda for monday meeting'\n]\nlabels = [1, 1, 0, 0, 1, 1, 0, 0, 1, 0]  # 1=spam, 0=ham\n\nvectorizer = CountVectorizer()\nX = vectorizer.fit_transform(emails)\n\nmodel = MultinomialNB()\nmodel.fit(X, labels)\n\ntest_emails = ['free money click', 'meeting agenda for tomorrow']\nX_test = vectorizer.transform(test_emails)\npredictions = model.predict(X_test)\nfor email, pred in zip(test_emails, predictions):\n    print(f'\"{email}\" -> {\"SPAM\" if pred else \"HAM\"}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "probability_game",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "nb_map",
+      "nodes": [
+        {
+          "label": "Naive Bayes",
+          "children": ["Bayes Theorem", "Independence Assumption", "Prior Probability", "Likelihood"]
+        },
+        {
+          "label": "Variants",
+          "children": ["GaussianNB (continuous)", "MultinomialNB (counts)", "BernoulliNB (binary)"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "nb_code",
+      "steps": [
+        {
+          "line": "from sklearn.feature_extraction.text import CountVectorizer",
+          "highlight": "CountVectorizer",
+          "explanation": { "en": "Converts text into a matrix of word counts — bag of words representation" }
+        },
+        {
+          "line": "from sklearn.naive_bayes import MultinomialNB",
+          "highlight": "MultinomialNB",
+          "explanation": { "en": "Multinomial Naive Bayes — ideal for text classification with word counts" }
+        },
+        {
+          "line": "emails = ['free money click here winner', 'claim your prize now free', 'meeting tomorrow at 3pm', 'project report due friday', 'you won a free vacation', 'buy cheap products now', 'quarterly review scheduled', 'team lunch next week', 'free gift card click now', 'agenda for monday meeting']",
+          "highlight": "emails",
+          "explanation": { "en": "Sample emails — mix of spam and legitimate messages" }
+        },
+        {
+          "line": "labels = [1, 1, 0, 0, 1, 1, 0, 0, 1, 0]",
+          "highlight": "labels",
+          "explanation": { "en": "1 = spam, 0 = ham (not spam) — our training labels" }
+        },
+        {
+          "line": "vectorizer = CountVectorizer()",
+          "highlight": "CountVectorizer",
+          "explanation": { "en": "Create the vectorizer — it will build a vocabulary from training text" }
+        },
+        {
+          "line": "X = vectorizer.fit_transform(emails)",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Convert emails to a sparse matrix of word counts" }
+        },
+        {
+          "line": "print(f'Vocabulary size: {len(vectorizer.vocabulary_)}')",
+          "highlight": "vocabulary_",
+          "explanation": { "en": "Each unique word becomes a feature in the count matrix" }
+        },
+        {
+          "line": "model = MultinomialNB()",
+          "highlight": "MultinomialNB",
+          "explanation": { "en": "Create the Naive Bayes classifier" }
+        },
+        {
+          "line": "model.fit(X, labels)",
+          "highlight": "fit",
+          "explanation": { "en": "Train: compute P(word|spam) and P(word|ham) for each word" }
+        },
+        {
+          "line": "test_emails = ['free money click', 'meeting agenda for tomorrow']",
+          "highlight": "test_emails",
+          "explanation": { "en": "Two test emails — one looks spammy, one looks legitimate" }
+        },
+        {
+          "line": "X_test = vectorizer.transform(test_emails)",
+          "highlight": "transform",
+          "explanation": { "en": "Convert test emails using the SAME vocabulary — transform, not fit_transform" }
+        },
+        {
+          "line": "predictions = model.predict(X_test)",
+          "highlight": "predict",
+          "explanation": { "en": "Predict: compute posterior probability for each class using Bayes' theorem" }
+        },
+        {
+          "line": "probas = model.predict_proba(X_test)",
+          "highlight": "predict_proba",
+          "explanation": { "en": "Get the actual probability scores for ham vs spam" }
+        },
+        {
+          "line": "for email, pred, prob in zip(test_emails, predictions, probas): print(f'\"{email}\" -> {\"SPAM\" if pred else \"HAM\"} (conf: {prob.max():.2f})')",
+          "highlight": "print",
+          "explanation": { "en": "Display prediction with confidence — Naive Bayes is fast and often well-calibrated" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_vocab",
+      "variable": "vocabulary_size",
+      "value": 28,
+      "data_type": "int",
+      "color": "#9b59b6"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_pred1",
+      "variable": "prediction_spam",
+      "value": "SPAM (0.97)",
+      "data_type": "str",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Vocabulary size: 28",
+        "\"free money click\" -> SPAM (conf: 0.97)",
+        "\"meeting agenda for tomorrow\" -> HAM (conf: 0.95)"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a movie review sentiment classifier. Create 10 positive and 10 negative sample reviews. Use CountVectorizer and MultinomialNB to classify 2 new reviews.",
+        "ta": "திரைப்பட விமர்சன உணர்வு வகைப்படுத்தியை உருவாக்குங்கள். 10 நேர்மறை மற்றும் 10 எதிர்மறை மாதிரி விமர்சனங்களை உருவாக்குங்கள். CountVectorizer மற்றும் MultinomialNB பயன்படுத்தி 2 புதிய விமர்சனங்களை வகைப்படுத்துங்கள்."
+      },
+      "starter_code": "from sklearn.feature_extraction.text import CountVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\n\nreviews = [\n    'great movie loved it amazing', 'wonderful acting brilliant film',\n    'excellent story beautiful cinematography', 'fantastic performances highly recommend',\n    'best movie ever outstanding', 'terrible movie waste of time',\n    'awful acting horrible plot', 'boring and slow worst film',\n    'disappointed terrible waste', 'bad movie do not watch'\n]\nlabels = [1,1,1,1,1, 0,0,0,0,0]  # 1=positive, 0=negative\n\nvectorizer = CountVectorizer()\nX = vectorizer.___(reviews)\n\nmodel = MultinomialNB()\nmodel.___(X, labels)\n\nnew_reviews = ['amazing brilliant must watch', 'terrible boring waste']\nX_new = vectorizer.___(new_reviews)\npreds = model.predict(X_new)\nfor review, pred in zip(new_reviews, preds):\n    print(f'\"{review}\" -> {\"POSITIVE\" if pred else \"NEGATIVE\"}')",
+      "expected_output": "\"amazing brilliant must watch\" -> POSITIVE\n\"terrible boring waste\" -> NEGATIVE",
+      "hints": {
+        "en": [
+          "Use fit_transform for training data, transform for new data",
+          "model.fit(X, labels) to train",
+          "MultinomialNB is extremely fast for text"
+        ],
+        "ta": [
+          "பயிற்சி தரவுக்கு fit_transform, புதிய தரவுக்கு transform பயன்படுத்துங்கள்",
+          "பயிற்சிக்கு model.fit(X, labels)",
+          "MultinomialNB உரைக்கு மிகவும் வேகமானது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the 'naive' assumption in Naive Bayes?",
+        "ta": "நேவ் பேய்ஸில் 'நேவ்' அனுமானம் என்ன?"
+      },
+      "options": {
+        "en": ["The model is simple", "All features are conditionally independent given the class", "The data has no noise", "The prior probability is uniform"],
+        "ta": ["மாடல் எளிமையானது", "வகுப்பைக் கொடுத்தால் அனைத்து அம்சங்களும் நிபந்தனையுடன் சுதந்திரமானவை", "தரவில் நாய்ஸ் இல்லை", "முன் நிகழ்தகவு சீரானது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which Naive Bayes variant is best for text classification with word counts?",
+        "ta": "சொல் எண்ணிக்கைகள் கொண்ட உரை வகைப்பாட்டிற்கு எந்த நேவ் பேய்ஸ் வகை சிறந்தது?"
+      },
+      "options": {
+        "en": ["GaussianNB", "MultinomialNB", "BernoulliNB", "ComplementNB"],
+        "ta": ["GaussianNB", "MultinomialNB", "BernoulliNB", "ComplementNB"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does CountVectorizer do?",
+        "ta": "CountVectorizer என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Counts the number of documents", "Converts text into a matrix of word count features", "Removes stop words only", "Trains a language model"],
+        "ta": ["ஆவணங்களின் எண்ணிக்கையை எண்ணுகிறது", "உரையை சொல் எண்ணிக்கை அம்ச அணியாக மாற்றுகிறது", "நிறுத்த சொற்களை மட்டும் நீக்குகிறது", "மொழி மாடலை பயிற்சிக்கிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["naive_bayes", "bayes_theorem", "text_classification", "count_vectorizer", "multinomial_nb"],
+    "concepts_required": ["classification_basics", "probability"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["spam_filtering", "sentiment_analysis", "document_classification"],
+    "category": "machine_learning",
+    "path_memberships": ["supervised_learning"]
+  }
+}

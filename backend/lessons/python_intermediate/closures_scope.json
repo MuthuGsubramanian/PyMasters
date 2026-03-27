@@ -1,0 +1,336 @@
+{
+  "id": "closures_scope",
+  "topic": "closures_scope",
+  "track": "python_intermediate",
+  "module": "decorators_and_closures",
+  "order": 25,
+  "title": {
+    "en": "Closures & Scope: The LEGB Rule Demystified",
+    "ta": "Closures & Scope: LEGB விதி புரிந்துகொள்ளுதல்"
+  },
+  "description": {
+    "en": "Understand closures, the nonlocal keyword, and Python's LEGB (Local, Enclosing, Global, Built-in) scope resolution rule.",
+    "ta": "Closures, nonlocal keyword, Python-ன் LEGB (Local, Enclosing, Global, Built-in) scope resolution rule புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Nested Rooms\n\nVaathiyaar walks through nested rooms. \"When Python sees a variable name, it searches for it in a specific order: **Local** room first, then the **Enclosing** room, then the **Global** hallway, and finally the **Built-in** lobby. This is the **LEGB rule**!\"\n\n### The LEGB Rule\n\n| Scope | Description | Example |\n|-------|-----------|----------|\n| **L**ocal | Inside the current function | `x = 10` inside `def` |\n| **E**nclosing | In an outer function (closure) | Variable in outer `def` |\n| **G**lobal | At module level | `x = 10` at top of file |\n| **B**uilt-in | Python's built-in names | `print`, `len`, `range` |\n\n### What is a Closure?\n\nA **closure** is a function that remembers variables from its enclosing scope, even after the outer function has finished.\n\n```python\ndef make_multiplier(factor):\n    def multiply(x):      # closure!\n        return x * factor  # 'factor' from enclosing scope\n    return multiply\n\ndouble = make_multiplier(2)\nprint(double(5))  # 10\n```\n\n> **Key Concept:** A closure \"closes over\" variables from its enclosing scope. The inner function carries those variables with it, creating a kind of lightweight object with hidden state."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "nested_rooms",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Closures & Scope",
+          "children": [
+            "LEGB rule",
+            "Local scope",
+            "Enclosing scope",
+            "Global scope",
+            "nonlocal keyword",
+            "Closures"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "x = 'global'",
+          "highlight": "global",
+          "explanation": {
+            "en": "Global scope — accessible everywhere in the module"
+          }
+        },
+        {
+          "line": "def outer():",
+          "highlight": "outer",
+          "explanation": {
+            "en": "Define an outer function"
+          }
+        },
+        {
+          "line": "    x = 'enclosing'",
+          "highlight": "enclosing",
+          "explanation": {
+            "en": "Enclosing scope — visible to inner functions"
+          }
+        },
+        {
+          "line": "    def inner():",
+          "highlight": "inner",
+          "explanation": {
+            "en": "Define an inner function"
+          }
+        },
+        {
+          "line": "        x = 'local'",
+          "highlight": "local",
+          "explanation": {
+            "en": "Local scope — only visible inside inner()"
+          }
+        },
+        {
+          "line": "        print(f'inner: {x}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Prints 'local' — L in LEGB wins"
+          }
+        },
+        {
+          "line": "    inner()",
+          "highlight": "inner()",
+          "explanation": {
+            "en": "Call inner — it prints 'local'"
+          }
+        },
+        {
+          "line": "    print(f'outer: {x}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Prints 'enclosing' — inner's x didn't affect outer's x"
+          }
+        },
+        {
+          "line": "outer()",
+          "highlight": "outer()",
+          "explanation": {
+            "en": "Run the demo"
+          }
+        },
+        {
+          "line": "print(f'global: {x}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Prints 'global' — neither inner nor outer affected global x"
+          }
+        },
+        {
+          "line": "def make_counter():",
+          "highlight": "make_counter",
+          "explanation": {
+            "en": "A CLOSURE factory — returns a function with hidden state"
+          }
+        },
+        {
+          "line": "    count = 0",
+          "highlight": "count = 0",
+          "explanation": {
+            "en": "This variable will be captured by the closure"
+          }
+        },
+        {
+          "line": "    def increment():",
+          "highlight": "increment",
+          "explanation": {
+            "en": "The inner function that forms the closure"
+          }
+        },
+        {
+          "line": "        nonlocal count",
+          "highlight": "nonlocal",
+          "explanation": {
+            "en": "nonlocal = 'I want to MODIFY the enclosing scope's count'"
+          }
+        },
+        {
+          "line": "        count += 1",
+          "highlight": "count += 1",
+          "explanation": {
+            "en": "Modify the enclosing variable — only works with nonlocal"
+          }
+        },
+        {
+          "line": "        return count",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the current count"
+          }
+        },
+        {
+          "line": "    return increment",
+          "highlight": "return increment",
+          "explanation": {
+            "en": "Return the inner function — it carries 'count' with it!"
+          }
+        },
+        {
+          "line": "counter = make_counter()",
+          "highlight": "make_counter()",
+          "explanation": {
+            "en": "Create a counter closure — make_counter is done, but count lives on"
+          }
+        },
+        {
+          "line": "print(counter())",
+          "highlight": "counter()",
+          "explanation": {
+            "en": "1 — count is remembered between calls!"
+          }
+        },
+        {
+          "line": "print(counter())",
+          "highlight": "counter()",
+          "explanation": {
+            "en": "2 — the closure maintains its state"
+          }
+        },
+        {
+          "line": "print(counter())",
+          "highlight": "counter()",
+          "explanation": {
+            "en": "3 — like a lightweight object with hidden state"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_global",
+      "variable": "x (global)",
+      "value": "global",
+      "data_type": "str",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_counter",
+      "variable": "counter.__closure__",
+      "value": "count=3 (captured)",
+      "data_type": "cell",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "inner: local",
+        "outer: enclosing",
+        "global: global",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "Built-in (B)",
+          "value": "print, len, range...",
+          "type": "builtins",
+          "address": "0x01"
+        },
+        {
+          "name": "Global (G)",
+          "value": "x = 'global'",
+          "type": "module",
+          "address": "0x02"
+        },
+        {
+          "name": "Enclosing (E)",
+          "value": "x = 'enclosing', count = 3",
+          "type": "closure",
+          "address": "0x03"
+        },
+        {
+          "name": "Local (L)",
+          "value": "x = 'local'",
+          "type": "function",
+          "address": "0x04"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a closure make_accumulator(initial) that returns a function. Each call to the returned function adds the given value to a running total. Start with 100 and add 10, 20, 30.",
+        "ta": "make_accumulator(initial) closure உருவாக்குங்கள். திருப்பப்படும் function ஒவ்வொரு அழைப்பிலும் running total-க்கு value சேர்க்கும். 100-ல் தொடங்கி 10, 20, 30 சேர்க்கவும்."
+      },
+      "starter_code": "def make_accumulator(initial):\n    total = initial\n    def add(value):\n        nonlocal total\n        total += value\n        return total\n    return add\n\nacc = make_accumulator(100)\nprint(acc(10))   # 110\nprint(acc(20))   # 130\nprint(acc(30))   # 160",
+      "expected_output": "110\n130\n160",
+      "hints": {
+        "en": [
+          "Use nonlocal total to modify the enclosing variable",
+          "total += value accumulates the sum",
+          "Each call to acc() adds to the running total",
+          "The closure remembers total between calls"
+        ],
+        "ta": [
+          "enclosing variable-ஐ மாற்ற nonlocal total பயன்படுத்துங்கள்",
+          "total += value தொகையை குவிக்கும்",
+          "ஒவ்வொரு acc() அழைப்பும் running total-க்கு சேர்க்கும்",
+          "closure அழைப்புகளுக்கு இடையே total நினைவில் வைக்கும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In LEGB, what does the 'E' stand for?",
+        "ta": "LEGB-ல், 'E' எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["External", "Enclosing", "Evaluated", "Exception"],
+        "ta": ["External", "Enclosing", "Evaluated", "Exception"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What keyword allows modifying a variable in the enclosing scope?",
+        "ta": "enclosing scope-ல் ஒரு variable-ஐ மாற்ற எந்த keyword அனுமதிக்கிறது?"
+      },
+      "options": {
+        "en": ["global", "nonlocal", "local", "outer"],
+        "ta": ["global", "nonlocal", "local", "outer"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What makes a function a closure?",
+        "ta": "ஒரு function-ஐ closure ஆக்குவது எது?"
+      },
+      "options": {
+        "en": [
+          "Using the return keyword",
+          "Referencing variables from an enclosing scope after it has finished",
+          "Being defined inside a class",
+          "Using global variables"
+        ],
+        "ta": [
+          "return keyword பயன்படுத்துவது",
+          "enclosing scope முடிந்த பிறகும் அதன் variables-ஐ குறிப்பிடுவது",
+          "வகுப்பின் உள்ளே வரையறுக்கப்படுவது",
+          "global variables பயன்படுத்துவது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["closures", "nonlocal", "LEGB_rule", "scope", "enclosing_scope"],
+    "concepts_required": ["functions", "variables", "nested_functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["decorators", "callbacks", "state_management"],
+    "category": "functional",
+    "path_memberships": ["python_intermediate"]
+  }
+}

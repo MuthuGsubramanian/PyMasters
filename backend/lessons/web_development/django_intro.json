@@ -1,0 +1,245 @@
+{
+  "id": "django_intro",
+  "topic": "django_intro",
+  "track": "web_development",
+  "module": "django_framework",
+  "order": 6,
+  "title": {
+    "en": "Django Introduction: The Batteries-Included Framework",
+    "ta": "Django அறிமுகம்: பேட்டரிகள் உள்ளடக்கிய கட்டமைப்பு"
+  },
+  "description": {
+    "en": "Learn Django's project structure, settings, manage.py commands, and the MTV architecture pattern.",
+    "ta": "Django-வின் திட்ட கட்டமைப்பு, அமைப்புகள், manage.py கட்டளைகள் மற்றும் MTV கட்டமைப்பு முறையைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## The Grand Factory\n\nVaathiyaar unveils a blueprint. \"If Flask is a workshop, Django is a **factory** — it comes with an admin panel, ORM, authentication, and more, all built in. You don't choose the tools; Django has already chosen the best ones for you.\"\n\n### Why Django?\n- **Batteries included** — Admin, ORM, auth, forms, all built in\n- **Scalable** — Powers Instagram, Pinterest, Disqus\n- **Secure** — CSRF, XSS, SQL injection protection by default\n- **DRY** — Don't Repeat Yourself philosophy\n\n### MTV Architecture\n\n| Component | Role | Like MVC |\n|-----------|------|----------|\n| **M**odel | Database structure | Model |\n| **T**emplate | HTML presentation | View |\n| **V**iew | Business logic | Controller |\n\n### Project vs App\n- A **project** is the entire website\n- An **app** is a module (blog, users, shop)\n- One project can have many apps\n\n### Key Commands\n```bash\ndjango-admin startproject mysite    # Create project\npython manage.py startapp blog      # Create app\npython manage.py runserver          # Start dev server\npython manage.py makemigrations     # Detect model changes\npython manage.py migrate            # Apply to database\npython manage.py createsuperuser    # Create admin user\n```\n\n> **Key Concept:** Django follows 'convention over configuration' — it has strong opinions about project structure, which means less decisions for you and more consistency across Django projects."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "grand_factory",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "django_structure",
+      "nodes": [
+        {
+          "label": "Django Project",
+          "children": [
+            "manage.py (CLI tool)",
+            "settings.py (configuration)",
+            "urls.py (URL routing)",
+            "Apps (modular components)"
+          ]
+        },
+        {
+          "label": "Django App",
+          "children": [
+            "models.py (database)",
+            "views.py (logic)",
+            "urls.py (app routes)",
+            "templates/ (HTML)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "django_setup_demo",
+      "steps": [
+        {
+          "line": "# Terminal: Create a new Django project",
+          "highlight": "Terminal",
+          "explanation": {
+            "en": "We start by creating the project skeleton from the command line"
+          }
+        },
+        {
+          "line": "# $ django-admin startproject mysite",
+          "highlight": "startproject",
+          "explanation": {
+            "en": "This creates the project folder with manage.py and settings"
+          }
+        },
+        {
+          "line": "# $ cd mysite && python manage.py startapp blog",
+          "highlight": "startapp",
+          "explanation": {
+            "en": "Create a 'blog' app inside the project"
+          }
+        },
+        {
+          "line": "# mysite/settings.py — Register the app",
+          "highlight": "settings.py",
+          "explanation": {
+            "en": "Django needs to know about your app — add it to INSTALLED_APPS"
+          }
+        },
+        {
+          "line": "INSTALLED_APPS = [\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    'blog',  # Our new app\n]",
+          "highlight": "'blog'",
+          "explanation": {
+            "en": "Add 'blog' to the list — Django's built-in apps handle admin, auth, etc."
+          }
+        },
+        {
+          "line": "# blog/views.py — Create a view",
+          "highlight": "views.py",
+          "explanation": {
+            "en": "Views contain the logic that handles requests and returns responses"
+          }
+        },
+        {
+          "line": "from django.http import HttpResponse\n\ndef home(request):\n    return HttpResponse('<h1>Welcome to PyMasters Blog!</h1>')",
+          "highlight": "HttpResponse",
+          "explanation": {
+            "en": "A simple view function — takes a request, returns an HTTP response"
+          }
+        },
+        {
+          "line": "# blog/urls.py — Map URL to view",
+          "highlight": "urls.py",
+          "explanation": {
+            "en": "Create URL patterns for this app"
+          }
+        },
+        {
+          "line": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.home, name='blog-home'),\n]",
+          "highlight": "path",
+          "explanation": {
+            "en": "path() maps the empty string URL to the home view function"
+          }
+        },
+        {
+          "line": "# mysite/urls.py — Include app URLs",
+          "highlight": "include",
+          "explanation": {
+            "en": "The project's main URL config includes the app's URLs"
+          }
+        },
+        {
+          "line": "from django.contrib import admin\nfrom django.urls import path, include\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    path('', include('blog.urls')),\n]",
+          "highlight": "include('blog.urls')",
+          "explanation": {
+            "en": "include() delegates URL matching to the blog app's urls.py"
+          }
+        },
+        {
+          "line": "# $ python manage.py runserver",
+          "highlight": "runserver",
+          "explanation": {
+            "en": "Start the development server — visit http://127.0.0.1:8000"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_debug",
+      "variable": "DEBUG",
+      "value": true,
+      "data_type": "bool",
+      "color": "#FF9800"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_apps",
+      "variable": "INSTALLED_APPS",
+      "value": "['admin', 'auth', 'blog', ...]",
+      "data_type": "list",
+      "color": "#2196F3"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ django-admin startproject mysite",
+        "$ cd mysite",
+        "$ python manage.py startapp blog",
+        "$ python manage.py runserver",
+        "Watching for file changes with StatReloader",
+        "Performing system checks...",
+        "System check identified no issues (0 silenced).",
+        "March 27, 2026 - 10:00:00",
+        "Django version 5.1, using settings 'mysite.settings'",
+        "Starting development server at http://127.0.0.1:8000/",
+        "Quit the server with CTRL-BREAK."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Set up a Django project called 'school' with an app called 'courses'. Create a view that returns a JSON response listing three courses with their names and credits. Wire up the URLs so visiting '/courses/' shows the data.",
+        "ta": "'courses' என்ற பயன்பாட்டுடன் 'school' என்ற Django திட்டத்தை அமையுங்கள். மூன்று படிப்புகளின் பெயர்கள் மற்றும் கிரெடிட்களை பட்டியலிடும் JSON பதிலை திருப்பும் பார்வையை உருவாக்குங்கள்."
+      },
+      "starter_code": "# courses/views.py\nfrom django.http import JsonResponse\n\ndef course_list(request):\n    courses = [\n        {'name': 'Python Fundamentals', 'credits': 3},\n        {'name': 'Web Development', 'credits': 4},\n        {'name': 'Data Science', 'credits': 3},\n    ]\n    return JsonResponse({'courses': courses})\n\n# courses/urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.course_list, name='course-list'),\n]\n\n# school/urls.py\nfrom django.urls import path, include\n\nurlpatterns = [\n    path('courses/', include('courses.urls')),\n]",
+      "expected_output": "GET /courses/ → {\"courses\": [{\"name\": \"Python Fundamentals\", \"credits\": 3}, ...]}",
+      "hints": {
+        "en": [
+          "Use JsonResponse to return JSON data from a view",
+          "Create urls.py in your app and use path() to map URLs",
+          "Use include() in the project urls.py to delegate to app URLs",
+          "Don't forget to add the app to INSTALLED_APPS in settings.py"
+        ],
+        "ta": [
+          "பார்வையிலிருந்து JSON தரவை திருப்ப JsonResponse பயன்படுத்துங்கள்",
+          "உங்கள் பயன்பாட்டில் urls.py உருவாக்கி URL-களை வரைபட செய்ய path() பயன்படுத்துங்கள்",
+          "பயன்பாட்டு URL-களுக்கு அனுப்ப திட்ட urls.py-ல் include() பயன்படுத்துங்கள்",
+          "settings.py-ல் INSTALLED_APPS-ல் பயன்பாட்டைச் சேர்க்க மறக்காதீர்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'python manage.py migrate' do?",
+        "ta": "'python manage.py migrate' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates a new Django app", "Applies database schema changes", "Starts the development server", "Creates a superuser"],
+        "ta": ["புதிய Django பயன்பாட்டை உருவாக்குகிறது", "தரவுத்தள அமைப்பு மாற்றங்களைப் பயன்படுத்துகிறது", "மேம்பாட்டு சேவையகத்தை தொடங்குகிறது", "சூப்பர் யூசரை உருவாக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In Django's MTV pattern, what does the 'T' stand for?",
+        "ta": "Django-வின் MTV முறையில், 'T' என்பது எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["Test", "Template", "Transfer", "Table"],
+        "ta": ["Test", "Template", "Transfer", "Table"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the difference between a Django project and a Django app?",
+        "ta": "Django திட்டத்திற்கும் Django பயன்பாட்டிற்கும் என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": ["They are the same thing", "A project is the whole site; an app is a module within it", "An app contains multiple projects", "A project is for development; an app is for production"],
+        "ta": ["அவை ஒன்றே", "திட்டம் முழு தளம்; பயன்பாடு அதன் ஒரு தொகுதி", "ஒரு பயன்பாட்டில் பல திட்டங்கள் உள்ளன", "திட்டம் மேம்பாட்டிற்கு; பயன்பாடு உற்பத்திக்கு"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["django_project_structure", "manage_py", "mtv_pattern", "django_settings"],
+    "concepts_required": ["http_methods", "python_functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 30,
+    "real_world_application": ["web_apps", "enterprise_development"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

@@ -1,0 +1,337 @@
+{
+  "id": "error_handling_advanced",
+  "topic": "error_handling_advanced",
+  "track": "python_intermediate",
+  "module": "error_handling",
+  "order": 24,
+  "title": {
+    "en": "Advanced Error Handling: Custom Exceptions & Chaining",
+    "ta": "மேம்பட்ட பிழை கையாளுதல்: தனிப்பயன் விதிவிலக்குகள் & சங்கிலி"
+  },
+  "description": {
+    "en": "Master custom exception classes, exception chaining with 'from', traceback module, and building robust error hierarchies for production code.",
+    "ta": "தனிப்பயன் exception வகுப்புகள், 'from' உடன் exception chaining, traceback module, production code-க்கான வலுவான error hierarchies கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Safety Net System\n\nVaathiyaar builds a multi-layered safety net. \"Basic try/except catches errors. But production code needs **custom exceptions** that tell you exactly what went wrong, **exception chaining** that shows the full story, and proper cleanup.\"\n\n### Beyond Basic try/except\n\n| Feature | Purpose |\n|---------|----------|\n| Custom exceptions | Meaningful, domain-specific errors |\n| Exception chaining | `raise X from Y` — show root cause |\n| `traceback` module | Programmatic access to stack traces |\n| Exception hierarchy | Organize related errors |\n| `finally` | ALWAYS runs — even after return |\n\n### Custom Exception Pattern\n\n```python\nclass AppError(Exception):\n    \"\"\"Base exception for our app\"\"\"\n    pass\n\nclass ValidationError(AppError):\n    def __init__(self, field, message):\n        self.field = field\n        super().__init__(f'{field}: {message}')\n\nclass NotFoundError(AppError):\n    pass\n```\n\n> **Key Concept:** Create a base exception for your app, then derive specific ones. This lets callers catch ALL your app's errors with `except AppError`, or specific ones with `except ValidationError`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "safety_net",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Advanced Errors",
+          "children": [
+            "Custom exceptions",
+            "raise from (chaining)",
+            "Exception hierarchy",
+            "traceback module",
+            "finally (cleanup)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class AppError(Exception):",
+          "highlight": "AppError",
+          "explanation": {
+            "en": "Base exception for our application — inherit from Exception"
+          }
+        },
+        {
+          "line": "    pass",
+          "highlight": "pass",
+          "explanation": {
+            "en": "No extra behavior needed for the base class"
+          }
+        },
+        {
+          "line": "class ValidationError(AppError):",
+          "highlight": "ValidationError",
+          "explanation": {
+            "en": "Specific error for invalid input — extends AppError"
+          }
+        },
+        {
+          "line": "    def __init__(self, field, message):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Custom constructor with field name and message"
+          }
+        },
+        {
+          "line": "        self.field = field",
+          "highlight": "self.field",
+          "explanation": {
+            "en": "Store which field failed validation"
+          }
+        },
+        {
+          "line": "        super().__init__(f'{field}: {message}')",
+          "highlight": "super()",
+          "explanation": {
+            "en": "Set the error message via parent's __init__"
+          }
+        },
+        {
+          "line": "class NotFoundError(AppError):",
+          "highlight": "NotFoundError",
+          "explanation": {
+            "en": "Specific error for missing resources"
+          }
+        },
+        {
+          "line": "    def __init__(self, resource, id):",
+          "highlight": "resource, id",
+          "explanation": {
+            "en": "Which resource type and which ID was not found"
+          }
+        },
+        {
+          "line": "        self.resource = resource",
+          "highlight": "self.resource",
+          "explanation": {
+            "en": "Store resource type"
+          }
+        },
+        {
+          "line": "        super().__init__(f'{resource} with id={id} not found')",
+          "highlight": "super()",
+          "explanation": {
+            "en": "Clear error message with context"
+          }
+        },
+        {
+          "line": "def validate_age(age):",
+          "highlight": "validate_age",
+          "explanation": {
+            "en": "A function that raises our custom exception"
+          }
+        },
+        {
+          "line": "    if not isinstance(age, int) or age < 0 or age > 150:",
+          "highlight": "if not",
+          "explanation": {
+            "en": "Validate the input"
+          }
+        },
+        {
+          "line": "        raise ValidationError('age', f'Invalid age: {age}')",
+          "highlight": "raise",
+          "explanation": {
+            "en": "Raise our custom ValidationError with field name"
+          }
+        },
+        {
+          "line": "    return age",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return valid age"
+          }
+        },
+        {
+          "line": "try:",
+          "highlight": "try",
+          "explanation": {
+            "en": "Try block to catch our custom exceptions"
+          }
+        },
+        {
+          "line": "    validate_age(-5)",
+          "highlight": "validate_age(-5)",
+          "explanation": {
+            "en": "This will raise ValidationError"
+          }
+        },
+        {
+          "line": "except ValidationError as e:",
+          "highlight": "ValidationError",
+          "explanation": {
+            "en": "Catch the specific exception type"
+          }
+        },
+        {
+          "line": "    print(f'Validation failed on field: {e.field}')",
+          "highlight": "e.field",
+          "explanation": {
+            "en": "Access the custom field attribute"
+          }
+        },
+        {
+          "line": "    print(f'Error: {e}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print the full error message"
+          }
+        },
+        {
+          "line": "except AppError as e:",
+          "highlight": "AppError",
+          "explanation": {
+            "en": "Catch-all for ANY app error — hierarchy in action"
+          }
+        },
+        {
+          "line": "    print(f'App error: {e}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Generic handler for other app errors"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_error",
+      "variable": "e",
+      "value": "ValidationError(field='age', 'Invalid age: -5')",
+      "data_type": "ValidationError",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Validation failed on field: age",
+        "Error: age: Invalid age: -5"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "Exception Hierarchy",
+          "value": "Exception -> AppError -> ValidationError",
+          "type": "class chain",
+          "address": "0x01"
+        },
+        {
+          "name": "e.field",
+          "value": "'age'",
+          "type": "str",
+          "address": "0x02"
+        },
+        {
+          "name": "e.args[0]",
+          "value": "'age: Invalid age: -5'",
+          "type": "str",
+          "address": "0x03"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create an InsufficientFundsError(AppError) with account and amount attributes. Write a withdraw function that raises it when balance is too low. Demonstrate with try/except and exception chaining (raise from).",
+        "ta": "account மற்றும் amount attributes உடன் InsufficientFundsError(AppError) உருவாக்குங்கள். balance குறைவாக இருக்கும்போது raise செய்யும் withdraw function எழுதுங்கள்."
+      },
+      "starter_code": "class AppError(Exception):\n    pass\n\nclass InsufficientFundsError(AppError):\n    def __init__(self, account, amount, balance):\n        self.account = account\n        self.amount = amount\n        self.balance = balance\n        super().__init__(f'Account {account}: need ${amount}, have ${balance}')\n\ndef withdraw(account, amount, balance):\n    if amount > balance:\n        raise InsufficientFundsError(account, amount, balance)\n    return balance - amount\n\ntry:\n    withdraw('ACC-001', 500, 200)\nexcept InsufficientFundsError as e:\n    print(f'Error: {e}')\n    print(f'Short by: ${e.amount - e.balance}')",
+      "expected_output": "Error: Account ACC-001: need $500, have $200\nShort by: $300",
+      "hints": {
+        "en": [
+          "Inherit from AppError (which inherits from Exception)",
+          "Store context in __init__ (account, amount, balance)",
+          "Call super().__init__() with a descriptive message",
+          "Access custom attributes in the except block"
+        ],
+        "ta": [
+          "AppError-லிருந்து inherit செய்யுங்கள்",
+          "__init__-ல் context சேமியுங்கள்",
+          "super().__init__()-ஐ descriptive message-உடன் அழையுங்கள்",
+          "except block-ல் custom attributes அணுகுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why create custom exception classes?",
+        "ta": "தனிப்பயன் exception வகுப்புகளை ஏன் உருவாக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Python requires it",
+          "For domain-specific errors with meaningful attributes",
+          "To make code run faster",
+          "To avoid try/except blocks"
+        ],
+        "ta": [
+          "Python தேவைப்படுகிறது",
+          "அர்த்தமுள்ள attributes உடன் domain-specific errors-க்கு",
+          "code வேகமாக இயங்க",
+          "try/except blocks தவிர்க்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does 'raise NewError() from original_error' do?",
+        "ta": "'raise NewError() from original_error' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Ignores the original error",
+          "Chains exceptions — shows both in traceback",
+          "Replaces the original error completely",
+          "Raises both errors simultaneously"
+        ],
+        "ta": [
+          "அசல் பிழையை புறக்கணிக்கிறது",
+          "exceptions-ஐ சங்கிலியிடுகிறது — traceback-ல் இரண்டையும் காட்டுகிறது",
+          "அசல் பிழையை முற்றிலும் மாற்றுகிறது",
+          "இரண்டு பிழைகளையும் ஒரே நேரத்தில் எழுப்புகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When does the 'finally' block execute?",
+        "ta": "'finally' block எப்போது செயல்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Only after except",
+          "Only if no exception occurs",
+          "Always, whether or not an exception occurs",
+          "Only if an exception occurs"
+        ],
+        "ta": [
+          "except-க்குப் பிறகு மட்டும்",
+          "விதிவிலக்கு இல்லாவிட்டால் மட்டும்",
+          "எப்போதும், விதிவிலக்கு இருந்தாலும் இல்லாவிட்டாலும்",
+          "விதிவிலக்கு இருந்தால் மட்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["custom_exceptions", "exception_chaining", "raise_from", "traceback", "exception_hierarchy"],
+    "concepts_required": ["try_except", "classes", "inheritance"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["production_code", "API_error_handling", "logging"],
+    "category": "error_handling",
+    "path_memberships": ["python_intermediate"]
+  }
+}

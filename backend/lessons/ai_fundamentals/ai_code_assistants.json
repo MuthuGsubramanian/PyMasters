@@ -1,0 +1,306 @@
+{
+  "id": "ai_code_assistants",
+  "topic": "ai_code_assistants",
+  "track": "ai_fundamentals",
+  "module": "ai_applications",
+  "order": 13,
+  "title": {
+    "en": "AI Code Assistants: Claude Code, Cursor & Copilot",
+    "ta": "AI Code Assistants: Claude Code, Cursor & Copilot"
+  },
+  "description": {
+    "en": "Master AI-assisted development — learn to use Claude Code, Cursor, and GitHub Copilot to write, review, and debug code faster.",
+    "ta": "AI-உதவியுடன் மேம்பாட்டைக் கற்றுக்கொள்ளுங்கள் — Claude Code, Cursor, GitHub Copilot பயன்படுத்தி குறியீட்டை வேகமாக எழுத, மதிப்பாய்வு செய்ய, debug செய்யக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "next_unlock": "structured_output",
+  "story_variants": {
+    "en": "## Vaathiyaar's AI Workbench\n\nVaathiyaar opens three IDE windows side by side. \"Students, AI code assistants are the biggest productivity leap since IDEs themselves. But they're tools, not replacements. The best developers don't let AI write everything — they use AI to amplify their skills. Let me show you the three kings.\"\n\n### The Three AI Coding Tools\n\n**1. Claude Code (Anthropic)**\n- Terminal-based AI coding agent\n- Reads your entire codebase\n- Creates files, runs tests, makes commits\n- Best for: large refactors, multi-file changes\n\n**2. Cursor (AI IDE)**\n- VS Code fork with built-in AI\n- Inline completions + chat + composer\n- Understands your project context\n- Best for: daily coding workflow\n\n**3. GitHub Copilot**\n- Inline code completions in any IDE\n- Tab to accept suggestions\n- GitHub-integrated\n- Best for: quick completions, boilerplate\n\n### Tips for AI-Assisted Development\n\n1. **Be specific** — 'Add error handling to the login function' > 'fix my code'\n2. **Review everything** — AI makes plausible but sometimes wrong code\n3. **Iterate** — First attempt is rarely perfect, refine your prompt\n4. **Learn from AI** — Read the generated code, understand WHY it works\n\n> **Key Insight:** AI assistants make senior developers faster, but they can make junior developers careless. Always understand the code AI generates.",
+    "ta": "## வாத்தியாரின் AI Workbench\n\nவாத்தியார் மூன்று IDE windows-ஐ அருகருகே திறக்கிறார். \"மாணவர்களே, AI code assistants IDE-களுக்குப் பிறகு மிகப்பெரிய உற்பத்தித்திறன் முன்னேற்றம். ஆனால் அவை கருவிகள், மாற்றுகள் அல்ல.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "ai_workbench",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "assistant_map",
+      "nodes": [
+        {
+          "label": "AI Code Assistants",
+          "children": [
+            "Claude Code (terminal agent)",
+            "Cursor (AI IDE)",
+            "GitHub Copilot (inline completions)",
+            "ChatGPT/Claude Chat (web interface)"
+          ]
+        },
+        {
+          "label": "Best Practices",
+          "children": [
+            "Be specific in prompts",
+            "Always review generated code",
+            "Iterate and refine",
+            "Learn from AI output"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "assistant_demo",
+      "steps": [
+        {
+          "line": "# Example: Using Claude Code from the terminal",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Claude Code works directly in your terminal, understanding your full codebase"
+          }
+        },
+        {
+          "line": "# $ claude 'Add input validation to the User model'",
+          "highlight": "command",
+          "explanation": {
+            "en": "Give Claude Code a task — it reads your codebase, makes changes, runs tests"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Here's what Claude Code might generate:"
+          }
+        },
+        {
+          "line": "from pydantic import BaseModel, EmailStr, field_validator",
+          "highlight": "import",
+          "explanation": {
+            "en": "Claude Code chose Pydantic for validation — a great choice"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "AI-generated User model with validation"
+          }
+        },
+        {
+          "line": "class User(BaseModel):",
+          "highlight": "class",
+          "explanation": {
+            "en": "Pydantic BaseModel for automatic validation"
+          }
+        },
+        {
+          "line": "    name: str",
+          "highlight": "name",
+          "explanation": {
+            "en": "Name field — Pydantic ensures it's a string"
+          }
+        },
+        {
+          "line": "    email: EmailStr",
+          "highlight": "email",
+          "explanation": {
+            "en": "EmailStr validates email format automatically"
+          }
+        },
+        {
+          "line": "    age: int",
+          "highlight": "age",
+          "explanation": {
+            "en": "Age as integer"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Claude Code also adds custom validators"
+          }
+        },
+        {
+          "line": "    @field_validator('name')",
+          "highlight": "validator",
+          "explanation": {
+            "en": "Custom validator for the name field"
+          }
+        },
+        {
+          "line": "    @classmethod",
+          "highlight": "classmethod",
+          "explanation": {
+            "en": "Pydantic v2 validators must be classmethods"
+          }
+        },
+        {
+          "line": "    def name_must_not_be_empty(cls, v):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Validation function that checks the name"
+          }
+        },
+        {
+          "line": "        if not v.strip():",
+          "highlight": "check",
+          "explanation": {
+            "en": "Reject empty or whitespace-only names"
+          }
+        },
+        {
+          "line": "            raise ValueError('Name cannot be empty')",
+          "highlight": "raise",
+          "explanation": {
+            "en": "Raise a clear error message"
+          }
+        },
+        {
+          "line": "        return v.strip()",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the cleaned name — AI added .strip() for good measure"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "tool_comparison",
+      "left_label": "Without AI Assistant",
+      "right_label": "With AI Assistant",
+      "left_content": "# Manual approach:\n# 1. Search StackOverflow for Pydantic validation\n# 2. Read documentation for field_validator\n# 3. Write model class from scratch\n# 4. Debug validation errors\n# 5. Write tests manually\n# Time: 30-45 minutes",
+      "right_content": "# AI-assisted approach:\n# 1. claude 'Add input validation to User model'\n# 2. Review the generated code\n# 3. Ask for adjustments if needed\n# 4. AI also generates tests\n# Time: 5-10 minutes\n# But YOU must understand the output!",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_productivity",
+      "variable": "productivity_gain",
+      "value": "3-5x faster",
+      "data_type": "str",
+      "color": "#22c55e"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Test the AI-generated model",
+        ">>> user = User(name='Muthu', email='muthu@example.com', age=30)",
+        ">>> print(user)",
+        "name='Muthu' email='muthu@example.com' age=30",
+        "",
+        ">>> # Validation works!",
+        ">>> try:",
+        "...     bad_user = User(name='', email='bad', age=-5)",
+        "... except Exception as e:",
+        "...     print(f'Validation error: {e}')",
+        "Validation error: 2 validation errors for User",
+        "name: Name cannot be empty",
+        "email: value is not a valid email address"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a prompt for an AI code assistant that asks it to create a Python class called 'TaskManager' with: add_task(), complete_task(), list_tasks(), and a summary property. Include the prompt text, then write the class yourself as if reviewing AI output. Add type hints and docstrings.",
+        "ta": "AI code assistant-க்கு 'TaskManager' Python class உருவாக்கக் கேட்கும் prompt எழுதுங்கள்: add_task(), complete_task(), list_tasks(), summary property. Prompt text-ஐ சேர்த்து, AI output-ஐ review செய்வது போல நீங்களே class எழுதுங்கள்."
+      },
+      "starter_code": "# Prompt you would give to an AI assistant:\nai_prompt = '''\nCreate a TaskManager class with:\n- add_task(title: str, priority: str = 'medium')\n- complete_task(title: str) -> bool\n- list_tasks(status: str = 'all') -> list\n- summary property -> dict with counts\n'''\n\n# Now write the class yourself (as if reviewing AI output)\nclass TaskManager:\n    def __init__(self):\n        self.tasks = []\n    \n    # Implement the methods\n    pass\n\n# Test it\ntm = TaskManager()\ntm.add_task('Learn AI', 'high')\ntm.add_task('Build chatbot', 'medium')\ntm.complete_task('Learn AI')\nprint(tm.summary)",
+      "expected_output": "{'total': 2, 'completed': 1, 'pending': 1}",
+      "hints": {
+        "en": [
+          "Store tasks as list of dicts: {'title': str, 'priority': str, 'done': bool}",
+          "complete_task should find the task by title and set done=True",
+          "Use @property for summary — return dict with counts"
+        ],
+        "ta": [
+          "Tasks-ஐ dict-களின் list ஆக சேமிக்கவும்: {'title': str, 'priority': str, 'done': bool}",
+          "complete_task title மூலம் task-ஐ கண்டுபிடித்து done=True அமைக்க வேண்டும்",
+          "summary-க்கு @property பயன்படுத்தவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main advantage of Claude Code over Copilot?",
+        "ta": "Copilot-ஐ விட Claude Code-ன் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": [
+          "It's free",
+          "It can read your entire codebase and make multi-file changes",
+          "It generates code faster",
+          "It supports more programming languages"
+        ],
+        "ta": [
+          "இலவசம்",
+          "முழு codebase-ஐ படித்து பல-கோப்பு மாற்றங்கள் செய்யும்",
+          "வேகமாக குறியீடு உருவாக்குகிறது",
+          "அதிக நிரலாக்க மொழிகளை ஆதரிக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What should you ALWAYS do with AI-generated code?",
+        "ta": "AI-உருவாக்கிய குறியீட்டில் நீங்கள் எப்போதும் என்ன செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Accept it without changes",
+          "Delete it and rewrite manually",
+          "Review it and understand how it works",
+          "Only use it in test files"
+        ],
+        "ta": [
+          "மாற்றங்கள் இல்லாமல் ஏற்றுக்கொள்ளுங்கள்",
+          "நீக்கிவிட்டு கைமுறையாக மீண்டும் எழுதுங்கள்",
+          "அதை review செய்து எவ்வாறு வேலை செய்கிறது என்பதைப் புரிந்துகொள்ளுங்கள்",
+          "test files-ல் மட்டும் பயன்படுத்துங்கள்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which AI tool is best for quick inline code completions while typing?",
+        "ta": "தட்டச்சு செய்யும்போது விரைவான inline code completions-க்கு எந்த AI கருவி சிறந்தது?"
+      },
+      "options": {
+        "en": [
+          "Claude Code",
+          "ChatGPT web interface",
+          "GitHub Copilot",
+          "LangChain"
+        ],
+        "ta": [
+          "Claude Code",
+          "ChatGPT web interface",
+          "GitHub Copilot",
+          "LangChain"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["claude_code", "cursor", "copilot", "ai_assisted_development"],
+    "concepts_required": ["what_is_ai"],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["daily_coding", "productivity"],
+    "category": "ai_tools",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "id": "database_sql_basics",
+  "topic": "database_sql_basics",
+  "track": "web_development",
+  "module": "web_foundations",
+  "order": 20,
+  "title": {
+    "en": "Database & SQL Basics: Storing Data Properly",
+    "ta": "தரவுத்தளம் & SQL அடிப்படைகள்: தரவை சரியாக சேமித்தல்"
+  },
+  "description": {
+    "en": "Learn SQL fundamentals — CREATE, SELECT, INSERT, UPDATE, DELETE, JOINs, and working with SQLite and PostgreSQL from Python.",
+    "ta": "SQL அடிப்படைகளைக் கற்றுக்கொள்ளுங்கள் — CREATE, SELECT, INSERT, UPDATE, DELETE, JOINs, மற்றும் Python-லிருந்து SQLite மற்றும் PostgreSQL-உடன் வேலை செய்தல்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## The Filing Cabinet\n\nVaathiyaar opens a massive filing cabinet. \"Variables are temporary — they vanish when your program stops. Databases are permanent — they survive restarts, crashes, even power outages. **SQL** is the language you use to talk to a relational database.\"\n\n### What is a Relational Database?\n- Data stored in **tables** (rows and columns)\n- Tables are linked by **relationships** (foreign keys)\n- **SQL** (Structured Query Language) to interact\n- **ACID** properties: Atomicity, Consistency, Isolation, Durability\n\n### SQL Operations\n\n| Operation | SQL | Purpose |\n|-----------|-----|--------|\n| Create table | `CREATE TABLE` | Define table structure |\n| Insert data | `INSERT INTO` | Add new rows |\n| Read data | `SELECT` | Query existing data |\n| Update data | `UPDATE` | Modify existing rows |\n| Delete data | `DELETE` | Remove rows |\n| Join tables | `JOIN` | Combine related tables |\n\n### SQLite vs PostgreSQL\n\n| Feature | SQLite | PostgreSQL |\n|---------|--------|------------|\n| Setup | Zero (file-based) | Server required |\n| Concurrency | Limited | Excellent |\n| Best for | Development, small apps | Production, large apps |\n| Python module | `sqlite3` (built-in) | `psycopg2` |\n\n> **Key Concept:** Even if you use an ORM (SQLAlchemy, Django ORM), understanding raw SQL is essential. ORMs generate SQL — when things go wrong, you need to read and debug the SQL directly."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "filing_cabinet",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "sql_overview",
+      "nodes": [
+        {
+          "label": "SQL & Databases",
+          "children": [
+            "Tables (structure)",
+            "CRUD Operations",
+            "JOINs (relationships)",
+            "Indexing (performance)",
+            "Transactions (ACID)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "sql_demo",
+      "steps": [
+        {
+          "line": "import sqlite3",
+          "highlight": "sqlite3",
+          "explanation": {
+            "en": "sqlite3 is built into Python — no installation needed"
+          }
+        },
+        {
+          "line": "# Connect to database (creates file if it doesn't exist)\nconn = sqlite3.connect('school.db')\ncursor = conn.cursor()",
+          "highlight": "connect",
+          "explanation": {
+            "en": "Connect to SQLite database file; cursor executes SQL statements"
+          }
+        },
+        {
+          "line": "# CREATE TABLE — Define the structure\ncursor.execute('''\n    CREATE TABLE IF NOT EXISTS students (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT NOT NULL,\n        email TEXT UNIQUE NOT NULL,\n        age INTEGER CHECK(age >= 10 AND age <= 120),\n        grade REAL DEFAULT 0.0,\n        enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n    )\n''')",
+          "highlight": "CREATE TABLE",
+          "explanation": {
+            "en": "Create a students table with constraints: NOT NULL, UNIQUE, CHECK, DEFAULT"
+          }
+        },
+        {
+          "line": "# INSERT — Add new rows (use ? placeholders to prevent SQL injection!)\ncursor.execute(\n    'INSERT INTO students (name, email, age, grade) VALUES (?, ?, ?, ?)',\n    ('Alice', 'alice@py.com', 22, 95.5)\n)\ncursor.execute(\n    'INSERT INTO students (name, email, age, grade) VALUES (?, ?, ?, ?)',\n    ('Bob', 'bob@py.com', 25, 87.0)\n)\ncursor.execute(\n    'INSERT INTO students (name, email, age, grade) VALUES (?, ?, ?, ?)',\n    ('Charlie', 'charlie@py.com', 20, 92.3)\n)\nconn.commit()  # Save changes!",
+          "highlight": "?",
+          "explanation": {
+            "en": "ALWAYS use parameterized queries (?) — NEVER f-strings to prevent SQL injection"
+          }
+        },
+        {
+          "line": "# SELECT — Query data\ncursor.execute('SELECT * FROM students')\nall_students = cursor.fetchall()\nfor student in all_students:\n    print(student)",
+          "highlight": "SELECT *",
+          "explanation": {
+            "en": "SELECT * gets all columns; fetchall() returns a list of tuples"
+          }
+        },
+        {
+          "line": "# SELECT with WHERE — Filter rows\ncursor.execute('SELECT name, grade FROM students WHERE grade > ?', (90.0,))\nhigh_achievers = cursor.fetchall()\nprint(f'High achievers: {high_achievers}')",
+          "highlight": "WHERE",
+          "explanation": {
+            "en": "WHERE filters rows — only students with grade > 90"
+          }
+        },
+        {
+          "line": "# SELECT with ORDER BY and LIMIT\ncursor.execute('SELECT name, grade FROM students ORDER BY grade DESC LIMIT 2')\ntop_two = cursor.fetchall()\nprint(f'Top 2: {top_two}')",
+          "highlight": "ORDER BY",
+          "explanation": {
+            "en": "ORDER BY sorts results; DESC = highest first; LIMIT restricts count"
+          }
+        },
+        {
+          "line": "# Aggregate functions\ncursor.execute('SELECT COUNT(*), AVG(grade), MAX(grade), MIN(grade) FROM students')\nstats = cursor.fetchone()\nprint(f'Count: {stats[0]}, Avg: {stats[1]:.1f}, Max: {stats[2]}, Min: {stats[3]}')",
+          "highlight": "AVG",
+          "explanation": {
+            "en": "Aggregate functions: COUNT, AVG, MAX, MIN, SUM"
+          }
+        },
+        {
+          "line": "# CREATE a second table for courses\ncursor.execute('''\n    CREATE TABLE IF NOT EXISTS enrollments (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        student_id INTEGER NOT NULL,\n        course_name TEXT NOT NULL,\n        FOREIGN KEY (student_id) REFERENCES students(id)\n    )\n''')\ncursor.execute('INSERT INTO enrollments (student_id, course_name) VALUES (1, \"Python 101\")')\ncursor.execute('INSERT INTO enrollments (student_id, course_name) VALUES (1, \"Web Dev\")')\ncursor.execute('INSERT INTO enrollments (student_id, course_name) VALUES (2, \"Python 101\")')\nconn.commit()",
+          "highlight": "FOREIGN KEY",
+          "explanation": {
+            "en": "Foreign key links enrollments to students — relational data"
+          }
+        },
+        {
+          "line": "# JOIN — Combine tables\ncursor.execute('''\n    SELECT s.name, e.course_name\n    FROM students s\n    INNER JOIN enrollments e ON s.id = e.student_id\n    ORDER BY s.name\n''')\nfor row in cursor.fetchall():\n    print(f'{row[0]} is enrolled in {row[1]}')",
+          "highlight": "INNER JOIN",
+          "explanation": {
+            "en": "JOIN combines rows from two tables where the condition matches"
+          }
+        },
+        {
+          "line": "# UPDATE — Modify existing data\ncursor.execute('UPDATE students SET grade = ? WHERE name = ?', (98.0, 'Alice'))\nconn.commit()\nprint('Alice grade updated to 98.0')",
+          "highlight": "UPDATE",
+          "explanation": {
+            "en": "UPDATE changes existing rows — always include WHERE to avoid updating ALL rows"
+          }
+        },
+        {
+          "line": "# DELETE — Remove rows\ncursor.execute('DELETE FROM students WHERE name = ?', ('Charlie',))\nconn.commit()\nprint('Charlie removed')",
+          "highlight": "DELETE",
+          "explanation": {
+            "en": "DELETE removes rows matching the condition — be careful with WHERE!"
+          }
+        },
+        {
+          "line": "# Always close the connection\nconn.close()",
+          "highlight": "close",
+          "explanation": {
+            "en": "Close the connection to release the database file"
+          }
+        },
+        {
+          "line": "# Better: use context manager\nwith sqlite3.connect('school.db') as conn:\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM students')\n    print(cursor.fetchall())\n    # auto-commits and auto-closes",
+          "highlight": "with",
+          "explanation": {
+            "en": "Context manager auto-commits on success, auto-rolls-back on error"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_conn",
+      "variable": "conn",
+      "value": "<sqlite3.Connection to 'school.db'>",
+      "data_type": "Connection",
+      "color": "#795548"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_results",
+      "variable": "fetchall()",
+      "value": "[(1, 'Alice', 98.0), (2, 'Bob', 87.0)]",
+      "data_type": "list[tuple]",
+      "color": "#FF9800"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "(1, 'Alice', 'alice@py.com', 22, 95.5, '2026-03-27 10:00:00')",
+        "(2, 'Bob', 'bob@py.com', 25, 87.0, '2026-03-27 10:00:00')",
+        "(3, 'Charlie', 'charlie@py.com', 20, 92.3, '2026-03-27 10:00:00')",
+        "High achievers: [('Alice', 95.5), ('Charlie', 92.3)]",
+        "Top 2: [('Alice', 95.5), ('Charlie', 92.3)]",
+        "Count: 3, Avg: 91.6, Max: 95.5, Min: 87.0",
+        "Alice is enrolled in Python 101",
+        "Alice is enrolled in Web Dev",
+        "Bob is enrolled in Python 101",
+        "Alice grade updated to 98.0",
+        "Charlie removed"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a SQLite database for a bookstore: a 'books' table with id, title, author, price, and in_stock fields, and an 'orders' table with a foreign key to books. Insert 5 books, create some orders, then write queries to: (1) find all books under $20, (2) find the average price, (3) JOIN orders with books to show which books were ordered.",
+        "ta": "புத்தகக் கடைக்கான SQLite தரவுத்தளத்தை உருவாக்குங்கள்: id, title, author, price, in_stock புலங்களுடன் 'books' அட்டவணை."
+      },
+      "starter_code": "import sqlite3\n\nwith sqlite3.connect(':memory:') as conn:\n    c = conn.cursor()\n\n    # Create tables\n    c.execute('''\n        CREATE TABLE books (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            title TEXT NOT NULL,\n            author TEXT NOT NULL,\n            price REAL NOT NULL,\n            in_stock BOOLEAN DEFAULT 1\n        )\n    ''')\n    c.execute('''\n        CREATE TABLE orders (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            book_id INTEGER NOT NULL,\n            quantity INTEGER DEFAULT 1,\n            FOREIGN KEY (book_id) REFERENCES books(id)\n        )\n    ''')\n\n    # Insert books\n    books = [\n        ('Python Crash Course', 'Eric Matthes', 15.99, 1),\n        ('Fluent Python', 'Luciano Ramalho', 45.99, 1),\n        ('Django for Beginners', 'William Vincent', 29.99, 1),\n        ('FastAPI Tutorial', 'Vaathiyaar', 12.99, 1),\n        ('SQL Pocket Guide', 'Alice Zhao', 18.99, 0),\n    ]\n    c.executemany('INSERT INTO books (title, author, price, in_stock) VALUES (?, ?, ?, ?)', books)\n\n    # Insert orders\n    c.execute('INSERT INTO orders (book_id, quantity) VALUES (1, 2)')\n    c.execute('INSERT INTO orders (book_id, quantity) VALUES (3, 1)')\n    c.execute('INSERT INTO orders (book_id, quantity) VALUES (4, 3)')\n    conn.commit()\n\n    # Query 1: Books under $20\n    print('Books under $20:')\n    for row in c.execute('SELECT title, price FROM books WHERE price < 20'):\n        print(f'  {row[0]} - ${row[1]}')\n\n    # Query 2: Average price\n    avg = c.execute('SELECT AVG(price) FROM books').fetchone()[0]\n    print(f'\\nAverage price: ${avg:.2f}')\n\n    # Query 3: JOIN orders with books\n    print('\\nOrders:')\n    for row in c.execute('''\n        SELECT b.title, o.quantity, b.price * o.quantity as total\n        FROM orders o\n        INNER JOIN books b ON o.book_id = b.id\n    '''):\n        print(f'  {row[0]} x{row[1]} = ${row[2]:.2f}')",
+      "expected_output": "Books under $20:\n  Python Crash Course - $15.99\n  FastAPI Tutorial - $12.99\n  SQL Pocket Guide - $18.99\n\nAverage price: $24.79\n\nOrders:\n  Python Crash Course x2 = $31.98\n  Django for Beginners x1 = $29.99\n  FastAPI Tutorial x3 = $38.97",
+      "hints": {
+        "en": [
+          "Use :memory: for in-memory SQLite databases (great for testing)",
+          "executemany() inserts multiple rows efficiently",
+          "INNER JOIN combines rows where the ON condition matches",
+          "You can compute expressions in SELECT: price * quantity as total"
+        ],
+        "ta": [
+          "நினைவக SQLite தரவுத்தளங்களுக்கு :memory: பயன்படுத்துங்கள்",
+          "executemany() பல வரிசைகளை திறமையாக செருகுகிறது",
+          "INNER JOIN ON நிபந்தனை பொருந்தும் வரிசைகளை இணைக்கிறது",
+          "SELECT-ல் கணக்கீடுகளைச் செய்யலாம்: price * quantity as total"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why should you NEVER use f-strings to insert values into SQL queries?",
+        "ta": "SQL வினவல்களில் மதிப்புகளைச் செருக ஏன் f-strings ஒருபோதும் பயன்படுத்தக் கூடாது?"
+      },
+      "options": {
+        "en": ["f-strings are slower", "f-strings can lead to SQL injection attacks", "f-strings don't work with SQLite", "f-strings make queries longer"],
+        "ta": ["f-strings மெதுவானவை", "f-strings SQL ஊசி தாக்குதல்களுக்கு வழிவகுக்கலாம்", "f-strings SQLite-உடன் வேலை செய்யாது", "f-strings வினவல்களை நீளமாக்குகின்றன"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does INNER JOIN do in SQL?",
+        "ta": "SQL-ல் INNER JOIN என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Deletes matching rows from both tables", "Returns rows that have matching values in both tables", "Creates a new table", "Copies data from one table to another"],
+        "ta": ["இரு அட்டவணைகளிலிருந்தும் பொருந்தும் வரிசைகளை நீக்குகிறது", "இரு அட்டவணைகளிலும் பொருந்தும் மதிப்புகள் கொண்ட வரிசைகளைத் திருப்புகிறது", "புதிய அட்டவணையை உருவாக்குகிறது", "ஒரு அட்டவணையிலிருந்து மற்றொன்றுக்கு தரவை நகலெடுக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does conn.commit() do after executing INSERT statements?",
+        "ta": "INSERT அறிக்கைகளை இயக்கிய பிறகு conn.commit() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Closes the database connection", "Permanently saves the changes to the database", "Rolls back the changes", "Prints the inserted data"],
+        "ta": ["தரவுத்தள இணைப்பை மூடுகிறது", "மாற்றங்களை தரவுத்தளத்தில் நிரந்தரமாக சேமிக்கிறது", "மாற்றங்களை திரும்பப் பெறுகிறது", "செருகப்பட்ட தரவை அச்சிடுகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sql_basics", "sqlite", "postgresql", "joins", "crud_sql"],
+    "concepts_required": ["python_data_structures"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["data_storage", "backend_development"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

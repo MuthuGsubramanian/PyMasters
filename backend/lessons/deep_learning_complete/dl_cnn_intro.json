@@ -1,0 +1,197 @@
+{
+  "id": "dl_cnn_intro",
+  "topic": "cnn_intro",
+  "track": "deep_learning_complete",
+  "module": "convolutional_networks",
+  "order": 11,
+  "title": {
+    "en": "CNN Introduction: Convolutions, Filters & Feature Maps",
+    "ta": "CNN அறிமுகம்: கன்வொல்யூஷன்கள், ஃபில்டர்கள் & அம்ச வரைபடங்கள்"
+  },
+  "description": {
+    "en": "Understand how convolutional layers detect patterns in images using learnable filters that slide across the input.",
+    "ta": "உள்ளீட்டின் மீது நகரும் கற்றுக்கொள்ளக்கூடிய ஃபில்டர்களைப் பயன்படுத்தி கன்வொல்யூஷனல் அடுக்குகள் எவ்வாறு படங்களில் வடிவங்களைக் கண்டறிகின்றன என்பதைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Magnifying Glass\n\nVaathiyaar holds up a small magnifying glass over a photograph. \"You don't look at the whole image at once. Your eye scans — left to right, top to bottom — looking for edges, corners, textures. A CNN does the same thing with a filter.\"\n\n### How Convolution Works\n\n1. A small filter (e.g., 3x3) slides across the image\n2. At each position, it computes element-wise multiplication and sums\n3. The result is a **feature map** showing where the pattern was found\n4. Multiple filters detect different features (edges, corners, textures)\n\n```python\nimport torch\nimport torch.nn as nn\n\n# Create a simple CNN\nconv = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, padding=1)\npool = nn.MaxPool2d(kernel_size=2, stride=2)\nrelu = nn.ReLU()\n\n# Simulate a grayscale image: batch=1, channels=1, height=28, width=28\nimage = torch.randn(1, 1, 28, 28)\n\n# Forward pass\nfeatures = conv(image)       # [1, 16, 28, 28] - 16 feature maps\nactivated = relu(features)   # ReLU activation\npooled = pool(activated)     # [1, 16, 14, 14] - halved spatial dims\n\nprint(f'Input: {image.shape}')       # [1, 1, 28, 28]\nprint(f'After conv: {features.shape}') # [1, 16, 28, 28]\nprint(f'After pool: {pooled.shape}')   # [1, 16, 14, 14]\nprint(f'Conv parameters: {sum(p.numel() for p in conv.parameters())}')\n# 1*16*3*3 + 16 = 160 parameters\n```\n\n> **Key Insight:** Convolutions share weights across spatial positions — the same filter detects the same pattern anywhere in the image!",
+    "ta": "## வாத்தியாரின் உருப்பெருக்கி\n\nவாத்தியார் ஒரு புகைப்படத்தின் மீது சிறிய உருப்பெருக்கியை வைக்கிறார். \"நீங்கள் முழு படத்தையும் ஒரே நேரத்தில் பார்ப்பதில்லை. உங்கள் கண் ஸ்கேன் செய்கிறது — இடமிருந்து வலம், மேலிருந்து கீழ் — விளிம்புகள், மூலைகள், அமைப்புகளைத் தேடுகிறது. CNN ஒரு ஃபில்டருடன் அதையே செய்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifying_glass",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cnn_concepts",
+      "nodes": [
+        {
+          "label": "CNN",
+          "children": [
+            "Convolution (filter sliding)",
+            "Feature Maps",
+            "Pooling (downsampling)",
+            "Stride & Padding",
+            "Weight Sharing",
+            "Hierarchical Features"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cnn_code",
+      "steps": [
+        {"line": "conv = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, padding=1)", "highlight": "Conv2d", "explanation": {"en": "Create a conv layer: 1 input channel (grayscale), 16 filters of size 3x3, padding=1 to keep size"}},
+        {"line": "pool = nn.MaxPool2d(kernel_size=2, stride=2)", "highlight": "MaxPool2d", "explanation": {"en": "Max pooling: take the max value in each 2x2 window, halving spatial dimensions"}},
+        {"line": "image = torch.randn(1, 1, 28, 28)", "highlight": "image", "explanation": {"en": "Batch of 1 grayscale image, 28x28 pixels. Shape: [batch, channels, height, width]"}},
+        {"line": "features = conv(image)", "highlight": "conv", "explanation": {"en": "Apply 16 filters: each 3x3 filter slides across 28x28 image producing one 28x28 feature map"}},
+        {"line": "activated = relu(features)", "highlight": "relu", "explanation": {"en": "ReLU: keep positive activations (detected features), zero out negatives"}},
+        {"line": "pooled = pool(activated)", "highlight": "pool", "explanation": {"en": "Max pool halves dimensions: 28x28 -> 14x14. Reduces computation and adds translation invariance"}},
+        {"line": "print(f'After conv: {features.shape}')", "highlight": "shape", "explanation": {"en": "16 feature maps of 28x28 each. With padding=1 and kernel=3, output size = input size"}},
+        {"line": "print(f'After pool: {pooled.shape}')", "highlight": "shape", "explanation": {"en": "Still 16 feature maps but now 14x14. Spatial information compressed by 2x"}},
+        {"line": "# Conv parameters: 1*16*3*3 + 16 = 160", "highlight": "parameters", "explanation": {"en": "16 filters x (1 channel x 3x3 kernel) + 16 biases = 160 learnable parameters"}},
+        {"line": "# Fully connected equivalent: 28*28*16 = 12544 weights per neuron!", "highlight": "comparison", "explanation": {"en": "Weight sharing makes CNNs vastly more efficient than fully connected layers for images"}}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "conv_visual",
+      "structure_type": "cnn_layers",
+      "layers": [
+        {"name": "Input", "nodes": ["1x28x28 (grayscale)"], "type": "input"},
+        {"name": "Conv2d(1,16,3)", "nodes": ["16x28x28 (16 feature maps)"], "type": "conv"},
+        {"name": "ReLU", "nodes": ["16x28x28 (activated)"], "type": "activation"},
+        {"name": "MaxPool2d(2)", "nodes": ["16x14x14 (downsampled)"], "type": "pool"}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "MemoryStack",
+      "id": "shape_tracking",
+      "slots": [
+        {"name": "Input Image", "value": "[1, 1, 28, 28]", "type": "tensor", "address": "784 values"},
+        {"name": "After Conv", "value": "[1, 16, 28, 28]", "type": "tensor", "address": "12,544 values"},
+        {"name": "After Pool", "value": "[1, 16, 14, 14]", "type": "tensor", "address": "3,136 values"}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_filter",
+      "variable": "filter (3x3)",
+      "value": "[[-1,0,1],[-2,0,2],[-1,0,1]]",
+      "data_type": "edge detector",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_feature_map",
+      "variable": "feature_map",
+      "value": "28x28 activation pattern",
+      "data_type": "tensor",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "FlowArrow",
+      "id": "cnn_flow",
+      "from": "image",
+      "to": "features",
+      "steps": ["Input image", "3x3 filter slides", "Element-wise multiply", "Sum values", "Feature map", "Pool to reduce"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> image = torch.randn(1, 1, 28, 28)",
+        ">>> conv = nn.Conv2d(1, 16, 3, padding=1)",
+        ">>> features = conv(image)",
+        ">>> features.shape",
+        "torch.Size([1, 16, 28, 28])",
+        ">>> pooled = nn.MaxPool2d(2)(features)",
+        ">>> pooled.shape",
+        "torch.Size([1, 16, 14, 14])",
+        ">>> sum(p.numel() for p in conv.parameters())",
+        "160"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "filter_scan",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a simple CNN for MNIST-like digit classification: Conv2d -> ReLU -> MaxPool -> Conv2d -> ReLU -> MaxPool -> Flatten -> Linear. Pass a random 28x28 image through it and print shapes at every layer.",
+        "ta": "MNIST போன்ற இலக்க வகைப்பாட்டிற்கான எளிய CNN உருவாக்குங்கள். ஒவ்வொரு அடுக்கிலும் வடிவங்களை அச்சிடுங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\nclass SimpleCNN(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: conv1: Conv2d(1, 32, 3, padding=1)\n        # TODO: conv2: Conv2d(32, 64, 3, padding=1)\n        # TODO: pool: MaxPool2d(2, 2)\n        # TODO: fc: Linear(64 * 7 * 7, 10)\n        pass\n    \n    def forward(self, x):\n        # TODO: conv1 -> relu -> pool -> conv2 -> relu -> pool -> flatten -> fc\n        pass\n\nmodel = SimpleCNN()\nX = torch.randn(4, 1, 28, 28)  # batch of 4 images\noutput = model(X)\nprint(f'Output shape: {output.shape}')  # should be [4, 10]\n",
+      "expected_output": "Output shape: torch.Size([4, 10])",
+      "hints": {
+        "en": [
+          "After conv1+pool: [4, 32, 14, 14]",
+          "After conv2+pool: [4, 64, 7, 7]",
+          "Flatten: x = x.view(x.size(0), -1) gives [4, 3136]",
+          "FC: Linear(3136, 10) maps to 10 digit classes"
+        ],
+        "ta": [
+          "conv1+pool பிறகு: [4, 32, 14, 14]",
+          "Flatten: x = x.view(x.size(0), -1) [4, 3136] கொடுக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main advantage of convolutional layers over fully connected layers for image processing?",
+        "ta": "பட செயலாக்கத்தில் முழு இணைக்கப்பட்ட அடுக்குகளை விட கன்வொல்யூஷனல் அடுக்குகளின் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["They are faster to train", "Weight sharing reduces parameters and captures spatial patterns", "They use more memory", "They can only process images"],
+        "ta": ["பயிற்சி வேகமானது", "எடை பகிர்வு அளவுருக்களைக் குறைத்து இடஞ்சார் வடிவங்களைப் பிடிக்கிறது", "அதிக நினைவகம் பயன்படுத்துகின்றன", "படங்களை மட்டுமே செயலாக்க முடியும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does MaxPool2d(2, 2) do to a 28x28 feature map?",
+        "ta": "28x28 feature map-க்கு MaxPool2d(2, 2) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Doubles the size to 56x56", "Reduces to 14x14 by taking max in each 2x2 window", "Keeps the size at 28x28", "Reduces to 7x7"],
+        "ta": ["அளவை 56x56-க்கு இரட்டிப்பாக்குகிறது", "ஒவ்வொரு 2x2 சாளரத்திலும் max எடுத்து 14x14-க்கு குறைக்கிறது", "அளவை 28x28-ல் வைக்கிறது", "7x7-க்கு குறைக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If a Conv2d layer has in_channels=3, out_channels=32, kernel_size=3, how many parameters does it have?",
+        "ta": "Conv2d அடுக்கு in_channels=3, out_channels=32, kernel_size=3 கொண்டிருந்தால், எத்தனை அளவுருக்கள் உள்ளன?"
+      },
+      "options": {
+        "en": ["288", "896", "864", "320"],
+        "ta": ["288", "896", "864", "320"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["convolution", "filters", "feature_maps", "pooling", "stride", "padding"],
+    "concepts_required": ["pytorch_basics", "forward_pass"],
+    "difficulty": "intermediate",
+    "engagement_type": "visual",
+    "estimated_minutes": 30,
+    "real_world_application": ["image_recognition", "computer_vision"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

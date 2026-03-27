@@ -1,0 +1,218 @@
+{
+  "id": "svm",
+  "topic": "support_vector_machines",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 12,
+  "title": {
+    "en": "Support Vector Machines: Maximum Margin",
+    "ta": "சப்போர்ட் வெக்டர் மெஷின்கள்: அதிகபட்ச விளிம்பு"
+  },
+  "description": {
+    "en": "Understand support vectors, the maximum margin hyperplane, kernel trick for non-linear boundaries, and when to choose SVM over other classifiers.",
+    "ta": "சப்போர்ட் வெக்டர்கள், அதிகபட்ச விளிம்பு ஹைப்பர்பிளேன், நேரியல் அல்லாத எல்லைகளுக்கான கர்னல் தந்திரம், மற்றும் எப்போது SVM ஐ தேர்வு செய்வது."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Dividing Wall\n\nVaathiyaar draws two groups of dots on the board separated by space. \"SVM finds the widest possible road between two classes. The road's edges touch only a few key points — those are the support vectors.\"\n\n### Key Concepts\n\n**Hyperplane**: The decision boundary (a line in 2D, plane in 3D)\n**Margin**: Distance between the hyperplane and the nearest data points\n**Support Vectors**: The data points closest to the hyperplane — they define it\n**Kernel Trick**: Transform data to higher dimensions where a linear boundary works\n\n```python\nfrom sklearn.svm import SVC\nfrom sklearn.datasets import make_circles, make_classification\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\n# Linear case\nX, y = make_classification(n_samples=200, n_features=2, n_redundant=0, random_state=42)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nscaler = StandardScaler()\nX_train_s = scaler.fit_transform(X_train)\nX_test_s = scaler.transform(X_test)\n\n# Linear SVM\nsvm_linear = SVC(kernel='linear', C=1.0)\nsvm_linear.fit(X_train_s, y_train)\nprint(f'Linear SVM: {svm_linear.score(X_test_s, y_test):.3f}')\nprint(f'Support vectors: {svm_linear.n_support_}')\n\n# RBF kernel for non-linear\nsvm_rbf = SVC(kernel='rbf', C=1.0, gamma='scale')\nsvm_rbf.fit(X_train_s, y_train)\nprint(f'RBF SVM: {svm_rbf.score(X_test_s, y_test):.3f}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "dividing_wall",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "svm_map",
+      "nodes": [
+        {
+          "label": "SVM",
+          "children": ["Hyperplane", "Margin", "Support Vectors", "Kernel Trick"]
+        },
+        {
+          "label": "Kernels",
+          "children": ["linear", "rbf (Gaussian)", "poly (Polynomial)", "sigmoid"]
+        },
+        {
+          "label": "Hyperparameters",
+          "children": ["C (regularization)", "gamma (kernel width)", "degree (poly)"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "svm_code",
+      "steps": [
+        {
+          "line": "from sklearn.svm import SVC",
+          "highlight": "SVC",
+          "explanation": { "en": "Import Support Vector Classifier — SVC for classification, SVR for regression" }
+        },
+        {
+          "line": "from sklearn.datasets import make_classification",
+          "highlight": "make_classification",
+          "explanation": { "en": "Generate a synthetic binary classification dataset" }
+        },
+        {
+          "line": "X, y = make_classification(n_samples=200, n_features=2, n_redundant=0, random_state=42)",
+          "highlight": "n_features=2",
+          "explanation": { "en": "200 samples with 2 features — easy to visualize the decision boundary" }
+        },
+        {
+          "line": "from sklearn.preprocessing import StandardScaler",
+          "highlight": "StandardScaler",
+          "explanation": { "en": "SVM is sensitive to feature scales — always normalize first" }
+        },
+        {
+          "line": "scaler = StandardScaler(); X_train_s = scaler.fit_transform(X_train)",
+          "highlight": "fit_transform",
+          "explanation": { "en": "Scale training data to mean=0, std=1" }
+        },
+        {
+          "line": "X_test_s = scaler.transform(X_test)",
+          "highlight": "transform",
+          "explanation": { "en": "Apply same scaling to test — use transform, NOT fit_transform" }
+        },
+        {
+          "line": "svm_linear = SVC(kernel='linear', C=1.0)",
+          "highlight": "kernel='linear'",
+          "explanation": { "en": "Linear kernel: finds a straight line/plane as decision boundary" }
+        },
+        {
+          "line": "svm_linear.fit(X_train_s, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train: find the maximum margin hyperplane" }
+        },
+        {
+          "line": "print(f'Linear SVM accuracy: {svm_linear.score(X_test_s, y_test):.3f}')",
+          "highlight": "score",
+          "explanation": { "en": "Evaluate on test data — linear SVM works well for linearly separable data" }
+        },
+        {
+          "line": "print(f'Number of support vectors: {svm_linear.n_support_}')",
+          "highlight": "n_support_",
+          "explanation": { "en": "Only a few points define the boundary — these are the support vectors" }
+        },
+        {
+          "line": "svm_rbf = SVC(kernel='rbf', C=1.0, gamma='scale')",
+          "highlight": "kernel='rbf'",
+          "explanation": { "en": "RBF kernel: maps data to infinite dimensions — handles non-linear boundaries" }
+        },
+        {
+          "line": "svm_rbf.fit(X_train_s, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train the RBF SVM — the kernel trick avoids explicit high-dimensional mapping" }
+        },
+        {
+          "line": "print(f'RBF SVM accuracy: {svm_rbf.score(X_test_s, y_test):.3f}')",
+          "highlight": "score",
+          "explanation": { "en": "RBF kernel can capture complex decision boundaries" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_linear_acc",
+      "variable": "linear_accuracy",
+      "value": 0.925,
+      "data_type": "float",
+      "color": "#3498db"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_rbf_acc",
+      "variable": "rbf_accuracy",
+      "value": 0.95,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_sv_count",
+      "variable": "support_vectors",
+      "value": "[28, 24]",
+      "data_type": "ndarray",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Linear SVM accuracy: 0.925",
+        "Number of support vectors: [28 24]",
+        "RBF SVM accuracy: 0.950"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use make_circles to create non-linearly separable data. Show that a linear SVM fails but an RBF SVM succeeds. Print both accuracies and the number of support vectors.",
+        "ta": "make_circles பயன்படுத்தி நேரியல் அல்லாத முறையில் பிரிக்கக்கூடிய தரவை உருவாக்குங்கள். நேரியல் SVM தோல்வியடைவதையும் RBF SVM வெற்றியடைவதையும் காட்டுங்கள்."
+      },
+      "starter_code": "from sklearn.svm import SVC\nfrom sklearn.datasets import make_circles\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = make_circles(n_samples=300, noise=0.1, factor=0.5, random_state=42)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nscaler = StandardScaler()\nX_train_s = scaler.fit_transform(X_train)\nX_test_s = scaler.transform(X_test)\n\n# Linear SVM\nlinear = SVC(kernel=___, C=1.0)\nlinear.fit(X_train_s, y_train)\nprint(f'Linear: {linear.score(X_test_s, y_test):.3f}')\n\n# RBF SVM\nrbf = SVC(kernel=___, C=1.0, gamma='scale')\nrbf.fit(X_train_s, y_train)\nprint(f'RBF: {rbf.score(X_test_s, y_test):.3f}')",
+      "expected_output": "Linear: 0.483\nRBF: 0.983",
+      "hints": {
+        "en": [
+          "kernel='linear' for the first, kernel='rbf' for the second",
+          "Circles are not linearly separable — linear SVM scores near 50%",
+          "RBF kernel handles circular boundaries perfectly"
+        ],
+        "ta": [
+          "முதலாவதற்கு kernel='linear', இரண்டாவதற்கு kernel='rbf'",
+          "வட்டங்கள் நேரியல் முறையில் பிரிக்க முடியாதவை — நேரியல் SVM 50% அருகில் மதிப்பெண் பெறும்",
+          "RBF கர்னல் வட்ட எல்லைகளை சரியாக கையாளுகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What are support vectors?",
+        "ta": "சப்போர்ட் வெக்டர்கள் என்ன?"
+      },
+      "options": {
+        "en": ["All training data points", "The data points closest to the decision boundary", "The outliers in the dataset", "The feature vectors"],
+        "ta": ["அனைத்து பயிற்சி தரவு புள்ளிகள்", "முடிவு எல்லைக்கு மிக அருகில் உள்ள தரவு புள்ளிகள்", "தரவுத்தொகுப்பிலுள்ள வெளிப்புற மதிப்புகள்", "அம்ச வெக்டர்கள்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When would you use an RBF kernel instead of linear?",
+        "ta": "நேரியல் கர்னலுக்கு பதிலாக RBF கர்னலை எப்போது பயன்படுத்துவீர்கள்?"
+      },
+      "options": {
+        "en": ["When data is linearly separable", "When the decision boundary is non-linear", "When you have very few features", "When you want faster training"],
+        "ta": ["தரவு நேரியல் முறையில் பிரிக்கக்கூடியதாக இருக்கும்போது", "முடிவு எல்லை நேரியல் அல்லாததாக இருக்கும்போது", "மிகக் குறைவான அம்சங்கள் இருக்கும்போது", "வேகமான பயிற்சி தேவைப்படும்போது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the C parameter control in SVM?",
+        "ta": "SVM-ல் C அளவுரு என்ன கட்டுப்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["The number of support vectors", "The trade-off between margin width and misclassification", "The kernel type", "The number of features"],
+        "ta": ["சப்போர்ட் வெக்டர்களின் எண்ணிக்கை", "விளிம்பு அகலம் மற்றும் தவறான வகைப்பாடு இடையிலான சமநிலை", "கர்னல் வகை", "அம்சங்களின் எண்ணிக்கை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["svm", "support_vectors", "kernel_trick", "margin_maximization", "rbf_kernel"],
+    "concepts_required": ["feature_scaling", "train_test_split", "classification"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["image_classification", "text_classification", "anomaly_detection"],
+    "category": "machine_learning",
+    "path_memberships": ["supervised_learning"]
+  }
+}

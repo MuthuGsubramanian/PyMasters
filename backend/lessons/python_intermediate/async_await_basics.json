@@ -1,0 +1,318 @@
+{
+  "id": "async_await_basics",
+  "topic": "async_await_basics",
+  "track": "python_intermediate",
+  "module": "async_programming",
+  "order": 20,
+  "title": {
+    "en": "async/await: Concurrent Python Without Threads",
+    "ta": "async/await: Threads இல்லாமல் ஒருங்கிணைந்த Python"
+  },
+  "description": {
+    "en": "Understand asyncio, coroutines, the event loop, and how async/await enables concurrent I/O without multi-threading.",
+    "ta": "asyncio, coroutines, event loop, async/await எவ்வாறு multi-threading இல்லாமல் ஒருங்கிணைந்த I/O-ஐ இயக்குகிறது என்பதை புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Restaurant Kitchen\n\nVaathiyaar becomes a chef. \"In a regular kitchen, you wait for water to boil before doing ANYTHING else. In an **async kitchen**, while water boils, you chop vegetables and prepare sauce. That's `async/await` — doing other work while waiting for I/O!\"\n\n### Sync vs Async\n\n| Sync | Async |\n|------|-------|\n| Wait for each task to finish | Start task, do other work while waiting |\n| `time.sleep(2)` blocks everything | `await asyncio.sleep(2)` lets others run |\n| One thing at a time | Concurrent I/O operations |\n\n### Key Concepts\n\n```python\nimport asyncio\n\nasync def fetch_data():      # coroutine function\n    await asyncio.sleep(1)   # non-blocking wait\n    return 'data'\n\nasyncio.run(fetch_data())    # start the event loop\n```\n\n| Term | Meaning |\n|------|----------|\n| `async def` | Defines a coroutine function |\n| `await` | Pause here, let other tasks run |\n| `asyncio.run()` | Start the event loop |\n| Event loop | Scheduler that manages coroutines |\n\n> **Key Concept:** `async/await` is NOT parallelism. It's **concurrency** — one thread doing multiple I/O-bound tasks by switching between them while waiting. Use threads/processes for CPU-bound work."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "restaurant_kitchen",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "async/await",
+          "children": [
+            "async def (coroutine)",
+            "await (yield control)",
+            "asyncio.run() (start)",
+            "Event loop (scheduler)",
+            "Concurrent I/O"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import asyncio",
+          "highlight": "asyncio",
+          "explanation": {
+            "en": "Import the asyncio module for async programming"
+          }
+        },
+        {
+          "line": "import time",
+          "highlight": "time",
+          "explanation": {
+            "en": "Import time to measure total execution time"
+          }
+        },
+        {
+          "line": "async def brew_coffee():",
+          "highlight": "async def",
+          "explanation": {
+            "en": "Define a coroutine with 'async def' — not a regular function"
+          }
+        },
+        {
+          "line": "    print('Start brewing coffee...')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Announce task start"
+          }
+        },
+        {
+          "line": "    await asyncio.sleep(2)",
+          "highlight": "await",
+          "explanation": {
+            "en": "await = 'pause ME, let others run for 2 seconds'"
+          }
+        },
+        {
+          "line": "    print('Coffee ready!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Resume after the sleep"
+          }
+        },
+        {
+          "line": "    return 'coffee'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return a value from the coroutine"
+          }
+        },
+        {
+          "line": "async def toast_bread():",
+          "highlight": "async def",
+          "explanation": {
+            "en": "Another coroutine — toasting bread"
+          }
+        },
+        {
+          "line": "    print('Start toasting bread...')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Announce toast start"
+          }
+        },
+        {
+          "line": "    await asyncio.sleep(3)",
+          "highlight": "await",
+          "explanation": {
+            "en": "Toast takes 3 seconds — but we won't wait idly"
+          }
+        },
+        {
+          "line": "    print('Toast ready!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Toast is done"
+          }
+        },
+        {
+          "line": "    return 'toast'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the result"
+          }
+        },
+        {
+          "line": "async def make_breakfast():",
+          "highlight": "async def",
+          "explanation": {
+            "en": "Main coroutine that runs both tasks concurrently"
+          }
+        },
+        {
+          "line": "    start = time.time()",
+          "highlight": "time.time()",
+          "explanation": {
+            "en": "Record start time"
+          }
+        },
+        {
+          "line": "    coffee, toast = await asyncio.gather(",
+          "highlight": "gather",
+          "explanation": {
+            "en": "asyncio.gather runs multiple coroutines CONCURRENTLY"
+          }
+        },
+        {
+          "line": "        brew_coffee(), toast_bread()",
+          "highlight": "brew_coffee(), toast_bread()",
+          "explanation": {
+            "en": "Both start at the same time — not one after another"
+          }
+        },
+        {
+          "line": "    )",
+          "highlight": ")",
+          "explanation": {
+            "en": "gather returns results in order when all are done"
+          }
+        },
+        {
+          "line": "    elapsed = time.time() - start",
+          "highlight": "elapsed",
+          "explanation": {
+            "en": "Calculate total time — should be ~3s, not 5s!"
+          }
+        },
+        {
+          "line": "    print(f'Breakfast: {coffee} + {toast} in {elapsed:.1f}s')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Both done in 3 seconds (max of 2 and 3), not 5 (sum)"
+          }
+        },
+        {
+          "line": "asyncio.run(make_breakfast())",
+          "highlight": "asyncio.run",
+          "explanation": {
+            "en": "Start the event loop and run the main coroutine"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_coffee",
+      "variable": "coffee",
+      "value": "coffee",
+      "data_type": "str",
+      "color": "#8B4513"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_toast",
+      "variable": "toast",
+      "value": "toast",
+      "data_type": "str",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Start brewing coffee...",
+        "Start toasting bread...",
+        "Coffee ready!",
+        "Toast ready!",
+        "Breakfast: coffee + toast in 3.0s"
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "execution_flow",
+      "flows": [
+        {"label": "gather()", "from": "make_breakfast", "to": ["brew_coffee", "toast_bread"]},
+        {"label": "await sleep(2)", "from": "brew_coffee", "to": "event_loop"},
+        {"label": "await sleep(3)", "from": "toast_bread", "to": "event_loop"},
+        {"label": "resume", "from": "event_loop", "to": "brew_coffee"},
+        {"label": "resume", "from": "event_loop", "to": "toast_bread"}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create 3 async functions that simulate downloading files (1s, 2s, 3s delays). Use asyncio.gather to run them concurrently. Verify total time is ~3s not 6s.",
+        "ta": "3 async functions உருவாக்குங்கள் — files download simulate (1s, 2s, 3s delays). asyncio.gather பயன்படுத்தி ஒரே நேரத்தில் இயக்குங்கள். மொத்த நேரம் ~3s என சரிபார்க்கவும்."
+      },
+      "starter_code": "import asyncio\nimport time\n\nasync def download(name, seconds):\n    print(f'Downloading {name}...')\n    await asyncio.sleep(seconds)\n    print(f'{name} done!')\n    return name\n\nasync def main():\n    start = time.time()\n    results = await asyncio.gather(\n        download('file1.txt', 1),\n        download('file2.txt', 2),\n        download('file3.txt', 3)\n    )\n    print(f'All done in {time.time()-start:.1f}s: {results}')\n\nasyncio.run(main())",
+      "expected_output": "Downloading file1.txt...\nDownloading file2.txt...\nDownloading file3.txt...\nfile1.txt done!\nfile2.txt done!\nfile3.txt done!\nAll done in 3.0s: ['file1.txt', 'file2.txt', 'file3.txt']",
+      "hints": {
+        "en": [
+          "Use async def for coroutine functions",
+          "Use await asyncio.sleep() for non-blocking delays",
+          "asyncio.gather() runs coroutines concurrently",
+          "Total time = max delay (3s), not sum (6s)"
+        ],
+        "ta": [
+          "coroutine functions-க்கு async def பயன்படுத்துங்கள்",
+          "non-blocking delays-க்கு await asyncio.sleep()",
+          "asyncio.gather() coroutines-ஐ ஒரே நேரத்தில் இயக்கும்",
+          "மொத்த நேரம் = max delay (3s), sum அல்ல (6s)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'await' do in an async function?",
+        "ta": "async function-ல் 'await' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Blocks the entire program",
+          "Pauses the coroutine and lets others run",
+          "Creates a new thread",
+          "Skips the current line"
+        ],
+        "ta": [
+          "முழு நிரலையும் தடுக்கிறது",
+          "coroutine-ஐ இடைநிறுத்தி மற்றவை இயங்க அனுமதிக்கிறது",
+          "புதிய thread உருவாக்குகிறது",
+          "தற்போதைய வரியை தவிர்க்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If task A takes 2s and task B takes 3s, how long does asyncio.gather(A, B) take?",
+        "ta": "task A 2s, task B 3s எடுத்தால், asyncio.gather(A, B) எவ்வளவு நேரம் எடுக்கும்?"
+      },
+      "options": {
+        "en": ["2 seconds", "3 seconds", "5 seconds", "6 seconds"],
+        "ta": ["2 வினாடிகள்", "3 வினாடிகள்", "5 வினாடிகள்", "6 வினாடிகள்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Is async/await true parallelism?",
+        "ta": "async/await உண்மையான parallelism-ஆ?"
+      },
+      "options": {
+        "en": [
+          "Yes, it uses multiple CPU cores",
+          "No, it's concurrency — one thread switching between tasks",
+          "Yes, it creates new processes",
+          "It depends on the OS"
+        ],
+        "ta": [
+          "ஆம், பல CPU cores பயன்படுத்தும்",
+          "இல்லை, இது concurrency — ஒரு thread tasks இடையே மாறுகிறது",
+          "ஆம், புதிய processes உருவாக்கும்",
+          "OS-ஐ பொறுத்தது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["async_await", "asyncio", "coroutines", "event_loop", "gather"],
+    "concepts_required": ["functions", "generators"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["web_servers", "API_calls", "IO_bound_tasks"],
+    "category": "async",
+    "path_memberships": ["python_intermediate"]
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "id": "decision_trees",
+  "topic": "decision_trees",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 10,
+  "title": {
+    "en": "Decision Trees: If-Else on Steroids",
+    "ta": "முடிவு மரங்கள்: மேம்படுத்தப்பட்ட If-Else"
+  },
+  "description": {
+    "en": "Learn how decision trees split data using Gini impurity and information gain, control tree depth to prevent overfitting, and visualize the learned rules.",
+    "ta": "ஜினி அசுத்தம் மற்றும் தகவல் ஆதாயம் பயன்படுத்தி முடிவு மரங்கள் தரவை எவ்வாறு பிரிக்கின்றன, அதிகப்படி பொருத்தத்தைத் தடுக்க மர ஆழத்தைக் கட்டுப்படுத்துதல், மற்றும் கற்ற விதிகளை காட்சிப்படுத்துதல்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's 20 Questions\n\nVaathiyaar plays a game. \"I'm thinking of an animal. Is it big? Does it have fur? Does it live in water? Each question splits the possibilities in half. That's exactly how a decision tree works.\"\n\n### How Trees Split\n\n**Gini Impurity**: Measures how mixed the classes are at a node\n- Gini = 0: pure node (all same class)\n- Gini = 0.5: maximum impurity (50/50 split for binary)\n\n**Information Gain**: How much a split reduces impurity\n\n**Pruning**: Limiting tree depth to prevent overfitting\n\n```python\nfrom sklearn.tree import DecisionTreeClassifier, export_text\nfrom sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\n\nX, y = load_iris(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n# Unpruned tree\ntree_full = DecisionTreeClassifier(random_state=42)\ntree_full.fit(X_train, y_train)\n\n# Pruned tree\ntree_pruned = DecisionTreeClassifier(max_depth=3, min_samples_leaf=5, random_state=42)\ntree_pruned.fit(X_train, y_train)\n\nprint(f'Full tree depth: {tree_full.get_depth()}')\nprint(f'Pruned tree depth: {tree_pruned.get_depth()}')\nprint(f'Full test acc: {tree_full.score(X_test, y_test):.3f}')\nprint(f'Pruned test acc: {tree_pruned.score(X_test, y_test):.3f}')\n\n# Visualize rules\nprint(export_text(tree_pruned, feature_names=load_iris().feature_names))\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "tree_branching",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "tree_map",
+      "nodes": [
+        {
+          "label": "Decision Tree",
+          "children": ["Root Node", "Internal Nodes", "Leaf Nodes", "Splitting Criteria"]
+        },
+        {
+          "label": "Splitting Criteria",
+          "children": ["Gini Impurity", "Information Gain (Entropy)", "MSE (Regression)"]
+        },
+        {
+          "label": "Regularization",
+          "children": ["max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "tree_code",
+      "steps": [
+        {
+          "line": "from sklearn.tree import DecisionTreeClassifier, export_text",
+          "highlight": "DecisionTreeClassifier",
+          "explanation": { "en": "Import the decision tree model and a text visualization tool" }
+        },
+        {
+          "line": "from sklearn.datasets import load_iris",
+          "highlight": "load_iris",
+          "explanation": { "en": "Load the Iris dataset — 3 flower species, 4 measurements each" }
+        },
+        {
+          "line": "X, y = load_iris(return_X_y=True)",
+          "highlight": "X, y",
+          "explanation": { "en": "Features: sepal/petal length/width; Labels: setosa/versicolor/virginica" }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
+          "highlight": "train_test_split",
+          "explanation": { "en": "80/20 split for evaluation" }
+        },
+        {
+          "line": "tree_full = DecisionTreeClassifier(random_state=42)",
+          "highlight": "tree_full",
+          "explanation": { "en": "Create an unrestricted tree — it will grow until every leaf is pure" }
+        },
+        {
+          "line": "tree_full.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train: the tree recursively finds the best feature and threshold to split on" }
+        },
+        {
+          "line": "tree_pruned = DecisionTreeClassifier(max_depth=3, min_samples_leaf=5, random_state=42)",
+          "highlight": "max_depth=3",
+          "explanation": { "en": "Pruned tree: max 3 levels deep, at least 5 samples per leaf" }
+        },
+        {
+          "line": "tree_pruned.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train the pruned tree — it will be simpler but may generalize better" }
+        },
+        {
+          "line": "print(f'Full tree depth: {tree_full.get_depth()}, nodes: {tree_full.tree_.node_count}')",
+          "highlight": "get_depth",
+          "explanation": { "en": "Full tree is deeper with more nodes — potential overfitting" }
+        },
+        {
+          "line": "print(f'Pruned tree depth: {tree_pruned.get_depth()}, nodes: {tree_pruned.tree_.node_count}')",
+          "highlight": "get_depth",
+          "explanation": { "en": "Pruned tree is shallower — trades some training accuracy for generalization" }
+        },
+        {
+          "line": "print(f'Full tree — Train: {tree_full.score(X_train, y_train):.3f}, Test: {tree_full.score(X_test, y_test):.3f}')",
+          "highlight": "score",
+          "explanation": { "en": "Full tree likely has perfect train accuracy but lower test accuracy" }
+        },
+        {
+          "line": "print(f'Pruned tree — Train: {tree_pruned.score(X_train, y_train):.3f}, Test: {tree_pruned.score(X_test, y_test):.3f}')",
+          "highlight": "score",
+          "explanation": { "en": "Pruned tree may have lower train accuracy but similar or better test accuracy" }
+        },
+        {
+          "line": "rules = export_text(tree_pruned, feature_names=['sepal_l', 'sepal_w', 'petal_l', 'petal_w'])",
+          "highlight": "export_text",
+          "explanation": { "en": "Visualize the tree as readable if-else rules" }
+        },
+        {
+          "line": "print(rules)",
+          "highlight": "rules",
+          "explanation": { "en": "Each line is a decision rule — interpretable unlike black-box models" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_full_depth",
+      "variable": "full_tree_depth",
+      "value": 5,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_pruned_depth",
+      "variable": "pruned_tree_depth",
+      "value": 3,
+      "data_type": "int",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Full tree depth: 5, nodes: 15",
+        "Pruned tree depth: 3, nodes: 9",
+        "Full tree — Train: 1.000, Test: 1.000",
+        "Pruned tree — Train: 0.975, Test: 1.000",
+        "|--- petal_l <= 2.45",
+        "|   |--- class: 0",
+        "|--- petal_l >  2.45",
+        "|   |--- petal_w <= 1.75",
+        "|   |   |--- class: 1",
+        "|   |--- petal_w >  1.75",
+        "|   |   |--- class: 2"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Train two DecisionTreeClassifiers on the wine dataset — one with no limits and one with max_depth=3. Compare their training and test accuracies. Print the decision rules for the pruned tree.",
+        "ta": "wine தரவுத்தொகுப்பில் இரண்டு DecisionTreeClassifier-களைப் பயிற்சிக்கவும் — ஒன்று வரம்பு இல்லாமல், மற்றொன்று max_depth=3 உடன். அவற்றின் பயிற்சி மற்றும் சோதனை துல்லியங்களை ஒப்பிடுங்கள். கத்தரிக்கப்பட்ட மரத்தின் முடிவு விதிகளை அச்சிடுங்கள்."
+      },
+      "starter_code": "from sklearn.datasets import load_wine\nfrom sklearn.tree import DecisionTreeClassifier, export_text\nfrom sklearn.model_selection import train_test_split\n\nX, y = load_wine(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n# Full tree\nfull = DecisionTreeClassifier(random_state=42)\nfull.fit(X_train, y_train)\n\n# Pruned tree\npruned = DecisionTreeClassifier(max_depth=___, random_state=42)\npruned.fit(X_train, y_train)\n\nprint(f'Full  — Train: {full.score(X_train, y_train):.3f}, Test: {full.score(X_test, y_test):.3f}')\nprint(f'Pruned — Train: {pruned.score(X_train, y_train):.3f}, Test: {pruned.score(X_test, y_test):.3f}')\nprint(export_text(pruned, feature_names=load_wine().feature_names))",
+      "expected_output": "Full  — Train: 1.000, Test: 0.889\nPruned — Train: 0.965, Test: 0.944",
+      "hints": {
+        "en": [
+          "max_depth=3 for the pruned tree",
+          "Full tree overfits: 100% train but lower test",
+          "Pruned tree generalizes better despite lower training score"
+        ],
+        "ta": [
+          "கத்தரிக்கப்பட்ட மரத்திற்கு max_depth=3",
+          "முழு மரம் அதிகப்படி பொருந்துகிறது: 100% பயிற்சி ஆனால் குறைவான சோதனை",
+          "கத்தரிக்கப்பட்ட மரம் குறைவான பயிற்சி மதிப்பெண் இருந்தாலும் சிறப்பாக பொதுமைப்படுத்துகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does Gini impurity of 0 mean?",
+        "ta": "ஜினி அசுத்தம் 0 என்றால் என்ன பொருள்?"
+      },
+      "options": {
+        "en": ["Maximum disorder", "The node contains only one class (pure)", "The tree is empty", "The model failed"],
+        "ta": ["அதிகபட்ச ஒழுங்கின்மை", "கணு ஒரே ஒரு வகுப்பை மட்டும் கொண்டுள்ளது (தூய்மையானது)", "மரம் காலியாக உள்ளது", "மாடல் தோல்வியடைந்தது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the main purpose of setting max_depth in a decision tree?",
+        "ta": "முடிவு மரத்தில் max_depth அமைப்பதன் முக்கிய நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": ["To speed up training", "To prevent overfitting by limiting tree complexity", "To increase accuracy", "To handle missing values"],
+        "ta": ["பயிற்சியை வேகப்படுத்த", "மர சிக்கலைக் கட்டுப்படுத்தி அதிகப்படி பொருத்தத்தைத் தடுக்க", "துல்லியத்தை அதிகரிக்க", "விடுபட்ட மதிப்புகளை கையாள"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are decision trees considered interpretable?",
+        "ta": "முடிவு மரங்கள் ஏன் விளக்கக்கூடியவை என்று கருதப்படுகின்றன?"
+      },
+      "options": {
+        "en": ["They always have high accuracy", "Their decisions can be expressed as simple if-else rules", "They use neural networks", "They require no training data"],
+        "ta": ["அவை எப்போதும் அதிக துல்லியம் கொண்டவை", "அவற்றின் முடிவுகள் எளிய if-else விதிகளாக வெளிப்படுத்தப்படலாம்", "அவை நரம்பு வலையமைப்புகளைப் பயன்படுத்துகின்றன", "அவைக்கு பயிற்சி தரவு தேவையில்லை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["decision_trees", "gini_impurity", "information_gain", "pruning", "tree_visualization"],
+    "concepts_required": ["train_test_split", "sklearn_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["credit_approval", "medical_diagnosis", "rule_extraction"],
+    "category": "machine_learning",
+    "path_memberships": ["supervised_learning"]
+  }
+}

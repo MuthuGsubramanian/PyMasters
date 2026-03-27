@@ -1,0 +1,235 @@
+{
+  "id": "fastapi_intro",
+  "topic": "fastapi_intro",
+  "track": "web_development",
+  "module": "fastapi_framework",
+  "order": 11,
+  "title": {
+    "en": "FastAPI Introduction: Modern Async Python APIs",
+    "ta": "FastAPI அறிமுகம்: நவீன ஒத்திசையா Python API-கள்"
+  },
+  "description": {
+    "en": "Build high-performance APIs with FastAPI — async routes, automatic documentation, type hints, and Pydantic models.",
+    "ta": "FastAPI மூலம் உயர் செயல்திறன் API-களை உருவாக்குங்கள் — async வழிகள், தானியங்கி ஆவணப்படுத்தல், வகை குறிப்புகள் மற்றும் Pydantic மாதிரிகள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## The Speed Racer\n\nVaathiyaar revs an engine. \"FastAPI is the Formula 1 of Python web frameworks — blazing fast, type-safe, and self-documenting. It's built on **Starlette** for the web parts and **Pydantic** for data validation.\"\n\n### Why FastAPI?\n- **Fastest** Python framework (on par with Node.js/Go)\n- **Type hints** drive automatic validation\n- **Auto docs** — Swagger UI and ReDoc built in\n- **Async/await** native support\n- **Pydantic** models for data validation\n- **Dependency injection** system\n\n### FastAPI vs Flask vs Django\n\n| Feature | Flask | Django | FastAPI |\n|---------|-------|--------|----------|\n| Speed | Moderate | Moderate | Very Fast |\n| Async | Add-on | Limited | Native |\n| Auto Docs | No | No | Yes (Swagger) |\n| Validation | Manual | Forms | Pydantic (auto) |\n| Type Safety | No | No | Yes |\n\n### Pydantic Models\n```python\nclass User(BaseModel):\n    name: str\n    age: int\n    email: EmailStr\n```\nPydantic validates data automatically based on type hints.\n\n> **Key Concept:** FastAPI uses Python type hints not just for documentation, but for automatic request validation, serialization, and OpenAPI schema generation. Write types, get validation free."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "speed_racer",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "fastapi_overview",
+      "nodes": [
+        {
+          "label": "FastAPI",
+          "children": [
+            "Async Routes (async/await)",
+            "Pydantic Models (validation)",
+            "Auto Documentation (Swagger)",
+            "Dependency Injection",
+            "Type Hints (auto-validate)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "fastapi_demo",
+      "steps": [
+        {
+          "line": "from fastapi import FastAPI, HTTPException, Query",
+          "highlight": "FastAPI",
+          "explanation": {
+            "en": "Import FastAPI and helpers for error handling and query params"
+          }
+        },
+        {
+          "line": "from pydantic import BaseModel, EmailStr, Field",
+          "highlight": "BaseModel",
+          "explanation": {
+            "en": "Pydantic's BaseModel provides automatic data validation"
+          }
+        },
+        {
+          "line": "app = FastAPI(title='PyMasters API', version='1.0.0')",
+          "highlight": "FastAPI()",
+          "explanation": {
+            "en": "Create the app — title and version appear in auto-generated docs"
+          }
+        },
+        {
+          "line": "class StudentCreate(BaseModel):\n    name: str = Field(..., min_length=2, max_length=100)\n    age: int = Field(..., ge=10, le=120)\n    email: EmailStr\n    grade: float = Field(default=0.0, ge=0.0, le=100.0)",
+          "highlight": "BaseModel",
+          "explanation": {
+            "en": "Pydantic model with type hints — FastAPI validates automatically"
+          }
+        },
+        {
+          "line": "class StudentResponse(BaseModel):\n    id: int\n    name: str\n    age: int\n    email: str\n    grade: float",
+          "highlight": "StudentResponse",
+          "explanation": {
+            "en": "Response model defines the shape of API output"
+          }
+        },
+        {
+          "line": "students_db: list[dict] = []",
+          "highlight": "students_db",
+          "explanation": {
+            "en": "In-memory list acting as a simple database for demonstration"
+          }
+        },
+        {
+          "line": "@app.get('/')\nasync def root():\n    return {'message': 'Welcome to PyMasters API', 'docs': '/docs'}",
+          "highlight": "async def",
+          "explanation": {
+            "en": "Async route handler — FastAPI runs this with async/await"
+          }
+        },
+        {
+          "line": "@app.post('/students/', response_model=StudentResponse, status_code=201)\nasync def create_student(student: StudentCreate):",
+          "highlight": "response_model",
+          "explanation": {
+            "en": "response_model filters the output; status_code sets 201 Created"
+          }
+        },
+        {
+          "line": "    new_id = len(students_db) + 1\n    student_dict = {'id': new_id, **student.model_dump()}\n    students_db.append(student_dict)\n    return student_dict",
+          "highlight": "model_dump()",
+          "explanation": {
+            "en": "model_dump() converts Pydantic model to dict; ** unpacks it"
+          }
+        },
+        {
+          "line": "@app.get('/students/', response_model=list[StudentResponse])\nasync def list_students(skip: int = 0, limit: int = Query(default=10, le=100)):\n    return students_db[skip:skip + limit]",
+          "highlight": "Query",
+          "explanation": {
+            "en": "Query params with defaults and validation — /students/?skip=0&limit=10"
+          }
+        },
+        {
+          "line": "@app.get('/students/{student_id}', response_model=StudentResponse)\nasync def get_student(student_id: int):\n    for student in students_db:\n        if student['id'] == student_id:\n            return student\n    raise HTTPException(status_code=404, detail='Student not found')",
+          "highlight": "HTTPException",
+          "explanation": {
+            "en": "Path parameter {student_id} auto-converts to int; raise 404 if missing"
+          }
+        },
+        {
+          "line": "# Run: uvicorn main:app --reload\n# Docs: http://127.0.0.1:8000/docs",
+          "highlight": "uvicorn",
+          "explanation": {
+            "en": "uvicorn is the ASGI server; --reload enables auto-restart on changes"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_student_model",
+      "variable": "student",
+      "value": "StudentCreate(name='Alice', age=22, email='a@b.com', grade=95.5)",
+      "data_type": "Pydantic",
+      "color": "#009688"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_validation",
+      "variable": "age constraint",
+      "value": "ge=10, le=120",
+      "data_type": "Field",
+      "color": "#FF5722"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ uvicorn main:app --reload",
+        "INFO:     Uvicorn running on http://127.0.0.1:8000",
+        "INFO:     Started reloader process",
+        "",
+        "$ curl -X POST http://localhost:8000/students/ -H 'Content-Type: application/json' -d '{\"name\":\"Alice\",\"age\":22,\"email\":\"alice@py.com\",\"grade\":95.5}'",
+        "{\"id\":1,\"name\":\"Alice\",\"age\":22,\"email\":\"alice@py.com\",\"grade\":95.5}",
+        "",
+        "$ curl http://localhost:8000/students/",
+        "[{\"id\":1,\"name\":\"Alice\",\"age\":22,\"email\":\"alice@py.com\",\"grade\":95.5}]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a FastAPI app with Pydantic models for a 'Product' with name, price, in_stock, and category fields. Implement GET (list all, filter by category), POST (create), and GET by ID endpoints. Add proper validation with Pydantic Field constraints.",
+        "ta": "name, price, in_stock, category புலங்களுடன் 'Product' க்கான Pydantic மாதிரிகளுடன் FastAPI பயன்பாட்டை உருவாக்குங்கள்."
+      },
+      "starter_code": "from fastapi import FastAPI, HTTPException, Query\nfrom pydantic import BaseModel, Field\n\napp = FastAPI(title='Product API')\n\nclass ProductCreate(BaseModel):\n    name: str = Field(..., min_length=1, max_length=200)\n    price: float = Field(..., gt=0)\n    in_stock: bool = True\n    category: str = Field(..., min_length=1)\n\nclass ProductResponse(ProductCreate):\n    id: int\n\nproducts_db = []\n\n@app.post('/products/', response_model=ProductResponse, status_code=201)\nasync def create_product(product: ProductCreate):\n    new_id = len(products_db) + 1\n    product_dict = {'id': new_id, **product.model_dump()}\n    products_db.append(product_dict)\n    return product_dict\n\n@app.get('/products/', response_model=list[ProductResponse])\nasync def list_products(category: str | None = None):\n    if category:\n        return [p for p in products_db if p['category'] == category]\n    return products_db\n\n@app.get('/products/{product_id}', response_model=ProductResponse)\nasync def get_product(product_id: int):\n    for p in products_db:\n        if p['id'] == product_id:\n            return p\n    raise HTTPException(status_code=404, detail='Product not found')",
+      "expected_output": "POST /products/ → {\"id\": 1, \"name\": \"Laptop\", \"price\": 999.99, \"in_stock\": true, \"category\": \"electronics\"}",
+      "hints": {
+        "en": [
+          "Pydantic Field(...) means required; Field(default=x) means optional",
+          "gt=0 means greater than 0, min_length=1 prevents empty strings",
+          "Use Query parameters for filtering (category: str | None = None)",
+          "Raise HTTPException(status_code=404) for not found"
+        ],
+        "ta": [
+          "Pydantic Field(...) என்றால் தேவை; Field(default=x) என்றால் விருப்பம்",
+          "gt=0 என்றால் 0-ஐ விட அதிகம், min_length=1 வெற்று சரங்களைத் தடுக்கிறது",
+          "வடிகட்டுதலுக்கு Query அளவுருக்களைப் பயன்படுத்துங்கள்",
+          "கிடைக்கவில்லை என்றால் HTTPException(status_code=404) எழுப்புங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does FastAPI use for automatic data validation?",
+        "ta": "தானியங்கி தரவு சரிபார்ப்புக்கு FastAPI எதைப் பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["Django Forms", "WTForms", "Pydantic models with type hints", "Manual if/else checks"],
+        "ta": ["Django Forms", "WTForms", "வகை குறிப்புகளுடன் Pydantic மாதிரிகள்", "கைமுறை if/else சோதனைகள்"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Where can you find auto-generated API documentation in FastAPI?",
+        "ta": "FastAPI-ல் தானாக உருவாக்கப்பட்ட API ஆவணங்களை எங்கே காணலாம்?"
+      },
+      "options": {
+        "en": ["/admin/", "/docs/ (Swagger UI)", "/api-docs/", "/readme/"],
+        "ta": ["/admin/", "/docs/ (Swagger UI)", "/api-docs/", "/readme/"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What ASGI server is typically used to run FastAPI applications?",
+        "ta": "FastAPI பயன்பாடுகளை இயக்க பொதுவாக எந்த ASGI சேவையகம் பயன்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": ["Gunicorn", "Apache", "Uvicorn", "Nginx"],
+        "ta": ["Gunicorn", "Apache", "Uvicorn", "Nginx"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["fastapi_basics", "pydantic", "async_routes", "auto_docs"],
+    "concepts_required": ["rest_api_concepts", "python_type_hints"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["api_development", "microservices"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

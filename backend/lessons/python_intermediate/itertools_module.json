@@ -1,0 +1,283 @@
+{
+  "id": "itertools_module",
+  "topic": "itertools_module",
+  "track": "python_intermediate",
+  "module": "standard_library",
+  "order": 16,
+  "title": {
+    "en": "itertools: Infinite Iterators & Combinatorics",
+    "ta": "itertools: முடிவிலா Iterators & கலவையியல்"
+  },
+  "description": {
+    "en": "Explore itertools — chain, product, combinations, permutations, islice, groupby, and building efficient iterator pipelines.",
+    "ta": "itertools ஆராயுங்கள் — chain, product, combinations, permutations, islice, groupby, திறமையான iterator pipelines."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Combination Lock\n\nVaathiyaar holds a combination lock. \"How many possible combinations are there for a 3-digit lock? What about permutations of letters? `itertools` generates these sequences **lazily**, without storing them all in memory.\"\n\n### itertools Categories\n\n| Category | Functions | Purpose |\n|----------|----------|----------|\n| Combining | `chain`, `product` | Merge or cross-product iterables |\n| Filtering | `islice`, `takewhile` | Slice or filter iterators |\n| Combinatoric | `combinations`, `permutations` | All possible arrangements |\n| Grouping | `groupby` | Group consecutive items |\n\n### Key Examples\n\n```python\nfrom itertools import chain, product, combinations\n\n# chain: merge multiple iterables\nlist(chain([1,2], [3,4]))  # [1, 2, 3, 4]\n\n# product: cartesian product\nlist(product('AB', '12'))  # [('A','1'),('A','2'),('B','1'),('B','2')]\n\n# combinations: n choose k\nlist(combinations('ABC', 2))  # [('A','B'),('A','C'),('B','C')]\n```\n\n> **Key Concept:** All itertools functions return **lazy iterators**. They compute values on demand, making them memory-efficient even for enormous datasets."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "combination_lock",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "itertools",
+          "children": [
+            "chain (merge)",
+            "product (cross)",
+            "combinations (nCk)",
+            "permutations (nPk)",
+            "islice (slice iterators)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from itertools import chain, product, combinations, permutations, islice, groupby",
+          "highlight": "itertools",
+          "explanation": {
+            "en": "Import the key itertools functions"
+          }
+        },
+        {
+          "line": "merged = list(chain([1, 2, 3], [4, 5], [6]))",
+          "highlight": "chain",
+          "explanation": {
+            "en": "chain merges multiple iterables into one sequence"
+          }
+        },
+        {
+          "line": "print(f'chain: {merged}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "[1, 2, 3, 4, 5, 6] — all merged into one list"
+          }
+        },
+        {
+          "line": "colors = ['red', 'blue']",
+          "highlight": "colors",
+          "explanation": {
+            "en": "First iterable for product"
+          }
+        },
+        {
+          "line": "sizes = ['S', 'M', 'L']",
+          "highlight": "sizes",
+          "explanation": {
+            "en": "Second iterable for product"
+          }
+        },
+        {
+          "line": "combos = list(product(colors, sizes))",
+          "highlight": "product",
+          "explanation": {
+            "en": "Cartesian product — every color paired with every size"
+          }
+        },
+        {
+          "line": "print(f'product: {combos}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "[('red','S'),('red','M'),('red','L'),('blue','S'),...]"
+          }
+        },
+        {
+          "line": "teams = list(combinations(['Alice', 'Bob', 'Charlie', 'Dave'], 2))",
+          "highlight": "combinations",
+          "explanation": {
+            "en": "All possible 2-person teams — order doesn't matter"
+          }
+        },
+        {
+          "line": "print(f'Teams: {len(teams)} combinations')",
+          "highlight": "len",
+          "explanation": {
+            "en": "6 combinations (4 choose 2)"
+          }
+        },
+        {
+          "line": "for team in teams:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Print each team"
+          }
+        },
+        {
+          "line": "    print(f'  {team}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "('Alice', 'Bob'), ('Alice', 'Charlie'), etc."
+          }
+        },
+        {
+          "line": "perms = list(permutations('ABC', 2))",
+          "highlight": "permutations",
+          "explanation": {
+            "en": "Permutations — order MATTERS. ('A','B') != ('B','A')"
+          }
+        },
+        {
+          "line": "print(f'Permutations: {perms}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "6 permutations: AB, AC, BA, BC, CA, CB"
+          }
+        },
+        {
+          "line": "big_range = range(1000000)",
+          "highlight": "range",
+          "explanation": {
+            "en": "A huge range — we only want a slice"
+          }
+        },
+        {
+          "line": "sliced = list(islice(big_range, 5, 10))",
+          "highlight": "islice",
+          "explanation": {
+            "en": "islice takes a slice of any iterator — elements 5 through 9"
+          }
+        },
+        {
+          "line": "print(f'islice: {sliced}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "[5, 6, 7, 8, 9] — no need to materialize the whole range"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_merged",
+      "variable": "merged",
+      "value": "[1, 2, 3, 4, 5, 6]",
+      "data_type": "list",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_teams",
+      "variable": "teams",
+      "value": "6 combinations of 2",
+      "data_type": "list",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "chain: [1, 2, 3, 4, 5, 6]",
+        "product: [('red', 'S'), ('red', 'M'), ('red', 'L'), ('blue', 'S'), ('blue', 'M'), ('blue', 'L')]",
+        "Teams: 6 combinations",
+        "  ('Alice', 'Bob')",
+        "  ('Alice', 'Charlie')",
+        "  ('Alice', 'Dave')",
+        "  ('Bob', 'Charlie')",
+        "  ('Bob', 'Dave')",
+        "  ('Charlie', 'Dave')",
+        "Permutations: [('A', 'B'), ('A', 'C'), ('B', 'A'), ('B', 'C'), ('C', 'A'), ('C', 'B')]",
+        "islice: [5, 6, 7, 8, 9]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use itertools.product to generate all possible 2-character passwords from the characters 'abc' and digits '123'. Print the total count and first 5 passwords.",
+        "ta": "'abc' எழுத்துகள் மற்றும் '123' இலக்கங்களிலிருந்து itertools.product பயன்படுத்தி அனைத்து 2-எழுத்து கடவுச்சொற்களையும் உருவாக்குங்கள்."
+      },
+      "starter_code": "from itertools import product, islice\n\nchars = 'abc'\ndigits = '123'\npasswords = [''.join(p) for p in product(chars, digits)]\nprint(f'Total: {len(passwords)}')\nprint(f'First 5: {passwords[:5]}')",
+      "expected_output": "Total: 9\nFirst 5: ['a1', 'a2', 'a3', 'b1', 'b2']",
+      "hints": {
+        "en": [
+          "product('abc', '123') gives all char-digit pairs",
+          "Use ''.join(p) to combine each tuple into a string",
+          "3 chars * 3 digits = 9 passwords"
+        ],
+        "ta": [
+          "product('abc', '123') அனைத்து char-digit ஜோடிகளையும் தரும்",
+          "''.join(p) மூலம் ஒவ்வொரு tuple-ஐ string-ஆக இணையுங்கள்",
+          "3 எழுத்துகள் * 3 இலக்கங்கள் = 9 கடவுச்சொற்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the difference between combinations and permutations?",
+        "ta": "combinations மற்றும் permutations இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": [
+          "No difference",
+          "Combinations: order matters, Permutations: order doesn't",
+          "Combinations: order doesn't matter, Permutations: order matters",
+          "They work on different data types"
+        ],
+        "ta": [
+          "வேறுபாடு இல்லை",
+          "Combinations: வரிசை முக்கியம், Permutations: வரிசை முக்கியமில்லை",
+          "Combinations: வரிசை முக்கியமில்லை, Permutations: வரிசை முக்கியம்",
+          "அவை வெவ்வேறு தரவு வகைகளில் வேலை செய்கின்றன"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does chain([1,2], [3,4]) produce?",
+        "ta": "chain([1,2], [3,4]) என்ன உருவாக்கும்?"
+      },
+      "options": {
+        "en": ["[[1,2],[3,4]]", "[1,2,3,4]", "[(1,3),(2,4)]", "Error"],
+        "ta": ["[[1,2],[3,4]]", "[1,2,3,4]", "[(1,3),(2,4)]", "பிழை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does islice do?",
+        "ta": "islice என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Slices a list",
+          "Slices any iterator without materializing it",
+          "Creates a new list",
+          "Sorts an iterator"
+        ],
+        "ta": [
+          "பட்டியலை நறுக்குகிறது",
+          "எந்த iterator-ஐயும் materialize செய்யாமல் நறுக்குகிறது",
+          "புதிய பட்டியலை உருவாக்குகிறது",
+          "iterator-ஐ வரிசைப்படுத்துகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["itertools", "chain", "product", "combinations", "permutations", "islice"],
+    "concepts_required": ["iterables", "generators", "tuples"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["data_pipelines", "combinatorial_problems", "testing"],
+    "category": "standard_library",
+    "path_memberships": ["python_intermediate"]
+  }
+}

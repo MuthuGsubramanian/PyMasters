@@ -1,0 +1,307 @@
+{
+  "id": "oop_classes_basics",
+  "topic": "oop_classes_basics",
+  "track": "python_intermediate",
+  "module": "object_oriented_programming",
+  "order": 1,
+  "title": {
+    "en": "Classes & Objects: Building Your First Blueprint",
+    "ta": "வகுப்புகள் & பொருள்கள்: உங்கள் முதல் வரைபடம்"
+  },
+  "description": {
+    "en": "Learn how to create classes with __init__, self, and instance attributes. Understand the relationship between classes (blueprints) and objects (instances).",
+    "ta": "__init__, self மற்றும் instance attributes மூலம் வகுப்புகளை எவ்வாறு உருவாக்குவது என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Blueprint Factory\n\nVaathiyaar walks into a bustling factory. On the wall hangs a **blueprint** for building robots. Every robot built from that blueprint has the same structure — a name, a battery level, and a skill — but each robot is unique.\n\n### What is a Class?\n- A **class** is a blueprint for creating objects\n- It defines **attributes** (data) and **methods** (behavior)\n- Created using the `class` keyword\n\n### The `__init__` Method\n\nThe `__init__` method is the **constructor** — it runs automatically when you create an object.\n\n```python\nclass Robot:\n    def __init__(self, name, skill):\n        self.name = name\n        self.skill = skill\n        self.battery = 100\n```\n\n### Understanding `self`\n\n| Concept | Meaning |\n|---------|----------|\n| `self` | Reference to the current instance |\n| `self.name` | Instance attribute belonging to this object |\n| `__init__` | Constructor, called when object is created |\n| `Robot()` | Creates a new instance of Robot |\n\n> **Key Concept:** `self` is how each object keeps track of its own data. When you write `self.name = name`, you're saying \"this particular robot's name is whatever was passed in.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "blueprint_factory",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Class",
+          "children": [
+            "__init__ (constructor)",
+            "self (instance ref)",
+            "Attributes (data)",
+            "Methods (behavior)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class Robot:",
+          "highlight": "class",
+          "explanation": {
+            "en": "Define a new class called Robot — this is our blueprint"
+          }
+        },
+        {
+          "line": "    def __init__(self, name, skill):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "The constructor method — runs when a Robot is created"
+          }
+        },
+        {
+          "line": "        self.name = name",
+          "highlight": "self.name",
+          "explanation": {
+            "en": "Store the name as an instance attribute on this robot"
+          }
+        },
+        {
+          "line": "        self.skill = skill",
+          "highlight": "self.skill",
+          "explanation": {
+            "en": "Store the skill as an instance attribute"
+          }
+        },
+        {
+          "line": "        self.battery = 100",
+          "highlight": "self.battery",
+          "explanation": {
+            "en": "Set a default battery level of 100 for every new robot"
+          }
+        },
+        {
+          "line": "    def introduce(self):",
+          "highlight": "introduce",
+          "explanation": {
+            "en": "Define a method — a function that belongs to the class"
+          }
+        },
+        {
+          "line": "        return f'I am {self.name}, skilled in {self.skill}'",
+          "highlight": "self.name",
+          "explanation": {
+            "en": "Access instance attributes using self inside methods"
+          }
+        },
+        {
+          "line": "    def work(self, hours):",
+          "highlight": "work",
+          "explanation": {
+            "en": "Another method that takes a parameter beyond self"
+          }
+        },
+        {
+          "line": "        self.battery -= hours * 10",
+          "highlight": "self.battery",
+          "explanation": {
+            "en": "Modify the battery attribute — each hour drains 10%"
+          }
+        },
+        {
+          "line": "        return f'{self.name} worked {hours}h. Battery: {self.battery}%'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return a status string showing remaining battery"
+          }
+        },
+        {
+          "line": "r1 = Robot('Archon', 'welding')",
+          "highlight": "Robot(",
+          "explanation": {
+            "en": "Create a new Robot instance — __init__ runs automatically"
+          }
+        },
+        {
+          "line": "r2 = Robot('Nexus', 'painting')",
+          "highlight": "Robot(",
+          "explanation": {
+            "en": "Create a second Robot — same blueprint, different data"
+          }
+        },
+        {
+          "line": "print(r1.introduce())",
+          "highlight": "introduce",
+          "explanation": {
+            "en": "Call the introduce method on r1 — self becomes r1"
+          }
+        },
+        {
+          "line": "print(r2.work(3))",
+          "highlight": "work",
+          "explanation": {
+            "en": "Call work on r2 — battery decreases by 30"
+          }
+        },
+        {
+          "line": "print(f'r1 battery: {r1.battery}, r2 battery: {r2.battery}')",
+          "highlight": "battery",
+          "explanation": {
+            "en": "Each object tracks its own state independently"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_r1",
+      "variable": "r1",
+      "value": "Robot(name='Archon', skill='welding', battery=100)",
+      "data_type": "Robot",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_r2",
+      "variable": "r2",
+      "value": "Robot(name='Nexus', skill='painting', battery=70)",
+      "data_type": "Robot",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "I am Archon, skilled in welding",
+        "Nexus worked 3h. Battery: 70%",
+        "r1 battery: 100, r2 battery: 70"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "r1",
+          "value": "Robot instance",
+          "type": "Robot",
+          "address": "0x01"
+        },
+        {
+          "name": "r1.name",
+          "value": "'Archon'",
+          "type": "str",
+          "address": "0x02"
+        },
+        {
+          "name": "r2",
+          "value": "Robot instance",
+          "type": "Robot",
+          "address": "0x03"
+        },
+        {
+          "name": "r2.name",
+          "value": "'Nexus'",
+          "type": "str",
+          "address": "0x04"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a class called Student with __init__ that takes name and grade. Add a method is_passing() that returns True if grade >= 50. Create two students and print whether each is passing.",
+        "ta": "Student என்ற வகுப்பை உருவாக்குங்கள், __init__ மூலம் name மற்றும் grade பெறுங்கள். is_passing() முறையைச் சேர்க்கவும், grade >= 50 எனில் True திருப்பும். இரு மாணவர்களை உருவாக்கி ஒவ்வொருவரும் தேர்ச்சி பெற்றாரா என்று அச்சிடுங்கள்."
+      },
+      "starter_code": "class Student:\n    def __init__(self, name, grade):\n        # store name and grade\n        pass\n\n    def is_passing(self):\n        # return True if grade >= 50\n        pass\n\ns1 = Student('Alice', 75)\ns2 = Student('Bob', 40)\nprint(f'{s1.name}: {s1.is_passing()}')\nprint(f'{s2.name}: {s2.is_passing()}')",
+      "expected_output": "Alice: True\nBob: False",
+      "hints": {
+        "en": [
+          "Use self.name = name inside __init__",
+          "Use self.grade = grade to store the grade",
+          "In is_passing, return self.grade >= 50"
+        ],
+        "ta": [
+          "__init__ உள்ளே self.name = name பயன்படுத்துங்கள்",
+          "self.grade = grade மூலம் மதிப்பெண்ணைச் சேமியுங்கள்",
+          "is_passing-ல் return self.grade >= 50 பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does __init__ do in a Python class?",
+        "ta": "Python வகுப்பில் __init__ என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Deletes the object",
+          "Initializes a new instance when created",
+          "Imports the class from a module",
+          "Prints the object's string representation"
+        ],
+        "ta": [
+          "பொருளை நீக்குகிறது",
+          "உருவாக்கும்போது புதிய நிகழ்வை துவக்குகிறது",
+          "ஒரு தொகுப்பிலிருந்து வகுப்பை இறக்குமதி செய்கிறது",
+          "பொருளின் சரம் பிரதிநிதித்துவத்தை அச்சிடுகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does 'self' refer to inside a class method?",
+        "ta": "வகுப்பு முறையின் உள்ளே 'self' எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The class itself",
+          "The current instance of the class",
+          "The parent class",
+          "A global variable"
+        ],
+        "ta": [
+          "வகுப்பு தன்னை",
+          "வகுப்பின் தற்போதைய நிகழ்வு",
+          "பெற்றோர் வகுப்பு",
+          "ஒரு உலகளாவிய மாறி"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the output of: r = Robot('Ace', 'coding'); print(r.name)?",
+        "ta": "r = Robot('Ace', 'coding'); print(r.name) என்பதன் வெளியீடு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Robot",
+          "Ace",
+          "coding",
+          "Error"
+        ],
+        "ta": [
+          "Robot",
+          "Ace",
+          "coding",
+          "பிழை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["classes", "objects", "__init__", "self", "instance_attributes", "methods"],
+    "concepts_required": ["functions", "variables"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["modeling_real_world_entities", "game_development"],
+    "category": "oop",
+    "path_memberships": ["python_intermediate"]
+  }
+}

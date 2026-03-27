@@ -1,0 +1,233 @@
+{
+  "id": "websockets_basics",
+  "topic": "websockets_basics",
+  "track": "web_development",
+  "module": "advanced_web",
+  "order": 17,
+  "title": {
+    "en": "WebSockets: Real-Time Communication",
+    "ta": "WebSockets: நிகழ்நேர தொடர்பு"
+  },
+  "description": {
+    "en": "Understand WebSocket protocol, build real-time features with Python, and compare WebSockets to HTTP polling.",
+    "ta": "WebSocket நெறிமுறையைப் புரிந்துகொள்ளுங்கள், Python மூலம் நிகழ்நேர அம்சங்களை உருவாக்குங்கள், மற்றும் HTTP polling-உடன் WebSockets-ஐ ஒப்பிடுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## The Walkie-Talkie\n\nVaathiyaar holds up a walkie-talkie and a postal letter. \"HTTP is like postal mail — you send a request, wait for a reply. WebSockets are like walkie-talkies — once connected, both sides can talk at ANY time, instantly.\"\n\n### HTTP vs WebSockets\n\n| Feature | HTTP | WebSocket |\n|---------|------|-----------|\n| Connection | New per request | Persistent |\n| Direction | Client → Server | Bidirectional |\n| Overhead | Headers each time | Minimal after handshake |\n| Use case | Page loads, APIs | Chat, live updates, games |\n| Protocol | `http://` / `https://` | `ws://` / `wss://` |\n\n### How WebSockets Work\n1. Client sends HTTP upgrade request\n2. Server agrees → connection upgrades to WebSocket\n3. Both sides can send messages freely\n4. Connection stays open until closed\n\n### When to Use WebSockets\n- **Chat applications** — instant message delivery\n- **Live dashboards** — real-time data updates\n- **Collaborative editing** — Google Docs style\n- **Gaming** — multiplayer state sync\n- **Notifications** — push alerts\n\n### When NOT to Use WebSockets\n- Simple CRUD APIs (use REST)\n- Infrequent updates (use polling or SSE)\n- One-way server updates (use Server-Sent Events)\n\n> **Key Concept:** WebSockets maintain a persistent, bidirectional connection. This eliminates the overhead of repeated HTTP requests, making them ideal for real-time features. But they use more server resources per connection."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "walkie_talkie",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ws_overview",
+      "nodes": [
+        {
+          "label": "WebSockets",
+          "children": [
+            "Persistent Connection",
+            "Bidirectional Communication",
+            "Low Latency",
+            "Event-Driven Architecture"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "ws_demo",
+      "steps": [
+        {
+          "line": "# Server: FastAPI WebSocket endpoint\nfrom fastapi import FastAPI, WebSocket, WebSocketDisconnect\nfrom typing import list",
+          "highlight": "WebSocket",
+          "explanation": {
+            "en": "FastAPI has built-in WebSocket support"
+          }
+        },
+        {
+          "line": "app = FastAPI()\n\nclass ConnectionManager:\n    def __init__(self):\n        self.active_connections: list[WebSocket] = []",
+          "highlight": "ConnectionManager",
+          "explanation": {
+            "en": "Manager tracks all active WebSocket connections"
+          }
+        },
+        {
+          "line": "    async def connect(self, websocket: WebSocket):\n        await websocket.accept()\n        self.active_connections.append(websocket)",
+          "highlight": "accept",
+          "explanation": {
+            "en": "Accept the WebSocket connection and add to active list"
+          }
+        },
+        {
+          "line": "    def disconnect(self, websocket: WebSocket):\n        self.active_connections.remove(websocket)",
+          "highlight": "disconnect",
+          "explanation": {
+            "en": "Remove disconnected client from the active list"
+          }
+        },
+        {
+          "line": "    async def broadcast(self, message: str):\n        for connection in self.active_connections:\n            await connection.send_text(message)",
+          "highlight": "broadcast",
+          "explanation": {
+            "en": "Send a message to ALL connected clients simultaneously"
+          }
+        },
+        {
+          "line": "manager = ConnectionManager()",
+          "highlight": "manager",
+          "explanation": {
+            "en": "Create a single manager instance for the application"
+          }
+        },
+        {
+          "line": "@app.websocket('/ws/chat/{username}')\nasync def websocket_endpoint(websocket: WebSocket, username: str):\n    await manager.connect(websocket)\n    await manager.broadcast(f'{username} joined the chat!')",
+          "highlight": "@app.websocket",
+          "explanation": {
+            "en": "WebSocket route — accepts connections and announces new users"
+          }
+        },
+        {
+          "line": "    try:\n        while True:\n            data = await websocket.receive_text()\n            await manager.broadcast(f'{username}: {data}')\n    except WebSocketDisconnect:\n        manager.disconnect(websocket)\n        await manager.broadcast(f'{username} left the chat.')",
+          "highlight": "receive_text",
+          "explanation": {
+            "en": "Loop forever receiving messages and broadcasting to all; handle disconnect"
+          }
+        },
+        {
+          "line": "# Client: JavaScript WebSocket\n# const ws = new WebSocket('ws://localhost:8000/ws/chat/alice');",
+          "highlight": "new WebSocket",
+          "explanation": {
+            "en": "Browser creates a WebSocket connection to the server"
+          }
+        },
+        {
+          "line": "# ws.onopen = () => console.log('Connected!');\n# ws.onmessage = (event) => {\n#     document.getElementById('messages').innerHTML += `<p>${event.data}</p>`;\n# };",
+          "highlight": "onmessage",
+          "explanation": {
+            "en": "Event handlers: onopen fires on connect, onmessage on each received message"
+          }
+        },
+        {
+          "line": "# ws.send('Hello everyone!');  // Send a message\n# ws.close();                  // Close the connection",
+          "highlight": "ws.send",
+          "explanation": {
+            "en": "Send messages from client to server; close() ends the connection"
+          }
+        },
+        {
+          "line": "# Python client (for testing)\nimport asyncio\nimport websockets\n\nasync def chat_client():\n    async with websockets.connect('ws://localhost:8000/ws/chat/bot') as ws:\n        await ws.send('Hello from Python!')\n        response = await ws.recv()\n        print(f'Received: {response}')\n\nasyncio.run(chat_client())",
+          "highlight": "websockets.connect",
+          "explanation": {
+            "en": "Python can also be a WebSocket client using the websockets library"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "http_vs_ws",
+      "left_label": "HTTP Polling",
+      "right_label": "WebSocket",
+      "left_content": "Client: GET /messages?since=123 (every 2 seconds)\nServer: 200 OK [{new messages}]\nClient: GET /messages?since=456\nServer: 200 OK []\nClient: GET /messages?since=456\nServer: 200 OK [{message}]\n(Wasted requests when no new data!)",
+      "right_content": "Client: Upgrade to WebSocket\nServer: 101 Switching Protocols\n--- Connection open ---\nServer → Client: {new message}\nServer → Client: {new message}\nClient → Server: {reply}\n(Messages flow instantly both ways!)"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_connections",
+      "variable": "active_connections",
+      "value": "[ws1, ws2, ws3]",
+      "data_type": "list",
+      "color": "#9C27B0"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "INFO: WebSocket connection opened: alice",
+        "INFO: alice joined the chat!",
+        "INFO: WebSocket connection opened: bob",
+        "INFO: bob joined the chat!",
+        "BROADCAST: alice: Hello everyone!",
+        "BROADCAST: bob: Hi Alice!",
+        "INFO: WebSocket connection closed: alice",
+        "BROADCAST: alice left the chat."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a simple chat server with FastAPI WebSockets. Implement a ConnectionManager that handles connect, disconnect, and broadcast. Create a WebSocket endpoint that accepts a username from the URL and broadcasts all messages to all connected clients.",
+        "ta": "FastAPI WebSockets மூலம் எளிய அரட்டை சேவையகத்தை உருவாக்குங்கள். இணைப்பு, துண்டிப்பு மற்றும் ஒளிபரப்பைக் கையாளும் ConnectionManager-ஐ செயல்படுத்துங்கள்."
+      },
+      "starter_code": "from fastapi import FastAPI, WebSocket, WebSocketDisconnect\n\napp = FastAPI()\n\nclass ConnectionManager:\n    def __init__(self):\n        self.active_connections: list[WebSocket] = []\n\n    async def connect(self, websocket: WebSocket):\n        await websocket.accept()\n        self.active_connections.append(websocket)\n\n    def disconnect(self, websocket: WebSocket):\n        self.active_connections.remove(websocket)\n\n    async def broadcast(self, message: str):\n        for connection in self.active_connections:\n            await connection.send_text(message)\n\nmanager = ConnectionManager()\n\n@app.websocket('/ws/chat/{username}')\nasync def websocket_endpoint(websocket: WebSocket, username: str):\n    await manager.connect(websocket)\n    await manager.broadcast(f'{username} joined!')\n    try:\n        while True:\n            data = await websocket.receive_text()\n            await manager.broadcast(f'{username}: {data}')\n    except WebSocketDisconnect:\n        manager.disconnect(websocket)\n        await manager.broadcast(f'{username} left.')",
+      "expected_output": "alice joined!\nalice: Hello!\nbob joined!\nbob: Hi Alice!",
+      "hints": {
+        "en": [
+          "websocket.accept() starts the connection",
+          "websocket.receive_text() waits for a message from the client",
+          "connection.send_text() sends a message to one client",
+          "Use WebSocketDisconnect exception to handle client disconnections"
+        ],
+        "ta": [
+          "websocket.accept() இணைப்பைத் தொடங்குகிறது",
+          "websocket.receive_text() கிளையன்ட்டிடமிருந்து செய்தியை எதிர்பார்க்கிறது",
+          "connection.send_text() ஒரு கிளையன்ட்டுக்கு செய்தி அனுப்புகிறது",
+          "கிளையன்ட் துண்டிப்புகளைக் கையாள WebSocketDisconnect விதிவிலக்கைப் பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main advantage of WebSockets over HTTP polling?",
+        "ta": "HTTP polling-ஐ விட WebSockets-ன் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["WebSockets are more secure", "WebSockets maintain a persistent bidirectional connection with lower latency", "WebSockets work without a server", "WebSockets don't need any protocol"],
+        "ta": ["WebSockets மிகவும் பாதுகாப்பானவை", "WebSockets குறைந்த தாமதத்துடன் நிலையான இருதிசை இணைப்பை பராமரிக்கின்றன", "WebSockets சேவையகம் இல்லாமல் வேலை செய்கின்றன", "WebSockets-க்கு எந்த நெறிமுறையும் தேவையில்லை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What HTTP status code indicates a successful WebSocket upgrade?",
+        "ta": "வெற்றிகரமான WebSocket மேம்படுத்தலை எந்த HTTP நிலை குறியீடு குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["200 OK", "101 Switching Protocols", "301 Moved", "204 No Content"],
+        "ta": ["200 OK", "101 Switching Protocols", "301 Moved", "204 No Content"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When should you NOT use WebSockets?",
+        "ta": "எப்போது WebSockets பயன்படுத்தக் கூடாது?"
+      },
+      "options": {
+        "en": ["Real-time chat applications", "Live dashboard updates", "Simple CRUD REST APIs with infrequent updates", "Multiplayer games"],
+        "ta": ["நிகழ்நேர அரட்டை பயன்பாடுகள்", "நிகழ்நேர டாஷ்போர்டு புதுப்பிப்புகள்", "அரிதான புதுப்பிப்புகளுடன் எளிய CRUD REST API-கள்", "பல் வீரர் விளையாட்டுகள்"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["websockets", "real_time", "bidirectional_communication", "connection_management"],
+    "concepts_required": ["http_fundamentals", "async_python"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 30,
+    "real_world_application": ["chat_apps", "live_dashboards", "gaming"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

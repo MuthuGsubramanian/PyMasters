@@ -1,0 +1,215 @@
+{
+  "id": "hyperparameter_tuning",
+  "topic": "hyperparameter_tuning",
+  "track": "machine_learning",
+  "module": "evaluation",
+  "order": 19,
+  "title": {
+    "en": "Hyperparameter Tuning: Finding the Sweet Spot",
+    "ta": "ஹைப்பர்பாரமீட்டர் டியூனிங்: சரியான இடத்தைக் கண்டறிதல்"
+  },
+  "description": {
+    "en": "Master GridSearchCV, RandomizedSearchCV, and Bayesian optimization to find the optimal hyperparameters that maximize model performance.",
+    "ta": "மாடல் செயல்திறனை அதிகரிக்கும் உகந்த ஹைப்பர்பாரமீட்டர்களைக் கண்டறிய GridSearchCV, RandomizedSearchCV, மற்றும் பேய்சியன் உகப்பாக்கம் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Dial Board\n\nVaathiyaar reveals a control panel with dozens of dials. \"These are your hyperparameters — the settings you choose BEFORE training. The model learns parameters; YOU choose hyperparameters. Finding the right combination is an art.\"\n\n### Parameters vs Hyperparameters\n- **Parameters**: Learned during training (weights, biases)\n- **Hyperparameters**: Set before training (learning_rate, max_depth, C, n_estimators)\n\n### Search Strategies\n\n**GridSearchCV**: Try every combination in a grid — exhaustive but slow\n**RandomizedSearchCV**: Sample random combinations — faster, nearly as good\n**Bayesian Optimization**: Smart search that learns from previous trials\n\n```python\nfrom sklearn.model_selection import GridSearchCV, RandomizedSearchCV\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.datasets import load_wine\nfrom scipy.stats import randint\n\nX, y = load_wine(return_X_y=True)\n\n# Grid Search\nparam_grid = {\n    'n_estimators': [50, 100, 200],\n    'max_depth': [3, 5, 10, None],\n    'min_samples_split': [2, 5, 10]\n}\n\ngrid = GridSearchCV(\n    RandomForestClassifier(random_state=42),\n    param_grid, cv=5, scoring='accuracy', n_jobs=-1\n)\ngrid.fit(X, y)\nprint(f'Best params: {grid.best_params_}')\nprint(f'Best CV score: {grid.best_score_:.3f}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "dial_board",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "tuning_map",
+      "nodes": [
+        {
+          "label": "Hyperparameter Tuning",
+          "children": ["GridSearchCV", "RandomizedSearchCV", "Bayesian Optimization"]
+        },
+        {
+          "label": "Key Hyperparameters",
+          "children": ["n_estimators (RF)", "max_depth (Tree)", "C (SVM/LogReg)", "learning_rate", "n_neighbors (KNN)"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "tuning_code",
+      "steps": [
+        {
+          "line": "from sklearn.model_selection import GridSearchCV, RandomizedSearchCV",
+          "highlight": "GridSearchCV",
+          "explanation": { "en": "Import both search strategies — Grid for exhaustive, Random for faster" }
+        },
+        {
+          "line": "from sklearn.ensemble import RandomForestClassifier",
+          "highlight": "RandomForestClassifier",
+          "explanation": { "en": "We will tune a Random Forest — it has many hyperparameters" }
+        },
+        {
+          "line": "from sklearn.datasets import load_wine",
+          "highlight": "load_wine",
+          "explanation": { "en": "Wine dataset for classification" }
+        },
+        {
+          "line": "X, y = load_wine(return_X_y=True)",
+          "highlight": "X, y",
+          "explanation": { "en": "Load features and labels" }
+        },
+        {
+          "line": "param_grid = {'n_estimators': [50, 100, 200], 'max_depth': [3, 5, 10, None], 'min_samples_split': [2, 5, 10]}",
+          "highlight": "param_grid",
+          "explanation": { "en": "Define the grid: 3 x 4 x 3 = 36 combinations to try" }
+        },
+        {
+          "line": "grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5, scoring='accuracy', n_jobs=-1)",
+          "highlight": "GridSearchCV",
+          "explanation": { "en": "GridSearchCV: 5-fold CV for each of 36 combos = 180 model fits" }
+        },
+        {
+          "line": "grid.fit(X, y)",
+          "highlight": "fit",
+          "explanation": { "en": "Run the search — tries every combination and evaluates with cross-validation" }
+        },
+        {
+          "line": "print(f'Best params: {grid.best_params_}')",
+          "highlight": "best_params_",
+          "explanation": { "en": "The combination that achieved the highest CV score" }
+        },
+        {
+          "line": "print(f'Best CV score: {grid.best_score_:.3f}')",
+          "highlight": "best_score_",
+          "explanation": { "en": "The best mean cross-validation accuracy across 5 folds" }
+        },
+        {
+          "line": "from scipy.stats import randint",
+          "highlight": "randint",
+          "explanation": { "en": "Import random integer distribution for RandomizedSearchCV" }
+        },
+        {
+          "line": "param_dist = {'n_estimators': randint(50, 300), 'max_depth': [3, 5, 10, 15, None], 'min_samples_split': randint(2, 20)}",
+          "highlight": "param_dist",
+          "explanation": { "en": "Define distributions instead of fixed lists — allows wider exploration" }
+        },
+        {
+          "line": "random_search = RandomizedSearchCV(RandomForestClassifier(random_state=42), param_dist, n_iter=20, cv=5, scoring='accuracy', random_state=42, n_jobs=-1)",
+          "highlight": "n_iter=20",
+          "explanation": { "en": "Only try 20 random combinations instead of all possible — much faster" }
+        },
+        {
+          "line": "random_search.fit(X, y)",
+          "highlight": "fit",
+          "explanation": { "en": "Run randomized search — samples 20 random parameter combinations" }
+        },
+        {
+          "line": "print(f'Random best: {random_search.best_params_}, score: {random_search.best_score_:.3f}')",
+          "highlight": "best_params_",
+          "explanation": { "en": "Often finds comparable results to grid search in much less time" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_combos",
+      "variable": "grid_combinations",
+      "value": 36,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_best_score",
+      "variable": "best_cv_score",
+      "value": 0.983,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Grid Search: 36 combinations x 5 folds = 180 fits",
+        "Best params: {'max_depth': None, 'min_samples_split': 2, 'n_estimators': 200}",
+        "Best CV score: 0.983",
+        "",
+        "Random Search: 20 iterations x 5 folds = 100 fits",
+        "Random best: {'max_depth': 10, 'min_samples_split': 3, 'n_estimators': 187}",
+        "Random best score: 0.978"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use GridSearchCV to tune an SVC on the breast cancer dataset. Search over kernel=['linear','rbf'], C=[0.1,1,10], gamma=['scale','auto']. Print the best parameters and score.",
+        "ta": "மார்பக புற்றுநோய் தரவுத்தொகுப்பில் SVC ஐ டியூன் செய்ய GridSearchCV பயன்படுத்துங்கள். kernel, C, gamma மீது தேடி சிறந்த அளவுருக்கள் மற்றும் மதிப்பெண்ணை அச்சிடுங்கள்."
+      },
+      "starter_code": "from sklearn.model_selection import GridSearchCV\nfrom sklearn.svm import SVC\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_breast_cancer(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\nparam_grid = {\n    'kernel': ['linear', 'rbf'],\n    'C': [0.1, 1, 10],\n    'gamma': ['scale', 'auto']\n}\n\ngrid = GridSearchCV(\n    SVC(random_state=42), param_grid, cv=5, scoring='accuracy', n_jobs=-1\n)\ngrid.fit(___, ___)\n\nprint(f'Best params: {grid.___}')\nprint(f'Best CV score: {grid.___:.3f}')\nprint(f'Total combinations tested: {len(grid.cv_results_[\"params\"])}')",
+      "expected_output": "Best params: {'C': 10, 'gamma': 'scale', 'kernel': 'rbf'}\nBest CV score: 0.979\nTotal combinations tested: 12",
+      "hints": {
+        "en": [
+          "grid.fit(X_scaled, y) — use scaled features",
+          "grid.best_params_ for best parameters",
+          "grid.best_score_ for best CV score"
+        ],
+        "ta": [
+          "grid.fit(X_scaled, y) — அளவிடப்பட்ட அம்சங்களைப் பயன்படுத்துங்கள்",
+          "சிறந்த அளவுருக்களுக்கு grid.best_params_",
+          "சிறந்த CV மதிப்பெண்ணுக்கு grid.best_score_"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the difference between parameters and hyperparameters?",
+        "ta": "parameters மற்றும் hyperparameters இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": ["They are the same thing", "Parameters are learned during training; hyperparameters are set before training", "Hyperparameters are learned during training", "Parameters are always integers"],
+        "ta": ["அவை ஒன்றே", "Parameters பயிற்சியின் போது கற்கப்படுகின்றன; hyperparameters பயிற்சிக்கு முன் அமைக்கப்படுகின்றன", "Hyperparameters பயிற்சியின் போது கற்கப்படுகின்றன", "Parameters எப்போதும் முழு எண்கள்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When would you prefer RandomizedSearchCV over GridSearchCV?",
+        "ta": "GridSearchCV-ஐ விட RandomizedSearchCV-ஐ எப்போது விரும்புவீர்கள்?"
+      },
+      "options": {
+        "en": ["When the parameter space is small", "When the parameter space is large and exhaustive search is too slow", "When you want guaranteed optimal results", "When you have only one hyperparameter"],
+        "ta": ["அளவுரு இடம் சிறியதாக இருக்கும்போது", "அளவுரு இடம் பெரியதாக இருக்கும்போது மற்றும் முழுமையான தேடல் மிகவும் மெதுவாக இருக்கும்போது", "உத்தரவாதமான உகந்த முடிவுகள் தேவைப்படும்போது", "ஒரே ஒரு hyperparameter இருக்கும்போது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does GridSearchCV use cross-validation internally?",
+        "ta": "GridSearchCV ஏன் உள்நாட்டில் cross-validation பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["To make training faster", "To get a reliable estimate of each parameter combination's performance", "To increase the dataset size", "To visualize the results"],
+        "ta": ["பயிற்சியை வேகமாக்க", "ஒவ்வொரு அளவுரு கலவையின் செயல்திறனின் நம்பகமான மதிப்பீட்டைப் பெற", "தரவுத்தொகுப்பின் அளவை அதிகரிக்க", "முடிவுகளை காட்சிப்படுத்த"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["grid_search", "random_search", "bayesian_optimization", "hyperparameters", "cv_scoring"],
+    "concepts_required": ["cross_validation", "model_evaluation"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["model_optimization", "automl", "production_tuning"],
+    "category": "machine_learning",
+    "path_memberships": ["evaluation"]
+  }
+}

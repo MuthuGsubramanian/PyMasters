@@ -1,0 +1,298 @@
+{
+  "id": "openai_api_basics",
+  "topic": "openai_api_basics",
+  "track": "ai_fundamentals",
+  "module": "api_integration",
+  "order": 5,
+  "title": {
+    "en": "OpenAI API Basics: Your First AI-Powered App",
+    "ta": "OpenAI API அடிப்படைகள்: உங்கள் முதல் AI-இயக்கும் செயலி"
+  },
+  "description": {
+    "en": "Learn to use the OpenAI API — set up API keys, make chat completions, and stream responses in real-time.",
+    "ta": "OpenAI API பயன்படுத்தக் கற்றுக்கொள்ளுங்கள் — API keys அமைத்தல், chat completions செய்தல், நிகழ்நேர streaming."
+  },
+  "xp_reward": 70,
+  "next_unlock": "anthropic_api_basics",
+  "story_variants": {
+    "en": "## Vaathiyaar's First API Call\n\nVaathiyaar opens a terminal. \"Students, until now we've been talking ABOUT AI. Today, we BUILD with it. One API call is all it takes to add intelligence to any Python program.\"\n\n### Setting Up\n\n1. Get your API key from [platform.openai.com](https://platform.openai.com)\n2. Store it safely: `export OPENAI_API_KEY='sk-...'`\n3. Install the library: `pip install openai`\n\n### The Chat Completions API\n\nEvery OpenAI call uses the **messages** pattern:\n- `system` — Sets AI behavior\n- `user` — Your input\n- `assistant` — AI's previous responses (for multi-turn)\n\n### Streaming\n\nFor long responses, **streaming** shows tokens as they're generated:\n```python\nfor chunk in stream:\n    print(chunk.choices[0].delta.content, end='')\n```\n\n> **Key Insight:** The OpenAI API is stateless — it doesn't remember previous calls. You must send the full conversation history each time.",
+    "ta": "## வாத்தியாரின் முதல் API அழைப்பு\n\nவாத்தியார் ஒரு terminal-ஐ திறக்கிறார். \"மாணவர்களே, இதுவரை நாம் AI பற்றி பேசிக்கொண்டிருந்தோம். இன்று, அதைக் கொண்டு உருவாக்குகிறோம்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "api_terminal",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "api_concepts",
+      "nodes": [
+        {
+          "label": "OpenAI API",
+          "children": [
+            "API Key (authentication)",
+            "Chat Completions (main endpoint)",
+            "Messages (system/user/assistant)",
+            "Streaming (real-time output)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "openai_code",
+      "steps": [
+        {
+          "line": "import os",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import os to access environment variables for the API key"
+          }
+        },
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the OpenAI client class"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Initialize the client — it automatically reads OPENAI_API_KEY from environment"
+          }
+        },
+        {
+          "line": "client = OpenAI()  # reads OPENAI_API_KEY from env",
+          "highlight": "client",
+          "explanation": {
+            "en": "Create the client — never hardcode your API key in source code"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's make our first chat completion"
+          }
+        },
+        {
+          "line": "# Basic chat completion",
+          "highlight": "comment",
+          "explanation": {
+            "en": "The chat completions endpoint is the primary way to interact with GPT models"
+          }
+        },
+        {
+          "line": "response = client.chat.completions.create(",
+          "highlight": "response",
+          "explanation": {
+            "en": "Call the chat completions API — this sends your messages to the model"
+          }
+        },
+        {
+          "line": "    model='gpt-4o-mini',",
+          "highlight": "model",
+          "explanation": {
+            "en": "gpt-4o-mini is fast, cheap ($0.15/1M input tokens), and great for most tasks"
+          }
+        },
+        {
+          "line": "    messages=[",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Messages is a list of conversation turns"
+          }
+        },
+        {
+          "line": "        {'role': 'system', 'content': 'You are a helpful Python tutor.'},",
+          "highlight": "system",
+          "explanation": {
+            "en": "System message sets the AI's personality and constraints"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'Explain list comprehensions in one paragraph.'}",
+          "highlight": "user",
+          "explanation": {
+            "en": "User message is your actual question or request"
+          }
+        },
+        {
+          "line": "    ],",
+          "highlight": "",
+          "explanation": {
+            "en": "Close the messages list"
+          }
+        },
+        {
+          "line": "    temperature=0.7,",
+          "highlight": "temperature",
+          "explanation": {
+            "en": "Balanced temperature for educational content"
+          }
+        },
+        {
+          "line": "    max_tokens=200",
+          "highlight": "max_tokens",
+          "explanation": {
+            "en": "Limit response to 200 tokens to keep it concise"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "API call is made — response is returned"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "request_response",
+      "left_label": "Request (what you send)",
+      "right_label": "Response (what you get)",
+      "left_content": "{\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a helpful Python tutor.\"},\n    {\"role\": \"user\", \"content\": \"Explain list comprehensions in one paragraph.\"}\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 200\n}",
+      "right_content": "{\n  \"id\": \"chatcmpl-abc123\",\n  \"model\": \"gpt-4o-mini\",\n  \"choices\": [{\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"A list comprehension is a concise way to create lists in Python...\"\n    },\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 25,\n    \"completion_tokens\": 87,\n    \"total_tokens\": 112\n  }\n}",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_model",
+      "variable": "model",
+      "value": "gpt-4o-mini",
+      "data_type": "str",
+      "color": "#10b981"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> # Extract the response text",
+        ">>> answer = response.choices[0].message.content",
+        ">>> print(answer)",
+        "A list comprehension is a concise way to create lists in Python",
+        "using a single line of code. Instead of writing a for loop to",
+        "append items to a list, you write [expression for item in iterable].",
+        "",
+        ">>> # Check token usage",
+        ">>> print(f'Tokens used: {response.usage.total_tokens}')",
+        "Tokens used: 112",
+        "",
+        ">>> # Streaming example",
+        ">>> stream = client.chat.completions.create(",
+        "...     model='gpt-4o-mini',",
+        "...     messages=[{'role': 'user', 'content': 'Count to 5'}],",
+        "...     stream=True",
+        "... )",
+        ">>> for chunk in stream:",
+        "...     if chunk.choices[0].delta.content:",
+        "...         print(chunk.choices[0].delta.content, end='')",
+        "1, 2, 3, 4, 5"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a complete script that: 1) Creates an OpenAI client, 2) Makes a chat completion asking for 3 Python tips for beginners, 3) Prints the response and token usage. Handle the case where the API key might be missing.",
+        "ta": "முழுமையான script எழுதுங்கள்: 1) OpenAI client உருவாக்குங்கள், 2) தொடக்கநிலையாளர்களுக்கான 3 Python உதவிக்குறிப்புகளைக் கேளுங்கள், 3) பதிலையும் token usage-ஐயும் அச்சிடுங்கள்."
+      },
+      "starter_code": "import os\nfrom openai import OpenAI\n\n# Check for API key\nif not os.getenv('OPENAI_API_KEY'):\n    print('Error: Set OPENAI_API_KEY environment variable')\nelse:\n    client = OpenAI()\n    \n    # Make the API call\n    # Your code here\n    \n    # Print the response\n    # Your code here\n    \n    # Print token usage\n    # Your code here",
+      "expected_output": "Response: Here are 3 Python tips...\nTokens used: (number)",
+      "hints": {
+        "en": [
+          "Use client.chat.completions.create() with model and messages",
+          "Access response with response.choices[0].message.content",
+          "Token usage is at response.usage.total_tokens"
+        ],
+        "ta": [
+          "client.chat.completions.create() model மற்றும் messages உடன் பயன்படுத்துங்கள்",
+          "response.choices[0].message.content மூலம் பதிலைப் பெறுங்கள்",
+          "response.usage.total_tokens மூலம் token usage பெறுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Where should you store your OpenAI API key?",
+        "ta": "உங்கள் OpenAI API key-ஐ எங்கே சேமிக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Hardcoded in your Python file",
+          "In an environment variable",
+          "In a public GitHub repository",
+          "In the HTML source code"
+        ],
+        "ta": [
+          "Python கோப்பில் hardcode செய்யுங்கள்",
+          "Environment variable-ல்",
+          "பொது GitHub repository-ல்",
+          "HTML source code-ல்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does stream=True do in a chat completion call?",
+        "ta": "Chat completion அழைப்பில் stream=True என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Makes the request faster",
+          "Returns tokens one at a time as they're generated",
+          "Saves the response to a file",
+          "Enables audio output"
+        ],
+        "ta": [
+          "கோரிக்கையை வேகமாக்குகிறது",
+          "உருவாக்கப்படும் போது tokens-ஐ ஒவ்வொன்றாகத் திருப்பி அனுப்புகிறது",
+          "பதிலை கோப்பில் சேமிக்கிறது",
+          "ஒலி வெளியீட்டை இயக்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "The OpenAI API is stateless. What does this mean?",
+        "ta": "OpenAI API stateless ஆக உள்ளது. இது என்ன பொருள்?"
+      },
+      "options": {
+        "en": [
+          "It works in all US states",
+          "It doesn't remember previous conversations — you must send full history",
+          "It doesn't need authentication",
+          "It can only return static content"
+        ],
+        "ta": [
+          "அனைத்து நிலைகளிலும் வேலை செய்கிறது",
+          "முந்தைய உரையாடல்களை நினைவில் வைக்காது — முழு வரலாற்றையும் அனுப்ப வேண்டும்",
+          "அங்கீகாரம் தேவையில்லை",
+          "நிலையான உள்ளடக்கத்தை மட்டுமே திருப்பி அனுப்ப முடியும்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["openai_api", "chat_completions", "streaming", "api_keys"],
+    "concepts_required": ["prompt_engineering_basics", "llm_how_they_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["chatbot_building", "ai_integration"],
+    "category": "ai_api",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

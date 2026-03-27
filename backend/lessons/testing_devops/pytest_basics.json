@@ -1,0 +1,262 @@
+{
+  "id": "pytest_basics",
+  "topic": "pytest_basics",
+  "track": "testing_devops",
+  "module": "testing_foundations",
+  "order": 3,
+  "title": {
+    "en": "pytest: Modern Python Testing",
+    "ta": "pytest: நவீன Python சோதனை"
+  },
+  "description": {
+    "en": "Learn pytest — the most popular Python testing framework. Write concise tests with plain assert, use fixtures for setup, and parametrize to test many inputs at once.",
+    "ta": "மிகவும் பிரபலமான Python testing framework-ஐ கற்றுக்கொள்ளுங்கள். assert-உடன் சுருக்கமான சோதனைகள் எழுதுங்கள், fixtures மற்றும் parametrize பயன்படுத்துங்கள்."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## Vaathiyaar's Shortcut\n\nVaathiyaar grins. \"You learned unittest — the formal way. Now let me show you pytest — the smart way. Less boilerplate, more power. In the real world, 80% of Python projects use pytest.\"\n\n### Why pytest?\n- **No classes needed** — just write functions starting with `test_`\n- **Plain assert** — no need for `assertEqual`, pytest gives rich diffs\n- **Fixtures** — reusable setup with `@pytest.fixture`\n- **Parametrize** — test many inputs with one function\n- **Plugins** — 800+ plugins on PyPI\n\n### Fixtures: Smart Setup\n\n```python\n@pytest.fixture\ndef sample_list():\n    return [1, 2, 3, 4, 5]\n\ndef test_sum(sample_list):\n    assert sum(sample_list) == 15\n```\n\n### Parametrize: Many Inputs, One Test\n\n```python\n@pytest.mark.parametrize('input,expected', [\n    (1, 1), (2, 4), (3, 9), (4, 16)\n])\ndef test_square(input, expected):\n    assert input ** 2 == expected\n```\n\n> **Key Concept:** pytest makes testing feel natural. You write plain Python assertions, and pytest handles the rest — discovery, reporting, and rich error messages."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "modern_testing",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "pytest_map",
+      "nodes": [
+        {
+          "label": "pytest",
+          "children": [
+            "Plain assert",
+            "Fixtures",
+            "Parametrize",
+            "Markers",
+            "Plugins"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pytest_code",
+      "steps": [
+        {
+          "line": "import pytest",
+          "highlight": "pytest",
+          "explanation": {
+            "en": "Import pytest — install with: pip install pytest"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Define a simple function to test"
+          }
+        },
+        {
+          "line": "def celsius_to_fahrenheit(c):",
+          "highlight": "celsius_to_fahrenheit",
+          "explanation": {
+            "en": "A temperature conversion function"
+          }
+        },
+        {
+          "line": "    return (c * 9/5) + 32",
+          "highlight": "9/5",
+          "explanation": {
+            "en": "Standard formula: multiply by 9/5 and add 32"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now write a fixture — reusable test setup"
+          }
+        },
+        {
+          "line": "@pytest.fixture",
+          "highlight": "@pytest.fixture",
+          "explanation": {
+            "en": "Decorator marks this function as a fixture"
+          }
+        },
+        {
+          "line": "def freezing_point():",
+          "highlight": "freezing_point",
+          "explanation": {
+            "en": "Fixture function — name becomes the parameter in tests"
+          }
+        },
+        {
+          "line": "    return 0",
+          "highlight": "0",
+          "explanation": {
+            "en": "Returns 0 celsius — the freezing point of water"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Use the fixture by adding its name as a test parameter"
+          }
+        },
+        {
+          "line": "def test_freezing(freezing_point):",
+          "highlight": "freezing_point",
+          "explanation": {
+            "en": "pytest injects the fixture value automatically by matching parameter name"
+          }
+        },
+        {
+          "line": "    assert celsius_to_fahrenheit(freezing_point) == 32",
+          "highlight": "== 32",
+          "explanation": {
+            "en": "0 celsius should be 32 fahrenheit — plain assert, no assertEqual needed"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Now use parametrize to test many values at once"
+          }
+        },
+        {
+          "line": "@pytest.mark.parametrize('celsius,expected', [",
+          "highlight": "@pytest.mark.parametrize",
+          "explanation": {
+            "en": "parametrize decorator: define variable names and their test values"
+          }
+        },
+        {
+          "line": "    (0, 32), (100, 212), (-40, -40), (37, 98.6)",
+          "highlight": "(0, 32)",
+          "explanation": {
+            "en": "Each tuple is one test case — 4 tuples means 4 test runs"
+          }
+        },
+        {
+          "line": "])",
+          "highlight": null,
+          "explanation": {
+            "en": "Close the parametrize list"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "unittest_vs_pytest",
+      "left": {
+        "label": "unittest style",
+        "content": "class TestTemp(unittest.TestCase):\n    def test_freezing(self):\n        self.assertEqual(\n            celsius_to_fahrenheit(0),\n            32\n        )",
+        "status": "warn"
+      },
+      "right": {
+        "label": "pytest style",
+        "content": "def test_freezing():\n    assert celsius_to_fahrenheit(0) == 32",
+        "status": "pass"
+      }
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_fixture",
+      "variable": "freezing_point",
+      "value": 0,
+      "data_type": "int (fixture)",
+      "color": "#a66bf7"
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "pytest_output",
+      "output": [
+        "$ pytest test_temp.py -v",
+        "======================== test session starts ========================",
+        "collected 5 items",
+        "",
+        "test_temp.py::test_freezing PASSED                            [ 20%]",
+        "test_temp.py::test_conversion[0-32] PASSED                    [ 40%]",
+        "test_temp.py::test_conversion[100-212] PASSED                 [ 60%]",
+        "test_temp.py::test_conversion[-40--40] PASSED                 [ 80%]",
+        "test_temp.py::test_conversion[37-98.6] PASSED                 [100%]",
+        "",
+        "========================= 5 passed in 0.03s ========================"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a `is_palindrome(s)` function and use `@pytest.mark.parametrize` to test it with at least 4 cases: 'racecar' (True), 'hello' (False), 'madam' (True), '' (True).",
+        "ta": "`is_palindrome(s)` செயல்பாட்டை எழுதி, குறைந்தது 4 cases-உடன் `@pytest.mark.parametrize` பயன்படுத்தி சோதிக்கவும்."
+      },
+      "starter_code": "import pytest\n\ndef is_palindrome(s):\n    # Return True if s reads the same forwards and backwards\n    pass\n\n@pytest.mark.parametrize('word,expected', [\n    # Add your test cases here\n])\ndef test_is_palindrome(word, expected):\n    assert is_palindrome(word) == expected",
+      "expected_output": "4 passed",
+      "hints": {
+        "en": [
+          "A palindrome reads the same backwards: s == s[::-1]",
+          "Empty string is a palindrome by convention",
+          "Add tuples like ('racecar', True) to parametrize"
+        ],
+        "ta": [
+          "palindrome பின்னால் இருந்து படிக்கவும் ஒன்றே: s == s[::-1]",
+          "காலி string மரபுப்படி palindrome ஆகும்",
+          "parametrize-க்கு ('racecar', True) போன்ற tuples சேர்க்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What decorator creates a pytest fixture?",
+        "ta": "எந்த decorator pytest fixture உருவாக்கும்?"
+      },
+      "options": {
+        "en": ["@pytest.setup", "@pytest.fixture", "@pytest.mark.fixture", "@fixture"],
+        "ta": ["@pytest.setup", "@pytest.fixture", "@pytest.mark.fixture", "@fixture"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How does pytest inject a fixture into a test function?",
+        "ta": "pytest ஒரு fixture-ஐ test function-க்குள் எப்படி செலுத்தும்?"
+      },
+      "options": {
+        "en": ["By calling setUp()", "By matching the parameter name to the fixture name", "By importing it explicitly", "By using self.fixture"],
+        "ta": ["setUp() அழைப்பதன் மூலம்", "parameter பெயரை fixture பெயருடன் பொருத்துவதன் மூலம்", "அதை வெளிப்படையாக import செய்வதன் மூலம்", "self.fixture பயன்படுத்துவதன் மூலம்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does @pytest.mark.parametrize do?",
+        "ta": "@pytest.mark.parametrize என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Skips the test", "Runs the test once with default values", "Runs the same test with multiple sets of inputs", "Makes the test run in parallel"],
+        "ta": ["சோதனையைத் தவிர்க்கும்", "default values-உடன் சோதனையை ஒரு முறை இயக்கும்", "பல input sets-உடன் அதே சோதனையை இயக்கும்", "சோதனையை parallel-ல் இயக்கும்"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["pytest", "fixtures", "parametrize", "markers"],
+    "concepts_required": ["functions", "testing_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["test_automation", "ci_cd"],
+    "category": "testing",
+    "path_memberships": ["testing_devops"]
+  }
+}

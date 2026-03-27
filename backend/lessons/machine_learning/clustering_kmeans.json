@@ -1,0 +1,213 @@
+{
+  "id": "clustering_kmeans",
+  "topic": "clustering_kmeans",
+  "track": "machine_learning",
+  "module": "unsupervised_learning",
+  "order": 15,
+  "title": {
+    "en": "K-Means Clustering: Finding Natural Groups",
+    "ta": "K-Means கிளஸ்டரிங்: இயற்கையான குழுக்களைக் கண்டறிதல்"
+  },
+  "description": {
+    "en": "Learn the K-Means algorithm step by step, use the elbow method and silhouette score to find the optimal K, and apply clustering to real data.",
+    "ta": "K-Means அல்காரிதத்தை படிப்படியாகக் கற்றுக்கொள்ளுங்கள், உகந்த K ஐ கண்டறிய எல்போ முறை மற்றும் சில்ஹவுட் மதிப்பெண் பயன்படுத்துங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Sorting Hat\n\nVaathiyaar blindfolds students. \"No labels. No answers. Just data. Your job is to find natural groupings.\" This is unsupervised learning.\n\n### K-Means Algorithm\n1. Choose K (number of clusters)\n2. Randomly place K centroids\n3. Assign each point to the nearest centroid\n4. Move each centroid to the mean of its assigned points\n5. Repeat steps 3-4 until convergence\n\n### Choosing K\n- **Elbow Method**: Plot inertia vs K — look for the \"elbow\" bend\n- **Silhouette Score**: Measures how similar a point is to its own cluster vs others\n\n```python\nfrom sklearn.cluster import KMeans\nfrom sklearn.datasets import make_blobs\nfrom sklearn.metrics import silhouette_score\nimport numpy as np\n\n# Generate 3 clusters\nX, y_true = make_blobs(n_samples=300, centers=3, cluster_std=1.0, random_state=42)\n\n# Elbow method\ninertias = []\nfor k in range(1, 8):\n    km = KMeans(n_clusters=k, random_state=42, n_init=10)\n    km.fit(X)\n    inertias.append(km.inertia_)\n    if k > 1:\n        print(f'K={k}: Inertia={km.inertia_:.0f}, Silhouette={silhouette_score(X, km.labels_):.3f}')\n\n# Best model\nkm_best = KMeans(n_clusters=3, random_state=42, n_init=10)\nkm_best.fit(X)\nprint(f'Cluster sizes: {np.bincount(km_best.labels_)}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "sorting_hat",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "kmeans_map",
+      "nodes": [
+        {
+          "label": "K-Means",
+          "children": ["Initialize Centroids", "Assign Points", "Update Centroids", "Convergence"]
+        },
+        {
+          "label": "Choosing K",
+          "children": ["Elbow Method (Inertia)", "Silhouette Score", "Domain Knowledge"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "kmeans_code",
+      "steps": [
+        {
+          "line": "from sklearn.cluster import KMeans",
+          "highlight": "KMeans",
+          "explanation": { "en": "Import K-Means clustering algorithm" }
+        },
+        {
+          "line": "from sklearn.datasets import make_blobs",
+          "highlight": "make_blobs",
+          "explanation": { "en": "Generate synthetic cluster data — we know the true labels for validation" }
+        },
+        {
+          "line": "from sklearn.metrics import silhouette_score",
+          "highlight": "silhouette_score",
+          "explanation": { "en": "Silhouette score: -1 (bad) to 1 (perfect) — measures cluster quality" }
+        },
+        {
+          "line": "X, y_true = make_blobs(n_samples=300, centers=3, cluster_std=1.0, random_state=42)",
+          "highlight": "centers=3",
+          "explanation": { "en": "Generate 300 points in 3 clusters — y_true holds the true cluster IDs" }
+        },
+        {
+          "line": "inertias = []",
+          "highlight": "inertias",
+          "explanation": { "en": "Store inertia (sum of squared distances to nearest centroid) for each K" }
+        },
+        {
+          "line": "for k in range(2, 8):",
+          "highlight": "range(2, 8)",
+          "explanation": { "en": "Try K from 2 to 7 — we will find the optimal number of clusters" }
+        },
+        {
+          "line": "    km = KMeans(n_clusters=k, random_state=42, n_init=10)",
+          "highlight": "n_clusters=k",
+          "explanation": { "en": "Create K-Means with k clusters; n_init=10 runs 10 times with different seeds" }
+        },
+        {
+          "line": "    km.fit(X)",
+          "highlight": "fit",
+          "explanation": { "en": "Run the algorithm: assign points, update centroids, repeat until convergence" }
+        },
+        {
+          "line": "    sil = silhouette_score(X, km.labels_)",
+          "highlight": "silhouette_score",
+          "explanation": { "en": "Compute silhouette score for this K — higher is better" }
+        },
+        {
+          "line": "    print(f'K={k}: Inertia={km.inertia_:.0f}, Silhouette={sil:.3f}')",
+          "highlight": "print",
+          "explanation": { "en": "Inertia decreases as K increases; silhouette peaks at the optimal K" }
+        },
+        {
+          "line": "km_best = KMeans(n_clusters=3, random_state=42, n_init=10)",
+          "highlight": "n_clusters=3",
+          "explanation": { "en": "Choose K=3 based on elbow/silhouette analysis" }
+        },
+        {
+          "line": "km_best.fit(X)",
+          "highlight": "fit",
+          "explanation": { "en": "Fit the final model with optimal K" }
+        },
+        {
+          "line": "print(f'Centroids:\\n{km_best.cluster_centers_}')",
+          "highlight": "cluster_centers_",
+          "explanation": { "en": "The centroids are the center of each cluster — the \"representative\" points" }
+        },
+        {
+          "line": "import numpy as np; print(f'Cluster sizes: {np.bincount(km_best.labels_)}')",
+          "highlight": "bincount",
+          "explanation": { "en": "Check how many points ended up in each cluster — should be roughly equal" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_k",
+      "variable": "optimal_K",
+      "value": 3,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_silhouette",
+      "variable": "silhouette",
+      "value": 0.584,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "K=2: Inertia=1593, Silhouette=0.489",
+        "K=3: Inertia=559, Silhouette=0.584",
+        "K=4: Inertia=468, Silhouette=0.492",
+        "K=5: Inertia=395, Silhouette=0.447",
+        "Cluster sizes: [100 100 100]"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Generate blob data with 4 centers. Use the elbow method (K=2 to 7) to find the optimal K. Print inertia and silhouette score for each K, then fit the best model and print cluster sizes.",
+        "ta": "4 மையங்களுடன் blob தரவை உருவாக்குங்கள். உகந்த K ஐ கண்டறிய எல்போ முறை (K=2 முதல் 7) பயன்படுத்துங்கள். ஒவ்வொரு K க்கும் inertia மற்றும் silhouette score அச்சிடுங்கள்."
+      },
+      "starter_code": "from sklearn.cluster import KMeans\nfrom sklearn.datasets import make_blobs\nfrom sklearn.metrics import silhouette_score\nimport numpy as np\n\nX, _ = make_blobs(n_samples=400, centers=4, cluster_std=0.8, random_state=42)\n\nbest_k, best_sil = 2, -1\nfor k in range(2, 8):\n    km = KMeans(n_clusters=k, random_state=42, n_init=10)\n    km.fit(X)\n    sil = silhouette_score(X, km.___)\n    print(f'K={k}: Inertia={km.inertia_:.0f}, Silhouette={sil:.3f}')\n    if sil > best_sil:\n        best_k, best_sil = k, sil\n\nprint(f'\\nOptimal K={best_k}')\nfinal = KMeans(n_clusters=best_k, random_state=42, n_init=10)\nfinal.fit(X)\nprint(f'Cluster sizes: {np.bincount(final.labels_)}')",
+      "expected_output": "K=2: Inertia=1453, Silhouette=0.516\nK=3: Inertia=763, Silhouette=0.571\nK=4: Inertia=291, Silhouette=0.728\nK=5: Inertia=252, Silhouette=0.633\n\nOptimal K=4\nCluster sizes: [100 100 100 100]",
+      "hints": {
+        "en": [
+          "Use km.labels_ for the cluster assignments",
+          "Silhouette score peaks at the true number of clusters",
+          "K=4 should have the highest silhouette score"
+        ],
+        "ta": [
+          "கிளஸ்டர் ஒதுக்கீடுகளுக்கு km.labels_ பயன்படுத்துங்கள்",
+          "சில்ஹவுட் மதிப்பெண் உண்மையான கிளஸ்டர் எண்ணிக்கையில் உச்சமடைகிறது",
+          "K=4 அதிகபட்ச சில்ஹவுட் மதிப்பெண் கொண்டிருக்க வேண்டும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does inertia measure in K-Means?",
+        "ta": "K-Means-ல் inertia என்ன அளவிடுகிறது?"
+      },
+      "options": {
+        "en": ["The number of clusters", "Sum of squared distances from each point to its nearest centroid", "The accuracy of clustering", "The number of iterations"],
+        "ta": ["கிளஸ்டர்களின் எண்ணிக்கை", "ஒவ்வொரு புள்ளியிலிருந்து அதன் நெருங்கிய மையப்புள்ளிக்கு சதுர தூரங்களின் கூட்டு", "கிளஸ்டரிங்கின் துல்லியம்", "மறுசெய்கைகளின் எண்ணிக்கை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the elbow method, how do you choose K?",
+        "ta": "எல்போ முறையில், K ஐ எவ்வாறு தேர்வு செய்வீர்கள்?"
+      },
+      "options": {
+        "en": ["Always choose K=3", "Pick K where inertia curve bends sharply (the elbow)", "Pick the largest K", "Pick K=1"],
+        "ta": ["எப்போதும் K=3 தேர்வு செய்யுங்கள்", "inertia வளைவு கூர்மையாக வளையும் K ஐ தேர்வு செய்யுங்கள் (எல்போ)", "மிகப்பெரிய K ஐ தேர்வு செய்யுங்கள்", "K=1 ஐ தேர்வு செய்யுங்கள்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is a limitation of K-Means?",
+        "ta": "K-Means இன் வரையறை என்ன?"
+      },
+      "options": {
+        "en": ["It is too slow", "It assumes clusters are spherical and equal-sized", "It cannot handle more than 2 features", "It requires labeled data"],
+        "ta": ["இது மிகவும் மெதுவானது", "கிளஸ்டர்கள் கோள வடிவமானவை மற்றும் சம அளவுடையவை என்று கருதுகிறது", "2 அம்சங்களுக்கு மேல் கையாள முடியாது", "பெயரிடப்பட்ட தரவு தேவை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["kmeans", "clustering", "elbow_method", "silhouette_score", "centroids"],
+    "concepts_required": ["numpy_basics", "feature_scaling"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["customer_segmentation", "image_compression", "anomaly_detection"],
+    "category": "machine_learning",
+    "path_memberships": ["unsupervised_learning"]
+  }
+}

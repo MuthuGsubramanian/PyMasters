@@ -1,0 +1,236 @@
+{
+  "id": "model_evaluation",
+  "topic": "model_evaluation",
+  "track": "machine_learning",
+  "module": "evaluation",
+  "order": 18,
+  "title": {
+    "en": "Model Evaluation: Beyond Accuracy",
+    "ta": "மாடல் மதிப்பீடு: துல்லியத்தைத் தாண்டி"
+  },
+  "description": {
+    "en": "Master precision, recall, F1-score, confusion matrix, ROC-AUC, and learn when each metric matters most for your classification problem.",
+    "ta": "துல்லியம், நினைவுகூர்தல், F1-மதிப்பெண், குழப்ப அணி, ROC-AUC ஆகியவற்றை கற்றுக்கொண்டு, ஒவ்வொரு அளவீடும் உங்கள் வகைப்பாட்டு சிக்கலுக்கு எப்போது மிக முக்கியம் என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Report Card\n\nVaathiyaar holds up two medical tests. \"Test A catches 99% of healthy patients correctly but misses 50% of sick patients. Test B catches 95% of sick patients. Which is better? It depends on what you care about — and that's why we have different metrics.\"\n\n### The Confusion Matrix\n```\n                  Predicted\n              Positive  Negative\nActual Pos      TP        FN\nActual Neg      FP        TN\n```\n\n### Key Metrics\n- **Accuracy** = (TP+TN) / Total — misleading with imbalanced data!\n- **Precision** = TP / (TP+FP) — \"Of those I predicted positive, how many really are?\"\n- **Recall** = TP / (TP+FN) — \"Of all actual positives, how many did I catch?\"\n- **F1-Score** = 2 * (Precision * Recall) / (Precision + Recall) — harmonic mean\n- **ROC-AUC** = Area under the TPR vs FPR curve — threshold-independent\n\n```python\nfrom sklearn.metrics import (accuracy_score, precision_score, recall_score,\n                             f1_score, confusion_matrix, roc_auc_score,\n                             classification_report)\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\n\nX, y = load_breast_cancer(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(max_iter=10000, random_state=42)\nmodel.fit(X_train, y_train)\ny_pred = model.predict(X_test)\ny_proba = model.predict_proba(X_test)[:, 1]\n\nprint(f'Accuracy:  {accuracy_score(y_test, y_pred):.3f}')\nprint(f'Precision: {precision_score(y_test, y_pred):.3f}')\nprint(f'Recall:    {recall_score(y_test, y_pred):.3f}')\nprint(f'F1:        {f1_score(y_test, y_pred):.3f}')\nprint(f'ROC-AUC:   {roc_auc_score(y_test, y_proba):.3f}')\nprint(f'\\nConfusion Matrix:\\n{confusion_matrix(y_test, y_pred)}')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "report_card",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "eval_map",
+      "nodes": [
+        {
+          "label": "Model Evaluation",
+          "children": ["Confusion Matrix", "Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC"]
+        },
+        {
+          "label": "When to Use",
+          "children": ["Accuracy: balanced classes", "Precision: minimize false positives", "Recall: minimize false negatives", "F1: balance precision & recall", "ROC-AUC: threshold-independent"]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "metric_comparison",
+      "models": [
+        { "name": "Accuracy", "strengths": "Simple, intuitive", "weaknesses": "Misleading with imbalanced data" },
+        { "name": "Precision", "strengths": "Important when FP is costly (spam filter)", "weaknesses": "Ignores false negatives" },
+        { "name": "Recall", "strengths": "Important when FN is costly (cancer detection)", "weaknesses": "Ignores false positives" },
+        { "name": "F1-Score", "strengths": "Balances precision and recall", "weaknesses": "Doesn't consider true negatives" },
+        { "name": "ROC-AUC", "strengths": "Threshold-independent, handles imbalance", "weaknesses": "Less intuitive" }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "eval_code",
+      "steps": [
+        {
+          "line": "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score, classification_report",
+          "highlight": "metrics",
+          "explanation": { "en": "Import all essential evaluation metrics from sklearn" }
+        },
+        {
+          "line": "from sklearn.linear_model import LogisticRegression",
+          "highlight": "LogisticRegression",
+          "explanation": { "en": "We'll use logistic regression as our model to evaluate" }
+        },
+        {
+          "line": "X, y = load_breast_cancer(return_X_y=True)",
+          "highlight": "load_breast_cancer",
+          "explanation": { "en": "Binary classification: 0=malignant, 1=benign — imbalanced classes" }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
+          "highlight": "train_test_split",
+          "explanation": { "en": "Standard 80/20 split" }
+        },
+        {
+          "line": "model = LogisticRegression(max_iter=10000, random_state=42); model.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train the model" }
+        },
+        {
+          "line": "y_pred = model.predict(X_test)",
+          "highlight": "predict",
+          "explanation": { "en": "Get class predictions (0 or 1)" }
+        },
+        {
+          "line": "y_proba = model.predict_proba(X_test)[:, 1]",
+          "highlight": "predict_proba",
+          "explanation": { "en": "Get probability of class 1 — needed for ROC-AUC" }
+        },
+        {
+          "line": "cm = confusion_matrix(y_test, y_pred)",
+          "highlight": "confusion_matrix",
+          "explanation": { "en": "The confusion matrix shows TP, FP, TN, FN in a 2x2 grid" }
+        },
+        {
+          "line": "print(f'Confusion Matrix:\\n{cm}')",
+          "highlight": "print",
+          "explanation": { "en": "Rows = actual classes, Columns = predicted classes" }
+        },
+        {
+          "line": "print(f'Accuracy:  {accuracy_score(y_test, y_pred):.3f}')",
+          "highlight": "accuracy",
+          "explanation": { "en": "Overall correct predictions / total — simple but can be misleading" }
+        },
+        {
+          "line": "print(f'Precision: {precision_score(y_test, y_pred):.3f}')",
+          "highlight": "precision",
+          "explanation": { "en": "Of predicted positives, how many are actually positive? High = few false alarms" }
+        },
+        {
+          "line": "print(f'Recall:    {recall_score(y_test, y_pred):.3f}')",
+          "highlight": "recall",
+          "explanation": { "en": "Of actual positives, how many did we catch? High = few missed cases" }
+        },
+        {
+          "line": "print(f'F1:        {f1_score(y_test, y_pred):.3f}')",
+          "highlight": "f1",
+          "explanation": { "en": "Harmonic mean of precision and recall — single balanced metric" }
+        },
+        {
+          "line": "print(f'ROC-AUC:   {roc_auc_score(y_test, y_proba):.3f}')",
+          "highlight": "roc_auc",
+          "explanation": { "en": "Area under ROC curve — 1.0 is perfect, 0.5 is random guessing" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_accuracy",
+      "variable": "accuracy",
+      "value": 0.965,
+      "data_type": "float",
+      "color": "#3498db"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_f1",
+      "variable": "f1_score",
+      "value": 0.972,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_auc",
+      "variable": "roc_auc",
+      "value": 0.996,
+      "data_type": "float",
+      "color": "#9b59b6"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Confusion Matrix:",
+        "[[40  3]",
+        " [ 1 70]]",
+        "Accuracy:  0.965",
+        "Precision: 0.959",
+        "Recall:    0.986",
+        "F1:        0.972",
+        "ROC-AUC:   0.996"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create an imbalanced dataset (95% class 0, 5% class 1). Train a model and show why accuracy alone is misleading. Print accuracy, precision, recall, and F1 to demonstrate the problem.",
+        "ta": "சமநிலையற்ற தரவுத்தொகுப்பை உருவாக்குங்கள் (95% வகுப்பு 0, 5% வகுப்பு 1). மாடலைப் பயிற்சித்து, துல்லியம் மட்டுமே ஏன் தவறானது என்பதைக் காட்டுங்கள்."
+      },
+      "starter_code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\nfrom sklearn.datasets import make_classification\n\nX, y = make_classification(n_samples=1000, n_features=10, weights=[0.95, 0.05], random_state=42)\nprint(f'Class distribution: {np.bincount(y)}')\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(random_state=42)\nmodel.fit(X_train, y_train)\ny_pred = model.predict(X_test)\n\nprint(f'Accuracy:  {accuracy_score(y_test, y_pred):.3f}')\nprint(f'Precision: {precision_score(y_test, y_pred, zero_division=0):.3f}')\nprint(f'Recall:    {recall_score(y_test, y_pred):.3f}')\nprint(f'F1:        {f1_score(y_test, y_pred):.3f}')\nprint('\\nNotice: High accuracy but low recall — the model misses most minority class samples!')",
+      "expected_output": "Class distribution: [950  50]\nAccuracy:  0.965\nPrecision: 0.667\nRecall:    0.333\nF1:        0.444",
+      "hints": {
+        "en": [
+          "A model predicting all-zeros gets 95% accuracy but 0% recall!",
+          "F1 exposes the problem: it balances precision and recall",
+          "For imbalanced data, always check precision, recall, and F1"
+        ],
+        "ta": [
+          "அனைத்தையும் பூஜ்ஜியமாக கணிக்கும் மாடல் 95% துல்லியம் ஆனால் 0% நினைவுகூர்தல் பெறும்!",
+          "F1 சிக்கலை வெளிப்படுத்துகிறது: precision மற்றும் recall ஐ சமநிலைப்படுத்துகிறது",
+          "சமநிலையற்ற தரவுக்கு, எப்போதும் precision, recall, F1 சரிபார்க்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In cancer detection, which metric is most important to maximize?",
+        "ta": "புற்றுநோய் கண்டறிதலில், எந்த அளவீட்டை அதிகப்படுத்துவது மிக முக்கியம்?"
+      },
+      "options": {
+        "en": ["Accuracy", "Precision", "Recall (Sensitivity)", "Specificity"],
+        "ta": ["துல்லியம்", "துல்லியம் (Precision)", "நினைவுகூர்தல் (Recall/Sensitivity)", "குறிப்பிட்டதன்மை"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does an ROC-AUC of 0.5 indicate?",
+        "ta": "ROC-AUC 0.5 என்ன குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["Perfect model", "Model performs no better than random guessing", "Model is 50% accurate", "Model needs more data"],
+        "ta": ["சரியான மாடல்", "மாடல் சீரற்ற யூகத்தை விட சிறப்பாக செயல்படவில்லை", "மாடல் 50% துல்லியமானது", "மாடலுக்கு அதிக தரவு தேவை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is accuracy misleading for imbalanced datasets?",
+        "ta": "சமநிலையற்ற தரவுத்தொகுப்புகளுக்கு துல்லியம் ஏன் தவறானது?"
+      },
+      "options": {
+        "en": ["It is always zero", "A model predicting only the majority class can still achieve high accuracy", "It considers both precision and recall", "It requires probability outputs"],
+        "ta": ["இது எப்போதும் பூஜ்ஜியம்", "பெரும்பான்மை வகுப்பை மட்டும் கணிக்கும் மாடல் இன்னும் அதிக துல்லியம் பெறலாம்", "precision மற்றும் recall இரண்டையும் கருதுகிறது", "நிகழ்தகவு வெளியீடுகள் தேவை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["confusion_matrix", "precision", "recall", "f1_score", "roc_auc", "classification_report"],
+    "concepts_required": ["classification", "logistic_regression"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 35,
+    "real_world_application": ["medical_diagnosis", "fraud_detection", "quality_control"],
+    "category": "machine_learning",
+    "path_memberships": ["evaluation"]
+  }
+}

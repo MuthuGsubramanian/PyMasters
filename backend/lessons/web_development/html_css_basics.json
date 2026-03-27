@@ -1,0 +1,245 @@
+{
+  "id": "html_css_basics",
+  "topic": "html_css_basics",
+  "track": "web_development",
+  "module": "frontend_foundations",
+  "order": 14,
+  "title": {
+    "en": "HTML & CSS Basics: Structuring the Web",
+    "ta": "HTML & CSS அடிப்படைகள்: வலையை கட்டமைத்தல்"
+  },
+  "description": {
+    "en": "Understand HTML document structure, semantic elements, CSS selectors, the box model, and basic layouts.",
+    "ta": "HTML ஆவண கட்டமைப்பு, சொற்பொருள் உறுப்புகள், CSS தேர்வாளர்கள், பெட்டி மாதிரி மற்றும் அடிப்படை தளவமைப்புகளைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## The Skeleton and the Skin\n\nVaathiyaar draws a house frame. \"**HTML** is the skeleton — the structure, the bones. **CSS** is the skin, paint, and decoration. You need both. A house frame without walls is useless; walls without a frame collapse.\"\n\n### HTML: The Structure\n```html\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>My Page</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <header>...</header>\n    <main>...</main>\n    <footer>...</footer>\n</body>\n</html>\n```\n\n### Semantic Elements\n\n| Element | Purpose |\n|---------|--------|\n| `<header>` | Page or section header |\n| `<nav>` | Navigation links |\n| `<main>` | Main content |\n| `<article>` | Self-contained content |\n| `<section>` | Thematic grouping |\n| `<footer>` | Page or section footer |\n\n### CSS Box Model\n```\n┌─────────── margin ──────────────┐\n│ ┌────────── border ──────────┐  │\n│ │ ┌──────── padding ───────┐ │  │\n│ │ │                        │ │  │\n│ │ │       CONTENT          │ │  │\n│ │ │                        │ │  │\n│ │ └────────────────────────┘ │  │\n│ └────────────────────────────┘  │\n└─────────────────────────────────┘\n```\n\n### CSS Selectors\n\n| Selector | Example | Targets |\n|----------|---------|--------|\n| Element | `p` | All paragraphs |\n| Class | `.card` | Elements with class=\"card\" |\n| ID | `#hero` | Element with id=\"hero\" |\n| Descendant | `.nav a` | Links inside .nav |\n| Pseudo | `a:hover` | Links on hover |\n\n> **Key Concept:** As a Python developer building web apps, you WILL write HTML/CSS in templates. Understanding the box model and selectors is essential — even if you use a CSS framework like Tailwind or Bootstrap."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "house_building",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "html_css_overview",
+      "nodes": [
+        {
+          "label": "HTML + CSS",
+          "children": [
+            "Document Structure (head, body)",
+            "Semantic Elements (header, main, footer)",
+            "CSS Selectors (class, id, element)",
+            "Box Model (margin, border, padding)",
+            "Layout (flexbox, grid)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "html_css_demo",
+      "steps": [
+        {
+          "line": "<!DOCTYPE html>",
+          "highlight": "DOCTYPE",
+          "explanation": {
+            "en": "Tells the browser this is an HTML5 document"
+          }
+        },
+        {
+          "line": "<html lang=\"en\">",
+          "highlight": "lang",
+          "explanation": {
+            "en": "Root element — lang helps screen readers and search engines"
+          }
+        },
+        {
+          "line": "<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>PyMasters</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>",
+          "highlight": "head",
+          "explanation": {
+            "en": "Head contains metadata, title, and stylesheet links — not visible content"
+          }
+        },
+        {
+          "line": "<body>",
+          "highlight": "body",
+          "explanation": {
+            "en": "Body contains all visible page content"
+          }
+        },
+        {
+          "line": "    <header class=\"site-header\">\n        <h1>PyMasters Academy</h1>\n        <nav>\n            <a href=\"/\">Home</a>\n            <a href=\"/courses\">Courses</a>\n            <a href=\"/about\">About</a>\n        </nav>\n    </header>",
+          "highlight": "header",
+          "explanation": {
+            "en": "Semantic header with navigation — better for accessibility and SEO"
+          }
+        },
+        {
+          "line": "    <main>\n        <section class=\"hero\">\n            <h2>Learn Python Web Development</h2>\n            <p>From HTTP to deployment, master the full stack.</p>\n            <button class=\"btn btn-primary\">Get Started</button>\n        </section>",
+          "highlight": "section",
+          "explanation": {
+            "en": "Section groups related content — the hero area with heading and CTA"
+          }
+        },
+        {
+          "line": "        <section class=\"cards\">\n            <article class=\"card\">\n                <h3>Flask</h3>\n                <p>Lightweight and flexible</p>\n            </article>\n            <article class=\"card\">\n                <h3>Django</h3>\n                <p>Batteries included</p>\n            </article>\n            <article class=\"card\">\n                <h3>FastAPI</h3>\n                <p>Modern and fast</p>\n            </article>\n        </section>\n    </main>",
+          "highlight": "article",
+          "explanation": {
+            "en": "Each card is an article — self-contained, reusable content blocks"
+          }
+        },
+        {
+          "line": "    <footer>\n        <p>&copy; 2026 PyMasters Academy</p>\n    </footer>\n</body>\n</html>",
+          "highlight": "footer",
+          "explanation": {
+            "en": "Footer appears at the bottom — copyright, links, contact info"
+          }
+        },
+        {
+          "line": "/* style.css */\n* {\n    margin: 0;\n    padding: 0;\n    box-sizing: border-box;\n}",
+          "highlight": "box-sizing",
+          "explanation": {
+            "en": "Reset defaults and use border-box so padding is included in width"
+          }
+        },
+        {
+          "line": "body {\n    font-family: 'Segoe UI', sans-serif;\n    line-height: 1.6;\n    color: #333;\n}",
+          "highlight": "font-family",
+          "explanation": {
+            "en": "Set base font, line height, and text color for the entire page"
+          }
+        },
+        {
+          "line": ".site-header {\n    background: #1a1a2e;\n    color: white;\n    padding: 1rem 2rem;\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n}",
+          "highlight": "display: flex",
+          "explanation": {
+            "en": "Flexbox layout — space-between pushes logo left and nav right"
+          }
+        },
+        {
+          "line": ".cards {\n    display: grid;\n    grid-template-columns: repeat(3, 1fr);\n    gap: 2rem;\n    padding: 2rem;\n}",
+          "highlight": "grid",
+          "explanation": {
+            "en": "CSS Grid creates a 3-column layout with equal widths and gaps"
+          }
+        },
+        {
+          "line": ".card {\n    background: white;\n    border-radius: 8px;\n    padding: 1.5rem;\n    box-shadow: 0 2px 8px rgba(0,0,0,0.1);\n    transition: transform 0.2s;\n}\n\n.card:hover {\n    transform: translateY(-4px);\n}",
+          "highlight": ":hover",
+          "explanation": {
+            "en": "Card with shadow and hover lift effect using CSS transitions"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_model",
+      "variable": "box-sizing",
+      "value": "border-box",
+      "data_type": "CSS",
+      "color": "#2196F3"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_display",
+      "variable": "display",
+      "value": "grid | flex",
+      "data_type": "CSS",
+      "color": "#E91E63"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Browser renders:",
+        "┌────────────────────────────────────┐",
+        "│ PyMasters Academy    Home Courses  │ ← header (flexbox)",
+        "├────────────────────────────────────┤",
+        "│     Learn Python Web Development   │ ← hero section",
+        "│       [Get Started]                │",
+        "├──────────┬──────────┬──────────────┤",
+        "│  Flask   │  Django  │   FastAPI    │ ← cards (CSS grid)",
+        "│  Light   │  Batt.   │   Modern    │",
+        "├──────────┴──────────┴──────────────┤",
+        "│      © 2026 PyMasters Academy      │ ← footer",
+        "└────────────────────────────────────┘"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a simple portfolio page with HTML and CSS: a header with your name and navigation, a main section with a bio paragraph and a grid of 3 project cards (each with title and description), and a footer. Use flexbox for the header and CSS Grid for the cards.",
+        "ta": "HTML மற்றும் CSS மூலம் எளிய போர்ட்ஃபோலியோ பக்கத்தை உருவாக்குங்கள்: தலைப்பு, உங்கள் பெயர் மற்றும் வழிசெலுத்தல், 3 திட்ட அட்டைகளுடன் முக்கிய பிரிவு, மற்றும் அடிக்குறிப்பு."
+      },
+      "starter_code": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>My Portfolio</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { font-family: sans-serif; line-height: 1.6; }\n        header { display: flex; justify-content: space-between; padding: 1rem 2rem; background: #2d3436; color: white; }\n        nav a { color: #dfe6e9; margin-left: 1rem; text-decoration: none; }\n        .projects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding: 2rem; }\n        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; }\n        footer { text-align: center; padding: 1rem; background: #2d3436; color: white; }\n    </style>\n</head>\n<body>\n    <header>\n        <h1>Your Name</h1>\n        <nav><a href=\"#\">Home</a><a href=\"#\">Projects</a><a href=\"#\">Contact</a></nav>\n    </header>\n    <main>\n        <section style=\"padding: 2rem;\"><p>Python developer passionate about web development.</p></section>\n        <section class=\"projects\">\n            <article class=\"card\"><h3>Project 1</h3><p>A Flask blog application</p></article>\n            <article class=\"card\"><h3>Project 2</h3><p>A Django REST API</p></article>\n            <article class=\"card\"><h3>Project 3</h3><p>A FastAPI microservice</p></article>\n        </section>\n    </main>\n    <footer><p>&copy; 2026 Your Name</p></footer>\n</body>\n</html>",
+      "expected_output": "A responsive portfolio page with header, bio, 3-column project grid, and footer",
+      "hints": {
+        "en": [
+          "Use display: flex on the header for horizontal layout",
+          "Use display: grid with grid-template-columns for the card grid",
+          "box-sizing: border-box includes padding in the element's width",
+          "Semantic tags (header, main, article, footer) improve accessibility"
+        ],
+        "ta": [
+          "கிடைமட்ட தளவமைப்புக்கு header-ல் display: flex பயன்படுத்துங்கள்",
+          "அட்டை கட்டத்திற்கு grid-template-columns-உடன் display: grid பயன்படுத்துங்கள்",
+          "box-sizing: border-box உறுப்பின் அகலத்தில் padding-ஐ சேர்க்கிறது",
+          "சொற்பொருள் குறிச்சொற்கள் அணுகலை மேம்படுத்துகின்றன"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the CSS box-sizing: border-box property do?",
+        "ta": "CSS box-sizing: border-box பண்பு என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Adds a visible border", "Includes padding and border in the element's total width/height", "Removes all margins", "Centers the element"],
+        "ta": ["கண்ணுக்குத் தெரியும் எல்லையைச் சேர்க்கிறது", "உறுப்பின் மொத்த அகலம்/உயரத்தில் padding மற்றும் border-ஐ சேர்க்கிறது", "அனைத்து விளிம்புகளையும் நீக்குகிறது", "உறுப்பை நடுவில் வைக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which CSS property creates a 3-column grid layout?",
+        "ta": "எந்த CSS பண்பு 3-நெடுவரிசை கட்ட தளவமைப்பை உருவாக்குகிறது?"
+      },
+      "options": {
+        "en": ["display: flex; flex-columns: 3", "display: grid; grid-template-columns: repeat(3, 1fr)", "columns: 3", "display: block; width: 33%"],
+        "ta": ["display: flex; flex-columns: 3", "display: grid; grid-template-columns: repeat(3, 1fr)", "columns: 3", "display: block; width: 33%"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use semantic HTML elements like <article> and <section>?",
+        "ta": "<article> மற்றும் <section> போன்ற சொற்பொருள் HTML உறுப்புகளை ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["They load faster", "They improve accessibility and SEO by describing content meaning", "They add automatic styling", "They are required by browsers"],
+        "ta": ["அவை வேகமாக ஏற்றப்படும்", "உள்ளடக்க அர்த்தத்தை விவரிப்பதன் மூலம் அணுகல் மற்றும் SEO-வை மேம்படுத்துகின்றன", "அவை தானியங்கி வடிவமைப்பைச் சேர்க்கின்றன", "உலாவிகளுக்கு அவை தேவை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["html_structure", "css_selectors", "box_model", "flexbox", "css_grid"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["web_design", "frontend_development"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

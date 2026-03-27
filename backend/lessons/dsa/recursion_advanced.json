@@ -1,0 +1,258 @@
+{
+  "id": "recursion_advanced",
+  "topic": "recursion_advanced",
+  "track": "dsa",
+  "module": "recursion_dp",
+  "order": 16,
+  "title": {
+    "en": "Advanced Recursion: Memoization & DP Intro",
+    "ta": "மேம்பட்ட Recursion: Memoization & DP அறிமுகம்"
+  },
+  "description": {
+    "en": "Speed up recursion with memoization using functools.lru_cache. Bridge from recursion to dynamic programming.",
+    "ta": "functools.lru_cache பயன்படுத்தி memoization மூலம் recursion-ஐ வேகப்படுத்துங்கள். recursion-லிருந்து dynamic programming-க்கு பாலம்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Notebook Trick\n\nVaathiyaar calls a student to compute fibonacci(30). It takes forever. Then he gives them a notebook: \"Write down each answer. If someone asks the same question, look it up instead of computing again. That's **memoization**!\"\n\n### The Problem with Naive Recursion\n\n```python\n# fib(5) calls fib(4) and fib(3)\n# fib(4) calls fib(3) and fib(2)\n# fib(3) is computed TWICE! (and more for larger n)\n# Total calls for fib(30): 2,692,537!\n```\n\n### Memoization — Cache Results\n\n```python\ndef fib_memo(n, cache={}):\n    if n in cache:\n        return cache[n]\n    if n <= 1:\n        return n\n    cache[n] = fib_memo(n - 1, cache) + fib_memo(n - 2, cache)\n    return cache[n]\n\nprint(fib_memo(30))  # Instant! Only 31 unique calls\n```\n\n### Python's @lru_cache\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    if n <= 1:\n        return n\n    return fib(n - 1) + fib(n - 2)\n\nprint(fib(100))  # 354224848179261915075 — instant!\n```\n\n### From Recursion to DP\n\n```python\n# Bottom-up approach (true DP)\ndef fib_dp(n):\n    if n <= 1:\n        return n\n    dp = [0] * (n + 1)\n    dp[1] = 1\n    for i in range(2, n + 1):\n        dp[i] = dp[i-1] + dp[i-2]\n    return dp[n]\n```\n\n> **Key Concept:** Memoization is top-down DP. It transforms O(2ⁿ) recursive solutions into O(n) by caching repeated subproblems."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "notebook_cache",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Memoization",
+          "children": [
+            "Cache computed results",
+            "Avoid redundant work",
+            "@lru_cache decorator",
+            "Top-down DP",
+            "O(2ⁿ) → O(n)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_memo",
+      "steps": [
+        {
+          "line": "from functools import lru_cache",
+          "highlight": "lru_cache",
+          "explanation": {
+            "en": "Import lru_cache — Python's built-in memoization decorator",
+            "ta": "lru_cache இறக்குமதி — Python-ன் built-in memoization decorator"
+          }
+        },
+        {
+          "line": "@lru_cache(maxsize=None)",
+          "highlight": "@lru_cache",
+          "explanation": {
+            "en": "Decorate the function — all results are cached automatically",
+            "ta": "function-ஐ decorate செய்யுங்கள் — அனைத்து முடிவுகளும் தானாகவே cached ஆகும்"
+          }
+        },
+        {
+          "line": "def fib(n):",
+          "highlight": "fib",
+          "explanation": {
+            "en": "Same fibonacci function — but now with caching!",
+            "ta": "அதே fibonacci function — ஆனால் இப்போது caching உடன்!"
+          }
+        },
+        {
+          "line": "    if n <= 1:",
+          "highlight": "n <= 1",
+          "explanation": {
+            "en": "Base case remains the same",
+            "ta": "Base case அப்படியே இருக்கும்"
+          }
+        },
+        {
+          "line": "        return n",
+          "highlight": "return n",
+          "explanation": {
+            "en": "fib(0)=0, fib(1)=1",
+            "ta": "fib(0)=0, fib(1)=1"
+          }
+        },
+        {
+          "line": "    return fib(n-1) + fib(n-2)",
+          "highlight": "fib(n-1) + fib(n-2)",
+          "explanation": {
+            "en": "Second call to fib(n-2) hits cache — already computed by fib(n-1)!",
+            "ta": "fib(n-2)-க்கான இரண்டாவது அழைப்பு cache-ல் hit ஆகும் — fib(n-1) ஏற்கனவே கணக்கிட்டது!"
+          }
+        },
+        {
+          "line": "print(fib(50))",
+          "highlight": "print",
+          "explanation": {
+            "en": "fib(50) = 12586269025 — computed instantly with memoization!",
+            "ta": "fib(50) = 12586269025 — memoization உடன் உடனடியாக கணக்கிடப்பட்டது!"
+          }
+        },
+        {
+          "line": "# Bottom-up DP approach",
+          "highlight": "Bottom-up",
+          "explanation": {
+            "en": "Instead of top-down recursion, build answer from smallest subproblems",
+            "ta": "top-down recursion-க்கு பதிலாக, சிறிய subproblems-லிருந்து விடையை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "def fib_dp(n):",
+          "highlight": "fib_dp",
+          "explanation": {
+            "en": "Bottom-up iterative approach — no recursion at all",
+            "ta": "Bottom-up iterative அணுகுமுறை — recursion இல்லவே இல்லை"
+          }
+        },
+        {
+          "line": "    dp = [0] * (n + 1)",
+          "highlight": "dp",
+          "explanation": {
+            "en": "Create a table to store all fibonacci values up to n",
+            "ta": "n வரை அனைத்து fibonacci மதிப்புகளையும் சேமிக்க table உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "    dp[1] = 1",
+          "highlight": "dp[1]",
+          "explanation": {
+            "en": "Initialize base case: dp[0]=0 (already), dp[1]=1",
+            "ta": "Base case துவக்குங்கள்: dp[0]=0 (ஏற்கனவே), dp[1]=1"
+          }
+        },
+        {
+          "line": "    for i in range(2, n + 1):",
+          "highlight": "for i",
+          "explanation": {
+            "en": "Build up from smallest to largest — each depends on previous two",
+            "ta": "சிறியதிலிருந்து பெரியது வரை உருவாக்குங்கள் — ஒவ்வொன்றும் முந்தைய இரண்டைச் சார்ந்தது"
+          }
+        },
+        {
+          "line": "        dp[i] = dp[i-1] + dp[i-2]",
+          "highlight": "dp[i]",
+          "explanation": {
+            "en": "Fill table iteratively — O(n) time, O(n) space",
+            "ta": "table-ஐ iteratively நிரப்புங்கள் — O(n) நேரம், O(n) இடம்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memo_stack",
+      "slots": [
+        {"name": "fib(5)", "value": "cache miss", "type": "frame", "address": "0x01"},
+        {"name": "fib(4)", "value": "cache miss", "type": "frame", "address": "0x02"},
+        {"name": "fib(3)", "value": "cache HIT!", "type": "frame", "address": "0x03"}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "memo_comparison",
+      "comparisons": [
+        {"label": "Naive O(2ⁿ)", "values": [1024, 1048576, 1073741824], "color": "#f74f4f"},
+        {"label": "Memoized O(n)", "values": [10, 20, 30], "color": "#4ff7a4"}
+      ],
+      "x_labels": ["n=10", "n=20", "n=30"]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_cache",
+      "variable": "cache",
+      "value": "{0:0, 1:1, 2:1, 3:2, 4:3, 5:5}",
+      "data_type": "dict",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "fib(30) naive: 2,692,537 calls",
+        "fib(30) memoized: 31 calls",
+        "fib(50) = 12586269025",
+        "fib(100) = 354224848179261915075"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use @lru_cache to solve the climbing stairs problem: you can climb 1 or 2 steps at a time. How many distinct ways to reach step n? Also solve it bottom-up with a DP table.",
+        "ta": "@lru_cache பயன்படுத்தி climbing stairs சிக்கலை தீர்க்கவும்: நீங்கள் ஒரு நேரத்தில் 1 அல்லது 2 படிகள் ஏறலாம். படி n-ஐ அடைய எத்தனை வெவ்வேறு வழிகள்?"
+      },
+      "starter_code": "from functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef climb_stairs_memo(n):\n    # Top-down: how many ways to climb n stairs?\n    pass\n\ndef climb_stairs_dp(n):\n    # Bottom-up: use a DP table\n    pass\n\nfor i in range(1, 8):\n    print(f'n={i}: memo={climb_stairs_memo(i)}, dp={climb_stairs_dp(i)}')",
+      "expected_output": "n=1: memo=1, dp=1\nn=2: memo=2, dp=2\nn=3: memo=3, dp=3\nn=4: memo=5, dp=5\nn=5: memo=8, dp=8\nn=6: memo=13, dp=13\nn=7: memo=21, dp=21",
+      "hints": {
+        "en": [
+          "climb(n) = climb(n-1) + climb(n-2) — same as fibonacci!",
+          "Base cases: climb(1)=1, climb(2)=2",
+          "DP table: dp[i] = dp[i-1] + dp[i-2], start from dp[1]=1, dp[2]=2"
+        ],
+        "ta": [
+          "climb(n) = climb(n-1) + climb(n-2) — fibonacci போலவே!",
+          "Base cases: climb(1)=1, climb(2)=2",
+          "DP table: dp[i] = dp[i-1] + dp[i-2], dp[1]=1, dp[2]=2 லிருந்து தொடங்குங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does memoization do?",
+        "ta": "Memoization என்ன செய்யும்?"
+      },
+      "options": {
+        "en": ["Makes code run in parallel", "Caches results of function calls to avoid recomputation", "Converts recursion to loops", "Reduces memory usage"],
+        "ta": ["code-ஐ parallel ஆக இயக்கும்", "மறு கணக்கிடுதலை தவிர்க்க function call முடிவுகளை cache செய்யும்", "recursion-ஐ loops ஆக மாற்றும்", "நினைவக பயன்பாட்டை குறைக்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What decorator does Python provide for memoization?",
+        "ta": "memoization-க்கு Python என்ன decorator வழங்குகிறது?"
+      },
+      "options": {
+        "en": ["@cache_result", "@memoize", "@functools.lru_cache", "@property"],
+        "ta": ["@cache_result", "@memoize", "@functools.lru_cache", "@property"]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the relationship between memoization and dynamic programming?",
+        "ta": "Memoization மற்றும் dynamic programming இடையே என்ன உறவு?"
+      },
+      "options": {
+        "en": ["They are unrelated", "Memoization is top-down DP", "DP is slower than memoization", "Memoization replaces DP"],
+        "ta": ["அவை தொடர்பற்றவை", "Memoization top-down DP ஆகும்", "DP memoization-ஐ விட மெதுவானது", "Memoization DP-ஐ மாற்றுகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["memoization", "lru_cache", "top_down_dp", "optimization"],
+    "concepts_required": ["recursion", "functions", "dictionaries"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["api_caching", "database_query_optimization"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

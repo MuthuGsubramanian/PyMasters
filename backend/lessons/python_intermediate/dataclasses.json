@@ -1,0 +1,363 @@
+{
+  "id": "dataclasses",
+  "topic": "dataclasses",
+  "track": "python_intermediate",
+  "module": "code_quality",
+  "order": 19,
+  "title": {
+    "en": "Dataclasses: Classes Without the Boilerplate",
+    "ta": "Dataclasses: Boilerplate இல்லாத வகுப்புகள்"
+  },
+  "description": {
+    "en": "Learn @dataclass to auto-generate __init__, __repr__, __eq__, and more. Master field(), frozen dataclasses, and __post_init__.",
+    "ta": "@dataclass மூலம் __init__, __repr__, __eq__ தானாக உருவாக்க கற்றுக்கொள்ளுங்கள். field(), frozen dataclasses, __post_init__ தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Auto-Builder\n\nVaathiyaar presses a button and a class builds itself. \"Tired of writing `__init__`, `__repr__`, `__eq__` for every class? `@dataclass` generates them automatically! Just declare your fields and Python does the rest.\"\n\n### Regular Class vs Dataclass\n\n```python\n# Before: 15 lines of boilerplate\nclass Point:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def __repr__(self): ...\n    def __eq__(self, other): ...\n\n# After: 4 lines with @dataclass\n@dataclass\nclass Point:\n    x: float\n    y: float\n```\n\n### Dataclass Features\n\n| Feature | How |\n|---------|-----|\n| Auto `__init__` | Generated from field declarations |\n| Auto `__repr__` | Shows class name and all fields |\n| Auto `__eq__` | Compares all fields |\n| Default values | `name: str = 'unknown'` |\n| Frozen (immutable) | `@dataclass(frozen=True)` |\n| Post-init logic | `def __post_init__(self):` |\n\n> **Key Concept:** Dataclasses are perfect for \"data holder\" classes. If your class mainly stores data with minimal behavior, use `@dataclass` instead of writing everything by hand."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "auto_builder",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "@dataclass",
+          "children": [
+            "Auto __init__",
+            "Auto __repr__",
+            "Auto __eq__",
+            "field() defaults",
+            "frozen=True",
+            "__post_init__"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from dataclasses import dataclass, field",
+          "highlight": "dataclass",
+          "explanation": {
+            "en": "Import dataclass decorator and field function"
+          }
+        },
+        {
+          "line": "@dataclass",
+          "highlight": "@dataclass",
+          "explanation": {
+            "en": "Apply the dataclass decorator — auto-generates methods"
+          }
+        },
+        {
+          "line": "class Student:",
+          "highlight": "Student",
+          "explanation": {
+            "en": "Define a Student class"
+          }
+        },
+        {
+          "line": "    name: str",
+          "highlight": "name: str",
+          "explanation": {
+            "en": "Declare a field 'name' of type str — becomes __init__ param"
+          }
+        },
+        {
+          "line": "    age: int",
+          "highlight": "age: int",
+          "explanation": {
+            "en": "Declare 'age' field — no __init__ needed!"
+          }
+        },
+        {
+          "line": "    grade: float = 0.0",
+          "highlight": "= 0.0",
+          "explanation": {
+            "en": "Default value — grade defaults to 0.0 if not provided"
+          }
+        },
+        {
+          "line": "    courses: list = field(default_factory=list)",
+          "highlight": "field(default_factory=list)",
+          "explanation": {
+            "en": "For mutable defaults, use field(default_factory=...) to avoid shared state"
+          }
+        },
+        {
+          "line": "s1 = Student('Alice', 20, 95.5)",
+          "highlight": "Student(",
+          "explanation": {
+            "en": "Create a Student — __init__ was auto-generated!"
+          }
+        },
+        {
+          "line": "s2 = Student('Alice', 20, 95.5)",
+          "highlight": "Student(",
+          "explanation": {
+            "en": "Create another Student with same values"
+          }
+        },
+        {
+          "line": "print(s1)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Student(name='Alice', age=20, grade=95.5, courses=[]) — auto __repr__!"
+          }
+        },
+        {
+          "line": "print(s1 == s2)",
+          "highlight": "==",
+          "explanation": {
+            "en": "True — auto __eq__ compares all fields"
+          }
+        },
+        {
+          "line": "@dataclass(frozen=True)",
+          "highlight": "frozen=True",
+          "explanation": {
+            "en": "frozen=True makes instances immutable — can't change fields"
+          }
+        },
+        {
+          "line": "class Coordinate:",
+          "highlight": "Coordinate",
+          "explanation": {
+            "en": "An immutable coordinate point"
+          }
+        },
+        {
+          "line": "    lat: float",
+          "highlight": "lat",
+          "explanation": {
+            "en": "Latitude — cannot be changed after creation"
+          }
+        },
+        {
+          "line": "    lon: float",
+          "highlight": "lon",
+          "explanation": {
+            "en": "Longitude — also immutable"
+          }
+        },
+        {
+          "line": "loc = Coordinate(13.08, 80.27)",
+          "highlight": "Coordinate(",
+          "explanation": {
+            "en": "Create a frozen coordinate (Chennai!)"
+          }
+        },
+        {
+          "line": "print(loc)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Coordinate(lat=13.08, lon=80.27)"
+          }
+        },
+        {
+          "line": "@dataclass",
+          "highlight": "@dataclass",
+          "explanation": {
+            "en": "A dataclass with __post_init__ for validation"
+          }
+        },
+        {
+          "line": "class Product:",
+          "highlight": "Product",
+          "explanation": {
+            "en": "Product with computed field"
+          }
+        },
+        {
+          "line": "    name: str",
+          "highlight": "name",
+          "explanation": {
+            "en": "Product name"
+          }
+        },
+        {
+          "line": "    price: float",
+          "highlight": "price",
+          "explanation": {
+            "en": "Base price"
+          }
+        },
+        {
+          "line": "    tax_rate: float = 0.18",
+          "highlight": "0.18",
+          "explanation": {
+            "en": "18% GST default"
+          }
+        },
+        {
+          "line": "    total: float = field(init=False)",
+          "highlight": "init=False",
+          "explanation": {
+            "en": "init=False means this field is NOT in __init__ — computed instead"
+          }
+        },
+        {
+          "line": "    def __post_init__(self):",
+          "highlight": "__post_init__",
+          "explanation": {
+            "en": "__post_init__ runs AFTER __init__ — perfect for computed fields"
+          }
+        },
+        {
+          "line": "        self.total = self.price * (1 + self.tax_rate)",
+          "highlight": "self.total",
+          "explanation": {
+            "en": "Compute total price including tax"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_s1",
+      "variable": "s1",
+      "value": "Student(name='Alice', age=20, grade=95.5)",
+      "data_type": "Student",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_loc",
+      "variable": "loc",
+      "value": "Coordinate(lat=13.08, lon=80.27) [FROZEN]",
+      "data_type": "Coordinate",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Student(name='Alice', age=20, grade=95.5, courses=[])",
+        "True",
+        "Coordinate(lat=13.08, lon=80.27)"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "before": {
+        "label": "Regular Class (15 lines)",
+        "code": "class Student:\n    def __init__(self, name, age, grade=0.0):\n        self.name = name\n        self.age = age\n        self.grade = grade\n    def __repr__(self):\n        return f'Student(...)'\n    def __eq__(self, other):\n        return ..."
+      },
+      "after": {
+        "label": "@dataclass (5 lines)",
+        "code": "@dataclass\nclass Student:\n    name: str\n    age: int\n    grade: float = 0.0"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a @dataclass called Book with title (str), author (str), pages (int), and price (float). Add a __post_init__ that sets a 'reading_time' field (pages / 30 hours). Create two books and print them.",
+        "ta": "title, author, pages, price உடன் Book @dataclass உருவாக்குங்கள். __post_init__-ல் 'reading_time' (pages / 30 hours) field அமையுங்கள்."
+      },
+      "starter_code": "from dataclasses import dataclass, field\n\n@dataclass\nclass Book:\n    title: str\n    author: str\n    pages: int\n    price: float\n    reading_time: float = field(init=False)\n\n    def __post_init__(self):\n        self.reading_time = round(self.pages / 30, 1)\n\nb1 = Book('Python Mastery', 'Vaathiyaar', 450, 29.99)\nb2 = Book('Short Stories', 'Author B', 90, 9.99)\nprint(b1)\nprint(f'{b2.title}: ~{b2.reading_time}h to read')",
+      "expected_output": "Book(title='Python Mastery', author='Vaathiyaar', pages=450, price=29.99, reading_time=15.0)\nShort Stories: ~3.0h to read",
+      "hints": {
+        "en": [
+          "Use field(init=False) for computed fields",
+          "__post_init__ runs after __init__",
+          "self.reading_time = round(self.pages / 30, 1)",
+          "The repr is auto-generated showing all fields"
+        ],
+        "ta": [
+          "கணக்கிடப்பட்ட fields-க்கு field(init=False) பயன்படுத்துங்கள்",
+          "__post_init__ __init__-க்குப் பின் இயங்கும்",
+          "self.reading_time = round(self.pages / 30, 1)",
+          "repr தானாக உருவாக்கப்பட்டு அனைத்து fields காட்டும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does @dataclass automatically generate?",
+        "ta": "@dataclass தானாக என்ன உருவாக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Only __init__",
+          "__init__, __repr__, and __eq__",
+          "Only __repr__",
+          "All magic methods"
+        ],
+        "ta": [
+          "__init__ மட்டும்",
+          "__init__, __repr__, மற்றும் __eq__",
+          "__repr__ மட்டும்",
+          "அனைத்து magic methods"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use field(default_factory=list) instead of = []?",
+        "ta": "= [] -க்கு பதிலாக field(default_factory=list) ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "It's faster",
+          "To avoid sharing the same mutable list between instances",
+          "It's required syntax",
+          "No difference"
+        ],
+        "ta": [
+          "வேகமானது",
+          "instances இடையே ஒரே mutable list பகிர்வதை தவிர்க்க",
+          "தேவையான syntax",
+          "வேறுபாடு இல்லை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does frozen=True do in @dataclass?",
+        "ta": "@dataclass-ல் frozen=True என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Makes the class faster",
+          "Makes instances immutable — fields can't be changed",
+          "Freezes the class from being inherited",
+          "Prevents new instances"
+        ],
+        "ta": [
+          "வகுப்பை வேகமாக்குகிறது",
+          "instances-ஐ மாற்ற முடியாதவையாக ஆக்குகிறது",
+          "பரம்பரையாகப் பெறுவதை தடுக்கிறது",
+          "புதிய instances தடுக்கிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dataclasses", "dataclass_decorator", "field", "frozen", "post_init"],
+    "concepts_required": ["classes", "type_hints", "magic_methods"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["data_models", "configuration", "API_responses"],
+    "category": "code_quality",
+    "path_memberships": ["python_intermediate"]
+  }
+}

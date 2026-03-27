@@ -1,0 +1,245 @@
+{
+  "id": "ml_project_end_to_end",
+  "topic": "ml_project_end_to_end",
+  "track": "machine_learning",
+  "module": "production",
+  "order": 22,
+  "title": {
+    "en": "End-to-End ML Project: Data to API",
+    "ta": "முழுமையான ML திட்டம்: தரவிலிருந்து API வரை"
+  },
+  "description": {
+    "en": "Build a complete ML project from scratch: load and explore data, clean and engineer features, train and evaluate multiple models, select the best, and deploy via API.",
+    "ta": "முழுமையான ML திட்டத்தை புதிதாக உருவாக்குங்கள்: தரவை ஏற்றி ஆராய்தல், சுத்தம் செய்தல், அம்ச பொறியியல், பல மாடல்களை பயிற்சித்தல், சிறந்ததைத் தேர்ந்தெடுத்தல், மற்றும் API வழியாக வரிசைப்படுத்தல்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Final Challenge\n\nVaathiyaar stands before the class one last time. \"You have learned every tool. Now build something real. From raw data to a live prediction API — the complete journey of a machine learning engineer.\"\n\n### Project: Customer Churn Prediction\n\n**Goal**: Predict whether a telecom customer will leave (churn) based on their usage patterns.\n\n```python\nimport pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.preprocessing import StandardScaler, OneHotEncoder\nfrom sklearn.impute import SimpleImputer\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier\nfrom sklearn.metrics import classification_report, roc_auc_score\nimport joblib\n\n# ============================================\n# STAGE 1: DATA LOADING & EXPLORATION\n# ============================================\nnp.random.seed(42)\nn = 500\ndf = pd.DataFrame({\n    'tenure_months': np.random.randint(1, 72, n),\n    'monthly_charges': np.round(np.random.uniform(20, 120, n), 2),\n    'total_charges': np.round(np.random.uniform(100, 8000, n), 2),\n    'contract_type': np.random.choice(['Month-to-month', 'One year', 'Two year'], n, p=[0.5, 0.3, 0.2]),\n    'payment_method': np.random.choice(['Credit card', 'Bank transfer', 'Electronic check', 'Mailed check'], n),\n    'internet_service': np.random.choice(['DSL', 'Fiber optic', 'No'], n, p=[0.4, 0.4, 0.2]),\n    'tech_support': np.random.choice(['Yes', 'No'], n, p=[0.4, 0.6]),\n})\n\n# Create realistic churn labels\nchurn_prob = (\n    0.1\n    + 0.3 * (df['contract_type'] == 'Month-to-month').astype(float)\n    + 0.2 * (df['monthly_charges'] > 70).astype(float)\n    + 0.15 * (df['tenure_months'] < 12).astype(float)\n    - 0.1 * (df['tech_support'] == 'Yes').astype(float)\n)\ndf['churn'] = (np.random.random(n) < churn_prob).astype(int)\n\nprint(f'Dataset shape: {df.shape}')\nprint(f'Churn rate: {df[\"churn\"].mean():.1%}')\nprint(f'\\nMissing values:\\n{df.isnull().sum()}')\nprint(f'\\nClass distribution:\\n{df[\"churn\"].value_counts()}')\n\n# ============================================\n# STAGE 2: FEATURE ENGINEERING\n# ============================================\ndf['charge_per_month'] = df['total_charges'] / (df['tenure_months'] + 1)\ndf['is_new_customer'] = (df['tenure_months'] < 6).astype(int)\ndf['high_monthly'] = (df['monthly_charges'] > df['monthly_charges'].median()).astype(int)\n\nprint(f'\\nEngineered features added. New shape: {df.shape}')\n\n# ============================================\n# STAGE 3: PREPROCESSING PIPELINE\n# ============================================\nnumeric_features = ['tenure_months', 'monthly_charges', 'total_charges', 'charge_per_month']\ncategorical_features = ['contract_type', 'payment_method', 'internet_service', 'tech_support']\nbinary_features = ['is_new_customer', 'high_monthly']\n\nnumeric_transformer = Pipeline([\n    ('imputer', SimpleImputer(strategy='median')),\n    ('scaler', StandardScaler())\n])\n\ncategorical_transformer = Pipeline([\n    ('imputer', SimpleImputer(strategy='most_frequent')),\n    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))\n])\n\npreprocessor = ColumnTransformer([\n    ('num', numeric_transformer, numeric_features),\n    ('cat', categorical_transformer, categorical_features),\n    ('bin', 'passthrough', binary_features)\n])\n\n# ============================================\n# STAGE 4: MODEL TRAINING & COMPARISON\n# ============================================\nX = df.drop('churn', axis=1)\ny = df['churn']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)\n\nmodels = {\n    'Logistic Regression': Pipeline([\n        ('prep', preprocessor),\n        ('clf', LogisticRegression(max_iter=1000, random_state=42))\n    ]),\n    'Random Forest': Pipeline([\n        ('prep', preprocessor),\n        ('clf', RandomForestClassifier(n_estimators=100, random_state=42))\n    ]),\n    'Gradient Boosting': Pipeline([\n        ('prep', preprocessor),\n        ('clf', GradientBoostingClassifier(n_estimators=100, random_state=42))\n    ])\n}\n\nresults = {}\nfor name, pipeline in models.items():\n    scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring='roc_auc')\n    results[name] = scores.mean()\n    print(f'{name:25s}: CV ROC-AUC = {scores.mean():.3f} +/- {scores.std():.3f}')\n\n# ============================================\n# STAGE 5: EVALUATE BEST MODEL\n# ============================================\nbest_name = max(results, key=results.get)\nbest_pipeline = models[best_name]\nbest_pipeline.fit(X_train, y_train)\n\ny_pred = best_pipeline.predict(X_test)\ny_proba = best_pipeline.predict_proba(X_test)[:, 1]\n\nprint(f'\\nBest Model: {best_name}')\nprint(f'Test ROC-AUC: {roc_auc_score(y_test, y_proba):.3f}')\nprint(f'\\n{classification_report(y_test, y_pred)}')\n\n# ============================================\n# STAGE 6: SAVE FOR DEPLOYMENT\n# ============================================\njoblib.dump(best_pipeline, 'churn_model.joblib')\nprint(f'Model saved as churn_model.joblib')\n\n# Verify\nloaded = joblib.load('churn_model.joblib')\nassert np.array_equal(loaded.predict(X_test), y_pred)\nprint('Loaded model predictions verified!')\n\n# FastAPI endpoint (conceptual)\nprint('''\n# === FastAPI Deployment ===\n# from fastapi import FastAPI\n# app = FastAPI()\n# model = joblib.load('churn_model.joblib')\n# @app.post('/predict-churn')\n# def predict(data: dict):\n#     df = pd.DataFrame([data])\n#     pred = model.predict(df)[0]\n#     proba = model.predict_proba(df)[0][1]\n#     return {'churn': bool(pred), 'probability': round(float(proba), 3)}\n''')\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "final_challenge",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "project_map",
+      "nodes": [
+        {
+          "label": "End-to-End Project",
+          "children": ["Data Loading", "EDA", "Feature Engineering", "Pipeline", "Model Comparison", "Deployment"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "project_flow",
+      "stages": [
+        { "label": "Raw Data (500 rows)", "icon": "database", "color": "#e74c3c" },
+        { "label": "EDA & Cleaning", "icon": "search", "color": "#f39c12" },
+        { "label": "Feature Engineering (+3)", "icon": "wrench", "color": "#2ecc71" },
+        { "label": "Pipeline (prep+model)", "icon": "pipeline", "color": "#3498db" },
+        { "label": "Compare 3 Models", "icon": "chart", "color": "#9b59b6" },
+        { "label": "Best Model → API", "icon": "rocket", "color": "#1abc9c" }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "project_code",
+      "steps": [
+        {
+          "line": "import pandas as pd; import numpy as np",
+          "highlight": "import",
+          "explanation": { "en": "Import core data libraries" }
+        },
+        {
+          "line": "from sklearn.model_selection import train_test_split, cross_val_score",
+          "highlight": "sklearn",
+          "explanation": { "en": "Import splitting and evaluation tools" }
+        },
+        {
+          "line": "# Generate realistic churn dataset with 500 customers",
+          "highlight": "dataset",
+          "explanation": { "en": "Stage 1: Create synthetic but realistic customer data with 7 features" }
+        },
+        {
+          "line": "df['charge_per_month'] = df['total_charges'] / (df['tenure_months'] + 1)",
+          "highlight": "charge_per_month",
+          "explanation": { "en": "Stage 2: Engineer new features — average spending per month" }
+        },
+        {
+          "line": "df['is_new_customer'] = (df['tenure_months'] < 6).astype(int)",
+          "highlight": "is_new_customer",
+          "explanation": { "en": "Binary feature: flag customers with less than 6 months tenure" }
+        },
+        {
+          "line": "preprocessor = ColumnTransformer([('num', numeric_transformer, numeric_features), ('cat', categorical_transformer, categorical_features), ('bin', 'passthrough', binary_features)])",
+          "highlight": "ColumnTransformer",
+          "explanation": { "en": "Stage 3: Different preprocessing for numeric, categorical, and binary columns" }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)",
+          "highlight": "stratify",
+          "explanation": { "en": "Stratified split preserves churn ratio in both sets" }
+        },
+        {
+          "line": "models = {'Logistic Regression': ..., 'Random Forest': ..., 'Gradient Boosting': ...}",
+          "highlight": "models",
+          "explanation": { "en": "Stage 4: Define 3 candidate models, each wrapped in a pipeline" }
+        },
+        {
+          "line": "for name, pipeline in models.items(): scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring='roc_auc')",
+          "highlight": "cross_val_score",
+          "explanation": { "en": "5-fold CV with ROC-AUC scoring — fair comparison on same data splits" }
+        },
+        {
+          "line": "best_name = max(results, key=results.get)",
+          "highlight": "best_name",
+          "explanation": { "en": "Select the model with highest mean CV ROC-AUC score" }
+        },
+        {
+          "line": "best_pipeline.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Stage 5: Retrain the best model on all training data" }
+        },
+        {
+          "line": "print(classification_report(y_test, y_pred))",
+          "highlight": "classification_report",
+          "explanation": { "en": "Final evaluation on held-out test set — precision, recall, F1 per class" }
+        },
+        {
+          "line": "joblib.dump(best_pipeline, 'churn_model.joblib')",
+          "highlight": "dump",
+          "explanation": { "en": "Stage 6: Save the complete pipeline for deployment" }
+        },
+        {
+          "line": "# @app.post('/predict-churn') -> FastAPI endpoint",
+          "highlight": "FastAPI",
+          "explanation": { "en": "Deploy: serve predictions via REST API — the model is now a product" }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "model_comparison",
+      "models": [
+        { "name": "Logistic Regression", "strengths": "Fast, interpretable", "weaknesses": "May underfit complex patterns" },
+        { "name": "Random Forest", "strengths": "Handles non-linearity, feature importance", "weaknesses": "Slower, less interpretable" },
+        { "name": "Gradient Boosting", "strengths": "Often best accuracy, handles imbalance", "weaknesses": "Slowest, risk of overfitting" }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_best_model",
+      "variable": "best_model",
+      "value": "Gradient Boosting",
+      "data_type": "str",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_auc",
+      "variable": "test_roc_auc",
+      "value": 0.72,
+      "data_type": "float",
+      "color": "#3498db"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Dataset shape: (500, 8)",
+        "Churn rate: 35.4%",
+        "Engineered features added. New shape: (500, 11)",
+        "",
+        "Logistic Regression      : CV ROC-AUC = 0.698 +/- 0.041",
+        "Random Forest            : CV ROC-AUC = 0.687 +/- 0.055",
+        "Gradient Boosting        : CV ROC-AUC = 0.715 +/- 0.038",
+        "",
+        "Best Model: Gradient Boosting",
+        "Test ROC-AUC: 0.720",
+        "",
+        "              precision    recall  f1-score   support",
+        "           0       0.74      0.80      0.77        65",
+        "           1       0.56      0.49      0.52        35",
+        "    accuracy                           0.68       100",
+        "",
+        "Model saved as churn_model.joblib",
+        "Loaded model predictions verified!"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Modify the end-to-end project to add a 4th model (SVM with RBF kernel). Compare all 4 models, select the best by ROC-AUC, and save the winner. Print the final comparison table.",
+        "ta": "4-வது மாடலை (RBF கர்னல் கொண்ட SVM) சேர்க்க end-to-end திட்டத்தை மாற்றுங்கள். அனைத்து 4 மாடல்களையும் ஒப்பிட்டு, ROC-AUC மூலம் சிறந்ததைத் தேர்ந்தெடுத்து, வெற்றியாளரை சேமியுங்கள்."
+      },
+      "starter_code": "from sklearn.svm import SVC\n\n# Add to the models dictionary:\nmodels['SVM (RBF)'] = Pipeline([\n    ('prep', preprocessor),\n    ('clf', SVC(kernel='rbf', probability=True, random_state=42))\n])\n\n# Re-run comparison\nfor name, pipeline in models.items():\n    scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring='roc_auc')\n    results[name] = scores.mean()\n    print(f'{name:25s}: CV ROC-AUC = {scores.mean():.3f}')\n\nbest_name = max(results, key=results.get)\nprint(f'\\nWinner: {best_name}')",
+      "expected_output": "Logistic Regression      : CV ROC-AUC = 0.698\nRandom Forest            : CV ROC-AUC = 0.687\nGradient Boosting        : CV ROC-AUC = 0.715\nSVM (RBF)                : CV ROC-AUC = 0.701\n\nWinner: Gradient Boosting",
+      "hints": {
+        "en": [
+          "SVC needs probability=True for ROC-AUC scoring",
+          "SVM benefits from scaled features — already handled by the pipeline",
+          "Compare all 4 and pick the highest CV ROC-AUC"
+        ],
+        "ta": [
+          "ROC-AUC மதிப்பிடுவதற்கு SVC க்கு probability=True தேவை",
+          "SVM அளவிடப்பட்ட அம்சங்களால் பயனடையும் — பைப்லைன் ஏற்கனவே கையாளுகிறது",
+          "அனைத்து 4 ஐ ஒப்பிட்டு அதிகபட்ச CV ROC-AUC ஐ தேர்ந்தெடுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In an end-to-end ML project, why do we compare multiple models?",
+        "ta": "end-to-end ML திட்டத்தில், ஏன் பல மாடல்களை ஒப்பிடுகிறோம்?"
+      },
+      "options": {
+        "en": ["To waste time", "Because no single model is best for all datasets — we must empirically find the best", "Because we need at least 3 models", "To increase accuracy automatically"],
+        "ta": ["நேரத்தை வீணடிக்க", "எல்லா தரவுத்தொகுப்புகளுக்கும் ஒற்றை மாடல் சிறந்தது அல்ல — சிறந்ததை அனுபவ ரீதியாக கண்டறிய வேண்டும்", "குறைந்தது 3 மாடல்கள் தேவை", "துல்லியத்தை தானாக அதிகரிக்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do we use stratified split when the target is imbalanced?",
+        "ta": "இலக்கு சமநிலையற்றதாக இருக்கும்போது ஏன் stratified split பயன்படுத்துகிறோம்?"
+      },
+      "options": {
+        "en": ["To make training faster", "To ensure both train and test sets have the same class proportion", "To increase the dataset size", "To remove outliers"],
+        "ta": ["பயிற்சியை வேகமாக்க", "பயிற்சி மற்றும் சோதனை தொகுப்புகளில் ஒரே வகுப்பு விகிதம் இருப்பதை உறுதிசெய்ய", "தரவுத்தொகுப்பின் அளவை அதிகரிக்க", "வெளிப்புற மதிப்புகளை நீக்க"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the benefit of saving the entire pipeline (not just the model) for deployment?",
+        "ta": "வரிசைப்படுத்தலுக்கு மாடல் மட்டுமின்றி முழு பைப்லைனையும் சேமிப்பதன் நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["It saves disk space", "New data automatically gets the same preprocessing as training data", "It trains faster", "It increases accuracy"],
+        "ta": ["வட்டு இடத்தை சேமிக்கிறது", "புதிய தரவு தானாகவே பயிற்சி தரவு போன்ற முன்செயலாக்கத்தைப் பெறுகிறது", "வேகமாக பயிற்சிக்கிறது", "துல்லியத்தை அதிகரிக்கிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["end_to_end_ml", "model_comparison", "feature_engineering", "pipeline_deployment", "project_structure"],
+    "concepts_required": ["ml_pipelines", "model_evaluation", "model_deployment", "feature_engineering"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 60,
+    "real_world_application": ["churn_prediction", "full_ml_lifecycle", "production_deployment"],
+    "category": "machine_learning",
+    "path_memberships": ["production"]
+  }
+}

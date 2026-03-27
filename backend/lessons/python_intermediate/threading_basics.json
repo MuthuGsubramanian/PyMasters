@@ -1,0 +1,354 @@
+{
+  "id": "threading_basics",
+  "topic": "threading_basics",
+  "track": "python_intermediate",
+  "module": "concurrency",
+  "order": 22,
+  "title": {
+    "en": "Threading: Concurrent Execution with the GIL",
+    "ta": "Threading: GIL உடன் ஒருங்கிணைந்த செயல்படுத்தல்"
+  },
+  "description": {
+    "en": "Learn Python threading — Thread creation, Lock for synchronization, the GIL explained, and when threads actually help (I/O-bound tasks).",
+    "ta": "Python threading — Thread உருவாக்கம், synchronization-க்கு Lock, GIL விளக்கம், threads உண்மையில் எப்போது உதவும் (I/O-bound tasks)."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Assembly Line Workers\n\nVaathiyaar has workers on an assembly line. \"Each worker is a **thread** — they share the same workspace (memory). But Python has a rule: only ONE worker can use the tool bench (CPU) at a time. That's the **GIL** (Global Interpreter Lock)!\"\n\n### Threading Concepts\n\n| Concept | Meaning |\n|---------|----------|\n| Thread | A separate flow of execution |\n| GIL | Only one thread runs Python code at a time |\n| Lock | Prevents two threads from modifying shared data simultaneously |\n| I/O-bound | Tasks that wait for network, disk, etc. |\n| CPU-bound | Tasks that do heavy computation |\n\n### When to Use Threads\n\n```\nI/O-bound (waiting) -> Use threads or async\nCPU-bound (computing) -> Use multiprocessing\n```\n\n> **Key Concept:** The GIL means threads DON'T speed up CPU-bound Python code. But they're perfect for I/O-bound tasks (downloading files, reading databases) because the GIL is released during I/O waits."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "assembly_workers",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Threading",
+          "children": [
+            "Thread (execution flow)",
+            "Lock (synchronization)",
+            "GIL (one-at-a-time)",
+            "I/O-bound (good fit)",
+            "CPU-bound (bad fit)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import threading",
+          "highlight": "threading",
+          "explanation": {
+            "en": "Import the threading module"
+          }
+        },
+        {
+          "line": "import time",
+          "highlight": "time",
+          "explanation": {
+            "en": "Import time for delays and measurement"
+          }
+        },
+        {
+          "line": "def download(filename, seconds):",
+          "highlight": "download",
+          "explanation": {
+            "en": "A regular function that simulates downloading a file"
+          }
+        },
+        {
+          "line": "    print(f'[{threading.current_thread().name}] Downloading {filename}...')",
+          "highlight": "current_thread",
+          "explanation": {
+            "en": "Show which thread is running this function"
+          }
+        },
+        {
+          "line": "    time.sleep(seconds)",
+          "highlight": "sleep",
+          "explanation": {
+            "en": "Simulate I/O wait — GIL is released during sleep!"
+          }
+        },
+        {
+          "line": "    print(f'[{threading.current_thread().name}] {filename} done!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Download complete"
+          }
+        },
+        {
+          "line": "start = time.time()",
+          "highlight": "time.time()",
+          "explanation": {
+            "en": "Record start time"
+          }
+        },
+        {
+          "line": "t1 = threading.Thread(target=download, args=('file1.zip', 2))",
+          "highlight": "Thread(",
+          "explanation": {
+            "en": "Create a thread — target is the function, args are its arguments"
+          }
+        },
+        {
+          "line": "t2 = threading.Thread(target=download, args=('file2.zip', 3))",
+          "highlight": "Thread(",
+          "explanation": {
+            "en": "Create a second thread for another download"
+          }
+        },
+        {
+          "line": "t1.start()",
+          "highlight": ".start()",
+          "explanation": {
+            "en": "Start the first thread — it runs in the background"
+          }
+        },
+        {
+          "line": "t2.start()",
+          "highlight": ".start()",
+          "explanation": {
+            "en": "Start the second thread — both run concurrently"
+          }
+        },
+        {
+          "line": "t1.join()",
+          "highlight": ".join()",
+          "explanation": {
+            "en": "Wait for t1 to finish before continuing"
+          }
+        },
+        {
+          "line": "t2.join()",
+          "highlight": ".join()",
+          "explanation": {
+            "en": "Wait for t2 to finish"
+          }
+        },
+        {
+          "line": "print(f'Total: {time.time()-start:.1f}s')",
+          "highlight": "print",
+          "explanation": {
+            "en": "~3s not 5s — threads ran concurrently!"
+          }
+        },
+        {
+          "line": "counter = 0",
+          "highlight": "counter",
+          "explanation": {
+            "en": "Shared variable — dangerous without a Lock!"
+          }
+        },
+        {
+          "line": "lock = threading.Lock()",
+          "highlight": "Lock()",
+          "explanation": {
+            "en": "Create a Lock to protect shared data"
+          }
+        },
+        {
+          "line": "def increment(n):",
+          "highlight": "increment",
+          "explanation": {
+            "en": "Function that modifies shared counter safely"
+          }
+        },
+        {
+          "line": "    global counter",
+          "highlight": "global",
+          "explanation": {
+            "en": "Declare we're modifying the global counter"
+          }
+        },
+        {
+          "line": "    for _ in range(n):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Increment n times"
+          }
+        },
+        {
+          "line": "        with lock:",
+          "highlight": "with lock",
+          "explanation": {
+            "en": "Acquire lock — only ONE thread can be here at a time"
+          }
+        },
+        {
+          "line": "            counter += 1",
+          "highlight": "counter += 1",
+          "explanation": {
+            "en": "Safe increment — lock prevents race conditions"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_t1",
+      "variable": "t1",
+      "value": "Thread(target=download, args=('file1.zip', 2))",
+      "data_type": "Thread",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_lock",
+      "variable": "lock",
+      "value": "Lock() — unlocked",
+      "data_type": "Lock",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "[Thread-1] Downloading file1.zip...",
+        "[Thread-2] Downloading file2.zip...",
+        "[Thread-1] file1.zip done!",
+        "[Thread-2] file2.zip done!",
+        "Total: 3.0s"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "Main Thread",
+          "value": "waiting (join)",
+          "type": "Thread",
+          "address": "0x01"
+        },
+        {
+          "name": "Thread-1",
+          "value": "downloading file1.zip",
+          "type": "Thread",
+          "address": "0x02"
+        },
+        {
+          "name": "Thread-2",
+          "value": "downloading file2.zip",
+          "type": "Thread",
+          "address": "0x03"
+        },
+        {
+          "name": "counter (shared)",
+          "value": "0 (protected by Lock)",
+          "type": "int",
+          "address": "0x04"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create 3 threads that each increment a shared counter 100000 times using a Lock. Verify the final count is exactly 300000 (no race condition).",
+        "ta": "3 threads உருவாக்கி ஒவ்வொன்றும் Lock பயன்படுத்தி shared counter-ஐ 100000 முறை increment செய்யுங்கள். இறுதி எண்ணிக்கை சரியாக 300000 என சரிபார்க்கவும்."
+      },
+      "starter_code": "import threading\n\ncounter = 0\nlock = threading.Lock()\n\ndef increment(n):\n    global counter\n    for _ in range(n):\n        with lock:\n            counter += 1\n\nthreads = [threading.Thread(target=increment, args=(100000,)) for _ in range(3)]\nfor t in threads:\n    t.start()\nfor t in threads:\n    t.join()\n\nprint(f'Final counter: {counter}')",
+      "expected_output": "Final counter: 300000",
+      "hints": {
+        "en": [
+          "Use 'with lock:' to protect counter += 1",
+          "Without the lock, you'd get less than 300000",
+          "Create threads in a list for clean iteration",
+          "start() all, then join() all"
+        ],
+        "ta": [
+          "counter += 1 பாதுகாக்க 'with lock:' பயன்படுத்துங்கள்",
+          "lock இல்லாமல், 300000-க்கும் குறைவாக கிடைக்கும்",
+          "சுத்தமான iteration-க்கு threads-ஐ list-ல் உருவாக்குங்கள்",
+          "அனைத்தையும் start(), பின் அனைத்தையும் join()"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the GIL in Python?",
+        "ta": "Python-ல் GIL என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "A garbage collector",
+          "A lock that allows only one thread to execute Python bytecode at a time",
+          "A thread pool",
+          "A memory manager"
+        ],
+        "ta": [
+          "ஒரு garbage collector",
+          "ஒரு நேரத்தில் ஒரே ஒரு thread Python bytecode செயல்படுத்த அனுமதிக்கும் lock",
+          "ஒரு thread pool",
+          "ஒரு memory manager"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do we need a Lock when sharing data between threads?",
+        "ta": "threads இடையே data பகிரும்போது ஏன் Lock தேவை?"
+      },
+      "options": {
+        "en": [
+          "To make threads faster",
+          "To prevent race conditions on shared data",
+          "Python requires it",
+          "To create new threads"
+        ],
+        "ta": [
+          "threads-ஐ வேகமாக்க",
+          "shared data-ல் race conditions தடுக்க",
+          "Python தேவைப்படுகிறது",
+          "புதிய threads உருவாக்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When are threads most effective in Python?",
+        "ta": "Python-ல் threads எப்போது மிகவும் பயனுள்ளது?"
+      },
+      "options": {
+        "en": [
+          "CPU-bound tasks",
+          "I/O-bound tasks",
+          "Memory-bound tasks",
+          "All tasks equally"
+        ],
+        "ta": [
+          "CPU-bound tasks",
+          "I/O-bound tasks",
+          "Memory-bound tasks",
+          "அனைத்து tasks-க்கும் சமமாக"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["threading", "Thread", "Lock", "GIL", "race_conditions", "join"],
+    "concepts_required": ["functions", "loops"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["concurrent_downloads", "GUI_responsiveness", "web_scraping"],
+    "category": "concurrency",
+    "path_memberships": ["python_intermediate"]
+  }
+}

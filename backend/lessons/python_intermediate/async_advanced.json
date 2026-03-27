@@ -1,0 +1,332 @@
+{
+  "id": "async_advanced",
+  "topic": "async_advanced",
+  "track": "python_intermediate",
+  "module": "async_programming",
+  "order": 21,
+  "title": {
+    "en": "Advanced Async: Tasks, Semaphores & Async Generators",
+    "ta": "மேம்பட்ட Async: Tasks, Semaphores & Async Generators"
+  },
+  "description": {
+    "en": "Master asyncio.create_task, semaphores for limiting concurrency, async generators, async context managers, and error handling in async code.",
+    "ta": "asyncio.create_task, concurrency கட்டுப்படுத்த semaphores, async generators, async context managers ஆகியவற்றில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Traffic Controller\n\nVaathiyaar stands at a busy intersection. \"With `gather`, you launch everything at once. But what if you have 1000 API calls and the server only allows 10 at a time? You need a **semaphore** — a traffic controller for your coroutines!\"\n\n### Advanced Async Patterns\n\n| Pattern | Use Case |\n|---------|----------|\n| `create_task()` | Fire-and-forget, monitor later |\n| `Semaphore(n)` | Limit to n concurrent operations |\n| `async for` | Iterate over async generators |\n| `async with` | Async context managers |\n| `wait()` | Wait for first/all with timeouts |\n\n### Tasks vs Gather\n\n```python\n# gather: run and wait for all\nresults = await asyncio.gather(coro1(), coro2())\n\n# create_task: start now, await later\ntask = asyncio.create_task(coro1())\n# ... do other work ...\nresult = await task  # get result when needed\n```\n\n> **Key Concept:** `create_task()` schedules a coroutine to run in the background immediately. Unlike `gather`, you can do other work between creating the task and awaiting its result."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "traffic_controller",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Advanced Async",
+          "children": [
+            "create_task (background)",
+            "Semaphore (rate limit)",
+            "async for (generators)",
+            "async with (context)",
+            "Exception handling"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import asyncio",
+          "highlight": "asyncio",
+          "explanation": {
+            "en": "Import asyncio for advanced async patterns"
+          }
+        },
+        {
+          "line": "async def fetch_url(url, sem):",
+          "highlight": "sem",
+          "explanation": {
+            "en": "A coroutine that respects a semaphore limit"
+          }
+        },
+        {
+          "line": "    async with sem:",
+          "highlight": "async with sem",
+          "explanation": {
+            "en": "Acquire semaphore — blocks if limit reached"
+          }
+        },
+        {
+          "line": "        print(f'Fetching {url}...')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Now we have a slot — start fetching"
+          }
+        },
+        {
+          "line": "        await asyncio.sleep(1)",
+          "highlight": "await",
+          "explanation": {
+            "en": "Simulate network delay"
+          }
+        },
+        {
+          "line": "        return f'{url}: OK'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return result — semaphore auto-releases on exit"
+          }
+        },
+        {
+          "line": "async def main():",
+          "highlight": "async def",
+          "explanation": {
+            "en": "Main function demonstrating semaphore-limited concurrency"
+          }
+        },
+        {
+          "line": "    sem = asyncio.Semaphore(2)",
+          "highlight": "Semaphore(2)",
+          "explanation": {
+            "en": "Only 2 concurrent fetches allowed at a time"
+          }
+        },
+        {
+          "line": "    urls = [f'https://api.example.com/{i}' for i in range(5)]",
+          "highlight": "urls",
+          "explanation": {
+            "en": "5 URLs to fetch, but only 2 at a time"
+          }
+        },
+        {
+          "line": "    tasks = [asyncio.create_task(fetch_url(url, sem)) for url in urls]",
+          "highlight": "create_task",
+          "explanation": {
+            "en": "Create tasks for all URLs — they start immediately!"
+          }
+        },
+        {
+          "line": "    results = await asyncio.gather(*tasks)",
+          "highlight": "gather(*tasks)",
+          "explanation": {
+            "en": "Wait for all tasks, but semaphore limits to 2 concurrent"
+          }
+        },
+        {
+          "line": "    for r in results:",
+          "highlight": "for",
+          "explanation": {
+            "en": "Print all results"
+          }
+        },
+        {
+          "line": "        print(r)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Each URL result"
+          }
+        },
+        {
+          "line": "async def number_stream(n):",
+          "highlight": "async def",
+          "explanation": {
+            "en": "An ASYNC GENERATOR — yields values asynchronously"
+          }
+        },
+        {
+          "line": "    for i in range(n):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Loop through n numbers"
+          }
+        },
+        {
+          "line": "        await asyncio.sleep(0.5)",
+          "highlight": "await",
+          "explanation": {
+            "en": "Simulate async data arrival"
+          }
+        },
+        {
+          "line": "        yield i",
+          "highlight": "yield",
+          "explanation": {
+            "en": "yield in an async function = async generator"
+          }
+        },
+        {
+          "line": "async def consume():",
+          "highlight": "async def",
+          "explanation": {
+            "en": "Consumer coroutine using async for"
+          }
+        },
+        {
+          "line": "    async for num in number_stream(3):",
+          "highlight": "async for",
+          "explanation": {
+            "en": "async for iterates over an async generator"
+          }
+        },
+        {
+          "line": "        print(f'Got: {num}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Process each value as it arrives"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_sem",
+      "variable": "sem",
+      "value": "Semaphore(2) — 2 slots",
+      "data_type": "Semaphore",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_tasks",
+      "variable": "tasks",
+      "value": "[Task1, Task2, Task3, Task4, Task5]",
+      "data_type": "list[Task]",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Fetching https://api.example.com/0...",
+        "Fetching https://api.example.com/1...",
+        "Fetching https://api.example.com/2...",
+        "Fetching https://api.example.com/3...",
+        "Fetching https://api.example.com/4...",
+        "https://api.example.com/0: OK",
+        "https://api.example.com/1: OK",
+        "Got: 0",
+        "Got: 1",
+        "Got: 2"
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "execution_flow",
+      "flows": [
+        {"label": "Semaphore(2)", "from": "main", "to": ["slot_1", "slot_2"]},
+        {"label": "URL 0,1 run", "from": "slot_1", "to": "fetch_url"},
+        {"label": "URL 2 waits", "from": "slot_2", "to": "queue"},
+        {"label": "slot freed", "from": "fetch_url", "to": "queue"}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create an async generator that yields the squares of numbers 1-5 with a 0.5s delay between each. Consume it with 'async for' and print each square.",
+        "ta": "1-5 எண்களின் squares-ஐ 0.5s delay-உடன் yield செய்யும் async generator உருவாக்குங்கள். 'async for' மூலம் consume செய்து ஒவ்வொரு square-ஐயும் அச்சிடுங்கள்."
+      },
+      "starter_code": "import asyncio\n\nasync def square_stream(n):\n    for i in range(1, n + 1):\n        await asyncio.sleep(0.5)\n        yield i ** 2\n\nasync def main():\n    async for square in square_stream(5):\n        print(f'Square: {square}')\n\nasyncio.run(main())",
+      "expected_output": "Square: 1\nSquare: 4\nSquare: 9\nSquare: 16\nSquare: 25",
+      "hints": {
+        "en": [
+          "async def + yield = async generator",
+          "Use await asyncio.sleep() for delay",
+          "Use 'async for' to iterate",
+          "yield i ** 2 gives the square"
+        ],
+        "ta": [
+          "async def + yield = async generator",
+          "delay-க்கு await asyncio.sleep() பயன்படுத்துங்கள்",
+          "iterate செய்ய 'async for' பயன்படுத்துங்கள்",
+          "yield i ** 2 square-ஐ தரும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does asyncio.Semaphore(3) do?",
+        "ta": "asyncio.Semaphore(3) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Creates 3 threads",
+          "Limits to 3 concurrent coroutines",
+          "Runs 3 tasks sequentially",
+          "Times out after 3 seconds"
+        ],
+        "ta": [
+          "3 threads உருவாக்குகிறது",
+          "3 ஒருங்கிணைந்த coroutines-க்கு கட்டுப்படுத்துகிறது",
+          "3 tasks-ஐ வரிசையாக இயக்குகிறது",
+          "3 வினாடிகளுக்குப் பிறகு நேரம் முடிகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the difference between create_task and gather?",
+        "ta": "create_task மற்றும் gather இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": [
+          "No difference",
+          "create_task starts immediately, gather waits for all",
+          "gather is faster",
+          "create_task only works with one coroutine"
+        ],
+        "ta": [
+          "வேறுபாடு இல்லை",
+          "create_task உடனடியாக தொடங்கும், gather அனைத்திற்கும் காத்திருக்கும்",
+          "gather வேகமானது",
+          "create_task ஒரு coroutine-உடன் மட்டுமே வேலை செய்யும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What makes an async generator different from a regular generator?",
+        "ta": "async generator-ஐ regular generator-லிருந்து வேறுபடுத்துவது எது?"
+      },
+      "options": {
+        "en": [
+          "Uses return instead of yield",
+          "Uses async def and can await inside",
+          "Cannot yield values",
+          "Runs in a separate process"
+        ],
+        "ta": [
+          "yield-க்கு பதிலாக return பயன்படுத்தும்",
+          "async def பயன்படுத்தும் மற்றும் உள்ளே await செய்யலாம்",
+          "values yield செய்ய முடியாது",
+          "தனி process-ல் இயங்கும்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["create_task", "semaphore", "async_generators", "async_context_managers", "asyncio_wait"],
+    "concepts_required": ["async_await", "asyncio", "generators"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["rate_limiting", "web_scraping", "real_time_streaming"],
+    "category": "async",
+    "path_memberships": ["python_intermediate"]
+  }
+}

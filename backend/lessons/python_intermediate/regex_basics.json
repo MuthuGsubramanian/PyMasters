@@ -1,0 +1,301 @@
+{
+  "id": "regex_basics",
+  "topic": "regex_basics",
+  "track": "python_intermediate",
+  "module": "text_processing",
+  "order": 11,
+  "title": {
+    "en": "Regex Basics: Pattern Matching Superpower",
+    "ta": "Regex அடிப்படைகள்: Pattern Matching வல்லமை"
+  },
+  "description": {
+    "en": "Learn the re module — match, search, findall, and basic patterns like \\d, \\w, \\s, character classes, and quantifiers.",
+    "ta": "re module — match, search, findall, மற்றும் \\d, \\w, \\s, character classes, quantifiers போன்ற அடிப்படை patterns கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Detective Magnifier\n\nVaathiyaar pulls out a magnifying glass. \"Imagine you have a 10,000-line log file and need to find every phone number, email, or IP address. Searching manually? Impossible. Regular expressions are your **pattern-matching superpower**!\"\n\n### The re Module\n\n```python\nimport re\nresult = re.search(r'\\d{3}-\\d{4}', 'Call 555-1234')\nprint(result.group())  # 555-1234\n```\n\n### Pattern Cheat Sheet\n\n| Pattern | Matches | Example |\n|---------|---------|----------|\n| `\\d` | Any digit | `0-9` |\n| `\\w` | Word character | `a-z, A-Z, 0-9, _` |\n| `\\s` | Whitespace | `space, tab, newline` |\n| `.` | Any char (except newline) | anything |\n| `*` | 0 or more | `ab*` → a, ab, abb... |\n| `+` | 1 or more | `ab+` → ab, abb... |\n| `?` | 0 or 1 | `colou?r` → color, colour |\n| `{n}` | Exactly n | `\\d{3}` → 3 digits |\n\n> **Key Concept:** Always use raw strings `r'...'` for regex patterns. This prevents Python from interpreting backslashes before regex sees them."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "detective",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Regex (re module)",
+          "children": [
+            "re.match (start)",
+            "re.search (anywhere)",
+            "re.findall (all)",
+            "Patterns (\\d, \\w, \\s)",
+            "Quantifiers (*, +, ?)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "import re",
+          "highlight": "re",
+          "explanation": {
+            "en": "Import Python's built-in regex module"
+          }
+        },
+        {
+          "line": "text = 'Order #1234 placed on 2025-03-27 for $49.99'",
+          "highlight": "text",
+          "explanation": {
+            "en": "Sample text with numbers, dates, and prices"
+          }
+        },
+        {
+          "line": "numbers = re.findall(r'\\d+', text)",
+          "highlight": "findall",
+          "explanation": {
+            "en": "findall returns ALL matches as a list. \\d+ = one or more digits"
+          }
+        },
+        {
+          "line": "print(numbers)",
+          "highlight": "print",
+          "explanation": {
+            "en": "['1234', '2025', '03', '27', '49', '99']"
+          }
+        },
+        {
+          "line": "match = re.search(r'#(\\d+)', text)",
+          "highlight": "search",
+          "explanation": {
+            "en": "search finds the FIRST match anywhere in the string"
+          }
+        },
+        {
+          "line": "print(f'Order number: {match.group(1)}')",
+          "highlight": "group(1)",
+          "explanation": {
+            "en": "group(1) returns the first captured group (in parentheses)"
+          }
+        },
+        {
+          "line": "date_match = re.search(r'(\\d{4})-(\\d{2})-(\\d{2})', text)",
+          "highlight": "\\d{4}",
+          "explanation": {
+            "en": "Match a date pattern: 4 digits - 2 digits - 2 digits"
+          }
+        },
+        {
+          "line": "print(f'Year: {date_match.group(1)}, Month: {date_match.group(2)}')",
+          "highlight": "group",
+          "explanation": {
+            "en": "Each parenthesized group can be accessed separately"
+          }
+        },
+        {
+          "line": "emails = 'Contact alice@example.com or bob@gmail.com'",
+          "highlight": "emails",
+          "explanation": {
+            "en": "Text containing email addresses"
+          }
+        },
+        {
+          "line": "pattern = r'[\\w.]+@[\\w.]+'",
+          "highlight": "pattern",
+          "explanation": {
+            "en": "Email pattern: word chars + @ + word chars"
+          }
+        },
+        {
+          "line": "found = re.findall(pattern, emails)",
+          "highlight": "findall",
+          "explanation": {
+            "en": "Find all email-like patterns"
+          }
+        },
+        {
+          "line": "print(found)",
+          "highlight": "print",
+          "explanation": {
+            "en": "['alice@example.com', 'bob@gmail.com']"
+          }
+        },
+        {
+          "line": "result = re.match(r'\\d+', 'abc123')",
+          "highlight": "match",
+          "explanation": {
+            "en": "match only checks the START of the string"
+          }
+        },
+        {
+          "line": "print(result)",
+          "highlight": "print",
+          "explanation": {
+            "en": "None — because 'abc123' doesn't START with digits"
+          }
+        },
+        {
+          "line": "result2 = re.search(r'\\d+', 'abc123')",
+          "highlight": "search",
+          "explanation": {
+            "en": "search finds digits ANYWHERE — returns Match object"
+          }
+        },
+        {
+          "line": "print(result2.group())",
+          "highlight": "group()",
+          "explanation": {
+            "en": "'123' — found the digits after 'abc'"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_numbers",
+      "variable": "numbers",
+      "value": "['1234', '2025', '03', '27', '49', '99']",
+      "data_type": "list",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_found",
+      "variable": "found",
+      "value": "['alice@example.com', 'bob@gmail.com']",
+      "data_type": "list",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "['1234', '2025', '03', '27', '49', '99']",
+        "Order number: 1234",
+        "Year: 2025, Month: 03",
+        "['alice@example.com', 'bob@gmail.com']",
+        "None",
+        "123"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "pattern_visual",
+      "structure_type": "table",
+      "data": {
+        "headers": ["Function", "Behavior"],
+        "rows": [
+          ["re.match()", "Match at START only"],
+          ["re.search()", "Find FIRST match anywhere"],
+          ["re.findall()", "Find ALL matches as list"]
+        ]
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use re.findall to extract all phone numbers in the format XXX-XXX-XXXX from a given text string. Print the list of found numbers.",
+        "ta": "கொடுக்கப்பட்ட உரைச் சரத்திலிருந்து XXX-XXX-XXXX வடிவத்தில் உள்ள அனைத்து தொலைபேசி எண்களையும் re.findall பயன்படுத்தி எடுக்கவும்."
+      },
+      "starter_code": "import re\n\ntext = 'Call 555-123-4567 or 800-999-8888 for support. Not 12-34.'\nphones = re.findall(r'your_pattern_here', text)\nprint(phones)",
+      "expected_output": "['555-123-4567', '800-999-8888']",
+      "hints": {
+        "en": [
+          "Phone format: 3 digits - 3 digits - 4 digits",
+          "Pattern: \\d{3}-\\d{3}-\\d{4}",
+          "Use raw string: r'\\d{3}-\\d{3}-\\d{4}'"
+        ],
+        "ta": [
+          "தொலைபேசி வடிவம்: 3 இலக்கங்கள் - 3 இலக்கங்கள் - 4 இலக்கங்கள்",
+          "Pattern: \\d{3}-\\d{3}-\\d{4}",
+          "raw string பயன்படுத்துங்கள்: r'\\d{3}-\\d{3}-\\d{4}'"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does re.match() check?",
+        "ta": "re.match() என்ன சரிபார்க்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The entire string",
+          "Only the start of the string",
+          "Anywhere in the string",
+          "The end of the string"
+        ],
+        "ta": [
+          "முழு சரம்",
+          "சரத்தின் தொடக்கத்தில் மட்டும்",
+          "சரத்தில் எங்கும்",
+          "சரத்தின் முடிவில்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does \\d+ match?",
+        "ta": "\\d+ எதைப் பொருத்துகிறது?"
+      },
+      "options": {
+        "en": [
+          "Exactly one digit",
+          "One or more digits",
+          "Zero or more digits",
+          "Only letters"
+        ],
+        "ta": [
+          "சரியாக ஒரு இலக்கம்",
+          "ஒன்று அல்லது அதற்கு மேற்பட்ட இலக்கங்கள்",
+          "பூஜ்ஜியம் அல்லது அதற்கு மேற்பட்ட இலக்கங்கள்",
+          "எழுத்துகள் மட்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use r'...' for regex patterns?",
+        "ta": "regex patterns-க்கு r'...' ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Makes it faster",
+          "Required by Python syntax",
+          "Prevents Python from interpreting backslashes",
+          "Makes the pattern case-insensitive"
+        ],
+        "ta": [
+          "வேகமாக்குகிறது",
+          "Python தொடரியல் தேவை",
+          "Python backslash-களை விளக்குவதை தடுக்கிறது",
+          "pattern-ஐ case-insensitive ஆக்குகிறது"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["regex", "re_module", "match", "search", "findall", "patterns"],
+    "concepts_required": ["strings", "functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["log_parsing", "data_validation", "web_scraping"],
+    "category": "text_processing",
+    "path_memberships": ["python_intermediate"]
+  }
+}

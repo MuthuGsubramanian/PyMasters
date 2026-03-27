@@ -1,0 +1,250 @@
+{
+  "id": "pandas_foundations",
+  "topic": "pandas_foundations",
+  "track": "machine_learning",
+  "module": "ml_foundations",
+  "order": 4,
+  "title": {
+    "en": "Pandas Foundations: Taming Tabular Data",
+    "ta": "Pandas அடிப்படைகள்: அட்டவணை தரவை அடக்குதல்"
+  },
+  "description": {
+    "en": "Learn DataFrames, Series, indexing, filtering, groupby, and merging — the essential data manipulation toolkit for every ML project.",
+    "ta": "DataFrames, Series, அட்டவணைப்படுத்தல், வடிகட்டுதல், groupby, மற்றும் இணைத்தல் — ஒவ்வொரு ML திட்டத்திற்கும் அத்தியாவசிய தரவு கையாளுதல் கருவித்தொகுப்பு."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Data Ledger\n\nVaathiyaar pulls out a massive ledger. \"Before any model can learn, you need to read, clean, and shape your data. Pandas is your Swiss Army knife.\"\n\n### Core Structures\n\n**Series** — A single column of data with an index\n**DataFrame** — A table with rows and named columns\n\n```python\nimport pandas as pd\n\n# Create a DataFrame\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Charlie', 'Diana'],\n    'age': [25, 30, 35, 28],\n    'salary': [50000, 60000, 70000, 55000],\n    'department': ['Engineering', 'Marketing', 'Engineering', 'Marketing']\n})\n\n# Indexing\nprint(df['name'])              # Single column (Series)\nprint(df[['name', 'age']])     # Multiple columns (DataFrame)\nprint(df.iloc[0])              # First row by position\nprint(df.loc[df['age'] > 28])  # Filter: age > 28\n\n# Aggregation\nprint(df.groupby('department')['salary'].mean())\n```\n\n> **Key Insight:** 80% of a data scientist's time is spent on data wrangling. Pandas mastery is ML mastery."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "data_ledger",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "pandas_map",
+      "nodes": [
+        {
+          "label": "Pandas",
+          "children": ["Series", "DataFrame", "Indexing", "Filtering", "GroupBy", "Merge"]
+        },
+        {
+          "label": "DataFrame",
+          "children": ["rows (index)", "columns", "dtypes", "shape"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pandas_code",
+      "steps": [
+        {
+          "line": "import pandas as pd",
+          "highlight": "pandas",
+          "explanation": { "en": "Import pandas — aliased as pd by convention" }
+        },
+        {
+          "line": "df = pd.DataFrame({'name': ['Alice', 'Bob', 'Charlie', 'Diana'], 'age': [25, 30, 35, 28], 'salary': [50000, 60000, 70000, 55000], 'department': ['Engineering', 'Marketing', 'Engineering', 'Marketing']})",
+          "highlight": "DataFrame",
+          "explanation": { "en": "Create a DataFrame from a dictionary — keys become column names" }
+        },
+        {
+          "line": "print(df.shape)",
+          "highlight": "shape",
+          "explanation": { "en": "Shape is (4, 4) — 4 rows and 4 columns" }
+        },
+        {
+          "line": "print(df.dtypes)",
+          "highlight": "dtypes",
+          "explanation": { "en": "Each column has a data type: object (string), int64, etc." }
+        },
+        {
+          "line": "print(df.describe())",
+          "highlight": "describe",
+          "explanation": { "en": "Statistical summary of numerical columns: mean, std, min, max, quartiles" }
+        },
+        {
+          "line": "ages = df['age']",
+          "highlight": "df['age']",
+          "explanation": { "en": "Select a single column — returns a Series object" }
+        },
+        {
+          "line": "subset = df[['name', 'salary']]",
+          "highlight": "[['name', 'salary']]",
+          "explanation": { "en": "Select multiple columns — returns a new DataFrame" }
+        },
+        {
+          "line": "first_row = df.iloc[0]",
+          "highlight": "iloc",
+          "explanation": { "en": "Select row by integer position — iloc uses numbers" }
+        },
+        {
+          "line": "senior = df.loc[df['age'] > 28]",
+          "highlight": "loc",
+          "explanation": { "en": "Boolean filtering: keep only rows where age > 28" }
+        },
+        {
+          "line": "eng_high = df.loc[(df['department'] == 'Engineering') & (df['salary'] > 55000)]",
+          "highlight": "&",
+          "explanation": { "en": "Combine conditions with & (and) or | (or) — parentheses required" }
+        },
+        {
+          "line": "avg_salary = df.groupby('department')['salary'].mean()",
+          "highlight": "groupby",
+          "explanation": { "en": "Group by department and compute mean salary per group" }
+        },
+        {
+          "line": "df['bonus'] = df['salary'] * 0.1",
+          "highlight": "bonus",
+          "explanation": { "en": "Create a new column — vectorized operation on entire column" }
+        },
+        {
+          "line": "print(df.head())",
+          "highlight": "head",
+          "explanation": { "en": "Display first 5 rows — always preview your data" }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "dataframe_visual",
+      "structure_type": "table",
+      "data": {
+        "columns": ["name", "age", "salary", "department"],
+        "rows": [
+          ["Alice", 25, 50000, "Engineering"],
+          ["Bob", 30, 60000, "Marketing"],
+          ["Charlie", 35, 70000, "Engineering"],
+          ["Diana", 28, 55000, "Marketing"]
+        ]
+      },
+      "highlight_cells": [[2, 2]],
+      "color": "#2ecc71"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_shape",
+      "variable": "df.shape",
+      "value": "(4, 4)",
+      "data_type": "tuple",
+      "color": "#3498db"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "(4, 4)",
+        "name          object",
+        "age            int64",
+        "salary         int64",
+        "department    object",
+        "dtype: object",
+        "Engineering    60000.0",
+        "Marketing      57500.0",
+        "Name: salary, dtype: float64"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a DataFrame of 5 students with columns 'name', 'math_score', and 'science_score'. Filter students who scored above 80 in math, add a column 'total' that sums both scores, and print the result sorted by total descending.",
+        "ta": "5 மாணவர்களின் DataFrame-ஐ 'name', 'math_score', 'science_score' நெடுவரிசைகளுடன் உருவாக்குங்கள். கணிதத்தில் 80-க்கு மேல் பெற்ற மாணவர்களை வடிகட்டி, இரு மதிப்பெண்களின் கூட்டுத்தொகையாக 'total' நெடுவரிசை சேர்த்து, மொத்தத்தின் இறங்கு வரிசையில் அச்சிடுங்கள்."
+      },
+      "starter_code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'],\n    'math_score': [85, 72, 91, 68, 95],\n    'science_score': [78, 88, 82, 75, 90]\n})\n\n# Filter math > 80\nhigh_math = df[df[___] > ___]\n\n# Add total column\nhigh_math = high_math.copy()\nhigh_math['total'] = high_math[___] + high_math[___]\n\n# Sort by total descending\nresult = high_math.sort_values(___, ascending=___)\nprint(result)",
+      "expected_output": "    name  math_score  science_score  total\n4    Eve          95             90    185\n2  Charlie       91             82    173\n0   Alice        85             78    163",
+      "hints": {
+        "en": [
+          "Filter with df[df['math_score'] > 80]",
+          "Add columns: high_math['math_score'] + high_math['science_score']",
+          "Sort with sort_values('total', ascending=False)"
+        ],
+        "ta": [
+          "df[df['math_score'] > 80] மூலம் வடிகட்டுங்கள்",
+          "high_math['math_score'] + high_math['science_score'] மூலம் நெடுவரிசை சேர்க்கவும்",
+          "sort_values('total', ascending=False) மூலம் வரிசைப்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the difference between df.iloc[0] and df.loc[0]?",
+        "ta": "df.iloc[0] மற்றும் df.loc[0] இடையே என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": [
+          "No difference — both select the first row",
+          "iloc uses integer position, loc uses label-based indexing",
+          "iloc selects columns, loc selects rows",
+          "iloc is faster than loc"
+        ],
+        "ta": [
+          "வேறுபாடு இல்லை — இரண்டும் முதல் வரிசையைத் தேர்ந்தெடுக்கும்",
+          "iloc முழு எண் நிலையைப் பயன்படுத்துகிறது, loc லேபிள் அடிப்படையிலான அட்டவணையைப் பயன்படுத்துகிறது",
+          "iloc நெடுவரிசைகளைத் தேர்ந்தெடுக்கிறது, loc வரிசைகளைத் தேர்ந்தெடுக்கிறது",
+          "iloc loc ஐ விட வேகமானது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you combine two filter conditions in pandas?",
+        "ta": "pandas-ல் இரண்டு வடிகட்டுதல் நிபந்தனைகளை எவ்வாறு இணைப்பீர்கள்?"
+      },
+      "options": {
+        "en": [
+          "Using 'and' keyword",
+          "Using & with each condition in parentheses",
+          "Using + operator",
+          "Using comma separation"
+        ],
+        "ta": [
+          "'and' முக்கிய சொல்லைப் பயன்படுத்தி",
+          "ஒவ்வொரு நிபந்தனையும் அடைப்புக்குறிகளில் & உடன்",
+          "+ ஆபரேட்டரைப் பயன்படுத்தி",
+          "காற்புள்ளி பிரிப்பைப் பயன்படுத்தி"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does df.groupby('col').mean() return?",
+        "ta": "df.groupby('col').mean() என்ன திருப்பி அனுப்புகிறது?"
+      },
+      "options": {
+        "en": [
+          "The mean of the entire DataFrame",
+          "The mean of each numerical column grouped by 'col'",
+          "A single number",
+          "An error because you need to specify a column"
+        ],
+        "ta": [
+          "முழு DataFrame-ன் சராசரி",
+          "'col' மூலம் குழுவாக்கப்பட்ட ஒவ்வொரு எண் நெடுவரிசையின் சராசரி",
+          "ஒற்றை எண்",
+          "நெடுவரிசையைக் குறிப்பிட வேண்டும் என்பதால் பிழை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dataframe", "series", "indexing", "filtering", "groupby"],
+    "concepts_required": ["python_basics", "dictionaries"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["data_analysis", "data_cleaning", "exploratory_analysis"],
+    "category": "machine_learning",
+    "path_memberships": ["ml_fundamentals"]
+  }
+}

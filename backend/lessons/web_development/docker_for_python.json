@@ -1,0 +1,251 @@
+{
+  "id": "docker_for_python",
+  "topic": "docker_for_python",
+  "track": "web_development",
+  "module": "devops_foundations",
+  "order": 19,
+  "title": {
+    "en": "Docker for Python: Containerizing Your App",
+    "ta": "Python-க்கான Docker: உங்கள் பயன்பாட்டை கொள்கலனாக்குதல்"
+  },
+  "description": {
+    "en": "Learn Docker fundamentals — Dockerfile, images, containers, docker-compose, and containerizing Python web applications.",
+    "ta": "Docker அடிப்படைகளைக் கற்றுக்கொள்ளுங்கள் — Dockerfile, படங்கள், கொள்கலன்கள், docker-compose மற்றும் Python வலை பயன்பாடுகளை கொள்கலனாக்குதல்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## The Shipping Container\n\nVaathiyaar shows a shipping container. \"'It works on my machine' — the most dangerous phrase in software. **Docker** solves this by packaging your app, its dependencies, and its environment into a **container** that runs identically everywhere.\"\n\n### Why Docker?\n- **Consistency** — Same environment dev → staging → production\n- **Isolation** — Each app gets its own container\n- **Portability** — Runs on any machine with Docker\n- **Reproducibility** — Build once, run anywhere\n- **Scalability** — Spin up multiple containers easily\n\n### Key Concepts\n\n| Concept | What It Is | Analogy |\n|---------|-----------|----------|\n| **Image** | Read-only template | Blueprint/Recipe |\n| **Container** | Running instance of an image | House built from blueprint |\n| **Dockerfile** | Instructions to build an image | The recipe steps |\n| **docker-compose** | Multi-container orchestration | Managing multiple recipes |\n| **Volume** | Persistent data storage | External hard drive |\n\n### Docker vs Virtual Machines\n```\nVM:      [App] → [Guest OS] → [Hypervisor] → [Host OS]\nDocker:  [App] → [Container Runtime] → [Host OS]\n```\nContainers share the host OS kernel — much lighter than VMs.\n\n> **Key Concept:** Docker doesn't virtualize hardware. It uses Linux namespaces and cgroups to isolate processes. This makes containers start in seconds (not minutes like VMs) and use far less memory."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "shipping_container",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "docker_overview",
+      "nodes": [
+        {
+          "label": "Docker",
+          "children": [
+            "Dockerfile (build instructions)",
+            "Image (template)",
+            "Container (running instance)",
+            "docker-compose (multi-service)",
+            "Volume (persistent data)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "docker_demo",
+      "steps": [
+        {
+          "line": "# Dockerfile — Build instructions for your image\nFROM python:3.12-slim",
+          "highlight": "FROM",
+          "explanation": {
+            "en": "Start from the official Python 3.12 slim image — lightweight base"
+          }
+        },
+        {
+          "line": "WORKDIR /app",
+          "highlight": "WORKDIR",
+          "explanation": {
+            "en": "Set the working directory inside the container"
+          }
+        },
+        {
+          "line": "# Copy requirements first for better caching\nCOPY requirements.txt .",
+          "highlight": "COPY",
+          "explanation": {
+            "en": "Copy requirements.txt first — Docker caches this layer"
+          }
+        },
+        {
+          "line": "RUN pip install --no-cache-dir -r requirements.txt",
+          "highlight": "RUN",
+          "explanation": {
+            "en": "Install dependencies — this layer is cached if requirements.txt hasn't changed"
+          }
+        },
+        {
+          "line": "# Copy the rest of the application\nCOPY . .",
+          "highlight": "COPY . .",
+          "explanation": {
+            "en": "Copy all app files into the container"
+          }
+        },
+        {
+          "line": "EXPOSE 8000",
+          "highlight": "EXPOSE",
+          "explanation": {
+            "en": "Document which port the container listens on (informational)"
+          }
+        },
+        {
+          "line": "CMD [\"gunicorn\", \"wsgi:application\", \"--bind\", \"0.0.0.0:8000\", \"--workers\", \"4\"]",
+          "highlight": "CMD",
+          "explanation": {
+            "en": "Default command to run when the container starts"
+          }
+        },
+        {
+          "line": "# .dockerignore — Exclude files from the build\n__pycache__\n*.pyc\n.env\nvenv/\n.git\n*.db",
+          "highlight": ".dockerignore",
+          "explanation": {
+            "en": "Like .gitignore but for Docker — keeps the image small and clean"
+          }
+        },
+        {
+          "line": "# Build the image\n# $ docker build -t pymaster-app:latest .",
+          "highlight": "docker build",
+          "explanation": {
+            "en": "Build an image named 'pymaster-app' tagged 'latest' from current directory"
+          }
+        },
+        {
+          "line": "# Run the container\n# $ docker run -d -p 8000:8000 --name myapp --env-file .env pymaster-app:latest",
+          "highlight": "docker run",
+          "explanation": {
+            "en": "-d detached, -p maps host:container ports, --env-file loads secrets"
+          }
+        },
+        {
+          "line": "# docker-compose.yml — Multi-service setup\nversion: '3.8'\nservices:\n  web:\n    build: .\n    ports:\n      - '8000:8000'\n    env_file:\n      - .env\n    depends_on:\n      - db\n    volumes:\n      - ./uploads:/app/uploads",
+          "highlight": "services",
+          "explanation": {
+            "en": "Define the web service: build from Dockerfile, map port, load env, mount volume"
+          }
+        },
+        {
+          "line": "  db:\n    image: postgres:16\n    environment:\n      POSTGRES_DB: myapp\n      POSTGRES_USER: appuser\n      POSTGRES_PASSWORD: secret\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n    ports:\n      - '5432:5432'\n\nvolumes:\n  pgdata:",
+          "highlight": "postgres:16",
+          "explanation": {
+            "en": "PostgreSQL service with named volume for persistent data"
+          }
+        },
+        {
+          "line": "# $ docker-compose up -d        # Start all services\n# $ docker-compose logs web     # View web logs\n# $ docker-compose down          # Stop and remove containers\n# $ docker-compose exec web bash # Shell into web container",
+          "highlight": "docker-compose up",
+          "explanation": {
+            "en": "Compose commands to manage the multi-container application"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_image",
+      "variable": "image",
+      "value": "pymaster-app:latest",
+      "data_type": "str",
+      "color": "#2196F3"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_container",
+      "variable": "container",
+      "value": "myapp (running)",
+      "data_type": "str",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ docker build -t pymaster-app:latest .",
+        "Step 1/7 : FROM python:3.12-slim",
+        " ---> a1b2c3d4e5f6",
+        "Step 2/7 : WORKDIR /app",
+        "Step 3/7 : COPY requirements.txt .",
+        "Step 4/7 : RUN pip install --no-cache-dir -r requirements.txt",
+        "Step 5/7 : COPY . .",
+        "Step 6/7 : EXPOSE 8000",
+        "Step 7/7 : CMD [\"gunicorn\", ...]",
+        "Successfully built f6e5d4c3b2a1",
+        "Successfully tagged pymaster-app:latest",
+        "",
+        "$ docker run -d -p 8000:8000 pymaster-app:latest",
+        "a1b2c3d4e5f6789012345678",
+        "",
+        "$ docker ps",
+        "CONTAINER ID  IMAGE             STATUS   PORTS",
+        "a1b2c3d4e5f6  pymaster-app      Up 5s    0.0.0.0:8000->8000/tcp"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a Dockerfile and docker-compose.yml for a FastAPI app with a PostgreSQL database. The Dockerfile should use multi-stage build or proper caching. The compose file should define both services with appropriate environment variables and volumes.",
+        "ta": "PostgreSQL தரவுத்தளத்துடன் FastAPI பயன்பாட்டிற்கான Dockerfile மற்றும் docker-compose.yml எழுதுங்கள்."
+      },
+      "starter_code": "# Dockerfile\nFROM python:3.12-slim\n\nWORKDIR /app\n\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\nCOPY . .\n\nEXPOSE 8000\n\nCMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\", \"--workers\", \"4\"]\n\n# docker-compose.yml\n# version: '3.8'\n# services:\n#   api:\n#     build: .\n#     ports:\n#       - '8000:8000'\n#     environment:\n#       - DATABASE_URL=postgresql://user:pass@db:5432/myapp\n#     depends_on:\n#       - db\n#   db:\n#     image: postgres:16\n#     environment:\n#       POSTGRES_DB: myapp\n#       POSTGRES_USER: user\n#       POSTGRES_PASSWORD: pass\n#     volumes:\n#       - pgdata:/var/lib/postgresql/data\n# volumes:\n#   pgdata:",
+      "expected_output": "docker-compose up builds and starts both API and database containers",
+      "hints": {
+        "en": [
+          "Copy requirements.txt before copying all files for better layer caching",
+          "Use --no-cache-dir with pip to keep the image small",
+          "depends_on ensures the database starts before the API",
+          "Named volumes persist data even when containers are removed"
+        ],
+        "ta": [
+          "சிறந்த அடுக்கு கேச்சிங்கிற்கு அனைத்து கோப்புகளையும் நகலெடுப்பதற்கு முன் requirements.txt-ஐ நகலெடுக்கவும்",
+          "படத்தை சிறியதாக வைக்க pip-உடன் --no-cache-dir பயன்படுத்துங்கள்",
+          "depends_on API-க்கு முன் தரவுத்தளம் தொடங்குவதை உறுதி செய்கிறது",
+          "கொள்கலன்கள் நீக்கப்பட்டாலும் பெயரிடப்பட்ட தொகுதிகள் தரவைப் பாதுகாக்கின்றன"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the difference between a Docker image and a container?",
+        "ta": "Docker படத்திற்கும் கொள்கலனுக்கும் என்ன வேறுபாடு?"
+      },
+      "options": {
+        "en": ["They are the same thing", "An image is a read-only template; a container is a running instance of an image", "A container is read-only; an image is running", "An image is for development; a container is for production"],
+        "ta": ["அவை ஒன்றே", "படம் படிக்க மட்டும் வார்ப்புரு; கொள்கலன் படத்தின் இயங்கும் நிகழ்வு", "கொள்கலன் படிக்க மட்டும்; படம் இயங்குகிறது", "படம் மேம்பாட்டிற்கு; கொள்கலன் உற்பத்திக்கு"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why should you COPY requirements.txt before COPY . . in a Dockerfile?",
+        "ta": "Dockerfile-ல் COPY . . க்கு முன் COPY requirements.txt ஏன் செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": ["It's required by Docker", "Docker caches layers — if requirements haven't changed, pip install is skipped on rebuild", "It makes the image smaller", "It's a security requirement"],
+        "ta": ["Docker-க்கு தேவை", "Docker அடுக்குகளை கேச் செய்கிறது — requirements மாறவில்லை என்றால், மீண்டும் கட்டும்போது pip install தவிர்க்கப்படும்", "படத்தை சிறியதாக்குகிறது", "பாதுகாப்பு தேவை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does 'docker-compose up -d' do?",
+        "ta": "'docker-compose up -d' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Deletes all containers", "Builds images and starts all services in detached (background) mode", "Shows running containers", "Stops all services"],
+        "ta": ["அனைத்து கொள்கலன்களையும் நீக்குகிறது", "படங்களை உருவாக்கி அனைத்து சேவைகளையும் பின்னணி முறையில் தொடங்குகிறது", "இயங்கும் கொள்கலன்களைக் காட்டுகிறது", "அனைத்து சேவைகளையும் நிறுத்துகிறது"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dockerfile", "docker_compose", "containers", "images", "volumes"],
+    "concepts_required": ["deployment_basics", "command_line"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["containerization", "devops", "microservices"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

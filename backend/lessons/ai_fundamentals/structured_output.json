@@ -1,0 +1,327 @@
+{
+  "id": "structured_output",
+  "topic": "structured_output",
+  "track": "ai_fundamentals",
+  "module": "ai_applications",
+  "order": 14,
+  "title": {
+    "en": "Structured Output: JSON Mode, Function Calling & Pydantic",
+    "ta": "Structured Output: JSON Mode, Function Calling & Pydantic"
+  },
+  "description": {
+    "en": "Force LLMs to return structured data — JSON mode, function calling, and Pydantic integration for reliable AI outputs.",
+    "ta": "LLM-கள் structured data திருப்பி அனுப்ப கட்டாயப்படுத்துங்கள் — JSON mode, function calling, நம்பகமான AI outputs-க்கு Pydantic integration."
+  },
+  "xp_reward": 70,
+  "next_unlock": "multi_modal_ai",
+  "story_variants": {
+    "en": "## Vaathiyaar's Data Factory\n\nVaathiyaar holds up a messy text blob and a clean JSON object. \"Students, LLMs return text by default. But your Python code needs structured data — dictionaries, lists, typed objects. Today you'll learn three ways to make LLMs return EXACTLY the structure you need.\"\n\n### The Problem\n```\nLLM says: 'The sentiment is positive with 85% confidence'\nYour code needs: {'sentiment': 'positive', 'confidence': 0.85}\n```\n\n### Three Solutions\n\n**1. JSON Mode** — Tell the API to return valid JSON\n```python\nresponse_format={'type': 'json_object'}\n```\n\n**2. Function Calling** — Define a schema, LLM fills it\n```python\ntools=[{'type': 'function', 'function': {...}}]\n```\n\n**3. Pydantic + Instructor** — Type-safe structured output\n```python\nclass Review(BaseModel):\n    sentiment: str\n    confidence: float\n```\n\n> **Key Insight:** Structured output is what separates toy demos from production apps. If your code can't parse the LLM's response reliably, your app will break.",
+    "ta": "## வாத்தியாரின் Data Factory\n\nவாத்தியார் ஒரு குழப்பமான text blob-ஐயும் சுத்தமான JSON object-ஐயும் உயர்த்திக் காட்டுகிறார். \"மாணவர்களே, LLM-கள் இயல்பாக text-ஐ திருப்பி அனுப்பும். ஆனால் உங்கள் Python code-க்கு structured data தேவை.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "data_factory",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "structured_output_map",
+      "nodes": [
+        {
+          "label": "Structured Output Methods",
+          "children": [
+            "JSON Mode (response_format)",
+            "Function Calling (tools)",
+            "Pydantic + Instructor",
+            "Prompt Engineering (fallback)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "structured_code",
+      "steps": [
+        {
+          "line": "from openai import OpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import OpenAI client"
+          }
+        },
+        {
+          "line": "from pydantic import BaseModel",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import Pydantic for type-safe data models"
+          }
+        },
+        {
+          "line": "import json",
+          "highlight": "import",
+          "explanation": {
+            "en": "JSON module to parse structured responses"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Method 1: JSON Mode"
+          }
+        },
+        {
+          "line": "client = OpenAI()",
+          "highlight": "client",
+          "explanation": {
+            "en": "Initialize the client"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Use response_format to force JSON output"
+          }
+        },
+        {
+          "line": "# Method 1: JSON Mode",
+          "highlight": "comment",
+          "explanation": {
+            "en": "The simplest way to get JSON — guaranteed valid JSON"
+          }
+        },
+        {
+          "line": "response = client.chat.completions.create(",
+          "highlight": "response",
+          "explanation": {
+            "en": "Make the API call with JSON mode enabled"
+          }
+        },
+        {
+          "line": "    model='gpt-4o-mini',",
+          "highlight": "model",
+          "explanation": {
+            "en": "Most modern models support JSON mode"
+          }
+        },
+        {
+          "line": "    response_format={'type': 'json_object'},",
+          "highlight": "response_format",
+          "explanation": {
+            "en": "This forces the model to return valid JSON — no markdown, no extra text"
+          }
+        },
+        {
+          "line": "    messages=[",
+          "highlight": "messages",
+          "explanation": {
+            "en": "You must mention JSON in the prompt for this to work"
+          }
+        },
+        {
+          "line": "        {'role': 'system', 'content': 'Analyze sentiment. Return JSON: {sentiment, confidence, keywords}'},",
+          "highlight": "system",
+          "explanation": {
+            "en": "Describe the JSON schema you want in the system prompt"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'I absolutely love this Python course!'}",
+          "highlight": "user",
+          "explanation": {
+            "en": "The text to analyze"
+          }
+        },
+        {
+          "line": "    ]",
+          "highlight": "",
+          "explanation": {
+            "en": "Close messages"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "API returns guaranteed valid JSON"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Parse the JSON response into a Python dict"
+          }
+        },
+        {
+          "line": "result = json.loads(response.choices[0].message.content)",
+          "highlight": "result",
+          "explanation": {
+            "en": "json.loads() converts the JSON string to a Python dictionary"
+          }
+        },
+        {
+          "line": "print(f\"Sentiment: {result['sentiment']}, Confidence: {result['confidence']}\")",
+          "highlight": "print",
+          "explanation": {
+            "en": "Access structured data with dictionary keys — no regex needed!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "structured_vs_unstructured",
+      "left_label": "Without Structured Output",
+      "right_label": "With JSON Mode",
+      "left_content": "The sentiment of this text is positive.\nI'd estimate about 85% confidence.\nKey words: love, Python, course\n\n# Parsing this requires regex,\n# string splitting, and prayer",
+      "right_content": "{\n  \"sentiment\": \"positive\",\n  \"confidence\": 0.92,\n  \"keywords\": [\"love\", \"Python\", \"course\"]\n}\n\n# Clean, parseable, reliable\nresult = json.loads(response)\nprint(result['sentiment'])  # 'positive'",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_sentiment",
+      "variable": "result['sentiment']",
+      "value": "positive",
+      "data_type": "str",
+      "color": "#22c55e"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_confidence",
+      "variable": "result['confidence']",
+      "value": 0.92,
+      "data_type": "float",
+      "color": "#3b82f6"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> result = json.loads(response.choices[0].message.content)",
+        ">>> print(json.dumps(result, indent=2))",
+        "{",
+        "  \"sentiment\": \"positive\",",
+        "  \"confidence\": 0.92,",
+        "  \"keywords\": [\"love\", \"Python\", \"course\"]",
+        "}",
+        "",
+        ">>> # Now use it in your code!",
+        ">>> if result['confidence'] > 0.8:",
+        "...     print(f\"High confidence {result['sentiment']} review\")",
+        "High confidence positive review",
+        "",
+        ">>> # Method 2: Pydantic model",
+        ">>> class Sentiment(BaseModel):",
+        "...     sentiment: str",
+        "...     confidence: float",
+        "...     keywords: list[str]",
+        ">>> parsed = Sentiment(**result)",
+        ">>> print(parsed.sentiment)",
+        "positive"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a Pydantic model called BookReview with fields: title (str), rating (int, 1-5), pros (list of str), cons (list of str), and recommended (bool). Write an API call using JSON mode that analyzes a book review and returns data matching this model. Parse the response into your Pydantic model.",
+        "ta": "BookReview என்ற Pydantic model உருவாக்குங்கள்: title (str), rating (int, 1-5), pros (list of str), cons (list of str), recommended (bool). JSON mode பயன்படுத்தி book review-ஐ பகுப்பாய்வு செய்யும் API call எழுதுங்கள்."
+      },
+      "starter_code": "from pydantic import BaseModel, Field\nfrom openai import OpenAI\nimport json\n\nclass BookReview(BaseModel):\n    title: str\n    rating: int = Field(ge=1, le=5)\n    pros: list[str]\n    cons: list[str]\n    recommended: bool\n\nclient = OpenAI()\n\nreview_text = '''Automate the Boring Stuff with Python is excellent for \nbeginners. Clear explanations and practical projects. However, it \ndoesn't cover advanced topics and some examples are outdated.'''\n\n# Make API call with JSON mode\n# Parse response into BookReview model\n# Print the structured review",
+      "expected_output": "title='Automate the Boring Stuff with Python'\nrating=4\npros=['Clear explanations', 'Practical projects']\ncons=['No advanced topics', 'Some outdated examples']\nrecommended=True",
+      "hints": {
+        "en": [
+          "Use response_format={'type': 'json_object'} in the API call",
+          "Describe the exact JSON schema in your system prompt",
+          "Parse with: BookReview(**json.loads(response.choices[0].message.content))"
+        ],
+        "ta": [
+          "API call-ல் response_format={'type': 'json_object'} பயன்படுத்துங்கள்",
+          "system prompt-ல் சரியான JSON schema-ஐ விவரிக்கவும்",
+          "Parse: BookReview(**json.loads(response.choices[0].message.content))"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does response_format={'type': 'json_object'} do?",
+        "ta": "response_format={'type': 'json_object'} என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Converts the response to XML",
+          "Forces the model to return valid JSON only",
+          "Makes the response shorter",
+          "Enables streaming"
+        ],
+        "ta": [
+          "பதிலை XML-ஆக மாற்றுகிறது",
+          "மாதிரி valid JSON-ஐ மட்டுமே திருப்பி அனுப்ப கட்டாயப்படுத்துகிறது",
+          "பதிலை சுருக்குகிறது",
+          "Streaming-ஐ இயக்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is Pydantic useful for LLM output parsing?",
+        "ta": "LLM output parsing-க்கு Pydantic ஏன் பயனுள்ளது?"
+      },
+      "options": {
+        "en": [
+          "It makes API calls faster",
+          "It provides type validation, ensuring the LLM output matches your schema",
+          "It's required by the OpenAI API",
+          "It reduces token usage"
+        ],
+        "ta": [
+          "API calls-ஐ வேகமாக்குகிறது",
+          "LLM output உங்கள் schema-வுடன் பொருந்துவதை உறுதி செய்யும் type validation வழங்குகிறது",
+          "OpenAI API-க்கு அவசியம்",
+          "Token usage-ஐ குறைக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What happens if you use JSON mode but don't mention JSON in the prompt?",
+        "ta": "JSON mode பயன்படுத்தி prompt-ல் JSON குறிப்பிடாவிட்டால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It works perfectly",
+          "The API may return an error or unreliable output",
+          "It returns XML instead",
+          "Nothing — JSON mode overrides the prompt"
+        ],
+        "ta": [
+          "சரியாக வேலை செய்கிறது",
+          "API error அல்லது நம்பகமற்ற output திருப்பி அனுப்பலாம்",
+          "XML-ஐ திருப்பி அனுப்புகிறது",
+          "ஒன்றும் இல்லை — JSON mode prompt-ஐ override செய்கிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["json_mode", "function_calling", "pydantic_llm", "structured_output"],
+    "concepts_required": ["openai_api_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["data_extraction", "api_integration"],
+    "category": "ai_applications",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

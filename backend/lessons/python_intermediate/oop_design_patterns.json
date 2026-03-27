@@ -1,0 +1,308 @@
+{
+  "id": "oop_design_patterns",
+  "topic": "oop_design_patterns",
+  "track": "python_intermediate",
+  "module": "object_oriented_programming",
+  "order": 5,
+  "title": {
+    "en": "Design Patterns: Recipes for Elegant Code",
+    "ta": "வடிவமைப்பு முறைகள்: நேர்த்தியான குறியீட்டுக்கான சமையல் குறிப்புகள்"
+  },
+  "description": {
+    "en": "Learn Singleton, Factory, Observer, and Strategy patterns — battle-tested solutions to common software design problems.",
+    "ta": "Singleton, Factory, Observer, Strategy ஆகிய வடிவமைப்பு முறைகளைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Recipe Book\n\nVaathiyaar opens an old, thick book. \"These are not my recipes — they are **design patterns**, solutions discovered by programmers over decades. Instead of reinventing the wheel, we stand on the shoulders of giants.\"\n\n### What are Design Patterns?\n- Reusable solutions to common problems\n- Not code — they are **templates** for solving problems\n- Named so developers can communicate ideas quickly\n\n### The Four Patterns We'll Learn\n\n| Pattern | Purpose | Real-World Analogy |\n|---------|---------|--------------------|\n| **Singleton** | Only one instance exists | One president per country |\n| **Factory** | Create objects without specifying class | Restaurant kitchen |\n| **Observer** | Notify watchers of changes | YouTube subscribers |\n| **Strategy** | Swap algorithms at runtime | GPS route options |\n\n> **Key Concept:** Design patterns are about writing code that is flexible, maintainable, and communicates intent clearly. Learn the patterns, then apply them when the problem fits."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "recipe_book",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Design Patterns",
+          "children": [
+            "Singleton (one instance)",
+            "Factory (object creation)",
+            "Observer (event notify)",
+            "Strategy (swap behavior)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class Singleton:",
+          "highlight": "Singleton",
+          "explanation": {
+            "en": "Singleton ensures only ONE instance of a class exists"
+          }
+        },
+        {
+          "line": "    _instance = None",
+          "highlight": "_instance",
+          "explanation": {
+            "en": "Class variable to hold the single instance"
+          }
+        },
+        {
+          "line": "    def __new__(cls):",
+          "highlight": "__new__",
+          "explanation": {
+            "en": "__new__ controls object creation — runs before __init__"
+          }
+        },
+        {
+          "line": "        if cls._instance is None:",
+          "highlight": "is None",
+          "explanation": {
+            "en": "Check if an instance already exists"
+          }
+        },
+        {
+          "line": "            cls._instance = super().__new__(cls)",
+          "highlight": "super().__new__",
+          "explanation": {
+            "en": "If not, create one. If yes, skip and return existing."
+          }
+        },
+        {
+          "line": "        return cls._instance",
+          "highlight": "return",
+          "explanation": {
+            "en": "Always return the same instance"
+          }
+        },
+        {
+          "line": "a = Singleton()",
+          "highlight": "Singleton()",
+          "explanation": {
+            "en": "Create first instance"
+          }
+        },
+        {
+          "line": "b = Singleton()",
+          "highlight": "Singleton()",
+          "explanation": {
+            "en": "Attempt to create second — gets the SAME object"
+          }
+        },
+        {
+          "line": "print(a is b)",
+          "highlight": "is",
+          "explanation": {
+            "en": "True — a and b point to the exact same object in memory"
+          }
+        },
+        {
+          "line": "class AnimalFactory:",
+          "highlight": "Factory",
+          "explanation": {
+            "en": "Factory pattern — creates objects based on input"
+          }
+        },
+        {
+          "line": "    @staticmethod",
+          "highlight": "@staticmethod",
+          "explanation": {
+            "en": "Factory method doesn't need self — it's a static method"
+          }
+        },
+        {
+          "line": "    def create(animal_type, name):",
+          "highlight": "create",
+          "explanation": {
+            "en": "Takes a type string and returns the right object"
+          }
+        },
+        {
+          "line": "        animals = {'dog': Dog, 'cat': Cat}",
+          "highlight": "animals",
+          "explanation": {
+            "en": "Map type strings to actual classes"
+          }
+        },
+        {
+          "line": "        cls = animals.get(animal_type)",
+          "highlight": ".get",
+          "explanation": {
+            "en": "Look up the class for the given type"
+          }
+        },
+        {
+          "line": "        if cls:",
+          "highlight": "if",
+          "explanation": {
+            "en": "Check if the type was found in our map"
+          }
+        },
+        {
+          "line": "            return cls(name)",
+          "highlight": "return cls(name)",
+          "explanation": {
+            "en": "Create and return the appropriate object"
+          }
+        },
+        {
+          "line": "        raise ValueError(f'Unknown: {animal_type}')",
+          "highlight": "raise",
+          "explanation": {
+            "en": "Raise an error for unrecognized types"
+          }
+        },
+        {
+          "line": "pet = AnimalFactory.create('dog', 'Rex')",
+          "highlight": "create",
+          "explanation": {
+            "en": "Use the factory — caller doesn't need to know which class"
+          }
+        },
+        {
+          "line": "print(pet.speak())",
+          "highlight": "speak",
+          "explanation": {
+            "en": "The created object works just like any Dog instance"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_a",
+      "variable": "a",
+      "value": "Singleton @ 0x7f01",
+      "data_type": "Singleton",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_b",
+      "variable": "b",
+      "value": "Singleton @ 0x7f01 (same!)",
+      "data_type": "Singleton",
+      "color": "#f74f4f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "True",
+        "Rex says Woof!"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "a",
+          "value": "Singleton @ 0x7f01",
+          "type": "Singleton",
+          "address": "0x7f01"
+        },
+        {
+          "name": "b",
+          "value": "SAME as a -> 0x7f01",
+          "type": "Singleton",
+          "address": "0x7f01"
+        },
+        {
+          "name": "pet",
+          "value": "Dog('Rex')",
+          "type": "Dog",
+          "address": "0x7f02"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a simple Observer pattern: Create a Channel class with subscribe(observer) and notify(message) methods. Create a Subscriber class with update(message) that prints the message. Subscribe 2 subscribers and notify them.",
+        "ta": "Observer pattern செயல்படுத்துங்கள்: Channel வகுப்பை subscribe(observer) மற்றும் notify(message) முறைகளுடன் உருவாக்குங்கள். Subscriber வகுப்பை update(message) முறையுடன் உருவாக்குங்கள்."
+      },
+      "starter_code": "class Subscriber:\n    def __init__(self, name):\n        self.name = name\n\n    def update(self, message):\n        print(f'{self.name} received: {message}')\n\nclass Channel:\n    def __init__(self):\n        self.subscribers = []\n\n    def subscribe(self, observer):\n        # add observer to list\n        pass\n\n    def notify(self, message):\n        # call update on each subscriber\n        pass\n\nch = Channel()\nch.subscribe(Subscriber('Alice'))\nch.subscribe(Subscriber('Bob'))\nch.notify('New video uploaded!')",
+      "expected_output": "Alice received: New video uploaded!\nBob received: New video uploaded!",
+      "hints": {
+        "en": [
+          "In subscribe: self.subscribers.append(observer)",
+          "In notify: loop through self.subscribers and call .update(message)",
+          "for sub in self.subscribers: sub.update(message)"
+        ],
+        "ta": [
+          "subscribe-ல்: self.subscribers.append(observer)",
+          "notify-ல்: self.subscribers வழியாக loop செய்து .update(message) அழையுங்கள்",
+          "for sub in self.subscribers: sub.update(message)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the Singleton pattern guarantee?",
+        "ta": "Singleton pattern என்ன உத்தரவாதம் அளிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Multiple instances always",
+          "Only one instance of a class exists",
+          "No instances can be created",
+          "Instances are created lazily"
+        ],
+        "ta": [
+          "எப்போதும் பல நிகழ்வுகள்",
+          "ஒரு வகுப்பின் ஒரே ஒரு நிகழ்வு மட்டுமே உள்ளது",
+          "நிகழ்வுகள் உருவாக்க முடியாது",
+          "நிகழ்வுகள் சோம்பலாக உருவாக்கப்படுகின்றன"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the Factory pattern, who decides which class to instantiate?",
+        "ta": "Factory pattern-ல், எந்த வகுப்பை நிகழ்வாக்குவது என்று யார் முடிவு செய்கிறார்?"
+      },
+      "options": {
+        "en": ["The client code", "The factory method", "The parent class", "Python interpreter"],
+        "ta": ["கிளையண்ட் குறியீடு", "தொழிற்சாலை முறை", "பெற்றோர் வகுப்பு", "Python மொழிமாற்றி"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which pattern is best for notifying multiple objects of state changes?",
+        "ta": "நிலை மாற்றங்களை பல பொருள்களுக்கு தெரிவிக்க எந்த pattern சிறந்தது?"
+      },
+      "options": {
+        "en": ["Singleton", "Factory", "Observer", "Strategy"],
+        "ta": ["Singleton", "Factory", "Observer", "Strategy"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["singleton", "factory", "observer", "strategy", "design_patterns"],
+    "concepts_required": ["classes", "inheritance", "composition"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 35,
+    "real_world_application": ["software_architecture", "scalable_code"],
+    "category": "oop",
+    "path_memberships": ["python_intermediate"]
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "id": "fastapi_crud",
+  "topic": "fastapi_crud",
+  "track": "web_development",
+  "module": "fastapi_framework",
+  "order": 12,
+  "title": {
+    "en": "FastAPI CRUD: Full API with Database",
+    "ta": "FastAPI CRUD: தரவுத்தளத்துடன் முழு API"
+  },
+  "description": {
+    "en": "Build a complete CRUD API with FastAPI, SQLAlchemy async, database sessions, and proper error handling.",
+    "ta": "FastAPI, SQLAlchemy async, தரவுத்தள அமர்வுகள் மற்றும் சரியான பிழை கையாளுதலுடன் முழுமையான CRUD API-ஐ உருவாக்குங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## The Full Kitchen\n\nVaathiyaar steps into a professional kitchen. \"We've learned the ingredients — now we cook the full meal. A real API needs a **database**, **schema validation**, **error handling**, and **proper CRUD operations**. Let's build a production-quality API.\"\n\n### The Stack\n- **FastAPI** — Web framework\n- **SQLAlchemy** — ORM (async mode)\n- **Pydantic** — Request/response validation\n- **SQLite/PostgreSQL** — Database\n\n### CRUD Pattern in FastAPI\n\n| Operation | HTTP | FastAPI Route | SQLAlchemy |\n|-----------|------|---------------|------------|\n| Create | POST | `@app.post('/items/')` | `db.add(item)` |\n| Read All | GET | `@app.get('/items/')` | `db.execute(select(Item))` |\n| Read One | GET | `@app.get('/items/{id}')` | `db.get(Item, id)` |\n| Update | PUT | `@app.put('/items/{id}')` | `item.name = new` |\n| Delete | DELETE | `@app.delete('/items/{id}')` | `db.delete(item)` |\n\n### Dependency Injection\nFastAPI uses `Depends()` to inject database sessions into routes:\n```python\nasync def get_db():\n    async with SessionLocal() as session:\n        yield session\n\n@app.get('/items/')\nasync def read_items(db: AsyncSession = Depends(get_db)):\n    ...\n```\n\n> **Key Concept:** Dependency injection keeps your code clean. Instead of creating database connections inside each route, you declare what you need and FastAPI provides it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "professional_kitchen",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "crud_overview",
+      "nodes": [
+        {
+          "label": "FastAPI CRUD",
+          "children": [
+            "SQLAlchemy Models (DB)",
+            "Pydantic Schemas (validation)",
+            "Depends() (injection)",
+            "CRUD Operations (routes)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "crud_demo",
+      "steps": [
+        {
+          "line": "# database.py — Database setup\nfrom sqlalchemy import create_engine\nfrom sqlalchemy.orm import sessionmaker, DeclarativeBase",
+          "highlight": "create_engine",
+          "explanation": {
+            "en": "Set up the database engine and session factory"
+          }
+        },
+        {
+          "line": "DATABASE_URL = 'sqlite:///./app.db'\nengine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False})\nSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)",
+          "highlight": "SessionLocal",
+          "explanation": {
+            "en": "SessionLocal creates new database sessions for each request"
+          }
+        },
+        {
+          "line": "class Base(DeclarativeBase):\n    pass",
+          "highlight": "DeclarativeBase",
+          "explanation": {
+            "en": "Base class for all SQLAlchemy models"
+          }
+        },
+        {
+          "line": "# models.py — Database models\nfrom sqlalchemy import Column, Integer, String, Float, Boolean\nfrom database import Base",
+          "highlight": "models.py",
+          "explanation": {
+            "en": "SQLAlchemy models define database table structure"
+          }
+        },
+        {
+          "line": "class Item(Base):\n    __tablename__ = 'items'\n    id = Column(Integer, primary_key=True, index=True)\n    name = Column(String(100), nullable=False)\n    description = Column(String(500), default='')\n    price = Column(Float, nullable=False)\n    in_stock = Column(Boolean, default=True)",
+          "highlight": "__tablename__",
+          "explanation": {
+            "en": "Define the Item table with typed columns"
+          }
+        },
+        {
+          "line": "# schemas.py — Pydantic models\nfrom pydantic import BaseModel, Field\n\nclass ItemCreate(BaseModel):\n    name: str = Field(..., min_length=1, max_length=100)\n    description: str = ''\n    price: float = Field(..., gt=0)\n    in_stock: bool = True",
+          "highlight": "ItemCreate",
+          "explanation": {
+            "en": "Pydantic schema for CREATE requests — validates input"
+          }
+        },
+        {
+          "line": "class ItemUpdate(BaseModel):\n    name: str | None = None\n    description: str | None = None\n    price: float | None = Field(default=None, gt=0)\n    in_stock: bool | None = None",
+          "highlight": "ItemUpdate",
+          "explanation": {
+            "en": "Update schema — all fields optional for partial updates"
+          }
+        },
+        {
+          "line": "class ItemResponse(ItemCreate):\n    id: int\n    class Config:\n        from_attributes = True",
+          "highlight": "from_attributes",
+          "explanation": {
+            "en": "from_attributes=True allows reading from SQLAlchemy model attributes"
+          }
+        },
+        {
+          "line": "# main.py — FastAPI app\nfrom fastapi import FastAPI, Depends, HTTPException\nfrom sqlalchemy.orm import Session\nfrom database import SessionLocal, engine, Base\nfrom models import Item\nfrom schemas import ItemCreate, ItemUpdate, ItemResponse",
+          "highlight": "main.py",
+          "explanation": {
+            "en": "Import all components into the main application file"
+          }
+        },
+        {
+          "line": "Base.metadata.create_all(bind=engine)\napp = FastAPI(title='Items API')",
+          "highlight": "create_all",
+          "explanation": {
+            "en": "Create database tables on startup"
+          }
+        },
+        {
+          "line": "def get_db():\n    db = SessionLocal()\n    try:\n        yield db\n    finally:\n        db.close()",
+          "highlight": "yield db",
+          "explanation": {
+            "en": "Dependency: yields a DB session, guarantees cleanup with finally"
+          }
+        },
+        {
+          "line": "@app.post('/items/', response_model=ItemResponse, status_code=201)\ndef create_item(item: ItemCreate, db: Session = Depends(get_db)):\n    db_item = Item(**item.model_dump())\n    db.add(db_item)\n    db.commit()\n    db.refresh(db_item)\n    return db_item",
+          "highlight": "Depends(get_db)",
+          "explanation": {
+            "en": "CREATE: validate with Pydantic, save with SQLAlchemy, return refreshed object"
+          }
+        },
+        {
+          "line": "@app.get('/items/', response_model=list[ItemResponse])\ndef list_items(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):\n    return db.query(Item).offset(skip).limit(limit).all()",
+          "highlight": "offset(skip).limit(limit)",
+          "explanation": {
+            "en": "READ ALL: pagination with skip and limit query params"
+          }
+        },
+        {
+          "line": "@app.get('/items/{item_id}', response_model=ItemResponse)\ndef get_item(item_id: int, db: Session = Depends(get_db)):\n    item = db.query(Item).filter(Item.id == item_id).first()\n    if not item:\n        raise HTTPException(status_code=404, detail='Item not found')\n    return item",
+          "highlight": "HTTPException",
+          "explanation": {
+            "en": "READ ONE: get by ID or raise 404"
+          }
+        },
+        {
+          "line": "@app.put('/items/{item_id}', response_model=ItemResponse)\ndef update_item(item_id: int, item_update: ItemUpdate, db: Session = Depends(get_db)):\n    item = db.query(Item).filter(Item.id == item_id).first()\n    if not item:\n        raise HTTPException(status_code=404, detail='Item not found')\n    for field, value in item_update.model_dump(exclude_unset=True).items():\n        setattr(item, field, value)\n    db.commit()\n    db.refresh(item)\n    return item",
+          "highlight": "exclude_unset",
+          "explanation": {
+            "en": "UPDATE: only change fields that were actually sent in the request"
+          }
+        },
+        {
+          "line": "@app.delete('/items/{item_id}', status_code=204)\ndef delete_item(item_id: int, db: Session = Depends(get_db)):\n    item = db.query(Item).filter(Item.id == item_id).first()\n    if not item:\n        raise HTTPException(status_code=404, detail='Item not found')\n    db.delete(item)\n    db.commit()\n    return None",
+          "highlight": "status_code=204",
+          "explanation": {
+            "en": "DELETE: remove the item and return 204 No Content"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_db_session",
+      "variable": "db",
+      "value": "<Session (bound to sqlite:///./app.db)>",
+      "data_type": "Session",
+      "color": "#795548"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_item",
+      "variable": "db_item",
+      "value": "Item(id=1, name='Widget', price=9.99)",
+      "data_type": "Item",
+      "color": "#009688"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ curl -X POST http://localhost:8000/items/ -H 'Content-Type: application/json' -d '{\"name\":\"Widget\",\"price\":9.99}'",
+        "{\"id\":1,\"name\":\"Widget\",\"description\":\"\",\"price\":9.99,\"in_stock\":true}",
+        "",
+        "$ curl http://localhost:8000/items/",
+        "[{\"id\":1,\"name\":\"Widget\",\"description\":\"\",\"price\":9.99,\"in_stock\":true}]",
+        "",
+        "$ curl -X PUT http://localhost:8000/items/1 -H 'Content-Type: application/json' -d '{\"price\":12.99}'",
+        "{\"id\":1,\"name\":\"Widget\",\"description\":\"\",\"price\":12.99,\"in_stock\":true}",
+        "",
+        "$ curl -X DELETE http://localhost:8000/items/1 -w '%{http_code}'",
+        "204"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a complete CRUD API for a 'Todo' resource with fields: title, description, is_done, priority. Include database setup, Pydantic schemas, and all five endpoints (create, list, get, update, delete). Add a custom endpoint GET /todos/pending that returns only incomplete todos.",
+        "ta": "title, description, is_done, priority புலங்களுடன் 'Todo' வளத்திற்கான முழுமையான CRUD API-ஐ உருவாக்குங்கள்."
+      },
+      "starter_code": "from fastapi import FastAPI, Depends, HTTPException\nfrom sqlalchemy import create_engine, Column, Integer, String, Boolean\nfrom sqlalchemy.orm import sessionmaker, DeclarativeBase, Session\nfrom pydantic import BaseModel, Field\n\n# Database\nengine = create_engine('sqlite:///./todos.db', connect_args={'check_same_thread': False})\nSessionLocal = sessionmaker(bind=engine)\n\nclass Base(DeclarativeBase): pass\n\nclass Todo(Base):\n    __tablename__ = 'todos'\n    id = Column(Integer, primary_key=True, index=True)\n    title = Column(String(200), nullable=False)\n    description = Column(String(500), default='')\n    is_done = Column(Boolean, default=False)\n    priority = Column(Integer, default=1)\n\nBase.metadata.create_all(bind=engine)\n\nclass TodoCreate(BaseModel):\n    title: str = Field(..., min_length=1)\n    description: str = ''\n    priority: int = Field(default=1, ge=1, le=5)\n\nclass TodoResponse(TodoCreate):\n    id: int\n    is_done: bool\n    class Config:\n        from_attributes = True\n\napp = FastAPI()\n\ndef get_db():\n    db = SessionLocal()\n    try: yield db\n    finally: db.close()\n\n@app.post('/todos/', response_model=TodoResponse, status_code=201)\ndef create_todo(todo: TodoCreate, db: Session = Depends(get_db)):\n    db_todo = Todo(**todo.model_dump())\n    db.add(db_todo); db.commit(); db.refresh(db_todo)\n    return db_todo\n\n@app.get('/todos/', response_model=list[TodoResponse])\ndef list_todos(db: Session = Depends(get_db)):\n    return db.query(Todo).all()\n\n@app.get('/todos/pending', response_model=list[TodoResponse])\ndef pending_todos(db: Session = Depends(get_db)):\n    return db.query(Todo).filter(Todo.is_done == False).order_by(Todo.priority).all()",
+      "expected_output": "POST /todos/ → {\"id\": 1, \"title\": \"Learn FastAPI\", ...}\nGET /todos/pending → [{\"id\": 1, \"title\": \"Learn FastAPI\", \"is_done\": false, ...}]",
+      "hints": {
+        "en": [
+          "Use Depends(get_db) to inject the database session",
+          "db.add() + db.commit() + db.refresh() for CREATE",
+          "db.query(Model).filter() for filtered queries",
+          "model_dump(exclude_unset=True) for partial updates"
+        ],
+        "ta": [
+          "தரவுத்தள அமர்வை செலுத்த Depends(get_db) பயன்படுத்துங்கள்",
+          "CREATE-க்கு db.add() + db.commit() + db.refresh()",
+          "வடிகட்டப்பட்ட வினவல்களுக்கு db.query(Model).filter()",
+          "பகுதி புதுப்பிப்புகளுக்கு model_dump(exclude_unset=True)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does Depends(get_db) do in a FastAPI route?",
+        "ta": "FastAPI வழியில் Depends(get_db) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates a new database", "Injects a database session into the route function", "Deletes the database", "Runs database migrations"],
+        "ta": ["புதிய தரவுத்தளத்தை உருவாக்குகிறது", "வழி செயல்பாட்டில் தரவுத்தள அமர்வை செலுத்துகிறது", "தரவுத்தளத்தை நீக்குகிறது", "தரவுத்தள இடம்பெயர்வுகளை இயக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use model_dump(exclude_unset=True) for update operations?",
+        "ta": "புதுப்பிப்பு செயல்பாடுகளுக்கு model_dump(exclude_unset=True) ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["To include all fields", "To only update fields that were explicitly sent in the request", "To remove the id field", "To convert to JSON string"],
+        "ta": ["அனைத்து புலங்களையும் சேர்க்க", "கோரிக்கையில் வெளிப்படையாக அனுப்பப்பட்ட புலங்களை மட்டும் புதுப்பிக்க", "id புலத்தை நீக்க", "JSON சரமாக மாற்ற"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What HTTP status code should DELETE return on success?",
+        "ta": "வெற்றிகரமாக நீக்கும்போது DELETE எந்த HTTP நிலை குறியீட்டை திருப்ப வேண்டும்?"
+      },
+      "options": {
+        "en": ["200 OK", "201 Created", "204 No Content", "404 Not Found"],
+        "ta": ["200 OK", "201 Created", "204 No Content", "404 Not Found"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["fastapi_crud", "sqlalchemy_integration", "dependency_injection", "pydantic_schemas"],
+    "concepts_required": ["fastapi_basics", "rest_api_concepts", "database_sql_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 40,
+    "real_world_application": ["api_development", "backend_services"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

@@ -1,0 +1,260 @@
+{
+  "id": "flask_authentication",
+  "topic": "flask_authentication",
+  "track": "web_development",
+  "module": "flask_framework",
+  "order": 5,
+  "title": {
+    "en": "Flask Authentication: Login, Sessions & Security",
+    "ta": "Flask அங்கீகாரம்: உள்நுழைவு, அமர்வுகள் & பாதுகாப்பு"
+  },
+  "description": {
+    "en": "Implement user authentication with Flask-Login, password hashing, sessions, and protected routes.",
+    "ta": "Flask-Login, கடவுச்சொல் ஹாஷிங், அமர்வுகள் மற்றும் பாதுகாக்கப்பட்ட வழிகள் மூலம் பயனர் அங்கீகாரத்தை செயல்படுத்துங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## The VIP Lounge\n\nVaathiyaar stands at a velvet rope. \"Not everyone gets in. Some pages are public, some are VIP-only. **Authentication** checks WHO you are (login). **Authorization** checks WHAT you can do (permissions). Today we build the bouncer.\"\n\n### Authentication Flow\n1. User submits username + password\n2. Server checks credentials against the database\n3. If valid, server creates a **session** (a cookie)\n4. Browser sends the cookie on every subsequent request\n5. Server recognizes the user without re-asking for password\n\n### Password Security\n- **NEVER** store passwords in plain text\n- Use **bcrypt** or **werkzeug.security** to hash passwords\n- Hashing is one-way — you can verify but never reverse\n- Add **salt** to prevent rainbow table attacks\n\n### Flask-Login\n| Feature | Purpose |\n|---------|--------|\n| `LoginManager` | Manages user sessions |\n| `login_user()` | Log a user in |\n| `logout_user()` | Log a user out |\n| `current_user` | Access the logged-in user |\n| `@login_required` | Protect routes from guests |\n\n> **Key Concept:** Sessions use signed cookies. The server stores a session ID in the cookie, not the actual user data. The SECRET_KEY signs the cookie so it can't be tampered with."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "vip_lounge",
+      "duration_ms": 4000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "auth_flow",
+      "steps": [
+        "User enters credentials",
+        "Flask receives POST /login",
+        "Check password hash with bcrypt",
+        "If match → login_user(user)",
+        "Session cookie set in browser",
+        "Subsequent requests include cookie",
+        "@login_required checks session"
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "auth_overview",
+      "nodes": [
+        {
+          "label": "Authentication",
+          "children": [
+            "Password Hashing (bcrypt)",
+            "Sessions (cookies)",
+            "Flask-Login (manager)",
+            "Protected Routes (@login_required)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "auth_demo",
+      "steps": [
+        {
+          "line": "from flask import Flask, render_template, redirect, url_for, flash, request",
+          "highlight": "Flask",
+          "explanation": {
+            "en": "Import core Flask utilities"
+          }
+        },
+        {
+          "line": "from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user",
+          "highlight": "LoginManager",
+          "explanation": {
+            "en": "Import Flask-Login components for session management"
+          }
+        },
+        {
+          "line": "from werkzeug.security import generate_password_hash, check_password_hash",
+          "highlight": "generate_password_hash",
+          "explanation": {
+            "en": "Werkzeug provides secure password hashing — built into Flask"
+          }
+        },
+        {
+          "line": "from flask_sqlalchemy import SQLAlchemy",
+          "highlight": "SQLAlchemy",
+          "explanation": {
+            "en": "SQLAlchemy for storing user accounts in a database"
+          }
+        },
+        {
+          "line": "app = Flask(__name__)\napp.config['SECRET_KEY'] = 'super-secret-key-change-me'\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'\ndb = SQLAlchemy(app)",
+          "highlight": "SECRET_KEY",
+          "explanation": {
+            "en": "Configure app with secret key for session signing and database URI"
+          }
+        },
+        {
+          "line": "login_manager = LoginManager(app)\nlogin_manager.login_view = 'login'",
+          "highlight": "login_view",
+          "explanation": {
+            "en": "Initialize LoginManager — login_view redirects unauthorized users to login page"
+          }
+        },
+        {
+          "line": "class User(UserMixin, db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    username = db.Column(db.String(80), unique=True, nullable=False)\n    password_hash = db.Column(db.String(200), nullable=False)",
+          "highlight": "UserMixin",
+          "explanation": {
+            "en": "UserMixin adds is_authenticated, is_active, get_id() methods required by Flask-Login"
+          }
+        },
+        {
+          "line": "    def set_password(self, password):\n        self.password_hash = generate_password_hash(password)",
+          "highlight": "generate_password_hash",
+          "explanation": {
+            "en": "Hash the plain-text password before storing — never store raw passwords"
+          }
+        },
+        {
+          "line": "    def check_password(self, password):\n        return check_password_hash(self.password_hash, password)",
+          "highlight": "check_password_hash",
+          "explanation": {
+            "en": "Verify a password attempt against the stored hash"
+          }
+        },
+        {
+          "line": "@login_manager.user_loader\ndef load_user(user_id):\n    return User.query.get(int(user_id))",
+          "highlight": "user_loader",
+          "explanation": {
+            "en": "Flask-Login calls this to reload a user from their session ID"
+          }
+        },
+        {
+          "line": "@app.route('/register', methods=['GET', 'POST'])\ndef register():\n    if request.method == 'POST':\n        user = User(username=request.form['username'])\n        user.set_password(request.form['password'])\n        db.session.add(user)\n        db.session.commit()\n        flash('Account created! Please log in.', 'success')\n        return redirect(url_for('login'))\n    return render_template('register.html')",
+          "highlight": "set_password",
+          "explanation": {
+            "en": "Registration: create user, hash password, save to database"
+          }
+        },
+        {
+          "line": "@app.route('/login', methods=['GET', 'POST'])\ndef login():\n    if request.method == 'POST':\n        user = User.query.filter_by(username=request.form['username']).first()\n        if user and user.check_password(request.form['password']):\n            login_user(user)\n            return redirect(url_for('dashboard'))\n        flash('Invalid credentials', 'danger')\n    return render_template('login.html')",
+          "highlight": "login_user",
+          "explanation": {
+            "en": "Login: find user, verify password hash, create session"
+          }
+        },
+        {
+          "line": "@app.route('/dashboard')\n@login_required\ndef dashboard():\n    return f'Welcome, {current_user.username}!'",
+          "highlight": "@login_required",
+          "explanation": {
+            "en": "Protected route — only logged-in users can access this"
+          }
+        },
+        {
+          "line": "@app.route('/logout')\n@login_required\ndef logout():\n    logout_user()\n    return redirect(url_for('login'))",
+          "highlight": "logout_user",
+          "explanation": {
+            "en": "Destroy the session and redirect to login page"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_hash",
+      "variable": "password_hash",
+      "value": "pbkdf2:sha256:260000$abc...",
+      "data_type": "str",
+      "color": "#E91E63"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_current_user",
+      "variable": "current_user.username",
+      "value": "pymaster",
+      "data_type": "str",
+      "color": "#4CAF50"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> from werkzeug.security import generate_password_hash, check_password_hash",
+        ">>> hashed = generate_password_hash('mypassword123')",
+        ">>> print(hashed)",
+        "pbkdf2:sha256:260000$UxK7xOzR$e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        ">>> check_password_hash(hashed, 'mypassword123')",
+        "True",
+        ">>> check_password_hash(hashed, 'wrongpassword')",
+        "False"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement password hashing: create a User class with set_password() and check_password() methods. Demonstrate that the same password produces different hashes (due to salting) but both verify correctly.",
+        "ta": "கடவுச்சொல் ஹாஷிங்கை செயல்படுத்துங்கள்: set_password() மற்றும் check_password() முறைகளுடன் User வகுப்பை உருவாக்குங்கள்."
+      },
+      "starter_code": "from werkzeug.security import generate_password_hash, check_password_hash\n\nclass User:\n    def __init__(self, username):\n        self.username = username\n        self.password_hash = None\n\n    def set_password(self, password):\n        self.password_hash = generate_password_hash(password)\n\n    def check_password(self, password):\n        return check_password_hash(self.password_hash, password)\n\n# Test it out\nalice = User('alice')\nalice.set_password('secret123')\n\nprint(f'Hash: {alice.password_hash[:50]}...')\nprint(f'Correct password: {alice.check_password(\"secret123\")}')\nprint(f'Wrong password: {alice.check_password(\"wrong\")}')\n\n# Same password, different hash (salting!)\nbob = User('bob')\nbob.set_password('secret123')\nprint(f'Same password, same hash? {alice.password_hash == bob.password_hash}')",
+      "expected_output": "Hash: pbkdf2:sha256:260000$...\nCorrect password: True\nWrong password: False\nSame password, same hash? False",
+      "hints": {
+        "en": [
+          "generate_password_hash() adds a random salt automatically",
+          "check_password_hash() extracts the salt and re-hashes to compare",
+          "Two hashes of the same password will differ due to unique salts",
+          "This prevents rainbow table attacks"
+        ],
+        "ta": [
+          "generate_password_hash() தானாகவே சீரற்ற உப்பைச் சேர்க்கிறது",
+          "check_password_hash() உப்பைப் பிரித்தெடுத்து மீண்டும் ஹாஷ் செய்து ஒப்பிடுகிறது",
+          "ஒரே கடவுச்சொல்லின் இரண்டு ஹாஷ்கள் தனிப்பட்ட உப்புகளால் வேறுபடும்",
+          "இது ரெயின்போ டேபிள் தாக்குதல்களைத் தடுக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why should you NEVER store plain-text passwords in a database?",
+        "ta": "தரவுத்தளத்தில் எளிய உரை கடவுச்சொற்களை ஏன் ஒருபோதும் சேமிக்கக் கூடாது?"
+      },
+      "options": {
+        "en": ["They take too much storage space", "If the database is breached, all passwords are exposed", "Plain text is slower to read", "Python doesn't support plain text"],
+        "ta": ["அவை அதிக சேமிப்பு இடத்தை எடுக்கும்", "தரவுத்தளம் மீறப்பட்டால், அனைத்து கடவுச்சொற்களும் வெளிப்படும்", "எளிய உரையைப் படிப்பது மெதுவாக இருக்கும்", "Python எளிய உரையை ஆதரிக்காது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does @login_required do in Flask-Login?",
+        "ta": "Flask-Login-ல் @login_required என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Hashes the user's password", "Redirects unauthenticated users to the login page", "Creates a new user account", "Encrypts the database"],
+        "ta": ["பயனரின் கடவுச்சொல்லை ஹாஷ் செய்கிறது", "அங்கீகரிக்கப்படாத பயனர்களை உள்நுழைவு பக்கத்திற்கு திருப்பி விடுகிறது", "புதிய பயனர் கணக்கை உருவாக்குகிறது", "தரவுத்தளத்தை குறியாக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the purpose of 'salting' a password hash?",
+        "ta": "கடவுச்சொல் ஹாஷை 'சால்ட்டிங்' செய்வதன் நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": ["To make the hash shorter", "To ensure identical passwords produce different hashes", "To speed up the hashing process", "To make the password recoverable"],
+        "ta": ["ஹாஷை குறுகியதாக்க", "ஒரே கடவுச்சொற்கள் வெவ்வேறு ஹாஷ்களை உருவாக்குவதை உறுதி செய்ய", "ஹாஷிங் செயல்முறையை விரைவுபடுத்த", "கடவுச்சொல்லை மீட்டெடுக்கக்கூடியதாக்க"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["password_hashing", "flask_login", "sessions", "protected_routes"],
+    "concepts_required": ["flask_routes", "flask_forms", "sqlalchemy"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["user_auth", "web_security"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

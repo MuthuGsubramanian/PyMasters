@@ -1,0 +1,234 @@
+{
+  "id": "logistic_regression",
+  "topic": "logistic_regression",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 9,
+  "title": {
+    "en": "Logistic Regression: Yes or No?",
+    "ta": "லாஜிஸ்டிக் பின்னடைவு: ஆம் அல்லது இல்லை?"
+  },
+  "description": {
+    "en": "Learn binary classification with logistic regression — the sigmoid function, decision boundary, log-loss, and multi-class extension.",
+    "ta": "லாஜிஸ்டிக் பின்னடைவுடன் இரும வகைப்பாடு கற்றுக்கொள்ளுங்கள் — சிக்மாய்டு செயல்பாடு, முடிவு எல்லை, log-loss, மற்றும் பல-வகுப்பு நீட்டிப்பு."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's Gate Keeper\n\nVaathiyaar stands at a gate. \"Linear regression predicts numbers. But what if you need a YES or NO answer? Will this email be spam? Will this patient have diabetes? That's classification, and logistic regression is your gatekeeper.\"\n\n### From Line to Curve\n\n**The Sigmoid Function**: sigma(z) = 1 / (1 + e^(-z))\n- Takes any real number and squashes it between 0 and 1\n- Output > 0.5 → Class 1, Output <= 0.5 → Class 0\n\n**Decision Boundary**: The threshold where the model switches its prediction\n\n```python\nimport numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import accuracy_score, classification_report\n\n# Load binary classification dataset\nX, y = load_breast_cancer(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(max_iter=10000, random_state=42)\nmodel.fit(X_train, y_train)\n\ny_pred = model.predict(X_test)\nprint(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')\nprint(classification_report(y_test, y_pred))\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "gate_keeper",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "logreg_map",
+      "nodes": [
+        {
+          "label": "Logistic Regression",
+          "children": ["Sigmoid Function", "Decision Boundary", "Log-Loss", "Binary Classification"]
+        },
+        {
+          "label": "Output",
+          "children": ["Probability (0-1)", "Class Label (0 or 1)", "Confidence Score"]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "logreg_code",
+      "steps": [
+        {
+          "line": "import numpy as np",
+          "highlight": "numpy",
+          "explanation": { "en": "Import NumPy for sigmoid demonstration" }
+        },
+        {
+          "line": "def sigmoid(z): return 1 / (1 + np.exp(-z))",
+          "highlight": "sigmoid",
+          "explanation": { "en": "The sigmoid function squashes any real number to range (0, 1)" }
+        },
+        {
+          "line": "print(f'sigmoid(-5)={sigmoid(-5):.4f}, sigmoid(0)={sigmoid(0):.4f}, sigmoid(5)={sigmoid(5):.4f}')",
+          "highlight": "sigmoid",
+          "explanation": { "en": "sigmoid(-5)≈0, sigmoid(0)=0.5, sigmoid(5)≈1 — S-shaped curve" }
+        },
+        {
+          "line": "from sklearn.linear_model import LogisticRegression",
+          "highlight": "LogisticRegression",
+          "explanation": { "en": "Import logistic regression — despite the name, it is a classifier" }
+        },
+        {
+          "line": "from sklearn.datasets import load_breast_cancer",
+          "highlight": "load_breast_cancer",
+          "explanation": { "en": "569 samples, 30 features, binary: malignant (0) or benign (1)" }
+        },
+        {
+          "line": "X, y = load_breast_cancer(return_X_y=True)",
+          "highlight": "X, y",
+          "explanation": { "en": "Load features and labels — a real medical classification problem" }
+        },
+        {
+          "line": "from sklearn.model_selection import train_test_split",
+          "highlight": "train_test_split",
+          "explanation": { "en": "Import the splitting function" }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
+          "highlight": "test_size=0.2",
+          "explanation": { "en": "80/20 split — 455 train, 114 test samples" }
+        },
+        {
+          "line": "model = LogisticRegression(max_iter=10000, random_state=42)",
+          "highlight": "max_iter",
+          "explanation": { "en": "max_iter=10000 ensures convergence — default 100 may not be enough" }
+        },
+        {
+          "line": "model.fit(X_train, y_train)",
+          "highlight": "fit",
+          "explanation": { "en": "Train: model learns weights that minimize log-loss" }
+        },
+        {
+          "line": "y_pred = model.predict(X_test)",
+          "highlight": "predict",
+          "explanation": { "en": "Predict class labels (0 or 1) for test data" }
+        },
+        {
+          "line": "y_proba = model.predict_proba(X_test)[:3]",
+          "highlight": "predict_proba",
+          "explanation": { "en": "Get probability scores — shows confidence for each class" }
+        },
+        {
+          "line": "from sklearn.metrics import accuracy_score, classification_report",
+          "highlight": "metrics",
+          "explanation": { "en": "Import evaluation tools for classification" }
+        },
+        {
+          "line": "print(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')",
+          "highlight": "accuracy_score",
+          "explanation": { "en": "Overall accuracy — percentage of correct predictions" }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_accuracy",
+      "variable": "accuracy",
+      "value": 0.9649,
+      "data_type": "float",
+      "color": "#2ecc71"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_sigmoid_0",
+      "variable": "sigmoid(0)",
+      "value": 0.5,
+      "data_type": "float",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "sigmoid(-5)=0.0067, sigmoid(0)=0.5000, sigmoid(5)=0.9933",
+        "Accuracy: 0.9649",
+        "              precision    recall  f1-score   support",
+        "           0       0.95      0.95      0.95        43",
+        "           1       0.97      0.97      0.97        71",
+        "    accuracy                           0.96       114"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a logistic regression spam classifier: create synthetic data where longer emails with more exclamation marks are spam. Train, predict probabilities, and display the classification report.",
+        "ta": "லாஜிஸ்டிக் ரிக்ரஷன் ஸ்பாம் வகைப்படுத்தியை உருவாக்குங்கள்: அதிக ஆச்சரியக்குறிகள் கொண்ட நீண்ட மின்னஞ்சல்கள் ஸ்பாம் என்று செயற்கை தரவை உருவாக்குங்கள். பயிற்சி செய்து, நிகழ்தகவுகளை கணித்து, வகைப்பாட்டு அறிக்கையைக் காட்டுங்கள்."
+      },
+      "starter_code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import classification_report\n\nnp.random.seed(42)\nn = 200\nemail_length = np.random.randint(10, 500, n)\nexclamation_count = np.random.randint(0, 20, n)\nspam = ((email_length > 200) & (exclamation_count > 8)).astype(int)\n\nX = np.column_stack([email_length, exclamation_count])\ny = spam\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(random_state=42)\nmodel.___(X_train, ___)\n\ny_pred = model.predict(___)\nprint(classification_report(y_test, y_pred))",
+      "expected_output": "              precision    recall  f1-score   support\n           0       1.00      1.00      1.00        29\n           1       1.00      1.00      1.00        11\n    accuracy                           1.00        40",
+      "hints": {
+        "en": [
+          "model.fit(X_train, y_train) to train",
+          "model.predict(X_test) for predictions",
+          "classification_report shows precision, recall, and F1"
+        ],
+        "ta": [
+          "பயிற்சிக்கு model.fit(X_train, y_train)",
+          "கணிப்புகளுக்கு model.predict(X_test)",
+          "classification_report precision, recall, F1 காட்டுகிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the sigmoid function output?",
+        "ta": "சிக்மாய்டு செயல்பாடு என்ன வெளியிடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Any real number",
+          "A value between 0 and 1",
+          "Only 0 or 1",
+          "A value between -1 and 1"
+        ],
+        "ta": [
+          "எந்த உண்மையான எண்",
+          "0 மற்றும் 1 இடையே ஒரு மதிப்பு",
+          "0 அல்லது 1 மட்டும்",
+          "-1 மற்றும் 1 இடையே ஒரு மதிப்பு"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is logistic regression called 'regression' if it does classification?",
+        "ta": "லாஜிஸ்டிக் ரிக்ரஷன் வகைப்பாடு செய்தாலும் ஏன் 'ரிக்ரஷன்' என்று அழைக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It was named by mistake",
+          "It regresses to find the probability, then thresholds for classification",
+          "It can only do regression",
+          "It uses linear regression internally"
+        ],
+        "ta": [
+          "தவறுதலாக பெயரிடப்பட்டது",
+          "நிகழ்தகவைக் கண்டறிய பின்னடைவு செய்து, வகைப்பாட்டிற்கு வரம்பிடுகிறது",
+          "பின்னடைவு மட்டுமே செய்ய முடியும்",
+          "உள்நாட்டில் நேரியல் பின்னடைவைப் பயன்படுத்துகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the default decision threshold in sklearn's LogisticRegression?",
+        "ta": "sklearn-ன் LogisticRegression-ல் இயல்புநிலை முடிவு வரம்பு என்ன?"
+      },
+      "options": {
+        "en": ["0.3", "0.5", "0.7", "0.9"],
+        "ta": ["0.3", "0.5", "0.7", "0.9"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["logistic_regression", "sigmoid", "decision_boundary", "binary_classification", "log_loss"],
+    "concepts_required": ["linear_regression", "train_test_split"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["spam_detection", "disease_prediction", "credit_scoring"],
+    "category": "machine_learning",
+    "path_memberships": ["supervised_learning"]
+  }
+}

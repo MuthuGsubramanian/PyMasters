@@ -1,0 +1,267 @@
+{
+  "id": "git_workflows",
+  "topic": "git_workflows",
+  "track": "testing_devops",
+  "module": "version_control",
+  "order": 11,
+  "title": {
+    "en": "Git Workflows: Branching & PRs",
+    "ta": "Git Workflows: Branching & PRs"
+  },
+  "description": {
+    "en": "Master Git branching strategies, pull requests, rebasing vs merging, and team collaboration workflows for professional Python development.",
+    "ta": "Git branching strategies, pull requests, rebasing vs merging, மற்றும் தொழில்முறை Python development-க்கான team collaboration workflows கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's Tree of Branches\n\nVaathiyaar draws a tree. \"The trunk is your main branch. Every new feature is a branch growing from the trunk. When the feature is ready, you merge the branch back. If the branch goes bad, you prune it. The trunk stays healthy.\"\n\n### Branching Strategies\n\n**Feature Branch Workflow:**\n1. Create a branch from main: `git checkout -b feature/login`\n2. Make commits on your branch\n3. Push and open a Pull Request\n4. Get code review\n5. Merge to main\n\n### Branch Naming Conventions\n- `feature/user-auth` — new feature\n- `fix/login-crash` — bug fix\n- `refactor/db-layer` — code cleanup\n- `docs/api-guide` — documentation\n\n### Merge vs Rebase\n\n| | Merge | Rebase |\n|---|-------|--------|\n| History | Preserves all commits | Linear, clean history |\n| Safety | Never rewrites history | Rewrites commit history |\n| Use when | Merging to main | Updating feature branch |\n\n### Pull Request Best Practices\n- Keep PRs small (< 400 lines)\n- Write clear descriptions\n- Request specific reviewers\n- Address all review comments\n- Squash commits before merging\n\n> **Key Concept:** Branches let you work on features in isolation. Pull requests let your team review code before it reaches main. This workflow prevents bugs and improves code quality."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "tree_branches",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "git_map",
+      "nodes": [
+        {
+          "label": "Git Workflow",
+          "children": [
+            "Branching",
+            "Pull Requests",
+            "Code Review",
+            "Merge/Rebase",
+            "Conventions"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "git_workflow_steps",
+      "steps": [
+        {
+          "line": "git checkout main",
+          "highlight": "main",
+          "explanation": {
+            "en": "Start from the main branch — always branch from main"
+          }
+        },
+        {
+          "line": "git pull origin main",
+          "highlight": "pull",
+          "explanation": {
+            "en": "Get the latest changes from the remote"
+          }
+        },
+        {
+          "line": "git checkout -b feature/user-profile",
+          "highlight": "feature/user-profile",
+          "explanation": {
+            "en": "Create and switch to a new feature branch"
+          }
+        },
+        {
+          "line": "# ... make changes to code ...",
+          "highlight": null,
+          "explanation": {
+            "en": "Work on your feature — edit files, add code"
+          }
+        },
+        {
+          "line": "git add src/profile.py tests/test_profile.py",
+          "highlight": "git add",
+          "explanation": {
+            "en": "Stage specific files — not 'git add .' for safety"
+          }
+        },
+        {
+          "line": "git commit -m 'feat: add user profile page'",
+          "highlight": "feat:",
+          "explanation": {
+            "en": "Conventional commit: 'feat:' prefix for new features"
+          }
+        },
+        {
+          "line": "git push -u origin feature/user-profile",
+          "highlight": "-u origin",
+          "explanation": {
+            "en": "Push branch to remote and set upstream tracking"
+          }
+        },
+        {
+          "line": "# Open Pull Request on GitHub",
+          "highlight": "Pull Request",
+          "explanation": {
+            "en": "Create a PR for code review — describe what and why"
+          }
+        },
+        {
+          "line": "# After review, update your branch with main",
+          "highlight": null,
+          "explanation": {
+            "en": "If main has new commits, update your branch"
+          }
+        },
+        {
+          "line": "git fetch origin main",
+          "highlight": "fetch",
+          "explanation": {
+            "en": "Download latest main without merging"
+          }
+        },
+        {
+          "line": "git rebase origin/main",
+          "highlight": "rebase",
+          "explanation": {
+            "en": "Replay your commits on top of latest main — clean history"
+          }
+        },
+        {
+          "line": "git push --force-with-lease",
+          "highlight": "--force-with-lease",
+          "explanation": {
+            "en": "Safe force push — fails if someone else pushed to your branch"
+          }
+        },
+        {
+          "line": "# PR approved — squash and merge on GitHub",
+          "highlight": "squash and merge",
+          "explanation": {
+            "en": "Squash all commits into one clean commit on main"
+          }
+        },
+        {
+          "line": "git checkout main && git pull",
+          "highlight": "git pull",
+          "explanation": {
+            "en": "Switch back to main and get the merged changes"
+          }
+        },
+        {
+          "line": "git branch -d feature/user-profile",
+          "highlight": "-d",
+          "explanation": {
+            "en": "Delete the feature branch locally — it's merged now"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "pr_flow",
+      "stages": [
+        { "label": "Branch", "icon": "git-branch", "color": "#4f8ef7" },
+        { "label": "Commit", "icon": "save", "color": "#6bcf7f" },
+        { "label": "Push", "icon": "upload", "color": "#ffd93d" },
+        { "label": "PR Review", "icon": "eye", "color": "#a66bf7" },
+        { "label": "Merge", "icon": "merge", "color": "#4ff7a4" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "git_output",
+      "output": [
+        "$ git log --oneline --graph main",
+        "* a1b2c3d (HEAD -> main) feat: add user profile page (#42)",
+        "* d4e5f6a fix: resolve login timeout (#41)",
+        "* 7g8h9i0 feat: add dashboard widgets (#40)",
+        "* j1k2l3m refactor: extract auth module (#39)",
+        "",
+        "$ git branch -a",
+        "* main",
+        "  remotes/origin/main",
+        "  remotes/origin/feature/notifications",
+        "  remotes/origin/fix/memory-leak"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "merge_vs_rebase",
+      "left": {
+        "label": "Merge (preserves history)",
+        "content": "* Merge branch 'feature/login'\n|\\\n| * Add login form\n| * Add auth logic\n|/\n* Previous commit",
+        "status": "pass"
+      },
+      "right": {
+        "label": "Rebase (linear history)",
+        "content": "* Add login form\n* Add auth logic\n* Previous commit\n(clean, linear, no merge commit)",
+        "status": "pass"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write the sequence of Git commands to: 1) Create a feature branch from main, 2) Make a commit with conventional commit message, 3) Push with upstream, 4) After merge, delete the local branch.",
+        "ta": "Git commands-ன் வரிசையை எழுதுங்கள்: 1) main-ல் இருந்து feature branch உருவாக்குங்கள், 2) conventional commit message-உடன் commit செய்யுங்கள், 3) upstream-உடன் push செய்யுங்கள், 4) merge-க்குப் பிறகு local branch-ஐ நீக்குங்கள்."
+      },
+      "starter_code": "# Step 1: Switch to main and pull latest\ngit checkout main\ngit pull origin main\n\n# Step 2: Create feature branch\n# Your command here\n\n# Step 3: Make changes and commit\n# Your commands here\n\n# Step 4: Push to remote\n# Your command here\n\n# Step 5: After PR is merged, clean up\n# Your commands here",
+      "expected_output": "Complete Git workflow from branch creation to cleanup",
+      "hints": {
+        "en": [
+          "git checkout -b feature/my-feature",
+          "git add <files> && git commit -m 'feat: description'",
+          "git push -u origin feature/my-feature",
+          "git checkout main && git pull && git branch -d feature/my-feature"
+        ],
+        "ta": [
+          "git checkout -b feature/my-feature",
+          "git add <files> && git commit -m 'feat: description'",
+          "git push -u origin feature/my-feature",
+          "git checkout main && git pull && git branch -d feature/my-feature"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'git checkout -b feature/login' do?",
+        "ta": "'git checkout -b feature/login' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Deletes the branch", "Creates a new branch AND switches to it", "Merges the branch", "Pushes the branch"],
+        "ta": ["Branch-ஐ நீக்கும்", "புதிய branch-ஐ உருவாக்கி அதற்கு switch செய்யும்", "Branch-ஐ merge செய்யும்", "Branch-ஐ push செய்யும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the advantage of rebase over merge?",
+        "ta": "Merge-ஐ விட rebase-ன் நன்மை என்ன?"
+      },
+      "options": {
+        "en": ["It's always safer", "It creates a clean, linear commit history", "It preserves all merge commits", "It's faster"],
+        "ta": ["எப்போதும் பாதுகாப்பானது", "சுத்தமான, நேர்க்கோட்டு commit history உருவாக்கும்", "அனைத்து merge commits-ஐயும் பாதுகாக்கும்", "வேகமானது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why use --force-with-lease instead of --force when pushing?",
+        "ta": "Push செய்யும்போது --force-க்கு பதிலாக --force-with-lease ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["It's faster", "It fails if someone else pushed to the branch, preventing data loss", "It doesn't require authentication", "There is no difference"],
+        "ta": ["வேகமானது", "வேறொருவர் branch-க்கு push செய்திருந்தால் தோல்வியடையும், data loss-ஐ தடுக்கும்", "authentication தேவையில்லை", "வேறுபாடு இல்லை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["git_branching", "pull_requests", "rebase", "merge", "conventional_commits"],
+    "concepts_required": ["git_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["team_collaboration", "open_source"],
+    "category": "devops",
+    "path_memberships": ["testing_devops"]
+  }
+}

@@ -1,0 +1,261 @@
+{
+  "id": "django_models",
+  "topic": "django_models",
+  "track": "web_development",
+  "module": "django_framework",
+  "order": 7,
+  "title": {
+    "en": "Django Models: Defining Your Database",
+    "ta": "Django மாதிரிகள்: உங்கள் தரவுத்தளத்தை வரையறுத்தல்"
+  },
+  "description": {
+    "en": "Master Django models, field types, migrations, relationships, and ORM queries to interact with your database.",
+    "ta": "Django மாதிரிகள், புல வகைகள், இடம்பெயர்வுகள், உறவுகள் மற்றும் ORM வினவல்களை தரவுத்தளத்துடன் தொடர்பு கொள்ள கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## The Blueprint Room\n\nVaathiyaar unrolls a blueprint. \"Before you build a house, you need a blueprint. In Django, **models** are your blueprints — they define the shape of your data. Django then builds the database tables for you automatically.\"\n\n### What is a Model?\n- A Python class that maps to a database table\n- Each attribute = a column in the table\n- Each instance = a row in the table\n- Django creates SQL from your Python code\n\n### Field Types\n\n| Field | Purpose | SQL Equivalent |\n|-------|---------|---------------|\n| `CharField` | Short text | VARCHAR |\n| `TextField` | Long text | TEXT |\n| `IntegerField` | Whole numbers | INTEGER |\n| `FloatField` | Decimals | REAL |\n| `BooleanField` | True/False | BOOLEAN |\n| `DateTimeField` | Date + time | DATETIME |\n| `ForeignKey` | Many-to-one link | FOREIGN KEY |\n| `ManyToManyField` | Many-to-many | Junction table |\n\n### Migrations: Version Control for Databases\n```bash\npython manage.py makemigrations  # Detect changes\npython manage.py migrate         # Apply changes\npython manage.py showmigrations  # List all migrations\n```\n\n### ORM Queries\n```python\nPost.objects.all()                    # SELECT * FROM post\nPost.objects.filter(author='alice')   # WHERE author='alice'\nPost.objects.get(pk=1)                # WHERE id=1 (single)\nPost.objects.create(title='Hello')    # INSERT INTO post\nPost.objects.count()                  # SELECT COUNT(*)\n```\n\n> **Key Concept:** The Django ORM is an abstraction layer — you write Python, Django writes SQL. You can switch databases (SQLite → PostgreSQL) without changing your model code."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "blueprint_room",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "model_overview",
+      "nodes": [
+        {
+          "label": "Django Model",
+          "children": [
+            "Fields (columns)",
+            "Relationships (FK, M2M)",
+            "Migrations (schema)",
+            "QuerySet (ORM queries)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "models_demo",
+      "steps": [
+        {
+          "line": "from django.db import models",
+          "highlight": "models",
+          "explanation": {
+            "en": "Import Django's models module — the foundation of the ORM"
+          }
+        },
+        {
+          "line": "class Author(models.Model):\n    name = models.CharField(max_length=100)\n    email = models.EmailField(unique=True)\n    bio = models.TextField(blank=True)",
+          "highlight": "models.Model",
+          "explanation": {
+            "en": "Define an Author model — Django auto-creates an 'id' primary key"
+          }
+        },
+        {
+          "line": "    def __str__(self):\n        return self.name",
+          "highlight": "__str__",
+          "explanation": {
+            "en": "__str__ controls how the object displays in admin and shell"
+          }
+        },
+        {
+          "line": "class Category(models.Model):\n    name = models.CharField(max_length=50, unique=True)\n    slug = models.SlugField(unique=True)",
+          "highlight": "SlugField",
+          "explanation": {
+            "en": "SlugField stores URL-friendly strings like 'web-development'"
+          }
+        },
+        {
+          "line": "    class Meta:\n        verbose_name_plural = 'categories'",
+          "highlight": "Meta",
+          "explanation": {
+            "en": "Meta class configures model behavior — here fixing the plural name"
+          }
+        },
+        {
+          "line": "class Post(models.Model):\n    title = models.CharField(max_length=200)\n    content = models.TextField()\n    published = models.DateTimeField(auto_now_add=True)",
+          "highlight": "auto_now_add",
+          "explanation": {
+            "en": "auto_now_add sets the timestamp automatically when created"
+          }
+        },
+        {
+          "line": "    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='posts')",
+          "highlight": "ForeignKey",
+          "explanation": {
+            "en": "ForeignKey creates a many-to-one relationship — one author, many posts"
+          }
+        },
+        {
+          "line": "    categories = models.ManyToManyField(Category, related_name='posts')",
+          "highlight": "ManyToManyField",
+          "explanation": {
+            "en": "ManyToMany — a post can have many categories, a category can have many posts"
+          }
+        },
+        {
+          "line": "    is_published = models.BooleanField(default=False)",
+          "highlight": "default=False",
+          "explanation": {
+            "en": "Posts start as drafts — default=False means unpublished by default"
+          }
+        },
+        {
+          "line": "# In the Django shell:\n# $ python manage.py shell",
+          "highlight": "shell",
+          "explanation": {
+            "en": "Open the Django interactive shell to test queries"
+          }
+        },
+        {
+          "line": "author = Author.objects.create(name='Vaathiyaar', email='v@py.com')",
+          "highlight": "objects.create",
+          "explanation": {
+            "en": "Create and save a new author in one step"
+          }
+        },
+        {
+          "line": "post = Post.objects.create(title='Learn Django', content='Models are powerful!', author=author)",
+          "highlight": "author=author",
+          "explanation": {
+            "en": "Create a post linked to the author via ForeignKey"
+          }
+        },
+        {
+          "line": "author.posts.all()  # Reverse relation via related_name",
+          "highlight": "posts.all()",
+          "explanation": {
+            "en": "Access all posts by this author using the related_name 'posts'"
+          }
+        },
+        {
+          "line": "Post.objects.filter(author__name='Vaathiyaar')",
+          "highlight": "author__name",
+          "explanation": {
+            "en": "Double underscore traverses relationships — filter posts by author name"
+          }
+        },
+        {
+          "line": "Post.objects.filter(is_published=True).order_by('-published')[:5]",
+          "highlight": "order_by",
+          "explanation": {
+            "en": "Chain filters: get published posts, newest first, limit to 5"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_author",
+      "variable": "author",
+      "value": "<Author: Vaathiyaar>",
+      "data_type": "Author",
+      "color": "#9C27B0"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_queryset",
+      "variable": "Post.objects.count()",
+      "value": 1,
+      "data_type": "int",
+      "color": "#FF9800"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ python manage.py makemigrations",
+        "Migrations for 'blog':",
+        "  blog/migrations/0001_initial.py",
+        "    - Create model Author",
+        "    - Create model Category",
+        "    - Create model Post",
+        "$ python manage.py migrate",
+        "Operations to perform:",
+        "  Apply all migrations: admin, auth, blog, contenttypes, sessions",
+        "Running migrations:",
+        "  Applying blog.0001_initial... OK",
+        ">>> Author.objects.create(name='Vaathiyaar', email='v@py.com')",
+        "<Author: Vaathiyaar>",
+        ">>> Post.objects.filter(author__name='Vaathiyaar').count()",
+        "1"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create Django models for a library system: a 'Book' model with title, isbn, pages, and published_date fields, and an 'Author' model with name and birth_date. Link them with a ForeignKey. Write ORM queries to create an author, create two books, and filter books with more than 300 pages.",
+        "ta": "நூலக அமைப்புக்கான Django மாதிரிகளை உருவாக்குங்கள்: title, isbn, pages, published_date புலங்களுடன் 'Book' மாதிரி, மற்றும் name, birth_date புலங்களுடன் 'Author' மாதிரி."
+      },
+      "starter_code": "from django.db import models\n\nclass Author(models.Model):\n    name = models.CharField(max_length=100)\n    birth_date = models.DateField(null=True, blank=True)\n\n    def __str__(self):\n        return self.name\n\nclass Book(models.Model):\n    title = models.CharField(max_length=200)\n    isbn = models.CharField(max_length=13, unique=True)\n    pages = models.IntegerField()\n    published_date = models.DateField()\n    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')\n\n    def __str__(self):\n        return self.title\n\n# ORM Queries (in Django shell):\n# author = Author.objects.create(name='Guido van Rossum')\n# Book.objects.create(title='Python Intro', isbn='1234567890123', pages=250, published_date='2024-01-01', author=author)\n# Book.objects.create(title='Advanced Python', isbn='1234567890124', pages=450, published_date='2024-06-01', author=author)\n# thick_books = Book.objects.filter(pages__gt=300)\n# print(thick_books)  # <QuerySet [<Book: Advanced Python>]>",
+      "expected_output": "QuerySet: [<Book: Advanced Python>]",
+      "hints": {
+        "en": [
+          "Use models.ForeignKey to link Book to Author",
+          "objects.create() creates and saves in one step",
+          "Use __gt (greater than) for numeric comparisons",
+          "related_name='books' lets you do author.books.all()"
+        ],
+        "ta": [
+          "Book-ஐ Author-உடன் இணைக்க models.ForeignKey பயன்படுத்துங்கள்",
+          "objects.create() ஒரே படியில் உருவாக்கி சேமிக்கிறது",
+          "எண் ஒப்பீடுகளுக்கு __gt பயன்படுத்துங்கள்",
+          "related_name='books' author.books.all() செய்ய அனுமதிக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'python manage.py makemigrations' do?",
+        "ta": "'python manage.py makemigrations' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Creates the database tables", "Detects model changes and creates migration files", "Runs the development server", "Deletes old migrations"],
+        "ta": ["தரவுத்தள அட்டவணைகளை உருவாக்குகிறது", "மாதிரி மாற்றங்களைக் கண்டறிந்து இடம்பெயர்வு கோப்புகளை உருவாக்குகிறது", "மேம்பாட்டு சேவையகத்தை இயக்குகிறது", "பழைய இடம்பெயர்வுகளை நீக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does on_delete=models.CASCADE mean in a ForeignKey?",
+        "ta": "ForeignKey-ல் on_delete=models.CASCADE என்ன அர்த்தம்?"
+      },
+      "options": {
+        "en": ["The field cannot be null", "When the parent is deleted, all related objects are also deleted", "The relationship is many-to-many", "The field auto-increments"],
+        "ta": ["புலம் null ஆக இருக்க முடியாது", "பெற்றோர் நீக்கப்படும்போது, தொடர்புடைய அனைத்து பொருள்களும் நீக்கப்படும்", "உறவு பல-க்கு-பல", "புலம் தானாக அதிகரிக்கிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you filter Django objects where a field is greater than a value?",
+        "ta": "ஒரு புலம் ஒரு மதிப்பை விட அதிகமாக இருக்கும் Django பொருள்களை எவ்வாறு வடிகட்டுவது?"
+      },
+      "options": {
+        "en": ["Model.objects.filter(field > value)", "Model.objects.filter(field__gt=value)", "Model.objects.where(field > value)", "Model.objects.get(field__greater=value)"],
+        "ta": ["Model.objects.filter(field > value)", "Model.objects.filter(field__gt=value)", "Model.objects.where(field > value)", "Model.objects.get(field__greater=value)"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["django_models", "orm_queries", "migrations", "relationships"],
+    "concepts_required": ["django_project_structure", "python_classes"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["database_design", "data_modeling"],
+    "category": "web_development",
+    "path_memberships": ["web_development"]
+  }
+}

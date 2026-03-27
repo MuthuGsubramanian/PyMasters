@@ -1,0 +1,322 @@
+{
+  "id": "langchain_agents",
+  "topic": "langchain_agents",
+  "track": "ai_fundamentals",
+  "module": "langchain",
+  "order": 8,
+  "title": {
+    "en": "LangChain Agents: Tools & the ReAct Pattern",
+    "ta": "LangChain Agents: கருவிகள் & ReAct வடிவம்"
+  },
+  "description": {
+    "en": "Build AI agents that can use tools, make decisions, and follow the ReAct (Reason + Act) pattern to solve complex tasks.",
+    "ta": "கருவிகளைப் பயன்படுத்தி, முடிவுகளை எடுத்து, சிக்கலான பணிகளைத் தீர்க்க ReAct வடிவத்தைப் பின்பற்றும் AI agents-ஐ உருவாக்குங்கள்."
+  },
+  "xp_reward": 75,
+  "next_unlock": "rag_fundamentals",
+  "story_variants": {
+    "en": "## Vaathiyaar's Robot Butler\n\nVaathiyaar introduces a robot. \"Students, a chain follows a fixed path. But an AGENT decides its own path. Give it tools — a calculator, a web searcher, a database — and it decides which tool to use, when, and how many times. This is the ReAct pattern: Reason about what to do, then Act.\"\n\n### Chain vs Agent\n\n| Feature | Chain | Agent |\n|---------|-------|-------|\n| Path | Fixed, predetermined | Dynamic, decided at runtime |\n| Tools | Not used | Can call tools |\n| Loops | No | Yes — can retry and iterate |\n| Use case | Simple pipelines | Complex, multi-step tasks |\n\n### The ReAct Pattern\n\n1. **Thought** — \"I need to find the current weather\"\n2. **Action** — Call the weather tool\n3. **Observation** — \"Temperature is 32°C\"\n4. **Thought** — \"Now I can answer the user\"\n5. **Final Answer** — \"It's 32°C and sunny\"\n\n> **Key Insight:** Agents are powerful but less predictable than chains. Use chains when you know the exact steps; use agents when the steps depend on the data.",
+    "ta": "## வாத்தியாரின் Robot Butler\n\nவாத்தியார் ஒரு robot-ஐ அறிமுகப்படுத்துகிறார். \"மாணவர்களே, chain ஒரு நிலையான பாதையைப் பின்பற்றும். ஆனால் AGENT தனது சொந்த பாதையை தீர்மானிக்கும்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "robot_butler",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "agent_concepts",
+      "nodes": [
+        {
+          "label": "LangChain Agent",
+          "children": [
+            "Tools (functions it can call)",
+            "LLM (the brain)",
+            "Agent Executor (the loop)",
+            "Memory (conversation history)"
+          ]
+        },
+        {
+          "label": "ReAct Loop",
+          "children": [
+            "Thought (reasoning)",
+            "Action (tool call)",
+            "Observation (tool result)",
+            "Final Answer"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "agent_code",
+      "steps": [
+        {
+          "line": "from langchain_openai import ChatOpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the LLM that will power our agent's reasoning"
+          }
+        },
+        {
+          "line": "from langchain.agents import tool, create_react_agent, AgentExecutor",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import agent components — @tool decorator, agent creator, and executor"
+          }
+        },
+        {
+          "line": "from langchain import hub",
+          "highlight": "import",
+          "explanation": {
+            "en": "Hub provides pre-built prompt templates for agents"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "First, let's define tools the agent can use"
+          }
+        },
+        {
+          "line": "# Define custom tools with the @tool decorator",
+          "highlight": "comment",
+          "explanation": {
+            "en": "The @tool decorator turns any Python function into an agent tool"
+          }
+        },
+        {
+          "line": "@tool",
+          "highlight": "decorator",
+          "explanation": {
+            "en": "This decorator registers the function as a tool the agent can call"
+          }
+        },
+        {
+          "line": "def calculate(expression: str) -> str:",
+          "highlight": "def",
+          "explanation": {
+            "en": "Define a calculator tool — takes a math expression as string"
+          }
+        },
+        {
+          "line": "    \"\"\"Evaluate a mathematical expression and return the result.\"\"\"",
+          "highlight": "docstring",
+          "explanation": {
+            "en": "The docstring tells the agent WHEN to use this tool — very important!"
+          }
+        },
+        {
+          "line": "    try:",
+          "highlight": "try",
+          "explanation": {
+            "en": "Wrap in try/except since the agent might pass invalid expressions"
+          }
+        },
+        {
+          "line": "        return str(eval(expression))",
+          "highlight": "eval",
+          "explanation": {
+            "en": "Evaluate the math expression — in production, use a safer parser"
+          }
+        },
+        {
+          "line": "    except Exception as e:",
+          "highlight": "except",
+          "explanation": {
+            "en": "Return error message so the agent can retry with a corrected expression"
+          }
+        },
+        {
+          "line": "        return f'Error: {e}'",
+          "highlight": "return",
+          "explanation": {
+            "en": "The agent reads this error and adjusts its approach"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now assemble the agent"
+          }
+        },
+        {
+          "line": "# Create the agent",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Connect the LLM, tools, and prompt into an agent"
+          }
+        },
+        {
+          "line": "llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)",
+          "highlight": "llm",
+          "explanation": {
+            "en": "Temperature 0 for deterministic tool-calling decisions"
+          }
+        },
+        {
+          "line": "tools = [calculate]",
+          "highlight": "tools",
+          "explanation": {
+            "en": "List of tools the agent can use — add more as needed"
+          }
+        },
+        {
+          "line": "prompt = hub.pull('hwchase17/react')",
+          "highlight": "prompt",
+          "explanation": {
+            "en": "Pull the standard ReAct prompt template from LangChain Hub"
+          }
+        },
+        {
+          "line": "agent = create_react_agent(llm, tools, prompt)",
+          "highlight": "agent",
+          "explanation": {
+            "en": "Create the agent — it now knows how to reason and use tools"
+          }
+        },
+        {
+          "line": "executor = AgentExecutor(agent=agent, tools=tools, verbose=True)",
+          "highlight": "executor",
+          "explanation": {
+            "en": "AgentExecutor runs the ReAct loop — verbose=True shows the thinking"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "react_flow",
+      "nodes": [
+        {"label": "User: 'What is 15% tip on ₹2400?'", "type": "input"},
+        {"label": "Thought: I need to calculate 15% of 2400", "type": "reasoning"},
+        {"label": "Action: calculate('2400 * 0.15')", "type": "tool_call"},
+        {"label": "Observation: 360.0", "type": "observation"},
+        {"label": "Thought: The tip is ₹360", "type": "reasoning"},
+        {"label": "Final Answer: A 15% tip on ₹2400 is ₹360", "type": "output"}
+      ],
+      "direction": "vertical",
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_tools",
+      "variable": "num_tools",
+      "value": 1,
+      "data_type": "int",
+      "color": "#ec4899"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> result = executor.invoke({'input': 'What is 15% tip on ₹2400?'})",
+        "",
+        "> Entering new AgentExecutor chain...",
+        "Thought: I need to calculate 15% of 2400",
+        "Action: calculate",
+        "Action Input: 2400 * 0.15",
+        "Observation: 360.0",
+        "Thought: I now know the final answer",
+        "Final Answer: A 15% tip on ₹2400 is ₹360.00",
+        "",
+        "> Finished chain.",
+        ">>> print(result['output'])",
+        "A 15% tip on ₹2400 is ₹360.00"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create two tools for a LangChain agent: 1) A 'word_count' tool that counts words in a string, and 2) A 'reverse_text' tool that reverses a string. Define them with @tool decorator and proper docstrings. Create the agent and test with a query that uses both tools.",
+        "ta": "LangChain agent-க்கு இரண்டு tools உருவாக்குங்கள்: 1) சரத்தில் சொற்களை எண்ணும் 'word_count', 2) சரத்தை மாற்றும் 'reverse_text'. @tool decorator மற்றும் docstrings பயன்படுத்துங்கள்."
+      },
+      "starter_code": "from langchain.agents import tool\n\n@tool\ndef word_count(text: str) -> str:\n    \"\"\"Count the number of words in the given text.\"\"\"\n    # Your code here\n    pass\n\n@tool\ndef reverse_text(text: str) -> str:\n    \"\"\"Reverse the given text string.\"\"\"\n    # Your code here\n    pass\n\n# Test the tools directly\nprint(word_count.invoke('Hello world from PyMasters'))\nprint(reverse_text.invoke('Python'))",
+      "expected_output": "4\nnohtyP",
+      "hints": {
+        "en": [
+          "word_count: return str(len(text.split()))",
+          "reverse_text: return text[::-1]",
+          "Docstrings tell the agent when to use each tool"
+        ],
+        "ta": [
+          "word_count: return str(len(text.split()))",
+          "reverse_text: return text[::-1]",
+          "Docstrings agent-க்கு எப்போது பயன்படுத்த வேண்டும் என்று சொல்கின்றன"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main difference between a chain and an agent?",
+        "ta": "Chain மற்றும் agent-க்கு இடையே முக்கிய வேறுபாடு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Chains are faster",
+          "Agents can decide which tools to use at runtime",
+          "Chains use more memory",
+          "Agents don't use LLMs"
+        ],
+        "ta": [
+          "Chains வேகமானவை",
+          "Agents இயக்க நேரத்தில் எந்த tools பயன்படுத்த வேண்டும் என்று தீர்மானிக்கும்",
+          "Chains அதிக memory பயன்படுத்தும்",
+          "Agents LLM-களைப் பயன்படுத்தாது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the ReAct pattern, what comes after an Action?",
+        "ta": "ReAct pattern-ல், Action-க்குப் பிறகு என்ன வரும்?"
+      },
+      "options": {
+        "en": ["Another Action", "Observation", "Final Answer", "Thought"],
+        "ta": ["மற்றொரு Action", "Observation", "Final Answer", "Thought"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are docstrings important for @tool decorated functions?",
+        "ta": "@tool decorator செயல்பாடுகளுக்கு docstrings ஏன் முக்கியம்?"
+      },
+      "options": {
+        "en": [
+          "They make the code look professional",
+          "They tell the agent when and how to use the tool",
+          "They're required by Python syntax",
+          "They speed up execution"
+        ],
+        "ta": [
+          "குறியீட்டை தொழில்முறையாகக் காட்டுகின்றன",
+          "agent-க்கு எப்போது, எப்படி tool-ஐ பயன்படுத்த வேண்டும் என்று சொல்கின்றன",
+          "Python syntax-க்கு அவசியம்",
+          "செயல்பாட்டை வேகப்படுத்துகின்றன"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["langchain_agents", "tools", "react_pattern", "agent_executor"],
+    "concepts_required": ["langchain_intro"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["autonomous_ai", "task_automation"],
+    "category": "ai_frameworks",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

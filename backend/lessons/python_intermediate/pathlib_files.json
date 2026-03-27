@@ -1,0 +1,277 @@
+{
+  "id": "pathlib_files",
+  "topic": "pathlib_files",
+  "track": "python_intermediate",
+  "module": "standard_library",
+  "order": 14,
+  "title": {
+    "en": "pathlib & File Operations: Modern File Handling",
+    "ta": "pathlib & கோப்பு செயல்பாடுகள்: நவீன கோப்பு கையாளுதல்"
+  },
+  "description": {
+    "en": "Use pathlib.Path for cross-platform file operations — glob, reading, writing, directory traversal, and replacing os.path.",
+    "ta": "pathlib.Path பயன்படுத்தி cross-platform கோப்பு செயல்பாடுகள் — glob, reading, writing, directory traversal கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "story_variants": {
+    "en": "## Vaathiyaar's File Cabinet\n\nVaathiyaar opens a modern digital filing cabinet. \"The old `os.path` way was clunky — joining paths with strings, checking existence with separate functions. `pathlib` gives you an **object-oriented** approach where paths are objects, not strings!\"\n\n### pathlib vs os.path\n\n| Task | os.path (old) | pathlib (modern) |\n|------|--------------|------------------|\n| Join paths | `os.path.join('a', 'b')` | `Path('a') / 'b'` |\n| Check exists | `os.path.exists(p)` | `p.exists()` |\n| Read file | `open(p).read()` | `p.read_text()` |\n| List dir | `os.listdir(p)` | `p.iterdir()` |\n| Glob | `glob.glob('*.py')` | `p.glob('*.py')` |\n\n### Path Object Properties\n\n```python\nfrom pathlib import Path\np = Path('/home/user/project/main.py')\nprint(p.name)    # main.py\nprint(p.stem)    # main\nprint(p.suffix)  # .py\nprint(p.parent)  # /home/user/project\n```\n\n> **Key Concept:** Use the `/` operator with Path objects to join paths. It works on all operating systems — no more worrying about \\ vs /!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "file_cabinet",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "pathlib.Path",
+          "children": [
+            "Path / operator",
+            ".name, .stem, .suffix",
+            ".read_text(), .write_text()",
+            ".glob(), .rglob()",
+            ".exists(), .is_file()"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "from pathlib import Path",
+          "highlight": "Path",
+          "explanation": {
+            "en": "Import Path — the star of pathlib"
+          }
+        },
+        {
+          "line": "p = Path('project') / 'src' / 'main.py'",
+          "highlight": "/",
+          "explanation": {
+            "en": "Use / operator to build paths — clean and cross-platform"
+          }
+        },
+        {
+          "line": "print(p)",
+          "highlight": "print",
+          "explanation": {
+            "en": "project/src/main.py (or project\\src\\main.py on Windows)"
+          }
+        },
+        {
+          "line": "print(f'Name: {p.name}')",
+          "highlight": ".name",
+          "explanation": {
+            "en": "main.py — the filename with extension"
+          }
+        },
+        {
+          "line": "print(f'Stem: {p.stem}')",
+          "highlight": ".stem",
+          "explanation": {
+            "en": "main — filename without extension"
+          }
+        },
+        {
+          "line": "print(f'Suffix: {p.suffix}')",
+          "highlight": ".suffix",
+          "explanation": {
+            "en": ".py — the file extension"
+          }
+        },
+        {
+          "line": "print(f'Parent: {p.parent}')",
+          "highlight": ".parent",
+          "explanation": {
+            "en": "project/src — the directory containing the file"
+          }
+        },
+        {
+          "line": "cwd = Path.cwd()",
+          "highlight": "cwd()",
+          "explanation": {
+            "en": "Get the current working directory as a Path object"
+          }
+        },
+        {
+          "line": "print(f'CWD: {cwd}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Shows your current directory"
+          }
+        },
+        {
+          "line": "demo = Path('demo_dir')",
+          "highlight": "demo",
+          "explanation": {
+            "en": "Create a Path object for a new directory"
+          }
+        },
+        {
+          "line": "demo.mkdir(exist_ok=True)",
+          "highlight": "mkdir",
+          "explanation": {
+            "en": "Create the directory — exist_ok=True means no error if it exists"
+          }
+        },
+        {
+          "line": "file_path = demo / 'hello.txt'",
+          "highlight": "/",
+          "explanation": {
+            "en": "Build path to a file inside the directory"
+          }
+        },
+        {
+          "line": "file_path.write_text('Hello from pathlib!')",
+          "highlight": "write_text",
+          "explanation": {
+            "en": "Write text directly — no need for open/close!"
+          }
+        },
+        {
+          "line": "content = file_path.read_text()",
+          "highlight": "read_text",
+          "explanation": {
+            "en": "Read entire file contents as string"
+          }
+        },
+        {
+          "line": "print(f'Content: {content}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "'Hello from pathlib!'"
+          }
+        },
+        {
+          "line": "for f in Path('.').glob('*.py'):",
+          "highlight": "glob",
+          "explanation": {
+            "en": "Glob pattern matching — find all .py files"
+          }
+        },
+        {
+          "line": "    print(f'Found: {f}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Print each matching file"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_path",
+      "variable": "p",
+      "value": "PosixPath('project/src/main.py')",
+      "data_type": "Path",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_content",
+      "variable": "content",
+      "value": "Hello from pathlib!",
+      "data_type": "str",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "project/src/main.py",
+        "Name: main.py",
+        "Stem: main",
+        "Suffix: .py",
+        "Parent: project/src",
+        "Content: Hello from pathlib!"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a directory 'notes', write 3 text files into it ('note1.txt', 'note2.txt', 'note3.txt'), then use glob to find all .txt files and print their contents.",
+        "ta": "'notes' directory உருவாக்கி, 3 text files எழுதி, glob பயன்படுத்தி அனைத்து .txt files கண்டுபிடித்து contents அச்சிடுங்கள்."
+      },
+      "starter_code": "from pathlib import Path\n\nnotes_dir = Path('notes')\nnotes_dir.mkdir(exist_ok=True)\n\nfor i in range(1, 4):\n    (notes_dir / f'note{i}.txt').write_text(f'This is note {i}')\n\nfor f in notes_dir.glob('*.txt'):\n    print(f'{f.name}: {f.read_text()}')",
+      "expected_output": "note1.txt: This is note 1\nnote2.txt: This is note 2\nnote3.txt: This is note 3",
+      "hints": {
+        "en": [
+          "Use Path('notes').mkdir(exist_ok=True)",
+          "Use (dir / 'file.txt').write_text('content')",
+          "Use dir.glob('*.txt') to find all txt files",
+          "Use f.read_text() to read each file"
+        ],
+        "ta": [
+          "Path('notes').mkdir(exist_ok=True) பயன்படுத்துங்கள்",
+          "(dir / 'file.txt').write_text('content') மூலம் எழுதுங்கள்",
+          "dir.glob('*.txt') மூலம் txt files கண்டுபிடியுங்கள்",
+          "f.read_text() மூலம் ஒவ்வொரு file படியுங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "How do you join paths using pathlib?",
+        "ta": "pathlib பயன்படுத்தி paths-ஐ எவ்வாறு இணைப்பீர்கள்?"
+      },
+      "options": {
+        "en": [
+          "path.join('a', 'b')",
+          "Path('a') + Path('b')",
+          "Path('a') / 'b'",
+          "Path('a').add('b')"
+        ],
+        "ta": [
+          "path.join('a', 'b')",
+          "Path('a') + Path('b')",
+          "Path('a') / 'b'",
+          "Path('a').add('b')"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does Path('file.py').stem return?",
+        "ta": "Path('file.py').stem என்ன திருப்பும்?"
+      },
+      "options": {
+        "en": ["file.py", "file", ".py", "Path('file')"],
+        "ta": ["file.py", "file", ".py", "Path('file')"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which method reads an entire file as a string?",
+        "ta": "எந்த முறை முழு கோப்பையும் சரமாக படிக்கும்?"
+      },
+      "options": {
+        "en": ["read()", "read_text()", "read_all()", "get_text()"],
+        "ta": ["read()", "read_text()", "read_all()", "get_text()"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["pathlib", "Path", "glob", "file_operations", "directory_traversal"],
+    "concepts_required": ["strings", "files"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["file_management", "build_scripts", "data_pipelines"],
+    "category": "standard_library",
+    "path_memberships": ["python_intermediate"]
+  }
+}

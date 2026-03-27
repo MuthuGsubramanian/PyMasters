@@ -1,0 +1,267 @@
+{
+  "id": "ci_cd_python",
+  "topic": "ci_cd_python",
+  "track": "testing_devops",
+  "module": "ci_cd",
+  "order": 7,
+  "title": {
+    "en": "Python CI Pipeline: Lint, Test, Deploy",
+    "ta": "Python CI Pipeline: Lint, Test, Deploy"
+  },
+  "description": {
+    "en": "Build a complete Python CI pipeline with linting (flake8/ruff), testing (pytest with coverage), matrix testing across Python versions, and deployment steps.",
+    "ta": "linting (flake8/ruff), testing (pytest with coverage), matrix testing, மற்றும் deployment steps-உடன் முழுமையான Python CI pipeline உருவாக்குங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Quality Control Line\n\nVaathiyaar draws three checkpoints on the board. \"Your code goes through three gates before it reaches users. Gate 1: Lint — is the code clean? Gate 2: Test — does it work? Gate 3: Deploy — ship it. If any gate fails, the line stops.\"\n\n### Gate 1: Linting\n- **flake8** — PEP 8 style checker\n- **ruff** — blazing fast linter (Rust-based)\n- **black** — opinionated code formatter\n- **isort** — sort imports automatically\n\n### Gate 2: Testing with Coverage\n```yaml\n- run: pytest --cov=src --cov-report=html tests/\n```\n- `--cov` measures which lines are tested\n- Coverage report shows untested code\n- Aim for 80%+ coverage on critical paths\n\n### Gate 3: Matrix Testing\n```yaml\nstrategy:\n  matrix:\n    python-version: ['3.10', '3.11', '3.12']\n```\n- Test across multiple Python versions\n- Catch compatibility issues early\n\n### Secrets & Environment Variables\n- Store API keys in GitHub Secrets\n- Access via `${{ secrets.API_KEY }}`\n- Never hardcode credentials in workflows\n\n> **Key Concept:** A production-grade CI pipeline has multiple stages. Each stage catches different problems. Linting catches style issues. Tests catch logic bugs. Matrix testing catches version incompatibilities."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "quality_gates",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "pipeline_map",
+      "nodes": [
+        {
+          "label": "Python CI Pipeline",
+          "children": [
+            "Lint (ruff/flake8)",
+            "Test (pytest+coverage)",
+            "Matrix (3.10, 3.11, 3.12)",
+            "Deploy (PyPI/Cloud)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "full_pipeline_yaml",
+      "steps": [
+        {
+          "line": "name: Python CI",
+          "highlight": "Python CI",
+          "explanation": {
+            "en": "Name the workflow — appears in GitHub Actions tab"
+          }
+        },
+        {
+          "line": "on: [push, pull_request]",
+          "highlight": "push, pull_request",
+          "explanation": {
+            "en": "Trigger on both pushes and pull requests"
+          }
+        },
+        {
+          "line": "jobs:",
+          "highlight": "jobs",
+          "explanation": {
+            "en": "Define pipeline jobs — lint and test"
+          }
+        },
+        {
+          "line": "  lint:",
+          "highlight": "lint",
+          "explanation": {
+            "en": "First job: check code quality with ruff"
+          }
+        },
+        {
+          "line": "    runs-on: ubuntu-latest",
+          "highlight": "ubuntu-latest",
+          "explanation": {
+            "en": "Run linting on latest Ubuntu"
+          }
+        },
+        {
+          "line": "    steps:",
+          "highlight": "steps",
+          "explanation": {
+            "en": "Define the linting steps"
+          }
+        },
+        {
+          "line": "      - uses: actions/checkout@v4",
+          "highlight": "checkout",
+          "explanation": {
+            "en": "Check out the repository code"
+          }
+        },
+        {
+          "line": "      - run: pip install ruff",
+          "highlight": "ruff",
+          "explanation": {
+            "en": "Install ruff — the fast Python linter written in Rust"
+          }
+        },
+        {
+          "line": "      - run: ruff check src/",
+          "highlight": "ruff check",
+          "explanation": {
+            "en": "Run ruff linter on the src directory"
+          }
+        },
+        {
+          "line": "      - run: ruff format --check src/",
+          "highlight": "format --check",
+          "explanation": {
+            "en": "Check formatting without modifying files"
+          }
+        },
+        {
+          "line": "  test:",
+          "highlight": "test",
+          "explanation": {
+            "en": "Second job: run tests with coverage across Python versions"
+          }
+        },
+        {
+          "line": "    needs: lint",
+          "highlight": "needs: lint",
+          "explanation": {
+            "en": "Only run tests if linting passes — job dependency"
+          }
+        },
+        {
+          "line": "    strategy:",
+          "highlight": "strategy",
+          "explanation": {
+            "en": "Define the matrix strategy for multiple versions"
+          }
+        },
+        {
+          "line": "      matrix:",
+          "highlight": "matrix",
+          "explanation": {
+            "en": "Matrix creates a job for each combination"
+          }
+        },
+        {
+          "line": "        python-version: ['3.10', '3.11', '3.12']",
+          "highlight": "['3.10', '3.11', '3.12']",
+          "explanation": {
+            "en": "Test against 3 Python versions — 3 parallel jobs"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "pipeline_stages",
+      "stages": [
+        { "label": "Checkout", "icon": "download", "color": "#4f8ef7" },
+        { "label": "Install ruff", "icon": "package", "color": "#6bcf7f" },
+        { "label": "ruff check", "icon": "search", "color": "#a66bf7" },
+        { "label": "ruff format", "icon": "align", "color": "#ffd93d" },
+        { "label": "pytest --cov", "icon": "check", "color": "#4ff7a4" },
+        { "label": "Upload Coverage", "icon": "upload", "color": "#ff6b6b" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "ci_output",
+      "output": [
+        "=== GitHub Actions: Python CI ===",
+        "",
+        "Job: lint (ubuntu-latest)",
+        "  ruff check src/ ..................... PASSED (0 errors)",
+        "  ruff format --check src/ ............ PASSED (formatted)",
+        "",
+        "Job: test (Python 3.10) ............... 42 passed, 0 failed",
+        "Job: test (Python 3.11) ............... 42 passed, 0 failed",
+        "Job: test (Python 3.12) ............... 42 passed, 0 failed",
+        "",
+        "Coverage: 87% (src/)",
+        "",
+        "All jobs completed successfully!"
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "lint_pass_fail",
+      "left": {
+        "label": "Lint FAILING",
+        "content": "$ ruff check src/\nsrc/app.py:15:1 F401 unused import\nsrc/utils.py:8:80 E501 line too long\n\n2 errors found",
+        "status": "fail"
+      },
+      "right": {
+        "label": "Lint PASSING",
+        "content": "$ ruff check src/\nAll checks passed!\n\n$ ruff format --check src/\n2 files already formatted.",
+        "status": "pass"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a complete GitHub Actions workflow with: a lint job using ruff, a test job that depends on lint, matrix testing Python 3.11 and 3.12, and pytest with --cov flag.",
+        "ta": "ruff-உடன் lint job, lint-ஐ சார்ந்த test job, Python 3.11 மற்றும் 3.12 matrix testing, --cov flag-உடன் pytest கொண்ட முழுமையான GitHub Actions workflow எழுதுங்கள்."
+      },
+      "starter_code": "# .github/workflows/python-ci.yml\nname: Python CI\n\non: [push, pull_request]\n\njobs:\n  lint:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      # Add ruff install and check steps\n\n  test:\n    needs: lint\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        python-version: # Add versions\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: ${{ matrix.python-version }}\n      # Add install and test steps",
+      "expected_output": "Complete CI workflow with lint and matrix test jobs",
+      "hints": {
+        "en": [
+          "Add: run: pip install ruff && ruff check src/",
+          "Matrix: python-version: ['3.11', '3.12']",
+          "Test: run: pytest tests/ --cov=src -v"
+        ],
+        "ta": [
+          "சேர்க்கவும்: run: pip install ruff && ruff check src/",
+          "Matrix: python-version: ['3.11', '3.12']",
+          "Test: run: pytest tests/ --cov=src -v"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'needs: lint' mean in a GitHub Actions job?",
+        "ta": "GitHub Actions job-ல் 'needs: lint' என்ன அர்த்தம்?"
+      },
+      "options": {
+        "en": ["The lint package is required", "This job only runs after the lint job succeeds", "Linting is optional", "Lint runs in parallel"],
+        "ta": ["lint package தேவை", "lint job வெற்றி பெற்ற பிறகு மட்டுமே இந்த job இயங்கும்", "Linting விருப்பமானது", "Lint parallel-ல் இயங்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does matrix strategy do?",
+        "ta": "Matrix strategy என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Runs tests sequentially", "Creates parallel jobs for each combination in the matrix", "Compresses the workflow", "Only runs on failure"],
+        "ta": ["Tests-ஐ வரிசையாக இயக்கும்", "Matrix-ல் உள்ள ஒவ்வொரு combination-க்கும் parallel jobs உருவாக்கும்", "Workflow-ஐ சுருக்கும்", "தோல்வியில் மட்டும் இயங்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you access GitHub Secrets in a workflow?",
+        "ta": "Workflow-ல் GitHub Secrets-ஐ எப்படி access செய்வீர்கள்?"
+      },
+      "options": {
+        "en": ["import secrets", "${{ secrets.SECRET_NAME }}", "os.environ['SECRET']", "github.secrets.get()"],
+        "ta": ["import secrets", "${{ secrets.SECRET_NAME }}", "os.environ['SECRET']", "github.secrets.get()"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["python_ci", "linting", "coverage", "matrix_testing", "github_secrets"],
+    "concepts_required": ["ci_cd_basics", "pytest"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["devops", "production_deployment"],
+    "category": "devops",
+    "path_memberships": ["testing_devops"]
+  }
+}

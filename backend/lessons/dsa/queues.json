@@ -1,0 +1,253 @@
+{
+  "id": "queues",
+  "topic": "queues",
+  "track": "dsa",
+  "module": "linear_structures",
+  "order": 5,
+  "title": {
+    "en": "Queues: First In, First Out",
+    "ta": "வரிசைகள்: முதலில் உள்ளே, முதலில் வெளியே"
+  },
+  "description": {
+    "en": "Learn queue, deque, and priority queue implementations. Understand FIFO ordering and real-world applications.",
+    "ta": "queue, deque மற்றும் priority queue செயலாக்கங்களைக் கற்றுக்கொள்ளுங்கள். FIFO வரிசைமுறையையும் நிஜ-உலக பயன்பாடுகளையும் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 70,
+  "story_variants": {
+    "en": "## Vaathiyaar's Canteen Queue\n\nVaathiyaar points to the canteen line. \"First person in line gets served first. No cutting! That's FIFO — First In, First Out.\"\n\n### Queue Operations\n- **enqueue(item)** — Add to the back → O(1)\n- **dequeue()** — Remove from the front → O(1)\n- **peek()** — Look at the front → O(1)\n- **is_empty()** — Check if empty → O(1)\n\n### Python's collections.deque\n\n```python\nfrom collections import deque\n\nq = deque()\nq.append('Alice')     # enqueue\nq.append('Bob')\nq.append('Charlie')\n\nfirst = q.popleft()   # dequeue — returns 'Alice'\nprint(first)           # Alice\nprint(q)               # deque(['Bob', 'Charlie'])\n```\n\n### Priority Queue with heapq\n\n```python\nimport heapq\n\ntasks = []\nheapq.heappush(tasks, (2, 'Medium task'))\nheapq.heappush(tasks, (1, 'Urgent task'))\nheapq.heappush(tasks, (3, 'Low task'))\n\nwhile tasks:\n    priority, task = heapq.heappop(tasks)\n    print(f'Priority {priority}: {task}')\n```\n\n> **Key Concept:** Use `collections.deque` for queues, NOT a list. `list.pop(0)` is O(n), but `deque.popleft()` is O(1)!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "canteen_queue",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Queue (FIFO)",
+          "children": [
+            "enqueue() — O(1)",
+            "dequeue() — O(1)",
+            "collections.deque",
+            "Priority Queue",
+            "BFS traversal"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_queue",
+      "steps": [
+        {
+          "line": "from collections import deque",
+          "highlight": "deque",
+          "explanation": {
+            "en": "Import deque — double-ended queue optimized for both ends",
+            "ta": "deque-ஐ இறக்குமதி செய்யுங்கள் — இரு முனைகளுக்கும் உகந்ததாக்கப்பட்ட இரட்டை-முனை வரிசை"
+          }
+        },
+        {
+          "line": "q = deque()",
+          "highlight": "q",
+          "explanation": {
+            "en": "Create an empty deque to use as our queue",
+            "ta": "நமது வரிசையாக பயன்படுத்த காலி deque-ஐ உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "q.append('Alice')",
+          "highlight": "append",
+          "explanation": {
+            "en": "Enqueue 'Alice' — she joins the back of the line",
+            "ta": "'Alice' ஐ enqueue செய்யுங்கள் — அவள் வரிசையின் பின்புறத்தில் சேர்கிறாள்"
+          }
+        },
+        {
+          "line": "q.append('Bob')",
+          "highlight": "append",
+          "explanation": {
+            "en": "Enqueue 'Bob' — queue is now ['Alice', 'Bob']",
+            "ta": "'Bob' ஐ enqueue செய்யுங்கள் — வரிசை இப்போது ['Alice', 'Bob']"
+          }
+        },
+        {
+          "line": "q.append('Charlie')",
+          "highlight": "append",
+          "explanation": {
+            "en": "Enqueue 'Charlie' — queue is now ['Alice', 'Bob', 'Charlie']",
+            "ta": "'Charlie' ஐ enqueue செய்யுங்கள் — வரிசை இப்போது ['Alice', 'Bob', 'Charlie']"
+          }
+        },
+        {
+          "line": "first = q.popleft()",
+          "highlight": "popleft",
+          "explanation": {
+            "en": "Dequeue from front — returns 'Alice' in O(1) time!",
+            "ta": "முன்புறத்திலிருந்து dequeue — O(1) நேரத்தில் 'Alice' ஐ திருப்பும்!"
+          }
+        },
+        {
+          "line": "print(first)",
+          "highlight": "print",
+          "explanation": {
+            "en": "Output: Alice — she was first in line",
+            "ta": "வெளியீடு: Alice — அவள் வரிசையில் முதலில் இருந்தாள்"
+          }
+        },
+        {
+          "line": "import heapq",
+          "highlight": "heapq",
+          "explanation": {
+            "en": "Import heapq for priority queue implementation",
+            "ta": "priority queue செயலாக்கத்திற்கு heapq-ஐ இறக்குமதி செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "tasks = []",
+          "highlight": "tasks",
+          "explanation": {
+            "en": "Priority queue uses a regular list managed by heapq",
+            "ta": "Priority queue heapq ஆல் நிர்வகிக்கப்படும் வழக்கமான list-ஐ பயன்படுத்தும்"
+          }
+        },
+        {
+          "line": "heapq.heappush(tasks, (2, 'Medium'))",
+          "highlight": "heappush",
+          "explanation": {
+            "en": "Push with priority 2 — lower number = higher priority",
+            "ta": "முன்னுரிமை 2 உடன் push — குறைந்த எண் = அதிக முன்னுரிமை"
+          }
+        },
+        {
+          "line": "heapq.heappush(tasks, (1, 'Urgent'))",
+          "highlight": "heappush",
+          "explanation": {
+            "en": "Push with priority 1 — this will come out first",
+            "ta": "முன்னுரிமை 1 உடன் push — இது முதலில் வெளியே வரும்"
+          }
+        },
+        {
+          "line": "priority, task = heapq.heappop(tasks)",
+          "highlight": "heappop",
+          "explanation": {
+            "en": "Pop returns (1, 'Urgent') — highest priority item first",
+            "ta": "Pop (1, 'Urgent') திருப்பும் — அதிக முன்னுரிமை உருப்படி முதலில்"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "queue_visual",
+      "structure_type": "list",
+      "initial_state": [],
+      "animations": [
+        {"action": "add", "index": 0, "value": "Alice"},
+        {"action": "add", "index": 1, "value": "Bob"},
+        {"action": "add", "index": 2, "value": "Charlie"},
+        {"action": "remove", "index": 0}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_front",
+      "variable": "front",
+      "value": "Alice",
+      "data_type": "str",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_size",
+      "variable": "size",
+      "value": 3,
+      "data_type": "int",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Alice",
+        "deque(['Bob', 'Charlie'])",
+        "Priority 1: Urgent task",
+        "Priority 2: Medium task",
+        "Priority 3: Low task"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a hot potato game simulation using a queue. Players stand in a circle passing a potato. Every k-th pass, the holder is eliminated. Return the winner.",
+        "ta": "வரிசையைப் பயன்படுத்தி hot potato விளையாட்டு உருவகப்படுத்தலை செயல்படுத்துங்கள்."
+      },
+      "starter_code": "from collections import deque\n\ndef hot_potato(names, k):\n    q = deque(names)\n    while len(q) > 1:\n        # Rotate k times, then eliminate\n        pass\n    return q[0]\n\nplayers = ['Alice', 'Bob', 'Charlie', 'David', 'Eve']\nwinner = hot_potato(players, 3)\nprint(f'Winner: {winner}')",
+      "expected_output": "Winner: David",
+      "hints": {
+        "en": [
+          "Use q.append(q.popleft()) to rotate — move front to back",
+          "After k rotations, popleft() eliminates the current holder",
+          "Continue until only one player remains"
+        ],
+        "ta": [
+          "சுழற்சிக்கு q.append(q.popleft()) பயன்படுத்துங்கள்",
+          "k சுழற்சிகளுக்குப் பிறகு, popleft() தற்போதைய வைத்திருப்பவரை நீக்கும்",
+          "ஒரே ஒரு வீரர் மீதம் இருக்கும் வரை தொடருங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does FIFO stand for?",
+        "ta": "FIFO என்றால் என்ன?"
+      },
+      "options": {
+        "en": ["First In First Out", "Fast In Fast Out", "First In Final Out", "Find In Find Out"],
+        "ta": ["First In First Out", "Fast In Fast Out", "First In Final Out", "Find In Find Out"]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why should you use collections.deque instead of a list for queues?",
+        "ta": "வரிசைகளுக்கு list-க்கு பதிலாக collections.deque ஐ ஏன் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": ["deque uses less memory", "deque.popleft() is O(1) vs list.pop(0) is O(n)", "deque is sorted", "deque supports strings only"],
+        "ta": ["deque குறைவான நினைவகம் பயன்படுத்தும்", "deque.popleft() O(1), list.pop(0) O(n)", "deque வரிசைப்படுத்தப்பட்டது", "deque சரங்களை மட்டும் ஆதரிக்கும்"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In a priority queue, which item is dequeued first?",
+        "ta": "Priority queue-ல், எந்த உருப்படி முதலில் dequeue செய்யப்படும்?"
+      },
+      "options": {
+        "en": ["The newest item", "The oldest item", "The highest priority item", "A random item"],
+        "ta": ["புதிய உருப்படி", "பழைய உருப்படி", "அதிக முன்னுரிமை உருப்படி", "சீரற்ற உருப்படி"]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["queue", "deque", "priority_queue", "fifo"],
+    "concepts_required": ["lists", "classes"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["task_scheduling", "bfs", "print_queue"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

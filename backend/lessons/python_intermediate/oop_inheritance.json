@@ -1,0 +1,300 @@
+{
+  "id": "oop_inheritance",
+  "topic": "oop_inheritance",
+  "track": "python_intermediate",
+  "module": "object_oriented_programming",
+  "order": 2,
+  "title": {
+    "en": "Inheritance: Standing on the Shoulders of Giants",
+    "ta": "பரம்பரை: பெரியவர்களின் தோள்களில் நிற்பது"
+  },
+  "description": {
+    "en": "Master single and multiple inheritance, super(), method resolution order (MRO), and when to use inheritance vs composition.",
+    "ta": "ஒற்றை மற்றும் பல பரம்பரை, super(), முறை தீர்மான வரிசை (MRO) ஆகியவற்றில் தேர்ச்சி பெறுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Family Tree\n\nVaathiyaar draws a family tree on the board. \"In every family, children inherit traits from their parents — eye color, height, talent. In Python, classes work the same way!\"\n\n### What is Inheritance?\n- A child class **inherits** all attributes and methods from a parent class\n- The child can **override** methods to customize behavior\n- The child can **extend** with new methods\n\n### Single Inheritance\n\n```python\nclass Animal:\n    def __init__(self, name):\n        self.name = name\n    def speak(self):\n        return 'Some sound'\n\nclass Dog(Animal):  # Dog inherits from Animal\n    def speak(self):\n        return f'{self.name} says Woof!'\n```\n\n### The super() Function\n\n| Concept | Purpose |\n|---------|----------|\n| `super()` | Call a method from the parent class |\n| `super().__init__()` | Initialize parent's attributes |\n| MRO | Method Resolution Order — search path for methods |\n| `isinstance()` | Check if object is instance of a class |\n\n> **Key Concept:** Use `super()` to call the parent's methods instead of hardcoding the parent class name. This makes your code flexible for multiple inheritance."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "family_tree",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Inheritance",
+          "children": [
+            "Parent (base) class",
+            "Child (derived) class",
+            "super()",
+            "Method Override",
+            "MRO"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_intro",
+      "steps": [
+        {
+          "line": "class Vehicle:",
+          "highlight": "Vehicle",
+          "explanation": {
+            "en": "Define the base (parent) class Vehicle"
+          }
+        },
+        {
+          "line": "    def __init__(self, brand, speed):",
+          "highlight": "__init__",
+          "explanation": {
+            "en": "Constructor takes brand and speed parameters"
+          }
+        },
+        {
+          "line": "        self.brand = brand",
+          "highlight": "self.brand",
+          "explanation": {
+            "en": "Store brand as instance attribute"
+          }
+        },
+        {
+          "line": "        self.speed = speed",
+          "highlight": "self.speed",
+          "explanation": {
+            "en": "Store speed as instance attribute"
+          }
+        },
+        {
+          "line": "    def describe(self):",
+          "highlight": "describe",
+          "explanation": {
+            "en": "A method that describes the vehicle"
+          }
+        },
+        {
+          "line": "        return f'{self.brand} goes {self.speed} km/h'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Returns a formatted description string"
+          }
+        },
+        {
+          "line": "class Car(Vehicle):",
+          "highlight": "(Vehicle)",
+          "explanation": {
+            "en": "Car inherits from Vehicle — gets all its methods and attributes"
+          }
+        },
+        {
+          "line": "    def __init__(self, brand, speed, doors):",
+          "highlight": "doors",
+          "explanation": {
+            "en": "Car adds a new parameter: doors"
+          }
+        },
+        {
+          "line": "        super().__init__(brand, speed)",
+          "highlight": "super()",
+          "explanation": {
+            "en": "Call Vehicle's __init__ to set brand and speed"
+          }
+        },
+        {
+          "line": "        self.doors = doors",
+          "highlight": "self.doors",
+          "explanation": {
+            "en": "Add the new attribute specific to Car"
+          }
+        },
+        {
+          "line": "    def describe(self):",
+          "highlight": "describe",
+          "explanation": {
+            "en": "Override the parent's describe method"
+          }
+        },
+        {
+          "line": "        base = super().describe()",
+          "highlight": "super().describe()",
+          "explanation": {
+            "en": "Reuse the parent's describe, then extend it"
+          }
+        },
+        {
+          "line": "        return f'{base} with {self.doors} doors'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Add door info to the parent's description"
+          }
+        },
+        {
+          "line": "c = Car('Toyota', 180, 4)",
+          "highlight": "Car(",
+          "explanation": {
+            "en": "Create a Car — calls Car.__init__, which calls Vehicle.__init__ via super()"
+          }
+        },
+        {
+          "line": "print(c.describe())",
+          "highlight": "describe",
+          "explanation": {
+            "en": "Calls Car's overridden describe method"
+          }
+        },
+        {
+          "line": "print(isinstance(c, Vehicle))",
+          "highlight": "isinstance",
+          "explanation": {
+            "en": "True — a Car IS a Vehicle (inheritance relationship)"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_car",
+      "variable": "c",
+      "value": "Car(brand='Toyota', speed=180, doors=4)",
+      "data_type": "Car",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Toyota goes 180 km/h with 4 doors",
+        "True"
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "memory_view",
+      "slots": [
+        {
+          "name": "c",
+          "value": "Car instance",
+          "type": "Car -> Vehicle",
+          "address": "0x01"
+        },
+        {
+          "name": "c.brand",
+          "value": "'Toyota'",
+          "type": "str (from Vehicle)",
+          "address": "0x02"
+        },
+        {
+          "name": "c.doors",
+          "value": "4",
+          "type": "int (Car-specific)",
+          "address": "0x03"
+        }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a class Shape with an area() method that returns 0. Then create Circle(Shape) that overrides area() to return pi * radius ** 2. Create a circle with radius 5 and print its area.",
+        "ta": "Shape என்ற வகுப்பை area() முறையுடன் உருவாக்குங்கள் (0 திருப்பும்). பின்னர் Circle(Shape) உருவாக்கி area()-ஐ pi * radius ** 2 திருப்ப மேலெழுதுங்கள். ஆரம் 5 உடன் வட்டம் உருவாக்கி பரப்பை அச்சிடுங்கள்."
+      },
+      "starter_code": "import math\n\nclass Shape:\n    def area(self):\n        return 0\n\nclass Circle(Shape):\n    def __init__(self, radius):\n        # store radius\n        pass\n\n    def area(self):\n        # return pi * radius ** 2\n        pass\n\nc = Circle(5)\nprint(f'Area: {c.area():.2f}')",
+      "expected_output": "Area: 78.54",
+      "hints": {
+        "en": [
+          "Use self.radius = radius in __init__",
+          "Use math.pi * self.radius ** 2 in area()",
+          "The :.2f formats to 2 decimal places"
+        ],
+        "ta": [
+          "__init__-ல் self.radius = radius பயன்படுத்துங்கள்",
+          "area()-ல் math.pi * self.radius ** 2 பயன்படுத்துங்கள்",
+          ":.2f இரண்டு தசம இடங்களுக்கு வடிவமைக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does super().__init__() do?",
+        "ta": "super().__init__() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Creates a new class",
+          "Calls the parent class constructor",
+          "Deletes the parent class",
+          "Returns the class name"
+        ],
+        "ta": [
+          "புதிய வகுப்பை உருவாக்குகிறது",
+          "பெற்றோர் வகுப்பின் கட்டமைப்பாளரை அழைக்கிறது",
+          "பெற்றோர் வகுப்பை நீக்குகிறது",
+          "வகுப்பின் பெயரைத் திருப்புகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If class Dog(Animal), what is Dog called?",
+        "ta": "class Dog(Animal) எனில், Dog என்ன அழைக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Parent class",
+          "Base class",
+          "Child/derived class",
+          "Abstract class"
+        ],
+        "ta": [
+          "பெற்றோர் வகுப்பு",
+          "அடிப்படை வகுப்பு",
+          "குழந்தை/பெறப்பட்ட வகுப்பு",
+          "சுருக்க வகுப்பு"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does isinstance(dog, Animal) return if Dog inherits from Animal?",
+        "ta": "Dog Animal-லிருந்து பரம்பரையாகப் பெற்றால், isinstance(dog, Animal) என்ன திருப்பும்?"
+      },
+      "options": {
+        "en": [
+          "False",
+          "True",
+          "None",
+          "Error"
+        ],
+        "ta": [
+          "False",
+          "True",
+          "None",
+          "பிழை"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["inheritance", "super", "method_override", "MRO", "isinstance"],
+    "concepts_required": ["classes", "objects", "__init__", "self"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["code_reuse", "class_hierarchies"],
+    "category": "oop",
+    "path_memberships": ["python_intermediate"]
+  }
+}

@@ -1,0 +1,321 @@
+{
+  "id": "langchain_intro",
+  "topic": "langchain_intro",
+  "track": "ai_fundamentals",
+  "module": "langchain",
+  "order": 7,
+  "title": {
+    "en": "LangChain Intro: Chains, Prompts & Parsers",
+    "ta": "LangChain அறிமுகம்: Chains, Prompts & Parsers"
+  },
+  "description": {
+    "en": "Learn LangChain fundamentals — prompt templates, output parsers, and how to chain LLM calls together.",
+    "ta": "LangChain அடிப்படைகளைக் கற்றுக்கொள்ளுங்கள் — prompt templates, output parsers, LLM அழைப்புகளை ஒன்றாக இணைத்தல்."
+  },
+  "xp_reward": 65,
+  "next_unlock": "langchain_agents",
+  "story_variants": {
+    "en": "## Vaathiyaar's Chain Factory\n\nVaathiyaar draws a conveyor belt on the board. \"Students, raw API calls work, but they get messy fast. LangChain is like a factory assembly line — each station does one job, and the output of one becomes the input of the next. That's a chain.\"\n\n### Why LangChain?\n\n- **Prompt Templates** — Reusable prompts with variables\n- **Output Parsers** — Automatically parse JSON, lists, etc.\n- **Chains** — Connect multiple LLM calls in sequence\n- **Model Agnostic** — Switch between OpenAI, Claude, local models\n\n### The LCEL Pattern (LangChain Expression Language)\n\n```python\nchain = prompt | model | parser\nresult = chain.invoke({'topic': 'Python'})\n```\n\nThe pipe `|` operator connects components like Unix pipes.\n\n> **Key Insight:** LangChain's real power is composability. Build small, testable components and connect them with pipes.",
+    "ta": "## வாத்தியாரின் Chain தொழிற்சாலை\n\nவாத்தியார் பலகையில் ஒரு conveyor belt வரைகிறார். \"மாணவர்களே, நேரடி API அழைப்புகள் வேலை செய்யும், ஆனால் விரைவில் குழப்பமாகும். LangChain ஒரு தொழிற்சாலை assembly line போன்றது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "chain_factory",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "langchain_concepts",
+      "nodes": [
+        {
+          "label": "LangChain Components",
+          "children": [
+            "PromptTemplate (input formatting)",
+            "ChatModel (LLM call)",
+            "OutputParser (response parsing)",
+            "Chain (connected pipeline)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "langchain_code",
+      "steps": [
+        {
+          "line": "from langchain_openai import ChatOpenAI",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the OpenAI chat model wrapper from LangChain"
+          }
+        },
+        {
+          "line": "from langchain_core.prompts import ChatPromptTemplate",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import prompt template — creates reusable prompts with variables"
+          }
+        },
+        {
+          "line": "from langchain_core.output_parsers import StrOutputParser",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import string output parser — extracts text from LLM response"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's build our first chain"
+          }
+        },
+        {
+          "line": "# Step 1: Create a prompt template",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Templates let you reuse the same prompt with different variables"
+          }
+        },
+        {
+          "line": "prompt = ChatPromptTemplate.from_messages([",
+          "highlight": "prompt",
+          "explanation": {
+            "en": "Create a chat prompt template with system and user messages"
+          }
+        },
+        {
+          "line": "    ('system', 'You are an expert on {topic}. Be concise.'),",
+          "highlight": "system",
+          "explanation": {
+            "en": "Variables in curly braces get filled in when the chain runs"
+          }
+        },
+        {
+          "line": "    ('user', 'Give me 3 tips about {topic} for beginners.')",
+          "highlight": "user",
+          "explanation": {
+            "en": "Same {topic} variable used in both messages"
+          }
+        },
+        {
+          "line": "])",
+          "highlight": "",
+          "explanation": {
+            "en": "Template is ready — not yet called"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 2: Create the model"
+          }
+        },
+        {
+          "line": "# Step 2: Choose the LLM",
+          "highlight": "comment",
+          "explanation": {
+            "en": "LangChain wraps the API — you can swap models without changing code"
+          }
+        },
+        {
+          "line": "model = ChatOpenAI(model='gpt-4o-mini', temperature=0.7)",
+          "highlight": "model",
+          "explanation": {
+            "en": "Create the LLM instance with your preferred model and settings"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 3: Connect everything with the pipe operator"
+          }
+        },
+        {
+          "line": "# Step 3: Build the chain with LCEL",
+          "highlight": "comment",
+          "explanation": {
+            "en": "LCEL uses the | operator to connect prompt → model → parser"
+          }
+        },
+        {
+          "line": "chain = prompt | model | StrOutputParser()",
+          "highlight": "chain",
+          "explanation": {
+            "en": "Pipe operator: prompt formats input → model generates → parser extracts text"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 4: Run the chain!"
+          }
+        },
+        {
+          "line": "# Step 4: Invoke the chain",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Pass variables as a dictionary to invoke()"
+          }
+        },
+        {
+          "line": "result = chain.invoke({'topic': 'Python decorators'})",
+          "highlight": "result",
+          "explanation": {
+            "en": "The chain fills the template, calls the LLM, and parses the output"
+          }
+        },
+        {
+          "line": "print(result)",
+          "highlight": "print",
+          "explanation": {
+            "en": "result is a clean string — no need to dig into response objects"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "chain_flow",
+      "nodes": [
+        {"label": "Input: {topic: 'Python decorators'}", "type": "input"},
+        {"label": "PromptTemplate: fills variables", "type": "process"},
+        {"label": "ChatOpenAI: generates response", "type": "process"},
+        {"label": "StrOutputParser: extracts text", "type": "process"},
+        {"label": "Output: '1. Start with @property...'", "type": "output"}
+      ],
+      "direction": "horizontal",
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_topic",
+      "variable": "topic",
+      "value": "Python decorators",
+      "data_type": "str",
+      "color": "#6366f1"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> result = chain.invoke({'topic': 'Python decorators'})",
+        ">>> print(result)",
+        "Here are 3 tips about Python decorators for beginners:",
+        "",
+        "1. Start with @property — it's the most practical decorator",
+        "   you'll use daily for getter/setter patterns.",
+        "",
+        "2. Remember that decorators are just functions that take a",
+        "   function and return a function. Write one manually first.",
+        "",
+        "3. Use @functools.wraps in your custom decorators to preserve",
+        "   the original function's name and docstring."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a LangChain chain that takes a programming language name and difficulty level, then generates a practice exercise. Use ChatPromptTemplate with two variables: {language} and {level}. Connect with LCEL pipes.",
+        "ta": "ஒரு programming language பெயர் மற்றும் difficulty level எடுத்து, practice exercise உருவாக்கும் LangChain chain உருவாக்குங்கள்."
+      },
+      "starter_code": "from langchain_openai import ChatOpenAI\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.output_parsers import StrOutputParser\n\n# Create prompt template with {language} and {level}\nprompt = ChatPromptTemplate.from_messages([\n    # Your messages here\n])\n\nmodel = ChatOpenAI(model='gpt-4o-mini', temperature=0.7)\n\n# Build the chain\nchain = # Your code here\n\n# Invoke with language='Python' and level='beginner'\nresult = chain.invoke({'language': 'Python', 'level': 'beginner'})\nprint(result)",
+      "expected_output": "(A practice exercise for Python beginners)",
+      "hints": {
+        "en": [
+          "Use {language} and {level} as variables in your template",
+          "Chain with: prompt | model | StrOutputParser()",
+          "invoke() takes a dict with all template variables"
+        ],
+        "ta": [
+          "template-ல் {language} மற்றும் {level} பயன்படுத்துங்கள்",
+          "Chain: prompt | model | StrOutputParser()",
+          "invoke() அனைத்து template variables உடன் dict எடுக்கும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the | (pipe) operator do in LangChain's LCEL?",
+        "ta": "LangChain-ன் LCEL-ல் | (pipe) operator என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Performs a bitwise OR operation",
+          "Connects components so output of one feeds into the next",
+          "Creates a new variable",
+          "Runs components in parallel"
+        ],
+        "ta": [
+          "Bitwise OR செயல்பாடு செய்கிறது",
+          "ஒன்றின் வெளியீடு அடுத்ததற்கு உள்ளீடாகும் வகையில் இணைக்கிறது",
+          "புதிய மாறியை உருவாக்குகிறது",
+          "கூறுகளை இணையாக இயக்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the benefit of using PromptTemplate over raw strings?",
+        "ta": "Raw strings-ஐ விட PromptTemplate பயன்படுத்துவதன் நன்மை என்ன?"
+      },
+      "options": {
+        "en": [
+          "It's faster",
+          "Reusable prompts with dynamic variables",
+          "It uses less memory",
+          "It's required by the API"
+        ],
+        "ta": [
+          "வேகமானது",
+          "dynamic variables உடன் மறுபயன்பாட்டு prompts",
+          "குறைவான memory பயன்படுத்துகிறது",
+          "API-க்கு அவசியம்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the purpose of an OutputParser in LangChain?",
+        "ta": "LangChain-ல் OutputParser-ன் நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "To format the input before sending to the model",
+          "To extract and structure the model's response",
+          "To choose which model to use",
+          "To calculate the cost"
+        ],
+        "ta": [
+          "model-க்கு அனுப்பும் முன் உள்ளீட்டை வடிவமைக்க",
+          "model-ன் பதிலை பிரித்தெடுத்து கட்டமைக்க",
+          "எந்த model பயன்படுத்த வேண்டும் என்பதைத் தேர்வு செய்ய",
+          "செலவைக் கணக்கிட"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["langchain", "prompt_templates", "output_parsers", "lcel_chains"],
+    "concepts_required": ["openai_api_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["ai_app_development", "workflow_automation"],
+    "category": "ai_frameworks",
+    "path_memberships": ["ai_fundamentals"]
+  }
+}

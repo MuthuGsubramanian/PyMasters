@@ -1,0 +1,196 @@
+{
+  "id": "dl_gan_image_generation",
+  "topic": "gan_image_generation",
+  "track": "deep_learning_complete",
+  "module": "generative_models",
+  "order": 22,
+  "title": {
+    "en": "DCGAN: Generating Images with Convolutions",
+    "ta": "DCGAN: கன்வொல்யூஷன்களுடன் படங்களை உருவாக்குதல்"
+  },
+  "description": {
+    "en": "Build a Deep Convolutional GAN to generate realistic images, learn training tricks, and handle mode collapse.",
+    "ta": "யதார்த்தமான படங்களை உருவாக்க Deep Convolutional GAN உருவாக்குங்கள், பயிற்சி தந்திரங்களைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 85,
+  "story_variants": {
+    "en": "## Vaathiyaar's Art Studio\n\nVaathiyaar unveils a canvas. \"The basic GAN used flat vectors. DCGAN uses convolutional layers — the generator upsamples noise into images, the discriminator uses convolutions to inspect them. The results? Stunning.\"\n\n### DCGAN Architecture\n\n```python\nimport torch\nimport torch.nn as nn\n\nclass DCGenerator(nn.Module):\n    def __init__(self, latent_dim=100, channels=1):\n        super().__init__()\n        self.net = nn.Sequential(\n            # Input: latent_dim x 1 x 1\n            nn.ConvTranspose2d(latent_dim, 256, 4, 1, 0, bias=False),\n            nn.BatchNorm2d(256),\n            nn.ReLU(True),\n            # 256 x 4 x 4\n            nn.ConvTranspose2d(256, 128, 4, 2, 1, bias=False),\n            nn.BatchNorm2d(128),\n            nn.ReLU(True),\n            # 128 x 8 x 8\n            nn.ConvTranspose2d(128, 64, 4, 2, 1, bias=False),\n            nn.BatchNorm2d(64),\n            nn.ReLU(True),\n            # 64 x 16 x 16\n            nn.ConvTranspose2d(64, channels, 4, 2, 1, bias=False),\n            nn.Tanh()\n            # channels x 32 x 32\n        )\n    \n    def forward(self, z):\n        return self.net(z.view(z.size(0), -1, 1, 1))\n\nclass DCDiscriminator(nn.Module):\n    def __init__(self, channels=1):\n        super().__init__()\n        self.net = nn.Sequential(\n            # channels x 32 x 32\n            nn.Conv2d(channels, 64, 4, 2, 1, bias=False),\n            nn.LeakyReLU(0.2, inplace=True),\n            # 64 x 16 x 16\n            nn.Conv2d(64, 128, 4, 2, 1, bias=False),\n            nn.BatchNorm2d(128),\n            nn.LeakyReLU(0.2, inplace=True),\n            # 128 x 8 x 8\n            nn.Conv2d(128, 256, 4, 2, 1, bias=False),\n            nn.BatchNorm2d(256),\n            nn.LeakyReLU(0.2, inplace=True),\n            # 256 x 4 x 4\n            nn.Conv2d(256, 1, 4, 1, 0, bias=False),\n            nn.Sigmoid()\n        )\n    \n    def forward(self, x):\n        return self.net(x).view(-1, 1)\n\n# Weight initialization (important for DCGAN!)\ndef weights_init(m):\n    if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.BatchNorm2d)):\n        nn.init.normal_(m.weight.data, 0.0, 0.02)\n\nG = DCGenerator(100, 1)\nD = DCDiscriminator(1)\nG.apply(weights_init)\nD.apply(weights_init)\n\nprint(f'Generator params: {sum(p.numel() for p in G.parameters()):,}')\nprint(f'Discriminator params: {sum(p.numel() for p in D.parameters()):,}')\n```\n\n### DCGAN Training Tricks\n1. Use `ConvTranspose2d` (not upsampling+conv) for generator\n2. Use `BatchNorm` in both G and D (except output layers)\n3. Use `LeakyReLU(0.2)` in D, `ReLU` in G\n4. Use `Adam(lr=0.0002, betas=(0.5, 0.999))`\n5. Initialize weights from N(0, 0.02)\n\n> **Key Insight:** DCGAN was the first architecture to reliably generate realistic images from noise, proving that GANs can learn complex image distributions!",
+    "ta": "## வாத்தியாரின் கலை ஸ்டுடியோ\n\nவாத்தியார் ஒரு கேன்வாஸை திரையிடுகிறார். \"அடிப்படை GAN தட்டையான vectors பயன்படுத்தியது. DCGAN convolutional layers பயன்படுத்துகிறது — generator noise-ஐ படங்களாக upsample செய்கிறது, discriminator convolutions-ஐ பயன்படுத்தி ஆராய்கிறது.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "art_studio",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "dcgan_concepts",
+      "nodes": [
+        {
+          "label": "DCGAN",
+          "children": [
+            "ConvTranspose2d (upsample)",
+            "Conv2d (downsample)",
+            "BatchNorm (stability)",
+            "LeakyReLU (D)",
+            "Weight Init N(0, 0.02)",
+            "Training Tricks"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "dcgan_code",
+      "steps": [
+        {"line": "nn.ConvTranspose2d(latent_dim, 256, 4, 1, 0)", "highlight": "ConvTranspose2d", "explanation": {"en": "Transposed convolution: upsamples spatial dimensions. Takes 1x1 noise to 4x4 feature map"}},
+        {"line": "# 256 x 4 x 4 -> 128 x 8 x 8 -> 64 x 16 x 16 -> 1 x 32 x 32", "highlight": "upsample", "explanation": {"en": "Each ConvTranspose2d with stride=2 doubles spatial dimensions: 4->8->16->32"}},
+        {"line": "nn.Conv2d(channels, 64, 4, 2, 1)", "highlight": "Conv2d", "explanation": {"en": "Discriminator uses regular convolutions with stride=2 to downsample: 32->16->8->4->1"}},
+        {"line": "nn.LeakyReLU(0.2, inplace=True)", "highlight": "LeakyReLU", "explanation": {"en": "Leaky ReLU in discriminator allows small gradient for negative values, preventing dead neurons"}},
+        {"line": "nn.BatchNorm2d(256)", "highlight": "BatchNorm", "explanation": {"en": "Batch normalization in both G and D stabilizes training. Critical for DCGAN success"}},
+        {"line": "nn.init.normal_(m.weight.data, 0.0, 0.02)", "highlight": "weight_init", "explanation": {"en": "Initialize all weights from Normal(0, 0.02). DCGAN paper found this crucial for stability"}},
+        {"line": "z.view(z.size(0), -1, 1, 1)", "highlight": "reshape", "explanation": {"en": "Reshape noise vector to (batch, channels, 1, 1) for ConvTranspose2d input"}},
+        {"line": "nn.Tanh()", "highlight": "Tanh", "explanation": {"en": "Generator output in [-1, 1]. Training data should also be normalized to [-1, 1]"}},
+        {"line": "Adam(lr=0.0002, betas=(0.5, 0.999))", "highlight": "optimizer", "explanation": {"en": "DCGAN-specific hyperparameters. Lower momentum (beta1=0.5) aids adversarial stability"}},
+        {"line": "# Mode collapse: G produces same image for all z", "highlight": "mode_collapse", "explanation": {"en": "If G finds one output that always fools D, it gets stuck. Fix: train D more, use label smoothing"}}
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "dcgan_arch",
+      "structure_type": "dcgan",
+      "layers": [
+        {"name": "Noise z", "nodes": ["100-dim vector"], "type": "input"},
+        {"name": "Reshape", "nodes": ["100 x 1 x 1"], "type": "reshape"},
+        {"name": "ConvT 4x4", "nodes": ["256 x 4 x 4"], "type": "deconv"},
+        {"name": "ConvT 4x4", "nodes": ["128 x 8 x 8"], "type": "deconv"},
+        {"name": "ConvT 4x4", "nodes": ["64 x 16 x 16"], "type": "deconv"},
+        {"name": "ConvT 4x4 + Tanh", "nodes": ["1 x 32 x 32 (image!)"], "type": "output"}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_g_params",
+      "variable": "G params",
+      "value": "1,548,673",
+      "data_type": "int",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_d_params",
+      "variable": "D params",
+      "value": "1,147,137",
+      "data_type": "int",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "training_progress",
+      "left": {"label": "Epoch 1", "content": "Generated images: pure noise\nD accuracy: 100%\nG_loss: 5.2"},
+      "right": {"label": "Epoch 100", "content": "Generated images: recognizable digits\nD accuracy: ~55% (confused)\nG_loss: 1.1"},
+      "duration_ms": 3000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "dcgan_flow",
+      "from": "noise",
+      "to": "image",
+      "steps": ["z [100]", "Reshape [100,1,1]", "ConvT->4x4", "ConvT->8x8", "ConvT->16x16", "ConvT->32x32", "Tanh"],
+      "duration_ms": 3000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> G = DCGenerator(100, 1)",
+        ">>> D = DCDiscriminator(1)",
+        ">>> G.apply(weights_init); D.apply(weights_init)",
+        "Generator params: 1,548,673",
+        "Discriminator params: 1,147,137",
+        ">>> z = torch.randn(16, 100)",
+        ">>> fake_images = G(z)",
+        ">>> fake_images.shape",
+        "torch.Size([16, 1, 32, 32])"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "image_reveal",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a DCGAN for generating 32x32 grayscale images. Train on synthetic data (random shapes: circles, squares). Implement label smoothing (real labels = 0.9 instead of 1.0) to stabilize training.",
+        "ta": "32x32 grayscale படங்களை உருவாக்கும் DCGAN உருவாக்குங்கள். பயிற்சியை நிலைப்படுத்த label smoothing செயல்படுத்துங்கள்."
+      },
+      "starter_code": "import torch\nimport torch.nn as nn\n\n# Synthetic data: simple shapes\ndef generate_shapes(n=1000):\n    images = torch.zeros(n, 1, 32, 32)\n    for i in range(n):\n        cx, cy = torch.randint(8, 24, (2,))\n        r = torch.randint(3, 8, (1,)).item()\n        for x in range(32):\n            for y in range(32):\n                if (x-cx)**2 + (y-cy)**2 < r**2:\n                    images[i, 0, x, y] = 1.0\n    return images * 2 - 1  # normalize to [-1, 1]\n\nreal_data = generate_shapes(1000)\n\n# TODO: Use the DCGenerator and DCDiscriminator from the lesson\n# TODO: Implement label smoothing: real_labels = 0.9, fake_labels = 0.0\n# TODO: Train for 100 epochs, print losses every 20 epochs\n",
+      "expected_output": "Epoch 100: D_loss=0.65, G_loss=0.82, D(real)=0.62, D(fake)=0.41",
+      "hints": {
+        "en": [
+          "Label smoothing: real_labels = torch.full((batch,1), 0.9)",
+          "This prevents D from becoming overconfident",
+          "Use DataLoader to batch the shape images",
+          "Generate samples every 20 epochs to visually check progress"
+        ],
+        "ta": [
+          "Label smoothing: real_labels = torch.full((batch,1), 0.9)",
+          "இது D-ஐ அதிக நம்பிக்கையாகாமல் தடுக்கிறது"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does ConvTranspose2d do in the generator?",
+        "ta": "Generator-ல் ConvTranspose2d என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": ["Downsamples the image", "Upsamples spatial dimensions (increases resolution)", "Removes noise", "Flattens the tensor"],
+        "ta": ["படத்தை downsample செய்கிறது", "இடஞ்சார் பரிமாணங்களை upsample செய்கிறது (தெளிவுத்திறனை அதிகரிக்கிறது)", "Noise-ஐ அகற்றுகிறது", "Tensor-ஐ தட்டையாக்குகிறது"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is label smoothing and why is it used in GAN training?",
+        "ta": "Label smoothing என்ன, GAN பயிற்சியில் ஏன் பயன்படுத்தப்படுகிறது?"
+      },
+      "options": {
+        "en": ["Using labels 0.9/0.1 instead of 1.0/0.0 to prevent the discriminator from becoming overconfident", "Shuffling labels randomly", "Removing labels entirely", "Using multi-class labels"],
+        "ta": ["Discriminator அதிக நம்பிக்கையாவதைத் தடுக்க 1.0/0.0-க்கு பதிலாக 0.9/0.1 labels பயன்படுத்துவது", "Labels-ஐ சீரற்ற முறையில் கலைப்பது", "Labels-ஐ முழுமையாக அகற்றுவது", "பல வகுப்பு labels பயன்படுத்துவது"]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does DCGAN use LeakyReLU in the discriminator instead of ReLU?",
+        "ta": "DCGAN discriminator-ல் ReLU-க்கு பதிலாக ஏன் LeakyReLU பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["LeakyReLU is faster", "It allows small gradients for negative values, preventing dying neurons", "ReLU doesn't work with convolutions", "No particular reason"],
+        "ta": ["LeakyReLU வேகமானது", "எதிர்மறை மதிப்புகளுக்கு சிறிய gradients அனுமதிக்கிறது, dying neurons தடுக்கிறது", "ReLU convolutions-உடன் வேலை செய்யாது", "குறிப்பிட்ட காரணம் இல்லை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["dcgan", "conv_transpose", "image_generation", "mode_collapse", "label_smoothing", "weight_init"],
+    "concepts_required": ["gan_basics", "cnn_intro"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 40,
+    "real_world_application": ["image_synthesis", "art_generation", "data_augmentation"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

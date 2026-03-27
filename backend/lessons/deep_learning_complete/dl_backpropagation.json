@@ -1,0 +1,201 @@
+{
+  "id": "dl_backpropagation",
+  "topic": "backpropagation",
+  "track": "deep_learning_complete",
+  "module": "training_fundamentals",
+  "order": 6,
+  "title": {
+    "en": "Backpropagation: Teaching the Network to Learn",
+    "ta": "பேக்ப்ரொபகேஷன்: நெட்வொர்க்கிற்கு கற்க கற்றுக்கொடுத்தல்"
+  },
+  "description": {
+    "en": "Understand the chain rule, gradient computation, and how errors flow backwards through the network to update weights.",
+    "ta": "சங்கிலி விதி, சாய்வு கணக்கீடு, மற்றும் பிழைகள் எவ்வாறு பின்நோக்கி பாய்ந்து எடைகளை புதுப்பிக்கின்றன என்பதைப் புரிந்துகொள்ளுங்கள்."
+  },
+  "xp_reward": 80,
+  "story_variants": {
+    "en": "## Vaathiyaar's Blame Game\n\nVaathiyaar lines up his students. \"The final answer was wrong. But who caused the error? We trace it back — from the output, through each layer, all the way to the input. Each neuron gets its share of the blame. That's backpropagation.\"\n\n### The Chain Rule\n\nIf y = f(g(x)), then dy/dx = dy/dg * dg/dx\n\n### Backprop in Action\n\n```python\nimport torch\n\n# Simple computation graph\nx = torch.tensor(2.0, requires_grad=True)\nw = torch.tensor(3.0, requires_grad=True)\nb = torch.tensor(1.0, requires_grad=True)\n\n# Forward pass\nz = w * x + b      # z = 3*2 + 1 = 7\ny = torch.sigmoid(z) # y = sigmoid(7) ≈ 0.999\nloss = (y - 1.0) ** 2 # MSE with target=1.0\n\n# Backward pass\nloss.backward()\n\nprint(f'z = {z.item():.4f}')\nprint(f'y = {y.item():.4f}')\nprint(f'loss = {loss.item():.6f}')\nprint(f'dL/dw = {w.grad.item():.6f}')  # how much w contributed to loss\nprint(f'dL/db = {b.grad.item():.6f}')  # how much b contributed to loss\nprint(f'dL/dx = {x.grad.item():.6f}')  # how much x contributed to loss\n```\n\n> **Key Insight:** PyTorch's autograd automatically builds a computation graph during the forward pass and computes all gradients in one `.backward()` call!",
+    "ta": "## வாத்தியாரின் குற்றச்சாட்டு விளையாட்டு\n\nவாத்தியார் தன் மாணவர்களை வரிசையாக நிறுத்துகிறார். \"இறுதி பதில் தவறு. ஆனால் யார் காரணம்? வெளியீட்டிலிருந்து, ஒவ்வொரு அடுக்கு வழியாக, உள்ளீடு வரை கண்காணிக்கிறோம். ஒவ்வொரு நியூரானுக்கும் அதன் பங்கு குற்றம் கிடைக்கிறது. அதுதான் பேக்ப்ரொபகேஷன்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "blame_game",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "backprop_concepts",
+      "nodes": [
+        {
+          "label": "Backpropagation",
+          "children": [
+            "Chain Rule",
+            "Computation Graph",
+            "Gradient Flow",
+            "requires_grad",
+            "loss.backward()",
+            "Weight Updates"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "backprop_code",
+      "steps": [
+        {"line": "x = torch.tensor(2.0, requires_grad=True)", "highlight": "requires_grad", "explanation": {"en": "Create input tensor and tell PyTorch to track gradients for it"}},
+        {"line": "w = torch.tensor(3.0, requires_grad=True)", "highlight": "w", "explanation": {"en": "Weight parameter — we want to know how loss changes with w"}},
+        {"line": "b = torch.tensor(1.0, requires_grad=True)", "highlight": "b", "explanation": {"en": "Bias parameter — also tracked for gradient computation"}},
+        {"line": "z = w * x + b", "highlight": "z", "explanation": {"en": "Forward: z = 3*2 + 1 = 7. PyTorch records this operation in the graph"}},
+        {"line": "y = torch.sigmoid(z)", "highlight": "sigmoid", "explanation": {"en": "Forward: y = sigmoid(7) ≈ 0.9991. Another node added to computation graph"}},
+        {"line": "loss = (y - 1.0) ** 2", "highlight": "loss", "explanation": {"en": "MSE loss comparing prediction to target 1.0. loss ≈ 0.000001"}},
+        {"line": "loss.backward()", "highlight": "backward", "explanation": {"en": "BACKPROP: Traverse graph in reverse, computing dL/dy, dL/dz, dL/dw, dL/db, dL/dx"}},
+        {"line": "print(f'dL/dw = {w.grad.item():.6f}')", "highlight": "w.grad", "explanation": {"en": "Gradient of loss w.r.t. w. Chain rule: dL/dw = dL/dy * dy/dz * dz/dw"}},
+        {"line": "print(f'dL/db = {b.grad.item():.6f}')", "highlight": "b.grad", "explanation": {"en": "Gradient of loss w.r.t. b. dz/db = 1, so dL/db = dL/dy * dy/dz * 1"}},
+        {"line": "print(f'dL/dx = {x.grad.item():.6f}')", "highlight": "x.grad", "explanation": {"en": "Gradient of loss w.r.t. x. dz/dx = w, so dL/dx = dL/dy * dy/dz * w"}}
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "gradient_flow",
+      "slots": [
+        {"name": "loss", "value": "0.000001", "type": "float", "address": "dL/dL = 1"},
+        {"name": "y = sigmoid(z)", "value": "0.9991", "type": "float", "address": "dL/dy = 2*(y-1) = -0.0018"},
+        {"name": "z = w*x + b", "value": "7.0", "type": "float", "address": "dL/dz = dL/dy * dy/dz = -0.0016"},
+        {"name": "w", "value": "3.0", "type": "float", "address": "dL/dw = dL/dz * x = -0.0032"},
+        {"name": "b", "value": "1.0", "type": "float", "address": "dL/db = dL/dz * 1 = -0.0016"}
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "backward_flow",
+      "from": "loss",
+      "to": "inputs",
+      "steps": ["dL/dL=1", "dL/dy", "dL/dz (chain rule)", "dL/dw, dL/db, dL/dx"],
+      "duration_ms": 4000
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_grad_w",
+      "variable": "w.grad",
+      "value": "-0.000032",
+      "data_type": "float",
+      "color": "#ff6b6b"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_grad_b",
+      "variable": "b.grad",
+      "value": "-0.000016",
+      "data_type": "float",
+      "color": "#4ecdc4"
+    },
+    {
+      "type": "DataStructure",
+      "id": "computation_graph",
+      "structure_type": "directed_graph",
+      "layers": [
+        {"name": "Inputs", "nodes": ["x=2.0", "w=3.0", "b=1.0"]},
+        {"name": "Multiply", "nodes": ["w*x=6.0"]},
+        {"name": "Add", "nodes": ["z=w*x+b=7.0"]},
+        {"name": "Sigmoid", "nodes": ["y=σ(z)=0.999"]},
+        {"name": "Loss", "nodes": ["L=(y-1)²"]}
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        ">>> loss.backward()",
+        ">>> print(f'z = {z.item():.4f}')",
+        "z = 7.0000",
+        ">>> print(f'y = {y.item():.4f}')",
+        "y = 0.9991",
+        ">>> print(f'loss = {loss.item():.6f}')",
+        "loss = 0.000001",
+        ">>> print(f'dL/dw = {w.grad.item():.6f}')",
+        "dL/dw = -0.000032",
+        ">>> print(f'dL/db = {b.grad.item():.6f}')",
+        "dL/db = -0.000016"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "gradient_cascade",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Manually compute gradients for a 2-layer network and verify them against PyTorch autograd. Build forward pass from scratch, compute loss, then compare your manual chain-rule gradients with .grad values.",
+        "ta": "2-அடுக்கு நெட்வொர்க்கிற்கு கைமுறையாக சாய்வுகளை கணக்கிட்டு, PyTorch autograd-உடன் சரிபார்க்கவும்."
+      },
+      "starter_code": "import torch\n\ntorch.manual_seed(42)\nx = torch.tensor([1.0, 2.0], requires_grad=True)\nw1 = torch.tensor([[0.5, -0.3], [0.2, 0.8]], requires_grad=True)\nw2 = torch.tensor([[0.4], [-0.6]], requires_grad=True)\ntarget = torch.tensor([1.0])\n\n# Forward pass\nz1 = x @ w1              # [1, 2] @ [2, 2] = [1, 2]\na1 = torch.relu(z1)       # ReLU activation\nz2 = a1 @ w2              # [1, 2] @ [2, 1] = [1, 1]\nloss = (z2 - target) ** 2 # MSE\n\n# TODO: Call backward and print all gradients\n# TODO: Manually compute dL/dw2 using chain rule and compare\n",
+      "expected_output": "Autograd dL/dw2: [[...], [...]]\nManual dL/dw2:   [[...], [...]]\nMatch: True",
+      "hints": {
+        "en": [
+          "loss.backward() computes all gradients at once",
+          "dL/dz2 = 2 * (z2 - target)",
+          "dL/dw2 = a1.T @ dL/dz2",
+          "Compare with w2.grad"
+        ],
+        "ta": [
+          "loss.backward() அனைத்து சாய்வுகளையும் ஒரே நேரத்தில் கணக்கிடுகிறது",
+          "dL/dz2 = 2 * (z2 - target)"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What mathematical rule is the foundation of backpropagation?",
+        "ta": "பேக்ப்ரொபகேஷனின் அடிப்படையான கணித விதி எது?"
+      },
+      "options": {
+        "en": ["Product rule", "Chain rule", "Power rule", "Quotient rule"],
+        "ta": ["பெருக்கல் விதி", "சங்கிலி விதி", "அடுக்கு விதி", "வகுத்தல் விதி"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `requires_grad=True` tell PyTorch?",
+        "ta": "`requires_grad=True` PyTorch-க்கு என்ன சொல்கிறது?"
+      },
+      "options": {
+        "en": ["Freeze this tensor", "Track operations on this tensor for gradient computation", "Normalize this tensor", "Convert to GPU tensor"],
+        "ta": ["இந்த டென்சரை முடக்கு", "சாய்வு கணக்கீட்டிற்கு இந்த டென்சரில் செயல்பாடுகளைக் கண்காணி", "இந்த டென்சரை இயல்பாக்கு", "GPU டென்சராக மாற்று"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In backpropagation, gradients flow in which direction?",
+        "ta": "பேக்ப்ரொபகேஷனில், சாய்வுகள் எந்த திசையில் பாய்கின்றன?"
+      },
+      "options": {
+        "en": ["Input to output (forward)", "Output to input (backward)", "Randomly", "Both directions simultaneously"],
+        "ta": ["உள்ளீட்டிலிருந்து வெளியீட்டிற்கு (முன்னோக்கி)", "வெளியீட்டிலிருந்து உள்ளீட்டிற்கு (பின்னோக்கி)", "சீரற்ற முறையில்", "இரண்டு திசைகளிலும் ஒரே நேரத்தில்"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["backpropagation", "chain_rule", "computation_graph", "autograd", "gradients"],
+    "concepts_required": ["forward_pass", "loss_functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": ["training_neural_networks"],
+    "category": "deep_learning",
+    "path_memberships": ["deep_learning_complete"]
+  }
+}

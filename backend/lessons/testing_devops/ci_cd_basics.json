@@ -1,0 +1,266 @@
+{
+  "id": "ci_cd_basics",
+  "topic": "ci_cd_basics",
+  "track": "testing_devops",
+  "module": "ci_cd",
+  "order": 6,
+  "title": {
+    "en": "CI/CD: Automate Everything",
+    "ta": "CI/CD: எல்லாவற்றையும் தானியங்கு செய்யுங்கள்"
+  },
+  "description": {
+    "en": "Understand Continuous Integration and Continuous Delivery. Learn how GitHub Actions automates testing, linting, and deployment on every push.",
+    "ta": "Continuous Integration மற்றும் Continuous Delivery புரிந்துகொள்ளுங்கள். GitHub Actions எவ்வாறு ஒவ்வொரு push-லும் testing, linting, deployment தானியங்கு செய்கிறது என்பதை கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 55,
+  "story_variants": {
+    "en": "## Vaathiyaar's Assembly Line\n\nVaathiyaar draws a factory on the whiteboard. \"Imagine a car factory. Raw materials go in one end. At each station, something happens automatically — welding, painting, inspection, packaging. The car rolls off the line ready to ship. That's CI/CD for software.\"\n\n### What is CI/CD?\n- **CI (Continuous Integration)** — Every code push triggers automated tests\n- **CD (Continuous Delivery)** — Code that passes tests is automatically prepared for release\n- **CD (Continuous Deployment)** — Code is automatically deployed to production\n\n### Why CI/CD?\n- Catch bugs immediately, not days later\n- Every commit is tested — no \"it works on my machine\"\n- Deploy with confidence, not anxiety\n- Small, frequent releases beat big, scary ones\n\n### GitHub Actions\n- Built into GitHub — no extra service needed\n- Triggered by events: push, pull_request, schedule\n- Defined in YAML files: `.github/workflows/`\n- Free for public repos, generous free tier for private\n\n> **Key Concept:** CI/CD turns manual, error-prone steps into an automated pipeline. If you push code, the robots do the rest — test, build, deploy."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "assembly_line",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cicd_map",
+      "nodes": [
+        {
+          "label": "CI/CD Pipeline",
+          "children": [
+            "Push Code",
+            "Run Tests",
+            "Build Artifact",
+            "Deploy"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "github_actions_yaml",
+      "steps": [
+        {
+          "line": "name: CI Pipeline",
+          "highlight": "name",
+          "explanation": {
+            "en": "Give your workflow a descriptive name"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Define when this workflow should run"
+          }
+        },
+        {
+          "line": "on:",
+          "highlight": "on",
+          "explanation": {
+            "en": "The 'on' key defines trigger events"
+          }
+        },
+        {
+          "line": "  push:",
+          "highlight": "push",
+          "explanation": {
+            "en": "Run this workflow when code is pushed"
+          }
+        },
+        {
+          "line": "    branches: [main]",
+          "highlight": "[main]",
+          "explanation": {
+            "en": "Only trigger on pushes to the main branch"
+          }
+        },
+        {
+          "line": "  pull_request:",
+          "highlight": "pull_request",
+          "explanation": {
+            "en": "Also run when a pull request is opened or updated"
+          }
+        },
+        {
+          "line": "    branches: [main]",
+          "highlight": "[main]",
+          "explanation": {
+            "en": "Only for PRs targeting the main branch"
+          }
+        },
+        {
+          "line": "",
+          "highlight": null,
+          "explanation": {
+            "en": "Define the jobs that make up the pipeline"
+          }
+        },
+        {
+          "line": "jobs:",
+          "highlight": "jobs",
+          "explanation": {
+            "en": "Jobs run in parallel by default — each on a fresh VM"
+          }
+        },
+        {
+          "line": "  test:",
+          "highlight": "test",
+          "explanation": {
+            "en": "Define a job called 'test'"
+          }
+        },
+        {
+          "line": "    runs-on: ubuntu-latest",
+          "highlight": "ubuntu-latest",
+          "explanation": {
+            "en": "Run on a fresh Ubuntu virtual machine"
+          }
+        },
+        {
+          "line": "    steps:",
+          "highlight": "steps",
+          "explanation": {
+            "en": "Steps run sequentially within the job"
+          }
+        },
+        {
+          "line": "      - uses: actions/checkout@v4",
+          "highlight": "checkout",
+          "explanation": {
+            "en": "Check out your repo code onto the runner"
+          }
+        },
+        {
+          "line": "      - uses: actions/setup-python@v5",
+          "highlight": "setup-python",
+          "explanation": {
+            "en": "Install Python on the runner"
+          }
+        },
+        {
+          "line": "      - run: pip install -r requirements.txt",
+          "highlight": "pip install",
+          "explanation": {
+            "en": "Install project dependencies"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "pipeline_flow",
+      "stages": [
+        { "label": "Push Code", "icon": "git", "color": "#4f8ef7" },
+        { "label": "Checkout", "icon": "download", "color": "#6bcf7f" },
+        { "label": "Install Deps", "icon": "package", "color": "#ffd93d" },
+        { "label": "Lint", "icon": "search", "color": "#a66bf7" },
+        { "label": "Test", "icon": "check", "color": "#4ff7a4" },
+        { "label": "Deploy", "icon": "rocket", "color": "#ff6b6b" }
+      ]
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "actions_output",
+      "output": [
+        "=== GitHub Actions Run #42 ===",
+        "",
+        "Job: test",
+        "  Step 1/5: actions/checkout@v4 ............ done (2s)",
+        "  Step 2/5: actions/setup-python@v5 ........ done (8s)",
+        "  Step 3/5: pip install -r requirements.txt  done (15s)",
+        "  Step 4/5: flake8 src/ .................... done (3s)",
+        "  Step 5/5: pytest tests/ -v ............... done (12s)",
+        "",
+        "Result: SUCCESS (all checks passed)",
+        "Duration: 40s"
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "workflow_file_tree",
+      "structure_type": "tree",
+      "layers": [
+        { "label": ".github/", "count": "root", "color": "#4f8ef7" },
+        { "label": "workflows/", "count": "YAML files", "color": "#6bcf7f" },
+        { "label": "ci.yml", "count": "main pipeline", "color": "#ffd93d" },
+        { "label": "deploy.yml", "count": "deployment", "color": "#ff6b6b" }
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a GitHub Actions YAML workflow that: triggers on push to main, runs on ubuntu-latest, checks out code, sets up Python 3.11, installs requirements, and runs pytest.",
+        "ta": "ஒரு GitHub Actions YAML workflow எழுதுங்கள்: main-க்கு push-ல் trigger ஆகும், ubuntu-latest-ல் இயங்கும், code checkout செய்யும், Python 3.11 setup செய்யும், requirements install செய்யும், pytest இயக்கும்."
+      },
+      "starter_code": "# .github/workflows/ci.yml\nname: CI\n\non:\n  push:\n    branches: [main]\n\njobs:\n  test:\n    runs-on: # which OS?\n    steps:\n      - uses: # checkout action?\n      - uses: actions/setup-python@v5\n        with:\n          python-version: # which version?\n      - run: # install dependencies?\n      - run: # run tests?",
+      "expected_output": "Valid GitHub Actions workflow YAML",
+      "hints": {
+        "en": [
+          "runs-on: ubuntu-latest",
+          "uses: actions/checkout@v4",
+          "python-version: '3.11'",
+          "run: pip install -r requirements.txt",
+          "run: pytest tests/ -v"
+        ],
+        "ta": [
+          "runs-on: ubuntu-latest",
+          "uses: actions/checkout@v4",
+          "python-version: '3.11'",
+          "run: pip install -r requirements.txt",
+          "run: pytest tests/ -v"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does CI stand for?",
+        "ta": "CI என்பது எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": ["Code Inspector", "Continuous Integration", "Complete Installation", "Central Interface"],
+        "ta": ["Code Inspector", "Continuous Integration", "Complete Installation", "Central Interface"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Where do GitHub Actions workflow files live?",
+        "ta": "GitHub Actions workflow files எங்கே இருக்கும்?"
+      },
+      "options": {
+        "en": [".github/workflows/", "actions/", "ci/", ".workflows/"],
+        "ta": [".github/workflows/", "actions/", "ci/", ".workflows/"]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does 'runs-on: ubuntu-latest' specify?",
+        "ta": "'runs-on: ubuntu-latest' என்ன குறிப்பிடுகிறது?"
+      },
+      "options": {
+        "en": ["The Python version", "The virtual machine OS for the job", "The branch to deploy to", "The test framework to use"],
+        "ta": ["Python version", "Job-க்கான virtual machine OS", "Deploy செய்ய வேண்டிய branch", "பயன்படுத்த வேண்டிய test framework"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["ci_cd", "github_actions", "yaml_workflows", "automation"],
+    "concepts_required": ["testing_basics", "git_basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": ["devops", "automation", "deployment"],
+    "category": "devops",
+    "path_memberships": ["testing_devops"]
+  }
+}

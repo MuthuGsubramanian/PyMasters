@@ -1,0 +1,258 @@
+{
+  "id": "graphs_basics",
+  "topic": "graphs_basics",
+  "track": "dsa",
+  "module": "graph_structures",
+  "order": 10,
+  "title": {
+    "en": "Graphs: Connections Everywhere",
+    "ta": "வரைபடங்கள்: எல்லா இடத்திலும் இணைப்புகள்"
+  },
+  "description": {
+    "en": "Learn graph representations (adjacency list/matrix) and fundamental traversals — BFS and DFS.",
+    "ta": "வரைபடங்கள் (adjacency list/matrix) மற்றும் அடிப்படை traversals — BFS மற்றும் DFS கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "story_variants": {
+    "en": "## Vaathiyaar's City Map\n\nVaathiyaar unfolds a city map. \"Cities are **nodes**, roads are **edges**. Some roads are one-way (directed), some go both ways (undirected). Let's explore!\"\n\n### Graph Representations\n\n```python\n# Adjacency List — most common, space efficient\ngraph = {\n    'A': ['B', 'C'],\n    'B': ['A', 'D', 'E'],\n    'C': ['A', 'F'],\n    'D': ['B'],\n    'E': ['B', 'F'],\n    'F': ['C', 'E']\n}\n\n# Adjacency Matrix — good for dense graphs\n#     A  B  C  D  E  F\n# A [[0, 1, 1, 0, 0, 0],\n#  B  [1, 0, 0, 1, 1, 0],\n#  C  [1, 0, 0, 0, 0, 1],\n#  ...]\n```\n\n### BFS — Breadth-First Search\n\n```python\nfrom collections import deque\n\ndef bfs(graph, start):\n    visited = set()\n    queue = deque([start])\n    visited.add(start)\n    order = []\n    while queue:\n        node = queue.popleft()\n        order.append(node)\n        for neighbor in graph[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append(neighbor)\n    return order\n```\n\n### DFS — Depth-First Search\n\n```python\ndef dfs(graph, start, visited=None):\n    if visited is None:\n        visited = set()\n    visited.add(start)\n    result = [start]\n    for neighbor in graph[start]:\n        if neighbor not in visited:\n            result += dfs(graph, neighbor, visited)\n    return result\n```\n\n> **Key Concept:** BFS explores level by level (uses queue). DFS goes deep first (uses stack/recursion). BFS finds shortest path in unweighted graphs."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "city_map",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Graph",
+          "children": [
+            "Nodes (vertices)",
+            "Edges (connections)",
+            "Adjacency List",
+            "BFS (queue)",
+            "DFS (stack/recursion)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_graph",
+      "steps": [
+        {
+          "line": "graph = {",
+          "highlight": "graph",
+          "explanation": {
+            "en": "Define a graph using an adjacency list (dict of lists)",
+            "ta": "adjacency list (list-களின் dict) பயன்படுத்தி graph-ஐ வரையறுக்கவும்"
+          }
+        },
+        {
+          "line": "    'A': ['B', 'C'],",
+          "highlight": "'A'",
+          "explanation": {
+            "en": "Node A connects to B and C",
+            "ta": "முனை A, B மற்றும் C உடன் இணைக்கிறது"
+          }
+        },
+        {
+          "line": "    'B': ['A', 'D', 'E'],",
+          "highlight": "'B'",
+          "explanation": {
+            "en": "Node B connects to A, D, and E",
+            "ta": "முனை B, A, D மற்றும் E உடன் இணைக்கிறது"
+          }
+        },
+        {
+          "line": "from collections import deque",
+          "highlight": "deque",
+          "explanation": {
+            "en": "Import deque for BFS — we need an efficient queue",
+            "ta": "BFS-க்கு deque இறக்குமதி — திறமையான queue தேவை"
+          }
+        },
+        {
+          "line": "def bfs(graph, start):",
+          "highlight": "bfs",
+          "explanation": {
+            "en": "BFS explores all neighbors before going deeper",
+            "ta": "BFS ஆழமாக செல்வதற்கு முன் அனைத்து அண்டை நாடுகளையும் ஆராயும்"
+          }
+        },
+        {
+          "line": "    visited = set()",
+          "highlight": "visited",
+          "explanation": {
+            "en": "Track visited nodes to avoid infinite loops in cycles",
+            "ta": "சுழற்சிகளில் முடிவற்ற loops-ஐ தவிர்க்க பார்வையிட்ட முனைகளை கண்காணிக்கவும்"
+          }
+        },
+        {
+          "line": "    queue = deque([start])",
+          "highlight": "queue",
+          "explanation": {
+            "en": "Start BFS from the given node — add it to the queue",
+            "ta": "கொடுக்கப்பட்ட முனையிலிருந்து BFS தொடங்குங்கள் — queue-ல் சேர்க்கவும்"
+          }
+        },
+        {
+          "line": "    while queue:",
+          "highlight": "while",
+          "explanation": {
+            "en": "Keep processing until queue is empty — all reachable nodes visited",
+            "ta": "queue காலியாகும் வரை செயலாக்கம் தொடருங்கள்"
+          }
+        },
+        {
+          "line": "        node = queue.popleft()",
+          "highlight": "popleft",
+          "explanation": {
+            "en": "Dequeue front node — process it next",
+            "ta": "முன்புற முனையை dequeue செய்யுங்கள் — அடுத்ததாக செயலாக்கவும்"
+          }
+        },
+        {
+          "line": "        for neighbor in graph[node]:",
+          "highlight": "neighbor",
+          "explanation": {
+            "en": "Check all neighbors of the current node",
+            "ta": "தற்போதைய முனையின் அனைத்து அண்டை முனைகளையும் சரிபார்க்கவும்"
+          }
+        },
+        {
+          "line": "            if neighbor not in visited:",
+          "highlight": "not in visited",
+          "explanation": {
+            "en": "Only visit unvisited neighbors — prevents revisiting",
+            "ta": "பார்வையிடாத அண்டை முனைகளை மட்டும் பார்வையிடுங்கள்"
+          }
+        },
+        {
+          "line": "                queue.append(neighbor)",
+          "highlight": "append",
+          "explanation": {
+            "en": "Add unvisited neighbor to queue — it will be processed later",
+            "ta": "பார்வையிடாத அண்டை முனையை queue-ல் சேர்க்கவும்"
+          }
+        },
+        {
+          "line": "print(bfs(graph, 'A'))",
+          "highlight": "print",
+          "explanation": {
+            "en": "BFS from A: ['A', 'B', 'C', 'D', 'E', 'F'] — level by level",
+            "ta": "A-லிருந்து BFS: ['A', 'B', 'C', 'D', 'E', 'F'] — நிலை நிலையாக"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowArrow",
+      "id": "bfs_flow",
+      "steps": [
+        {"label": "Start at A", "active": true},
+        {"label": "Visit B, C (level 1)", "active": true},
+        {"label": "Visit D, E, F (level 2)", "active": true},
+        {"label": "All nodes visited!", "active": true}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_visited",
+      "variable": "visited",
+      "value": "{'A', 'B', 'C', 'D', 'E', 'F'}",
+      "data_type": "set",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_queue",
+      "variable": "queue",
+      "value": "deque([])",
+      "data_type": "deque",
+      "color": "#f7914f"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "BFS from A: ['A', 'B', 'C', 'D', 'E', 'F']",
+        "DFS from A: ['A', 'B', 'D', 'E', 'F', 'C']",
+        "Nodes: 6, Edges: 7",
+        "Is connected: True"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement both BFS and DFS for an undirected graph. Use BFS to find the shortest path (in terms of edges) between two nodes.",
+        "ta": "undirected graph-க்கு BFS மற்றும் DFS இரண்டையும் செயல்படுத்துங்கள். இரண்டு முனைகளுக்கு இடையில் குறுகிய பாதையை கண்டறிய BFS பயன்படுத்துங்கள்."
+      },
+      "starter_code": "from collections import deque\n\ngraph = {\n    'A': ['B', 'C'],\n    'B': ['A', 'D', 'E'],\n    'C': ['A', 'F'],\n    'D': ['B'],\n    'E': ['B', 'F'],\n    'F': ['C', 'E']\n}\n\ndef bfs(graph, start):\n    visited = set()\n    queue = deque([start])\n    visited.add(start)\n    order = []\n    while queue:\n        node = queue.popleft()\n        order.append(node)\n        for neighbor in graph[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append(neighbor)\n    return order\n\ndef dfs(graph, start, visited=None):\n    # Implement recursive DFS\n    pass\n\ndef shortest_path(graph, start, end):\n    # BFS to find shortest path\n    pass\n\nprint('BFS:', bfs(graph, 'A'))\nprint('DFS:', dfs(graph, 'A'))\nprint('Shortest A→F:', shortest_path(graph, 'A', 'F'))",
+      "expected_output": "BFS: ['A', 'B', 'C', 'D', 'E', 'F']\nDFS: ['A', 'B', 'D', 'E', 'F', 'C']\nShortest A→F: ['A', 'C', 'F']",
+      "hints": {
+        "en": [
+          "DFS: use recursion, add start to visited, recurse on unvisited neighbors",
+          "Shortest path: BFS but track parent of each node",
+          "Reconstruct path by following parents from end back to start"
+        ],
+        "ta": [
+          "DFS: recursion பயன்படுத்துங்கள், start-ஐ visited-ல் சேர்க்கவும்",
+          "குறுகிய பாதை: BFS ஆனால் ஒவ்வொரு முனையின் parent-ஐ கண்காணிக்கவும்",
+          "end-லிருந்து start வரை parents-ஐ பின்பற்றி பாதையை மீட்டெடுக்கவும்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which data structure does BFS use?",
+        "ta": "BFS எந்த தரவு கட்டமைப்பைப் பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": ["Stack", "Queue", "Heap", "Hash table"],
+        "ta": ["Stack", "Queue", "Heap", "Hash table"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which traversal is guaranteed to find the shortest path in an unweighted graph?",
+        "ta": "எந்த traversal எடையற்ற graph-ல் குறுகிய பாதையை கண்டறிய உத்தரவாதம் அளிக்கும்?"
+      },
+      "options": {
+        "en": ["DFS", "BFS", "Both", "Neither"],
+        "ta": ["DFS", "BFS", "இரண்டும்", "இரண்டும் இல்லை"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the space complexity of an adjacency list for a graph with V vertices and E edges?",
+        "ta": "V முனைகள் மற்றும் E விளிம்புகள் கொண்ட graph-க்கு adjacency list-ன் இட சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(V²)", "O(V + E)", "O(E)", "O(V)"],
+        "ta": ["O(V²)", "O(V + E)", "O(E)", "O(V)"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["graph", "adjacency_list", "bfs", "dfs"],
+    "concepts_required": ["dict", "queue", "recursion"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": ["social_networks", "maps_navigation", "web_crawling"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "id": "arrays_strings",
+  "topic": "arrays_strings",
+  "track": "dsa",
+  "module": "linear_structures",
+  "order": 2,
+  "title": {
+    "en": "Arrays & Strings: The Foundation",
+    "ta": "அணிகள் & சரங்கள்: அடித்தளம்"
+  },
+  "description": {
+    "en": "Master Python lists as arrays and explore string manipulation algorithms. Understand indexing, slicing, and in-place operations.",
+    "ta": "Python பட்டியல்களை அணிகளாக கற்றுக்கொள்ளுங்கள், சரம் கையாளும் வழிமுறைகளை ஆராயுங்கள்."
+  },
+  "xp_reward": 65,
+  "story_variants": {
+    "en": "## Vaathiyaar's Train Compartments\n\nVaathiyaar draws a train on the board. \"Each compartment is a slot in an array. Passengers board at specific indices!\"\n\n### Python Lists as Arrays\n- Lists are **dynamic arrays** — they resize automatically\n- Elements are stored in **contiguous memory** (mostly)\n- Index access is **O(1)**, append is **amortized O(1)**\n- Insert/delete at beginning is **O(n)** — elements shift\n\n### Key Operations\n\n```python\narr = [10, 20, 30, 40, 50]\n\n# Accessing — O(1)\nfirst = arr[0]       # 10\nlast = arr[-1]       # 50\n\n# Slicing — O(k) where k is slice size\nmiddle = arr[1:4]    # [20, 30, 40]\n\n# Append — amortized O(1)\narr.append(60)       # [10, 20, 30, 40, 50, 60]\n\n# Insert at index — O(n)\narr.insert(0, 5)     # [5, 10, 20, 30, 40, 50, 60]\n\n# Remove — O(n)\narr.remove(30)       # [5, 10, 20, 40, 50, 60]\n```\n\n### String Operations\n\n```python\ns = 'hello world'\n\n# Strings are immutable — cannot change in place\nreversed_s = s[::-1]         # 'dlrow olleh'\nwords = s.split()             # ['hello', 'world']\njoined = '-'.join(words)      # 'hello-world'\nis_palindrome = s == s[::-1]  # False\n```\n\n> **Key Concept:** Lists are mutable (changeable), strings are immutable. Every string operation creates a **new** string."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "train_compartments",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_overview",
+      "nodes": [
+        {
+          "label": "Arrays & Strings",
+          "children": [
+            "Indexing O(1)",
+            "Slicing O(k)",
+            "Append O(1)",
+            "Insert/Delete O(n)",
+            "Immutable Strings"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_arrays",
+      "steps": [
+        {
+          "line": "arr = [10, 20, 30, 40, 50]",
+          "highlight": "arr",
+          "explanation": {
+            "en": "Create a list with 5 elements — this is our array",
+            "ta": "5 உறுப்புகளுடன் ஒரு பட்டியலை உருவாக்குங்கள் — இது நமது அணி"
+          }
+        },
+        {
+          "line": "print(arr[0], arr[-1])",
+          "highlight": "arr[0]",
+          "explanation": {
+            "en": "Access first (index 0) and last (index -1) elements in O(1)",
+            "ta": "முதல் (குறியீடு 0) மற்றும் கடைசி (குறியீடு -1) உறுப்புகளை O(1) ல் அணுகுங்கள்"
+          }
+        },
+        {
+          "line": "sub = arr[1:4]",
+          "highlight": "1:4",
+          "explanation": {
+            "en": "Slice from index 1 to 3 (4 is excluded) — returns [20, 30, 40]",
+            "ta": "குறியீடு 1 முதல் 3 வரை வெட்டுங்கள் (4 விலக்கப்பட்டது) — [20, 30, 40] திருப்பும்"
+          }
+        },
+        {
+          "line": "arr.append(60)",
+          "highlight": "append",
+          "explanation": {
+            "en": "Add 60 to the end — amortized O(1), very fast",
+            "ta": "60 ஐ முடிவில் சேர்க்கவும் — amortized O(1), மிக வேகமானது"
+          }
+        },
+        {
+          "line": "arr.insert(0, 5)",
+          "highlight": "insert",
+          "explanation": {
+            "en": "Insert 5 at index 0 — O(n) because all elements shift right",
+            "ta": "குறியீடு 0 ல் 5 ஐ செருகவும் — O(n) ஏனெனில் அனைத்து உறுப்புகளும் வலது நகரும்"
+          }
+        },
+        {
+          "line": "arr.pop()",
+          "highlight": "pop",
+          "explanation": {
+            "en": "Remove and return last element — O(1)",
+            "ta": "கடைசி உறுப்பை நீக்கி திருப்புங்கள் — O(1)"
+          }
+        },
+        {
+          "line": "s = 'racecar'",
+          "highlight": "s",
+          "explanation": {
+            "en": "Create a string to test palindrome checking",
+            "ta": "palindrome சோதனைக்கு ஒரு சரத்தை உருவாக்குங்கள்"
+          }
+        },
+        {
+          "line": "reversed_s = s[::-1]",
+          "highlight": "[::-1]",
+          "explanation": {
+            "en": "Reverse the string using slice with step -1",
+            "ta": "படி -1 உடன் slice பயன்படுத்தி சரத்தை தலைகீழாக மாற்றுங்கள்"
+          }
+        },
+        {
+          "line": "is_palindrome = s == reversed_s",
+          "highlight": "==",
+          "explanation": {
+            "en": "Check if string equals its reverse — 'racecar' is a palindrome!",
+            "ta": "சரம் அதன் தலைகீழுக்கு சமமா என சரிபார்க்கவும் — 'racecar' ஒரு palindrome!"
+          }
+        },
+        {
+          "line": "print(f'{s} palindrome: {is_palindrome}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Output: racecar palindrome: True",
+            "ta": "வெளியீடு: racecar palindrome: True"
+          }
+        },
+        {
+          "line": "words = 'hello world'.split()",
+          "highlight": "split",
+          "explanation": {
+            "en": "Split string into list of words: ['hello', 'world']",
+            "ta": "சரத்தை வார்த்தைகளின் பட்டியலாக பிரிக்கவும்: ['hello', 'world']"
+          }
+        },
+        {
+          "line": "joined = '-'.join(words)",
+          "highlight": "join",
+          "explanation": {
+            "en": "Join words with hyphen: 'hello-world'",
+            "ta": "வார்த்தைகளை இணைக்குறியுடன் இணைக்கவும்: 'hello-world'"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "array_visual",
+      "structure_type": "list",
+      "initial_state": [10, 20, 30, 40, 50],
+      "animations": [
+        {"action": "add", "index": 5, "value": 60},
+        {"action": "add", "index": 0, "value": 5},
+        {"action": "remove", "index": 6}
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_arr",
+      "variable": "arr",
+      "value": "[5, 10, 20, 30, 40, 50]",
+      "data_type": "list",
+      "color": "#4f8ef7"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_palindrome",
+      "variable": "is_palindrome",
+      "value": true,
+      "data_type": "bool",
+      "color": "#4ff7a4"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "10 50",
+        "[20, 30, 40]",
+        "racecar palindrome: True",
+        "hello-world"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function that takes a list and returns it rotated left by k positions. Also write a function that checks if two strings are anagrams of each other.",
+        "ta": "ஒரு பட்டியலை எடுத்து k நிலைகள் இடது சுழற்சி செய்யும் செயல்பாட்டை எழுதுங்கள். இரண்டு சரங்கள் anagram-களா என சரிபார்க்கும் செயல்பாட்டையும் எழுதுங்கள்."
+      },
+      "starter_code": "def rotate_left(arr, k):\n    # Rotate list left by k positions\n    pass\n\ndef is_anagram(s1, s2):\n    # Check if s1 and s2 are anagrams\n    pass\n\nprint(rotate_left([1, 2, 3, 4, 5], 2))\nprint(is_anagram('listen', 'silent'))\nprint(is_anagram('hello', 'world'))",
+      "expected_output": "[3, 4, 5, 1, 2]\nTrue\nFalse",
+      "hints": {
+        "en": [
+          "For rotate: use slicing — arr[k:] + arr[:k]",
+          "For anagram: sort both strings and compare, or use Counter",
+          "Remember to handle k larger than array length with k % len(arr)"
+        ],
+        "ta": [
+          "சுழற்சிக்கு: slicing பயன்படுத்துங்கள் — arr[k:] + arr[:k]",
+          "Anagram-க்கு: இரண்டு சரங்களையும் வரிசைப்படுத்தி ஒப்பிடுங்கள்",
+          "k அணியின் நீளத்தை விட பெரியதாக இருந்தால் k % len(arr) பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the time complexity of inserting an element at the beginning of a Python list?",
+        "ta": "Python பட்டியலின் தொடக்கத்தில் ஒரு உறுப்பை செருகுவதன் நேர சிக்கல் என்ன?"
+      },
+      "options": {
+        "en": ["O(1)", "O(n)", "O(log n)", "O(n²)"],
+        "ta": ["O(1)", "O(n)", "O(log n)", "O(n²)"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does 'hello'[::-1] return?",
+        "ta": "'hello'[::-1] என்ன திருப்பும்?"
+      },
+      "options": {
+        "en": ["'hello'", "'olleh'", "'h'", "Error"],
+        "ta": ["'hello'", "'olleh'", "'h'", "Error"]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why can't you do s[0] = 'H' on a Python string?",
+        "ta": "Python சரத்தில் s[0] = 'H' ஏன் செய்ய முடியாது?"
+      },
+      "options": {
+        "en": ["Strings don't support indexing", "Strings are immutable", "Index 0 doesn't exist", "You need parentheses"],
+        "ta": ["சரங்கள் குறியீட்டை ஆதரிக்காது", "சரங்கள் மாற்ற முடியாதவை", "குறியீடு 0 இல்லை", "அடைப்புக்குறிகள் தேவை"]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["arrays", "strings", "slicing", "indexing", "palindrome"],
+    "concepts_required": ["variables", "loops"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": ["data_processing", "text_manipulation"],
+    "category": "dsa",
+    "path_memberships": ["dsa_track"]
+  }
+}
