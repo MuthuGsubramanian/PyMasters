@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
+import PythonEditor from '../components/PythonEditor';
 import api, { getAuthHeaders } from '../api';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
+import OutputPanel from '../components/OutputPanel';
 import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2 } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -158,30 +160,12 @@ function buildMarkdownComponents(onInjectCode, hasExistingCode) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Line numbers component for the code editor
-// ──────────────────────────────────────────────────────────────────────────────
-function LineNumbers({ code, scrollRef }) {
-    const lineCount = Math.max(code.split('\n').length, 1);
-    return (
-        <div
-            ref={scrollRef}
-            className="select-none text-right pr-3 pt-4 pb-4 text-slate-600 text-xs font-mono leading-[1.625rem] min-w-[3rem] border-r border-slate-700/50 overflow-hidden"
-        >
-            {Array.from({ length: lineCount }, (_, i) => (
-                <div key={i + 1}>{i + 1}</div>
-            ))}
-        </div>
-    );
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
 // Main Playground page
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Playground() {
     const { user } = useAuth();
     const chatEndRef = useRef(null);
     const editorRef = useRef(null);
-    const lineNumbersRef = useRef(null);
     const streamControllerRef = useRef(null);
 
     useEffect(() => { document.title = 'Playground — PyMasters'; }, []);
@@ -205,6 +189,7 @@ export default function Playground() {
     const [code, setCode] = useState('# Write Python code here...\n\n');
     const [output, setOutput] = useState('');
     const [running, setRunning] = useState(false);
+    const [executionTime, setExecutionTime] = useState(null);
 
     useEffect(() => {
         if (user?.id) {
@@ -361,12 +346,16 @@ export default function Playground() {
     const handleRunCode = async () => {
         if (!code.trim() || running) return;
         setRunning(true);
-        setOutput('>>> Running...\n');
+        setOutput('');
+        setExecutionTime(null);
+        const startTime = performance.now();
         try {
             const res = await api.post('/playground/execute', {
                 user_id: user?.id,
                 code: code,
             });
+            const elapsed = Math.round(performance.now() - startTime);
+            setExecutionTime(elapsed);
             const result = res.data;
             let out = '';
             if (result.output) out += result.output;
@@ -374,10 +363,16 @@ export default function Playground() {
             if (!out) out = '(no output)';
             setOutput(out);
         } catch (err) {
+            setExecutionTime(Math.round(performance.now() - startTime));
             setOutput(`Execution error: ${err.response?.data?.detail || err.message}`);
         } finally {
             setRunning(false);
         }
+    };
+
+    const handleAskAIForHelp = (failedCode, errorText) => {
+        const helpMsg = `My code produced this error. Help me fix it:\n\n\`\`\`python\n${failedCode}\n\`\`\`\n\nError:\n\`\`\`\n${errorText}\n\`\`\``;
+        handleSend(helpMsg);
     };
 
     const handleClearTerminal = () => {
@@ -424,26 +419,6 @@ export default function Playground() {
             editorRef.current.focus();
         }
     }, []);
-
-    // Handle Tab and Ctrl+Enter keys in editor
-    const handleEditorKeyDown = (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const { selectionStart, selectionEnd } = e.target;
-            const newCode = code.substring(0, selectionStart) + '    ' + code.substring(selectionEnd);
-            setCode(newCode);
-            requestAnimationFrame(() => {
-                if (editorRef.current) {
-                    editorRef.current.selectionStart = selectionStart + 4;
-                    editorRef.current.selectionEnd = selectionStart + 4;
-                }
-            });
-        }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            e.preventDefault();
-            handleRunCode();
-        }
-    };
 
     const remaining = credits?.remaining_prompts ?? 0;
     const total = credits?.total_prompts ?? 0;
@@ -729,20 +704,11 @@ export default function Playground() {
                     {/* Code editor area */}
                     <div className="flex-1 flex flex-col min-h-0">
                         <div className="flex-1 flex min-h-0 overflow-hidden" style={{ minHeight: '40%' }}>
-                            <LineNumbers code={code} scrollRef={lineNumbersRef} />
-                            <textarea
-                                ref={editorRef}
+                            <PythonEditor
                                 value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                onKeyDown={handleEditorKeyDown}
-                                onScroll={(e) => {
-                                    if (lineNumbersRef.current) {
-                                        lineNumbersRef.current.scrollTop = e.target.scrollTop;
-                                    }
-                                }}
-                                spellCheck={false}
-                                className="flex-1 bg-transparent text-[#e6edf3] text-sm font-mono p-4 resize-none outline-none leading-[1.625rem] overflow-y-auto placeholder-slate-600"
-                                style={{ caretColor: '#39d353', tabSize: 4 }}
+                                onChange={setCode}
+                                onRun={handleRunCode}
+                                height="calc(100% - 28px)"
                                 placeholder="# Write Python code here...&#10;# Press Ctrl+Enter to run"
                             />
                         </div>
