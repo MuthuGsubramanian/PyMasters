@@ -9,6 +9,9 @@ import DataStructure from './DataStructure';
 import MemoryStack from './MemoryStack';
 import ComparisonPanel from './ComparisonPanel';
 import ConceptMap from './ConceptMap';
+import LoopVisualizer from './LoopVisualizer';
+import FlowDiagram from './FlowDiagram';
+import ExecutionVisualizer from './ExecutionVisualizer';
 
 // Maps primitive type strings to components (PascalCase + snake_case)
 const PRIMITIVE_MAP = {
@@ -22,6 +25,9 @@ const PRIMITIVE_MAP = {
   MemoryStack, memory_stack: MemoryStack,
   ComparisonPanel, comparison_panel: ComparisonPanel,
   ConceptMap, concept_map: ConceptMap,
+  LoopVisualizer, loop_visualizer: LoopVisualizer,
+  FlowDiagram, flow_diagram: FlowDiagram,
+  ExecutionVisualizer, execution_visualizer: ExecutionVisualizer,
 };
 
 // Keys whose values are locale maps ({"en": "...", "ta": "..."})
@@ -35,6 +41,7 @@ const STRUCT_KEYS = new Set([
   'operations', 'steps', 'data', 'slots', 'children', 'variables',
   'highlightSequence', 'stepDescriptions', 'values', 'output',
   'animate_sequence', 'animation', 'practice_challenge', 'profile_update',
+  'executionPath', 'executionSteps', 'collection', 'iterations',
 ]);
 
 /**

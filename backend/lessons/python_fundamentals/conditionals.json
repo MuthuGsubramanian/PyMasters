@@ -142,6 +142,52 @@
       }
     },
     {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "Start", "type": "start" },
+        { "id": "input", "label": "score = 85", "type": "process" },
+        { "id": "check1", "label": "score >= 90?", "type": "decision" },
+        { "id": "grade_a", "label": "grade = 'A'", "type": "process" },
+        { "id": "check2", "label": "score >= 80?", "type": "decision" },
+        { "id": "grade_b", "label": "grade = 'B'", "type": "process" },
+        { "id": "check3", "label": "score >= 70?", "type": "decision" },
+        { "id": "grade_c", "label": "grade = 'C'", "type": "process" },
+        { "id": "grade_f", "label": "grade = 'F'", "type": "process" },
+        { "id": "print", "label": "print(grade)", "type": "io" },
+        { "id": "end", "label": "End", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "input" },
+        { "from": "input", "to": "check1" },
+        { "from": "check1", "to": "grade_a", "label": "True" },
+        { "from": "check1", "to": "check2", "label": "False" },
+        { "from": "check2", "to": "grade_b", "label": "True" },
+        { "from": "check2", "to": "check3", "label": "False" },
+        { "from": "check3", "to": "grade_c", "label": "True" },
+        { "from": "check3", "to": "grade_f", "label": "False" },
+        { "from": "grade_a", "to": "print" },
+        { "from": "grade_b", "to": "print" },
+        { "from": "grade_c", "to": "print" },
+        { "from": "grade_f", "to": "print" },
+        { "from": "print", "to": "end" }
+      ],
+      "executionPath": ["start", "input", "check1", "check2", "grade_b", "print", "end"],
+      "variables": { "score": [null, 85, 85, 85, 85, 85, 85], "grade": [null, null, null, null, "B", "B", "B"] },
+      "speed": "normal"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "code": "score = 85\n\nif score >= 90:\n    grade = 'A'\nelif score >= 80:\n    grade = 'B'\nelif score >= 70:\n    grade = 'C'\nelse:\n    grade = 'F'\n\nprint(grade)",
+      "executionSteps": [
+        { "line": 1, "variables": { "score": 85 }, "output": "", "description": "Set score to 85" },
+        { "line": 3, "variables": { "score": 85 }, "output": "", "description": "Check: is 85 >= 90? No (False)" },
+        { "line": 5, "variables": { "score": 85 }, "output": "", "description": "Check: is 85 >= 80? Yes (True)!" },
+        { "line": 6, "variables": { "score": 85, "grade": "B" }, "output": "", "description": "Assign grade = 'B' — skip remaining elif/else" },
+        { "line": 12, "variables": { "score": 85, "grade": "B" }, "output": "B", "description": "Print the grade: B" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "Terminal",
       "id": "output_display",
       "output": [

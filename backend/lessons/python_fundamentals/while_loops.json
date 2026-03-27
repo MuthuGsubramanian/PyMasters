@@ -30,13 +30,42 @@
       }
     },
     {
-      "type": "FlowArrow",
-      "id": "while_flow",
-      "label": {
-        "en": "loop back if count < 3"
-      },
-      "direction": "up",
-      "branch": "loop"
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "Start", "type": "start" },
+        { "id": "init", "label": "count = 5", "type": "process" },
+        { "id": "check", "label": "count > 0?", "type": "decision" },
+        { "id": "body", "label": "print(count)", "type": "process" },
+        { "id": "dec", "label": "count -= 1", "type": "process" },
+        { "id": "end", "label": "End: Liftoff!", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "init" },
+        { "from": "init", "to": "check" },
+        { "from": "check", "to": "body", "label": "True" },
+        { "from": "body", "to": "dec" },
+        { "from": "dec", "to": "check", "label": "loop back" },
+        { "from": "check", "to": "end", "label": "False" }
+      ],
+      "executionPath": ["start", "init", "check", "body", "dec", "check", "body", "dec", "check", "body", "dec", "check", "end"],
+      "variables": { "count": [null, 5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, null] },
+      "speed": "normal"
+    },
+    {
+      "type": "LoopVisualizer",
+      "loopType": "while",
+      "variable": "count",
+      "condition": "count > 0",
+      "code": "count = 5\nwhile count > 0:\n    print(count)\n    count -= 1\nprint('Liftoff!')",
+      "iterations": [
+        { "value": 5, "output": "5", "description": "First check: 5 > 0 is True" },
+        { "value": 4, "output": "4", "description": "Second check: 4 > 0 is True" },
+        { "value": 3, "output": "3", "description": "Third check: 3 > 0 is True" },
+        { "value": 2, "output": "2", "description": "Fourth check: 2 > 0 is True" },
+        { "value": 1, "output": "1", "description": "Fifth check: 1 > 0 is True" },
+        { "value": 0, "output": "Liftoff!", "description": "Sixth check: 0 > 0 is False — loop ends!" }
+      ],
+      "speed": "normal"
     },
     {
       "type": "TerminalOutput",
