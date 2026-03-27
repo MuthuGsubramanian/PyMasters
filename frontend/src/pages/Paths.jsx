@@ -601,6 +601,7 @@ function PathDetail() {
 // MAIN EXPORT — routes between list and detail
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Paths() {
+    useEffect(() => { document.title = 'Learning Paths — PyMasters'; }, []);
     const { pathId } = useParams();
     return pathId ? <PathDetail /> : <PathList />;
 }

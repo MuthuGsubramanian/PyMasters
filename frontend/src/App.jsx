@@ -26,18 +26,33 @@ function OnboardedRoute({ children }) {
   return children;
 }
 
+function NotFound() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white p-4">
+      <div className="text-center max-w-md">
+        <div className="text-8xl font-bold font-display bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4">404</div>
+        <h1 className="text-2xl font-bold mb-2">Page Not Found</h1>
+        <p className="text-slate-400 mb-8">The page you're looking for doesn't exist or has been moved.</p>
+        <a href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold text-sm hover:scale-105 transition-transform">
+          Go Home
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ProfileProvider>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/security" element={<Security />} />
-            <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
+            <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+            <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+            <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
+            <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
+            <Route path="/security" element={<ErrorBoundary><Security /></ErrorBoundary>} />
+            <Route path="/onboarding" element={<PrivateRoute><ErrorBoundary><Onboarding /></ErrorBoundary></PrivateRoute>} />
             <Route path="/dashboard" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
               <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />
               <Route path="learn" element={<ErrorBoundary><LearningMap /></ErrorBoundary>} />
@@ -47,7 +62,7 @@ export default function App() {
               <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
               <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
             </Route>
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ProfileProvider>
       </AuthProvider>

@@ -366,6 +366,8 @@ function ProgressDots({ total, current }) {
 // Main component
 // ---------------------------------------------------------------------------
 export default function Onboarding() {
+    useEffect(() => { document.title = 'Welcome — PyMasters'; }, []);
+
     const { user, updateUser } = useAuth();
     const navigate = useNavigate();
     const bottomRef = useRef(null);

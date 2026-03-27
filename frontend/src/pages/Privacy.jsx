@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Terminal } from 'lucide-react';
 
 export default function Privacy() {
     const navigate = useNavigate();
+    useEffect(() => { document.title = 'Privacy Policy — PyMasters'; }, []);
 
     return (
         <div className="min-h-screen bg-[var(--bg-deep)] text-slate-700 font-sans">

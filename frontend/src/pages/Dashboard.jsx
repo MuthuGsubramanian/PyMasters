@@ -28,14 +28,16 @@ function AnimatedNumber({ value, duration = 1200 }) {
     const [display, setDisplay] = useState(0);
     useEffect(() => {
         let start = null;
+        let rafId;
         const step = (ts) => {
             if (!start) start = ts;
             const progress = Math.min((ts - start) / duration, 1);
             const eased = 1 - Math.pow(1 - progress, 3);
             setDisplay(Math.floor(eased * value));
-            if (progress < 1) requestAnimationFrame(step);
+            if (progress < 1) rafId = requestAnimationFrame(step);
         };
-        requestAnimationFrame(step);
+        rafId = requestAnimationFrame(step);
+        return () => cancelAnimationFrame(rafId);
     }, [value, duration]);
     return display;
 }
@@ -79,9 +81,14 @@ export function Overview() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
+    const [totalModules, setTotalModules] = useState(4);
     const modulesUnlocked = (user.unlocked || []).length;
-    const totalModules = 12;
-    const progressPct = Math.round((modulesUnlocked / totalModules) * 100);
+    const progressPct = totalModules > 0 ? Math.round((modulesUnlocked / totalModules) * 100) : 0;
+
+    useEffect(() => { document.title = 'Dashboard — PyMasters'; }, []);
+    useEffect(() => {
+        getModules().then(res => setTotalModules(res.data.length)).catch(() => {});
+    }, []);
 
     return (
         <div className="animate-fade-in space-y-8">
@@ -110,7 +117,7 @@ export function Overview() {
             <div className="grid md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-6">
                     {/* Stat Cards with animations */}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {[
                             {
                                 label: 'Total XP',
@@ -175,7 +182,10 @@ export function Overview() {
                                     <h3 className="text-xl font-bold text-slate-900 font-display">Continue Training</h3>
                                 </div>
                                 <p className="text-slate-500 text-sm mb-5">
-                                    You are on Module {modulesUnlocked + 1}. Keep the momentum going!
+                                    {modulesUnlocked >= totalModules
+                                        ? "You've completed all modules. Amazing work!"
+                                        : `You are on Module ${modulesUnlocked + 1}. Keep the momentum going!`
+                                    }
                                 </p>
                                 <div className="flex items-center gap-3">
                                     <button
@@ -262,6 +272,7 @@ export function LearningMap() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    useEffect(() => { document.title = 'Learning Path — PyMasters'; }, []);
     useEffect(() => {
         getModules()
             .then(res => setModules(res.data))
@@ -397,7 +408,10 @@ export function ModuleViewer() {
     const [result, setResult] = useState(null);
 
     useEffect(() => {
-        getModule(id).then(res => setModule(res.data)).catch(() => navigate('/dashboard/learn'));
+        getModule(id).then(res => {
+            setModule(res.data);
+            document.title = res.data.title + ' — PyMasters';
+        }).catch(() => navigate('/dashboard/learn'));
     }, [id, navigate]);
 
     if (!module) return (
@@ -431,6 +445,10 @@ export function ModuleViewer() {
                 }
             } catch (err) {
                 console.error(err);
+                setResult({
+                    passed: false,
+                    msg: 'Failed to submit quiz. Please check your connection and try again.',
+                });
             }
         } else {
             const remaining = module.quiz.length - correctCount;
@@ -619,7 +637,15 @@ export function ModuleViewer() {
                                                                 key={oIdx}
                                                                 whileHover={!result?.passed ? { scale: 1.01 } : {}}
                                                                 whileTap={!result?.passed ? { scale: 0.99 } : {}}
-                                                                onClick={() => !result?.passed && setAnswers({ ...answers, [qIdx]: oIdx })}
+                                                                onClick={() => {
+                                                                    if (result?.passed) return;
+                                                                    if (result && !result.passed) {
+                                                                        setResult(null);
+                                                                        setAnswers({ [qIdx]: oIdx });
+                                                                    } else {
+                                                                        setAnswers({ ...answers, [qIdx]: oIdx });
+                                                                    }
+                                                                }}
                                                                 className={clsx(
                                                                     "flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-all duration-200 border",
                                                                     showCorrect ? "bg-green-50 border-green-300" :

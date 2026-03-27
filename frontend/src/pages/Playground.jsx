@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
-import api from '../api';
+import api, { getAuthHeaders } from '../api';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2 } from 'lucide-react';
 
@@ -160,10 +160,13 @@ function buildMarkdownComponents(onInjectCode, hasExistingCode) {
 // ──────────────────────────────────────────────────────────────────────────────
 // Line numbers component for the code editor
 // ──────────────────────────────────────────────────────────────────────────────
-function LineNumbers({ code }) {
+function LineNumbers({ code, scrollRef }) {
     const lineCount = Math.max(code.split('\n').length, 1);
     return (
-        <div className="select-none text-right pr-3 pt-4 pb-4 text-slate-600 text-xs font-mono leading-[1.625rem] min-w-[3rem] border-r border-slate-700/50">
+        <div
+            ref={scrollRef}
+            className="select-none text-right pr-3 pt-4 pb-4 text-slate-600 text-xs font-mono leading-[1.625rem] min-w-[3rem] border-r border-slate-700/50 overflow-hidden"
+        >
             {Array.from({ length: lineCount }, (_, i) => (
                 <div key={i + 1}>{i + 1}</div>
             ))}
@@ -178,6 +181,9 @@ export default function Playground() {
     const { user } = useAuth();
     const chatEndRef = useRef(null);
     const editorRef = useRef(null);
+    const lineNumbersRef = useRef(null);
+
+    useEffect(() => { document.title = 'Playground — PyMasters'; }, []);
 
     // Chat state
     const [messages, setMessages] = useState([]);
@@ -256,7 +262,7 @@ export default function Playground() {
         try {
             const response = await fetch(`${api.defaults.baseURL}/playground/chat/stream`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
                 body: JSON.stringify({
                     user_id: user?.id,
                     message,
@@ -271,6 +277,10 @@ export default function Playground() {
                     return [...filtered, { role: 'assistant', content: "You've used all your prompts! Complete more lessons to earn XP and unlock more." }];
                 });
                 return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
 
             const reader = response.body.getReader();
@@ -386,6 +396,9 @@ export default function Playground() {
     };
 
     const handleClearTerminal = () => {
+        if (code.trim() && code.trim() !== '# Write Python code here...') {
+            if (!window.confirm('Clear all code? This cannot be undone.')) return;
+        }
         setCode('# Write Python code here...\n\n');
         setOutput('');
     };
@@ -427,20 +440,23 @@ export default function Playground() {
         }
     }, []);
 
-    // Handle Tab key in editor
+    // Handle Tab and Ctrl+Enter keys in editor
     const handleEditorKeyDown = (e) => {
         if (e.key === 'Tab') {
             e.preventDefault();
             const { selectionStart, selectionEnd } = e.target;
             const newCode = code.substring(0, selectionStart) + '    ' + code.substring(selectionEnd);
             setCode(newCode);
-            // Restore cursor position after state update
             requestAnimationFrame(() => {
                 if (editorRef.current) {
                     editorRef.current.selectionStart = selectionStart + 4;
                     editorRef.current.selectionEnd = selectionStart + 4;
                 }
             });
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleRunCode();
         }
     };
 
@@ -454,7 +470,7 @@ export default function Playground() {
     const mdComponents = buildMarkdownComponents(handleInjectCode, hasExistingCode);
 
     return (
-        <div className="h-screen flex flex-col overflow-hidden">
+        <div className="h-[100dvh] flex flex-col overflow-hidden">
             <VaathiyaarMessage />
 
             {/* ── Header ────────────────────────────────────────────────────── */}
@@ -602,10 +618,10 @@ export default function Playground() {
             )}
 
             {/* ── Main Content: 2-column layout ───────────────────────────── */}
-            <div className="flex-1 grid grid-cols-5 gap-4 px-6 pb-2 min-h-0 overflow-hidden">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 px-6 pb-2 min-h-0 overflow-hidden">
 
                 {/* ── Left Panel: Vaathiyaar Chat ────────────────────────── */}
-                <div className="col-span-2 flex flex-col min-h-0 rounded-2xl border border-slate-200/80 bg-white/60 backdrop-blur-sm shadow-sm overflow-hidden">
+                <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 rounded-2xl border border-slate-200/80 bg-white/60 backdrop-blur-sm shadow-sm overflow-hidden">
                     {/* Panel header with macOS dots */}
                     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200/60 bg-slate-50/80 flex-shrink-0">
                         <div className="flex items-center gap-1.5">
@@ -706,7 +722,7 @@ export default function Playground() {
                 </div>
 
                 {/* ── Right Panel: Live Code Terminal ─────────────────────── */}
-                <div className="col-span-3 flex flex-col min-h-0 rounded-2xl border border-slate-700/30 bg-[#0d1117] shadow-xl overflow-hidden">
+                <div className="col-span-1 lg:col-span-3 flex flex-col min-h-0 rounded-2xl border border-slate-700/30 bg-[#0d1117] shadow-xl overflow-hidden">
                     {/* Panel header with macOS dots */}
                     <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/50 bg-[#161b22] flex-shrink-0">
                         <div className="flex items-center gap-2">
@@ -728,16 +744,21 @@ export default function Playground() {
                     {/* Code editor area */}
                     <div className="flex-1 flex flex-col min-h-0">
                         <div className="flex-1 flex min-h-0 overflow-hidden" style={{ minHeight: '40%' }}>
-                            <LineNumbers code={code} />
+                            <LineNumbers code={code} scrollRef={lineNumbersRef} />
                             <textarea
                                 ref={editorRef}
                                 value={code}
                                 onChange={(e) => setCode(e.target.value)}
                                 onKeyDown={handleEditorKeyDown}
+                                onScroll={(e) => {
+                                    if (lineNumbersRef.current) {
+                                        lineNumbersRef.current.scrollTop = e.target.scrollTop;
+                                    }
+                                }}
                                 spellCheck={false}
                                 className="flex-1 bg-transparent text-[#e6edf3] text-sm font-mono p-4 resize-none outline-none leading-[1.625rem] overflow-y-auto placeholder-slate-600"
                                 style={{ caretColor: '#39d353', tabSize: 4 }}
-                                placeholder="# Write Python code here..."
+                                placeholder="# Write Python code here...&#10;# Press Ctrl+Enter to run"
                             />
                         </div>
 
@@ -778,6 +799,7 @@ export default function Playground() {
                                 {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                                 {running ? 'Running...' : 'Run Code'}
                             </button>
+                            <span className="text-[10px] text-slate-600 font-mono hidden sm:inline">Ctrl+Enter</span>
                             <button
                                 onClick={handleClearTerminal}
                                 className="flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 hover:bg-slate-700 hover:text-slate-300 transition-all duration-200"

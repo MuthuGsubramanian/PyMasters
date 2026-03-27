@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Terminal, Shield, Lock, Database, Cpu, AlertCircle } from 'lucide-react';
 
 export default function Security() {
     const navigate = useNavigate();
+    useEffect(() => { document.title = 'Security — PyMasters'; }, []);
 
     return (
         <div className="min-h-screen bg-[var(--bg-deep)] text-slate-700 font-sans">
