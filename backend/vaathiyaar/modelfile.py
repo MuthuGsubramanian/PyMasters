@@ -314,7 +314,11 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     context = lesson_context or {}
 
     # --- Student profile section ---
+    # Prefer username over generic "Learner" default
     name = profile.get("name") or profile.get("username") or "the student"
+    username = profile.get("username") or ""
+    if name in ("Learner", "learner", "the student") and username:
+        name = username
     skill_level = profile.get("skill_level", "beginner")
     preferred_language = profile.get("preferred_language", "en")
     motivation = profile.get("motivation", "not specified")
@@ -349,7 +353,11 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     # Personalized name instruction
     name_instruction = ""
     if name and name != "the student":
-        name_instruction = f"\n- **Important**: Address the student by their name '{name}' for personal connection."
+        name_instruction = (
+            f"\n- **CRITICAL**: Always address the student as '{name}'. "
+            f"Never use 'friend', 'buddy', 'dear student', or any generic term. "
+            f"Use their actual name '{name}' in greetings and throughout the conversation."
+        )
 
     profile_block = f"""
 ## Current Student Profile
