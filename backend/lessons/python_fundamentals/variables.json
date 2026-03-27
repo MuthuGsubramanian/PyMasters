@@ -115,6 +115,17 @@
       ]
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "name = 'PyMaster'\nage = 25\npi = 3.14\nprint(f'Hello, {name}! Age: {age}, Pi: {pi}')",
+      "executionSteps": [
+        { "line": 1, "variables": { "name": "PyMaster" }, "output": "", "description": "Create variable 'name' and store the string 'PyMaster'" },
+        { "line": 2, "variables": { "name": "PyMaster", "age": 25 }, "output": "", "description": "Create variable 'age' and store the integer 25" },
+        { "line": 3, "variables": { "name": "PyMaster", "age": 25, "pi": 3.14 }, "output": "", "description": "Create variable 'pi' and store the float 3.14" },
+        { "line": 4, "variables": { "name": "PyMaster", "age": 25, "pi": 3.14 }, "output": "Hello, PyMaster! Age: 25, Pi: 3.14", "description": "Use f-string to combine all variables into one output" }
+      ],
+      "speed": "normal"
+    },
+    {
       "type": "MemoryStack",
       "id": "memory_view",
       "slots": [

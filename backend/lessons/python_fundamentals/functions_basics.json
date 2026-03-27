@@ -30,6 +30,51 @@
       }
     },
     {
+      "type": "ExecutionVisualizer",
+      "code": "def greet(name):\n    message = f'Hello, {name}!'\n    return message\n\nresult = greet('Alice')\nprint(result)",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "description": "Define function 'greet' — stored in memory, not executed yet" },
+        { "line": 5, "variables": {}, "output": "", "description": "Call greet('Alice') — jump into the function" },
+        { "line": 1, "variables": { "name": "Alice" }, "output": "", "description": "Enter function: parameter name = 'Alice'" },
+        { "line": 2, "variables": { "name": "Alice", "message": "Hello, Alice!" }, "output": "", "description": "Create message using f-string: 'Hello, Alice!'" },
+        { "line": 3, "variables": { "name": "Alice", "message": "Hello, Alice!" }, "output": "", "description": "Return 'Hello, Alice!' back to the caller" },
+        { "line": 5, "variables": { "result": "Hello, Alice!" }, "output": "", "description": "Store returned value in result" },
+        { "line": 6, "variables": { "result": "Hello, Alice!" }, "output": "Hello, Alice!", "description": "Print result: Hello, Alice!" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "nodes": [
+        { "id": "start", "label": "Start", "type": "start" },
+        { "id": "define", "label": "def greet(name)", "type": "process" },
+        { "id": "call", "label": "greet('Alice')", "type": "process" },
+        { "id": "enter", "label": "Enter function", "type": "process" },
+        { "id": "body", "label": "message = f'Hello, {name}!'", "type": "process" },
+        { "id": "return", "label": "return message", "type": "process" },
+        { "id": "resume", "label": "result = 'Hello, Alice!'", "type": "process" },
+        { "id": "print", "label": "print(result)", "type": "io" },
+        { "id": "end", "label": "End", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "define" },
+        { "from": "define", "to": "call" },
+        { "from": "call", "to": "enter", "label": "jump in" },
+        { "from": "enter", "to": "body" },
+        { "from": "body", "to": "return" },
+        { "from": "return", "to": "resume", "label": "return value" },
+        { "from": "resume", "to": "print" },
+        { "from": "print", "to": "end" }
+      ],
+      "executionPath": ["start", "define", "call", "enter", "body", "return", "resume", "print", "end"],
+      "variables": {
+        "name": [null, null, null, "Alice", "Alice", "Alice", null, null, null],
+        "message": [null, null, null, null, "Hello, Alice!", "Hello, Alice!", null, null, null],
+        "result": [null, null, null, null, null, null, "Hello, Alice!", "Hello, Alice!", "Hello, Alice!"]
+      },
+      "speed": "normal"
+    },
+    {
       "type": "MemoryStack",
       "id": "call_stack",
       "slots": [
