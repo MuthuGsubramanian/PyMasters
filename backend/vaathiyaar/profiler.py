@@ -245,4 +245,63 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
     finally:
         conn.close()
 
+    # Add completed lessons
+    conn = sqlite3.connect(db_path)
+    try:
+        comp_rows = conn.execute(
+            "SELECT lesson_id, completed_at, xp_awarded FROM lesson_completions WHERE user_id = ? ORDER BY completed_at DESC LIMIT 20",
+            [user_id],
+        ).fetchall()
+        profile["completed_lessons"] = [
+            {"lesson_id": r[0], "completed_at": r[1], "xp": r[2]} for r in comp_rows
+        ]
+    finally:
+        conn.close()
+
+    # Add active learning path
+    conn = sqlite3.connect(db_path)
+    try:
+        path_row = conn.execute(
+            """SELECT lp.name, ulp.current_position, lp.lesson_sequence, ulp.status
+               FROM user_learning_paths ulp
+               JOIN learning_paths lp ON ulp.path_id = lp.id
+               WHERE ulp.user_id = ? AND ulp.status = 'active'
+               LIMIT 1""",
+            [user_id],
+        ).fetchone()
+        if path_row:
+            import json as _json
+            seq = _json.loads(path_row[2]) if path_row[2] else []
+            profile["active_path"] = {
+                "name": path_row[0],
+                "position": path_row[1] or 0,
+                "total_lessons": len(seq),
+                "status": path_row[3],
+            }
+        else:
+            profile["active_path"] = None
+    finally:
+        conn.close()
+
+    # Add recent playground conversation topics
+    conn = sqlite3.connect(db_path)
+    try:
+        pg_rows = conn.execute(
+            "SELECT title FROM playground_conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT 5",
+            [user_id],
+        ).fetchall()
+        profile["recent_playground_topics"] = [r[0] for r in pg_rows if r[0] and r[0] != "New conversation"]
+    finally:
+        conn.close()
+
+    # Add XP and rank
+    conn = sqlite3.connect(db_path)
+    try:
+        pts_row = conn.execute("SELECT points FROM users WHERE id = ?", [user_id]).fetchone()
+        total_xp = pts_row[0] if pts_row else 0
+        profile["total_xp"] = total_xp
+        profile["rank"] = "ARCHITECT" if total_xp > 1000 else "ENGINEER" if total_xp > 500 else "CADET"
+    finally:
+        conn.close()
+
     return profile

@@ -451,6 +451,46 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
 
     enhanced_context = "\n".join(blocks)
 
+    # ── Learner Journey Context ──────────────────────────────────────
+    journey_block = ""
+    if student_profile:
+        journey_parts = []
+
+        completed = student_profile.get("completed_lessons", [])
+        if completed:
+            recent_names = ", ".join(
+                f"{c['lesson_id']} ({c.get('completed_at', 'recently')[:10]})"
+                for c in completed[:8]
+            )
+            journey_parts.append(f"Completed lessons (recent): {recent_names}")
+            journey_parts.append(
+                f"Total completed: {len(completed)} lessons | "
+                f"{student_profile.get('total_xp', 0)} XP | "
+                f"Rank: {student_profile.get('rank', 'CADET')}"
+            )
+
+        path = student_profile.get("active_path")
+        if path:
+            pct = round((path["position"] / max(path["total_lessons"], 1)) * 100)
+            journey_parts.append(
+                f'Active path: "{path["name"]}" — lesson {path["position"]} of {path["total_lessons"]} ({pct}% complete)'
+            )
+
+        pg_topics = student_profile.get("recent_playground_topics", [])
+        if pg_topics:
+            journey_parts.append(f"Recent playground topics: {', '.join(pg_topics[:5])}")
+
+        if journey_parts:
+            journey_block = (
+                "\n\n=== LEARNER JOURNEY ===\n"
+                + "\n".join(journey_parts)
+                + "\n\nUse this context to:\n"
+                "- Reference completed lessons when explaining related concepts\n"
+                "- Acknowledge progress milestones naturally\n"
+                "- Connect new topics to what the student already knows\n"
+                "- Never re-explain concepts the student has demonstrated mastery in\n"
+            )
+
     # --- Assemble full prompt ---
     full_prompt = (
         VAATHIYAAR_IDENTITY
@@ -458,6 +498,7 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
         + context_block
         + lang_instruction
         + enhanced_context
+        + journey_block
         + ANIMATION_INSTRUCTIONS
         + RESPONSE_FORMAT
     )
