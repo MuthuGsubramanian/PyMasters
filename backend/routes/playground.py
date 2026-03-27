@@ -10,7 +10,7 @@ import sqlite3
 import uuid
 from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -347,3 +347,145 @@ def playground_chat_stream(request: PlaygroundChatRequest):
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@router.post("/execute")
+def execute_code(request: dict = Body(...)):
+    """
+    Execute Python code in a subprocess with real Python 3.12.
+    Used by the Playground live terminal.
+    More permissive than classroom evaluate — allows imports, file ops, etc.
+    """
+    import subprocess
+    import tempfile
+    import os
+
+    code = request.get("code", "")
+    user_id = request.get("user_id", "")
+
+    if not code.strip():
+        return {"output": "", "error": "No code provided", "exit_code": 1}
+
+    # Hard security limits — block truly dangerous operations
+    HARD_BLOCKED = ["subprocess.call", "subprocess.run", "subprocess.Popen",
+                    "os.system", "os.remove", "os.rmdir", "shutil.rmtree",
+                    "__import__('os').system", "eval(", "exec("]
+    for blocked in HARD_BLOCKED:
+        if blocked in code:
+            return {
+                "output": "",
+                "error": f"Security: '{blocked}' is not allowed in the playground.",
+                "exit_code": 1,
+            }
+
+    # Write code to a temp file and execute with subprocess
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+            f.write(code)
+            temp_path = f.name
+
+        # Find Python executable
+        python_cmd = "python3" if os.name != "nt" else "python"
+
+        result = subprocess.run(
+            [python_cmd, temp_path],
+            capture_output=True,
+            text=True,
+            timeout=10,  # 10 second timeout
+            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        )
+
+        output = result.stdout
+        error = result.stderr
+        exit_code = result.returncode
+
+        # Clean up
+        try:
+            os.unlink(temp_path)
+        except Exception:
+            pass
+
+        return {
+            "output": output,
+            "error": error,
+            "exit_code": exit_code,
+        }
+    except subprocess.TimeoutExpired:
+        try:
+            os.unlink(temp_path)
+        except Exception:
+            pass
+        return {
+            "output": "",
+            "error": "Execution timed out (10 second limit). Check for infinite loops.",
+            "exit_code": 1,
+        }
+    except FileNotFoundError:
+        return {
+            "output": "",
+            "error": "Python interpreter not found. Please check server configuration.",
+            "exit_code": 1,
+        }
+    except Exception as e:
+        return {
+            "output": "",
+            "error": str(e),
+            "exit_code": 1,
+        }
+
+
+@router.post("/install-package")
+def install_package(request: dict = Body(...)):
+    """
+    Install a Python package via pip for the playground.
+    """
+    import subprocess
+    import os
+
+    package = request.get("package", "").strip()
+    user_id = request.get("user_id", "")
+
+    if not package:
+        return {"success": False, "error": "No package name provided"}
+
+    # Whitelist common safe packages
+    ALLOWED_PACKAGES = {
+        "numpy", "pandas", "matplotlib", "seaborn", "scipy", "scikit-learn",
+        "requests", "beautifulsoup4", "flask", "fastapi", "django",
+        "pillow", "opencv-python", "torch", "tensorflow", "transformers",
+        "langchain", "openai", "anthropic", "chromadb", "faiss-cpu",
+        "pytest", "black", "isort", "rich", "typer", "click",
+        "pydantic", "sqlalchemy", "aiohttp", "httpx", "boto3",
+        "redis", "celery", "PyPDF2", "openpyxl", "python-dotenv",
+        "tiktoken", "nltk", "spacy", "networkx", "sympy",
+    }
+
+    # Normalize package name
+    pkg_normalized = package.lower().replace("-", "_").replace(".", "_")
+    allowed_normalized = {p.lower().replace("-", "_").replace(".", "_") for p in ALLOWED_PACKAGES}
+
+    if pkg_normalized not in allowed_normalized:
+        return {
+            "success": False,
+            "error": f"Package '{package}' is not in the allowed list. Contact support to request it.",
+            "allowed": sorted(ALLOWED_PACKAGES),
+        }
+
+    python_cmd = "python3" if os.name != "nt" else "python"
+
+    try:
+        result = subprocess.run(
+            [python_cmd, "-m", "pip", "install", package],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        if result.returncode == 0:
+            return {"success": True, "output": result.stdout}
+        else:
+            return {"success": False, "error": result.stderr}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "Installation timed out"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

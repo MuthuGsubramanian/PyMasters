@@ -124,7 +124,7 @@ def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | Non
     return None
 
 
-def _list_all_lessons(lessons_dir: str = None, user_id: int = None) -> list[dict]:
+def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict]:
     """List all lessons across all track subdirectories."""
     base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
     lessons = []
@@ -133,18 +133,22 @@ def _list_all_lessons(lessons_dir: str = None, user_id: int = None) -> list[dict
             for lesson_file in sorted(track_dir.glob("*.json")):
                 if lesson_file.name == "schema.json":
                     continue
-                with open(lesson_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    lessons.append({
-                        "id": data.get("id", lesson_file.stem),
-                        "title": data.get("title", {}),
-                        "description": data.get("description", {}),
-                        "xp_reward": data.get("xp_reward"),
-                        "topic": data.get("topic"),
-                        "track": data.get("track"),
-                        "module": data.get("module"),
-                        "order": data.get("order", 0),
-                    })
+                try:
+                    with open(lesson_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        lessons.append({
+                            "id": data.get("id", lesson_file.stem),
+                            "title": data.get("title", {}),
+                            "description": data.get("description", {}),
+                            "xp_reward": data.get("xp_reward"),
+                            "topic": data.get("topic"),
+                            "track": data.get("track"),
+                            "module": data.get("module"),
+                            "order": data.get("order", 0),
+                        })
+                except Exception as e:
+                    print(f"Warning: Failed to load lesson {lesson_file}: {e}")
+                    continue
 
     # Generated lessons from database
     if user_id:
@@ -308,7 +312,7 @@ def chat_stream(request: ChatRequest):
 
 
 @router.get("/lessons")
-async def list_lessons(user_id: int = None):
+async def list_lessons(user_id: str = None):
     """
     List all available lessons, personalized to the user's onboarding profile.
 
@@ -501,8 +505,8 @@ async def list_lessons(user_id: int = None):
                         "primary_tracks": primary_tracks,
                         **path_info,
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Profile lookup failed: {e}")
 
         return {"lessons": lessons}
     except Exception:
