@@ -26,6 +26,7 @@ from routes.notifications import router as notifications_router
 from routes.modules import router as modules_router
 from routes.graph import router as graph_router
 from routes.messages import router as messages_router
+from routes.paths import router as paths_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -427,6 +428,13 @@ def init_db():
         except Exception as e:
             print(f"Graph seed: {e}")
 
+        # Seed learning paths
+        try:
+            from paths.definitions import seed_paths
+            seed_paths(DB_PATH)
+        except Exception as e:
+            print(f"Paths seed: {e}")
+
         conn.commit()
 
     except Exception as e:
@@ -453,6 +461,7 @@ app.include_router(notifications_router)
 app.include_router(modules_router)
 app.include_router(graph_router)
 app.include_router(messages_router)
+app.include_router(paths_router)
 
 # --- CORS ---
 origins = [
