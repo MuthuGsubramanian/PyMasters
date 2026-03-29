@@ -287,78 +287,63 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="px-3 pb-3 space-y-1.5">
+                                            <div className="px-4 pb-4 space-y-2">
                                                 {lessonsInTrack.map((lesson, idx) => {
                                                     const isLocked = lesson.recommended === false;
+                                                    const isDone = completedLessons.has(lesson.id);
                                                     return (
                                                         <motion.button
                                                             key={lesson.id}
-                                                            initial={{ opacity: 0, x: -10 }}
+                                                            initial={{ opacity: 0, x: -8 }}
                                                             animate={{ opacity: 1, x: 0 }}
-                                                            transition={{ delay: idx * 0.03 }}
+                                                            transition={{ delay: idx * 0.02 }}
                                                             onClick={() => !isLocked && onSelectLesson(lesson)}
                                                             title={isLocked ? 'Complete earlier modules first' : undefined}
-                                                            className={`w-full text-left rounded-xl p-4 flex items-center gap-3 group transition-all duration-300 ${
+                                                            className={`w-full text-left rounded-xl px-4 py-3.5 flex items-start gap-4 group transition-all duration-200 ${
                                                                 isLocked
                                                                     ? 'opacity-40 cursor-not-allowed'
-                                                                    : 'hover:bg-white/90 hover:shadow-sm cursor-pointer'
+                                                                    : 'hover:bg-white dark:hover:bg-slate-700/40 hover:shadow-sm cursor-pointer'
                                                             } ${
-                                                                lesson.recommended === true
-                                                                    ? 'bg-purple-50/60 border border-purple-100'
-                                                                    : 'bg-white/40 border border-transparent'
+                                                                isDone
+                                                                    ? 'bg-green-50/40 dark:bg-green-900/10'
+                                                                    : lesson.recommended === true
+                                                                    ? 'bg-purple-50/40 dark:bg-purple-900/10'
+                                                                    : 'bg-white/50 dark:bg-white/[0.03]'
                                                             }`}
                                                         >
-                                                            <div className={`flex-shrink-0 w-9 h-9 rounded-lg border flex items-center justify-center text-sm font-bold transition-colors ${
-                                                                isLocked
-                                                                    ? 'bg-slate-100 border-slate-200 text-slate-400'
-                                                                    : lesson.recommended === true
-                                                                    ? 'border-purple-200 text-purple-500 group-hover:bg-purple-100'
-                                                                    : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:bg-cyan-50 group-hover:border-cyan-200 group-hover:text-cyan-600'
-                                                            }`}
-                                                                style={!isLocked ? { background: `${meta.accent}08` } : {}}
-                                                            >
-                                                                {isLocked ? <Lock size={14} /> : <span>{idx + 1}</span>}
+                                                            {/* Number badge */}
+                                                            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold mt-0.5 ${
+                                                                isLocked ? 'bg-slate-100 dark:bg-slate-700 text-slate-400'
+                                                                : isDone ? 'bg-green-500 text-white'
+                                                                : 'text-white'
+                                                            }`} style={!isLocked && !isDone ? { background: meta.accent } : {}}>
+                                                                {isLocked ? <Lock size={13} /> : isDone ? '✓' : idx + 1}
                                                             </div>
+                                                            {/* Content */}
                                                             <div className="flex-1 min-w-0">
-                                                                <div className={`font-semibold text-sm truncate transition-colors ${
-                                                                    isLocked
-                                                                        ? 'text-slate-500'
-                                                                        : 'text-slate-800 group-hover:text-purple-600'
-                                                                }`}>
-                                                                    {resolveText(lesson.title, language)}
-                                                                    {completedLessons.has(lesson.id) && (
-                                                                        <span className="ml-2 text-[9px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
-                                                                            Done
-                                                                        </span>
-                                                                    )}
+                                                                <div className="flex items-center gap-2 mb-0.5">
+                                                                    <h4 className={`font-semibold text-[15px] leading-tight transition-colors ${
+                                                                        isLocked ? 'text-slate-400' : 'text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300'
+                                                                    }`}>
+                                                                        {resolveText(lesson.title, language)}
+                                                                    </h4>
+                                                                    {isDone && <span className="text-[9px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded-full px-2 py-0.5">Done</span>}
+                                                                    {lesson.generated && <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-full px-2 py-0.5">Custom</span>}
                                                                 </div>
                                                                 {lesson.description && (
-                                                                    <div className="text-xs text-slate-400 truncate mt-0.5">
+                                                                    <p className="text-[13px] text-slate-600 dark:text-slate-200 leading-relaxed">
                                                                         {resolveText(lesson.description, language)}
-                                                                    </div>
+                                                                    </p>
                                                                 )}
                                                             </div>
-                                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                                                {lesson.generated && (
-                                                                    <span className="text-[9px] font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
-                                                                        Custom
-                                                                    </span>
-                                                                )}
+                                                            {/* Right side: XP + play */}
+                                                            <div className="flex-shrink-0 flex items-center gap-2 mt-1">
                                                                 {lesson.xp_reward != null && (
-                                                                    <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${
-                                                                        isLocked
-                                                                            ? 'text-slate-400 bg-slate-50 border-slate-200'
-                                                                            : 'text-amber-600 bg-amber-50 border-amber-200'
-                                                                    }`}>
-                                                                        +{lesson.xp_reward} XP
-                                                                    </span>
+                                                                    <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
+                                                                        isLocked ? 'text-slate-400 bg-slate-50 dark:bg-slate-700' : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30'
+                                                                    }`}>+{lesson.xp_reward} XP</span>
                                                                 )}
-                                                                {!isLocked && (
-                                                                    <Play
-                                                                        size={14}
-                                                                        className="text-slate-300 group-hover:text-purple-500 transition-all"
-                                                                    />
-                                                                )}
+                                                                {!isLocked && <Play size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />}
                                                             </div>
                                                         </motion.button>
                                                     );
@@ -430,41 +415,18 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </h2>
             </header>
 
-            {/* ── Main cinema container ── */}
-            <div className="rounded-3xl overflow-hidden border border-slate-200 bg-gradient-to-br from-[#0f172a] via-[#0c1220] to-[#0f172a] shadow-2xl shadow-black/20">
-                {/* Header bar */}
-                <div className="px-5 py-2.5 border-b border-white/[0.06] flex items-center gap-3 bg-slate-800/50">
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                        <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                        <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+            {/* ── Vaathiyaar Story Card ── */}
+            <div className="rounded-2xl bg-gradient-to-r from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg">
+                <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-mono ml-2">
-                        {resolveText(lesson.active_title || lesson.title, language)}
-                    </span>
-                    <div className="ml-auto flex items-center gap-3">
-                        <button
-                            onClick={replayAnimations}
-                            className="flex items-center gap-1.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-lg px-3 py-1.5 hover:bg-cyan-500/20 hover:text-cyan-200 transition-all duration-200"
-                        >
-                            <RotateCcw size={11} />
-                            Run Animation
-                        </button>
-                        <div className="flex items-center gap-1.5">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                            </span>
-                            <span className="text-[10px] text-green-400/80">visual mode</span>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-white font-bold text-sm">Vaathiyaar</span>
+                            <span className="text-emerald-400 text-[10px] font-medium">Teaching</span>
                         </div>
-                    </div>
-                </div>
-
-                {/* ── Row 1: Vaathiyaar Story (horizontal, full width) ── */}
-                <div className="px-5 py-4 border-b border-white/[0.04]">
-                    <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
-                        <div className="flex-1 min-w-0 text-sm text-slate-200 leading-relaxed max-h-[180px] overflow-y-auto pr-2">
+                        <div className="text-sm text-slate-200 leading-relaxed">
                             {storyPrimitives.length > 0 ? (
                                 <AnimationRenderer
                                     key={`story-${animKey}`}
@@ -479,12 +441,37 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* ── Row 2: Two columns — Code Execution + Flow ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 min-h-[400px]">
+            {/* ── Run Animation Button ── */}
+            <button
+                onClick={replayAnimations}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 text-sm font-medium transition-all duration-200"
+            >
+                <RotateCcw size={14} />
+                Run Animation
+            </button>
 
-                    {/* LEFT: Code Execution (3 cols — bigger) */}
-                    <div className="lg:col-span-3 border-r border-white/[0.04] p-5 space-y-4 overflow-y-auto max-h-[550px]">
+            {/* ── Two columns — Code Execution + Flow ── */}
+            <div className="flex flex-col lg:flex-row gap-5" style={{height: 'calc(100vh - 340px)', minHeight: '350px'}}>
+
+                {/* LEFT: Code Execution (bigger) */}
+                <div className="flex-1 min-w-0 rounded-2xl bg-[#0d1117] overflow-hidden shadow-lg flex flex-col">
+                    {/* Terminal header */}
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/[0.06]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+                        <span className="ml-2 text-[11px] text-slate-400 font-mono">step-by-step execution</span>
+                        <div className="ml-auto flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                            </span>
+                            <span className="text-[10px] text-green-400/80">running</span>
+                        </div>
+                    </div>
+                    <div className="p-5 space-y-4 overflow-y-auto flex-1">
                         {loopViz && (
                             <div>
                                 <div className="text-[10px] text-amber-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -535,32 +522,32 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                             </div>
                         )}
                     </div>
+                </div>
 
-                    {/* RIGHT: Execution Flow (2 cols) */}
-                    <div className="lg:col-span-2 p-5 space-y-4 overflow-y-auto max-h-[550px]">
-                        {flowDiagram && (
-                            <div>
-                                <div className="text-[10px] text-cyan-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                                    Execution Flow
-                                </div>
-                                <FlowDiagram
-                                    key={`flow-${animKey}`}
-                                    nodes={flowDiagram.nodes || []}
-                                    edges={flowDiagram.edges || []}
-                                    executionPath={flowDiagram.executionPath || []}
-                                    variables={flowDiagram.variables || {}}
-                                    speed={flowDiagram.speed || 'normal'}
-                                />
-                            </div>
-                        )}
-                        {(executionViz || loopViz) && (
-                            <div className="text-xs text-slate-400 space-y-1">
-                                {executionViz && <p>{(executionViz.executionSteps || []).length} execution steps</p>}
-                                {loopViz && <p>{loopViz.loopType || 'for'} loop &middot; {(loopViz.iterations || []).length} iterations</p>}
-                            </div>
-                        )}
+                {/* RIGHT: Execution Flow */}
+                <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl bg-[#0f172a] p-5 shadow-lg overflow-y-auto">
+                    <div className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                        Execution Flow
                     </div>
+                    {flowDiagram ? (
+                        <FlowDiagram
+                            key={`flow-${animKey}`}
+                            nodes={flowDiagram.nodes || []}
+                            edges={flowDiagram.edges || []}
+                            executionPath={flowDiagram.executionPath || []}
+                            variables={flowDiagram.variables || {}}
+                            speed={flowDiagram.speed || 'normal'}
+                        />
+                    ) : (
+                        <p className="text-sm text-slate-400 italic">No flow diagram for this lesson</p>
+                    )}
+                    {(executionViz || loopViz) && (
+                        <div className="mt-4 pt-3 border-t border-white/[0.06] text-xs text-slate-300 space-y-1">
+                            {executionViz && <p>{(executionViz.executionSteps || []).length} execution steps</p>}
+                            {loopViz && <p>{loopViz.loopType || 'for'} loop &middot; {(loopViz.iterations || []).length} iterations</p>}
+                        </div>
+                    )}
                 </div>
             </div>
 
