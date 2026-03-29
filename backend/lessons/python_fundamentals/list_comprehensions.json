@@ -1,0 +1,390 @@
+{
+  "id": "list_comprehensions",
+  "topic": "list_comprehensions",
+  "track": "python_fundamentals",
+  "module": "data_structures",
+  "order": 10,
+  "title": {
+    "en": "List Comprehensions Magic",
+    "ta": "List Comprehensions மாயாஜாலம்"
+  },
+  "description": {
+    "en": "Master Python's most elegant feature — list comprehensions. Transform data, filter collections, and write cleaner code in a single expressive line.",
+    "ta": "Python-ன் மிக நேர்த்தியான அம்சத்தை கற்றுக்கொள்ளுங்கள் — list comprehensions. ஒரே expressive வரியில் data மாற்றுங்கள், collections filter செய்யுங்கள், சுத்தமான code எழுதுங்கள்."
+  },
+  "xp_reward": 50,
+  "next_unlock": "comprehensions",
+  "story_variants": {
+    "en": "## Vaathiyaar's Factory Assembly Line\n\nVaathiyaar takes you to a factory. \"Watch this assembly line:\n\n**Old way (manual):** A worker picks up raw material, walks to the machine, processes it, walks back, puts the finished item in a box. One. At. A. Time.\n\n**New way (assembly line):** Raw materials go in one end, the machine transforms each piece automatically, and finished products come out the other end. One elegant line of production!\"\n\n```python\n# Manual loop (the old way)\nresult = []\nfor x in range(10):\n    result.append(x ** 2)\n\n# List comprehension (the assembly line)\nresult = [x ** 2 for x in range(10)]\n```\n\n### The Comprehension Formula\n\n```\n[expression for item in iterable if condition]\n```\n\n| Part | Purpose | Example |\n|------|---------|--------|\n| `expression` | What to produce | `x ** 2` |\n| `for item in iterable` | What to loop over | `for x in range(10)` |\n| `if condition` (optional) | Filter items | `if x % 2 == 0` |\n\n### Types of Comprehensions\n\n- **List:** `[x for x in range(5)]` -> `[0, 1, 2, 3, 4]`\n- **Set:** `{x for x in [1,1,2,2,3]}` -> `{1, 2, 3}`\n- **Dict:** `{k: v for k, v in pairs}` -> `{'a': 1, 'b': 2}`\n- **Generator:** `(x for x in range(5))` -> lazy iterator\n\n> **Key Insight:** List comprehensions are not just shorter — they're faster than equivalent for loops because Python optimizes the internal iteration. They're the Pythonic way to transform data.",
+    "ta": "## வாத்தியாரின் தொழிற்சாலை assembly line\n\nவாத்தியார் உங்களை ஒரு தொழிற்சாலைக்கு அழைத்துச் செல்கிறார். \"இந்த assembly line-ஐ பாருங்கள்:\n\n**பழைய வழி:** ஒரு தொழிலாளி raw material-ஐ எடுத்து, machine-க்கு நடந்து சென்று, process செய்து, திரும்பி வந்து, finished item-ஐ box-ல் வைக்கிறார். ஒன்று. ஒன்றாக.\n\n**புதிய வழி:** Raw materials ஒரு முனையில் உள்ளே செல்கின்றன, machine ஒவ்வொரு piece-ஐயும் தானாக மாற்றுகிறது, finished products மறு முனையில் வெளிவருகின்றன!\"\n\n### Comprehension Formula\n\n```\n[expression for item in iterable if condition]\n```"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "factory_line",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "comprehension_concepts",
+      "nodes": [
+        {
+          "label": "List Comprehension",
+          "children": [
+            "Expression (transform)",
+            "Iteration (for ... in ...)",
+            "Filter (if condition)",
+            "Nested loops",
+            "Readability first"
+          ]
+        },
+        {
+          "label": "Other Comprehensions",
+          "children": [
+            "Set comprehension {x for ...}",
+            "Dict comprehension {k:v for ...}",
+            "Generator expression (x for ...)",
+            "Nested comprehensions"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "comprehension_code",
+      "steps": [
+        {
+          "line": "# Various list comprehension patterns",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's explore the power of list comprehensions with practical examples",
+            "ta": "நடைமுறை எடுத்துக்காட்டுகளுடன் list comprehensions-ன் சக்தியை ஆராய்வோம்"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Pattern 1: Simple transformation"
+          }
+        },
+        {
+          "line": "# Pattern 1: Transform each element",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Apply a function/expression to every item in a collection"
+          }
+        },
+        {
+          "line": "squares = [x**2 for x in range(6)]",
+          "highlight": "squares",
+          "explanation": {
+            "en": "Square each number: [0, 1, 4, 9, 16, 25]",
+            "ta": "ஒவ்வொரு எண்ணையும் வர்க்கமாக்கு: [0, 1, 4, 9, 16, 25]"
+          }
+        },
+        {
+          "line": "print(squares)  # [0, 1, 4, 9, 16, 25]",
+          "highlight": "print",
+          "explanation": {
+            "en": "6 numbers in, 6 squared numbers out — clean and expressive"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Pattern 2: Filtering with if"
+          }
+        },
+        {
+          "line": "# Pattern 2: Filter elements",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Only include items that pass a condition"
+          }
+        },
+        {
+          "line": "evens = [x for x in range(10) if x % 2 == 0]",
+          "highlight": "evens",
+          "explanation": {
+            "en": "Keep only even numbers: [0, 2, 4, 6, 8]",
+            "ta": "இரட்டை எண்களை மட்டும் வைத்துக்கொள்: [0, 2, 4, 6, 8]"
+          }
+        },
+        {
+          "line": "print(evens)  # [0, 2, 4, 6, 8]",
+          "highlight": "print",
+          "explanation": {
+            "en": "The 'if' clause filters — only items where the condition is True are included"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Pattern 3: Transform with condition"
+          }
+        },
+        {
+          "line": "# Pattern 3: Transform + Filter",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Combine transformation and filtering in one expression"
+          }
+        },
+        {
+          "line": "words = ['hello', 'WORLD', 'Python', 'AI']",
+          "highlight": "words",
+          "explanation": {
+            "en": "A list of mixed-case words"
+          }
+        },
+        {
+          "line": "long_lower = [w.lower() for w in words if len(w) > 2]",
+          "highlight": "long_lower",
+          "explanation": {
+            "en": "Lowercase words longer than 2 chars: ['hello', 'world', 'python']",
+            "ta": "2 எழுத்துக்கு மேல் உள்ள words-ஐ lowercase-ஆக மாற்று: ['hello', 'world', 'python']"
+          }
+        },
+        {
+          "line": "print(long_lower)  # ['hello', 'world', 'python']",
+          "highlight": "print",
+          "explanation": {
+            "en": "'AI' is filtered out (len 2), remaining are lowercased"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Pattern 4: Nested comprehension"
+          }
+        },
+        {
+          "line": "# Pattern 4: Flatten nested lists",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Two for-clauses can flatten a list of lists"
+          }
+        },
+        {
+          "line": "matrix = [[1,2,3], [4,5,6], [7,8,9]]",
+          "highlight": "matrix",
+          "explanation": {
+            "en": "A 3x3 matrix (list of lists)"
+          }
+        },
+        {
+          "line": "flat = [num for row in matrix for num in row]",
+          "highlight": "flat",
+          "explanation": {
+            "en": "Flatten: [1,2,3,4,5,6,7,8,9] — outer loop first, inner loop second",
+            "ta": "Flatten: [1,2,3,4,5,6,7,8,9] — வெளி loop முதலில், உள் loop அடுத்ததாக"
+          }
+        },
+        {
+          "line": "print(flat)  # [1, 2, 3, 4, 5, 6, 7, 8, 9]",
+          "highlight": "print",
+          "explanation": {
+            "en": "Read it as: for each row in matrix, for each num in row, give me num"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Pattern 5: Dict comprehension"
+          }
+        },
+        {
+          "line": "# Pattern 5: Dict comprehension",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Create dictionaries with the same elegant syntax"
+          }
+        },
+        {
+          "line": "name_lengths = {name: len(name) for name in ['Alice', 'Bob', 'Charlie']}",
+          "highlight": "dict",
+          "explanation": {
+            "en": "Map names to their lengths: {'Alice': 5, 'Bob': 3, 'Charlie': 7}",
+            "ta": "பெயர்களை அவற்றின் நீளத்திற்கு map செய்: {'Alice': 5, 'Bob': 3, 'Charlie': 7}"
+          }
+        },
+        {
+          "line": "print(name_lengths)  # {'Alice': 5, 'Bob': 3, 'Charlie': 7}",
+          "highlight": "print",
+          "explanation": {
+            "en": "Dict comprehension uses {key: value for ...} syntax"
+          }
+        }
+      ]
+    },
+    {
+      "type": "DataStructure",
+      "id": "comprehension_visual",
+      "structure_type": "list",
+      "data": {
+        "input": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "expression": "x**2",
+        "filter": "x % 2 == 0",
+        "output": [4, 16, 36, 64, 100]
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_comprehension",
+      "code": "# Converting loops to comprehensions\n\n# Loop version\nresult_loop = []\nfor x in range(1, 6):\n    if x % 2 != 0:\n        result_loop.append(x ** 3)\nprint(f'Loop: {result_loop}')\n\n# Comprehension version (one line!)\nresult_comp = [x**3 for x in range(1, 6) if x % 2 != 0]\nprint(f'Comp: {result_comp}')\n\nprint(f'Same? {result_loop == result_comp}')",
+      "executionSteps": [
+        {
+          "line": 4,
+          "variables": { "result_loop": [] },
+          "output": "",
+          "explanation": "Start with empty list — the old way"
+        },
+        {
+          "line": 5,
+          "variables": { "x": 1 },
+          "output": "",
+          "explanation": "Loop through 1 to 5, check if odd, cube it, append"
+        },
+        {
+          "line": 7,
+          "variables": { "result_loop": [1, 27, 125] },
+          "output": "Loop: [1, 27, 125]",
+          "explanation": "After loop: cubes of odd numbers 1, 3, 5"
+        },
+        {
+          "line": 10,
+          "variables": { "result_comp": [1, 27, 125] },
+          "output": "Comp: [1, 27, 125]",
+          "explanation": "Comprehension does the same in one line"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "Same? True",
+          "explanation": "Both produce identical results — comprehension is just cleaner"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "loop_vs_comp",
+      "left": {
+        "title": "For Loop (4 lines)",
+        "code": "result = []\nfor x in range(10):\n    if x % 2 == 0:\n        result.append(x**2)"
+      },
+      "right": {
+        "title": "Comprehension (1 line)",
+        "code": "result = [x**2 for x in range(10) if x % 2 == 0]"
+      }
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Convert these three loops to list comprehensions:\n1. Cube all numbers from 1 to 10\n2. Get words longer than 4 characters from a list, converted to uppercase\n3. Create a dict mapping numbers 1-5 to their squares",
+        "ta": "இந்த மூன்று loops-ஐ list comprehensions-ஆக மாற்றுங்கள்:\n1. 1 முதல் 10 வரை அனைத்து எண்களையும் cube செய்யுங்கள்\n2. ஒரு list-லிருந்து 4 எழுத்துக்களுக்கு மேல் உள்ள words-ஐ uppercase-ல் பெறுங்கள்\n3. 1-5 எண்களை அவற்றின் squares-க்கு map செய்யும் dict உருவாக்குங்கள்"
+      },
+      "starter_code": "# 1. Cube numbers 1-10\n# Loop version:\nresult1 = []\nfor x in range(1, 11):\n    result1.append(x**3)\n# Convert to comprehension:\ncubes = # Your code here\nprint(cubes)\n\n# 2. Filter and transform words\nwords = ['hi', 'hello', 'hey', 'python', 'go', 'javascript']\n# Loop version:\nresult2 = []\nfor w in words:\n    if len(w) > 4:\n        result2.append(w.upper())\n# Convert to comprehension:\nlong_upper = # Your code here\nprint(long_upper)\n\n# 3. Number to square mapping\n# Loop version:\nresult3 = {}\nfor n in range(1, 6):\n    result3[n] = n**2\n# Convert to comprehension:\nsquare_map = # Your code here\nprint(square_map)",
+      "expected_output": "[1, 8, 27, 64, 125, 216, 343, 512, 729, 1000]\n['HELLO', 'PYTHON', 'JAVASCRIPT']\n{1: 1, 2: 4, 3: 9, 4: 16, 5: 25}",
+      "hints": {
+        "en": [
+          "Cubes: [x**3 for x in range(1, 11)]",
+          "Filter + transform: [w.upper() for w in words if len(w) > 4]",
+          "Dict comprehension: {n: n**2 for n in range(1, 6)}"
+        ],
+        "ta": [
+          "Cubes: [x**3 for x in range(1, 11)]",
+          "Filter + transform: [w.upper() for w in words if len(w) > 4]",
+          "Dict comprehension: {n: n**2 for n in range(1, 6)}"
+        ]
+      },
+      "test_code": "cubes = [x**3 for x in range(1, 11)]\nassert cubes == [1, 8, 27, 64, 125, 216, 343, 512, 729, 1000]\nwords = ['hi', 'hello', 'hey', 'python', 'go', 'javascript']\nlong_upper = [w.upper() for w in words if len(w) > 4]\nassert long_upper == ['HELLO', 'PYTHON', 'JAVASCRIPT']\nsquare_map = {n: n**2 for n in range(1, 6)}\nassert square_map == {1: 1, 2: 4, 3: 9, 4: 16, 5: 25}"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does `[x for x in range(10) if x > 5]` produce?",
+        "ta": "`[x for x in range(10) if x > 5]` எதை உருவாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "[0, 1, 2, 3, 4, 5]",
+          "[6, 7, 8, 9]",
+          "[5, 6, 7, 8, 9]",
+          "[True, True, True, True]"
+        ],
+        "ta": [
+          "[0, 1, 2, 3, 4, 5]",
+          "[6, 7, 8, 9]",
+          "[5, 6, 7, 8, 9]",
+          "[True, True, True, True]"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which creates a dictionary comprehension?",
+        "ta": "எது dictionary comprehension உருவாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "[k: v for k, v in items]",
+          "{k: v for k, v in items}",
+          "(k: v for k, v in items)",
+          "dict[k: v for k, v in items]"
+        ],
+        "ta": [
+          "[k: v for k, v in items]",
+          "{k: v for k, v in items}",
+          "(k: v for k, v in items)",
+          "dict[k: v for k, v in items]"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "list_comprehensions",
+      "dict_comprehensions",
+      "set_comprehensions",
+      "generator_expressions",
+      "filtering",
+      "data_transformation"
+    ],
+    "concepts_required": [
+      "lists",
+      "for_loops",
+      "conditionals"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "real_world_application": [
+      "data_processing",
+      "data_cleaning",
+      "pythonic_code"
+    ],
+    "category": "python_core",
+    "path_memberships": [
+      "python_fundamentals"
+    ]
+  }
+}

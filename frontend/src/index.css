@@ -138,6 +138,28 @@
   background: rgba(148, 163, 184, 0.4);
 }
 
+/* Dark mode variables */
+.dark {
+    --bg-deep: #0a0f1e;
+    --bg-surface: rgba(15, 23, 42, 0.95);
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Dark mode overrides for common classes */
+.dark .bg-white { background-color: rgb(15, 23, 42) !important; }
+.dark .bg-white\/80 { background-color: rgba(15, 23, 42, 0.8) !important; }
+.dark .bg-white\/95 { background-color: rgba(15, 23, 42, 0.95) !important; }
+.dark .bg-slate-50 { background-color: rgb(10, 15, 30) !important; }
+.dark .text-slate-900 { color: #e2e8f0 !important; }
+.dark .text-slate-700 { color: #cbd5e1 !important; }
+.dark .text-slate-600 { color: #94a3b8 !important; }
+.dark .text-slate-500 { color: #64748b !important; }
+.dark .text-slate-400 { color: #475569 !important; }
+.dark .border-black\/\[0\.05\] { border-color: rgba(255,255,255,0.06) !important; }
+.dark .border-black\/\[0\.04\] { border-color: rgba(255,255,255,0.04) !important; }
+
 /* Perspective utility */
 .perspective-800 {
   perspective: 800px;

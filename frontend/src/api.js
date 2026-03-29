@@ -72,6 +72,35 @@ export const getModuleStatus = (jobId) =>
 export const getGeneratedModules = (userId) =>
     api.get(`/modules/generated/${userId}`);
 
+// Profile settings
+export const updateProfileSettings = (userId, settings) =>
+    api.put(`/profile/${userId}/settings`, settings);
+export const getProfileStats = (userId) =>
+    api.get(`/profile/${userId}/stats`);
+export const getProfileAchievements = (userId) =>
+    api.get(`/profile/${userId}/achievements`);
+export const getDailyRecommendation = (userId) =>
+    api.get(`/profile/${userId}/daily-recommendation`);
+
+// Trending
+export const getTrending = (count = 10, category = '') =>
+    api.get(`/trending`, { params: { count, category: category || undefined } });
+export const getPersonalizedTrending = (userId) =>
+    api.get(`/trending/personalized/${userId}`);
+export const getTrendingCategories = () =>
+    api.get(`/trending/categories`);
+export const searchTrending = (query) =>
+    api.get(`/trending/search`, { params: { q: query } });
+export const getTrendingTopic = (topicId) =>
+    api.get(`/trending/topic/${topicId}`);
+export const getDailyContent = (userId) =>
+    api.get(`/trending/daily/${userId}`);
+
+// Paths
+export const getPaths = () => api.get('/paths');
+export const getPath = (pathId) => api.get(`/paths/${pathId}`);
+export const startPath = (pathId, userId) => api.post(`/paths/${pathId}/start`, { user_id: userId });
+
 // Helper for raw fetch calls (streaming endpoints)
 export function getAuthHeaders() {
   try {

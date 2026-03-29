@@ -1,0 +1,373 @@
+{
+  "id": "async_await",
+  "topic": "async_await",
+  "track": "python_intermediate",
+  "module": "concurrency",
+  "order": 6,
+  "title": {
+    "en": "Async/Await in Python",
+    "ta": "Python-ல் Async/Await — ஒத்திசைவற்ற நிரலாக்கம்"
+  },
+  "description": {
+    "en": "Learn asynchronous programming with Python's asyncio — async/await syntax, concurrent tasks, and building non-blocking I/O applications.",
+    "ta": "Python-ன் asyncio மூலம் asynchronous programming கற்றுக்கொள்ளுங்கள் — async/await syntax, concurrent tasks, non-blocking I/O applications கட்டமைத்தல்."
+  },
+  "xp_reward": 75,
+  "next_unlock": "async_advanced",
+  "story_variants": {
+    "en": "## Vaathiyaar's Restaurant\n\nVaathiyaar takes you to a busy restaurant. \"Watch two types of waiters:\"\n\n**Synchronous waiter:** Takes order from Table 1, goes to kitchen, waits for food, delivers it, THEN moves to Table 2. The other tables wait hungrily.\n\n**Asynchronous waiter:** Takes order from Table 1, sends it to kitchen, immediately moves to Table 2, takes their order, checks if Table 1's food is ready, serves Table 3... All tables are being served!\n\n\"The async waiter doesn't cook faster — they just don't **waste time waiting**. That's `async/await` in Python!\"\n\n### Sync vs Async\n\n| Sync | Async |\n|------|-------|\n| One task at a time | Many tasks interleaved |\n| Blocks on I/O (network, disk) | Does other work during I/O |\n| Simple to understand | Slightly more complex |\n| Good for CPU-bound tasks | Great for I/O-bound tasks |\n\n### The Key Concepts\n\n```python\nasync def fetch_data():    # async function (coroutine)\n    data = await get_url()  # await pauses this, lets others run\n    return data\n```\n\n| Keyword | Meaning |\n|---------|--------|\n| `async def` | Declares a coroutine function |\n| `await` | Pause here, let other tasks run |\n| `asyncio.gather` | Run multiple coroutines concurrently |\n| `asyncio.run` | Start the event loop |\n\n> **Key Insight:** async/await is NOT parallel execution (that's threading/multiprocessing). It's **cooperative multitasking** — tasks voluntarily yield control at `await` points, allowing other tasks to run during I/O waits.",
+    "ta": "## வாத்தியாரின் உணவகம்\n\nவாத்தியார் ஒரு பரபரப்பான உணவகத்திற்கு அழைத்துச் செல்கிறார். \"இரண்டு வகை waiters-ஐ பாருங்கள்:\"\n\n**Synchronous waiter:** Table 1-ல் order எடுத்து, சமையலறைக்கு சென்று, உணவு வரும் வரை காத்திருந்து, deliver செய்து, பின்னர் Table 2-க்கு நகர்கிறார்.\n\n**Asynchronous waiter:** Table 1-ல் order எடுத்து, சமையலறைக்கு அனுப்பி, உடனே Table 2-க்கு நகர்ந்து, அவர்களின் order எடுத்து, Table 1-ன் உணவு தயாரா என்று check செய்கிறார்...\n\n\"Async waiter வேகமாக சமைக்கவில்லை — காத்திருக்கும் நேரத்தை வீணடிக்கவில்லை!\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "restaurant_async",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "async_concepts",
+      "nodes": [
+        {
+          "label": "asyncio",
+          "children": [
+            "async def (coroutine)",
+            "await (pause and yield)",
+            "Event Loop (scheduler)",
+            "asyncio.gather (concurrent)",
+            "asyncio.run (entry point)"
+          ]
+        },
+        {
+          "label": "Use Cases",
+          "children": [
+            "HTTP requests",
+            "Database queries",
+            "File I/O",
+            "WebSocket connections",
+            "Web scraping"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "async_code",
+      "steps": [
+        {
+          "line": "# asyncio basics with async/await",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's learn async programming by building concurrent tasks",
+            "ta": "Concurrent tasks கட்டுவதன் மூலம் async programming கற்போம்"
+          }
+        },
+        {
+          "line": "import asyncio",
+          "highlight": "import",
+          "explanation": {
+            "en": "asyncio is Python's built-in async framework — no pip install needed"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "First, let's see a regular async function"
+          }
+        },
+        {
+          "line": "async def fetch_data(name, delay):",
+          "highlight": "async",
+          "explanation": {
+            "en": "'async def' creates a coroutine — a function that can be paused and resumed",
+            "ta": "'async def' ஒரு coroutine உருவாக்குகிறது — நிறுத்தி மீண்டும் தொடரக்கூடிய function"
+          }
+        },
+        {
+          "line": "    print(f'{name}: starting fetch...')",
+          "highlight": "print",
+          "explanation": {
+            "en": "This runs immediately when the coroutine starts"
+          }
+        },
+        {
+          "line": "    await asyncio.sleep(delay)  # Simulate network I/O",
+          "highlight": "await",
+          "explanation": {
+            "en": "await pauses THIS task — the event loop runs OTHER tasks during the wait",
+            "ta": "await இந்த task-ஐ நிறுத்துகிறது — wait-ன் போது event loop மற்ற tasks-ஐ இயக்குகிறது"
+          }
+        },
+        {
+          "line": "    print(f'{name}: done! (took {delay}s)')",
+          "highlight": "print",
+          "explanation": {
+            "en": "After the await completes, execution resumes here"
+          }
+        },
+        {
+          "line": "    return f'{name}_result'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Coroutines can return values just like regular functions"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's run multiple tasks concurrently"
+          }
+        },
+        {
+          "line": "async def main():",
+          "highlight": "async",
+          "explanation": {
+            "en": "The main coroutine — our program's async entry point",
+            "ta": "Main coroutine — நிரலின் async entry point"
+          }
+        },
+        {
+          "line": "    # Run 3 tasks concurrently with gather",
+          "highlight": "comment",
+          "explanation": {
+            "en": "asyncio.gather runs multiple coroutines at the same time"
+          }
+        },
+        {
+          "line": "    results = await asyncio.gather(",
+          "highlight": "gather",
+          "explanation": {
+            "en": "gather starts all three tasks and waits for ALL to complete"
+          }
+        },
+        {
+          "line": "        fetch_data('API', 2),",
+          "highlight": "task1",
+          "explanation": {
+            "en": "Task 1: takes 2 seconds"
+          }
+        },
+        {
+          "line": "        fetch_data('Database', 3),",
+          "highlight": "task2",
+          "explanation": {
+            "en": "Task 2: takes 3 seconds"
+          }
+        },
+        {
+          "line": "        fetch_data('Cache', 1),",
+          "highlight": "task3",
+          "explanation": {
+            "en": "Task 3: takes 1 second"
+          }
+        },
+        {
+          "line": "    )",
+          "highlight": "",
+          "explanation": {
+            "en": "Total time: ~3 seconds (not 6!) because they run concurrently",
+            "ta": "மொத்த நேரம்: ~3 seconds (6 அல்ல!) ஏனெனில் அவை concurrently இயங்குகின்றன"
+          }
+        },
+        {
+          "line": "    print(f'All results: {results}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "All three results returned in order"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Start the event loop"
+          }
+        },
+        {
+          "line": "asyncio.run(main())",
+          "highlight": "run",
+          "explanation": {
+            "en": "asyncio.run() starts the event loop and runs our main coroutine"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_async",
+      "code": "import asyncio\nimport time\n\nasync def task(name, delay):\n    print(f'{name}: start')\n    await asyncio.sleep(delay)\n    print(f'{name}: done ({delay}s)')\n    return name\n\nasync def main():\n    start = time.time()\n    results = await asyncio.gather(\n        task('API', 2), task('DB', 3), task('Cache', 1)\n    )\n    elapsed = time.time() - start\n    print(f'Total: {elapsed:.1f}s (sync would be 6s)')\n    print(f'Results: {results}')\n\nasyncio.run(main())",
+      "executionSteps": [
+        {
+          "line": 12,
+          "variables": {},
+          "output": "",
+          "explanation": "gather starts all 3 tasks concurrently"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "API: start\nDB: start\nCache: start",
+          "explanation": "All three start immediately — none waits for the others"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "Cache: done (1s)",
+          "explanation": "Cache finishes first (1s) while API and DB are still waiting"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "API: done (2s)",
+          "explanation": "API finishes next (2s)"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "DB: done (3s)",
+          "explanation": "DB finishes last (3s)"
+        },
+        {
+          "line": 16,
+          "variables": { "elapsed": 3.0 },
+          "output": "Total: 3.0s (sync would be 6s)",
+          "explanation": "Total time is 3s, not 2+3+1=6s — tasks overlapped!"
+        },
+        {
+          "line": 17,
+          "variables": { "results": ["API", "DB", "Cache"] },
+          "output": "Results: ['API', 'DB', 'Cache']",
+          "explanation": "Results are in the original order, regardless of completion order"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "async_flow",
+      "nodes": [
+        { "id": "start", "label": "asyncio.run(main())", "type": "start" },
+        { "id": "gather", "label": "gather starts 3 tasks", "type": "process" },
+        { "id": "api", "label": "Task: API (2s)", "type": "process" },
+        { "id": "db", "label": "Task: DB (3s)", "type": "process" },
+        { "id": "cache", "label": "Task: Cache (1s)", "type": "process" },
+        { "id": "all_done", "label": "All complete in 3s", "type": "end" }
+      ],
+      "edges": [
+        { "from": "start", "to": "gather" },
+        { "from": "gather", "to": "api" },
+        { "from": "gather", "to": "db" },
+        { "from": "gather", "to": "cache" },
+        { "from": "api", "to": "all_done" },
+        { "from": "db", "to": "all_done" },
+        { "from": "cache", "to": "all_done" }
+      ],
+      "executionPath": ["start", "gather", "cache", "api", "db", "all_done"],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an async web scraper simulation: Create 5 async functions that simulate fetching different URLs with different delays. Use asyncio.gather to fetch all 5 concurrently. Print the total time and show it's faster than sequential execution.",
+        "ta": "Async web scraper simulation கட்டுங்கள்: வெவ்வேறு delays-உடன் URLs fetch செய்வதை simulate செய்யும் 5 async functions உருவாக்குங்கள். 5 URLs-ஐயும் concurrently fetch செய்ய asyncio.gather பயன்படுத்துங்கள்."
+      },
+      "starter_code": "import asyncio\nimport time\n\nasync def fetch_url(url, delay):\n    \"\"\"Simulate fetching a URL.\"\"\"\n    # Your code here: print start, await sleep, print done, return url\n    pass\n\nasync def main():\n    urls = [\n        ('https://api.example.com/users', 2),\n        ('https://api.example.com/posts', 1),\n        ('https://api.example.com/comments', 3),\n        ('https://api.example.com/likes', 1),\n        ('https://api.example.com/shares', 2),\n    ]\n    start = time.time()\n    # Use asyncio.gather to fetch all URLs concurrently\n    # Your code here\n    elapsed = time.time() - start\n    print(f'Total: {elapsed:.1f}s (sequential would be 9s)')\n\nasyncio.run(main())",
+      "expected_output": "Fetching https://api.example.com/users...\nFetching https://api.example.com/posts...\nFetching https://api.example.com/comments...\nFetching https://api.example.com/likes...\nFetching https://api.example.com/shares...\nDone: https://api.example.com/posts (1s)\nDone: https://api.example.com/likes (1s)\nDone: https://api.example.com/users (2s)\nDone: https://api.example.com/shares (2s)\nDone: https://api.example.com/comments (3s)\nTotal: 3.0s (sequential would be 9s)",
+      "hints": {
+        "en": [
+          "fetch_url should: print 'Fetching {url}...', await asyncio.sleep(delay), print 'Done: {url}', return url",
+          "In main, use: results = await asyncio.gather(*[fetch_url(url, d) for url, d in urls])",
+          "The total time should be ~3s (the longest delay), not 9s (sum of all delays)"
+        ],
+        "ta": [
+          "fetch_url: 'Fetching {url}...' print, await asyncio.sleep(delay), 'Done: {url}' print, return url",
+          "main-ல்: results = await asyncio.gather(*[fetch_url(url, d) for url, d in urls])",
+          "மொத்த நேரம் ~3s (நீண்ட delay), 9s (எல்லா delays-ன் கூட்டுத்தொகை) அல்ல"
+        ]
+      },
+      "test_code": "import asyncio\nimport time\nasync def fetch_url(url, delay):\n    print(f'Fetching {url}...')\n    await asyncio.sleep(delay)\n    print(f'Done: {url} ({delay}s)')\n    return url\nasync def main():\n    urls = [('a', 0.1), ('b', 0.2), ('c', 0.15)]\n    start = time.time()\n    results = await asyncio.gather(*[fetch_url(u, d) for u, d in urls])\n    elapsed = time.time() - start\n    assert elapsed < 0.5  # concurrent, not sequential\n    assert len(results) == 3\nasyncio.run(main())"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'await' do in an async function?",
+        "ta": "Async function-ல் 'await' என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Stops the entire program",
+          "Pauses this coroutine and lets other tasks run",
+          "Makes the function synchronous",
+          "Starts a new thread"
+        ],
+        "ta": [
+          "முழு நிரலையும் நிறுத்துகிறது",
+          "இந்த coroutine-ஐ நிறுத்தி மற்ற tasks இயங்க அனுமதிக்கிறது",
+          "Function-ஐ synchronous ஆக்குகிறது",
+          "புதிய thread-ஐ தொடங்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If you gather 3 async tasks taking 2s, 3s, and 1s, how long does the total take?",
+        "ta": "2s, 3s, 1s எடுக்கும் 3 async tasks-ஐ gather செய்தால், மொத்தம் எவ்வளவு நேரம் ஆகும்?"
+      },
+      "options": {
+        "en": [
+          "6 seconds (sum of all)",
+          "3 seconds (the longest task)",
+          "1 second (the shortest task)",
+          "2 seconds (average)"
+        ],
+        "ta": [
+          "6 seconds (அனைத்தின் கூட்டுத்தொகை)",
+          "3 seconds (நீண்ட task)",
+          "1 second (குறுகிய task)",
+          "2 seconds (சராசரி)"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "async_await",
+      "asyncio",
+      "coroutines",
+      "event_loop",
+      "concurrent_tasks"
+    ],
+    "concepts_required": [
+      "functions_basics",
+      "for_loops"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": [
+      "web_scraping",
+      "api_calls",
+      "web_servers",
+      "network_programming"
+    ],
+    "category": "python_core",
+    "path_memberships": [
+      "python_intermediate"
+    ]
+  }
+}
