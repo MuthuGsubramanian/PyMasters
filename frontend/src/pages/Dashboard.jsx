@@ -152,7 +152,7 @@ function StatCard({ label, value, suffix, icon, gradient, iconBg, border, delay,
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-white/40 to-transparent" />
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</span>
                     <div className={clsx(
                         'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
                         iconBg,
@@ -164,7 +164,7 @@ function StatCard({ label, value, suffix, icon, gradient, iconBg, border, delay,
                     {children || (
                         <>
                             <AnimatedNumber value={value} />
-                            {suffix && <span className="text-slate-400 text-lg ml-0.5">{suffix}</span>}
+                            {suffix && <span className="text-slate-500 text-lg ml-0.5">{suffix}</span>}
                         </>
                     )}
                 </div>
@@ -274,15 +274,15 @@ export function Overview() {
 
                 <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                        <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
                             <Calendar size={12} />
                             <span>{formatDate()}</span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 mb-2">
                             {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">{user.username}</span>!
                         </h1>
-                        <p className="text-sm text-slate-500 italic max-w-lg">
-                            &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-slate-400">&mdash; {dailyQuote.author}</span>
+                        <p className="text-sm text-slate-700 italic max-w-lg">
+                            &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-slate-600">&mdash; {dailyQuote.author}</span>
                         </p>
                     </div>
 
@@ -335,7 +335,7 @@ export function Overview() {
                     <div className="flex items-center gap-3">
                         <span>
                             <AnimatedNumber value={modulesUnlocked} />
-                            <span className="text-slate-400 text-lg ml-0.5">/ {totalModules}</span>
+                            <span className="text-slate-500 text-lg ml-0.5">/ {totalModules}</span>
                         </span>
                         <div className="w-16">
                             <ProgressRing progress={progressPct} size={36} strokeWidth={3} />
@@ -352,7 +352,7 @@ export function Overview() {
                 >
                     <div className="flex items-center gap-2">
                         <AnimatedNumber value={streak} />
-                        <span className="text-slate-400 text-lg">days</span>
+                        <span className="text-slate-500 text-lg">days</span>
                         {streak > 0 && (
                             <motion.span
                                 animate={{ y: [0, -3, 0] }}
@@ -396,7 +396,7 @@ export function Overview() {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-slate-900 font-display">Today&apos;s Recommended Lesson</h3>
-                                    <p className="text-xs text-slate-400">Personalized for your learning path</p>
+                                    <p className="text-xs text-slate-500">Personalized for your learning path</p>
                                 </div>
                                 {(recommendation?.trending) && (
                                     <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 text-[10px] font-bold text-rose-600 uppercase tracking-wider">
@@ -417,7 +417,7 @@ export function Overview() {
                                     <h4 className="text-xl font-bold text-slate-800 font-display mb-2">
                                         {recommendation?.title || (modulesUnlocked >= totalModules ? 'Explore AI Topics' : `Module ${modulesUnlocked + 1}`)}
                                     </h4>
-                                    <p className="text-sm text-slate-500 mb-3 leading-relaxed">
+                                    <p className="text-sm text-slate-700 mb-3 leading-relaxed">
                                         {recommendation?.description || (
                                             modulesUnlocked >= totalModules
                                                 ? 'You have completed all core modules. Explore trending AI and Python topics in the classroom!'
@@ -493,7 +493,7 @@ export function Overview() {
                                             <h4 className="text-sm font-bold text-slate-800 mb-1.5 group-hover:text-cyan-600 transition-colors font-display line-clamp-2">
                                                 {trend.title}
                                             </h4>
-                                            <p className="text-xs text-slate-400 line-clamp-2">{trend.desc}</p>
+                                            <p className="text-xs text-slate-600 line-clamp-2">{trend.desc}</p>
                                         </>
                                     )}
                                 </motion.div>
@@ -510,7 +510,7 @@ export function Overview() {
                         className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm overflow-hidden"
                     >
                         <div className="px-5 py-3.5 border-b border-black/[0.04]">
-                            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Learning Progress</h3>
+                            <h3 className="font-bold text-xs text-slate-600 uppercase tracking-widest">Learning Progress</h3>
                         </div>
                         <div className="p-5">
                             {/* Progress Ring */}
@@ -519,7 +519,7 @@ export function Overview() {
                                     <ProgressRing progress={progressPct} size={100} strokeWidth={8} color="#06b6d4" />
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                                         <span className="text-2xl font-bold text-slate-800 font-display">{progressPct}%</span>
-                                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">Complete</span>
+                                        <span className="text-[10px] text-slate-600 uppercase tracking-wider">Complete</span>
                                     </div>
                                 </div>
                             </div>
@@ -543,7 +543,7 @@ export function Overview() {
 
                             {/* Recent Activity */}
                             <div>
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Recent Activity</h4>
+                                <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">Recent Activity</h4>
                                 {recentActivity.length > 0 ? (
                                     <div className="space-y-3">
                                         {recentActivity.slice(0, 5).map((act, i) => (
@@ -556,13 +556,13 @@ export function Overview() {
                                             >
                                                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
                                                 <span className="text-slate-600 truncate">{act.label || act}</span>
-                                                {act.time && <span className="text-slate-300 ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
+                                                {act.time && <span className="text-slate-500 ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
                                             </motion.div>
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="text-center py-4">
-                                        <p className="text-xs text-slate-400">Start learning to see your activity here</p>
+                                        <p className="text-xs text-slate-500">Start learning to see your activity here</p>
                                     </div>
                                 )}
                             </div>
@@ -575,7 +575,7 @@ export function Overview() {
                         className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm overflow-hidden"
                     >
                         <div className="px-5 py-3.5 border-b border-black/[0.04]">
-                            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Quick Actions</h3>
+                            <h3 className="font-bold text-xs text-slate-600 uppercase tracking-widest">Quick Actions</h3>
                         </div>
                         <div className="p-4 grid grid-cols-2 gap-3">
                             {[
@@ -688,10 +688,10 @@ export function LearningMap() {
                         Learning Path
                     </div>
                     <h2 className="text-3xl font-bold mb-2 font-display">Module Progression</h2>
-                    <p className="text-slate-500">Complete each module sequentially to unlock the next.</p>
+                    <p className="text-slate-600">Complete each module sequentially to unlock the next.</p>
                 </div>
                 <div className="text-right hidden sm:block">
-                    <div className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Progress</div>
+                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-1">Progress</div>
                     <div className="text-3xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
                         {progressPct}%
                     </div>
@@ -755,7 +755,7 @@ export function LearningMap() {
                                             "text-lg font-bold mb-0.5 transition-colors font-display",
                                             unlocked ? "text-slate-800 group-hover:text-cyan-600" : "text-slate-500"
                                         )}>{mod.title}</h3>
-                                        <p className="text-sm text-slate-400 max-w-xl line-clamp-1">{mod.desc}</p>
+                                        <p className="text-sm text-slate-600 max-w-xl line-clamp-1">{mod.desc}</p>
                                     </div>
                                 </div>
 
@@ -828,7 +828,7 @@ export function ModuleViewer() {
     if (!module) return (
         <div className="flex flex-col items-center justify-center h-64 gap-3">
             <div className="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-400">Loading module...</p>
+            <p className="text-sm text-slate-500">Loading module...</p>
         </div>
     );
 
@@ -883,7 +883,7 @@ export function ModuleViewer() {
         <div className="max-w-4xl mx-auto pb-20 animate-fade-in relative">
             <button
                 onClick={() => navigate('/dashboard/learn')}
-                className="mb-6 flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 transition-colors group"
+                className="mb-6 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors group"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Learning Path
@@ -977,7 +977,7 @@ export function ModuleViewer() {
 
                                 {/* Quiz progress bar */}
                                 <div className="mb-8">
-                                    <div className="flex justify-between text-[10px] text-slate-400 font-mono mb-1">
+                                    <div className="flex justify-between text-[10px] text-slate-500 font-mono mb-1">
                                         <span>{Object.keys(answers).length} / {module.quiz.length} answered</span>
                                         <span>{Math.round(quizProgress)}%</span>
                                     </div>
@@ -1056,7 +1056,7 @@ export function ModuleViewer() {
                                                 }`}
                                             >
                                                 <p className="font-bold text-base text-slate-800 font-display flex items-start gap-2">
-                                                    <span className="text-sm text-slate-400 font-mono mt-0.5">{qIdx + 1}.</span>
+                                                    <span className="text-sm text-slate-500 font-mono mt-0.5">{qIdx + 1}.</span>
                                                     {q.q}
                                                 </p>
                                                 <div className="space-y-2 pl-5">

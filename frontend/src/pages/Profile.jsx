@@ -821,7 +821,7 @@ export default function Profile() {
                                         [&::-webkit-slider-thumb]:from-cyan-500 [&::-webkit-slider-thumb]:to-blue-600
                                         [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer"
                                 />
-                                <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                <div className="flex justify-between text-xs text-slate-500 mt-1">
                                     <span>0.5x</span>
                                     <span>1.0x</span>
                                     <span>1.5x</span>
@@ -853,7 +853,7 @@ export default function Profile() {
                                         </button>
                                     ))}
                                 </div>
-                                <p className="text-xs text-slate-400 mt-1.5">
+                                <p className="text-xs text-slate-500 mt-1.5">
                                     {hintLevel === 1 && 'Minimal hints -- figure it out yourself'}
                                     {hintLevel === 2 && 'Gentle nudges in the right direction'}
                                     {hintLevel === 3 && 'Detailed hints with examples'}

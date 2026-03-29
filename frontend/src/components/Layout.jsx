@@ -129,7 +129,7 @@ export default function Layout() {
 
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2 mt-2">Navigation</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2 mt-2">Navigation</div>
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                         return (
@@ -156,7 +156,7 @@ export default function Layout() {
                                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300",
                                     isActive
                                         ? "bg-cyan-500/10 text-cyan-600"
-                                        : "text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-100"
+                                        : "text-slate-500 group-hover:text-slate-600 group-hover:bg-slate-100"
                                 )}>
                                     <item.icon size={17} className="transition-transform duration-300 group-hover:scale-110" />
                                 </div>
