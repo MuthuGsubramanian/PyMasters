@@ -1,0 +1,329 @@
+{
+  "id": "generators",
+  "topic": "generators",
+  "track": "python_fundamentals",
+  "module": "advanced",
+  "order": 3,
+  "title": {
+    "en": "Python Generators & Yield",
+    "ta": "Python Generators & Yield — சோம்பல் மதிப்பீடு"
+  },
+  "description": {
+    "en": "Master Python generators — lazy evaluation with yield, generator expressions, and memory-efficient iteration for large datasets.",
+    "ta": "Python generators-ஐ கற்றுக்கொள்ளுங்கள் — yield மூலம் lazy evaluation, generator expressions, பெரிய datasets-க்கு memory-efficient iteration."
+  },
+  "xp_reward": 65,
+  "next_unlock": "adv_iterators",
+  "story_variants": {
+    "en": "## Vaathiyaar's Lazy Farmer\n\nVaathiyaar tells a story. \"There are two types of farmers. The **eager farmer** harvests ALL vegetables at once, fills a massive truck, and delivers everything — even if the customer only needs 3 tomatoes. The **lazy farmer** picks one vegetable at a time, only when asked. Less waste, less fuel, less storage needed.\"\n\n\"Python generators are like the lazy farmer — they produce values **one at a time, on demand**, using the magic word `yield`.\"\n\n### List vs Generator\n\n| Feature | List | Generator |\n|---------|------|----------|\n| Memory | Stores ALL items in RAM | One item at a time |\n| Creation | `[x**2 for x in range(1M)]` | `(x**2 for x in range(1M))` |\n| Size in memory | ~8 MB for 1M ints | ~120 bytes always |\n| Reusable | Yes, iterate many times | No — exhausted after one pass |\n| Speed | Instant index access | Must iterate sequentially |\n\n### The yield Keyword\n\n```python\ndef countdown(n):\n    while n > 0:\n        yield n    # Pause here, give n, resume later\n        n -= 1\n\nfor num in countdown(3):\n    print(num)  # 3, 2, 1\n```\n\n> **Key Insight:** `yield` is like a bookmark. The function pauses, hands you a value, and when you ask for the next one, it resumes exactly where it left off — with all local variables intact!",
+    "ta": "## வாத்தியாரின் சோம்பல் விவசாயி\n\nவாத்தியார் ஒரு கதை சொல்கிறார். \"இரண்டு வகை விவசாயிகள் உள்ளனர். **ஆர்வமுள்ள விவசாயி** அனைத்து காய்கறிகளையும் ஒரே நேரத்தில் அறுவடை செய்கிறார். **சோம்பல் விவசாயி** கேட்கும்போது மட்டும் ஒரு காய்கறியை பறிக்கிறார்.\"\n\n\"Python generators சோம்பல் விவசாயி போல — `yield` என்ற மாயா வார்த்தை மூலம் **ஒரே நேரத்தில் ஒரு மதிப்பை, தேவைக்கேற்ப** உருவாக்குகின்றன.\"\n\n### yield Keyword\n\nyield ஒரு bookmark போல. Function நிறுத்தி, ஒரு மதிப்பை கொடுத்து, அடுத்ததைக் கேட்கும்போது நிறுத்திய இடத்திலிருந்து தொடரும்!"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "lazy_farmer",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "generator_concepts",
+      "nodes": [
+        {
+          "label": "Generators",
+          "children": [
+            "yield keyword",
+            "Lazy evaluation",
+            "Generator expression (x for x in ...)",
+            "next() function",
+            "StopIteration exception"
+          ]
+        },
+        {
+          "label": "Use Cases",
+          "children": [
+            "Large file processing",
+            "Infinite sequences",
+            "Pipeline processing",
+            "Memory-efficient iteration"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "generator_code",
+      "steps": [
+        {
+          "line": "# Generator functions with yield",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's build generators step by step",
+            "ta": "Generators-ஐ படிப்படியாக கட்டுவோம்"
+          }
+        },
+        {
+          "line": "def countdown(n):",
+          "highlight": "def",
+          "explanation": {
+            "en": "A generator function looks like a regular function, but uses yield instead of return",
+            "ta": "Generator function சாதாரண function போல தெரிகிறது, ஆனால் return-க்கு பதிலாக yield பயன்படுத்துகிறது"
+          }
+        },
+        {
+          "line": "    print(f'Starting countdown from {n}')",
+          "highlight": "print",
+          "explanation": {
+            "en": "This runs only when we first iterate — not when we create the generator"
+          }
+        },
+        {
+          "line": "    while n > 0:",
+          "highlight": "while",
+          "explanation": {
+            "en": "The loop runs, but pauses at each yield"
+          }
+        },
+        {
+          "line": "        yield n",
+          "highlight": "yield",
+          "explanation": {
+            "en": "yield pauses the function, returns n, and remembers this exact spot",
+            "ta": "yield function-ஐ நிறுத்தி, n-ஐ return செய்து, இந்த இடத்தை நினைவில் வைக்கிறது"
+          }
+        },
+        {
+          "line": "        n -= 1",
+          "highlight": "n",
+          "explanation": {
+            "en": "When next() is called, execution resumes here — n decreases by 1"
+          }
+        },
+        {
+          "line": "    print('Liftoff!')",
+          "highlight": "print",
+          "explanation": {
+            "en": "When the function ends normally, StopIteration is raised"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's use our generator"
+          }
+        },
+        {
+          "line": "# Create the generator object (nothing runs yet!)",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Calling countdown(3) does NOT run the function — it creates a generator object",
+            "ta": "countdown(3) அழைப்பது function-ஐ இயக்காது — generator object-ஐ உருவாக்கும்"
+          }
+        },
+        {
+          "line": "gen = countdown(3)",
+          "highlight": "gen",
+          "explanation": {
+            "en": "gen is a generator object — it's a frozen function waiting to run"
+          }
+        },
+        {
+          "line": "print(next(gen))  # Starting countdown from 3 -> 3",
+          "highlight": "next",
+          "explanation": {
+            "en": "First next() runs until the first yield — prints 'Starting...' then yields 3"
+          }
+        },
+        {
+          "line": "print(next(gen))  # -> 2",
+          "highlight": "next",
+          "explanation": {
+            "en": "Second next() resumes after yield, decrements n, and yields 2"
+          }
+        },
+        {
+          "line": "print(next(gen))  # -> 1",
+          "highlight": "next",
+          "explanation": {
+            "en": "Third next() yields 1 — next call after this will end the loop"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Generators work beautifully with for loops"
+          }
+        },
+        {
+          "line": "# The Pythonic way — for loop handles next() and StopIteration",
+          "highlight": "comment",
+          "explanation": {
+            "en": "for loop automatically calls next() and catches StopIteration"
+          }
+        },
+        {
+          "line": "for num in countdown(5):",
+          "highlight": "for",
+          "explanation": {
+            "en": "This creates a new generator and iterates through all values",
+            "ta": "இது புதிய generator உருவாக்கி அனைத்து values-ஐயும் iterate செய்கிறது"
+          }
+        },
+        {
+          "line": "    print(num, end=' ')  # 5 4 3 2 1",
+          "highlight": "print",
+          "explanation": {
+            "en": "Prints each yielded value — clean and memory efficient"
+          }
+        }
+      ]
+    },
+    {
+      "type": "MemoryStack",
+      "id": "generator_memory",
+      "frames": [
+        {
+          "label": "Generator created",
+          "variables": { "gen": "<generator countdown at 0x...>", "n": "not started" }
+        },
+        {
+          "label": "After first next()",
+          "variables": { "gen": "paused at yield", "n": 3 }
+        },
+        {
+          "label": "After second next()",
+          "variables": { "gen": "paused at yield", "n": 2 }
+        },
+        {
+          "label": "After third next()",
+          "variables": { "gen": "paused at yield", "n": 1 }
+        },
+        {
+          "label": "Generator exhausted",
+          "variables": { "gen": "StopIteration", "n": 0 }
+        }
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_generator",
+      "code": "def fibonacci(limit):\n    a, b = 0, 1\n    while a < limit:\n        yield a\n        a, b = b, a + b\n\nfib_gen = fibonacci(50)\nfor num in fib_gen:\n    print(num, end=' ')",
+      "executionSteps": [
+        { "line": 1, "variables": {}, "output": "", "explanation": "Define a Fibonacci generator with a limit" },
+        { "line": 2, "variables": { "a": 0, "b": 1 }, "output": "", "explanation": "Initialize first two Fibonacci numbers" },
+        { "line": 4, "variables": { "a": 0 }, "output": "0 ", "explanation": "yield 0 — generator pauses" },
+        { "line": 5, "variables": { "a": 1, "b": 1 }, "output": "0 ", "explanation": "Resume: a becomes 1, b becomes 1" },
+        { "line": 4, "variables": { "a": 1 }, "output": "0 1 ", "explanation": "yield 1 — generator pauses again" },
+        { "line": 5, "variables": { "a": 1, "b": 2 }, "output": "0 1 ", "explanation": "Resume: a becomes 1, b becomes 2" },
+        { "line": 4, "variables": { "a": 1 }, "output": "0 1 1 ", "explanation": "yield 1" },
+        { "line": 4, "variables": { "a": 2 }, "output": "0 1 1 2 ", "explanation": "yield 2" },
+        { "line": 4, "variables": { "a": 3 }, "output": "0 1 1 2 3 ", "explanation": "yield 3" },
+        { "line": 4, "variables": { "a": 5 }, "output": "0 1 1 2 3 5 8 13 21 34 ", "explanation": "Continues until a >= 50, then StopIteration" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a Fibonacci generator function `fib()` that yields the infinite Fibonacci sequence (0, 1, 1, 2, 3, 5, 8, ...). Use it to print the first 10 Fibonacci numbers.",
+        "ta": "எல்லையற்ற Fibonacci sequence-ஐ yield செய்யும் `fib()` generator function உருவாக்குங்கள் (0, 1, 1, 2, 3, 5, 8, ...). முதல் 10 Fibonacci எண்களை print செய்ய அதைப் பயன்படுத்துங்கள்."
+      },
+      "starter_code": "def fib():\n    \"\"\"Infinite Fibonacci generator.\"\"\"\n    # Your code here\n    pass\n\n# Print first 10 Fibonacci numbers\ngen = fib()\nfor _ in range(10):\n    print(next(gen), end=' ')",
+      "expected_output": "0 1 1 2 3 5 8 13 21 34 ",
+      "hints": {
+        "en": [
+          "Start with a, b = 0, 1",
+          "Use 'while True:' for infinite generator — it only runs when asked",
+          "yield a, then update: a, b = b, a + b"
+        ],
+        "ta": [
+          "a, b = 0, 1 உடன் தொடங்குங்கள்",
+          "எல்லையற்ற generator-க்கு 'while True:' பயன்படுத்துங்கள்",
+          "yield a, பின்னர் புதுப்பி: a, b = b, a + b"
+        ]
+      },
+      "test_code": "def fib():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\ngen = fib()\nresults = [next(gen) for _ in range(10)]\nassert results == [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What happens when you call a generator function?",
+        "ta": "Generator function-ஐ அழைக்கும்போது என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The function runs immediately",
+          "It returns a generator object without running the body",
+          "It returns the first value",
+          "It raises an error"
+        ],
+        "ta": [
+          "Function உடனடியாக இயங்கும்",
+          "Body-ஐ இயக்காமல் generator object-ஐ return செய்கிறது",
+          "முதல் value-ஐ return செய்கிறது",
+          "Error ஏற்படும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are generators memory-efficient?",
+        "ta": "Generators ஏன் memory-efficient?"
+      },
+      "options": {
+        "en": [
+          "They use compressed data",
+          "They produce values one at a time instead of storing all in memory",
+          "They run faster than lists",
+          "They use a special memory allocator"
+        ],
+        "ta": [
+          "Compressed data பயன்படுத்துகின்றன",
+          "நினைவகத்தில் அனைத்தையும் சேமிப்பதற்கு பதிலாக ஒரே நேரத்தில் ஒரு value உருவாக்குகின்றன",
+          "Lists-ஐ விட வேகமாக இயங்குகின்றன",
+          "சிறப்பு memory allocator பயன்படுத்துகின்றன"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "generators",
+      "yield",
+      "lazy_evaluation",
+      "generator_expressions",
+      "next_function"
+    ],
+    "concepts_required": [
+      "functions_basics",
+      "for_loops",
+      "lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "large_file_processing",
+      "streaming_data",
+      "memory_optimization"
+    ],
+    "category": "python_core",
+    "path_memberships": [
+      "python_fundamentals"
+    ]
+  }
+}

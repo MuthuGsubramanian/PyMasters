@@ -1,0 +1,432 @@
+{
+  "id": "neural_networks_intro",
+  "topic": "neural_networks_intro",
+  "track": "machine_learning",
+  "module": "neural_networks",
+  "order": 15,
+  "title": {
+    "en": "Neural Networks from Scratch",
+    "ta": "Neural Networks — அடிப்படையிலிருந்து"
+  },
+  "description": {
+    "en": "Build a neural network from scratch using only NumPy — understand perceptrons, activation functions, forward pass, and train a simple classifier.",
+    "ta": "NumPy மட்டும் பயன்படுத்தி neural network-ஐ அடிப்படையிலிருந்து கட்டுங்கள் — perceptrons, activation functions, forward pass புரிந்துகொண்டு, ஒரு எளிய classifier-ஐ train செய்யுங்கள்."
+  },
+  "xp_reward": 85,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Vaathiyaar's Brain Model\n\nVaathiyaar draws a brain on the whiteboard. \"The human brain has about 86 billion neurons, each connected to thousands of others. When you see a cat, millions of neurons fire in specific patterns that you've learned from experience. A neural network does the same thing — with math!\"\n\n### The Artificial Neuron (Perceptron)\n\nA single neuron takes inputs, multiplies each by a weight, adds them up, and passes through an activation function:\n\n```\noutput = activation(w1*x1 + w2*x2 + ... + bias)\n```\n\n### Building Blocks\n\n| Component | Role | Math |\n|-----------|------|------|\n| Inputs (x) | Data features | [0.5, 0.3, 0.8] |\n| Weights (w) | Importance of each input | [0.2, -0.1, 0.7] |\n| Bias (b) | Shift the decision boundary | 0.1 |\n| Weighted Sum | Combine inputs | sum(w*x) + b |\n| Activation | Add non-linearity | sigmoid, ReLU |\n\n### Activation Functions\n\n```\nSigmoid: 1 / (1 + e^(-x))   -> output between 0 and 1\nReLU:    max(0, x)            -> output is x if positive, 0 otherwise\n```\n\n> **Key Insight:** A single neuron can only learn linear boundaries (straight lines). Stack neurons in layers, and suddenly you can learn ANY function — curves, circles, complex patterns. That's the power of deep learning!",
+    "ta": "## வாத்தியாரின் மூளை மாதிரி\n\nவாத்தியார் whiteboard-ல் ஒரு மூளையை வரைகிறார். \"மனித மூளையில் சுமார் 86 பில்லியன் நரம்பு செல்கள் உள்ளன, ஒவ்வொன்றும் ஆயிரக்கணக்கானவற்றுடன் இணைக்கப்பட்டுள்ளது. பூனையைப் பார்க்கும்போது, அனுபவத்திலிருந்து கற்ற குறிப்பிட்ட patterns-ல் கோடிக்கணக்கான நரம்பு செல்கள் fire ஆகின்றன. Neural network அதையே செய்கிறது — கணிதத்துடன்!\"\n\n### செயற்கை நரம்பு செல் (Perceptron)\n\nஒரு நரம்பு செல் inputs எடுத்து, ஒவ்வொன்றையும் weight-ஆல் பெருக்கி, கூட்டி, activation function வழியாக அனுப்புகிறது."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "brain_neurons",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "nn_concepts",
+      "nodes": [
+        {
+          "label": "Neural Network",
+          "children": [
+            "Perceptron (single neuron)",
+            "Weights & Biases",
+            "Activation Functions",
+            "Forward Pass",
+            "Layers (input, hidden, output)"
+          ]
+        },
+        {
+          "label": "Training",
+          "children": [
+            "Loss Function (how wrong?)",
+            "Backpropagation (calculate blame)",
+            "Gradient Descent (update weights)",
+            "Learning Rate (step size)",
+            "Epochs (training cycles)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "nn_code",
+      "steps": [
+        {
+          "line": "# Building a simple perceptron in NumPy",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's build a neural network from scratch — just NumPy, no frameworks",
+            "ta": "Neural network-ஐ அடிப்படையிலிருந்து கட்டுவோம் — NumPy மட்டும், frameworks இல்லை"
+          }
+        },
+        {
+          "line": "import numpy as np",
+          "highlight": "import",
+          "explanation": {
+            "en": "NumPy handles all the matrix math for us"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "First, define the activation function"
+          }
+        },
+        {
+          "line": "def sigmoid(x):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Sigmoid squishes any number into the range (0, 1)",
+            "ta": "Sigmoid எந்த எண்ணையும் (0, 1) வரம்பிற்குள் அழுத்துகிறது"
+          }
+        },
+        {
+          "line": "    return 1 / (1 + np.exp(-x))",
+          "highlight": "return",
+          "explanation": {
+            "en": "The sigmoid formula: 1/(1+e^-x) — large positive -> ~1, large negative -> ~0"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "We also need its derivative for backpropagation"
+          }
+        },
+        {
+          "line": "def sigmoid_derivative(x):",
+          "highlight": "def",
+          "explanation": {
+            "en": "The derivative tells us how to adjust weights during training"
+          }
+        },
+        {
+          "line": "    return x * (1 - x)",
+          "highlight": "return",
+          "explanation": {
+            "en": "For sigmoid, the derivative has this elegant form"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now set up the training data — learning AND gate"
+          }
+        },
+        {
+          "line": "# Training data: AND gate",
+          "highlight": "comment",
+          "explanation": {
+            "en": "We'll teach the network the AND logic: both inputs must be 1 for output to be 1",
+            "ta": "AND logic கற்பிப்போம்: output 1 ஆக இரண்டு inputs-ம் 1 ஆக இருக்க வேண்டும்"
+          }
+        },
+        {
+          "line": "X = np.array([[0,0], [0,1], [1,0], [1,1]])",
+          "highlight": "X",
+          "explanation": {
+            "en": "4 training examples: all combinations of two binary inputs"
+          }
+        },
+        {
+          "line": "y = np.array([[0], [0], [0], [1]])",
+          "highlight": "y",
+          "explanation": {
+            "en": "Expected outputs: only [1,1] -> 1, all others -> 0"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Initialize weights randomly"
+          }
+        },
+        {
+          "line": "np.random.seed(42)",
+          "highlight": "seed",
+          "explanation": {
+            "en": "Set seed for reproducibility — same random numbers every time"
+          }
+        },
+        {
+          "line": "weights = np.random.randn(2, 1)  # 2 inputs -> 1 output",
+          "highlight": "weights",
+          "explanation": {
+            "en": "Random starting weights — the network will learn the correct values"
+          }
+        },
+        {
+          "line": "bias = np.zeros((1, 1))",
+          "highlight": "bias",
+          "explanation": {
+            "en": "Bias starts at zero"
+          }
+        },
+        {
+          "line": "learning_rate = 0.5",
+          "highlight": "lr",
+          "explanation": {
+            "en": "How big each weight adjustment step is — too big = overshoot, too small = slow"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Training loop — forward pass, loss, backprop, update"
+          }
+        },
+        {
+          "line": "for epoch in range(10000):",
+          "highlight": "for",
+          "explanation": {
+            "en": "Train for 10,000 iterations — the network gradually learns",
+            "ta": "10,000 iterations-க்கு train — network படிப்படியாக கற்கிறது"
+          }
+        },
+        {
+          "line": "    # Forward pass",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Step 1: compute the network's prediction"
+          }
+        },
+        {
+          "line": "    output = sigmoid(np.dot(X, weights) + bias)",
+          "highlight": "output",
+          "explanation": {
+            "en": "Multiply inputs by weights, add bias, apply sigmoid"
+          }
+        },
+        {
+          "line": "    # Calculate error",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Step 2: how far off are we?"
+          }
+        },
+        {
+          "line": "    error = y - output",
+          "highlight": "error",
+          "explanation": {
+            "en": "Error = expected - predicted — positive means undershoot, negative means overshoot"
+          }
+        },
+        {
+          "line": "    # Backpropagation",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Step 3: calculate how much to adjust each weight"
+          }
+        },
+        {
+          "line": "    adjustment = error * sigmoid_derivative(output)",
+          "highlight": "adjustment",
+          "explanation": {
+            "en": "The gradient tells us direction and magnitude of weight updates"
+          }
+        },
+        {
+          "line": "    weights += learning_rate * np.dot(X.T, adjustment)",
+          "highlight": "weights",
+          "explanation": {
+            "en": "Update weights — move in the direction that reduces error"
+          }
+        },
+        {
+          "line": "    bias += learning_rate * np.sum(adjustment)",
+          "highlight": "bias",
+          "explanation": {
+            "en": "Update bias similarly"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "After training, test the network"
+          }
+        },
+        {
+          "line": "print('Predictions after training:')",
+          "highlight": "print",
+          "explanation": {
+            "en": "Let's see what our trained network predicts"
+          }
+        },
+        {
+          "line": "print(np.round(output, 3))",
+          "highlight": "print",
+          "explanation": {
+            "en": "Should be close to [0, 0, 0, 1] — the AND gate pattern!",
+            "ta": "[0, 0, 0, 1]-க்கு அருகில் இருக்க வேண்டும் — AND gate pattern!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_nn",
+      "code": "import numpy as np\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\nX = np.array([[0,0], [0,1], [1,0], [1,1]])\ny = np.array([[0], [0], [0], [1]])\n\nnp.random.seed(42)\nw = np.random.randn(2,1)\nb = np.zeros((1,1))\n\nfor i in range(10000):\n    out = sigmoid(np.dot(X, w) + b)\n    err = y - out\n    adj = err * out * (1 - out)\n    w += 0.5 * np.dot(X.T, adj)\n    b += 0.5 * np.sum(adj)\n\nprint('Trained AND gate:')\nfor i in range(4):\n    print(f'{X[i]} -> {out[i][0]:.3f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": { "X": "[[0,0],[0,1],[1,0],[1,1]]", "y": "[[0],[0],[0],[1]]" },
+          "output": "",
+          "explanation": "AND gate: both inputs must be 1 for output 1"
+        },
+        {
+          "line": 9,
+          "variables": { "w": "random weights", "b": "0" },
+          "output": "",
+          "explanation": "Initialize weights randomly, bias at zero"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "",
+          "explanation": "Training loop: 10,000 forward + backward passes"
+        },
+        {
+          "line": 20,
+          "variables": {},
+          "output": "Trained AND gate:\n[0 0] -> 0.003\n[0 1] -> 0.045\n[1 0] -> 0.045\n[1 1] -> 0.956",
+          "explanation": "After training: [0,0],[0,1],[1,0] near 0, [1,1] near 1 — it learned AND!"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "nn_flow",
+      "nodes": [
+        { "id": "input", "label": "Input: [x1, x2]", "type": "start" },
+        { "id": "weighted", "label": "Weighted sum: w1*x1 + w2*x2 + b", "type": "process" },
+        { "id": "activation", "label": "Sigmoid activation", "type": "process" },
+        { "id": "prediction", "label": "Output prediction", "type": "process" },
+        { "id": "loss", "label": "Calculate error (y - output)", "type": "process" },
+        { "id": "backprop", "label": "Backpropagation: compute gradients", "type": "process" },
+        { "id": "update", "label": "Update weights & bias", "type": "end" }
+      ],
+      "edges": [
+        { "from": "input", "to": "weighted" },
+        { "from": "weighted", "to": "activation" },
+        { "from": "activation", "to": "prediction" },
+        { "from": "prediction", "to": "loss" },
+        { "from": "loss", "to": "backprop" },
+        { "from": "backprop", "to": "update" },
+        { "from": "update", "to": "input" }
+      ],
+      "executionPath": ["input", "weighted", "activation", "prediction", "loss", "backprop", "update"],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Modify the perceptron code to learn the OR gate instead of AND. The OR gate outputs 1 if either input is 1. Training data: [0,0]->0, [0,1]->1, [1,0]->1, [1,1]->1. Train and print predictions.",
+        "ta": "AND-க்கு பதிலாக OR gate கற்க perceptron code-ஐ மாற்றுங்கள். OR gate ஏதேனும் ஒரு input 1 ஆக இருந்தால் 1 output செய்யும். Train செய்து predictions-ஐ print செய்யுங்கள்."
+      },
+      "starter_code": "import numpy as np\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n# OR gate training data\nX = np.array([[0,0], [0,1], [1,0], [1,1]])\ny = np.array([  # Fill in OR gate expected outputs\n])\n\nnp.random.seed(42)\nweights = np.random.randn(2, 1)\nbias = np.zeros((1, 1))\n\n# Train for 10000 epochs\n# Your code here\n\n# Print predictions\nfor i in range(4):\n    pred = sigmoid(np.dot(X[i], weights) + bias)\n    print(f'{X[i]} -> {pred[0]:.3f}')",
+      "expected_output": "[0 0] -> 0.021\n[0 1] -> 0.981\n[1 0] -> 0.981\n[1 1] -> 1.000",
+      "hints": {
+        "en": [
+          "OR gate outputs: y = np.array([[0], [1], [1], [1]])",
+          "The training loop is the same as AND — just the expected outputs change",
+          "After training, [0,0] should be near 0, all others near 1"
+        ],
+        "ta": [
+          "OR gate outputs: y = np.array([[0], [1], [1], [1]])",
+          "Training loop AND-ஐ போலவே — expected outputs மட்டும் மாறும்",
+          "Training-க்குப் பிறகு, [0,0] 0-க்கு அருகில், மற்றவை 1-க்கு அருகில் இருக்க வேண்டும்"
+        ]
+      },
+      "test_code": "import numpy as np\ndef sigmoid(x): return 1 / (1 + np.exp(-x))\nX = np.array([[0,0],[0,1],[1,0],[1,1]])\ny = np.array([[0],[1],[1],[1]])\nnp.random.seed(42)\nw = np.random.randn(2,1)\nb = np.zeros((1,1))\nfor _ in range(10000):\n    out = sigmoid(np.dot(X,w)+b)\n    err = y - out\n    adj = err * out * (1-out)\n    w += 0.5 * np.dot(X.T, adj)\n    b += 0.5 * np.sum(adj)\nfinal = sigmoid(np.dot(X,w)+b)\nassert final[0] < 0.1\nassert final[1] > 0.9\nassert final[2] > 0.9\nassert final[3] > 0.9"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the activation function do in a neural network?",
+        "ta": "Neural network-ல் activation function என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Stores the weights",
+          "Adds non-linearity so the network can learn complex patterns",
+          "Speeds up training",
+          "Reduces memory usage"
+        ],
+        "ta": [
+          "Weights-ஐ சேமிக்கிறது",
+          "சிக்கலான patterns கற்க non-linearity சேர்க்கிறது",
+          "Training-ஐ வேகப்படுத்துகிறது",
+          "Memory பயன்பாட்டை குறைக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is backpropagation?",
+        "ta": "Backpropagation என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "A way to create new neurons",
+          "The process of calculating how to adjust weights based on error",
+          "A type of activation function",
+          "A method to speed up forward pass"
+        ],
+        "ta": [
+          "புதிய neurons உருவாக்கும் வழி",
+          "Error-ன் அடிப்படையில் weights-ஐ எவ்வாறு adjust செய்வது என்று கணக்கிடும் process",
+          "ஒரு வகை activation function",
+          "Forward pass-ஐ வேகப்படுத்தும் method"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "neural_networks",
+      "perceptron",
+      "activation_functions",
+      "forward_pass",
+      "backpropagation",
+      "gradient_descent"
+    ],
+    "concepts_required": [
+      "numpy_foundations",
+      "linear_regression"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "real_world_application": [
+      "deep_learning",
+      "pattern_recognition",
+      "classification"
+    ],
+    "category": "ml_core",
+    "path_memberships": [
+      "machine_learning"
+    ]
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "id": "prompt_engineering",
+  "topic": "prompt_engineering",
+  "track": "ai_fundamentals",
+  "module": "ai_foundations",
+  "order": 4,
+  "title": {
+    "en": "The Art of Prompt Engineering",
+    "ta": "Prompt Engineering கலை"
+  },
+  "description": {
+    "en": "Master the art of crafting effective prompts — from zero-shot to few-shot, chain-of-thought, and structured output techniques.",
+    "ta": "திறமையான prompts உருவாக்கும் கலையை கற்றுக்கொள்ளுங்கள் — zero-shot முதல் few-shot, chain-of-thought, மற்றும் structured output நுட்பங்கள் வரை."
+  },
+  "xp_reward": 65,
+  "next_unlock": "rag_fundamentals",
+  "story_variants": {
+    "en": "## Vaathiyaar's New Employee\n\nVaathiyaar points to a new intern sitting at a desk. \"Imagine you hire a brilliant employee on their first day. They know a lot, but they don't know YOUR company. The quality of their work depends entirely on how clearly you give instructions. That's prompt engineering!\"\n\n### Prompt Techniques\n\n| Technique | Description | When to Use |\n|-----------|-------------|-------------|\n| Zero-shot | Just ask directly | Simple, common tasks |\n| Few-shot | Provide examples first | When format matters |\n| Chain-of-thought | Ask to reason step by step | Complex reasoning tasks |\n| System prompt | Set role and behavior | Consistent personality |\n| Structured output | Request JSON/specific format | When parsing the response |\n\n### The Prompt Formula\n\n```\nRole + Context + Task + Format + Constraints\n```\n\n**Bad prompt:** \"Tell me about Python\"\n\n**Good prompt:** \"You are a Python tutor for beginners. Explain list comprehensions using a factory assembly line analogy. Give 3 examples, each with comments. Keep it under 200 words.\"\n\n> **Key Insight:** The difference between a mediocre and excellent AI response is almost always the prompt. Invest time in prompt design — it pays dividends.",
+    "ta": "## வாத்தியாரின் புதிய ஊழியர்\n\nவாத்தியார் ஒரு புதிய intern-ஐ சுட்டிக்காட்டுகிறார். \"முதல் நாள் ஒரு புத்திசாலியான ஊழியரை நியமிப்பதை கற்பனை செய்யுங்கள். அவர்களுக்கு நிறைய தெரியும், ஆனால் உங்கள் நிறுவனம் தெரியாது. அவர்களின் வேலையின் தரம் நீங்கள் எவ்வளவு தெளிவாக அறிவுறுத்துகிறீர்கள் என்பதைப் பொறுத்தது. இதுதான் prompt engineering!\"\n\n### Prompt நுட்பங்கள்\n\n| நுட்பம் | விளக்கம் |\n|---------|----------|\n| Zero-shot | நேரடியாகக் கேளுங்கள் |\n| Few-shot | முதலில் எடுத்துக்காட்டுகள் கொடுங்கள் |\n| Chain-of-thought | படிப்படியாக சிந்திக்கச் சொல்லுங்கள் |"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "prompt_workshop",
+      "duration_ms": 5000
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "prompt_flow",
+      "nodes": [
+        { "id": "user", "label": "User crafts prompt", "type": "start" },
+        { "id": "role", "label": "Set role/persona", "type": "process" },
+        { "id": "context", "label": "Provide context", "type": "process" },
+        { "id": "task", "label": "Define task clearly", "type": "process" },
+        { "id": "format", "label": "Specify output format", "type": "process" },
+        { "id": "model", "label": "LLM processes prompt", "type": "process" },
+        { "id": "response", "label": "High-quality response", "type": "end" }
+      ],
+      "edges": [
+        { "from": "user", "to": "role" },
+        { "from": "role", "to": "context" },
+        { "from": "context", "to": "task" },
+        { "from": "task", "to": "format" },
+        { "from": "format", "to": "model" },
+        { "from": "model", "to": "response" }
+      ],
+      "executionPath": ["user", "role", "context", "task", "format", "model", "response"],
+      "speed": "normal"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "prompt_code",
+      "steps": [
+        {
+          "line": "# Building effective prompts with few-shot examples",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Few-shot prompting teaches the model by providing examples",
+            "ta": "Few-shot prompting எடுத்துக்காட்டுகள் கொடுத்து model-ஐ கற்பிக்கிறது"
+          }
+        },
+        {
+          "line": "def classify_sentiment(text):",
+          "highlight": "def",
+          "explanation": {
+            "en": "We'll build a sentiment classifier using prompt engineering alone"
+          }
+        },
+        {
+          "line": "    prompt = '''Classify the sentiment as positive, negative, or neutral.",
+          "highlight": "prompt",
+          "explanation": {
+            "en": "Start with a clear task description",
+            "ta": "தெளிவான task விளக்கத்துடன் தொடங்குங்கள்"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now provide few-shot examples to show the model what we want"
+          }
+        },
+        {
+          "line": "Examples:",
+          "highlight": "examples",
+          "explanation": {
+            "en": "Each example shows input and expected output — the model learns the pattern"
+          }
+        },
+        {
+          "line": "Text: \"This product is amazing!\" -> positive",
+          "highlight": "example1",
+          "explanation": {
+            "en": "Example 1: clearly positive sentiment"
+          }
+        },
+        {
+          "line": "Text: \"Terrible experience, never again\" -> negative",
+          "highlight": "example2",
+          "explanation": {
+            "en": "Example 2: clearly negative sentiment"
+          }
+        },
+        {
+          "line": "Text: \"The package arrived on Tuesday\" -> neutral",
+          "highlight": "example3",
+          "explanation": {
+            "en": "Example 3: neutral — just a factual statement"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now ask the model to classify our actual input"
+          }
+        },
+        {
+          "line": "Text: \"{text}\" ->'''",
+          "highlight": "input",
+          "explanation": {
+            "en": "Insert the user's text and let the model complete the classification",
+            "ta": "பயனரின் உரையைச் செருகி, model வகைப்படுத்தட்டும்"
+          }
+        },
+        {
+          "line": "    return call_llm(prompt)  # Returns: positive/negative/neutral",
+          "highlight": "return",
+          "explanation": {
+            "en": "The model follows the pattern from examples and classifies the new text"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "techniques_map",
+      "nodes": [
+        {
+          "label": "Prompt Engineering",
+          "children": [
+            "Zero-shot (just ask)",
+            "Few-shot (give examples)",
+            "Chain-of-thought (step by step)",
+            "System prompt (set behavior)",
+            "Structured output (JSON/format)"
+          ]
+        },
+        {
+          "label": "Prompt Components",
+          "children": [
+            "Role definition",
+            "Context/background",
+            "Clear task",
+            "Output format",
+            "Constraints/limits"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_prompt",
+      "code": "# Comparing prompt quality\nbad_prompt = 'Tell me about Python'\ngood_prompt = '''You are a Python tutor for beginners.\nExplain list comprehensions using a factory analogy.\nGive 2 examples with comments. Under 100 words.'''\n\nprint('Bad prompt (vague):')\nprint(f'  \"{bad_prompt}\"')\nprint(f'  -> Could return ANYTHING about Python\\n')\nprint('Good prompt (specific):')\nfor line in good_prompt.split('\\n'):\n    print(f'  {line}')\nprint('  -> Returns focused, formatted response')",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": { "bad_prompt": "Tell me about Python" },
+          "output": "",
+          "explanation": "A vague prompt gives the model too much freedom"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "A good prompt has role, task, format, and constraints"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "Bad prompt (vague):\n  \"Tell me about Python\"\n  -> Could return ANYTHING about Python",
+          "explanation": "Vague prompts lead to unpredictable, unfocused responses"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Good prompt (specific):\n  You are a Python tutor for beginners.\n  Explain list comprehensions using a factory analogy.\n  Give 2 examples with comments. Under 100 words.\n  -> Returns focused, formatted response",
+          "explanation": "Specific prompts produce consistent, high-quality output"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `optimize_prompt(task)` that takes a simple task description and returns an optimized prompt with role, context, format, and constraints. Test with task='summarize an article'.",
+        "ta": "ஒரு எளிய task description-ஐ எடுத்து, role, context, format, constraints-உடன் optimized prompt-ஐ return செய்யும் `optimize_prompt(task)` function எழுதுங்கள்."
+      },
+      "starter_code": "def optimize_prompt(task):\n    \"\"\"Transform a simple task into an optimized prompt.\"\"\"\n    # Add: role, context, format instructions, constraints\n    # Your code here\n    pass\n\n# Test\nresult = optimize_prompt('summarize an article')\nprint(result)",
+      "expected_output": "Role: You are an expert content summarizer.\nTask: summarize an article\nFormat: Provide a 3-bullet summary followed by a one-sentence takeaway.\nConstraints: Keep each bullet under 20 words. Use simple language.",
+      "hints": {
+        "en": [
+          "Use an f-string with a multi-line template: Role + Task + Format + Constraints",
+          "Think about what makes a summary good: concise, structured, actionable",
+          "Return the complete prompt as a formatted string"
+        ],
+        "ta": [
+          "Multi-line template-உடன் f-string பயன்படுத்துங்கள்: Role + Task + Format + Constraints",
+          "நல்ல summary என்ன என்று யோசியுங்கள்: சுருக்கமான, structured, actionable"
+        ]
+      },
+      "test_code": "def optimize_prompt(task):\n    return f'''Role: You are an expert content summarizer.\nTask: {task}\nFormat: Provide a 3-bullet summary followed by a one-sentence takeaway.\nConstraints: Keep each bullet under 20 words. Use simple language.'''\n\nresult = optimize_prompt('summarize an article')\nassert 'Role' in result\nassert 'summarize an article' in result\nassert 'Format' in result or 'format' in result"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is few-shot prompting?",
+        "ta": "Few-shot prompting என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Sending multiple API calls",
+          "Providing examples in the prompt to guide the model",
+          "Using a smaller model",
+          "Reducing the token count"
+        ],
+        "ta": [
+          "பல API அழைப்புகள் அனுப்புதல்",
+          "Model-ஐ வழிநடத்த prompt-ல் எடுத்துக்காட்டுகள் கொடுத்தல்",
+          "சிறிய model பயன்படுத்துதல்",
+          "Token எண்ணிக்கையை குறைத்தல்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which prompt is most effective for a complex reasoning task?",
+        "ta": "சிக்கலான reasoning task-க்கு எந்த prompt மிகவும் திறமையானது?"
+      },
+      "options": {
+        "en": [
+          "Give me the answer",
+          "Think step by step and explain your reasoning",
+          "Be creative",
+          "Use JSON format"
+        ],
+        "ta": [
+          "பதிலை கொடுங்கள்",
+          "படிப்படியாக சிந்தித்து உங்கள் reasoning-ஐ விளக்குங்கள்",
+          "படைப்பாற்றலாக இருங்கள்",
+          "JSON format பயன்படுத்துங்கள்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "prompt_engineering",
+      "zero_shot",
+      "few_shot",
+      "chain_of_thought",
+      "structured_output"
+    ],
+    "concepts_required": [
+      "what_is_ai",
+      "llm_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "crafting_effective_prompts",
+      "building_ai_applications"
+    ],
+    "category": "ai_core",
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
+  }
+}

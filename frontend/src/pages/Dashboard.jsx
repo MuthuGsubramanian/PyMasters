@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     BookOpen,
@@ -16,11 +16,22 @@ import {
     Sparkles,
     RotateCcw,
     TrendingUp,
+    Flame,
+    Clock,
+    Play,
+    Code2,
+    MessageCircle,
+    User,
+    Calendar,
+    Lightbulb,
+    Rocket,
+    ArrowRight,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { getModules, getModule, completeModule, getCompletions, recordSignal } from '../api';
+import { getModules, getModule, completeModule, getCompletions, getProfile, recordSignal } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import clsx from 'clsx';
 
 // ─── Animated Number Counter ───────────────────────────────────────────────
@@ -76,183 +87,555 @@ function Skeleton({ className }) {
     );
 }
 
+// ─── Motivational Quotes ──────────────────────────────────────────────────
+const QUOTES = [
+    { text: "Code is like humor. When you have to explain it, it's bad.", author: "Cory House" },
+    { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
+    { text: "The best way to predict the future is to invent it.", author: "Alan Kay" },
+    { text: "AI is the new electricity.", author: "Andrew Ng" },
+    { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+    { text: "Simplicity is the soul of efficiency.", author: "Austin Freeman" },
+    { text: "Python is executable pseudocode.", author: "Bruce Eckel" },
+    { text: "In God we trust. All others must bring data.", author: "W. Edwards Deming" },
+    { text: "The only way to learn a new programming language is by writing programs in it.", author: "Dennis Ritchie" },
+    { text: "Machine intelligence is the last invention that humanity will ever need.", author: "Nick Bostrom" },
+];
+
+// ─── Trending Topics (fallback) ───────────────────────────────────────────
+const FALLBACK_TRENDS = [
+    { id: 't1', title: 'Building RAG Pipelines', category: 'AI', difficulty: 'Intermediate', desc: 'Learn to build Retrieval-Augmented Generation systems with Python.' },
+    { id: 't2', title: 'FastAPI Masterclass', category: 'Python', difficulty: 'Beginner', desc: 'Create production-ready APIs with FastAPI and Pydantic.' },
+    { id: 't3', title: 'PyTorch from Scratch', category: 'AI', difficulty: 'Advanced', desc: 'Deep dive into neural networks with PyTorch tensors.' },
+    { id: 't4', title: 'Async Python Patterns', category: 'Python', difficulty: 'Intermediate', desc: 'Master asyncio, coroutines, and concurrent programming.' },
+    { id: 't5', title: 'LangChain Agents', category: 'AI', difficulty: 'Advanced', desc: 'Build autonomous AI agents with LangChain and tool calling.' },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
+function formatDate() {
+    return new Date().toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+}
+
+function formatLearningTime(minutes) {
+    if (!minutes || minutes < 1) return '0m';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m}m`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}m`;
+}
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api';
+
+// ─── Stat Card ────────────────────────────────────────────────────────────
+function StatCard({ label, value, suffix, icon, gradient, iconBg, border, delay, children }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, type: 'spring', stiffness: 260, damping: 20 }}
+            className={clsx(
+                'relative rounded-2xl p-5 border backdrop-blur-xl transition-all duration-300',
+                'hover:shadow-xl hover:-translate-y-1 group overflow-hidden',
+                gradient, border,
+            )}
+        >
+            {/* Subtle glow on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-white/40 to-transparent" />
+            <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
+                    <div className={clsx(
+                        'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
+                        iconBg,
+                    )}>
+                        {icon}
+                    </div>
+                </div>
+                <div className="text-2xl font-display font-bold text-slate-900">
+                    {children || (
+                        <>
+                            <AnimatedNumber value={value} />
+                            {suffix && <span className="text-slate-400 text-lg ml-0.5">{suffix}</span>}
+                        </>
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
 // ─── Overview ──────────────────────────────────────────────────────────────
 export function Overview() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
     const [totalModules, setTotalModules] = useState(4);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState(null);
+    const [recommendation, setRecommendation] = useState(null);
+    const [trends, setTrends] = useState(FALLBACK_TRENDS);
+
     const modulesUnlocked = (user.unlocked || []).length;
     const progressPct = totalModules > 0 ? Math.round((modulesUnlocked / totalModules) * 100) : 0;
 
-    useEffect(() => { document.title = 'Dashboard — PyMasters'; }, []);
-    useEffect(() => {
-        getModules().then(res => setTotalModules(res.data.length)).catch(() => {});
+    const dailyQuote = useMemo(() => {
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+        return QUOTES[dayOfYear % QUOTES.length];
     }, []);
 
-    return (
-        <div className="animate-fade-in space-y-8">
-            <header className="flex items-center justify-between">
-                <div>
-                    <motion.h1
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-3xl font-bold mb-1 font-display"
-                    >
-                        Command Center
-                    </motion.h1>
-                    <p className="text-slate-500">Welcome back, <span className="text-slate-700 font-medium">{user.username}</span>. Systems optimal.</p>
-                </div>
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100"
-                >
-                    <Zap size={16} className="text-cyan-500" />
-                    <span className="text-sm font-bold text-cyan-700">{user.points} XP</span>
-                </motion.div>
-            </header>
+    useEffect(() => { document.title = 'Dashboard \u2014 PyMasters'; }, []);
 
-            <div className="grid md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 space-y-6">
-                    {/* Stat Cards with animations */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {[
-                            {
-                                label: 'Total XP',
-                                value: user.points,
-                                icon: <Trophy size={20} />,
-                                color: 'from-amber-50 to-orange-50',
-                                iconBg: 'bg-amber-100 text-amber-600',
-                                border: 'border-amber-100',
-                            },
-                            {
-                                label: 'Modules',
-                                value: modulesUnlocked,
-                                suffix: ` / ${totalModules}`,
-                                icon: <BookOpen size={20} />,
-                                color: 'from-cyan-50 to-blue-50',
-                                iconBg: 'bg-cyan-100 text-cyan-600',
-                                border: 'border-cyan-100',
-                            },
-                            {
-                                label: 'Completion',
-                                value: progressPct,
-                                suffix: '%',
-                                icon: <Target size={20} />,
-                                color: 'from-purple-50 to-violet-50',
-                                iconBg: 'bg-purple-100 text-purple-600',
-                                border: 'border-purple-100',
-                            },
-                        ].map((stat, idx) => (
-                            <motion.div
-                                key={stat.label}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className={`rounded-2xl p-5 bg-gradient-to-br ${stat.color} border ${stat.border} transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group`}
-                            >
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{stat.label}</span>
-                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${stat.iconBg} transition-transform duration-300 group-hover:scale-110`}>
-                                        {stat.icon}
-                                    </div>
-                                </div>
-                                <div className="text-2xl font-display font-bold text-slate-900">
-                                    <AnimatedNumber value={stat.value} />
-                                    {stat.suffix && <span className="text-slate-400 text-lg">{stat.suffix}</span>}
-                                </div>
-                            </motion.div>
-                        ))}
+    useEffect(() => {
+        const fetchAll = async () => {
+            setLoading(true);
+            try {
+                const [modsRes] = await Promise.all([
+                    getModules(),
+                ]);
+                setTotalModules(modsRes.data.length);
+            } catch {}
+
+            // Fetch stats (graceful fallback)
+            if (user?.id) {
+                try {
+                    const res = await axios.get(`${API_URL}/profile/${user.id}/stats`, {
+                        headers: { Authorization: `Bearer ${user.token}` },
+                    });
+                    setStats(res.data);
+                } catch {
+                    setStats(null);
+                }
+                // Fetch daily recommendation (graceful fallback)
+                try {
+                    const res = await axios.get(`${API_URL}/profile/${user.id}/daily-recommendation`, {
+                        headers: { Authorization: `Bearer ${user.token}` },
+                    });
+                    setRecommendation(res.data);
+                } catch {
+                    setRecommendation(null);
+                }
+            }
+
+            // Fetch trends (graceful fallback)
+            try {
+                const res = await axios.get(`${API_URL}/trends`, {
+                    headers: { Authorization: `Bearer ${user?.token}` },
+                });
+                if (Array.isArray(res.data) && res.data.length > 0) setTrends(res.data);
+            } catch {}
+
+            setLoading(false);
+        };
+        fetchAll();
+    }, [user?.id, user?.token]);
+
+    const streak = stats?.streak ?? (user.streak || 0);
+    const learningMinutes = stats?.learning_minutes ?? 0;
+    const recentActivity = stats?.recent_activity ?? [];
+    const nextMilestone = stats?.next_milestone ?? { label: `${Math.ceil((user.points || 0) / 100) * 100} XP`, progress: ((user.points || 0) % 100) };
+
+    // ─── Stagger animation variants ──────────────────────────────────────
+    const containerVariants = {
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.08 } },
+    };
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 20 } },
+    };
+
+    return (
+        <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-8 pb-8"
+        >
+            {/* ─── Welcome Banner ────────────────────────────────────────── */}
+            <motion.div
+                variants={itemVariants}
+                className="relative rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm"
+            >
+                {/* Top gradient bar */}
+                <div className="h-1.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
+
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-cyan-200/10 via-blue-200/10 to-purple-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/10 to-cyan-200/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+                <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                            <Calendar size={12} />
+                            <span>{formatDate()}</span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 mb-2">
+                            {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">{user.username}</span>!
+                        </h1>
+                        <p className="text-sm text-slate-500 italic max-w-lg">
+                            &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-slate-400">&mdash; {dailyQuote.author}</span>
+                        </p>
                     </div>
 
-                    {/* Continue Learning Banner */}
+                    {/* Streak badge */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-sm shadow-sm group hover:shadow-lg transition-all duration-500"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.3, type: 'spring' }}
+                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 shadow-sm self-start"
+                    >
+                        <div className="relative">
+                            <span className="text-2xl" role="img" aria-label="fire">&#x1F525;</span>
+                            {streak > 0 && (
+                                <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-orange-400/40"
+                                />
+                            )}
+                        </div>
+                        <div>
+                            <div className="text-xl font-bold font-display text-orange-700">{streak}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-400">day streak</div>
+                        </div>
+                    </motion.div>
+                </div>
+            </motion.div>
+
+            {/* ─── Stats Row ─────────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    label="Total XP"
+                    value={user.points || 0}
+                    icon={<Trophy size={20} />}
+                    gradient="bg-gradient-to-br from-amber-50/80 to-orange-50/80"
+                    iconBg="bg-amber-100 text-amber-600"
+                    border="border-amber-100"
+                    delay={0.1}
+                />
+                <StatCard
+                    label="Modules Completed"
+                    value={modulesUnlocked}
+                    suffix={` / ${totalModules}`}
+                    icon={<BookOpen size={20} />}
+                    gradient="bg-gradient-to-br from-cyan-50/80 to-blue-50/80"
+                    iconBg="bg-cyan-100 text-cyan-600"
+                    border="border-cyan-100"
+                    delay={0.15}
+                >
+                    <div className="flex items-center gap-3">
+                        <span>
+                            <AnimatedNumber value={modulesUnlocked} />
+                            <span className="text-slate-400 text-lg ml-0.5">/ {totalModules}</span>
+                        </span>
+                        <div className="w-16">
+                            <ProgressRing progress={progressPct} size={36} strokeWidth={3} />
+                        </div>
+                    </div>
+                </StatCard>
+                <StatCard
+                    label="Current Streak"
+                    icon={<Flame size={20} />}
+                    gradient="bg-gradient-to-br from-orange-50/80 to-red-50/80"
+                    iconBg="bg-orange-100 text-orange-600"
+                    border="border-orange-100"
+                    delay={0.2}
+                >
+                    <div className="flex items-center gap-2">
+                        <AnimatedNumber value={streak} />
+                        <span className="text-slate-400 text-lg">days</span>
+                        {streak > 0 && (
+                            <motion.span
+                                animate={{ y: [0, -3, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                className="text-lg"
+                            >
+                                &#x1F525;
+                            </motion.span>
+                        )}
+                    </div>
+                </StatCard>
+                <StatCard
+                    label="Learning Time"
+                    icon={<Clock size={20} />}
+                    gradient="bg-gradient-to-br from-purple-50/80 to-violet-50/80"
+                    iconBg="bg-purple-100 text-purple-600"
+                    border="border-purple-100"
+                    delay={0.25}
+                >
+                    <span className="text-2xl font-display font-bold text-slate-900">
+                        {loading ? <Skeleton className="h-7 w-16 inline-block" /> : formatLearningTime(learningMinutes)}
+                    </span>
+                </StatCard>
+            </div>
+
+            {/* ─── Main Content Grid ─────────────────────────────────────── */}
+            <div className="grid lg:grid-cols-3 gap-6">
+                {/* Left Column (2/3) */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* ─── Daily Recommendation Card ─────────────────────── */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="relative rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm group hover:shadow-xl transition-all duration-500"
                     >
                         <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
-                        <div className="p-8 flex justify-between items-center">
-                            <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <GraduationCap size={18} className="text-cyan-500" />
-                                    <h3 className="text-xl font-bold text-slate-900 font-display">Continue Training</h3>
+                        <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-bl from-cyan-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+                        <div className="relative z-10 p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
+                                    <Lightbulb size={20} className="text-cyan-600" />
                                 </div>
-                                <p className="text-slate-500 text-sm mb-5">
-                                    {modulesUnlocked >= totalModules
-                                        ? "You've completed all modules. Amazing work!"
-                                        : `You are on Module ${modulesUnlocked + 1}. Keep the momentum going!`
-                                    }
-                                </p>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => navigate('/dashboard/learn')}
-                                        className="btn-neo btn-neo-primary py-2.5 text-sm group/btn"
-                                    >
-                                        Resume Path
-                                        <ChevronRight size={16} className="ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/dashboard/classroom')}
-                                        className="btn-neo btn-neo-ghost py-2.5 text-sm"
-                                    >
-                                        <Sparkles size={14} className="mr-1" />
-                                        AI Classroom
-                                    </button>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 font-display">Today&apos;s Recommended Lesson</h3>
+                                    <p className="text-xs text-slate-400">Personalized for your learning path</p>
                                 </div>
+                                {(recommendation?.trending) && (
+                                    <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 text-[10px] font-bold text-rose-600 uppercase tracking-wider">
+                                        <TrendingUp size={10} />
+                                        Trending
+                                    </span>
+                                )}
                             </div>
-                            <div className="hidden sm:block relative">
-                                <ProgressRing progress={progressPct} size={90} strokeWidth={7} />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-lg font-bold text-slate-700 font-display">{progressPct}%</span>
+
+                            {loading ? (
+                                <div className="space-y-3">
+                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-2/3" />
                                 </div>
+                            ) : (
+                                <>
+                                    <h4 className="text-xl font-bold text-slate-800 font-display mb-2">
+                                        {recommendation?.title || (modulesUnlocked >= totalModules ? 'Explore AI Topics' : `Module ${modulesUnlocked + 1}`)}
+                                    </h4>
+                                    <p className="text-sm text-slate-500 mb-3 leading-relaxed">
+                                        {recommendation?.description || (
+                                            modulesUnlocked >= totalModules
+                                                ? 'You have completed all core modules. Explore trending AI and Python topics in the classroom!'
+                                                : `Continue your learning journey with the next module. Keep the momentum going!`
+                                        )}
+                                    </p>
+                                    {recommendation?.reason && (
+                                        <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-gradient-to-r from-blue-50/50 to-purple-50/50 border border-blue-100/50">
+                                            <Sparkles size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                                            <p className="text-xs text-blue-700">{recommendation.reason}</p>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() => navigate(recommendation?.link || '/dashboard/learn')}
+                                        className="btn-neo btn-neo-primary py-2.5 text-sm group/btn inline-flex items-center gap-2"
+                                    >
+                                        <Play size={14} />
+                                        Start Learning
+                                        <ArrowRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* ─── Trending in AI/Python ──────────────────────────── */}
+                    <motion.div variants={itemVariants}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp size={16} className="text-cyan-500" />
+                                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Trending in AI & Python</h3>
                             </div>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent -mx-1 px-1">
+                            {(loading ? Array(5).fill(null) : trends).map((trend, idx) => (
+                                <motion.div
+                                    key={trend?.id || idx}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3 + idx * 0.05 }}
+                                    onClick={() => !loading && navigate('/dashboard/classroom')}
+                                    className={clsx(
+                                        'flex-shrink-0 w-60 rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl p-5 cursor-pointer',
+                                        'hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group',
+                                    )}
+                                >
+                                    {loading ? (
+                                        <div className="space-y-3">
+                                            <Skeleton className="h-4 w-16" />
+                                            <Skeleton className="h-5 w-40" />
+                                            <Skeleton className="h-3 w-full" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <span className={clsx(
+                                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider',
+                                                    trend.category === 'AI'
+                                                        ? 'text-purple-600 bg-purple-50 border-purple-200'
+                                                        : 'text-cyan-600 bg-cyan-50 border-cyan-200',
+                                                )}>
+                                                    {trend.category}
+                                                </span>
+                                                <span className={clsx(
+                                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                                    trend.difficulty === 'Beginner' ? 'text-green-600 bg-green-50 border-green-200'
+                                                        : trend.difficulty === 'Intermediate' ? 'text-amber-600 bg-amber-50 border-amber-200'
+                                                        : 'text-red-600 bg-red-50 border-red-200',
+                                                )}>
+                                                    {trend.difficulty}
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-bold text-slate-800 mb-1.5 group-hover:text-cyan-600 transition-colors font-display line-clamp-2">
+                                                {trend.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-400 line-clamp-2">{trend.desc}</p>
+                                        </>
+                                    )}
+                                </motion.div>
+                            ))}
                         </div>
                     </motion.div>
                 </div>
 
-                {/* Activity Feed */}
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="rounded-2xl bg-white/80 backdrop-blur-sm border border-black/[0.04] shadow-sm overflow-hidden"
-                >
-                    <div className="px-5 py-3.5 border-b border-black/[0.04] flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        <h3 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Live Feed</h3>
-                    </div>
-                    <div className="p-5 space-y-4">
-                        {[
-                            { user: 'Arjun_K', topic: 'Advanced Recursion', time: '2m ago' },
-                            { user: 'Priya_S', topic: 'Neural Networks', time: '5m ago' },
-                            { user: 'Karthik_R', topic: 'List Comprehensions', time: '8m ago' },
-                            { user: 'Meera_V', topic: 'Pandas DataFrames', time: '12m ago' },
-                        ].map((item, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.5 + i * 0.1 }}
-                                className="flex gap-3 text-sm items-start"
-                            >
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <span className="text-[10px] font-bold text-cyan-600">{item.user[0]}</span>
+                {/* Right Column (1/3) */}
+                <div className="space-y-6">
+                    {/* ─── Learning Progress ─────────────────────────────── */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm overflow-hidden"
+                    >
+                        <div className="px-5 py-3.5 border-b border-black/[0.04]">
+                            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Learning Progress</h3>
+                        </div>
+                        <div className="p-5">
+                            {/* Progress Ring */}
+                            <div className="flex items-center justify-center mb-5">
+                                <div className="relative">
+                                    <ProgressRing progress={progressPct} size={100} strokeWidth={8} color="#06b6d4" />
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="text-2xl font-bold text-slate-800 font-display">{progressPct}%</span>
+                                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">Complete</span>
+                                    </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-slate-600">
-                                        <span className="text-slate-800 font-semibold">{item.user}</span> completed{' '}
-                                        <span className="text-cyan-600 font-medium">{item.topic}</span>
-                                    </p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">{item.time}</p>
+                            </div>
+
+                            {/* Next Milestone */}
+                            <div className="mb-5 p-3 rounded-xl bg-gradient-to-r from-cyan-50/50 to-blue-50/50 border border-cyan-100/50">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Rocket size={12} className="text-cyan-500" />
+                                    <span className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest">Next Milestone</span>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
+                                <p className="text-sm font-bold text-slate-700 font-display">{nextMilestone.label}</p>
+                                <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${Math.min(nextMilestone.progress, 100)}%` }}
+                                        transition={{ duration: 1.2, ease: 'easeOut', delay: 0.5 }}
+                                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Recent Activity */}
+                            <div>
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Recent Activity</h4>
+                                {recentActivity.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {recentActivity.slice(0, 5).map((act, i) => (
+                                            <motion.div
+                                                key={i}
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: 0.6 + i * 0.08 }}
+                                                className="flex items-center gap-2.5 text-xs"
+                                            >
+                                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                                                <span className="text-slate-600 truncate">{act.label || act}</span>
+                                                {act.time && <span className="text-slate-300 ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4">
+                                        <p className="text-xs text-slate-400">Start learning to see your activity here</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* ─── Quick Actions ──────────────────────────────────── */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm overflow-hidden"
+                    >
+                        <div className="px-5 py-3.5 border-b border-black/[0.04]">
+                            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Quick Actions</h3>
+                        </div>
+                        <div className="p-4 grid grid-cols-2 gap-3">
+                            {[
+                                {
+                                    label: 'Continue Learning',
+                                    icon: <Play size={18} />,
+                                    to: '/dashboard/learn',
+                                    colors: 'from-cyan-500 to-blue-500',
+                                    bg: 'bg-cyan-50 hover:bg-cyan-100',
+                                    text: 'text-cyan-700',
+                                },
+                                {
+                                    label: 'Practice Mode',
+                                    icon: <Code2 size={18} />,
+                                    to: '/dashboard/classroom',
+                                    colors: 'from-purple-500 to-violet-500',
+                                    bg: 'bg-purple-50 hover:bg-purple-100',
+                                    text: 'text-purple-700',
+                                },
+                                {
+                                    label: 'Ask Vaathiyaar',
+                                    icon: <MessageCircle size={18} />,
+                                    to: '/dashboard/classroom',
+                                    colors: 'from-amber-500 to-orange-500',
+                                    bg: 'bg-amber-50 hover:bg-amber-100',
+                                    text: 'text-amber-700',
+                                },
+                                {
+                                    label: 'View Profile',
+                                    icon: <User size={18} />,
+                                    to: '/dashboard/profile',
+                                    colors: 'from-emerald-500 to-green-500',
+                                    bg: 'bg-emerald-50 hover:bg-emerald-100',
+                                    text: 'text-emerald-700',
+                                },
+                            ].map((action, idx) => (
+                                <motion.button
+                                    key={action.label}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.5 + idx * 0.05 }}
+                                    onClick={() => navigate(action.to)}
+                                    className={clsx(
+                                        'flex flex-col items-center gap-2 p-4 rounded-xl border border-transparent transition-all duration-200',
+                                        action.bg, action.text,
+                                        'hover:border-black/[0.04] hover:shadow-sm',
+                                    )}
+                                >
+                                    <div className={clsx(
+                                        'w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br text-white',
+                                        action.colors,
+                                    )}>
+                                        {action.icon}
+                                    </div>
+                                    <span className="text-[11px] font-bold leading-tight text-center">{action.label}</span>
+                                </motion.button>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
             </div>
 
             <style>{`
@@ -260,8 +643,12 @@ export function Overview() {
                     0% { background-position: 200% 0; }
                     100% { background-position: -200% 0; }
                 }
+                .scrollbar-thin::-webkit-scrollbar { height: 4px; }
+                .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+                .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+                .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
             `}</style>
-        </div>
+        </motion.div>
     );
 }
 

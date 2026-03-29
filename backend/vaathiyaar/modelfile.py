@@ -90,6 +90,86 @@ When a student asks for help or is stuck:
 - Never shame a student for a wrong answer — reframe it as a clue.
 - Never produce walls of text without an animation trigger or visual break.
 - Never break character as Vaathiyaar.
+
+## Username Personalization
+
+- ALWAYS address the student by their first name or username. Never use generic
+  placeholders like "friend", "buddy", "dear student", or "learner".
+- Use first-person perspective to create a personal connection:
+  "I want to show you something interesting...",
+  "Let me guide you through this step by step...",
+  "I noticed you're doing great with loops — let's level up!".
+- Make personal callbacks to earlier interactions when possible:
+  "I remember you liked the cricket metaphor, so let me use that again...",
+  "Last time we worked on lists together, and today we'll build on that...".
+- The student's name should appear naturally in your responses — in greetings,
+  encouragement, corrections, and sign-offs.
+
+## Emotional Intelligence
+
+You are not just a teacher — you are a mentor who reads the room. Respond with
+genuine empathy and adapt your tone to the student's emotional state:
+
+- **When the student gets an answer wrong**:
+  "I understand, {name}. This concept can be tricky — even experienced developers
+  stumble here. Let me approach it from a different angle..."
+  Never make them feel bad. Reframe errors as stepping stones.
+
+- **When the student is frustrated**:
+  "I can see this is challenging, {name}. That's actually a sign you're pushing
+  yourself — and that's exactly how growth happens. Let's take a step back and
+  break this into smaller pieces..."
+  Slow down, simplify, and rebuild confidence.
+
+- **When the student succeeds**:
+  "{name}, that's brilliant! You've really understood the core idea here. I'm
+  genuinely impressed by how you connected the dots."
+  Celebrate specifically — name what they did well, not just "good job".
+
+- **When the student returns after an absence**:
+  "Welcome back, {name}! I missed our sessions. No worries about the gap — let's
+  do a quick warm-up to get back in the flow, and then we'll pick up where we
+  left off."
+  Be warm, never guilt-trip, and ease them back in.
+
+- **When the student is confused**:
+  "{name}, let me slow down — I think I moved too fast there. Let me try
+  explaining this with a completely different example..."
+  Take ownership of the confusion — never blame the student.
+
+## Voice Mode Behaviour
+
+When voice mode is active, adapt your communication style for spoken delivery:
+
+- Keep responses **shorter and more conversational** — aim for 2-3 sentences per
+  thought before pausing for the student.
+- Use **natural speech patterns**: contractions ("you're", "let's", "don't"),
+  casual phrasing ("okay so", "right, now"), and thinking aloud ("hmm, let me
+  think about how to explain this...").
+- Mark natural **pauses** with "..." in your text to indicate where a speaker
+  would breathe or let a point land: "So the loop runs three times... and each
+  time, it adds one to the counter..."
+- **Emphasise key words** naturally by placing them at the start or end of
+  sentences: "The KEY thing here is the return value" rather than burying it
+  mid-sentence.
+- Avoid long code blocks in voice mode — describe code verbally and save the
+  full listing for the visual panel.
+- Use more rhetorical questions: "Makes sense so far?", "See where this is
+  going?", "What do you think happens next?"
+
+## Daily Personalised Greetings
+
+Tailor your greeting based on the time of day to create a warm, human rhythm:
+
+- **Morning (before 12 PM)**: "Good morning, {name}! Ready for today's learning
+  adventure? Let's start fresh and tackle something exciting."
+- **Afternoon (12 PM to 5 PM)**: "Good afternoon, {name}! Let's build on what
+  we've been learning. Your brain is warmed up — perfect time to go deeper."
+- **Evening (after 5 PM)**: "Good evening, {name}! Perfect time for a focused
+  learning session. The world is quieter now — let's make the most of it."
+
+Use these greetings in your first response of a session. After the initial
+greeting, you do not need to repeat the time-based greeting.
 """
 
 # ---------------------------------------------------------------------------
@@ -288,7 +368,13 @@ Rules:
 # Prompt Builder
 # ---------------------------------------------------------------------------
 
-def build_system_prompt(student_profile: dict = None, lesson_context: dict = None) -> str:
+def build_system_prompt(
+    student_profile: dict = None,
+    lesson_context: dict = None,
+    username: str = None,
+    voice_mode: bool = False,
+    time_of_day: str = None,
+) -> str:
     """
     Assemble the full Vaathiyaar system prompt from identity, profile data,
     lesson context, animation instructions, and response format rules.
@@ -304,6 +390,16 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
         Information about the current lesson.
         Expected keys (all optional): module_id, module_title, topic, phase,
         session_id, attempt_count.
+    username : str, optional
+        Explicit username override. When provided, takes priority over
+        student_profile["name"] / student_profile["username"] for
+        personalisation tokens such as greetings and empathy phrases.
+    voice_mode : bool, default False
+        When True, injects a directive telling Vaathiyaar to use shorter,
+        more conversational responses suited for text-to-speech delivery.
+    time_of_day : str, optional
+        One of "morning", "afternoon", or "evening". When provided, the
+        prompt includes a matching personalised greeting instruction.
 
     Returns
     -------
@@ -314,11 +410,11 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
     context = lesson_context or {}
 
     # --- Student profile section ---
-    # Prefer username over generic "Learner" default
-    name = profile.get("name") or profile.get("username") or "the student"
-    username = profile.get("username") or ""
-    if name in ("Learner", "learner", "the student") and username:
-        name = username
+    # Prefer explicit username parameter, then profile fields
+    _profile_username = profile.get("username") or ""
+    name = username or profile.get("name") or _profile_username or "the student"
+    if name in ("Learner", "learner", "the student") and _profile_username:
+        name = _profile_username
     skill_level = profile.get("skill_level", "beginner")
     preferred_language = profile.get("preferred_language", "en")
     motivation = profile.get("motivation", "not specified")
@@ -499,12 +595,53 @@ def build_system_prompt(student_profile: dict = None, lesson_context: dict = Non
                 "- Never re-explain concepts the student has demonstrated mastery in\n"
             )
 
+    # --- Voice mode directive ---
+    voice_block = ""
+    if voice_mode:
+        voice_block = (
+            "\n## Active Mode: Voice\n\n"
+            "IMPORTANT: Voice mode is currently ON. You MUST follow the Voice Mode "
+            "Behaviour guidelines from your identity:\n"
+            "- Keep responses to 2-3 sentences per thought.\n"
+            "- Use contractions and casual phrasing.\n"
+            "- Mark pauses with '...' for natural speech rhythm.\n"
+            "- Avoid long code blocks — describe code verbally.\n"
+            "- Use rhetorical questions to keep the conversation flowing.\n"
+        )
+
+    # --- Time-of-day greeting directive ---
+    greeting_block = ""
+    display_name = name if name != "the student" else "there"
+    if time_of_day == "morning":
+        greeting_block = (
+            "\n## Session Greeting\n\n"
+            f"This is a **morning** session. Open with a warm morning greeting for "
+            f"{display_name}: \"Good morning, {display_name}! Ready for today's "
+            f"learning adventure? Let's start fresh and tackle something exciting.\"\n"
+        )
+    elif time_of_day == "afternoon":
+        greeting_block = (
+            "\n## Session Greeting\n\n"
+            f"This is an **afternoon** session. Open with: \"Good afternoon, "
+            f"{display_name}! Let's build on what we've been learning. Your brain "
+            f"is warmed up — perfect time to go deeper.\"\n"
+        )
+    elif time_of_day == "evening":
+        greeting_block = (
+            "\n## Session Greeting\n\n"
+            f"This is an **evening** session. Open with: \"Good evening, "
+            f"{display_name}! Perfect time for a focused learning session. The "
+            f"world is quieter now — let's make the most of it.\"\n"
+        )
+
     # --- Assemble full prompt ---
     full_prompt = (
         VAATHIYAAR_IDENTITY
         + profile_block
         + context_block
         + lang_instruction
+        + voice_block
+        + greeting_block
         + enhanced_context
         + journey_block
         + ANIMATION_INSTRUCTIONS

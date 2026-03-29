@@ -11,11 +11,16 @@ import {
     Trophy,
     ChevronRight,
     Menu,
-    X
+    X,
+    User,
+    TrendingUp,
+    Settings
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import PymastersIcon from '../assets/pymasters-icon.svg';
+import GlobalSearch from './GlobalSearch';
+import DarkModeToggle from './DarkModeToggle';
 
 export default function Layout() {
     const { user, logout } = useAuth();
@@ -30,6 +35,8 @@ export default function Layout() {
         { icon: Map, label: 'Evolution', path: '/dashboard/paths', desc: 'Your AI learning journey' },
         { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
         { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
+        { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
+        { icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' },
     ];
 
     const rank = user.points > 1000 ? 'ARCHITECT' : user.points > 500 ? 'ENGINEER' : 'CADET';
@@ -79,7 +86,7 @@ export default function Layout() {
                     <div className="rounded-2xl p-4 bg-gradient-to-br from-slate-50 to-white border border-black/[0.04] shadow-sm">
                         <div className="flex items-center gap-3 mb-3">
                             {/* Avatar with animated ring */}
-                            <div className="relative">
+                            <div className="relative cursor-pointer" onClick={() => navigate('/dashboard/profile')}>
                                 <div className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
                                     <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-slate-700 font-bold text-sm">
                                         {user.username.substring(0, 2).toUpperCase()}
@@ -88,7 +95,10 @@ export default function Layout() {
                                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-400 border-2 border-white shadow-sm" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="text-slate-900 font-bold text-sm truncate">{user.username}</div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="text-slate-900 font-bold text-sm truncate">{user.username}</div>
+                                    <Settings size={12} className="text-slate-400 hover:text-cyan-600 cursor-pointer transition-colors shrink-0" onClick={() => navigate('/dashboard/profile')} />
+                                </div>
                                 <div className={`inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${rc.bg} ${rc.text} ${rc.border}`}>
                                     <Zap size={8} />
                                     {rank}
@@ -174,12 +184,15 @@ export default function Layout() {
 
                 {/* Footer */}
                 <div className="p-4 border-t border-black/[0.05] space-y-3">
-                    <button
-                        onClick={logout}
-                        className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300 border border-transparent hover:border-red-100"
-                    >
-                        <LogOut size={14} /> Sign Out
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={logout}
+                            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300 border border-transparent hover:border-red-100"
+                        >
+                            <LogOut size={14} /> Sign Out
+                        </button>
+                        <DarkModeToggle />
+                    </div>
                     <div className="flex items-center justify-center gap-3 pt-1">
                         <Link to="/terms" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Terms</Link>
                         <span className="text-slate-200 text-[10px]">&middot;</span>
@@ -205,6 +218,8 @@ export default function Layout() {
                     <Outlet />
                 </div>
             </main>
+
+            <GlobalSearch />
         </div>
     );
 }

@@ -12,6 +12,9 @@ import ConceptMap from './ConceptMap';
 import LoopVisualizer from './LoopVisualizer';
 import FlowDiagram from './FlowDiagram';
 import ExecutionVisualizer from './ExecutionVisualizer';
+import NeuralNetworkVisualizer from './NeuralNetworkVisualizer';
+import AlgorithmVisualizer from './AlgorithmVisualizer';
+import TreeVisualizer from './TreeVisualizer';
 
 // Maps primitive type strings to components (PascalCase + snake_case)
 const PRIMITIVE_MAP = {
@@ -28,6 +31,9 @@ const PRIMITIVE_MAP = {
   LoopVisualizer, loop_visualizer: LoopVisualizer,
   FlowDiagram, flow_diagram: FlowDiagram,
   ExecutionVisualizer, execution_visualizer: ExecutionVisualizer,
+  NeuralNetworkVisualizer, neural_network: NeuralNetworkVisualizer,
+  AlgorithmVisualizer, algorithm_visualizer: AlgorithmVisualizer,
+  TreeVisualizer, tree_visualizer: TreeVisualizer,
 };
 
 // Keys whose values are locale maps ({"en": "...", "ta": "..."})

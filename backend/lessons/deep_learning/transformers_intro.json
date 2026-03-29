@@ -1,0 +1,406 @@
+{
+  "id": "transformers_intro",
+  "topic": "transformers_intro",
+  "track": "deep_learning",
+  "module": "transformers",
+  "order": 18,
+  "title": {
+    "en": "Understanding Transformers",
+    "ta": "Transformers புரிந்துகொள்ளுதல்"
+  },
+  "description": {
+    "en": "Understand the Transformer architecture that powers modern AI — self-attention, positional encoding, and the mechanism behind GPT and Claude.",
+    "ta": "நவீன AI-ஐ இயக்கும் Transformer architecture-ஐ புரிந்துகொள்ளுங்கள் — self-attention, positional encoding, GPT மற்றும் Claude-ன் பின்னால் உள்ள mechanism."
+  },
+  "xp_reward": 90,
+  "next_unlock": "transformer_attention",
+  "story_variants": {
+    "en": "## Vaathiyaar's Group Discussion\n\nVaathiyaar arranges students in a circle. \"Imagine a group discussion where every person can listen to every other person simultaneously. Not just the person next to them — EVERYONE. Each person decides who's most relevant to their current thought and pays more **attention** to them.\"\n\n\"That's the Transformer's secret weapon — **self-attention**. Every token in a sentence can directly attend to every other token, regardless of distance.\"\n\n### Before Transformers: The RNN Problem\n\nRNNs processed text one word at a time, left to right:\n- Word 1 -> Word 2 -> Word 3 -> ... -> Word 100\n- By the time it reaches Word 100, it has nearly forgotten Word 1\n- Cannot be parallelized — sequential by nature\n\n### The Transformer Revolution (2017)\n\n| Feature | RNN | Transformer |\n|---------|-----|------------|\n| Processing | Sequential (one word at a time) | Parallel (all words at once) |\n| Long-range deps | Forgets distant words | Direct attention to any word |\n| Training speed | Slow (sequential) | Fast (parallelizable) |\n| Scalability | Limited | Scales to billions of params |\n\n### Self-Attention: The Core Idea\n\nFor the sentence \"The cat sat on the mat because it was tired\":\n- What does \"it\" refer to? The **cat**!\n- Self-attention learns that \"it\" should attend strongly to \"cat\"\n- Each word computes: Query (what am I looking for?), Key (what do I represent?), Value (what info do I carry?)\n\n> **Key Insight:** The attention formula `Attention(Q,K,V) = softmax(QK^T / sqrt(d)) * V` is arguably the most important equation in modern AI. Every LLM — GPT, Claude, Gemini — is built on this.",
+    "ta": "## வாத்தியாரின் குழு விவாதம்\n\nவாத்தியார் மாணவர்களை வட்டமாக அமர்த்துகிறார். \"ஒவ்வொரு நபரும் ஒவ்வொரு மற்ற நபரையும் ஒரே நேரத்தில் கேட்கக்கூடிய குழு விவாதத்தை கற்பனை செய்யுங்கள். அருகில் இருப்பவரை மட்டும் அல்ல — அனைவரையும். ஒவ்வொரு நபரும் தங்கள் தற்போதைய எண்ணத்திற்கு யார் மிகவும் பொருத்தமானவர் என்று முடிவு செய்து அவர்களிடம் அதிக **கவனம்** செலுத்துகிறார்.\"\n\n\"இதுதான் Transformer-ன் இரகசிய ஆயுதம் — **self-attention**. வாக்கியத்தில் ஒவ்வொரு token-ம் தூரத்தைப் பொருட்படுத்தாமல் ஒவ்வொரு மற்ற token-க்கும் நேரடியாக attend செய்ய முடியும்.\""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "group_discussion",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "transformer_concepts",
+      "nodes": [
+        {
+          "label": "Transformer Architecture",
+          "children": [
+            "Self-Attention",
+            "Multi-Head Attention",
+            "Positional Encoding",
+            "Feed-Forward Network",
+            "Layer Normalization"
+          ]
+        },
+        {
+          "label": "Attention Components",
+          "children": [
+            "Query (Q) — what am I looking for?",
+            "Key (K) — what do I represent?",
+            "Value (V) — what info do I carry?",
+            "Softmax — normalize scores",
+            "Scaled dot-product"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "attention_code",
+      "steps": [
+        {
+          "line": "# Self-attention in Python",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's implement scaled dot-product attention from scratch",
+            "ta": "Scaled dot-product attention-ஐ அடிப்படையிலிருந்து implement செய்வோம்"
+          }
+        },
+        {
+          "line": "import numpy as np",
+          "highlight": "import",
+          "explanation": {
+            "en": "NumPy for matrix operations"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "The attention formula: softmax(QK^T / sqrt(d_k)) * V"
+          }
+        },
+        {
+          "line": "def softmax(x):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Softmax converts raw scores into probabilities that sum to 1",
+            "ta": "Softmax raw scores-ஐ 1-க்கு கூடும் probabilities-ஆக மாற்றுகிறது"
+          }
+        },
+        {
+          "line": "    exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True))",
+          "highlight": "exp",
+          "explanation": {
+            "en": "Subtract max for numerical stability, then exponentiate"
+          }
+        },
+        {
+          "line": "    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)",
+          "highlight": "return",
+          "explanation": {
+            "en": "Divide by sum to get probabilities"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now implement the attention mechanism"
+          }
+        },
+        {
+          "line": "def scaled_dot_product_attention(Q, K, V):",
+          "highlight": "def",
+          "explanation": {
+            "en": "The core attention function — this is THE equation behind every LLM",
+            "ta": "Core attention function — ஒவ்வொரு LLM-ன் பின்னாலும் உள்ள equation இதுதான்"
+          }
+        },
+        {
+          "line": "    d_k = Q.shape[-1]  # dimension of keys",
+          "highlight": "d_k",
+          "explanation": {
+            "en": "d_k is the dimension of keys — we scale by this to prevent huge values"
+          }
+        },
+        {
+          "line": "    # Step 1: Compute attention scores",
+          "highlight": "comment",
+          "explanation": {
+            "en": "How much should each query attend to each key?"
+          }
+        },
+        {
+          "line": "    scores = np.dot(Q, K.T) / np.sqrt(d_k)",
+          "highlight": "scores",
+          "explanation": {
+            "en": "QK^T gives raw similarity scores, divided by sqrt(d_k) for stability",
+            "ta": "QK^T raw similarity scores கொடுக்கிறது, stability-க்காக sqrt(d_k)-ஆல் வகுக்கிறது"
+          }
+        },
+        {
+          "line": "    # Step 2: Normalize with softmax",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Convert scores to probabilities — they must sum to 1"
+          }
+        },
+        {
+          "line": "    attention_weights = softmax(scores)",
+          "highlight": "weights",
+          "explanation": {
+            "en": "Each row sums to 1 — shows how much each token attends to every other token"
+          }
+        },
+        {
+          "line": "    # Step 3: Weighted sum of values",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Use the attention weights to create a weighted combination of values"
+          }
+        },
+        {
+          "line": "    output = np.dot(attention_weights, V)",
+          "highlight": "output",
+          "explanation": {
+            "en": "Each token's output is a weighted sum of all value vectors",
+            "ta": "ஒவ்வொரு token-ன் output-ம் அனைத்து value vectors-ன் weighted sum"
+          }
+        },
+        {
+          "line": "    return output, attention_weights",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return both the output and the attention weights (for visualization)"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's test with a simple example"
+          }
+        },
+        {
+          "line": "# Example: 3 tokens, embedding dim = 4",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Simulate 3 word embeddings with dimension 4"
+          }
+        },
+        {
+          "line": "np.random.seed(42)",
+          "highlight": "seed",
+          "explanation": {
+            "en": "Reproducible random numbers"
+          }
+        },
+        {
+          "line": "seq_len, d_model = 3, 4",
+          "highlight": "dims",
+          "explanation": {
+            "en": "3 tokens (words), each represented as a 4-dimensional vector"
+          }
+        },
+        {
+          "line": "X = np.random.randn(seq_len, d_model)  # Token embeddings",
+          "highlight": "X",
+          "explanation": {
+            "en": "Random embeddings for 3 tokens — in real models, these come from the embedding layer"
+          }
+        },
+        {
+          "line": "# In real transformers, Q/K/V come from learned linear projections",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Q = X @ W_Q, K = X @ W_K, V = X @ W_V — here we simplify"
+          }
+        },
+        {
+          "line": "Q = K = V = X  # Simplified: same input for all",
+          "highlight": "QKV",
+          "explanation": {
+            "en": "For simplicity, Q=K=V=X — real transformers learn separate projections"
+          }
+        },
+        {
+          "line": "output, weights = scaled_dot_product_attention(Q, K, V)",
+          "highlight": "output",
+          "explanation": {
+            "en": "Run attention — each token now contains info from all other tokens"
+          }
+        },
+        {
+          "line": "print('Attention weights (who attends to whom):')",
+          "highlight": "print",
+          "explanation": {
+            "en": "The weights show how much each token pays attention to every other token",
+            "ta": "ஒவ்வொரு token மற்ற ஒவ்வொரு token-க்கும் எவ்வளவு கவனம் செலுத்துகிறது என்பதை weights காட்டுகிறது"
+          }
+        },
+        {
+          "line": "print(np.round(weights, 3))",
+          "highlight": "print",
+          "explanation": {
+            "en": "A 3x3 matrix — row i shows token i's attention distribution over all tokens"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_transformer",
+      "code": "import numpy as np\n\ndef softmax(x):\n    e = np.exp(x - np.max(x, axis=-1, keepdims=True))\n    return e / np.sum(e, axis=-1, keepdims=True)\n\ndef attention(Q, K, V):\n    d_k = Q.shape[-1]\n    scores = np.dot(Q, K.T) / np.sqrt(d_k)\n    weights = softmax(scores)\n    return np.dot(weights, V), weights\n\nnp.random.seed(42)\nX = np.random.randn(3, 4)  # 3 tokens, dim 4\nout, w = attention(X, X, X)\nprint('Attention weights:')\nprint(np.round(w, 3))\nprint(f'\\nToken 0 attends most to token: {np.argmax(w[0])}')",
+      "executionSteps": [
+        {
+          "line": 14,
+          "variables": { "X_shape": "(3, 4)" },
+          "output": "",
+          "explanation": "3 tokens, each a 4-dimensional embedding vector"
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "",
+          "explanation": "Compute attention: Q*K^T/sqrt(d_k) -> softmax -> weighted V"
+        },
+        {
+          "line": 17,
+          "variables": { "w_shape": "(3, 3)" },
+          "output": "Attention weights:\n[[0.436 0.247 0.317]\n [0.248 0.411 0.341]\n [0.308 0.332 0.360]]",
+          "explanation": "Each row sums to 1 — shows attention distribution for that token"
+        },
+        {
+          "line": 18,
+          "variables": {},
+          "output": "Token 0 attends most to token: 0",
+          "explanation": "Token 0 attends most to itself (0.436) — common in self-attention"
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "transformer_flow",
+      "nodes": [
+        { "id": "input", "label": "Input tokens [The, cat, sat]", "type": "start" },
+        { "id": "embed", "label": "Token + Positional Embedding", "type": "process" },
+        { "id": "qkv", "label": "Create Q, K, V projections", "type": "process" },
+        { "id": "scores", "label": "Compute QK^T / sqrt(d_k)", "type": "process" },
+        { "id": "softmax", "label": "Softmax -> attention weights", "type": "process" },
+        { "id": "weighted", "label": "Weighted sum of V", "type": "process" },
+        { "id": "ff", "label": "Feed-Forward Network", "type": "process" },
+        { "id": "output", "label": "Context-aware representations", "type": "end" }
+      ],
+      "edges": [
+        { "from": "input", "to": "embed" },
+        { "from": "embed", "to": "qkv" },
+        { "from": "qkv", "to": "scores" },
+        { "from": "scores", "to": "softmax" },
+        { "from": "softmax", "to": "weighted" },
+        { "from": "weighted", "to": "ff" },
+        { "from": "ff", "to": "output" }
+      ],
+      "executionPath": ["input", "embed", "qkv", "scores", "softmax", "weighted", "ff", "output"],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement the `scaled_dot_product_attention(Q, K, V)` function that computes attention using the formula: softmax(QK^T / sqrt(d_k)) * V. Test it with random 4x3 matrices (4 tokens, 3 dimensions). Print the attention weights matrix.",
+        "ta": "softmax(QK^T / sqrt(d_k)) * V formula பயன்படுத்தி attention கணக்கிடும் `scaled_dot_product_attention(Q, K, V)` function-ஐ implement செய்யுங்கள். Random 4x3 matrices-உடன் (4 tokens, 3 dimensions) test செய்யுங்கள்."
+      },
+      "starter_code": "import numpy as np\n\ndef softmax(x):\n    exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True))\n    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)\n\ndef scaled_dot_product_attention(Q, K, V):\n    # Step 1: Compute scaled scores\n    # Step 2: Apply softmax\n    # Step 3: Weighted sum of values\n    # Return (output, attention_weights)\n    pass\n\n# Test\nnp.random.seed(0)\nQ = K = V = np.random.randn(4, 3)\noutput, weights = scaled_dot_product_attention(Q, K, V)\nprint('Attention weights shape:', weights.shape)\nprint('Each row sums to:', np.round(weights.sum(axis=1), 3))\nprint('Weights:\\n', np.round(weights, 3))",
+      "expected_output": "Attention weights shape: (4, 4)\nEach row sums to: [1. 1. 1. 1.]\nWeights:\n [[0.395 0.146 0.302 0.157]\n [0.149 0.449 0.136 0.266]\n [0.298 0.136 0.384 0.182]\n [0.174 0.296 0.182 0.348]]",
+      "hints": {
+        "en": [
+          "d_k = Q.shape[-1] — the last dimension of Q",
+          "scores = np.dot(Q, K.T) / np.sqrt(d_k)",
+          "attention_weights = softmax(scores), then output = np.dot(attention_weights, V)"
+        ],
+        "ta": [
+          "d_k = Q.shape[-1] — Q-ன் கடைசி dimension",
+          "scores = np.dot(Q, K.T) / np.sqrt(d_k)",
+          "attention_weights = softmax(scores), பின்னர் output = np.dot(attention_weights, V)"
+        ]
+      },
+      "test_code": "import numpy as np\ndef softmax(x):\n    exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True))\n    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)\ndef scaled_dot_product_attention(Q, K, V):\n    d_k = Q.shape[-1]\n    scores = np.dot(Q, K.T) / np.sqrt(d_k)\n    weights = softmax(scores)\n    output = np.dot(weights, V)\n    return output, weights\nnp.random.seed(0)\nQ = K = V = np.random.randn(4, 3)\nout, w = scaled_dot_product_attention(Q, K, V)\nassert w.shape == (4, 4)\nassert np.allclose(w.sum(axis=1), 1.0)\nassert out.shape == (4, 3)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main advantage of Transformers over RNNs?",
+        "ta": "RNNs-ஐ விட Transformers-ன் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": [
+          "Transformers use less memory",
+          "Transformers process all tokens in parallel with direct attention",
+          "Transformers are simpler to implement",
+          "Transformers don't need training"
+        ],
+        "ta": [
+          "Transformers குறைவான memory பயன்படுத்துகின்றன",
+          "Transformers அனைத்து tokens-ஐயும் நேரடி attention-உடன் parallel-ஆக process செய்கின்றன",
+          "Transformers implement செய்வது எளிது",
+          "Transformers-க்கு training தேவையில்லை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In self-attention, what do Q, K, and V stand for?",
+        "ta": "Self-attention-ல், Q, K, V என்பவை எதைக் குறிக்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "Quick, Key, Variable",
+          "Query, Key, Value",
+          "Quantize, Kernel, Vector",
+          "Queue, Keep, Validate"
+        ],
+        "ta": [
+          "Quick, Key, Variable",
+          "Query, Key, Value",
+          "Quantize, Kernel, Vector",
+          "Queue, Keep, Validate"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "transformers",
+      "self_attention",
+      "scaled_dot_product",
+      "positional_encoding",
+      "query_key_value"
+    ],
+    "concepts_required": [
+      "neural_networks",
+      "numpy_foundations",
+      "linear_algebra_basics"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 40,
+    "real_world_application": [
+      "understanding_llms",
+      "nlp",
+      "modern_ai_architecture"
+    ],
+    "category": "dl_core",
+    "path_memberships": [
+      "deep_learning"
+    ]
+  }
+}

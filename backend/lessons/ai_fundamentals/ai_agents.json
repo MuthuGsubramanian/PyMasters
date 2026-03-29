@@ -1,0 +1,380 @@
+{
+  "id": "ai_agents",
+  "topic": "ai_agents",
+  "track": "ai_fundamentals",
+  "module": "ai_applications",
+  "order": 12,
+  "title": {
+    "en": "Building AI Agents",
+    "ta": "AI Agents கட்டமைத்தல்"
+  },
+  "description": {
+    "en": "Learn to build AI agents that can reason, plan, and use tools to accomplish complex tasks autonomously.",
+    "ta": "சிக்கலான பணிகளை தானாகவே நிறைவேற்ற reasoning, planning, மற்றும் tools பயன்படுத்தும் AI agents-ஐ கட்டமைக்கக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 80,
+  "next_unlock": "langchain_agents",
+  "story_variants": {
+    "en": "## Vaathiyaar's Skilled Assistant\n\nVaathiyaar introduces a new character. \"Imagine you hire a skilled assistant. Unlike a simple chatbot that just answers questions, this assistant can **think**, **plan**, and **use tools**. Need to book a flight? The assistant checks calendars, searches flights, compares prices, and books the best option. That's an AI Agent!\"\n\n### What Makes an Agent?\n\nA regular LLM call is like asking a friend a question — you get one answer. An **agent** is like delegating a task — it takes multiple steps to accomplish the goal.\n\n### The Agent Loop\n\n```\n1. Receive task\n2. THINK: What do I need to do?\n3. ACT: Choose and use a tool\n4. OBSERVE: What did the tool return?\n5. Repeat 2-4 until task is complete\n6. Return final answer\n```\n\n### Agent Components\n\n| Component | Purpose | Example |\n|-----------|---------|--------|\n| LLM (Brain) | Reasoning and planning | Claude, GPT-4 |\n| Tools | Actions the agent can take | Search, Calculator, API calls |\n| Memory | Track conversation and state | Chat history, scratchpad |\n| Orchestrator | Manages the agent loop | LangChain, custom code |\n\n> **Key Insight:** The power of agents comes from the loop — observe, think, act, repeat. The LLM is the brain, but tools are the hands.",
+    "ta": "## வாத்தியாரின் திறமையான உதவியாளர்\n\nவாத்தியார் ஒரு புதிய கதாபாத்திரத்தை அறிமுகப்படுத்துகிறார். \"ஒரு திறமையான உதவியாளரை நியமிப்பதை கற்பனை செய்யுங்கள். கேள்விகளுக்கு மட்டும் பதிலளிக்கும் chatbot போலல்லாமல், இந்த உதவியாளர் **சிந்திக்க**, **திட்டமிட**, **கருவிகளைப் பயன்படுத்த** முடியும். இதுதான் AI Agent!\"\n\n### Agent Loop\n\n1. பணியைப் பெறுதல்\n2. சிந்தித்தல்: என்ன செய்ய வேண்டும்?\n3. செயல்படுதல்: கருவியை தேர்ந்தெடுத்து பயன்படுத்துதல்\n4. கவனித்தல்: கருவி என்ன திருப்பியது?\n5. பணி முடியும் வரை 2-4 மீண்டும் செய்யுதல்"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "agent_assistant",
+      "duration_ms": 5000
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "agent_loop",
+      "nodes": [
+        { "id": "task", "label": "Receive Task", "type": "start" },
+        { "id": "think", "label": "THINK: Plan next step", "type": "process" },
+        { "id": "decide", "label": "Need a tool?", "type": "decision" },
+        { "id": "act", "label": "ACT: Call tool", "type": "process" },
+        { "id": "observe", "label": "OBSERVE: Process result", "type": "process" },
+        { "id": "done_check", "label": "Task complete?", "type": "decision" },
+        { "id": "answer", "label": "Return final answer", "type": "end" }
+      ],
+      "edges": [
+        { "from": "task", "to": "think" },
+        { "from": "think", "to": "decide" },
+        { "from": "decide", "to": "act" },
+        { "from": "act", "to": "observe" },
+        { "from": "observe", "to": "done_check" },
+        { "from": "done_check", "to": "think" },
+        { "from": "done_check", "to": "answer" }
+      ],
+      "executionPath": ["task", "think", "decide", "act", "observe", "done_check", "think", "decide", "answer"],
+      "speed": "normal"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "agent_code",
+      "steps": [
+        {
+          "line": "# Building a simple AI agent with tool calling",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's build an agent that can use tools to answer questions",
+            "ta": "கேள்விகளுக்கு பதிலளிக்க tools பயன்படுத்தும் agent-ஐ கட்டுவோம்"
+          }
+        },
+        {
+          "line": "import json",
+          "highlight": "import",
+          "explanation": {
+            "en": "We'll use JSON to structure tool calls and responses"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "First, define the tools our agent can use"
+          }
+        },
+        {
+          "line": "# Define available tools",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Tools are Python functions the agent can call"
+          }
+        },
+        {
+          "line": "def calculator(expression):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Tool 1: A calculator that evaluates math expressions",
+            "ta": "Tool 1: கணித expressions-ஐ மதிப்பீடு செய்யும் calculator"
+          }
+        },
+        {
+          "line": "    return str(eval(expression))",
+          "highlight": "return",
+          "explanation": {
+            "en": "Returns the result as a string (in production, use a safe math parser)"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Define another tool"
+          }
+        },
+        {
+          "line": "def get_weather(city):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Tool 2: Get weather for a city (simulated here)",
+            "ta": "Tool 2: நகரத்தின் வானிலை பெறுதல் (இங்கு simulate செய்யப்பட்டது)"
+          }
+        },
+        {
+          "line": "    weather_data = {'Chennai': '32C Sunny', 'London': '15C Rainy'}",
+          "highlight": "data",
+          "explanation": {
+            "en": "Simulated weather data — real agent would call a weather API"
+          }
+        },
+        {
+          "line": "    return weather_data.get(city, 'Unknown city')",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return weather for the city, or 'Unknown city' if not found"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now build the agent loop"
+          }
+        },
+        {
+          "line": "# Tool registry",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Register tools so the agent knows what's available"
+          }
+        },
+        {
+          "line": "tools = {'calculator': calculator, 'get_weather': get_weather}",
+          "highlight": "tools",
+          "explanation": {
+            "en": "A dictionary mapping tool names to functions — the agent picks by name",
+            "ta": "Tool பெயர்களை functions-க்கு map செய்யும் dictionary — agent பெயரால் தேர்ந்தெடுக்கும்"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "The agent loop processes one step at a time"
+          }
+        },
+        {
+          "line": "def run_agent(task):",
+          "highlight": "def",
+          "explanation": {
+            "en": "The main agent function — receives a task and works through it"
+          }
+        },
+        {
+          "line": "    # In production, the LLM decides which tool to call",
+          "highlight": "comment",
+          "explanation": {
+            "en": "The LLM analyzes the task and outputs structured tool calls"
+          }
+        },
+        {
+          "line": "    # Simulated: parse task and call appropriate tool",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Here we simulate the LLM's decision with simple parsing"
+          }
+        },
+        {
+          "line": "    if 'weather' in task.lower():",
+          "highlight": "if",
+          "explanation": {
+            "en": "If the task mentions weather, use the weather tool"
+          }
+        },
+        {
+          "line": "        result = tools['get_weather']('Chennai')",
+          "highlight": "result",
+          "explanation": {
+            "en": "Call the weather tool — agent observes the result"
+          }
+        },
+        {
+          "line": "        return f'The weather in Chennai is {result}'",
+          "highlight": "return",
+          "explanation": {
+            "en": "Format the final answer using the tool's output"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's test our agent"
+          }
+        },
+        {
+          "line": "print(run_agent('What is the weather in Chennai?'))",
+          "highlight": "print",
+          "explanation": {
+            "en": "Agent receives task, picks tool, calls it, and returns formatted answer",
+            "ta": "Agent பணியை பெறுகிறது, tool-ஐ தேர்ந்தெடுக்கிறது, அழைக்கிறது, formatted answer return செய்கிறது"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ConceptMap",
+      "id": "agent_concepts",
+      "nodes": [
+        {
+          "label": "AI Agent",
+          "children": [
+            "LLM (Brain)",
+            "Tools (Hands)",
+            "Memory (Context)",
+            "Agent Loop (Think-Act-Observe)"
+          ]
+        },
+        {
+          "label": "Agent Patterns",
+          "children": [
+            "ReAct (Reason + Act)",
+            "Plan and Execute",
+            "Tool Calling",
+            "Multi-Agent Systems"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_agent",
+      "code": "tools = {\n    'calculator': lambda expr: str(eval(expr)),\n    'weather': lambda city: {'Chennai': '32C Sunny'}.get(city, 'Unknown')\n}\n\ndef agent_step(task):\n    print(f'Task: {task}')\n    print('THINK: I need the weather tool')\n    result = tools['weather']('Chennai')\n    print(f'ACT: weather(\"Chennai\") -> {result}')\n    print(f'OBSERVE: Got result: {result}')\n    print(f'ANSWER: The weather in Chennai is {result}')\n\nagent_step('Weather in Chennai?')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": { "task": "Weather in Chennai?" },
+          "output": "Task: Weather in Chennai?",
+          "explanation": "Agent receives the task from the user"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "THINK: I need the weather tool",
+          "explanation": "Agent reasons about which tool to use"
+        },
+        {
+          "line": 8,
+          "variables": { "result": "32C Sunny" },
+          "output": "ACT: weather(\"Chennai\") -> 32C Sunny",
+          "explanation": "Agent calls the weather tool and gets the result"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "OBSERVE: Got result: 32C Sunny",
+          "explanation": "Agent observes the tool output"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "ANSWER: The weather in Chennai is 32C Sunny",
+          "explanation": "Agent formulates the final answer using the tool result"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Design a simple agent with 3 tools: `add(a, b)`, `multiply(a, b)`, and `greet(name)`. Create a `tools` dictionary mapping tool names to functions. Write a `dispatch(tool_name, args)` function that calls the correct tool. Test all three tools.",
+        "ta": "3 tools-உடன் ஒரு எளிய agent வடிவமையுங்கள்: `add(a, b)`, `multiply(a, b)`, `greet(name)`. Tool பெயர்களை functions-க்கு map செய்யும் `tools` dictionary உருவாக்குங்கள். சரியான tool-ஐ அழைக்கும் `dispatch(tool_name, args)` function எழுதுங்கள்."
+      },
+      "starter_code": "# Define your tools\ndef add(a, b):\n    pass\n\ndef multiply(a, b):\n    pass\n\ndef greet(name):\n    pass\n\n# Tool registry\ntools = {}\n\n# Dispatcher\ndef dispatch(tool_name, args):\n    pass\n\n# Test\nprint(dispatch('add', [3, 5]))\nprint(dispatch('multiply', [4, 7]))\nprint(dispatch('greet', ['Muthu']))",
+      "expected_output": "8\n28\nHello, Muthu!",
+      "hints": {
+        "en": [
+          "Each tool is a simple function: add returns a + b, multiply returns a * b, greet returns f'Hello, {name}!'",
+          "Register tools: tools = {'add': add, 'multiply': multiply, 'greet': greet}",
+          "dispatch looks up the tool and calls it: tools[tool_name](*args)"
+        ],
+        "ta": [
+          "ஒவ்வொரு tool-ம் ஒரு எளிய function: add returns a + b",
+          "Tools-ஐ register செய்யுங்கள்: tools = {'add': add, ...}",
+          "dispatch tool-ஐ lookup செய்து அழைக்கிறது: tools[tool_name](*args)"
+        ]
+      },
+      "test_code": "def add(a, b): return a + b\ndef multiply(a, b): return a * b\ndef greet(name): return f'Hello, {name}!'\ntools = {'add': add, 'multiply': multiply, 'greet': greet}\ndef dispatch(tool_name, args):\n    return tools[tool_name](*args)\nassert dispatch('add', [3, 5]) == 8\nassert dispatch('multiply', [4, 7]) == 28\nassert dispatch('greet', ['Muthu']) == 'Hello, Muthu!'"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the core loop of an AI agent?",
+        "ta": "AI agent-ன் core loop என்ன?"
+      },
+      "options": {
+        "en": [
+          "Input -> Output",
+          "Think -> Act -> Observe -> Repeat",
+          "Train -> Test -> Deploy",
+          "Prompt -> Response -> Feedback"
+        ],
+        "ta": [
+          "Input -> Output",
+          "சிந்தி -> செயல்படு -> கவனி -> மீண்டும்",
+          "பயிற்சி -> சோதனை -> Deploy",
+          "Prompt -> Response -> Feedback"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What role do 'tools' play in an AI agent?",
+        "ta": "AI agent-ல் 'tools' என்ன பங்கு வகிக்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "They train the model",
+          "They allow the agent to take actions in the real world",
+          "They store the agent's memory",
+          "They improve the model's accuracy"
+        ],
+        "ta": [
+          "Model-ஐ train செய்கின்றன",
+          "Agent-க்கு நிஜ உலகில் செயல்பட அனுமதிக்கின்றன",
+          "Agent-ன் memory-ஐ சேமிக்கின்றன",
+          "Model-ன் accuracy-ஐ மேம்படுத்துகின்றன"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "ai_agents",
+      "tool_calling",
+      "agent_loop",
+      "react_pattern",
+      "agent_architecture"
+    ],
+    "concepts_required": [
+      "llm_basics",
+      "prompt_engineering",
+      "functions_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": [
+      "building_ai_assistants",
+      "task_automation",
+      "tool_augmented_ai"
+    ],
+    "category": "ai_core",
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
+  }
+}

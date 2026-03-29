@@ -12,6 +12,8 @@ import Paths from './pages/Paths';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Security from './pages/Security';
+import Profile from './pages/Profile';
+import Trending from './pages/Trending';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function PrivateRoute({ children }) {
@@ -61,6 +63,8 @@ export default function App() {
               <Route path="paths/:pathId" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
               <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
               <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
+              <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
+              <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

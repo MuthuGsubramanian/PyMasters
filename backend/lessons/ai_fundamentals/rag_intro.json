@@ -1,0 +1,368 @@
+{
+  "id": "rag_intro",
+  "topic": "rag_intro",
+  "track": "ai_fundamentals",
+  "module": "rag",
+  "order": 8,
+  "title": {
+    "en": "Retrieval Augmented Generation",
+    "ta": "Retrieval Augmented Generation — தேடல் மூலம் மேம்படுத்தப்பட்ட உருவாக்கம்"
+  },
+  "description": {
+    "en": "Learn how RAG gives LLMs access to your own data by retrieving relevant documents and injecting them as context — the most practical pattern in enterprise AI.",
+    "ta": "தொடர்புடைய ஆவணங்களை retrieve செய்து context-ஆக செலுத்துவதன் மூலம் RAG எவ்வாறு LLM-களுக்கு உங்கள் சொந்த தரவுக்கான அணுகலை வழங்குகிறது என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 75,
+  "next_unlock": "embeddings_similarity",
+  "story_variants": {
+    "en": "## Vaathiyaar's Open-Book Exam\n\nVaathiyaar holds up two exam papers. \"In a closed-book exam, you can only answer from memory — sometimes you forget or make things up. But in an **open-book exam**, you can look up the reference material and give accurate, cited answers. RAG turns every LLM interaction into an open-book exam!\"\n\n### The RAG Pattern\n\n1. **User asks a question** — \"What is our refund policy?\"\n2. **System searches documents** — Finds relevant policy chunks\n3. **Context is injected** — Retrieved text added to the prompt\n4. **LLM generates answer** — Uses the context to answer accurately\n\n### Why RAG Beats Alternatives\n\n| Approach | Pros | Cons |\n|----------|------|------|\n| Fine-tuning | Deep knowledge | Expensive, stale quickly |\n| Prompt stuffing | Simple | Limited by context window |\n| **RAG** | **Fresh, accurate, cites sources** | **Needs retrieval pipeline** |\n\n### RAG Architecture\n\n```\nDocuments -> Chunking -> Embedding -> Vector Store\n                                          |\nUser Query -> Embedding -> Similarity Search\n                                          |\n                          Retrieved Chunks + Query -> LLM -> Answer\n```\n\n> **Key Insight:** RAG is the backbone of 90% of production AI applications. It's cheaper than fine-tuning, always up-to-date, and can cite its sources.",
+    "ta": "## வாத்தியாரின் திறந்த புத்தக தேர்வு\n\nவாத்தியார் இரண்டு தேர்வுத் தாள்களை உயர்த்திக் காட்டுகிறார். \"மூடிய புத்தக தேர்வில், நினைவகத்திலிருந்து மட்டுமே பதிலளிக்க முடியும் — சில நேரங்களில் மறந்துவிடுவீர்கள் அல்லது கட்டுக்கதைகள் சொல்வீர்கள். ஆனால் **திறந்த புத்தக தேர்வில்**, குறிப்பு பொருட்களைப் பார்த்து துல்லியமான பதில்களை கொடுக்கலாம். RAG ஒவ்வொரு LLM உரையாடலையும் திறந்த புத்தக தேர்வாக மாற்றுகிறது!\"\n\n### RAG Pattern\n\n1. **பயனர் கேள்வி கேட்கிறார்**\n2. **System ஆவணங்களைத் தேடுகிறது**\n3. **Context செலுத்தப்படுகிறது**\n4. **LLM துல்லியமான பதிலை உருவாக்குகிறது**"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "library_exam",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rag_pipeline",
+      "nodes": [
+        {
+          "label": "RAG Pipeline",
+          "children": [
+            "1. Document Loading",
+            "2. Text Chunking",
+            "3. Embedding Generation",
+            "4. Vector Storage",
+            "5. Similarity Search",
+            "6. Context Injection",
+            "7. LLM Generation"
+          ]
+        },
+        {
+          "label": "Key Components",
+          "children": [
+            "Document Loader (PDF, HTML, etc.)",
+            "Text Splitter (chunk size matters)",
+            "Embedding Model (text to vectors)",
+            "Vector Database (Chroma, Pinecone)",
+            "LLM (Claude, GPT)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rag_code",
+      "steps": [
+        {
+          "line": "# Simple RAG with document retrieval",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's build a basic RAG system step by step",
+            "ta": "அடிப்படை RAG system-ஐ படிப்படியாக கட்டுவோம்"
+          }
+        },
+        {
+          "line": "# Step 1: Prepare our knowledge base",
+          "highlight": "comment",
+          "explanation": {
+            "en": "First, we need documents that the LLM can search through"
+          }
+        },
+        {
+          "line": "documents = [",
+          "highlight": "documents",
+          "explanation": {
+            "en": "A list of document chunks — in production, these come from PDFs, databases, etc.",
+            "ta": "Document chunks-ன் list — production-ல், இவை PDFs, databases-லிருந்து வரும்"
+          }
+        },
+        {
+          "line": "    'Our refund policy allows returns within 30 days of purchase.',",
+          "highlight": "doc1",
+          "explanation": {
+            "en": "Document chunk 1: refund policy information"
+          }
+        },
+        {
+          "line": "    'Shipping takes 3-5 business days for domestic orders.',",
+          "highlight": "doc2",
+          "explanation": {
+            "en": "Document chunk 2: shipping information"
+          }
+        },
+        {
+          "line": "    'Premium members get free shipping and extended 60-day returns.',",
+          "highlight": "doc3",
+          "explanation": {
+            "en": "Document chunk 3: premium membership perks"
+          }
+        },
+        {
+          "line": "]",
+          "highlight": "",
+          "explanation": {
+            "en": "Our knowledge base is ready"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 2: Simple keyword-based retrieval (production uses vector similarity)"
+          }
+        },
+        {
+          "line": "def retrieve(query, docs, top_k=2):",
+          "highlight": "def",
+          "explanation": {
+            "en": "A retrieval function that finds the most relevant documents for a query",
+            "ta": "Query-க்கு மிகவும் பொருத்தமான documents-ஐ கண்டுபிடிக்கும் retrieval function"
+          }
+        },
+        {
+          "line": "    scored = [(doc, sum(w in doc.lower() for w in query.lower().split())) for doc in docs]",
+          "highlight": "scored",
+          "explanation": {
+            "en": "Score each document by counting keyword matches (simplified — real RAG uses embeddings)"
+          }
+        },
+        {
+          "line": "    scored.sort(key=lambda x: x[1], reverse=True)",
+          "highlight": "sort",
+          "explanation": {
+            "en": "Sort by relevance score — highest first"
+          }
+        },
+        {
+          "line": "    return [doc for doc, score in scored[:top_k]]",
+          "highlight": "return",
+          "explanation": {
+            "en": "Return the top-k most relevant documents"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Step 3: Build the augmented prompt"
+          }
+        },
+        {
+          "line": "def rag_prompt(query, context_docs):",
+          "highlight": "def",
+          "explanation": {
+            "en": "Combine the retrieved context with the user's question into one prompt"
+          }
+        },
+        {
+          "line": "    context = '\\n'.join(context_docs)",
+          "highlight": "context",
+          "explanation": {
+            "en": "Join retrieved documents into a single context string"
+          }
+        },
+        {
+          "line": "    return f'Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer based on the context above:'",
+          "highlight": "return",
+          "explanation": {
+            "en": "The final prompt tells the LLM to answer ONLY from the provided context",
+            "ta": "Final prompt, LLM-ஐ கொடுக்கப்பட்ட context-இலிருந்து மட்டுமே பதிலளிக்கச் சொல்கிறது"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Let's test our RAG pipeline"
+          }
+        },
+        {
+          "line": "query = 'What is the refund policy?'",
+          "highlight": "query",
+          "explanation": {
+            "en": "The user's question about refund policy"
+          }
+        },
+        {
+          "line": "relevant = retrieve(query, documents)",
+          "highlight": "relevant",
+          "explanation": {
+            "en": "Retrieve the most relevant documents for this query"
+          }
+        },
+        {
+          "line": "prompt = rag_prompt(query, relevant)",
+          "highlight": "prompt",
+          "explanation": {
+            "en": "Build the augmented prompt with context + question"
+          }
+        },
+        {
+          "line": "print(prompt)",
+          "highlight": "print",
+          "explanation": {
+            "en": "This prompt would be sent to the LLM — it now has the context to answer accurately!"
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "rag_flow",
+      "nodes": [
+        { "id": "query", "label": "User: 'What is the refund policy?'", "type": "start" },
+        { "id": "embed_q", "label": "Embed the query", "type": "process" },
+        { "id": "search", "label": "Search vector store", "type": "process" },
+        { "id": "retrieve", "label": "Retrieve top-k chunks", "type": "process" },
+        { "id": "inject", "label": "Inject context into prompt", "type": "process" },
+        { "id": "llm", "label": "LLM generates answer", "type": "process" },
+        { "id": "answer", "label": "Accurate, grounded answer", "type": "end" }
+      ],
+      "edges": [
+        { "from": "query", "to": "embed_q" },
+        { "from": "embed_q", "to": "search" },
+        { "from": "search", "to": "retrieve" },
+        { "from": "retrieve", "to": "inject" },
+        { "from": "inject", "to": "llm" },
+        { "from": "llm", "to": "answer" }
+      ],
+      "executionPath": ["query", "embed_q", "search", "retrieve", "inject", "llm", "answer"],
+      "speed": "normal"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_rag",
+      "code": "documents = [\n    'Refund policy: returns within 30 days.',\n    'Shipping: 3-5 business days domestic.',\n    'Premium members: free shipping, 60-day returns.'\n]\n\ndef retrieve(query, docs):\n    scored = [(d, sum(w in d.lower() for w in query.lower().split())) for d in docs]\n    scored.sort(key=lambda x: x[1], reverse=True)\n    return [d for d, s in scored[:2]]\n\nquery = 'What is the refund policy?'\nrelevant = retrieve(query, documents)\nprint(f'Query: {query}')\nprint(f'Retrieved: {relevant}')",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": { "documents": ["3 document chunks"] },
+          "output": "",
+          "explanation": "Our knowledge base of 3 document chunks"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "explanation": "Retrieve function scores documents by keyword overlap"
+        },
+        {
+          "line": 12,
+          "variables": { "query": "What is the refund policy?" },
+          "output": "",
+          "explanation": "User asks about refund policy"
+        },
+        {
+          "line": 13,
+          "variables": { "relevant": ["Refund policy: returns within 30 days.", "Premium members: free shipping, 60-day returns."] },
+          "output": "Query: What is the refund policy?\nRetrieved: ['Refund policy: returns within 30 days.', 'Premium members: free shipping, 60-day returns.']",
+          "explanation": "The system correctly retrieves the two most relevant chunks about returns/refunds"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a simple knowledge retrieval system: Create a list of 5 document strings about a topic (e.g., a fictional company FAQ). Write a `search(query, docs)` function that returns documents containing any word from the query. Test with a sample query.",
+        "ta": "ஒரு எளிய knowledge retrieval system கட்டுங்கள்: ஒரு topic பற்றிய 5 document strings-ன் list உருவாக்குங்கள். Query-லிருந்து ஏதேனும் வார்த்தையை கொண்ட documents-ஐ return செய்யும் `search(query, docs)` function எழுதுங்கள்."
+      },
+      "starter_code": "# Your knowledge base\nfaq_docs = [\n    # Add 5 FAQ-style document strings here\n]\n\ndef search(query, docs):\n    \"\"\"Return docs that match any query word.\"\"\"\n    # Your code here\n    pass\n\n# Test\nresults = search('shipping delivery', faq_docs)\nfor r in results:\n    print(r)",
+      "expected_output": "Orders ship within 2 business days via standard delivery.\nExpress shipping is available for an additional fee.",
+      "hints": {
+        "en": [
+          "Split the query into words with query.lower().split()",
+          "Check if any query word appears in each document using 'any()' and 'in'",
+          "Return a list of matching documents using a list comprehension"
+        ],
+        "ta": [
+          "Query-ஐ query.lower().split() மூலம் வார்த்தைகளாக பிரிக்கவும்",
+          "'any()' மற்றும் 'in' பயன்படுத்தி ஒவ்வொரு document-லும் query word உள்ளதா என சரிபார்க்கவும்",
+          "List comprehension பயன்படுத்தி matching documents-ஐ return செய்யுங்கள்"
+        ]
+      },
+      "test_code": "faq_docs = [\n    'Orders ship within 2 business days via standard delivery.',\n    'Returns accepted within 30 days of purchase.',\n    'Express shipping is available for an additional fee.',\n    'Contact support at help@example.com for issues.',\n    'Gift cards never expire and are non-refundable.'\n]\ndef search(query, docs):\n    words = query.lower().split()\n    return [d for d in docs if any(w in d.lower() for w in words)]\nresults = search('shipping delivery', faq_docs)\nassert len(results) >= 1\nassert any('ship' in r.lower() for r in results)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does RAG stand for?",
+        "ta": "RAG என்பதன் விரிவாக்கம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Rapid Automated Generation",
+          "Retrieval Augmented Generation",
+          "Random Access Generation",
+          "Recursive Agent Graph"
+        ],
+        "ta": [
+          "Rapid Automated Generation",
+          "Retrieval Augmented Generation",
+          "Random Access Generation",
+          "Recursive Agent Graph"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is RAG preferred over fine-tuning for most enterprise applications?",
+        "ta": "பெரும்பாலான enterprise applications-க்கு fine-tuning-ஐ விட RAG ஏன் விரும்பப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "RAG produces better quality text",
+          "RAG is cheaper, stays current, and can cite sources",
+          "Fine-tuning is not possible with modern models",
+          "RAG uses less compute power"
+        ],
+        "ta": [
+          "RAG சிறந்த தர உரையை உருவாக்குகிறது",
+          "RAG மலிவானது, புதுப்பிக்கப்பட்டதாக இருக்கும், sources-ஐ cite செய்யும்",
+          "நவீன models-ல் fine-tuning சாத்தியமில்லை",
+          "RAG குறைவான compute power பயன்படுத்துகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag_pattern",
+      "document_retrieval",
+      "context_injection",
+      "vector_search",
+      "knowledge_base"
+    ],
+    "concepts_required": [
+      "llm_basics",
+      "prompt_engineering"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "real_world_application": [
+      "enterprise_ai",
+      "document_qa",
+      "knowledge_retrieval"
+    ],
+    "category": "ai_core",
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
+  }
+}

@@ -10,7 +10,7 @@ import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench, Globe2, Cpu
+    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ExecutionVisualizer from '../components/animations/ExecutionVisualizer';
@@ -18,6 +18,8 @@ import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
+import useTTS from '../hooks/useTTS';
+import TTSControls from '../components/TTSControls';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -850,6 +852,8 @@ export default function Classroom() {
     const [evalResult, setEvalResult] = useState(null);
     const [completedLessons, setCompletedLessons] = useState(new Set());
 
+    const tts = useTTS();
+
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
 
@@ -1023,6 +1027,10 @@ export default function Classroom() {
                         setChatMessages((prev) =>
                             prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
                         );
+                        // Auto-speak Vaathiyaar's response via TTS
+                        if (tts.enabled && finalMsg) {
+                            tts.speak(finalMsg);
+                        }
                         const learnPatterns = /(?:teach me|learn about|i want to learn|explain)\s+(.+)/i;
                         const topicMatch = message.match(learnPatterns);
                         if (topicMatch && topicMatch[1]) {
@@ -1255,17 +1263,33 @@ export default function Classroom() {
                 )}
             </div>
 
+            {/* TTS Controls — bottom-right floating */}
+            {phase !== 'select' && <TTSControls tts={tts} />}
+
             {/* Fixed chat bar */}
             {phase !== 'select' && (
                 <div className="fixed bottom-0 left-0 right-0 z-50">
                     <div className="h-10 bg-gradient-to-t from-[#f0f4f8] to-transparent pointer-events-none" />
                     <div className="bg-[#f0f4f8] px-4 pb-4">
-                        <div className="max-w-screen-xl mx-auto">
-                            <ChatBar
-                                onSend={handleChat}
-                                loading={chatLoading}
-                                placeholder="Ask Vaathiyaar anything..."
-                            />
+                        <div className="max-w-screen-xl mx-auto flex items-end gap-2">
+                            <div className="flex-1">
+                                <ChatBar
+                                    onSend={handleChat}
+                                    loading={chatLoading}
+                                    placeholder="Ask Vaathiyaar anything..."
+                                />
+                            </div>
+                            <button
+                                onClick={() => tts.setEnabled(!tts.enabled)}
+                                title={tts.enabled ? 'TTS enabled — click to mute' : 'TTS disabled — click to enable'}
+                                className={`mb-1 p-2.5 rounded-xl border transition-all duration-200 ${
+                                    tts.enabled
+                                        ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'
+                                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'
+                                }`}
+                            >
+                                {tts.enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                            </button>
                         </div>
                     </div>
                 </div>

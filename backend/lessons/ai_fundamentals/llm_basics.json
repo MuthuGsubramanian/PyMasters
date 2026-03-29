@@ -1,0 +1,335 @@
+{
+  "id": "llm_basics",
+  "topic": "llm_basics",
+  "track": "ai_fundamentals",
+  "module": "ai_foundations",
+  "order": 3,
+  "title": {
+    "en": "How Large Language Models Work",
+    "ta": "பெரிய மொழி மாதிரிகள் எவ்வாறு செயல்படுகின்றன"
+  },
+  "description": {
+    "en": "Understand the inner workings of Large Language Models — tokenization, attention, and next-token prediction — and learn to use LLM APIs in Python.",
+    "ta": "பெரிய மொழி மாதிரிகளின் உள் செயல்பாடுகளைப் புரிந்துகொள்ளுங்கள் — tokenization, attention, மற்றும் அடுத்த-token கணிப்பு — Python-ல் LLM API-களைப் பயன்படுத்தக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 60,
+  "next_unlock": "prompt_engineering_basics",
+  "story_variants": {
+    "en": "## Vaathiyaar's Language Machine\n\nVaathiyaar holds up a stack of books. \"Imagine a child who reads millions of books — not to memorize them, but to learn **patterns** in language. After reading enough, the child can predict what word comes next in any sentence. That's essentially what a Large Language Model does!\"\n\n### How LLMs Learn\n\n1. **Tokenization** — Break text into small pieces (tokens)\n2. **Training** — Read billions of tokens, learn patterns\n3. **Attention** — Understand which words relate to which\n4. **Prediction** — Given context, predict the next token\n\n### Key Concepts\n\n| Concept | What It Means | Analogy |\n|---------|--------------|--------|\n| Token | A piece of text (word or sub-word) | A letter tile in Scrabble |\n| Context Window | How much text the model can see at once | Short-term memory capacity |\n| Temperature | Randomness in output | Creativity dial |\n| Attention | Which tokens influence which | Spotlight in a crowded room |\n\n### The Prediction Game\n\n```\nInput:  \"The cat sat on the ___\"\nModel:  mat (92%), floor (5%), table (2%), ...\n```\n\nThe model doesn't \"understand\" — it predicts statistically likely continuations based on patterns learned from training data.\n\n> **Key Insight:** LLMs are powerful pattern-matching engines. They don't have knowledge — they have learned statistical associations between tokens. Understanding this helps you use them more effectively.",
+    "ta": "## வாத்தியாரின் மொழி இயந்திரம்\n\nவாத்தியார் புத்தகங்களின் அடுக்கை உயர்த்திக் காட்டுகிறார். \"கோடிக்கணக்கான புத்தகங்களைப் படிக்கும் ஒரு குழந்தையை கற்பனை செய்யுங்கள் — மனப்பாடம் செய்ய அல்ல, மொழியில் உள்ள **வடிவங்களைக்** கற்க. போதுமான அளவு படித்த பிறகு, எந்த வாக்கியத்திலும் அடுத்து என்ன வார்த்தை வரும் என்று கணிக்க முடியும். இதுதான் LLM செய்கிறது!\"\n\n### LLM எவ்வாறு கற்கிறது\n\n1. **Tokenization** — உரையை சிறிய துண்டுகளாக உடைத்தல்\n2. **பயிற்சி** — கோடிக்கணக்கான tokens படிக்கும்\n3. **Attention** — எந்த வார்த்தைகள் தொடர்புடையவை என்பதைப் புரிதல்\n4. **கணிப்பு** — சூழலைக் கொடுத்து, அடுத்த token-ஐ கணிக்கும்"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "neural_network",
+      "duration_ms": 5000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "llm_concepts",
+      "nodes": [
+        {
+          "label": "Large Language Model",
+          "children": [
+            "Tokenization",
+            "Embeddings",
+            "Attention Mechanism",
+            "Next-Token Prediction",
+            "Context Window"
+          ]
+        },
+        {
+          "label": "LLM Parameters",
+          "children": [
+            "Temperature (creativity)",
+            "Max Tokens (length)",
+            "Top-p (nucleus sampling)",
+            "System Prompt (behavior)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "llm_api_code",
+      "steps": [
+        {
+          "line": "# Using an LLM API in Python",
+          "highlight": "comment",
+          "explanation": {
+            "en": "Let's learn how to call an LLM from Python code",
+            "ta": "Python குறியீட்டிலிருந்து LLM-ஐ எவ்வாறு அழைப்பது என்று கற்போம்"
+          }
+        },
+        {
+          "line": "from anthropic import Anthropic",
+          "highlight": "import",
+          "explanation": {
+            "en": "Import the Anthropic client library to talk to Claude",
+            "ta": "Claude-உடன் தொடர்பு கொள்ள Anthropic client library-ஐ import செய்யுங்கள்"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Create a client instance — it reads your API key from environment"
+          }
+        },
+        {
+          "line": "client = Anthropic()",
+          "highlight": "client",
+          "explanation": {
+            "en": "The client handles authentication and HTTP requests for you",
+            "ta": "Client authentication மற்றும் HTTP requests-ஐ கையாளுகிறது"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's send a message to the model"
+          }
+        },
+        {
+          "line": "message = client.messages.create(",
+          "highlight": "message",
+          "explanation": {
+            "en": "Create a message request — this is where the magic happens",
+            "ta": "Message request உருவாக்குங்கள் — இங்குதான் மாயாஜாலம் நடக்கிறது"
+          }
+        },
+        {
+          "line": "    model='claude-sonnet-4-20250514',",
+          "highlight": "model",
+          "explanation": {
+            "en": "Choose the model — different models have different speed/quality tradeoffs"
+          }
+        },
+        {
+          "line": "    max_tokens=1024,",
+          "highlight": "max_tokens",
+          "explanation": {
+            "en": "Limit the response length — 1024 tokens is roughly 750 words"
+          }
+        },
+        {
+          "line": "    messages=[",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Messages is a list of conversation turns — user and assistant alternate"
+          }
+        },
+        {
+          "line": "        {'role': 'user', 'content': 'Explain Python decorators in 3 sentences'}",
+          "highlight": "content",
+          "explanation": {
+            "en": "The user message — this is your prompt to the LLM",
+            "ta": "User message — இது LLM-க்கான உங்கள் prompt"
+          }
+        },
+        {
+          "line": "    ]",
+          "highlight": "",
+          "explanation": {
+            "en": "Close the messages list"
+          }
+        },
+        {
+          "line": ")",
+          "highlight": "",
+          "explanation": {
+            "en": "The API call is sent — the model processes your prompt and returns a response"
+          }
+        },
+        {
+          "line": "",
+          "highlight": "",
+          "explanation": {
+            "en": "Now let's extract and print the response"
+          }
+        },
+        {
+          "line": "print(message.content[0].text)",
+          "highlight": "print",
+          "explanation": {
+            "en": "The response is in message.content — a list of content blocks. We get the text from the first block.",
+            "ta": "பதில் message.content-ல் உள்ளது — content blocks-ன் list. முதல் block-இலிருந்து text-ஐ பெறுகிறோம்."
+          }
+        }
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "llm_flow",
+      "nodes": [
+        { "id": "input", "label": "User types prompt", "type": "start" },
+        { "id": "tokenize", "label": "Text tokenized into tokens", "type": "process" },
+        { "id": "embed", "label": "Tokens converted to embeddings", "type": "process" },
+        { "id": "attention", "label": "Attention layers process context", "type": "process" },
+        { "id": "predict", "label": "Predict next token probabilities", "type": "process" },
+        { "id": "sample", "label": "Sample token (temperature controls randomness)", "type": "process" },
+        { "id": "output", "label": "Generated text returned", "type": "end" }
+      ],
+      "edges": [
+        { "from": "input", "to": "tokenize" },
+        { "from": "tokenize", "to": "embed" },
+        { "from": "embed", "to": "attention" },
+        { "from": "attention", "to": "predict" },
+        { "from": "predict", "to": "sample" },
+        { "from": "sample", "to": "output" }
+      ],
+      "executionPath": ["input", "tokenize", "embed", "attention", "predict", "sample", "output"],
+      "speed": "normal"
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exec_viz_llm",
+      "code": "# Simulating tokenization\ntext = 'The cat sat on the mat'\ntokens = text.split()  # simplified tokenization\nprint(f'Text: {text}')\nprint(f'Tokens: {tokens}')\nprint(f'Token count: {len(tokens)}')\n\n# Temperature demonstration\nimport random\nrandom.seed(42)\nnext_words = {'mat': 0.7, 'floor': 0.15, 'table': 0.1, 'roof': 0.05}\nprint(f'\\nPrediction probabilities: {next_words}')\nprint(f'Most likely next word: mat (70%)')",
+      "executionSteps": [
+        {
+          "line": 2,
+          "variables": { "text": "The cat sat on the mat" },
+          "output": "",
+          "explanation": "Input text that will be processed by the model"
+        },
+        {
+          "line": 3,
+          "variables": { "tokens": ["The", "cat", "sat", "on", "the", "mat"] },
+          "output": "",
+          "explanation": "Split text into tokens — real LLMs use sub-word tokenization"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "Text: The cat sat on the mat",
+          "explanation": "Display the original text"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Tokens: ['The', 'cat', 'sat', 'on', 'the', 'mat']",
+          "explanation": "Each word becomes a token the model processes"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "Token count: 6",
+          "explanation": "6 tokens — real models handle thousands at once"
+        },
+        {
+          "line": 10,
+          "variables": { "next_words": {"mat": 0.7, "floor": 0.15, "table": 0.1, "roof": 0.05} },
+          "output": "Prediction probabilities: {'mat': 0.7, 'floor': 0.15, 'table': 0.1, 'roof': 0.05}",
+          "explanation": "The model assigns probabilities to possible next tokens"
+        },
+        {
+          "line": 11,
+          "variables": {},
+          "output": "Most likely next word: mat (70%)",
+          "explanation": "With low temperature, the most probable token is chosen"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "duration_ms": 1500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a simple prompt template function that takes a topic and difficulty level, and returns a formatted prompt string asking an LLM to explain the topic at that level. Test it with topic='recursion' and difficulty='beginner'.",
+        "ta": "ஒரு topic மற்றும் difficulty level எடுத்து, அந்த level-ல் topic-ஐ விளக்கச் சொல்லும் formatted prompt string-ஐ return செய்யும் ஒரு எளிய prompt template function-ஐ உருவாக்குங்கள்."
+      },
+      "starter_code": "def create_prompt(topic, difficulty='beginner'):\n    \"\"\"Create a prompt template for an LLM.\"\"\"\n    # Your code here\n    pass\n\n# Test it\nprompt = create_prompt('recursion', 'beginner')\nprint(prompt)",
+      "expected_output": "Explain recursion to a beginner. Use simple analogies and short code examples. Avoid jargon.",
+      "hints": {
+        "en": [
+          "Use an f-string to combine the topic and difficulty into a natural prompt",
+          "Include instructions about the style: analogies for beginners, technical detail for advanced",
+          "Consider using a dictionary to map difficulty levels to instruction styles"
+        ],
+        "ta": [
+          "Topic-ஐயும் difficulty-ஐயும் இணைக்க f-string பயன்படுத்துங்கள்",
+          "Style பற்றிய instructions சேர்க்கவும்: beginners-க்கு analogies, advanced-க்கு technical detail",
+          "Difficulty levels-ஐ instruction styles-க்கு map செய்ய dictionary-ஐ பயன்படுத்துங்கள்"
+        ]
+      },
+      "test_code": "def create_prompt(topic, difficulty='beginner'):\n    styles = {\n        'beginner': 'Use simple analogies and short code examples. Avoid jargon.',\n        'intermediate': 'Include code examples and explain the underlying concepts.',\n        'advanced': 'Go deep into implementation details and edge cases.'\n    }\n    style = styles.get(difficulty, styles['beginner'])\n    return f'Explain {topic} to a {difficulty}. {style}'\n\nprompt = create_prompt('recursion', 'beginner')\nassert 'recursion' in prompt.lower()\nassert 'beginner' in prompt.lower()\nprompt2 = create_prompt('decorators', 'advanced')\nassert 'advanced' in prompt2.lower()"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does an LLM fundamentally do?",
+        "ta": "LLM அடிப்படையில் என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Searches a database for answers",
+          "Predicts the next token given context",
+          "Runs code to generate responses",
+          "Copies text from the internet"
+        ],
+        "ta": [
+          "பதில்களுக்கு தரவுத்தளத்தில் தேடுகிறது",
+          "சூழலைக் கொடுத்து அடுத்த token-ஐ கணிக்கிறது",
+          "பதில்களை உருவாக்க குறியீட்டை இயக்குகிறது",
+          "இணையத்திலிருந்து உரையை நகலெடுக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the 'temperature' parameter control?",
+        "ta": "'temperature' parameter எதைக் கட்டுப்படுத்துகிறது?"
+      },
+      "options": {
+        "en": [
+          "Speed of generation",
+          "Length of output",
+          "Randomness/creativity of output",
+          "Cost of API call"
+        ],
+        "ta": [
+          "உருவாக்கத்தின் வேகம்",
+          "வெளியீட்டின் நீளம்",
+          "வெளியீட்டின் சீரற்ற தன்மை/படைப்பாற்றல்",
+          "API அழைப்பின் செலவு"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "llm_architecture",
+      "tokenization",
+      "attention_mechanism",
+      "llm_api_usage",
+      "temperature_parameter"
+    ],
+    "concepts_required": [
+      "what_is_ai",
+      "functions_basics"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "using_llm_apis",
+      "building_ai_applications"
+    ],
+    "category": "ai_core",
+    "path_memberships": [
+      "ai_fundamentals"
+    ]
+  }
+}

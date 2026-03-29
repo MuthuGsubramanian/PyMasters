@@ -27,6 +27,7 @@ from routes.modules import router as modules_router
 from routes.graph import router as graph_router
 from routes.messages import router as messages_router
 from routes.paths import router as paths_router
+from routes.trending import router as trending_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -364,6 +365,32 @@ def init_db():
             )
         """)
 
+        # ── User settings table ────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_settings (
+                user_id TEXT PRIMARY KEY,
+                bio TEXT,
+                voice_enabled BOOLEAN DEFAULT 0,
+                voice_speed REAL DEFAULT 1.0,
+                voice_name TEXT DEFAULT '',
+                auto_play_animations BOOLEAN DEFAULT 1,
+                hint_level INTEGER DEFAULT 2,
+                daily_goal TEXT DEFAULT '30min',
+                difficulty_preference TEXT DEFAULT 'intermediate',
+                updated_at TIMESTAMP
+            )
+        """)
+
+        # ── User streaks table ─────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_streaks (
+                user_id TEXT PRIMARY KEY,
+                current_streak INTEGER DEFAULT 0,
+                longest_streak INTEGER DEFAULT 0,
+                last_active_date TEXT
+            )
+        """)
+
         # ── Vaathiyaar proactive messages ─────────────────────────────
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS pending_vaathiyaar_messages (
@@ -462,6 +489,7 @@ app.include_router(modules_router)
 app.include_router(graph_router)
 app.include_router(messages_router)
 app.include_router(paths_router)
+app.include_router(trending_router)
 
 # --- CORS ---
 origins = [
