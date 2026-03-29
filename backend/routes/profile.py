@@ -35,6 +35,7 @@ class OnboardingData(BaseModel):
     goal: str
     time_commitment: str
     preferred_language: str
+    user_type: Optional[str] = ""
     email: Optional[str] = ""
     whatsapp: Optional[str] = ""
 
@@ -73,6 +74,7 @@ def onboarding(data: OnboardingData):
         "goal": data.goal,
         "time_commitment": data.time_commitment,
         "preferred_language": data.preferred_language,
+        "user_type": data.user_type or "",
         "email": data.email or "",
         "whatsapp": data.whatsapp or "",
     }
@@ -136,6 +138,10 @@ class UserSettingsUpdate(BaseModel):
     voice_name: str = ""
     auto_play_animations: bool = True
     hint_level: int = 2
+    linkedin_url: Optional[str] = ""
+    github_url: Optional[str] = ""
+    twitter_url: Optional[str] = ""
+    website_url: Optional[str] = ""
 
 
 # ---------------------------------------------------------------------------
@@ -166,10 +172,14 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate):
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="User not found")
 
-        # 1. Update users table (name, email, whatsapp)
+        # 1. Update users table (name, email, whatsapp, social links)
         cursor.execute(
-            "UPDATE users SET name = ?, email = ?, whatsapp = ? WHERE id = ?",
-            [data.name, data.email, data.whatsapp, user_id],
+            """UPDATE users SET name = ?, email = ?, whatsapp = ?,
+               linkedin_url = ?, github_url = ?, twitter_url = ?, website_url = ?
+               WHERE id = ?""",
+            [data.name, data.email, data.whatsapp,
+             data.linkedin_url or "", data.github_url or "",
+             data.twitter_url or "", data.website_url or "", user_id],
         )
 
         # 2. Update user_profiles table (learning preferences)
