@@ -101,6 +101,19 @@ export const getPaths = () => api.get('/paths');
 export const getPath = (pathId) => api.get(`/paths/${pathId}`);
 export const startPath = (pathId, userId) => api.post(`/paths/${pathId}/start`, { user_id: userId });
 
+// Organizations
+export const createOrg = (data) => api.post('/org', data);
+export const getMyOrgs = (userId) => api.get('/org/my', { params: { user_id: userId } });
+export const getOrg = (orgId, userId) => api.get(`/org/${orgId}`, { params: { user_id: userId } });
+export const updateOrg = (orgId, data) => api.put(`/org/${orgId}`, data);
+export const getOrgMembers = (orgId, userId) => api.get(`/org/${orgId}/members`, { params: { user_id: userId } });
+export const inviteToOrg = (orgId, data) => api.post(`/org/${orgId}/invite`, data);
+export const bulkInviteToOrg = (orgId, data) => api.post(`/org/${orgId}/invite/bulk`, data);
+export const joinOrg = (token, data) => api.post(`/org/join/${token}`, data);
+export const updateMemberRole = (orgId, memberId, data) => api.put(`/org/${orgId}/members/${memberId}/role`, data);
+export const removeMember = (orgId, memberId, userId) => api.delete(`/org/${orgId}/members/${memberId}`, { params: { user_id: userId } });
+export const getOrgAnalytics = (orgId, userId) => api.get(`/org/${orgId}/analytics`, { params: { user_id: userId } });
+
 // Helper for raw fetch calls (streaming endpoints)
 export function getAuthHeaders() {
   try {

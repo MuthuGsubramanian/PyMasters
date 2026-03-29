@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -14,7 +14,8 @@ import {
     X,
     User,
     TrendingUp,
-    Settings
+    Settings,
+    Building2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -23,21 +24,27 @@ import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 
 export default function Layout() {
-    const { user, logout } = useAuth();
+    const { user, logout, activeOrg } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     if (!user) return <Outlet />;
 
-    const navItems = [
-        { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
-        { icon: Map, label: 'Evolution', path: '/dashboard/paths', desc: 'Your AI learning journey' },
-        { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
-        { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
-        { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
-        { icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' },
-    ];
+    const navItems = useMemo(() => {
+        const items = [
+            { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
+            { icon: Map, label: 'Evolution', path: '/dashboard/paths', desc: 'Your AI learning journey' },
+            { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
+            { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
+            { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
+        ];
+        if (activeOrg) {
+            items.push({ icon: Building2, label: 'Organization', path: '/dashboard/org', desc: 'Manage your org' });
+        }
+        items.push({ icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' });
+        return items;
+    }, [activeOrg]);
 
     const rank = user.points > 1000 ? 'ARCHITECT' : user.points > 500 ? 'ENGINEER' : 'CADET';
     const rankColors = {

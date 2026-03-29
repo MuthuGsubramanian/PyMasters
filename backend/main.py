@@ -28,6 +28,7 @@ from routes.graph import router as graph_router
 from routes.messages import router as messages_router
 from routes.paths import router as paths_router
 from routes.trending import router as trending_router
+from routes.organizations import router as org_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -131,6 +132,14 @@ def init_db():
             print("Migrating DB: Adding whatsapp column")
             cursor.execute("ALTER TABLE users ADD COLUMN whatsapp TEXT DEFAULT ''")
 
+        if 'linkedin_url' not in col_names:
+            print("Migrating DB: Adding social profile columns")
+            cursor.execute("ALTER TABLE users ADD COLUMN linkedin_url TEXT DEFAULT ''")
+            cursor.execute("ALTER TABLE users ADD COLUMN github_url TEXT DEFAULT ''")
+            cursor.execute("ALTER TABLE users ADD COLUMN twitter_url TEXT DEFAULT ''")
+            cursor.execute("ALTER TABLE users ADD COLUMN website_url TEXT DEFAULT ''")
+            cursor.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''")
+
         # Create user_profiles table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_profiles (
@@ -148,6 +157,14 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migrate user_profiles: add user_type
+        cursor.execute("PRAGMA table_info(user_profiles)")
+        profile_columns = cursor.fetchall()
+        profile_col_names = [c[1] for c in profile_columns]
+        if 'user_type' not in profile_col_names:
+            print("Migrating DB: Adding user_type column to user_profiles")
+            cursor.execute("ALTER TABLE user_profiles ADD COLUMN user_type TEXT DEFAULT ''")
 
         # Create learning_signals table
         cursor.execute("""
@@ -437,6 +454,52 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_paths_user ON user_learning_paths(user_id, status)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pending_msgs_user ON pending_vaathiyaar_messages(user_id, delivered)")
 
+        # ── Organization tables ──────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS organizations (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT DEFAULT 'other',
+                domain TEXT DEFAULT '',
+                logo_url TEXT DEFAULT '',
+                settings TEXT DEFAULT '{}',
+                plan TEXT DEFAULT 'free',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS org_members (
+                org_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                role TEXT DEFAULT 'member',
+                department TEXT DEFAULT '',
+                joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                invited_by TEXT DEFAULT '',
+                PRIMARY KEY (org_id, user_id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS org_invites (
+                id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                email TEXT NOT NULL,
+                role TEXT DEFAULT 'member',
+                token TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP,
+                used INTEGER DEFAULT 0,
+                used_by TEXT DEFAULT ''
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_members_user ON org_members(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_members_role ON org_members(org_id, role)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_invites_token ON org_invites(token)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_invites_email ON org_invites(email)")
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
@@ -490,6 +553,7 @@ app.include_router(graph_router)
 app.include_router(messages_router)
 app.include_router(paths_router)
 app.include_router(trending_router)
+app.include_router(org_router)
 
 # --- CORS ---
 origins = [
@@ -579,6 +643,24 @@ def login(user: UserLogin):
         if not record:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
+        # Check org membership
+        org_row = cursor.execute("""
+            SELECT o.id, o.name, o.type, om.role, om.department
+            FROM org_members om JOIN organizations o ON o.id = om.org_id
+            WHERE om.user_id = ?
+            LIMIT 1
+        """, [record[0]]).fetchone()
+
+        org_info = None
+        if org_row:
+            org_info = {
+                "org_id": org_row[0],
+                "org_name": org_row[1],
+                "org_type": org_row[2],
+                "role": org_row[3],
+                "department": org_row[4] or ""
+            }
+
         unlocks = json.loads(record[3]) if record[3] else ["module_1"]
         return {
             "id": record[0],
@@ -587,7 +669,8 @@ def login(user: UserLogin):
             "points": record[2] or 0,
             "unlocked": unlocks,
             "onboarding_completed": bool(record[4]),
-            "token": f"mock-jwt-{record[0]}"
+            "token": f"mock-jwt-{record[0]}",
+            "org": org_info
         }
     finally:
         conn.close()

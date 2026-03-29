@@ -10,6 +10,42 @@ import uuid
 import sqlite3
 
 
+def _compute_skill_level(user_type: str, prior_experience: str) -> str:
+    """Compute skill_level from user_type + prior_experience combination."""
+    user_type = (user_type or "").lower()
+    prior_exp = (prior_experience or "none").lower()
+
+    if user_type == "senior_developer":
+        if prior_exp in ("python", "other_language"):
+            return "advanced"
+        return "intermediate"
+
+    if user_type == "junior_developer":
+        if prior_exp in ("python", "other_language", "some"):
+            return "intermediate"
+        return "beginner"
+
+    if user_type == "college_student":
+        if prior_exp in ("python", "other_language"):
+            return "intermediate"
+        return "beginner"
+
+    if user_type == "high_school_student":
+        return "beginner"
+
+    if user_type in ("career_switcher", "hobbyist"):
+        if prior_exp == "python":
+            return "intermediate"
+        return "beginner"
+
+    # Fallback based on prior_experience alone
+    if prior_exp == "python":
+        return "intermediate"
+    if prior_exp == "other_language":
+        return "intermediate"
+    return "beginner"
+
+
 def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
     """
     Save onboarding questionnaire answers for a user.
@@ -29,15 +65,16 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
         learning_style = data.get("learning_style")
         goal = data.get("goal")
         time_commitment = data.get("time_commitment")
-        skill_level = data.get("skill_level") or "beginner"
+        user_type = data.get("user_type", "")
+        skill_level = _compute_skill_level(user_type, prior_experience)
         diagnostic_score = data.get("diagnostic_score")
 
         cursor.execute("""
             INSERT INTO user_profiles
                 (user_id, motivation, prior_experience, known_languages,
                  learning_style, goal, time_commitment, preferred_language,
-                 skill_level, diagnostic_score, onboarding_completed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                 skill_level, diagnostic_score, onboarding_completed, user_type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
             ON CONFLICT (user_id) DO UPDATE SET
                 motivation = excluded.motivation,
                 prior_experience = excluded.prior_experience,
@@ -48,11 +85,12 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
                 preferred_language = excluded.preferred_language,
                 skill_level = excluded.skill_level,
                 diagnostic_score = excluded.diagnostic_score,
-                onboarding_completed = 1
+                onboarding_completed = 1,
+                user_type = excluded.user_type
         """, [
             user_id, motivation, prior_experience, known_languages,
             learning_style, goal, time_commitment, preferred_language,
-            skill_level, diagnostic_score
+            skill_level, diagnostic_score, user_type
         ])
 
         cursor.execute("""
@@ -200,7 +238,7 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
             SELECT up.user_id, up.motivation, up.prior_experience, up.known_languages,
                    up.learning_style, up.goal, up.time_commitment, up.preferred_language,
                    up.skill_level, up.diagnostic_score, up.onboarding_completed, up.created_at,
-                   u.username, u.name
+                   u.username, u.name, up.user_type
             FROM user_profiles up
             LEFT JOIN users u ON u.id = up.user_id
             WHERE up.user_id = ?
@@ -225,6 +263,7 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
             "created_at": row[11],
             "username": row[12],
             "name": row[13],
+            "user_type": row[14],
         }
         profile["skill_level"] = profile.get("skill_level") or "beginner"
     finally:

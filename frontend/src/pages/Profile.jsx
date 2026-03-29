@@ -6,7 +6,7 @@ import {
     Volume2, VolumeX, Play, Zap, Trophy, Award, Flame, Star,
     Timer, CheckCircle2, Download, Trash2, RotateCcw, Save,
     ChevronDown, Shield, Sparkles, TrendingUp, ArrowLeft, AlertTriangle,
-    Settings, Eye, Lightbulb, Mic, Lock,
+    Settings, Eye, Lightbulb, Mic, Lock, ExternalLink, Link,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getProfile, recordSignal } from '../api';
@@ -291,6 +291,12 @@ export default function Profile() {
     const [whatsapp, setWhatsapp] = useState('');
     const [bio, setBio] = useState('');
 
+    // ─── Social Profiles ──────────────────────────────────────────────────
+    const [linkedinUrl, setLinkedinUrl] = useState('');
+    const [githubUrl, setGithubUrl] = useState('');
+    const [twitterUrl, setTwitterUrl] = useState('');
+    const [websiteUrl, setWebsiteUrl] = useState('');
+
     // ─── Learning Preferences ───────────────────────────────────────────────
     const [preferredLang, setPreferredLang] = useState('en');
     const [learningStyle, setLearningStyle] = useState('mixed');
@@ -342,6 +348,12 @@ export default function Profile() {
                 setEmail(p.email || '');
                 setWhatsapp(p.whatsapp || '');
                 setBio(p.bio || '');
+
+                // Social profiles
+                setLinkedinUrl(p.linkedin_url || '');
+                setGithubUrl(p.github_url || '');
+                setTwitterUrl(p.twitter_url || '');
+                setWebsiteUrl(p.website_url || '');
 
                 // Preferences
                 const prefs = p.preferences || {};
@@ -404,6 +416,10 @@ export default function Profile() {
                 email,
                 whatsapp,
                 bio,
+                linkedin_url: linkedinUrl,
+                github_url: githubUrl,
+                twitter_url: twitterUrl,
+                website_url: websiteUrl,
                 preferences: {
                     preferred_language: preferredLang,
                     learning_style: learningStyle,
@@ -768,6 +784,47 @@ export default function Profile() {
                         </div>
                     </GlassCard>
                 </div>
+
+                {/* ═══════════════════════════════════════════════════════════ */}
+                {/* Social Profiles                                           */}
+                {/* ═══════════════════════════════════════════════════════════ */}
+                <GlassCard index={2.5}>
+                    <SectionHeading icon={Link} title="Social Profiles" subtitle="Connect your professional presence" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField
+                            label="LinkedIn URL"
+                            value={linkedinUrl}
+                            onChange={markDirty(setLinkedinUrl)}
+                            type="url"
+                            placeholder="https://linkedin.com/in/username"
+                            icon={ExternalLink}
+                        />
+                        <InputField
+                            label="GitHub URL"
+                            value={githubUrl}
+                            onChange={markDirty(setGithubUrl)}
+                            type="url"
+                            placeholder="https://github.com/username"
+                            icon={ExternalLink}
+                        />
+                        <InputField
+                            label="Twitter / X URL"
+                            value={twitterUrl}
+                            onChange={markDirty(setTwitterUrl)}
+                            type="url"
+                            placeholder="https://x.com/username"
+                            icon={ExternalLink}
+                        />
+                        <InputField
+                            label="Personal Website"
+                            value={websiteUrl}
+                            onChange={markDirty(setWebsiteUrl)}
+                            type="url"
+                            placeholder="https://yoursite.com"
+                            icon={Globe}
+                        />
+                    </div>
+                </GlassCard>
 
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* 4. Vaathiyaar Settings                                    */}
