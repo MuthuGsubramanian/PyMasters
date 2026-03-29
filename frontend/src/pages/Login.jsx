@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser, registerUser } from '../api';
+import { loginUser, registerUser, createOrg } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
 import PymastersIcon from '../assets/pymasters-icon.svg';
 
@@ -17,6 +17,11 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [accountType, setAccountType] = useState(null); // null | 'individual' | 'organization'
+    const [orgName, setOrgName] = useState('');
+    const [orgType, setOrgType] = useState(''); // school | university | enterprise | other
+    const [orgDomain, setOrgDomain] = useState('');
+    const [orgStep, setOrgStep] = useState(0); // 0=type select, 1=org details, 2=admin account
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -36,6 +41,25 @@ export default function Login() {
                 data = res.data;
                 if (!data.token) data.token = `mock-jwt-${data.id}`;
                 isNewUser = true;
+            }
+
+            if (accountType === 'organization' && orgName) {
+                try {
+                    const orgRes = await createOrg({
+                        name: orgName,
+                        type: orgType,
+                        domain: orgDomain,
+                        user_id: data.id,
+                    });
+                    data.org = {
+                        org_id: orgRes.data.id,
+                        org_name: orgRes.data.name,
+                        org_type: orgRes.data.type,
+                        role: 'super_admin',
+                    };
+                } catch (orgErr) {
+                    console.error('Org creation failed:', orgErr);
+                }
             }
 
             // Success animation before navigating
@@ -71,7 +95,33 @@ export default function Login() {
         setIsLogin(!isLogin);
         setError('');
         setSuccess(false);
+        setAccountType(null);
+        setOrgStep(0);
+        setOrgName('');
+        setOrgType('');
+        setOrgDomain('');
     };
+
+    // Determine header text
+    const getHeaderText = () => {
+        if (isLogin) return { title: 'Welcome Back', subtitle: 'Sign in to continue your Python journey' };
+        if (accountType === null) return { title: 'Join PyMasters', subtitle: 'Choose how you want to learn' };
+        if (accountType === 'organization' && orgStep === 0) return { title: 'Register Organization', subtitle: "Set up your team's learning space" };
+        if (accountType === 'organization' && orgStep === 1) return { title: 'Create Admin Account', subtitle: `This account will manage ${orgName}` };
+        return { title: 'Create Account', subtitle: 'Start learning Python with Vaathiyaar' };
+    };
+
+    const header = getHeaderText();
+
+    // Determine submit button text
+    const getSubmitText = () => {
+        if (isLogin) return 'Sign In';
+        if (accountType === 'organization') return 'Create Organization & Account';
+        return 'Create Account';
+    };
+
+    // Whether to show the username/password form
+    const showCredentialsForm = isLogin || accountType === 'individual' || (accountType === 'organization' && orgStep === 1);
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#020617]">
@@ -110,20 +160,17 @@ export default function Login() {
 
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={isLogin ? 'login' : 'register'}
+                            key={`${isLogin}-${accountType}-${orgStep}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.3 }}
                         >
                             <h2 className="text-3xl font-bold mb-2 tracking-tight text-white font-display">
-                                {isLogin ? 'Welcome Back' : 'Create Account'}
+                                {header.title}
                             </h2>
                             <p className="text-slate-400">
-                                {isLogin
-                                    ? 'Sign in to continue your Python journey'
-                                    : 'Start learning Python with Vaathiyaar'
-                                }
+                                {header.subtitle}
                             </p>
                         </motion.div>
                     </AnimatePresence>
@@ -168,106 +215,271 @@ export default function Login() {
                         )}
                     </AnimatePresence>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-1.5">
-                            <label htmlFor="username" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Username</label>
-                            <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
-                                <input
-                                    id="username"
-                                    type="text"
-                                    value={username}
-                                    onChange={e => setUsername(e.target.value)}
-                                    autoComplete="username"
-                                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
-                                    placeholder="Enter your username"
-                                    required
-                                />
-                            </div>
-                        </div>
+                    <AnimatePresence mode="wait">
+                        {/* Account Type Selector — shown when signing up and no type chosen */}
+                        {!isLogin && accountType === null && (
+                            <motion.div
+                                key="account-type-selector"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="space-y-4">
+                                    <p className="text-sm text-slate-400 text-center mb-6">How would you like to use PyMasters?</p>
 
-                        <div className="space-y-1.5">
-                            <label htmlFor="password" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Password</label>
-                            <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
-                                <input
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    autoComplete={isLogin ? "current-password" : "new-password"}
-                                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
-                                    placeholder="Enter your password"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                                >
-                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
-                            </div>
+                                    {/* Individual option */}
+                                    <button
+                                        onClick={() => setAccountType('individual')}
+                                        className="w-full p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-cyan-500/30 transition-all duration-300 text-left group"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <User size={24} className="text-cyan-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-white font-bold text-sm">Individual Learner</h3>
+                                                <p className="text-slate-500 text-xs mt-0.5">Learn Python & AI at your own pace</p>
+                                            </div>
+                                            <ArrowRight size={16} className="text-slate-600 ml-auto group-hover:text-cyan-400 transition-colors" />
+                                        </div>
+                                    </button>
 
-                            {/* Password strength indicator for registration */}
-                            {!isLogin && password.length > 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="pt-1.5"
-                                >
-                                    {(() => {
-                                        const hasUpper = /[A-Z]/.test(password);
-                                        const hasLower = /[a-z]/.test(password);
-                                        const hasNum = /\d/.test(password);
-                                        const hasSpecial = /[^a-zA-Z0-9]/.test(password);
-                                        const checks = [password.length >= 4, password.length >= 6, hasUpper || hasSpecial, password.length >= 8 && (hasNum || hasSpecial)];
-                                        const strength = checks.filter(Boolean).length;
-                                        const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-green-400'];
-                                        const labels = ['Weak', 'Fair', 'Good', 'Strong'];
-                                        return (
+                                    {/* Organization option */}
+                                    <button
+                                        onClick={() => { setAccountType('organization'); setOrgStep(0); }}
+                                        className="w-full p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/30 transition-all duration-300 text-left group"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Building2 size={24} className="text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-white font-bold text-sm">Organization / School / Enterprise</h3>
+                                                <p className="text-slate-500 text-xs mt-0.5">Manage teams, track progress, assign paths</p>
+                                            </div>
+                                            <ArrowRight size={16} className="text-slate-600 ml-auto group-hover:text-purple-400 transition-colors" />
+                                        </div>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Org Details — step 0 */}
+                        {!isLogin && accountType === 'organization' && orgStep === 0 && (
+                            <motion.div
+                                key="org-details"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="space-y-5">
+                                    <button onClick={() => setAccountType(null)} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-2">
+                                        <ChevronLeft size={14} /> Back
+                                    </button>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Organization Name *</label>
+                                        <input
+                                            type="text"
+                                            value={orgName}
+                                            onChange={e => setOrgName(e.target.value)}
+                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/30 transition-all duration-300 font-medium"
+                                            placeholder="e.g., Stanford University, Google, Lincoln High"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Organization Type *</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {[
+                                                { value: 'school', label: 'School', icon: School, color: 'cyan' },
+                                                { value: 'university', label: 'University', icon: GraduationCap, color: 'blue' },
+                                                { value: 'enterprise', label: 'Enterprise', icon: Briefcase, color: 'purple' },
+                                                { value: 'other', label: 'Other', icon: Users, color: 'violet' },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => setOrgType(opt.value)}
+                                                    className={clsx(
+                                                        "p-3 rounded-xl border text-left transition-all duration-200 flex items-center gap-2.5",
+                                                        orgType === opt.value
+                                                            ? "border-purple-500/50 bg-purple-500/10 text-white"
+                                                            : "border-white/[0.08] bg-white/[0.02] text-slate-400 hover:border-white/[0.15]"
+                                                    )}
+                                                >
+                                                    <opt.icon size={16} />
+                                                    <span className="text-sm font-medium">{opt.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Domain <span className="text-slate-600">(optional)</span></label>
+                                        <input
+                                            type="text"
+                                            value={orgDomain}
+                                            onChange={e => setOrgDomain(e.target.value)}
+                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/30 transition-all duration-300 font-medium"
+                                            placeholder="e.g., stanford.edu, company.com"
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={() => setOrgStep(1)}
+                                        disabled={!orgName || !orgType}
+                                        className={clsx(
+                                            "w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-300 flex items-center justify-center gap-2",
+                                            orgName && orgType
+                                                ? "bg-gradient-to-r from-purple-600 to-violet-500 hover:scale-[1.02] shadow-lg shadow-purple-500/25"
+                                                : "bg-slate-700 cursor-not-allowed opacity-50"
+                                        )}
+                                    >
+                                        Next: Create Admin Account <ArrowRight size={16} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Credentials form — login, individual signup, or org admin account (step 1) */}
+                        {showCredentialsForm && (
+                            <motion.div
+                                key={`credentials-${accountType}-${orgStep}`}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {/* Back button for individual signup */}
+                                {!isLogin && accountType === 'individual' && (
+                                    <button onClick={() => setAccountType(null)} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4">
+                                        <ChevronLeft size={14} /> Back
+                                    </button>
+                                )}
+
+                                {/* Back button and org badge for org admin step */}
+                                {!isLogin && accountType === 'organization' && orgStep === 1 && (
+                                    <>
+                                        <button onClick={() => setOrgStep(0)} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4">
+                                            <ChevronLeft size={14} /> Back to org details
+                                        </button>
+                                        <div className="mb-5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-3">
+                                            <Building2 size={16} className="text-purple-400 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs text-purple-300 font-bold">{orgName}</p>
+                                                <p className="text-[10px] text-purple-400/60">You'll be the Super Admin</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    <div className="space-y-1.5">
+                                        <label htmlFor="username" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Username</label>
+                                        <div className="relative group">
+                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
+                                            <input
+                                                id="username"
+                                                type="text"
+                                                value={username}
+                                                onChange={e => setUsername(e.target.value)}
+                                                autoComplete="username"
+                                                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
+                                                placeholder="Enter your username"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label htmlFor="password" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Password</label>
+                                        <div className="relative group">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
+                                            <input
+                                                id="password"
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={password}
+                                                onChange={e => setPassword(e.target.value)}
+                                                autoComplete={isLogin ? "current-password" : "new-password"}
+                                                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
+                                                placeholder="Enter your password"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                            >
+                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                        </div>
+
+                                        {/* Password strength indicator for registration */}
+                                        {!isLogin && password.length > 0 && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="pt-1.5"
+                                            >
+                                                {(() => {
+                                                    const hasUpper = /[A-Z]/.test(password);
+                                                    const hasLower = /[a-z]/.test(password);
+                                                    const hasNum = /\d/.test(password);
+                                                    const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+                                                    const checks = [password.length >= 4, password.length >= 6, hasUpper || hasSpecial, password.length >= 8 && (hasNum || hasSpecial)];
+                                                    const strength = checks.filter(Boolean).length;
+                                                    const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-green-400'];
+                                                    const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+                                                    return (
+                                                        <>
+                                                            <div className="flex gap-1">
+                                                                {[0,1,2,3].map(i => (
+                                                                    <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                                                                        i < strength ? colors[strength - 1] : 'bg-white/[0.06]'
+                                                                    }`} />
+                                                                ))}
+                                                            </div>
+                                                            <p className="text-[10px] mt-1 text-slate-500">{labels[strength - 1] || 'Too short'}</p>
+                                                        </>
+                                                    );
+                                                })()}
+                                            </motion.div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        disabled={loading}
+                                        className={clsx(
+                                            "w-full mt-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden",
+                                            loading
+                                                ? "bg-slate-700 cursor-wait"
+                                                : "bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30"
+                                        )}
+                                    >
+                                        {loading ? (
                                             <>
-                                                <div className="flex gap-1">
-                                                    {[0,1,2,3].map(i => (
-                                                        <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                                                            i < strength ? colors[strength - 1] : 'bg-white/[0.06]'
-                                                        }`} />
-                                                    ))}
-                                                </div>
-                                                <p className="text-[10px] mt-1 text-slate-500">{labels[strength - 1] || 'Too short'}</p>
+                                                <Loader2 className="animate-spin" size={18} />
+                                                <span>Authenticating...</span>
                                             </>
-                                        );
-                                    })()}
-                                </motion.div>
-                            )}
-                        </div>
-
-                        <button
-                            disabled={loading}
-                            className={clsx(
-                                "w-full mt-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden",
-                                loading
-                                    ? "bg-slate-700 cursor-wait"
-                                    : "bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30"
-                            )}
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="animate-spin" size={18} />
-                                    <span>Authenticating...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
-                                    <ArrowRight size={18} />
-                                </>
-                            )}
-                            {!loading && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-700" />
-                            )}
-                        </button>
-                    </form>
+                                        ) : (
+                                            <>
+                                                <span>{getSubmitText()}</span>
+                                                <ArrowRight size={18} />
+                                            </>
+                                        )}
+                                        {!loading && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-700" />
+                                        )}
+                                    </button>
+                                </form>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Footer */}
