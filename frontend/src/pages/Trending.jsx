@@ -810,7 +810,7 @@ export default function Trending() {
             Trending in AI & Python
           </h1>
         </div>
-        <p className="text-slate-400 text-lg ml-0 md:ml-14">
+        <p className="text-slate-600 text-lg ml-0 md:ml-14">
           Stay ahead with the latest developments
         </p>
       </motion.div>
@@ -844,7 +844,7 @@ export default function Trending() {
         transition={{ delay: 0.25, duration: 0.4 }}
         className="relative max-w-xl"
       >
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
         <input
           type="text"
           placeholder="Search trending topics..."
@@ -893,7 +893,7 @@ export default function Trending() {
                     </h3>
 
                     {/* Summary */}
-                    <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">
+                    <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
                       {topic.summary}
                     </p>
 
@@ -973,7 +973,7 @@ export default function Trending() {
               className="text-center py-16"
             >
               <Search className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400 text-lg">No topics found matching your search</p>
+              <p className="text-slate-600 text-lg">No topics found matching your search</p>
               <p className="text-slate-500 text-sm mt-1">Try adjusting your filters or search query</p>
             </motion.div>
           )}
