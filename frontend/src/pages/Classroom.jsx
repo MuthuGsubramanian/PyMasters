@@ -448,29 +448,28 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
     return (
-        <div className="animate-fade-in space-y-5 max-w-[1600px] mx-auto">
-            {/* ── 3-Column Grid ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[600px]">
-
-                {/* Column 1: Vaathiyaar (3 cols) */}
-                <div className="lg:col-span-3 flex flex-col gap-4">
-                    <div className="rounded-2xl border border-white/[0.06] bg-[#0f172a]/90 backdrop-blur-xl p-4">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
-                            <div>
-                                <h3 className="text-white font-bold text-sm">Vaathiyaar</h3>
-                                <p className="text-emerald-400 text-[10px]">Teaching</p>
+        <div className="animate-fade-in space-y-6">
+            {/* ── Row 1: Vaathiyaar — full width horizontal ── */}
+            <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-white dark:from-[#0f172a] dark:to-[#131c2e] p-5 lg:p-6">
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg shadow-lg shadow-purple-500/20">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="text-slate-900 dark:text-white font-bold text-sm">Vaathiyaar</span>
+                            <span className="text-emerald-500 text-[10px] font-medium">Teaching</span>
+                            <div className="ml-auto flex items-center gap-3">
+                                <h2 className="text-sm font-bold font-display text-slate-900 dark:text-white hidden sm:block">
+                                    {resolveText(lesson.active_title || lesson.title, language)}
+                                </h2>
+                                {lesson.xp_reward && (
+                                    <span className="text-amber-500 text-[10px] font-bold bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full">+{lesson.xp_reward} XP</span>
+                                )}
+                                <button onClick={replayAnimations} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-cyan-500 transition-colors">
+                                    <RotateCcw size={12} /> Replay
+                                </button>
                             </div>
-                            <button
-                                onClick={replayAnimations}
-                                className="ml-auto flex items-center gap-1.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-lg px-2.5 py-1.5 hover:bg-cyan-500/20 hover:text-cyan-200 transition-all duration-200"
-                            >
-                                <RotateCcw size={10} />
-                                Replay
-                            </button>
                         </div>
-                        {/* Story content / chat messages */}
-                        <div className="max-h-[500px] overflow-y-auto pr-1 space-y-3 text-sm text-slate-200 leading-relaxed">
+                        <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed max-h-[200px] overflow-y-auto pr-2">
                             {storyPrimitives.length > 0 ? (
                                 <AnimationRenderer
                                     key={`story-${animKey}`}
@@ -480,76 +479,58 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                     language={language}
                                 />
                             ) : storyContent ? (
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{storyContent}</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{storyContent}</ReactMarkdown>
                             ) : null}
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Column 2: Step-by-Step Execution (6 cols - biggest) */}
-                <div className="lg:col-span-6 flex flex-col gap-4">
-                    {/* Lesson title bar */}
-                    <div className="rounded-xl border border-white/[0.06] bg-[#0f172a]/90 backdrop-blur-xl p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-[10px] font-bold tracking-wider uppercase">
-                                <Sparkles size={10} />
-                                Lesson
-                            </div>
-                            <h2 className="text-white font-bold font-display text-sm lg:text-base truncate">
-                                {resolveText(lesson.active_title || lesson.title, language)}
-                            </h2>
+            {/* ── Row 2: Two columns — Code Execution + Flow ── */}
+            <div className="flex flex-col lg:flex-row gap-6">
+
+                {/* Left: Code & Step-by-Step Execution (bigger) */}
+                <div className="flex-1 min-w-0">
+                    <div className="rounded-xl bg-[#0d1117] overflow-hidden shadow-xl">
+                        {/* Terminal header */}
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22]">
+                            <span className="w-3 h-3 rounded-full bg-red-500/80" />
+                            <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                            <span className="w-3 h-3 rounded-full bg-green-500/80" />
+                            <span className="ml-3 text-[11px] text-slate-400 font-mono">step-by-step execution</span>
+                            <span className="ml-auto flex items-center gap-1.5 text-green-400 text-[10px]">
+                                <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-60" /><span className="relative rounded-full h-1.5 w-1.5 bg-green-400" /></span>
+                                running
+                            </span>
                         </div>
-                        {lesson.xp_reward && (
-                            <span className="text-amber-400 text-xs font-bold flex-shrink-0">+{lesson.xp_reward} XP</span>
-                        )}
-                    </div>
-                    {/* Main visualization area - CodeStepper, VariableBox, etc. */}
-                    <div className="flex-1 rounded-2xl border border-white/[0.06] bg-[#0f172a]/90 backdrop-blur-xl p-5 overflow-y-auto max-h-[600px]">
-                        {/* Loop Visualizer */}
-                        {loopViz && (
-                            <div className="mb-4">
-                                <div className="text-[10px] text-amber-400/80 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                    Loop Iteration
+                        <div className="p-5 overflow-y-auto max-h-[500px]">
+                            {loopViz && (
+                                <div className="mb-5">
+                                    <LoopVisualizer
+                                        key={`loop-${animKey}`}
+                                        loopType={loopViz.loopType || 'for'}
+                                        collection={loopViz.collection}
+                                        variable={loopViz.variable || 'i'}
+                                        rangeStart={loopViz.rangeStart ?? 0}
+                                        rangeEnd={loopViz.rangeEnd ?? 5}
+                                        rangeStep={loopViz.rangeStep ?? 1}
+                                        iterations={loopViz.iterations || []}
+                                        code={loopViz.code || ''}
+                                        speed={loopViz.speed || 'normal'}
+                                    />
                                 </div>
-                                <LoopVisualizer
-                                    key={`loop-${animKey}`}
-                                    loopType={loopViz.loopType || 'for'}
-                                    collection={loopViz.collection}
-                                    variable={loopViz.variable || 'i'}
-                                    rangeStart={loopViz.rangeStart ?? 0}
-                                    rangeEnd={loopViz.rangeEnd ?? 5}
-                                    rangeStep={loopViz.rangeStep ?? 1}
-                                    iterations={loopViz.iterations || []}
-                                    code={loopViz.code || ''}
-                                    speed={loopViz.speed || 'normal'}
-                                />
-                            </div>
-                        )}
-
-                        {/* Execution Visualizer */}
-                        {executionViz && (
-                            <div className="mb-4">
-                                <div className="text-[10px] text-purple-400/80 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                                    Step-by-Step Execution
+                            )}
+                            {executionViz && (
+                                <div className="mb-5">
+                                    <ExecutionVisualizer
+                                        key={`exec-${animKey}`}
+                                        code={executionViz.code || ''}
+                                        executionSteps={executionViz.executionSteps || []}
+                                        speed={executionViz.speed || 'normal'}
+                                    />
                                 </div>
-                                <ExecutionVisualizer
-                                    key={`exec-${animKey}`}
-                                    code={executionViz.code || ''}
-                                    executionSteps={executionViz.executionSteps || []}
-                                    speed={executionViz.speed || 'normal'}
-                                />
-                            </div>
-                        )}
-
-                        {/* Legacy animations (CodeStepper, VariableBox, Terminal) */}
-                        {legacyAnimPrimitives.length > 0 && (
-                            <div>
-                                <div className="text-[10px] text-cyan-400/80 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                                    Code Walkthrough
-                                </div>
+                            )}
+                            {legacyAnimPrimitives.length > 0 && (
                                 <AnimationRenderer
                                     key={`legacy-${animKey}`}
                                     sequence={legacyAnimPrimitives}
@@ -557,26 +538,20 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                     speedMultiplier={speedMultiplier}
                                     language={language}
                                 />
-                            </div>
-                        )}
-
-                        {/* Fallback when no visualizations */}
-                        {!loopViz && !executionViz && legacyAnimPrimitives.length === 0 && storyContent && (
-                            <div className="text-sm text-slate-300 leading-relaxed">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{storyContent}</ReactMarkdown>
-                            </div>
-                        )}
+                            )}
+                            {!loopViz && !executionViz && legacyAnimPrimitives.length === 0 && storyContent && (
+                                <div className="text-sm text-slate-300 leading-relaxed">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{storyContent}</ReactMarkdown>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Column 3: Execution Flow (3 cols) */}
-                <div className="lg:col-span-3 flex flex-col gap-4">
-                    {/* Flow Diagram */}
-                    <div className="rounded-2xl border border-white/[0.06] bg-[#0f172a]/90 backdrop-blur-xl p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-2 h-2 rounded-full bg-cyan-400" />
-                            <span className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Flow</span>
-                        </div>
+                {/* Right: Execution Flow */}
+                <div className="lg:w-[300px] lg:flex-shrink-0">
+                    <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-4">Execution Flow</div>
+                    <div className="overflow-y-auto max-h-[500px] space-y-5">
                         {flowDiagram ? (
                             <FlowDiagram
                                 key={`flow-${animKey}`}
@@ -587,37 +562,24 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                                 speed={flowDiagram.speed || 'normal'}
                             />
                         ) : (
-                            <p className="text-xs text-slate-500 italic">No flow diagram for this lesson</p>
+                            <p className="text-xs text-slate-400 italic">No flow diagram for this lesson</p>
                         )}
-                    </div>
-                    {/* Loop/Execution Visualizer summary */}
-                    <div className="rounded-2xl border border-white/[0.06] bg-[#0f172a]/90 backdrop-blur-xl p-4 flex-1">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-2 h-2 rounded-full bg-purple-400" />
-                            <span className="text-purple-400 text-xs font-bold uppercase tracking-wider">Execution</span>
-                        </div>
-                        <div className="space-y-2 text-xs text-slate-400">
-                            <div className="flex items-center gap-1.5">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                                </span>
-                                <span className="text-green-400/80 text-[10px]">visual mode active</span>
+                        {(executionViz || loopViz) && (
+                            <div className="pt-3 border-t border-slate-200 dark:border-white/[0.06] space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                {executionViz && <p>{(executionViz.executionSteps || []).length} execution steps</p>}
+                                {loopViz && <p>{loopViz.loopType || 'for'} loop &middot; {(loopViz.iterations || []).length} iterations</p>}
                             </div>
-                            {executionViz && <p className="text-slate-300">{(executionViz.executionSteps || []).length} execution steps</p>}
-                            {loopViz && <p className="text-slate-300">{loopViz.loopType || 'for'} loop &middot; {(loopViz.iterations || []).length} iterations</p>}
-                            {!executionViz && !loopViz && <p className="text-slate-500 italic">Watch the main panel for step-by-step execution</p>}
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* ── Start Practice button (full width, gradient) ── */}
+            {/* ── Start Practice ── */}
             <button
                 onClick={onComplete}
-                className="w-full py-4 text-base font-bold rounded-2xl bg-gradient-to-r from-purple-600 via-cyan-500 to-blue-600 text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full py-3.5 text-sm font-bold rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:shadow-xl hover:scale-[1.01] transition-all duration-300 flex items-center justify-center gap-2"
             >
-                <Play size={18} fill="currentColor" />
+                <Play size={16} fill="currentColor" />
                 Start Practice
             </button>
         </div>
