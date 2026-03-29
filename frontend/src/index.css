@@ -158,12 +158,13 @@
 .dark .bg-slate-50 { background-color: rgb(10, 15, 30) !important; }
 .dark .bg-slate-100 { background-color: rgba(30, 41, 59, 0.5) !important; }
 
-/* Text — light text on dark backgrounds */
-.dark .text-slate-900 { color: #f1f5f9 !important; }
-.dark .text-slate-800 { color: #e2e8f0 !important; }
-.dark .text-slate-700 { color: #cbd5e1 !important; }
-.dark .text-slate-600 { color: #94a3b8 !important; }
-.dark .text-slate-500 { color: #64748b !important; }
+/* Text — bright text on dark backgrounds for readability */
+.dark .text-slate-900 { color: #f8fafc !important; }
+.dark .text-slate-800 { color: #f1f5f9 !important; }
+.dark .text-slate-700 { color: #e2e8f0 !important; }
+.dark .text-slate-600 { color: #cbd5e1 !important; }
+.dark .text-slate-500 { color: #94a3b8 !important; }
+.dark .text-slate-400 { color: #94a3b8 !important; }
 
 /* Borders */
 .dark .border-black\/\[0\.05\] { border-color: rgba(255,255,255,0.06) !important; }
@@ -186,7 +187,32 @@
 .dark .input-neo { background-color: rgba(15, 23, 42, 0.9) !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.1) !important; }
 
 /* Body background in dark mode */
-.dark body { background-color: #0a0f1e !important; color: #94a3b8 !important; }
+.dark body { background-color: #0a0f1e !important; color: #cbd5e1 !important; }
+
+/* Headings in dark mode — always bright white */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 { color: #f8fafc !important; }
+
+/* Paragraphs and spans readable in dark */
+.dark p { color: #e2e8f0; }
+.dark .panel { background-color: rgba(15, 23, 42, 0.85) !important; border-color: rgba(255,255,255,0.06) !important; }
+.dark .panel p, .dark .panel span { color: #e2e8f0; }
+
+/* Sidebar text in dark mode */
+.dark .text-slate-400.hover\:text-cyan-600 { color: #94a3b8 !important; }
+.dark .text-slate-400.hover\:text-red-500 { color: #94a3b8 !important; }
+
+/* Placeholders */
+.dark .placeholder-slate-400::placeholder { color: #64748b !important; }
+.dark .placeholder-slate-600::placeholder { color: #475569 !important; }
+
+/* White text overrides for elements already on dark bg */
+.dark .bg-white\/60 { background-color: rgba(15, 23, 42, 0.6) !important; }
+.dark .bg-white\/40 { background-color: rgba(15, 23, 42, 0.4) !important; }
+.dark .bg-white\/90 { background-color: rgba(15, 23, 42, 0.9) !important; }
+
+/* Glassmorphism panels in dark */
+.dark .bg-gradient-to-br.from-slate-50 { background: rgb(15, 23, 42) !important; }
+.dark .bg-gradient-to-b.from-slate-50 { background: rgb(10, 15, 30) !important; }
 
 /* Gradient text remains visible */
 .dark .from-slate-50 { --tw-gradient-from: rgb(15, 23, 42) !important; }
