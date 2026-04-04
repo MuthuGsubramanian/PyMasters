@@ -1,6 +1,6 @@
 # Look up the billing account
 data "google_billing_account" "pymasters" {
-  display_name = "My Billing Account"
+  display_name = "PyMasters startup"
   open         = true
 }
 
@@ -69,7 +69,7 @@ resource "google_monitoring_uptime_check_config" "pymasters" {
     type = "uptime_url"
     labels = {
       project_id = var.project_id
-      host       = google_cloud_run_v2_service.pymasters.uri
+      host       = "pymasters-977064896391.us-central1.run.app"
     }
   }
 }
