@@ -6,7 +6,7 @@ structured data suitable for search engine optimization.
 
 import json
 import os
-from anthropic import Anthropic
+from pipeline.utils.claude import ask_claude_json
 from pipeline.utils.logger import get_logger
 
 log = get_logger("actor.pymasters_seo")
@@ -58,30 +58,14 @@ def generate_seo_metadata(lesson: dict) -> dict | None:
 
     log.info(f"Generating SEO metadata for: {title}")
 
-    client = Anthropic()
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2048,
-            messages=[
-                {
-                    "role": "user",
-                    "content": SEO_PROMPT.format(
-                        title=title,
-                        description=description,
-                        track=track,
-                        tags=tags_str,
-                    ),
-                }
-            ],
+        prompt = SEO_PROMPT.format(
+            title=title,
+            description=description,
+            track=track,
+            tags=tags_str,
         )
-
-        response_text = response.content[0].text.strip()
-        if response_text.startswith("```"):
-            lines = response_text.split("\n")
-            response_text = "\n".join(lines[1:-1])
-
-        seo_data = json.loads(response_text)
+        seo_data = ask_claude_json(prompt)
         seo_data["lesson_id"] = lesson.get("id", "")
         log.info(f"SEO metadata generated for: {title}")
         return seo_data

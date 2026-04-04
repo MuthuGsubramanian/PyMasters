@@ -1,7 +1,7 @@
-"""Analyze collected items for relevance using Claude API."""
+"""Analyze collected items for relevance using Claude Code CLI."""
 
 import json
-from anthropic import Anthropic
+from pipeline.utils.claude import ask_claude_json
 from pipeline.utils.logger import get_logger
 
 log = get_logger("analyzer.relevance")
@@ -69,24 +69,8 @@ def analyze(items: list[dict]) -> list[dict]:
 
         try:
             log.info(f"Sending batch ({batch_start}-{batch_start + len(batch)}) to Claude for analysis...")
-            client = Anthropic()
-            response = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=4096,
-                system=SYSTEM_PROMPT,
-                messages=[
-                    {"role": "user", "content": USER_PROMPT_TEMPLATE.format(items_json=items_json)}
-                ],
-            )
-
-            response_text = response.content[0].text.strip()
-
-            # Extract JSON from response (handle markdown code blocks)
-            if response_text.startswith("```"):
-                lines = response_text.split("\n")
-                response_text = "\n".join(lines[1:-1])
-
-            scores = json.loads(response_text)
+            full_prompt = SYSTEM_PROMPT + "\n\n" + USER_PROMPT_TEMPLATE.format(items_json=items_json)
+            scores = ask_claude_json(full_prompt)
 
             for score_entry in scores:
                 idx = score_entry["index"]

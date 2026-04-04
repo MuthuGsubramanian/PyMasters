@@ -13,7 +13,7 @@ import tempfile
 import textwrap
 from pathlib import Path
 
-from anthropic import Anthropic
+from pipeline.utils.claude import ask_claude_json
 
 from pipeline.config import HOMIE_REPO, RELEVANCE_THRESHOLD_HOMIE
 from pipeline.utils.logger import get_logger
@@ -149,9 +149,7 @@ _PLUGIN_GEN_SYSTEM = textwrap.dedent("""\
 
 def _generate_plugin_code(item: dict, homie_context: str) -> tuple[str, str, str]:
     """Use Claude to generate plugin code. Returns (filename, code, description)."""
-    client = Anthropic()
-
-    prompt = textwrap.dedent(f"""\
+    prompt = _PLUGIN_GEN_SYSTEM + "\n\n" + textwrap.dedent(f"""\
         ## Task
         Generate a Homie plugin based on this pipeline discovery:
 
@@ -173,20 +171,7 @@ def _generate_plugin_code(item: dict, homie_context: str) -> tuple[str, str, str
         }}
     """)
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=4096,
-        system=_PLUGIN_GEN_SYSTEM,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    text = response.content[0].text.strip()
-    # Handle markdown code blocks
-    if text.startswith("```"):
-        lines = text.split("\n")
-        text = "\n".join(lines[1:-1])
-
-    data = json.loads(text)
+    data = ask_claude_json(prompt)
     return data["filename"], data["code"], data["description"]
 
 

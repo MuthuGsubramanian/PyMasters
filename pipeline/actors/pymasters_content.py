@@ -8,8 +8,8 @@ import json
 import os
 import re
 import subprocess
-from anthropic import Anthropic
 from pipeline.config import PYMASTERS_REPO, RELEVANCE_THRESHOLD_PYMASTERS
+from pipeline.utils.claude import ask_claude_json
 from pipeline.utils.logger import get_logger
 
 log = get_logger("actor.pymasters_content")
@@ -111,33 +111,15 @@ def generate_lesson(item: dict) -> dict | None:
 
     log.info(f"Generating lesson for: {title}")
 
-    client = Anthropic()
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=8192,
-            messages=[
-                {
-                    "role": "user",
-                    "content": LESSON_GENERATION_PROMPT.format(
-                        title=title,
-                        description=description,
-                        opportunity=opportunity,
-                        track=DEFAULT_TRACK,
-                        module=DEFAULT_MODULE,
-                    ),
-                }
-            ],
+        prompt = LESSON_GENERATION_PROMPT.format(
+            title=title,
+            description=description,
+            opportunity=opportunity,
+            track=DEFAULT_TRACK,
+            module=DEFAULT_MODULE,
         )
-
-        response_text = response.content[0].text.strip()
-
-        # Strip markdown code fences if present
-        if response_text.startswith("```"):
-            lines = response_text.split("\n")
-            response_text = "\n".join(lines[1:-1])
-
-        lesson = json.loads(response_text)
+        lesson = ask_claude_json(prompt)
 
         # Ensure required fields
         lesson.setdefault("generated", True)

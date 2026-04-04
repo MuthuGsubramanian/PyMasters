@@ -1,6 +1,5 @@
 import os
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 PYMASTERS_REPO = "MuthuGsubramanian/PyMasters"
 HOMIE_REPO = "MuthuGsubramanian/Homie"
 RELEVANCE_THRESHOLD_HOMIE = 7
