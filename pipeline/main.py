@@ -125,7 +125,49 @@ def run_daily_pipeline():
             except Exception as e:
                 log.error(f"SEO generation failed for {lc.get('lesson_id', '?')}: {e}")
 
-    # 4. Generate digest (include evolution and cross-pollination in issues list)
+    # ── Growth Engine ──────────────────────────────────────────
+
+    # 4a. HF publishing for top item scored >= 8 (max 1 Space per run)
+    hf_published = None
+    log.info("Checking for HuggingFace Space publishing opportunities...")
+    try:
+        hf_candidates = [
+            item for item in scored_items
+            if item.get("relevance_score", 0) >= 8
+        ]
+        if hf_candidates:
+            hf_published = maybe_publish_space_for_item(hf_candidates[0])
+            log.info(f"  HF Space: {hf_published.get('status', 'unknown')} "
+                     f"-> {hf_published.get('url', 'N/A')}")
+        else:
+            log.info("  No items scored >= 8 for HF publishing.")
+    except Exception as e:
+        log.error(f"HF publishing failed: {e}")
+
+    # 4b. Social content generation (always, from top items)
+    social_result = {}
+    log.info("Generating social content drafts...")
+    try:
+        social_result = generate_social_content(scored_items)
+        log.info(f"  Tweets: {social_result.get('tweets_path', 'N/A')}")
+        log.info(f"  Blog:   {social_result.get('blog_path', 'N/A')}")
+    except Exception as e:
+        log.error(f"Social content generation failed: {e}")
+
+    # 4c. Innovation backlog update (always)
+    backlog_results = []
+    log.info("Updating innovation backlogs...")
+    try:
+        backlog_results = update_backlogs(scored_items)
+        for br in backlog_results:
+            log.info(f"  {br.get('repo', '?')}: {br.get('items_added', 0)} items added "
+                     f"({br.get('status', 'unknown')})")
+    except Exception as e:
+        log.error(f"Backlog update failed: {e}")
+
+    # ── Reporting ─────────────────────────────────────────────
+
+    # 5. Generate digest (include evolution and cross-pollination in issues list)
     all_actions = issues_created + evolution_results + cross_results
     log.info("Generating daily digest...")
     try:
@@ -134,7 +176,7 @@ def run_daily_pipeline():
     except Exception as e:
         log.error(f"Digest generation failed: {e}")
 
-    # 5. Summary
+    # 6. Summary
     log.info("=" * 60)
     log.info("Pipeline complete!")
     log.info(f"  Items collected: {len(all_items)}")
@@ -143,6 +185,9 @@ def run_daily_pipeline():
     log.info(f"  Lessons generated: {len(lessons_created)}")
     log.info(f"  Homie evolution actions: {len(evolution_results)}")
     log.info(f"  Cross-pollination issues: {len(cross_results)}")
+    log.info(f"  HF Space published: {'Yes' if hf_published and hf_published.get('status') == 'published' else 'No'}")
+    log.info(f"  Social content: {social_result.get('status', 'N/A')}")
+    log.info(f"  Backlog updates: {sum(r.get('items_added', 0) for r in backlog_results)} items across {len(backlog_results)} repos")
     log.info("=" * 60)
 
 
