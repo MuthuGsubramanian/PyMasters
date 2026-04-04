@@ -10,8 +10,13 @@ from pipeline.collectors import huggingface, arxiv, github, hackernews
 from pipeline.analyzers.relevance import analyze
 from pipeline.actors.github_issues import create_issues
 from pipeline.actors.digest import generate_digest
+from pipeline.actors.homie_evolution import evolve_homie
+from pipeline.actors.cross_pollinate import cross_pollinate
 from pipeline.actors.pymasters_content import create_lesson_pr
 from pipeline.actors.pymasters_seo import generate_seo_for_lesson
+from pipeline.actors.hf_publisher import maybe_publish_space_for_item
+from pipeline.actors.social_content import generate_social_content
+from pipeline.actors.backlog import update_backlogs
 from pipeline.utils.logger import get_logger
 
 log = get_logger("pipeline.main")
@@ -67,7 +72,27 @@ def run_daily_pipeline():
         log.error(f"Issue creation failed: {e}")
         issues_created = []
 
-    # 3b. Auto-generate PyMasters lesson for top pymasters-scored item (max 1 per run)
+    # 3b. Homie auto-evolution (plugin PRs, model/capability issues — max 2 PRs)
+    log.info("Running Homie auto-evolution...")
+    evolution_results = []
+    try:
+        evolution_results = evolve_homie(scored_items)
+        for ev in evolution_results:
+            log.info(f"  [{ev.get('type', '?')}] {ev.get('title', '?')} -> {ev.get('url', 'N/A')}")
+    except Exception as e:
+        log.error(f"Homie evolution failed: {e}")
+
+    # 3c. Cross-pollination between Homie and PyMasters
+    log.info("Running cross-pollination...")
+    cross_results = []
+    try:
+        cross_results = cross_pollinate(scored_items)
+        for cr in cross_results:
+            log.info(f"  [{cr.get('type', '?')}] {cr.get('title', '?')} -> {cr.get('url', 'N/A')}")
+    except Exception as e:
+        log.error(f"Cross-pollination failed: {e}")
+
+    # 3d. Auto-generate PyMasters lesson for top pymasters-scored item (max 1 per run)
     log.info("Checking for PyMasters lesson generation opportunities...")
     lessons_created = []
     try:
@@ -77,7 +102,7 @@ def run_daily_pipeline():
     except Exception as e:
         log.error(f"Lesson generation failed: {e}")
 
-    # 3c. Generate SEO metadata for any new lessons
+    # 3e. Generate SEO metadata for any new lessons
     if lessons_created:
         log.info("Generating SEO metadata for new lessons...")
         for lc in lessons_created:
@@ -100,10 +125,11 @@ def run_daily_pipeline():
             except Exception as e:
                 log.error(f"SEO generation failed for {lc.get('lesson_id', '?')}: {e}")
 
-    # 4. Generate digest
+    # 4. Generate digest (include evolution and cross-pollination in issues list)
+    all_actions = issues_created + evolution_results + cross_results
     log.info("Generating daily digest...")
     try:
-        report_path = generate_digest(scored_items, issues_created, collection_stats)
+        report_path = generate_digest(scored_items, all_actions, collection_stats)
         log.info(f"Report saved: {report_path}")
     except Exception as e:
         log.error(f"Digest generation failed: {e}")
@@ -115,6 +141,8 @@ def run_daily_pipeline():
     log.info(f"  Items analyzed: {len(scored_items)}")
     log.info(f"  Issues created: {len(issues_created)}")
     log.info(f"  Lessons generated: {len(lessons_created)}")
+    log.info(f"  Homie evolution actions: {len(evolution_results)}")
+    log.info(f"  Cross-pollination issues: {len(cross_results)}")
     log.info("=" * 60)
 
 
