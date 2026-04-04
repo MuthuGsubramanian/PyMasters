@@ -4,9 +4,8 @@ resource "google_cloudbuild_trigger" "pymasters_deploy" {
   description = "Deploy pymasters.net to Cloud Run on push to main"
   location    = var.region
 
-  github {
-    owner = var.pymasters_repo_owner
-    name  = var.pymasters_repo_name
+  repository_event_config {
+    repository = "projects/${var.project_id}/locations/${var.region}/connections/pymasters-github/repositories/pymasters-repo"
 
     push {
       branch = "^main$"
@@ -23,9 +22,8 @@ resource "google_cloudbuild_trigger" "homie_ci" {
   description = "Run Homie tests on push to main"
   location    = var.region
 
-  github {
-    owner = var.pymasters_repo_owner
-    name  = var.homie_repo_name
+  repository_event_config {
+    repository = "projects/${var.project_id}/locations/${var.region}/connections/pymasters-github/repositories/homie-repo"
 
     push {
       branch = "^main$"
