@@ -3,7 +3,7 @@
 import os
 import json
 from datetime import datetime
-from anthropic import Anthropic
+from pipeline.utils.claude import ask_claude
 from pipeline.utils.logger import get_logger
 
 log = get_logger("actor.social_content")
@@ -70,16 +70,10 @@ Format each tweet as:
 """
 
     try:
-        client = Anthropic()
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            system=TWEET_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        tweets_content = response.content[0].text.strip()
+        full_prompt = TWEET_SYSTEM_PROMPT + "\n\n" + prompt
+        tweets_content = ask_claude(full_prompt)
     except Exception as e:
-        log.error(f"Claude API call failed for tweets: {e}")
+        log.error(f"Claude CLI call failed for tweets: {e}")
         # Fallback: generate simple tweets without AI
         tweets_content = _fallback_tweets(items_for_prompt)
 
@@ -121,16 +115,10 @@ Write the full blog post in markdown format.
 """
 
     try:
-        client = Anthropic()
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2048,
-            system=BLOG_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        blog_content = response.content[0].text.strip()
+        full_prompt = BLOG_SYSTEM_PROMPT + "\n\n" + prompt
+        blog_content = ask_claude(full_prompt)
     except Exception as e:
-        log.error(f"Claude API call failed for blog draft: {e}")
+        log.error(f"Claude CLI call failed for blog draft: {e}")
         blog_content = _fallback_blog(items_for_prompt, today)
 
     header = f"<!-- Draft generated {today} - Review before publishing -->\n\n"
