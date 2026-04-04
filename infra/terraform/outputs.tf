@@ -7,7 +7,7 @@ output "region" {
 }
 
 output "pymasters_cloud_run_url" {
-  value       = google_cloud_run_v2_service.pymasters.uri
+  value       = "https://pymasters-977064896391.us-central1.run.app"
   description = "pymasters.net Cloud Run URL"
 }
 

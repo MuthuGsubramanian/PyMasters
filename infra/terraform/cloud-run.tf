@@ -58,10 +58,5 @@ resource "google_cloud_run_v2_service" "pymasters" {
   depends_on = [google_artifact_registry_repository.pymasters]
 }
 
-# Allow unauthenticated access (public website)
-resource "google_cloud_run_v2_service_iam_member" "pymasters_public" {
-  name     = google_cloud_run_v2_service.pymasters.name
-  location = var.region
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
+# Public access is configured via Cloud Run console (org policy restricts allUsers via Terraform)
+# The existing service already allows unauthenticated access.
