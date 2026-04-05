@@ -18,7 +18,6 @@ def collect() -> list[dict]:
         log.info("Fetching trending HuggingFace models...")
         models = list(api.list_models(
             sort="downloads",
-            direction=-1,
             limit=MAX_ITEMS_PER_SOURCE,
         ))
         for m in models:
@@ -40,7 +39,6 @@ def collect() -> list[dict]:
         log.info("Fetching trending HuggingFace spaces...")
         spaces = list(api.list_spaces(
             sort="likes",
-            direction=-1,
             limit=MAX_ITEMS_PER_SOURCE,
         ))
         for s in spaces:
@@ -62,7 +60,6 @@ def collect() -> list[dict]:
         log.info("Fetching new HuggingFace datasets...")
         datasets = list(api.list_datasets(
             sort="createdAt",
-            direction=-1,
             limit=MAX_ITEMS_PER_SOURCE,
         ))
         for d in datasets:
