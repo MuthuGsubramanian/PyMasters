@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser, registerUser, createOrg } from '../api';
+import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
@@ -37,29 +38,30 @@ export default function Login() {
                 const res = await loginUser(username, password);
                 data = res.data;
             } else {
-                const res = await registerUser(username, password, username);
+                const res = await registerUser(username, password, username, accountType === 'organization' ? 'organization' : 'individual');
                 data = res.data;
                 if (!data.token) data.token = `mock-jwt-${data.id}`;
+                if (!data.account_type) data.account_type = accountType === 'organization' ? 'organization' : 'individual';
                 isNewUser = true;
             }
 
             if (accountType === 'organization' && orgName) {
-                try {
-                    const orgRes = await createOrg({
-                        name: orgName,
-                        type: orgType,
-                        domain: orgDomain,
-                        user_id: data.id,
-                    });
-                    data.org = {
-                        org_id: orgRes.data.id,
-                        org_name: orgRes.data.name,
-                        org_type: orgRes.data.type,
-                        role: 'super_admin',
-                    };
-                } catch (orgErr) {
-                    console.error('Org creation failed:', orgErr);
-                }
+                const orgRes = await createOrg({
+                    name: orgName,
+                    type: orgType,
+                    domain: orgDomain || '',
+                    user_id: data.id,
+                });
+                data.org = {
+                    id: orgRes.data.id,
+                    org_id: orgRes.data.id,
+                    name: orgRes.data.name,
+                    org_name: orgRes.data.name,
+                    type: orgRes.data.type,
+                    org_type: orgRes.data.type,
+                    role: 'super_admin',
+                    department: '',
+                };
             }
 
             // Success animation before navigating
@@ -75,7 +77,7 @@ export default function Login() {
         } catch (err) {
             console.error("Auth Fail", err);
             if (err.response) {
-                const detail = err.response.data.detail || '';
+                const detail = safeErrorMsg(err, '');
                 if (detail.includes('already taken')) {
                     setError('This username is already taken. Try a different one or login instead.');
                 } else if (detail.includes('Invalid credentials')) {
