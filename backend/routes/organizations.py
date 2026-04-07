@@ -40,6 +40,7 @@ class CreateOrgRequest(BaseModel):
     type: str = "other"  # school, university, enterprise, other
     domain: str = ""
     logo_url: str = ""
+    description: str = ""
     user_id: str  # creator
 
 class UpdateOrgRequest(BaseModel):
@@ -47,6 +48,7 @@ class UpdateOrgRequest(BaseModel):
     type: Optional[str] = None
     domain: Optional[str] = None
     logo_url: Optional[str] = None
+    description: Optional[str] = None
     plan: Optional[str] = None
     user_id: str
 
@@ -77,8 +79,8 @@ def create_org(data: CreateOrgRequest):
     try:
         now = datetime.utcnow().isoformat()
         conn.execute(
-            "INSERT INTO organizations (id, name, type, domain, logo_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [org_id, data.name, data.type, data.domain, data.logo_url, now, now]
+            "INSERT INTO organizations (id, name, type, domain, logo_url, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [org_id, data.name, data.type, data.domain, data.logo_url, data.description, now, now]
         )
         conn.execute(
             "INSERT INTO org_members (org_id, user_id, role, joined_at) VALUES (?, ?, 'super_admin', ?)",
@@ -87,7 +89,12 @@ def create_org(data: CreateOrgRequest):
         conn.commit()
     finally:
         conn.close()
-    return {"id": org_id, "name": data.name, "type": data.type, "role": "super_admin"}
+    return {
+        "id": org_id, "org_id": org_id,
+        "name": data.name, "org_name": data.name,
+        "type": data.type, "org_type": data.type,
+        "role": "super_admin"
+    }
 
 
 @router.get("/my")
@@ -106,9 +113,12 @@ def my_orgs(user_id: str = Query(...)):
     conn.close()
     return {"organizations": [
         {
-            "id": r[0], "name": r[1], "type": r[2], "domain": r[3],
-            "logo_url": r[4], "plan": r[5], "role": r[6],
-            "department": r[7] or "", "joined_at": r[8], "member_count": r[9]
+            "id": r[0], "org_id": r[0],  # dual keys for frontend compat
+            "name": r[1], "org_name": r[1],
+            "type": r[2], "org_type": r[2],
+            "domain": r[3], "logo_url": r[4], "plan": r[5],
+            "role": r[6], "department": r[7] or "",
+            "joined_at": r[8], "member_count": r[9]
         } for r in rows
     ]}
 
@@ -149,7 +159,13 @@ def join_org(token: str, data: JoinOrgRequest):
         conn.commit()
 
         org = conn.execute("SELECT name, type FROM organizations WHERE id = ?", [invite[1]]).fetchone()
-        return {"joined": True, "org_id": invite[1], "org_name": org[0] if org else "", "role": invite[3]}
+        org_type = org[1] if org else "other"
+        return {
+            "joined": True, "id": invite[1], "org_id": invite[1],
+            "name": org[0] if org else "", "org_name": org[0] if org else "",
+            "type": org_type, "org_type": org_type,
+            "role": invite[3], "department": ""
+        }
     finally:
         conn.close()
 
@@ -157,20 +173,39 @@ def join_org(token: str, data: JoinOrgRequest):
 @router.get("/{org_id}")
 def get_org(org_id: str, user_id: str = Query(...)):
     """Get organization details. Requires membership."""
-    require_org_role(DB_PATH, org_id, user_id)
+    member_info = require_org_role(DB_PATH, org_id, user_id)
     conn = sqlite3.connect(DB_PATH)
     org = conn.execute(
-        "SELECT id, name, type, domain, logo_url, settings, plan, created_at FROM organizations WHERE id = ?",
+        "SELECT id, name, type, domain, logo_url, description, settings, plan, created_at FROM organizations WHERE id = ?",
         [org_id]
     ).fetchone()
     member_count = conn.execute("SELECT COUNT(*) FROM org_members WHERE org_id = ?", [org_id]).fetchone()[0]
+
+    # Pending invites for admin+ visibility
+    pending_invites = []
+    if ROLE_LEVELS.get(member_info["role"], 0) >= ROLE_LEVELS.get("admin", 0):
+        inv_rows = conn.execute(
+            "SELECT id, email, role, token, created_at, expires_at FROM org_invites WHERE org_id = ? AND used = 0 ORDER BY created_at DESC",
+            [org_id]
+        ).fetchall()
+        pending_invites = [
+            {"id": r[0], "email": r[1], "role": r[2], "token": r[3], "created_at": r[4], "expires_at": r[5]}
+            for r in inv_rows
+        ]
+
     conn.close()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
     return {
-        "id": org[0], "name": org[1], "type": org[2], "domain": org[3],
-        "logo_url": org[4], "settings": org[5], "plan": org[6],
-        "created_at": org[7], "member_count": member_count
+        "id": org[0], "org_id": org[0],  # dual keys for frontend compat
+        "name": org[1], "org_name": org[1],
+        "type": org[2], "org_type": org[2],
+        "domain": org[3], "logo_url": org[4],
+        "description": org[5] or "", "settings": org[6], "plan": org[7],
+        "created_at": org[8], "member_count": member_count,
+        "my_role": member_info["role"],
+        "my_department": member_info["department"] or "",
+        "pending_invites": pending_invites
     }
 
 
@@ -181,7 +216,7 @@ def update_org(org_id: str, data: UpdateOrgRequest):
     conn = sqlite3.connect(DB_PATH)
     updates = []
     values = []
-    for field in ["name", "type", "domain", "logo_url", "plan"]:
+    for field in ["name", "type", "domain", "logo_url", "description", "plan"]:
         val = getattr(data, field, None)
         if val is not None:
             updates.append(f"{field} = ?")
@@ -198,8 +233,8 @@ def update_org(org_id: str, data: UpdateOrgRequest):
 
 @router.get("/{org_id}/members")
 def list_members(org_id: str, user_id: str = Query(...), role: Optional[str] = None, department: Optional[str] = None):
-    """List org members. Requires manager+."""
-    require_org_role(DB_PATH, org_id, user_id, "manager")
+    """List org members. Requires membership."""
+    require_org_role(DB_PATH, org_id, user_id, "member")
     conn = sqlite3.connect(DB_PATH)
     query = """
         SELECT u.id, u.username, u.name, u.email, u.points, u.linkedin_url, u.github_url,
@@ -220,8 +255,10 @@ def list_members(org_id: str, user_id: str = Query(...), role: Optional[str] = N
     conn.close()
     return {"members": [
         {
-            "id": r[0], "username": r[1], "name": r[2], "email": r[3],
-            "points": r[4] or 0, "linkedin_url": r[5] or "", "github_url": r[6] or "",
+            "id": r[0], "user_id": r[0],  # dual keys for frontend compat
+            "username": r[1], "name": r[2], "email": r[3],
+            "points": r[4] or 0, "xp": r[4] or 0,  # alias for frontend
+            "linkedin_url": r[5] or "", "github_url": r[6] or "",
             "role": r[7], "department": r[8] or "", "joined_at": r[9]
         } for r in rows
     ]}
@@ -386,3 +423,51 @@ def org_analytics(org_id: str, user_id: str = Query(...)):
         "roles": {r[0]: r[1] for r in roles},
         "departments": {d[0]: d[1] for d in depts} if depts else {}
     }
+
+
+@router.delete("/{org_id}")
+def delete_organization(org_id: str, user_id: str = None):
+    """
+    Permanently delete an organization and all associated data.
+    Requires super_admin role. Member user accounts are preserved.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        cursor = conn.cursor()
+
+        # Verify org exists
+        cursor.execute("SELECT id, name FROM organizations WHERE id = ?", [org_id])
+        org = cursor.fetchone()
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        # Verify user is super_admin
+        cursor.execute(
+            "SELECT role FROM org_members WHERE org_id = ? AND user_id = ?",
+            [org_id, user_id]
+        )
+        member = cursor.fetchone()
+        if not member or member["role"] != "super_admin":
+            raise HTTPException(status_code=403, detail="Only super admins can delete an organization")
+
+        # Delete all associated data
+        cursor.execute("DELETE FROM org_members WHERE org_id = ?", [org_id])
+        cursor.execute("DELETE FROM org_invites WHERE org_id = ?", [org_id])
+
+        # Delete org_profiles (may not exist if onboarding wasn't completed)
+        try:
+            cursor.execute("DELETE FROM org_profiles WHERE org_id = ?", [org_id])
+        except Exception:
+            pass
+
+        # Delete the organization itself
+        cursor.execute("DELETE FROM organizations WHERE id = ?", [org_id])
+
+        conn.commit()
+        return {"deleted": True, "org_id": org_id}
+    finally:
+        conn.close()
