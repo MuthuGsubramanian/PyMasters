@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import ChatBar from '../components/ChatBar';
 import PythonEditor from '../components/PythonEditor';
 import api, { getAuthHeaders } from '../api';
+import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import OutputPanel from '../components/OutputPanel';
 import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2 } from 'lucide-react';
@@ -109,11 +110,11 @@ function ApplyFixButton({ text, onInject }) {
 // ──────────────────────────────────────────────────────────────────────────────
 function buildMarkdownComponents(onInjectCode, hasExistingCode) {
     return {
-        h2: ({children}) => <h2 className="text-base font-bold text-slate-900 mt-3 mb-1">{children}</h2>,
-        h3: ({children}) => <h3 className="text-sm font-bold text-slate-800 mt-2 mb-1">{children}</h3>,
-        p: ({children}) => <p className="text-sm text-slate-700 mb-2 leading-relaxed">{children}</p>,
-        ul: ({children}) => <ul className="list-disc list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ul>,
-        ol: ({children}) => <ol className="list-decimal list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ol>,
+        h2: ({children}) => <h2 className="text-base font-bold text-text-primary mt-3 mb-1">{children}</h2>,
+        h3: ({children}) => <h3 className="text-sm font-bold text-text-primary mt-2 mb-1">{children}</h3>,
+        p: ({children}) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
+        ul: ({children}) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
+        ol: ({children}) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
         code: ({children, className}) => {
             const isPythonBlock = className && (className.includes('python') || className.includes('language-python') || className.includes('language-py'));
             const isCodeBlock = !!className;
@@ -139,23 +140,23 @@ function buildMarkdownComponents(onInjectCode, hasExistingCode) {
                     </div>
                 );
             }
-            return <code className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
+            return <code className="bg-bg-inset text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
         },
         table: ({children}) => (
-            <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 shadow-sm">
+            <div className="overflow-x-auto my-3 rounded-xl border border-border-default shadow-sm">
                 <table className="text-sm w-full">{children}</table>
             </div>
         ),
         thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
-        tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
-        tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+        tbody: ({children}) => <tbody className="divide-y divide-border-default">{children}</tbody>,
+        tr: ({children}) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
         th: ({children}) => (
             <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
         ),
         td: ({children}) => (
-            <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
+            <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>
         ),
-        strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
+        strong: ({children}) => <strong className="font-bold text-text-primary">{children}</strong>,
     };
 }
 
@@ -364,7 +365,7 @@ export default function Playground() {
             setOutput(out);
         } catch (err) {
             setExecutionTime(Math.round(performance.now() - startTime));
-            setOutput(`Execution error: ${err.response?.data?.detail || err.message}`);
+            setOutput(`Execution error: ${safeErrorMsg(err, 'Unknown error')}`);
         } finally {
             setRunning(false);
         }
@@ -399,7 +400,7 @@ export default function Playground() {
                 setOutput(`Failed to install ${pkg}:\n${res.data.error}`);
             }
         } catch (err) {
-            setOutput(`Install error: ${err.response?.data?.detail || err.message}`);
+            setOutput(`Install error: ${safeErrorMsg(err, 'Unknown error')}`);
         } finally {
             setInstalling(false);
             setInstallPkg('');
@@ -441,8 +442,8 @@ export default function Playground() {
                             <Sparkles size={20} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold font-display text-slate-900">Playground</h1>
-                            <p className="text-xs text-slate-500">Chat with Vaathiyaar + Live Code Terminal</p>
+                            <h1 className="text-2xl font-bold font-display text-text-primary">Playground</h1>
+                            <p className="text-xs text-text-muted">Chat with Vaathiyaar + Live Code Terminal</p>
                         </div>
                     </div>
 
@@ -456,7 +457,7 @@ export default function Playground() {
                         </button>
                         <button
                             onClick={() => setShowSidebar(!showSidebar)}
-                            className="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-100 transition-all duration-300"
+                            className="flex items-center gap-1.5 text-xs font-bold text-text-secondary bg-bg-elevated border border-border-default rounded-xl px-3 py-2 hover:bg-bg-inset transition-all duration-300"
                         >
                             <MessageSquare size={14} />
                             History
@@ -467,7 +468,7 @@ export default function Playground() {
                 {/* Credits bar */}
                 {!creditsLoading && credits && (
                     <div className="flex items-center gap-4">
-                        <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className="flex-1 bg-bg-elevated h-2 rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${remainingPct}%` }}
@@ -484,7 +485,7 @@ export default function Playground() {
                                 <Zap size={12} />
                                 {credits.xp} XP
                             </span>
-                            <span className="text-xs font-mono text-slate-500">
+                            <span className="text-xs font-mono text-text-muted">
                                 {remaining}/{total} prompts
                             </span>
                         </div>
@@ -510,13 +511,13 @@ export default function Playground() {
                             className="w-80 bg-white/95 backdrop-blur-xl shadow-2xl border-r border-black/[0.04] flex flex-col h-full"
                         >
                             <div className="flex items-center justify-between p-4 border-b border-black/[0.04]">
-                                <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <Clock size={14} className="text-slate-400" />
+                                <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                                    <Clock size={14} className="text-text-muted" />
                                     Chat History
                                 </h2>
                                 <button
                                     onClick={() => setShowSidebar(false)}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+                                    className="text-text-muted hover:text-text-secondary transition-colors p-1 rounded-lg hover:bg-bg-elevated"
                                 >
                                     <ChevronLeft size={18} />
                                 </button>
@@ -524,9 +525,9 @@ export default function Playground() {
                             <div className="flex-1 overflow-y-auto p-2 space-y-1">
                                 {conversations.length === 0 ? (
                                     <div className="text-center py-12">
-                                        <MessageSquare size={24} className="text-slate-300 mx-auto mb-3" />
-                                        <p className="text-sm text-slate-400">No conversations yet</p>
-                                        <p className="text-xs text-slate-400 mt-1">Start chatting to see history here</p>
+                                        <MessageSquare size={24} className="text-text-muted mx-auto mb-3" />
+                                        <p className="text-sm text-text-muted">No conversations yet</p>
+                                        <p className="text-xs text-text-muted mt-1">Start chatting to see history here</p>
                                     </div>
                                 ) : (
                                     conversations.map((conv, idx) => (
@@ -539,11 +540,11 @@ export default function Playground() {
                                             className={`w-full text-left px-3 py-3 rounded-xl text-sm transition-all duration-200 ${
                                                 conversationId === conv.id
                                                     ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
-                                                    : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+                                                    : 'text-text-secondary hover:bg-bg-elevated border border-transparent'
                                             }`}
                                         >
                                             <p className="font-medium truncate">{conv.title}</p>
-                                            <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                                            <p className="text-[10px] text-text-muted mt-0.5 flex items-center gap-1">
                                                 <Clock size={10} />
                                                 {new Date(conv.updated_at).toLocaleDateString()}
                                             </p>
@@ -569,7 +570,7 @@ export default function Playground() {
                     </div>
                     <div>
                         <p className="font-bold text-amber-700 text-sm">No prompts remaining</p>
-                        <p className="text-slate-600 text-sm mt-1 leading-relaxed">
+                        <p className="text-text-secondary text-sm mt-1 leading-relaxed">
                             You've used all your prompts! Complete more lessons to earn XP and unlock more.
                             Each 100 XP gives you more prompts.
                         </p>
@@ -581,15 +582,15 @@ export default function Playground() {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 px-6 pb-2 min-h-0 overflow-hidden">
 
                 {/* ── Left Panel: Vaathiyaar Chat ────────────────────────── */}
-                <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 rounded-2xl border border-slate-200/80 bg-white/60 backdrop-blur-sm shadow-sm overflow-hidden">
+                <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 rounded-2xl border border-border-default bg-bg-surface/60 backdrop-blur-sm shadow-sm overflow-hidden">
                     {/* Panel header with macOS dots */}
-                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200/60 bg-slate-50/80 flex-shrink-0">
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-default bg-bg-elevated/80 flex-shrink-0">
                         <div className="flex items-center gap-1.5">
                             <div className="w-3 h-3 rounded-full bg-red-400" />
                             <div className="w-3 h-3 rounded-full bg-amber-400" />
                             <div className="w-3 h-3 rounded-full bg-green-400" />
                         </div>
-                        <span className="text-xs font-semibold text-slate-500 ml-2 flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-text-muted ml-2 flex items-center gap-1.5">
                             {'🧑‍🏫'} Vaathiyaar Chat
                         </span>
                     </div>
@@ -605,12 +606,12 @@ export default function Playground() {
                                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-cyan-100 border border-purple-200/50 flex items-center justify-center text-3xl mx-auto mb-4 select-none shadow-lg shadow-purple-100/50">
                                     {'🧑‍🏫'}
                                 </div>
-                                <h2 className="text-lg font-bold text-slate-800 mb-2 font-display">
+                                <h2 className="text-lg font-bold text-text-primary mb-2 font-display">
                                     {user?.name || user?.username
                                         ? `Hey ${user.name || user.username}!`
                                         : 'Ask Vaathiyaar anything!'}
                                 </h2>
-                                <p className="text-xs text-slate-500 max-w-xs mx-auto mb-5 leading-relaxed">
+                                <p className="text-xs text-text-muted max-w-xs mx-auto mb-5 leading-relaxed">
                                     Ask about Python concepts, debug code, explore ideas, or send your code for review.
                                 </p>
                                 {/* Quick start suggestions */}
@@ -647,7 +648,7 @@ export default function Playground() {
                                             <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-xs select-none mt-1 shadow-md shadow-purple-300/20">
                                                 {'🧑‍🏫'}
                                             </div>
-                                            <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-purple-500/40 text-slate-800 text-sm leading-relaxed min-w-0">
+                                            <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-purple-500/40 text-text-primary text-sm leading-relaxed min-w-0">
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                                                     {msg.content}
                                                 </ReactMarkdown>
