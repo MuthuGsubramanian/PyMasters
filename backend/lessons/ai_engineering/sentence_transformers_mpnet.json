@@ -1,0 +1,119 @@
+{
+  "id": "sentence_transformers_mpnet",
+  "topic": "sentence_transformers_mpnet",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "High-Quality Embeddings with all-mpnet-base-v2",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master the highest-quality sentence embedding model in the sentence-transformers family — all-mpnet-base-v2 produces 768-dimensional vectors that outperform smaller models on retrieval, clustering, and semantic similarity benchmarks.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Gold Standard of Sentence Embeddings\n\nVaathiyaar here! You've seen lightweight embedding models that trade quality for speed. But when your RAG pipeline returns the wrong documents, when your clustering produces noisy groups, or when semantic search misses obvious matches — you need a stronger embedding model. Meet `all-mpnet-base-v2`: the highest-quality general-purpose sentence embedding model in the sentence-transformers library.\n\nBuilt on Microsoft's MPNet architecture (which combines the strengths of BERT's masked language modeling and XLNet's permuted language modeling), this model was trained on over 1 billion sentence pairs. The result: 768-dimensional embeddings that consistently top the leaderboards for semantic textual similarity.\n\n### Model Comparison: When Quality Matters\n\n| Model | Dimensions | Size | STS Benchmark | Speed (CPU) | Best For |\n|---|---|---|---|---|---|\n| all-MiniLM-L6-v2 | 384 | 80 MB | 0.789 | ~14K sent/sec | Prototyping, edge |\n| all-MiniLM-L12-v2 | 384 | 120 MB | 0.812 | ~7.5K sent/sec | Balanced |\n| all-mpnet-base-v2 | 768 | 420 MB | 0.838 | ~2.8K sent/sec | Production RAG |\n| text-embedding-3-small | 1536 | API | ~0.831 | Network-bound | Cloud-only |\n\nNotice: mpnet-base-v2 **beats OpenAI's small embedding model** on STS benchmarks — and runs locally with zero API cost.\n\n### Generating High-Quality Embeddings\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-mpnet-base-v2\")\n\ndocuments = [\n    \"Retrieval-augmented generation improves LLM accuracy\",\n    \"RAG pipelines fetch relevant context before prompting\",\n    \"Photosynthesis converts sunlight into chemical energy\",\n    \"Vector databases store high-dimensional embeddings\",\n]\n\nembeddings = model.encode(documents, normalize_embeddings=True)\nprint(embeddings.shape)  # (4, 768)\n```\n\nWith `normalize_embeddings=True`, vectors have unit length — so dot product equals cosine similarity, making downstream math faster.\n\n### Embedding Quality Head-to-Head\n\nLet's prove the quality difference with a tricky query:\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmpnet = SentenceTransformer(\"all-mpnet-base-v2\")\nminilm = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndocs = [\n    \"The bank approved my mortgage application yesterday\",\n    \"We sat on the river bank watching the sunset\",\n    \"Financial institutions process loan requests daily\",\n]\nquery = \"getting a home loan from a financial institution\"\n\nfor name, m in [(\"mpnet\", mpnet), (\"minilm\", minilm)]:\n    emb_docs = m.encode(docs, convert_to_tensor=True)\n    emb_q = m.encode(query, convert_to_tensor=True)\n    scores = util.cos_sim(emb_q, emb_docs)[0]\n    print(f\"\\n{name}:\")\n    for doc, s in zip(docs, scores):\n        print(f\"  {s:.3f} | {doc}\")\n```\n\nMPNet more clearly separates \"bank (financial)\" from \"bank (river)\" — this disambiguation is where the extra parameters pay off.\n\n### Upgrading Your RAG Pipeline\n\n```python\nclass ProductionRAG:\n    def __init__(self, model_name=\"all-mpnet-base-v2\"):\n        self.model = SentenceTransformer(model_name)\n        self.docs = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.docs = documents\n        self.embeddings = self.model.encode(\n            documents,\n            normalize_embeddings=True,\n            convert_to_tensor=True,\n            show_progress_bar=True,\n        )\n\n    def retrieve(self, query: str, top_k: int = 3) -> list[dict]:\n        q_emb = self.model.encode(query,\n            normalize_embeddings=True,\n            convert_to_tensor=True)\n        scores = util.dot_score(q_emb, self.embeddings)[0]\n        top_idx = scores.argsort(descending=True)[:top_k]\n        return [\n            {\"text\": self.docs[i], \"score\": float(scores[i])}\n            for i in top_idx\n        ]\n\n    def build_prompt(self, query: str, top_k: int = 3) -> str:\n        results = self.retrieve(query, top_k)\n        context = \"\\n---\\n\".join(r[\"text\"] for r in results)\n        return f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"\n```\n\nKey upgrade over MiniLM: using `normalize_embeddings=True` + `dot_score` instead of `cos_sim` — mathematically identical but avoids redundant normalization at query time.\n\n### ONNX & OpenVINO Acceleration\n\nThe 420MB size is the main trade-off. Accelerate inference without losing quality:\n\n```python\n# ONNX Runtime (2-3x faster on CPU)\nmodel = SentenceTransformer(\n    \"all-mpnet-base-v2\", backend=\"onnx\"\n)\n\n# OpenVINO (optimized for Intel CPUs)\nmodel = SentenceTransformer(\n    \"all-mpnet-base-v2\", backend=\"openvino\"\n)\n```\n\nInstall `optimum[onnxruntime]` or `optimum[openvino]` to unlock these backends — same API, same quality, significantly faster inference.\n\n> **Key Insight:** all-mpnet-base-v2 is the quality ceiling for local sentence embeddings. When your RAG pipeline's retrieval accuracy matters more than latency — when wrong context means wrong answers — this is the model to reach for. It beats cloud APIs on quality while keeping your data local and your costs at zero.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "When your RAG pipeline retrieves wrong documents, the LLM gives wrong answers. all-mpnet-base-v2 produces 768-dimensional embeddings that top semantic similarity benchmarks — beating even OpenAI's small embedding model, entirely local and free.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-mpnet-base-v2\")\n\ndocuments = [\n    \"Retrieval-augmented generation improves LLM accuracy\",\n    \"RAG pipelines fetch relevant context before prompting\",\n    \"Photosynthesis converts sunlight into chemical energy\",\n    \"Vector databases store high-dimensional embeddings\",\n]\n\nembeddings = model.encode(documents, normalize_embeddings=True)\nprint(embeddings.shape)  # (4, 768)\nprint(np.linalg.norm(embeddings[0]))  # ~1.0 (normalized)",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer and util — the core library for loading pre-trained embedding models and computing similarity."},
+        {"line": 4, "explanation": "Load all-mpnet-base-v2 — a 420MB model producing 768-dimensional vectors. Downloads once from HuggingFace Hub, runs locally afterward."},
+        {"line": 6, "explanation": "Define documents spanning different topics — RAG concepts, biology, and vector databases. A good embedding model must separate these clearly."},
+        {"line": 13, "explanation": "encode() with normalize_embeddings=True returns unit-length vectors. This means dot product equals cosine similarity — faster downstream math."},
+        {"line": 14, "explanation": "Shape is (4, 768) — four documents, each as a 768-dimensional vector. Twice the dimensions of MiniLM means richer semantic representation."},
+        {"line": 15, "explanation": "The norm is ~1.0 confirming normalization. Normalized embeddings let you use simple dot product instead of cosine similarity."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmpnet = SentenceTransformer(\"all-mpnet-base-v2\")\n\ndocs = [\n    \"The bank approved my mortgage application\",\n    \"We sat on the river bank at sunset\",\n    \"Financial institutions process loan requests\",\n]\nquery = \"getting a home loan\"\n\nemb_docs = mpnet.encode(docs, convert_to_tensor=True)\nemb_q = mpnet.encode(query, convert_to_tensor=True)\nscores = util.cos_sim(emb_q, emb_docs)[0]\n\nranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 3, "explanation": "Load the mpnet model — we'll use it to disambiguate tricky polysemous words like 'bank' (financial vs. river)."},
+        {"line": 5, "explanation": "Three documents: two about banking (different sense) and one about finance. The model must understand which 'bank' matches a loan query."},
+        {"line": 10, "explanation": "Query about home loans — no exact word overlap with any document, forcing the model to rely on deep semantic understanding."},
+        {"line": 12, "explanation": "convert_to_tensor=True returns PyTorch tensors for GPU-accelerated similarity computation."},
+        {"line": 14, "explanation": "cos_sim returns a similarity matrix. [0] extracts scores for our single query against all documents."},
+        {"line": 16, "explanation": "Sort by score descending. MPNet correctly ranks 'bank (mortgage)' and 'financial institutions' above 'river bank'."},
+        {"line": 17, "explanation": "The score gap between financial-bank and river-bank is wider with mpnet than smaller models — better disambiguation."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "all-MiniLM-L6-v2 (80MB)",
+      "right_label": "all-mpnet-base-v2 (420MB)",
+      "items": [
+        {"left": "384 dimensions", "right": "768 dimensions — richer representation"},
+        {"left": "~14K sentences/sec", "right": "~2.8K sentences/sec — still fast enough for production"},
+        {"left": "STS benchmark: 0.789", "right": "STS benchmark: 0.838 — top of class"},
+        {"left": "Best for: prototyping, edge, real-time", "right": "Best for: production RAG, high-accuracy retrieval"},
+        {"left": "Good at synonym matching", "right": "Excels at disambiguation and nuanced meaning"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now wield the highest-quality local embedding model — your RAG pipelines just got a serious accuracy upgrade!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EmbeddingBenchmark` class that compares the quality of two simulated embedding strategies. Implement a `WordEmbedder` (bag-of-words: word frequency vectors) and a `BigramEmbedder` (bag-of-bigrams: consecutive word pair frequency vectors). The benchmark should run a set of query-document pairs through both embedders and report which one produces better similarity rankings. Higher-dimensional bigram embeddings should capture more nuance — similar to how mpnet's 768 dims beat MiniLM's 384."
+      },
+      "starter_code": "import math\n\nclass WordEmbedder:\n    def encode(self, text: str) -> dict:\n        # Return word frequency vector: {word: count}\n        # Lowercase all words\n        pass\n\nclass BigramEmbedder:\n    def encode(self, text: str) -> dict:\n        # Return bigram frequency vector: {\"word1_word2\": count}\n        # Lowercase, create pairs of consecutive words\n        # e.g., \"the cat sat\" -> {\"the_cat\": 1, \"cat_sat\": 1}\n        pass\n\ndef cosine_similarity(vec_a: dict, vec_b: dict) -> float:\n    # Compute cosine similarity between two dict vectors\n    # Return 0.0 if either vector has zero magnitude\n    pass\n\nclass EmbeddingBenchmark:\n    def __init__(self):\n        self.word_emb = WordEmbedder()\n        self.bigram_emb = BigramEmbedder()\n\n    def score_retrieval(self, query: str, relevant_doc: str,\n                        irrelevant_doc: str, embedder) -> bool:\n        # Return True if the embedder ranks relevant_doc higher than\n        # irrelevant_doc for the given query\n        pass\n\n    def compare(self, test_cases: list[tuple]) -> dict:\n        # test_cases: [(query, relevant_doc, irrelevant_doc), ...]\n        # Run each test case through both embedders\n        # Return {\"word\": correct_count, \"bigram\": correct_count}\n        pass\n\n# Test it:\nbenchmark = EmbeddingBenchmark()\ntest_cases = [\n    (\"machine learning models\",\n     \"machine learning algorithms train on data\",\n     \"the learning curve was steep\"),\n    (\"python web framework\",\n     \"python web framework for APIs\",\n     \"a python snake in the web\"),\n]\nresults = benchmark.compare(test_cases)\nprint(results[\"bigram\"] >= results[\"word\"])\nprint(type(results))",
+      "expected_output": "True\n<class 'dict'>",
+      "hints": {
+        "en": [
+          "WordEmbedder.encode: use text.lower().split() and count words with a dict",
+          "BigramEmbedder.encode: after splitting, zip words[:-1] with words[1:] to get consecutive pairs, join with '_'",
+          "In score_retrieval, encode all three texts, compute cosine_similarity(query, relevant) and cosine_similarity(query, irrelevant), return whether relevant score is higher"
+        ]
+      },
+      "test_code": "we = WordEmbedder()\nassert we.encode(\"hello world\") == {\"hello\": 1, \"world\": 1}\nassert we.encode(\"go go go\") == {\"go\": 3}\nbe = BigramEmbedder()\nassert be.encode(\"the cat sat\") == {\"the_cat\": 1, \"cat_sat\": 1}\nassert be.encode(\"go go go\") == {\"go_go\": 2}\nsim = cosine_similarity({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1})\nassert abs(sim - 1.0) < 0.001\nassert cosine_similarity({\"a\": 1}, {\"b\": 1}) == 0.0\nb = EmbeddingBenchmark()\nresult = b.score_retrieval(\"a b c\", \"a b c d\", \"x y z\", b.word_emb)\nassert result is True\nresults = b.compare([(\"a b\", \"a b c\", \"x y z\")])\nassert isinstance(results, dict)\nassert \"word\" in results and \"bigram\" in results"
+    },
+    {
+      "instruction": {
+        "en": "Build a `NormalizedRetriever` class that demonstrates the performance benefit of pre-normalizing embeddings. Implement `encode_and_normalize(text)` that returns a unit-length word frequency vector (divide each value by the vector's magnitude), `dot_score(vec_a, vec_b)` that computes a simple dot product, and `retrieve(query, top_k)` that uses dot product on pre-normalized vectors — equivalent to cosine similarity but without redundant normalization at query time."
+      },
+      "starter_code": "import math\n\nclass NormalizedRetriever:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.doc_vectors = [self.encode_and_normalize(d) for d in documents]\n\n    def encode_and_normalize(self, text: str) -> dict:\n        # 1. Create word frequency vector (lowercase)\n        # 2. Compute magnitude: sqrt(sum of squares)\n        # 3. Divide each value by magnitude to get unit vector\n        # Return empty dict if text is empty\n        pass\n\n    def dot_score(self, vec_a: dict, vec_b: dict) -> float:\n        # Simple dot product: sum of a[key]*b[key] for shared keys\n        # On normalized vectors, this equals cosine similarity\n        pass\n\n    def retrieve(self, query: str, top_k: int = 3) -> list[dict]:\n        # Encode + normalize query, dot_score against all docs\n        # Return top-k results: [{\"document\": str, \"score\": float}]\n        pass\n\n# Test it:\nretriever = NormalizedRetriever([\n    \"deep learning neural networks\",\n    \"neural network training optimization\",\n    \"cooking Italian pasta recipes\",\n    \"deep sea ocean exploration\",\n])\n\nresults = retriever.retrieve(\"deep neural network learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(round(results[0][\"score\"], 4) > round(results[1][\"score\"], 4))\n\n# Verify normalization: magnitude should be ~1.0\nvec = retriever.encode_and_normalize(\"test words\")\nmagnitude = math.sqrt(sum(v**2 for v in vec.values()))\nprint(round(magnitude, 1))",
+      "expected_output": "2\ndeep learning neural networks\nTrue\n1.0",
+      "hints": {
+        "en": [
+          "In encode_and_normalize, first build word counts, then compute magnitude as math.sqrt(sum(v**2 for v in vec.values())), and return {word: count/magnitude}",
+          "dot_score is just sum(vec_a.get(k, 0) * vec_b.get(k, 0) for k in set(vec_a) & set(vec_b))",
+          "retrieve works the same as search — encode query, score all docs, sort descending, return top_k"
+        ]
+      },
+      "test_code": "r = NormalizedRetriever([\"a b c\", \"a a a\", \"x y z\"])\nvec = r.encode_and_normalize(\"a b c\")\nmag = math.sqrt(sum(v**2 for v in vec.values()))\nassert abs(mag - 1.0) < 0.001, f\"Vector not normalized: magnitude={mag}\"\nassert r.encode_and_normalize(\"\") == {}\nscore = r.dot_score({\"a\": 0.5, \"b\": 0.5}, {\"a\": 0.5, \"b\": 0.5})\nassert abs(score - 0.5) < 0.001\nassert r.dot_score({\"a\": 1}, {\"b\": 1}) == 0.0\nresults = r.retrieve(\"a b\", top_k=2)\nassert len(results) == 2\nassert results[0][\"score\"] >= results[1][\"score\"]\nassert all(\"document\" in res and \"score\" in res for res in results)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sentence embeddings", "all-mpnet-base-v2", "embedding quality comparison", "normalized embeddings", "dot product vs cosine similarity", "ONNX acceleration", "production RAG retrieval"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install", "cosine similarity"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

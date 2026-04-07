@@ -1,0 +1,123 @@
+{
+  "id": "qwen25_7b_instruct",
+  "topic": "qwen25_7b_instruct",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen2.5-7B-Instruct: A Capable Local LLM Backend",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn to run Qwen2.5-7B-Instruct locally using Hugging Face Transformers — a powerful 7-billion-parameter instruction-tuned model ideal for local chatbots, code generation, structured outputs, and serving as a backend for your own AI applications.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Run a Serious LLM on Your Own Hardware\n\nVaathiyaar here! We've played with tiny models before — now let's level up. **Qwen2.5-7B-Instruct** from Alibaba's Qwen team is a 7-billion-parameter instruction-tuned model that rivals many commercial APIs in quality. It follows complex instructions, generates code, produces structured JSON, and holds multi-turn conversations — all running locally on your machine.\n\nIf you're building a local AI assistant (like our Homie project), Qwen2.5-7B is one of the best open-weight models to serve as your backend brain.\n\n### Why Qwen2.5-7B-Instruct?\n\n| Feature | Qwen2.5-7B-Instruct | GPT-3.5-Turbo | Llama-3-8B-Instruct | Mistral-7B-Instruct |\n|---|---|---|---|---|\n| Parameters | 7B | ~175B (cloud) | 8B | 7B |\n| Runs Locally | Yes (~16GB RAM) | No | Yes (~16GB RAM) | Yes (~16GB RAM) |\n| Instruction Following | Excellent | Excellent | Good | Good |\n| Code Generation | Strong | Strong | Moderate | Moderate |\n| Structured Output (JSON) | Native support | Yes | Limited | Limited |\n| License | Apache 2.0 | Proprietary | Llama License | Apache 2.0 |\n\nQwen2.5-7B-Instruct excels at instruction following and structured output — two features that make it ideal as a programmable AI backend.\n\n### Loading the Model\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nimport torch\n\nmodel_name = \"Qwen/Qwen2.5-7B-Instruct\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name,\n    torch_dtype=torch.float16,\n    device_map=\"auto\"\n)\n```\n\nThe model is ~14GB in float16 precision. `device_map=\"auto\"` distributes layers across available GPUs, or falls back to CPU (slower but works). For CPU-only machines, consider using GGUF quantized versions via `llama-cpp-python`.\n\n### Chat-Style Inference\n\nQwen2.5 uses a chat template — structure your input as a conversation:\n\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a senior Python developer. Be concise.\"},\n    {\"role\": \"user\", \"content\": \"Write a function to flatten a nested list.\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(\n    **inputs,\n    max_new_tokens=300,\n    temperature=0.7,\n    top_p=0.8,\n    repetition_penalty=1.05\n)\nresponse = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(response)\n```\n\n### Structured JSON Output\n\nOne of Qwen2.5's strengths is generating valid JSON on demand:\n\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"Respond ONLY with valid JSON. No explanation.\"},\n    {\"role\": \"user\", \"content\": \"Extract entities: 'Elon Musk founded SpaceX in 2002 in Hawthorne, California'\"}\n]\n\n# ... same generate pattern as above\n# Output: {\"person\": \"Elon Musk\", \"company\": \"SpaceX\", \"year\": 2002, \"location\": \"Hawthorne, California\"}\n```\n\nThis makes Qwen2.5-7B perfect for data extraction pipelines, function-calling agents, and tool-use workflows.\n\n### Serving as a Local API with vLLM\n\nFor production use, serve the model as an OpenAI-compatible API:\n\n```python\n# Terminal: pip install vllm\n# Terminal: vllm serve Qwen/Qwen2.5-7B-Instruct --port 8000\n\nimport openai\n\nclient = openai.OpenAI(base_url=\"http://localhost:8000/v1\", api_key=\"unused\")\nresponse = client.chat.completions.create(\n    model=\"Qwen/Qwen2.5-7B-Instruct\",\n    messages=[{\"role\": \"user\", \"content\": \"Hello!\"}],\n    max_tokens=100\n)\nprint(response.choices[0].message.content)\n```\n\nvLLM gives you batched inference, continuous batching, and an OpenAI-compatible endpoint — any app that uses the OpenAI SDK works instantly with your local model.\n\n### Memory and Performance Tips\n\n| Technique | RAM Saved | Quality Impact |\n|---|---|---|\n| float16 (default above) | ~50% vs float32 | Negligible |\n| 8-bit quantization (bitsandbytes) | ~75% vs float32 | Minor |\n| 4-bit quantization (GPTQ/AWQ) | ~87% vs float32 | Moderate |\n| KV-cache optimization | Varies | None |\n| Flash Attention 2 | Faster, not smaller | None |\n\n> **Key Insight:** Qwen2.5-7B-Instruct is the sweet spot between capability and local feasibility. It follows instructions precisely, generates structured JSON natively, and can be served as an OpenAI-compatible API via vLLM — making it an ideal drop-in backend for local AI applications like Homie. You get GPT-3.5-class performance with zero API costs and full data privacy.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if your AI assistant ran entirely on your own hardware — with GPT-3.5-class quality, zero API costs, and full data privacy? Qwen2.5-7B-Instruct is a 7-billion-parameter instruction-tuned model that excels at code generation, structured JSON output, and multi-turn conversations.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\nimport torch\n\nmodel_name = \"Qwen/Qwen2.5-7B-Instruct\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=torch.float16, device_map=\"auto\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a senior Python developer.\"},\n    {\"role\": \"user\", \"content\": \"Write a function to flatten a nested list.\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(\n    **inputs, max_new_tokens=300, temperature=0.7, top_p=0.8\n)\nresponse = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(response)",
+      "steps": [
+        {"line": 1, "explanation": "Import AutoModelForCausalLM to load the language model and AutoTokenizer for text-to-token conversion from Hugging Face Transformers."},
+        {"line": 2, "explanation": "Import torch to specify float16 precision, which halves memory usage compared to float32 with negligible quality loss."},
+        {"line": 4, "explanation": "Specify the Hugging Face model ID. Qwen2.5-7B-Instruct is a 7B-parameter instruction-tuned model — about 14GB in float16."},
+        {"line": 5, "explanation": "Load the tokenizer that knows Qwen2.5's vocabulary and special tokens. Downloads once, then loads from cache."},
+        {"line": 6, "explanation": "Load model weights in float16 precision. device_map='auto' distributes layers across GPUs or falls back to CPU."},
+        {"line": 10, "explanation": "Structure input as a chat conversation — a system message sets the persona, a user message contains the actual request."},
+        {"line": 15, "explanation": "apply_chat_template formats messages into the special token structure Qwen2.5 expects, including role markers and turn separators."},
+        {"line": 18, "explanation": "Tokenize the formatted text into tensor IDs and move to the model's device (GPU or CPU)."},
+        {"line": 20, "explanation": "Generate up to 300 new tokens with temperature=0.7 for moderate creativity and top_p=0.8 for nucleus sampling."},
+        {"line": 23, "explanation": "Decode only the generated tokens (slicing off the prompt) back into readable text, stripping special tokens."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "# Serve Qwen2.5 as an OpenAI-compatible API\n# First: pip install vllm openai\n# Terminal: vllm serve Qwen/Qwen2.5-7B-Instruct --port 8000\n\nimport openai\n\nclient = openai.OpenAI(\n    base_url=\"http://localhost:8000/v1\",\n    api_key=\"unused\"\n)\n\nresponse = client.chat.completions.create(\n    model=\"Qwen/Qwen2.5-7B-Instruct\",\n    messages=[\n        {\"role\": \"system\", \"content\": \"Respond only with valid JSON.\"},\n        {\"role\": \"user\", \"content\": \"Extract: 'Python 3.12 released Oct 2023'\"}\n    ],\n    max_tokens=150,\n    temperature=0.3\n)\n\nprint(response.choices[0].message.content)",
+      "steps": [
+        {"line": 1, "explanation": "vLLM is a high-performance inference engine that serves any HF model as a REST API with OpenAI-compatible endpoints."},
+        {"line": 5, "explanation": "We use the standard OpenAI Python SDK — any existing OpenAI code works with zero changes, just a different base_url."},
+        {"line": 7, "explanation": "Point the client to your local vLLM server. The api_key is required by the SDK but ignored by vLLM."},
+        {"line": 12, "explanation": "Use the exact same chat.completions.create() interface as OpenAI's API — model name matches the one vLLM is serving."},
+        {"line": 15, "explanation": "The system message instructs JSON-only output. Qwen2.5 excels at structured generation — it reliably produces valid JSON."},
+        {"line": 18, "explanation": "max_tokens limits response length. temperature=0.3 keeps output focused and deterministic — ideal for structured extraction."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud API (GPT-3.5/4)",
+      "right_label": "Local Qwen2.5-7B-Instruct",
+      "items": [
+        {"left": "Pay per token ($0.002-0.06/1K)", "right": "Completely free after download"},
+        {"left": "Data sent to third-party servers", "right": "Data never leaves your machine"},
+        {"left": "Rate limits and usage caps", "right": "Unlimited requests, your hardware is the limit"},
+        {"left": "Highest quality (GPT-4 class)", "right": "GPT-3.5-class quality, excellent for most tasks"},
+        {"left": "Requires internet connection", "right": "Fully offline after model download"},
+        {"left": "Vendor lock-in to API provider", "right": "OpenAI-compatible API via vLLM — switch anytime"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now run a GPT-3.5-class model locally and serve it as an API — your own private AI backend with zero recurring costs!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LocalLLMRouter` class that routes user prompts to different model configurations based on task type. It should detect the task type from the prompt ('code' if the prompt contains 'function', 'class', 'code', or 'implement'; 'json' if it contains 'json', 'extract', or 'structured'; 'chat' otherwise — check case-insensitively). Each task type maps to a generation config: 'code' uses temperature=0.2, max_tokens=512; 'json' uses temperature=0.1, max_tokens=256; 'chat' uses temperature=0.7, max_tokens=300. Implement `detect_task(prompt)` returning the task type string, `get_config(task_type)` returning the config dict, and `route(prompt)` returning a dict with keys 'task_type', 'config', and 'messages' (a list with a system message appropriate to the task and the user message)."
+      },
+      "starter_code": "class LocalLLMRouter:\n    TASK_KEYWORDS = {\n        \"code\": [\"function\", \"class\", \"code\", \"implement\"],\n        \"json\": [\"json\", \"extract\", \"structured\"]\n    }\n\n    CONFIGS = {\n        \"code\": {\"temperature\": 0.2, \"max_tokens\": 512},\n        \"json\": {\"temperature\": 0.1, \"max_tokens\": 256},\n        \"chat\": {\"temperature\": 0.7, \"max_tokens\": 300}\n    }\n\n    SYSTEM_PROMPTS = {\n        \"code\": \"You are a Python code generator. Return only code.\",\n        \"json\": \"You are a JSON extractor. Return only valid JSON.\",\n        \"chat\": \"You are a helpful assistant. Be concise.\"\n    }\n\n    def detect_task(self, prompt: str) -> str:\n        # Check prompt (case-insensitive) against TASK_KEYWORDS\n        # Return 'code', 'json', or 'chat' (default)\n        pass\n\n    def get_config(self, task_type: str) -> dict:\n        # Return the config dict for the given task_type\n        pass\n\n    def route(self, prompt: str) -> dict:\n        # 1. Detect task type\n        # 2. Get config\n        # 3. Build messages list with system prompt and user prompt\n        # 4. Return {\"task_type\": ..., \"config\": ..., \"messages\": [...]}\n        pass\n\n# Test it:\nrouter = LocalLLMRouter()\nr1 = router.route(\"Write a function to sort a list\")\nprint(r1[\"task_type\"])\nprint(r1[\"config\"][\"temperature\"])\n\nr2 = router.route(\"Extract JSON from this text\")\nprint(r2[\"task_type\"])\nprint(len(r2[\"messages\"]))\n\nr3 = router.route(\"Hello, how are you?\")\nprint(r3[\"task_type\"])",
+      "expected_output": "code\n0.2\njson\n2\nchat",
+      "hints": {
+        "en": [
+          "In detect_task(), convert the prompt to lowercase and check if any keyword from each task type appears using 'any(kw in prompt_lower for kw in keywords)'",
+          "get_config() is a simple dictionary lookup: return self.CONFIGS[task_type]",
+          "In route(), build messages as [{\"role\": \"system\", \"content\": self.SYSTEM_PROMPTS[task_type]}, {\"role\": \"user\", \"content\": prompt}]"
+        ]
+      },
+      "test_code": "router = LocalLLMRouter()\nassert router.detect_task(\"Write a function\") == \"code\"\nassert router.detect_task(\"implement a CLASS\") == \"code\"\nassert router.detect_task(\"Extract JSON data\") == \"json\"\nassert router.detect_task(\"Give me structured output\") == \"json\"\nassert router.detect_task(\"Hello there\") == \"chat\"\nassert router.get_config(\"code\") == {\"temperature\": 0.2, \"max_tokens\": 512}\nassert router.get_config(\"json\") == {\"temperature\": 0.1, \"max_tokens\": 256}\nassert router.get_config(\"chat\") == {\"temperature\": 0.7, \"max_tokens\": 300}\nr = router.route(\"Write code for sorting\")\nassert r[\"task_type\"] == \"code\"\nassert r[\"config\"][\"temperature\"] == 0.2\nassert len(r[\"messages\"]) == 2\nassert r[\"messages\"][0][\"role\"] == \"system\"\nassert r[\"messages\"][1][\"role\"] == \"user\"\nassert r[\"messages\"][1][\"content\"] == \"Write code for sorting\"\nr2 = router.route(\"Hello\")\nassert r2[\"task_type\"] == \"chat\"\nassert r2[\"messages\"][0][\"content\"] == \"You are a helpful assistant. Be concise.\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `ModelMemoryCalculator` class that estimates GPU/RAM requirements for running a language model locally. It should accept `param_billions` (number of parameters in billions), `precision` ('float32', 'float16', 'int8', or 'int4'), and `context_length` (default 4096). Implement `bytes_per_param()` returning bytes per parameter for the precision (float32=4, float16=2, int8=1, int4=0.5), `model_size_gb()` returning estimated model size in GB, `kv_cache_gb()` returning estimated KV-cache size in GB (formula: 2 * param_billions * context_length * bytes_per_param() / 1e9 * 0.05), `total_gb()` returning model_size_gb + kv_cache_gb rounded to 1 decimal, and `can_run(available_gb)` returning True if available_gb >= total_gb()."
+      },
+      "starter_code": "class ModelMemoryCalculator:\n    BYTES_MAP = {\n        \"float32\": 4,\n        \"float16\": 2,\n        \"int8\": 1,\n        \"int4\": 0.5\n    }\n\n    def __init__(self, param_billions: float, precision: str = \"float16\",\n                 context_length: int = 4096):\n        # Validate precision is in BYTES_MAP, store attributes\n        pass\n\n    def bytes_per_param(self) -> float:\n        # Return bytes per parameter for self.precision\n        pass\n\n    def model_size_gb(self) -> float:\n        # param_billions * 1e9 * bytes_per_param / 1e9 = param_billions * bytes_per_param\n        pass\n\n    def kv_cache_gb(self) -> float:\n        # 2 * param_billions * context_length * bytes_per_param / 1e9 * 0.05\n        pass\n\n    def total_gb(self) -> float:\n        # model_size_gb + kv_cache_gb, rounded to 1 decimal\n        pass\n\n    def can_run(self, available_gb: float) -> bool:\n        # True if available_gb >= total_gb()\n        pass\n\n# Test it:\ncalc = ModelMemoryCalculator(7, \"float16\")\nprint(calc.model_size_gb())\nprint(calc.total_gb())\nprint(calc.can_run(16))\n\ncalc4 = ModelMemoryCalculator(7, \"int4\")\nprint(calc4.total_gb())\nprint(calc4.can_run(4))",
+      "expected_output": "14.0\n14.3\nTrue\n3.6\nTrue",
+      "hints": {
+        "en": [
+          "In __init__, check 'if precision not in self.BYTES_MAP: raise ValueError(...)' then store all three attributes",
+          "model_size_gb is simply self.param_billions * self.bytes_per_param() — the 1e9 factors cancel out",
+          "Use round(value, 1) in total_gb() to get one decimal place"
+        ]
+      },
+      "test_code": "calc = ModelMemoryCalculator(7, \"float16\")\nassert calc.bytes_per_param() == 2\nassert calc.model_size_gb() == 14.0\nassert round(calc.kv_cache_gb(), 4) == round(2 * 7 * 4096 * 2 / 1e9 * 0.05, 4)\nassert calc.total_gb() == 14.3\nassert calc.can_run(16) == True\nassert calc.can_run(10) == False\ncalc32 = ModelMemoryCalculator(7, \"float32\")\nassert calc32.model_size_gb() == 28.0\ncalc4 = ModelMemoryCalculator(7, \"int4\")\nassert calc4.model_size_gb() == 3.5\nassert calc4.total_gb() == 3.6\nassert calc4.can_run(4) == True\nassert calc4.can_run(3) == False\ntry:\n    ModelMemoryCalculator(7, \"float8\")\n    assert False, \"Should have raised ValueError\"\nexcept ValueError:\n    pass\ncalc_ctx = ModelMemoryCalculator(7, \"float16\", context_length=8192)\nassert calc_ctx.kv_cache_gb() > calc.kv_cache_gb()"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["local LLM inference", "Qwen2.5-7B-Instruct", "Hugging Face Transformers", "chat templates", "text generation parameters", "structured JSON output", "vLLM serving", "OpenAI-compatible API", "model quantization"],
+    "concepts_required": ["python classes", "dictionaries", "pip install", "basic ML concepts", "REST APIs"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

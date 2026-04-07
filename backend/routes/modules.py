@@ -63,7 +63,7 @@ async def get_job_status(job_id: str):
 
 
 @router.get("/generated/{user_id}")
-async def list_generated_modules(user_id: int):
+async def list_generated_modules(user_id: str):
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     rows = conn.execute(

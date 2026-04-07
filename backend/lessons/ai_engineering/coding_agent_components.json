@@ -1,0 +1,125 @@
+{
+  "id": "coding_agent_components",
+  "topic": "coding_agent_components",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Components of a Coding Agent"
+  },
+  "description": {
+    "en": "Understand the core building blocks of a coding agent — the LLM backbone, tool system, memory, planning loop, and sandboxed execution — and wire them together in Python."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Building Blocks of a Coding Agent\n\nWelcome back, coder! Vaathiyaar here. Today we crack open the engine of a **coding agent** — a system that reads requirements, writes code, runs it, and fixes its own mistakes. Tools like Claude Code, Cursor, and Devin all share the same fundamental architecture. Once you see the components, you can build your own.\n\n### The Agent Loop\n\nEvery coding agent is a **loop**: observe → think → act → observe again. The LLM decides what to do next based on the full conversation history plus tool results. The loop keeps running until the task is complete or a budget is exhausted.\n\n```python\ndef agent_loop(task: str, tools: dict, max_steps: int = 20) -> str:\n    messages = [{\"role\": \"user\", \"content\": task}]\n    for step in range(max_steps):\n        response = call_llm(messages)          # Think\n        if response.done:\n            return response.content\n        result = execute_tool(response.tool_call, tools)  # Act\n        messages.append(response.as_message())\n        messages.append({\"role\": \"tool\", \"content\": result})  # Observe\n    return \"Max steps reached\"\n```\n\n### The Five Components\n\n| Component | Role | Example |\n|-----------|------|----------|\n| **LLM Backbone** | Reasoning engine; decides next action | Claude, GPT-4o |\n| **Tool System** | Lets the agent interact with the world | file read/write, shell, search |\n| **Memory** | Retains context across steps | conversation history, vector store |\n| **Planner** | Breaks a task into sub-steps | todo list, dependency graph |\n| **Sandbox** | Executes code safely | Docker container, subprocess |\n\n### 1. Tool System\n\nTools are plain Python functions with a schema the LLM can read. The agent picks a tool by name and passes arguments:\n\n```python\nimport json, subprocess\n\nTOOLS = {\n    \"read_file\": lambda path: open(path).read(),\n    \"write_file\": lambda path, content: open(path, \"w\").write(content),\n    \"run_shell\": lambda cmd: subprocess.run(\n        cmd, shell=True, capture_output=True, text=True, timeout=30\n    ).stdout,\n}\n\ndef execute_tool(tool_call, tools):\n    fn = tools[tool_call.name]\n    return fn(**tool_call.arguments)\n```\n\n### 2. Memory & Context Management\n\nCoding agents quickly fill their context window. Smart agents compress old steps, summarize file contents, and keep a **scratchpad** of key decisions:\n\n```python\nclass AgentMemory:\n    def __init__(self, max_tokens=100_000):\n        self.messages = []\n        self.scratchpad = {}  # key facts the agent wants to remember\n\n    def add(self, message):\n        self.messages.append(message)\n        if self.token_count() > self.max_tokens:\n            self._compress()  # summarize old messages\n\n    def _compress(self):\n        old = self.messages[:len(self.messages)//2]\n        summary = call_llm([{\"role\": \"user\",\n            \"content\": \"Summarize these steps: \" + str(old)}])\n        self.messages = [{\"role\": \"system\",\n            \"content\": summary}] + self.messages[len(self.messages)//2:]\n```\n\n### 3. Planner\n\nBefore diving into code the agent writes a plan — a list of ordered steps. After each action it marks progress and re-evaluates:\n\n```python\nSYSTEM_PROMPT = \"\"\"You are a coding agent. Before acting:\n1. Write a numbered plan\n2. Execute one step at a time\n3. After each step, update your plan\n4. Stop when all steps are done\"\"\"\n```\n\n### 4. Sandboxed Execution\n\nRunning LLM-generated code without a sandbox is dangerous. Production agents use containers or restricted subprocesses:\n\n```python\nimport subprocess\n\ndef safe_run(code: str, timeout: int = 10) -> str:\n    result = subprocess.run(\n        [\"python\", \"-c\", code],\n        capture_output=True, text=True,\n        timeout=timeout,\n    )\n    return result.stdout if result.returncode == 0 else result.stderr\n```\n\n### Putting It All Together\n\nA minimal coding agent is surprisingly short — under 100 lines. The magic is in the loop: the LLM reasons, calls tools, observes results, and repeats. Each component can be swapped independently: upgrade the LLM, add new tools, or switch from a subprocess sandbox to Docker.\n\n> **Key Insight:** A coding agent is not one monolithic program — it is five composable components (LLM, tools, memory, planner, sandbox) connected by a simple loop. Master each piece and you can build agents that rival commercial offerings."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A coding agent is a loop: observe → think → act → repeat. Today we dissect its five components — LLM backbone, tool system, memory, planner, and sandbox — and wire them together in Python.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_1",
+      "nodes": [
+        {"id": "loop", "label": "Agent Loop"},
+        {"id": "llm", "label": "LLM Backbone"},
+        {"id": "tools", "label": "Tool System"},
+        {"id": "memory", "label": "Memory"},
+        {"id": "planner", "label": "Planner"},
+        {"id": "sandbox", "label": "Sandbox"}
+      ],
+      "edges": [
+        {"from": "loop", "to": "llm"},
+        {"from": "loop", "to": "tools"},
+        {"from": "loop", "to": "memory"},
+        {"from": "loop", "to": "planner"},
+        {"from": "loop", "to": "sandbox"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import subprocess, json\n\n# 1. Define tools the agent can use\nTOOLS = {\n    \"read_file\": lambda path: open(path).read(),\n    \"write_file\": lambda path, content: open(path, \"w\").write(content),\n    \"run_shell\": lambda cmd: subprocess.run(\n        cmd, shell=True, capture_output=True, text=True, timeout=30\n    ).stdout,\n}\n\n# 2. Tool dispatcher\ndef execute_tool(tool_call, tools):\n    fn = tools[tool_call[\"name\"]]\n    return fn(**tool_call[\"arguments\"])\n\n# 3. The agent loop\ndef agent_loop(task, tools, max_steps=20):\n    messages = [{\"role\": \"user\", \"content\": task}]\n    for step in range(max_steps):\n        response = call_llm(messages)\n        if response[\"done\"]:\n            return response[\"content\"]\n        result = execute_tool(response[\"tool_call\"], tools)\n        messages.append({\"role\": \"assistant\", \"content\": json.dumps(response[\"tool_call\"])})\n        messages.append({\"role\": \"tool\", \"content\": result})\n    return \"Max steps reached\"",
+      "steps": [
+        {"line": 1, "explanation": "Import subprocess for shell execution and json for serializing tool calls."},
+        {"line": 4, "explanation": "Define tools as a dictionary mapping names to callable functions. The LLM picks a tool by name."},
+        {"line": 5, "explanation": "read_file: a simple tool that returns the contents of a file at the given path."},
+        {"line": 6, "explanation": "write_file: lets the agent create or overwrite files — the core of a coding agent."},
+        {"line": 7, "explanation": "run_shell: executes a shell command and returns stdout. The timeout prevents infinite hangs."},
+        {"line": 13, "explanation": "The dispatcher looks up the tool by name and calls it with the LLM-provided arguments."},
+        {"line": 18, "explanation": "The agent loop: take a task, call the LLM in a loop, execute tools, and append results."},
+        {"line": 21, "explanation": "Each iteration: the LLM sees the full conversation and decides the next action (think step)."},
+        {"line": 23, "explanation": "If the LLM signals 'done', return its final answer and exit the loop."},
+        {"line": 24, "explanation": "Otherwise execute the chosen tool (act step) and feed the result back (observe step)."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "class AgentMemory:\n    def __init__(self, max_tokens=100_000):\n        self.messages = []\n        self.scratchpad = {}\n        self.max_tokens = max_tokens\n\n    def add(self, message):\n        self.messages.append(message)\n        if self.token_count() > self.max_tokens:\n            self._compress()\n\n    def _compress(self):\n        mid = len(self.messages) // 2\n        old = self.messages[:mid]\n        summary = call_llm([{\"role\": \"user\",\n            \"content\": \"Summarize: \" + str(old)}])\n        self.messages = [\n            {\"role\": \"system\", \"content\": summary}\n        ] + self.messages[mid:]\n\n    def token_count(self):\n        return sum(len(m[\"content\"]) // 4 for m in self.messages)",
+      "steps": [
+        {"line": 1, "explanation": "AgentMemory manages the conversation history and keeps it within budget."},
+        {"line": 4, "explanation": "The scratchpad stores key facts (e.g., file paths, decisions) the agent wants quick access to."},
+        {"line": 9, "explanation": "After every message, check if we have exceeded the token budget."},
+        {"line": 12, "explanation": "Compression: summarize the oldest half of messages into a single system message."},
+        {"line": 15, "explanation": "Use the LLM itself to create the summary — it knows what is important."},
+        {"line": 21, "explanation": "A rough token estimator: ~4 characters per token. Production agents use a real tokenizer."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now know the five components of a coding agent! Time to build your own."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a tool registry: create a dictionary called `TOOLS` with three entries — 'list_files' (returns a list of filenames in a directory using os.listdir), 'read_file' (returns file contents), and 'count_lines' (returns the number of lines in a file as a string). Then write an `execute_tool(name, args)` function that looks up the tool by name and calls it with the given args dict."
+      },
+      "starter_code": "import os\n\nTOOLS = {\n    # Add three tools here\n}\n\ndef execute_tool(name: str, args: dict) -> str:\n    # Look up and call the tool\n    pass\n\n# Test\nresult = execute_tool(\"count_lines\", {\"path\": \"test.txt\"})",
+      "expected_output": "Tool registry with 3 tools and a working dispatcher",
+      "hints": {
+        "en": [
+          "os.listdir(path) returns filenames; wrap it so it returns a string with str()",
+          "For count_lines, read the file and use len(content.splitlines())",
+          "execute_tool should do: return TOOLS[name](**args)"
+        ]
+      },
+      "test_code": "import tempfile, os\nwith tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:\n    f.write('line1\\nline2\\nline3')\n    tmp = f.name\nassert 'list_files' in TOOLS\nassert 'read_file' in TOOLS\nassert 'count_lines' in TOOLS\nassert execute_tool('count_lines', {'path': tmp}) == '3'\nassert 'line1' in execute_tool('read_file', {'path': tmp})\nos.unlink(tmp)"
+    },
+    {
+      "instruction": {
+        "en": "Implement a minimal `agent_step` function that simulates one iteration of an agent loop. It takes `messages` (list of dicts), a `mock_llm` function (that returns a dict with 'tool_call' or 'done'), and `tools` (dict of callables). If the LLM returns done=True, return the content. Otherwise, execute the tool, append the assistant and tool messages to the list, and return None."
+      },
+      "starter_code": "def agent_step(messages: list, mock_llm, tools: dict):\n    response = mock_llm(messages)\n    # If done, return response content\n    # Otherwise, execute tool call and append messages\n    pass",
+      "expected_output": "None (when tool executed) or final answer string (when done)",
+      "hints": {
+        "en": [
+          "Check response.get('done', False) to see if the agent is finished",
+          "Use tools[response['tool_call']['name']](**response['tool_call']['args']) to execute",
+          "Append two messages: one for the assistant's action, one for the tool result"
+        ]
+      },
+      "test_code": "msgs = [{'role': 'user', 'content': 'test'}]\nmock = lambda m: {'done': False, 'tool_call': {'name': 'echo', 'args': {'text': 'hi'}}}\ntools = {'echo': lambda text: text.upper()}\nresult = agent_step(msgs, mock, tools)\nassert result is None\nassert len(msgs) == 3\nassert msgs[-1]['content'] == 'HI'\nmock_done = lambda m: {'done': True, 'content': 'All done'}\nassert agent_step(msgs, mock_done, tools) == 'All done'"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["agent loop", "tool use", "LLM orchestration", "context management", "sandboxed execution", "agent planning"],
+    "concepts_required": ["python functions", "dictionaries", "classes", "subprocess"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

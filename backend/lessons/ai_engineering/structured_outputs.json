@@ -1,0 +1,69 @@
+{
+  "id": "structured_outputs",
+  "topic": "structured_outputs",
+  "track": "ai_engineering",
+  "module": "llm_patterns",
+  "order": 1,
+  "title": {
+    "en": "Structured Outputs with Pydantic + LLMs",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how to get reliable, typed JSON from LLMs using Pydantic models. Turn unpredictable text generation into structured data pipelines you can build production systems on.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": "polars_data",
+  "story_variants": {
+    "en": "## From Messy Text to Clean Data\n\nLarge Language Models are brilliant at understanding and generating text. But when you're building real applications, you don't want prose -- you want **structured data**. A JSON object. A typed Python object. Something you can validate, store in a database, and pass to the next step in your pipeline.\n\nThis is where **structured outputs** come in: techniques that force LLMs to return data matching a schema you define.\n\n### The Problem\n\n```python\n# Without structured outputs:\nresponse = client.chat(\"Extract the name and age from: 'John is 30 years old'\")\n# response.text might be:\n# \"The name is John and the age is 30.\"\n# or: \"Name: John\\nAge: 30\"\n# or: \"{name: 'John', age: 30}\"  -- not even valid JSON!\n```\n\nEvery response has a different format. Parsing is fragile. Production systems break.\n\n### Pydantic: Your Schema Definition Language\n\nPydantic lets you define data schemas as Python classes with type annotations:\n\n```python\nfrom pydantic import BaseModel, Field\nfrom typing import Optional\n\nclass Person(BaseModel):\n    name: str = Field(description=\"The person's full name\")\n    age: int = Field(description=\"Age in years\")\n    occupation: Optional[str] = Field(None, description=\"Job title if mentioned\")\n\n# Pydantic validates and coerces data:\nperson = Person(name=\"John\", age=\"30\")  # age coerced to int\nprint(person.model_dump())  # {'name': 'John', 'age': 30, 'occupation': None}\n```\n\n### OpenAI Structured Outputs\n\nOpenAI's API natively supports Pydantic models with `response_format`:\n\n```python\nfrom openai import OpenAI\nfrom pydantic import BaseModel\n\nclient = OpenAI()\n\nclass MovieReview(BaseModel):\n    title: str\n    rating: float\n    sentiment: str  # 'positive', 'negative', 'mixed'\n    key_themes: list[str]\n\nresponse = client.beta.chat.completions.parse(\n    model=\"gpt-4o\",\n    messages=[{\"role\": \"user\", \"content\": \"Review: Inception was mind-bending and visually stunning. 9/10.\"}],\n    response_format=MovieReview,\n)\n\nreview = response.choices[0].message.parsed\nprint(review.title)       # \"Inception\"\nprint(review.rating)      # 9.0\nprint(review.key_themes)  # [\"mind-bending\", \"visual effects\", \"sci-fi\"]\n```\n\nThe LLM is *constrained* to produce valid JSON matching your Pydantic model. No parsing needed.\n\n### Anthropic with Tool Use\n\nAnthropic's Claude supports structured outputs through tool use:\n\n```python\nimport anthropic\nfrom pydantic import BaseModel\nimport json\n\nclient = anthropic.Anthropic()\n\nclass ExtractedEvent(BaseModel):\n    event_name: str\n    date: str\n    location: str\n    attendee_count: int | None = None\n\nresponse = client.messages.create(\n    model=\"claude-sonnet-4-20250514\",\n    max_tokens=1024,\n    tools=[{\n        \"name\": \"extract_event\",\n        \"description\": \"Extract event details from text\",\n        \"input_schema\": ExtractedEvent.model_json_schema()\n    }],\n    tool_choice={\"type\": \"tool\", \"name\": \"extract_event\"},\n    messages=[{\"role\": \"user\", \"content\": \"PyCon US 2026 is in Long Beach, CA on May 14-22 with 3000 attendees.\"}]\n)\n\ntool_input = response.content[0].input\nevent = ExtractedEvent(**tool_input)\nprint(event.model_dump())\n# {'event_name': 'PyCon US 2026', 'date': '2026-05-14', 'location': 'Long Beach, CA', 'attendee_count': 3000}\n```\n\n### The Instructor Library\n\n`instructor` wraps multiple LLM APIs with a unified structured output interface:\n\n```python\nimport instructor\nfrom openai import OpenAI\nfrom pydantic import BaseModel\n\nclient = instructor.from_openai(OpenAI())\n\nclass UserInfo(BaseModel):\n    name: str\n    age: int\n    email: str | None = None\n\nuser = client.chat.completions.create(\n    model=\"gpt-4o\",\n    response_model=UserInfo,\n    messages=[{\"role\": \"user\", \"content\": \"John Doe is 30 and his email is john@example.com\"}],\n)\n\nprint(user)  # UserInfo(name='John Doe', age=30, email='john@example.com')\n```\n\n### Best Practices\n\n1. **Use Field descriptions**: They act as instructions to the LLM about what each field should contain\n2. **Keep models focused**: One model per extraction task, not a mega-schema\n3. **Use Optional for uncertain fields**: Don't force the LLM to hallucinate values\n4. **Add validators**: Pydantic's `@field_validator` catches bad data before it enters your pipeline\n5. **Handle failures**: Wrap in try/except for `ValidationError` and implement retries\n\n### Key Takeaways\n\n- Pydantic models define the shape of data you want from an LLM\n- OpenAI supports `response_format` with Pydantic models directly\n- Anthropic uses tool use with `model_json_schema()` for structured outputs\n- The `instructor` library provides a unified interface across providers\n- Field descriptions guide the LLM; Optional fields prevent hallucination",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Structured outputs turn unpredictable LLM text into validated, typed data using Pydantic models. The foundation of production AI systems.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from pydantic import BaseModel, Field\nfrom typing import Optional\n\nclass Person(BaseModel):\n    name: str = Field(description=\"The person's full name\")\n    age: int = Field(description=\"Age in years\")\n    occupation: Optional[str] = Field(None, description=\"Job title if mentioned\")\n\nperson = Person(name=\"Alice\", age=\"28\", occupation=\"Engineer\")\nprint(person.model_dump())\n# {'name': 'Alice', 'age': 28, 'occupation': 'Engineer'}",
+      "steps": [
+        {"line": 1, "explanation": "Import BaseModel and Field from Pydantic -- the foundation for structured outputs."},
+        {"line": 4, "explanation": "Define a data model as a Python class. Each field has a type annotation."},
+        {"line": 5, "explanation": "Field descriptions serve double duty: documentation for devs AND instructions for the LLM."},
+        {"line": 7, "explanation": "Optional fields with defaults prevent the LLM from hallucinating when data is missing."},
+        {"line": 9, "explanation": "Pydantic automatically coerces '28' (string) to 28 (int) based on the type annotation."},
+        {"line": 10, "explanation": "model_dump() converts to a clean dictionary -- ready for JSON, databases, or APIs."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from openai import OpenAI\nfrom pydantic import BaseModel\n\nclient = OpenAI()\n\nclass MovieReview(BaseModel):\n    title: str\n    rating: float\n    sentiment: str\n    key_themes: list[str]\n\nresponse = client.beta.chat.completions.parse(\n    model=\"gpt-4o\",\n    messages=[{\"role\": \"user\", \"content\": \"Inception was mind-bending. 9/10.\"}],\n    response_format=MovieReview,\n)\n\nreview = response.choices[0].message.parsed\nprint(review.title)       # Inception\nprint(review.rating)      # 9.0\nprint(review.key_themes)  # ['mind-bending', 'sci-fi', ...]",
+      "steps": [
+        {"line": 6, "explanation": "Define the exact shape of data you want the LLM to return."},
+        {"line": 12, "explanation": "Use the .parse() method with response_format set to your Pydantic model."},
+        {"line": 15, "explanation": "The LLM is constrained to output valid JSON matching MovieReview's schema."},
+        {"line": 18, "explanation": "The response is already parsed into a typed Pydantic object -- no JSON parsing needed."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Define a Pydantic model called `Recipe` with fields: name (str), prep_time_minutes (int), ingredients (list[str]), difficulty (str with values 'easy', 'medium', 'hard'), and optional vegetarian (bool, default None). Add Field descriptions to each."},
+      "expected_output": "A valid Pydantic model class with proper type annotations and Field descriptions",
+      "hints": ["Use from pydantic import BaseModel, Field", "Use Field(description='...') for each field", "Use Optional or | None for the vegetarian field with a default"],
+      "test_code": "r = Recipe(name='Pasta', prep_time_minutes=20, ingredients=['pasta', 'sauce'], difficulty='easy')\nassert r.name == 'Pasta'\nassert r.vegetarian is None\nassert r.model_dump()['prep_time_minutes'] == 20"
+    },
+    {
+      "instruction": {"en": "Write a function `extract_contacts(text: str, model_class)` that takes raw text and a Pydantic model class, and returns a dictionary of the model's JSON schema (using model_json_schema()). This schema would be sent to an LLM for structured extraction."},
+      "expected_output": "A JSON schema dictionary matching the Pydantic model",
+      "hints": ["Call model_class.model_json_schema()", "This returns a dict representing the JSON Schema", "The function is a helper for building LLM tool definitions"],
+      "test_code": "schema = extract_contacts('test', Person)\nassert 'properties' in schema\nassert 'name' in schema['properties']"
+    }
+  ]
+}

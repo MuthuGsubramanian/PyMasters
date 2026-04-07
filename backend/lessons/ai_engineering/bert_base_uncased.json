@@ -1,0 +1,120 @@
+{
+  "id": "bert_base_uncased",
+  "topic": "bert_base_uncased",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Masked Language Modeling with BERT",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master masked language modeling and transfer learning with google-bert/bert-base-uncased — the foundational transformer model that revolutionized NLP by learning deep bidirectional representations from unlabeled text.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Unmasking Language: BERT and the Bidirectional Revolution\n\nVaathiyaar here! Before 2018, language models could only read left-to-right or right-to-left — like reading a sentence with one eye closed. Then Google released **BERT** (Bidirectional Encoder Representations from Transformers) and changed everything. BERT reads the entire sentence at once, understanding each word in the context of *all* surrounding words. The `bert-base-uncased` model remains one of the most downloaded models on Hugging Face, and understanding it is essential for any AI engineer.\n\n### What Makes BERT Special?\n\n| Feature | GPT-style (Autoregressive) | BERT (Masked LM) |\n|---|---|---|\n| Direction | Left-to-right only | Bidirectional (full context) |\n| Pre-training task | Predict next token | Predict masked tokens |\n| Best for | Text generation | Understanding & classification |\n| Parameters (base) | 117M (GPT-1) | 110M |\n| Input handling | Causal attention mask | Full self-attention |\n\nBERT's secret sauce is **Masked Language Modeling (MLM)**: during training, 15% of input tokens are randomly masked, and the model learns to predict them using both left and right context. This forces deep bidirectional understanding.\n\n### Loading BERT for Masked Language Modeling\n\n```python\nfrom transformers import pipeline\n\nunmasker = pipeline(\"fill-mask\", model=\"bert-base-uncased\")\n\nresults = unmasker(\"The capital of France is [MASK].\")\nfor r in results:\n    print(f\"{r['score']:.4f} => {r['token_str']}\")\n# 0.9009 => paris\n# 0.0253 => lyon\n# 0.0077 => lille\n```\n\nBERT uses `[MASK]` as its special mask token. The model predicts what word belongs there, scored by probability. Notice the outputs are lowercase — \"uncased\" means the model lowercases all input.\n\n### Tokenization: WordPiece Under the Hood\n\n```python\nfrom transformers import BertTokenizer\n\ntokenizer = BertTokenizer.from_pretrained(\"bert-base-uncased\")\n\ntokens = tokenizer.tokenize(\"Transfer learning is unstoppable!\")\nprint(tokens)\n# ['transfer', 'learning', 'is', 'un', '##stop', '##pa', '##ble', '!']\n\nencoded = tokenizer(\"Hello BERT\", return_tensors=\"pt\")\nprint(encoded.input_ids)\n# tensor([[ 101, 7592, 14324,  102]])\n```\n\nBERT uses **WordPiece tokenization** — common words stay whole, rare words split into subwords prefixed with `##`. Token IDs 101 and 102 are special: `[CLS]` (classification) and `[SEP]` (separator).\n\n### Extracting Embeddings for Downstream Tasks\n\n```python\nfrom transformers import BertModel, BertTokenizer\nimport torch\n\ntokenizer = BertTokenizer.from_pretrained(\"bert-base-uncased\")\nmodel = BertModel.from_pretrained(\"bert-base-uncased\")\n\ninputs = tokenizer(\"Transfer learning is powerful\",\n                   return_tensors=\"pt\")\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\ncls_embedding = outputs.last_hidden_state[:, 0, :]\nprint(cls_embedding.shape)  # torch.Size([1, 768])\n```\n\nThe `[CLS]` token embedding (position 0) serves as a sentence-level representation. This 768-dimensional vector is what gets fed into classification heads for sentiment analysis, NER, question answering, and more.\n\n### Fine-Tuning BERT for Classification\n\n```python\nfrom transformers import BertForSequenceClassification\n\nmodel = BertForSequenceClassification.from_pretrained(\n    \"bert-base-uncased\", num_labels=2\n)\n# model now has BERT + a classification head\n# Fine-tune on your labeled dataset:\n# optimizer.zero_grad()\n# outputs = model(**batch, labels=labels)\n# outputs.loss.backward()\n# optimizer.step()\n```\n\nHugging Face provides task-specific wrappers. `BertForSequenceClassification` adds a linear layer on top of the `[CLS]` embedding — freeze BERT layers for feature extraction, or train end-to-end for full fine-tuning.\n\n### BERT vs Modern Alternatives\n\n| Model | Year | Params | Best Use Case |\n|---|---|---|---|\n| bert-base-uncased | 2018 | 110M | Classification, NER, QA |\n| roberta-base | 2019 | 125M | Improved BERT (more data, no NSP) |\n| deberta-v3-base | 2021 | 86M | State-of-art NLU on benchmarks |\n| ModernBERT | 2024 | 149M | Long context, code-aware |\n\nBERT is not the newest, but understanding its architecture — masked LM, WordPiece, `[CLS]`/`[SEP]` tokens, bidirectional attention — is fundamental. Every encoder model since builds on BERT's design.\n\n> **Key Insight:** BERT's masked language modeling pre-training teaches the model to understand language bidirectionally — using both left and right context for every token. This simple idea created the foundation for modern NLP: pre-train once on massive unlabeled data, then fine-tune cheaply on your specific task. Understanding BERT is understanding the backbone of encoder-based NLP.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BERT reads language bidirectionally — understanding each word in the context of ALL surrounding words. Its Masked Language Modeling pre-training, where 15% of tokens are hidden and predicted, created the foundation for modern NLP classification, NER, and question answering.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nunmasker = pipeline(\"fill-mask\", model=\"bert-base-uncased\")\n\nresults = unmasker(\"The capital of France is [MASK].\")\n\nfor r in results:\n    print(f\"{r['score']:.4f} => {r['token_str']}\")\n# 0.9009 => paris\n# 0.0253 => lyon",
+      "steps": [
+        {"line": 1, "explanation": "Import pipeline from Hugging Face transformers — the simplest way to use any pre-trained model for inference."},
+        {"line": 3, "explanation": "Create a fill-mask pipeline loading bert-base-uncased. The model (~440MB) downloads once and caches locally."},
+        {"line": 5, "explanation": "Pass a sentence with [MASK] — BERT's special token. The model predicts what word belongs in that position using full bidirectional context."},
+        {"line": 7, "explanation": "Iterate over the top-5 predictions. Each result has 'score' (probability), 'token_str' (predicted word), and 'token' (vocabulary ID)."},
+        {"line": 9, "explanation": "BERT confidently predicts 'paris' with 90% probability — it learned world knowledge from its massive pre-training corpus."},
+        {"line": 10, "explanation": "Lower-ranked predictions are also valid French cities. The 'uncased' model lowercases everything, so 'paris' not 'Paris'."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import BertTokenizer, BertModel\nimport torch\n\ntokenizer = BertTokenizer.from_pretrained(\"bert-base-uncased\")\nmodel = BertModel.from_pretrained(\"bert-base-uncased\")\n\ntext = \"Transfer learning is powerful\"\ninputs = tokenizer(text, return_tensors=\"pt\")\nprint(tokenizer.tokenize(text))\n# ['transfer', 'learning', 'is', 'powerful']\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\ncls_embedding = outputs.last_hidden_state[:, 0, :]\nprint(cls_embedding.shape)  # torch.Size([1, 768])",
+      "steps": [
+        {"line": 1, "explanation": "Import BertTokenizer and BertModel separately — needed when you want embeddings rather than task-specific predictions."},
+        {"line": 4, "explanation": "Load the tokenizer — it handles WordPiece tokenization, converting text to token IDs that BERT understands."},
+        {"line": 5, "explanation": "Load the base model — 12 transformer layers, 768 hidden dimensions, 12 attention heads, 110M parameters total."},
+        {"line": 8, "explanation": "Tokenize with return_tensors='pt' to get PyTorch tensors. Automatically adds [CLS] at start and [SEP] at end."},
+        {"line": 9, "explanation": "tokenize() shows the WordPiece tokens. Common words stay whole; rare words would split into ##subword pieces."},
+        {"line": 12, "explanation": "torch.no_grad() disables gradient computation — we're doing inference, not training, so this saves memory."},
+        {"line": 13, "explanation": "Forward pass through all 12 layers. outputs.last_hidden_state has shape (batch, sequence_length, 768)."},
+        {"line": 15, "explanation": "Extract the [CLS] token embedding at position 0. This 768-dim vector is the sentence-level representation used for classification tasks."},
+        {"line": 16, "explanation": "Shape is [1, 768] — one sentence, 768 dimensions. This vector captures the semantic meaning of the entire input."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Autoregressive (GPT-style)",
+      "right_label": "Masked LM (BERT-style)",
+      "items": [
+        {"left": "Reads left-to-right only", "right": "Reads entire sequence bidirectionally"},
+        {"left": "Predicts next token", "right": "Predicts masked tokens from context"},
+        {"left": "Great for text generation", "right": "Great for understanding & classification"},
+        {"left": "Causal attention mask", "right": "Full self-attention over all tokens"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand BERT's masked language modeling — the bidirectional breakthrough that powers modern NLP!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MaskedLanguageModel` class that simulates how BERT's masked language modeling works. It takes a vocabulary of word-to-context mappings (each word maps to a list of words it commonly appears with). Implement `mask_sentence(sentence, mask_index)` that replaces the word at mask_index with '[MASK]', and `predict_mask(masked_sentence)` that scores each vocabulary word by counting how many of its context words appear in the sentence, returning the top predictions sorted by score descending."
+      },
+      "starter_code": "class MaskedLanguageModel:\n    def __init__(self, vocab_context: dict[str, list[str]]):\n        # vocab_context maps each word to its context words\n        # e.g., {\"paris\": [\"france\", \"capital\", \"city\"], ...}\n        self.vocab_context = vocab_context\n\n    def mask_sentence(self, sentence: str, mask_index: int) -> str:\n        # Replace word at mask_index with [MASK]\n        # Return the modified sentence (lowercase)\n        pass\n\n    def predict_mask(self, masked_sentence: str) -> list[dict]:\n        # Score each vocab word by counting context word matches\n        # in the masked sentence\n        # Return list of {\"token\": word, \"score\": count}\n        # sorted by score descending, exclude zero scores\n        pass\n\n# Test it:\nvocab = {\n    \"paris\": [\"france\", \"capital\", \"city\", \"european\"],\n    \"london\": [\"england\", \"capital\", \"city\", \"british\"],\n    \"sushi\": [\"japan\", \"food\", \"rice\", \"fish\"],\n    \"lyon\": [\"france\", \"city\", \"french\"]\n}\n\nmlm = MaskedLanguageModel(vocab)\n\nmasked = mlm.mask_sentence(\"The capital of France is Paris\", 5)\nprint(masked)\n\npredictions = mlm.predict_mask(\"the capital of france is [MASK]\")\nprint(predictions[0][\"token\"])\nprint(predictions[0][\"score\"] > predictions[1][\"score\"])",
+      "expected_output": "the capital of france is [MASK]\nparis\nTrue",
+      "hints": {
+        "en": [
+          "In mask_sentence(), use sentence.lower().split(), replace the element at mask_index with '[MASK]', then join with spaces",
+          "In predict_mask(), split the sentence into words, then for each vocab word count how many of its context words appear in the sentence words",
+          "Filter out words with zero score, sort by score descending, and return as list of dicts"
+        ]
+      },
+      "test_code": "v = {\"cat\": [\"pet\", \"fur\", \"meow\"], \"dog\": [\"pet\", \"fur\", \"bark\"], \"fish\": [\"water\", \"swim\"]}\nm = MaskedLanguageModel(v)\nassert m.mask_sentence(\"My pet has fur\", 1) == \"my [MASK] has fur\"\nassert m.mask_sentence(\"Hello World\", 0) == \"[MASK] world\"\npreds = m.predict_mask(\"my [MASK] has fur and is a pet\")\nassert len(preds) >= 2\nassert preds[0][\"token\"] in [\"cat\", \"dog\"]\nassert preds[0][\"score\"] == 2\npreds2 = m.predict_mask(\"it can swim in water\")\nassert preds2[0][\"token\"] == \"fish\"\nassert preds2[0][\"score\"] == 2"
+    },
+    {
+      "instruction": {
+        "en": "Build a `WordPieceTokenizer` class that simulates BERT's WordPiece tokenization. Given a vocabulary list, implement `tokenize(text)` that greedily matches the longest vocabulary token from left to right for each word. If a subword match is found mid-word, prefix it with '##'. If no match is found for a character, use '[UNK]'. Always add '[CLS]' at the start and '[SEP]' at the end."
+      },
+      "starter_code": "class WordPieceTokenizer:\n    def __init__(self, vocab: list[str]):\n        # vocab is a list of known tokens\n        # e.g., [\"hello\", \"world\", \"hel\", \"##lo\", \"##ld\", \"wor\", ...]\n        self.vocab = set(vocab)\n\n    def tokenize(self, text: str) -> list[str]:\n        # 1. Lowercase and split text into words\n        # 2. For each word, greedily match longest substrings\n        #    - First piece: match against vocab as-is\n        #    - Subsequent pieces: match with '##' prefix\n        #    - If no match found for a single char, emit '[UNK]'\n        # 3. Wrap with [CLS] and [SEP]\n        pass\n\n# Test it:\nvocab = [\"transfer\", \"learn\", \"##ing\", \"is\", \"un\", \"##stop\",\n         \"##able\", \"power\", \"##ful\", \"bert\", \"model\"]\n\ntokenizer = WordPieceTokenizer(vocab)\n\ntokens = tokenizer.tokenize(\"Transfer learning is powerful\")\nprint(tokens)\n\ntokens2 = tokenizer.tokenize(\"BERT is unstoppable\")\nprint(len(tokens2))",
+      "expected_output": "['[CLS]', 'transfer', 'learn', '##ing', 'is', 'power', '##ful', '[SEP]']\n7",
+      "hints": {
+        "en": [
+          "For each word, start with the full remaining substring and shrink from the right until you find a vocab match (or reach length 1)",
+          "For the first piece of each word check vocab directly; for subsequent pieces prepend '##' before checking vocab",
+          "If shrinking to a single character still has no match, append '[UNK]' and advance by one character"
+        ]
+      },
+      "test_code": "v = [\"hello\", \"world\", \"hel\", \"##lo\", \"wor\", \"##ld\"]\nt = WordPieceTokenizer(v)\ntokens = t.tokenize(\"hello world\")\nassert tokens[0] == \"[CLS]\"\nassert tokens[-1] == \"[SEP]\"\nassert \"hello\" in tokens\nassert \"world\" in tokens\nt2 = WordPieceTokenizer([\"un\", \"##stop\", \"##able\"])\ntokens2 = t2.tokenize(\"unstoppable\")\nassert tokens2[0] == \"[CLS]\"\nassert tokens2[-1] == \"[SEP]\"\nassert \"un\" in tokens2\nassert \"##stop\" in tokens2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["masked language modeling", "BERT architecture", "WordPiece tokenization", "transfer learning", "CLS embeddings", "fill-mask pipeline", "fine-tuning transformers"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "string manipulation", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,70 @@
+{
+  "id": "multi_agent_systems",
+  "topic": "multi_agent_systems",
+  "track": "ai_agents",
+  "module": "advanced",
+  "order": 5,
+  "title": {
+    "en": "Multi-Agent Systems with CrewAI",
+    "ta": "CrewAI மூலம் பல-ஏஜெண்ட் அமைப்புகள்"
+  },
+  "description": {
+    "en": "Build teams of specialized AI agents that collaborate to solve complex tasks. Learn role-based agent design, task delegation, and inter-agent communication with CrewAI.",
+    "ta": "சிக்கலான பணிகளைத் தீர்க்க ஒத்துழைக்கும் சிறப்பு AI ஏஜெண்ட்களின் குழுக்களை உருவாக்குங்கள். CrewAI மூலம் role-based agent design, task delegation மற்றும் inter-agent communication கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 120,
+  "next_unlock": "agentic_rag",
+  "story_variants": {
+    "en": "## Multi-Agent Systems: A Team of Specialists\n\nOne agent trying to do everything is like one person running an entire company. It works for small tasks, but for complex projects you need a **team**. A researcher who digs deep, a writer who crafts prose, a critic who catches errors, and a manager who coordinates. That is what multi-agent systems are about.\n\n### Why Multiple Agents?\n\nSingle agents hit limits:\n- **Context window overflow** -- one agent cannot hold all relevant information\n- **Role confusion** -- asking one agent to be both creative and critical produces mediocre results\n- **No specialization** -- different tasks need different system prompts and tools\n\nMulti-agent systems solve this by assigning **roles, goals, and tools** to specialized agents that work together.\n\n### CrewAI: Building Agent Teams\n\nCrewAI is the leading framework for multi-agent orchestration. It uses three core concepts:\n\n1. **Agent** -- A specialized team member with a role, goal, and backstory\n2. **Task** -- A specific job assigned to an agent\n3. **Crew** -- The team that coordinates agents and tasks\n\n```python\nfrom crewai import Agent, Task, Crew, Process\n\n# Define specialized agents\nresearcher = Agent(\n    role=\"Senior Research Analyst\",\n    goal=\"Find comprehensive, accurate information on the given topic\",\n    backstory=\"You are an expert researcher with 20 years of experience \"\n              \"in data analysis and investigative journalism.\",\n    tools=[search_tool, scrape_tool],\n    verbose=True\n)\n\nwriter = Agent(\n    role=\"Technical Content Writer\",\n    goal=\"Write engaging, accurate technical articles\",\n    backstory=\"You are a senior tech writer who makes complex topics \"\n              \"accessible. You write for developers.\",\n    verbose=True\n)\n\neditor = Agent(\n    role=\"Senior Editor\",\n    goal=\"Review content for accuracy, clarity, and engagement\",\n    backstory=\"You are a meticulous editor who ensures every piece \"\n              \"meets the highest quality standards.\",\n    verbose=True\n)\n```\n\n### Defining Tasks\n\nEach task has a description, expected output, and assigned agent:\n\n```python\nresearch_task = Task(\n    description=\"Research the topic: {topic}. Find key facts, \"\n                \"recent developments, and expert opinions.\",\n    expected_output=\"A detailed research report with sources\",\n    agent=researcher\n)\n\nwriting_task = Task(\n    description=\"Write a 1000-word article based on the research. \"\n                \"Make it engaging and technically accurate.\",\n    expected_output=\"A polished article ready for publication\",\n    agent=writer,\n    context=[research_task]  # Uses output from research\n)\n\nediting_task = Task(\n    description=\"Review the article for factual accuracy, \"\n                \"grammar, and readability. Provide final version.\",\n    expected_output=\"Final edited article with corrections applied\",\n    agent=editor,\n    context=[writing_task]\n)\n```\n\nThe `context` parameter creates a pipeline: the writer receives the researcher's output, and the editor receives the writer's draft.\n\n### Assembling the Crew\n\n```python\ncrew = Crew(\n    agents=[researcher, writer, editor],\n    tasks=[research_task, writing_task, editing_task],\n    process=Process.sequential,  # Run tasks in order\n    verbose=True\n)\n\nresult = crew.kickoff(\n    inputs={\"topic\": \"AI Agents in Production Systems\"}\n)\nprint(result.raw)  # The final edited article\n```\n\n### Process Types\n\n| Process | Description | Best For |\n|---------|-------------|----------|\n| `Process.sequential` | Tasks run one after another | Pipelines where each step builds on the last |\n| `Process.hierarchical` | A manager agent delegates tasks | Complex projects needing coordination |\n\nWith `hierarchical`, CrewAI creates a manager agent that decides which agent handles what, similar to a real project manager.\n\n### Agent Memory and Collaboration\n\nCrewAI agents can share context through:\n- **Task context** -- Outputs from one task feed into another\n- **Shared memory** -- Agents can read each other's findings\n- **Delegation** -- An agent can ask another agent for help\n\n```python\nresearcher = Agent(\n    role=\"Researcher\",\n    goal=\"Find information\",\n    backstory=\"Expert researcher\",\n    allow_delegation=True  # Can delegate sub-tasks to other agents\n)\n```\n\n### Real-World Applications\n\n- **Content Pipeline**: Researcher -> Writer -> Editor -> Publisher\n- **Code Review**: Developer -> Reviewer -> Security Auditor\n- **Customer Support**: Classifier -> Specialist -> QA Agent\n- **Data Analysis**: Collector -> Analyst -> Visualizer -> Reporter\n\n### Design Principles\n\n1. **Single Responsibility** -- Each agent does one thing well\n2. **Clear Goals** -- Specific, measurable objectives\n3. **Rich Backstories** -- Context helps the LLM play the role\n4. **Minimal Tool Sets** -- Give each agent only the tools it needs\n5. **Explicit Dependencies** -- Use `context` to define the information flow\n\nMulti-agent systems are how real-world AI applications are being built in 2026. One agent is a tool. A crew of agents is a workforce.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_5",
+      "content": "One agent doing everything is like one person running a company. Multi-agent systems assign specialized roles -- Researcher, Writer, Editor -- that collaborate to produce work no single agent could match.",
+      "visual_theme": "agents"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_5",
+      "nodes": ["User Input", "Researcher Agent", "Writer Agent", "Editor Agent", "Final Output"],
+      "edges": [
+        {"from": "User Input", "to": "Researcher Agent"},
+        {"from": "Researcher Agent", "to": "Writer Agent"},
+        {"from": "Writer Agent", "to": "Editor Agent"},
+        {"from": "Editor Agent", "to": "Final Output"}
+      ],
+      "description": "A CrewAI sequential pipeline: research flows to writing, writing flows to editing, producing a polished final output"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_5",
+      "language": "python",
+      "code": "from crewai import Agent, Task, Crew, Process\n\nresearcher = Agent(\n    role=\"Research Analyst\",\n    goal=\"Find accurate information\",\n    backstory=\"Expert researcher with 20 years experience.\"\n)\n\nwriter = Agent(\n    role=\"Content Writer\",\n    goal=\"Write engaging articles\",\n    backstory=\"Senior tech writer for developers.\"\n)\n\nresearch_task = Task(\n    description=\"Research {topic}\",\n    expected_output=\"Detailed report\",\n    agent=researcher\n)\n\nwriting_task = Task(\n    description=\"Write article from research\",\n    expected_output=\"Polished article\",\n    agent=writer,\n    context=[research_task]\n)\n\ncrew = Crew(\n    agents=[researcher, writer],\n    tasks=[research_task, writing_task],\n    process=Process.sequential\n)\n\nresult = crew.kickoff(inputs={\"topic\": \"AI Agents\"})",
+      "steps": [
+        {"line": 1, "explanation": "Import the four core CrewAI classes: Agent, Task, Crew, and Process."},
+        {"line": 3, "explanation": "Define a researcher agent with a role, goal, and backstory. The backstory helps the LLM stay in character."},
+        {"line": 9, "explanation": "A second agent -- the writer. Different role, different goal, different expertise."},
+        {"line": 15, "explanation": "A Task assigned to the researcher. The {topic} placeholder is filled at kickoff time."},
+        {"line": 21, "explanation": "The writing task uses context=[research_task] -- it receives the researcher's output as input."},
+        {"line": 28, "explanation": "Assemble the Crew. Process.sequential means tasks run in order."},
+        {"line": 33, "explanation": "kickoff() starts the crew. Each agent executes its task, passing results down the chain."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a list called `crew` containing 3 dictionaries, each representing an agent. Each dict should have 'role' and 'goal' keys. Roles: 'Researcher', 'Writer', 'Editor'. Goals: 'Find facts', 'Write content', 'Review quality'. Print the role of the second agent."
+      },
+      "expected_output": "Writer",
+      "hints": [
+        "Create a list of dicts: [{'role': 'Researcher', 'goal': 'Find facts'}, ...]",
+        "Access the second agent with crew[1]",
+        "Print crew[1]['role']"
+      ],
+      "test_code": "assert len(crew) == 3\nassert crew[0]['role'] == 'Researcher'\nassert crew[1]['role'] == 'Writer'\nassert crew[2]['role'] == 'Editor'"
+    }
+  ]
+}

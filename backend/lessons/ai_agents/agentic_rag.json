@@ -1,0 +1,71 @@
+{
+  "id": "agentic_rag",
+  "topic": "agentic_rag",
+  "track": "ai_agents",
+  "module": "advanced",
+  "order": 6,
+  "title": {
+    "en": "Agentic RAG - Intelligent Retrieval",
+    "ta": "Agentic RAG - அறிவார்ந்த மீட்டெடுப்பு"
+  },
+  "description": {
+    "en": "Go beyond basic RAG. Build agents that reason about which documents to retrieve, when to search again, and how to synthesize information from multiple sources into accurate answers.",
+    "ta": "அடிப்படை RAG-ஐ தாண்டிச் செல்லுங்கள். எந்த ஆவணங்களை மீட்டெடுக்க வேண்டும், எப்போது மீண்டும் தேட வேண்டும், பல ஆதாரங்களிலிருந்து தகவல்களை எவ்வாறு தொகுக்க வேண்டும் என்பதை பகுத்தறியும் ஏஜெண்ட்களை உருவாக்குங்கள்."
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Agentic RAG: When Retrieval Gets Smart\n\nBasic RAG (Retrieval-Augmented Generation) works like a simple librarian: you ask a question, it finds the most similar documents, and hands them to the LLM. But what if the first documents are not enough? What if you need information from multiple collections? What if the question needs to be broken down into sub-questions first?\n\n**Agentic RAG** adds a reasoning layer on top of retrieval. The agent **decides** what to search, evaluates results, and iterates until it has enough information.\n\n### Basic RAG vs Agentic RAG\n\n| Feature | Basic RAG | Agentic RAG |\n|---------|-----------|-------------|\n| Query | Single vector search | Multi-step, reformulated queries |\n| Retrieval | One-shot | Iterative -- search again if needed |\n| Sources | One collection | Multiple vector stores, APIs, databases |\n| Evaluation | None | Agent grades retrieved documents |\n| Routing | None | Agent picks the best source per query |\n\n### The Architecture\n\n```python\nfrom langgraph.graph import StateGraph, START, END\nfrom typing import TypedDict, Annotated\nfrom operator import add\n\nclass RAGState(TypedDict):\n    question: str\n    sub_questions: list[str]\n    documents: Annotated[list[str], add]\n    answer: str\n    is_sufficient: bool\n\ndef decompose_question(state: RAGState) -> dict:\n    \"\"\"Break a complex question into sub-questions.\"\"\"\n    question = state[\"question\"]\n    # LLM call to decompose\n    sub_qs = llm.invoke(\n        f\"Break this into 2-3 specific sub-questions: {question}\"\n    )\n    return {\"sub_questions\": sub_qs.split(\"\\n\")}\n\ndef retrieve_documents(state: RAGState) -> dict:\n    \"\"\"Search the vector store for each sub-question.\"\"\"\n    docs = []\n    for q in state[\"sub_questions\"]:\n        results = vector_store.similarity_search(q, k=3)\n        docs.extend([doc.page_content for doc in results])\n    return {\"documents\": docs}\n\ndef grade_documents(state: RAGState) -> dict:\n    \"\"\"Have the LLM evaluate if retrieved docs are relevant.\"\"\"\n    graded = []\n    for doc in state[\"documents\"]:\n        score = llm.invoke(\n            f\"Is this document relevant to '{state['question']}'? \"\n            f\"Document: {doc[:200]}. Answer YES or NO.\"\n        )\n        if \"YES\" in score.upper():\n            graded.append(doc)\n    is_sufficient = len(graded) >= 2\n    return {\"documents\": graded, \"is_sufficient\": is_sufficient}\n\ndef generate_answer(state: RAGState) -> dict:\n    \"\"\"Synthesize an answer from the graded documents.\"\"\"\n    context = \"\\n\\n\".join(state[\"documents\"])\n    answer = llm.invoke(\n        f\"Based on the following context, answer: {state['question']}\\n\"\n        f\"Context: {context}\"\n    )\n    return {\"answer\": answer}\n```\n\n### Building the Graph\n\n```python\ndef route_after_grading(state: RAGState) -> str:\n    if state[\"is_sufficient\"]:\n        return \"generate\"\n    else:\n        return \"web_search\"  # Fallback to web search\n\ndef web_search(state: RAGState) -> dict:\n    \"\"\"Search the web as a fallback when docs are insufficient.\"\"\"\n    results = tavily_search.invoke(state[\"question\"])\n    return {\"documents\": [r[\"content\"] for r in results]}\n\n# Build the agentic RAG graph\ngraph = StateGraph(RAGState)\ngraph.add_node(\"decompose\", decompose_question)\ngraph.add_node(\"retrieve\", retrieve_documents)\ngraph.add_node(\"grade\", grade_documents)\ngraph.add_node(\"web_search\", web_search)\ngraph.add_node(\"generate\", generate_answer)\n\ngraph.add_edge(START, \"decompose\")\ngraph.add_edge(\"decompose\", \"retrieve\")\ngraph.add_edge(\"retrieve\", \"grade\")\ngraph.add_conditional_edges(\n    \"grade\",\n    route_after_grading,\n    {\"generate\": \"generate\", \"web_search\": \"web_search\"}\n)\ngraph.add_edge(\"web_search\", \"generate\")\ngraph.add_edge(\"generate\", END)\n\nrag_agent = graph.compile()\n```\n\n### Query Routing\n\nAgentic RAG can route queries to different data sources:\n\n```python\ndef route_query(state: RAGState) -> str:\n    \"\"\"Route to the best source based on question type.\"\"\"\n    question = state[\"question\"].lower()\n    if \"code\" in question or \"api\" in question:\n        return \"code_docs\"      # Technical documentation\n    elif \"policy\" in question or \"hr\" in question:\n        return \"company_wiki\"   # Internal knowledge base\n    else:\n        return \"general_search\"  # Web search\n```\n\n### Self-Reflection: The Key Innovation\n\nThe most powerful pattern in agentic RAG is **self-reflection**. After generating an answer, the agent checks its own work:\n\n```python\ndef check_hallucination(state: RAGState) -> dict:\n    \"\"\"Verify the answer is grounded in retrieved documents.\"\"\"\n    verdict = llm.invoke(\n        f\"Is this answer supported by the documents? \"\n        f\"Answer: {state['answer']}\\n\"\n        f\"Documents: {state['documents'][:3]}\"\n    )\n    if \"not supported\" in verdict.lower():\n        return {\"is_sufficient\": False}  # Trigger re-retrieval\n    return {\"is_sufficient\": True}\n```\n\n### Vector Store Setup with ChromaDB\n\n```python\nimport chromadb\nfrom sentence_transformers import SentenceTransformer\n\n# Initialize\nclient = chromadb.Client()\ncollection = client.create_collection(\"knowledge_base\")\nembedder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\n# Add documents\ndocs = [\"AI agents use tool calling...\", \"RAG retrieves relevant...\"]\nembeddings = embedder.encode(docs).tolist()\ncollection.add(\n    documents=docs,\n    embeddings=embeddings,\n    ids=[\"doc1\", \"doc2\"]\n)\n\n# Query\nresults = collection.query(\n    query_embeddings=embedder.encode([\"How do agents work?\"]).tolist(),\n    n_results=3\n)\n```\n\n### Why Agentic RAG Wins\n\nBasic RAG retrieves and hopes for the best. Agentic RAG **thinks** about retrieval:\n- Decomposes complex questions\n- Evaluates document relevance\n- Falls back to alternative sources\n- Checks for hallucinations\n- Iterates until confident\n\nThis is the future of enterprise AI -- systems that do not just search, but **reason** over your knowledge base.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_6",
+      "content": "Basic RAG retrieves and hopes. Agentic RAG thinks: it decomposes questions, grades documents, falls back to web search, and verifies its own answers. Retrieval that reasons.",
+      "visual_theme": "agents"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_6",
+      "nodes": ["Question", "Decompose", "Retrieve", "Grade Docs", "Generate Answer", "Web Search", "Output"],
+      "edges": [
+        {"from": "Question", "to": "Decompose"},
+        {"from": "Decompose", "to": "Retrieve"},
+        {"from": "Retrieve", "to": "Grade Docs"},
+        {"from": "Grade Docs", "to": "Generate Answer"},
+        {"from": "Grade Docs", "to": "Web Search"},
+        {"from": "Web Search", "to": "Generate Answer"},
+        {"from": "Generate Answer", "to": "Output"}
+      ],
+      "description": "Agentic RAG graph: decompose the question, retrieve docs, grade them, and either generate an answer or fall back to web search"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_6",
+      "language": "python",
+      "code": "class RAGState(TypedDict):\n    question: str\n    documents: list[str]\n    is_sufficient: bool\n    answer: str\n\ndef retrieve(state: RAGState) -> dict:\n    docs = vector_store.similarity_search(state[\"question\"], k=3)\n    return {\"documents\": [d.page_content for d in docs]}\n\ndef grade(state: RAGState) -> dict:\n    relevant = [d for d in state[\"documents\"] if is_relevant(d)]\n    return {\"documents\": relevant, \"is_sufficient\": len(relevant) >= 2}\n\ndef generate(state: RAGState) -> dict:\n    context = \"\\n\".join(state[\"documents\"])\n    answer = llm.invoke(f\"Answer: {state['question']}\\nContext: {context}\")\n    return {\"answer\": answer}",
+      "steps": [
+        {"line": 1, "explanation": "Define the state that flows through the RAG graph: question, documents, sufficiency flag, and final answer."},
+        {"line": 7, "explanation": "Retrieve step: search the vector store for the top 3 most similar documents."},
+        {"line": 11, "explanation": "Grade step: filter documents by relevance. If fewer than 2 are relevant, mark as insufficient to trigger fallback."},
+        {"line": 15, "explanation": "Generate step: join all relevant documents into context and ask the LLM to synthesize an answer."},
+        {"line": 17, "explanation": "The LLM generates a grounded answer using only the retrieved and graded documents as context."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a list of 4 document dictionaries, each with 'content' and 'relevance_score' (float 0-1) keys. Filter the list to keep only documents with relevance_score >= 0.7. Print the number of documents that passed the filter. Use these docs: ('AI agents overview', 0.9), ('Recipe for pasta', 0.1), ('LLM tool calling', 0.85), ('Weather today', 0.3)."
+      },
+      "expected_output": "2",
+      "hints": [
+        "Create a list of dicts: [{'content': 'AI agents overview', 'relevance_score': 0.9}, ...]",
+        "Use a list comprehension: [d for d in docs if d['relevance_score'] >= 0.7]",
+        "Print len() of the filtered list"
+      ],
+      "test_code": "assert len(filtered_docs) == 2\nassert all(d['relevance_score'] >= 0.7 for d in filtered_docs)"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "id": "agent_fundamentals",
+  "topic": "agent_fundamentals",
+  "track": "ai_agents",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "What Are AI Agents?",
+    "ta": "AI ஏஜெண்ட்கள் என்றால் என்ன?"
+  },
+  "description": {
+    "en": "Understand the paradigm shift from chatbots to autonomous AI agents. Learn the Perceive-Reason-Act loop, tool use, and how agents differ from simple LLM calls.",
+    "ta": "சாட்பாட்களில் இருந்து தன்னாட்சி AI ஏஜெண்ட்களுக்கான மாற்றத்தைப் புரிந்துகொள்ளுங்கள். Perceive-Reason-Act சுழற்சி, கருவி பயன்பாடு மற்றும் எளிய LLM அழைப்புகளிலிருந்து ஏஜெண்ட்கள் எவ்வாறு வேறுபடுகின்றன என்பதைக் கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 120,
+  "next_unlock": "pydantic_ai",
+  "story_variants": {
+    "en": "## The Rise of AI Agents\n\nImagine you ask a chatbot: *\"Book me a flight to Tokyo for next Friday under $800.\"* A regular LLM would give you advice on how to search. An **AI Agent** would actually go search flight APIs, compare prices, check your calendar, and book the best option. That is the fundamental difference.\n\n### From Chatbots to Agents\n\nIn 2024-2025, the AI world made a massive leap. We moved from **\"AI that talks\"** to **\"AI that acts.\"** An agent is an LLM with:\n\n1. **Perception** -- It reads input, tool outputs, and environmental context\n2. **Reasoning** -- It plans multi-step strategies using chain-of-thought\n3. **Action** -- It calls tools, APIs, databases, and other agents\n4. **Memory** -- It retains context across interactions\n\n### The Agent Loop\n\nEvery AI agent runs a core loop:\n\n```python\nwhile not task_complete:\n    observation = perceive(environment)\n    plan = reason(observation, memory)\n    result = act(plan, tools)\n    memory.update(result)\n```\n\nThis is the **Perceive-Reason-Act (PRA) loop** -- the heartbeat of every agent system.\n\n### Tool Use: The Superpower\n\nWhat makes agents powerful is **tool use**. An LLM alone can only generate text. An agent can:\n\n- Search the web with a search tool\n- Query a database with a SQL tool\n- Read and write files\n- Call external APIs\n- Execute Python code in a sandbox\n\n```python\nimport openai\n\n# Define a tool the agent can call\ntools = [{\n    \"type\": \"function\",\n    \"function\": {\n        \"name\": \"get_weather\",\n        \"description\": \"Get current weather for a city\",\n        \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"city\": {\"type\": \"string\"}\n            },\n            \"required\": [\"city\"]\n        }\n    }\n}]\n\n# The LLM decides WHEN and HOW to call tools\nresponse = openai.chat.completions.create(\n    model=\"gpt-4o\",\n    messages=[{\"role\": \"user\", \"content\": \"What's the weather in Chennai?\"}],\n    tools=tools,\n    tool_choice=\"auto\"\n)\n```\n\nThe model does not just answer -- it **decides** to call `get_weather(city=\"Chennai\")` and uses the result to craft its response.\n\n### Agent Architectures in 2026\n\nThe ecosystem has matured around a few key patterns:\n\n| Pattern | Description | Framework |\n|---------|-------------|-----------|\n| ReAct | Reason + Act in alternating steps | LangChain, LangGraph |\n| Plan-and-Execute | Create full plan, then execute | LangGraph |\n| Multi-Agent | Multiple specialized agents collaborate | CrewAI, AutoGen |\n| Tool-Augmented | LLM + structured tool calling | PydanticAI, OpenAI SDK |\n\n### Why Python Dominates\n\nPython is the undisputed language for AI agents because:\n- Every major LLM provider has a Python SDK\n- Pydantic provides type-safe data validation\n- asyncio enables concurrent tool execution\n- The ecosystem (LangGraph, CrewAI, PydanticAI) is Python-first\n\n### What You Will Build in This Track\n\nBy the end of these 6 lessons, you will be able to:\n- Build type-safe agents with PydanticAI\n- Orchestrate complex workflows with LangGraph\n- Connect agents to real tools via MCP\n- Design multi-agent teams with CrewAI\n- Build intelligent RAG systems that reason over documents\n\nWelcome to the age of agents. Let us begin.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "The AI world shifted from 'AI that talks' to 'AI that acts.' An agent is an LLM that can perceive, reason, act, and remember -- autonomously completing tasks by calling tools and APIs.",
+      "visual_theme": "agents"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_1",
+      "nodes": ["Perceive", "Reason", "Act", "Memory Update", "Task Complete?"],
+      "edges": [
+        {"from": "Perceive", "to": "Reason"},
+        {"from": "Reason", "to": "Act"},
+        {"from": "Act", "to": "Memory Update"},
+        {"from": "Memory Update", "to": "Task Complete?"},
+        {"from": "Task Complete?", "to": "Perceive"}
+      ],
+      "description": "The Perceive-Reason-Act loop: the core cycle every AI agent runs until the task is complete"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "tools = [{\n    \"type\": \"function\",\n    \"function\": {\n        \"name\": \"get_weather\",\n        \"description\": \"Get current weather for a city\",\n        \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"city\": {\"type\": \"string\"}\n            },\n            \"required\": [\"city\"]\n        }\n    }\n}]\n\nresponse = openai.chat.completions.create(\n    model=\"gpt-4o\",\n    messages=[{\"role\": \"user\", \"content\": \"Weather in Chennai?\"}],\n    tools=tools,\n    tool_choice=\"auto\"\n)",
+      "steps": [
+        {"line": 1, "explanation": "Define a list of tools the agent can use. Each tool has a name, description, and parameter schema."},
+        {"line": 3, "explanation": "The function name 'get_weather' -- the LLM will reference this when it decides to call the tool."},
+        {"line": 4, "explanation": "The description helps the LLM understand WHEN to use this tool."},
+        {"line": 16, "explanation": "Send the user message along with available tools to the LLM."},
+        {"line": 19, "explanation": "tool_choice='auto' lets the model decide whether to call a tool or respond directly."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a dictionary called `agent_config` with keys 'name', 'tools', and 'max_steps'. Set name to 'WeatherBot', tools to a list containing 'get_weather' and 'get_forecast', and max_steps to 5. Then print the number of tools the agent has."
+      },
+      "expected_output": "2",
+      "hints": [
+        "Use a Python dictionary with string keys",
+        "The tools value should be a list: ['get_weather', 'get_forecast']",
+        "Use len(agent_config['tools']) to get the count"
+      ],
+      "test_code": "assert agent_config['name'] == 'WeatherBot'\nassert len(agent_config['tools']) == 2\nassert agent_config['max_steps'] == 5"
+    }
+  ]
+}

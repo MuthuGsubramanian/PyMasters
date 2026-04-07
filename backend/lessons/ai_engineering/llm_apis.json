@@ -1,0 +1,70 @@
+{
+  "id": "llm_apis",
+  "topic": "llm_apis",
+  "track": "ai_engineering",
+  "module": "llm_patterns",
+  "order": 3,
+  "title": {
+    "en": "Working with LLM APIs: OpenAI, Anthropic, Google",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master the three major LLM APIs: OpenAI, Anthropic, and Google. Learn authentication, chat completions, streaming, tool use, and best practices for building reliable LLM-powered applications.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": "eval_driven_dev",
+  "story_variants": {
+    "en": "## Three APIs, One Skill Set\n\nBuilding AI-powered applications means working with LLM APIs. The three dominant providers -- OpenAI, Anthropic, and Google -- each have their own SDKs and conventions, but they share a common pattern: send messages, get completions. Master all three and you can pick the right model for each job.\n\n### Authentication Pattern\n\nAll three providers use API keys, typically set as environment variables:\n\n```python\nimport os\n\n# Set keys (or use .env file with python-dotenv)\nos.environ[\"OPENAI_API_KEY\"] = \"sk-...\"\nos.environ[\"ANTHROPIC_API_KEY\"] = \"sk-ant-...\"\nos.environ[\"GOOGLE_API_KEY\"] = \"AI...\"\n```\n\n### OpenAI: Chat Completions\n\n```python\nfrom openai import OpenAI\n\nclient = OpenAI()  # reads OPENAI_API_KEY from env\n\nresponse = client.chat.completions.create(\n    model=\"gpt-4o\",\n    messages=[\n        {\"role\": \"system\", \"content\": \"You are a helpful Python tutor.\"},\n        {\"role\": \"user\", \"content\": \"Explain list comprehensions in one paragraph.\"},\n    ],\n    temperature=0.7,\n    max_tokens=200,\n)\n\nprint(response.choices[0].message.content)\n```\n\n### Anthropic: Messages API\n\n```python\nimport anthropic\n\nclient = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env\n\nresponse = client.messages.create(\n    model=\"claude-sonnet-4-20250514\",\n    max_tokens=1024,\n    system=\"You are a helpful Python tutor.\",\n    messages=[\n        {\"role\": \"user\", \"content\": \"Explain list comprehensions in one paragraph.\"},\n    ],\n)\n\nprint(response.content[0].text)\n```\n\nNote: Anthropic uses a separate `system` parameter instead of a system message in the messages list.\n\n### Google: Gemini API\n\n```python\nfrom google import genai\n\nclient = genai.Client()  # reads GOOGLE_API_KEY from env\n\nresponse = client.models.generate_content(\n    model=\"gemini-2.5-flash\",\n    contents=\"Explain list comprehensions in one paragraph.\",\n    config=genai.types.GenerateContentConfig(\n        system_instruction=\"You are a helpful Python tutor.\",\n        temperature=0.7,\n        max_output_tokens=200,\n    ),\n)\n\nprint(response.text)\n```\n\n### Streaming Responses\n\nFor long responses, streaming gives users immediate feedback:\n\n```python\n# OpenAI streaming\nstream = client.chat.completions.create(\n    model=\"gpt-4o\",\n    messages=[{\"role\": \"user\", \"content\": \"Write a Python tutorial.\"}],\n    stream=True,\n)\nfor chunk in stream:\n    if chunk.choices[0].delta.content:\n        print(chunk.choices[0].delta.content, end=\"\")\n\n# Anthropic streaming\nwith client.messages.stream(\n    model=\"claude-sonnet-4-20250514\",\n    max_tokens=1024,\n    messages=[{\"role\": \"user\", \"content\": \"Write a Python tutorial.\"}],\n) as stream:\n    for text in stream.text_stream:\n        print(text, end=\"\")\n```\n\n### Tool Use / Function Calling\n\nAll three APIs support giving the model access to tools:\n\n```python\n# OpenAI tool definition\ntools = [{\n    \"type\": \"function\",\n    \"function\": {\n        \"name\": \"get_weather\",\n        \"description\": \"Get current weather for a city\",\n        \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"city\": {\"type\": \"string\", \"description\": \"City name\"},\n            },\n            \"required\": [\"city\"],\n        },\n    },\n}]\n\nresponse = client.chat.completions.create(\n    model=\"gpt-4o\",\n    messages=[{\"role\": \"user\", \"content\": \"What's the weather in Paris?\"}],\n    tools=tools,\n)\n\n# Check if the model wants to call a tool\ntool_call = response.choices[0].message.tool_calls[0]\nprint(tool_call.function.name)       # get_weather\nprint(tool_call.function.arguments)  # {\"city\": \"Paris\"}\n```\n\n### Multi-Turn Conversations\n\nMaintain conversation history by accumulating messages:\n\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a Python tutor.\"},\n]\n\ndef chat(user_message: str) -> str:\n    messages.append({\"role\": \"user\", \"content\": user_message})\n    response = client.chat.completions.create(\n        model=\"gpt-4o\",\n        messages=messages,\n    )\n    assistant_msg = response.choices[0].message.content\n    messages.append({\"role\": \"assistant\", \"content\": assistant_msg})\n    return assistant_msg\n\nchat(\"What are decorators?\")\nchat(\"Can you show me an example?\")  # Has full context\n```\n\n### API Comparison\n\n| Feature | OpenAI | Anthropic | Google |\n|---------|--------|-----------|--------|\n| System prompt | In messages list | Separate parameter | Config object |\n| Response access | `.choices[0].message.content` | `.content[0].text` | `.text` |\n| Streaming | `stream=True` | `.messages.stream()` | `stream=True` |\n| Tool use | `tools` parameter | `tools` parameter | `tools` parameter |\n| Token counting | `response.usage` | `response.usage` | `response.usage_metadata` |\n\n### Best Practices\n\n1. **Always set timeouts**: Network calls fail; wrap in try/except with retries\n2. **Use environment variables**: Never hardcode API keys\n3. **Monitor token usage**: Track `response.usage` to control costs\n4. **Implement exponential backoff**: For rate limit errors (429)\n5. **Cache responses**: For identical prompts, cache to reduce cost and latency\n\n### Key Takeaways\n\n- All three APIs follow the same pattern: client, messages, response\n- Anthropic separates the system prompt; OpenAI embeds it in messages; Google uses a config object\n- Streaming provides better UX for long responses\n- Tool use lets models call your functions with structured arguments\n- Always handle errors, monitor costs, and secure your API keys",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Three major LLM APIs dominate the landscape: OpenAI, Anthropic, and Google. They share a common pattern but differ in details. Master all three to pick the right tool for each job.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from openai import OpenAI\n\nclient = OpenAI()\n\nresponse = client.chat.completions.create(\n    model=\"gpt-4o\",\n    messages=[\n        {\"role\": \"system\", \"content\": \"You are a Python tutor.\"},\n        {\"role\": \"user\", \"content\": \"What are decorators?\"},\n    ],\n    temperature=0.7,\n    max_tokens=200,\n)\n\nprint(response.choices[0].message.content)",
+      "steps": [
+        {"line": 1, "explanation": "Import the OpenAI client. It reads OPENAI_API_KEY from environment automatically."},
+        {"line": 5, "explanation": "Create a chat completion request with model name, messages, and generation parameters."},
+        {"line": 7, "explanation": "Messages is a list of role/content dicts. Roles: system, user, assistant, tool."},
+        {"line": 8, "explanation": "The system message sets the AI's behavior and persona for the conversation."},
+        {"line": 11, "explanation": "temperature controls randomness (0=deterministic, 1=creative). max_tokens caps response length."},
+        {"line": 15, "explanation": "Access the response text via choices[0].message.content."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import anthropic\n\nclient = anthropic.Anthropic()\n\nresponse = client.messages.create(\n    model=\"claude-sonnet-4-20250514\",\n    max_tokens=1024,\n    system=\"You are a Python tutor.\",\n    messages=[\n        {\"role\": \"user\", \"content\": \"What are decorators?\"},\n    ],\n)\n\nprint(response.content[0].text)\nprint(f\"Tokens used: {response.usage.input_tokens} in, {response.usage.output_tokens} out\")",
+      "steps": [
+        {"line": 1, "explanation": "Import the Anthropic client. Reads ANTHROPIC_API_KEY from environment."},
+        {"line": 5, "explanation": "Use client.messages.create() -- the core API endpoint."},
+        {"line": 8, "explanation": "Key difference: system prompt is a separate parameter, not in the messages list."},
+        {"line": 14, "explanation": "Access response text via content[0].text -- content is a list of content blocks."},
+        {"line": 15, "explanation": "Track token usage to monitor costs. Every response includes usage statistics."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Write a function `create_chat_client(provider: str)` that returns the appropriate client object for 'openai', 'anthropic', or 'google'. Each should read API keys from environment variables. Raise ValueError for unknown providers."},
+      "expected_output": "A function that returns the correct client based on provider string",
+      "hints": ["Use if/elif/else to check the provider string", "OpenAI() reads OPENAI_API_KEY, Anthropic() reads ANTHROPIC_API_KEY", "For Google, use genai.Client()"],
+      "test_code": "# Test structure only (no real API keys in tests)\nimport types\nassert callable(create_chat_client)\ntry:\n    create_chat_client('unknown')\n    assert False, 'Should raise ValueError'\nexcept ValueError:\n    pass"
+    },
+    {
+      "instruction": {"en": "Write a function `build_conversation(system_prompt, user_messages)` that takes a system prompt string and a list of user message strings, and returns a properly formatted messages list for the OpenAI API (with alternating user/assistant placeholders)."},
+      "expected_output": "A list of message dicts with system, user, and assistant roles",
+      "hints": ["Start with {'role': 'system', 'content': system_prompt}", "Add each user message with role 'user'", "The function builds the conversation structure, not the API call"],
+      "test_code": "msgs = build_conversation('Be helpful', ['Hello', 'Thanks'])\nassert msgs[0]['role'] == 'system'\nassert msgs[1]['role'] == 'user'\nassert msgs[1]['content'] == 'Hello'"
+    }
+  ]
+}

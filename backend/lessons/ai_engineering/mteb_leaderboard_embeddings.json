@@ -1,0 +1,120 @@
+{
+  "id": "mteb_leaderboard_embeddings",
+  "topic": "mteb_leaderboard_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "MTEB Leaderboard: Choosing the Right Embedding Model for RAG",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how the Massive Text Embedding Benchmark (MTEB) ranks embedding models across tasks like retrieval, classification, and clustering — and how to use its leaderboard to pick the best model for your RAG pipeline.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Embedding Model Showdown: MTEB Leaderboard Explained\n\nVaathiyaar here! You've learned to generate embeddings — but with hundreds of embedding models on Hugging Face, how do you pick the right one? You don't guess. You check the **MTEB Leaderboard** — the definitive benchmark that ranks embedding models across real-world tasks. Think of it as the \"report card\" every embedding model gets before you trust it with your data.\n\n### What Is MTEB?\n\nThe **Massive Text Embedding Benchmark** evaluates models across 8 task categories with 58+ datasets. Every model gets scored on how well its embeddings perform on:\n\n| Task Category | What It Measures | RAG Relevance |\n|---|---|---|\n| **Retrieval** | Finding relevant docs for a query | Critical — this IS your RAG retriever |\n| **STS** (Semantic Textual Similarity) | Scoring sentence similarity | High — deduplication, caching |\n| **Classification** | Categorizing text from embeddings | Medium — intent routing |\n| **Clustering** | Grouping similar documents | Medium — topic organization |\n| **Reranking** | Ordering candidate results | High — second-stage retrieval |\n| **Pair Classification** | Detecting paraphrase/entailment | Low for RAG |\n| **Summarization** | Evaluating summary quality | Low for RAG |\n| **BitextMining** | Finding translations across languages | Niche — multilingual RAG |\n\n### Reading the Leaderboard\n\nThe MTEB leaderboard on Hugging Face Spaces ranks models by average score — but **average is misleading** for RAG. A model can top the overall leaderboard yet underperform on retrieval. Always filter by the **Retrieval** tab.\n\n```python\nimport requests\nimport json\n\n# Fetch MTEB results for a specific model from Hugging Face\ndef get_mteb_results(model_id: str) -> dict:\n    url = f\"https://huggingface.co/api/models/{model_id}\"\n    resp = requests.get(url)\n    data = resp.json()\n    # MTEB results are stored in model card metadata\n    results = {}\n    for sibling in data.get(\"siblings\", []):\n        if \"mteb\" in sibling.get(\"rfilename\", \"\").lower():\n            results[\"has_mteb\"] = True\n    results[\"model_id\"] = model_id\n    results[\"downloads\"] = data.get(\"downloads\", 0)\n    results[\"library\"] = data.get(\"library_name\", \"unknown\")\n    return results\n\ninfo = get_mteb_results(\"BAAI/bge-small-en-v1.5\")\nprint(f\"Model: {info['model_id']}\")\nprint(f\"Downloads: {info['downloads']:,}\")\n```\n\n### Top Models Compared (2025-2026 Era)\n\n| Model | Params | Dims | Retrieval Avg | Speed | Best For |\n|---|---|---|---|---|---|\n| nvidia/NV-Embed-v2 | 7.8B | 4096 | 72.3 | Slow | Maximum quality |\n| Alibaba/gte-Qwen2-7B | 7B | 3584 | 71.5 | Slow | Multilingual |\n| BAAI/bge-large-en-v1.5 | 335M | 1024 | 63.6 | Medium | Production balanced |\n| BAAI/bge-small-en-v1.5 | 33M | 384 | 59.2 | Fast | Low-resource RAG |\n| all-MiniLM-L6-v2 | 22M | 384 | 49.5 | Fastest | Prototyping |\n\n### Building a Model Comparison Tool\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport time\n\ndef benchmark_model(model_name, queries, corpus):\n    \"\"\"Benchmark an embedding model on retrieval speed and quality.\"\"\"\n    model = SentenceTransformer(model_name)\n\n    start = time.time()\n    corpus_embs = model.encode(corpus, convert_to_tensor=True,\n                               normalize_embeddings=True)\n    index_time = time.time() - start\n\n    start = time.time()\n    query_embs = model.encode(queries, convert_to_tensor=True,\n                              normalize_embeddings=True)\n    scores = util.cos_sim(query_embs, corpus_embs)\n    search_time = time.time() - start\n\n    return {\n        \"model\": model_name,\n        \"dims\": corpus_embs.shape[1],\n        \"index_time_ms\": round(index_time * 1000, 1),\n        \"search_time_ms\": round(search_time * 1000, 1),\n        \"top_scores\": scores.max(dim=1).values.tolist()\n    }\n\ncorpus = [\"Retrieval augmented generation combines search with LLMs\",\n          \"Vector databases store high-dimensional embeddings\",\n          \"Fine-tuning adapts pre-trained models to specific tasks\",\n          \"Tokenizers split text into subword units\"]\nqueries = [\"How does RAG work?\", \"What is an embedding?\"]\n\nresult = benchmark_model(\"all-MiniLM-L6-v2\", queries, corpus)\nfor k, v in result.items():\n    print(f\"{k}: {v}\")\n```\n\n### The Decision Framework for RAG\n\n```python\ndef recommend_embedding_model(corpus_size, latency_budget_ms,\n                               gpu_available, multilingual):\n    \"\"\"Recommend an embedding model based on constraints.\"\"\"\n    if multilingual:\n        if gpu_available:\n            return \"Alibaba/gte-Qwen2-7B-instruct\"\n        return \"sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2\"\n    if gpu_available and latency_budget_ms > 100:\n        if corpus_size > 1_000_000:\n            return \"BAAI/bge-large-en-v1.5\"  # Quality + reasonable speed\n        return \"nvidia/NV-Embed-v2\"           # Maximum quality\n    if latency_budget_ms < 20:\n        return \"all-MiniLM-L6-v2\"             # Fastest\n    return \"BAAI/bge-small-en-v1.5\"           # Best balanced\n\nrec = recommend_embedding_model(\n    corpus_size=50_000, latency_budget_ms=50,\n    gpu_available=False, multilingual=False\n)\nprint(f\"Recommended: {rec}\")\n```\n\n### Key MTEB Metrics to Watch\n\n- **NDCG@10**: Normalized discounted cumulative gain at top-10 results — the primary retrieval metric\n- **MAP**: Mean average precision across all relevant documents\n- **Recall@100**: How many relevant docs appear in the top 100 — critical for RAG where you retrieve then rerank\n\n> **Key Insight:** The MTEB Leaderboard is your compass for embedding model selection. Never pick a model by name recognition alone — filter by the Retrieval tab, check NDCG@10 scores, then weigh quality against your latency budget and hardware. A 33M-parameter BGE-small often beats a 7B model in production when you factor in cost per query.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "With hundreds of embedding models on Hugging Face, how do you choose? The MTEB Leaderboard benchmarks every model across 8 task types and 58+ datasets — giving you a data-driven way to pick the right model for your RAG pipeline.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\nimport time\n\ndef benchmark_model(model_name, queries, corpus):\n    model = SentenceTransformer(model_name)\n\n    start = time.time()\n    corpus_embs = model.encode(corpus, convert_to_tensor=True,\n                               normalize_embeddings=True)\n    index_time = time.time() - start\n\n    start = time.time()\n    query_embs = model.encode(queries, convert_to_tensor=True,\n                              normalize_embeddings=True)\n    scores = util.cos_sim(query_embs, corpus_embs)\n    search_time = time.time() - start\n\n    return {\n        \"model\": model_name,\n        \"dims\": corpus_embs.shape[1],\n        \"index_time_ms\": round(index_time * 1000, 1),\n        \"search_time_ms\": round(search_time * 1000, 1),\n        \"top_scores\": scores.max(dim=1).values.tolist()\n    }",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer for loading models and util for cosine similarity computation."},
+        {"line": 4, "explanation": "Define a benchmarking function that takes a model name, test queries, and a document corpus."},
+        {"line": 5, "explanation": "Load the model by name — sentence-transformers downloads it from Hugging Face on first use."},
+        {"line": 7, "explanation": "Start timing the indexing phase — encoding the entire corpus into embeddings."},
+        {"line": 8, "explanation": "Encode corpus with normalize_embeddings=True so dot product equals cosine similarity (faster search)."},
+        {"line": 12, "explanation": "Now time the search phase — encoding queries and computing similarity scores."},
+        {"line": 15, "explanation": "cos_sim returns a matrix of similarity scores: each query against every corpus document."},
+        {"line": 18, "explanation": "Return a benchmark report with model name, embedding dimensions, timing, and top similarity scores."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def recommend_embedding_model(corpus_size, latency_budget_ms,\n                               gpu_available, multilingual):\n    if multilingual:\n        if gpu_available:\n            return \"Alibaba/gte-Qwen2-7B-instruct\"\n        return \"paraphrase-multilingual-MiniLM-L12-v2\"\n    if gpu_available and latency_budget_ms > 100:\n        if corpus_size > 1_000_000:\n            return \"BAAI/bge-large-en-v1.5\"\n        return \"nvidia/NV-Embed-v2\"\n    if latency_budget_ms < 20:\n        return \"all-MiniLM-L6-v2\"\n    return \"BAAI/bge-small-en-v1.5\"\n\nrec = recommend_embedding_model(\n    corpus_size=50_000, latency_budget_ms=50,\n    gpu_available=False, multilingual=False)\nprint(f\"Recommended: {rec}\")",
+      "steps": [
+        {"line": 1, "explanation": "Build a decision function that maps real-world constraints to MTEB-ranked model recommendations."},
+        {"line": 3, "explanation": "First decision gate: multilingual requirement narrows choices to models trained on parallel corpora."},
+        {"line": 5, "explanation": "With GPU + multilingual, recommend the Qwen2-7B model — top MTEB multilingual retrieval scores."},
+        {"line": 7, "explanation": "For English-only with GPU and relaxed latency, go for maximum quality models from the MTEB top ranks."},
+        {"line": 11, "explanation": "Under 20ms budget? MiniLM-L6-v2 is the fastest model with acceptable retrieval quality."},
+        {"line": 13, "explanation": "Default recommendation: BGE-small — the best quality-to-speed ratio for CPU-only English RAG."},
+        {"line": 15, "explanation": "Test with a typical small-scale, CPU-only, English scenario — BGE-small wins."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Picking by Popularity",
+      "right_label": "Picking by MTEB Scores",
+      "items": [
+        {"left": "Choose the most downloaded model", "right": "Filter MTEB by Retrieval NDCG@10"},
+        {"left": "One model for all tasks", "right": "Match model strengths to your task type"},
+        {"left": "Ignore latency until production", "right": "Benchmark speed vs quality upfront"},
+        {"left": "Assume bigger = better", "right": "33M BGE-small often beats 7B in cost-adjusted RAG"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now know how to navigate the MTEB leaderboard and make data-driven embedding model choices for RAG!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EmbeddingModelRegistry` class that helps developers compare embedding models for RAG. The registry stores model specs (name, dimensions, retrieval_score, speed_score, parameter_count) and provides methods to query the best model for given constraints. Implement `add_model(name, dims, retrieval_score, speed_score, params)`, `best_for_retrieval(top_k)` returning top-k models sorted by retrieval_score descending, `best_under_params(max_params, top_k)` returning top models by retrieval_score that have parameter_count <= max_params, and `compare(model_a, model_b)` returning a dict with the winner for each metric."
+      },
+      "starter_code": "class EmbeddingModelRegistry:\n    def __init__(self):\n        self.models = {}\n\n    def add_model(self, name: str, dims: int, retrieval_score: float,\n                  speed_score: float, params: int):\n        # Store model specs in self.models dict keyed by name\n        pass\n\n    def best_for_retrieval(self, top_k: int = 3) -> list[dict]:\n        # Return top-k models sorted by retrieval_score descending\n        # Each result: {\"name\": str, \"retrieval_score\": float, \"dims\": int}\n        pass\n\n    def best_under_params(self, max_params: int,\n                          top_k: int = 3) -> list[dict]:\n        # Filter models with params <= max_params\n        # Sort by retrieval_score descending, return top-k\n        pass\n\n    def compare(self, model_a: str, model_b: str) -> dict:\n        # Compare two models on retrieval_score, speed_score, params\n        # Return {\"retrieval\": winner_name, \"speed\": winner_name,\n        #         \"efficiency\": winner_name}  (fewer params = more efficient)\n        pass\n\n# Test it:\nreg = EmbeddingModelRegistry()\nreg.add_model(\"bge-large\", 1024, 63.6, 5.0, 335_000_000)\nreg.add_model(\"bge-small\", 384, 59.2, 8.5, 33_000_000)\nreg.add_model(\"MiniLM\", 384, 49.5, 9.8, 22_000_000)\nreg.add_model(\"NV-Embed-v2\", 4096, 72.3, 2.1, 7_800_000_000)\n\ntop = reg.best_for_retrieval(top_k=2)\nprint(top[0][\"name\"])\nprint(top[1][\"name\"])\n\nsmall = reg.best_under_params(max_params=100_000_000, top_k=2)\nprint(small[0][\"name\"])\n\ncmp = reg.compare(\"bge-small\", \"MiniLM\")\nprint(cmp[\"retrieval\"])\nprint(cmp[\"speed\"])\nprint(cmp[\"efficiency\"])",
+      "expected_output": "NV-Embed-v2\nbge-large\nbge-small\nbge-small\nMiniLM\nMiniLM",
+      "hints": {
+        "en": [
+          "Store each model as a dict in self.models[name] with keys: dims, retrieval_score, speed_score, params",
+          "For best_for_retrieval, use sorted() with key=lambda on retrieval_score, reverse=True, then slice [:top_k]",
+          "For compare(), compare retrieval_score (higher wins), speed_score (higher wins), and params (lower wins for efficiency)"
+        ]
+      },
+      "test_code": "r = EmbeddingModelRegistry()\nr.add_model(\"A\", 384, 60.0, 9.0, 30_000_000)\nr.add_model(\"B\", 768, 70.0, 5.0, 300_000_000)\nr.add_model(\"C\", 1024, 65.0, 7.0, 150_000_000)\ntop = r.best_for_retrieval(top_k=2)\nassert top[0][\"name\"] == \"B\"\nassert top[1][\"name\"] == \"C\"\nassert len(top) == 2\nsmall = r.best_under_params(max_params=100_000_000, top_k=1)\nassert small[0][\"name\"] == \"A\"\ncmp = r.compare(\"A\", \"B\")\nassert cmp[\"retrieval\"] == \"B\"\nassert cmp[\"speed\"] == \"A\"\nassert cmp[\"efficiency\"] == \"A\""
+    },
+    {
+      "instruction": {
+        "en": "Build an `MTEBScoreAnalyzer` that computes aggregate benchmark statistics from raw task scores. Given a model's scores across MTEB task categories, implement `add_scores(model_name, scores_dict)` where scores_dict maps task names to float scores, `overall_average(model_name)` returning the mean across all tasks, `category_ranking(task_name)` returning models sorted by that task's score descending, and `best_model_for(task_name)` returning the model name with the highest score for that task."
+      },
+      "starter_code": "class MTEBScoreAnalyzer:\n    def __init__(self):\n        self.data = {}  # model_name -> {task: score}\n\n    def add_scores(self, model_name: str, scores: dict):\n        # Store scores dict for the model\n        pass\n\n    def overall_average(self, model_name: str) -> float:\n        # Return mean of all task scores for this model, rounded to 2 decimals\n        pass\n\n    def category_ranking(self, task_name: str) -> list[tuple]:\n        # Return [(model_name, score), ...] sorted by score descending\n        # Only include models that have this task\n        pass\n\n    def best_model_for(self, task_name: str) -> str:\n        # Return model name with highest score for this task\n        pass\n\n# Test it:\nanalyzer = MTEBScoreAnalyzer()\nanalyzer.add_scores(\"bge-large\", {\n    \"retrieval\": 63.6, \"sts\": 62.1, \"classification\": 75.2,\n    \"clustering\": 46.5, \"reranking\": 60.1\n})\nanalyzer.add_scores(\"MiniLM\", {\n    \"retrieval\": 49.5, \"sts\": 58.3, \"classification\": 63.1,\n    \"clustering\": 42.4, \"reranking\": 57.1\n})\nanalyzer.add_scores(\"NV-Embed\", {\n    \"retrieval\": 72.3, \"sts\": 67.8, \"classification\": 78.9,\n    \"clustering\": 52.1, \"reranking\": 65.4\n})\n\nprint(analyzer.overall_average(\"bge-large\"))\nprint(analyzer.best_model_for(\"retrieval\"))\nranking = analyzer.category_ranking(\"sts\")\nprint(ranking[0][0])\nprint(ranking[-1][0])",
+      "expected_output": "61.5\nNV-Embed\nNV-Embed\nMiniLM",
+      "hints": {
+        "en": [
+          "In add_scores, just store: self.data[model_name] = scores",
+          "For overall_average, sum the values of the scores dict and divide by len, then round(result, 2)",
+          "For category_ranking, iterate self.data.items(), collect (name, scores[task]) if task in scores, then sort descending"
+        ]
+      },
+      "test_code": "a = MTEBScoreAnalyzer()\na.add_scores(\"X\", {\"r\": 80.0, \"s\": 60.0})\na.add_scores(\"Y\", {\"r\": 70.0, \"s\": 90.0})\nassert a.overall_average(\"X\") == 70.0\nassert a.overall_average(\"Y\") == 80.0\nassert a.best_model_for(\"r\") == \"X\"\nassert a.best_model_for(\"s\") == \"Y\"\nranking = a.category_ranking(\"r\")\nassert ranking[0] == (\"X\", 80.0)\nassert ranking[1] == (\"Y\", 70.0)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["MTEB benchmark", "embedding model evaluation", "NDCG@10", "retrieval metrics", "model selection for RAG", "embedding dimensions", "speed vs quality tradeoff"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "sorting", "pip install", "basic embeddings concept"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,119 @@
+{
+  "id": "bge_small_compact_embeddings",
+  "topic": "bge_small_compact_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Compact Embeddings with BGE-small-en-v1.5",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master BAAI/bge-small-en-v1.5 — a 33MB embedding model that punches above its weight for local RAG, semantic search, and retrieval pipelines, with support for PyTorch, ONNX, and SafeTensors backends.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Small Model, Big Retrieval: BGE-small-en-v1.5\n\nVaathiyaar here! When you're building a local RAG pipeline on your laptop or deploying to a resource-constrained device, every megabyte counts. The **BAAI/bge-small-en-v1.5** model is only 33MB — less than half the size of MiniLM — yet it delivers surprisingly strong retrieval quality. It was trained by the Beijing Academy of Artificial Intelligence (BAAI) using a contrastive learning approach with curated text pairs, and it tops many benchmarks for models in its size class.\n\nThe secret sauce? BGE models use a **query instruction prefix** that tells the model whether the input is a query or a document. This asymmetric encoding dramatically improves retrieval accuracy.\n\n### Why BGE-small-en-v1.5?\n\n| Model | Size | Dimensions | MTEB Avg | Backend Options |\n|---|---|---|---|---|\n| bge-small-en-v1.5 | 33 MB | 384 | 62.x | PyTorch, ONNX, SafeTensors |\n| all-MiniLM-L6-v2 | 80 MB | 384 | 56.x | PyTorch, ONNX |\n| bge-base-en-v1.5 | 110 MB | 768 | 64.x | PyTorch, ONNX, SafeTensors |\n| bge-large-en-v1.5 | 335 MB | 1024 | 64.x | PyTorch, ONNX, SafeTensors |\n\nAt 33MB with 384 dimensions, BGE-small gives you more retrieval quality per megabyte than almost any other English embedding model.\n\n### The Query Instruction Pattern\n\nBGE models use a special prefix for queries (not for documents). This asymmetry is the key differentiator:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\n# Documents are encoded as-is\ndocuments = [\n    \"Python generators yield values lazily\",\n    \"List comprehensions create lists eagerly\",\n    \"Async functions use the event loop\",\n]\ndoc_embeddings = model.encode(documents, normalize_embeddings=True)\n\n# Queries get the instruction prefix\ninstruction = \"Represent this sentence for searching relevant passages: \"\nquery = instruction + \"How do I process data without loading it all into memory?\"\nquery_embedding = model.encode(query, normalize_embeddings=True)\n```\n\nThe instruction prefix tells the model to encode the query for *retrieval* rather than *similarity* — a subtle but important distinction.\n\n### Building a Local RAG Retriever\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass BGERetriever:\n    QUERY_PREFIX = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.documents = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.documents = documents\n        self.embeddings = self.model.encode(\n            documents, normalize_embeddings=True\n        )\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        q_emb = self.model.encode(\n            self.QUERY_PREFIX + query, normalize_embeddings=True\n        )\n        # With normalized vectors, dot product == cosine similarity\n        scores = self.embeddings @ q_emb\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [\n            {\"document\": self.documents[i], \"score\": float(scores[i])}\n            for i in top_idx\n        ]\n```\n\nBecause we normalize embeddings, a simple dot product replaces the more expensive cosine similarity computation.\n\n### ONNX for Production Speed\n\nBGE-small ships with ONNX weights, giving you a 2-3x speedup on CPU without any quality loss:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\"\n)\n# Same API, faster inference\nembeddings = model.encode([\"ONNX is fast\"], normalize_embeddings=True)\n```\n\nInstall `optimum[onnxruntime]` to unlock this backend. For GPU acceleration, use `optimum[onnxruntime-gpu]` instead.\n\n### Saving and Loading Embeddings\n\n```python\nimport numpy as np\n\n# Compute once\nnp.save(\"doc_embeddings.npy\", doc_embeddings)\n\n# Load instantly in production\ncached = np.load(\"doc_embeddings.npy\")\n```\n\nFor a 10,000-document corpus with 384 dimensions, your embedding file is only ~15MB — tiny enough to bundle with your application.\n\n> **Key Insight:** BGE-small-en-v1.5 is the ideal embedding model for local-first RAG: at 33MB it's smaller than most Python packages, its query instruction prefix gives it retrieval quality that rivals models 3x its size, and ONNX support makes it production-ready on CPU. When you need embeddings without the cloud, BGE-small is your go-to.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BAAI/bge-small-en-v1.5 packs top-tier retrieval into just 33MB. Its secret weapon — a query instruction prefix — tells the model whether it's encoding a search query or a document, dramatically improving retrieval accuracy for local RAG pipelines.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndocuments = [\n    \"Python generators yield values lazily\",\n    \"List comprehensions create lists eagerly\",\n    \"Async functions use the event loop\",\n    \"Decorators wrap functions with extra behavior\",\n]\n\ndoc_embeddings = model.encode(documents, normalize_embeddings=True)\nprint(doc_embeddings.shape)  # (4, 384)\nprint(np.linalg.norm(doc_embeddings[0]))  # ~1.0 (normalized)",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — it handles tokenization, model loading, and encoding in one clean API."},
+        {"line": 4, "explanation": "Load BGE-small-en-v1.5. At 33MB, it downloads in seconds and runs entirely on CPU."},
+        {"line": 6, "explanation": "Define documents to index. These are encoded WITHOUT any instruction prefix — only queries get the prefix."},
+        {"line": 13, "explanation": "Encode all documents with normalize_embeddings=True. Normalized vectors let us use fast dot products instead of cosine similarity."},
+        {"line": 14, "explanation": "Shape is (4, 384) — four documents, each as a 384-dimensional unit vector."},
+        {"line": 15, "explanation": "Each embedding vector has magnitude ~1.0 because we normalized. This makes dot product equivalent to cosine similarity."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\ndocs = [\n    \"Generators produce items on demand\",\n    \"Lists store all elements in memory\",\n    \"Cooking pasta requires boiling water\",\n]\ndoc_embs = model.encode(docs, normalize_embeddings=True)\n\nprefix = \"Represent this sentence for searching relevant passages: \"\nquery = prefix + \"lazy evaluation in Python\"\nq_emb = model.encode(query, normalize_embeddings=True)\n\nscores = doc_embs @ q_emb\nranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 5, "explanation": "Three documents: two about Python data handling, one about cooking. Semantic search should rank Python docs higher for a Python query."},
+        {"line": 10, "explanation": "Encode documents without any prefix — documents are always encoded plain."},
+        {"line": 12, "explanation": "The BGE query instruction prefix. This is what makes BGE different from MiniLM — it signals 'retrieval mode' to the encoder."},
+        {"line": 13, "explanation": "Prepend the prefix to the actual query. The model now knows to optimize this embedding for finding relevant passages."},
+        {"line": 14, "explanation": "Encode the prefixed query. The prefix changes the embedding to better match relevant documents."},
+        {"line": 16, "explanation": "Matrix multiply: dot product of normalized vectors gives cosine similarity. One line, no library function needed."},
+        {"line": 17, "explanation": "Sort by descending score. 'Generators produce items on demand' should rank first — it matches 'lazy evaluation' semantically."},
+        {"line": 18, "explanation": "Print ranked results. The model bridges vocabulary gaps: 'lazy evaluation' maps to 'on demand', not 'boiling water'."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Without Query Prefix",
+      "right_label": "With BGE Query Prefix",
+      "items": [
+        {"left": "Symmetric encoding for both sides", "right": "Asymmetric: queries get instruction prefix"},
+        {"left": "Optimizes for general similarity", "right": "Optimizes specifically for retrieval"},
+        {"left": "Good for clustering and dedup", "right": "Better for search and RAG pipelines"},
+        {"left": "Works with any model", "right": "BGE-specific; improves retrieval scores by ~3-5%"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now wield a 33MB embedding powerhouse for local RAG — compact, fast, and retrieval-optimized!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `BGESearchEngine` class that simulates BGE-style asymmetric search. It should support a query instruction prefix for queries (but not documents). Implement `encode(text)` to return a word-frequency vector (dict), `cosine_similarity(vec_a, vec_b)` to compare two vectors, and `search(query, top_k)` that automatically prepends extra context words from the prefix to the query before encoding. The prefix should add the words 'search find relevant' to boost retrieval-oriented terms."
+      },
+      "starter_code": "import math\n\nclass BGESearchEngine:\n    QUERY_BOOST_WORDS = \"search find relevant\"\n\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        # Encode documents WITHOUT the prefix\n        self.doc_vectors = [self.encode(doc) for doc in documents]\n\n    def encode(self, text: str) -> dict:\n        # Return word frequency vector as dict: {word: count}\n        # Lowercase all words\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Compute cosine similarity between two word-frequency vectors\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Prepend QUERY_BOOST_WORDS to the query before encoding\n        # This simulates BGE's asymmetric query instruction\n        # Return top-k results as [{\"document\": str, \"score\": float}]\n        pass\n\n# Test it:\nengine = BGESearchEngine([\n    \"search algorithms find items in data structures\",\n    \"cooking recipes for pasta dishes\",\n    \"relevant information retrieval from documents\",\n    \"gardening tips for spring flowers\"\n])\n\nresults = engine.search(\"data retrieval\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] > results[1][\"score\"])\n# The boost words 'search find relevant' should help rank\n# search/retrieval docs higher\nprint(results[0][\"document\"])",
+      "expected_output": "2\nTrue\nsearch algorithms find items in data structures",
+      "hints": {
+        "en": [
+          "In encode(), use text.lower().split() and build a dict counting each word's occurrences",
+          "For cosine_similarity, find shared keys, compute dot product, divide by product of magnitudes (sqrt of sum of squared values)",
+          "In search(), create the boosted query as: self.QUERY_BOOST_WORDS + ' ' + query, then encode and compare against all doc_vectors"
+        ]
+      },
+      "test_code": "e = BGESearchEngine([\"hello world\", \"search find relevant data\", \"cats dogs\"])\nassert e.encode(\"hello hello\") == {\"hello\": 2}\nassert e.encode(\"a b a\") == {\"a\": 2, \"b\": 1}\nsim = e.cosine_similarity({\"a\": 1}, {\"a\": 1})\nassert abs(sim - 1.0) < 0.001\nsim0 = e.cosine_similarity({\"a\": 1}, {\"b\": 1})\nassert sim0 == 0.0\nresults = e.search(\"data\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"search find relevant data\"\nassert results[0][\"score\"] > results[1][\"score\"]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MultiBackendEmbedder` class that simulates switching between embedding 'backends'. It supports two modes: 'standard' (word frequency vectors) and 'bigram' (pairs of consecutive words as features). Implement `encode(text, backend)` that returns a feature vector dict using the chosen backend, and `compare(text_a, text_b, backend)` that returns cosine similarity. The bigram backend should capture word-order information that the standard backend misses."
+      },
+      "starter_code": "import math\n\nclass MultiBackendEmbedder:\n    def encode(self, text: str, backend: str = \"standard\") -> dict:\n        # If backend == 'standard': return word frequency dict\n        # If backend == 'bigram': return bigram frequency dict\n        #   e.g., 'a b c' -> {'a_b': 1, 'b_c': 1}\n        # Lowercase all text first\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two feature vectors\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def compare(self, text_a: str, text_b: str,\n                backend: str = \"standard\") -> float:\n        # Encode both texts with the given backend, return similarity\n        pass\n\n# Test it:\nemb = MultiBackendEmbedder()\n\n# Standard backend: word order doesn't matter\nstd_sim = emb.compare(\"dog bites man\", \"man bites dog\", \"standard\")\nprint(f\"{std_sim:.3f}\")  # 1.000 — same words, same frequencies\n\n# Bigram backend: word order matters!\nbig_sim = emb.compare(\"dog bites man\", \"man bites dog\", \"bigram\")\nprint(f\"{big_sim:.3f}\")  # ~0.333 — different bigrams\n\n# Bigram catches order difference\nprint(std_sim > big_sim)",
+      "expected_output": "1.000\n0.333\nTrue",
+      "hints": {
+        "en": [
+          "For bigram encoding, split into words, then create pairs: words[i] + '_' + words[i+1] for each consecutive pair",
+          "The cosine_similarity method is the same regardless of backend — it just operates on dict vectors",
+          "\"dog bites man\" has bigrams {dog_bites: 1, bites_man: 1}; \"man bites dog\" has {man_bites: 1, bites_dog: 1} — only 0 shared keys out of 2, but 'bites' appears in different positions"
+        ]
+      },
+      "test_code": "e = MultiBackendEmbedder()\nassert e.encode(\"a b c\", \"standard\") == {\"a\": 1, \"b\": 1, \"c\": 1}\nassert e.encode(\"a b c\", \"bigram\") == {\"a_b\": 1, \"b_c\": 1}\nassert e.encode(\"a a b\", \"standard\") == {\"a\": 2, \"b\": 1}\nassert e.encode(\"a a b\", \"bigram\") == {\"a_a\": 1, \"a_b\": 1}\nsim = e.compare(\"hello world\", \"hello world\", \"standard\")\nassert abs(sim - 1.0) < 0.001\nsim_bi = e.compare(\"hello world\", \"hello world\", \"bigram\")\nassert abs(sim_bi - 1.0) < 0.001\n# Order matters for bigram\nsim_std = e.compare(\"a b c\", \"c b a\", \"standard\")\nassert abs(sim_std - 1.0) < 0.001\nsim_big = e.compare(\"a b c\", \"c b a\", \"bigram\")\nassert sim_big < 0.5"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["BGE embeddings", "query instruction prefix", "asymmetric retrieval", "ONNX inference", "normalized embeddings", "compact embedding models", "local RAG retrieval"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

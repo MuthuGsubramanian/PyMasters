@@ -1,0 +1,109 @@
+{
+  "id": "agentic_skill_internalization_rl",
+  "topic": "agentic_skill_internalization_rl",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "In-Context Agentic RL for Skill Internalization",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how reinforcement learning can internalize agent skills — procedural knowledge packages — directly into model parameters, eliminating retrieval noise and token overhead at inference time.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Skill Loading to Skill Knowing\n\nVaathiyaar here! Today's LLM agents rely on a clever trick: they load **skills** — structured bundles of instructions, tool schemas, and example traces — into their context window at inference time. Need the agent to write SQL? Inject the SQL skill. Need it to call a REST API? Load the API skill. But this approach has three painful limits: retrieval can grab the wrong skill, each loaded skill eats precious context tokens, and the model never truly *learns* — it just follows instructions.\n\n**In-Context Agentic Reinforcement Learning (ICARL)** flips this paradigm. Instead of loading skills at inference, we use RL to **internalize** skills into the model's weights. The model graduates from reading the recipe every time to actually knowing how to cook.\n\n### Skill Augmentation vs Skill Internalization\n\n| Dimension | Skill Augmentation (RAG-style) | Skill Internalization (ICARL) |\n|---|---|---|\n| Knowledge location | Context window | Model parameters |\n| Token overhead | 500-2000 tokens/skill | Zero at inference |\n| Retrieval errors | Possible (wrong skill) | None |\n| Adapts to new skills | Instantly (just add docs) | Requires RL training round |\n| Generalization | Limited to loaded examples | Cross-skill transfer |\n| Latency | Higher (retrieval + injection) | Lower (direct generation) |\n\n### The ICARL Training Loop\n\nThe core idea: present the agent with tasks that *require* a skill, provide the skill in-context during early training, then **gradually withdraw** the skill text while rewarding successful task completion. The model must internalize the knowledge to maintain performance.\n\n```python\nfrom dataclasses import dataclass, field\n\n@dataclass\nclass Skill:\n    name: str\n    description: str\n    procedures: list[str]       # Step-by-step instructions\n    tool_schemas: list[dict]    # Tool definitions the skill uses\n    examples: list[dict]        # Few-shot demonstrations\n\n@dataclass\nclass ICARLConfig:\n    total_phases: int = 5\n    skill_visibility_schedule: list[float] = field(\n        default_factory=lambda: [1.0, 0.75, 0.5, 0.25, 0.0]\n    )\n    correctness_weight: float = 1.0\n    autonomy_weight: float = 0.4\n    efficiency_weight: float = 0.2\n```\n\n### The Skill Fade Schedule\n\nICRL uses a **skill fade schedule** — a curriculum that progressively removes skill content from the prompt across training phases:\n\n```python\nimport random\n\ndef build_training_prompt(\n    task: str,\n    skill: Skill,\n    phase: int,\n    config: ICARLConfig\n) -> str:\n    visibility = config.skill_visibility_schedule[phase]\n    prompt_parts = [f\"Task: {task}\"]\n\n    if visibility > 0:\n        # Include skill description always when visible\n        prompt_parts.append(f\"Skill: {skill.name}\")\n        prompt_parts.append(f\"Description: {skill.description}\")\n\n        # Randomly include procedures based on visibility\n        for proc in skill.procedures:\n            if random.random() < visibility:\n                prompt_parts.append(f\"- {proc}\")\n\n        # Include examples proportionally\n        n_examples = max(0, int(len(skill.examples) * visibility))\n        for ex in skill.examples[:n_examples]:\n            prompt_parts.append(f\"Example: {ex}\")\n\n    return \"\\n\".join(prompt_parts)\n```\n\n### The Internalization Reward\n\nThe reward function incentivizes correctness, autonomy (solving without skill text), and efficiency:\n\n```python\ndef icarl_reward(\n    task_success: bool,\n    skill_visibility: float,\n    tokens_used: int,\n    max_tokens: int,\n    config: ICARLConfig\n) -> float:\n    correctness = 1.0 if task_success else -1.0\n    autonomy_bonus = (1.0 - skill_visibility) if task_success else 0.0\n    efficiency = max(0, 1.0 - tokens_used / max_tokens) if task_success else 0.0\n\n    return (\n        config.correctness_weight * correctness +\n        config.autonomy_weight * autonomy_bonus +\n        config.efficiency_weight * efficiency\n    )\n```\n\n### When to Internalize vs Augment\n\nInternalization shines for **stable, frequently-used skills** — your agent's core competencies. Keep augmentation for rare or rapidly-changing skills where retraining isn't practical. The best systems use both: a base model with internalized core skills, augmented by retrieval for the long tail.\n\n> **Key Insight:** Skill internalization through RL transforms agents from instruction-followers into genuine skill-holders. By gradually withdrawing skill text during training while rewarding successful execution, the model learns to encode procedural knowledge in its parameters — eliminating retrieval noise, slashing token costs, and enabling cross-skill generalization that augmentation alone cannot achieve.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "LLM agents today load skills into their context at inference time — but what if the model could internalize those skills into its weights? In-Context Agentic RL teaches models to graduate from reading recipes to knowing how to cook.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from dataclasses import dataclass, field\n\n@dataclass\nclass Skill:\n    name: str\n    description: str\n    procedures: list[str]\n    tool_schemas: list[dict]\n    examples: list[dict]\n\n@dataclass\nclass ICARLConfig:\n    total_phases: int = 5\n    skill_visibility_schedule: list[float] = field(\n        default_factory=lambda: [1.0, 0.75, 0.5, 0.25, 0.0]\n    )\n    correctness_weight: float = 1.0\n    autonomy_weight: float = 0.4\n    efficiency_weight: float = 0.2",
+      "steps": [
+        {"line": 1, "explanation": "Import dataclass and field for structured configuration with default factories."},
+        {"line": 3, "explanation": "A Skill bundles everything an agent needs: name, description, step-by-step procedures, tool schemas, and examples."},
+        {"line": 7, "explanation": "Procedures are the ordered steps — the 'how-to' that we want the model to internalize into its weights."},
+        {"line": 8, "explanation": "Tool schemas define what external tools this skill can invoke (APIs, databases, file systems)."},
+        {"line": 11, "explanation": "ICARLConfig controls the training curriculum — how fast skills fade and how rewards are weighted."},
+        {"line": 14, "explanation": "The skill_visibility_schedule is the key innovation: [1.0, 0.75, 0.5, 0.25, 0.0] means full skill text in phase 0, completely withdrawn by phase 4."},
+        {"line": 17, "explanation": "Three reward components: correctness (did it work?), autonomy (did it work without help?), and efficiency (how many tokens?)."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import random\n\ndef build_training_prompt(task, skill, phase, config):\n    visibility = config.skill_visibility_schedule[phase]\n    prompt_parts = [f\"Task: {task}\"]\n    if visibility > 0:\n        prompt_parts.append(f\"Skill: {skill.name}\")\n        for proc in skill.procedures:\n            if random.random() < visibility:\n                prompt_parts.append(f\"- {proc}\")\n        n_examples = int(len(skill.examples) * visibility)\n        for ex in skill.examples[:n_examples]:\n            prompt_parts.append(f\"Example: {ex}\")\n    return \"\\n\".join(prompt_parts)\n\ndef icarl_reward(task_success, skill_visibility, tokens_used,\n                 max_tokens, config):\n    correctness = 1.0 if task_success else -1.0\n    autonomy = (1.0 - skill_visibility) if task_success else 0.0\n    efficiency = max(0, 1.0 - tokens_used / max_tokens) if task_success else 0.0\n    return (config.correctness_weight * correctness +\n            config.autonomy_weight * autonomy +\n            config.efficiency_weight * efficiency)",
+      "steps": [
+        {"line": 3, "explanation": "build_training_prompt constructs the agent's prompt, injecting skill content based on the current training phase."},
+        {"line": 4, "explanation": "Look up visibility for this phase — 1.0 means full skill text, 0.0 means the model is on its own."},
+        {"line": 6, "explanation": "Only include skill information when visibility > 0. At phase 4, the model gets just the task."},
+        {"line": 8, "explanation": "Each procedure is included with probability equal to visibility — stochastic dropout of skill steps."},
+        {"line": 11, "explanation": "Examples are truncated proportionally: 4 examples at visibility 0.5 becomes 2 examples."},
+        {"line": 16, "explanation": "The reward function combines three signals to guide the RL training toward full internalization."},
+        {"line": 18, "explanation": "Correctness is binary: +1.0 for success, -1.0 for failure — task completion is non-negotiable."},
+        {"line": 19, "explanation": "Autonomy bonus scales with how little skill text was provided — solving without help earns more reward."},
+        {"line": 20, "explanation": "Efficiency rewards concise solutions. All bonuses are zero for failed tasks — no gaming the system."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand how ICARL internalizes agent skills into model weights through graduated RL training!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a `SkillFadeScheduler` class that manages the progressive withdrawal of skill content. It should: 1) accept a `phases` count and build a linear fade schedule from 1.0 to 0.0, 2) have an `advance()` method that moves to the next phase (capped at the last phase), 3) have a `current_visibility()` method returning the current phase's visibility float, 4) have a `filter_procedures(procedures)` method that returns only the procedures to include (keep first N proportional to visibility, where N = round(len * visibility))."
+      },
+      "starter_code": "class SkillFadeScheduler:\n    def __init__(self, phases: int = 5):\n        # Build a linear schedule from 1.0 down to 0.0\n        self.phase = 0\n        self.schedule = []  # Fill this\n        pass\n\n    def advance(self):\n        # Move to next phase (don't exceed max)\n        pass\n\n    def current_visibility(self) -> float:\n        # Return visibility for current phase\n        pass\n\n    def filter_procedures(self, procedures: list[str]) -> list[str]:\n        # Keep first N procedures based on visibility\n        pass\n\n# Test it:\nscheduler = SkillFadeScheduler(5)\nprocs = [\"step1\", \"step2\", \"step3\", \"step4\"]\nprint(scheduler.current_visibility())\nprint(scheduler.filter_procedures(procs))\nscheduler.advance()\nscheduler.advance()\nprint(scheduler.current_visibility())\nprint(scheduler.filter_procedures(procs))\nscheduler.advance()\nscheduler.advance()\nprint(scheduler.current_visibility())\nprint(scheduler.filter_procedures(procs))",
+      "expected_output": "1.0\n['step1', 'step2', 'step3', 'step4']\n0.5\n['step1', 'step2']\n0.0\n[]",
+      "hints": {
+        "en": [
+          "Build the schedule with [1.0 - i/(phases-1) for i in range(phases)] to get evenly spaced values from 1.0 to 0.0",
+          "advance() just increments self.phase but caps at len(self.schedule) - 1",
+          "filter_procedures: compute n = round(len(procedures) * current_visibility()) and return procedures[:n]"
+        ]
+      },
+      "test_code": "s = SkillFadeScheduler(5)\nassert s.current_visibility() == 1.0\nassert s.filter_procedures(['a','b','c','d']) == ['a','b','c','d']\ns.advance()\nassert s.current_visibility() == 0.75\nassert s.filter_procedures(['a','b','c','d']) == ['a','b','c']\ns.advance()\nassert s.current_visibility() == 0.5\nassert s.filter_procedures(['a','b','c','d']) == ['a','b']\ns.advance()\nassert s.current_visibility() == 0.25\nassert s.filter_procedures(['a','b','c','d']) == ['a']\ns.advance()\nassert s.current_visibility() == 0.0\nassert s.filter_procedures(['a','b','c','d']) == []\ns.advance()\nassert s.current_visibility() == 0.0"
+    },
+    {
+      "instruction": {
+        "en": "Implement an `icarl_reward(task_success, skill_visibility, tokens_used, max_tokens)` function and a `run_icarl_episode(tasks, skill_phases)` simulator. The reward function should: give +1.0 for success/-1.0 for failure as correctness, add autonomy bonus of 0.4*(1-skill_visibility) for successful tasks only, add efficiency bonus of 0.2*max(0, 1-tokens_used/max_tokens) for successful tasks only. `run_icarl_episode` takes a list of task result dicts with keys 'success' (bool), 'tokens' (int), 'max_tokens' (int), and a list of skill_phases (float visibility per task). Return a dict with 'rewards' (list of floats rounded to 2 decimals) and 'avg_reward' (float rounded to 2 decimals)."
+      },
+      "starter_code": "def icarl_reward(task_success: bool, skill_visibility: float,\n                 tokens_used: int, max_tokens: int) -> float:\n    # Compute ICARL reward\n    pass\n\ndef run_icarl_episode(tasks: list[dict],\n                      skill_phases: list[float]) -> dict:\n    # Return {'rewards': [...], 'avg_reward': ...}\n    pass\n\n# Test it:\nprint(icarl_reward(True, 1.0, 100, 200))\nprint(icarl_reward(True, 0.0, 100, 200))\nprint(icarl_reward(False, 0.5, 50, 200))\nresult = run_icarl_episode(\n    [{'success': True, 'tokens': 100, 'max_tokens': 200},\n     {'success': False, 'tokens': 50, 'max_tokens': 200}],\n    [1.0, 0.0]\n)\nprint(result)",
+      "expected_output": "1.1\n1.5\n-1.0\n{'rewards': [1.1, -1.0], 'avg_reward': 0.05}",
+      "hints": {
+        "en": [
+          "Correctness: 1.0 if success else -1.0. Autonomy: 0.4 * (1 - visibility) only if success. Efficiency: 0.2 * max(0, 1 - tokens/max) only if success.",
+          "run_icarl_episode zips tasks with skill_phases and calls icarl_reward for each",
+          "Round each reward to 2 decimals, and compute avg_reward as round(sum/len, 2)"
+        ]
+      },
+      "test_code": "assert abs(icarl_reward(True, 1.0, 100, 200) - 1.1) < 0.01\nassert abs(icarl_reward(True, 0.0, 100, 200) - 1.5) < 0.01\nassert abs(icarl_reward(False, 0.5, 50, 200) - (-1.0)) < 0.01\nassert abs(icarl_reward(True, 0.5, 200, 200) - 1.2) < 0.01\nr = run_icarl_episode([{'success': True, 'tokens': 100, 'max_tokens': 200}, {'success': False, 'tokens': 50, 'max_tokens': 200}], [1.0, 0.0])\nassert r['rewards'] == [1.1, -1.0]\nassert r['avg_reward'] == 0.05"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["skill internalization", "agentic reinforcement learning", "skill fade scheduling", "autonomy-aware rewards", "inference-time optimization"],
+    "concepts_required": ["python classes", "dataclasses", "reinforcement learning basics", "LLM agents"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

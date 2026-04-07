@@ -1,0 +1,122 @@
+{
+  "id": "rag_scientific_literature_eic",
+  "topic": "rag_scientific_literature_eic",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Building a RAG Pipeline for Scientific Literature (EIC Case Study)",
+    "ta": ""
+  },
+  "description": {
+    "en": "Build a domain-specific Retrieval-Augmented Generation pipeline for answering technical questions over scientific papers, inspired by the Electron-Ion Collider Q&A system using arXiv articles and open-source LLMs.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Papers to Answers: RAG for Scientific Literature\n\nVaathiyaar here! Imagine you have thousands of arXiv papers about a cutting-edge physics experiment — the Electron-Ion Collider (EIC) — and researchers need instant, accurate answers from them. You can't feed 10,000 PDFs into an LLM prompt. This is exactly where **Retrieval-Augmented Generation (RAG)** shines, and a real team built exactly this system using open-source tools.\n\nLet's break down how to build a domain-specific RAG pipeline that can answer specialized scientific questions — and how you can apply the same architecture to any technical corpus.\n\n### Why RAG for Scientific Domains?\n\nGeneral-purpose LLMs hallucinate on niche topics. RAG grounds responses in actual source documents:\n\n| Approach | Strength | Weakness |\n|---|---|---|\n| Fine-tuning | Bakes knowledge into weights | Expensive, can't cite sources |\n| Prompt stuffing | Simple | Context window too small for large corpora |\n| RAG | Scalable, citable, updatable | Requires retrieval pipeline |\n| Hybrid (RAG + fine-tuned) | Best accuracy on domain tasks | Most complex to build |\n\n### The EIC RAG Architecture\n\nThe Electron-Ion Collider team built their pipeline with three stages: **Ingest → Index → Retrieve+Generate**.\n\n```python\nfrom langchain.document_loaders import ArxivLoader\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\nfrom langchain.embeddings import HuggingFaceEmbeddings\nfrom langchain.vectorstores import FAISS\n\n# Stage 1: Ingest arXiv papers\ndef ingest_papers(arxiv_ids: list[str]) -> list:\n    docs = []\n    for aid in arxiv_ids:\n        loader = ArxivLoader(query=aid, load_max_docs=1)\n        docs.extend(loader.load())\n    return docs\n\n# Stage 2: Chunk and index\ndef build_index(docs, chunk_size=1000, overlap=200):\n    splitter = RecursiveCharacterTextSplitter(\n        chunk_size=chunk_size,\n        chunk_overlap=overlap,\n        separators=[\"\\n\\n\", \"\\n\", \". \", \" \"]\n    )\n    chunks = splitter.split_documents(docs)\n    embeddings = HuggingFaceEmbeddings(\n        model_name=\"sentence-transformers/all-MiniLM-L6-v2\"\n    )\n    return FAISS.from_documents(chunks, embeddings)\n```\n\n### Retrieval and Generation with LLaMA\n\nThe EIC team used an open-source LLaMA model to avoid sending sensitive research data to external APIs:\n\n```python\nfrom langchain.llms import LlamaCpp\nfrom langchain.chains import RetrievalQA\nfrom langchain.prompts import PromptTemplate\n\ntemplate = \"\"\"You are a physics research assistant.\nUse the following context from EIC papers to answer.\nIf unsure, say you don't know. Cite paper IDs.\n\nContext: {context}\nQuestion: {question}\nAnswer:\"\"\"\n\ndef build_qa_chain(vectorstore, model_path: str):\n    llm = LlamaCpp(\n        model_path=model_path,\n        n_ctx=4096,\n        temperature=0.1\n    )\n    prompt = PromptTemplate(\n        template=template,\n        input_variables=[\"context\", \"question\"]\n    )\n    return RetrievalQA.from_chain_type(\n        llm=llm,\n        retriever=vectorstore.as_retriever(search_kwargs={\"k\": 5}),\n        chain_type_kwargs={\"prompt\": prompt},\n        return_source_documents=True\n    )\n```\n\n### Chunking Strategy Matters\n\nScientific papers have structure — abstracts, sections, equations, references. Naive chunking destroys this:\n\n| Strategy | Use Case | Risk |\n|---|---|---|\n| Fixed-size (500 tokens) | General text | Splits equations mid-formula |\n| Recursive (paragraph → sentence) | Structured docs | Better boundary respect |\n| Section-aware | Academic papers | Preserves logical units |\n| Semantic chunking | Mixed content | Computationally expensive |\n\nThe EIC team used recursive splitting with overlap, plus metadata tagging so each chunk knows which paper and section it came from.\n\n### Evaluation: Does Your RAG Actually Work?\n\nDomain experts created ground-truth Q&A pairs. Key metrics:\n\n```python\ndef evaluate_rag(qa_chain, test_pairs: list[dict]) -> dict:\n    correct, total = 0, len(test_pairs)\n    for pair in test_pairs:\n        result = qa_chain({\"query\": pair[\"question\"]})\n        if pair[\"key_phrase\"].lower() in result[\"result\"].lower():\n            correct += 1\n    return {\n        \"accuracy\": correct / total,\n        \"total\": total\n    }\n```\n\n> **Key Insight:** The power of domain-specific RAG isn't just retrieval — it's the combination of structured ingestion, smart chunking that respects document boundaries, and an LLM prompted to stay grounded in the retrieved context. This same architecture works for any specialized corpus: legal documents, medical literature, or your own project's documentation.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Thousands of arXiv papers about a physics experiment. Researchers need instant answers. Too much for any context window. This is where RAG transforms a pile of PDFs into a knowledge-grounded Q&A system.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from langchain.document_loaders import ArxivLoader\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\nfrom langchain.embeddings import HuggingFaceEmbeddings\nfrom langchain.vectorstores import FAISS\n\ndef ingest_papers(arxiv_ids: list[str]) -> list:\n    docs = []\n    for aid in arxiv_ids:\n        loader = ArxivLoader(query=aid, load_max_docs=1)\n        docs.extend(loader.load())\n    return docs\n\ndef build_index(docs, chunk_size=1000, overlap=200):\n    splitter = RecursiveCharacterTextSplitter(\n        chunk_size=chunk_size,\n        chunk_overlap=overlap,\n        separators=[\"\\n\\n\", \"\\n\", \". \", \" \"]\n    )\n    chunks = splitter.split_documents(docs)\n    embeddings = HuggingFaceEmbeddings(\n        model_name=\"sentence-transformers/all-MiniLM-L6-v2\"\n    )\n    return FAISS.from_documents(chunks, embeddings)",
+      "steps": [
+        {"line": 1, "explanation": "Import ArxivLoader — it fetches papers directly from arXiv by ID, handling PDF parsing automatically."},
+        {"line": 2, "explanation": "RecursiveCharacterTextSplitter respects natural boundaries (paragraphs, sentences) when chunking."},
+        {"line": 3, "explanation": "HuggingFace embeddings run locally — no API calls needed, critical for sensitive research data."},
+        {"line": 4, "explanation": "FAISS is Facebook's vector similarity library — fast, free, and runs entirely in-memory or on disk."},
+        {"line": 6, "explanation": "ingest_papers() takes arXiv IDs and downloads each paper as a LangChain Document with metadata."},
+        {"line": 9, "explanation": "ArxivLoader handles PDF download, text extraction, and metadata parsing in one call."},
+        {"line": 13, "explanation": "build_index() is where the magic happens — chunk documents and create searchable vector embeddings."},
+        {"line": 17, "explanation": "chunk_overlap=200 ensures context isn't lost at chunk boundaries — critical for scientific text."},
+        {"line": 20, "explanation": "all-MiniLM-L6-v2 is a lightweight but effective embedding model — 384 dimensions, fast inference."},
+        {"line": 22, "explanation": "FAISS.from_documents() embeds all chunks and builds the similarity search index in one step."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from langchain.llms import LlamaCpp\nfrom langchain.chains import RetrievalQA\nfrom langchain.prompts import PromptTemplate\n\ntemplate = \"\"\"You are a physics research assistant.\nUse the context from EIC papers to answer.\nIf unsure, say you don't know. Cite paper IDs.\n\nContext: {context}\nQuestion: {question}\nAnswer:\"\"\"\n\ndef build_qa_chain(vectorstore, model_path):\n    llm = LlamaCpp(model_path=model_path, n_ctx=4096, temperature=0.1)\n    prompt = PromptTemplate(template=template, input_variables=[\"context\", \"question\"])\n    return RetrievalQA.from_chain_type(\n        llm=llm,\n        retriever=vectorstore.as_retriever(search_kwargs={\"k\": 5}),\n        chain_type_kwargs={\"prompt\": prompt},\n        return_source_documents=True\n    )",
+      "steps": [
+        {"line": 1, "explanation": "LlamaCpp runs the LLaMA model locally via llama.cpp — no API costs, full data privacy."},
+        {"line": 5, "explanation": "The prompt template grounds the LLM — it must use retrieved context, not hallucinate answers."},
+        {"line": 7, "explanation": "'If unsure, say you don't know' — a critical guardrail for scientific accuracy."},
+        {"line": 13, "explanation": "build_qa_chain() wires retrieval and generation together into a single callable chain."},
+        {"line": 14, "explanation": "temperature=0.1 keeps answers factual and deterministic — essential for scientific Q&A."},
+        {"line": 18, "explanation": "search_kwargs={'k': 5} retrieves the 5 most relevant chunks for each question."},
+        {"line": 20, "explanation": "return_source_documents=True lets users verify answers against the original papers."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "General LLM",
+      "right_label": "RAG Pipeline",
+      "items": [
+        {"left": "May hallucinate domain-specific facts", "right": "Grounded in actual paper content"},
+        {"left": "Cannot cite sources", "right": "Returns source documents with answers"},
+        {"left": "Knowledge frozen at training cutoff", "right": "Updated by adding new papers to the index"},
+        {"left": "One-size-fits-all responses", "right": "Domain-expert-level precision"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now build domain-specific RAG pipelines for any scientific corpus!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a simple RAG pipeline simulator. Create a class `SimpleRAG` that takes a list of document strings in its constructor, chunks them into segments of a given size with overlap, and implements `retrieve(query, k)` that returns the top-k chunks most relevant to the query (use simple keyword overlap as a similarity measure — count how many query words appear in each chunk). Also implement `answer(query, k)` that returns a formatted string combining the query with retrieved chunks."
+      },
+      "starter_code": "class SimpleRAG:\n    def __init__(self, documents: list[str], chunk_size: int = 50, overlap: int = 10):\n        # Chunk each document into overlapping segments\n        self.chunks = []\n        pass\n\n    def _chunk_text(self, text: str, size: int, overlap: int) -> list[str]:\n        # Split text into word-based chunks with overlap\n        pass\n\n    def _similarity(self, query: str, chunk: str) -> int:\n        # Count how many query words appear in the chunk (case-insensitive)\n        pass\n\n    def retrieve(self, query: str, k: int = 3) -> list[str]:\n        # Return top-k most relevant chunks\n        pass\n\n    def answer(self, query: str, k: int = 2) -> str:\n        # Return formatted answer string\n        pass\n\n# Test it:\ndocs = [\n    \"The Electron-Ion Collider will be built at Brookhaven National Laboratory. It will collide electrons with protons and heavy ions to study the strong force that binds quarks and gluons inside protons and neutrons.\",\n    \"Retrieval Augmented Generation combines a retriever that searches documents with a generator that produces answers. The retriever finds relevant passages and the generator synthesizes them into coherent responses.\"\n]\nrag = SimpleRAG(docs, chunk_size=15, overlap=3)\nresults = rag.retrieve(\"electron proton collider\", k=2)\nprint(len(results))\nprint(\"collider\" in results[0].lower() or \"electron\" in results[0].lower())\nprint(rag.answer(\"What is RAG?\", k=1).startswith(\"Question:\"))",
+      "expected_output": "2\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In _chunk_text, split the text into words, then create chunks by slicing the word list with step = size - overlap",
+          "In _similarity, use set intersection: len(set(query.lower().split()) & set(chunk.lower().split()))",
+          "In retrieve, sort chunks by similarity score descending and return the first k"
+        ]
+      },
+      "test_code": "docs = [\"The EIC collider studies electrons and protons in high energy physics experiments at Brookhaven lab.\", \"RAG retrieval augmented generation uses vector search to find relevant documents for language models.\"]\nrag = SimpleRAG(docs, chunk_size=8, overlap=2)\nassert len(rag.chunks) > 0\nassert isinstance(rag.retrieve(\"EIC electrons\", k=1), list)\nassert len(rag.retrieve(\"EIC electrons\", k=1)) == 1\nassert rag._similarity(\"electron proton\", \"The electron hits the proton\") >= 2\nans = rag.answer(\"What is RAG?\", k=1)\nassert \"Question:\" in ans and \"Context:\" in ans"
+    },
+    {
+      "instruction": {
+        "en": "Build an `EvalHarness` class to evaluate RAG quality. It takes a RAG instance and a list of test cases (each a dict with 'question', 'expected_keywords' — a list of strings that should appear in retrieved chunks). Implement `run(k)` that returns a dict with 'precision' (fraction of test cases where at least one expected keyword appears in the top-k retrieved chunks) and 'details' (list of booleans per test case)."
+      },
+      "starter_code": "class SimpleRAG:\n    def __init__(self, documents, chunk_size=50, overlap=10):\n        self.chunks = []\n        for doc in documents:\n            self.chunks.extend(self._chunk_text(doc, chunk_size, overlap))\n\n    def _chunk_text(self, text, size, overlap):\n        words = text.split()\n        chunks = []\n        step = max(size - overlap, 1)\n        for i in range(0, len(words), step):\n            chunks.append(\" \".join(words[i:i+size]))\n        return chunks\n\n    def _similarity(self, query, chunk):\n        return len(set(query.lower().split()) & set(chunk.lower().split()))\n\n    def retrieve(self, query, k=3):\n        scored = sorted(self.chunks, key=lambda c: self._similarity(query, c), reverse=True)\n        return scored[:k]\n\nclass EvalHarness:\n    def __init__(self, rag: SimpleRAG, test_cases: list[dict]):\n        # test_cases: [{\"question\": ..., \"expected_keywords\": [...]}]\n        pass\n\n    def run(self, k: int = 3) -> dict:\n        # Return {\"precision\": float, \"details\": [bool, ...]}\n        pass\n\n# Test it:\ndocs = [\n    \"FAISS is a library for efficient similarity search developed by Facebook AI Research.\",\n    \"LangChain provides tools for building RAG pipelines with vector stores and LLMs.\"\n]\nrag = SimpleRAG(docs, chunk_size=10, overlap=2)\ntests = [\n    {\"question\": \"similarity search library\", \"expected_keywords\": [\"faiss\", \"similarity\"]},\n    {\"question\": \"building RAG pipelines\", \"expected_keywords\": [\"langchain\", \"rag\"]}\n]\nharness = EvalHarness(rag, tests)\nresult = harness.run(k=2)\nprint(result[\"precision\"])\nprint(len(result[\"details\"]))",
+      "expected_output": "1.0\n2",
+      "hints": {
+        "en": [
+          "Store the rag instance and test_cases in __init__",
+          "For each test case, retrieve top-k chunks and check if any expected keyword appears (case-insensitive) in the joined chunk text",
+          "Precision = number of passing test cases / total test cases"
+        ]
+      },
+      "test_code": "docs = [\"Alpha Beta Gamma\", \"Delta Epsilon Zeta\"]\nrag = SimpleRAG(docs, chunk_size=3, overlap=0)\ntests = [\n    {\"question\": \"Alpha\", \"expected_keywords\": [\"alpha\"]},\n    {\"question\": \"Zeta\", \"expected_keywords\": [\"zeta\"]},\n    {\"question\": \"Omega\", \"expected_keywords\": [\"omega\"]}\n]\nh = EvalHarness(rag, tests)\nr = h.run(k=2)\nassert r[\"precision\"] == 2/3\nassert r[\"details\"] == [True, True, False]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["retrieval-augmented generation", "document chunking", "vector embeddings", "FAISS indexing", "domain-specific QA", "RAG evaluation"],
+    "concepts_required": ["python classes", "lists", "string methods", "dictionaries", "LLM basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

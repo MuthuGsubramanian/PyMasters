@@ -1,0 +1,130 @@
+{
+  "id": "ultrascale_playbook",
+  "topic": "ultrascale_playbook",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The Ultrascale Playbook: Distributed Training for LLMs"
+  },
+  "description": {
+    "en": "Master the core parallelism strategies — Data Parallel, Tensor Parallel, Pipeline Parallel, and ZeRO — used to train billion-parameter language models across GPU clusters."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Scaling LLMs Across a GPU Cluster\n\nWelcome back, coder! Vaathiyaar here. Today we tackle one of the hardest problems in modern AI: **how do you train a model so large it doesn't fit on a single GPU?** The open-source [nanotron/ultrascale-playbook](https://github.com/huggingface/nanotron) from Hugging Face lays out every trick the industry uses. Let's break them down.\n\n### Why Distributed Training?\n\nA 70B-parameter model in fp16 needs ~140 GB just for weights. A single A100 has 80 GB. You **must** split the work across multiple GPUs. The question is *how* you split it.\n\n### The Four Parallelism Strategies\n\n| Strategy | What It Splits | When to Use | Communication Cost |\n|----------|---------------|-------------|-------------------|\n| **Data Parallel (DP)** | Batches across replicas | Model fits on 1 GPU | AllReduce gradients |\n| **ZeRO (Sharded DP)** | Optimizer states + gradients + params | Memory-bound on 1 GPU | AllGather params |\n| **Tensor Parallel (TP)** | Weight matrices within a layer | Very large layers | AllReduce per layer |\n| **Pipeline Parallel (PP)** | Layers across GPUs | Deep models, multi-node | Point-to-point activations |\n\n### 1. Data Parallelism — The Baseline\n\nEvery GPU holds a full model copy. Each sees a different mini-batch. After the backward pass, gradients are averaged with **AllReduce**.\n\n```python\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\n\ndist.init_process_group(backend=\"nccl\")\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\nmodel = MyModel().to(local_rank)\nmodel = DDP(model, device_ids=[local_rank])\n\nfor batch in dataloader:\n    loss = model(batch)\n    loss.backward()       # gradients synced automatically by DDP\n    optimizer.step()\n    optimizer.zero_grad()\n```\n\n### 2. ZeRO — Sharding Optimizer State\n\nDeepSpeed's ZeRO partitions optimizer states (Stage 1), gradients (Stage 2), and parameters (Stage 3) across GPUs, slashing per-GPU memory.\n\n```python\nimport deepspeed\n\nds_config = {\n    \"zero_optimization\": {\n        \"stage\": 2,\n        \"overlap_comm\": True,\n        \"contiguous_gradients\": True,\n    },\n    \"train_batch_size\": 64,\n    \"gradient_accumulation_steps\": 4,\n    \"fp16\": {\"enabled\": True},\n}\n\nmodel_engine, optimizer, _, _ = deepspeed.initialize(\n    model=model, config=ds_config\n)\n```\n\n### 3. Tensor Parallelism — Splitting Matrices\n\nTP slices weight matrices **within** a single layer across GPUs. For a linear layer `Y = XA`, you split `A` column-wise across N GPUs so each GPU computes a shard of `Y`, then combine with AllReduce.\n\n```python\n# Conceptual: column-parallel linear\nclass ColumnParallelLinear(torch.nn.Module):\n    def __init__(self, in_features, out_features, world_size, rank):\n        super().__init__()\n        self.shard_size = out_features // world_size\n        self.weight = torch.nn.Parameter(\n            torch.randn(in_features, self.shard_size)\n        )\n\n    def forward(self, x):\n        local_out = x @ self.weight  # each GPU computes its shard\n        return local_out              # gather or feed to row-parallel next\n```\n\n### 4. Pipeline Parallelism — Splitting Layers\n\nPP assigns consecutive layers to different GPUs. Naive PP wastes time in a \"bubble\" where GPUs idle. The fix: **micro-batching** — split a batch into micro-batches so multiple GPUs work simultaneously.\n\n```python\n# Nanotron-style pipeline schedule (1F1B)\nif is_first_stage:\n    for mb in micro_batches:\n        send_activation(model_chunk(mb), next_stage)\nelse:\n    for mb in micro_batches:\n        activation = recv_activation(prev_stage)\n        output = model_chunk(activation)\n        if not is_last_stage:\n            send_activation(output, next_stage)\n```\n\n### Combining Strategies — 3D Parallelism\n\nReal training runs combine all three: TP within a node (fast NVLink), PP across nodes, DP across replicas. The ultrascale playbook calls this **3D parallelism** and walks through how to compute the optimal configuration for your cluster.\n\n> **Key Insight:** No single parallelism strategy is enough for frontier models. The art is in combining Data, Tensor, and Pipeline parallelism — matching each axis to your hardware topology — so that communication cost stays low while memory is fully utilized across every GPU."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A 70B-parameter model needs ~140 GB of memory — far more than any single GPU. Distributed training splits the work across a cluster using four parallelism strategies: Data Parallel, ZeRO, Tensor Parallel, and Pipeline Parallel.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_1",
+      "nodes": [
+        {"id": "dist", "label": "Distributed Training"},
+        {"id": "dp", "label": "Data Parallel"},
+        {"id": "zero", "label": "ZeRO (Sharded DP)"},
+        {"id": "tp", "label": "Tensor Parallel"},
+        {"id": "pp", "label": "Pipeline Parallel"},
+        {"id": "3d", "label": "3D Parallelism"}
+      ],
+      "edges": [
+        {"from": "dist", "to": "dp"},
+        {"from": "dist", "to": "zero"},
+        {"from": "dist", "to": "tp"},
+        {"from": "dist", "to": "pp"},
+        {"from": "dp", "to": "3d"},
+        {"from": "tp", "to": "3d"},
+        {"from": "pp", "to": "3d"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import os\nimport torch\nimport torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\n\n# 1. Initialize the process group (NCCL for GPU)\ndist.init_process_group(backend=\"nccl\")\nlocal_rank = int(os.environ[\"LOCAL_RANK\"])\ntorch.cuda.set_device(local_rank)\n\n# 2. Create model on this GPU\nmodel = MyLargeModel().to(local_rank)\n\n# 3. Wrap with DDP — handles gradient sync\nmodel = DDP(model, device_ids=[local_rank])\n\n# 4. Standard training loop\nfor epoch in range(num_epochs):\n    for batch in train_loader:\n        batch = batch.to(local_rank)\n        loss = model(batch).loss\n        loss.backward()        # DDP auto-syncs gradients via AllReduce\n        optimizer.step()\n        optimizer.zero_grad()\n\n# 5. Launch: torchrun --nproc_per_node=4 train.py\ndist.destroy_process_group()",
+      "steps": [
+        {"line": 3, "explanation": "Import torch.distributed — the backbone of all distributed training in PyTorch."},
+        {"line": 4, "explanation": "DistributedDataParallel wraps your model and handles gradient synchronization across GPUs."},
+        {"line": 7, "explanation": "init_process_group sets up communication. NCCL is optimized for NVIDIA GPUs."},
+        {"line": 8, "explanation": "LOCAL_RANK tells each process which GPU it owns. Set by torchrun automatically."},
+        {"line": 12, "explanation": "Place the model on this process's assigned GPU using .to(local_rank)."},
+        {"line": 15, "explanation": "DDP wraps the model. It registers hooks on each parameter to trigger AllReduce during backward()."},
+        {"line": 22, "explanation": "loss.backward() triggers gradient computation AND automatic gradient averaging across all GPUs."},
+        {"line": 23, "explanation": "optimizer.step() updates weights — now identical on every GPU since gradients are averaged."},
+        {"line": 27, "explanation": "Use torchrun to launch: it spawns N processes, one per GPU, each with its own LOCAL_RANK."},
+        {"line": 28, "explanation": "Clean up the process group when training is complete to release resources."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import deepspeed\nimport torch\n\n# ZeRO Stage 2: shard optimizer states + gradients\nds_config = {\n    \"zero_optimization\": {\n        \"stage\": 2,\n        \"overlap_comm\": True,\n        \"contiguous_gradients\": True,\n        \"reduce_bucket_size\": 5e8,\n    },\n    \"train_micro_batch_size_per_gpu\": 4,\n    \"gradient_accumulation_steps\": 8,\n    \"fp16\": {\"enabled\": True},\n    \"gradient_clipping\": 1.0,\n}\n\n# Initialize DeepSpeed engine\nmodel_engine, optimizer, _, scheduler = deepspeed.initialize(\n    model=model,\n    config=ds_config,\n    model_parameters=model.parameters(),\n)\n\n# Training with DeepSpeed\nfor batch in train_loader:\n    loss = model_engine(batch)\n    model_engine.backward(loss)\n    model_engine.step()",
+      "steps": [
+        {"line": 1, "explanation": "DeepSpeed is Microsoft's distributed training library, famous for ZeRO memory optimization."},
+        {"line": 7, "explanation": "ZeRO Stage 2 shards optimizer states AND gradients — cutting per-GPU memory by ~8x for Adam."},
+        {"line": 8, "explanation": "overlap_comm=True overlaps gradient communication with backward pass computation for speed."},
+        {"line": 10, "explanation": "reduce_bucket_size controls how many gradients are batched before a communication call."},
+        {"line": 12, "explanation": "Micro batch size per GPU — the actual batch each GPU processes in one forward pass."},
+        {"line": 13, "explanation": "Gradient accumulation simulates a larger effective batch without more GPU memory."},
+        {"line": 14, "explanation": "fp16 halves memory usage by using 16-bit floats. ZeRO keeps a fp32 master copy in sharded optimizer."},
+        {"line": 19, "explanation": "deepspeed.initialize replaces manual optimizer/scheduler setup — it handles sharding internally."},
+        {"line": 28, "explanation": "model_engine.backward() and .step() replace the standard loss.backward() and optimizer.step()."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand the four parallelism strategies used to train frontier LLMs! Time to scale up."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Simulate a simplified gradient AllReduce. Write a function `all_reduce_avg(gradients)` that takes a list of gradient tensors (one per simulated GPU) and returns a list of tensors where each is the element-wise average of all inputs. This is the core operation behind Data Parallel training."
+      },
+      "starter_code": "import torch\n\ndef all_reduce_avg(gradients: list[torch.Tensor]) -> list[torch.Tensor]:\n    \"\"\"Simulate AllReduce: average all gradient tensors and return\n    a list where every element is the averaged tensor.\"\"\"\n    # Your code here\n    pass\n\n# Test\ng0 = torch.tensor([1.0, 2.0, 3.0])\ng1 = torch.tensor([3.0, 4.0, 5.0])\nresult = all_reduce_avg([g0, g1])\nprint(result[0])  # tensor([2., 3., 4.])\nprint(result[1])  # tensor([2., 3., 4.])",
+      "expected_output": "tensor([2., 3., 4.])\ntensor([2., 3., 4.])",
+      "hints": {
+        "en": [
+          "Use torch.stack(gradients) to combine tensors, then .mean(dim=0) to average",
+          "The result list should contain N copies of the same averaged tensor, one per GPU",
+          "Return [avg_tensor.clone() for _ in gradients] to simulate each GPU holding its own copy"
+        ]
+      },
+      "test_code": "import torch\ng0 = torch.tensor([1.0, 2.0, 3.0])\ng1 = torch.tensor([3.0, 4.0, 5.0])\ng2 = torch.tensor([2.0, 6.0, 1.0])\nresult2 = all_reduce_avg([g0, g1])\nassert len(result2) == 2\nassert torch.allclose(result2[0], torch.tensor([2.0, 3.0, 4.0]))\nassert torch.allclose(result2[1], torch.tensor([2.0, 3.0, 4.0]))\nresult3 = all_reduce_avg([g0, g1, g2])\nassert len(result3) == 3\nassert torch.allclose(result3[0], torch.tensor([2.0, 4.0, 3.0]))\nassert torch.allclose(result3[2], torch.tensor([2.0, 4.0, 3.0]))"
+    },
+    {
+      "instruction": {
+        "en": "Implement a `partition_layers` function for Pipeline Parallelism. Given a list of layer names and a number of stages (GPUs), return a dictionary mapping each stage index to its assigned layers. Distribute layers as evenly as possible, with earlier stages getting any extra layers."
+      },
+      "starter_code": "def partition_layers(layers: list[str], num_stages: int) -> dict[int, list[str]]:\n    \"\"\"Split layers across pipeline stages as evenly as possible.\n    Earlier stages get extra layers if not evenly divisible.\"\"\"\n    # Your code here\n    pass\n\n# Test\nlayers = [\"embed\", \"block_0\", \"block_1\", \"block_2\", \"block_3\", \"lm_head\"]\nresult = partition_layers(layers, 3)\nfor stage, assigned in result.items():\n    print(f\"Stage {stage}: {assigned}\")",
+      "expected_output": "Stage 0: ['embed', 'block_0']\nStage 1: ['block_1', 'block_2']\nStage 2: ['block_3', 'lm_head']",
+      "hints": {
+        "en": [
+          "Use divmod(len(layers), num_stages) to get base chunk size and remainder",
+          "The first 'remainder' stages get (base + 1) layers, the rest get 'base' layers",
+          "Slice the list with a running offset to assign layers to each stage"
+        ]
+      },
+      "test_code": "layers6 = ['embed', 'block_0', 'block_1', 'block_2', 'block_3', 'lm_head']\nr = partition_layers(layers6, 3)\nassert len(r) == 3\nassert r[0] == ['embed', 'block_0']\nassert r[1] == ['block_1', 'block_2']\nassert r[2] == ['block_3', 'lm_head']\nr2 = partition_layers(['a', 'b', 'c', 'd', 'e'], 2)\nassert r2[0] == ['a', 'b', 'c']\nassert r2[1] == ['d', 'e']\nr3 = partition_layers(['x', 'y', 'z', 'w'], 4)\nassert all(len(v) == 1 for v in r3.values())"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["distributed training", "data parallelism", "tensor parallelism", "pipeline parallelism", "ZeRO optimization", "3D parallelism", "gradient synchronization", "model sharding"],
+    "concepts_required": ["python functions", "PyTorch basics", "neural network training", "GPU computing"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

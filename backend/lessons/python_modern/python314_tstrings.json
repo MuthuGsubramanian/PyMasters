@@ -1,0 +1,70 @@
+{
+  "id": "python314_tstrings",
+  "topic": "template_strings",
+  "track": "python_modern",
+  "module": "python314_features",
+  "order": 1,
+  "title": {
+    "en": "Template Strings (t-strings) in Python 3.14",
+    "ta": ""
+  },
+  "description": {
+    "en": "Discover Python 3.14's t-strings: a new string prefix that gives you structured access to interpolated values before they become a final string, enabling safe HTML generation, SQL queries, and custom rendering.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": "free_threading",
+  "story_variants": {
+    "en": "## The String That Knows Its Parts\n\nFor years, f-strings have been Python's beloved tool for string interpolation. You write `f\"Hello, {name}\"` and Python hands you back a finished string. Simple, elegant, done.\n\nBut what if you needed to *inspect* those interpolated values before the string was assembled? What if you wanted to HTML-escape user input, parameterize a SQL query, or log the raw template alongside its resolved values?\n\nEnter **t-strings**, landed in Python 3.14 via PEP 750.\n\n### The Core Idea\n\nA t-string looks almost identical to an f-string, but uses the `t` prefix instead of `f`:\n\n```python\nfrom string.templatelib import Template, Interpolation\n\nname = \"<script>alert('xss')</script>\"\ngreeting = t\"Hello, {name}!\"\n```\n\nThe crucial difference: `greeting` is **not** a `str`. It is a `Template` object that preserves the static parts and the interpolated values as separate, inspectable pieces.\n\n### Anatomy of a Template\n\n```python\nprint(type(greeting))        # <class 'string.templatelib.Template'>\nprint(greeting.strings)      # ('Hello, ', '!')\nprint(greeting.interpolations)  # (Interpolation(value=\"<script>...\", expr='name', ...),)\n```\n\nYou get the raw template structure: the literal text fragments in `.strings` and each interpolated value wrapped in an `Interpolation` object that carries the value, the original expression text, and any format spec.\n\n### Why This Matters: Safe HTML\n\nWith t-strings you can write a renderer that escapes dangerous content automatically:\n\n```python\nfrom html import escape\n\ndef safe_html(template: Template) -> str:\n    parts = []\n    for item in template:\n        if isinstance(item, str):\n            parts.append(item)\n        else:  # Interpolation\n            parts.append(escape(str(item.value)))\n    return ''.join(parts)\n\nuser_input = \"<img src=x onerror=alert(1)>\"\nresult = safe_html(t\"<p>Comment: {user_input}</p>\")\n# '<p>Comment: &lt;img src=x onerror=alert(1)&gt;</p>'\n```\n\nNo more forgetting to escape. The template *structure* enforces safety.\n\n### SQL Parameterization\n\nThe same pattern works for SQL, where you can collect interpolated values into a parameter list instead of concatenating them into the query string:\n\n```python\ndef sql_query(template: Template):\n    query_parts, params = [], []\n    for item in template:\n        if isinstance(item, str):\n            query_parts.append(item)\n        else:\n            query_parts.append('?')\n            params.append(item.value)\n    return ''.join(query_parts), tuple(params)\n\nemail = \"user@example.com\"\nquery, params = sql_query(t\"SELECT * FROM users WHERE email = {email}\")\n# query:  'SELECT * FROM users WHERE email = ?'\n# params: ('user@example.com',)\n```\n\n### Comparison with f-strings\n\n| Feature | f-string | t-string |\n|---------|----------|----------|\n| Prefix | `f\"...\"` | `t\"...\"` |\n| Returns | `str` | `Template` |\n| Values accessible? | No (already merged) | Yes (via `.interpolations`) |\n| Custom rendering | Not possible | Write any processor |\n\nT-strings don't replace f-strings. Use f-strings when you just need a string. Reach for t-strings when you need **control over the interpolation pipeline**.\n\n### Key Takeaways\n\n- `t\"...\"` returns a `Template`, not a `str`\n- Templates preserve both static text and interpolated values\n- You write custom processors to decide how values are rendered\n- Perfect for security-sensitive contexts: HTML, SQL, logging, i18n",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Python 3.14 introduces t-strings -- template strings that give you structured access to interpolated values before they become a final string.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from string.templatelib import Template, Interpolation\n\nname = \"World\"\ngreeting = t\"Hello, {name}!\"\n\nprint(type(greeting))           # <class 'Template'>\nprint(greeting.strings)         # ('Hello, ', '!')\nprint(greeting.interpolations)  # (Interpolation(value='World', ...),)",
+      "steps": [
+        {"line": 1, "explanation": "Import Template and Interpolation from the new string.templatelib module."},
+        {"line": 3, "explanation": "Define a regular variable that will be interpolated."},
+        {"line": 4, "explanation": "Use the t-prefix instead of f-prefix. This creates a Template object, NOT a string."},
+        {"line": 6, "explanation": "The type is Template, not str -- the interpolation hasn't happened yet."},
+        {"line": 7, "explanation": "The .strings attribute holds the static text fragments around the interpolation slots."},
+        {"line": 8, "explanation": "Each interpolated value is wrapped in an Interpolation object with the value, expression, and format spec."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from html import escape\nfrom string.templatelib import Template, Interpolation\n\ndef safe_html(template: Template) -> str:\n    parts = []\n    for item in template:\n        if isinstance(item, str):\n            parts.append(item)\n        else:\n            parts.append(escape(str(item.value)))\n    return ''.join(parts)\n\nuser = \"<script>alert('xss')</script>\"\nprint(safe_html(t\"<p>{user}</p>\"))\n# <p>&lt;script&gt;alert('xss')&lt;/script&gt;</p>",
+      "steps": [
+        {"line": 4, "explanation": "Define a custom processor that receives a Template and returns a safe HTML string."},
+        {"line": 6, "explanation": "Iterate over the template -- yields alternating str fragments and Interpolation objects."},
+        {"line": 7, "explanation": "Static string parts are safe literal HTML, so pass them through unchanged."},
+        {"line": 10, "explanation": "Interpolated values get HTML-escaped before joining -- XSS attacks are neutralized automatically."},
+        {"line": 14, "explanation": "The t-string preserves structure so safe_html can escape the dangerous input."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Write a function `render_upper(template)` that processes a t-string and uppercases all interpolated values while leaving static text unchanged. For example, `render_upper(t\"Hello, {name}!\")` with `name = \"world\"` should return `\"Hello, WORLD!\"`"},
+      "expected_output": "Hello, WORLD!",
+      "hints": ["Iterate over the template object", "Check isinstance(item, str) vs Interpolation", "Call .upper() on str(item.value) for interpolated parts"],
+      "test_code": "from string.templatelib import Template, Interpolation\nname = 'world'\nresult = render_upper(t'Hello, {name}!')\nassert result == 'Hello, WORLD!', f'Expected Hello, WORLD! but got {result}'"
+    },
+    {
+      "instruction": {"en": "Write a function `sql_safe(template)` that returns a tuple of (query_string, params) where each interpolated value is replaced with a '?' placeholder and collected into the params tuple."},
+      "expected_output": "('SELECT * FROM users WHERE id = ?', (42,))",
+      "hints": ["Collect string parts and parameter values separately", "Replace each Interpolation with '?'", "Return the joined query and a tuple of params"],
+      "test_code": "uid = 42\nq, p = sql_safe(t'SELECT * FROM users WHERE id = {uid}')\nassert q == 'SELECT * FROM users WHERE id = ?'\nassert p == (42,)"
+    }
+  ]
+}

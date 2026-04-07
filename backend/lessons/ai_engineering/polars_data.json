@@ -1,0 +1,69 @@
+{
+  "id": "polars_data",
+  "topic": "polars_data",
+  "track": "ai_engineering",
+  "module": "data_processing",
+  "order": 2,
+  "title": {
+    "en": "Data Processing with Polars",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn Polars -- the blazing-fast DataFrame library written in Rust. Process millions of rows in seconds with an expressive API, lazy evaluation, and automatic parallelism.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": "llm_apis",
+  "story_variants": {
+    "en": "## DataFrames at Lightning Speed\n\nPandas has served the Python data community well for over a decade. But as datasets grow into millions and billions of rows, its single-threaded, memory-hungry design shows its limits. **Polars** is the modern alternative: a DataFrame library written in Rust that is faster, more memory-efficient, and has a cleaner API.\n\n### Why Polars?\n\n- **Speed**: Written in Rust, uses all CPU cores automatically\n- **Memory**: Apache Arrow columnar format, zero-copy operations\n- **Lazy evaluation**: Build a query plan, then execute it optimally\n- **Expressive API**: Method chaining with clear semantics\n- **No index**: No confusing index alignment issues\n\n### Getting Started\n\n```python\nimport polars as pl\n\n# Create a DataFrame\ndf = pl.DataFrame({\n    \"name\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\"],\n    \"age\": [28, 35, 42, 31],\n    \"department\": [\"Engineering\", \"Marketing\", \"Engineering\", \"Marketing\"],\n    \"salary\": [95000, 78000, 120000, 82000],\n})\n\nprint(df)\n# shape: (4, 4)\n# +--------+-----+-------------+--------+\n# | name   | age | department  | salary |\n# | str    | i64 | str         | i64    |\n# +--------+-----+-------------+--------+\n# | Alice  | 28  | Engineering | 95000  |\n# | Bob    | 35  | Marketing   | 78000  |\n# | ...    | ... | ...         | ...    |\n```\n\n### Selecting and Filtering\n\nPolars uses **expressions** instead of bracket indexing:\n\n```python\n# Select columns with expressions\nresult = df.select(\n    pl.col(\"name\"),\n    pl.col(\"salary\").alias(\"annual_pay\"),\n    (pl.col(\"salary\") / 12).round(2).alias(\"monthly_pay\"),\n)\n\n# Filter rows\nsenior_engineers = df.filter(\n    (pl.col(\"department\") == \"Engineering\") & (pl.col(\"age\") > 30)\n)\n```\n\n### GroupBy and Aggregation\n\n```python\ndept_stats = df.group_by(\"department\").agg(\n    pl.col(\"salary\").mean().alias(\"avg_salary\"),\n    pl.col(\"salary\").max().alias(\"max_salary\"),\n    pl.col(\"name\").count().alias(\"headcount\"),\n)\n\nprint(dept_stats)\n# +-------------+------------+------------+-----------+\n# | department  | avg_salary | max_salary | headcount |\n# | str         | f64        | i64        | u32       |\n# +-------------+------------+------------+-----------+\n# | Engineering | 107500.0   | 120000     | 2         |\n# | Marketing   | 80000.0    | 82000      | 2         |\n```\n\n### Lazy Evaluation: The Superpower\n\nLazy mode builds a query plan and optimizes it before execution:\n\n```python\n# Lazy: build a plan, execute at the end\nresult = (\n    pl.scan_csv(\"sales_data.csv\")  # Lazy reader\n    .filter(pl.col(\"revenue\") > 1000)\n    .group_by(\"region\")\n    .agg(\n        pl.col(\"revenue\").sum().alias(\"total_revenue\"),\n        pl.col(\"order_id\").n_unique().alias(\"unique_orders\"),\n    )\n    .sort(\"total_revenue\", descending=True)\n    .collect()  # Execute the optimized plan\n)\n```\n\nPolars optimizes the query plan: it pushes filters down to read fewer rows, projects only needed columns, and parallelizes operations automatically.\n\n### Window Functions\n\n```python\ndf = df.with_columns(\n    pl.col(\"salary\")\n      .rank(descending=True)\n      .over(\"department\")\n      .alias(\"dept_salary_rank\"),\n    pl.col(\"salary\")\n      .mean()\n      .over(\"department\")\n      .alias(\"dept_avg_salary\"),\n)\n```\n\nWindow functions with `.over()` compute aggregations within groups without collapsing rows -- essential for feature engineering.\n\n### Reading and Writing Data\n\n```python\n# CSV\ndf = pl.read_csv(\"data.csv\")\ndf.write_csv(\"output.csv\")\n\n# Parquet (much faster, smaller files)\ndf = pl.read_parquet(\"data.parquet\")\ndf.write_parquet(\"output.parquet\")\n\n# JSON\ndf = pl.read_json(\"data.json\")\n\n# Direct from URL\ndf = pl.read_csv(\"https://example.com/data.csv\")\n```\n\n### Polars vs Pandas Cheat Sheet\n\n| Operation | Pandas | Polars |\n|-----------|--------|--------|\n| Select column | `df['col']` | `df.select(pl.col('col'))` |\n| Filter | `df[df['x'] > 5]` | `df.filter(pl.col('x') > 5)` |\n| GroupBy agg | `df.groupby('x').agg({'y': 'mean'})` | `df.group_by('x').agg(pl.col('y').mean())` |\n| New column | `df['new'] = df['x'] * 2` | `df.with_columns((pl.col('x') * 2).alias('new'))` |\n| Sort | `df.sort_values('x')` | `df.sort('x')` |\n\n### Key Takeaways\n\n- Polars is a Rust-powered DataFrame library that is 5-50x faster than Pandas\n- Use `pl.col()` expressions for selecting, filtering, and transforming\n- Lazy evaluation with `scan_csv` and `.collect()` enables query optimization\n- Window functions with `.over()` are powerful for grouped computations\n- No index means no alignment headaches -- simpler mental model",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Polars is a Rust-powered DataFrame library that processes millions of rows in seconds. It uses lazy evaluation, automatic parallelism, and an expressive expression API.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import polars as pl\n\ndf = pl.DataFrame({\n    \"name\": [\"Alice\", \"Bob\", \"Charlie\"],\n    \"dept\": [\"Eng\", \"Mkt\", \"Eng\"],\n    \"salary\": [95000, 78000, 120000],\n})\n\nresult = df.filter(\n    pl.col(\"dept\") == \"Eng\"\n).select(\n    pl.col(\"name\"),\n    (pl.col(\"salary\") / 12).round(0).alias(\"monthly\"),\n)\n\nprint(result)",
+      "steps": [
+        {"line": 1, "explanation": "Import polars -- conventionally aliased as pl, just like pandas is pd."},
+        {"line": 3, "explanation": "Create a DataFrame from a dictionary. Polars infers types automatically."},
+        {"line": 9, "explanation": "Filter rows using pl.col() expressions -- no bracket indexing needed."},
+        {"line": 11, "explanation": "Select and transform columns in a single chain. alias() renames the result."},
+        {"line": 13, "explanation": "Arithmetic and methods chain naturally: divide, round, then alias."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import polars as pl\n\nresult = (\n    pl.scan_csv(\"sales.csv\")\n    .filter(pl.col(\"revenue\") > 1000)\n    .group_by(\"region\")\n    .agg(\n        pl.col(\"revenue\").sum().alias(\"total\"),\n        pl.col(\"order_id\").n_unique().alias(\"orders\"),\n    )\n    .sort(\"total\", descending=True)\n    .collect()\n)\n\nprint(result)",
+      "steps": [
+        {"line": 4, "explanation": "scan_csv creates a LazyFrame -- it doesn't read the file yet, just builds a plan."},
+        {"line": 5, "explanation": "Filters are pushed down to the scan, so only matching rows are loaded from disk."},
+        {"line": 6, "explanation": "Group by region and aggregate with multiple expressions."},
+        {"line": 8, "explanation": "Sum revenue per region and count unique orders in one pass."},
+        {"line": 12, "explanation": "collect() triggers execution of the optimized query plan. This is where work happens."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Create a Polars DataFrame with columns 'product' (str), 'category' (str), and 'price' (float) with at least 5 rows. Then filter for products with price > 20, group by category, and compute the average price per category."},
+      "expected_output": "A DataFrame with category and avg_price columns",
+      "hints": ["Use pl.DataFrame({...}) to create the data", "Chain .filter(), .group_by(), and .agg()", "Use pl.col('price').mean().alias('avg_price') in the aggregation"],
+      "test_code": "import polars as pl\nassert isinstance(result, pl.DataFrame)\nassert 'category' in result.columns\nassert 'avg_price' in result.columns"
+    },
+    {
+      "instruction": {"en": "Given a DataFrame `df` with columns 'employee', 'department', and 'sales', add a new column 'dept_rank' that ranks each employee's sales within their department (highest sales = rank 1). Use window functions with .over()."},
+      "expected_output": "DataFrame with a dept_rank column showing within-department rankings",
+      "hints": ["Use df.with_columns()", "Use pl.col('sales').rank(descending=True).over('department')", "Alias the result as 'dept_rank'"],
+      "test_code": "import polars as pl\nassert 'dept_rank' in result.columns\nassert result.filter(pl.col('dept_rank') == 1).height >= 1"
+    }
+  ]
+}

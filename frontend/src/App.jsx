@@ -16,6 +16,8 @@ import Profile from './pages/Profile';
 import Trending from './pages/Trending';
 import OrgSetup from './pages/OrgSetup';
 import OrgDashboard from './pages/OrgDashboard';
+import Challenges from './pages/Challenges';
+import Reference from './pages/Reference';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function PrivateRoute({ children }) {
@@ -66,6 +68,8 @@ export default function App() {
               <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
               <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
               <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
+              <Route path="challenges" element={<ErrorBoundary><Challenges /></ErrorBoundary>} />
+              <Route path="reference" element={<ErrorBoundary><Reference /></ErrorBoundary>} />
               <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
               <Route path="org/setup" element={<ErrorBoundary><OrgSetup /></ErrorBoundary>} />
               <Route path="org" element={<ErrorBoundary><OrgDashboard /></ErrorBoundary>} />

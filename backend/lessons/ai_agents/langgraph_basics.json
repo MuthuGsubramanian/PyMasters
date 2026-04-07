@@ -1,0 +1,71 @@
+{
+  "id": "langgraph_basics",
+  "topic": "langgraph_basics",
+  "track": "ai_agents",
+  "module": "orchestration",
+  "order": 3,
+  "title": {
+    "en": "Agent Orchestration with LangGraph",
+    "ta": "LangGraph மூலம் ஏஜெண்ட் ஒழுங்கமைப்பு"
+  },
+  "description": {
+    "en": "Master LangGraph to build complex agent workflows as directed graphs. Learn about state machines, conditional edges, human-in-the-loop, and persistent checkpoints.",
+    "ta": "சிக்கலான ஏஜெண்ட் பணிப்பாய்வுகளை directed graphs ஆக உருவாக்க LangGraph-ஐ தேர்ச்சி பெறுங்கள். State machines, conditional edges, human-in-the-loop மற்றும் persistent checkpoints பற்றி கற்றுக்கொள்ளுங்கள்."
+  },
+  "xp_reward": 120,
+  "next_unlock": "mcp_protocol",
+  "story_variants": {
+    "en": "## LangGraph: Agents as Graphs\n\nWhat if your agent needs to make decisions, branch into different paths, loop back on failures, and coordinate multiple steps? You need more than a simple chain -- you need a **graph**. That is LangGraph.\n\n### The Problem with Linear Chains\n\nEarly agent frameworks ran steps in a straight line: Step 1 -> Step 2 -> Step 3. But real workflows are messy:\n\n- What if Step 2 fails? Retry or take a different path?\n- What if the user needs to approve before Step 3?\n- What if you need to run Steps 2a and 2b in parallel?\n\nLangGraph models your agent as a **stateful, directed graph** where nodes are actions and edges define transitions.\n\n### Your First LangGraph Agent\n\n```python\nfrom langgraph.graph import StateGraph, START, END\nfrom typing import TypedDict, Annotated\nfrom operator import add\n\n# 1. Define the state your agent carries through the graph\nclass AgentState(TypedDict):\n    messages: Annotated[list[str], add]\n    next_step: str\n\n# 2. Define node functions\ndef researcher(state: AgentState) -> dict:\n    query = state[\"messages\"][-1]\n    result = f\"Research result for: {query}\"\n    return {\"messages\": [result], \"next_step\": \"writer\"}\n\ndef writer(state: AgentState) -> dict:\n    research = state[\"messages\"][-1]\n    draft = f\"Draft article based on: {research}\"\n    return {\"messages\": [draft], \"next_step\": \"done\"}\n\ndef reviewer(state: AgentState) -> dict:\n    draft = state[\"messages\"][-1]\n    feedback = f\"Review of: {draft} -- Approved!\"\n    return {\"messages\": [feedback], \"next_step\": \"done\"}\n\n# 3. Build the graph\ngraph = StateGraph(AgentState)\ngraph.add_node(\"researcher\", researcher)\ngraph.add_node(\"writer\", writer)\ngraph.add_node(\"reviewer\", reviewer)\n\n# 4. Define edges (transitions)\ngraph.add_edge(START, \"researcher\")\ngraph.add_edge(\"researcher\", \"writer\")\ngraph.add_edge(\"writer\", \"reviewer\")\ngraph.add_edge(\"reviewer\", END)\n\n# 5. Compile and run\napp = graph.compile()\nresult = app.invoke({\"messages\": [\"AI agents in 2026\"], \"next_step\": \"\"})\n```\n\n### Conditional Branching\n\nThe real power is **conditional edges** -- your agent decides its own path:\n\n```python\ndef route_after_review(state: AgentState) -> str:\n    last_message = state[\"messages\"][-1]\n    if \"Approved\" in last_message:\n        return \"publish\"\n    else:\n        return \"writer\"  # Send back for revision\n\ngraph.add_conditional_edges(\n    \"reviewer\",\n    route_after_review,\n    {\"publish\": \"publisher\", \"writer\": \"writer\"}\n)\n```\n\nNow the agent can **loop**: if the reviewer rejects the draft, it goes back to the writer. This is impossible with simple chains.\n\n### State Management\n\nLangGraph state is a TypedDict that flows through every node. Each node reads the current state and returns updates:\n\n```python\nclass AgentState(TypedDict):\n    messages: Annotated[list[str], add]  # Appends new messages\n    iteration: int                        # Tracks loop count\n    approved: bool                        # Flag for routing\n```\n\nThe `Annotated[list[str], add]` tells LangGraph to **append** returned messages to the existing list instead of replacing them.\n\n### Human-in-the-Loop\n\nFor high-stakes decisions, you can pause the graph and wait for human approval:\n\n```python\nfrom langgraph.checkpoint.memory import MemorySaver\n\ncheckpointer = MemorySaver()\napp = graph.compile(\n    checkpointer=checkpointer,\n    interrupt_before=[\"publisher\"]  # Pause before publishing\n)\n\n# Run until the interrupt point\nresult = app.invoke(input_data, config={\"configurable\": {\"thread_id\": \"1\"}})\n# ... human reviews ...\n# Resume from where it paused\nresult = app.invoke(None, config={\"configurable\": {\"thread_id\": \"1\"}})\n```\n\n### Key Concepts Summary\n\n| Concept | Description |\n|---------|-------------|\n| **Node** | A function that processes state |\n| **Edge** | A transition between nodes |\n| **Conditional Edge** | A dynamic transition based on state |\n| **State** | A TypedDict carried through the graph |\n| **Checkpoint** | Saved state for pause/resume |\n| **Interrupt** | Human-in-the-loop breakpoint |\n\nLangGraph is the industry standard for building complex, production-ready agent workflows. If PydanticAI is the engine, LangGraph is the highway system.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_3",
+      "content": "Real agent workflows are not straight lines. They branch, loop, and pause. LangGraph models your agent as a stateful graph where nodes are actions and edges are decisions.",
+      "visual_theme": "agents"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_3",
+      "nodes": ["START", "Researcher", "Writer", "Reviewer", "Publisher", "END"],
+      "edges": [
+        {"from": "START", "to": "Researcher"},
+        {"from": "Researcher", "to": "Writer"},
+        {"from": "Writer", "to": "Reviewer"},
+        {"from": "Reviewer", "to": "Publisher"},
+        {"from": "Reviewer", "to": "Writer"},
+        {"from": "Publisher", "to": "END"}
+      ],
+      "description": "A LangGraph agent with conditional routing: the Reviewer can approve (go to Publisher) or reject (loop back to Writer)"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from langgraph.graph import StateGraph, START, END\nfrom typing import TypedDict, Annotated\nfrom operator import add\n\nclass AgentState(TypedDict):\n    messages: Annotated[list[str], add]\n\ndef researcher(state: AgentState) -> dict:\n    return {\"messages\": [\"Research complete\"]}\n\ndef writer(state: AgentState) -> dict:\n    return {\"messages\": [\"Draft written\"]}\n\ngraph = StateGraph(AgentState)\ngraph.add_node(\"researcher\", researcher)\ngraph.add_node(\"writer\", writer)\ngraph.add_edge(START, \"researcher\")\ngraph.add_edge(\"researcher\", \"writer\")\ngraph.add_edge(\"writer\", END)\n\napp = graph.compile()\nresult = app.invoke({\"messages\": [\"AI trends\"]})",
+      "steps": [
+        {"line": 1, "explanation": "Import StateGraph (the builder), START and END (special nodes marking graph boundaries)."},
+        {"line": 5, "explanation": "Define AgentState -- a TypedDict that flows through every node. Annotated[list, add] means new messages append."},
+        {"line": 8, "explanation": "Each node is a function that takes state and returns a partial state update."},
+        {"line": 14, "explanation": "Create the graph builder with your state schema."},
+        {"line": 17, "explanation": "Wire up edges: START -> researcher -> writer -> END. This defines the execution order."},
+        {"line": 21, "explanation": "Compile the graph into a runnable app, then invoke it with initial state."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a dictionary representing a simple graph with 3 nodes. The dictionary should have a key 'nodes' with value ['start', 'process', 'end'], and a key 'edges' with value [('start', 'process'), ('process', 'end')]. Print the number of edges."
+      },
+      "expected_output": "2",
+      "hints": [
+        "Use a dictionary with 'nodes' and 'edges' keys",
+        "Edges can be a list of tuples: [('start', 'process'), ...]",
+        "Use len() on the edges list"
+      ],
+      "test_code": "assert len(graph_dict['nodes']) == 3\nassert len(graph_dict['edges']) == 2\nassert ('start', 'process') in graph_dict['edges']"
+    }
+  ]
+}

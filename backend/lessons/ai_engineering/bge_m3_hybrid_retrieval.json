@@ -1,0 +1,121 @@
+{
+  "id": "bge_m3_hybrid_retrieval",
+  "topic": "bge_m3_hybrid_retrieval",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Hybrid Retrieval with BGE-M3: Dense + Sparse + ColBERT",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master hybrid retrieval using BAAI/bge-m3 — a single multilingual embedding model that produces dense, sparse, AND ColBERT representations, enabling state-of-the-art search across 100+ languages.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Model, Three Retrieval Powers: BGE-M3\n\nVaathiyaar here! Most embedding models give you one trick — dense vectors. You encode text, compute cosine similarity, done. But what if one document matches on meaning while another matches on exact keywords? You need both. BGE-M3 from BAAI is the first production-ready model that outputs **dense**, **sparse**, and **ColBERT** representations from a single forward pass — and it works across 100+ languages.\n\nThe \"M3\" stands for **Multi-Linguality**, **Multi-Functionality**, and **Multi-Granularity**. Let's see why this matters for your RAG pipeline.\n\n### Why Three Retrieval Modes?\n\n| Mode | What It Captures | Best For |\n|---|---|---|\n| Dense | Semantic meaning as a single vector (1024-d) | Conceptual similarity, paraphrases |\n| Sparse | Learned term weights (like TF-IDF, but neural) | Exact keyword matching, rare terms |\n| ColBERT | Token-level dense vectors with late interaction | Fine-grained passage matching |\n\nDense retrieval misses exact terms. Sparse retrieval misses synonyms. **Hybrid retrieval combines both** — and ColBERT adds precision on top.\n\n### Generating All Three Representations\n\n```python\nfrom FlagEmbedding import BGEM3FlagModel\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\ndocuments = [\n    \"Python est un langage de programmation polyvalent\",\n    \"Machine learning requires large training datasets\",\n    \"बड़े भाषा मॉडल टेक्स्ट उत्पन्न करते हैं\",\n    \"大規模言語モデルはテキストを生成する\",\n]\n\noutput = model.encode(documents, return_dense=True,\n    return_sparse=True, return_colbert_vecs=True)\n\nprint(output[\"dense_vecs\"].shape)    # (4, 1024)\nprint(len(output[\"lexical_weights\"]))  # 4 sparse dicts\nprint(output[\"colbert_vecs\"][0].shape) # (token_count, 1024)\n```\n\nOne `encode()` call, three retrieval systems. The sparse weights are dictionaries mapping token IDs to learned importance scores — similar to BM25 but trained end-to-end.\n\n### Hybrid Scoring: Combining Dense + Sparse\n\n```python\nimport numpy as np\n\ndef hybrid_search(model, query, documents, weights=(0.6, 0.4)):\n    q_out = model.encode([query], return_dense=True,\n        return_sparse=True)\n    d_out = model.encode(documents, return_dense=True,\n        return_sparse=True)\n\n    # Dense scores via cosine similarity\n    dense_scores = q_out[\"dense_vecs\"] @ d_out[\"dense_vecs\"].T\n    dense_scores = dense_scores[0]\n\n    # Sparse scores via dot product of shared tokens\n    sparse_scores = []\n    q_sparse = q_out[\"lexical_weights\"][0]\n    for d_sparse in d_out[\"lexical_weights\"]:\n        shared = set(q_sparse.keys()) & set(d_sparse.keys())\n        score = sum(q_sparse[t] * d_sparse[t] for t in shared)\n        sparse_scores.append(score)\n    sparse_scores = np.array(sparse_scores)\n\n    # Normalize and combine\n    if dense_scores.max() > 0:\n        dense_scores /= dense_scores.max()\n    if sparse_scores.max() > 0:\n        sparse_scores /= sparse_scores.max()\n\n    final = weights[0] * dense_scores + weights[1] * sparse_scores\n    ranked = sorted(zip(documents, final), key=lambda x: x[1],\n        reverse=True)\n    return ranked\n```\n\n### Multilingual Power\n\nBGE-M3 handles cross-lingual retrieval natively. A query in English retrieves relevant documents in French, Hindi, Japanese — or any of 100+ languages. No translation pipeline needed.\n\n```python\nresults = hybrid_search(model, \"How do LLMs generate text?\", documents)\nfor doc, score in results:\n    print(f\"{score:.3f} | {doc}\")\n# Hindi and Japanese LLM docs rank highest despite English query\n```\n\n### BGE-M3 vs Other Embedding Models\n\n| Feature | BGE-M3 | MiniLM-L6-v2 | OpenAI text-embedding-3 |\n|---|---|---|---|\n| Dimensions | 1024 | 384 | 1536 |\n| Languages | 100+ | English-focused | ~30 |\n| Sparse output | Yes (built-in) | No | No |\n| ColBERT output | Yes (built-in) | No | No |\n| Max tokens | 8192 | 256 | 8191 |\n| Runs locally | Yes | Yes | API only |\n\n> **Key Insight:** BGE-M3 eliminates the need to maintain separate dense and sparse retrieval systems. A single model produces all three representation types, enabling hybrid search that catches both semantic matches AND exact keyword hits — across 100+ languages, locally, with no API costs. For multilingual RAG, it's the new default.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Dense embeddings miss exact keywords. Sparse retrieval misses synonyms. BGE-M3 solves both — one model produces dense, sparse, AND ColBERT representations in a single forward pass, across 100+ languages.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from FlagEmbedding import BGEM3FlagModel\nimport numpy as np\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\ndocuments = [\n    \"Retrieval augmented generation improves LLM accuracy\",\n    \"Vector databases store high-dimensional embeddings\",\n    \"BM25 uses term frequency for document ranking\",\n    \"Neural search understands semantic meaning of queries\",\n]\n\noutput = model.encode(documents, return_dense=True,\n    return_sparse=True, return_colbert_vecs=True)\n\nprint(output[\"dense_vecs\"].shape)\nprint(type(output[\"lexical_weights\"][0]))\nprint(output[\"colbert_vecs\"][0].shape)",
+      "steps": [
+        {"line": 1, "explanation": "Import BGEM3FlagModel from the FlagEmbedding library — BAAI's official package for BGE models. Install with: pip install FlagEmbedding."},
+        {"line": 4, "explanation": "Load BGE-M3 with fp16 precision. The model is ~2.2GB and downloads once. use_fp16=True halves memory usage with negligible quality loss."},
+        {"line": 6, "explanation": "Define documents — these could be in any of 100+ languages. BGE-M3 maps them all into the same vector space."},
+        {"line": 13, "explanation": "The magic: one encode() call with three flags produces dense vectors, sparse lexical weights, AND ColBERT token-level vectors simultaneously."},
+        {"line": 16, "explanation": "Dense output: shape (4, 1024). Each document compressed into a single 1024-dimensional vector for semantic similarity."},
+        {"line": 17, "explanation": "Sparse output: a dict per document mapping token IDs to learned weights. Like BM25, but the weights are trained by the neural network."},
+        {"line": 18, "explanation": "ColBERT output: per-token dense vectors. Shape varies with document length. Enables fine-grained late interaction matching."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from FlagEmbedding import BGEM3FlagModel\nimport numpy as np\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\ndocs = [\"RAG improves accuracy\", \"BM25 uses term frequency\"]\nquery = \"retrieval augmented generation\"\n\nq = model.encode([query], return_dense=True, return_sparse=True)\nd = model.encode(docs, return_dense=True, return_sparse=True)\n\ndense_scores = (q[\"dense_vecs\"] @ d[\"dense_vecs\"].T)[0]\nprint(f\"Dense: {dense_scores}\")\n\nfor i, doc_sparse in enumerate(d[\"lexical_weights\"]):\n    shared = set(q[\"lexical_weights\"][0]) & set(doc_sparse)\n    score = sum(q[\"lexical_weights\"][0][t] * doc_sparse[t] for t in shared)\n    print(f\"Sparse doc {i}: {score:.3f}\")\n\nhybrid = 0.6 * dense_scores + 0.4 * np.array([0.8, 0.1])\nprint(f\"Hybrid: {hybrid}\")",
+      "steps": [
+        {"line": 6, "explanation": "Two documents: one about RAG (semantically related to query), one about BM25 (different topic but shares 'retrieval' concept)."},
+        {"line": 7, "explanation": "Query: 'retrieval augmented generation'. Dense search finds semantic matches; sparse search finds exact term overlaps."},
+        {"line": 9, "explanation": "Encode query and documents separately — in production you'd pre-encode documents and only encode the query at search time."},
+        {"line": 12, "explanation": "Dense scoring: matrix multiply query vector (1×1024) with document vectors (2×1024 transposed). Result: cosine-like similarity scores."},
+        {"line": 15, "explanation": "Sparse scoring: find shared token IDs between query and each document, multiply their learned weights, and sum."},
+        {"line": 17, "explanation": "The sparse score rewards exact token matches — 'retrieval' appearing in both query and doc gets a high weight."},
+        {"line": 20, "explanation": "Hybrid fusion: weight dense 60% and sparse 40%. This catches both semantic matches AND exact keyword hits."},
+        {"line": 21, "explanation": "The hybrid score combines the strengths of both approaches — neither dense nor sparse alone would rank as accurately."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Single-Mode Retrieval",
+      "right_label": "BGE-M3 Hybrid Retrieval",
+      "items": [
+        {"left": "Dense OR sparse — pick one", "right": "Dense + sparse + ColBERT from one model"},
+        {"left": "Misses exact terms or synonyms", "right": "Catches both keyword and semantic matches"},
+        {"left": "English-only or requires translation", "right": "100+ languages natively, cross-lingual"},
+        {"left": "256-512 token limit typical", "right": "8192 token context window"},
+        {"left": "Multiple models to maintain", "right": "Single model, single encode() call"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now wield BGE-M3's triple retrieval powers — dense, sparse, and ColBERT — in a single model!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `HybridRetriever` class that simulates BGE-M3's hybrid retrieval. It produces both dense vectors (word frequency dicts) and sparse vectors (unique word presence dicts with weight 1.0). Implement `dense_score(query, doc)` using cosine similarity of word-frequency vectors, `sparse_score(query, doc)` using dot product of binary word-presence vectors, and `hybrid_search(query, top_k, dense_weight=0.6)` that combines both scores with normalization and returns ranked results."
+      },
+      "starter_code": "import math\n\nclass HybridRetriever:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n\n    def _word_freq(self, text: str) -> dict:\n        \"\"\"Return word frequency vector: {word: count}\"\"\"\n        words = text.lower().split()\n        vec = {}\n        for w in words:\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def _word_presence(self, text: str) -> dict:\n        \"\"\"Return binary word presence: {word: 1.0}\"\"\"\n        return {w: 1.0 for w in text.lower().split()}\n\n    def dense_score(self, query: str, doc: str) -> float:\n        # Cosine similarity of word frequency vectors\n        pass\n\n    def sparse_score(self, query: str, doc: str) -> float:\n        # Dot product of word presence vectors (count of shared words)\n        pass\n\n    def hybrid_search(self, query: str, top_k: int = 3,\n                      dense_weight: float = 0.6) -> list[dict]:\n        # 1. Compute dense and sparse scores for each document\n        # 2. Normalize each score array by dividing by max (if max > 0)\n        # 3. Combine: dense_weight * dense + (1-dense_weight) * sparse\n        # 4. Return top_k results as [{\"document\": str, \"score\": float}]\n        pass\n\n# Test it:\nretriever = HybridRetriever([\n    \"python machine learning library\",\n    \"python programming basics\",\n    \"cooking italian pasta recipes\",\n    \"machine learning deep neural networks\",\n])\n\nresults = retriever.hybrid_search(\"python machine learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "2\npython machine learning library\nTrue",
+      "hints": {
+        "en": [
+          "For dense_score, compute cosine similarity: dot product of shared words divided by product of magnitudes (sqrt of sum of squares of values)",
+          "For sparse_score, just count the number of shared unique words between query and document (since each weight is 1.0)",
+          "In hybrid_search, compute all dense and sparse scores first as lists, then normalize each list by its max value before combining with weights"
+        ]
+      },
+      "test_code": "r = HybridRetriever([\"hello world\", \"world peace\", \"hello hello world\"])\nassert abs(r.dense_score(\"hello\", \"hello\") - 1.0) < 0.001\nassert r.sparse_score(\"hello world\", \"hello world\") == 2.0\nassert r.sparse_score(\"hello\", \"goodbye\") == 0.0\nresults = r.hybrid_search(\"hello world\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] in [\"hello world\", \"hello hello world\"]\nassert results[0][\"score\"] >= results[1][\"score\"]\nr2 = HybridRetriever([\"a b c\", \"x y z\"])\nresults2 = r2.hybrid_search(\"a b\", top_k=1)\nassert results2[0][\"document\"] == \"a b c\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `MultilingualMatcher` class that simulates cross-lingual retrieval. Given a translation dictionary that maps words across languages, implement `translate_to_common(text)` that converts all known words to their English form, and `cross_lingual_search(query, top_k)` that uses the translated representations for cosine similarity matching. This simulates how BGE-M3 maps multiple languages into a shared vector space."
+      },
+      "starter_code": "import math\n\nclass MultilingualMatcher:\n    def __init__(self, documents: list[str], translations: dict):\n        self.documents = documents\n        # translations: {\"foreign_word\": \"english_word\", ...}\n        self.translations = translations\n\n    def translate_to_common(self, text: str) -> dict:\n        # Convert text to word frequency vector in common space\n        # For each word: if it's in translations, use the English form\n        # Otherwise keep the original word\n        # Return {word: count} dict\n        pass\n\n    def cosine_sim(self, vec_a: dict, vec_b: dict) -> float:\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[w] * vec_b[w] for w in shared)\n        mag_a = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in vec_b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\n    def cross_lingual_search(self, query: str, top_k: int = 3) -> list[dict]:\n        # 1. Translate query to common space\n        # 2. Translate each document to common space\n        # 3. Compute cosine similarity\n        # 4. Return top_k results as [{\"document\": str, \"score\": float}]\n        pass\n\n# Test it:\ntranslations = {\n    \"apprentissage\": \"learning\",\n    \"automatique\": \"machine\",\n    \"langage\": \"language\",\n    \"programmation\": \"programming\",\n    \"aprendizaje\": \"learning\",\n    \"profundo\": \"deep\",\n}\n\nmatcher = MultilingualMatcher([\n    \"machine learning algorithms\",\n    \"apprentissage automatique avancé\",\n    \"deep learning neural networks\",\n    \"aprendizaje profundo redes\",\n], translations)\n\nresults = matcher.cross_lingual_search(\"machine learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] > 0.5)\nprint(results[1][\"score\"] > 0.3)",
+      "expected_output": "2\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In translate_to_common(), for each word in text.lower().split(), check if it exists in self.translations — if so, use the translated English word instead",
+          "Build the frequency dict using the translated words so that 'apprentissage' becomes 'learning' and matches English 'learning'",
+          "cross_lingual_search is just cosine similarity search on the translated vectors — sort by score descending and return top_k"
+        ]
+      },
+      "test_code": "t = {\"hola\": \"hello\", \"mundo\": \"world\"}\nm = MultilingualMatcher([\"hello world\", \"hola mundo\", \"goodbye\"], t)\nv = m.translate_to_common(\"hola mundo\")\nassert v == {\"hello\": 1, \"world\": 1}\nresults = m.cross_lingual_search(\"hello world\", top_k=2)\nassert len(results) == 2\nassert results[0][\"score\"] > 0.9\nassert results[1][\"score\"] > 0.9\nassert m.translate_to_common(\"unknown word\") == {\"unknown\": 1, \"word\": 1}\nresults2 = m.cross_lingual_search(\"goodbye\", top_k=1)\nassert results2[0][\"document\"] == \"goodbye\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["hybrid retrieval", "dense embeddings", "sparse retrieval", "ColBERT late interaction", "BGE-M3", "multilingual embeddings", "cross-lingual search", "retrieval fusion"],
+    "concepts_required": ["python classes", "dictionaries", "numpy basics", "cosine similarity", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}
