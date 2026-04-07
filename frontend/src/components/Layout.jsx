@@ -14,14 +14,16 @@ import {
     X,
     User,
     TrendingUp,
-    Settings,
-    Building2
+    Building2,
+    Swords,
+    BookOpen
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import PymastersIcon from '../assets/pymasters-icon.svg';
 import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
+import ReleaseNotes from './ReleaseNotes';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
@@ -38,6 +40,8 @@ export default function Layout() {
             { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
             { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
             { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
+            { icon: Swords, label: 'Challenges', path: '/dashboard/challenges', desc: 'Weekly coding battles' },
+            { icon: BookOpen, label: 'Reference', path: '/dashboard/reference', desc: 'Quick cheat sheets' },
         ];
         if (activeOrg) {
             items.push({ icon: Building2, label: 'Organization', path: '/dashboard/org', desc: 'Manage your org' });
@@ -53,17 +57,15 @@ export default function Layout() {
         ARCHITECT: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-200' },
     };
     const rc = rankColors[rank];
-    const nextMilestone = user.points > 1000 ? 2000 : user.points > 500 ? 1000 : 500;
-    const progressPct = Math.min((user.points / nextMilestone) * 100, 100);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[var(--bg-deep)] text-slate-600 font-sans">
+        <div className="flex h-screen overflow-hidden bg-bg-base text-text-secondary font-sans">
             {/* Mobile header bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white/95 backdrop-blur-xl border-b border-black/[0.05] flex items-center justify-between px-4">
-                <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors" aria-label="Open menu">
-                    <Menu size={20} className="text-slate-600" />
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-bg-surface backdrop-blur-xl border-b border-border-default flex items-center justify-between px-4">
+                <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-bg-elevated transition-colors" aria-label="Open menu">
+                    <Menu size={20} className="text-text-muted" />
                 </button>
-                <span className="font-display font-bold text-slate-900 tracking-tight">PYMASTERS</span>
+                <span className="font-display font-bold text-text-primary tracking-tight">PYMASTERS</span>
                 <div className="w-9" /> {/* Spacer for centering */}
             </div>
 
@@ -73,70 +75,49 @@ export default function Layout() {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed lg:relative z-50 lg:z-auto w-[270px] flex flex-col border-r border-black/[0.05] bg-white/95 backdrop-blur-xl h-full transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+            <aside className={`fixed lg:relative z-50 lg:z-auto w-[270px] flex flex-col border-r border-border-default bg-bg-surface backdrop-blur-xl h-full transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 {/* Brand */}
-                <div className="h-16 flex items-center gap-3 px-6 border-b border-black/[0.05]">
-                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 transition-colors mr-1" aria-label="Close menu">
-                        <X size={18} className="text-slate-400" />
+                <div className="h-14 flex items-center gap-3 px-5 border-b border-border-default">
+                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-bg-elevated transition-colors mr-1" aria-label="Close menu">
+                        <X size={18} className="text-text-muted" />
                     </button>
                     <div className="relative group cursor-pointer" onClick={() => navigate('/')}>
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" />
-                        <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
-                            <img src={PymastersIcon} alt="PyMasters" className="w-6 h-6" style={{ filter: 'brightness(2)' }} />
+                        <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
+                            <img src={PymastersIcon} alt="PyMasters" className="w-5 h-5" style={{ filter: 'brightness(2)' }} />
                         </div>
                     </div>
-                    <span className="font-display font-bold text-lg text-slate-900 tracking-tight">PYMASTERS</span>
+                    <span className="font-display font-bold text-base text-text-primary tracking-tight">PYMASTERS</span>
                 </div>
 
-                {/* User Card */}
-                <div className="p-4">
-                    <div className="rounded-2xl p-4 bg-gradient-to-br from-slate-50 to-white border border-black/[0.04] shadow-sm">
-                        <div className="flex items-center gap-3 mb-3">
-                            {/* Avatar with animated ring */}
-                            <div className="relative cursor-pointer" onClick={() => navigate('/dashboard/profile')}>
-                                <div className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
-                                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-slate-700 font-bold text-sm">
-                                        {user.username.substring(0, 2).toUpperCase()}
-                                    </div>
-                                </div>
-                                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-400 border-2 border-white shadow-sm" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="text-slate-900 font-bold text-sm truncate">{user.username}</div>
-                                    <Settings size={12} className="text-slate-400 hover:text-cyan-600 cursor-pointer transition-colors shrink-0" onClick={() => navigate('/dashboard/profile')} />
-                                </div>
-                                <div className={`inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${rc.bg} ${rc.text} ${rc.border}`}>
-                                    <Zap size={8} />
-                                    {rank}
+                {/* Compact User Row */}
+                <div className="px-4 py-3 border-b border-border-default">
+                    <div className="flex items-center gap-2.5">
+                        <div className="relative cursor-pointer" onClick={() => navigate('/dashboard/profile')}>
+                            <div className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
+                                <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-[10px]">
+                                    {user.username.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" />
                         </div>
-
-                        {/* XP Progress */}
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between text-[10px] font-mono">
-                                <span className="text-slate-500 flex items-center gap-1">
-                                    <Trophy size={10} className="text-amber-500" />
-                                    {user.points} XP
-                                </span>
-                                <span className="text-slate-400">{nextMilestone} XP</span>
-                            </div>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progressPct}%` }}
-                                    transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
-                                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]"
-                                />
-                            </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-text-primary font-bold text-xs truncate">{user.username}</div>
                         </div>
+                        <div className={`inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full border ${rc.bg} ${rc.text} ${rc.border}`}>
+                            <Zap size={7} />
+                            {rank}
+                        </div>
+                        <span className="text-[10px] font-mono text-text-muted flex items-center gap-0.5">
+                            <Trophy size={9} className="text-amber-500" />
+                            {user.points}
+                        </span>
                     </div>
                 </div>
 
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2 mt-2">Navigation</div>
+                    <div className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-3 mb-1.5 mt-1">Navigation</div>
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                         return (
@@ -144,74 +125,50 @@ export default function Layout() {
                                 key={item.path}
                                 onClick={() => { navigate(item.path); setSidebarOpen(false); }}
                                 className={clsx(
-                                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-300 group relative",
+                                    "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 group relative",
                                     isActive
-                                        ? "bg-gradient-to-r from-cyan-50 to-blue-50/50 text-cyan-700 font-semibold"
-                                        : "hover:bg-slate-50 text-slate-500 hover:text-slate-700"
+                                        ? "bg-accent-subtle text-accent-primary font-semibold"
+                                        : "hover:bg-bg-elevated text-text-muted hover:text-text-secondary"
                                 )}
                             >
-                                {/* Active indicator bar */}
                                 {isActive && (
                                     <motion.div
                                         layoutId="sidebar-active"
-                                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-gradient-to-b from-cyan-400 to-blue-500 shadow-[0_0_6px_rgba(6,182,212,0.5)]"
+                                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-to-b from-cyan-400 to-blue-500 shadow-[0_0_6px_rgba(6,182,212,0.5)]"
                                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                                     />
                                 )}
-
-                                <div className={clsx(
-                                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300",
-                                    isActive
-                                        ? "bg-cyan-500/10 text-cyan-600"
-                                        : "text-slate-500 group-hover:text-slate-600 group-hover:bg-slate-100"
-                                )}>
-                                    <item.icon size={17} className="transition-transform duration-300 group-hover:scale-110" />
-                                </div>
-
-                                <div className="flex-1 text-left">
-                                    <div className="text-sm font-medium leading-tight">{item.label}</div>
-                                    {isActive && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            className="text-[10px] text-cyan-500/70 mt-0.5"
-                                        >
-                                            {item.desc}
-                                        </motion.div>
-                                    )}
-                                </div>
-
-                                {isActive && (
-                                    <ChevronRight size={14} className="text-cyan-400" />
-                                )}
+                                <item.icon size={16} className="transition-transform duration-200 group-hover:scale-110 shrink-0" />
+                                <span className="text-sm font-medium leading-tight">{item.label}</span>
+                                {isActive && <ChevronRight size={13} className="text-accent-primary ml-auto" />}
                             </button>
                         );
                     })}
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-black/[0.05] space-y-3">
+                <div className="px-3 py-2.5 border-t border-border-default space-y-1.5">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={logout}
-                            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300 border border-transparent hover:border-red-100"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-100"
                         >
-                            <LogOut size={14} /> Sign Out
+                            <LogOut size={13} /> Sign Out
                         </button>
                         <DarkModeToggle />
                     </div>
-                    <div className="flex items-center justify-center gap-3 pt-1">
-                        <Link to="/terms" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Terms</Link>
-                        <span className="text-slate-200 text-[10px]">&middot;</span>
-                        <Link to="/privacy" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Privacy</Link>
-                        <span className="text-slate-200 text-[10px]">&middot;</span>
-                        <Link to="/security" className="text-[10px] text-slate-400 hover:text-cyan-600 transition-colors">Security</Link>
+                    <div className="flex items-center justify-center gap-3">
+                        <Link to="/terms" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Terms</Link>
+                        <span className="text-text-disabled text-[9px]">&middot;</span>
+                        <Link to="/privacy" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Privacy</Link>
+                        <span className="text-text-disabled text-[9px]">&middot;</span>
+                        <Link to="/security" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Security</Link>
                     </div>
                 </div>
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-slate-50 via-[#f0f4f8] to-[#e8eef4] pt-14 lg:pt-0">
+            <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-14 lg:pt-0">
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                     style={{
                         backgroundImage: `
@@ -221,12 +178,13 @@ export default function Layout() {
                         backgroundSize: '60px 60px',
                     }}
                 />
-                <div className="p-8 max-w-7xl mx-auto relative z-10 min-h-full">
+                <div className="p-6 max-w-7xl mx-auto relative z-10 min-h-full">
                     <Outlet />
                 </div>
             </main>
 
             <GlobalSearch />
+            <ReleaseNotes />
         </div>
     );
 }
