@@ -19,7 +19,7 @@ export default class ErrorBoundary extends Component {
             return (
                 <div className="flex flex-col items-center justify-center h-64 text-center space-y-4 p-4">
                     <div className="text-red-400 font-bold text-lg">Something went wrong</div>
-                    <p className="text-slate-500 text-sm max-w-md">
+                    <p className="text-text-muted text-sm max-w-md">
                         This section encountered an error.
                     </p>
                     <button
@@ -30,7 +30,17 @@ export default class ErrorBoundary extends Component {
                     </button>
                     {this.state.error && (
                         <pre className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-[11px] text-red-400 max-w-lg overflow-auto text-left max-h-32">
-                            {this.state.error.toString()}
+                            {(() => {
+                                try {
+                                    const e = this.state.error;
+                                    if (typeof e === 'string') return e;
+                                    if (e instanceof Error) return e.message || e.toString();
+                                    if (typeof e?.message === 'string') return e.message;
+                                    return JSON.stringify(e, null, 2);
+                                } catch {
+                                    return 'An unexpected error occurred';
+                                }
+                            })()}
                         </pre>
                     )}
                 </div>
