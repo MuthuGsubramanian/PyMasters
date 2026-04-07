@@ -40,6 +40,16 @@ class OnboardingData(BaseModel):
     whatsapp: Optional[str] = ""
 
 
+class OrgOnboardingData(BaseModel):
+    user_id: str
+    preferred_language: str
+    org_size: str
+    learner_profile: str
+    skill_level: str
+    learning_focus: str
+    structure_preference: str
+
+
 class SignalData(BaseModel):
     user_id: str
     signal_type: str
@@ -83,6 +93,66 @@ def onboarding(data: OnboardingData):
     return result
 
 
+@router.post("/onboarding/org")
+def org_onboarding(data: OrgOnboardingData):
+    """
+    Save org-focused onboarding for an organization admin.
+    Stores org profile data and marks the admin's onboarding as complete.
+    """
+    if data.preferred_language.lower() in BLOCKED_LANGUAGES:
+        raise HTTPException(
+            status_code=400,
+            detail="Hindi is not supported on PyMasters. Please choose another language.",
+        )
+
+    conn = _get_conn()
+    try:
+        cursor = conn.cursor()
+
+        # Find the user's org
+        cursor.execute(
+            "SELECT org_id FROM org_members WHERE user_id = ? AND role IN ('super_admin', 'admin') LIMIT 1",
+            [data.user_id]
+        )
+        org_row = cursor.fetchone()
+        if not org_row:
+            raise HTTPException(status_code=400, detail="User is not an org admin")
+
+        org_id = org_row["org_id"]
+
+        # Upsert org_profiles
+        cursor.execute("""
+            INSERT INTO org_profiles (org_id, org_size, learner_profile, skill_level, learning_focus, structure_preference)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT (org_id) DO UPDATE SET
+                org_size = excluded.org_size,
+                learner_profile = excluded.learner_profile,
+                skill_level = excluded.skill_level,
+                learning_focus = excluded.learning_focus,
+                structure_preference = excluded.structure_preference
+        """, [org_id, data.org_size, data.learner_profile, data.skill_level, data.learning_focus, data.structure_preference])
+
+        # Update user's preferred_language and mark onboarding complete
+        cursor.execute(
+            "UPDATE users SET preferred_language = ?, onboarding_completed = 1 WHERE id = ?",
+            [data.preferred_language, data.user_id]
+        )
+
+        # Also create/update user_profiles entry to mark onboarding_completed
+        cursor.execute("""
+            INSERT INTO user_profiles (user_id, preferred_language, onboarding_completed)
+            VALUES (?, ?, 1)
+            ON CONFLICT (user_id) DO UPDATE SET
+                preferred_language = excluded.preferred_language,
+                onboarding_completed = 1
+        """, [data.user_id, data.preferred_language])
+
+        conn.commit()
+        return {"onboarding_completed": True, "user_id": data.user_id}
+    finally:
+        conn.close()
+
+
 @router.get("/{user_id}")
 def get_profile(user_id: str):
     """
@@ -99,6 +169,181 @@ def get_profile(user_id: str):
         "profile": profile,
         "onboarding_completed": profile.get("onboarding_completed", False),
     }
+
+
+@router.get("/{user_id}/export")
+def export_user_data(user_id: str):
+    """
+    Export all user data as JSON (GDPR-style data export).
+    """
+    conn = _get_conn()
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM users WHERE id = ?", [user_id])
+        user_row = cursor.fetchone()
+        if not user_row:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        export = {"user": dict(user_row)}
+
+        # Remove sensitive fields
+        export["user"].pop("password_hash", None)
+
+        tables_to_export = [
+            ("profile", "SELECT * FROM user_profiles WHERE user_id = ?"),
+            ("settings", "SELECT * FROM user_settings WHERE user_id = ?"),
+            ("mastery", "SELECT * FROM user_mastery WHERE user_id = ?"),
+            ("lesson_completions", "SELECT * FROM lesson_completions WHERE user_id = ?"),
+            ("learning_signals", "SELECT * FROM learning_signals WHERE user_id = ?"),
+            ("streaks", "SELECT * FROM user_streaks WHERE user_id = ?"),
+            ("notifications", "SELECT * FROM notifications WHERE user_id = ?"),
+            ("org_memberships", "SELECT * FROM org_members WHERE user_id = ?"),
+            ("learning_paths", "SELECT * FROM user_learning_paths WHERE user_id = ?"),
+            ("challenge_submissions", "SELECT * FROM challenge_submissions WHERE user_id = ?"),
+        ]
+
+        for key, query in tables_to_export:
+            try:
+                cursor.execute(query, [user_id])
+                rows = cursor.fetchall()
+                export[key] = [dict(r) for r in rows]
+            except Exception:
+                export[key] = []
+
+        return export
+    finally:
+        conn.close()
+
+
+@router.post("/{user_id}/reset")
+def reset_progress(user_id: str):
+    """
+    Reset all learning progress for a user while keeping the account.
+    """
+    conn = _get_conn()
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id FROM users WHERE id = ?", [user_id])
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Reset XP
+        cursor.execute("UPDATE users SET points = 0 WHERE id = ?", [user_id])
+
+        # Clear progress tables
+        progress_tables = [
+            ("user_mastery", "user_id"),
+            ("lesson_completions", "user_id"),
+            ("learning_signals", "user_id"),
+            ("user_streaks", "user_id"),
+            ("challenge_submissions", "user_id"),
+            ("path_adaptation_log", "user_id"),
+        ]
+        for table, column in progress_tables:
+            try:
+                cursor.execute(f"DELETE FROM {table} WHERE {column} = ?", [user_id])
+            except Exception:
+                pass
+
+        # Reset learning path progress
+        try:
+            cursor.execute(
+                "UPDATE user_learning_paths SET status = 'not_started', current_step = 0, progress_pct = 0 WHERE user_id = ?",
+                [user_id]
+            )
+        except Exception:
+            pass
+
+        conn.commit()
+        return {"reset": True, "user_id": user_id}
+    finally:
+        conn.close()
+
+
+@router.delete("/{user_id}")
+def delete_account(user_id: str):
+    """
+    Permanently delete a user account and all associated data.
+    This action is irreversible.
+    """
+    conn = _get_conn()
+    try:
+        cursor = conn.cursor()
+
+        # Verify user exists
+        cursor.execute("SELECT id FROM users WHERE id = ?", [user_id])
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Guard: don't allow deletion if user is sole super_admin of any org
+        cursor.execute("""
+            SELECT om.org_id, o.name
+            FROM org_members om
+            JOIN organizations o ON o.id = om.org_id
+            WHERE om.user_id = ? AND om.role = 'super_admin'
+        """, [user_id])
+        admin_orgs = cursor.fetchall()
+
+        for org in admin_orgs:
+            cursor.execute(
+                "SELECT COUNT(*) FROM org_members WHERE org_id = ? AND role = 'super_admin' AND user_id != ?",
+                [org["org_id"], user_id]
+            )
+            other_admins = cursor.fetchone()[0]
+            if other_admins == 0:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"You are the only super admin of '{org['name']}'. Transfer ownership or delete the organization first."
+                )
+
+        # Delete from all related tables (order doesn't matter with no FK constraints)
+        related_tables = [
+            ("user_profiles", "user_id"),
+            ("user_settings", "user_id"),
+            ("user_streaks", "user_id"),
+            ("user_mastery", "user_id"),
+            ("learning_signals", "user_id"),
+            ("lesson_completions", "user_id"),
+            ("notifications", "user_id"),
+            ("notification_deliveries", "user_id"),
+            ("notification_preferences", "user_id"),
+            ("module_generation_jobs", "user_id"),
+            ("generated_lessons", "user_id"),
+            ("playground_conversations", "user_id"),
+            ("user_learning_paths", "user_id"),
+            ("pending_vaathiyaar_messages", "user_id"),
+            ("challenge_submissions", "user_id"),
+            ("path_adaptation_log", "user_id"),
+            ("org_members", "user_id"),
+            ("org_invites", "invited_by"),
+            ("training_data", "user_id"),
+        ]
+
+        for table, column in related_tables:
+            try:
+                cursor.execute(f"DELETE FROM {table} WHERE {column} = ?", [user_id])
+            except Exception:
+                pass  # Table may not exist in all environments
+
+        # Delete playground messages (linked via conversation)
+        try:
+            cursor.execute(
+                "DELETE FROM playground_messages WHERE conversation_id IN "
+                "(SELECT id FROM playground_conversations WHERE user_id = ?)",
+                [user_id]
+            )
+        except Exception:
+            pass
+
+        # Finally delete the user record
+        cursor.execute("DELETE FROM users WHERE id = ?", [user_id])
+        conn.commit()
+
+        return {"deleted": True, "user_id": user_id}
+    finally:
+        conn.close()
 
 
 @router.post("/signal")
