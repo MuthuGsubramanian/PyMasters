@@ -114,6 +114,68 @@ const QUESTIONS = [
     },
 ];
 
+const ORG_QUESTIONS = [
+    {
+        key: 'preferred_language',
+        type: 'language',
+        text: "First things first — which language should the platform use for your organization? 🌐",
+    },
+    {
+        key: 'org_size',
+        type: 'choice',
+        text: "How many learners will use PyMasters? 👥",
+        options: [
+            { value: '1-10',   label: '👤 1-10 learners' },
+            { value: '11-50',  label: '👥 11-50 learners' },
+            { value: '51-200', label: '🏫 51-200 learners' },
+            { value: '200+',   label: '🏢 200+ learners' },
+        ],
+    },
+    {
+        key: 'learner_profile',
+        type: 'choice',
+        text: "Who are your learners? 🎓",
+        options: [
+            { value: 'k12',          label: '🏫 K-12 Students' },
+            { value: 'university',   label: '🎓 University Students' },
+            { value: 'professional', label: '💼 Working Professionals' },
+            { value: 'mixed',        label: '🌍 Mixed Group' },
+        ],
+    },
+    {
+        key: 'skill_level',
+        type: 'choice',
+        text: "What's their current Python level? 📊",
+        options: [
+            { value: 'beginner', label: '🌱 Complete Beginners' },
+            { value: 'some',     label: '📝 Some Experience' },
+            { value: 'mixed',    label: '🔀 Mixed Levels' },
+        ],
+    },
+    {
+        key: 'learning_focus',
+        type: 'choice',
+        text: "What should they learn? 🎯",
+        options: [
+            { value: 'fundamentals',  label: '🐍 Python Fundamentals' },
+            { value: 'ai_ml',         label: '🤖 AI & Machine Learning' },
+            { value: 'web',           label: '🌐 Web Development' },
+            { value: 'data_science',  label: '📊 Data Science' },
+            { value: 'mixed',         label: '🎯 Mixed / All Topics' },
+        ],
+    },
+    {
+        key: 'structure_preference',
+        type: 'choice',
+        text: "How do you want to manage learning? 📋",
+        options: [
+            { value: 'assigned',    label: '📋 Assign Specific Paths' },
+            { value: 'free_choice', label: '🆓 Let Learners Choose' },
+            { value: 'mix',         label: '🔀 Mix of Both' },
+        ],
+    },
+];
+
 // ---------------------------------------------------------------------------
 // Vaathiyaar reaction map
 // ---------------------------------------------------------------------------
@@ -161,6 +223,26 @@ const REACTIONS = {
     // contact_preference
     yes:             "Awesome! I'll make sure you never miss a milestone. 📬",
     no:              "No worries! You can always opt in later from your profile. 👍",
+};
+
+const ORG_REACTIONS = {
+    '1-10':        "A focused group! You'll be able to give everyone personal attention. 👤",
+    '11-50':       "Nice team size! Big enough for group dynamics, small enough to track everyone. 👥",
+    '51-200':      "A proper classroom! The analytics dashboard will be your best friend. 🏫",
+    '200+':        "An enterprise operation! We'll make sure the platform scales for your needs. 🏢",
+    k12:           "Young minds! I love it. We'll keep things visual and engaging. 🏫",
+    university:    "University students — they'll appreciate the depth we go into. 🎓",
+    professional:  "Working professionals — practical, job-relevant content is the priority. 💼",
+    mixed:         "A diverse group! We'll make sure everyone finds their level. 🌍",
+    beginner:      "Starting from scratch — we'll build a strong foundation. 🌱",
+    some:          "Some experience — we can skip the absolute basics and accelerate. 📝",
+    fundamentals:  "Core Python — the foundation everything else is built on. 🐍",
+    ai_ml:         "AI & ML — the hottest field in tech right now. Great choice! 🤖",
+    web:           "Web development — Flask, FastAPI, and beyond. 🌐",
+    data_science:  "Data science — pandas, numpy, and the power of data. 📊",
+    assigned:      "Structured paths — great for consistency across your team. 📋",
+    free_choice:   "Learner autonomy — motivated learners thrive with choice. 🆓",
+    mix:           "Best of both worlds — structure where needed, freedom where possible. 🔀",
 };
 
 // ---------------------------------------------------------------------------
@@ -407,13 +489,21 @@ export default function Onboarding() {
     const bottomRef = useRef(null);
 
     const username = user?.name || user?.username || '';
-    const greeting = username
-        ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?`
-        : "Vanakkam! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?";
+    const isOrg = user?.account_type === 'organization';
+    const questions = isOrg ? ORG_QUESTIONS : QUESTIONS;
+    const reactions = isOrg ? ORG_REACTIONS : REACTIONS;
+
+    const greeting = isOrg
+        ? (username
+            ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar. Let's set up your organization's learning environment. A few quick questions!`
+            : "Vanakkam! 🙏 I'm Vaathiyaar. Let's set up your organization's learning environment. A few quick questions!")
+        : (username
+            ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?`
+            : "Vanakkam! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?");
 
     const [messages, setMessages] = useState([
         makeMsg('vaathiyaar', greeting),
-        makeMsg('vaathiyaar', QUESTIONS[0].text, { questionIndex: 0 }),
+        makeMsg('vaathiyaar', questions[0].text, { questionIndex: 0 }),
     ]);
     const [currentStep, setCurrentStep] = useState(0);
     const [answers, setAnswers] = useState({});
@@ -431,7 +521,7 @@ export default function Onboarding() {
         if (busy || done) return;
         setBusy(true);
 
-        const question = QUESTIONS[currentStep];
+        const question = questions[currentStep];
         const newAnswers = { ...answers, [question.key]: option.value };
 
         // For contact_details, also store email/whatsapp at top level
@@ -447,17 +537,17 @@ export default function Onboarding() {
 
         // Reaction from Vaathiyaar (skip for contact type)
         if (question.type !== 'contact') {
-            // Check for nested reactions first (e.g. REACTIONS.user_type.high_school_student)
-            const nestedReaction = REACTIONS[question.key]?.[option.value];
-            const reaction = nestedReaction || REACTIONS[option.value] || "Noted! Let's keep going. 😊";
+            // Check for nested reactions first (e.g. reactions.user_type.high_school_student)
+            const nestedReaction = reactions[question.key]?.[option.value];
+            const reaction = nestedReaction || reactions[option.value] || "Noted! Let's keep going. 😊";
             await delay(400);
             addMsg(makeMsg('vaathiyaar', reaction));
         }
 
         // Determine next step, skipping conditional questions that don't apply
         let nextStep = currentStep + 1;
-        while (nextStep < QUESTIONS.length) {
-            const nextQ = QUESTIONS[nextStep];
+        while (nextStep < questions.length) {
+            const nextQ = questions[nextStep];
             if (nextQ.condition) {
                 // Parse condition like 'contact_preference === yes'
                 const [condKey, condVal] = nextQ.condition.split('===').map(s => s.trim());
@@ -469,64 +559,87 @@ export default function Onboarding() {
             break;
         }
 
-        if (nextStep < QUESTIONS.length) {
+        if (nextStep < questions.length) {
             // Next question after a short pause
             await delay(800);
-            addMsg(makeMsg('vaathiyaar', QUESTIONS[nextStep].text, { questionIndex: nextStep }));
+            addMsg(makeMsg('vaathiyaar', questions[nextStep].text, { questionIndex: nextStep }));
             setCurrentStep(nextStep);
             setBusy(false);
         } else {
             // All answered — submit
             await delay(800);
             try {
-                await api.post('/profile/onboarding', {
-                    user_id: user?.id,
-                    ...newAnswers,
-                    linkedin_url: newAnswers.linkedin_url || undefined,
-                    github_url: newAnswers.github_url || undefined,
-                });
+                if (isOrg) {
+                    const { saveOrgOnboarding } = await import('../api');
+                    await saveOrgOnboarding({
+                        user_id: user?.id,
+                        preferred_language: newAnswers.preferred_language || 'en',
+                        org_size: newAnswers.org_size || '',
+                        learner_profile: newAnswers.learner_profile || '',
+                        skill_level: newAnswers.skill_level || '',
+                        learning_focus: newAnswers.learning_focus || '',
+                        structure_preference: newAnswers.structure_preference || '',
+                    });
+                } else {
+                    await api.post('/profile/onboarding', {
+                        user_id: user?.id,
+                        ...newAnswers,
+                        linkedin_url: newAnswers.linkedin_url || undefined,
+                        github_url: newAnswers.github_url || undefined,
+                    });
+                }
             } catch (err) {
                 console.error('Onboarding submit failed:', err);
             }
 
-            // Mark onboarding complete in local user state
             updateUser({ onboarding_completed: true, preferred_language: newAnswers.preferred_language || 'en' });
 
-            // Fetch path recommendation
-            let recommendedPath = null;
-            try {
-                const recRes = await api.get(`/paths/recommend?user_id=${user?.id}`);
-                recommendedPath = recRes.data;
-            } catch (e) {
-                console.log('Path recommendation not available:', e);
-            }
-
-            if (recommendedPath && recommendedPath.id) {
+            if (isOrg) {
                 addMsg(makeMsg('vaathiyaar', username
-                    ? `${username}, based on everything you told me, I've found the perfect learning path for you! 🎯`
-                    : "Based on everything you told me, I've found the perfect learning path for you! 🎯"
-                ));
-                await delay(600);
-                const lessons = recommendedPath.lesson_sequence
-                    ? JSON.parse(recommendedPath.lesson_sequence).length
-                    : '?';
-                addMsg(makeMsg('vaathiyaar',
-                    `**${recommendedPath.name}**\n\n${recommendedPath.description || ''}\n\n` +
-                    `📚 ${lessons} lessons · ⏱️ ~${recommendedPath.estimated_hours || '?'} hours · ` +
-                    `${recommendedPath.difficulty_start} → ${recommendedPath.difficulty_end}`,
-                    { isPathRecommendation: true, pathId: recommendedPath.id }
-                ));
-                setDone(true);
-                setBusy(false);
-            } else {
-                addMsg(makeMsg('vaathiyaar', username
-                    ? `${username}, you're all set! Let's begin your Python journey! 🚀`
-                    : "You're all set! Let's begin your Python journey! 🚀"
+                    ? `${username}, your organization is all set! Let's get your team onboard. 🚀`
+                    : "Your organization is all set! Let's get your team onboard. 🚀"
                 ));
                 setDone(true);
                 setBusy(false);
                 await delay(1500);
-                navigate('/dashboard/classroom');
+                navigate('/dashboard/org');
+            } else {
+                // Existing individual flow — path recommendation
+                let recommendedPath = null;
+                try {
+                    const recRes = await api.get(`/paths/recommend?user_id=${user?.id}`);
+                    recommendedPath = recRes.data;
+                } catch (e) {
+                    console.log('Path recommendation not available:', e);
+                }
+
+                if (recommendedPath && recommendedPath.id) {
+                    addMsg(makeMsg('vaathiyaar', username
+                        ? `${username}, based on everything you told me, I've found the perfect learning path for you! 🎯`
+                        : "Based on everything you told me, I've found the perfect learning path for you! 🎯"
+                    ));
+                    await delay(600);
+                    const lessons = recommendedPath.lesson_sequence
+                        ? JSON.parse(recommendedPath.lesson_sequence).length
+                        : '?';
+                    addMsg(makeMsg('vaathiyaar',
+                        `**${recommendedPath.name}**\n\n${recommendedPath.description || ''}\n\n` +
+                        `📚 ${lessons} lessons · ⏱️ ~${recommendedPath.estimated_hours || '?'} hours · ` +
+                        `${recommendedPath.difficulty_start} → ${recommendedPath.difficulty_end}`,
+                        { isPathRecommendation: true, pathId: recommendedPath.id }
+                    ));
+                    setDone(true);
+                    setBusy(false);
+                } else {
+                    addMsg(makeMsg('vaathiyaar', username
+                        ? `${username}, you're all set! Let's begin your Python journey! 🚀`
+                        : "You're all set! Let's begin your Python journey! 🚀"
+                    ));
+                    setDone(true);
+                    setBusy(false);
+                    await delay(1500);
+                    navigate('/dashboard/classroom');
+                }
             }
         }
     };
@@ -596,11 +709,11 @@ export default function Onboarding() {
                                     {/* Render interactive widget only for the currently active question */}
                                     {!done && msg.questionIndex === activeQuestionIndex && (
                                         <>
-                                            {QUESTIONS[msg.questionIndex].type === 'language' ? (
+                                            {questions[msg.questionIndex].type === 'language' ? (
                                                 <LangPickerBlock onSelect={handleAnswer} disabled={busy} />
-                                            ) : QUESTIONS[msg.questionIndex].type === 'contact' ? (
+                                            ) : questions[msg.questionIndex].type === 'contact' ? (
                                                 <ContactInputBlock onSelect={handleAnswer} disabled={busy} />
-                                            ) : QUESTIONS[msg.questionIndex].type === 'social' ? (
+                                            ) : questions[msg.questionIndex].type === 'social' ? (
                                                 <motion.div
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
@@ -640,15 +753,15 @@ export default function Onboarding() {
                                                         </button>
                                                     </div>
                                                 </motion.div>
-                                            ) : QUESTIONS[msg.questionIndex].multi ? (
+                                            ) : questions[msg.questionIndex].multi ? (
                                                 <MultiOptionPills
-                                                    options={QUESTIONS[msg.questionIndex].options}
+                                                    options={questions[msg.questionIndex].options}
                                                     onSelect={handleAnswer}
                                                     disabled={busy}
                                                 />
                                             ) : (
                                                 <OptionPills
-                                                    options={QUESTIONS[msg.questionIndex].options}
+                                                    options={questions[msg.questionIndex].options}
                                                     onSelect={handleAnswer}
                                                     disabled={busy}
                                                 />
@@ -666,9 +779,9 @@ export default function Onboarding() {
 
             {/* Footer — progress + dots */}
             <footer className="flex-shrink-0 px-4 py-5 border-t border-slate-200 flex flex-col items-center gap-3">
-                <ProgressDots total={QUESTIONS.length} current={done ? QUESTIONS.length : currentStep} />
+                <ProgressDots total={questions.length} current={done ? questions.length : currentStep} />
                 <p className="text-[11px] text-slate-600">
-                    {done ? 'All done!' : `Question ${currentStep + 1} of ${QUESTIONS.length}`}
+                    {done ? 'All done!' : `Question ${currentStep + 1} of ${questions.length}`}
                 </p>
             </footer>
         </div>
