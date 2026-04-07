@@ -43,7 +43,7 @@ export default function Layout() {
             { icon: Swords, label: 'Challenges', path: '/dashboard/challenges', desc: 'Weekly coding battles' },
             { icon: BookOpen, label: 'Reference', path: '/dashboard/reference', desc: 'Quick cheat sheets' },
         ];
-        if (activeOrg) {
+        if (activeOrg && (activeOrg.role === 'super_admin' || activeOrg.role === 'admin')) {
             items.push({ icon: Building2, label: 'Organization', path: '/dashboard/org', desc: 'Manage your org' });
         }
         items.push({ icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' });
