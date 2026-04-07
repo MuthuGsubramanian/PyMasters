@@ -29,6 +29,8 @@ from routes.messages import router as messages_router
 from routes.paths import router as paths_router
 from routes.trending import router as trending_router
 from routes.organizations import router as org_router
+from routes.challenges import router as challenges_router
+from routes.reference import router as reference_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -139,6 +141,10 @@ def init_db():
             cursor.execute("ALTER TABLE users ADD COLUMN twitter_url TEXT DEFAULT ''")
             cursor.execute("ALTER TABLE users ADD COLUMN website_url TEXT DEFAULT ''")
             cursor.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''")
+
+        if 'account_type' not in col_names:
+            print("Migrating DB: Adding account_type column")
+            cursor.execute("ALTER TABLE users ADD COLUMN account_type TEXT DEFAULT 'individual'")
 
         # Create user_profiles table
         cursor.execute("""
@@ -422,6 +428,21 @@ def init_db():
             )
         """)
 
+        # ── Challenge submissions table ──────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS challenge_submissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                challenge_id TEXT NOT NULL,
+                code TEXT NOT NULL,
+                passed INTEGER DEFAULT 0,
+                xp_awarded INTEGER DEFAULT 0,
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, challenge_id)
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_challenge_sub_user ON challenge_submissions(user_id)")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS lesson_insertions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -462,6 +483,7 @@ def init_db():
                 type TEXT DEFAULT 'other',
                 domain TEXT DEFAULT '',
                 logo_url TEXT DEFAULT '',
+                description TEXT DEFAULT '',
                 settings TEXT DEFAULT '{}',
                 plan TEXT DEFAULT 'free',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -495,10 +517,29 @@ def init_db():
             )
         """)
 
+        # Migrate: add description column to organizations if missing
+        org_cols = [r[1] for r in cursor.execute("PRAGMA table_info(organizations)").fetchall()]
+        if 'description' not in org_cols:
+            print("Migrating DB: Adding description column to organizations")
+            cursor.execute("ALTER TABLE organizations ADD COLUMN description TEXT DEFAULT ''")
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_members_user ON org_members(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_members_role ON org_members(org_id, role)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_invites_token ON org_invites(token)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_invites_email ON org_invites(email)")
+
+        # ── Org profiles (onboarding answers for org admins) ──────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS org_profiles (
+                org_id TEXT PRIMARY KEY,
+                org_size TEXT DEFAULT '',
+                learner_profile TEXT DEFAULT '',
+                skill_level TEXT DEFAULT '',
+                learning_focus TEXT DEFAULT '',
+                structure_preference TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
@@ -554,6 +595,8 @@ app.include_router(messages_router)
 app.include_router(paths_router)
 app.include_router(trending_router)
 app.include_router(org_router)
+app.include_router(challenges_router)
+app.include_router(reference_router)
 
 # --- CORS ---
 origins = [
@@ -579,6 +622,7 @@ class UserRegister(BaseModel):
     username: str
     password: str
     name: Optional[str] = "Learner"
+    account_type: Optional[str] = "individual"
 
 class UserLogin(BaseModel):
     username: str
@@ -616,13 +660,14 @@ def register(user: UserRegister):
         hashed = hash_pw(user.password)
         # Initialize with module_1 unlocked
         default_unlocks = json.dumps(["module_1"])
+        account_type = user.account_type if user.account_type in ("individual", "organization") else "individual"
 
         cursor.execute(
-            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', 0)",
-            [user_id, user.username, hashed, user.name, default_unlocks]
+            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed, account_type) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', 0, ?)",
+            [user_id, user.username, hashed, user.name, default_unlocks, account_type]
         )
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": False}
+        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": False, "account_type": account_type}
     finally:
         conn.close()
 
@@ -635,7 +680,7 @@ def login(user: UserLogin):
         hashed = hash_pw(user.password)
         # Fetch basic info + points + unlocks + onboarding status
         cursor.execute(
-            "SELECT id, name, points, unlocked_modules, onboarding_completed FROM users WHERE username = ? AND password_hash = ?",
+            "SELECT id, name, points, unlocked_modules, onboarding_completed, account_type FROM users WHERE username = ? AND password_hash = ?",
             [user.username, hashed]
         )
         record = cursor.fetchone()
@@ -654,9 +699,9 @@ def login(user: UserLogin):
         org_info = None
         if org_row:
             org_info = {
-                "org_id": org_row[0],
-                "org_name": org_row[1],
-                "org_type": org_row[2],
+                "id": org_row[0], "org_id": org_row[0],
+                "name": org_row[1], "org_name": org_row[1],
+                "type": org_row[2], "org_type": org_row[2],
                 "role": org_row[3],
                 "department": org_row[4] or ""
             }
@@ -669,6 +714,7 @@ def login(user: UserLogin):
             "points": record[2] or 0,
             "unlocked": unlocks,
             "onboarding_completed": bool(record[4]),
+            "account_type": record[5] or "individual",
             "token": f"mock-jwt-{record[0]}",
             "org": org_info
         }
