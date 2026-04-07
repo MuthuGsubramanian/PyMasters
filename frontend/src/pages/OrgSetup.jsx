@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createOrg, bulkInviteToOrg } from '../api';
+import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2, Users, Mail, Plus, Trash2,
@@ -91,20 +92,32 @@ export default function OrgSetup() {
     try {
       const res = await createOrg({
         name: orgName.trim(),
-        org_type: orgType.toLowerCase(),
-        domain: domain.trim() || undefined,
-        logo_url: logoUrl.trim() || undefined,
-        description: description.trim() || undefined,
-        created_by: user.user_id,
+        type: orgType.toLowerCase(),
+        domain: domain.trim() || '',
+        logo_url: logoUrl.trim() || '',
+        description: description.trim() || '',
+        user_id: user.id,
       });
-      const org = res.data;
+      const raw = res.data;
+      // Reconstruct org with only safe scalar fields to prevent
+      // React "Objects are not valid as React child" crashes
+      const org = {
+        id: raw.id || raw.org_id || '',
+        org_id: raw.org_id || raw.id || '',
+        name: raw.name || raw.org_name || orgName.trim(),
+        org_name: raw.org_name || raw.name || orgName.trim(),
+        type: raw.type || raw.org_type || orgType.toLowerCase(),
+        org_type: raw.org_type || raw.type || orgType.toLowerCase(),
+        role: raw.role || 'super_admin',
+        department: raw.department || '',
+      };
 
       if (members.length > 0) {
         try {
-          await bulkInviteToOrg(org.org_id || org.id, {
+          await bulkInviteToOrg(org.id, {
             emails: members.map((m) => m.email),
             role: 'member',
-            invited_by: user.user_id,
+            user_id: user.id,
           });
         } catch {
           // Invites are non-critical — org is already created
@@ -115,7 +128,7 @@ export default function OrgSetup() {
       setSuccess(true);
       setTimeout(() => navigate('/dashboard/org'), 2000);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create organization');
+      setError(safeErrorMsg(err, 'Failed to create organization'));
     } finally {
       setLoading(false);
     }
@@ -138,8 +151,8 @@ export default function OrgSetup() {
           >
             <CheckCircle2 size={40} className="text-white" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Organization Created!</h2>
-          <p className="text-slate-500">Redirecting to your dashboard...</p>
+          <h2 className="text-2xl font-bold text-text-primary mb-2">Organization Created!</h2>
+          <p className="text-text-muted">Redirecting to your dashboard...</p>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: '100%' }}
@@ -160,8 +173,8 @@ export default function OrgSetup() {
             <Building2 size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Create Organization</h1>
-            <p className="text-sm text-slate-500">Set up your team in a few steps</p>
+            <h1 className="text-2xl font-bold text-text-primary">Create Organization</h1>
+            <p className="text-sm text-text-muted">Set up your team in a few steps</p>
           </div>
         </div>
       </div>
@@ -177,24 +190,24 @@ export default function OrgSetup() {
                     ? 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md shadow-cyan-500/30'
                     : i === step
                     ? 'bg-gradient-to-br from-purple-500 to-cyan-500 text-white shadow-md shadow-purple-500/30'
-                    : 'bg-slate-100 text-slate-400'
+                    : 'bg-bg-elevated text-text-muted'
                 }`}
               >
                 {i < step ? <CheckCircle2 size={14} /> : i + 1}
               </div>
-              <span className={`text-xs font-medium hidden sm:block ${i === step ? 'text-slate-900' : 'text-slate-400'}`}>
+              <span className={`text-xs font-medium hidden sm:block ${i === step ? 'text-text-primary' : 'text-text-muted'}`}>
                 {label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`h-[2px] flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-cyan-400' : 'bg-slate-200'}`} />
+              <div className={`h-[2px] flex-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-cyan-400' : 'bg-border-default'}`} />
             )}
           </div>
         ))}
       </div>
 
       {/* Step Content */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-black/[0.05] p-6 sm:p-8 shadow-sm min-h-[360px]">
+      <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 sm:p-4 shadow-sm min-h-[360px]">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -207,9 +220,9 @@ export default function OrgSetup() {
           >
             {/* Step 0: Organization Info */}
             {step === 0 && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
                     Organization Name <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -217,12 +230,12 @@ export default function OrgSetup() {
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
                     placeholder="e.g., Acme Academy"
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-slate-800 placeholder:text-slate-300 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
                     Organization Type <span className="text-red-400">*</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -233,7 +246,7 @@ export default function OrgSetup() {
                         className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
                           orgType === type
                             ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-300 text-cyan-700 shadow-sm'
-                            : 'border-black/[0.06] text-slate-500 hover:bg-slate-50 hover:border-slate-200'
+                            : 'border-border-default text-text-muted hover:bg-bg-elevated hover:border-border-default'
                         }`}
                       >
                         {type}
@@ -243,16 +256,16 @@ export default function OrgSetup() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    <Globe size={14} className="inline mr-1.5 text-slate-400" />
-                    Domain <span className="text-slate-400 text-xs font-normal">(optional)</span>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    <Globe size={14} className="inline mr-1.5 text-text-muted" />
+                    Domain <span className="text-text-muted text-xs font-normal">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
                     placeholder="e.g., company.com"
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-slate-800 placeholder:text-slate-300 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
                   />
                 </div>
               </div>
@@ -260,40 +273,40 @@ export default function OrgSetup() {
 
             {/* Step 1: Branding */}
             {step === 1 && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
                     <Sparkles size={14} className="inline mr-1.5 text-amber-400" />
-                    Logo URL <span className="text-slate-400 text-xs font-normal">(optional)</span>
+                    Logo URL <span className="text-text-muted text-xs font-normal">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-slate-800 placeholder:text-slate-300 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
                   />
                   {logoUrl && (
                     <div className="mt-3 flex items-center gap-3">
                       <img
                         src={logoUrl}
                         alt="Logo preview"
-                        className="w-12 h-12 rounded-xl object-cover border border-black/[0.05]"
+                        className="w-12 h-12 rounded-xl object-cover border border-border-default"
                         onError={(e) => (e.target.style.display = 'none')}
                       />
-                      <span className="text-xs text-slate-400">Preview</span>
+                      <span className="text-xs text-text-muted">Preview</span>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description of your organization..."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-slate-800 placeholder:text-slate-300 transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all resize-none"
                   />
                 </div>
               </div>
@@ -301,10 +314,10 @@ export default function OrgSetup() {
 
             {/* Step 2: Invite Members */}
             {step === 2 && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    <Mail size={14} className="inline mr-1.5 text-slate-400" />
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    <Mail size={14} className="inline mr-1.5 text-text-muted" />
                     Add Members by Email
                   </label>
                   <div className="flex gap-2">
@@ -314,7 +327,7 @@ export default function OrgSetup() {
                       onChange={(e) => setEmailInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addEmail()}
                       placeholder="member@example.com"
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-slate-800 placeholder:text-slate-300 transition-all"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all"
                     />
                     <button
                       onClick={addEmail}
@@ -328,13 +341,13 @@ export default function OrgSetup() {
                 {members.length > 0 && (
                   <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
                     {members.map((m) => (
-                      <div key={m.email} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50/80 border border-black/[0.04]">
-                        <Mail size={14} className="text-slate-400 shrink-0" />
-                        <span className="text-sm text-slate-700 flex-1 truncate">{m.email}</span>
+                      <div key={m.email} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-elevated border border-border-default">
+                        <Mail size={14} className="text-text-muted shrink-0" />
+                        <span className="text-sm text-text-secondary flex-1 truncate">{m.email}</span>
                         <select
                           value={m.role}
                           onChange={(e) => changeRole(m.email, e.target.value)}
-                          className="text-xs px-2 py-1 rounded-lg border border-black/[0.08] bg-white text-slate-600 focus:outline-none"
+                          className="text-xs px-2 py-1 rounded-lg border border-black/[0.08] bg-bg-surface text-text-secondary focus:outline-none"
                         >
                           {ROLES.map((r) => (
                             <option key={r} value={r}>{r}</option>
@@ -342,7 +355,7 @@ export default function OrgSetup() {
                         </select>
                         <button
                           onClick={() => removeEmail(m.email)}
-                          className="p-1 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                          className="p-1 rounded-lg hover:bg-red-50 text-text-muted hover:text-red-500 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -352,15 +365,15 @@ export default function OrgSetup() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Bulk Paste <span className="text-slate-400 text-xs font-normal">(comma or newline separated)</span>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    Bulk Paste <span className="text-text-muted text-xs font-normal">(comma or newline separated)</span>
                   </label>
                   <textarea
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
                     placeholder={"alice@example.com, bob@example.com\ncharlie@example.com"}
                     rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-slate-800 placeholder:text-slate-300 transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all resize-none"
                   />
                   {bulkText.trim() && (
                     <button
@@ -376,36 +389,36 @@ export default function OrgSetup() {
 
             {/* Step 3: Confirmation */}
             {step === 3 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
+              <div className="space-y-4">
+                <div className="text-center mb-4">
                   <Sparkles size={28} className="text-amber-400 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-slate-900">Review & Create</h3>
-                  <p className="text-sm text-slate-500">Confirm your organization details</p>
+                  <h3 className="text-lg font-bold text-text-primary">Review & Create</h3>
+                  <p className="text-sm text-text-muted">Confirm your organization details</p>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 border border-black/[0.04]">
-                    <span className="text-sm text-slate-500">Name</span>
-                    <span className="text-sm font-semibold text-slate-800">{orgName}</span>
+                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">
+                    <span className="text-sm text-text-muted">Name</span>
+                    <span className="text-sm font-semibold text-text-primary">{orgName}</span>
                   </div>
-                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 border border-black/[0.04]">
-                    <span className="text-sm text-slate-500">Type</span>
-                    <span className="text-sm font-semibold text-slate-800">{orgType}</span>
+                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">
+                    <span className="text-sm text-text-muted">Type</span>
+                    <span className="text-sm font-semibold text-text-primary">{orgType}</span>
                   </div>
                   {domain && (
-                    <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 border border-black/[0.04]">
-                      <span className="text-sm text-slate-500">Domain</span>
-                      <span className="text-sm font-semibold text-slate-800">{domain}</span>
+                    <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">
+                      <span className="text-sm text-text-muted">Domain</span>
+                      <span className="text-sm font-semibold text-text-primary">{domain}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 border border-black/[0.04]">
-                    <span className="text-sm text-slate-500">Members to Invite</span>
-                    <span className="text-sm font-semibold text-slate-800">{members.length}</span>
+                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">
+                    <span className="text-sm text-text-muted">Members to Invite</span>
+                    <span className="text-sm font-semibold text-text-primary">{members.length}</span>
                   </div>
                   {description && (
-                    <div className="px-4 py-3 rounded-xl bg-slate-50/80 border border-black/[0.04]">
-                      <span className="text-sm text-slate-500 block mb-1">Description</span>
-                      <span className="text-sm text-slate-700">{description}</span>
+                    <div className="px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">
+                      <span className="text-sm text-text-muted block mb-1">Description</span>
+                      <span className="text-sm text-text-secondary">{description}</span>
                     </div>
                   )}
                 </div>
@@ -428,8 +441,8 @@ export default function OrgSetup() {
           disabled={step === 0}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             step === 0
-              ? 'text-slate-300 cursor-not-allowed'
-              : 'text-slate-600 hover:bg-slate-100 border border-black/[0.06]'
+              ? 'text-text-muted cursor-not-allowed'
+              : 'text-text-secondary hover:bg-bg-elevated border border-border-default'
           }`}
         >
           <ChevronLeft size={16} /> Back
@@ -442,7 +455,7 @@ export default function OrgSetup() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
               canNext()
                 ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/25 hover:shadow-lg hover:shadow-cyan-500/30'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                : 'bg-bg-elevated text-text-muted cursor-not-allowed'
             }`}
           >
             Next <ChevronRight size={16} />
