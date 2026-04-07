@@ -1,0 +1,69 @@
+{
+  "id": "free_threading",
+  "topic": "free_threading",
+  "track": "python_modern",
+  "module": "concurrency_modern",
+  "order": 2,
+  "title": {
+    "en": "Free-Threaded Python: Life Without the GIL",
+    "ta": ""
+  },
+  "description": {
+    "en": "Explore Python's free-threaded mode (PEP 703) -- run truly parallel threads without the Global Interpreter Lock. Learn when it helps, how to enable it, and what changes for your code.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": "subinterpreters",
+  "story_variants": {
+    "en": "## Breaking Free from the GIL\n\nSince the earliest days of CPython, a single lock has governed access to Python objects: the **Global Interpreter Lock (GIL)**. It kept the interpreter simple and C extensions safe, but it also meant that no matter how many CPU cores you had, only one thread could execute Python bytecode at a time.\n\nWith Python 3.13, an experimental **free-threaded** build became available (built with `--disable-gil`). In Python 3.14, this mode has matured significantly, and the ecosystem has begun to embrace it.\n\n### What the GIL Actually Did\n\n```python\nimport threading, time\n\ndef cpu_work():\n    total = 0\n    for i in range(20_000_000):\n        total += i\n    return total\n\n# With the GIL: threads take turns, no speedup on CPU work\nt1 = threading.Thread(target=cpu_work)\nt2 = threading.Thread(target=cpu_work)\nstart = time.perf_counter()\nt1.start(); t2.start()\nt1.join(); t2.join()\nprint(f\"Threaded: {time.perf_counter() - start:.2f}s\")\n# Roughly the SAME time as running sequentially!\n```\n\nIn GIL-enabled Python, two CPU-bound threads run on one core effectively, because the GIL serializes them.\n\n### Enabling Free-Threaded Mode\n\nStarting with Python 3.13+, you can install the free-threaded build:\n\n```bash\n# On macOS/Linux with pyenv\npyenv install 3.14t\npython3.14t -c \"import sys; print(sys._is_gil_enabled())\"  # False\n\n# Or use the official installer (Windows/macOS)\n# Check the 'free-threaded' option during installation\n```\n\nThe `3.14t` suffix denotes the free-threaded variant. You can check at runtime:\n\n```python\nimport sys\nprint(sys._is_gil_enabled())  # False in free-threaded build\n```\n\n### Real Parallel Threads\n\nWith the GIL disabled, CPU-bound threads actually run in parallel:\n\n```python\nimport threading, time\n\ndef cpu_work():\n    total = 0\n    for i in range(20_000_000):\n        total += i\n    return total\n\n# Free-threaded: real parallelism!\nthreads = [threading.Thread(target=cpu_work) for _ in range(4)]\nstart = time.perf_counter()\nfor t in threads: t.start()\nfor t in threads: t.join()\nprint(f\"Free-threaded: {time.perf_counter() - start:.2f}s\")\n# Roughly 4x faster than sequential on 4+ cores!\n```\n\n### Thread Safety Matters More Now\n\nWithout the GIL acting as an accidental safety net, you must be more careful about shared mutable state:\n\n```python\nimport threading\n\ncounter = 0\nlock = threading.Lock()\n\ndef increment():\n    global counter\n    for _ in range(1_000_000):\n        with lock:          # Explicit locking is essential now\n            counter += 1\n\nthreads = [threading.Thread(target=increment) for _ in range(4)]\nfor t in threads: t.start()\nfor t in threads: t.join()\nprint(counter)  # 4_000_000 -- correct with lock, wrong without\n```\n\n### When to Use Free-Threaded Python\n\n| Scenario | Free-threaded helps? |\n|----------|--------------------|\n| CPU-bound parallel computation | Yes -- real speedup |\n| I/O-bound async work | Minimal benefit (asyncio already handles this) |\n| C extension heavy code | Check compatibility first |\n| Data science (NumPy, etc.) | Improving -- check library support |\n\n### What About Existing Code?\n\nMost pure Python code works unchanged. The key differences:\n\n- **Thread-safe builtins**: `list.append()`, `dict` operations are still atomic for single operations\n- **Compound operations need locks**: `counter += 1` is NOT atomic\n- **C extensions**: Must be updated to declare free-threading support\n- **Performance**: Single-threaded code may be ~5-10% slower due to per-object locking overhead\n\n### Key Takeaways\n\n- The GIL prevented true thread parallelism for CPU-bound Python code\n- Python 3.13+ offers an experimental free-threaded build (`3.14t`)\n- Real parallel threads give genuine multi-core speedups\n- Thread safety discipline becomes critical: use `Lock`, `Queue`, or atomic data structures\n- Check that your C extensions support free-threading before switching",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "The GIL has governed CPython since the beginning. Free-threaded Python removes it, enabling real parallel threads on multiple CPU cores.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import threading, time\n\ndef cpu_work():\n    total = 0\n    for i in range(20_000_000):\n        total += i\n    return total\n\nthreads = [threading.Thread(target=cpu_work) for _ in range(4)]\nstart = time.perf_counter()\nfor t in threads: t.start()\nfor t in threads: t.join()\nprint(f\"Time: {time.perf_counter() - start:.2f}s\")",
+      "steps": [
+        {"line": 3, "explanation": "A CPU-bound function -- pure computation with no I/O."},
+        {"line": 9, "explanation": "Create 4 threads, each running the same CPU work."},
+        {"line": 11, "explanation": "Start all threads. With GIL: they take turns. Without GIL: they run in parallel."},
+        {"line": 12, "explanation": "Wait for all threads to finish."},
+        {"line": 13, "explanation": "In free-threaded Python, this is ~4x faster than running sequentially on 4+ cores."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import threading\n\ncounter = 0\nlock = threading.Lock()\n\ndef safe_increment():\n    global counter\n    for _ in range(1_000_000):\n        with lock:\n            counter += 1\n\nthreads = [threading.Thread(target=safe_increment) for _ in range(4)]\nfor t in threads: t.start()\nfor t in threads: t.join()\nassert counter == 4_000_000",
+      "steps": [
+        {"line": 3, "explanation": "Shared mutable state -- dangerous without protection in free-threaded Python."},
+        {"line": 4, "explanation": "A Lock ensures only one thread modifies counter at a time."},
+        {"line": 9, "explanation": "The with-statement acquires the lock, does the work, and releases automatically."},
+        {"line": 10, "explanation": "counter += 1 is NOT atomic -- without the lock, threads would produce wrong results."},
+        {"line": 15, "explanation": "With proper locking, the final count is exactly 4 million."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Write a function `parallel_sum(n, num_threads)` that splits the range(n) into `num_threads` chunks, sums each chunk in a separate thread, and returns the total. Use threading.Lock to safely accumulate the result."},
+      "expected_output": "499999500000",
+      "hints": ["Divide range(n) into equal-sized chunks for each thread", "Use a lock when adding each thread's partial sum to the shared total", "threading.Thread(target=fn, args=(...)) passes arguments to the target"],
+      "test_code": "result = parallel_sum(1_000_000, 4)\nassert result == sum(range(1_000_000)), f'Expected {sum(range(1_000_000))} but got {result}'"
+    },
+    {
+      "instruction": {"en": "Write code to check whether the current Python interpreter has the GIL enabled. Print 'GIL disabled' if free-threaded, or 'GIL enabled' otherwise. Use sys._is_gil_enabled()."},
+      "expected_output": "GIL enabled",
+      "hints": ["Import sys", "Call sys._is_gil_enabled() -- returns True if GIL is active", "This function exists in Python 3.13+"],
+      "test_code": "import sys\nresult = sys._is_gil_enabled()\nassert isinstance(result, bool)"
+    }
+  ]
+}

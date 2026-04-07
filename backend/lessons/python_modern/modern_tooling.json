@@ -1,0 +1,67 @@
+{
+  "id": "modern_tooling",
+  "topic": "modern_tooling",
+  "track": "python_modern",
+  "module": "developer_tools",
+  "order": 4,
+  "title": {
+    "en": "Modern Python Tooling: uv, Ruff, and ty",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master the modern Python developer toolkit: uv for lightning-fast package management, Ruff for instant linting and formatting, and ty for type checking -- all written in Rust for maximum speed.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Rust-Powered Python Revolution\n\nPython's ecosystem has undergone a tooling revolution. A new generation of developer tools -- written in Rust for extreme speed -- has replaced the slow, fragmented toolchain of the past. Meet the trio that every modern Python developer should know: **uv**, **Ruff**, and **ty**.\n\n### uv: The Universal Package Manager\n\n`uv` (by Astral) is a drop-in replacement for pip, pip-tools, virtualenv, pyenv, and even pipx -- all in one tool, running 10-100x faster.\n\n```bash\n# Install uv\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n# Create a new project\nuv init my-project\ncd my-project\n\n# Add dependencies (creates/updates pyproject.toml)\nuv add requests fastapi pydantic\n\n# Run your script (auto-creates venv, installs deps)\nuv run python app.py\n\n# Lock dependencies for reproducible builds\nuv lock\n\n# Sync environment to match lockfile\nuv sync\n```\n\n#### Inline Script Dependencies\n\nOne of uv's most powerful features is inline script metadata. Add dependencies directly to a script:\n\n```python\n# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\"httpx\", \"rich\"]\n# ///\n\nimport httpx\nfrom rich import print\n\nresp = httpx.get(\"https://api.github.com/zen\")\nprint(f\"[bold green]{resp.text}[/bold green]\")\n```\n\nRun it with `uv run script.py` -- uv reads the metadata, installs dependencies into an ephemeral environment, and executes. No venv management needed.\n\n### Ruff: Linter + Formatter in One\n\n`ruff` replaces flake8, isort, black, pyflakes, and dozens of other linting tools. It checks and formats your code in milliseconds.\n\n```bash\n# Lint your project\nruff check .\n\n# Auto-fix what can be fixed\nruff check --fix .\n\n# Format code (replaces Black)\nruff format .\n\n# Check and format in one go\nruff check --fix . && ruff format .\n```\n\n#### Configuration in pyproject.toml\n\n```toml\n[tool.ruff]\nline-length = 100\ntarget-version = \"py314\"\n\n[tool.ruff.lint]\nselect = [\"E\", \"F\", \"I\", \"N\", \"UP\", \"RUF\"]\n\n[tool.ruff.format]\nquote-style = \"double\"\nindent-style = \"space\"\n```\n\nRuff supports over 800 lint rules from dozens of plugins, all built-in. No plugin installation needed.\n\n### ty: Astral's Type Checker\n\n`ty` is Astral's new type checker for Python -- extremely fast, with excellent error messages and deep understanding of Python's type system.\n\n```bash\n# Check types in your project\nty check .\n\n# Check a specific file\nty check app.py\n```\n\n```python\n# ty catches real bugs:\ndef greet(name: str) -> str:\n    return f\"Hello, {name}\"\n\nresult: int = greet(\"world\")  # ty error: str is not assignable to int\n```\n\nty integrates into CI pipelines and editors, providing instant feedback on type errors.\n\n### The Modern Workflow\n\nHere is how these tools fit together in a modern Python project:\n\n```bash\n# 1. Start a project\nuv init awesome-project && cd awesome-project\n\n# 2. Add dependencies\nuv add fastapi uvicorn sqlmodel\nuv add --dev ruff ty pytest\n\n# 3. Write code, then check it\nruff check --fix . && ruff format .  # Lint + format\nty check .                            # Type check\nuv run pytest                         # Test\n\n# 4. Run the app\nuv run uvicorn app:main --reload\n```\n\n### Speed Comparison\n\n| Tool | Replaces | Speed improvement |\n|------|----------|------------------|\n| uv | pip + venv + pip-tools | 10-100x faster |\n| Ruff | flake8 + black + isort | 100-1000x faster |\n| ty | mypy / pyright | Significantly faster |\n\n### Key Takeaways\n\n- **uv** handles everything: project init, dependency management, virtual environments, Python version management, and script running\n- **Ruff** is your all-in-one linter and formatter, configured in `pyproject.toml`\n- **ty** provides fast, accurate type checking with clear error messages\n- All three are written in Rust, making them orders of magnitude faster than their Python predecessors\n- `pyproject.toml` is the single configuration file for your entire project",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A new generation of Rust-powered tools has transformed the Python developer experience: uv for package management, Ruff for linting and formatting, and ty for type checking.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "bash",
+      "code": "# Create a new project with uv\nuv init my-project\ncd my-project\n\n# Add dependencies\nuv add requests fastapi pydantic\n\n# Add dev dependencies\nuv add --dev ruff ty pytest\n\n# Run your app\nuv run python app.py",
+      "steps": [
+        {"line": 2, "explanation": "uv init creates a project with pyproject.toml, .python-version, and a src layout."},
+        {"line": 6, "explanation": "uv add installs packages AND updates pyproject.toml -- no separate requirements.txt needed."},
+        {"line": 9, "explanation": "Dev dependencies are tracked separately so they don't ship in production."},
+        {"line": 12, "explanation": "uv run auto-creates a virtual environment, syncs dependencies, then runs the command."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\"httpx\", \"rich\"]\n# ///\n\nimport httpx\nfrom rich import print\n\nresp = httpx.get(\"https://api.github.com/zen\")\nprint(f\"[bold green]{resp.text}[/bold green]\")",
+      "steps": [
+        {"line": 1, "explanation": "PEP 723 inline script metadata -- uv reads this block automatically."},
+        {"line": 3, "explanation": "Declare dependencies right in the script. No pyproject.toml or venv needed."},
+        {"line": 6, "explanation": "Import and use packages as normal. uv installs them in an ephemeral environment."},
+        {"line": 9, "explanation": "Run with 'uv run script.py' -- dependencies are resolved and installed in seconds."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Write a pyproject.toml snippet that configures Ruff to use a line length of 100, target Python 3.14, select rules E, F, I, and UP, and use double quotes with space indentation for formatting."},
+      "expected_output": "[tool.ruff] configuration with line-length, target-version, lint select, and format settings",
+      "hints": ["Use [tool.ruff] for top-level settings", "Use [tool.ruff.lint] for select rules", "Use [tool.ruff.format] for quote-style and indent-style"],
+      "test_code": "# Manual review: check that the TOML has correct sections and values"
+    },
+    {
+      "instruction": {"en": "Write a Python script with PEP 723 inline metadata that depends on 'polars' and 'rich', requires Python >=3.12, reads a CSV file called 'data.csv', and prints the first 5 rows using rich's print."},
+      "expected_output": "A script with inline /// script metadata and polars/rich usage",
+      "hints": ["Start with # /// script block", "Use polars.read_csv('data.csv')", "Use rich.print() or rich.console.Console().print()"],
+      "test_code": "# Manual review: check PEP 723 header format and correct library usage"
+    }
+  ]
+}

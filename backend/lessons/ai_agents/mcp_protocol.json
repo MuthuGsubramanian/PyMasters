@@ -1,0 +1,68 @@
+{
+  "id": "mcp_protocol",
+  "topic": "mcp_protocol",
+  "track": "ai_agents",
+  "module": "protocols",
+  "order": 4,
+  "title": {
+    "en": "Model Context Protocol (MCP) - Connecting AI to Tools",
+    "ta": "Model Context Protocol (MCP) - AI-ஐ கருவிகளுடன் இணைத்தல்"
+  },
+  "description": {
+    "en": "Learn the Model Context Protocol -- the open standard that lets AI agents connect to any tool, database, or service through a universal interface. Build your own MCP server in Python.",
+    "ta": "Model Context Protocol கற்றுக்கொள்ளுங்கள் -- AI ஏஜெண்ட்கள் எந்த கருவி, தரவுத்தளம் அல்லது சேவையுடனும் ஒரு universal interface மூலம் இணைக்க அனுமதிக்கும் open standard."
+  },
+  "xp_reward": 120,
+  "next_unlock": "multi_agent_systems",
+  "story_variants": {
+    "en": "## MCP: The USB-C of AI\n\nBefore USB-C, every device had a different charger. Before MCP, every AI tool integration was custom-built. The **Model Context Protocol (MCP)** is the universal standard that lets any AI agent connect to any tool through one protocol.\n\n### The Problem MCP Solves\n\nImagine you build an AI agent that needs to:\n- Read files from your filesystem\n- Query a PostgreSQL database\n- Search your company's Confluence wiki\n- Send Slack messages\n\nWithout MCP, you write 4 different integrations. With MCP, each of those is an **MCP server** that speaks the same protocol, and your agent connects to all of them the same way.\n\n### How MCP Works\n\nMCP has three core concepts:\n\n1. **Tools** -- Functions the agent can call (like `query_database`, `send_email`)\n2. **Resources** -- Data the agent can read (like files, database schemas)\n3. **Prompts** -- Reusable prompt templates the server provides\n\nThe architecture is client-server:\n\n```\nAI Application (Host)\n  --> MCP Client\n       --> MCP Server A (filesystem)\n       --> MCP Server B (database)\n       --> MCP Server C (Slack)\n```\n\n### Building an MCP Server in Python\n\nLet us build a simple MCP server that provides a calculator tool:\n\n```python\nfrom mcp.server.fastmcp import FastMCP\n\n# Create an MCP server\nmcp = FastMCP(\"calculator\")\n\n@mcp.tool()\ndef add(a: float, b: float) -> float:\n    \"\"\"Add two numbers together.\"\"\"\n    return a + b\n\n@mcp.tool()\ndef multiply(a: float, b: float) -> float:\n    \"\"\"Multiply two numbers.\"\"\"\n    return a * b\n\n@mcp.tool()\ndef factorial(n: int) -> int:\n    \"\"\"Calculate the factorial of a non-negative integer.\"\"\"\n    if n < 0:\n        raise ValueError(\"n must be non-negative\")\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n\n# Run the server\nif __name__ == \"__main__\":\n    mcp.run()\n```\n\nThat is it. The `@mcp.tool()` decorator exposes your Python function as a tool that any MCP-compatible AI agent can discover and call.\n\n### Adding Resources\n\nResources expose data for the agent to read:\n\n```python\n@mcp.resource(\"config://app\")\ndef get_app_config() -> str:\n    \"\"\"Return the application configuration.\"\"\"\n    return json.dumps({\n        \"version\": \"2.1.0\",\n        \"environment\": \"production\",\n        \"features\": [\"auth\", \"billing\", \"notifications\"]\n    })\n\n@mcp.resource(\"db://schema/{table_name}\")\ndef get_table_schema(table_name: str) -> str:\n    \"\"\"Return the schema for a database table.\"\"\"\n    schemas = {\n        \"users\": \"id INTEGER, name TEXT, email TEXT\",\n        \"orders\": \"id INTEGER, user_id INTEGER, total FLOAT\"\n    }\n    return schemas.get(table_name, \"Table not found\")\n```\n\n### Transport Protocols\n\nMCP servers communicate over two transport options:\n\n| Transport | Use Case | How |\n|-----------|----------|-----|\n| **stdio** | Local tools, CLI agents | Server runs as subprocess |\n| **SSE (HTTP)** | Remote servers, web apps | Server runs as HTTP endpoint |\n\nFor local development:\n```bash\n# Run with stdio (most common for local use)\npython my_server.py\n\n# Or run as HTTP server\nmcp run my_server.py --transport sse --port 8080\n```\n\n### Connecting from Claude Desktop\n\nTo use your MCP server with Claude Desktop, add it to your config:\n\n```json\n{\n  \"mcpServers\": {\n    \"calculator\": {\n      \"command\": \"python\",\n      \"args\": [\"path/to/calculator_server.py\"]\n    }\n  }\n}\n```\n\nNow Claude can use your `add`, `multiply`, and `factorial` tools directly in conversation.\n\n### The MCP Ecosystem in 2026\n\nThe ecosystem has exploded. There are MCP servers for:\n- **Databases**: PostgreSQL, MySQL, SQLite, MongoDB\n- **Cloud**: AWS, GCP, Azure resource management\n- **Dev Tools**: GitHub, GitLab, Jira, Linear\n- **Communication**: Slack, Discord, Gmail\n- **Knowledge**: Notion, Confluence, Google Drive\n- **Browsers**: Puppeteer, Playwright\n\nMCP is to AI agents what HTTP was to the web -- a universal protocol that unlocks an entire ecosystem of interoperability.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_4",
+      "content": "MCP is the USB-C of AI. One universal protocol that lets any agent connect to any tool -- databases, APIs, file systems, cloud services. Build once, connect everywhere.",
+      "visual_theme": "agents"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_4",
+      "nodes": ["AI Host (Claude/GPT)", "MCP Client", "MCP Server: Files", "MCP Server: Database", "MCP Server: Slack"],
+      "edges": [
+        {"from": "AI Host (Claude/GPT)", "to": "MCP Client"},
+        {"from": "MCP Client", "to": "MCP Server: Files"},
+        {"from": "MCP Client", "to": "MCP Server: Database"},
+        {"from": "MCP Client", "to": "MCP Server: Slack"}
+      ],
+      "description": "MCP architecture: One client in the AI host connects to multiple MCP servers, each exposing different tools and resources"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_4",
+      "language": "python",
+      "code": "from mcp.server.fastmcp import FastMCP\n\nmcp = FastMCP(\"calculator\")\n\n@mcp.tool()\ndef add(a: float, b: float) -> float:\n    \"\"\"Add two numbers together.\"\"\"\n    return a + b\n\n@mcp.tool()\ndef multiply(a: float, b: float) -> float:\n    \"\"\"Multiply two numbers.\"\"\"\n    return a * b\n\nif __name__ == \"__main__\":\n    mcp.run()",
+      "steps": [
+        {"line": 1, "explanation": "Import FastMCP -- the high-level API for building MCP servers quickly."},
+        {"line": 3, "explanation": "Create a named MCP server. The name helps AI clients identify what this server does."},
+        {"line": 5, "explanation": "The @mcp.tool() decorator exposes this function as a callable tool. The docstring becomes the tool description."},
+        {"line": 6, "explanation": "Type hints (a: float, b: float) -> float are used to generate the tool's JSON schema automatically."},
+        {"line": 15, "explanation": "mcp.run() starts the server, listening for connections over stdio by default."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a dictionary called `mcp_server` with keys: 'name' set to 'file_manager', 'tools' set to a list of tool names ['read_file', 'write_file', 'list_directory'], and 'transport' set to 'stdio'. Print the server name and number of tools in the format 'file_manager: 3 tools'."
+      },
+      "expected_output": "file_manager: 3 tools",
+      "hints": [
+        "Create a dict with three keys: 'name', 'tools', 'transport'",
+        "Use an f-string: f\"{mcp_server['name']}: {len(mcp_server['tools'])} tools\"",
+        "The tools list should contain 3 string items"
+      ],
+      "test_code": "assert mcp_server['name'] == 'file_manager'\nassert len(mcp_server['tools']) == 3\nassert mcp_server['transport'] == 'stdio'"
+    }
+  ]
+}

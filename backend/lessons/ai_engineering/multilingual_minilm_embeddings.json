@@ -1,0 +1,118 @@
+{
+  "id": "multilingual_minilm_embeddings",
+  "topic": "multilingual_minilm_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Multilingual Embeddings with paraphrase-multilingual-MiniLM-L12-v2",
+    "ta": ""
+  },
+  "description": {
+    "en": "Build cross-language semantic search using paraphrase-multilingual-MiniLM-L12-v2 — a 420MB model supporting 50+ languages that lets your RAG pipeline understand queries in any language against documents in any other language, all running locally.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Breaking the Language Barrier: Multilingual Semantic Search\n\nVaathiyaar here! Imagine a user searching in Tamil but your knowledge base is in English. Or a French query against German documents. Monolingual embedding models can't bridge this gap — but `paraphrase-multilingual-MiniLM-L12-v2` can. It maps text from 50+ languages into a **shared** 384-dimensional vector space where meaning aligns across languages.\n\nThis is the secret weapon for building RAG systems that serve multilingual communities — no translation API needed, no per-language index, just one model that understands them all.\n\n### Why paraphrase-multilingual-MiniLM-L12-v2?\n\n| Model | Languages | Size | Dimensions | Use Case |\n|---|---|---|---|---|\n| all-MiniLM-L6-v2 | English only | 80 MB | 384 | Fast English-only search |\n| paraphrase-multilingual-MiniLM-L12-v2 | 50+ | 420 MB | 384 | Cross-language search & clustering |\n| paraphrase-multilingual-mpnet-base-v2 | 50+ | 970 MB | 768 | Highest multilingual quality |\n| text-embedding-3-small (OpenAI) | 50+ | API call | 1536 | Cloud-dependent, pay-per-token |\n\nThe multilingual MiniLM-L12-v2 is the sweet spot: covers 50+ languages including Tamil, Hindi, French, Arabic, Chinese, and Japanese — all in a single 420MB local model with 384-dimensional output.\n\n### Cross-Language Embeddings in Action\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\n# Same concept in different languages\nsentences = [\n    \"Machine learning is transforming healthcare\",      # English\n    \"L'apprentissage automatique transforme la santé\",  # French\n    \"மெஷின் லேர்னிங் சுகாதாரத்தை மாற்றுகிறது\",          # Tamil\n    \"The weather is sunny today\",                       # Unrelated\n]\n\nembeddings = model.encode(sentences)\nprint(embeddings.shape)  # (4, 384)\n\n# Compare English to all others\nscores = util.cos_sim(embeddings[0], embeddings)[0]\nfor sent, score in zip(sentences, scores):\n    print(f\"{score:.3f} | {sent}\")\n# ~1.000 | Machine learning is transforming healthcare\n# ~0.88  | L'apprentissage automatique transforme la santé\n# ~0.82  | மெஷின் லேர்னிங் சுகாதாரத்தை மாற்றுகிறது\n# ~0.15  | The weather is sunny today\n```\n\nThe model maps semantically equivalent sentences close together **regardless of language** — the French and Tamil translations score 0.82-0.88 against the English original.\n\n### Building a Multilingual RAG Retriever\n\n```python\nclass MultilingualRetriever:\n    def __init__(self, model_name=\"paraphrase-multilingual-MiniLM-L12-v2\"):\n        self.model = SentenceTransformer(model_name)\n        self.documents = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.documents = documents\n        self.embeddings = self.model.encode(\n            documents, convert_to_tensor=True,\n            normalize_embeddings=True\n        )\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        query_emb = self.model.encode(\n            query, convert_to_tensor=True,\n            normalize_embeddings=True\n        )\n        # With normalized embeddings, dot product = cosine similarity\n        scores = util.dot_score(query_emb, self.embeddings)[0]\n        top_indices = scores.argsort(descending=True)[:top_k]\n        return [\n            {\"document\": self.documents[i],\n             \"score\": float(scores[i]),\n             \"rank\": rank + 1}\n            for rank, i in enumerate(top_indices)\n        ]\n```\n\nIndex your English knowledge base once. Users can query in Tamil, Hindi, Spanish, or any of the 50+ supported languages — the retriever returns relevant English documents because the embeddings share the same vector space.\n\n### Feeding Into Your LLM\n\n```python\ndef multilingual_rag(retriever, query, top_k=3):\n    results = retriever.search(query, top_k=top_k)\n    context = \"\\n\".join(\n        f\"[{r['rank']}] {r['document']}\" for r in results\n    )\n    return (\n        f\"Context:\\n{context}\\n\\n\"\n        f\"Question ({detect_hint(query)}): {query}\\n\"\n        f\"Answer in the same language as the question:\"\n    )\n```\n\n### Performance & Deployment Tips\n\n- **Normalize embeddings** at encode time (`normalize_embeddings=True`) so you can use `dot_score` instead of `cos_sim` — same result, faster math\n- **ONNX backend**: `SentenceTransformer(model, backend=\"onnx\")` gives 2-3x CPU speedup\n- **Batch encode**: Always pass lists, not single strings — the model batches internally\n- **Cache aggressively**: Embeddings are deterministic — compute once, store with `torch.save()` or `np.save()`\n- **Quantization**: Use ONNX quantized variant for edge devices — ~50% size reduction with minimal quality loss\n\n> **Key Insight:** paraphrase-multilingual-MiniLM-L12-v2 collapses 50+ languages into a single shared vector space. This means your RAG pipeline, built once with English documents, instantly supports queries in Tamil, Hindi, French, Arabic, and dozens more — no translation API, no per-language index, no extra cost. For multilingual communities, this is the embedding model to reach for.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if a user searches in Tamil but your documents are in English? paraphrase-multilingual-MiniLM-L12-v2 maps 50+ languages into a shared 384-dimensional vector space — meaning aligns across languages, enabling cross-language semantic search with no translation API.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\nsentences = [\n    \"Machine learning is transforming healthcare\",\n    \"L'apprentissage automatique transforme la santé\",\n    \"மெஷின் லேர்னிங் சுகாதாரத்தை மாற்றுகிறது\",\n    \"The weather is sunny today\",\n]\n\nembeddings = model.encode(sentences)\nprint(embeddings.shape)  # (4, 384)\n\nscores = util.cos_sim(embeddings[0], embeddings)[0]\nfor sent, score in zip(sentences, scores):\n    print(f\"{score:.3f} | {sent}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer and util — the library handles model loading, tokenization, and similarity computation."},
+        {"line": 3, "explanation": "Load paraphrase-multilingual-MiniLM-L12-v2 — a 420MB model trained on parallel corpora in 50+ languages. Downloads once, runs locally."},
+        {"line": 5, "explanation": "Four sentences: the same meaning in English, French, and Tamil, plus one unrelated sentence. The model should cluster the first three together."},
+        {"line": 12, "explanation": "model.encode() converts each sentence into a 384-dimensional vector — same dimensionality regardless of language."},
+        {"line": 15, "explanation": "cos_sim compares the English sentence against all four. French and Tamil translations score 0.82-0.88 despite completely different scripts and vocabulary."},
+        {"line": 16, "explanation": "Print scores ranked. The unrelated sentence ('weather is sunny') scores ~0.15 — the model clearly separates meaning from language."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\nimport torch\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\n# English knowledge base\nknowledge_base = [\n    \"Python decorators wrap functions to add behavior\",\n    \"List comprehensions create lists from iterables\",\n    \"FastAPI handles async HTTP requests efficiently\",\n    \"Pandas DataFrames store tabular data in memory\",\n]\n\nembeddings = model.encode(knowledge_base,\n    convert_to_tensor=True, normalize_embeddings=True)\n\n# Query in Tamil: \"How to process data in tables?\"\nquery = \"அட்டவணையில் தரவை எவ்வாறு செயலாக்குவது?\"\nquery_emb = model.encode(query,\n    convert_to_tensor=True, normalize_embeddings=True)\n\nscores = util.dot_score(query_emb, embeddings)[0]\nbest_idx = scores.argmax().item()\nprint(f\"Best match: {knowledge_base[best_idx]}\")\nprint(f\"Score: {scores[best_idx]:.3f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import torch alongside sentence_transformers — we'll use tensor operations for efficient similarity computation."},
+        {"line": 7, "explanation": "An English-only knowledge base about Python topics. Users will query this in any language."},
+        {"line": 14, "explanation": "Encode with normalize_embeddings=True — this makes each vector unit-length, so dot product equals cosine similarity."},
+        {"line": 18, "explanation": "A Tamil query asking about processing tabular data. The model must bridge Tamil→English to find the Pandas DataFrame document."},
+        {"line": 22, "explanation": "dot_score is faster than cos_sim when embeddings are pre-normalized. Same result, fewer floating-point operations."},
+        {"line": 24, "explanation": "The model correctly identifies 'Pandas DataFrames store tabular data' as the best match for the Tamil query about table data processing."},
+        {"line": 25, "explanation": "Scores above 0.4 indicate strong semantic matches. Cross-language matches are typically 0.05-0.15 lower than same-language matches."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Monolingual Embeddings",
+      "right_label": "Multilingual Embeddings",
+      "items": [
+        {"left": "One language per model/index", "right": "50+ languages in one shared space"},
+        {"left": "Requires translation API for cross-language", "right": "Native cross-language similarity"},
+        {"left": "Faster, smaller model (80MB)", "right": "Slightly larger model (420MB)"},
+        {"left": "Best quality for English-only use cases", "right": "Essential for multilingual RAG & search"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now build RAG pipelines that understand queries in 50+ languages against any-language documents!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MultilingualSearchEngine` class that simulates cross-language search. It uses a simple character n-gram approach to create language-agnostic 'embeddings'. Implement `char_ngrams(text, n)` that returns a frequency dict of character n-grams (default n=3), `cosine_similarity(vec_a, vec_b)` for comparing two frequency dicts, and `search(query, top_k)` that returns the top-k most similar documents. The key insight: character n-grams partially capture cross-language patterns (e.g., 'machine' and 'machin' share trigrams with 'machine learning' in French: 'l\\'apprentissage automatique')."
+      },
+      "starter_code": "import math\n\nclass MultilingualSearchEngine:\n    def __init__(self, documents: list[str], n: int = 3):\n        self.documents = documents\n        self.n = n\n        self.doc_vectors = [self.char_ngrams(doc) for doc in documents]\n\n    def char_ngrams(self, text: str) -> dict:\n        # Return frequency dict of character n-grams from lowercased text\n        # e.g., char_ngrams(\"hello\", 3) -> {\"hel\": 1, \"ell\": 1, \"llo\": 1}\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Compute cosine similarity between two frequency vectors\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Return top-k results as [{\"document\": str, \"score\": float}, ...]\n        # sorted by score descending\n        pass\n\n# Test it:\nengine = MultilingualSearchEngine([\n    \"machine learning algorithms\",\n    \"deep neural networks\",\n    \"cooking pasta recipes\",\n    \"machine learning models\"\n])\n\nresults = engine.search(\"machine learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "2\nmachine learning algorithms\nTrue",
+      "hints": {
+        "en": [
+          "In char_ngrams(), lowercase the text, then iterate from index 0 to len(text)-n, extracting text[i:i+n] slices and counting them in a dict",
+          "For cosine_similarity(), find shared keys between the two dicts, compute dot product as sum of products, and divide by the product of magnitudes",
+          "In search(), encode the query with char_ngrams(), compute cosine_similarity against all doc_vectors, sort descending, and return top_k"
+        ]
+      },
+      "test_code": "e = MultilingualSearchEngine([\"hello world\", \"world peace\", \"hello hello\"], n=3)\nng = e.char_ngrams(\"hello\")\nassert ng == {\"hel\": 1, \"ell\": 1, \"llo\": 1}\nng2 = e.char_ngrams(\"aaa\")\nassert ng2 == {\"aaa\": 1}\nsim = e.cosine_similarity({\"abc\": 1, \"bcd\": 1}, {\"abc\": 1, \"bcd\": 1})\nassert abs(sim - 1.0) < 0.001\nsim0 = e.cosine_similarity({\"abc\": 1}, {\"xyz\": 1})\nassert sim0 == 0.0\nresults = e.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"score\"] >= results[1][\"score\"]\nassert results[0][\"document\"] == \"hello hello\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `LanguageDetector` class that identifies which language a text is most likely written in, using character n-gram profiles. Initialize it with a dict of language profiles (language_name -> sample_text). It builds a character n-gram frequency vector for each language from its sample text. Then `detect(text)` returns the language name whose profile is most similar (by cosine similarity) to the input text's n-gram profile."
+      },
+      "starter_code": "import math\n\nclass LanguageDetector:\n    def __init__(self, profiles: dict[str, str], n: int = 3):\n        # profiles: {\"english\": \"sample english text...\", \"french\": \"texte français...\"}\n        self.n = n\n        self.profiles = {}\n        for lang, sample in profiles.items():\n            self.profiles[lang] = self.char_ngrams(sample)\n\n    def char_ngrams(self, text: str) -> dict:\n        # Return frequency dict of character n-grams (lowercase)\n        text = text.lower()\n        ngrams = {}\n        for i in range(len(text) - self.n + 1):\n            gram = text[i:i + self.n]\n            ngrams[gram] = ngrams.get(gram, 0) + 1\n        return ngrams\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[w] * vec_b[w] for w in shared)\n        mag_a = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in vec_b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\n    def detect(self, text: str) -> str:\n        # Return the language name with highest cosine similarity\n        pass\n\n# Test it:\ndetector = LanguageDetector({\n    \"english\": \"the quick brown fox jumps over the lazy dog and the cat\",\n    \"french\": \"le petit renard brun saute par dessus le chien paresseux\",\n    \"spanish\": \"el rápido zorro marrón salta sobre el perro perezoso\"\n})\n\nprint(detector.detect(\"the dog is running fast\"))\nprint(detector.detect(\"le chat est sur la table\"))\nprint(detector.detect(\"el gato está en la mesa\"))",
+      "expected_output": "english\nfrench\nspanish",
+      "hints": {
+        "en": [
+          "In detect(), compute char_ngrams for the input text, then compare it against each language profile using cosine_similarity",
+          "Track the language with the highest similarity score and return its name",
+          "Character n-grams like 'the', 'ing', 'tion' are strong signals for English; 'les', 'ent', 'que' for French"
+        ]
+      },
+      "test_code": "d = LanguageDetector({\"english\": \"the cat and the dog are running in the park\", \"french\": \"le chat et le chien courent dans le parc\"}, n=3)\nassert d.detect(\"the bird is in the tree\") == \"english\"\nassert d.detect(\"le oiseau est dans le arbre\") == \"french\"\nassert isinstance(d.detect(\"hello world\"), str)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multilingual embeddings", "cross-language semantic search", "paraphrase-multilingual-MiniLM-L12-v2", "normalized embeddings", "dot product scoring", "multilingual RAG retrieval"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install", "cosine similarity"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

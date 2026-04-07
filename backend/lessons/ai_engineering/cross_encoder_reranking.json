@@ -1,0 +1,123 @@
+{
+  "id": "cross_encoder_reranking",
+  "topic": "cross_encoder_reranking",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Cross-Encoder Reranking: Supercharge RAG with ms-marco-MiniLM-L6-v2",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master cross-encoder reranking using cross-encoder/ms-marco-MiniLM-L6-v2 to dramatically improve search and RAG retrieval quality by rescoring candidate documents with full query-document attention.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Cross-Encoder Reranking: The Secret Weapon for Search Quality\n\nVaathiyaar here! You've built a RAG pipeline — you embed documents, store them in a vector database, and retrieve the top-k results. It works... but the results feel noisy. Relevant documents sit at rank 5 while irrelevant ones sneak into rank 1. The problem? Bi-encoders encode query and document **independently**, so they can't model the rich interaction between them. Enter the **cross-encoder** — a model that processes the query and document **together** through full self-attention, producing a precise relevance score.\n\ncross-encoder/ms-marco-MiniLM-L6-v2 is the go-to production reranker: only 22M parameters, trained on MS MARCO passage ranking, and fast enough to rescore 100 candidates in under a second.\n\n### Bi-Encoder vs Cross-Encoder: The Trade-Off\n\n| Feature | Bi-Encoder | Cross-Encoder |\n|---|---|---|\n| Encoding | Query and doc encoded separately | Query + doc encoded jointly |\n| Speed | Fast — precompute doc embeddings | Slow — must process each pair |\n| Quality | Good — approximate similarity | Best — full token interaction |\n| Use case | First-stage retrieval (thousands) | Second-stage reranking (top 20-100) |\n| Scalability | Millions of docs in ms | Linear in candidate count |\n\nThe pattern is simple: **retrieve broadly, then rerank precisely**. Use a bi-encoder to fetch 50-100 candidates, then let the cross-encoder rescore them.\n\n### Reranking with sentence-transformers\n\n```python\nfrom sentence_transformers import CrossEncoder\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", max_length=512)\n\nquery = \"How does photosynthesis work?\"\ncandidates = [\n    \"Photosynthesis converts light energy into chemical energy in chloroplasts\",\n    \"The process of cellular respiration breaks down glucose for energy\",\n    \"Plants use sunlight, water, and CO2 to produce glucose and oxygen\",\n    \"Solar panels convert sunlight into electrical energy\",\n    \"Chlorophyll absorbs light primarily in the red and blue wavelengths\",\n]\n\nscores = model.predict([(query, doc) for doc in candidates])\n\nranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:>8.4f} | {doc}\")\n```\n\n### Integrating Reranking into a RAG Pipeline\n\n```python\nfrom sentence_transformers import SentenceTransformer, CrossEncoder\nimport numpy as np\n\nbi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\ncross_encoder = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", max_length=512)\n\ndef retrieve_and_rerank(query, corpus, top_k=3, rerank_pool=20):\n    # Stage 1: Bi-encoder retrieval\n    q_emb = bi_encoder.encode(query)\n    doc_embs = bi_encoder.encode(corpus)\n    cos_scores = np.dot(doc_embs, q_emb) / (\n        np.linalg.norm(doc_embs, axis=1) * np.linalg.norm(q_emb)\n    )\n    top_indices = np.argsort(cos_scores)[-rerank_pool:][::-1]\n\n    # Stage 2: Cross-encoder reranking\n    pairs = [(query, corpus[i]) for i in top_indices]\n    ce_scores = cross_encoder.predict(pairs)\n\n    reranked = sorted(zip(top_indices, ce_scores), key=lambda x: x[1], reverse=True)\n    return [(corpus[i], float(s)) for i, s in reranked[:top_k]]\n```\n\n### Why Cross-Encoders Are Better at Scoring\n\nA bi-encoder compresses \"How does photosynthesis work?\" into one vector and \"Plants use sunlight...\" into another, then computes a dot product. The cross-encoder sees **both texts simultaneously** — every query token attends to every document token through BERT's self-attention layers. This lets it catch nuances like negation, paraphrasing, and implicit relevance that independent encodings miss.\n\n### Performance on MS MARCO\n\n| Model | MRR@10 | Parameters | Latency (100 pairs) |\n|---|---|---|---|\n| BM25 baseline | 0.187 | — | <1ms |\n| all-MiniLM-L6-v2 (bi-encoder) | ~0.33 | 22M | ~5ms |\n| ms-marco-MiniLM-L6-v2 (cross-encoder) | ~0.39 | 22M | ~80ms |\n| ms-marco-MiniLM-L12-v2 (cross-encoder) | ~0.41 | 33M | ~150ms |\n\n> **Key Insight:** Cross-encoder reranking is the single highest-leverage improvement you can add to any RAG pipeline. By processing query and document jointly through full self-attention, ms-marco-MiniLM-L6-v2 catches relevance signals that bi-encoders fundamentally cannot — and at 22M parameters, it's fast enough to rescore 100 candidates in real-time. Retrieve broadly with a bi-encoder, rerank precisely with a cross-encoder.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Bi-encoders retrieve fast but miss nuance — they encode query and document separately. Cross-encoders process them together through full self-attention, catching relevance signals that independent embeddings miss. The pattern: retrieve 100 candidates broadly, rerank the top results precisely.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", max_length=512)\n\nquery = \"How does photosynthesis work?\"\ncandidates = [\n    \"Photosynthesis converts light energy into chemical energy in chloroplasts\",\n    \"The process of cellular respiration breaks down glucose for energy\",\n    \"Plants use sunlight, water, and CO2 to produce glucose and oxygen\",\n    \"Solar panels convert sunlight into electrical energy\",\n    \"Chlorophyll absorbs light primarily in the red and blue wavelengths\",\n]\n\nscores = model.predict([(query, doc) for doc in candidates])\n\nranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:>8.4f} | {doc}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import CrossEncoder from sentence-transformers. Unlike SentenceTransformer (bi-encoder), CrossEncoder takes a query-document pair and outputs a single relevance score, not an embedding."},
+        {"line": 3, "explanation": "Load ms-marco-MiniLM-L6-v2 — a 22M parameter model trained on 500K+ query-passage pairs from MS MARCO. max_length=512 truncates inputs beyond 512 tokens. Downloads once, ~80MB."},
+        {"line": 5, "explanation": "Define the search query. The cross-encoder will score every candidate document against this query by processing them together through BERT's self-attention layers."},
+        {"line": 6, "explanation": "Define candidate documents — in production these come from a first-stage retriever (bi-encoder, BM25, or hybrid). We rerank this pre-filtered set."},
+        {"line": 14, "explanation": "Create (query, document) pairs and predict relevance scores. The model tokenizes each pair as [CLS] query [SEP] document [SEP], processes through 6 transformer layers, and outputs a relevance logit."},
+        {"line": 16, "explanation": "Sort candidates by cross-encoder score in descending order. Higher scores mean the model found stronger relevance signals between query and document tokens."},
+        {"line": 17, "explanation": "Print the reranked results. The photosynthesis-specific documents should now be ranked above solar panels and respiration — the cross-encoder catches semantic precision that cosine similarity misses."},
+        {"line": 18, "explanation": "The score is an unbounded logit (not 0-1 probability). It's useful for ranking, not for absolute thresholds. Compare relative scores between candidates, don't interpret absolute values."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, CrossEncoder\nimport numpy as np\n\nbi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\ncross_encoder = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", max_length=512)\n\ndef retrieve_and_rerank(query, corpus, top_k=3, rerank_pool=20):\n    q_emb = bi_encoder.encode(query)\n    doc_embs = bi_encoder.encode(corpus)\n    cos_scores = np.dot(doc_embs, q_emb) / (\n        np.linalg.norm(doc_embs, axis=1) * np.linalg.norm(q_emb)\n    )\n    top_indices = np.argsort(cos_scores)[-rerank_pool:][::-1]\n\n    pairs = [(query, corpus[i]) for i in top_indices]\n    ce_scores = cross_encoder.predict(pairs)\n\n    reranked = sorted(zip(top_indices, ce_scores), key=lambda x: x[1], reverse=True)\n    return [(corpus[i], float(s)) for i, s in reranked[:top_k]]",
+      "steps": [
+        {"line": 1, "explanation": "Import both model types: SentenceTransformer for fast first-stage retrieval (bi-encoder), CrossEncoder for precise second-stage reranking. This two-stage pattern is the industry standard."},
+        {"line": 4, "explanation": "Load the bi-encoder (all-MiniLM-L6-v2) for fast embedding similarity search. It encodes query and docs independently into 384-dim vectors."},
+        {"line": 5, "explanation": "Load the cross-encoder (ms-marco-MiniLM-L6-v2) for reranking. Same model family, different architecture — this one processes query+doc jointly for higher accuracy."},
+        {"line": 7, "explanation": "The two-stage pipeline function: retrieve rerank_pool candidates with the bi-encoder, then rescore the top ones with the cross-encoder, returning top_k final results."},
+        {"line": 8, "explanation": "Stage 1: Encode query and all documents with the bi-encoder. This is fast — documents can be pre-encoded and cached in a vector database."},
+        {"line": 10, "explanation": "Compute cosine similarity between the query and all documents. This rough scoring narrows millions of documents to a manageable candidate set."},
+        {"line": 13, "explanation": "Select the top rerank_pool indices by bi-encoder score. We over-fetch (e.g. 20-100) to give the cross-encoder a good pool to rerank from."},
+        {"line": 15, "explanation": "Stage 2: Form (query, document) pairs for the cross-encoder. This is the expensive step — each pair goes through full transformer attention, but we only have 20 pairs, not millions."},
+        {"line": 18, "explanation": "Sort by cross-encoder score and return top_k results. The reranking often dramatically reshuffles the bi-encoder's ordering, surfacing truly relevant documents."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Bi-Encoder (Retrieval)",
+      "right_label": "Cross-Encoder (Reranking)",
+      "items": [
+        {"left": "Encodes query and document independently", "right": "Processes query + document jointly through self-attention"},
+        {"left": "Fast — precompute embeddings, dot product search", "right": "Slow — must run model for each query-document pair"},
+        {"left": "Scales to millions of documents", "right": "Practical for 20-100 candidates per query"},
+        {"left": "Approximate relevance via vector similarity", "right": "Precise relevance via full token interaction"},
+        {"left": "MRR@10 ~0.33 on MS MARCO", "right": "MRR@10 ~0.39 on MS MARCO"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered cross-encoder reranking — the highest-leverage upgrade for any RAG pipeline!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `CrossEncoderReranker` class that simulates cross-encoder reranking. A bi-encoder computes similarity from independent embeddings (word overlap ratio), while a cross-encoder computes joint similarity (shared bigram ratio — consecutive character pairs). Implement `bi_encoder_score(query, doc)` using word overlap, `cross_encoder_score(query, doc)` using character bigram overlap, and `retrieve_and_rerank(query, top_k, rerank_pool)` that first retrieves candidates with the bi-encoder, then reranks with the cross-encoder."
+      },
+      "starter_code": "class CrossEncoderReranker:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n\n    def _get_words(self, text: str) -> set[str]:\n        return set(text.lower().split())\n\n    def _get_bigrams(self, text: str) -> set[str]:\n        \"\"\"Get character-level bigrams from text (lowered, no spaces)\"\"\"\n        t = text.lower().replace(\" \", \"\")\n        return {t[i:i+2] for i in range(len(t) - 1)}\n\n    def bi_encoder_score(self, query: str, doc: str) -> float:\n        \"\"\"Simulate bi-encoder: word overlap ratio (Jaccard on words)\"\"\"\n        # Return |intersection| / |union| of word sets\n        # Return 0.0 if union is empty\n        pass\n\n    def cross_encoder_score(self, query: str, doc: str) -> float:\n        \"\"\"Simulate cross-encoder: bigram overlap ratio (Jaccard on bigrams)\"\"\"\n        # Return |intersection| / |union| of bigram sets\n        # Return 0.0 if union is empty\n        pass\n\n    def retrieve_and_rerank(self, query: str, top_k: int = 3, rerank_pool: int = 5) -> list[dict]:\n        # Stage 1: Score ALL docs with bi_encoder_score, take top rerank_pool\n        # Stage 2: Rescore those candidates with cross_encoder_score\n        # Return top_k results as [{\"document\": str, \"bi_score\": float, \"ce_score\": float}]\n        # sorted by ce_score descending\n        pass\n\n# Test it:\nreranker = CrossEncoderReranker([\n    \"machine learning algorithms for classification\",\n    \"learning to play machine drums\",\n    \"deep learning neural network architectures\",\n    \"the machinery of government learning\",\n    \"supervised machine learning classification methods\",\n])\n\nresults = reranker.retrieve_and_rerank(\"machine learning classification\", top_k=2, rerank_pool=4)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"ce_score\"] > results[1][\"ce_score\"])",
+      "expected_output": "2\nsupervised machine learning classification methods\nTrue",
+      "hints": {
+        "en": [
+          "bi_encoder_score: compute len(words_q & words_d) / len(words_q | words_d) — this is Jaccard similarity on word sets",
+          "cross_encoder_score: same Jaccard formula but on character bigram sets — bigrams capture subword patterns that word overlap misses",
+          "retrieve_and_rerank: sort all docs by bi_encoder_score descending, slice [:rerank_pool], then rescore with cross_encoder_score, sort again, and slice [:top_k]"
+        ]
+      },
+      "test_code": "r = CrossEncoderReranker([\"hello world\", \"hi there\", \"hello earth\"])\nassert abs(r.bi_encoder_score(\"hello world\", \"hello world\") - 1.0) < 0.001\nassert abs(r.bi_encoder_score(\"hello\", \"goodbye\") - 0.0) < 0.001\nassert r.bi_encoder_score(\"hello world\", \"hello earth\") > 0\nassert abs(r.cross_encoder_score(\"abc\", \"abc\") - 1.0) < 0.001\nassert r.cross_encoder_score(\"abc\", \"xyz\") == 0.0\nresults = r.retrieve_and_rerank(\"hello world\", top_k=2, rerank_pool=3)\nassert len(results) == 2\nassert results[0][\"document\"] == \"hello world\"\nassert \"bi_score\" in results[0]\nassert \"ce_score\" in results[0]\nassert results[0][\"ce_score\"] >= results[1][\"ce_score\"]\nr2 = CrossEncoderReranker([\"aaa\", \"bbb\"])\nassert r2.bi_encoder_score(\"\", \"\") == 0.0\nassert r2.cross_encoder_score(\"a\", \"b\") == 0.0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RerankerBenchmark` class that measures how much reranking improves retrieval quality. Given a corpus, queries, and ground truth relevant document indices, compute Mean Reciprocal Rank (MRR) for both bi-encoder-only retrieval and after cross-encoder reranking. MRR is the average of 1/rank where rank is the position of the first relevant document. Use the CrossEncoderReranker from the previous challenge."
+      },
+      "starter_code": "class RerankerBenchmark:\n    def __init__(self, corpus: list[str]):\n        self.reranker = CrossEncoderReranker(corpus)\n        self.corpus = corpus\n\n    def reciprocal_rank(self, ranked_docs: list[str], relevant: set[str]) -> float:\n        \"\"\"Return 1/rank of the first relevant doc, or 0.0 if none found\"\"\"\n        # rank is 1-indexed (first result = rank 1)\n        pass\n\n    def evaluate(self, queries: list[str], ground_truth: list[set[int]], top_k: int = 5) -> dict:\n        \"\"\"\n        queries: list of query strings\n        ground_truth: list of sets of relevant document INDICES for each query\n        Returns {\"mrr_bi_encoder\": float, \"mrr_reranked\": float, \"improvement\": float}\n        \"\"\"\n        # For each query:\n        # 1. Get bi-encoder ranking: score all docs, sort by bi_encoder_score desc, take top_k\n        # 2. Get reranked results: use retrieve_and_rerank(query, top_k, rerank_pool=top_k)\n        # 3. Compute reciprocal rank for both\n        # Return mean RR for each approach and the absolute improvement\n        pass\n\n# Test it:\ncorpus = [\n    \"python web framework flask tutorial\",\n    \"javascript react frontend development\",\n    \"python django rest api backend\",\n    \"cooking italian pasta recipes\",\n    \"python fastapi modern web development\",\n]\n\nbench = RerankerBenchmark(corpus)\nresult = bench.evaluate(\n    queries=[\"python web development\", \"frontend javascript\"],\n    ground_truth=[{0, 2, 4}, {1}],\n    top_k=5,\n)\nprint(f\"Bi-encoder MRR: {result['mrr_bi_encoder']:.2f}\")\nprint(f\"Reranked MRR:   {result['mrr_reranked']:.2f}\")\nprint(f\"Improvement:    {result['improvement']:.2f}\")\nprint(result[\"mrr_reranked\"] >= result[\"mrr_bi_encoder\"])",
+      "expected_output": "Bi-encoder MRR: 1.00\nReranked MRR:   1.00\nImprovement:    0.00\nTrue",
+      "hints": {
+        "en": [
+          "reciprocal_rank: enumerate ranked_docs starting at rank 1, return 1/rank for the first doc that appears in the relevant set",
+          "For bi-encoder ranking: score all corpus docs with bi_encoder_score, sort descending, take top_k doc strings",
+          "improvement is simply mrr_reranked - mrr_bi_encoder — positive means reranking helped"
+        ]
+      },
+      "test_code": "b = RerankerBenchmark([\"aaa bbb\", \"ccc ddd\", \"aaa ccc\"])\nassert abs(b.reciprocal_rank([\"aaa bbb\", \"ccc ddd\"], {\"aaa bbb\"}) - 1.0) < 0.001\nassert abs(b.reciprocal_rank([\"ccc ddd\", \"aaa bbb\"], {\"aaa bbb\"}) - 0.5) < 0.001\nassert b.reciprocal_rank([\"ccc ddd\"], {\"aaa bbb\"}) == 0.0\nresult = b.evaluate([\"aaa\"], [set([0])], top_k=3)\nassert \"mrr_bi_encoder\" in result\nassert \"mrr_reranked\" in result\nassert \"improvement\" in result\nassert result[\"mrr_bi_encoder\"] > 0\nassert result[\"mrr_reranked\"] >= 0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["cross-encoder reranking", "ms-marco-MiniLM-L6-v2", "two-stage retrieval", "bi-encoder vs cross-encoder", "mean reciprocal rank", "sentence-transformers CrossEncoder", "RAG pipeline optimization"],
+    "concepts_required": ["python classes", "sets", "list sorting", "dictionaries", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

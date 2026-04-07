@@ -1,0 +1,122 @@
+{
+  "id": "qwen3_06b_local_llm",
+  "topic": "qwen3_06b_local_llm",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Run Qwen3-0.6B Locally: Your Own Tiny LLM",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn to run Qwen3-0.6B — a 0.6-billion-parameter language model — entirely on your laptop using Hugging Face Transformers. Perfect for local chatbots, offline text generation, and lightweight AI experiments with zero API costs.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Your Own LLM, Running on Your Laptop\n\nVaathiyaar here! Everyone talks about GPT-4 and Claude, but what if you could run a real language model on your own machine — no API key, no internet, no cost per token? Meet **Qwen3-0.6B**, a 0.6-billion-parameter model from Alibaba's Qwen team that fits in under 2GB of RAM and generates surprisingly coherent text.\n\nSmall local LLMs are the secret weapon for prototyping, education, privacy-sensitive tasks, and edge deployment. Let's get one running in under 20 lines of Python.\n\n### Why Qwen3-0.6B?\n\n| Model | Parameters | RAM Needed | Speed (CPU) | API Required |\n|---|---|---|---|---|\n| GPT-4o | ~200B+ | Cloud only | N/A | Yes ($$$) |\n| Llama-3-8B | 8B | ~16 GB | Slow | No |\n| Phi-3-mini | 3.8B | ~8 GB | Moderate | No |\n| **Qwen3-0.6B** | **0.6B** | **~1.5 GB** | **Fast** | **No** |\n| TinyLlama-1.1B | 1.1B | ~2.5 GB | Moderate | No |\n\nQwen3-0.6B is the smallest in the Qwen3 family — small enough for a laptop CPU, yet capable of following instructions, holding conversations, and generating structured text.\n\n### Loading the Model\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n```\n\nThe first run downloads ~1.2GB of weights. After that, it loads from cache in seconds. `device_map=\"auto\"` uses your GPU if available, otherwise falls back to CPU.\n\n### Generating Text with the Chat Interface\n\nQwen3 is a conversational model — it expects messages in chat format:\n\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful Python tutor.\"},\n    {\"role\": \"user\", \"content\": \"Explain list comprehensions in one sentence.\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=100)\nresponse = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(response)\n```\n\n`apply_chat_template` formats your messages into the special token structure Qwen3 expects. We slice the output to exclude the prompt tokens and get only the model's response.\n\n### Streaming for Real-Time Output\n\nFor a chatbot feel, stream tokens as they're generated:\n\n```python\nfrom transformers import TextStreamer\n\nstreamer = TextStreamer(tokenizer, skip_special_tokens=True)\nmodel.generate(**inputs, max_new_tokens=200, streamer=streamer)\n```\n\nTokens print to the console one by one — just like ChatGPT's typing effect, but running entirely on your machine.\n\n### Controlling Generation\n\n| Parameter | Effect | Recommended |\n|---|---|---|\n| `temperature` | Randomness (0=deterministic, 1=creative) | 0.7 |\n| `top_p` | Nucleus sampling cutoff | 0.8 |\n| `top_k` | Limit vocabulary choices per step | 20 |\n| `max_new_tokens` | Maximum response length | 100-512 |\n| `repetition_penalty` | Penalize repeated phrases | 1.1 |\n\n```python\noutput = model.generate(\n    **inputs,\n    max_new_tokens=200,\n    temperature=0.7,\n    top_p=0.8,\n    top_k=20,\n    repetition_penalty=1.1\n)\n```\n\n### When to Use a Small Local LLM\n\n- **Prototyping**: Test prompt templates before paying for API calls\n- **Education**: Understand how LLMs work by running one yourself\n- **Privacy**: Process sensitive documents without sending data to the cloud\n- **Offline**: Build AI features that work without internet\n- **Embedding in apps**: Ship a model alongside your Python application\n\n> **Key Insight:** Qwen3-0.6B proves that useful AI doesn't require massive infrastructure. A 0.6B parameter model running on your laptop CPU can follow instructions, hold conversations, and generate structured text — giving you a free, private, offline AI assistant for prototyping and learning. Start small, understand the fundamentals, then scale up when you need to.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if you could run a real language model on your laptop — no API key, no internet, no cost? Qwen3-0.6B is a 0.6-billion-parameter model that fits in 1.5GB of RAM and generates coherent text right on your machine.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful Python tutor.\"},\n    {\"role\": \"user\", \"content\": \"What is a decorator?\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=150)\nresponse = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(response)",
+      "steps": [
+        {"line": 1, "explanation": "Import the two key classes from Hugging Face Transformers: AutoModelForCausalLM loads the language model, AutoTokenizer loads the matching tokenizer."},
+        {"line": 3, "explanation": "Specify the Hugging Face model ID. 'Qwen/Qwen3-0.6B' is a 0.6-billion-parameter model — only ~1.2GB to download."},
+        {"line": 4, "explanation": "Load the tokenizer, which converts text to token IDs and back. It downloads once and caches locally."},
+        {"line": 5, "explanation": "Load the model weights. torch_dtype='auto' picks the best precision for your hardware. device_map='auto' uses GPU if available, CPU otherwise."},
+        {"line": 9, "explanation": "Qwen3 is a chat model — structure input as a list of message dicts with 'role' and 'content' keys."},
+        {"line": 14, "explanation": "apply_chat_template converts the message list into the special token format Qwen3 expects. add_generation_prompt=True appends the assistant turn marker."},
+        {"line": 17, "explanation": "Tokenize the formatted text into tensor IDs and move them to the model's device (CPU or GPU)."},
+        {"line": 19, "explanation": "model.generate() runs autoregressive decoding — predicting one token at a time up to max_new_tokens=150."},
+        {"line": 20, "explanation": "Decode only the NEW tokens (slice off the prompt) back into readable text. skip_special_tokens removes formatting markers."},
+        {"line": 23, "explanation": "Print the model's response — a complete answer generated entirely on your local machine."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import TextStreamer\n\n# Reuse model and inputs from above\nstreamer = TextStreamer(tokenizer, skip_special_tokens=True)\n\n# Stream tokens one at a time — chatbot-style output\nmodel.generate(\n    **inputs,\n    max_new_tokens=200,\n    temperature=0.7,\n    top_p=0.8,\n    repetition_penalty=1.1,\n    streamer=streamer\n)",
+      "steps": [
+        {"line": 1, "explanation": "TextStreamer is a callback that prints each token to the console as soon as it's generated — giving a real-time typing effect."},
+        {"line": 4, "explanation": "Create the streamer with skip_special_tokens=True so only readable text appears in the output."},
+        {"line": 7, "explanation": "Call generate() with the streamer parameter — tokens appear one by one instead of waiting for the full response."},
+        {"line": 10, "explanation": "temperature=0.7 adds moderate randomness. Higher values (closer to 1.0) make output more creative but less focused."},
+        {"line": 11, "explanation": "top_p=0.8 uses nucleus sampling — only considers tokens whose cumulative probability exceeds 80%, filtering out unlikely words."},
+        {"line": 12, "explanation": "repetition_penalty=1.1 discourages the model from repeating the same phrases, a common issue with small LLMs."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud API LLM",
+      "right_label": "Local Qwen3-0.6B",
+      "items": [
+        {"left": "Requires API key and internet", "right": "Runs fully offline, no account needed"},
+        {"left": "Pay per token ($0.01-0.06/1K)", "right": "Completely free after download"},
+        {"left": "Data sent to third-party servers", "right": "Data never leaves your machine"},
+        {"left": "Highest quality (100B+ params)", "right": "Good quality for size (0.6B params)"},
+        {"left": "Rate limits and downtime", "right": "Always available, no limits"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now have a language model running on your own machine — no API, no cloud, no limits!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LocalChatbot` class that simulates how a local LLM chatbot manages conversation history. It should maintain a list of messages (system, user, assistant), format them into a prompt string, and simulate generating a response. Implement `add_system_message(content)`, `chat(user_message)` that adds the user message, builds the prompt, generates a mock response based on keywords, and returns it, and `get_history()` that returns the full message list. The mock generation should return 'I can help with Python!' if 'python' appears in the user message (case-insensitive), 'Let me explain that concept.' if 'explain' appears, and 'Here is my response.' otherwise."
+      },
+      "starter_code": "class LocalChatbot:\n    def __init__(self):\n        self.messages = []\n\n    def add_system_message(self, content: str):\n        # Add a system message to self.messages\n        # Format: {\"role\": \"system\", \"content\": content}\n        pass\n\n    def format_prompt(self) -> str:\n        # Convert self.messages into a single prompt string\n        # Format each message as \"<role>: <content>\" on its own line\n        # Add \"assistant:\" at the end (the generation prompt)\n        pass\n\n    def generate_response(self, prompt: str) -> str:\n        # Mock LLM: check the last user message in self.messages\n        # If 'python' in message (case-insensitive): return 'I can help with Python!'\n        # If 'explain' in message (case-insensitive): return 'Let me explain that concept.'\n        # Otherwise: return 'Here is my response.'\n        pass\n\n    def chat(self, user_message: str) -> str:\n        # 1. Add user message to history\n        # 2. Format the prompt\n        # 3. Generate response\n        # 4. Add assistant response to history\n        # 5. Return the response\n        pass\n\n    def get_history(self) -> list:\n        return self.messages\n\n# Test it:\nbot = LocalChatbot()\nbot.add_system_message(\"You are a helpful tutor.\")\nresp1 = bot.chat(\"Tell me about Python basics\")\nprint(resp1)\nresp2 = bot.chat(\"Can you explain decorators?\")\nprint(resp2)\nprint(len(bot.get_history()))",
+      "expected_output": "I can help with Python!\nLet me explain that concept.\n5",
+      "hints": {
+        "en": [
+          "Each message is a dict with 'role' and 'content' keys — append to self.messages for system, user, and assistant messages",
+          "In format_prompt(), use a list comprehension or loop: f\"{msg['role']}: {msg['content']}\" for each message, then join with newlines and append 'assistant:' at the end",
+          "In chat(), add the user message first, then call format_prompt() and generate_response(), add the assistant message, and return the response string"
+        ]
+      },
+      "test_code": "bot = LocalChatbot()\nbot.add_system_message(\"Test system\")\nassert len(bot.messages) == 1\nassert bot.messages[0] == {\"role\": \"system\", \"content\": \"Test system\"}\nr1 = bot.chat(\"Tell me about Python\")\nassert r1 == \"I can help with Python!\"\nassert len(bot.messages) == 3\nassert bot.messages[1] == {\"role\": \"user\", \"content\": \"Tell me about Python\"}\nassert bot.messages[2] == {\"role\": \"assistant\", \"content\": \"I can help with Python!\"}\nr2 = bot.chat(\"Please explain this\")\nassert r2 == \"Let me explain that concept.\"\nr3 = bot.chat(\"Hello there\")\nassert r3 == \"Here is my response.\"\nassert len(bot.messages) == 7\nprompt = bot.format_prompt()\nassert \"assistant:\" in prompt"
+    },
+    {
+      "instruction": {
+        "en": "Build a `GenerationConfig` class that validates and applies LLM generation parameters. It should accept `temperature` (0.0-2.0), `top_p` (0.0-1.0), `top_k` (1-100 integer), `max_new_tokens` (1-2048 integer), and `repetition_penalty` (1.0-2.0). Implement `__init__` that validates all parameters and raises ValueError with a descriptive message if any are out of range, `to_dict()` that returns all parameters as a dictionary, and `describe()` that returns a human-readable string describing the generation style (e.g., 'deterministic' if temperature < 0.3, 'balanced' if 0.3-0.7, 'creative' if > 0.7)."
+      },
+      "starter_code": "class GenerationConfig:\n    def __init__(self, temperature=0.7, top_p=0.9, top_k=50,\n                 max_new_tokens=256, repetition_penalty=1.1):\n        # Validate all parameters and raise ValueError if out of range\n        # temperature: 0.0 to 2.0 (float)\n        # top_p: 0.0 to 1.0 (float)\n        # top_k: 1 to 100 (int)\n        # max_new_tokens: 1 to 2048 (int)\n        # repetition_penalty: 1.0 to 2.0 (float)\n        pass\n\n    def to_dict(self) -> dict:\n        # Return all parameters as a dictionary\n        pass\n\n    def describe(self) -> str:\n        # Return generation style description:\n        # temperature < 0.3: 'deterministic'\n        # temperature 0.3-0.7: 'balanced'\n        # temperature > 0.7: 'creative'\n        pass\n\n# Test it:\nconfig = GenerationConfig(temperature=0.5, top_k=20)\nprint(config.describe())\nprint(config.to_dict()[\"top_k\"])\n\ntry:\n    bad = GenerationConfig(temperature=3.0)\nexcept ValueError as e:\n    print(\"Caught error\")",
+      "expected_output": "balanced\n20\nCaught error",
+      "hints": {
+        "en": [
+          "Store each parameter as self.temperature, self.top_p, etc. after validation",
+          "For validation, use simple if-checks: if not (0.0 <= temperature <= 2.0): raise ValueError(f'temperature must be between 0.0 and 2.0, got {temperature}')",
+          "In describe(), use if/elif to check self.temperature ranges and return the corresponding string"
+        ]
+      },
+      "test_code": "config = GenerationConfig()\nassert config.to_dict() == {\"temperature\": 0.7, \"top_p\": 0.9, \"top_k\": 50, \"max_new_tokens\": 256, \"repetition_penalty\": 1.1}\nassert config.describe() == \"balanced\"\nc2 = GenerationConfig(temperature=0.1)\nassert c2.describe() == \"deterministic\"\nc3 = GenerationConfig(temperature=1.5)\nassert c3.describe() == \"creative\"\nc4 = GenerationConfig(temperature=0.3)\nassert c4.describe() == \"balanced\"\nc5 = GenerationConfig(temperature=0.7)\nassert c5.describe() == \"balanced\"\ntry:\n    GenerationConfig(temperature=-0.1)\n    assert False, \"Should have raised ValueError\"\nexcept ValueError:\n    pass\ntry:\n    GenerationConfig(top_p=1.5)\n    assert False, \"Should have raised ValueError\"\nexcept ValueError:\n    pass\ntry:\n    GenerationConfig(top_k=0)\n    assert False, \"Should have raised ValueError\"\nexcept ValueError:\n    pass\ntry:\n    GenerationConfig(max_new_tokens=5000)\n    assert False, \"Should have raised ValueError\"\nexcept ValueError:\n    pass"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["local LLM inference", "Qwen3-0.6B", "Hugging Face Transformers", "chat templates", "text generation parameters", "token streaming", "small language models"],
+    "concepts_required": ["python classes", "dictionaries", "pip install", "basic ML concepts"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

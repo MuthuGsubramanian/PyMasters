@@ -1,0 +1,118 @@
+{
+  "id": "sentence_transformers_minilm",
+  "topic": "sentence_transformers_minilm",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Semantic Search with all-MiniLM-L6-v2",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master semantic search using the sentence-transformers/all-MiniLM-L6-v2 model — a lightweight, blazing-fast embedding model perfect for local RAG pipelines, similarity matching, and clustering.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Beyond Keywords: Semantic Search with MiniLM\n\nVaathiyaar here! Traditional keyword search fails when users say \"automobile\" but your documents say \"car\". Semantic search solves this by comparing **meaning**, not words. And the best part? You don't need a GPU or an API key — the `all-MiniLM-L6-v2` model runs locally on a laptop in milliseconds.\n\nThis 80MB model from the sentence-transformers library maps any text into a 384-dimensional vector. Texts with similar meaning land close together in vector space. Let's build a semantic search engine from scratch.\n\n### Why all-MiniLM-L6-v2?\n\n| Model | Size | Dimensions | Speed | Quality |\n|---|---|---|---|---|\n| all-MiniLM-L6-v2 | 80 MB | 384 | ~14K sentences/sec | Good |\n| all-mpnet-base-v2 | 420 MB | 768 | ~2.8K sentences/sec | Best |\n| text-embedding-3-small (OpenAI) | API call | 1536 | Network-bound | Great |\n| all-MiniLM-L12-v2 | 120 MB | 384 | ~7.5K sentences/sec | Better |\n\nMiniLM-L6-v2 hits the sweet spot: fast enough for real-time search, small enough for edge deployment, and good enough for most production use cases.\n\n### Generating Embeddings\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndocuments = [\n    \"Python is a versatile programming language\",\n    \"Machine learning models need training data\",\n    \"The cat sat on the warm windowsill\",\n    \"Deep neural networks learn representations\",\n]\n\nembeddings = model.encode(documents)\nprint(embeddings.shape)  # (4, 384)\n```\n\nEach document is now a 384-dimensional vector. Documents about similar topics will have vectors pointing in similar directions.\n\n### Cosine Similarity: Measuring Meaning\n\nCosine similarity measures the angle between two vectors — 1.0 means identical meaning, 0.0 means unrelated:\n\n```python\nfrom sentence_transformers import util\n\nquery = \"How do neural networks learn?\"\nquery_embedding = model.encode(query)\n\nscores = util.cos_sim(query_embedding, embeddings)[0]\nfor doc, score in zip(documents, scores):\n    print(f\"{score:.3f} | {doc}\")\n# 0.652 | Deep neural networks learn representations\n# 0.413 | Machine learning models need training data\n# 0.178 | Python is a versatile programming language\n# 0.031 | The cat sat on the warm windowsill\n```\n\nThe model understands that \"neural networks learn\" is closest to \"deep neural networks learn representations\" — even though the exact words differ.\n\n### Building a Local Semantic Search Engine\n\n```python\nclass SemanticSearch:\n    def __init__(self, model_name=\"all-MiniLM-L6-v2\"):\n        self.model = SentenceTransformer(model_name)\n        self.documents = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.documents = documents\n        self.embeddings = self.model.encode(documents,\n            convert_to_tensor=True)\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        query_emb = self.model.encode(query, convert_to_tensor=True)\n        scores = util.cos_sim(query_emb, self.embeddings)[0]\n        top_indices = scores.argsort(descending=True)[:top_k]\n        return [\n            {\"document\": self.documents[i], \"score\": float(scores[i])}\n            for i in top_indices\n        ]\n```\n\n### Plugging into a RAG Pipeline\n\nMiniLM is ideal as the retrieval layer in Retrieval-Augmented Generation:\n\n```python\ndef rag_retrieve(search_engine, query, top_k=3):\n    results = search_engine.search(query, top_k=top_k)\n    context = \"\\n\".join(r[\"document\"] for r in results)\n    prompt = f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"\n    return prompt  # Send this to your LLM of choice\n```\n\nNo API calls for embeddings, no rate limits, no cost per token — just local, fast semantic retrieval feeding your LLM.\n\n### Performance Tips\n\n- **Batch encoding**: Always pass a list to `model.encode()` — it batches internally for GPU/CPU optimization\n- **Normalize embeddings**: Use `normalize_embeddings=True` so dot product equals cosine similarity (faster math)\n- **ONNX runtime**: Install `optimum` and load with `SentenceTransformer(model, backend=\"onnx\")` for 2-3x CPU speedup\n- **Cache embeddings**: Compute once, save to disk with `np.save()`, reload instantly\n\n> **Key Insight:** Semantic search with all-MiniLM-L6-v2 gives you the core superpower of vector databases — understanding meaning, not just matching keywords — in an 80MB package that runs anywhere. For local RAG, prototyping, or edge deployment, it's the go-to embedding model in the Python ecosystem.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Keyword search breaks when words differ but meaning matches. Semantic search with all-MiniLM-L6-v2 encodes text into 384-dimensional vectors where similar meanings cluster together — locally, in milliseconds, with no API key.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndocuments = [\n    \"Python is a versatile programming language\",\n    \"Machine learning models need training data\",\n    \"The cat sat on the warm windowsill\",\n    \"Deep neural networks learn representations\",\n]\n\nembeddings = model.encode(documents)\nprint(embeddings.shape)  # (4, 384)\nprint(type(embeddings))  # <class 'numpy.ndarray'>",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the library that wraps hundreds of pre-trained embedding models."},
+        {"line": 4, "explanation": "Load all-MiniLM-L6-v2 — an 80MB model that maps any text to a 384-dimensional vector. Downloads once, runs locally."},
+        {"line": 6, "explanation": "Define a list of documents. These could be paragraphs, sentences, or entire articles."},
+        {"line": 13, "explanation": "model.encode() converts each string into a dense vector. Pass a list for batched (faster) encoding."},
+        {"line": 14, "explanation": "Result is a NumPy array of shape (4, 384) — four documents, each represented as 384 floating-point numbers."},
+        {"line": 15, "explanation": "Embeddings are plain NumPy arrays — easy to save, load, and compute with."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\ndocs = [\"Cars use gasoline\", \"Automobiles consume fuel\", \"Cats love naps\"]\nembeddings = model.encode(docs, convert_to_tensor=True)\n\nquery = \"vehicles and petrol\"\nquery_emb = model.encode(query, convert_to_tensor=True)\nscores = util.cos_sim(query_emb, embeddings)[0]\n\nranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import util alongside SentenceTransformer — it provides cosine_similarity and other distance functions."},
+        {"line": 4, "explanation": "Three documents: two about vehicles (different wording) and one unrelated. Semantic search should see through the synonyms."},
+        {"line": 5, "explanation": "convert_to_tensor=True returns PyTorch tensors — faster for similarity computation than NumPy."},
+        {"line": 7, "explanation": "Query uses 'vehicles' and 'petrol' — neither word appears in the documents, yet the model understands the meaning."},
+        {"line": 9, "explanation": "cos_sim computes cosine similarity between the query and all documents in one vectorized operation."},
+        {"line": 11, "explanation": "Sort by score descending. 'Cars use gasoline' and 'Automobiles consume fuel' will rank highest despite zero word overlap with the query."},
+        {"line": 12, "explanation": "Print ranked results. The model bridges the vocabulary gap: vehicles≈cars≈automobiles, petrol≈gasoline≈fuel."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Keyword Search",
+      "right_label": "Semantic Search",
+      "items": [
+        {"left": "Matches exact words only", "right": "Matches meaning across synonyms"},
+        {"left": "\"automobile\" misses \"car\" documents", "right": "\"automobile\" finds \"car\" documents"},
+        {"left": "No model needed, instant", "right": "Requires 80MB model, milliseconds per query"},
+        {"left": "Zero cost, zero dependencies", "right": "Free, local — no API key needed"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now build semantic search engines that understand meaning, not just keywords!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `SemanticSearchEngine` class that simulates how sentence-transformers works. It takes a list of documents and uses a simple bag-of-words approach to create 'embeddings' (word frequency vectors). Implement `encode(texts)` that returns a dict-based vector for each text (word → count), `cosine_similarity(vec_a, vec_b)` that computes cosine similarity between two such vectors, and `search(query, top_k)` that returns the top-k most similar documents with their scores."
+      },
+      "starter_code": "import math\n\nclass SemanticSearchEngine:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.doc_vectors = [self.encode(doc) for doc in documents]\n\n    def encode(self, text: str) -> dict:\n        # Return a word frequency vector as a dict: {word: count}\n        # Lowercase all words\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Compute cosine similarity between two word-frequency vectors\n        # cos_sim = dot(a,b) / (||a|| * ||b||)\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Encode query, compute similarity with all docs, return top-k\n        # Each result: {\"document\": str, \"score\": float}\n        pass\n\n# Test it:\nengine = SemanticSearchEngine([\n    \"python programming language\",\n    \"machine learning algorithms\",\n    \"python machine learning library\",\n    \"cooking pasta recipes\"\n])\n\nresults = engine.search(\"python learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "2\npython machine learning library\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), use text.lower().split() and count word occurrences with a dictionary",
+          "For cosine_similarity, compute dot product as sum of vec_a[word]*vec_b[word] for shared words, then divide by product of magnitudes (sqrt of sum of squares)",
+          "In search(), sort documents by cosine_similarity descending and slice [:top_k]"
+        ]
+      },
+      "test_code": "e = SemanticSearchEngine([\"hello world\", \"world peace\", \"hello hello\"])\nassert e.encode(\"hello world\") == {\"hello\": 1, \"world\": 1}\nassert e.encode(\"hello hello\") == {\"hello\": 2}\nsim = e.cosine_similarity({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1})\nassert abs(sim - 1.0) < 0.001\nsim0 = e.cosine_similarity({\"a\": 1}, {\"b\": 1})\nassert sim0 == 0.0\nresults = e.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"hello hello\"\nassert results[0][\"score\"] > results[1][\"score\"]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `DocumentClusterer` class that groups documents by similarity. Given a list of documents and a similarity threshold, implement `find_clusters()` that returns clusters of document indices where every pair within a cluster has cosine similarity >= the threshold. Use the SemanticSearchEngine's encode and cosine_similarity methods. Use a greedy approach: iterate documents in order, assign each to the first existing cluster it matches, or create a new cluster."
+      },
+      "starter_code": "import math\n\nclass SemanticSearchEngine:\n    def __init__(self, documents):\n        self.documents = documents\n        self.doc_vectors = [self.encode(doc) for doc in documents]\n\n    def encode(self, text):\n        words = text.lower().split()\n        vec = {}\n        for w in words:\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def cosine_similarity(self, vec_a, vec_b):\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[w] * vec_b[w] for w in shared)\n        mag_a = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in vec_b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\nclass DocumentClusterer:\n    def __init__(self, documents: list[str], threshold: float = 0.5):\n        self.engine = SemanticSearchEngine(documents)\n        self.threshold = threshold\n\n    def find_clusters(self) -> list[list[int]]:\n        # Return list of clusters, each cluster is a list of doc indices\n        # Greedy: for each doc, join first cluster where similarity to ALL\n        # members >= threshold, or start a new cluster\n        pass\n\n# Test it:\nclustered = DocumentClusterer([\n    \"python programming code\",\n    \"python coding scripts\",\n    \"cooking food recipes\",\n    \"baking food dishes\",\n    \"machine learning AI\"\n], threshold=0.3)\nclusters = clustered.find_clusters()\nprint(len(clusters))\nprint(0 in clusters[0] and 1 in clusters[0])",
+      "expected_output": "3\nTrue",
+      "hints": {
+        "en": [
+          "Initialize clusters as an empty list. For each document index, check each existing cluster.",
+          "A document joins a cluster if its cosine_similarity with EVERY member of that cluster is >= threshold.",
+          "If no cluster matches, append a new cluster containing just this document index."
+        ]
+      },
+      "test_code": "c = DocumentClusterer([\"a b\", \"a b c\", \"x y\", \"x y z\"], threshold=0.3)\nclusters = c.find_clusters()\nassert isinstance(clusters, list)\nassert all(isinstance(cl, list) for cl in clusters)\nall_indices = sorted(idx for cl in clusters for idx in cl)\nassert all_indices == [0, 1, 2, 3]\n# 'a b' and 'a b c' should cluster together\nassert any(0 in cl and 1 in cl for cl in clusters)\n# 'x y' and 'x y z' should cluster together\nassert any(2 in cl and 3 in cl for cl in clusters)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sentence embeddings", "cosine similarity", "semantic search", "all-MiniLM-L6-v2", "vector encoding", "local RAG retrieval"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,107 @@
+{
+  "id": "batched_contextual_reinforcement",
+  "topic": "batched_contextual_reinforcement",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Batched Contextual Reinforcement: Efficient CoT Reasoning",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how Batched Contextual Reinforcement (BCR) trains LLMs to reason efficiently — producing shorter Chain-of-Thought traces without sacrificing accuracy, using a minimalist single-stage RL paradigm.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Reasoning Smarter, Not Longer\n\nVaathiyaar here! Chain-of-Thought (CoT) reasoning is how modern LLMs solve hard problems — they \"think step by step\" before answering. But there's a dirty secret: most of those reasoning tokens are **wasted**. Models over-explain, repeat themselves, and pad their thinking with filler. That costs real money at inference time.\n\n**Batched Contextual Reinforcement (BCR)** is a new training paradigm that teaches models to reason efficiently. No complex curricula, no difficulty estimators, no multi-stage pipelines — just a single, elegant structural change to how we batch RL training examples.\n\n### The Token Waste Problem\n\n| Approach | Accuracy | Avg Tokens | Cost per 1M queries |\n|---|---|---|---|\n| Standard CoT | 92% | 850 | $170 |\n| Length penalty | 85% | 320 | $64 |\n| Difficulty routing | 90% | 510 | $102 |\n| **BCR** | **91%** | **340** | **$68** |\n\nLength penalties slash tokens but **destroy accuracy**. Difficulty routing helps but needs a separate classifier. BCR achieves near-optimal efficiency **without sacrificing reasoning quality**.\n\n### How BCR Works\n\nThe core idea: instead of training on random batches, BCR groups problems by difficulty within each batch. The model sees easy problems (needing short reasoning) alongside hard ones (needing long reasoning) **in the same context window**. This implicit contrast teaches the model to calibrate its reasoning length to problem difficulty.\n\n```python\nimport random\nfrom dataclasses import dataclass\n\n@dataclass\nclass Problem:\n    question: str\n    difficulty: float  # 0.0 = trivial, 1.0 = hardest\n    solution: str\n\ndef build_bcr_batch(problems: list[Problem], batch_size: int = 8) -> list[list[Problem]]:\n    \"\"\"Group problems into BCR batches with difficulty diversity.\"\"\"\n    sorted_problems = sorted(problems, key=lambda p: p.difficulty)\n    n = len(sorted_problems)\n    batches = []\n    \n    # Interleave easy and hard problems in each batch\n    easy_half = sorted_problems[:n // 2]\n    hard_half = sorted_problems[n // 2:]\n    random.shuffle(easy_half)\n    random.shuffle(hard_half)\n    \n    for i in range(0, min(len(easy_half), len(hard_half)), batch_size // 2):\n        batch = (\n            easy_half[i:i + batch_size // 2] +\n            hard_half[i:i + batch_size // 2]\n        )\n        random.shuffle(batch)  # Mix within batch\n        batches.append(batch)\n    \n    return batches\n```\n\n### The Reward Function\n\nBCR uses a combined reward that balances correctness with brevity. The key innovation is the **contextual baseline** — each problem's token budget is compared against the batch average, not a global constant:\n\n```python\ndef bcr_reward(\n    is_correct: bool,\n    tokens_used: int,\n    batch_avg_tokens: float,\n    correctness_weight: float = 1.0,\n    efficiency_weight: float = 0.3\n) -> float:\n    \"\"\"Compute BCR reward with contextual efficiency bonus.\"\"\"\n    correctness = 1.0 if is_correct else -0.5\n    \n    # Efficiency is relative to batch context, not absolute\n    token_ratio = tokens_used / max(batch_avg_tokens, 1)\n    efficiency = max(0, 1.0 - token_ratio)  # Bonus for below-average\n    \n    return (correctness_weight * correctness +\n            efficiency_weight * efficiency)\n```\n\n### Applying BCR to Your Own Models\n\nYou can apply BCR principles even without full RL training — use it as a **prompt-engineering strategy** by providing difficulty-diverse few-shot examples:\n\n```python\ndef build_bcr_fewshot(examples: list[dict]) -> str:\n    \"\"\"Build a BCR-inspired few-shot prompt with mixed difficulty.\"\"\"\n    easy = [e for e in examples if e[\"difficulty\"] == \"easy\"]\n    hard = [e for e in examples if e[\"difficulty\"] == \"hard\"]\n    \n    # Mix short and long reasoning traces\n    selected = random.sample(easy, min(2, len(easy))) + \\\n               random.sample(hard, min(2, len(hard)))\n    random.shuffle(selected)\n    \n    prompt_parts = []\n    for ex in selected:\n        prompt_parts.append(\n            f\"Q: {ex['question']}\\n\"\n            f\"Reasoning: {ex['reasoning']}\\n\"\n            f\"A: {ex['answer']}\"\n        )\n    \n    return \"\\n\\n\".join(prompt_parts)\n```\n\n### Why It Works\n\nThe batch diversity creates an implicit curriculum. When the model sees a trivial question answered in 20 tokens next to a complex proof requiring 500 tokens, it learns **proportionality** — match reasoning effort to problem complexity. No explicit length penalty needed.\n\n> **Key Insight:** BCR proves that efficient reasoning doesn't require complex training pipelines. By simply structuring training batches to include diverse difficulty levels, models learn to self-calibrate their Chain-of-Thought length — spending tokens where they matter and staying concise where they don't.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Chain-of-Thought reasoning is powerful but token-hungry. Batched Contextual Reinforcement teaches LLMs to think just enough — calibrating reasoning length to problem difficulty with a single-stage training trick.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from dataclasses import dataclass\nimport random\n\n@dataclass\nclass Problem:\n    question: str\n    difficulty: float\n    solution: str\n\ndef build_bcr_batch(problems, batch_size=8):\n    sorted_probs = sorted(problems, key=lambda p: p.difficulty)\n    n = len(sorted_probs)\n    easy_half = sorted_probs[:n // 2]\n    hard_half = sorted_probs[n // 2:]\n    random.shuffle(easy_half)\n    random.shuffle(hard_half)\n    batch = easy_half[:batch_size // 2] + hard_half[:batch_size // 2]\n    random.shuffle(batch)\n    return batch",
+      "steps": [
+        {"line": 1, "explanation": "Import dataclass for clean data modeling and random for shuffling operations."},
+        {"line": 4, "explanation": "Define a Problem dataclass with question text, a 0-1 difficulty score, and the solution."},
+        {"line": 10, "explanation": "build_bcr_batch is the core — it constructs difficulty-diverse batches instead of random ones."},
+        {"line": 11, "explanation": "Sort all problems by difficulty so we can split them into easy and hard halves."},
+        {"line": 13, "explanation": "Split into easy (lower half) and hard (upper half) problem pools."},
+        {"line": 15, "explanation": "Shuffle within each pool so the model doesn't see a predictable ordering."},
+        {"line": 17, "explanation": "Take equal numbers from each pool — this diversity is what teaches proportional reasoning."},
+        {"line": 18, "explanation": "Shuffle the final batch so easy/hard problems are interleaved unpredictably."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def bcr_reward(is_correct, tokens_used, batch_avg_tokens,\n               correctness_weight=1.0, efficiency_weight=0.3):\n    correctness = 1.0 if is_correct else -0.5\n    token_ratio = tokens_used / max(batch_avg_tokens, 1)\n    efficiency = max(0, 1.0 - token_ratio)\n    return (correctness_weight * correctness +\n            efficiency_weight * efficiency)\n\n# Example: correct answer using fewer tokens than average\nreward = bcr_reward(True, 200, 500)\nprint(f\"Reward: {reward:.2f}\")  # 1.18",
+      "steps": [
+        {"line": 1, "explanation": "The BCR reward function takes correctness, token count, and the batch's average token usage."},
+        {"line": 3, "explanation": "Correctness dominates: +1.0 for right answers, -0.5 penalty for wrong ones."},
+        {"line": 4, "explanation": "Token ratio compares this response's length to the batch average — the contextual baseline."},
+        {"line": 5, "explanation": "Efficiency bonus: responses shorter than average get a positive boost, longer ones get zero."},
+        {"line": 6, "explanation": "Weighted sum keeps correctness primary (1.0) and efficiency secondary (0.3)."},
+        {"line": 10, "explanation": "A correct answer using 200 tokens vs 500 avg gets 1.0 + 0.3*(0.6) = 1.18 reward."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand how BCR makes LLM reasoning efficient without sacrificing accuracy!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a `BCRBatchBuilder` class that takes a list of (question, difficulty) tuples. It should have: 1) an `add_problem(question, difficulty)` method to add more problems, 2) a `build_batch(batch_size)` method that returns a batch with equal representation from easy (difficulty < 0.5) and hard (difficulty >= 0.5) problems, and 3) a `stats()` method returning a dict with 'total', 'easy_count', and 'hard_count'."
+      },
+      "starter_code": "class BCRBatchBuilder:\n    def __init__(self, problems: list[tuple] = None):\n        # problems is [(question, difficulty), ...]\n        self.problems = []\n        if problems:\n            for q, d in problems:\n                self.add_problem(q, d)\n\n    def add_problem(self, question: str, difficulty: float):\n        # Add a problem to the pool\n        pass\n\n    def build_batch(self, batch_size: int = 8) -> list[dict]:\n        # Return a batch with equal easy/hard representation\n        # Each item should be {'question': ..., 'difficulty': ...}\n        pass\n\n    def stats(self) -> dict:\n        # Return {'total': N, 'easy_count': N, 'hard_count': N}\n        pass\n\n# Test it:\nbuilder = BCRBatchBuilder([(\"What is 2+2?\", 0.1), (\"Prove P=NP\", 0.95),\n                           (\"Sort a list\", 0.3), (\"Solve integral\", 0.8)])\nprint(builder.stats())\nbatch = builder.build_batch(4)\nprint(len(batch))\nprint(all('question' in p and 'difficulty' in p for p in batch))",
+      "expected_output": "{'total': 4, 'easy_count': 2, 'hard_count': 2}\n4\nTrue",
+      "hints": {
+        "en": [
+          "Store problems as dicts with 'question' and 'difficulty' keys in self.problems",
+          "In build_batch, split self.problems into easy (< 0.5) and hard (>= 0.5), then take batch_size//2 from each",
+          "stats() just counts problems with difficulty < 0.5 as easy and >= 0.5 as hard"
+        ]
+      },
+      "test_code": "b = BCRBatchBuilder([('q1', 0.1), ('q2', 0.2), ('q3', 0.7), ('q4', 0.9)])\nassert b.stats() == {'total': 4, 'easy_count': 2, 'hard_count': 2}\nb.add_problem('q5', 0.05)\nassert b.stats()['total'] == 5\nassert b.stats()['easy_count'] == 3\nbatch = b.build_batch(4)\nassert len(batch) == 4\nassert all('question' in p and 'difficulty' in p for p in batch)"
+    },
+    {
+      "instruction": {
+        "en": "Implement a `bcr_reward(is_correct, tokens_used, batch_token_counts)` function that computes the BCR reward. It should: 1) give +1.0 for correct, -0.5 for incorrect, 2) compute the batch average from `batch_token_counts` (a list of ints), 3) add an efficiency bonus of 0.3 * max(0, 1 - tokens_used/batch_avg) for correct answers only (no efficiency bonus for wrong answers). Also implement `evaluate_batch(results)` that takes a list of dicts with 'correct', 'tokens', and 'batch_tokens' keys and returns a list of rewards."
+      },
+      "starter_code": "def bcr_reward(is_correct: bool, tokens_used: int,\n               batch_token_counts: list[int]) -> float:\n    # Compute BCR reward with contextual efficiency bonus\n    pass\n\ndef evaluate_batch(results: list[dict]) -> list[float]:\n    # results = [{'correct': bool, 'tokens': int, 'batch_tokens': [int, ...]}, ...]\n    # Return list of rewards\n    pass\n\n# Test it:\nprint(bcr_reward(True, 200, [200, 400, 600]))\nprint(bcr_reward(False, 100, [200, 400, 600]))\nprint(evaluate_batch([\n    {'correct': True, 'tokens': 100, 'batch_tokens': [100, 300, 500]},\n    {'correct': False, 'tokens': 50, 'batch_tokens': [100, 300, 500]}\n]))",
+      "expected_output": "1.15\n-0.5\n[1.2, -0.5]",
+      "hints": {
+        "en": [
+          "Batch average = sum(batch_token_counts) / len(batch_token_counts)",
+          "Efficiency bonus only applies when is_correct is True",
+          "evaluate_batch just calls bcr_reward for each result dict"
+        ]
+      },
+      "test_code": "assert abs(bcr_reward(True, 200, [200, 400, 600]) - 1.15) < 0.01\nassert abs(bcr_reward(False, 100, [200, 400, 600]) - (-0.5)) < 0.01\nassert abs(bcr_reward(True, 400, [400]) - 1.0) < 0.01\nresults = evaluate_batch([{'correct': True, 'tokens': 100, 'batch_tokens': [100, 300, 500]}, {'correct': False, 'tokens': 50, 'batch_tokens': [100, 300, 500]}])\nassert abs(results[0] - 1.2) < 0.01\nassert abs(results[1] - (-0.5)) < 0.01"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["batched contextual reinforcement", "efficient CoT reasoning", "RL reward design", "token efficiency", "difficulty-aware batching"],
+    "concepts_required": ["python classes", "dataclasses", "basic statistics", "LLM basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

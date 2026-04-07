@@ -1,0 +1,69 @@
+{
+  "id": "eval_driven_dev",
+  "topic": "eval_driven_dev",
+  "track": "ai_engineering",
+  "module": "llm_patterns",
+  "order": 4,
+  "title": {
+    "en": "Evaluation-Driven AI Development",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how to build reliable AI features by writing evaluations first. Evals are the tests of AI engineering -- they tell you whether your prompt, model, or pipeline actually works before you ship it.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Evals: The Tests of AI Engineering\n\nIn traditional software, you write tests to verify your code works. In AI engineering, you write **evals** to verify your prompts, models, and pipelines produce good outputs. Without evals, you are flying blind -- you cannot tell if a prompt change improved things or made them worse.\n\n### Why Evals Matter\n\nLLM outputs are non-deterministic. The same prompt can produce different results on different runs. A prompt that works for 10 examples might fail on the 11th. Evals give you a systematic way to measure quality.\n\n```python\n# Without evals: \"It seems to work\" (vibes-based development)\n# With evals: \"Accuracy improved from 78% to 91% after prompt change\" (data-driven)\n```\n\n### Anatomy of an Eval\n\nEvery eval has three components:\n\n1. **Dataset**: Input/output pairs (what you send to the LLM, what you expect back)\n2. **Task**: The function or pipeline you are evaluating\n3. **Scorer**: A function that judges whether the output is correct\n\n```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass EvalCase:\n    input: str\n    expected: str\n    tags: list[str] = None  # For slicing results\n\n# Dataset: the cases to test\ndataset = [\n    EvalCase(\n        input=\"What is the capital of France?\",\n        expected=\"Paris\",\n        tags=[\"geography\", \"easy\"],\n    ),\n    EvalCase(\n        input=\"What is the capital of Myanmar?\",\n        expected=\"Naypyidaw\",\n        tags=[\"geography\", \"hard\"],\n    ),\n]\n```\n\n### Building a Scorer\n\nScorers judge output quality. They can be exact match, fuzzy match, LLM-as-judge, or custom logic:\n\n```python\ndef exact_match(output: str, expected: str) -> float:\n    \"\"\"Returns 1.0 if output matches expected, 0.0 otherwise.\"\"\"\n    return 1.0 if output.strip().lower() == expected.strip().lower() else 0.0\n\ndef contains_match(output: str, expected: str) -> float:\n    \"\"\"Returns 1.0 if expected appears in output.\"\"\"\n    return 1.0 if expected.lower() in output.lower() else 0.0\n\ndef llm_judge(output: str, expected: str, criteria: str) -> float:\n    \"\"\"Use an LLM to judge output quality on a 0-1 scale.\"\"\"\n    from openai import OpenAI\n    client = OpenAI()\n    response = client.chat.completions.create(\n        model=\"gpt-4o\",\n        messages=[{\n            \"role\": \"user\",\n            \"content\": f\"\"\"Rate this output on a scale of 0 to 1.\n            Criteria: {criteria}\n            Expected: {expected}\n            Actual: {output}\n            Return ONLY a number between 0 and 1.\"\"\"\n        }],\n        temperature=0,\n    )\n    return float(response.choices[0].message.content.strip())\n```\n\n### The Eval Runner\n\n```python\nfrom openai import OpenAI\n\nclient = OpenAI()\n\ndef run_task(input_text: str) -> str:\n    \"\"\"The AI pipeline being evaluated.\"\"\"\n    response = client.chat.completions.create(\n        model=\"gpt-4o\",\n        messages=[\n            {\"role\": \"system\", \"content\": \"Answer in one word.\"},\n            {\"role\": \"user\", \"content\": input_text},\n        ],\n        temperature=0,\n    )\n    return response.choices[0].message.content\n\ndef run_eval(dataset, task_fn, scorer_fn):\n    \"\"\"Run an eval and return aggregate results.\"\"\"\n    results = []\n    for case in dataset:\n        output = task_fn(case.input)\n        score = scorer_fn(output, case.expected)\n        results.append({\n            \"input\": case.input,\n            \"expected\": case.expected,\n            \"output\": output,\n            \"score\": score,\n            \"tags\": case.tags,\n        })\n    \n    avg_score = sum(r[\"score\"] for r in results) / len(results)\n    print(f\"Overall accuracy: {avg_score:.1%}\")\n    \n    # Breakdown by tag\n    from collections import defaultdict\n    tag_scores = defaultdict(list)\n    for r in results:\n        for tag in (r[\"tags\"] or []):\n            tag_scores[tag].append(r[\"score\"])\n    \n    for tag, scores in tag_scores.items():\n        print(f\"  {tag}: {sum(scores)/len(scores):.1%}\")\n    \n    return results\n\n# Run it\nresults = run_eval(dataset, run_task, contains_match)\n```\n\n### The Eval-Driven Workflow\n\n1. **Define your dataset** with representative examples, including edge cases\n2. **Write your scorer** that captures what \"good\" means\n3. **Run baseline eval** with your current prompt/model\n4. **Make a change** (prompt tweak, model switch, add few-shot examples)\n5. **Re-run eval** and compare scores\n6. **Only ship if scores improve** (or at least don't regress)\n\n```python\n# Comparing two approaches:\nprint(\"=== Baseline (zero-shot) ===\")\nbaseline_results = run_eval(dataset, zero_shot_task, contains_match)\n\nprint(\"=== With few-shot examples ===\")\nfewshot_results = run_eval(dataset, few_shot_task, contains_match)\n\n# Make data-driven decisions\nbaseline_score = sum(r[\"score\"] for r in baseline_results) / len(baseline_results)\nfewshot_score = sum(r[\"score\"] for r in fewshot_results) / len(fewshot_results)\n\nif fewshot_score > baseline_score:\n    print(f\"Few-shot is better: {fewshot_score:.1%} vs {baseline_score:.1%}\")\n```\n\n### Types of Evals\n\n| Type | Use when | Example scorer |\n|------|----------|---------------|\n| Exact match | One correct answer | `output == expected` |\n| Contains | Answer should appear in output | `expected in output` |\n| LLM-as-judge | Subjective quality | GPT-4o rates 0-1 |\n| Code execution | Code generation tasks | Run code, check output |\n| Human eval | Highest stakes | Human reviewers score |\n\n### Common Mistakes\n\n- **Too few examples**: 10 cases is a demo, not an eval. Aim for 50-200 minimum.\n- **No edge cases**: Easy examples give false confidence. Include adversarial inputs.\n- **Evaluating once**: Evals should run on every prompt change, like CI for code.\n- **Ignoring failure modes**: Look at *which* cases fail, not just the overall score.\n\n### Key Takeaways\n\n- Evals are the foundation of reliable AI engineering\n- Every eval needs a dataset, a task function, and a scorer\n- Run evals before and after every change to measure impact\n- Use LLM-as-judge for subjective quality, exact/contains match for factual tasks\n- Treat eval scores like test results: don't ship regressions",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Evals are the tests of AI engineering. Without them, you cannot tell if your prompt changes made things better or worse. Build evals first, then iterate with confidence.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from dataclasses import dataclass\n\n@dataclass\nclass EvalCase:\n    input: str\n    expected: str\n    tags: list[str] = None\n\ndataset = [\n    EvalCase(\"Capital of France?\", \"Paris\", [\"easy\"]),\n    EvalCase(\"Capital of Myanmar?\", \"Naypyidaw\", [\"hard\"]),\n]\n\ndef exact_match(output: str, expected: str) -> float:\n    return 1.0 if output.strip().lower() == expected.strip().lower() else 0.0",
+      "steps": [
+        {"line": 3, "explanation": "Define eval cases as dataclasses with input, expected output, and optional tags."},
+        {"line": 7, "explanation": "Tags let you slice results -- see accuracy on 'easy' vs 'hard' examples separately."},
+        {"line": 9, "explanation": "Build a dataset of diverse examples. Include easy cases, hard cases, and edge cases."},
+        {"line": 14, "explanation": "A scorer function takes the actual output and expected value, returns a 0-1 score."},
+        {"line": 15, "explanation": "Exact match is the simplest scorer. Normalize case and whitespace before comparing."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def run_eval(dataset, task_fn, scorer_fn):\n    results = []\n    for case in dataset:\n        output = task_fn(case.input)\n        score = scorer_fn(output, case.expected)\n        results.append({\n            \"input\": case.input,\n            \"output\": output,\n            \"score\": score,\n        })\n    \n    avg = sum(r[\"score\"] for r in results) / len(results)\n    print(f\"Accuracy: {avg:.1%}\")\n    return results\n\n# Compare approaches\nbaseline = run_eval(dataset, zero_shot, exact_match)\nimproved = run_eval(dataset, few_shot, exact_match)",
+      "steps": [
+        {"line": 1, "explanation": "The eval runner takes a dataset, the function being tested, and a scoring function."},
+        {"line": 3, "explanation": "Loop through every eval case, run the task, and score the output."},
+        {"line": 5, "explanation": "The scorer returns 0.0 to 1.0 -- how well did the output match expectations?"},
+        {"line": 12, "explanation": "Compute average accuracy across all cases. This is your headline metric."},
+        {"line": 17, "explanation": "Run the same eval on two approaches. Compare scores to make data-driven decisions."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Create an eval dataset with at least 5 EvalCase instances for testing a 'sentiment analysis' task. Each case should have an input text, an expected sentiment ('positive', 'negative', or 'neutral'), and at least one tag."},
+      "expected_output": "A list of 5+ EvalCase objects with diverse sentiment examples",
+      "hints": ["Include examples of each sentiment class", "Add edge cases like sarcasm or mixed sentiment", "Use tags like 'easy', 'hard', 'sarcastic' for result slicing"],
+      "test_code": "assert len(dataset) >= 5\nassert all(hasattr(c, 'input') and hasattr(c, 'expected') for c in dataset)\nassert all(c.expected in ('positive', 'negative', 'neutral') for c in dataset)"
+    },
+    {
+      "instruction": {"en": "Write a `contains_match` scorer and a `run_eval` function. The scorer returns 1.0 if the expected string appears in the output (case-insensitive), 0.0 otherwise. run_eval should take (dataset, task_fn, scorer_fn) and return the average score."},
+      "expected_output": "0.8",
+      "hints": ["contains_match: check expected.lower() in output.lower()", "run_eval: loop cases, call task_fn and scorer_fn, average the scores", "Return the average as a float"],
+      "test_code": "assert contains_match('Paris is the capital', 'Paris') == 1.0\nassert contains_match('London is great', 'Paris') == 0.0"
+    }
+  ]
+}

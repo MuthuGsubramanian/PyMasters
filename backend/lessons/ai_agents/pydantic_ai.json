@@ -1,0 +1,69 @@
+{
+  "id": "pydantic_ai",
+  "topic": "pydantic_ai",
+  "track": "ai_agents",
+  "module": "frameworks",
+  "order": 2,
+  "title": {
+    "en": "Building Type-Safe Agents with PydanticAI",
+    "ta": "PydanticAI மூலம் Type-Safe ஏஜெண்ட்கள் உருவாக்குதல்"
+  },
+  "description": {
+    "en": "Learn to build production-grade AI agents using PydanticAI -- the framework that brings type safety, dependency injection, and structured outputs to agent development.",
+    "ta": "PydanticAI பயன்படுத்தி தொழில்முறை AI ஏஜெண்ட்களை உருவாக்கக் கற்றுக்கொள்ளுங்கள் -- type safety, dependency injection மற்றும் structured outputs ஆகியவற்றை ஏஜெண்ட் மேம்பாட்டிற்குக் கொண்டு வரும் framework."
+  },
+  "xp_reward": 120,
+  "next_unlock": "langgraph_basics",
+  "story_variants": {
+    "en": "## PydanticAI: The Python Way to Build Agents\n\nYou have been writing Python with type hints and Pydantic models. Now imagine bringing that same discipline to AI agents. That is exactly what **PydanticAI** does -- built by the creator of Pydantic himself, Samuel Colvin.\n\n### Why PydanticAI?\n\nMost agent frameworks treat tool inputs and outputs as untyped dictionaries. PydanticAI says: **\"No. Every input, every output, every dependency should be validated and typed.\"**\n\n```python\nfrom pydantic_ai import Agent\nfrom pydantic import BaseModel\n\nclass CityWeather(BaseModel):\n    city: str\n    temperature: float\n    condition: str\n    humidity: int\n\n# Create an agent with a structured output type\nagent = Agent(\n    model=\"openai:gpt-4o\",\n    result_type=CityWeather,\n    system_prompt=\"You are a weather assistant. Return structured weather data.\"\n)\n\nresult = await agent.run(\"What is the weather in Tokyo?\")\nprint(result.data)  # CityWeather(city='Tokyo', temperature=22.5, ...)\nprint(result.data.temperature)  # 22.5 -- fully typed!\n```\n\nThe `result_type=CityWeather` guarantees the LLM output is parsed into a valid Pydantic model. No more parsing JSON strings and hoping for the best.\n\n### Adding Tools to Your Agent\n\nTools in PydanticAI are just Python functions with type annotations:\n\n```python\nfrom pydantic_ai import Agent, RunContext\nimport httpx\n\nagent = Agent(\n    model=\"openai:gpt-4o\",\n    system_prompt=\"You help users find weather information.\"\n)\n\n@agent.tool\nasync def get_weather(ctx: RunContext[None], city: str) -> str:\n    \"\"\"Fetch current weather for a given city.\"\"\"\n    async with httpx.AsyncClient() as client:\n        resp = await client.get(\n            f\"https://api.weatherapi.com/v1/current.json\",\n            params={\"key\": \"YOUR_KEY\", \"q\": city}\n        )\n        data = resp.json()\n        return f\"{data['current']['temp_c']}C, {data['current']['condition']['text']}\"\n\nresult = await agent.run(\"How hot is it in Chennai right now?\")\n```\n\nThe `@agent.tool` decorator registers the function. PydanticAI automatically generates the JSON schema from your type hints -- the LLM knows exactly what parameters to pass.\n\n### Dependency Injection\n\nReal applications need database connections, API keys, and user context. PydanticAI handles this with dependency injection:\n\n```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass WeatherDeps:\n    api_key: str\n    user_city: str\n\nagent = Agent(\n    model=\"openai:gpt-4o\",\n    deps_type=WeatherDeps,\n    system_prompt=\"You are a weather assistant.\"\n)\n\n@agent.tool\nasync def get_forecast(ctx: RunContext[WeatherDeps], days: int) -> str:\n    \"\"\"Get weather forecast for N days.\"\"\"\n    api_key = ctx.deps.api_key  # Access injected dependencies\n    city = ctx.deps.user_city\n    return f\"Forecast for {city}: sunny for {days} days\"\n\n# Run with dependencies injected\ndeps = WeatherDeps(api_key=\"abc123\", user_city=\"Mumbai\")\nresult = await agent.run(\"What is the 3-day forecast?\", deps=deps)\n```\n\n### Structured Outputs vs Free Text\n\nPydanticAI gives you a choice:\n\n| Mode | Use Case |\n|------|----------|\n| `result_type=str` | Free-form text responses |\n| `result_type=MyModel` | Structured, validated data |\n| `result_type=list[MyModel]` | Lists of structured items |\n| `result_type=Union[A, B]` | Multiple possible output shapes |\n\n### Streaming Support\n\nFor real-time UIs, PydanticAI supports streaming:\n\n```python\nasync with agent.run_stream(\"Tell me about Tokyo weather\") as response:\n    async for chunk in response.stream_text():\n        print(chunk, end=\"\", flush=True)\n```\n\n### Model Agnostic\n\nPydanticAI works with multiple providers:\n- `openai:gpt-4o` -- OpenAI\n- `anthropic:claude-sonnet-4-20250514` -- Anthropic\n- `google-gla:gemini-2.0-flash` -- Google\n- `groq:llama-3.3-70b` -- Groq\n\nSwitch models by changing one string. Your tools, types, and logic stay the same.\n\n### Why This Matters\n\nPydanticAI is not just another wrapper. It brings **software engineering discipline** to AI agents: type safety catches bugs before runtime, dependency injection makes testing easy, and structured outputs make your agent's responses predictable and parseable. This is how production agents are built in 2026.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_2",
+      "content": "PydanticAI brings type safety and software engineering discipline to AI agents. Every input validated. Every output structured. Every dependency injected.",
+      "visual_theme": "agents"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_2",
+      "nodes": ["User Query", "Agent (PydanticAI)", "Tool Call (typed)", "LLM Response", "Pydantic Validation", "Structured Output"],
+      "edges": [
+        {"from": "User Query", "to": "Agent (PydanticAI)"},
+        {"from": "Agent (PydanticAI)", "to": "Tool Call (typed)"},
+        {"from": "Tool Call (typed)", "to": "LLM Response"},
+        {"from": "LLM Response", "to": "Pydantic Validation"},
+        {"from": "Pydantic Validation", "to": "Structured Output"}
+      ],
+      "description": "PydanticAI flow: query enters the agent, tools are called with typed parameters, and the response is validated against a Pydantic model"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from pydantic_ai import Agent\nfrom pydantic import BaseModel\n\nclass CityWeather(BaseModel):\n    city: str\n    temperature: float\n    condition: str\n\nagent = Agent(\n    model=\"openai:gpt-4o\",\n    result_type=CityWeather,\n    system_prompt=\"Return structured weather data.\"\n)\n\nresult = await agent.run(\"Weather in Tokyo?\")\nprint(result.data.temperature)",
+      "steps": [
+        {"line": 1, "explanation": "Import Agent from pydantic_ai -- the core class for building agents."},
+        {"line": 4, "explanation": "Define a Pydantic model for the expected output. This ensures type safety."},
+        {"line": 9, "explanation": "Create an agent with a specific model and result_type. The LLM output MUST match CityWeather."},
+        {"line": 15, "explanation": "Run the agent. It calls the LLM and validates the response against CityWeather."},
+        {"line": 16, "explanation": "Access typed fields directly -- result.data.temperature is a float, guaranteed."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Create a Pydantic model called `BookRecommendation` with fields: title (str), author (str), rating (float), and genre (str). Then create an instance with title='Dune', author='Frank Herbert', rating=4.8, genre='Science Fiction'. Print the rating."
+      },
+      "expected_output": "4.8",
+      "hints": [
+        "Import BaseModel from pydantic",
+        "Define the class with type-annotated fields",
+        "Create an instance: BookRecommendation(title='Dune', ...)"
+      ],
+      "test_code": "assert isinstance(book, BookRecommendation)\nassert book.title == 'Dune'\nassert book.rating == 4.8"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "id": "subinterpreters",
+  "topic": "subinterpreters",
+  "track": "python_modern",
+  "module": "concurrency_modern",
+  "order": 3,
+  "title": {
+    "en": "Concurrent Subinterpreters",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how to use Python's subinterpreters for safe concurrency -- each subinterpreter has its own GIL and isolated state, giving you true parallelism without shared-memory headaches.",
+    "ta": ""
+  },
+  "xp_reward": 120,
+  "next_unlock": "modern_tooling",
+  "story_variants": {
+    "en": "## Interpreters Within Interpreters\n\nWhat if you could spin up multiple Python interpreters inside a single process, each with its own GIL and isolated memory? That is exactly what **subinterpreters** offer, and Python 3.13/3.14 have made them practical to use through the `concurrent.interpreters` module.\n\n### The Problem Subinterpreters Solve\n\nThreads share memory, which creates data races. Processes have separate memory but are heavy to spawn. Subinterpreters hit a sweet spot: they run in the same process (lightweight) but each has its own GIL and isolated namespace (safe).\n\n### Your First Subinterpreter\n\n```python\nimport concurrent.interpreters as interpreters\n\n# Create a new subinterpreter\ninterp = interpreters.create()\n\n# Run code in the subinterpreter\ninterp.exec('x = 40 + 2')\ninterp.exec('print(f\"Answer from subinterp: {x}\")')\n# Output: Answer from subinterp: 42\n\ninterp.close()\n```\n\nEach subinterpreter is a fully isolated Python environment. Variables defined in one are invisible to others.\n\n### Parallelism with Subinterpreters\n\nSince each subinterpreter has its own GIL, they can truly run in parallel on multiple cores:\n\n```python\nimport concurrent.interpreters as interpreters\nimport threading\nimport time\n\ndef run_in_interp(code: str):\n    interp = interpreters.create()\n    interp.exec(code)\n    interp.close()\n\nwork = '''\nimport math\ntotal = sum(math.factorial(i) for i in range(800))\n'''\n\nstart = time.perf_counter()\nthreads = [threading.Thread(target=run_in_interp, args=(work,)) for _ in range(4)]\nfor t in threads: t.start()\nfor t in threads: t.join()\nprint(f\"Parallel: {time.perf_counter() - start:.2f}s\")\n```\n\nUnlike regular threads with the GIL, these four subinterpreters actually run CPU-bound work simultaneously.\n\n### Communicating Between Interpreters\n\nSubinterpreters are isolated by design, but you can pass data between them using channels or by preparing data before `exec`:\n\n```python\nimport concurrent.interpreters as interpreters\n\ninterp = interpreters.create()\n\n# Prepare data to send\ninterp.prepare_main(data=42)\ninterp.exec('print(f\"Received: {data}\")')  # Received: 42\n\ninterp.close()\n```\n\nFor structured data exchange, the `concurrent.interpreters` module supports sending shareable types (ints, floats, bytes, strings, booleans, None) between interpreters.\n\n### Subinterpreters vs Threads vs Processes\n\n| Feature | Threads | Subinterpreters | Processes |\n|---------|---------|-----------------|----------|\n| Memory isolation | None | Full | Full |\n| Parallelism (GIL) | Blocked | Each has own GIL | Separate process |\n| Spawn overhead | Low | Low | High |\n| Data sharing | Direct | Via channels | Via IPC/pickle |\n| C extension compat | Good | Limited | Good |\n\n### When to Choose Subinterpreters\n\n- **CPU-bound parallel tasks** where you want isolation without process overhead\n- **Plugin systems** where untrusted code should not access the main interpreter's state\n- **Sandboxing** computation in a web server, one interpreter per request\n- When you want parallelism but your C extensions do not yet support free-threading\n\n### Limitations to Know\n\n- Not all C extensions work in subinterpreters yet (they must support PEP 489 multi-phase init)\n- You cannot share arbitrary Python objects between interpreters\n- The API is still evolving and marked as provisional\n- Debugging is harder since each interpreter has its own namespace\n\n### Key Takeaways\n\n- Subinterpreters run in the same process but with isolated state and separate GILs\n- They enable true parallelism for CPU-bound work without shared-memory races\n- Use `concurrent.interpreters` (Python 3.13+) for the high-level API\n- Data exchange uses shareable types or `prepare_main`\n- Great for sandboxing, plugin systems, and parallel computation",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Subinterpreters give you isolated Python environments within a single process -- each with its own GIL, enabling true parallelism without shared-memory headaches.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import concurrent.interpreters as interpreters\n\ninterp = interpreters.create()\ninterp.exec('x = 40 + 2')\ninterp.exec('print(f\"Answer: {x}\")')  # Answer: 42\ninterp.close()",
+      "steps": [
+        {"line": 1, "explanation": "Import the concurrent.interpreters module -- available in Python 3.13+."},
+        {"line": 3, "explanation": "Create a new subinterpreter. It has its own namespace and GIL."},
+        {"line": 4, "explanation": "Execute code inside the subinterpreter. Variable x exists only there."},
+        {"line": 5, "explanation": "The subinterpreter can print, import modules, and run any Python code."},
+        {"line": 6, "explanation": "Always close the subinterpreter when done to free resources."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import concurrent.interpreters as interpreters\nimport threading\n\ndef run_task(task_id):\n    interp = interpreters.create()\n    interp.prepare_main(task_id=task_id)\n    interp.exec('result = task_id ** 2')\n    interp.close()\n\nthreads = [threading.Thread(target=run_task, args=(i,)) for i in range(4)]\nfor t in threads: t.start()\nfor t in threads: t.join()",
+      "steps": [
+        {"line": 4, "explanation": "Each task creates its own isolated subinterpreter."},
+        {"line": 6, "explanation": "prepare_main sends data into the subinterpreter's __main__ namespace."},
+        {"line": 7, "explanation": "The subinterpreter accesses task_id as a regular variable."},
+        {"line": 10, "explanation": "Four threads, each with its own subinterpreter, run truly in parallel."}
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {"en": "Create a subinterpreter, send it the number 10 using prepare_main, have it compute the factorial (math.factorial), and print the result."},
+      "expected_output": "3628800",
+      "hints": ["Use interpreters.create() to make a new subinterpreter", "Use interp.prepare_main(n=10) to send the value", "Use interp.exec('import math; print(math.factorial(n))')"],
+      "test_code": "import concurrent.interpreters as interpreters\ninterp = interpreters.create()\ninterp.prepare_main(n=10)\ninterp.exec('import math; result = math.factorial(n)')\ninterp.close()"
+    },
+    {
+      "instruction": {"en": "Write a function `parallel_compute(values, code_template)` that creates one subinterpreter per value, sends each value via prepare_main, and executes the code_template in each. Use threading for parallelism."},
+      "expected_output": "All subinterpreters completed",
+      "hints": ["Create a thread for each value", "In each thread, create a subinterpreter, prepare_main with the value, exec the code", "Join all threads and print the completion message"],
+      "test_code": "# This tests the structure, not the output since subinterpreters are isolated\nimport threading\nassert callable(parallel_compute)"
+    }
+  ]
+}
