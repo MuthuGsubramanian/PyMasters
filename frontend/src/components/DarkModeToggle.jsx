@@ -8,7 +8,7 @@ export default function DarkModeToggle() {
     return (
         <button
             onClick={toggle}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-black/[0.04] hover:bg-black/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.12] transition-colors duration-300"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-bg-elevated hover:bg-border-strong transition-colors duration-300"
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
             <motion.div

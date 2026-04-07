@@ -228,11 +228,11 @@ export default function GlobalSearch() {
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-4 rounded-2xl border border-white/20 bg-white/90 backdrop-blur-xl shadow-2xl shadow-black/20 overflow-hidden"
+            className="relative w-full max-w-lg mx-4 rounded-2xl border border-border-default bg-bg-surface/90 backdrop-blur-xl shadow-2xl shadow-black/20 overflow-hidden"
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 px-4 h-14 border-b border-black/[0.06]">
-              <Search size={18} className="text-slate-400 shrink-0" />
+            <div className="flex items-center gap-3 px-4 h-14 border-b border-border-default">
+              <Search size={18} className="text-text-muted shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
@@ -240,9 +240,9 @@ export default function GlobalSearch() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onInputKeyDown}
                 placeholder="Search pages, topics, settings..."
-                className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
               />
-              <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5">
+              <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] font-mono text-text-muted bg-bg-elevated border border-border-default rounded px-1.5 py-0.5">
                 ESC
               </kbd>
             </div>
@@ -250,13 +250,13 @@ export default function GlobalSearch() {
             {/* Results */}
             <div ref={listRef} className="max-h-[360px] overflow-y-auto py-2">
               {categories.length === 0 && trimmed.length > 0 && (
-                <div className="px-4 py-8 text-center text-sm text-slate-400">
+                <div className="px-4 py-8 text-center text-sm text-text-muted">
                   No results for &ldquo;{query}&rdquo;
                 </div>
               )}
 
               {categories.length === 0 && trimmed.length === 0 && (
-                <div className="px-4 py-8 text-center text-sm text-slate-400">
+                <div className="px-4 py-8 text-center text-sm text-text-muted">
                   Start typing to search...
                 </div>
               )}
@@ -265,7 +265,7 @@ export default function GlobalSearch() {
                 const Icon = CATEGORY_ICONS[cat] || BookOpen;
                 return (
                   <div key={cat}>
-                    <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                    <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-text-muted flex items-center gap-1.5">
                       <Icon size={11} />
                       {cat}
                     </div>
@@ -282,10 +282,10 @@ export default function GlobalSearch() {
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 ${
                             isActive
                               ? 'bg-cyan-50 text-cyan-700'
-                              : 'text-slate-600 hover:bg-slate-50'
+                              : 'text-text-secondary hover:bg-bg-elevated'
                           }`}
                         >
-                          <CatIcon size={15} className={isActive ? 'text-cyan-500' : 'text-slate-400'} />
+                          <CatIcon size={15} className={isActive ? 'text-cyan-500' : 'text-text-muted'} />
                           <span className="flex-1 text-left truncate">{item.title}</span>
                           {isActive && (
                             <CornerDownLeft size={13} className="text-cyan-400 shrink-0" />
@@ -299,7 +299,7 @@ export default function GlobalSearch() {
             </div>
 
             {/* Footer hints */}
-            <div className="flex items-center gap-4 px-4 h-10 border-t border-black/[0.06] text-[10px] text-slate-400 bg-slate-50/60">
+            <div className="flex items-center gap-4 px-4 h-10 border-t border-border-default text-[10px] text-text-muted bg-bg-elevated/60">
               <span className="flex items-center gap-1">
                 <ArrowUp size={10} />
                 <ArrowDown size={10} />
@@ -310,7 +310,7 @@ export default function GlobalSearch() {
                 open
               </span>
               <span className="flex items-center gap-1">
-                <span className="font-mono text-[9px] bg-slate-200/80 rounded px-1">ESC</span>
+                <span className="font-mono text-[9px] bg-bg-elevated rounded px-1">ESC</span>
                 close
               </span>
               <span className="ml-auto flex items-center gap-1">
