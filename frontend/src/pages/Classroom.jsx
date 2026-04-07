@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
 import api, { getAuthHeaders, requestModule, getCompletions, recordSignal } from '../api';
+import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
@@ -39,29 +40,29 @@ function ThinkingBubble() {
 // Markdown components
 // ──────────────────────────────────────────────────────────────────────────────
 const markdownComponents = {
-    h2: ({children}) => <h2 className="text-base font-bold text-slate-900 mt-3 mb-1">{children}</h2>,
-    h3: ({children}) => <h3 className="text-sm font-bold text-slate-800 mt-2 mb-1">{children}</h3>,
-    p: ({children}) => <p className="text-sm text-slate-700 mb-2">{children}</p>,
-    ul: ({children}) => <ul className="list-disc list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ul>,
-    ol: ({children}) => <ol className="list-decimal list-inside text-sm text-slate-700 mb-2 space-y-1">{children}</ol>,
+    h2: ({children}) => <h2 className="text-base font-bold text-text-primary mt-3 mb-1">{children}</h2>,
+    h3: ({children}) => <h3 className="text-sm font-bold text-text-primary mt-2 mb-1">{children}</h3>,
+    p: ({children}) => <p className="text-sm text-text-secondary mb-2">{children}</p>,
+    ul: ({children}) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
+    ol: ({children}) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
     code: ({children, className}) => className
         ? <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>
-        : <code className="bg-slate-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+        : <code className="bg-bg-inset text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
     table: ({children}) => (
-        <div className="overflow-x-auto my-3 rounded-lg border border-slate-200">
+        <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
             <table className="text-sm w-full">{children}</table>
         </div>
     ),
     thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
-    tbody: ({children}) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
-    tr: ({children}) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+    tbody: ({children}) => <tbody className="divide-y divide-border-default">{children}</tbody>,
+    tr: ({children}) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
     th: ({children}) => (
         <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
     ),
     td: ({children}) => (
-        <td className="px-3 py-2 text-sm text-slate-700">{children}</td>
+        <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>
     ),
-    strong: ({children}) => <strong className="font-bold text-slate-900">{children}</strong>,
+    strong: ({children}) => <strong className="font-bold text-text-primary">{children}</strong>,
 };
 
 // Markdown components for Vaathiyaar story card (dark background)
@@ -245,26 +246,26 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
     }, [presentTracks.length]);
 
     return (
-        <div className="animate-fade-in space-y-8 max-w-3xl mx-auto">
+        <div className="animate-fade-in space-y-4 max-w-3xl mx-auto">
             <header className="space-y-3">
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold tracking-wider uppercase ${welcome.color}`}>
                     {welcome.icon}
                     Classroom
                 </div>
-                <h1 className="text-3xl font-bold font-display text-slate-900">{welcome.title}</h1>
-                <p className="text-slate-500">{welcome.subtitle}</p>
+                <h1 className="text-3xl font-bold font-display text-text-primary">{welcome.title}</h1>
+                <p className="text-text-muted">{welcome.subtitle}</p>
             </header>
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-3">
                     <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-slate-400">Loading your lessons...</p>
+                    <p className="text-sm text-text-muted">Loading your lessons...</p>
                 </div>
             ) : lessons.length === 0 ? (
                 <div className="panel rounded-2xl p-10 text-center space-y-3">
                     <BookOpen size={32} className="mx-auto text-purple-400" />
-                    <p className="text-slate-600 font-medium">Your lessons are being prepared.</p>
-                    <p className="text-slate-400 text-sm">Ask Vaathiyaar to teach you a topic using the chat below!</p>
+                    <p className="text-text-secondary font-medium">Your lessons are being prepared.</p>
+                    <p className="text-text-muted text-sm">Ask Vaathiyaar to teach you a topic using the chat below!</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -277,13 +278,13 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                             <motion.div
                                 key={track}
                                 layout
-                                className="rounded-2xl border border-black/[0.06] overflow-hidden bg-white/60 backdrop-blur-sm"
+                                className="rounded-2xl border border-border-default overflow-hidden bg-bg-surface backdrop-blur-sm"
                             >
                                 {/* Track header - clickable to expand */}
                                 <button
                                     onClick={() => setExpandedTrack(isExpanded ? null : track)}
-                                    className={`w-full px-5 py-4 flex items-center gap-3 transition-all duration-300 hover:bg-white/80 ${
-                                        isExpanded ? 'bg-white/80' : ''
+                                    className={`w-full px-4 py-3 flex items-center gap-3 transition-all duration-300 hover:bg-bg-elevated ${
+                                        isExpanded ? 'bg-bg-elevated' : ''
                                     }`}
                                 >
                                     <div className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -291,8 +292,8 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                         {meta.icon}
                                     </div>
                                     <div className="flex-1 text-left">
-                                        <h2 className="text-sm font-bold text-slate-800">{meta.name}</h2>
-                                        <p className="text-xs text-slate-400">{lessonsInTrack.length} lessons</p>
+                                        <h2 className="text-sm font-bold text-text-primary">{meta.name}</h2>
+                                        <p className="text-xs text-text-muted">{lessonsInTrack.length} lessons</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
@@ -301,7 +302,7 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                         </span>
                                         <ChevronRight
                                             size={16}
-                                            className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
+                                            className={`text-text-muted transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
                                         />
                                     </div>
                                 </button>
@@ -328,42 +329,42 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                             transition={{ delay: idx * 0.02 }}
                                                             onClick={() => !isLocked && onSelectLesson(lesson)}
                                                             title={isLocked ? 'Complete earlier modules first' : undefined}
-                                                            className={`text-left rounded-xl p-4 group transition-all duration-200 relative ${
+                                                            className={`text-left rounded-xl p-3 group transition-all duration-200 relative ${
                                                                 isLocked
-                                                                    ? 'opacity-40 cursor-not-allowed bg-slate-50 dark:bg-slate-800/30'
+                                                                    ? 'opacity-40 cursor-not-allowed bg-bg-elevated'
                                                                     : isDone
-                                                                    ? 'bg-white dark:bg-slate-800/50 border border-green-200 dark:border-green-800/30 hover:shadow-md cursor-pointer'
-                                                                    : 'bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/30 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600/40 cursor-pointer'
+                                                                    ? 'bg-bg-surface border border-green-200 hover:shadow-md cursor-pointer'
+                                                                    : 'bg-bg-surface border border-border-default hover:shadow-md hover:border-purple-300 cursor-pointer'
                                                             }`}
                                                         >
                                                             {/* Top: number + XP */}
                                                             <div className="flex items-center gap-2 mb-2">
                                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                                                                    isLocked ? 'bg-slate-100 dark:bg-slate-700 text-slate-400'
+                                                                    isLocked ? 'bg-bg-elevated text-text-muted'
                                                                     : isDone ? 'bg-green-500 text-white'
                                                                     : 'text-white'
                                                                 }`} style={!isLocked && !isDone ? { background: meta.accent } : {}}>
                                                                     {isLocked ? <Lock size={12} /> : isDone ? '✓' : idx + 1}
                                                                 </div>
                                                                 <div className="ml-auto flex items-center gap-1.5">
-                                                                    {isDone && <span className="text-[9px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded-full px-2 py-0.5">Done</span>}
-                                                                    {lesson.generated && <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-full px-2 py-0.5">Custom</span>}
+                                                                    {isDone && <span className="text-[9px] font-bold text-green-600 bg-green-50 rounded-full px-2 py-0.5">Done</span>}
+                                                                    {lesson.generated && <span className="text-[9px] font-bold text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Custom</span>}
                                                                     {lesson.xp_reward != null && (
                                                                         <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
-                                                                            isLocked ? 'text-slate-400 bg-slate-50 dark:bg-slate-700' : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30'
+                                                                            isLocked ? 'text-text-muted bg-bg-elevated' : 'text-amber-600 bg-amber-50'
                                                                         }`}>+{lesson.xp_reward} XP</span>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                             {/* Title */}
                                                             <h4 className={`font-bold text-[15px] leading-snug mb-1 transition-colors ${
-                                                                isLocked ? 'text-slate-400' : 'text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300'
+                                                                isLocked ? 'text-text-disabled' : 'text-text-primary group-hover:text-purple-600'
                                                             }`}>
                                                                 {resolveText(lesson.title, language)}
                                                             </h4>
                                                             {/* Description */}
                                                             {lesson.description && (
-                                                                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                                                                <p className="text-sm text-text-secondary leading-relaxed">
                                                                     {resolveText(lesson.description, language)}
                                                                 </p>
                                                             )}
@@ -424,7 +425,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
     return (
-        <div className="animate-fade-in space-y-5 max-w-7xl mx-auto">
+        <div className="animate-fade-in space-y-4 max-w-7xl mx-auto">
             {/* ── Header ── */}
             <header>
                 <div className="flex items-center gap-2 mb-1">
@@ -438,7 +439,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         </span>
                     )}
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 font-display">
+                <h2 className="text-2xl font-bold text-text-primary font-display">
                     {resolveText(lesson.active_title || lesson.title, language)}
                 </h2>
             </header>
@@ -607,9 +608,9 @@ function PracticePhase({
           'Write your solution below.';
 
     return (
-        <div className="animate-fade-in max-w-4xl mx-auto space-y-5">
+        <div className="animate-fade-in max-w-4xl mx-auto space-y-4">
             {/* Vaathiyaar instruction panel */}
-            <div className="panel rounded-2xl p-5 border-l-4 border-l-purple-400 flex items-start gap-4">
+            <div className="panel rounded-2xl p-4 border-l-4 border-l-purple-400 flex items-start gap-3">
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg select-none shadow-lg shadow-purple-500/20">
                     {'\u{1F9D1}\u200D\u{1F3EB}'}
                 </div>
@@ -618,7 +619,7 @@ function PracticePhase({
                         <p className="text-xs font-bold uppercase tracking-widest text-purple-500">Challenge</p>
                         <Zap size={12} className="text-amber-400" />
                     </div>
-                    <p className="text-slate-700 leading-relaxed">{instruction}</p>
+                    <p className="text-text-secondary leading-relaxed">{instruction}</p>
                 </div>
             </div>
 
@@ -631,7 +632,7 @@ function PracticePhase({
                     className="panel rounded-xl p-4 border border-amber-200 bg-amber-50/80 flex items-start gap-3"
                 >
                     <span className="text-amber-500 text-lg">💡</span>
-                    <p className="text-slate-600 text-sm leading-relaxed">{m.content}</p>
+                    <p className="text-text-secondary text-sm leading-relaxed">{m.content}</p>
                 </motion.div>
             ))}
 
@@ -694,7 +695,7 @@ function PracticePhase({
                     >
                         💡 Need a hint?
                         {hintIndex > 0 && (
-                            <span className="ml-1.5 text-xs text-slate-400">
+                            <span className="ml-1.5 text-xs text-text-muted">
                                 ({hintIndex}/{challenge.hints.length})
                             </span>
                         )}
@@ -786,7 +787,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
                         <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-sm select-none shadow-md">
                             {'\u{1F9D1}\u200D\u{1F3EB}'}
                         </div>
-                        <div className="text-slate-700 leading-relaxed flex-1">
+                        <div className="text-text-secondary leading-relaxed flex-1">
                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                                 {feedbackMsg}
                             </ReactMarkdown>
@@ -952,8 +953,7 @@ export default function Classroom() {
         } catch (err) {
             const elapsed = Math.round(performance.now() - startTime);
             setExecutionTime(elapsed);
-            const detail = err.response?.data?.detail || err.message || 'Unknown error';
-            setOutput(`Execution error: ${detail}`);
+            setOutput(`Execution error: ${safeErrorMsg(err, 'Unknown error')}`);
             console.error('[Classroom handleRun]', err);
         } finally {
             setRunning(false);
@@ -1113,7 +1113,7 @@ export default function Classroom() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         onClick={handleBackToSelect}
-                        className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 transition-colors mb-6 group"
+                        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors mb-6 group"
                     >
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                         Back to lessons
@@ -1208,7 +1208,7 @@ export default function Classroom() {
                 {/* Chat messages */}
                 {phase !== 'select' && chatMessages.filter((m) => !m._isHint).length > 0 && (
                     <div className="mt-8 space-y-3">
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
+                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2 flex items-center gap-2">
                             <MessageSquare size={12} />
                             Chat with Vaathiyaar
                         </p>
@@ -1225,7 +1225,7 @@ export default function Classroom() {
                                     }`}
                                 >
                                     {msg._isModuleSuggestion ? (
-                                        <div className="max-w-[80%] px-4 py-3 rounded-2xl panel text-slate-700 rounded-bl-none space-y-2">
+                                        <div className="max-w-[80%] px-4 py-3 rounded-2xl panel text-text-secondary rounded-bl-none space-y-2">
                                             <p className="text-sm">{msg.content}</p>
                                             <button
                                                 onClick={async () => {
@@ -1248,7 +1248,7 @@ export default function Classroom() {
                                             className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                                                 msg.role === 'user'
                                                     ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-br-none shadow-lg shadow-cyan-500/20'
-                                                    : 'panel text-slate-700 rounded-bl-none'
+                                                    : 'panel text-text-secondary rounded-bl-none'
                                             }`}
                                         >
                                             {msg._isThinking ? (
@@ -1289,7 +1289,7 @@ export default function Classroom() {
                             </div>
                             <button
                                 onClick={() => tts.setEnabled(!tts.enabled)}
-                                className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+                                className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
                                 title={tts.enabled ? 'Voice on' : 'Voice off'}
                             >
                                 {tts.enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
