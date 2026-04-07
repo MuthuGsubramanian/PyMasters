@@ -1,17 +1,19 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getOrg, getOrgMembers, inviteToOrg, bulkInviteToOrg,
-  updateMemberRole, removeMember, getOrgAnalytics, getMyOrgs
+  updateMemberRole, removeMember, getOrgAnalytics, getMyOrgs, deleteOrg
 } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
   Building2, Users, Mail, Send, Copy, Shield, Crown,
   UserX, BarChart3, TrendingUp, Trophy, Zap, Search,
-  Plus, ChevronDown, ExternalLink, Check, AlertTriangle
+  Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
+  Upload, Rocket, X, Loader2
 } from 'lucide-react';
+import { read, utils } from 'xlsx';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -36,6 +38,34 @@ const TYPE_BADGES = {
   enterprise: 'bg-purple-100 text-purple-700',
   other: 'bg-slate-100 text-slate-600',
 };
+
+/* Helper: parse emails from uploaded file */
+async function parseEmailFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const emails = [];
+
+  if (ext === 'xlsx' || ext === 'xls') {
+    const data = await file.arrayBuffer();
+    const wb = read(data);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = utils.sheet_to_json(ws, { header: 1 });
+    for (let i = 0; i < rows.length; i++) {
+      const cell = String(rows[i]?.[0] || '').trim();
+      if (!cell) continue;
+      if (i === 0 && /^(email|mail|name|e-mail)/i.test(cell)) continue;
+      if (cell.includes('@')) emails.push(cell);
+    }
+  } else {
+    const text = await file.text();
+    const lines = text.split(/[\n,;]+/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed && trimmed.includes('@')) emails.push(trimmed);
+    }
+  }
+
+  return [...new Set(emails)];
+}
 
 /* Helper: safely extract org id from activeOrg (handles all 3 shapes) */
 function getOrgId(activeOrg) {
@@ -98,6 +128,220 @@ function CopyButton({ text }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  InvitePromptCard — shown when org has only 1 member               */
+/* ------------------------------------------------------------------ */
+function InvitePromptCard({ orgId, userId, onInviteSent }) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('member');
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem(`pm_invite_prompt_dismissed_${orgId}`) === '1'; } catch { return false; }
+  });
+  const [fileEmails, setFileEmails] = useState([]);
+  const [fileRole, setFileRole] = useState('member');
+  const [bulkSending, setBulkSending] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
+  const fileInputRef = useRef(null);
+
+  if (dismissed) return null;
+
+  const handleSingleInvite = async () => {
+    if (!email.trim() || sending) return;
+    setSending(true);
+    setResult(null);
+    try {
+      await inviteToOrg(orgId, { email: email.trim(), role, user_id: userId });
+      setResult({ ok: true, msg: `Invited ${email.trim()}` });
+      setEmail('');
+      onInviteSent?.();
+    } catch (err) {
+      setResult({ ok: false, msg: safeErrorMsg(err, 'Failed to send invite') });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const emails = await parseEmailFile(file);
+    setFileEmails(emails);
+    setBulkResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleBulkSend = async () => {
+    if (fileEmails.length === 0 || bulkSending) return;
+    setBulkSending(true);
+    setBulkResult(null);
+    try {
+      const invites = fileEmails.map(em => ({ email: em, role: fileRole }));
+      await bulkInviteToOrg(orgId, { invites, user_id: userId });
+      setBulkResult({ ok: true, msg: `Sent ${fileEmails.length} invites` });
+      setFileEmails([]);
+      onInviteSent?.();
+    } catch (err) {
+      setBulkResult({ ok: false, msg: safeErrorMsg(err, 'Bulk invite failed') });
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    try { localStorage.setItem(`pm_invite_prompt_dismissed_${orgId}`, '1'); } catch {}
+  };
+
+  return (
+    <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-border-default rounded-2xl p-4 space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-text-primary font-bold text-base flex items-center gap-2">
+            <Rocket size={18} className="text-cyan-500" /> Get your team started
+          </h3>
+          <p className="text-text-muted text-sm mt-1">Invite learners to start their Python journey with your organization.</p>
+        </div>
+        <button onClick={handleDismiss} className="text-text-muted hover:text-text-secondary p-1" title="Dismiss">
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="flex gap-2 items-center">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email address"
+          className="input-neo flex-1 py-2 text-sm"
+          onKeyDown={(e) => e.key === 'Enter' && handleSingleInvite()}
+        />
+        <select value={role} onChange={(e) => setRole(e.target.value)} className="input-neo w-28 py-2 text-sm">
+          <option value="member">Member</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button onClick={handleSingleInvite} disabled={sending || !email.trim()} className="btn-neo btn-neo-primary py-2 px-4 text-sm">
+          {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+        </button>
+      </div>
+      {result && (
+        <p className={`text-xs ${result.ok ? 'text-green-600' : 'text-red-500'}`}>{result.msg}</p>
+      )}
+
+      <div className="border-t border-border-default pt-3">
+        <label className="flex items-center gap-2 text-sm text-text-muted cursor-pointer hover:text-text-secondary transition-colors">
+          <Upload size={14} />
+          <span>Upload file (.csv, .xlsx, .txt)</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,.txt"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </label>
+
+        {fileEmails.length > 0 && (
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-text-secondary font-medium">{fileEmails.length} emails found</p>
+              <select value={fileRole} onChange={(e) => setFileRole(e.target.value)} className="input-neo w-28 py-1 text-xs">
+                <option value="member">Member</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="max-h-32 overflow-y-auto bg-bg-inset rounded-lg p-2 text-xs text-text-muted space-y-0.5">
+              {fileEmails.map((em, i) => <div key={i}>{em}</div>)}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleBulkSend} disabled={bulkSending} className="btn-neo btn-neo-primary py-1.5 px-4 text-xs">
+                {bulkSending ? 'Sending...' : `Invite all ${fileEmails.length}`}
+              </button>
+              <button onClick={() => setFileEmails([])} className="btn-neo btn-neo-ghost py-1.5 px-4 text-xs">
+                Clear
+              </button>
+            </div>
+            {bulkResult && (
+              <p className={`text-xs ${bulkResult.ok ? 'text-green-600' : 'text-red-500'}`}>{bulkResult.msg}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  DeleteOrgModal                                                      */
+/* ------------------------------------------------------------------ */
+function DeleteOrgModal({ orgName, orgId, userId, onDeleted, onClose }) {
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+
+  const canDelete = confirmText === orgName;
+
+  const handleDelete = async () => {
+    if (!canDelete || deleting) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await deleteOrg(orgId, userId);
+      onDeleted();
+    } catch (err) {
+      setError(safeErrorMsg(err, 'Failed to delete organization'));
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-bg-surface border border-border-default rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+            <AlertTriangle size={20} className="text-red-500" />
+          </div>
+          <div>
+            <h3 className="text-text-primary font-bold">Delete Organization</h3>
+            <p className="text-text-muted text-xs">This action cannot be undone</p>
+          </div>
+        </div>
+
+        <p className="text-sm text-text-secondary">
+          This will permanently delete <strong>{orgName}</strong>, remove all members, and cancel all pending invites. Member accounts will not be deleted.
+        </p>
+
+        <div className="space-y-1.5">
+          <label className="text-xs text-text-muted font-medium">Type &quot;{orgName}&quot; to confirm</label>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            className="input-neo py-2 text-sm"
+            placeholder={orgName}
+          />
+        </div>
+
+        {error && <p className="text-xs text-red-500">{error}</p>}
+
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="btn-neo btn-neo-ghost py-2 px-4 text-sm">Cancel</button>
+          <button
+            onClick={handleDelete}
+            disabled={!canDelete || deleting}
+            className="btn-neo py-2 px-4 text-sm font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors"
+          >
+            {deleting ? 'Deleting...' : 'Delete Organization'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function OrgDashboard() {
@@ -107,6 +351,7 @@ export default function OrgDashboard() {
   const [tab, setTab] = useState('overview');
   const [org, setOrgData] = useState(null);
   const [members, setMembers] = useState([]);
+  const [showDeleteOrg, setShowDeleteOrg] = useState(false);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -456,6 +701,14 @@ export default function OrgDashboard() {
           {/* ========== OVERVIEW TAB ========== */}
           {tab === 'overview' && (
             <div className="space-y-4">
+              {members.length <= 1 && (
+                <InvitePromptCard
+                  orgId={getOrgId(activeOrg)}
+                  userId={user?.id}
+                  onInviteSent={() => loadOrg()}
+                />
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard icon={Users} label="Total Members" value={memberCount} />
                 <StatCard icon={Zap} label="Avg XP" value={avgXp} color="from-purple-500 to-pink-500" />
@@ -486,6 +739,30 @@ export default function OrgDashboard() {
                       ))}
                   </div>
                 </div>
+              )}
+
+              {activeOrg?.role === 'super_admin' && (
+                <div className="border-t border-border-default pt-4 mt-4">
+                  <button
+                    onClick={() => setShowDeleteOrg(true)}
+                    className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+                  >
+                    Delete Organization
+                  </button>
+                </div>
+              )}
+
+              {showDeleteOrg && (
+                <DeleteOrgModal
+                  orgName={getOrgName(org, activeOrg)}
+                  orgId={getOrgId(activeOrg)}
+                  userId={user?.id}
+                  onDeleted={() => {
+                    setOrg(null);
+                    navigate('/dashboard');
+                  }}
+                  onClose={() => setShowDeleteOrg(false)}
+                />
               )}
             </div>
           )}
