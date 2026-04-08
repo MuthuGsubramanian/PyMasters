@@ -1,0 +1,186 @@
+{
+  "id": "open_llm_leaderboard",
+  "topic": "open_llm_leaderboard",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Open LLM Leaderboard: Benchmarking & Picking the Right Local Model",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn how the Hugging Face Open LLM Leaderboard evaluates open-weight language models across standardized benchmarks, and build Python tools to query leaderboard data and pick the best model for your local inference setup.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Open LLM Leaderboard: Your Guide to Choosing Local Models\n\nVaathiyaar here! With thousands of open-weight LLMs flooding Hugging Face every week, picking the right model for local inference feels like drinking from a firehose. Should you run Llama, Mistral, Qwen, or Gemma? The **Open LLM Leaderboard** answers that question with cold, hard benchmark scores. It's the definitive scoreboard for open-source language models â€” and today you'll learn to read it, query it, and build your own model selection pipeline.\n\n### What Is the Open LLM Leaderboard?\n\nMaintained by Hugging Face, the **Open LLM Leaderboard** (v2) evaluates open-weight models on 6 challenging benchmarks that test reasoning, knowledge, and instruction-following. Every model gets a public, reproducible score.\n\n| Benchmark | What It Tests | Example Task |\n|---|---|---|\n| **IFEval** | Instruction following | \"Write exactly 3 sentences about cats\" |\n| **BBH** (Big-Bench Hard) | Multi-step reasoning | Chain-of-thought logic puzzles |\n| **MATH Lvl 5** | Mathematical reasoning | Competition-level math problems |\n| **GPQA** | Graduate-level science QA | PhD-qualifier style questions |\n| **MuSR** | Multi-step soft reasoning | Complex narrative reasoning |\n| **MMLU-PRO** | Massive multitask knowledge | 10-choice expert knowledge questions |\n\n### Querying the Leaderboard Programmatically\n\nYou don't need to scroll through the web UI. The leaderboard dataset is published on Hugging Face and can be loaded directly with the `datasets` library:\n\n```python\nfrom datasets import load_dataset\n\n# Load the Open LLM Leaderboard results\nds = load_dataset(\n    \"open-llm-leaderboard/contents\", split=\"train\"\n)\n\n# Each row is a model with benchmark scores\nprint(f\"Total models evaluated: {len(ds)}\")\nprint(f\"Columns: {ds.column_names}\")\n\n# Filter to models with complete results\nimport pandas as pd\ndf = ds.to_pandas()\nprint(df[[\"model_name\", \"ifeval\", \"bbh\", \"math_lvl5\",\n         \"gpqa\", \"musr\", \"mmlu_pro\"]].head(3))\n```\n\n### Building a Model Recommender\n\nRaw scores aren't enough â€” you need to match models to your hardware and use case:\n\n```python\ndef recommend_local_llm(df, max_params_b=None, min_avg_score=None,\n                         priority=\"balanced\"):\n    \"\"\"Recommend a local LLM based on constraints.\"\"\"\n    filtered = df.copy()\n    if max_params_b is not None:\n        filtered = filtered[filtered[\"params_b\"] <= max_params_b]\n    if min_avg_score is not None:\n        filtered = filtered[filtered[\"average\"] >= min_avg_score]\n\n    weight_map = {\n        \"reasoning\": {\"bbh\": 3, \"math_lvl5\": 3, \"gpqa\": 2,\n                      \"musr\": 1, \"ifeval\": 1, \"mmlu_pro\": 1},\n        \"knowledge\": {\"mmlu_pro\": 3, \"gpqa\": 2, \"bbh\": 1,\n                      \"math_lvl5\": 1, \"musr\": 1, \"ifeval\": 1},\n        \"balanced\":  {\"bbh\": 1, \"math_lvl5\": 1, \"gpqa\": 1,\n                      \"musr\": 1, \"ifeval\": 1, \"mmlu_pro\": 1},\n    }\n    weights = weight_map[priority]\n    benchmarks = list(weights.keys())\n    for b in benchmarks:\n        if b in filtered.columns:\n            filtered[f\"{b}_w\"] = filtered[b] * weights[b]\n    w_cols = [f\"{b}_w\" for b in benchmarks if b in filtered.columns]\n    filtered[\"weighted_score\"] = filtered[w_cols].sum(axis=1)\n    return filtered.nlargest(5, \"weighted_score\")[\n        [\"model_name\", \"params_b\", \"average\", \"weighted_score\"]\n    ]\n```\n\n### Comparing Model Families\n\n| Model Family | Typical Sizes | Strengths | Hardware Needed |\n|---|---|---|---|\n| **Llama 3** | 8B, 70B | Balanced, large community | 8B: 6GB VRAM, 70B: 48GB |\n| **Mistral/Mixtral** | 7B, 8x7B | Fast inference, MoE efficiency | 7B: 6GB, 8x7B: 32GB |\n| **Qwen 2.5** | 0.5Bâ€“72B | Math, coding, multilingual | Varies by size |\n| **Gemma 2** | 2B, 9B, 27B | Efficient for size, safety-tuned | 9B: 8GB VRAM |\n| **Phi-3/4** | 3.8B, 14B | Punches above weight class | 3.8B: 4GB VRAM |\n\n### Quantization: Running Big Models on Small GPUs\n\n```python\ndef estimate_vram_gb(params_b, quant_bits=16):\n    \"\"\"Estimate VRAM needed for a model at given quantization.\"\"\"\n    bytes_per_param = quant_bits / 8\n    model_gb = params_b * bytes_per_param\n    overhead_gb = model_gb * 0.2  # KV cache + activations\n    return round(model_gb + overhead_gb, 1)\n\nfor bits in [16, 8, 4]:\n    vram = estimate_vram_gb(7.0, bits)\n    print(f\"7B model @ {bits}-bit: ~{vram} GB VRAM\")\n# 7B model @ 16-bit: ~16.8 GB VRAM\n# 7B model @ 8-bit:  ~8.4 GB VRAM\n# 7B model @ 4-bit:  ~4.2 GB VRAM\n```\n\n> **Key Insight:** The Open LLM Leaderboard is not about finding the single \"best\" model â€” it's about finding the best model *for your constraints*. A 7B model quantized to 4-bit that scores 45 on average and runs at 30 tokens/sec on your GPU is far more useful than a 70B model scoring 65 that you can't even load. Always cross-reference leaderboard scores with your hardware budget and latency needs.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "With thousands of open-weight LLMs on Hugging Face, how do you choose which to run locally? The Open LLM Leaderboard benchmarks every model across 6 standardized tests â€” IFEval, BBH, MATH, GPQA, MuSR, and MMLU-PRO â€” so you can make data-driven decisions instead of guessing.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from datasets import load_dataset\nimport pandas as pd\n\n# Load the Open LLM Leaderboard results\nds = load_dataset(\"open-llm-leaderboard/contents\", split=\"train\")\ndf = ds.to_pandas()\n\n# See how many models have been evaluated\nprint(f\"Total models: {len(df)}\")\n\n# Show top 5 by average score\ntop5 = df.nlargest(5, \"average\")\nfor _, row in top5.iterrows():\n    print(f\"{row['model_name']}: {row['average']:.1f}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the datasets library â€” Hugging Face's tool for loading any dataset, including leaderboard results."
+        },
+        {
+          "line": 5,
+          "explanation": "Load the full leaderboard dataset directly from Hugging Face. Each row represents one evaluated model."
+        },
+        {
+          "line": 6,
+          "explanation": "Convert to a pandas DataFrame for easy filtering, sorting, and analysis of benchmark scores."
+        },
+        {
+          "line": 9,
+          "explanation": "Check how many models have been benchmarked â€” the leaderboard evaluates thousands of open-weight models."
+        },
+        {
+          "line": 11,
+          "explanation": "Use nlargest to efficiently grab the top 5 models by their average benchmark score."
+        },
+        {
+          "line": 12,
+          "explanation": "Iterate and print each top model's name and average score â€” your first look at what's winning."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def estimate_vram_gb(params_b, quant_bits=16):\n    bytes_per_param = quant_bits / 8\n    model_gb = params_b * bytes_per_param\n    overhead_gb = model_gb * 0.2\n    return round(model_gb + overhead_gb, 1)\n\ndef find_best_for_gpu(df, vram_gb, quant_bits=4):\n    candidates = []\n    for _, row in df.iterrows():\n        needed = estimate_vram_gb(row[\"params_b\"], quant_bits)\n        if needed <= vram_gb:\n            candidates.append(row)\n    result = pd.DataFrame(candidates)\n    return result.nlargest(3, \"average\")\n\n# Find best models for an 8GB GPU at 4-bit\npicks = find_best_for_gpu(df, vram_gb=8, quant_bits=4)\nfor _, r in picks.iterrows():\n    vram = estimate_vram_gb(r[\"params_b\"], 4)\n    print(f\"{r['model_name']}: avg={r['average']:.1f}, ~{vram}GB\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Build a VRAM estimator: multiply billions of parameters by bytes per param at the target quantization level."
+        },
+        {
+          "line": 4,
+          "explanation": "Add 20% overhead for KV cache and activations â€” the model weights alone don't tell the full memory story."
+        },
+        {
+          "line": 7,
+          "explanation": "Define a hardware-aware model finder that filters the leaderboard by what actually fits on your GPU."
+        },
+        {
+          "line": 10,
+          "explanation": "For each model, estimate VRAM at the chosen quantization and check if it fits within your budget."
+        },
+        {
+          "line": 13,
+          "explanation": "Convert surviving candidates back to a DataFrame and pick the top 3 by average benchmark score."
+        },
+        {
+          "line": 17,
+          "explanation": "Run it: find the best models that fit on an 8GB GPU when quantized to 4-bit â€” practical local LLM selection."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Picking Models by Hype",
+      "right_label": "Picking Models by Leaderboard",
+      "items": [
+        {
+          "left": "Choose whatever is trending on Reddit",
+          "right": "Filter by benchmark scores matching your use case"
+        },
+        {
+          "left": "Assume bigger is always better",
+          "right": "Cross-reference scores with VRAM budget"
+        },
+        {
+          "left": "Ignore quantization effects",
+          "right": "Account for quality-VRAM tradeoffs at 4/8-bit"
+        },
+        {
+          "left": "Use one model for everything",
+          "right": "Pick reasoning-heavy vs knowledge-heavy models per task"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now query the Open LLM Leaderboard programmatically and pick the best model for your hardware and use case!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `LLMLeaderboard` class that stores model benchmark results and helps developers pick models for local deployment. Implement `add_model(name, params_b, scores)` where scores is a dict mapping benchmark names to float scores, `average_score(name)` returning the mean of all benchmark scores rounded to 2 decimals, `top_models(n)` returning the top-n models by average score as a list of tuples (name, avg_score), `fits_in_vram(vram_gb, quant_bits)` returning models sorted by average score descending that fit in the given VRAM (use formula: params_b * quant_bits/8 * 1.2), and `best_for_benchmark(benchmark_name)` returning the model name with the highest score on that specific benchmark."
+      },
+      "starter_code": "class LLMLeaderboard:\n    def __init__(self):\n        self.models = {}\n\n    def add_model(self, name: str, params_b: float, scores: dict):\n        # Store model with its parameter count (billions) and benchmark scores\n        pass\n\n    def average_score(self, name: str) -> float:\n        # Return mean of all benchmark scores for this model, rounded to 2\n        pass\n\n    def top_models(self, n: int = 3) -> list[tuple]:\n        # Return top-n models as [(name, avg_score), ...] sorted desc\n        pass\n\n    def fits_in_vram(self, vram_gb: float,\n                      quant_bits: int = 4) -> list[tuple]:\n        # VRAM needed = params_b * (quant_bits / 8) * 1.2\n        # Return [(name, avg_score), ...] for models that fit, sorted desc\n        pass\n\n    def best_for_benchmark(self, benchmark: str) -> str:\n        # Return model name with highest score on given benchmark\n        pass\n\n# Test it:\nlb = LLMLeaderboard()\nlb.add_model(\"Llama-3-8B\", 8.0, {\n    \"ifeval\": 72.0, \"bbh\": 61.5, \"math\": 30.2,\n    \"gpqa\": 31.4, \"musr\": 40.1, \"mmlu_pro\": 44.3\n})\nlb.add_model(\"Phi-3-mini\", 3.8, {\n    \"ifeval\": 68.5, \"bbh\": 58.2, \"math\": 35.7,\n    \"gpqa\": 29.1, \"musr\": 37.8, \"mmlu_pro\": 41.9\n})\nlb.add_model(\"Qwen2.5-72B\", 72.0, {\n    \"ifeval\": 85.1, \"bbh\": 78.4, \"math\": 62.3,\n    \"gpqa\": 49.0, \"musr\": 55.2, \"mmlu_pro\": 68.5\n})\n\nprint(lb.average_score(\"Llama-3-8B\"))\ntop = lb.top_models(2)\nprint(top[0][0])\nprint(top[1][0])\n\ngpu8 = lb.fits_in_vram(vram_gb=8.0, quant_bits=4)\nprint(len(gpu8))\nprint(gpu8[0][0])\n\nprint(lb.best_for_benchmark(\"math\"))",
+      "expected_output": "46.58\nQwen2.5-72B\nLlama-3-8B\n2\nLlama-3-8B\nQwen2.5-72B",
+      "hints": {
+        "en": [
+          "Store each model as a dict in self.models[name] with keys 'params_b' and 'scores'",
+          "For average_score, use sum(scores.values()) / len(scores) and round to 2 decimals",
+          "For fits_in_vram, calculate VRAM as params_b * (quant_bits / 8) * 1.2 and keep models where that value <= vram_gb"
+        ]
+      },
+      "test_code": "lb = LLMLeaderboard()\nlb.add_model(\"A\", 7.0, {\"x\": 80.0, \"y\": 60.0})\nlb.add_model(\"B\", 3.0, {\"x\": 70.0, \"y\": 75.0})\nlb.add_model(\"C\", 70.0, {\"x\": 90.0, \"y\": 85.0})\nassert lb.average_score(\"A\") == 70.0\nassert lb.average_score(\"B\") == 72.5\ntop = lb.top_models(2)\nassert top[0][0] == \"C\"\nassert top[1][0] == \"B\"\nassert top[0][1] == 87.5\nfits = lb.fits_in_vram(vram_gb=6.0, quant_bits=4)\nassert len(fits) == 1\nassert fits[0][0] == \"B\"\nfits8 = lb.fits_in_vram(vram_gb=5.0, quant_bits=4)\nassert len(fits8) == 1\nassert fits8[0][0] == \"B\"\nassert lb.best_for_benchmark(\"x\") == \"C\"\nassert lb.best_for_benchmark(\"y\") == \"C\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `BenchmarkAnalyzer` that identifies model strengths and weaknesses across leaderboard benchmarks. Implement `add_result(model, scores_dict)` to store a model's benchmark scores, `strength_profile(model)` returning a dict with 'strongest' and 'weakest' keys (benchmark names where the model scored highest/lowest), `head_to_head(model_a, model_b)` returning a dict with keys 'wins_a', 'wins_b', and 'ties' (count of benchmarks each model wins on â€” higher score wins, tie if equal), and `benchmark_difficulty()` returning a list of (benchmark_name, avg_score) tuples sorted by avg_score ascending (hardest benchmarks first)."
+      },
+      "starter_code": "class BenchmarkAnalyzer:\n    def __init__(self):\n        self.results = {}\n\n    def add_result(self, model: str, scores: dict):\n        # Store benchmark scores for a model\n        pass\n\n    def strength_profile(self, model: str) -> dict:\n        # Return {\"strongest\": benchmark_name, \"weakest\": benchmark_name}\n        pass\n\n    def head_to_head(self, model_a: str, model_b: str) -> dict:\n        # Compare on shared benchmarks\n        # Return {\"wins_a\": int, \"wins_b\": int, \"ties\": int}\n        pass\n\n    def benchmark_difficulty(self) -> list[tuple]:\n        # Average each benchmark across all models\n        # Return [(name, avg), ...] sorted by avg ascending (hardest first)\n        pass\n\n# Test it:\nba = BenchmarkAnalyzer()\nba.add_result(\"Llama-3-8B\", {\n    \"ifeval\": 72.0, \"bbh\": 61.5, \"math\": 30.2, \"gpqa\": 31.4\n})\nba.add_result(\"Phi-3-mini\", {\n    \"ifeval\": 68.5, \"bbh\": 58.2, \"math\": 35.7, \"gpqa\": 29.1\n})\n\nprofile = ba.strength_profile(\"Llama-3-8B\")\nprint(profile[\"strongest\"])\nprint(profile[\"weakest\"])\n\nh2h = ba.head_to_head(\"Llama-3-8B\", \"Phi-3-mini\")\nprint(h2h[\"wins_a\"])\nprint(h2h[\"wins_b\"])\n\ndiff = ba.benchmark_difficulty()\nprint(diff[0][0])\nprint(diff[-1][0])",
+      "expected_output": "ifeval\nmath\n3\n1\ngpqa\nifeval",
+      "hints": {
+        "en": [
+          "For strength_profile, use max() and min() with key parameter on the scores dict items",
+          "For head_to_head, find shared benchmarks (intersection of keys), then compare scores one by one",
+          "For benchmark_difficulty, collect all scores per benchmark across models, compute the mean, then sort ascending"
+        ]
+      },
+      "test_code": "ba = BenchmarkAnalyzer()\nba.add_result(\"X\", {\"a\": 90.0, \"b\": 40.0, \"c\": 70.0})\nba.add_result(\"Y\", {\"a\": 85.0, \"b\": 50.0, \"c\": 70.0})\np = ba.strength_profile(\"X\")\nassert p[\"strongest\"] == \"a\"\nassert p[\"weakest\"] == \"b\"\nh = ba.head_to_head(\"X\", \"Y\")\nassert h[\"wins_a\"] == 1\nassert h[\"wins_b\"] == 1\nassert h[\"ties\"] == 1\nd = ba.benchmark_difficulty()\nassert d[0][0] == \"b\"\nassert d[0][1] == 45.0\nassert d[-1][0] == \"a\"\nassert d[-1][1] == 87.5"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "Open LLM Leaderboard",
+      "LLM benchmarking",
+      "IFEval",
+      "BBH",
+      "MATH",
+      "GPQA",
+      "MuSR",
+      "MMLU-PRO",
+      "model selection",
+      "quantization VRAM estimation",
+      "hardware-aware model picking"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "lists",
+      "sorting",
+      "pip install",
+      "basic LLM concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
