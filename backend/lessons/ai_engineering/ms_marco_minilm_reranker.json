@@ -1,0 +1,202 @@
+{
+  "id": "ms_marco_minilm_reranker",
+  "topic": "ms_marco_minilm_reranker",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Production Reranking with ms-marco-MiniLM-L6-v2: Build a RAG Reranker",
+    "ta": ""
+  },
+  "description": {
+    "en": "Build a production-grade reranker using cross-encoder/ms-marco-MiniLM-L6-v2 â€” learn threshold-based filtering, ONNX acceleration, batch reranking, and how to integrate a reranker component into your RAG pipeline for dramatically better retrieval quality.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Building a Production RAG Reranker with ms-marco-MiniLM-L6-v2\n\nVaathiyaar here! You've built a RAG pipeline that retrieves documents using embeddings, and it works â€” most of the time. But users complain: \"I asked about Python async patterns and got a result about Python snake species.\" The bi-encoder retrieved it because both mention \"Python\" â€” it can't tell the difference from independent vectors. A **reranker** solves this by reading query and document together, catching contextual nuance that embedding similarity misses. Today we build a production-ready reranker component using `cross-encoder/ms-marco-MiniLM-L6-v2` â€” the most deployed reranking model in the open-source ecosystem.\n\n### Why ms-marco-MiniLM-L6-v2?\n\nThis 22M-parameter model was trained on 500K+ query-passage pairs from Microsoft's MS MARCO dataset â€” real Bing search queries with human-judged relevant passages. It supports PyTorch, ONNX, JAX, and safetensors backends.\n\n| Backend | Install | Latency (100 pairs) | Best For |\n|---|---|---|---|\n| PyTorch | `sentence-transformers` | ~80ms | Development, GPU inference |\n| ONNX | `optimum[onnxruntime]` | ~35ms | Production CPU, edge deploy |\n| JAX | `jax`, `flax` | ~40ms | TPU workloads, research |\n| Safetensors | built-in | Same as PT | Fast loading, secure weights |\n\n### Basic Reranking\n\n```python\nfrom sentence_transformers import CrossEncoder\n\nreranker = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", max_length=512)\n\nquery = \"How to handle async errors in Python?\"\ncandidates = [\n    \"Python asyncio provides try/except patterns for coroutine error handling\",\n    \"The Python snake is found in tropical regions of Southeast Asia\",\n    \"Error handling in synchronous Python uses try/except blocks\",\n    \"Async programming in JavaScript uses Promise.catch() for errors\",\n]\n\nscores = reranker.predict([(query, doc) for doc in candidates])\nranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:>8.4f} | {doc}\")\n```\n\n### Threshold-Based Filtering: Don't Just Rank â€” Filter\n\nIn production, you don't want to return irrelevant results just because they're \"the best of a bad set.\" Apply a relevance threshold:\n\n```python\ndef rerank_and_filter(query, candidates, model, threshold=-2.0, top_k=5):\n    pairs = [(query, doc) for doc in candidates]\n    scores = model.predict(pairs)\n    results = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)\n    # Filter below threshold AND limit to top_k\n    return [(doc, float(s)) for doc, s in results if s >= threshold][:top_k]\n```\n\nScores from ms-marco-MiniLM-L6-v2 are unbounded logits. Empirically: above 0 means strong relevance, -2 to 0 is marginal, below -5 is irrelevant. Tune the threshold on your domain.\n\n### ONNX-Accelerated Reranking\n\nFor production CPU deployment, ONNX Runtime cuts latency in half:\n\n```python\nfrom optimum.onnxruntime import ORTModelForSequenceClassification\nfrom transformers import AutoTokenizer\nimport numpy as np\n\ntokenizer = AutoTokenizer.from_pretrained(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\nort_model = ORTModelForSequenceClassification.from_pretrained(\n    \"cross-encoder/ms-marco-MiniLM-L6-v2\", export=True\n)\n\ndef onnx_rerank(query, docs, top_k=5):\n    inputs = tokenizer(\n        [query] * len(docs), docs,\n        padding=True, truncation=True, max_length=512, return_tensors=\"np\"\n    )\n    logits = ort_model(**{k: v for k, v in inputs.items()}).logits.flatten()\n    ranked_idx = np.argsort(logits)[::-1][:top_k]\n    return [(docs[i], float(logits[i])) for i in ranked_idx]\n```\n\n### Building a Homie RAG Reranker Component\n\nA well-designed reranker component slots between retrieval and generation:\n\n```python\nclass RAGReranker:\n    def __init__(self, model_name=\"cross-encoder/ms-marco-MiniLM-L6-v2\",\n                 threshold=-2.0, max_length=512):\n        self.model = CrossEncoder(model_name, max_length=max_length)\n        self.threshold = threshold\n\n    def rerank(self, query, documents, top_k=5):\n        if not documents:\n            return []\n        pairs = [(query, doc) for doc in documents]\n        scores = self.model.predict(pairs)\n        ranked = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)\n        filtered = [(doc, float(s)) for doc, s in ranked if s >= self.threshold]\n        return filtered[:top_k]\n\n    def rerank_batch(self, queries, doc_lists, top_k=5):\n        return [self.rerank(q, docs, top_k) for q, docs in zip(queries, doc_lists)]\n```\n\n### Score Distribution Analysis\n\n| Score Range | Meaning | Action |\n|---|---|---|\n| > 2.0 | Highly relevant | Always include |\n| 0.0 to 2.0 | Likely relevant | Include in results |\n| -2.0 to 0.0 | Marginal relevance | Include cautiously |\n| < -2.0 | Likely irrelevant | Filter out |\n| < -5.0 | Completely off-topic | Definitely filter |\n\n> **Key Insight:** A reranker isn't just about sorting â€” it's about filtering. ms-marco-MiniLM-L6-v2's scores give you a relevance signal strong enough to remove irrelevant results entirely, not just push them down. Combine threshold filtering with ONNX acceleration and you have a production reranker that processes 100 candidates in ~35ms on CPU. This is the single highest-ROI upgrade for any RAG pipeline: retrieve broadly, rerank precisely, filter aggressively.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Your RAG pipeline retrieves candidates fast â€” but relevance is noisy. A cross-encoder reranker reads query and document together through full self-attention, catching nuance that embedding similarity misses. ms-marco-MiniLM-L6-v2 is the production standard: 22M parameters, ~80ms for 100 pairs, and supports PyTorch, ONNX, JAX, and safetensors.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\n\nreranker = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", max_length=512)\n\nquery = \"How to handle async errors in Python?\"\ncandidates = [\n    \"Python asyncio provides try/except patterns for coroutine error handling\",\n    \"The Python snake is found in tropical regions of Southeast Asia\",\n    \"Error handling in synchronous Python uses try/except blocks\",\n    \"Async programming in JavaScript uses Promise.catch() for errors\",\n]\n\nscores = reranker.predict([(query, doc) for doc in candidates])\n\nranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"{score:>8.4f} | {doc}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import CrossEncoder from sentence-transformers. Unlike SentenceTransformer which produces embeddings, CrossEncoder takes a (query, document) pair and outputs a single relevance score."
+        },
+        {
+          "line": 3,
+          "explanation": "Load ms-marco-MiniLM-L6-v2 â€” trained on 500K+ real Bing search queries from MS MARCO. max_length=512 truncates longer inputs. First run downloads ~80MB of weights."
+        },
+        {
+          "line": 5,
+          "explanation": "A specific query about Python async error handling. The reranker must distinguish 'Python programming' from 'Python snake' and 'async' from 'synchronous'."
+        },
+        {
+          "line": 6,
+          "explanation": "Four candidates simulating retriever output: one perfect match, one Python-but-wrong-domain, one related-but-sync, and one wrong-language. A bi-encoder would struggle here."
+        },
+        {
+          "line": 13,
+          "explanation": "Create (query, doc) pairs and predict scores. Internally: each pair is tokenized as [CLS] query [SEP] doc [SEP], fed through 6 transformer layers, producing a relevance logit."
+        },
+        {
+          "line": 15,
+          "explanation": "Sort by score descending. The asyncio error handling doc should rank first â€” the cross-encoder sees that 'async errors' and 'asyncio try/except' share deep semantic alignment."
+        },
+        {
+          "line": 16,
+          "explanation": "Scores are unbounded logits, not probabilities. Positive means likely relevant, negative means likely irrelevant. Use them for ranking and threshold filtering."
+        },
+        {
+          "line": 17,
+          "explanation": "The Python snake doc should score far below the programming docs â€” the cross-encoder reads both texts jointly and understands 'Python' means the language in this query context."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\n\nclass RAGReranker:\n    def __init__(self, model_name=\"cross-encoder/ms-marco-MiniLM-L6-v2\",\n                 threshold=-2.0, max_length=512):\n        self.model = CrossEncoder(model_name, max_length=max_length)\n        self.threshold = threshold\n\n    def rerank(self, query, documents, top_k=5):\n        if not documents:\n            return []\n        pairs = [(query, doc) for doc in documents]\n        scores = self.model.predict(pairs)\n        ranked = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)\n        filtered = [(doc, float(s)) for doc, s in ranked if s >= self.threshold]\n        return filtered[:top_k]\n\n    def rerank_batch(self, queries, doc_lists, top_k=5):\n        return [self.rerank(q, docs, top_k) for q, docs in zip(queries, doc_lists)]\n\nreranker = RAGReranker(threshold=0.0)\nresults = reranker.rerank(\"Python async patterns\", [\n    \"asyncio.gather runs coroutines concurrently\",\n    \"Python snakes grow up to 6 meters\",\n    \"async/await syntax was introduced in Python 3.5\",\n], top_k=3)\nfor doc, score in results:\n    print(f\"{score:.2f} | {doc}\")",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "Define RAGReranker as a reusable component. It wraps CrossEncoder with production features: threshold filtering and batch support."
+        },
+        {
+          "line": 5,
+          "explanation": "The threshold parameter controls minimum relevance. Set to -2.0 by default (permissive). Raise to 0.0 for stricter filtering â€” depends on your domain and tolerance for noise."
+        },
+        {
+          "line": 6,
+          "explanation": "Initialize the CrossEncoder once. Model loading is expensive (~2s); reuse the instance across requests. Thread-safe for read-only predict() calls."
+        },
+        {
+          "line": 9,
+          "explanation": "The rerank method: takes a query and candidate documents, returns filtered and sorted results as (document, score) tuples."
+        },
+        {
+          "line": 10,
+          "explanation": "Handle empty input gracefully â€” a production reranker must not crash on edge cases like zero candidates from the retriever."
+        },
+        {
+          "line": 14,
+          "explanation": "Sort by cross-encoder score descending, then filter by threshold. This two-step approach ensures you never return irrelevant results even if they're 'best of a bad set'."
+        },
+        {
+          "line": 18,
+          "explanation": "Batch reranking processes multiple queries efficiently. In production, batch incoming requests to amortize model overhead."
+        },
+        {
+          "line": 21,
+          "explanation": "Create a reranker with threshold=0.0 (only return likely-relevant results). The Python snake doc should be filtered out entirely â€” not just ranked lower."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Retrieve Only (Bi-Encoder)",
+      "right_label": "Retrieve + Rerank (Cross-Encoder)",
+      "items": [
+        {
+          "left": "Returns noisy results with false positives",
+          "right": "Filters irrelevant results via threshold"
+        },
+        {
+          "left": "Ranks by approximate vector similarity",
+          "right": "Ranks by precise query-document attention"
+        },
+        {
+          "left": "Cannot distinguish polysemy (Python snake vs language)",
+          "right": "Reads context: 'async errors' â†’ programming Python"
+        },
+        {
+          "left": "Fast: ~5ms for 1000 docs",
+          "right": "+35ms (ONNX) to rescore top 100 candidates"
+        },
+        {
+          "left": "One stage â€” what you retrieve is what you get",
+          "right": "Two stages â€” retrieve broadly, rerank precisely"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a production RAG reranker with ms-marco-MiniLM-L6-v2 â€” retrieve broadly, rerank precisely, filter aggressively!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ProductionReranker` class that simulates cross-encoder reranking with threshold filtering. It uses character trigram Jaccard similarity as a 'cross-encoder score' (more granular than word overlap). Implement `cross_encoder_score(query, doc)` using trigram Jaccard, `rerank(query, documents, top_k, threshold)` that scores, filters by threshold, and returns the top-k results, and `rerank_batch(queries, doc_lists, top_k, threshold)` for batch processing."
+      },
+      "starter_code": "class ProductionReranker:\n    def __init__(self):\n        pass\n\n    def _get_trigrams(self, text: str) -> set[str]:\n        \"\"\"Get character-level trigrams from lowercased text with spaces removed\"\"\"\n        t = text.lower().replace(\" \", \"\")\n        return {t[i:i+3] for i in range(len(t) - 2)} if len(t) >= 3 else set()\n\n    def cross_encoder_score(self, query: str, doc: str) -> float:\n        \"\"\"Simulate cross-encoder: trigram Jaccard similarity\"\"\"\n        # Return |intersection| / |union| of trigram sets\n        # Return 0.0 if union is empty\n        pass\n\n    def rerank(self, query: str, documents: list[str], top_k: int = 5,\n              threshold: float = 0.0) -> list[dict]:\n        \"\"\"Score docs, filter by threshold, return top_k sorted by score desc\"\"\"\n        # Each result: {\"document\": str, \"score\": float}\n        # Only include results where score >= threshold\n        pass\n\n    def rerank_batch(self, queries: list[str], doc_lists: list[list[str]],\n                     top_k: int = 5, threshold: float = 0.0) -> list[list[dict]]:\n        \"\"\"Rerank for multiple queries\"\"\"\n        pass\n\n# Test it:\nreranker = ProductionReranker()\n\nresults = reranker.rerank(\n    \"python async error handling\",\n    [\n        \"python asyncio try except for coroutine errors\",\n        \"the python snake lives in tropical forests\",\n        \"error handling in python with try except blocks\",\n        \"javascript async await promise catch\",\n    ],\n    top_k=3,\n    threshold=0.1,\n)\n\nprint(len(results))\nprint(results[0][\"document\"])\nprint(all(r[\"score\"] >= 0.1 for r in results))\n\nbatch = reranker.rerank_batch(\n    [\"python\", \"cooking\"],\n    [[\"python programming\", \"java code\"], [\"baking bread\", \"cooking pasta\"]],\n    top_k=1,\n    threshold=0.0,\n)\nprint(len(batch))\nprint(len(batch[0]))",
+      "expected_output": "3\npython asyncio try except for coroutine errors\nTrue\n2\n1",
+      "hints": {
+        "en": [
+          "cross_encoder_score: compute trigrams for both texts using _get_trigrams, then return len(intersection) / len(union) â€” standard Jaccard formula",
+          "rerank: score all docs, filter where score >= threshold, sort by score descending, then slice [:top_k]",
+          "rerank_batch: simply call self.rerank() for each (query, docs) pair from zip(queries, doc_lists)"
+        ]
+      },
+      "test_code": "r = ProductionReranker()\nassert abs(r.cross_encoder_score(\"abcdef\", \"abcdef\") - 1.0) < 0.001\nassert r.cross_encoder_score(\"ab\", \"cd\") == 0.0\nassert r.cross_encoder_score(\"abc\", \"abc\") == 1.0\nassert r.cross_encoder_score(\"\", \"\") == 0.0\nresults = r.rerank(\"hello world\", [\"hello world program\", \"goodbye moon\", \"hello earth\"], top_k=2, threshold=0.0)\nassert len(results) <= 2\nassert results[0][\"score\"] >= results[-1][\"score\"]\nassert all(\"document\" in x and \"score\" in x for x in results)\nfiltered = r.rerank(\"aaa\", [\"bbb\", \"ccc\"], top_k=5, threshold=0.5)\nassert len(filtered) == 0\nempty = r.rerank(\"test\", [], top_k=3, threshold=0.0)\nassert empty == []\nbatch = r.rerank_batch([\"a\", \"b\"], [[\"aaa\", \"bbb\"], [\"bbb\", \"aaa\"]], top_k=1)\nassert len(batch) == 2\nassert len(batch[0]) == 1"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RerankerPipeline` class that combines bi-encoder retrieval with cross-encoder reranking â€” the classic two-stage pattern. It uses word overlap Jaccard as the bi-encoder score and trigram Jaccard as the cross-encoder score. Implement `retrieve(query, pool_size)` for first-stage retrieval, `retrieve_and_rerank(query, pool_size, top_k, threshold)` for the full two-stage pipeline, and `compare_stages(query, pool_size, top_k)` that returns both rankings to show how reranking reshuffles results."
+      },
+      "starter_code": "class RerankerPipeline:\n    def __init__(self, corpus: list[str]):\n        self.corpus = corpus\n\n    def _word_jaccard(self, a: str, b: str) -> float:\n        \"\"\"Bi-encoder score: word-level Jaccard similarity\"\"\"\n        wa, wb = set(a.lower().split()), set(b.lower().split())\n        union = wa | wb\n        return len(wa & wb) / len(union) if union else 0.0\n\n    def _trigram_jaccard(self, a: str, b: str) -> float:\n        \"\"\"Cross-encoder score: character trigram Jaccard similarity\"\"\"\n        def trigrams(t):\n            t = t.lower().replace(\" \", \"\")\n            return {t[i:i+3] for i in range(len(t) - 2)} if len(t) >= 3 else set()\n        ta, tb = trigrams(a), trigrams(b)\n        union = ta | tb\n        return len(ta & tb) / len(union) if union else 0.0\n\n    def retrieve(self, query: str, pool_size: int = 10) -> list[dict]:\n        \"\"\"Stage 1: Score all docs with bi-encoder, return top pool_size\"\"\"\n        # Each result: {\"document\": str, \"bi_score\": float}\n        # Sorted by bi_score descending\n        pass\n\n    def retrieve_and_rerank(self, query: str, pool_size: int = 10,\n                            top_k: int = 3, threshold: float = 0.0) -> list[dict]:\n        \"\"\"Stage 1 + Stage 2: Retrieve pool, rerank with cross-encoder, filter\"\"\"\n        # Each result: {\"document\": str, \"bi_score\": float, \"ce_score\": float}\n        # Sorted by ce_score descending, filtered by threshold on ce_score\n        pass\n\n    def compare_stages(self, query: str, pool_size: int = 10,\n                       top_k: int = 3) -> dict:\n        \"\"\"Return both rankings to show reranking impact\"\"\"\n        # Returns {\"bi_encoder_top\": list[str], \"reranked_top\": list[str], \"reshuffled\": bool}\n        # reshuffled is True if the orderings differ\n        pass\n\n# Test it:\ncorpus = [\n    \"machine learning classification algorithms\",\n    \"learning to play machine drums rhythms\",\n    \"deep learning neural network training\",\n    \"the machinery of local government learning programs\",\n    \"supervised machine learning for text classification\",\n    \"cooking recipes for machine-made pasta\",\n]\n\npipe = RerankerPipeline(corpus)\n\nresults = pipe.retrieve_and_rerank(\n    \"machine learning classification\",\n    pool_size=4, top_k=3, threshold=0.05,\n)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(all(r[\"ce_score\"] >= 0.05 for r in results))\n\ncomp = pipe.compare_stages(\"machine learning classification\", pool_size=4, top_k=3)\nprint(len(comp[\"bi_encoder_top\"]))\nprint(type(comp[\"reshuffled\"]))",
+      "expected_output": "3\nsupervised machine learning for text classification\nTrue\n3\n<class 'bool'>",
+      "hints": {
+        "en": [
+          "retrieve: score each corpus doc with _word_jaccard(query, doc), sort descending, slice [:pool_size], return dicts with 'document' and 'bi_score'",
+          "retrieve_and_rerank: call retrieve() to get the pool, then score each with _trigram_jaccard for ce_score, filter by threshold, sort by ce_score desc, return top_k",
+          "compare_stages: get bi-encoder top from retrieve()[:top_k] and reranked top from retrieve_and_rerank(), extract doc lists, compare order"
+        ]
+      },
+      "test_code": "p = RerankerPipeline([\"aaa bbb\", \"ccc ddd\", \"aaa ccc\", \"bbb ddd\"])\nret = p.retrieve(\"aaa\", pool_size=2)\nassert len(ret) == 2\nassert \"document\" in ret[0] and \"bi_score\" in ret[0]\nassert ret[0][\"bi_score\"] >= ret[1][\"bi_score\"]\nrr = p.retrieve_and_rerank(\"aaa bbb\", pool_size=4, top_k=2, threshold=0.0)\nassert len(rr) <= 2\nassert \"ce_score\" in rr[0] and \"bi_score\" in rr[0]\nassert rr[0][\"ce_score\"] >= rr[-1][\"ce_score\"]\nfilt = p.retrieve_and_rerank(\"aaa\", pool_size=4, top_k=4, threshold=0.99)\nassert len(filt) <= 1\ncomp = p.compare_stages(\"aaa bbb\", pool_size=4, top_k=2)\nassert \"bi_encoder_top\" in comp and \"reranked_top\" in comp and \"reshuffled\" in comp\nassert len(comp[\"bi_encoder_top\"]) <= 2\nassert isinstance(comp[\"reshuffled\"], bool)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "ms-marco-MiniLM-L6-v2",
+      "cross-encoder reranking",
+      "threshold-based filtering",
+      "ONNX reranker deployment",
+      "two-stage retrieval pipeline",
+      "batch reranking",
+      "RAG reranker component",
+      "score distribution analysis"
+    ],
+    "concepts_required": [
+      "python classes",
+      "sets",
+      "list sorting",
+      "dictionaries",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
