@@ -1,0 +1,166 @@
+{
+  "id": "bge_small_efficient_local_rag",
+  "topic": "bge_small_efficient_local_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Efficient Local RAG with BGE-small-en-v1.5"
+  },
+  "description": {
+    "en": "Build a memory-efficient RAG pipeline using BAAI/bge-small-en-v1.5 â€” a 33MB BERT-based embedding model optimized for low-end devices with PyTorch, ONNX, and SafeTensors support."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Local RAG on a Budget: BGE-small-en-v1.5 for Low-End Devices\n\nVaathiyaar here! Cloud APIs are convenient, but what happens when your device has no internet, limited RAM, or you simply don't want to send private documents to someone else's server? Enter **BAAI/bge-small-en-v1.5** â€” a 33MB embedding model that turns any low-end laptop or Raspberry Pi into a capable retrieval engine. Today we'll build a production-ready local RAG pipeline that respects your hardware constraints.\n\n### Why BGE-small for Constrained Environments?\n\nNot every device has a GPU or 16GB of RAM. BGE-small was designed for exactly this scenario:\n\n| Constraint | BGE-small Solution |\n|---|---|\n| Limited RAM (< 4GB) | 33MB model fits easily; ~15MB for 10K document embeddings |\n| No GPU available | ONNX backend gives 2-3x CPU speedup |\n| Slow disk I/O | SafeTensors format loads faster than pickle-based PyTorch |\n| Offline deployment | Download once, run forever without API calls |\n| Battery-powered device | Small model = fewer FLOPs = longer battery life |\n\n### Step 1: Memory-Conscious Model Loading\n\nChoosing the right backend matters on constrained hardware:\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport sys\n\n# ONNX backend: faster CPU inference, lower peak memory\nmodel = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\"\n)\n\nprint(f\"Model loaded: {sys.getsizeof(model) / 1024:.0f} KB ref\")\n```\n\nThe ONNX runtime avoids loading PyTorch's heavy autograd machinery, saving hundreds of megabytes of RAM on devices where every byte counts.\n\n### Step 2: Batched Encoding to Control Peak Memory\n\nEncoding 10,000 documents at once can spike memory. Batch processing keeps it flat:\n\n```python\nimport numpy as np\n\ndef encode_batched(model, texts, batch_size=64):\n    \"\"\"Encode in batches to cap peak memory usage.\"\"\"\n    prefix = \"Represent this sentence for searching relevant passages: \"\n    all_embeddings = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        embs = model.encode(batch, normalize_embeddings=True)\n        all_embeddings.append(embs)\n    return np.vstack(all_embeddings)\n\ndocuments = [\"Doc \" + str(i) for i in range(1000)]\ndoc_embeddings = encode_batched(model, documents, batch_size=32)\nprint(f\"Shape: {doc_embeddings.shape}\")\nprint(f\"Memory: {doc_embeddings.nbytes / 1024:.0f} KB\")\n```\n\nWith a batch size of 32, peak memory stays under 50MB even for large corpora.\n\n### Step 3: Disk-Backed Index for Persistent RAG\n\nDon't recompute embeddings on every restart â€” persist them:\n\n```python\nimport numpy as np\nimport json\n\ndef save_index(documents, embeddings, path=\"rag_index\"):\n    np.save(f\"{path}_embs.npy\", embeddings)\n    with open(f\"{path}_docs.json\", \"w\") as f:\n        json.dump(documents, f)\n\ndef load_index(path=\"rag_index\"):\n    embeddings = np.load(f\"{path}_embs.npy\")\n    with open(f\"{path}_docs.json\") as f:\n        documents = json.load(f)\n    return documents, embeddings\n\n# Save once\nsave_index(documents, doc_embeddings)\n# Load instantly on next boot\ndocs, embs = load_index()\nprint(f\"Loaded {len(docs)} docs, {embs.shape[1]}d embeddings\")\n```\n\n### Step 4: Complete Offline RAG Pipeline\n\n```python\nclass LocalRAG:\n    QUERY_PREFIX = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model, documents, embeddings):\n        self.model = model\n        self.documents = documents\n        self.embeddings = embeddings\n\n    def retrieve(self, query: str, top_k: int = 3):\n        q_emb = self.model.encode(\n            self.QUERY_PREFIX + query,\n            normalize_embeddings=True\n        )\n        scores = self.embeddings @ q_emb\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [\n            {\"text\": self.documents[i], \"score\": float(scores[i])}\n            for i in top_idx\n        ]\n\nrag = LocalRAG(model, docs, embs)\nresults = rag.retrieve(\"memory efficient processing\")\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['text']}\")\n```\n\nThis entire pipeline â€” model, index, and retrieval â€” runs in under 200MB of RAM for 10,000 documents.\n\n> **Key Insight:** BGE-small-en-v1.5 makes local RAG practical on low-end hardware. Pair ONNX inference with batched encoding and disk-backed indexes, and you get a retrieval system that runs offline on a Raspberry Pi â€” no cloud, no GPU, no compromise on retrieval quality."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Building RAG pipelines on low-end devices demands efficiency at every layer. BGE-small-en-v1.5 delivers strong retrieval quality in just 33MB â€” combine it with ONNX inference, batched encoding, and disk-backed indexes for a pipeline that runs offline in under 200MB of RAM.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\", backend=\"onnx\")\n\ndocuments = [\n    \"Generators yield values one at a time to save memory\",\n    \"Lists store every element in memory at once\",\n    \"Memory-mapped files access disk data without loading it all\",\n    \"Cloud APIs require internet and incur per-call costs\",\n]\n\ndef encode_batched(model, texts, batch_size=2):\n    results = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        embs = model.encode(batch, normalize_embeddings=True)\n        results.append(embs)\n    return np.vstack(results)\n\ndoc_embeddings = encode_batched(model, documents)\nprint(f\"Shape: {doc_embeddings.shape}\")\nprint(f\"Memory: {doc_embeddings.nbytes} bytes\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer â€” the unified API that handles tokenization, model loading, and encoding across all backends."
+        },
+        {
+          "line": 4,
+          "explanation": "Load BGE-small with the ONNX backend. This avoids PyTorch's autograd overhead, saving hundreds of MB of RAM on constrained devices."
+        },
+        {
+          "line": 6,
+          "explanation": "Four sample documents. On a real device, this could be thousands of local files, notes, or knowledge base entries."
+        },
+        {
+          "line": 13,
+          "explanation": "Batched encoding function: process texts in small chunks to keep peak memory flat instead of spiking with large inputs."
+        },
+        {
+          "line": 15,
+          "explanation": "Loop through texts in batch_size chunks. On a 2GB RAM device, batch_size=32 keeps memory well under control."
+        },
+        {
+          "line": 17,
+          "explanation": "Encode each batch with normalize_embeddings=True. Normalized vectors let us use fast dot products instead of cosine similarity."
+        },
+        {
+          "line": 19,
+          "explanation": "Stack all batch results into a single numpy array â€” this is our searchable document index."
+        },
+        {
+          "line": 21,
+          "explanation": "Shape (4, 384): four documents, each as a 384-dimensional unit vector. Total memory: just 6,144 bytes for 4 docs."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nimport json\n\n# Save index to disk\nnp.save(\"index_embs.npy\", doc_embeddings)\nwith open(\"index_docs.json\", \"w\") as f:\n    json.dump(documents, f)\n\n# Load on next boot â€” no recomputation needed\nembs = np.load(\"index_embs.npy\")\nwith open(\"index_docs.json\") as f:\n    docs = json.load(f)\n\n# Query with BGE instruction prefix\nprefix = \"Represent this sentence for searching relevant passages: \"\nquery = prefix + \"processing data without high memory usage\"\nq_emb = model.encode(query, normalize_embeddings=True)\n\nscores = embs @ q_emb\ntop_idx = np.argsort(scores)[::-1][:2]\nfor i in top_idx:\n    print(f\"{scores[i]:.3f} | {docs[i]}\")",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Save embeddings as a .npy file. For 10,000 docs with 384 dims, this file is only ~15MB â€” small enough to bundle with any app."
+        },
+        {
+          "line": 6,
+          "explanation": "Save document texts as JSON alongside the embeddings. Together they form a complete offline index."
+        },
+        {
+          "line": 10,
+          "explanation": "On the next app startup, load the precomputed index instantly â€” no model inference needed just to restore state."
+        },
+        {
+          "line": 15,
+          "explanation": "BGE's query instruction prefix signals retrieval mode. Documents are encoded plain, but queries always get this prefix."
+        },
+        {
+          "line": 17,
+          "explanation": "Encode the prefixed query. The instruction changes the embedding space to optimize for finding relevant passages."
+        },
+        {
+          "line": 19,
+          "explanation": "Dot product of normalized vectors equals cosine similarity. One matrix multiply searches the entire index."
+        },
+        {
+          "line": 20,
+          "explanation": "argsort descending, take top 2. Memory-related documents should rank highest for our memory-efficiency query."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built a complete offline RAG pipeline that runs on low-end hardware â€” 33MB model, batched encoding, and disk-backed indexes!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MemoryEfficientIndex` class that simulates a disk-backed RAG index for constrained devices. It should encode documents using word-frequency vectors, support saving/loading the index as plain Python data (no numpy required), and perform retrieval with a configurable query boost prefix. Implement `encode(text)`, `save(path)`, `load(path)`, and `search(query, top_k)` methods."
+      },
+      "starter_code": "import math\nimport json\n\nclass MemoryEfficientIndex:\n    QUERY_BOOST = \"search retrieve find\"\n\n    def __init__(self):\n        self.documents = []\n        self.vectors = []  # list of dicts\n\n    def encode(self, text: str) -> dict:\n        # Return word frequency vector as dict\n        # Lowercase all words\n        pass\n\n    def add_documents(self, docs: list[str]):\n        # Store documents and their encoded vectors\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two word-frequency dicts\n        # Return 0.0 if either has zero magnitude\n        pass\n\n    def save(self, path: str):\n        # Save documents and vectors to a JSON file\n        # Store as {\"documents\": [...], \"vectors\": [...]}\n        pass\n\n    def load(self, path: str):\n        # Load documents and vectors from a JSON file\n        pass\n\n    def search(self, query: str, top_k: int = 2) -> list[dict]:\n        # Prepend QUERY_BOOST to query before encoding\n        # Return top_k results as [{\"document\": str, \"score\": float}]\n        # Sorted by score descending\n        pass\n\n# Test it:\nindex = MemoryEfficientIndex()\nindex.add_documents([\n    \"search algorithms retrieve data efficiently\",\n    \"cooking pasta requires boiling water\",\n    \"find relevant documents using embeddings\",\n    \"gardening in spring needs good soil\"\n])\n\nindex.save(\"test_index.json\")\nnew_index = MemoryEfficientIndex()\nnew_index.load(\"test_index.json\")\n\nresults = new_index.search(\"data retrieval methods\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "2\nsearch algorithms retrieve data efficiently\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), use text.lower().split() and count each word's occurrences into a dict",
+          "For save/load, use json.dump/json.load â€” dicts serialize naturally to JSON",
+          "In search(), prepend self.QUERY_BOOST + ' ' + query before encoding, then compute cosine similarity against all stored vectors and sort descending"
+        ]
+      },
+      "test_code": "idx = MemoryEfficientIndex()\nassert idx.encode(\"a b a\") == {\"a\": 2, \"b\": 1}\nassert idx.encode(\"Hello World\") == {\"hello\": 1, \"world\": 1}\nsim = idx.cosine_similarity({\"a\": 1}, {\"a\": 1})\nassert abs(sim - 1.0) < 0.001\nassert idx.cosine_similarity({\"a\": 1}, {\"b\": 1}) == 0.0\nassert idx.cosine_similarity({}, {\"a\": 1}) == 0.0\nidx.add_documents([\"search find data\", \"cook food eat\"])\nassert len(idx.documents) == 2\nassert len(idx.vectors) == 2\nresults = idx.search(\"data\", top_k=1)\nassert len(results) == 1\nassert results[0][\"document\"] == \"search find data\"\nassert results[0][\"score\"] > 0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `BatchedEncoder` class that simulates memory-efficient batched encoding. Given a list of texts, it should process them in configurable batch sizes, track peak batch memory (number of texts held in memory at once), and return all encoded vectors. This demonstrates why batching matters on low-RAM devices."
+      },
+      "starter_code": "class BatchedEncoder:\n    def __init__(self, batch_size: int = 2):\n        self.batch_size = batch_size\n        self.peak_batch_count = 0  # largest batch processed\n\n    def encode_one(self, text: str) -> dict:\n        # Encode a single text as word-frequency dict (lowercase)\n        pass\n\n    def encode_all(self, texts: list[str]) -> list[dict]:\n        # Process texts in batches of self.batch_size\n        # Track the largest batch size actually processed\n        # (last batch may be smaller)\n        # Return list of all encoded vectors in order\n        pass\n\n    def get_peak_memory(self) -> int:\n        # Return the peak batch count (largest batch processed)\n        pass\n\n# Test it:\nencoder = BatchedEncoder(batch_size=3)\ntexts = [\"alpha beta\", \"gamma delta\", \"epsilon zeta\",\n         \"eta theta\", \"iota kappa\"]\nresults = encoder.encode_all(texts)\n\nprint(len(results))\nprint(encoder.get_peak_memory())\nprint(results[0])\nprint(results[4])",
+      "expected_output": "5\n3\n{'alpha': 1, 'beta': 1}\n{'iota': 1, 'kappa': 1}",
+      "hints": {
+        "en": [
+          "In encode_all(), loop with range(0, len(texts), self.batch_size) and slice texts[i:i+batch_size] for each batch",
+          "Track peak_batch_count as max(self.peak_batch_count, len(current_batch)) during each iteration",
+          "Encode each text in the batch individually with encode_one() and extend the results list"
+        ]
+      },
+      "test_code": "enc = BatchedEncoder(batch_size=2)\nassert enc.encode_one(\"a b a\") == {\"a\": 2, \"b\": 1}\nresults = enc.encode_all([\"x y\", \"a b\", \"m\"])\nassert len(results) == 3\nassert results[0] == {\"x\": 1, \"y\": 1}\nassert results[2] == {\"m\": 1}\nassert enc.get_peak_memory() == 2\nenc2 = BatchedEncoder(batch_size=10)\nresults2 = enc2.encode_all([\"a\", \"b\", \"c\"])\nassert enc2.get_peak_memory() == 3\nassert len(results2) == 3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "batched encoding",
+      "disk-backed embeddings index",
+      "ONNX inference optimization",
+      "offline RAG pipeline",
+      "memory-efficient ML",
+      "BGE query instruction prefix",
+      "low-resource deployment"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "file I/O",
+      "numpy basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
