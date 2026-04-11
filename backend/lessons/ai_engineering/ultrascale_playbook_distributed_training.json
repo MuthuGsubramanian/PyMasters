@@ -1,0 +1,241 @@
+{
+  "id": "ultrascale_playbook_distributed_training",
+  "topic": "ultrascale_playbook_distributed_training",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The Ultra-Scale Playbook: Mastering Distributed LLM Training"
+  },
+  "description": {
+    "en": "Learn how to scale LLM training across hundreds of GPUs using the Ultra-Scale Playbook â€” covering tensor, data, pipeline, and context parallelism with practical Nanotron examples."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Scaling Training Across Hundreds of GPUs\n\nWelcome back, coder! Vaathiyaar here. Today we tackle the definitive guide to distributed training: the **Ultra-Scale Playbook** from the Nanotron team at Hugging Face. When your model is too large for a single GPU â€” or training takes weeks instead of days â€” you need parallelism. But not just any parallelism: you need the *right combination* of strategies. Let's break down how the pros do it.\n\n### The Parallelism Landscape\n\nTraining a 70B+ parameter model requires splitting work across GPUs. Each parallelism strategy splits a different dimension of the problem:\n\n| Strategy | What It Splits | When to Use | Trade-off |\n|----------|---------------|-------------|----------|\n| **Data Parallelism (DP)** | Training batch | Always â€” the baseline | Communication scales with model size |\n| **Tensor Parallelism (TP)** | Individual layers | Layers too large for one GPU | Requires fast interconnect (NVLink) |\n| **Pipeline Parallelism (PP)** | Model layers across stages | Very deep models | Introduces bubble overhead |\n| **Context Parallelism (CP)** | Sequence length | Long sequences (32K+) | Ring attention overhead |\n| **Expert Parallelism (EP)** | MoE experts | Mixture-of-Experts models | Load balancing complexity |\n\n### Tensor Parallelism â€” Splitting Layers\n\nTP partitions weight matrices within each transformer layer. Column-parallel splits the output dimension; row-parallel splits the input dimension. In a multi-head attention block, each GPU computes a subset of attention heads.\n\n```python\nimport torch\nimport torch.distributed as dist\nfrom nanotron.config import ParallelismArgs\n\n# Configure 3D parallelism for a 70B model on 64 GPUs\nparallelism = ParallelismArgs(\n    dp=8,   # 8-way data parallelism\n    tp=4,   # 4-way tensor parallelism\n    pp=2,   # 2-way pipeline parallelism\n)  # Total: 8 * 4 * 2 = 64 GPUs\n\nprint(f\"Total GPUs: {parallelism.dp * parallelism.tp * parallelism.pp}\")\n```\n\n### Pipeline Parallelism â€” Splitting Depth\n\nPP assigns consecutive groups of transformer layers to different GPUs. The challenge is the **pipeline bubble** â€” time spent idle while waiting for forward/backward passes to propagate. The 1F1B (one-forward-one-backward) schedule minimizes this by interleaving micro-batches.\n\n```python\n# Pipeline parallelism configuration\npipeline_config = {\n    \"num_stages\": 4,            # 4 pipeline stages\n    \"num_micro_batches\": 16,    # More micro-batches = smaller bubble\n    \"schedule\": \"1F1B\",         # Interleaved scheduling\n}\n\n# Bubble ratio = (pp_size - 1) / num_micro_batches\nbubble_ratio = (pipeline_config[\"num_stages\"] - 1) / pipeline_config[\"num_micro_batches\"]\nprint(f\"Pipeline bubble overhead: {bubble_ratio:.1%}\")\n```\n\n### Data Parallelism with ZeRO\n\nPure data parallelism replicates the full model on every GPU. **ZeRO** (Zero Redundancy Optimizer) shards optimizer states (Stage 1), gradients (Stage 2), and parameters (Stage 3) to reduce memory:\n\n```python\n# ZeRO stages and their memory savings\nzero_stages = {\n    \"Stage 0\": {\"shards\": \"nothing\",           \"memory_factor\": 1.0},\n    \"Stage 1\": {\"shards\": \"optimizer_states\",   \"memory_factor\": 0.25},\n    \"Stage 2\": {\"shards\": \"+ gradients\",        \"memory_factor\": 0.125},\n    \"Stage 3\": {\"shards\": \"+ parameters\",       \"memory_factor\": 0.0625},\n}\n\nmodel_params_gb = 70 * 2  # 70B params * 2 bytes (bf16)\nfor stage, info in zero_stages.items():\n    mem = model_params_gb * info[\"memory_factor\"]\n    print(f\"{stage}: {mem:.1f} GB/GPU ({info['shards']})\")\n```\n\n### Context Parallelism â€” Long Sequences\n\nFor sequences beyond 32K tokens, attention memory becomes the bottleneck. Context parallelism splits the sequence across GPUs using **ring attention** â€” each GPU holds a chunk and passes KV blocks in a ring topology.\n\n### Choosing Your Strategy\n\nThe Playbook's golden rule: **start with TP within a node (up to 8 GPUs on NVLink), add PP across nodes if the model still doesn't fit, then scale out with DP.** Add CP only for very long sequences.\n\n> **Key Insight:** Distributed training is not about picking one parallelism strategy â€” it's about combining TP, PP, DP, and CP in the right proportions. The Ultra-Scale Playbook shows that the optimal configuration depends on your model size, sequence length, cluster topology, and interconnect bandwidth."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "The Ultra-Scale Playbook is the definitive guide to distributed LLM training from Hugging Face's Nanotron team. It covers how to combine tensor, data, pipeline, and context parallelism to train models with hundreds of billions of parameters across hundreds of GPUs efficiently.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_1",
+      "nodes": [
+        {
+          "id": "playbook",
+          "label": "Ultra-Scale Playbook"
+        },
+        {
+          "id": "tp",
+          "label": "Tensor Parallelism (TP)"
+        },
+        {
+          "id": "dp",
+          "label": "Data Parallelism (DP/ZeRO)"
+        },
+        {
+          "id": "pp",
+          "label": "Pipeline Parallelism (PP)"
+        },
+        {
+          "id": "cp",
+          "label": "Context Parallelism (CP)"
+        },
+        {
+          "id": "ep",
+          "label": "Expert Parallelism (EP)"
+        },
+        {
+          "id": "3d",
+          "label": "3D Parallelism (TP+PP+DP)"
+        }
+      ],
+      "edges": [
+        {
+          "from": "playbook",
+          "to": "tp"
+        },
+        {
+          "from": "playbook",
+          "to": "dp"
+        },
+        {
+          "from": "playbook",
+          "to": "pp"
+        },
+        {
+          "from": "playbook",
+          "to": "cp"
+        },
+        {
+          "from": "playbook",
+          "to": "ep"
+        },
+        {
+          "from": "tp",
+          "to": "3d"
+        },
+        {
+          "from": "pp",
+          "to": "3d"
+        },
+        {
+          "from": "dp",
+          "to": "3d"
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "# Ultra-Scale Distributed Training Configuration\n\n# 1. Define cluster topology\ncluster = {\n    \"nodes\": 8,\n    \"gpus_per_node\": 8,         # 8x H100 per node\n    \"intra_node\": \"NVLink\",     # 900 GB/s\n    \"inter_node\": \"InfiniBand\",  # 400 Gb/s\n    \"total_gpus\": 64,\n}\n\n# 2. Configure 3D parallelism\ntp_size = 4   # Tensor parallel within a node (fast NVLink)\npp_size = 2   # Pipeline parallel across 2 nodes\ndp_size = cluster[\"total_gpus\"] // (tp_size * pp_size)  # = 8\n\n# 3. Memory budget per GPU (H100 80GB)\ngpu_memory_gb = 80\nmodel_params_b = 70\nbytes_per_param = 2  # bf16\n\n# Model memory split across TP and PP\nmodel_mem_per_gpu = (model_params_b * bytes_per_param) / (tp_size * pp_size)\nprint(f\"Model memory per GPU: {model_mem_per_gpu:.1f} GB\")\n\n# 4. Pipeline schedule\nnum_micro_batches = 16\nbubble_ratio = (pp_size - 1) / num_micro_batches\nprint(f\"Pipeline bubble: {bubble_ratio:.1%}\")\n\n# 5. ZeRO Stage 1 for optimizer states\noptimizer_mem = model_params_b * 8  # Adam: 8 bytes/param\nzero1_mem_per_gpu = optimizer_mem / dp_size\nprint(f\"Optimizer memory (ZeRO-1): {zero1_mem_per_gpu:.1f} GB/GPU\")\n\n# 6. Communication volumes\ntp_allreduce_gb = model_params_b * bytes_per_param / tp_size\ndp_allreduce_gb = model_params_b * bytes_per_param\nprint(f\"TP all-reduce per step: {tp_allreduce_gb:.1f} GB (NVLink)\")\nprint(f\"DP all-reduce per step: {dp_allreduce_gb:.1f} GB (InfiniBand)\")",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "A typical training cluster: 8 nodes with 8 H100 GPUs each, connected by fast NVLink within nodes and InfiniBand across nodes."
+        },
+        {
+          "line": 13,
+          "explanation": "TP=4 splits each layer across 4 GPUs within one node. This requires fast interconnect (NVLink) because TP communicates every layer."
+        },
+        {
+          "line": 14,
+          "explanation": "PP=2 splits the model's depth across 2 stages. Each stage holds half the transformer layers on a different node."
+        },
+        {
+          "line": 15,
+          "explanation": "DP fills the remaining GPUs: 64 / (4*2) = 8-way data parallelism. Each DP rank processes different training data."
+        },
+        {
+          "line": 22,
+          "explanation": "A 70B bf16 model = 140 GB. Split across TP=4 and PP=2, each GPU holds only 17.5 GB of model weights."
+        },
+        {
+          "line": 26,
+          "explanation": "More micro-batches shrink the pipeline bubble. With PP=2 and 16 micro-batches, only 6.25% of time is wasted."
+        },
+        {
+          "line": 30,
+          "explanation": "Adam optimizer stores 8 bytes per parameter (momentum + variance + master weights). ZeRO Stage 1 shards this across DP ranks."
+        },
+        {
+          "line": 35,
+          "explanation": "TP all-reduce happens every layer via NVLink (fast). DP all-reduce happens once per step via InfiniBand (slower but less frequent)."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "# Choosing the Right Parallelism Strategy\n\ndef recommend_parallelism(model_params_b, seq_len, num_gpus, gpu_mem_gb=80):\n    \"\"\"Recommend a parallelism configuration based on model size,\n    sequence length, and available GPUs.\"\"\"\n\n    # Rule 1: TP within a node (max 8 for NVLink)\n    model_mem = model_params_b * 2  # bf16 bytes\n    tp = 1\n    while model_mem / tp > gpu_mem_gb * 0.4 and tp < 8:\n        tp *= 2\n\n    # Rule 2: PP across nodes if model still too large\n    pp = 1\n    while model_mem / (tp * pp) > gpu_mem_gb * 0.4 and pp < 8:\n        pp *= 2\n\n    # Rule 3: CP for long sequences\n    cp = 1\n    if seq_len > 32768:\n        cp = min(4, seq_len // 32768)\n\n    # Rule 4: DP fills remaining GPUs\n    dp = num_gpus // (tp * pp * cp)\n\n    return {\"TP\": tp, \"PP\": pp, \"CP\": cp, \"DP\": dp,\n            \"total\": tp * pp * cp * dp}\n\n# Scenario 1: 7B model, 4K context, 8 GPUs\nconfig_7b = recommend_parallelism(7, 4096, 8)\nprint(f\"7B model:  {config_7b}\")\n\n# Scenario 2: 70B model, 8K context, 64 GPUs\nconfig_70b = recommend_parallelism(70, 8192, 64)\nprint(f\"70B model: {config_70b}\")\n\n# Scenario 3: 70B model, 128K context, 128 GPUs\nconfig_long = recommend_parallelism(70, 131072, 128)\nprint(f\"70B long:  {config_long}\")",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "This function encodes the Playbook's decision hierarchy: TP first, then PP, then CP, then DP."
+        },
+        {
+          "line": 10,
+          "explanation": "TP doubles until model weights per GPU fit within 40% of GPU memory (leaving room for activations and optimizer states)."
+        },
+        {
+          "line": 15,
+          "explanation": "If TP=8 isn't enough (very large models), PP adds depth-splitting across nodes."
+        },
+        {
+          "line": 20,
+          "explanation": "Context parallelism activates only for sequences above 32K â€” below that, attention memory is manageable."
+        },
+        {
+          "line": 24,
+          "explanation": "DP is the simplest parallelism and scales linearly. It fills whatever GPU capacity remains after TP, PP, and CP."
+        },
+        {
+          "line": 31,
+          "explanation": "A 7B model fits easily with TP=1: pure data parallelism across all 8 GPUs â€” the simplest and most efficient setup."
+        },
+        {
+          "line": 35,
+          "explanation": "70B needs TP=4 to fit layers in memory, then DP=16 to utilize all 64 GPUs. No PP needed."
+        },
+        {
+          "line": 38,
+          "explanation": "128K sequences trigger CP=4, splitting the sequence across 4 GPUs using ring attention."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand the core strategies of the Ultra-Scale Playbook â€” tensor, pipeline, data, and context parallelism. You're ready to scale training from 1 GPU to 1000!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a `plan_3d_parallelism` function that takes the number of total GPUs, GPUs per node, model size in billions of parameters, and GPU memory in GB. It should return a dictionary with 'tp', 'pp', and 'dp' values. Rules: (1) TP must not exceed gpus_per_node, (2) TP doubles until model_params*2/(tp*pp) <= gpu_mem*0.4, (3) if TP is maxed, PP doubles next, (4) DP = total_gpus // (tp * pp). Raise ValueError if total_gpus < tp * pp."
+      },
+      "starter_code": "def plan_3d_parallelism(total_gpus: int, gpus_per_node: int,\n                        model_params_b: float, gpu_mem_gb: int = 80) -> dict:\n    \"\"\"Plan a 3D parallelism configuration.\n    Returns dict with 'tp', 'pp', 'dp' keys.\"\"\"\n    # Your code here\n    pass\n\n# Test\nprint(plan_3d_parallelism(64, 8, 70, 80))\nprint(plan_3d_parallelism(8, 8, 7, 80))\nprint(plan_3d_parallelism(128, 8, 200, 80))",
+      "expected_output": "{'tp': 4, 'pp': 1, 'dp': 16}\n{'tp': 1, 'pp': 1, 'dp': 8}\n{'tp': 8, 'pp': 2, 'dp': 8}",
+      "hints": {
+        "en": [
+          "Start with tp=1, pp=1. Compute model_mem = model_params_b * 2 (bf16). While model_mem/(tp*pp) > gpu_mem*0.4, double tp first.",
+          "Once tp reaches gpus_per_node, stop doubling tp and start doubling pp instead.",
+          "Finally compute dp = total_gpus // (tp * pp) and return the dict."
+        ]
+      },
+      "test_code": "r1 = plan_3d_parallelism(64, 8, 70, 80)\nassert r1 == {'tp': 4, 'pp': 1, 'dp': 16}, f\"Got {r1}\"\nr2 = plan_3d_parallelism(8, 8, 7, 80)\nassert r2 == {'tp': 1, 'pp': 1, 'dp': 8}, f\"Got {r2}\"\nr3 = plan_3d_parallelism(128, 8, 200, 80)\nassert r3 == {'tp': 8, 'pp': 2, 'dp': 8}, f\"Got {r3}\"\nr4 = plan_3d_parallelism(32, 8, 13, 80)\nassert r4['tp'] <= 8\nassert r4['tp'] * r4['pp'] * r4['dp'] == 32\ntry:\n    plan_3d_parallelism(2, 8, 800, 80)\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass"
+    },
+    {
+      "instruction": {
+        "en": "Implement a `pipeline_bubble_efficiency` function that takes `pp_size` (number of pipeline stages) and `num_micro_batches`, and returns a dictionary with 'bubble_ratio' (float, the fraction of wasted time) and 'efficiency' (float, 1 - bubble_ratio), both rounded to 4 decimal places. The bubble ratio formula is (pp_size - 1) / num_micro_batches. Raise ValueError if num_micro_batches < pp_size."
+      },
+      "starter_code": "def pipeline_bubble_efficiency(pp_size: int, num_micro_batches: int) -> dict:\n    \"\"\"Calculate pipeline parallelism bubble overhead.\n    Returns dict with 'bubble_ratio' and 'efficiency'.\"\"\"\n    # Your code here\n    pass\n\n# Test\nprint(pipeline_bubble_efficiency(4, 16))\nprint(pipeline_bubble_efficiency(2, 32))\nprint(pipeline_bubble_efficiency(8, 64))",
+      "expected_output": "{'bubble_ratio': 0.1875, 'efficiency': 0.8125}\n{'bubble_ratio': 0.0312, 'efficiency': 0.9688}\n{'bubble_ratio': 0.1094, 'efficiency': 0.8906}",
+      "hints": {
+        "en": [
+          "The bubble ratio is simply (pp_size - 1) / num_micro_batches",
+          "Use round(value, 4) to round to 4 decimal places",
+          "Don't forget to validate: num_micro_batches must be >= pp_size"
+        ]
+      },
+      "test_code": "r1 = pipeline_bubble_efficiency(4, 16)\nassert r1 == {'bubble_ratio': 0.1875, 'efficiency': 0.8125}\nr2 = pipeline_bubble_efficiency(2, 32)\nassert r2 == {'bubble_ratio': 0.0312, 'efficiency': 0.9688}\nr3 = pipeline_bubble_efficiency(8, 64)\nassert r3 == {'bubble_ratio': 0.1094, 'efficiency': 0.8906}\nr4 = pipeline_bubble_efficiency(1, 1)\nassert r4 == {'bubble_ratio': 0.0, 'efficiency': 1.0}\ntry:\n    pipeline_bubble_efficiency(8, 4)\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "distributed training",
+      "tensor parallelism",
+      "pipeline parallelism",
+      "data parallelism",
+      "context parallelism",
+      "ZeRO optimizer",
+      "3D parallelism",
+      "pipeline bubble",
+      "ring attention",
+      "model sharding"
+    ],
+    "concepts_required": [
+      "python functions",
+      "dictionaries",
+      "PyTorch basics",
+      "transformer architecture",
+      "GPU computing"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
