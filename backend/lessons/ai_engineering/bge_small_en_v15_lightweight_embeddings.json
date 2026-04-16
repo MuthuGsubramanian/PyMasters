@@ -1,0 +1,198 @@
+{
+  "id": "bge_small_en_v15_lightweight_embeddings",
+  "topic": "bge_small_en_v15_lightweight_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BGE-small-en-v1.5: Lightweight Embeddings for Local RAG"
+  },
+  "description": {
+    "en": "Master BAAI/bge-small-en-v1.5 â€” a 33M-parameter embedding model that punches above its weight for semantic search, retrieval, and classification. Build Homie's local RAG pipeline with minimal memory and maximum speed."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Small Model, Big Retrieval: BGE-small-en-v1.5 for Local RAG\n\nVaathiyaar here! You need embeddings for Homie's local RAG pipeline, but you're running on a laptop with 8GB RAM â€” no GPU, no cloud API budget. Most embedding models either eat your memory or require a GPU to run at usable speed. Enter `BAAI/bge-small-en-v1.5`: a 33M-parameter model that produces 384-dimensional vectors, ranks in the top tier on MTEB benchmarks for its size class, and runs comfortably on CPU. It's the ideal backbone for a local-first retrieval system.\n\nThis lesson shows you how to load, encode, and deploy BGE-small for production-grade local RAG â€” including the critical `query_instruction` prefix that most tutorials miss.\n\n### Model Specifications\n\n| Property | Value |\n|---|---|\n| Developer | Beijing Academy of AI (BAAI) |\n| Parameters | 33.4M |\n| Output dimensions | 384 |\n| Max sequence length | 512 tokens |\n| Model size on disk | ~67 MB (SafeTensors) |\n| Pooling | CLS token (not mean pooling) |\n| MTEB Average (56 tasks) | 62.x (top for <50M params) |\n| Frameworks | PyTorch, ONNX, SafeTensors, sentence-transformers |\n\nThe `v1.5` revision improves retrieval quality over v1 by adding similarity distribution normalization during training â€” embeddings are better calibrated for cosine similarity without post-processing.\n\n### The Query Instruction Trick\n\nBGE models were trained with an asymmetric setup: **queries** get a special prefix, **documents** do not. Forgetting this prefix drops retrieval accuracy by 5-10%.\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\n# Documents â€” encode as-is\ndocs = [\n    \"Python lists are ordered, mutable sequences.\",\n    \"Dictionaries map keys to values with O(1) lookup.\",\n    \"Sets store unique elements with fast membership testing.\",\n]\ndoc_embeddings = model.encode(docs, normalize_embeddings=True)\n\n# Queries â€” MUST prepend instruction\nquery_instruction = \"Represent this sentence for searching relevant passages: \"\nquery = query_instruction + \"How do I store key-value pairs?\"\nquery_embedding = model.encode([query], normalize_embeddings=True)\n```\n\nThis asymmetry lets the model learn separate representations for \"what I'm looking for\" versus \"what this passage contains.\"\n\n### Building Homie's Local RAG Pipeline\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass LocalRAGPipeline:\n    QUERY_PREFIX = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.chunks = []\n        self.index = None\n\n    def ingest(self, chunks: list[str]):\n        self.chunks = chunks\n        self.index = self.model.encode(chunks, normalize_embeddings=True)\n        print(f\"Indexed {len(chunks)} chunks â†’ shape {self.index.shape}\")\n\n    def search(self, query: str, top_k: int = 5) -> list[dict]:\n        prefixed = self.QUERY_PREFIX + query\n        q_emb = self.model.encode([prefixed], normalize_embeddings=True)\n        scores = np.dot(self.index, q_emb.T).squeeze()\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [\n            {\"chunk\": self.chunks[i], \"score\": float(scores[i])}\n            for i in top_idx\n        ]\n\n    def build_prompt(self, query: str, top_k: int = 3) -> str:\n        results = self.search(query, top_k)\n        context = \"\\n\".join(f\"- {r['chunk']}\" for r in results)\n        return f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"\n```\n\n### Comparing BGE-small to Other Lightweight Models\n\n| Model | Params | Dims | MTEB Avg | Disk Size | Query Prefix? |\n|---|---|---|---|---|---|\n| bge-small-en-v1.5 | 33M | 384 | 62.x | 67 MB | Yes |\n| all-MiniLM-L6-v2 | 22M | 384 | 56.x | 80 MB | No |\n| bge-base-en-v1.5 | 109M | 768 | 64.x | 220 MB | Yes |\n| e5-small-v2 | 33M | 384 | 59.x | 67 MB | Yes |\n\nBGE-small outperforms MiniLM on retrieval benchmarks despite similar parameter counts. The trade-off: you must remember to use the query prefix.\n\n### ONNX Acceleration for CPU Inference\n\n```python\nmodel_onnx = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n# Same API, 2-3x faster on CPU\nembeddings = model_onnx.encode([\"fast local inference\"], normalize_embeddings=True)\n```\n\nFor Homie's laptop deployment, ONNX Runtime eliminates PyTorch overhead entirely. Pair this with batched encoding and you get sub-second retrieval over thousands of document chunks.\n\n> **Key Insight:** BGE-small-en-v1.5 is the sweet spot for local RAG â€” it delivers retrieval quality that rivals models 3x its size, fits in 67 MB of disk and minimal RAM, and runs fast on CPU with ONNX. The one rule you must never forget: always prepend the query instruction for search queries, but never for documents. This asymmetric encoding is what gives BGE its edge over symmetric models like MiniLM."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BAAI/bge-small-en-v1.5 is a 33M-parameter embedding model that produces 384-dimensional vectors â€” perfect for local RAG on CPU. It outperforms many larger models on retrieval benchmarks thanks to asymmetric query-document training. This lesson builds Homie's local RAG pipeline with BGE-small.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\n# Documents â€” encode without prefix\ndocs = [\n    \"Python lists are ordered, mutable sequences.\",\n    \"Dictionaries map keys to values with O(1) lookup.\",\n    \"Sets store unique elements with fast membership testing.\",\n]\ndoc_embeddings = model.encode(docs, normalize_embeddings=True)\nprint(f\"Doc matrix shape: {doc_embeddings.shape}\")\n\n# Queries â€” prepend the instruction prefix\nquery_prefix = \"Represent this sentence for searching relevant passages: \"\nquery = query_prefix + \"How do I store key-value pairs?\"\nquery_emb = model.encode([query], normalize_embeddings=True)\n\n# Cosine similarity via dot product (embeddings are normalized)\nscores = np.dot(doc_embeddings, query_emb.T).squeeze()\nfor doc, score in zip(docs, scores):\n    print(f\"{score:.4f} â†’ {doc}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer â€” the high-level API that handles tokenization, model loading, and pooling for BGE-small-en-v1.5."
+        },
+        {
+          "line": 4,
+          "explanation": "Load BAAI/bge-small-en-v1.5. At 67 MB, this downloads in seconds and uses minimal RAM. The model uses CLS-token pooling, not mean pooling."
+        },
+        {
+          "line": 7,
+          "explanation": "Documents are encoded as-is â€” no prefix. BGE's training teaches the model to represent passages differently from queries, enabling asymmetric retrieval."
+        },
+        {
+          "line": 12,
+          "explanation": "normalize_embeddings=True L2-normalizes each vector. This means dot product equals cosine similarity â€” no separate normalization step needed."
+        },
+        {
+          "line": 16,
+          "explanation": "The critical query instruction prefix. BGE models were trained with this prefix on the query side. Omitting it drops retrieval accuracy by 5-10%."
+        },
+        {
+          "line": 18,
+          "explanation": "Encode the prefixed query into a 384-dim vector. The prefix steers the model's attention toward retrieval-relevant features."
+        },
+        {
+          "line": 21,
+          "explanation": "Dot product between doc matrix (3, 384) and query vector (384, 1) gives similarity scores. Highest score = most relevant document."
+        },
+        {
+          "line": 22,
+          "explanation": "Print scores alongside documents. 'Dictionaries map keys to values' should score highest for the key-value pairs query."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass LocalRAGPipeline:\n    QUERY_PREFIX = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.chunks = []\n        self.index = None\n\n    def ingest(self, chunks: list[str]):\n        self.chunks = chunks\n        self.index = self.model.encode(chunks, normalize_embeddings=True)\n\n    def search(self, query: str, top_k: int = 5) -> list[dict]:\n        prefixed = self.QUERY_PREFIX + query\n        q_emb = self.model.encode([prefixed], normalize_embeddings=True)\n        scores = np.dot(self.index, q_emb.T).squeeze()\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [\n            {\"chunk\": self.chunks[i], \"score\": float(scores[i])}\n            for i in top_idx\n        ]\n\n    def build_prompt(self, query: str, top_k: int = 3) -> str:\n        results = self.search(query, top_k)\n        context = \"\\n\".join(f\"- {r['chunk']}\" for r in results)\n        return f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "LocalRAGPipeline encapsulates Homie's entire retrieval layer â€” ingest docs, search by query, build LLM prompts. All running locally on CPU."
+        },
+        {
+          "line": 5,
+          "explanation": "The query prefix is a class constant. Centralizing it prevents the most common BGE mistake â€” forgetting to prepend it on search queries."
+        },
+        {
+          "line": 12,
+          "explanation": "ingest() encodes documents without the query prefix. This is the asymmetric design: documents and queries live in the same vector space but are encoded differently."
+        },
+        {
+          "line": 14,
+          "explanation": "The index is an (N, 384) numpy array â€” Homie's entire vector store. For 10K chunks, this is only ~15 MB of RAM."
+        },
+        {
+          "line": 16,
+          "explanation": "search() prepends the query prefix automatically, so callers never need to remember it. Encapsulation prevents retrieval accuracy bugs."
+        },
+        {
+          "line": 19,
+          "explanation": "Dot product computes all similarity scores in one vectorized operation. argsort descending picks the top-k most relevant chunks."
+        },
+        {
+          "line": 26,
+          "explanation": "build_prompt() formats retrieved chunks into a RAG prompt template. The LLM receives grounded context before answering the user's question."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Without Query Prefix",
+      "right_label": "With Query Prefix",
+      "items": [
+        {
+          "left": "Symmetric encoding â€” same process for all text",
+          "right": "Asymmetric â€” queries get instruction prefix"
+        },
+        {
+          "left": "5-10% lower retrieval accuracy on benchmarks",
+          "right": "Full retrieval quality as designed"
+        },
+        {
+          "left": "Works okay for similarity but misses ranking nuance",
+          "right": "Optimized for 'find relevant passages' intent"
+        },
+        {
+          "left": "No distinction between query and document",
+          "right": "Model learns separate query vs. passage representations"
+        },
+        {
+          "left": "Simpler code but weaker results",
+          "right": "One extra line of code, significantly better search"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered BGE-small-en-v1.5 and built Homie's local RAG pipeline â€” lightweight embeddings with retrieval quality that rivals models 3x its size!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `AsymmetricEncoder` class that simulates BGE's query-document asymmetry using word-frequency vectors. Implement `encode_document(text)` that returns a word-frequency dict (lowercase), `encode_query(text)` that prepends a prefix before encoding, `similarity(vec_a, vec_b)` for cosine similarity, and `rank_documents(query, documents)` that returns documents sorted by relevance as a list of `{\"document\": str, \"score\": float}` dicts. The query prefix should be stored as the class attribute `QUERY_PREFIX = \"search: \"`."
+      },
+      "starter_code": "import math\n\nclass AsymmetricEncoder:\n    QUERY_PREFIX = \"search: \"\n\n    def encode_document(self, text: str) -> dict:\n        # Word frequency vector, lowercase, no prefix\n        pass\n\n    def encode_query(self, text: str) -> dict:\n        # Prepend QUERY_PREFIX, then word frequency vector, lowercase\n        pass\n\n    def similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two word-frequency dicts\n        # Return 0.0 if either has zero magnitude\n        pass\n\n    def rank_documents(self, query: str, documents: list[str]) -> list[dict]:\n        # Encode query (with prefix), encode each document (without prefix)\n        # Return list of {\"document\": str, \"score\": float} sorted by score descending\n        pass\n\n# Test it:\nenc = AsymmetricEncoder()\n\n# Document encoding â€” no prefix\ndoc_vec = enc.encode_document(\"python data science\")\nprint(doc_vec)\n\n# Query encoding â€” has prefix\nquery_vec = enc.encode_query(\"python\")\nprint(\"search:\" in str(query_vec))\n\n# Ranking\ndocs = [\"python programming basics\", \"cooking italian food\", \"python data analysis\"]\nresults = enc.rank_documents(\"python data\", docs)\nprint(results[0][\"document\"])\nprint(results[-1][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "{'python': 1, 'data': 1, 'science': 1}\nTrue\npython data analysis\ncooking italian food\nTrue",
+      "hints": {
+        "en": [
+          "encode_document(): use text.lower().split() and count each word in a dict",
+          "encode_query(): prepend self.QUERY_PREFIX to text, then call the same word-frequency logic",
+          "similarity(): dot = sum(a[w]*b[w] for shared words), mag = sqrt(sum(v**2)), return dot/(mag_a*mag_b) or 0.0"
+        ]
+      },
+      "test_code": "enc = AsymmetricEncoder()\nassert enc.encode_document(\"Hello World\") == {\"hello\": 1, \"world\": 1}\nassert enc.encode_document(\"go go go\") == {\"go\": 3}\nq = enc.encode_query(\"test\")\nassert \"search:\" in q\nassert \"test\" in q\nassert abs(enc.similarity({\"a\": 1}, {\"a\": 1}) - 1.0) < 0.001\nassert enc.similarity({\"a\": 1}, {\"b\": 1}) == 0.0\nassert enc.similarity({}, {\"a\": 1}) == 0.0\nresults = enc.rank_documents(\"a b\", [\"a b c\", \"d e f\", \"a b\"])\nassert len(results) == 3\nassert results[-1][\"document\"] == \"d e f\"\nassert results[0][\"score\"] >= results[1][\"score\"]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MiniRAG` class that combines asymmetric encoding with a retrieval pipeline. Implement `ingest(documents)` to store and encode documents, `search(query, top_k)` to find the most relevant documents using cosine similarity (queries get the prefix `\"search: \"`, documents do not), and `build_prompt(query, top_k)` to format results as `\"Context:\\n- doc1\\n- doc2\\n\\nQuestion: {query}\\nAnswer:\"`. Use word-frequency vectors for encoding and track the number of ingested documents via a `doc_count` property."
+      },
+      "starter_code": "import math\n\nclass MiniRAG:\n    QUERY_PREFIX = \"search: \"\n\n    def __init__(self):\n        self.documents = []\n        self.doc_vectors = []\n\n    @property\n    def doc_count(self):\n        return len(self.documents)\n\n    def _encode(self, text: str) -> dict:\n        # Word frequency vector, lowercase\n        pass\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        # Cosine similarity, return 0.0 if zero magnitude\n        pass\n\n    def ingest(self, documents: list[str]):\n        # Store documents and pre-compute their vectors (no prefix)\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Encode query WITH prefix, score against docs, return top-k\n        # Each result: {\"document\": str, \"score\": float}\n        pass\n\n    def build_prompt(self, query: str, top_k: int = 2) -> str:\n        # Retrieve top-k and format as:\n        # Context:\\n- doc1\\n- doc2\\n\\nQuestion: {query}\\nAnswer:\n        pass\n\n# Test it:\nrag = MiniRAG()\nrag.ingest([\"python lists and tuples\", \"javascript arrays\", \"python dict comprehension\", \"cooking recipes\"])\nprint(rag.doc_count)\n\nresults = rag.search(\"python data structures\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] > 0)\n\nprompt = rag.build_prompt(\"python\", top_k=2)\nprint(\"Context:\" in prompt)\nprint(\"Answer:\" in prompt)\n\n# Re-ingest replaces old docs\nrag.ingest([\"rust ownership model\"])\nprint(rag.doc_count)\nresults2 = rag.search(\"rust\", top_k=1)\nprint(results2[0][\"document\"])",
+      "expected_output": "4\n2\nTrue\nTrue\nTrue\n1\nrust ownership model",
+      "hints": {
+        "en": [
+          "_encode(): split text.lower() into words and count occurrences in a dict",
+          "_cosine(): compute dot product over shared keys, divide by product of magnitudes (sqrt of sum of squares), return 0.0 if either magnitude is zero",
+          "search(): prepend QUERY_PREFIX to query before encoding, then compute _cosine against each doc_vector, sort descending, return top_k"
+        ]
+      },
+      "test_code": "rag = MiniRAG()\nassert rag.doc_count == 0\nrag.ingest([\"a b c\", \"d e f\", \"a b d\"])\nassert rag.doc_count == 3\nresults = rag.search(\"a b\", top_k=2)\nassert len(results) == 2\nassert results[0][\"score\"] >= results[1][\"score\"]\nassert results[-1][\"document\"] != \"d e f\"\nprompt = rag.build_prompt(\"a\", top_k=1)\nassert prompt.startswith(\"Context:\")\nassert \"Question: a\" in prompt\nassert prompt.strip().endswith(\"Answer:\")\nrag.ingest([\"x y z\"])\nassert rag.doc_count == 1\nr2 = rag.search(\"x\", top_k=1)\nassert r2[0][\"document\"] == \"x y z\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "BGE embeddings",
+      "asymmetric query-document encoding",
+      "query instruction prefix",
+      "lightweight embedding models",
+      "local RAG pipeline",
+      "bge-small-en-v1.5",
+      "CLS token pooling",
+      "ONNX CPU acceleration",
+      "cosine similarity retrieval",
+      "Homie RAG integration"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "numpy basics",
+      "pip install",
+      "cosine similarity"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
