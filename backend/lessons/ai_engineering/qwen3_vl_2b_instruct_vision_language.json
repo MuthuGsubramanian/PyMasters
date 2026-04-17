@@ -1,0 +1,208 @@
+{
+  "id": "qwen3_vl_2b_instruct_vision_language",
+  "topic": "qwen3_vl_2b_instruct_vision_language",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-VL-2B: Local Vision-Language AI That Reads Images and Text"
+  },
+  "description": {
+    "en": "Run Qwen3-VL-2B-Instruct â€” a 2-billion-parameter vision-language model â€” on your own machine. Learn to send images and text together, describe photos, extract info from screenshots, and build a local multimodal assistant with a small footprint."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Teaching Your AI to See: Vision-Language Models on Your Laptop\n\nVaathiyaar here! Text-only LLMs are powerful, but the real world is full of *images* â€” screenshots, diagrams, photos, charts. What if your local AI could look at a picture and answer questions about it? Meet **Qwen3-VL-2B-Instruct** from Alibaba's Qwen team: a 2-billion-parameter vision-language model that processes both images and text, runs on modest hardware, and understands what it sees.\n\nVision-language models (VLMs) are the next frontier for local AI. They combine a visual encoder with a language decoder, letting you send an image alongside a text prompt and get a coherent, context-aware response.\n\n### Why Qwen3-VL-2B?\n\n| Model | Parameters | RAM Needed | Modalities | API Required | Instruction-Tuned |\n|---|---|---|---|---|---|\n| GPT-4o | ~200B+ | Cloud only | Text + Image + Audio | Yes ($$$) | Yes |\n| LLaVA-1.5-13B | 13B | ~26 GB | Text + Image | No | Yes |\n| Phi-3-Vision | 4.2B | ~9 GB | Text + Image | No | Yes |\n| **Qwen3-VL-2B** | **2B** | **~5 GB** | **Text + Image + Video** | **No** | **Yes** |\n| MiniCPM-V-2.6 | 8B | ~16 GB | Text + Image | No | Yes |\n\nQwen3-VL-2B hits a sweet spot: small enough for a laptop with a decent GPU (or CPU with patience), yet capable enough to describe images, read text from screenshots, and answer visual questions.\n\n### Loading the Model\n\n```python\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n```\n\nThe processor handles both image preprocessing and text tokenization. First run downloads ~4GB of weights and caches them locally.\n\n### Sending an Image with a Prompt\n\nQwen3-VL uses the chat format with a special content structure for multimodal messages:\n\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful visual assistant.\"},\n    {\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": \"https://example.com/photo.jpg\"},\n        {\"type\": \"text\", \"text\": \"What is in this image? Describe it briefly.\"}\n    ]}\n]\n\ntext = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)\ninputs = processor(text=text, images=[\"https://example.com/photo.jpg\"], return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=200)\nresponse = processor.batch_decode(output[:, inputs[\"input_ids\"].shape[1]:], skip_special_tokens=True)[0]\nprint(response)\n```\n\nThe key difference from text-only models: user content is a *list* of typed blocks â€” mixing `image` and `text` entries in any order.\n\n### Local Image Files\n\nYou can also pass local file paths or PIL images:\n\n```python\nfrom PIL import Image\n\nimg = Image.open(\"screenshot.png\")\nmessages = [\n    {\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": img},\n        {\"type\": \"text\", \"text\": \"Extract all the text you see in this screenshot.\"}\n    ]}\n]\n```\n\nThis is perfect for OCR-like tasks, reading charts, or parsing UI screenshots â€” all running locally with zero cloud dependency.\n\n### Generation Parameters for VLMs\n\n| Parameter | Effect | Recommended |\n|---|---|---|\n| `temperature` | Randomness of text output | 0.7 |\n| `top_p` | Nucleus sampling cutoff | 0.8 |\n| `max_new_tokens` | Maximum response length | 200-512 |\n| `repetition_penalty` | Penalize repeated phrases | 1.1 |\n\n```python\noutput = model.generate(\n    **inputs,\n    max_new_tokens=300,\n    temperature=0.7,\n    top_p=0.8,\n    repetition_penalty=1.1\n)\n```\n\n### Practical Use Cases\n\n- **Screenshot analysis**: Extract text, describe layouts, identify UI elements\n- **Photo description**: Generate alt-text or captions for accessibility\n- **Chart reading**: Summarize data from bar charts, line graphs, tables\n- **Document parsing**: Read scanned documents or handwritten notes\n- **Visual QA**: Answer specific questions about image content\n\n> **Key Insight:** Qwen3-VL-2B-Instruct bridges the gap between text-only local LLMs and expensive cloud vision APIs. At just 2B parameters, it can describe images, read screenshots, and answer visual questions â€” all on your own hardware. Your Homie can now *see* the world, not just read about it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if your local AI could look at images and understand them â€” no cloud API, no cost? Qwen3-VL-2B-Instruct is a 2-billion-parameter vision-language model that processes images and text together, runs on modest hardware, and can describe photos, read screenshots, and answer visual questions.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import Qwen3VLForConditionalGeneration, AutoProcessor\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful visual assistant.\"},\n    {\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": \"https://example.com/photo.jpg\"},\n        {\"type\": \"text\", \"text\": \"Describe what you see in this image.\"}\n    ]}\n]\n\ntext = processor.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = processor(\n    text=text, images=[\"https://example.com/photo.jpg\"],\n    return_tensors=\"pt\"\n).to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=200)\nresponse = processor.batch_decode(\n    output[:, inputs[\"input_ids\"].shape[1]:],\n    skip_special_tokens=True\n)[0]\nprint(response)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import Qwen3VLForConditionalGeneration â€” the vision-language model class â€” and AutoProcessor which handles both image preprocessing and text tokenization in one object."
+        },
+        {
+          "line": 3,
+          "explanation": "Specify the Hugging Face model ID. Qwen3-VL-2B-Instruct is a 2B-parameter multimodal model â€” about 4GB to download."
+        },
+        {
+          "line": 4,
+          "explanation": "Load the processor â€” it replaces the tokenizer for VLMs because it must handle images AND text together."
+        },
+        {
+          "line": 5,
+          "explanation": "Load model weights. torch_dtype='auto' picks optimal precision (float16/bfloat16). device_map='auto' places layers on GPU or CPU automatically."
+        },
+        {
+          "line": 9,
+          "explanation": "Build multimodal messages. The system message is plain text, but the user message has a list of content blocks â€” this is how VLMs mix images and text."
+        },
+        {
+          "line": 12,
+          "explanation": "The 'image' block tells the model to look at this image. You can use URLs, local file paths, or PIL Image objects."
+        },
+        {
+          "line": 13,
+          "explanation": "The 'text' block is your prompt about the image. Image and text blocks can appear in any order within the content list."
+        },
+        {
+          "line": 17,
+          "explanation": "apply_chat_template converts the multimodal messages into the special-token format Qwen3-VL was trained on, including image placeholder tokens."
+        },
+        {
+          "line": 20,
+          "explanation": "The processor tokenizes text AND preprocesses images together. Pass the images list separately so pixel data gets encoded correctly."
+        },
+        {
+          "line": 25,
+          "explanation": "model.generate() runs the vision encoder on image pixels, then the language decoder autoregressively generates a text response."
+        },
+        {
+          "line": 26,
+          "explanation": "batch_decode converts token IDs back to text. We slice off the input tokens to get only the model's new response."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from PIL import Image\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\n\nprocessor = AutoProcessor.from_pretrained(\"Qwen/Qwen3-VL-2B-Instruct\")\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    \"Qwen/Qwen3-VL-2B-Instruct\", torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nimg = Image.open(\"dashboard_screenshot.png\")\n\nmessages = [\n    {\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": img},\n        {\"type\": \"text\", \"text\": \"Extract all text and numbers from this screenshot.\"}\n    ]}\n]\n\ntext = processor.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = processor(\n    text=text, images=[img], return_tensors=\"pt\"\n).to(model.device)\n\noutput = model.generate(\n    **inputs, max_new_tokens=300,\n    temperature=0.3, repetition_penalty=1.1\n)\nresult = processor.batch_decode(\n    output[:, inputs[\"input_ids\"].shape[1]:],\n    skip_special_tokens=True\n)[0]\nprint(result)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import PIL's Image class â€” this lets you load local image files and pass them directly to the model without URLs."
+        },
+        {
+          "line": 9,
+          "explanation": "Open a local image file with PIL. This works with PNG, JPEG, BMP, and other common formats."
+        },
+        {
+          "line": 13,
+          "explanation": "Pass the PIL Image object directly as the image content. No need to upload to a server or convert to base64."
+        },
+        {
+          "line": 14,
+          "explanation": "For OCR-like tasks, be specific in your prompt. 'Extract all text and numbers' gets better results than vague 'describe this'."
+        },
+        {
+          "line": 22,
+          "explanation": "Pass the PIL image in the images list â€” the processor converts it to pixel tensors at the resolution the model expects."
+        },
+        {
+          "line": 26,
+          "explanation": "Lower temperature (0.3) for extraction tasks â€” you want accurate, deterministic output when reading text from images."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud Vision API",
+      "right_label": "Local Qwen3-VL-2B",
+      "items": [
+        {
+          "left": "Requires API key and internet",
+          "right": "Runs fully offline after download"
+        },
+        {
+          "left": "Pay per image ($0.01-0.04 each)",
+          "right": "Completely free, unlimited images"
+        },
+        {
+          "left": "Images sent to third-party servers",
+          "right": "Images never leave your machine"
+        },
+        {
+          "left": "Best-in-class accuracy (huge models)",
+          "right": "Good accuracy for 2B parameters"
+        },
+        {
+          "left": "Text + Image + Video + Audio",
+          "right": "Text + Image + Video support"
+        },
+        {
+          "left": "Sub-second latency on cloud GPUs",
+          "right": "5-30 seconds depending on hardware"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Your local AI can now see! Qwen3-VL-2B gives Homie eyes to read images, screenshots, and documents â€” all on your own hardware."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `VisionLanguageProcessor` class that simulates how a vision-language model handles multimodal inputs. It should accept messages containing both image and text blocks, validate the format, build a combined prompt, and simulate generating a response. Implement `add_message(role, content)` where content is either a string (for system/assistant) or a list of dicts with 'type' key ('image' or 'text') for user messages, `build_prompt()` that formats all messages into a single string with image placeholders like '[IMAGE: <source>]', and `generate_response()` that returns a mock response based on the last user prompt: 'I see an image with text content.' if any image block is present, 'I can answer that question.' if only text blocks exist, or 'No messages to process.' if no user messages exist."
+      },
+      "starter_code": "class VisionLanguageProcessor:\n    def __init__(self):\n        self.messages = []\n\n    def add_message(self, role: str, content):\n        # Validate role is one of: 'system', 'user', 'assistant'\n        # If role is 'user', content should be a list of dicts with 'type' key\n        # Each dict has type 'image' (with 'source' key) or 'text' (with 'text' key)\n        # For other roles, content is a plain string\n        # Raise ValueError for invalid role or malformed content\n        pass\n\n    def build_prompt(self) -> str:\n        # Format all messages into a string\n        # System/assistant: \"<role>: <content>\"\n        # User with mixed content: \"user: [IMAGE: <source>] <text>\"\n        # Join all formatted messages with newlines\n        # Append \"\\nassistant:\" at the end\n        pass\n\n    def has_images(self) -> bool:\n        # Return True if any user message contains an image block\n        pass\n\n    def generate_response(self) -> str:\n        # If no user messages: return 'No messages to process.'\n        # If last user message has image blocks: return 'I see an image with text content.'\n        # If last user message is text-only: return 'I can answer that question.'\n        pass\n\n    def get_message_count(self) -> int:\n        return len(self.messages)\n\n# Test it:\nvlm = VisionLanguageProcessor()\nvlm.add_message(\"system\", \"You are a visual assistant.\")\nvlm.add_message(\"user\", [\n    {\"type\": \"image\", \"source\": \"photo.jpg\"},\n    {\"type\": \"text\", \"text\": \"What is in this photo?\"}\n])\nprint(vlm.has_images())\nprint(vlm.generate_response())\nprint(vlm.get_message_count())",
+      "expected_output": "True\nI see an image with text content.\n2",
+      "hints": {
+        "en": [
+          "Store messages as dicts: {'role': role, 'content': content}. For user messages, content stays as the list of blocks; for others, it's a plain string.",
+          "In build_prompt(), iterate messages. For user messages, loop through content blocks: if type is 'image', append '[IMAGE: <source>]', if 'text', append the text value. Join the parts with spaces.",
+          "In has_images(), check if any message with role 'user' has a content block where type == 'image'. Use any() with a nested loop or generator expression."
+        ]
+      },
+      "test_code": "vlm = VisionLanguageProcessor()\nassert vlm.generate_response() == 'No messages to process.'\nvlm.add_message('system', 'You are helpful.')\nassert vlm.get_message_count() == 1\nassert vlm.generate_response() == 'No messages to process.'\nvlm.add_message('user', [{'type': 'image', 'source': 'test.jpg'}, {'type': 'text', 'text': 'Describe this'}])\nassert vlm.has_images() == True\nassert vlm.generate_response() == 'I see an image with text content.'\nassert vlm.get_message_count() == 2\nprompt = vlm.build_prompt()\nassert '[IMAGE: test.jpg]' in prompt\nassert 'Describe this' in prompt\nassert 'assistant:' in prompt\nvlm2 = VisionLanguageProcessor()\nvlm2.add_message('user', [{'type': 'text', 'text': 'Hello'}])\nassert vlm2.has_images() == False\nassert vlm2.generate_response() == 'I can answer that question.'\ntry:\n    vlm2.add_message('invalid_role', 'test')\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MultimodalMessage` class that constructs and validates vision-language model messages with mixed content types. Implement `__init__(self, role)` that validates role is 'system', 'user', or 'assistant', `add_text(text)` to add a text block, `add_image(source)` to add an image block, `get_content()` that returns the content in the correct format (string joined with spaces for system/assistant, list of typed dicts for user), `get_block_count()` returning total blocks added, and `get_image_sources()` returning a list of all image source strings. Raise ValueError if add_image is called on a non-user role."
+      },
+      "starter_code": "class MultimodalMessage:\n    def __init__(self, role: str):\n        # Validate role is 'system', 'user', or 'assistant'\n        # Initialize storage for content blocks\n        pass\n\n    def add_text(self, text: str):\n        # Add a text block: {\"type\": \"text\", \"text\": text}\n        pass\n\n    def add_image(self, source: str):\n        # Add an image block: {\"type\": \"image\", \"source\": source}\n        # Raise ValueError if role is not 'user'\n        pass\n\n    def get_content(self):\n        # For 'user' role: return list of block dicts\n        # For other roles: return all text blocks joined with ' '\n        pass\n\n    def get_block_count(self) -> int:\n        # Return total number of blocks (text + image)\n        pass\n\n    def get_image_sources(self) -> list:\n        # Return list of source strings from image blocks\n        pass\n\n# Test it:\nmsg = MultimodalMessage(\"user\")\nmsg.add_image(\"photo.jpg\")\nmsg.add_text(\"What is this?\")\nmsg.add_image(\"diagram.png\")\nprint(msg.get_block_count())\nprint(msg.get_image_sources())\nprint(len(msg.get_content()))\n\nsys_msg = MultimodalMessage(\"system\")\nsys_msg.add_text(\"You are helpful.\")\nprint(sys_msg.get_content())",
+      "expected_output": "3\n['photo.jpg', 'diagram.png']\n3\nYou are helpful.",
+      "hints": {
+        "en": [
+          "Store blocks in a list like self.blocks = []. Each block is a dict with a 'type' key ('text' or 'image') and the corresponding data key.",
+          "In add_image(), check self.role first â€” if it's not 'user', raise ValueError('Images can only be added to user messages').",
+          "In get_content(), use a conditional: if self.role == 'user', return self.blocks directly. Otherwise, extract text from text blocks and join with ' '."
+        ]
+      },
+      "test_code": "msg = MultimodalMessage('user')\nassert msg.get_block_count() == 0\nmsg.add_text('Hello')\nassert msg.get_block_count() == 1\nmsg.add_image('img.jpg')\nassert msg.get_block_count() == 2\nassert msg.get_image_sources() == ['img.jpg']\ncontent = msg.get_content()\nassert isinstance(content, list)\nassert len(content) == 2\nassert content[0] == {'type': 'text', 'text': 'Hello'}\nassert content[1] == {'type': 'image', 'source': 'img.jpg'}\nsys = MultimodalMessage('system')\nsys.add_text('Part one.')\nsys.add_text('Part two.')\nassert sys.get_content() == 'Part one. Part two.'\nassert sys.get_image_sources() == []\ntry:\n    sys.add_image('nope.jpg')\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass\ntry:\n    MultimodalMessage('invalid')\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "vision-language models",
+      "Qwen3-VL-2B",
+      "multimodal AI",
+      "image-text inference",
+      "Hugging Face Transformers",
+      "AutoProcessor",
+      "local VLM inference",
+      "visual question answering",
+      "screenshot OCR"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "lists",
+      "pip install",
+      "basic ML concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
