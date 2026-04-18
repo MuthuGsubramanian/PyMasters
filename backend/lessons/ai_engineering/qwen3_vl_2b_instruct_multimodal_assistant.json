@@ -1,0 +1,208 @@
+{
+  "id": "qwen3_vl_2b_instruct_multimodal_assistant",
+  "topic": "qwen3_vl_2b_instruct_multimodal_assistant",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-VL-2B-Instruct: Build a Private Multimodal Assistant Pipeline"
+  },
+  "description": {
+    "en": "Turn Qwen3-VL-2B-Instruct into a structured multimodal assistant that extracts data from images, performs OCR on documents, and returns machine-readable JSON â€” all running locally on consumer hardware with full privacy."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Pixels to Structured Data: Your Local Vision Assistant\n\nVaathiyaar here! Describing an image is cool, but what if your local AI could *extract structured data* from a photo â€” pull line items from a receipt, parse fields from a form, or return bounding-box descriptions as JSON? That's the power of an **instruction-tuned** vision-language model. Qwen3-VL-2B-Instruct doesn't just see images; it follows precise instructions about *how* to respond, making it perfect for building reliable assistant pipelines on your own machine.\n\n### Instruction Tuning: Why It Matters\n\n| Base Model | Instruct Model |\n|---|---|\n| Predicts next token generically | Follows user instructions faithfully |\n| Output format is unpredictable | Can output JSON, lists, tables on request |\n| Needs few-shot examples | Works zero-shot with clear prompts |\n| Good for fine-tuning | Good for direct deployment |\n| Raw text completion | Chat-ready with system/user/assistant roles |\n\nThe `-Instruct` suffix means Qwen3-VL-2B was further trained on instruction-following datasets, so it reliably obeys formatting constraints â€” critical for building pipelines that downstream code can parse.\n\n### Setting Up the Pipeline\n\n```python\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n```\n\nThis downloads ~4GB of weights once and caches them. With `device_map='auto'`, the model uses your GPU if available, falling back to CPU.\n\n### Structured Extraction from Images\n\nThe key to reliable extraction is a well-crafted system prompt:\n\n```python\nfrom PIL import Image\n\nimage = Image.open(\"receipt.jpg\")\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a document parser. Always respond with valid JSON.\"},\n    {\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": image},\n        {\"type\": \"text\", \"text\": \"Extract all line items as a JSON array with keys: item, quantity, price.\"}\n    ]}\n]\n\ntext_prompt = processor.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = processor(\n    text=[text_prompt], images=[image],\n    return_tensors=\"pt\"\n).to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=500, temperature=0.1)\nresult = processor.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(result)\n```\n\nUsing `temperature=0.1` keeps the output deterministic â€” essential when parsing the result as JSON downstream.\n\n### Building a Reusable Assistant Class\n\n```python\nimport json\n\nclass VisionAssistant:\n    def __init__(self, model, processor, system_prompt=\"\"):\n        self.model = model\n        self.processor = processor\n        self.system_prompt = system_prompt\n\n    def analyze(self, image, question, max_tokens=300):\n        messages = []\n        if self.system_prompt:\n            messages.append({\"role\": \"system\", \"content\": self.system_prompt})\n        messages.append({\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": question}\n        ]})\n        prompt = self.processor.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = self.processor(\n            text=[prompt], images=[image], return_tensors=\"pt\"\n        ).to(self.model.device)\n        out = self.model.generate(**inputs, max_new_tokens=max_tokens, temperature=0.1)\n        return self.processor.decode(\n            out[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n        )\n\nassistant = VisionAssistant(model, processor, system_prompt=\"Respond in JSON.\")\n```\n\n### Privacy and Performance\n\n| Metric | Cloud API | Local Qwen3-VL-2B |\n|---|---|---|\n| Data privacy | Images sent externally | Never leaves your machine |\n| Cost per image | $0.01 - $0.05 | Free after download |\n| Latency | 1-3s (network + inference) | 0.5-2s (inference only) |\n| Offline capable | No | Yes |\n| Output control | Limited | Full prompt engineering |\n\n> **Key Insight:** Instruction-tuned vision models like Qwen3-VL-2B-Instruct bridge the gap between 'AI that sees' and 'AI that does useful work with what it sees.' By combining system prompts, low temperature, and structured output requests, you transform a general-purpose VLM into a reliable, private data extraction pipeline â€” no cloud required."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Vision-language models can do more than describe pictures. Qwen3-VL-2B-Instruct follows precise instructions to extract structured data from images â€” parse receipts, read forms, analyze charts â€” and return clean JSON. All running locally on ~5GB VRAM with zero cloud dependencies.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nimage = Image.open(\"receipt.jpg\")\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a document parser. Always respond with valid JSON.\"},\n    {\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": image},\n        {\"type\": \"text\", \"text\": \"Extract all line items as JSON with keys: item, quantity, price.\"}\n    ]}\n]\n\ntext_prompt = processor.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = processor(\n    text=[text_prompt], images=[image],\n    return_tensors=\"pt\"\n).to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=500, temperature=0.1)\nresult = processor.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(result)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import Qwen3VLForConditionalGeneration â€” the model class for Qwen3's vision-language architecture â€” and AutoProcessor for unified text+image preprocessing."
+        },
+        {
+          "line": 2,
+          "explanation": "PIL (Pillow) provides the Image class. Qwen3-VL expects PIL Image objects as visual input."
+        },
+        {
+          "line": 4,
+          "explanation": "Point to the instruction-tuned variant on Hugging Face. The '-Instruct' suffix means it follows formatting instructions reliably."
+        },
+        {
+          "line": 5,
+          "explanation": "The processor handles both tokenization and image preprocessing â€” resizing, normalization, and converting pixels to tensors."
+        },
+        {
+          "line": 6,
+          "explanation": "Load ~4GB of model weights. torch_dtype='auto' picks optimal precision (bfloat16 on supported GPUs); device_map='auto' distributes across available hardware."
+        },
+        {
+          "line": 10,
+          "explanation": "Load a local image file. In production this could be a scanned document, screenshot, or camera capture."
+        },
+        {
+          "line": 12,
+          "explanation": "The system message instructs the model to always output JSON â€” this instruction-tuned model will follow this constraint reliably."
+        },
+        {
+          "line": 14,
+          "explanation": "The user message combines an image content block with a text block containing the extraction instruction. The model sees both simultaneously."
+        },
+        {
+          "line": 20,
+          "explanation": "apply_chat_template converts the structured messages into the special token format Qwen3-VL was trained on, handling image placeholder tokens."
+        },
+        {
+          "line": 27,
+          "explanation": "Generate with temperature=0.1 for deterministic, parseable output. Low temperature reduces creativity but increases format reliability â€” exactly what data extraction needs."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import json\n\nclass VisionAssistant:\n    def __init__(self, model, processor, system_prompt=\"\"):\n        self.model = model\n        self.processor = processor\n        self.system_prompt = system_prompt\n        self.history = []\n\n    def analyze(self, image, question, max_tokens=300):\n        messages = []\n        if self.system_prompt:\n            messages.append({\"role\": \"system\", \"content\": self.system_prompt})\n        messages.append({\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": question}\n        ]})\n        prompt = self.processor.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = self.processor(\n            text=[prompt], images=[image], return_tensors=\"pt\"\n        ).to(self.model.device)\n        out = self.model.generate(\n            **inputs, max_new_tokens=max_tokens, temperature=0.1\n        )\n        response = self.processor.decode(\n            out[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n        )\n        self.history.append({\"question\": question, \"response\": response})\n        return response\n\nassistant = VisionAssistant(model, processor, system_prompt=\"Respond in JSON.\")\nresult = assistant.analyze(image, \"List all text visible in this image.\")\nparsed = json.loads(result)\nprint(type(parsed))",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "Wrap the model and processor in a reusable class. The system_prompt parameter lets you configure behavior per use case â€” JSON parser, OCR engine, chart reader."
+        },
+        {
+          "line": 8,
+          "explanation": "Track analysis history for logging, debugging, or building multi-step pipelines where later steps reference earlier results."
+        },
+        {
+          "line": 10,
+          "explanation": "The analyze method takes a PIL Image and a question string, handling all the template formatting and generation internally."
+        },
+        {
+          "line": 12,
+          "explanation": "Conditionally prepend the system prompt. This lets the same class work with or without formatting constraints."
+        },
+        {
+          "line": 14,
+          "explanation": "Build the multimodal user message with image and text content blocks â€” the standard format for Qwen3-VL's chat interface."
+        },
+        {
+          "line": 24,
+          "explanation": "Generate with temperature=0.1 by default. For a production pipeline, deterministic output means consistent, parseable responses."
+        },
+        {
+          "line": 35,
+          "explanation": "Because we used a JSON system prompt, the response should be valid JSON. json.loads() parses it into a Python dict or list for downstream processing."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Base Model (no instruct)",
+      "right_label": "Instruct-Tuned Model",
+      "items": [
+        {
+          "left": "Output format is unpredictable",
+          "right": "Follows JSON/list/table instructions"
+        },
+        {
+          "left": "Needs few-shot examples for structure",
+          "right": "Works zero-shot with clear prompts"
+        },
+        {
+          "left": "Better for fine-tuning on custom data",
+          "right": "Ready to deploy as-is"
+        },
+        {
+          "left": "May ignore system prompts",
+          "right": "Respects system prompt constraints"
+        },
+        {
+          "left": "Raw text completion style",
+          "right": "Chat-ready with role-based messages"
+        },
+        {
+          "left": "Creative but unreliable formatting",
+          "right": "Consistent, pipeline-friendly output"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a private vision assistant pipeline! Qwen3-VL-2B-Instruct extracts structured data from images on your own hardware â€” no cloud, no cost, no data leakage."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `StructuredVisionPipeline` class that simulates a vision-language model pipeline for extracting structured data from images. Initialize with `system_prompt` (str) and `temperature` (float, 0.0-2.0 inclusive, raises ValueError otherwise). Implement `extract(image_path, instruction)` which returns a dict with keys 'image', 'instruction', 'system_prompt', 'temperature', and 'output'. The 'output' value should be: if the instruction contains 'json' (case-insensitive), return '{\"extracted\": true}'; if it contains 'list', return '- item 1\\n- item 2'; otherwise return 'Analysis complete.'. Also implement `batch_extract(image_paths, instruction)` that calls extract for each path and returns a list of results, and `get_stats()` returning a dict with 'total_calls' (int) and 'unique_images' (number of distinct image paths processed)."
+      },
+      "starter_code": "class StructuredVisionPipeline:\n    def __init__(self, system_prompt: str = \"\", temperature: float = 0.1):\n        # Validate temperature: 0.0 to 2.0 inclusive\n        # Store system_prompt, temperature\n        # Track calls and unique images\n        pass\n\n    def extract(self, image_path: str, instruction: str) -> dict:\n        # Return dict with: image, instruction, system_prompt, temperature, output\n        # output depends on instruction content (json/list/other)\n        pass\n\n    def batch_extract(self, image_paths: list, instruction: str) -> list:\n        # Call extract for each image_path, return list of results\n        pass\n\n    def get_stats(self) -> dict:\n        # Return total_calls and unique_images count\n        pass\n\n# Test it:\npipe = StructuredVisionPipeline(system_prompt=\"Parse documents\", temperature=0.1)\nr1 = pipe.extract(\"receipt.jpg\", \"Extract items as JSON\")\nprint(r1[\"output\"])\nr2 = pipe.extract(\"menu.jpg\", \"List all dishes\")\nprint(r2[\"output\"])\nr3 = pipe.extract(\"receipt.jpg\", \"Describe this image\")\nprint(r3[\"output\"])\nstats = pipe.get_stats()\nprint(stats[\"total_calls\"])\nprint(stats[\"unique_images\"])",
+      "expected_output": "{\"extracted\": true}\n- item 1\n- item 2\nAnalysis complete.\n3\n2",
+      "hints": {
+        "en": [
+          "Use a set to track unique image paths â€” self.unique_images = set() â€” and add each image_path in extract()",
+          "Check 'json' in instruction.lower() first, then 'list' in instruction.lower(), then fall through to 'Analysis complete.'",
+          "batch_extract is simply: return [self.extract(path, instruction) for path in image_paths] â€” each call updates stats automatically"
+        ]
+      },
+      "test_code": "pipe = StructuredVisionPipeline()\nassert pipe.get_stats() == {\"total_calls\": 0, \"unique_images\": 0}\nr = pipe.extract(\"a.jpg\", \"Return JSON\")\nassert r[\"output\"] == '{\"extracted\": true}'\nassert r[\"image\"] == \"a.jpg\"\nassert r[\"temperature\"] == 0.1\nr2 = pipe.extract(\"b.jpg\", \"Give me a list\")\nassert r2[\"output\"] == \"- item 1\\n- item 2\"\nr3 = pipe.extract(\"a.jpg\", \"Summarize\")\nassert r3[\"output\"] == \"Analysis complete.\"\nassert pipe.get_stats() == {\"total_calls\": 3, \"unique_images\": 2}\nbatch = pipe.batch_extract([\"c.jpg\", \"d.jpg\"], \"Return JSON\")\nassert len(batch) == 2\nassert batch[0][\"output\"] == '{\"extracted\": true}'\nassert pipe.get_stats()[\"total_calls\"] == 5\nassert pipe.get_stats()[\"unique_images\"] == 4\ntry:\n    StructuredVisionPipeline(temperature=3.0)\n    assert False\nexcept ValueError:\n    pass\ntry:\n    StructuredVisionPipeline(temperature=-0.1)\n    assert False\nexcept ValueError:\n    pass\npipe2 = StructuredVisionPipeline(system_prompt=\"test\")\nassert pipe2.extract(\"x.jpg\", \"hi\")[\"system_prompt\"] == \"test\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `MultimodalMessage` class that constructs and validates chat messages for a vision-language model. Initialize with `role` (must be 'system', 'user', or 'assistant' â€” raise ValueError otherwise). Implement `add_text(text)` to append a text content block, `add_image(path)` to append an image content block (raises ValueError if role is 'system' or 'assistant'), `get_content()` which returns a list of content block dicts (each with 'type' and either 'text' or 'path' key), and `to_dict()` returning {'role': role, 'content': content_list}. If only one text block exists and no image blocks, `to_dict` should simplify content to just the text string instead of a list."
+      },
+      "starter_code": "class MultimodalMessage:\n    def __init__(self, role: str):\n        # Validate role is one of: system, user, assistant\n        # Initialize content blocks list\n        pass\n\n    def add_text(self, text: str):\n        # Append {\"type\": \"text\", \"text\": text}\n        pass\n\n    def add_image(self, path: str):\n        # Only allowed for role='user'\n        # Append {\"type\": \"image\", \"path\": path}\n        pass\n\n    def get_content(self) -> list:\n        # Return list of content block dicts\n        pass\n\n    def to_dict(self) -> dict:\n        # If single text block only: {\"role\": ..., \"content\": \"the text\"}\n        # Otherwise: {\"role\": ..., \"content\": [blocks...]}\n        pass\n\n# Test it:\nmsg = MultimodalMessage(\"user\")\nmsg.add_image(\"photo.jpg\")\nmsg.add_text(\"What is in this image?\")\nprint(msg.to_dict()[\"content\"][0][\"type\"])\nprint(msg.to_dict()[\"content\"][1][\"text\"])\n\nsys_msg = MultimodalMessage(\"system\")\nsys_msg.add_text(\"You are a helpful assistant.\")\nprint(type(sys_msg.to_dict()[\"content\"]))\n\ntry:\n    bad = MultimodalMessage(\"tool\")\nexcept ValueError:\n    print(\"Invalid role caught\")",
+      "expected_output": "image\nWhat is in this image?\n<class 'str'>\nInvalid role caught",
+      "hints": {
+        "en": [
+          "Store content blocks as a list of dicts. add_text appends {'type': 'text', 'text': text}, add_image appends {'type': 'image', 'path': path}",
+          "In add_image, check self.role != 'user' and raise ValueError â€” only user messages can contain images in the chat format",
+          "In to_dict, check if len(self.content) == 1 and self.content[0]['type'] == 'text' â€” if so, return the text string directly instead of the list"
+        ]
+      },
+      "test_code": "msg = MultimodalMessage(\"user\")\nmsg.add_text(\"hello\")\nmsg.add_image(\"img.jpg\")\nd = msg.to_dict()\nassert d[\"role\"] == \"user\"\nassert isinstance(d[\"content\"], list)\nassert len(d[\"content\"]) == 2\nassert d[\"content\"][0][\"type\"] == \"text\"\nassert d[\"content\"][1][\"type\"] == \"image\"\nassert d[\"content\"][1][\"path\"] == \"img.jpg\"\n\nsys = MultimodalMessage(\"system\")\nsys.add_text(\"Be helpful\")\nassert isinstance(sys.to_dict()[\"content\"], str)\nassert sys.to_dict()[\"content\"] == \"Be helpful\"\n\ntry:\n    sys.add_image(\"x.jpg\")\n    assert False\nexcept ValueError:\n    pass\n\ntry:\n    MultimodalMessage(\"tool\")\n    assert False\nexcept ValueError:\n    pass\n\nassistant_msg = MultimodalMessage(\"assistant\")\ntry:\n    assistant_msg.add_image(\"x.jpg\")\n    assert False\nexcept ValueError:\n    pass\nassistant_msg.add_text(\"I see a cat\")\nassert assistant_msg.to_dict()[\"content\"] == \"I see a cat\"\n\nmulti = MultimodalMessage(\"user\")\nmulti.add_text(\"a\")\nmulti.add_text(\"b\")\nassert isinstance(multi.to_dict()[\"content\"], list)\nassert len(multi.to_dict()[\"content\"]) == 2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "instruction-tuned VLMs",
+      "Qwen3-VL-2B-Instruct",
+      "structured data extraction",
+      "multimodal chat templates",
+      "system prompts for format control",
+      "low-temperature generation",
+      "vision assistant pipelines",
+      "local multimodal inference",
+      "JSON output from VLMs"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "JSON parsing",
+      "basic ML concepts",
+      "PIL/Pillow basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
