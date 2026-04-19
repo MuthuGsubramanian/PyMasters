@@ -1,0 +1,190 @@
+{
+  "id": "chronos2_time_series_forecasting",
+  "topic": "chronos2_time_series_forecasting",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Amazon Chronos-2: Zero-Shot Time-Series Forecasting with Foundation Models"
+  },
+  "description": {
+    "en": "Forecast any time series without training using Amazon's Chronos-2 â€” a T5-based foundation model that tokenizes real-valued data into discrete bins and generates probabilistic forecasts out of the box."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Predicting the Future: Zero-Shot Time-Series Forecasting\n\nVaathiyaar here! Traditional time-series forecasting required fitting a separate model â€” ARIMA, Prophet, or a custom LSTM â€” for every dataset. What if you could just hand *any* time series to a pre-trained foundation model and get accurate probabilistic forecasts with zero training? That's exactly what **Amazon Chronos-2** does. Built on the T5 architecture, Chronos-2 treats time-series forecasting as a language task: tokenize the numbers, feed them into a transformer, and decode the future.\n\n### Why Chronos-2?\n\n| Approach | Training Required | Probabilistic | Multi-Dataset | Hardware |\n|---|---|---|---|---|\n| ARIMA / ETS | Per-series fitting | Limited | No | CPU |\n| Prophet | Per-series fitting | Yes | No | CPU |\n| Custom LSTM/Transformer | Full training | Optional | With effort | GPU |\n| **Chronos-2** | **None (zero-shot)** | **Yes (samples)** | **Yes** | **CPU or GPU** |\n\nChronos-2 was pre-trained on billions of time-series observations â€” both real-world datasets and synthetic data generated via Gaussian processes. It learns universal temporal patterns, so you don't need domain-specific training.\n\n### How Chronos Works Under the Hood\n\n1. **Scaling**: Each series is normalized (mean/std) so the model sees standardized patterns\n2. **Tokenization**: Continuous values are mapped to discrete bins (vocabulary tokens), turning floats into a language-like sequence\n3. **Generation**: The T5 model autoregressively generates future token IDs\n4. **De-tokenization**: Token IDs are mapped back to real values and un-scaled\n\n### Loading and Forecasting\n\n```python\nimport torch\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"auto\",\n    torch_dtype=torch.float32,\n)\n\n# Your historical data as a 1-D tensor\ncontext = torch.tensor([10, 12, 13, 15, 18, 20, 23, 25, 28, 30,\n                        33, 35, 38, 40, 42, 45, 47, 50, 52, 55])\n\nforecast = pipeline.predict(context, prediction_length=5, num_samples=20)\n# forecast shape: (1, num_samples, prediction_length)\n\nmedian_forecast = forecast.median(dim=1).values\nprint(median_forecast)\n```\n\nThe pipeline downloads a pre-trained T5 model fine-tuned for time series. `predict()` returns multiple sample trajectories â€” giving you a full probability distribution, not just a point estimate.\n\n### Probabilistic Forecasting and Uncertainty\n\n```python\nimport numpy as np\n\nlow = np.percentile(forecast[0].numpy(), 10, axis=0)\nhigh = np.percentile(forecast[0].numpy(), 90, axis=0)\nmedian = np.median(forecast[0].numpy(), axis=0)\n\nfor i in range(len(median)):\n    print(f\"Step {i+1}: {median[i]:.1f}  \"\n          f\"[{low[i]:.1f} - {high[i]:.1f}]\")\n```\n\nBy drawing multiple samples, you get prediction intervals for free. The 10thâ€“90th percentile band shows how confident the model is â€” wider bands mean more uncertainty.\n\n### Model Sizes\n\n| Model | Parameters | Download | Speed | Accuracy |\n|---|---|---|---|---|\n| chronos-t5-tiny | 8M | ~33 MB | Fastest | Good |\n| chronos-t5-mini | 20M | ~80 MB | Fast | Better |\n| chronos-t5-small | 46M | ~180 MB | Moderate | Strong |\n| chronos-t5-base | 200M | ~800 MB | Slower | Best |\n| chronos-t5-large | 710M | ~2.8 GB | Slowest | Best+ |\n\nStart with `chronos-t5-small` for a balance of speed and accuracy. Scale up if you need maximum precision on complex seasonal data.\n\n### When to Use Chronos-2\n\n- **Quick baselines**: Get a strong forecast in seconds without any training\n- **Cold-start problems**: New product with no history? Chronos transfers patterns from its pre-training\n- **Many series at once**: Forecast thousands of series without fitting thousands of models\n- **Uncertainty quantification**: Built-in probabilistic output for risk-aware decisions\n\n> **Key Insight:** Chronos-2 brings the foundation-model paradigm to time series â€” pre-train once on massive data, then forecast anything zero-shot. By tokenizing continuous values into discrete bins and leveraging the T5 architecture, it turns forecasting into a sequence generation task. You get probabilistic predictions with uncertainty bands, no training loop required."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if you could forecast any time series without training a model? Amazon Chronos-2 is a T5-based foundation model pre-trained on billions of observations. It tokenizes your numbers into discrete bins, feeds them through a transformer, and generates probabilistic forecasts â€” zero-shot, with uncertainty bands built in.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import torch\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"auto\",\n    torch_dtype=torch.float32,\n)\n\ncontext = torch.tensor([10, 12, 13, 15, 18, 20, 23, 25, 28, 30,\n                        33, 35, 38, 40, 42, 45, 47, 50, 52, 55])\n\nforecast = pipeline.predict(\n    context, prediction_length=5, num_samples=20\n)\n\nmedian_forecast = forecast.median(dim=1).values\nprint(median_forecast)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import PyTorch â€” Chronos uses tensors as input and returns forecast samples as tensors."
+        },
+        {
+          "line": 2,
+          "explanation": "Import ChronosPipeline from the chronos package (pip install chronos-forecasting). This is the high-level API for loading and running forecasts."
+        },
+        {
+          "line": 4,
+          "explanation": "Load a pre-trained Chronos model from Hugging Face. 'chronos-t5-small' has 46M parameters â€” a good balance of speed and accuracy."
+        },
+        {
+          "line": 6,
+          "explanation": "device_map='auto' places the model on GPU if available, otherwise CPU. torch_dtype=torch.float32 ensures numeric stability."
+        },
+        {
+          "line": 10,
+          "explanation": "Your historical data as a 1-D tensor. Chronos works with any numeric time series â€” sales, temperature, stock prices, sensor readings."
+        },
+        {
+          "line": 13,
+          "explanation": "predict() generates forecasts. prediction_length=5 forecasts 5 steps ahead. num_samples=20 draws 20 sample trajectories for uncertainty estimation."
+        },
+        {
+          "line": 17,
+          "explanation": "forecast shape is (1, 20, 5) â€” 1 series, 20 samples, 5 future steps. Take the median across samples to get a robust point forecast."
+        },
+        {
+          "line": 18,
+          "explanation": "Print the median forecast values â€” these are the model's best estimates for the next 5 time steps, derived from the pre-trained transformer."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nimport torch\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"auto\",\n    torch_dtype=torch.float32,\n)\n\ncontext = torch.tensor([100, 120, 115, 130, 125, 140, 135, 150,\n                        145, 160, 155, 170, 165, 180, 175, 190])\n\nforecast = pipeline.predict(\n    context, prediction_length=4, num_samples=50\n)\n\nsamples = forecast[0].numpy()\nlow = np.percentile(samples, 10, axis=0)\nhigh = np.percentile(samples, 90, axis=0)\nmedian = np.median(samples, axis=0)\n\nfor i in range(len(median)):\n    print(f\"Step {i+1}: {median[i]:.1f}  \"\n          f\"[{low[i]:.1f} - {high[i]:.1f}]\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import NumPy for percentile calculations â€” we'll build prediction intervals from the sample trajectories."
+        },
+        {
+          "line": 11,
+          "explanation": "A time series with an upward trend and oscillation. Chronos should capture both the trend and the periodic pattern."
+        },
+        {
+          "line": 14,
+          "explanation": "Generate 50 sample trajectories for 4 steps ahead. More samples give smoother uncertainty estimates."
+        },
+        {
+          "line": 18,
+          "explanation": "Extract the samples array with shape (50, 4) â€” 50 possible futures, each 4 steps long."
+        },
+        {
+          "line": 19,
+          "explanation": "Compute 10th and 90th percentiles across samples. This gives an 80% prediction interval â€” the range where the true value is likely to fall."
+        },
+        {
+          "line": 21,
+          "explanation": "The median is more robust than the mean for skewed distributions. It's the model's central forecast."
+        },
+        {
+          "line": 23,
+          "explanation": "Print each future step with its median and confidence band. Wider bands mean the model is less certain about that step."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Traditional Forecasting",
+      "right_label": "Chronos-2 Foundation Model",
+      "items": [
+        {
+          "left": "Fit a separate model per series",
+          "right": "One model forecasts any series zero-shot"
+        },
+        {
+          "left": "Needs domain-specific feature engineering",
+          "right": "Raw values in, forecast out"
+        },
+        {
+          "left": "Point estimates by default",
+          "right": "Probabilistic samples with uncertainty bands"
+        },
+        {
+          "left": "Cold-start fails without enough history",
+          "right": "Pre-trained patterns transfer to new domains"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now forecast any time series with zero training using Chronos-2 â€” the foundation model approach to temporal prediction!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `TimeSeriesTokenizer` class that simulates how Chronos converts continuous values into discrete tokens. Given `num_bins` and a `bin_range` (min, max), implement `fit(series)` to compute mean/std for normalization, `tokenize(series)` to normalize values and map them into bin indices, and `detokenize(tokens)` to convert bin indices back to approximate real values. This mirrors Chronos's scaling â†’ binning â†’ de-binning pipeline."
+      },
+      "starter_code": "class TimeSeriesTokenizer:\n    def __init__(self, num_bins: int = 10, bin_range: tuple = (-3.0, 3.0)):\n        self.num_bins = num_bins\n        self.bin_min, self.bin_max = bin_range\n        self.bin_width = (self.bin_max - self.bin_min) / num_bins\n        self.mean = 0.0\n        self.std = 1.0\n\n    def fit(self, series: list[float]):\n        # Compute mean and std of the series\n        # Store them for normalize/denormalize\n        pass\n\n    def tokenize(self, series: list[float]) -> list[int]:\n        # 1. Normalize each value: (val - mean) / std\n        # 2. Clamp to [bin_min, bin_max)\n        # 3. Map to bin index: int((clamped - bin_min) / bin_width)\n        # 4. Clamp bin index to [0, num_bins - 1]\n        # Return list of integer token IDs\n        pass\n\n    def detokenize(self, tokens: list[int]) -> list[float]:\n        # 1. Map each token to bin center: bin_min + (token + 0.5) * bin_width\n        # 2. Denormalize: center * std + mean\n        # Return list of floats (rounded to 2 decimals)\n        pass\n\n# Test it:\ndata = [10.0, 12.0, 14.0, 16.0, 18.0, 20.0]\ntok = TimeSeriesTokenizer(num_bins=10, bin_range=(-3.0, 3.0))\ntok.fit(data)\n\ntokens = tok.tokenize(data)\nprint(tokens)\n\nreconstructed = tok.detokenize(tokens)\nprint(all(abs(r - o) < 2.0 for r, o in zip(reconstructed, data)))",
+      "expected_output": "[2, 3, 5, 6, 7, 9]\nTrue",
+      "hints": {
+        "en": [
+          "In fit(), compute mean as sum(series)/len(series) and std as the population standard deviation â€” use (sum((x-mean)**2 for x in series)/len(series))**0.5",
+          "In tokenize(), after normalizing use max(bin_min, min(bin_max - 0.0001, normalized)) to clamp, then compute int((clamped - bin_min) / bin_width) and clamp to [0, num_bins-1]",
+          "In detokenize(), the bin center is bin_min + (token + 0.5) * bin_width, then denormalize by multiplying by std and adding mean"
+        ]
+      },
+      "test_code": "t = TimeSeriesTokenizer(num_bins=10, bin_range=(-3.0, 3.0))\nt.fit([0.0, 0.0, 0.0, 0.0])\nassert t.mean == 0.0\nt2 = TimeSeriesTokenizer(num_bins=10, bin_range=(-3.0, 3.0))\nt2.fit([10.0, 20.0, 30.0, 40.0])\nassert abs(t2.mean - 25.0) < 0.01\ntokens = t2.tokenize([10.0, 20.0, 30.0, 40.0])\nassert all(isinstance(tk, int) for tk in tokens)\nassert all(0 <= tk < 10 for tk in tokens)\nassert tokens == sorted(tokens)\nrecon = t2.detokenize(tokens)\nassert len(recon) == 4\nassert all(isinstance(v, float) for v in recon)\nassert all(abs(r - o) < 5.0 for r, o in zip(recon, [10.0, 20.0, 30.0, 40.0]))"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ProbabilisticForecaster` class that simulates Chronos's sample-based probabilistic forecasting. It takes a list of historical values and generates multiple forecast samples by adding random noise to a simple linear-trend extrapolation. Implement `forecast(history, steps, num_samples)` that fits a linear trend (slope from last vs first value), generates `num_samples` trajectories with Gaussian noise, and `summarize(samples)` that returns median, 10th percentile, and 90th percentile for each step."
+      },
+      "starter_code": "import random\n\nclass ProbabilisticForecaster:\n    def __init__(self, noise_scale: float = 0.1):\n        self.noise_scale = noise_scale\n\n    def forecast(self, history: list[float], steps: int,\n                 num_samples: int = 20) -> list[list[float]]:\n        # 1. Compute slope: (history[-1] - history[0]) / (len(history) - 1)\n        # 2. Last value = history[-1]\n        # 3. For each sample, generate `steps` future values:\n        #    val = last + slope * (step+1) + random.gauss(0, noise_scale * abs(last))\n        # Return list of num_samples lists, each of length steps\n        pass\n\n    def summarize(self, samples: list[list[float]]) -> list[dict]:\n        # For each time step, compute across all samples:\n        # - median (middle value when sorted)\n        # - p10 (10th percentile)\n        # - p90 (90th percentile)\n        # Return list of dicts with keys: median, p10, p90\n        # Round all values to 2 decimal places\n        pass\n\n# Test it:\nrandom.seed(42)\nfc = ProbabilisticForecaster(noise_scale=0.05)\nhistory = [100, 105, 110, 115, 120]\n\nsamples = fc.forecast(history, steps=3, num_samples=50)\nprint(len(samples), len(samples[0]))\n\nsummary = fc.summarize(samples)\nfor s in summary:\n    print(f\"Median: {s['median']:.1f}  [{s['p10']:.1f} - {s['p90']:.1f}]\")",
+      "expected_output": "50 3\nMedian: 125.0  [117.3 - 132.4]\nMedian: 130.2  [120.4 - 139.6]\nMedian: 134.6  [122.0 - 148.2]",
+      "hints": {
+        "en": [
+          "Slope is (history[-1] - history[0]) / (len(history) - 1) â€” this gives the average change per step across the full history",
+          "For percentiles, sort the values for each step and pick the element at index int(len(sorted_vals) * percentile) â€” e.g., index int(50 * 0.1) = 5 for p10",
+          "For median, use the middle element of sorted values: sorted_vals[len(sorted_vals) // 2]"
+        ]
+      },
+      "test_code": "random.seed(99)\nfc = ProbabilisticForecaster(noise_scale=0.0)\nsamples = fc.forecast([10, 20, 30], steps=2, num_samples=10)\nassert len(samples) == 10\nassert len(samples[0]) == 2\nassert all(abs(s[0] - 40.0) < 0.01 for s in samples)\nassert all(abs(s[1] - 50.0) < 0.01 for s in samples)\nsummary = fc.summarize(samples)\nassert len(summary) == 2\nassert 'median' in summary[0]\nassert 'p10' in summary[0]\nassert 'p90' in summary[0]\nassert abs(summary[0]['median'] - 40.0) < 0.01\nfc2 = ProbabilisticForecaster(noise_scale=0.1)\nrandom.seed(42)\nsamples2 = fc2.forecast([100, 110, 120], steps=1, num_samples=100)\nvals = [s[0] for s in samples2]\nassert max(vals) > min(vals)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "time-series forecasting",
+      "foundation models for time series",
+      "probabilistic forecasting",
+      "Chronos architecture",
+      "tokenization of continuous values",
+      "prediction intervals",
+      "zero-shot inference"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "basic statistics",
+      "pip install",
+      "tensors"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
