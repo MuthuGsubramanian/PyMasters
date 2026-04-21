@@ -1,0 +1,203 @@
+{
+  "id": "roberta_large_masked_lm_transfer_learning",
+  "topic": "roberta_large_masked_lm_transfer_learning",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Masked Language Modeling & Transfer Learning with RoBERTa-Large"
+  },
+  "description": {
+    "en": "Master masked language modeling and transfer learning with FacebookAI/roberta-large â€” the robustly optimized BERT approach that removes next sentence prediction, uses dynamic masking, and trains on 10x more data to achieve superior NLU performance."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RoBERTa: BERT Done Right\n\nVaathiyaar here! In 2019, Facebook AI Research asked a bold question: what if BERT was just undertrained? They took the BERT architecture, removed the Next Sentence Prediction (NSP) objective, used **dynamic masking** instead of static, trained on 160GB of text (10x BERT's data), and ran it for far longer. The result â€” **RoBERTa** (Robustly Optimized BERT Approach) â€” crushed BERT on every benchmark. The `roberta-large` model with 355M parameters remains one of the strongest encoder models for NLU tasks.\n\n### What RoBERTa Changed from BERT\n\n| Design Choice | BERT | RoBERTa |\n|---|---|---|\n| Next Sentence Prediction | Yes (binary) | Removed (hurts performance) |\n| Masking strategy | Static (same masks every epoch) | Dynamic (new masks each epoch) |\n| Training data | 16GB (Books + Wikipedia) | 160GB (+ CC-News, OpenWebText, Stories) |\n| Batch size | 256 | 8,000 |\n| Tokenizer | WordPiece (30K vocab) | BPE (50K vocab) |\n| Mask token | [MASK] | <mask> |\n\nThese seemingly small changes led to massive improvements. RoBERTa proved that BERT's architecture was sound â€” it just needed better training recipes.\n\n### Fill-Mask with RoBERTa-Large\n\n```python\nfrom transformers import pipeline\n\nunmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-large\")\n\nresults = unmasker(\"The theory of <mask> changed physics forever.\")\nfor r in results[:3]:\n    print(f\"{r['score']:.4f} => {r['token_str']}\")\n# 0.4121 => relativity\n# 0.1589 => gravity\n# 0.0789 => evolution\n```\n\nNotice RoBERTa uses `<mask>` instead of BERT's `[MASK]`. The model's predictions show deeper world knowledge from its massive training corpus.\n\n### BPE Tokenization: RoBERTa's Approach\n\n```python\nfrom transformers import RobertaTokenizer\n\ntokenizer = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\n\ntokens = tokenizer.tokenize(\"Transfer learning is unstoppable!\")\nprint(tokens)\n# ['Transfer', 'Ä learning', 'Ä is', 'Ä unst', 'opp', 'able', '!']\n\nencoded = tokenizer(\"Hello RoBERTa\", return_tensors=\"pt\")\nprint(encoded.input_ids)\n# tensor([[    0, 31414, 26164,    33,     2]])\n```\n\nRoBERTa uses **Byte-Pair Encoding (BPE)** with a `Ä ` prefix for tokens that start a new word (representing the space character). Token IDs 0 and 2 are `<s>` (start) and `</s>` (end) â€” different from BERT's `[CLS]`/`[SEP]`.\n\n### Extracting Embeddings for Transfer Learning\n\n```python\nfrom transformers import RobertaModel, RobertaTokenizer\nimport torch\n\ntokenizer = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = RobertaModel.from_pretrained(\"FacebookAI/roberta-large\")\n\ninputs = tokenizer(\"Transfer learning unlocks NLP\", return_tensors=\"pt\")\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\ncls_embedding = outputs.last_hidden_state[:, 0, :]\nprint(cls_embedding.shape)  # torch.Size([1, 1024])\n```\n\nRoBERTa-large produces 1024-dimensional embeddings (vs BERT-base's 768). The `<s>` token at position 0 serves as the sentence representation â€” perfect for downstream classification.\n\n### Fine-Tuning RoBERTa for Classification\n\n```python\nfrom transformers import RobertaForSequenceClassification\n\nmodel = RobertaForSequenceClassification.from_pretrained(\n    \"FacebookAI/roberta-large\", num_labels=3\n)\n# Sentiment: negative(0), neutral(1), positive(2)\n# Fine-tune with AdamW, lr=1e-5, warmup steps\n# RoBERTa's larger capacity means it excels at\n# nuanced classification with fewer training examples\n```\n\nWith 355M parameters and 24 transformer layers, RoBERTa-large captures subtle language patterns. It particularly shines in low-resource fine-tuning â€” its robust pre-training means it needs fewer labeled examples to achieve strong task performance.\n\n> **Key Insight:** RoBERTa proves that training methodology matters as much as architecture. By removing NSP, using dynamic masking, and training longer on more data, it achieves dramatically better results with the same transformer architecture as BERT. When choosing an encoder for NLU tasks â€” sentiment analysis, NER, question answering â€” RoBERTa-large is often the strongest single-model baseline before reaching for ensemble methods."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RoBERTa took BERT's architecture and asked: what if we just train it better? By removing Next Sentence Prediction, using dynamic masking, and training on 10x more data with larger batches, Facebook AI created one of the strongest encoder models for understanding language.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nunmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-large\")\n\nresults = unmasker(\"The theory of <mask> changed physics forever.\")\n\nfor r in results[:3]:\n    print(f\"{r['score']:.4f} => {r['token_str']}\")\n# 0.4121 => relativity\n# 0.1589 => gravity",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the pipeline abstraction â€” it handles tokenization, model inference, and output decoding in one call."
+        },
+        {
+          "line": 3,
+          "explanation": "Load FacebookAI/roberta-large for fill-mask. At 355M parameters (~1.4GB), it's larger than BERT-base but delivers significantly better predictions."
+        },
+        {
+          "line": 5,
+          "explanation": "Use <mask> (not [MASK]) â€” RoBERTa's mask token is different from BERT's. The model predicts what word belongs here using full bidirectional context."
+        },
+        {
+          "line": 7,
+          "explanation": "Slice results to top 3. The pipeline returns 5 predictions by default, each with score, token_str, token ID, and the filled sequence."
+        },
+        {
+          "line": 8,
+          "explanation": "Print score and predicted token. RoBERTa's confidence reflects its training on 160GB of text â€” deep factual and linguistic knowledge."
+        },
+        {
+          "line": 9,
+          "explanation": "'relativity' scores highest â€” RoBERTa learned from diverse web text including scientific content. Dynamic masking during training means it saw varied contexts."
+        },
+        {
+          "line": 10,
+          "explanation": "'gravity' is a reasonable second prediction. The model considers multiple valid completions weighted by their probability in natural text."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import RobertaTokenizer, RobertaModel\nimport torch\n\ntokenizer = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = RobertaModel.from_pretrained(\"FacebookAI/roberta-large\")\n\ntext = \"Transfer learning unlocks NLP\"\ninputs = tokenizer(text, return_tensors=\"pt\")\nprint(tokenizer.tokenize(text))\n# ['Transfer', 'Ä learning', 'Ä unlocks', 'Ä NLP']\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\ncls_embedding = outputs.last_hidden_state[:, 0, :]\nprint(cls_embedding.shape)  # torch.Size([1, 1024])",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import RoBERTa-specific classes. While AutoModel works too, explicit classes make the architecture clear in production code."
+        },
+        {
+          "line": 4,
+          "explanation": "Load the BPE tokenizer with 50,265 vocabulary tokens. Larger vocab than BERT means fewer subword splits and better token efficiency."
+        },
+        {
+          "line": 5,
+          "explanation": "Load roberta-large: 24 layers, 16 attention heads, 1024 hidden dimensions. Double the depth and width of roberta-base."
+        },
+        {
+          "line": 8,
+          "explanation": "Tokenize with return_tensors='pt'. Adds <s> at start and </s> at end automatically (equivalent to BERT's [CLS]/[SEP])."
+        },
+        {
+          "line": 9,
+          "explanation": "BPE tokens use Ä  prefix for word boundaries (the space character). RoBERTa is case-sensitive unlike bert-base-uncased."
+        },
+        {
+          "line": 12,
+          "explanation": "Disable gradients for inference â€” saves ~40% memory on a 355M parameter model. Essential for large models."
+        },
+        {
+          "line": 13,
+          "explanation": "Forward pass through all 24 transformer layers. Each layer refines the representation with self-attention and feed-forward networks."
+        },
+        {
+          "line": 15,
+          "explanation": "Extract <s> token embedding at position 0. This 1024-dim vector is the sentence representation for downstream tasks."
+        },
+        {
+          "line": 16,
+          "explanation": "Shape [1, 1024] â€” larger than BERT's 768. More dimensions means higher capacity to encode nuanced semantic differences."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "BERT-base-uncased",
+      "right_label": "RoBERTa-large",
+      "items": [
+        {
+          "left": "110M parameters, 12 layers",
+          "right": "355M parameters, 24 layers"
+        },
+        {
+          "left": "Static masking (same each epoch)",
+          "right": "Dynamic masking (new each epoch)"
+        },
+        {
+          "left": "WordPiece tokenizer (30K vocab)",
+          "right": "BPE tokenizer (50K vocab)"
+        },
+        {
+          "left": "Uses Next Sentence Prediction",
+          "right": "NSP removed (improves results)"
+        },
+        {
+          "left": "Trained on 16GB text",
+          "right": "Trained on 160GB text"
+        },
+        {
+          "left": "768-dim embeddings",
+          "right": "1024-dim embeddings"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand RoBERTa â€” the robustly optimized BERT that proves better training beats better architecture!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `DynamicMaskingTrainer` class that simulates RoBERTa's dynamic masking strategy. Unlike BERT's static masking (same positions masked every epoch), RoBERTa generates new mask positions each time. Implement `generate_masks(sentence, mask_ratio, seed)` that selects positions to mask based on the ratio and a seed for reproducibility, and `train_epoch(sentences, mask_ratio)` that runs multiple epochs showing different masks each time. Track how many unique positions get masked across epochs."
+      },
+      "starter_code": "import random\n\nclass DynamicMaskingTrainer:\n    def __init__(self, mask_token: str = \"<mask>\"):\n        self.mask_token = mask_token\n        self.masked_positions_history = []  # track all masked positions\n\n    def generate_masks(self, sentence: str, mask_ratio: float, seed: int) -> str:\n        # Split sentence into words\n        # Use seed for random.seed() to get reproducible results\n        # Mask approximately mask_ratio fraction of words\n        # (round number of masks to nearest int, minimum 1)\n        # Return masked sentence\n        pass\n\n    def train_epoch(self, sentences: list[str], mask_ratio: float, epoch: int) -> list[str]:\n        # For each sentence, generate masks using epoch as seed offset\n        # Use seed = epoch * 100 + sentence_index for each sentence\n        # Track which positions were masked in masked_positions_history\n        # Return list of masked sentences\n        pass\n\n    def unique_positions_masked(self) -> int:\n        # Return count of unique (sentence_index, word_position) pairs\n        # that have been masked across all epochs\n        pass\n\n# Test it:\ntrainer = DynamicMaskingTrainer()\n\nsentences = [\n    \"The theory of relativity changed physics forever\",\n    \"Dynamic masking improves model robustness significantly\"\n]\n\nepoch0 = trainer.train_epoch(sentences, 0.3, epoch=0)\nepoch1 = trainer.train_epoch(sentences, 0.3, epoch=1)\n\nprint(epoch0[0] != epoch1[0])  # Different masks each epoch\nprint(trainer.unique_positions_masked() > 2)  # Multiple unique positions masked\nprint(\"<mask>\" in epoch0[0])",
+      "expected_output": "True\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In generate_masks(), use random.seed(seed), then random.sample() to pick positions. The number of positions to mask is round(len(words) * mask_ratio) with a minimum of 1.",
+          "In train_epoch(), use seed = epoch * 100 + sentence_index for each sentence. Store tuples (sentence_index, position) in masked_positions_history.",
+          "In unique_positions_masked(), convert masked_positions_history to a set and return its length."
+        ]
+      },
+      "test_code": "import random\nt = DynamicMaskingTrainer()\nsents = [\"one two three four five six seven eight\"]\ne0 = t.train_epoch(sents, 0.25, epoch=0)\ne1 = t.train_epoch(sents, 0.25, epoch=1)\nassert \"<mask>\" in e0[0]\nassert \"<mask>\" in e1[0]\nassert e0[0] != e1[0], \"Dynamic masking should produce different masks per epoch\"\nassert t.unique_positions_masked() >= 2\nt2 = DynamicMaskingTrainer()\nresult = t2.generate_masks(\"a b c d e f g h i j\", 0.3, seed=42)\nassert result.count(\"<mask>\") == 3\nt2_again = t2.generate_masks(\"a b c d e f g h i j\", 0.3, seed=42)\nassert result == t2_again, \"Same seed should produce same masks\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `TransferLearningPipeline` class that simulates how RoBERTa's pre-trained representations transfer to downstream tasks. The pipeline has a `backbone` (maps words to embedding vectors as dicts), and a `classification_head` (a simple scoring function). Implement `extract_features(sentence)` that averages word embeddings, `fine_tune_head(examples)` that learns which embedding dimensions correlate with positive labels, and `predict(sentence)` that returns a label based on the learned head."
+      },
+      "starter_code": "class TransferLearningPipeline:\n    def __init__(self, backbone: dict[str, list[float]]):\n        # backbone maps words to embedding vectors (list of floats)\n        # e.g., {\"great\": [0.9, 0.1, 0.8], \"terrible\": [0.1, 0.9, 0.2]}\n        self.backbone = backbone\n        self.head_weights = None  # learned during fine-tuning\n\n    def extract_features(self, sentence: str) -> list[float]:\n        # Lowercase, split sentence into words\n        # Average the embeddings of known words (skip unknown)\n        # Return averaged embedding vector\n        # If no known words, return zeros matching embedding dim\n        pass\n\n    def fine_tune_head(self, examples: list[tuple[str, int]]):\n        # examples: list of (sentence, label) where label is 0 or 1\n        # For each embedding dimension, compute average value\n        # for positive examples minus average value for negative examples\n        # Store as self.head_weights (list of floats)\n        pass\n\n    def predict(self, sentence: str) -> int:\n        # Extract features, dot product with head_weights\n        # Return 1 if dot product > 0, else 0\n        pass\n\n# Test it:\nbackbone = {\n    \"great\": [0.9, 0.1, 0.8],\n    \"amazing\": [0.85, 0.15, 0.75],\n    \"terrible\": [0.1, 0.9, 0.2],\n    \"awful\": [0.15, 0.85, 0.25],\n    \"movie\": [0.5, 0.5, 0.5],\n    \"the\": [0.3, 0.3, 0.3]\n}\n\npipe = TransferLearningPipeline(backbone)\n\npipe.fine_tune_head([\n    (\"the movie was great\", 1),\n    (\"amazing movie\", 1),\n    (\"terrible movie\", 0),\n    (\"the movie was awful\", 0)\n])\n\nprint(pipe.predict(\"great amazing movie\"))\nprint(pipe.predict(\"terrible awful movie\"))\nprint(pipe.head_weights is not None)",
+      "expected_output": "1\n0\nTrue",
+      "hints": {
+        "en": [
+          "In extract_features(), collect embeddings for known words, then compute element-wise average. Use zip(*embeddings) to transpose and average each dimension.",
+          "In fine_tune_head(), separate examples by label, extract features for each, average the positive embeddings and negative embeddings, then subtract: weight[i] = avg_positive[i] - avg_negative[i].",
+          "In predict(), compute dot product: sum(f * w for f, w in zip(features, weights)) and return 1 if positive, 0 otherwise."
+        ]
+      },
+      "test_code": "b = {\"good\": [1.0, 0.0], \"bad\": [0.0, 1.0], \"very\": [0.5, 0.5]}\np = TransferLearningPipeline(b)\nfeats = p.extract_features(\"good very\")\nassert abs(feats[0] - 0.75) < 0.01\nassert abs(feats[1] - 0.25) < 0.01\nfeats_unk = p.extract_features(\"unknown words only\")\nassert feats_unk == [0.0, 0.0]\np.fine_tune_head([(\"good\", 1), (\"bad\", 0)])\nassert p.predict(\"good\") == 1\nassert p.predict(\"bad\") == 0\nassert p.head_weights is not None\nassert len(p.head_weights) == 2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "RoBERTa architecture",
+      "dynamic masking",
+      "BPE tokenization",
+      "transfer learning",
+      "fill-mask pipeline",
+      "encoder embeddings",
+      "fine-tuning for classification",
+      "BERT vs RoBERTa comparison"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "string manipulation",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
