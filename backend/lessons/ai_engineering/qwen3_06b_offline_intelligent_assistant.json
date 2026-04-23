@@ -1,0 +1,194 @@
+{
+  "id": "qwen3_06b_offline_intelligent_assistant",
+  "topic": "qwen3_06b_offline_intelligent_assistant",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Build Homie â€” Your Offline Intelligent Assistant"
+  },
+  "description": {
+    "en": "Transform Qwen3-0.6B into Homie, a fully offline on-device AI assistant. Learn context windowing, intent routing, structured JSON output, and memory-efficient inference to ship a private, zero-cost assistant that fits in under 2GB."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Homie Lives on Your Device â€” No Cloud Required\n\nVaathiyaar here! Everyone talks about billion-dollar cloud models, but the real revolution is happening in your pocket. **Qwen3-0.6B** â€” just 0.6 billion parameters â€” is small enough to run on a Raspberry Pi, fast enough for real-time conversation on CPU, and smart enough to power a genuinely useful personal assistant. Today we build **Homie**: an offline, private, intelligent assistant that never phones home.\n\nThe trick isn't raw power â€” it's smart engineering around a small model. Context windowing, intent routing, and structured output turn a tiny model into a capable assistant.\n\n### Why On-Device Matters\n\n| Concern | Cloud LLM | On-Device Qwen3-0.6B |\n|---|---|---|\n| Privacy | Data sent to third-party servers | Data never leaves your machine |\n| Latency | Network round-trip (200-800ms) | Direct inference (~50-200ms on CPU) |\n| Cost | $0.01-0.06 per 1K tokens | Free forever after download |\n| Availability | Requires internet connection | Works on an airplane |\n| Control | Provider can change model anytime | You own the exact weights |\n\n### Step 1 â€” Load the Model Efficiently\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nimport torch\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=torch.float16, device_map=\"auto\"\n)\nmodel.eval()\n```\n\nUsing `float16` halves memory usage compared to `float32`. Calling `model.eval()` disables dropout â€” critical for consistent assistant behaviour.\n\n### Step 2 â€” Intent Routing with System Prompts\n\nSmall models shine when given focused instructions:\n\n```python\nSYSTEM_PROMPTS = {\n    \"general\": \"You are Homie, a concise helpful assistant. Answer in 1-2 sentences.\",\n    \"code\": \"You are Homie, a Python coding assistant. Reply with only code and a one-line explanation.\",\n    \"summarize\": \"You are Homie. Summarize the following text in exactly one sentence.\",\n}\n\ndef route_intent(user_msg: str) -> str:\n    msg = user_msg.lower()\n    if any(kw in msg for kw in [\"code\", \"function\", \"class\", \"script\", \"program\"]):\n        return \"code\"\n    if any(kw in msg for kw in [\"summarize\", \"summary\", \"tldr\", \"shorten\"]):\n        return \"summarize\"\n    return \"general\"\n```\n\nRouting lets you swap system prompts per intent, dramatically improving response quality from a small model.\n\n### Step 3 â€” Context Window Management\n\nQwen3-0.6B supports 32K tokens, but shorter contexts produce better results and faster inference:\n\n```python\ndef trim_history(messages, max_tokens=1024):\n    system = [m for m in messages if m[\"role\"] == \"system\"]\n    others = [m for m in messages if m[\"role\"] != \"system\"]\n    trimmed = list(system)\n    token_count = sum(len(tokenizer.encode(m[\"content\"])) for m in system)\n    for msg in reversed(others):\n        msg_tokens = len(tokenizer.encode(msg[\"content\"]))\n        if token_count + msg_tokens > max_tokens:\n            break\n        trimmed.insert(len(system), msg)\n        token_count += msg_tokens\n    return trimmed\n```\n\n### Step 4 â€” Structured JSON Output\n\nForce the model to return parseable JSON â€” essential for tool-use patterns:\n\n```python\nimport json\n\ndef get_structured_response(user_msg, model, tokenizer):\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"Respond ONLY with valid JSON: \"\n            '{\"answer\": \"...\", \"confidence\": \"high|medium|low\"}'\n        )},\n        {\"role\": \"user\", \"content\": user_msg}\n    ]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, max_new_tokens=150, temperature=0.3)\n    raw = tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n    return json.loads(raw)\n```\n\nLow temperature (0.3) keeps JSON output deterministic â€” small models are more likely to produce valid structure when creativity is constrained.\n\n### Step 5 â€” The Complete Homie Loop\n\n```python\ndef homie_chat(user_msg, history, model, tokenizer):\n    intent = route_intent(user_msg)\n    if not history or history[0][\"role\"] != \"system\":\n        history.insert(0, {\"role\": \"system\", \"content\": SYSTEM_PROMPTS[intent]})\n    else:\n        history[0][\"content\"] = SYSTEM_PROMPTS[intent]\n    history.append({\"role\": \"user\", \"content\": user_msg})\n    history = trim_history(history)\n    text = tokenizer.apply_chat_template(\n        history, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(\n        **inputs, max_new_tokens=200, temperature=0.7, repetition_penalty=1.15\n    )\n    reply = tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n    history.append({\"role\": \"assistant\", \"content\": reply})\n    return reply, history\n```\n\n> **Key Insight:** A 0.6B model becomes a capable on-device assistant not through brute-force scaling, but through smart engineering â€” intent routing focuses the model's limited capacity, context trimming keeps inference fast, and structured output makes responses programmatically useful. Homie proves that the best AI assistant is the one that runs anywhere, costs nothing, and keeps your data private."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if your AI assistant needed no internet, no API key, and no subscription? Qwen3-0.6B fits in 1.5GB of RAM and runs on any laptop CPU. Today you'll build Homie â€” an intelligent on-device assistant with intent routing, context management, and structured output.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\nimport torch\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=torch.float16, device_map=\"auto\"\n)\nmodel.eval()\n\nSYSTEM_PROMPTS = {\n    \"general\": \"You are Homie, a concise helpful assistant.\",\n    \"code\": \"You are Homie, a Python coding assistant.\",\n    \"summarize\": \"You are Homie. Summarize in one sentence.\"\n}\n\ndef route_intent(user_msg: str) -> str:\n    msg = user_msg.lower()\n    if any(kw in msg for kw in [\"code\", \"function\", \"class\"]):\n        return \"code\"\n    if any(kw in msg for kw in [\"summarize\", \"summary\", \"tldr\"]):\n        return \"summarize\"\n    return \"general\"\n\nintent = route_intent(\"Write a function to reverse a list\")\nprint(intent)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import Hugging Face Transformers classes and PyTorch. AutoModelForCausalLM loads any causal language model by name."
+        },
+        {
+          "line": 4,
+          "explanation": "Specify the Qwen3-0.6B model ID. At 0.6 billion parameters, this is one of the smallest production-quality chat models available."
+        },
+        {
+          "line": 6,
+          "explanation": "Load model with float16 precision â€” halves memory from ~2.4GB to ~1.2GB. device_map='auto' picks GPU or CPU automatically."
+        },
+        {
+          "line": 9,
+          "explanation": "model.eval() disables dropout layers. In inference mode, this ensures consistent responses â€” critical for a reliable assistant."
+        },
+        {
+          "line": 11,
+          "explanation": "Define task-specific system prompts. Small models perform dramatically better with focused, narrow instructions."
+        },
+        {
+          "line": 17,
+          "explanation": "route_intent scans the user message for keywords and selects the appropriate system prompt â€” a simple but effective routing strategy."
+        },
+        {
+          "line": 24,
+          "explanation": "Test the router: 'Write a function' contains 'function', so it returns 'code' â€” Homie will use the coding system prompt."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def trim_history(messages, tokenizer, max_tokens=1024):\n    system = [m for m in messages if m[\"role\"] == \"system\"]\n    others = [m for m in messages if m[\"role\"] != \"system\"]\n    trimmed = list(system)\n    token_count = sum(len(tokenizer.encode(m[\"content\"])) for m in system)\n    for msg in reversed(others):\n        msg_tokens = len(tokenizer.encode(msg[\"content\"]))\n        if token_count + msg_tokens > max_tokens:\n            break\n        trimmed.insert(len(system), msg)\n        token_count += msg_tokens\n    return trimmed\n\ndef homie_respond(user_msg, history, model, tokenizer):\n    intent = route_intent(user_msg)\n    history[0] = {\"role\": \"system\", \"content\": SYSTEM_PROMPTS[intent]}\n    history.append({\"role\": \"user\", \"content\": user_msg})\n    history = trim_history(history, tokenizer)\n    text = tokenizer.apply_chat_template(\n        history, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(\n        **inputs, max_new_tokens=200, temperature=0.7,\n        repetition_penalty=1.15\n    )\n    reply = tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    )\n    history.append({\"role\": \"assistant\", \"content\": reply})\n    return reply, history",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "trim_history keeps conversations within a token budget. This is crucial â€” small models produce better output with shorter, focused contexts."
+        },
+        {
+          "line": 2,
+          "explanation": "Separate system messages from user/assistant turns. System messages are always preserved â€” they define Homie's behavior."
+        },
+        {
+          "line": 6,
+          "explanation": "Walk backwards through conversation history, adding the most recent messages first until the token budget is exhausted."
+        },
+        {
+          "line": 8,
+          "explanation": "If adding the next message would exceed max_tokens, stop. Older messages are dropped â€” recency bias is intentional for assistants."
+        },
+        {
+          "line": 14,
+          "explanation": "homie_respond ties everything together: route intent, swap system prompt, trim context, generate, and update history."
+        },
+        {
+          "line": 16,
+          "explanation": "Dynamically swap the system prompt based on intent. The model gets task-specific instructions every turn â€” maximizing its limited capacity."
+        },
+        {
+          "line": 23,
+          "explanation": "Generate with temperature=0.7 for balanced creativity and repetition_penalty=1.15 to prevent the small model from looping phrases."
+        },
+        {
+          "line": 27,
+          "explanation": "Decode only newly generated tokens by slicing off the input prompt. skip_special_tokens removes Qwen3's internal markers."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Naive Small LLM Usage",
+      "right_label": "Engineered Homie Assistant",
+      "items": [
+        {
+          "left": "Single generic system prompt",
+          "right": "Intent-routed task-specific prompts"
+        },
+        {
+          "left": "Unbounded conversation history",
+          "right": "Token-budgeted context trimming"
+        },
+        {
+          "left": "float32 precision (~2.4GB RAM)",
+          "right": "float16 precision (~1.2GB RAM)"
+        },
+        {
+          "left": "High temperature, random output",
+          "right": "Tuned temperature + repetition penalty"
+        },
+        {
+          "left": "Free-form text responses only",
+          "right": "Structured JSON for tool integration"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie is alive! You built an offline AI assistant with intent routing, context management, and structured output â€” all running on your own hardware."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `IntentRouter` class that routes user messages to the correct system prompt. It should accept a dictionary of `{intent_name: {\"keywords\": [...], \"system_prompt\": \"...\"}}` in its constructor, plus a `default_intent` string. Implement `route(user_message)` that checks keywords case-insensitively and returns the matching system prompt (first match wins), falling back to the default intent's prompt. Also implement `add_intent(name, keywords, system_prompt)` to register new intents at runtime, and `list_intents()` to return a sorted list of all intent names."
+      },
+      "starter_code": "class IntentRouter:\n    def __init__(self, intents: dict, default_intent: str):\n        # intents format: {\"code\": {\"keywords\": [\"code\", \"function\"], \"system_prompt\": \"You are a coder.\"}}\n        # Store intents and default_intent\n        pass\n\n    def route(self, user_message: str) -> str:\n        # Check each intent's keywords against user_message (case-insensitive)\n        # Return the system_prompt of the first matching intent\n        # If no match, return the default intent's system_prompt\n        pass\n\n    def add_intent(self, name: str, keywords: list, system_prompt: str):\n        # Add a new intent to the router\n        pass\n\n    def list_intents(self) -> list:\n        # Return sorted list of all intent names\n        pass\n\n# Test it:\nrouter = IntentRouter(\n    intents={\n        \"code\": {\"keywords\": [\"code\", \"function\", \"class\"], \"system_prompt\": \"You are a coder.\"},\n        \"summarize\": {\"keywords\": [\"summarize\", \"tldr\"], \"system_prompt\": \"Summarize concisely.\"},\n        \"general\": {\"keywords\": [], \"system_prompt\": \"You are a helpful assistant.\"}\n    },\n    default_intent=\"general\"\n)\nprint(router.route(\"Write a function to sort a list\"))\nprint(router.route(\"Can you summarize this article?\"))\nprint(router.route(\"What is the weather today?\"))\nrouter.add_intent(\"math\", [\"calculate\", \"equation\"], \"You are a math tutor.\")\nprint(router.route(\"Calculate 2+2\"))\nprint(router.list_intents())",
+      "expected_output": "You are a coder.\nSummarize concisely.\nYou are a helpful assistant.\nYou are a math tutor.\n['code', 'general', 'math', 'summarize']",
+      "hints": {
+        "en": [
+          "Store intents as self.intents (the dict) and self.default_intent (the string key). In route(), loop through self.intents and check if any keyword appears in user_message.lower().",
+          "For route(), use: for name, config in self.intents.items(): if any(kw in user_message.lower() for kw in config['keywords']): return config['system_prompt']. Then fall back to self.intents[self.default_intent]['system_prompt'].",
+          "add_intent just adds to self.intents dict. list_intents returns sorted(self.intents.keys())."
+        ]
+      },
+      "test_code": "router = IntentRouter(\n    intents={\n        \"code\": {\"keywords\": [\"code\", \"function\"], \"system_prompt\": \"Coder\"},\n        \"general\": {\"keywords\": [], \"system_prompt\": \"General\"}\n    },\n    default_intent=\"general\"\n)\nassert router.route(\"Write a function\") == \"Coder\"\nassert router.route(\"Hello there\") == \"General\"\nassert router.route(\"CODE something\") == \"Coder\"\nassert router.list_intents() == [\"code\", \"general\"]\nrouter.add_intent(\"math\", [\"calculate\"], \"Math\")\nassert router.route(\"Calculate 5+3\") == \"Math\"\nassert router.list_intents() == [\"code\", \"general\", \"math\"]\nassert len(router.intents) == 3"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ContextWindow` class that manages a token-budgeted conversation history for a small LLM. It takes `max_tokens` (int) in its constructor. Implement `add_message(role, content)` to append messages as `{\"role\": role, \"content\": content}`, `token_count(text)` that estimates tokens as `len(text.split())` (word-based approximation), `get_trimmed_history()` that always keeps the first message (system prompt) and fills remaining budget with the most recent messages, and `total_tokens()` returning the total estimated tokens in the trimmed history."
+      },
+      "starter_code": "class ContextWindow:\n    def __init__(self, max_tokens: int):\n        # Store max_tokens and initialize empty messages list\n        pass\n\n    def add_message(self, role: str, content: str):\n        # Append {\"role\": role, \"content\": content} to messages\n        pass\n\n    def token_count(self, text: str) -> int:\n        # Estimate tokens as word count: len(text.split())\n        pass\n\n    def get_trimmed_history(self) -> list:\n        # Always keep messages[0] (system prompt)\n        # Add most recent messages that fit in remaining budget\n        # Return the trimmed list\n        pass\n\n    def total_tokens(self) -> int:\n        # Return total token count of trimmed history\n        pass\n\n# Test it:\nctx = ContextWindow(max_tokens=20)\nctx.add_message(\"system\", \"You are Homie\")\nctx.add_message(\"user\", \"What is Python used for in data science?\")\nctx.add_message(\"assistant\", \"Python is widely used for data analysis and machine learning.\")\nctx.add_message(\"user\", \"Tell me more\")\ntrimmed = ctx.get_trimmed_history()\nprint(len(trimmed))\nprint(trimmed[0][\"role\"])\nprint(trimmed[-1][\"content\"])\nprint(ctx.total_tokens())",
+      "expected_output": "3\nsystem\nTell me more\n6",
+      "hints": {
+        "en": [
+          "Store messages as a list. get_trimmed_history starts with [messages[0]], then iterates reversed(messages[1:]) adding messages while token budget allows.",
+          "Track token_budget = max_tokens - token_count(messages[0]['content']). For each message from the end, subtract its token count. If it fits, insert it after the system message.",
+          "total_tokens sums token_count(m['content']) for all messages in get_trimmed_history()."
+        ]
+      },
+      "test_code": "ctx = ContextWindow(max_tokens=20)\nctx.add_message(\"system\", \"You are Homie\")\nassert ctx.token_count(\"You are Homie\") == 3\nassert len(ctx.get_trimmed_history()) == 1\nctx.add_message(\"user\", \"short msg\")\nassert len(ctx.get_trimmed_history()) == 2\nctx.add_message(\"assistant\", \"short reply\")\nassert len(ctx.get_trimmed_history()) == 3\nctx.add_message(\"user\", \"another question here with several words to use tokens\")\ntrimmed = ctx.get_trimmed_history()\nassert trimmed[0][\"role\"] == \"system\"\nassert trimmed[-1][\"role\"] == \"user\"\nctx2 = ContextWindow(max_tokens=5)\nctx2.add_message(\"system\", \"Hi\")\nctx2.add_message(\"user\", \"a b c d e f g h i j\")\ntrimmed2 = ctx2.get_trimmed_history()\nassert len(trimmed2) == 1\nassert trimmed2[0][\"role\"] == \"system\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "on-device LLM deployment",
+      "Qwen3-0.6B",
+      "intent routing",
+      "context window management",
+      "structured JSON output",
+      "memory-efficient inference",
+      "system prompt engineering",
+      "small language models"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "string methods",
+      "basic ML concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
