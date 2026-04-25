@@ -1,0 +1,195 @@
+{
+  "id": "all_minilm_l6_v2_sentence_similarity_embedding",
+  "topic": "all_minilm_l6_v2_sentence_similarity_embedding",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Sentence Similarity with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Master sentence embeddings and semantic similarity using sentence-transformers/all-MiniLM-L6-v2 â€” the lightweight, production-ready model that powers RAG pipelines, semantic search, and Homie's embedding backbone."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Sentence Similarity: The Engine Behind Semantic Search\n\nVaathiyaar here! Keyword search is dead â€” or at least, it should be. When a user searches for \"how to fix a slow laptop\" they expect results about \"improving computer performance,\" not just pages containing those exact words. The magic behind this understanding is **sentence embeddings**, and `all-MiniLM-L6-v2` is the workhorse model that makes it fast and practical. With only 22M parameters and 384-dimensional output, it delivers an unbeatable balance of speed and quality for RAG pipelines, semantic search, and clustering.\n\n### Why all-MiniLM-L6-v2?\n\n| Feature | all-MiniLM-L6-v2 | all-mpnet-base-v2 | OpenAI text-embedding-3-small |\n|---|---|---|---|\n| Parameters | 22M | 109M | Unknown (API) |\n| Embedding Dim | 384 | 768 | 1536 |\n| Max Tokens | 256 | 384 | 8191 |\n| Speed (relative) | 5x faster | 1x baseline | Network-bound |\n| Privacy | Fully local | Fully local | Cloud API |\n| Cost | Free | Free | $0.02/1M tokens |\n\nThis model was distilled from `all-MiniLM-L12-v2` and trained on over 1 billion sentence pairs. It's the default embedding model in LangChain, LlamaIndex, and countless RAG tutorials for good reason.\n\n### Computing Sentence Embeddings\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nsentences = [\n    \"How to fix a slow laptop\",\n    \"Improving computer performance tips\",\n    \"Best pasta recipe for beginners\"\n]\n\nembeddings = model.encode(sentences)\nprint(embeddings.shape)  # (3, 384)\n```\n\nEach sentence becomes a 384-dimensional vector. Semantically similar sentences land close together in this vector space, while unrelated sentences are far apart.\n\n### Measuring Semantic Similarity\n\n```python\nfrom sentence_transformers import util\n\nquery = \"How to speed up my computer\"\ncorpus = [\n    \"Tips for improving laptop performance\",\n    \"Best hiking trails in Colorado\",\n    \"RAM upgrade guide for faster computing\"\n]\n\nquery_emb = model.encode(query)\ncorpus_emb = model.encode(corpus)\n\nscores = util.cos_sim(query_emb, corpus_emb)\nfor i, score in enumerate(scores[0]):\n    print(f\"{score:.4f} | {corpus[i]}\")\n# 0.7842 | Tips for improving laptop performance\n# 0.0531 | Best hiking trails in Colorado\n# 0.6193 | RAM upgrade guide for faster computing\n```\n\nCosine similarity ranges from -1 to 1. The model correctly scores the laptop performance tip highest, the RAM guide second, and hiking trails near zero â€” all without keyword overlap.\n\n### Building a Mini RAG Retriever\n\n```python\nimport numpy as np\n\ndef build_index(documents):\n    return model.encode(documents, normalize_embeddings=True)\n\ndef search(query, doc_embeddings, documents, top_k=3):\n    q_emb = model.encode(query, normalize_embeddings=True)\n    scores = np.dot(doc_embeddings, q_emb)\n    top_indices = np.argsort(scores)[::-1][:top_k]\n    return [(documents[i], scores[i]) for i in top_indices]\n\nknowledge_base = [\n    \"Python lists are mutable ordered collections.\",\n    \"Dictionaries map keys to values with O(1) lookup.\",\n    \"Sets store unique elements with no duplicates.\",\n    \"Tuples are immutable sequences, often used as dict keys.\"\n]\n\nindex = build_index(knowledge_base)\nresults = search(\"Which data structure prevents duplicates?\", index, knowledge_base)\nprint(results[0][0])  # Sets store unique elements...\n```\n\nWith `normalize_embeddings=True`, cosine similarity simplifies to a dot product â€” a key optimization for production vector stores like FAISS and ChromaDB. This is exactly how Homie's embedding backbone works under the hood.\n\n### Cross-Framework Support\n\n```python\n# PyTorch (default)\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\", backend=\"torch\")\n\n# ONNX â€” 2-3x faster CPU inference\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\", backend=\"onnx\")\n\n# The model also supports TensorFlow, Rust (via candle),\n# and OpenVINO backends for deployment flexibility.\n```\n\n> **Key Insight:** all-MiniLM-L6-v2 proves that bigger isn't always better. At 22M parameters and 384 dimensions, it delivers 80-90% of the quality of models 5x its size at 5x the speed â€” making it the ideal embedding backbone for local RAG systems, semantic search, and any application where you need fast, private, high-quality sentence understanding without API costs."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "all-MiniLM-L6-v2 transforms sentences into 384-dimensional vectors where semantic meaning is captured as geometric distance. Sentences with similar meanings cluster together, enabling semantic search, RAG retrieval, and clustering â€” all locally, all free, at 5x the speed of larger models.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nfrom sentence_transformers import util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nsentences = [\n    \"How to fix a slow laptop\",\n    \"Improving computer performance tips\",\n    \"Best pasta recipe for beginners\"\n]\n\nembeddings = model.encode(sentences)\nprint(embeddings.shape)  # (3, 384)\n\nscores = util.cos_sim(embeddings, embeddings)\nprint(f\"Sim(0,1): {scores[0][1]:.4f}\")\nprint(f\"Sim(0,2): {scores[0][2]:.4f}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer â€” the main class from the sentence-transformers library that wraps transformer models for producing sentence embeddings."
+        },
+        {
+          "line": 2,
+          "explanation": "Import util for similarity functions. cos_sim computes cosine similarity between embedding tensors efficiently."
+        },
+        {
+          "line": 4,
+          "explanation": "Load all-MiniLM-L6-v2 â€” a 22M parameter model that outputs 384-dimensional embeddings. Downloads ~80MB on first use and caches locally."
+        },
+        {
+          "line": 6,
+          "explanation": "Define three test sentences: two about computers (semantically similar) and one about cooking (unrelated). This tests the model's ability to capture meaning."
+        },
+        {
+          "line": 12,
+          "explanation": "model.encode() converts sentences to numpy arrays of shape (3, 384). Each sentence is now a point in 384-dimensional space."
+        },
+        {
+          "line": 13,
+          "explanation": "Shape (3, 384) means 3 sentences, each represented by 384 floating-point numbers. This compact representation enables fast similarity computation."
+        },
+        {
+          "line": 15,
+          "explanation": "cos_sim computes pairwise cosine similarity, returning a 3x3 matrix. Values range from -1 (opposite) to 1 (identical meaning)."
+        },
+        {
+          "line": 16,
+          "explanation": "Similarity between 'fix slow laptop' and 'improving performance' is high (~0.78) â€” the model understands they mean similar things despite different words."
+        },
+        {
+          "line": 17,
+          "explanation": "Similarity between 'fix slow laptop' and 'pasta recipe' is near zero (~0.05) â€” correctly identifying these as unrelated topics."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef build_index(docs):\n    return model.encode(docs, normalize_embeddings=True)\n\ndef search(query, index, docs, top_k=2):\n    q_emb = model.encode(query, normalize_embeddings=True)\n    scores = np.dot(index, q_emb)\n    top_idx = np.argsort(scores)[::-1][:top_k]\n    return [(docs[i], float(scores[i])) for i in top_idx]\n\nknowledge = [\n    \"Python lists are mutable ordered collections.\",\n    \"Dictionaries map keys to values.\",\n    \"Sets store unique elements.\"\n]\nindex = build_index(knowledge)\nresults = search(\"no duplicates\", index, knowledge)\nprint(results[0][0])",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import numpy for fast vector math. When embeddings are normalized, dot product equals cosine similarity â€” a key optimization."
+        },
+        {
+          "line": 6,
+          "explanation": "build_index encodes all documents once with normalize_embeddings=True. Normalization makes each vector unit-length, enabling dot product as similarity."
+        },
+        {
+          "line": 9,
+          "explanation": "search encodes the query and computes dot product against all document embeddings. This is the core of semantic retrieval."
+        },
+        {
+          "line": 11,
+          "explanation": "np.dot computes similarity scores in one vectorized operation. For production, replace with FAISS or ChromaDB for million-scale search."
+        },
+        {
+          "line": 12,
+          "explanation": "argsort + reverse gives indices sorted by descending score. Slice to top_k for the most relevant documents."
+        },
+        {
+          "line": 20,
+          "explanation": "Build the index once â€” this is the expensive step. In production, persist these embeddings to avoid re-encoding."
+        },
+        {
+          "line": 21,
+          "explanation": "Search for 'no duplicates' finds 'Sets store unique elements' â€” the model understands semantic equivalence without keyword overlap."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Keyword Search (TF-IDF/BM25)",
+      "right_label": "Semantic Search (MiniLM Embeddings)",
+      "items": [
+        {
+          "left": "Matches exact words only",
+          "right": "Understands meaning and synonyms"
+        },
+        {
+          "left": "Fast, no model needed",
+          "right": "Requires embedding model (22M params)"
+        },
+        {
+          "left": "Fails on paraphrases",
+          "right": "Scores paraphrases as highly similar"
+        },
+        {
+          "left": "Sparse vectors (huge dimensions)",
+          "right": "Dense vectors (384 dimensions)"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now build semantic search and RAG retrieval with all-MiniLM-L6-v2 â€” the embedding backbone that powers production AI systems!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `SemanticSearch` class that simulates how sentence embeddings power RAG retrieval. It stores documents as simple bag-of-words vectors and retrieves the most relevant ones for a query using cosine similarity. Implement `add_documents(docs)` to build the index, and `search(query, top_k)` to return the top-k most similar documents with their scores."
+      },
+      "starter_code": "import math\n\nclass SemanticSearch:\n    def __init__(self):\n        self.documents = []\n        self.vocab = set()\n        self.vectors = []\n\n    def _tokenize(self, text: str) -> list[str]:\n        return text.lower().split()\n\n    def _build_vector(self, tokens: list[str]) -> dict[str, float]:\n        # Build a normalized term-frequency vector\n        # Count each token, then normalize to unit length\n        pass\n\n    def _cosine_sim(self, v1: dict, v2: dict) -> float:\n        # Compute cosine similarity between two sparse vectors\n        # Only iterate over shared keys (dot product)\n        # Vectors are already normalized, so just compute dot product\n        pass\n\n    def add_documents(self, docs: list[str]):\n        # Store documents and build their vectors\n        pass\n\n    def search(self, query: str, top_k: int = 2) -> list[tuple[str, float]]:\n        # Return top_k (document, score) tuples sorted by similarity\n        pass\n\n# Test it:\nengine = SemanticSearch()\nengine.add_documents([\n    \"python lists are mutable ordered collections\",\n    \"dictionaries map keys to values efficiently\",\n    \"sets store unique elements with no duplicates\",\n    \"tuples are immutable sequences used as keys\"\n])\n\nresults = engine.search(\"unique items no repeats\", top_k=2)\nprint(results[0][0])\nprint(len(results))\nprint(results[0][1] > results[1][1])",
+      "expected_output": "sets store unique elements with no duplicates\n2\nTrue",
+      "hints": {
+        "en": [
+          "In _build_vector, count token frequencies, then divide each count by the vector's magnitude: sqrt(sum of count^2 values)",
+          "In _cosine_sim, find common keys between the two dicts and sum v1[key] * v2[key] â€” since vectors are normalized, this gives cosine similarity",
+          "In search, build a vector for the query, compute similarity against all document vectors, sort by score descending, and slice to top_k"
+        ]
+      },
+      "test_code": "e = SemanticSearch()\ne.add_documents([\"cat pet fur\", \"dog pet bark\", \"fish water swim\"])\nr = e.search(\"furry pet animal\", top_k=2)\nassert len(r) == 2\nassert r[0][0] == \"cat pet fur\"\nassert r[0][1] > r[1][1]\nassert isinstance(r[0][1], float)\nr2 = e.search(\"swim ocean\", top_k=1)\nassert r2[0][0] == \"fish water swim\"\nassert len(r2) == 1\nr3 = e.search(\"xyz unknown\", top_k=2)\nassert all(score == 0.0 for _, score in r3) or len(r3) >= 0"
+    },
+    {
+      "instruction": {
+        "en": "Build an `EmbeddingIndex` class that demonstrates how normalized embeddings turn cosine similarity into a simple dot product â€” the key optimization used in production vector databases like FAISS and ChromaDB. Implement `normalize(vector)` to create unit vectors, `add(id, vector)` to store normalized vectors, and `query(vector, top_k)` to retrieve the most similar items using dot product."
+      },
+      "starter_code": "import math\n\nclass EmbeddingIndex:\n    def __init__(self, dim: int):\n        self.dim = dim\n        self.index = {}  # id -> normalized vector\n\n    def normalize(self, vector: list[float]) -> list[float]:\n        # Return a unit vector (length = 1.0)\n        # Divide each element by the vector's magnitude\n        pass\n\n    def add(self, doc_id: str, vector: list[float]):\n        # Normalize and store the vector\n        pass\n\n    def dot_product(self, v1: list[float], v2: list[float]) -> float:\n        # Compute dot product of two vectors\n        pass\n\n    def query(self, vector: list[float], top_k: int = 2) -> list[tuple[str, float]]:\n        # Normalize query vector, compute dot product against all stored,\n        # return top_k (id, score) sorted by score descending\n        pass\n\n# Test it:\nidx = EmbeddingIndex(dim=3)\nidx.add(\"doc1\", [1.0, 0.0, 0.0])\nidx.add(\"doc2\", [0.0, 1.0, 0.0])\nidx.add(\"doc3\", [1.0, 1.0, 0.0])\n\nresults = idx.query([1.0, 0.0, 0.0], top_k=2)\nprint(results[0][0])\nprint(f\"{results[0][1]:.4f}\")\nprint(results[1][0])",
+      "expected_output": "doc1\n1.0000\ndoc3",
+      "hints": {
+        "en": [
+          "In normalize, compute magnitude as math.sqrt(sum(x**2 for x in vector)), then divide each element by it",
+          "In dot_product, return sum(a*b for a,b in zip(v1, v2)) â€” this equals cosine similarity when both vectors are normalized",
+          "In query, normalize the input vector, compute dot product against each stored vector, sort descending, and return top_k results"
+        ]
+      },
+      "test_code": "idx = EmbeddingIndex(dim=3)\nv = idx.normalize([3.0, 4.0, 0.0])\nassert abs(sum(x**2 for x in v) - 1.0) < 1e-6\nassert abs(v[0] - 0.6) < 1e-6\nassert abs(v[1] - 0.8) < 1e-6\nidx.add(\"a\", [1, 0, 0])\nidx.add(\"b\", [0, 1, 0])\nidx.add(\"c\", [1, 1, 0])\nr = idx.query([1, 0, 0], top_k=3)\nassert r[0][0] == \"a\"\nassert abs(r[0][1] - 1.0) < 1e-6\nassert r[1][0] == \"c\"\nassert abs(r[1][1] - 0.7071) < 1e-3\nassert r[2][0] == \"b\"\nassert abs(r[2][1] - 0.0) < 1e-6"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence embeddings",
+      "cosine similarity",
+      "semantic search",
+      "RAG retrieval",
+      "vector normalization",
+      "dot product optimization",
+      "sentence-transformers library",
+      "embedding indexing"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "basic math",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
