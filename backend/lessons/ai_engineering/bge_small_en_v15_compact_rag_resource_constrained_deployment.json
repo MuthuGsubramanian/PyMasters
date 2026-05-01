@@ -1,0 +1,231 @@
+{
+  "id": "bge_small_en_v15_compact_rag_resource_constrained_deployment",
+  "topic": "bge_small_en_v15_compact_rag_resource_constrained_deployment",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Resource-Constrained RAG with BAAI/bge-small-en-v1.5"
+  },
+  "description": {
+    "en": "Deploy BAAI/bge-small-en-v1.5 in memory-tight environments for lightweight RAG pipelines. Learn quantized ONNX inference, batched encoding strategies, and context-window packing to run production-grade semantic retrieval on edge hardware."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Lightweight RAG That Runs Anywhere: bge-small-en-v1.5 Under Constraints\n\nVaathiyaar here! Building a RAG pipeline is easy when you have a beefy GPU server â€” but what happens when your deployment target is a $5/month VPS, a Raspberry Pi, or a bundled desktop app? You need an embedding model that delivers retrieval quality without devouring RAM or CPU cycles. Enter `BAAI/bge-small-en-v1.5` â€” at just 33MB (and ~9MB quantized), it's the smallest model that still competes on retrieval benchmarks.\n\nThis lesson focuses on the **deployment side**: how to squeeze every ounce of performance from bge-small when resources are scarce.\n\n### Memory Budget Comparison\n\n| Configuration | Model Size | Peak RAM | Throughput (CPU) | Quality (MTEB Retrieval) |\n|---|---|---|---|---|\n| PyTorch FP32 | 33 MB | ~180 MB | ~18K sent/sec | 51.68 |\n| ONNX FP32 | 33 MB | ~95 MB | ~35K sent/sec | 51.68 |\n| ONNX INT8 Quantized | ~9 MB | ~55 MB | ~50K sent/sec | ~50.9 |\n| all-MiniLM-L6-v2 ONNX | 80 MB | ~210 MB | ~28K sent/sec | 41.95 |\n\nNotice: ONNX INT8 quantization cuts memory by 70% with less than 2% quality loss â€” an excellent trade-off for constrained deployments.\n\n### Batched Encoding for Low-Memory Environments\n\nWhen embedding thousands of documents on a machine with limited RAM, batch size control is critical:\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndef encode_in_batches(model, texts, batch_size=32):\n    all_embeddings = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        embs = model.encode(batch, normalize_embeddings=True,\n                            show_progress_bar=False)\n        all_embeddings.append(embs)\n    return np.vstack(all_embeddings)\n\ndocuments = [f\"Document about topic {i}\" for i in range(10000)]\nembeddings = encode_in_batches(model, documents, batch_size=64)\nprint(embeddings.shape)  # (10000, 384)\n```\n\nSmaller batch sizes reduce peak memory at the cost of slightly slower throughput. On a 512MB device, `batch_size=16` keeps memory stable.\n\n### ONNX Quantized Inference Pipeline\n\nFor the tightest resource budgets, ONNX Runtime with INT8 quantization is the winning combination:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel_q = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\n        \"provider\": \"CPUExecutionProvider\",\n        \"quantize\": True,\n    },\n)\n\nquery = \"Represent this sentence: how to deploy models on edge devices\"\nquery_emb = model_q.encode(query, normalize_embeddings=True)\nprint(query_emb.shape)  # (384,)\n```\n\n### Context-Window Packing for RAG\n\nOnce you retrieve relevant chunks, packing them efficiently into the LLM context window matters â€” especially when your local LLM also has tight limits:\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\nchunks = [\n    \"BGE models use CLS pooling for embedding extraction.\",\n    \"Quantization reduces model size with minimal quality loss.\",\n    \"ONNX Runtime eliminates PyTorch overhead for inference.\",\n    \"Contrastive learning trains models on query-passage pairs.\",\n    \"SafeTensors provides fast, safe model weight loading.\",\n]\n\nchunk_embs = model.encode(chunks, normalize_embeddings=True)\nquery_emb = model.encode(\n    \"Represent this sentence: how to make models smaller\",\n    normalize_embeddings=True\n)\n\nscores = util.cos_sim(query_emb, chunk_embs)[0]\n\ndef pack_context(chunks, scores, max_chars=500, threshold=0.3):\n    ranked = sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True)\n    context, total = [], 0\n    for chunk, score in ranked:\n        if float(score) < threshold:\n            break\n        if total + len(chunk) > max_chars:\n            break\n        context.append(chunk)\n        total += len(chunk)\n    return \"\\n\".join(context)\n\npacked = pack_context(chunks, scores, max_chars=200, threshold=0.3)\nprint(packed)\n```\n\nThis greedy packer fills the context window with the highest-scoring chunks first, stopping at the character budget or quality threshold â€” whichever comes first.\n\n> **Key Insight:** Resource-constrained RAG is not about choosing a worse model â€” it's about choosing the right format. BAAI/bge-small-en-v1.5 in ONNX INT8 gives you 70% less memory, 2.5Ã— faster throughput, and less than 2% quality drop compared to FP32 PyTorch. Combine that with batched encoding and context-window packing, and you have a production RAG pipeline that runs on a Raspberry Pi."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "When your deployment target has limited RAM and no GPU, you need an embedding model that delivers quality without bulk. BAAI/bge-small-en-v1.5 at 33MB (9MB quantized) is the ideal backbone for resource-constrained RAG â€” this lesson shows you how to maximize throughput and minimize memory on edge hardware.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndef encode_in_batches(model, texts, batch_size=32):\n    all_embeddings = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        embs = model.encode(batch, normalize_embeddings=True,\n                            show_progress_bar=False)\n        all_embeddings.append(embs)\n    return np.vstack(all_embeddings)\n\ndocs = [f\"Document {i} about ML\" for i in range(1000)]\nembeddings = encode_in_batches(model, docs, batch_size=32)\nprint(embeddings.shape)  # (1000, 384)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer for high-level embedding and numpy for array operations."
+        },
+        {
+          "line": 4,
+          "explanation": "Load bge-small-en-v1.5 â€” at 33MB, it fits comfortably in memory even on a Raspberry Pi 4 with 1GB RAM."
+        },
+        {
+          "line": 6,
+          "explanation": "Define a batched encoding function. On constrained hardware, encoding all documents at once can cause out-of-memory errors."
+        },
+        {
+          "line": 8,
+          "explanation": "Iterate through texts in chunks of batch_size. Each batch is encoded independently, keeping peak memory proportional to batch_size, not corpus size."
+        },
+        {
+          "line": 10,
+          "explanation": "Encode one batch with normalization. show_progress_bar=False avoids overhead in headless/embedded deployments."
+        },
+        {
+          "line": 13,
+          "explanation": "Stack all batch results into a single numpy array. vstack concatenates along the first axis, giving us (N, 384)."
+        },
+        {
+          "line": 16,
+          "explanation": "Encode 1000 documents in batches of 32. Peak memory stays around ~180MB instead of spiking with a single large batch."
+        },
+        {
+          "line": 17,
+          "explanation": "Output shape confirms 1000 documents encoded into 384-dimensional normalized vectors, ready for similarity search."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\n\nmodel_q = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\n        \"provider\": \"CPUExecutionProvider\",\n        \"quantize\": True,\n    },\n)\n\nquery = \"Represent this sentence: efficient model deployment\"\nquery_emb = model_q.encode(query, normalize_embeddings=True)\nprint(query_emb.shape)    # (384,)\nprint(type(query_emb))    # <class 'numpy.ndarray'>",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "Create a SentenceTransformer with ONNX backend. This replaces PyTorch with ONNX Runtime, cutting memory usage nearly in half."
+        },
+        {
+          "line": 5,
+          "explanation": "backend='onnx' tells the library to use ONNX Runtime instead of PyTorch for inference."
+        },
+        {
+          "line": 7,
+          "explanation": "CPUExecutionProvider runs on any CPU without CUDA. For ARM devices, this is the only option."
+        },
+        {
+          "line": 8,
+          "explanation": "quantize=True applies INT8 quantization, shrinking the model from 33MB to ~9MB with <2% quality loss."
+        },
+        {
+          "line": 12,
+          "explanation": "Use BGE's query instruction prefix for retrieval. Even with quantization, the prefix trick still boosts accuracy."
+        },
+        {
+          "line": 13,
+          "explanation": "Encode returns a numpy array directly â€” no PyTorch tensors, no GPU memory, just a compact 384-float vector."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\nchunks = [\n    \"BGE uses CLS pooling for embeddings.\",\n    \"ONNX Runtime speeds up CPU inference.\",\n    \"Quantization shrinks models with minimal loss.\",\n    \"Contrastive learning trains retrieval models.\",\n]\n\nchunk_embs = model.encode(chunks, normalize_embeddings=True)\nquery_emb = model.encode(\n    \"Represent this sentence: making models smaller\",\n    normalize_embeddings=True\n)\nscores = util.cos_sim(query_emb, chunk_embs)[0]\n\ndef pack_context(chunks, scores, max_chars=200, threshold=0.3):\n    ranked = sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True)\n    context, total = [], 0\n    for chunk, score in ranked:\n        if float(score) < threshold:\n            break\n        if total + len(chunk) > max_chars:\n            break\n        context.append(chunk)\n        total += len(chunk)\n    return \"\\n\".join(context)\n\npacked = pack_context(chunks, scores)\nprint(packed)",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Define four knowledge chunks about model optimization â€” these simulate a chunked knowledge base for RAG."
+        },
+        {
+          "line": 12,
+          "explanation": "Encode all chunks as documents (no prefix). These vectors form the retrieval index."
+        },
+        {
+          "line": 13,
+          "explanation": "Encode a query with the BGE instruction prefix to search for chunks about model compression."
+        },
+        {
+          "line": 17,
+          "explanation": "Compute cosine similarity between the query and all chunks in one vectorized operation."
+        },
+        {
+          "line": 19,
+          "explanation": "Define a greedy context packer that fills up to max_chars with the highest-scoring chunks above a quality threshold."
+        },
+        {
+          "line": 22,
+          "explanation": "Iterate through ranked chunks. Stop if quality drops below threshold or character budget is exhausted."
+        },
+        {
+          "line": 29,
+          "explanation": "Join selected chunks with newlines. This packed context goes directly into your LLM prompt."
+        },
+        {
+          "line": 31,
+          "explanation": "Print the packed context â€” only the most relevant chunks within budget, ready for a constrained LLM context window."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "PyTorch FP32 (33MB)",
+      "right_label": "ONNX INT8 Quantized (~9MB)",
+      "items": [
+        {
+          "left": "~180MB peak RAM",
+          "right": "~55MB peak RAM"
+        },
+        {
+          "left": "~18K sentences/sec",
+          "right": "~50K sentences/sec"
+        },
+        {
+          "left": "MTEB Retrieval: 51.68",
+          "right": "MTEB Retrieval: ~50.9"
+        },
+        {
+          "left": "Requires PyTorch runtime",
+          "right": "Runs on ONNX Runtime only"
+        },
+        {
+          "left": "Easy debugging with autograd",
+          "right": "Production-optimized, no gradients"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered resource-constrained RAG with bge-small-en-v1.5 â€” quantized, batched, and packed for edge deployment!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ConstrainedEmbeddingPipeline` class that simulates memory-efficient batched encoding. It stores documents and uses character trigrams as feature vectors. Implement `trigrams(text)` to return a frequency dict of 3-character sequences from lowercased text, `encode_batch(texts)` to return a list of trigram dicts for a batch, `encode_all(batch_size)` to encode all documents in batches of `batch_size` and store results in `self.index`, and `memory_report()` that returns a dict with 'num_documents', 'batch_count' (from last encode_all), and 'features_per_doc' (average unique trigrams per document)."
+      },
+      "starter_code": "class ConstrainedEmbeddingPipeline:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.index = []\n        self._last_batch_count = 0\n\n    def trigrams(self, text: str) -> dict:\n        # Return frequency dict of 3-char sequences from lowercased text\n        pass\n\n    def encode_batch(self, texts: list[str]) -> list[dict]:\n        # Return list of trigram dicts for the given texts\n        pass\n\n    def encode_all(self, batch_size: int = 32) -> None:\n        # Encode all documents in batches, store in self.index\n        # Track number of batches in self._last_batch_count\n        pass\n\n    def memory_report(self) -> dict:\n        # Return {'num_documents': int, 'batch_count': int, 'features_per_doc': float}\n        pass\n\n# Test it:\npipeline = ConstrainedEmbeddingPipeline([\n    \"machine learning models\",\n    \"deep learning networks\",\n    \"natural language processing\",\n    \"computer vision tasks\",\n    \"reinforcement learning agents\"\n])\npipeline.encode_all(batch_size=2)\nreport = pipeline.memory_report()\nprint(report['num_documents'])\nprint(report['batch_count'])\nprint(report['features_per_doc'] > 0)",
+      "expected_output": "5\n3\nTrue",
+      "hints": {
+        "en": [
+          "In trigrams(), iterate range(len(text.lower())-2) and count each text[i:i+3] slice in a dict",
+          "encode_all() loops in steps of batch_size, calls encode_batch on each slice, and extends self.index. Count iterations for _last_batch_count",
+          "memory_report() computes features_per_doc as sum(len(d) for d in self.index) / len(self.index) if index is non-empty"
+        ]
+      },
+      "test_code": "p = ConstrainedEmbeddingPipeline([\"hello\", \"world\", \"test\"])\nassert p.trigrams(\"hello\") == {\"hel\": 1, \"ell\": 1, \"llo\": 1}\nassert p.trigrams(\"ab\") == {}\nassert p.encode_batch([\"hello\"]) == [{\"hel\": 1, \"ell\": 1, \"llo\": 1}]\np.encode_all(batch_size=2)\nassert len(p.index) == 3\nassert p._last_batch_count == 2\nr = p.memory_report()\nassert r['num_documents'] == 3\nassert r['batch_count'] == 2\nassert r['features_per_doc'] > 0\np2 = ConstrainedEmbeddingPipeline([f\"document number {i}\" for i in range(10)])\np2.encode_all(batch_size=3)\nassert len(p2.index) == 10\nassert p2._last_batch_count == 4"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ContextPacker` class that simulates RAG context-window packing. It takes a list of chunks and their similarity scores. Implement `rank(chunks, scores)` that returns a list of (chunk, score) tuples sorted by score descending, `pack(chunks, scores, max_chars, threshold)` that greedily fills a character budget with the highest-scoring chunks above the threshold, and `format_prompt(packed_chunks, query)` that formats the result as 'Context:\\n1. chunk1\\n2. chunk2\\n\\nQuery: {query}'."
+      },
+      "starter_code": "class ContextPacker:\n    def rank(self, chunks: list[str], scores: list[float]) -> list[tuple]:\n        # Return list of (chunk, score) sorted by score descending\n        pass\n\n    def pack(self, chunks: list[str], scores: list[float],\n             max_chars: int = 500, threshold: float = 0.0) -> list[str]:\n        # Greedily pack highest-scoring chunks within max_chars budget\n        # Skip chunks below threshold\n        pass\n\n    def format_prompt(self, packed_chunks: list[str], query: str) -> str:\n        # Format as:\n        # Context:\n        # 1. chunk1\n        # 2. chunk2\n        #\n        # Query: {query}\n        # Return 'No relevant context found.\\n\\nQuery: {query}' if no chunks\n        pass\n\n# Test it:\npacker = ContextPacker()\nchunks = [\"Short.\", \"A medium length chunk here.\", \"Tiny.\", \"Another chunk of text.\"]\nscores = [0.9, 0.7, 0.3, 0.8]\n\npacked = packer.pack(chunks, scores, max_chars=40, threshold=0.5)\nprint(len(packed) > 0)\n\nprompt = packer.format_prompt(packed, \"How does it work?\")\nprint(\"Context:\" in prompt)\nprint(\"Query: How does it work?\" in prompt)\n\nempty = packer.format_prompt([], \"test\")\nprint(\"No relevant context found.\" in empty)",
+      "expected_output": "True\nTrue\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "rank() is just sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True)",
+          "In pack(), iterate through ranked results, accumulate len(chunk) and stop when adding the next chunk would exceed max_chars",
+          "format_prompt() uses enumerate to number chunks starting at 1, with 'Context:\\n' header and '\\n\\nQuery: {query}' footer"
+        ]
+      },
+      "test_code": "cp = ContextPacker()\nranked = cp.rank([\"a\", \"b\", \"c\"], [0.1, 0.9, 0.5])\nassert ranked[0] == (\"b\", 0.9)\nassert ranked[2] == (\"a\", 0.1)\npacked = cp.pack([\"hello world\", \"foo\", \"bar baz\"], [0.8, 0.5, 0.9], max_chars=20, threshold=0.0)\nassert packed[0] == \"bar baz\"\nassert len(\"\".join(packed)) <= 20\npacked_thresh = cp.pack([\"a\", \"b\"], [0.1, 0.2], max_chars=100, threshold=0.5)\nassert packed_thresh == []\nprompt = cp.format_prompt([\"chunk1\", \"chunk2\"], \"my query\")\nassert prompt.startswith(\"Context:\")\nassert \"1. chunk1\" in prompt\nassert \"2. chunk2\" in prompt\nassert prompt.endswith(\"Query: my query\")\nempty_prompt = cp.format_prompt([], \"q\")\nassert \"No relevant context found.\" in empty_prompt\nassert \"Query: q\" in empty_prompt"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "resource-constrained deployment",
+      "ONNX INT8 quantization",
+      "batched encoding",
+      "context-window packing",
+      "BGE query prefix",
+      "memory budgeting",
+      "edge inference",
+      "RAG pipeline optimization"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "basic NLP concepts",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
