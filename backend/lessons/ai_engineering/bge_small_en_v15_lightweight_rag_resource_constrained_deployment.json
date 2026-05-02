@@ -1,0 +1,229 @@
+{
+  "id": "bge_small_en_v15_lightweight_rag_resource_constrained_deployment",
+  "topic": "bge_small_en_v15_lightweight_rag_resource_constrained_deployment",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Lightweight RAG with bge-small-en-v1.5 for Resource-Constrained Deployment"
+  },
+  "description": {
+    "en": "Deploy BAAI/bge-small-en-v1.5 in resource-constrained environments â€” build a complete lightweight RAG pipeline using compact 384-dim embeddings, ONNX quantization, and memory-efficient retrieval for edge devices and budget servers."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Big RAG Energy on a Tiny Budget: bge-small-en-v1.5\n\nVaathiyaar here! Everyone talks about RAG with GPU clusters and terabyte vector databases â€” but what about the rest of us? What if your entire deployment runs on a $5/month VPS, a Raspberry Pi, or a containerized microservice with a 256MB memory limit? Enter `BAAI/bge-small-en-v1.5` â€” at 33MB, it's the Swiss Army knife of compact embeddings that makes resource-constrained RAG not just possible, but genuinely fast.\n\nThis lesson focuses on the deployment angle: how to squeeze maximum retrieval quality from minimal hardware using BGE-small's unique strengths â€” query prefixing, ONNX quantization, and smart batching.\n\n### Resource Profile: What You're Working With\n\n| Resource | bge-small-en-v1.5 | bge-base-en-v1.5 | bge-large-en-v1.5 |\n|---|---|---|---|\n| Model Size (FP32) | 33 MB | 110 MB | 335 MB |\n| Model Size (INT8 ONNX) | ~9 MB | ~30 MB | ~90 MB |\n| RAM at Inference | ~80 MB | ~250 MB | ~700 MB |\n| Embedding Dims | 384 | 768 | 1024 |\n| Vector Storage (1M docs) | ~1.5 GB | ~3 GB | ~4 GB |\n| CPU Throughput | ~18K sent/sec | ~6K sent/sec | ~1.5K sent/sec |\n\nWith INT8 quantization, the model fits in 9MB and each embedding is just 1.5KB. A million-document index fits in ~1.5GB of RAM â€” that's a serious RAG system on a Raspberry Pi 4.\n\n### Building a Memory-Efficient RAG Pipeline\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\n# Load with ONNX backend for minimal CPU overhead\nmodel = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\n# Knowledge base for our lightweight RAG\nknowledge_base = [\n    \"Python's GIL prevents true parallel threading for CPU tasks\",\n    \"asyncio enables concurrent I/O without threads\",\n    \"multiprocessing bypasses the GIL using separate processes\",\n    \"Docker containers share the host kernel for efficiency\",\n    \"Kubernetes orchestrates container deployments at scale\",\n]\n\n# Encode documents once, store as float16 to halve memory\ndoc_embeddings = model.encode(\n    knowledge_base, normalize_embeddings=True\n).astype(np.float16)\n\nprint(f\"Index size: {doc_embeddings.nbytes / 1024:.1f} KB\")\n# Index size: 3.8 KB (for 5 docs Ã— 384 dims Ã— 2 bytes)\n```\n\n### Retrieval with Query Prefix and Context Assembly\n\nThe BGE query prefix trick is critical for asymmetric retrieval â€” where queries are short questions and documents are longer passages:\n\n```python\ndef retrieve_and_build_context(query, top_k=3, threshold=0.3):\n    # BGE query instruction prefix\n    prefixed = f\"Represent this sentence: {query}\"\n    q_emb = model.encode(prefixed, normalize_embeddings=True)\n\n    # Dot product on float16 (upcast for computation)\n    scores = np.dot(\n        doc_embeddings.astype(np.float32), q_emb\n    )\n\n    # Filter and rank\n    ranked = sorted(\n        enumerate(scores), key=lambda x: x[1], reverse=True\n    )\n    results = [\n        (knowledge_base[i], float(s))\n        for i, s in ranked[:top_k] if s >= threshold\n    ]\n\n    # Build RAG context string\n    context = \"\\n\".join(\n        f\"[{i+1}] {doc}\" for i, (doc, _) in enumerate(results)\n    )\n    return context, results\n\ncontext, hits = retrieve_and_build_context(\n    \"How does Python handle parallelism?\"\n)\nprint(context)\n# [1] Python's GIL prevents true parallel threading...\n# [2] multiprocessing bypasses the GIL...\n# [3] asyncio enables concurrent I/O...\n```\n\n### Batched Encoding for Constrained Memory\n\nWhen indexing large document sets on limited hardware, batch encoding prevents memory spikes:\n\n```python\ndef encode_batched(texts, batch_size=64):\n    all_embs = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        embs = model.encode(\n            batch, normalize_embeddings=True\n        ).astype(np.float16)\n        all_embs.append(embs)\n    return np.vstack(all_embs)\n\n# Index 10K documents in 64-doc batches\n# Peak memory stays under ~50MB extra\n```\n\nThis pattern keeps peak memory proportional to `batch_size Ã— 384 Ã— 4 bytes` rather than `total_docs Ã— 384 Ã— 4 bytes`.\n\n> **Key Insight:** Resource-constrained RAG is a design discipline, not a compromise. BAAI/bge-small-en-v1.5 with ONNX quantization gives you a 9MB model, 384-dim embeddings at float16 (768 bytes per doc), and ~18K sentences/sec on CPU. Combine the query instruction prefix for retrieval accuracy, float16 storage for memory efficiency, and batched encoding for predictable resource usage â€” and you have a production RAG pipeline that runs on hardware most people throw away."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BAAI/bge-small-en-v1.5 enables serious RAG on minimal hardware. At 33MB (9MB quantized), with 384-dim embeddings and 18K sent/sec CPU throughput, it powers retrieval pipelines on edge devices, budget VPS instances, and memory-constrained containers. This lesson covers the deployment patterns that make it work.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\ndocs = [\n    \"Python's GIL prevents true parallel threading\",\n    \"asyncio enables concurrent I/O without threads\",\n    \"multiprocessing bypasses the GIL using processes\",\n]\n\ndoc_embs = model.encode(docs, normalize_embeddings=True)\nprint(doc_embs.shape)  # (3, 384)\nprint(f\"Size: {doc_embs.nbytes} bytes\")  # 4608 bytes",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer for the high-level embedding API and numpy for efficient array operations on the resulting vectors."
+        },
+        {
+          "line": 4,
+          "explanation": "Load bge-small-en-v1.5 with the ONNX backend. This eliminates the PyTorch runtime entirely, cutting memory usage by ~200MB and boosting CPU inference speed 2-3x."
+        },
+        {
+          "line": 7,
+          "explanation": "CPUExecutionProvider tells ONNX Runtime to use optimized CPU kernels. No GPU needed â€” this model was designed to fly on CPU hardware."
+        },
+        {
+          "line": 10,
+          "explanation": "Define knowledge base documents. In a real deployment, these would be loaded from files, a database, or chunked from larger documents."
+        },
+        {
+          "line": 16,
+          "explanation": "Encode all documents with L2 normalization. Normalized vectors let us use fast dot product instead of cosine similarity â€” same result, less computation."
+        },
+        {
+          "line": 17,
+          "explanation": "Output shape: 3 documents Ã— 384 dimensions. Each document is now a compact vector capturing its semantic meaning."
+        },
+        {
+          "line": 18,
+          "explanation": "Total index size: 4608 bytes for 3 documents. At 1536 bytes per doc (384 Ã— 4 bytes float32), a million-document index is ~1.5GB."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\n\n# Store as float16 to halve memory usage\ndoc_embs_f16 = doc_embs.astype(np.float16)\nprint(f\"FP32: {doc_embs.nbytes} bytes\")\nprint(f\"FP16: {doc_embs_f16.nbytes} bytes\")\n\n# BGE query prefix for retrieval\nquery = \"Represent this sentence: How to run tasks in parallel?\"\nq_emb = model.encode(query, normalize_embeddings=True)\n\n# Score against float16 index (upcast for dot product)\nscores = np.dot(doc_embs_f16.astype(np.float32), q_emb)\nranked_idx = np.argsort(scores)[::-1]\n\nfor idx in ranked_idx:\n    print(f\"{scores[idx]:.3f} | {docs[idx]}\")",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "Cast embeddings to float16. This halves storage from 1536 to 768 bytes per document with negligible quality loss â€” critical for fitting large indexes in RAM."
+        },
+        {
+          "line": 5,
+          "explanation": "Compare sizes: float32 uses 4608 bytes, float16 uses 2304 bytes. For 1M documents, that's 1.5GB vs 750MB â€” the difference between fitting in RAM or not."
+        },
+        {
+          "line": 9,
+          "explanation": "BGE's query instruction prefix: 'Represent this sentence: ' tells the model to produce a retrieval-optimized embedding. This boosts search accuracy 2-3% on benchmarks."
+        },
+        {
+          "line": 10,
+          "explanation": "Encode the prefixed query at full float32 precision. Only the stored index needs compression â€” the single query vector is tiny."
+        },
+        {
+          "line": 13,
+          "explanation": "Upcast float16 to float32 for the dot product computation. NumPy handles this efficiently and the temporary memory cost is just one batch at a time."
+        },
+        {
+          "line": 14,
+          "explanation": "argsort gives indices from lowest to highest; [::-1] reverses to highest-first. This ranks documents by relevance to the query."
+        },
+        {
+          "line": 16,
+          "explanation": "Print ranked results. 'How to run tasks in parallel?' should rank multiprocessing and asyncio highest â€” demonstrating semantic understanding beyond keyword matching."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def build_rag_context(query, docs, doc_embs, model,\n                      top_k=3, threshold=0.3):\n    prefixed = f\"Represent this sentence: {query}\"\n    q_emb = model.encode(prefixed, normalize_embeddings=True)\n\n    scores = np.dot(doc_embs.astype(np.float32), q_emb)\n    ranked = sorted(enumerate(scores),\n                    key=lambda x: x[1], reverse=True)\n\n    context_parts = []\n    for rank, (idx, score) in enumerate(ranked[:top_k]):\n        if score < threshold:\n            break\n        context_parts.append(f\"[{rank+1}] {docs[idx]}\")\n\n    return \"\\n\".join(context_parts)\n\ncontext = build_rag_context(\n    \"How does Python handle concurrency?\",\n    docs, doc_embs_f16, model\n)\nprint(context)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Define a reusable RAG context builder that encapsulates the full retrieval pipeline: encode, score, filter, and format."
+        },
+        {
+          "line": 3,
+          "explanation": "Apply BGE query prefix inside the function. This encapsulates the model-specific detail so callers don't need to know about it."
+        },
+        {
+          "line": 6,
+          "explanation": "Dot product between query and all document embeddings. With normalized vectors, this equals cosine similarity â€” no extra computation needed."
+        },
+        {
+          "line": 7,
+          "explanation": "Sort by score descending. enumerate preserves the original document index so we can look up the text from our docs list."
+        },
+        {
+          "line": 11,
+          "explanation": "Iterate through top-k results, but stop early if we hit the threshold. This prevents low-relevance documents from polluting the LLM context."
+        },
+        {
+          "line": 14,
+          "explanation": "Format as numbered references: [1], [2], etc. This format lets the LLM cite specific sources in its response."
+        },
+        {
+          "line": 16,
+          "explanation": "Join with newlines for a clean context block. Pass this string directly into your LLM prompt as retrieved context."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Resource-Optimized (ONNX + FP16)",
+      "right_label": "Standard (PyTorch + FP32)",
+      "items": [
+        {
+          "left": "Model: ~9 MB (INT8 quantized)",
+          "right": "Model: 33 MB (full weights)"
+        },
+        {
+          "left": "Runtime RAM: ~80 MB total",
+          "right": "Runtime RAM: ~300 MB total"
+        },
+        {
+          "left": "Index: 768 bytes/doc (FP16)",
+          "right": "Index: 1536 bytes/doc (FP32)"
+        },
+        {
+          "left": "Speed: ~18K sent/sec (CPU)",
+          "right": "Speed: ~8K sent/sec (CPU)"
+        },
+        {
+          "left": "Quality loss: <0.5% on MTEB",
+          "right": "Full quality baseline"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered lightweight RAG deployment with bge-small-en-v1.5 â€” compact embeddings, ONNX optimization, and memory-efficient retrieval for any hardware!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LightweightRAGIndex` class that simulates a memory-efficient embedding index. It stores documents and their trigram vectors, and supports float16 simulation by rounding similarity scores to 3 decimal places. Implement `trigrams(text)` for character-level trigram frequency vectors, `cosine_sim(a, b)` for comparing trigram dicts, `add_documents(docs)` to extend the index, and `search(query, top_k, threshold, use_prefix)` that filters results by a minimum score threshold and optionally prepends 'query: ' to simulate BGE's query prefix."
+      },
+      "starter_code": "import math\n\nclass LightweightRAGIndex:\n    def __init__(self):\n        self.documents = []\n        self.vectors = []\n\n    def trigrams(self, text: str) -> dict:\n        # Return frequency dict of 3-char sequences from lowercased text\n        pass\n\n    def cosine_sim(self, a: dict, b: dict) -> float:\n        # Cosine similarity rounded to 3 decimal places\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def add_documents(self, docs: list[str]):\n        # Add documents and their trigram vectors to the index\n        pass\n\n    def search(self, query: str, top_k: int = 3,\n               threshold: float = 0.0,\n               use_prefix: bool = False) -> list[dict]:\n        # If use_prefix, prepend 'query: ' to query text\n        # Compute trigrams, score against all docs\n        # Return top_k results above threshold as\n        # [{\"document\": str, \"score\": float, \"rank\": int}]\n        # rank starts at 1\n        pass\n\n    def memory_report(self) -> dict:\n        # Return {\"num_docs\": int, \"unique_trigrams\": int}\n        # unique_trigrams = total distinct trigrams across all vectors\n        pass\n\n# Test it:\nindex = LightweightRAGIndex()\nindex.add_documents([\n    \"machine learning models\",\n    \"deep learning neural networks\",\n    \"cooking pasta recipes\",\n    \"learning python programming\"\n])\n\nresults = index.search(\"learning algorithms\", top_k=2, threshold=0.1)\nprint(len(results) > 0)\nprint(results[0][\"rank\"] == 1)\n\nreport = index.memory_report()\nprint(report[\"num_docs\"] == 4)",
+      "expected_output": "True\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In trigrams(), lowercase the text, then iterate range(len(t)-2) building a frequency dict of t[i:i+3] slices",
+          "In cosine_sim(), compute dot product over shared keys, divide by product of L2 magnitudes, and use round(result, 3)",
+          "In search(), build scored list, filter by threshold, sort descending, slice top_k, and add 'rank' starting at 1 using enumerate"
+        ]
+      },
+      "test_code": "idx = LightweightRAGIndex()\nassert idx.trigrams(\"hello\") == {\"hel\": 1, \"ell\": 1, \"llo\": 1}\nassert idx.trigrams(\"ab\") == {}\nassert idx.cosine_sim({\"abc\": 1}, {\"abc\": 1}) == 1.0\nassert idx.cosine_sim({\"abc\": 1}, {\"xyz\": 1}) == 0.0\nassert idx.cosine_sim({}, {\"abc\": 1}) == 0.0\nidx.add_documents([\"hello world\", \"help wanted\", \"goodbye now\"])\nassert len(idx.documents) == 3\nassert len(idx.vectors) == 3\nresults = idx.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"rank\"] == 1\nassert results[1][\"rank\"] == 2\nassert results[0][\"score\"] >= results[1][\"score\"]\nfiltered = idx.search(\"hello\", top_k=3, threshold=0.99)\nassert len(filtered) == 0 or all(r[\"score\"] >= 0.99 for r in filtered)\nprefix_results = idx.search(\"test\", top_k=1, use_prefix=True)\nassert len(prefix_results) <= 1\nreport = idx.memory_report()\nassert report[\"num_docs\"] == 3\nassert report[\"unique_trigrams\"] > 0\nidx.add_documents([\"extra doc here\"])\nassert idx.memory_report()[\"num_docs\"] == 4"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ConstrainedRAGPipeline` that wraps a `LightweightRAGIndex` and adds deployment-aware features. Implement `ingest(docs, batch_size)` that adds documents in batches and returns the number of batches processed, `retrieve_context(query, top_k, threshold)` that searches with prefix and formats results as a numbered context string (e.g., '[1] doc (0.85)\\n[2] doc (0.72)'), and `resource_status()` that returns a dict with 'num_docs', 'unique_trigrams', and 'bytes_estimate' (num_docs Ã— 768 to simulate float16 Ã— 384-dim storage)."
+      },
+      "starter_code": "import math\n\nclass LightweightRAGIndex:\n    def __init__(self):\n        self.documents = []\n        self.vectors = []\n\n    def trigrams(self, text):\n        t = text.lower()\n        vec = {}\n        for i in range(len(t) - 2):\n            tri = t[i:i+3]\n            vec[tri] = vec.get(tri, 0) + 1\n        return vec\n\n    def cosine_sim(self, a, b):\n        shared = set(a) & set(b)\n        dot = sum(a[k] * b[k] for k in shared)\n        mag_a = math.sqrt(sum(v**2 for v in a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return round(dot / (mag_a * mag_b), 3)\n\n    def add_documents(self, docs):\n        for doc in docs:\n            self.documents.append(doc)\n            self.vectors.append(self.trigrams(doc))\n\n    def search(self, query, top_k=3, threshold=0.0, use_prefix=False):\n        q_text = ('query: ' + query) if use_prefix else query\n        q_vec = self.trigrams(q_text)\n        scored = []\n        for doc, vec in zip(self.documents, self.vectors):\n            s = self.cosine_sim(q_vec, vec)\n            if s >= threshold:\n                scored.append({\"document\": doc, \"score\": s})\n        scored.sort(key=lambda x: x[\"score\"], reverse=True)\n        results = scored[:top_k]\n        for i, r in enumerate(results):\n            r[\"rank\"] = i + 1\n        return results\n\n    def memory_report(self):\n        all_tri = set()\n        for v in self.vectors:\n            all_tri.update(v.keys())\n        return {\"num_docs\": len(self.documents), \"unique_trigrams\": len(all_tri)}\n\nclass ConstrainedRAGPipeline:\n    def __init__(self):\n        self.index = LightweightRAGIndex()\n\n    def ingest(self, docs: list[str], batch_size: int = 32) -> int:\n        # Add documents in batches of batch_size\n        # Return the number of batches processed\n        pass\n\n    def retrieve_context(self, query: str, top_k: int = 3,\n                         threshold: float = 0.1) -> str:\n        # Search with use_prefix=True\n        # Format as '[1] doc (score)\\n[2] doc (score)'\n        # Return empty string if no results\n        pass\n\n    def resource_status(self) -> dict:\n        # Return {\"num_docs\": int, \"unique_trigrams\": int,\n        #         \"bytes_estimate\": num_docs * 768}\n        pass\n\n# Test it:\npipeline = ConstrainedRAGPipeline()\nbatches = pipeline.ingest([\n    \"Python supports async programming\",\n    \"Docker containers run in isolation\",\n    \"Kubernetes manages container clusters\",\n    \"Flask is a lightweight web framework\",\n    \"FastAPI supports async endpoints\"\n], batch_size=2)\nprint(batches == 3)\n\nctx = pipeline.retrieve_context(\"async web development\", top_k=2)\nprint(\"[1]\" in ctx)\n\nstatus = pipeline.resource_status()\nprint(status[\"bytes_estimate\"] == 5 * 768)",
+      "expected_output": "True\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In ingest(), use range(0, len(docs), batch_size) to iterate in chunks and call self.index.add_documents(docs[i:i+batch_size]) for each batch",
+          "Count batches with math.ceil(len(docs) / batch_size) or increment a counter in the loop",
+          "In retrieve_context(), format each result with f'[{r[\"rank\"]}] {r[\"document\"]} ({r[\"score\"]})' and join with newlines"
+        ]
+      },
+      "test_code": "p = ConstrainedRAGPipeline()\nassert p.ingest([\"a\", \"b\", \"c\", \"d\", \"e\"], batch_size=2) == 3\nassert p.ingest([\"f\", \"g\"], batch_size=5) == 1\nassert p.index.memory_report()[\"num_docs\"] == 7\nctx = p.retrieve_context(\"hello\", top_k=2, threshold=0.0)\nassert \"[1]\" in ctx\nassert \"[2]\" in ctx\nempty_ctx = p.retrieve_context(\"zzzzz\", top_k=2, threshold=0.99)\nassert empty_ctx == \"\"\nstatus = p.resource_status()\nassert status[\"num_docs\"] == 7\nassert status[\"bytes_estimate\"] == 7 * 768\nassert status[\"unique_trigrams\"] > 0\np2 = ConstrainedRAGPipeline()\nassert p2.ingest([], batch_size=10) == 0\nassert p2.resource_status()[\"bytes_estimate\"] == 0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "lightweight RAG pipeline",
+      "resource-constrained deployment",
+      "BGE query instruction prefix",
+      "ONNX quantization",
+      "float16 embedding storage",
+      "batched encoding",
+      "similarity threshold filtering",
+      "CLS token pooling",
+      "memory-efficient vector indexing"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "numpy basics",
+      "basic NLP concepts",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
