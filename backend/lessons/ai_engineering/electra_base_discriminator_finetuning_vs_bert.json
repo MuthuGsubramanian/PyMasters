@@ -1,0 +1,198 @@
+{
+  "id": "electra_base_discriminator_finetuning_vs_bert",
+  "topic": "electra_base_discriminator_finetuning_vs_bert",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Fine-Tuning ELECTRA vs BERT: From Pretraining Objective to Downstream Performance"
+  },
+  "description": {
+    "en": "Hands-on tutorial fine-tuning google/electra-base-discriminator alongside BERT-base, measuring how ELECTRA's replaced-token-detection pretraining translates to faster convergence and better accuracy on classification tasks across PyTorch, TensorFlow, and JAX."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Pretraining to Fine-Tuning: ELECTRA's Hidden Advantage\n\nVaathiyaar here! We know ELECTRA's replaced-token-detection (RTD) is more sample-efficient than BERT's masked language modeling (MLM) during pretraining. But the real question is: **does that efficiency carry over to fine-tuning?** Spoiler â€” yes, and the reasons are fascinating. Today we fine-tune `google/electra-base-discriminator` head-to-head with `bert-base-uncased` and measure the difference.\n\n### Why Pretraining Objectives Matter for Fine-Tuning\n\nBERT's [MASK] token creates a **pretrain-finetune mismatch** â€” during fine-tuning, the model never sees [MASK], so 15% of its pretraining experience was with tokens that vanish downstream. ELECTRA never uses [MASK] at all â€” its discriminator sees real or replaced tokens, which look just like normal text. This means ELECTRA's representations transfer more cleanly.\n\n| Factor | BERT Fine-Tuning | ELECTRA Fine-Tuning |\n|---|---|---|\n| Pretrain-finetune gap | [MASK] never seen downstream | No mismatch â€” always real text |\n| Token representations | Learned from 15% signal | Learned from 100% signal |\n| Convergence speed | Baseline | ~2x faster on most tasks |\n| GLUE average (base) | 79.6 | 82.7 |\n| Parameters | 110M | 110M (identical) |\n\n### Setting Up the Head-to-Head Comparison\n\n```python\nfrom transformers import (\n    AutoTokenizer, AutoModelForSequenceClassification,\n    TrainingArguments, Trainer\n)\nfrom datasets import load_dataset\nimport numpy as np\n\n# Load both models â€” same architecture size, different pretraining\nelectra_name = \"google/electra-base-discriminator\"\nbert_name = \"bert-base-uncased\"\n\nelectra_tokenizer = AutoTokenizer.from_pretrained(electra_name)\nbert_tokenizer = AutoTokenizer.from_pretrained(bert_name)\n\nelectra_model = AutoModelForSequenceClassification.from_pretrained(\n    electra_name, num_labels=2\n)\nbert_model = AutoModelForSequenceClassification.from_pretrained(\n    bert_name, num_labels=2\n)\n\nprint(f\"ELECTRA params: {sum(p.numel() for p in electra_model.parameters()):,}\")\nprint(f\"BERT params:    {sum(p.numel() for p in bert_model.parameters()):,}\")\n```\n\n### Fine-Tuning on SST-2 Sentiment\n\n```python\ndataset = load_dataset(\"glue\", \"sst2\")\n\ndef tokenize_fn(examples, tokenizer):\n    return tokenizer(\n        examples[\"sentence\"],\n        padding=\"max_length\",\n        truncation=True,\n        max_length=128\n    )\n\nelectra_ds = dataset.map(\n    lambda x: tokenize_fn(x, electra_tokenizer), batched=True\n)\nbert_ds = dataset.map(\n    lambda x: tokenize_fn(x, bert_tokenizer), batched=True\n)\n\ndef compute_metrics(eval_pred):\n    logits, labels = eval_pred\n    preds = np.argmax(logits, axis=-1)\n    return {\"accuracy\": (preds == labels).mean()}\n\ntraining_args = TrainingArguments(\n    output_dir=\"./results\",\n    num_train_epochs=3,\n    per_device_train_batch_size=32,\n    evaluation_strategy=\"epoch\",\n    learning_rate=2e-5,\n    weight_decay=0.01,\n)\n```\n\n### Cross-Framework Availability\n\nELECTRA ships with official weights for every major framework:\n\n```python\n# PyTorch (default)\nfrom transformers import ElectraModel\npt = ElectraModel.from_pretrained(electra_name)\n\n# TensorFlow\nfrom transformers import TFElectraModel\ntf_m = TFElectraModel.from_pretrained(electra_name)\n\n# JAX/Flax\nfrom transformers import FlaxElectraModel\njax_m = FlaxElectraModel.from_pretrained(electra_name)\n```\n\n### Expected Results: ELECTRA's Edge\n\nWith identical hyperparameters and architecture size, expect:\n- **Epoch 1 accuracy**: ELECTRA ~90%, BERT ~87%\n- **Final accuracy**: ELECTRA ~93%, BERT ~91%\n- **Time to 90% accuracy**: ELECTRA reaches it ~2x faster\n\nThe gap is consistent across GLUE tasks because RTD pretraining gives every token a richer contextual representation â€” the discriminator had to understand context deeply to spot subtle replacements.\n\n> **Key Insight:** ELECTRA's fine-tuning advantage isn't just about pretraining efficiency â€” it's about representation quality. Because the discriminator was forced to reason about every token (not just 15%), its embeddings encode finer-grained contextual information. Combined with zero pretrain-finetune mismatch (no [MASK] token), this makes `google/electra-base-discriminator` the better starting point for classification tasks, especially when training data or compute budget is limited."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "ELECTRA and BERT have identical transformer architectures (12 layers, 768 hidden dim, 110M params). The only difference is how they were pretrained: BERT predicts masked words, ELECTRA detects replaced tokens. Today we fine-tune both on the same task and measure how pretraining objectives affect downstream performance â€” spoiler: ELECTRA converges faster and scores higher.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoTokenizer\nfrom transformers import AutoModelForSequenceClassification\nimport torch\n\nelectra_name = \"google/electra-base-discriminator\"\nbert_name = \"bert-base-uncased\"\n\nelectra_tok = AutoTokenizer.from_pretrained(electra_name)\nbert_tok = AutoTokenizer.from_pretrained(bert_name)\n\nelectra_model = AutoModelForSequenceClassification.from_pretrained(\n    electra_name, num_labels=2\n)\nbert_model = AutoModelForSequenceClassification.from_pretrained(\n    bert_name, num_labels=2\n)\n\ntext = \"This movie was absolutely fantastic\"\n\ne_inputs = electra_tok(text, return_tensors=\"pt\")\nb_inputs = bert_tok(text, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    e_logits = electra_model(**e_inputs).logits\n    b_logits = bert_model(**b_inputs).logits\n\nprint(f\"ELECTRA: {torch.softmax(e_logits, dim=-1)}\")\nprint(f\"BERT:    {torch.softmax(b_logits, dim=-1)}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "AutoTokenizer automatically selects the right tokenizer class â€” ElectraTokenizer for ELECTRA, BertTokenizer for BERT. Both use WordPiece with 30,522 vocab."
+        },
+        {
+          "line": 2,
+          "explanation": "AutoModelForSequenceClassification adds a classification head on top of either model's encoder â€” a linear layer mapping 768 hidden dims to num_labels classes."
+        },
+        {
+          "line": 5,
+          "explanation": "Load google/electra-base-discriminator â€” the discriminator that was pretrained on replaced-token-detection. Only the discriminator is used for downstream tasks."
+        },
+        {
+          "line": 8,
+          "explanation": "Load both tokenizers. They're nearly identical (same vocab size, same special tokens), so the real comparison is purely about representation quality."
+        },
+        {
+          "line": 11,
+          "explanation": "Load ELECTRA with a fresh classification head. The pretrained encoder weights encode rich per-token understanding from RTD, but the classifier head is randomly initialized."
+        },
+        {
+          "line": 14,
+          "explanation": "Load BERT with the same classification head. Before fine-tuning, both models output near-random predictions since the heads are untrained."
+        },
+        {
+          "line": 18,
+          "explanation": "Same input text for both models â€” any performance difference comes purely from how each model's encoder represents the tokens internally."
+        },
+        {
+          "line": 23,
+          "explanation": "Forward pass through both models. Even before fine-tuning, the hidden representations differ because RTD and MLM produce different feature distributions."
+        },
+        {
+          "line": 27,
+          "explanation": "Print softmax probabilities. Pre-fine-tuning these are near-random, but after training ELECTRA will typically converge faster to confident correct predictions."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import ElectraModel, BertModel\nimport torch\n\nelectra = ElectraModel.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\nbert = BertModel.from_pretrained(\"bert-base-uncased\")\n\nfrom transformers import AutoTokenizer\ntok = AutoTokenizer.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\n\ntext = \"The cat sat on the mat\"\ninputs = tok(text, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    e_out = electra(**inputs).last_hidden_state\n    b_out = bert(**inputs).last_hidden_state\n\nprint(f\"ELECTRA CLS norm: {e_out[0, 0].norm():.3f}\")\nprint(f\"BERT CLS norm:    {b_out[0, 0].norm():.3f}\")\n\ncosine_sim = torch.nn.functional.cosine_similarity(\n    e_out[0, 0].unsqueeze(0),\n    b_out[0, 0].unsqueeze(0)\n)\nprint(f\"CLS cosine similarity: {cosine_sim.item():.4f}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the base encoder models (no task head) to compare raw representations produced by different pretraining objectives."
+        },
+        {
+          "line": 4,
+          "explanation": "Load ELECTRA's encoder. Its 12 transformer layers learned representations by detecting replaced tokens at every position during pretraining."
+        },
+        {
+          "line": 7,
+          "explanation": "Load BERT's encoder. Same architecture but trained with MLM â€” predicting masked tokens at only 15% of positions."
+        },
+        {
+          "line": 14,
+          "explanation": "Same input, same tokenization. Any difference in output comes purely from what each model learned during pretraining."
+        },
+        {
+          "line": 17,
+          "explanation": "Extract last hidden states from both models â€” these are the contextual embeddings that downstream tasks fine-tune on."
+        },
+        {
+          "line": 21,
+          "explanation": "Compare [CLS] token embedding norms. ELECTRA and BERT often have different magnitude distributions due to their different training signals."
+        },
+        {
+          "line": 24,
+          "explanation": "Cosine similarity between the two [CLS] embeddings â€” typically low (0.1-0.3), showing that different pretraining objectives produce genuinely different representation spaces."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "BERT (MLM Pretrained)",
+      "right_label": "ELECTRA (RTD Pretrained)",
+      "items": [
+        {
+          "left": "Learns from 15% of tokens per example",
+          "right": "Learns from 100% of tokens per example"
+        },
+        {
+          "left": "Sees [MASK] during pretraining only",
+          "right": "Never sees [MASK] â€” no distribution shift"
+        },
+        {
+          "left": "SST-2 accuracy: ~91% after 3 epochs",
+          "right": "SST-2 accuracy: ~93% after 3 epochs"
+        },
+        {
+          "left": "GLUE average: 79.6 (base size)",
+          "right": "GLUE average: 82.7 (base size)"
+        },
+        {
+          "left": "Available in PT, TF, JAX, ONNX",
+          "right": "Available in PT, TF, JAX, ONNX, Rust"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now fine-tune ELECTRA vs BERT head-to-head! ELECTRA's RTD pretraining gives it faster convergence, higher accuracy, and zero pretrain-finetune mismatch â€” all at the same parameter count."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `PretrainFinetuneMismatchAnalyzer` that quantifies the pretrain-finetune distribution gap for BERT vs ELECTRA. Implement: (1) `bert_token_distribution(seq_len, mask_ratio)` returning a dict with 'normal_tokens' (tokens seen as-is), 'mask_tokens' (tokens replaced with [MASK]), and 'mismatch_ratio' (mask_tokens / seq_len, rounded to 3 decimals); (2) `electra_token_distribution(seq_len)` returning a dict with 'normal_tokens' (all tokens â€” ELECTRA sees real/replaced text, never [MASK]), 'mask_tokens' (always 0), and 'mismatch_ratio' (always 0.0); (3) `finetune_advantage(seq_len, mask_ratio)` returning how many more 'clean' tokens ELECTRA saw per example during pretraining (electra normal - bert normal)."
+      },
+      "starter_code": "class PretrainFinetuneMismatchAnalyzer:\n    def __init__(self):\n        self.comparisons = 0\n\n    def bert_token_distribution(self, seq_len: int,\n                                 mask_ratio: float = 0.15) -> dict:\n        # BERT replaces mask_ratio of tokens with [MASK]\n        # mask_tokens = int(seq_len * mask_ratio)\n        # normal_tokens = seq_len - mask_tokens\n        # mismatch_ratio = round(mask_tokens / seq_len, 3)\n        # Increment comparisons\n        pass\n\n    def electra_token_distribution(self, seq_len: int) -> dict:\n        # ELECTRA never uses [MASK] â€” all tokens are normal\n        # (some may be replaced by generator, but they look like\n        # real words, not special tokens)\n        # Increment comparisons\n        pass\n\n    def finetune_advantage(self, seq_len: int,\n                            mask_ratio: float = 0.15) -> int:\n        # How many more natural-looking tokens ELECTRA sees\n        # per pretraining example vs BERT\n        # (electra_normal - bert_normal)\n        # Increment comparisons\n        pass\n\n\n# Test:\nanalyzer = PretrainFinetuneMismatchAnalyzer()\n\nbert_dist = analyzer.bert_token_distribution(512)\nprint(bert_dist['normal_tokens'])\nprint(bert_dist['mask_tokens'])\nprint(bert_dist['mismatch_ratio'])\n\nelectra_dist = analyzer.electra_token_distribution(512)\nprint(electra_dist['normal_tokens'])\nprint(electra_dist['mask_tokens'])\n\nadvantage = analyzer.finetune_advantage(512)\nprint(advantage)\nprint(analyzer.comparisons)",
+      "expected_output": "435\n77\n0.15\n512\n0\n77\n3",
+      "hints": {
+        "en": [
+          "bert_token_distribution: mask_tokens = int(seq_len * mask_ratio), normal_tokens = seq_len - mask_tokens, mismatch_ratio = round(mask_tokens / seq_len, 3)",
+          "electra_token_distribution always returns normal_tokens=seq_len, mask_tokens=0, mismatch_ratio=0.0 because ELECTRA's generator produces real words, not [MASK]",
+          "finetune_advantage: get both distributions and subtract bert's normal_tokens from electra's normal_tokens â€” this equals bert's mask_tokens"
+        ]
+      },
+      "test_code": "a = PretrainFinetuneMismatchAnalyzer()\nb = a.bert_token_distribution(512)\nassert b['normal_tokens'] == 435\nassert b['mask_tokens'] == 77\nassert b['mismatch_ratio'] == 0.15\nassert b['normal_tokens'] + b['mask_tokens'] == 512\ne = a.electra_token_distribution(512)\nassert e['normal_tokens'] == 512\nassert e['mask_tokens'] == 0\nassert e['mismatch_ratio'] == 0.0\nassert a.finetune_advantage(512) == 77\nassert a.finetune_advantage(100) == 15\nassert a.finetune_advantage(200, 0.2) == 40\nb2 = a.bert_token_distribution(100, 0.2)\nassert b2['mask_tokens'] == 20\nassert b2['mismatch_ratio'] == 0.2\nassert a.comparisons == 7"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ConvergenceTracker` that simulates how ELECTRA and BERT fine-tune at different rates. Initialize with a target accuracy. Implement: (1) `simulate_epoch(model_type, current_acc, learning_rate)` â€” for 'electra', new_acc = current_acc + learning_rate * 2.0 * (1 - current_acc); for 'bert', new_acc = current_acc + learning_rate * 1.0 * (1 - current_acc). Cap at 1.0 and round to 4 decimals. (2) `epochs_to_target(model_type, start_acc, learning_rate)` returning how many epochs to reach self.target_accuracy. (3) `speedup_ratio(start_acc, learning_rate)` returning round(bert_epochs / electra_epochs, 2)."
+      },
+      "starter_code": "class ConvergenceTracker:\n    def __init__(self, target_accuracy: float):\n        self.target_accuracy = target_accuracy\n        self.history = []\n\n    def simulate_epoch(self, model_type: str,\n                        current_acc: float,\n                        learning_rate: float) -> float:\n        # ELECTRA converges ~2x faster due to richer representations\n        # electra: new = current + lr * 2.0 * (1 - current)\n        # bert:    new = current + lr * 1.0 * (1 - current)\n        # Cap at 1.0, round to 4 decimals\n        pass\n\n    def epochs_to_target(self, model_type: str,\n                          start_acc: float,\n                          learning_rate: float) -> int:\n        # Count epochs until accuracy >= target_accuracy\n        # Record each accuracy in self.history\n        pass\n\n    def speedup_ratio(self, start_acc: float,\n                       learning_rate: float) -> float:\n        # How many times faster ELECTRA reaches target vs BERT\n        # round(bert_epochs / electra_epochs, 2)\n        pass\n\n\n# Test:\ntracker = ConvergenceTracker(target_accuracy=0.90)\n\n# Single epoch simulation\nacc = tracker.simulate_epoch(\"electra\", 0.5, 0.3)\nprint(acc)\nacc = tracker.simulate_epoch(\"bert\", 0.5, 0.3)\nprint(acc)\n\n# Epochs to target\nelectra_epochs = tracker.epochs_to_target(\"electra\", 0.5, 0.3)\nprint(electra_epochs)\nbert_epochs = tracker.epochs_to_target(\"bert\", 0.5, 0.3)\nprint(bert_epochs)\n\n# Speedup\nratio = tracker.speedup_ratio(0.5, 0.3)\nprint(ratio)",
+      "expected_output": "0.8\n0.65\n2\n4\n2.0",
+      "hints": {
+        "en": [
+          "simulate_epoch uses a diminishing-returns formula: gain = lr * multiplier * (1 - current). The (1-current) term makes improvement slow as accuracy approaches 1.0",
+          "epochs_to_target: loop calling simulate_epoch, incrementing a counter until acc >= target. Don't forget to append each accuracy to self.history",
+          "speedup_ratio: call epochs_to_target for both model types, then divide bert_epochs by electra_epochs"
+        ]
+      },
+      "test_code": "t = ConvergenceTracker(target_accuracy=0.90)\nassert t.simulate_epoch(\"electra\", 0.5, 0.3) == 0.8\nassert t.simulate_epoch(\"bert\", 0.5, 0.3) == 0.65\nassert t.simulate_epoch(\"electra\", 0.8, 0.3) == 0.92\nassert t.simulate_epoch(\"bert\", 0.65, 0.3) == 0.755\nassert t.simulate_epoch(\"electra\", 0.99, 0.3) == 0.996\nt2 = ConvergenceTracker(target_accuracy=0.90)\nassert t2.epochs_to_target(\"electra\", 0.5, 0.3) == 2\nassert t2.epochs_to_target(\"bert\", 0.5, 0.3) == 4\nt3 = ConvergenceTracker(target_accuracy=0.95)\nassert t3.speedup_ratio(0.5, 0.3) == 2.0\nt4 = ConvergenceTracker(target_accuracy=0.90)\nassert t4.speedup_ratio(0.5, 0.3) == 2.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "ELECTRA fine-tuning",
+      "pretrain-finetune mismatch",
+      "RTD vs MLM downstream impact",
+      "model comparison methodology",
+      "convergence analysis",
+      "cross-framework ELECTRA deployment",
+      "representation quality comparison"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "basic math",
+      "loops",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
