@@ -1,0 +1,133 @@
+{
+  "id": "all_minilm_l6_v2_semantic_search_fundamentals",
+  "topic": "all_minilm_l6_v2_semantic_search_fundamentals",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Semantic Search with all-MiniLM-L6-v2 â€” Homie's Embedding Backbone"
+  },
+  "description": {
+    "en": "Master semantic search fundamentals using sentence-transformers/all-MiniLM-L6-v2, the lightweight embedding model powering RAG pipelines and Homie's default vector search."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Engine Behind Meaning â€” all-MiniLM-L6-v2\n\nVaathiyaar leans forward with a knowing smile. \"You type 'how to fix a leaking tap' into a search box, and it returns a document titled 'Plumbing Repair Guide' â€” even though no words match exactly. How? Welcome to **semantic search**, powered by sentence embeddings.\"\n\n### Why all-MiniLM-L6-v2?\n\nThis model from Sentence Transformers maps sentences into a 384-dimensional dense vector space. It's the sweet spot of speed and quality â€” trained on over 1 billion sentence pairs, distilled from a larger model, and small enough to run on CPU.\n\n| Property | Value |\n|----------|-------|\n| Dimensions | 384 |\n| Max Sequence Length | 256 tokens |\n| Model Size | ~80 MB |\n| Speed (CPU) | ~14,000 sentences/sec |\n| Training Data | 1B+ sentence pairs |\n| Use Case | Semantic search, clustering, RAG |\n\n### How Embeddings Enable Search\n\nTraditional keyword search uses TF-IDF or BM25 â€” it counts words. Semantic search encodes **meaning** into vectors, then measures cosine similarity between them.\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\n# Load the model\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\n# Encode documents and query\ndocuments = [\n    \"How to repair a dripping faucet\",\n    \"Best chocolate cake recipe\",\n    \"Python async programming guide\"\n]\nquery = \"fix a leaking tap\"\n\ndoc_embeddings = model.encode(documents)\nquery_embedding = model.encode(query)\n\n# Compute cosine similarity\nfrom numpy.linalg import norm\n\nsimilarities = [\n    np.dot(query_embedding, doc) / (norm(query_embedding) * norm(doc))\n    for doc in doc_embeddings\n]\n\nfor doc, score in sorted(zip(documents, similarities), key=lambda x: -x[1]):\n    print(f\"{score:.4f} | {doc}\")\n```\n\n### Building a Mini RAG Pipeline\n\nIn Homie's architecture, all-MiniLM-L6-v2 serves as the **default embedding backbone**. Every document chunk gets encoded at ingestion time, stored in a vector index, and retrieved at query time.\n\n```python\n# Simulating Homie's retrieval step\ndef retrieve(query, corpus_embeddings, corpus, top_k=3):\n    query_emb = model.encode(query)\n    scores = np.dot(corpus_embeddings, query_emb)\n    top_indices = np.argsort(scores)[::-1][:top_k]\n    return [(corpus[i], scores[i]) for i in top_indices]\n\nresults = retrieve(\"fix a leaking tap\", doc_embeddings, documents, top_k=2)\nfor text, score in results:\n    print(f\"[{score:.3f}] {text}\")\n```\n\n### When to Upgrade\n\nall-MiniLM-L6-v2 is ideal for prototyping and resource-constrained deployments. For higher accuracy at the cost of speed, consider `all-mpnet-base-v2` (768 dims) or multilingual variants like `paraphrase-multilingual-MiniLM-L12-v2`.\n\n> **Key Insight:** Semantic search replaces exact keyword matching with meaning-based similarity. all-MiniLM-L6-v2 gives you 90% of the quality of larger models at a fraction of the compute â€” making it the pragmatic default for any RAG pipeline."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "title": "The Embedding Engine",
+      "body": "all-MiniLM-L6-v2 transforms sentences into 384-dimensional vectors that capture meaning, enabling search beyond keywords.",
+      "duration": 5
+    },
+    {
+      "type": "CodeStepper",
+      "title": "Semantic Search in Action",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "narration": "Import the SentenceTransformer class from the sentence-transformers library."
+        },
+        {
+          "code": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "narration": "Load the pre-trained all-MiniLM-L6-v2 model â€” 80MB, 384 dimensions."
+        },
+        {
+          "code": "documents = [\n    \"How to repair a dripping faucet\",\n    \"Best chocolate cake recipe\",\n    \"Python async programming guide\"\n]",
+          "narration": "Define a small corpus of documents to search through."
+        },
+        {
+          "code": "query = \"fix a leaking tap\"",
+          "narration": "Define a query that doesn't share exact words with the best match."
+        },
+        {
+          "code": "doc_embeddings = model.encode(documents)",
+          "narration": "Encode all documents into 384-dim vectors. Shape: (3, 384)."
+        },
+        {
+          "code": "query_embedding = model.encode(query)",
+          "narration": "Encode the query into the same vector space."
+        },
+        {
+          "code": "import numpy as np\nfrom numpy.linalg import norm",
+          "narration": "Import numpy for cosine similarity computation."
+        },
+        {
+          "code": "similarities = [\n    np.dot(query_embedding, doc) / (norm(query_embedding) * norm(doc))\n    for doc in doc_embeddings\n]",
+          "narration": "Compute cosine similarity between query and each document."
+        },
+        {
+          "code": "ranked = sorted(zip(documents, similarities), key=lambda x: -x[1])",
+          "narration": "Sort documents by similarity score in descending order."
+        },
+        {
+          "code": "for doc, score in ranked:\n    print(f\"{score:.4f} | {doc}\")",
+          "narration": "Print ranked results â€” the faucet doc scores highest despite no word overlap."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "confetti",
+      "trigger": "lesson_complete",
+      "duration": 3
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a semantic search function that takes a query and a list of sentences, then returns the top-k most similar sentences using all-MiniLM-L6-v2. Your function should return a list of tuples (sentence, score) sorted by descending similarity."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef semantic_search(query: str, corpus: list[str], top_k: int = 3) -> list[tuple[str, float]]:\n    # TODO: Encode query and corpus\n    # TODO: Compute cosine similarities\n    # TODO: Return top_k results sorted by score\n    pass\n\n# Test\ncorpus = [\n    \"The cat sat on the mat\",\n    \"Dogs are loyal companions\",\n    \"Machine learning transforms data into predictions\",\n    \"Neural networks mimic brain structure\",\n    \"I love my pet kitten\"\n]\n\nresults = semantic_search(\"feline animals\", corpus, top_k=2)\nfor text, score in results:\n    print(f\"{score:.4f} | {text}\")",
+      "expected_output": "0.5547 | The cat sat on the mat\n0.4089 | I love my pet kitten",
+      "hints": {
+        "en": [
+          "Use model.encode() to get embeddings for both the query and the corpus in one call each.",
+          "Cosine similarity = dot(a, b) / (norm(a) * norm(b)). Since sentence-transformers normalizes by default, you can just use dot product.",
+          "Use np.argsort on the scores array and slice [::-1][:top_k] to get top-k indices."
+        ]
+      },
+      "test_code": "results = semantic_search(\"feline animals\", corpus, top_k=2)\nassert len(results) == 2, f\"Expected 2 results, got {len(results)}\"\nassert results[0][1] >= results[1][1], \"Results should be sorted by descending score\"\nassert \"cat\" in results[0][0].lower(), \"Top result should be about cats\"\nassert all(isinstance(s, float) for _, s in results), \"Scores should be floats\""
+    },
+    {
+      "instruction": {
+        "en": "Implement a batch document indexer that pre-computes embeddings for a corpus and supports adding new documents incrementally. The class should have an `add` method and a `search` method."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nclass SemanticIndex:\n    def __init__(self, model_name='sentence-transformers/all-MiniLM-L6-v2'):\n        self.model = SentenceTransformer(model_name)\n        self.documents = []\n        self.embeddings = None\n\n    def add(self, texts: list[str]):\n        \"\"\"Add documents to the index.\"\"\"\n        # TODO: Encode texts and append to self.embeddings\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[tuple[str, float]]:\n        \"\"\"Search the index and return top_k results.\"\"\"\n        # TODO: Encode query and compute similarities\n        pass\n\n# Test\nindex = SemanticIndex()\nindex.add([\"Python is a programming language\", \"JavaScript runs in browsers\"])\nindex.add([\"Rust is memory safe\", \"Go has goroutines\"])\n\nresults = index.search(\"web development language\", top_k=2)\nfor text, score in results:\n    print(f\"{score:.4f} | {text}\")",
+      "expected_output": "0.4912 | JavaScript runs in browsers\n0.2834 | Python is a programming language",
+      "hints": {
+        "en": [
+          "In the add method, use np.vstack to stack new embeddings onto existing ones, or initialize if self.embeddings is None.",
+          "Remember to extend self.documents with the new texts so indices stay aligned.",
+          "For search, encode the query and use matrix multiplication (embeddings @ query_emb) for efficient batch similarity."
+        ]
+      },
+      "test_code": "index = SemanticIndex()\nindex.add([\"Python is great\", \"Java is verbose\"])\nindex.add([\"Rust is fast\"])\nassert len(index.documents) == 3, f\"Expected 3 docs, got {len(index.documents)}\"\nassert index.embeddings.shape == (3, 384), f\"Expected shape (3, 384), got {index.embeddings.shape}\"\nresults = index.search(\"speed and performance\", top_k=1)\nassert len(results) == 1\nassert \"Rust\" in results[0][0], \"Rust should be top result for speed query\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "cosine_similarity",
+      "semantic_search",
+      "vector_indexing",
+      "rag_retrieval"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_fundamentals",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on_tutorial",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "rag_fundamentals"
+    ]
+  },
+  "generated": true
+}
