@@ -1,0 +1,233 @@
+{
+  "id": "bge_small_en_v15_resource_constrained_rag_deployment",
+  "topic": "bge_small_en_v15_resource_constrained_rag_deployment",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Resource-Constrained RAG with bge-small-en-v1.5 for Local Deployment"
+  },
+  "description": {
+    "en": "Deploy BAAI/bge-small-en-v1.5 in resource-constrained RAG pipelines â€” learn memory-budgeted indexing, ONNX-accelerated inference, and end-to-end retrieval-augmented generation on edge hardware like Homie's local stack."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RAG on a Shoestring: Deploying bge-small-en-v1.5 Locally\n\nVaathiyaar here! Building a RAG pipeline usually means cloud GPUs, API keys, and monthly bills. But what if you could run a complete retrieval-augmented generation system on a $35 Raspberry Pi or a laptop with 4GB RAM? With `BAAI/bge-small-en-v1.5` â€” a 33MB embedding model delivering 384-dimensional vectors â€” you absolutely can. This is how Homie keeps its knowledge retrieval fast, private, and completely offline.\n\nThe trick isn't just choosing a small model â€” it's architecting every layer of your RAG stack around memory and latency budgets. Let's build one from scratch.\n\n### Memory Budget Breakdown\n\nBefore writing code, understand where RAM goes in a local RAG pipeline:\n\n| Component | Memory (typical) | With bge-small | Savings |\n|---|---|---|---|\n| Embedding model (PyTorch) | 200-1400 MB | 67 MB | 67-95% |\n| Embedding model (ONNX) | 80-500 MB | 18 MB | 78-96% |\n| 10K doc vectors (768d) | 30 MB | 15 MB (384d) | 50% |\n| 100K doc vectors (768d) | 300 MB | 150 MB (384d) | 50% |\n| FAISS flat index overhead | ~0 | ~0 | â€” |\n| **Total (10K docs, ONNX)** | **310+ MB** | **33 MB** | **~89%** |\n\nWith ONNX runtime and 384-dimensional vectors, you can index 10,000 documents in roughly 33MB of RAM. That's transformative for edge deployment.\n\n### Building the Local RAG Pipeline\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\nimport json\n\n# Step 1: Load with ONNX backend for minimal memory\nmodel = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\n# Step 2: Index documents with memory-efficient float16\ndocuments = [\n    \"RAG combines retrieval with generation for grounded answers\",\n    \"Vector databases store embeddings for fast similarity search\",\n    \"Chunking strategies affect retrieval quality significantly\",\n    \"Local deployment eliminates API latency and data privacy concerns\",\n    \"ONNX Runtime optimizes model inference on CPU hardware\",\n]\n\nembeddings = model.encode(documents, normalize_embeddings=True)\nindex = embeddings.astype(np.float16)  # halve storage: 384*2 = 768 bytes/doc\n```\n\n### Retrieval with BGE Query Prefix\n\nBGE models use a query instruction prefix that shifts embeddings into a retrieval-optimized subspace:\n\n```python\ndef retrieve(query, index, documents, model, top_k=3):\n    prefixed = \"Represent this sentence: \" + query\n    q_emb = model.encode(prefixed, normalize_embeddings=True)\n    q_emb = q_emb.astype(np.float16)\n\n    scores = np.dot(index, q_emb)\n    top_indices = np.argsort(scores)[::-1][:top_k]\n\n    return [\n        {\"doc\": documents[i], \"score\": float(scores[i])}\n        for i in top_indices\n    ]\n\nresults = retrieve(\"how does RAG work\", index, documents, model)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['doc']}\")\n```\n\n### Persistent Index for Instant Startup\n\nOn constrained devices, re-encoding on every startup wastes precious time. Save and reload:\n\n```python\n# Save index to disk\nnp.save(\"rag_index.npy\", index)\nwith open(\"rag_docs.json\", \"w\") as f:\n    json.dump(documents, f)\n\n# Reload on next startup â€” no re-encoding needed\nindex = np.load(\"rag_index.npy\")\nwith open(\"rag_docs.json\") as f:\n    documents = json.load(f)\n```\n\n### Batched Encoding for Large Document Sets\n\nWhen indexing thousands of documents on limited RAM, batch encoding prevents out-of-memory crashes:\n\n```python\ndef batch_encode(docs, model, batch_size=64):\n    all_embs = []\n    for i in range(0, len(docs), batch_size):\n        batch = docs[i:i + batch_size]\n        embs = model.encode(batch, normalize_embeddings=True)\n        all_embs.append(embs.astype(np.float16))\n    return np.vstack(all_embs)\n\n# Encode 5000 docs in 64-doc batches\nlarge_index = batch_encode(documents * 1000, model, batch_size=64)\nprint(f\"Index shape: {large_index.shape}\")  # (5000, 384)\nprint(f\"Index size: {large_index.nbytes / 1024:.0f} KB\")  # ~3750 KB\n```\n\nAt 768 bytes per document (384 dims Ã— float16), 10,000 documents require only 7.5MB of index storage. Combined with the 18MB ONNX model, your entire RAG pipeline fits in under 30MB.\n\n> **Key Insight:** Resource-constrained RAG isn't about compromise â€” it's about precision engineering. BAAI/bge-small-en-v1.5 with ONNX backend, float16 index storage, batched encoding, and persistent indices delivers production-quality retrieval in under 30MB total RAM. For Homie's local deployment or any edge scenario, this architecture eliminates cloud dependencies while keeping retrieval quality within 3% of models 10Ã— larger."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Running RAG locally means fitting an embedding model, a vector index, and retrieval logic into minimal RAM. BAAI/bge-small-en-v1.5 makes this possible: 33MB model, 384-dim vectors, ONNX acceleration, and a query prefix trick that boosts retrieval accuracy. Let's build a complete local RAG pipeline under 30MB.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\ndocuments = [\n    \"RAG combines retrieval with generation\",\n    \"Vector databases store embeddings\",\n    \"Local deployment ensures data privacy\",\n    \"ONNX Runtime optimizes CPU inference\",\n]\n\nembeddings = model.encode(documents, normalize_embeddings=True)\nindex = embeddings.astype(np.float16)\nprint(index.shape)         # (4, 384)\nprint(index.nbytes, \"bytes\") # 3072 bytes â€” 768 bytes per doc",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer and NumPy. sentence-transformers wraps Hugging Face models with a clean encode() API."
+        },
+        {
+          "line": 4,
+          "explanation": "Load bge-small-en-v1.5 with the ONNX backend. This eliminates PyTorch overhead, reducing model memory from ~67MB to ~18MB."
+        },
+        {
+          "line": 6,
+          "explanation": "Set backend='onnx' to use ONNX Runtime instead of PyTorch. CPUExecutionProvider runs on any machine â€” no GPU needed."
+        },
+        {
+          "line": 10,
+          "explanation": "Define four documents for our RAG knowledge base. In production, these would be chunked paragraphs from your documentation."
+        },
+        {
+          "line": 17,
+          "explanation": "Encode all documents into normalized 384-dim vectors. Normalization means dot product equals cosine similarity â€” faster retrieval."
+        },
+        {
+          "line": 18,
+          "explanation": "Cast to float16, halving storage from 1536 to 768 bytes per document. Retrieval accuracy loss is negligible (<0.1%)."
+        },
+        {
+          "line": 19,
+          "explanation": "Shape is (4, 384): four documents, each a 384-dimensional semantic fingerprint."
+        },
+        {
+          "line": 20,
+          "explanation": "Total index size: 3072 bytes for 4 docs. At this rate, 10K docs = ~7.5MB. That's edge-deployable."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\n\ndef retrieve(query, index, documents, model, top_k=3):\n    prefixed = \"Represent this sentence: \" + query\n    q_emb = model.encode(prefixed, normalize_embeddings=True)\n    q_emb = q_emb.astype(np.float16)\n    scores = np.dot(index, q_emb)\n    top_indices = np.argsort(scores)[::-1][:top_k]\n    return [\n        {\"doc\": documents[i], \"score\": float(scores[i])}\n        for i in top_indices\n    ]\n\nresults = retrieve(\"how does retrieval augmented generation work\",\n                   index, documents, model, top_k=2)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['doc']}\")",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "Define a retrieve function that takes a query, the float16 index, documents list, model, and top_k parameter."
+        },
+        {
+          "line": 4,
+          "explanation": "BGE's key trick: prefix queries with 'Represent this sentence: ' to activate retrieval-optimized encoding. This boosts accuracy ~2-3%."
+        },
+        {
+          "line": 5,
+          "explanation": "Encode the prefixed query with normalization. The model sees the prefix as part of the input text."
+        },
+        {
+          "line": 6,
+          "explanation": "Cast query to float16 to match the index dtype. NumPy handles the dot product between float16 arrays efficiently."
+        },
+        {
+          "line": 7,
+          "explanation": "Matrix-vector dot product: scores all documents against the query in one operation. With normalized vectors, this equals cosine similarity."
+        },
+        {
+          "line": 8,
+          "explanation": "argsort descending, take top_k. For 10K docs this takes <1ms on CPU â€” no vector database needed at this scale."
+        },
+        {
+          "line": 14,
+          "explanation": "Test with a natural language query. Despite different wording, BGE bridges the semantic gap between 'retrieval augmented generation' and 'RAG combines retrieval with generation'."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import numpy as np\nimport json\n\n# Save index and docs for instant startup\nnp.save(\"rag_index.npy\", index)\nwith open(\"rag_docs.json\", \"w\") as f:\n    json.dump(documents, f)\n\n# Reload without re-encoding\nloaded_index = np.load(\"rag_index.npy\")\nwith open(\"rag_docs.json\") as f:\n    loaded_docs = json.load(f)\n\nprint(loaded_index.shape)          # (4, 384)\nprint(loaded_index.dtype)          # float16\nprint(len(loaded_docs))            # 4\n\n# Batch encoding for large document sets\ndef batch_encode(docs, model, batch_size=64):\n    all_embs = []\n    for i in range(0, len(docs), batch_size):\n        batch = docs[i:i + batch_size]\n        embs = model.encode(batch, normalize_embeddings=True)\n        all_embs.append(embs.astype(np.float16))\n    return np.vstack(all_embs)",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Save the float16 index to disk as a .npy file. This avoids re-encoding on every application restart â€” critical for edge devices."
+        },
+        {
+          "line": 6,
+          "explanation": "Save the document texts alongside the index. The index position maps directly to the document list position."
+        },
+        {
+          "line": 10,
+          "explanation": "Reload the index from disk. np.load is near-instant even for large arrays â€” no model inference needed."
+        },
+        {
+          "line": 14,
+          "explanation": "Verify the reloaded index matches: same shape (4, 384), same dtype (float16), same document count."
+        },
+        {
+          "line": 19,
+          "explanation": "For large document sets, batch encoding prevents OOM. Process 64 documents at a time, converting each batch to float16 immediately."
+        },
+        {
+          "line": 24,
+          "explanation": "Each batch is cast to float16 right after encoding, freeing the float32 memory before the next batch. Peak memory stays constant."
+        },
+        {
+          "line": 25,
+          "explanation": "np.vstack combines all batches into a single contiguous array. The final index is ready for dot-product retrieval."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud RAG (API-based)",
+      "right_label": "Local RAG (bge-small + ONNX)",
+      "items": [
+        {
+          "left": "~$0.10 per 1M tokens for embeddings",
+          "right": "Free â€” runs entirely offline"
+        },
+        {
+          "left": "Requires internet connectivity",
+          "right": "Works offline, on-device"
+        },
+        {
+          "left": "Data leaves your infrastructure",
+          "right": "Data never leaves the device"
+        },
+        {
+          "left": "50-200ms API latency per query",
+          "right": "2-5ms local inference per query"
+        },
+        {
+          "left": "Unlimited scale with cost",
+          "right": "~100K docs in <80MB total RAM"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a complete local RAG pipeline with bge-small-en-v1.5 â€” ONNX acceleration, float16 indexing, persistent storage, and batched encoding. Edge-ready retrieval in under 30MB!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LocalRAGIndex` class that simulates a memory-efficient RAG index. It stores documents and their trigram-based embeddings using float-value dictionaries as sparse vectors. Implement `trigrams(text)` returning a frequency dict, `normalize(vec)` that L2-normalizes a vector dict in-place and returns it, `add_documents(docs)` to add new docs to the index, `search(query, top_k)` that prepends 'query: ' to the query text before computing similarity, and `memory_report()` returning a dict with 'num_documents', 'num_unique_features' (total unique trigrams across all indexed vectors), and 'bytes_estimate' (num_unique_features * 8 â€” simulating 8 bytes per float feature)."
+      },
+      "starter_code": "import math\n\nclass LocalRAGIndex:\n    def __init__(self):\n        self.documents = []\n        self.vectors = []\n\n    def trigrams(self, text: str) -> dict:\n        # Return frequency dict of 3-char sequences from lowercased text\n        pass\n\n    def normalize(self, vec: dict) -> dict:\n        # L2-normalize vector dict in-place, return it\n        # If magnitude is 0, return vec unchanged\n        pass\n\n    def add_documents(self, docs: list[str]):\n        # Append docs and their normalized trigram vectors to the index\n        pass\n\n    def dot_product(self, vec_a: dict, vec_b: dict) -> float:\n        # Sparse dot product between two vector dicts\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Prepend 'query: ' to query, compute normalized trigrams,\n        # score against all indexed vectors, return top_k results\n        # as [{\"document\": str, \"score\": float}]\n        pass\n\n    def memory_report(self) -> dict:\n        # Return {\"num_documents\": int, \"num_unique_features\": int, \"bytes_estimate\": int}\n        # num_unique_features = total unique trigram keys across ALL indexed vectors\n        pass\n\n# Test it:\nidx = LocalRAGIndex()\nidx.add_documents([\n    \"retrieval augmented generation\",\n    \"vector similarity search\",\n    \"local deployment pipeline\",\n    \"cooking italian pasta\"\n])\n\nresults = idx.search(\"retrieval search\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] > 0)\n\nreport = idx.memory_report()\nprint(report[\"num_documents\"])\nprint(report[\"bytes_estimate\"] > 0)",
+      "expected_output": "2\nTrue\n4\nTrue",
+      "hints": {
+        "en": [
+          "trigrams: iterate range(len(text.lower())-2), collect text[i:i+3] slices into a frequency dict",
+          "normalize: compute magnitude as sqrt(sum(v**2)), then divide each value by it. Return unchanged if magnitude is 0",
+          "memory_report: collect all unique keys across self.vectors using a set union, count them, multiply by 8"
+        ]
+      },
+      "test_code": "idx = LocalRAGIndex()\nassert idx.trigrams(\"hello\") == {\"hel\": 1, \"ell\": 1, \"llo\": 1}\nassert idx.trigrams(\"ab\") == {}\nv = {\"a\": 3.0, \"b\": 4.0}\nnv = idx.normalize(v)\nassert abs(nv[\"a\"] - 0.6) < 0.01\nassert abs(nv[\"b\"] - 0.8) < 0.01\nassert idx.dot_product({\"a\": 1, \"b\": 2}, {\"a\": 3, \"c\": 4}) == 3\nassert idx.dot_product({\"a\": 1}, {\"b\": 2}) == 0\nidx.add_documents([\"hello world\", \"help wanted\", \"goodbye now\"])\nassert len(idx.documents) == 3\nassert len(idx.vectors) == 3\nresults = idx.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"score\"] >= results[1][\"score\"]\nreport = idx.memory_report()\nassert report[\"num_documents\"] == 3\nassert report[\"num_unique_features\"] > 0\nassert report[\"bytes_estimate\"] == report[\"num_unique_features\"] * 8"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RAGContextBuilder` that wraps a `LocalRAGIndex` and produces formatted context for LLM prompts. Implement `retrieve_above_threshold(query, top_k, threshold)` returning only results with score >= threshold, `build_prompt_context(query, top_k, threshold, max_chars)` that formats retrieved docs as a numbered list and truncates the total string to max_chars (default 500), and `index_stats()` returning the memory report from the underlying index plus an 'avg_features_per_doc' key (total features / num_documents, or 0 if empty)."
+      },
+      "starter_code": "import math\n\nclass LocalRAGIndex:\n    def __init__(self):\n        self.documents = []\n        self.vectors = []\n\n    def trigrams(self, text):\n        t = text.lower()\n        vec = {}\n        for i in range(len(t) - 2):\n            tri = t[i:i+3]\n            vec[tri] = vec.get(tri, 0) + 1\n        return vec\n\n    def normalize(self, vec):\n        mag = math.sqrt(sum(v**2 for v in vec.values()))\n        if mag == 0:\n            return vec\n        for k in vec:\n            vec[k] /= mag\n        return vec\n\n    def add_documents(self, docs):\n        for doc in docs:\n            self.documents.append(doc)\n            self.vectors.append(self.normalize(self.trigrams(doc)))\n\n    def dot_product(self, vec_a, vec_b):\n        return sum(vec_a.get(k, 0) * vec_b.get(k, 0) for k in vec_a)\n\n    def search(self, query, top_k=3):\n        q_text = \"query: \" + query\n        q_vec = self.normalize(self.trigrams(q_text))\n        scored = [\n            {\"document\": doc, \"score\": self.dot_product(q_vec, dv)}\n            for doc, dv in zip(self.documents, self.vectors)\n        ]\n        scored.sort(key=lambda x: x[\"score\"], reverse=True)\n        return scored[:top_k]\n\n    def memory_report(self):\n        all_keys = set()\n        for v in self.vectors:\n            all_keys.update(v.keys())\n        return {\n            \"num_documents\": len(self.documents),\n            \"num_unique_features\": len(all_keys),\n            \"bytes_estimate\": len(all_keys) * 8\n        }\n\nclass RAGContextBuilder:\n    def __init__(self, documents: list[str]):\n        self.index = LocalRAGIndex()\n        self.index.add_documents(documents)\n\n    def retrieve_above_threshold(self, query: str, top_k: int = 3, threshold: float = 0.0) -> list[dict]:\n        # Search and filter results with score >= threshold\n        pass\n\n    def build_prompt_context(self, query: str, top_k: int = 3, threshold: float = 0.0, max_chars: int = 500) -> str:\n        # Build numbered context string: \"1. doc\\n2. doc\\n...\"\n        # Truncate final string to max_chars\n        # Return empty string if no results\n        pass\n\n    def index_stats(self) -> dict:\n        # Return memory_report() dict plus 'avg_features_per_doc'\n        pass\n\n# Test it:\nbuilder = RAGContextBuilder([\n    \"embedding models convert text to vectors\",\n    \"retrieval augmented generation uses context\",\n    \"vector search finds similar documents\",\n    \"baking bread requires flour and water\"\n])\n\nresults = builder.retrieve_above_threshold(\"vector embeddings\", top_k=2, threshold=0.05)\nprint(len(results) > 0)\n\ncontext = builder.build_prompt_context(\"vector search\", top_k=2)\nprint(\"1.\" in context)\n\nstats = builder.index_stats()\nprint(\"avg_features_per_doc\" in stats)",
+      "expected_output": "True\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "retrieve_above_threshold: call self.index.search(query, top_k), then filter with list comprehension [r for r in results if r['score'] >= threshold]",
+          "build_prompt_context: use enumerate(results, 1) and join with newlines, then slice [:max_chars]",
+          "index_stats: get memory_report(), compute avg as num_unique_features / num_documents (guard against division by zero)"
+        ]
+      },
+      "test_code": "b = RAGContextBuilder([\"hello world\", \"help wanted\", \"goodbye now\"])\nresults = b.retrieve_above_threshold(\"hello\", top_k=3, threshold=0.0)\nassert len(results) == 3\nhigh = b.retrieve_above_threshold(\"hello\", top_k=3, threshold=0.99)\nassert len(high) == 0\nctx = b.build_prompt_context(\"hello\", top_k=2)\nassert \"1.\" in ctx\nassert \"2.\" in ctx\nshort_ctx = b.build_prompt_context(\"hello\", top_k=2, max_chars=10)\nassert len(short_ctx) <= 10\nempty_ctx = b.build_prompt_context(\"hello\", top_k=2, threshold=0.99)\nassert empty_ctx == \"\"\nstats = b.index_stats()\nassert stats[\"num_documents\"] == 3\nassert \"avg_features_per_doc\" in stats\nassert stats[\"avg_features_per_doc\"] > 0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "resource-constrained RAG",
+      "ONNX-accelerated inference",
+      "float16 index storage",
+      "batched encoding",
+      "persistent vector indices",
+      "BGE query prefix",
+      "memory budgeting",
+      "edge deployment",
+      "local retrieval pipeline"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "numpy basics",
+      "file I/O",
+      "basic NLP concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
