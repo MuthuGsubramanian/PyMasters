@@ -1,0 +1,193 @@
+{
+  "id": "bge_small_en_v15_lightweight_rag_embeddings",
+  "topic": "bge_small_en_v15_lightweight_rag_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Lightweight Embedding with BGE-Small for Resource-Constrained RAG"
+  },
+  "description": {
+    "en": "Master BAAI/bge-small-en-v1.5 â€” a compact 33M-parameter embedding model that delivers strong retrieval quality in under 130MB, ideal for edge deployment, on-device RAG pipelines, and resource-constrained environments like Homie."
+  },
+  "xp_reward": 60,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Small Model, Big Retrieval: BGE-Small for Edge RAG\n\nVaathiyaar here! When building RAG pipelines, everyone reaches for the biggest embedding model they can find. But what if your deployment target is a Raspberry Pi, a $5/month VPS, or a mobile device? **BAAI/bge-small-en-v1.5** proves that you don't need 400MB+ models to get excellent retrieval. At just 33M parameters and ~67MB in fp16, it punches far above its weight on the MTEB benchmark â€” and it's the secret weapon for resource-constrained AI systems.\n\n### Why BGE-Small?\n\n| Feature | bge-small-en-v1.5 | all-MiniLM-L6-v2 | bge-base-en-v1.5 |\n|---|---|---|---|\n| Parameters | 33M | 22M | 109M |\n| Embedding Dim | 384 | 384 | 768 |\n| Model Size | ~67MB (fp16) | ~80MB | ~220MB |\n| MTEB Avg Score | 62.17 | 58.04 | 63.55 |\n| Speed (relative) | Fast | Fastest | Moderate |\n| Best For | Edge RAG, constrained envs | Prototyping | Quality-first RAG |\n\nBGE-small sits in a sweet spot: nearly the quality of bge-base at a third of the size, and meaningfully better than MiniLM on retrieval benchmarks.\n\n### Basic Embedding with Sentence-Transformers\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\nsentences = [\n    \"How do I reset my password?\",\n    \"Password recovery and account access\",\n    \"Best pizza recipes for beginners\"\n]\n\nembeddings = model.encode(sentences, normalize_embeddings=True)\nprint(embeddings.shape)  # (3, 384)\n```\n\nThe `normalize_embeddings=True` flag is critical for BGE models â€” it L2-normalizes vectors so cosine similarity becomes a simple dot product, which is faster for search.\n\n### The BGE Instruction Prefix Trick\n\n```python\nquery_prefix = \"Represent this sentence for searching relevant passages: \"\n\nquery = query_prefix + \"How do I reset my password?\"\nq_emb = model.encode([query], normalize_embeddings=True)\n\ndocs = [\"To reset your password, go to Settings > Security.\",\n        \"Our pizza dough recipe uses 500g flour.\"]\nd_emb = model.encode(docs, normalize_embeddings=True)\n\nscores = q_emb @ d_emb.T\nprint(scores)  # [[0.82, 0.13]] â€” clear separation\n```\n\nBGE models were trained with an instruction prefix for queries (but not for documents). Adding `\"Represent this sentence for searching relevant passages: \"` before queries boosts retrieval accuracy by 1-2% on benchmarks.\n\n### Building a Minimal RAG Index\n\n```python\nimport numpy as np\n\nclass CompactRAGIndex:\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.docs = []\n        self.embeddings = None\n\n    def add_documents(self, documents: list[str]):\n        self.docs.extend(documents)\n        embs = self.model.encode(documents, normalize_embeddings=True)\n        if self.embeddings is None:\n            self.embeddings = embs\n        else:\n            self.embeddings = np.vstack([self.embeddings, embs])\n\n    def search(self, query: str, top_k: int = 3) -> list[tuple]:\n        prefix = \"Represent this sentence for searching relevant passages: \"\n        q_emb = self.model.encode([prefix + query], normalize_embeddings=True)\n        scores = (q_emb @ self.embeddings.T)[0]\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [(self.docs[i], float(scores[i])) for i in top_idx]\n```\n\nThis index fits entirely in memory on a 512MB device. With 10,000 documents, the embedding matrix is only ~15MB (10000 x 384 x float32). For larger corpora, swap the numpy dot product for FAISS.\n\n### ONNX for Even Faster Inference\n\n```python\nfrom optimum.onnxruntime import ORTModelForFeatureExtraction\nfrom transformers import AutoTokenizer\n\ntokenizer = AutoTokenizer.from_pretrained(\"BAAI/bge-small-en-v1.5\")\nmodel = ORTModelForFeatureExtraction.from_pretrained(\n    \"BAAI/bge-small-en-v1.5\", export=True\n)\n\ninputs = tokenizer(\"Edge deployment is fast\", return_tensors=\"np\")\noutputs = model(**inputs)\nprint(outputs.last_hidden_state.shape)  # (1, 7, 384)\n```\n\nONNX Runtime eliminates the PyTorch dependency entirely â€” perfect for edge containers where every MB counts. Inference is typically 1.5-2x faster than PyTorch on CPU.\n\n> **Key Insight:** BGE-small-en-v1.5 proves that embedding quality and model size are not linearly correlated. At 33M parameters, it captures 98% of the retrieval quality of its 109M-parameter sibling. For edge RAG, on-device search, and budget deployments, choosing the right small model beats throwing hardware at a big one. Always normalize embeddings and use the query instruction prefix â€” these two tricks alone close most of the gap to larger models."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BAAI/bge-small-en-v1.5 is a 33M-parameter embedding model that delivers near-base-model retrieval quality at a fraction of the size. With 384-dimensional embeddings, instruction-aware query encoding, and ONNX support, it's purpose-built for resource-constrained RAG pipelines and edge deployment.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\nsentences = [\n    \"How do I reset my password?\",\n    \"Password recovery and account access\",\n    \"Best pizza recipes for beginners\"\n]\n\nembeddings = model.encode(sentences, normalize_embeddings=True)\nprint(embeddings.shape)  # (3, 384)\n\nfrom numpy import dot\nsimilarity = dot(embeddings[0], embeddings[1])\nprint(f\"Relevant pair: {similarity:.4f}\")  # ~0.82\n\nirrelevant = dot(embeddings[0], embeddings[2])\nprint(f\"Irrelevant pair: {irrelevant:.4f}\")  # ~0.13",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer â€” the easiest interface for embedding models. It handles tokenization, forward pass, and pooling in one call."
+        },
+        {
+          "line": 3,
+          "explanation": "Load bge-small-en-v1.5. At ~67MB in fp16, it downloads quickly and fits comfortably in memory on even low-end hardware."
+        },
+        {
+          "line": 5,
+          "explanation": "Define three sentences â€” two semantically related (password topics) and one unrelated (pizza). This tests the model's ability to separate concepts."
+        },
+        {
+          "line": 11,
+          "explanation": "Encode all sentences at once. normalize_embeddings=True L2-normalizes each vector, so cosine similarity equals dot product â€” faster search."
+        },
+        {
+          "line": 12,
+          "explanation": "Each sentence becomes a 384-dimensional vector. Smaller than bge-base's 768 dims, but still captures rich semantic information."
+        },
+        {
+          "line": 15,
+          "explanation": "Dot product between the two password-related sentences. With normalized vectors, this equals cosine similarity â€” expect a high score (~0.82)."
+        },
+        {
+          "line": 18,
+          "explanation": "Dot product between password and pizza sentences. The low score (~0.13) shows the model clearly distinguishes unrelated content."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndocs = [\n    \"To reset your password, go to Settings > Security.\",\n    \"Contact support for account recovery.\",\n    \"Our pizza dough recipe uses 500g flour.\",\n    \"Enable two-factor authentication in Settings.\"\n]\ndoc_embs = model.encode(docs, normalize_embeddings=True)\n\nprefix = \"Represent this sentence for searching relevant passages: \"\nquery = prefix + \"How do I change my password?\"\nq_emb = model.encode([query], normalize_embeddings=True)\n\nscores = (q_emb @ doc_embs.T)[0]\ntop_idx = np.argsort(scores)[::-1]\nfor i in top_idx:\n    print(f\"{scores[i]:.4f} | {docs[i][:50]}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import numpy for efficient matrix operations â€” dot products and sorting over embedding arrays."
+        },
+        {
+          "line": 6,
+          "explanation": "Define a small document corpus. In a real RAG pipeline, these would be chunked passages from your knowledge base."
+        },
+        {
+          "line": 12,
+          "explanation": "Encode all documents at once without any prefix. BGE's training protocol applies instruction prefixes only to queries, not documents."
+        },
+        {
+          "line": 14,
+          "explanation": "The BGE instruction prefix tells the model this is a search query. This asymmetric encoding improves retrieval accuracy by 1-2% on benchmarks."
+        },
+        {
+          "line": 16,
+          "explanation": "Encode the prefixed query. The model projects it into the same 384-dim space as documents, but the prefix steers the representation toward retrieval."
+        },
+        {
+          "line": 18,
+          "explanation": "Matrix multiply query embedding against all document embeddings. With normalized vectors, this gives cosine similarities in one operation."
+        },
+        {
+          "line": 19,
+          "explanation": "Sort indices by descending score. The password-reset doc should rank first, followed by account recovery and 2FA â€” all semantically relevant."
+        },
+        {
+          "line": 20,
+          "explanation": "Print ranked results with scores. Clear score separation between relevant (>0.7) and irrelevant (<0.3) documents demonstrates strong retrieval quality."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Large Embedding (bge-base, 109M)",
+      "right_label": "Compact Embedding (bge-small, 33M)",
+      "items": [
+        {
+          "left": "768-dim embeddings, ~220MB model",
+          "right": "384-dim embeddings, ~67MB model"
+        },
+        {
+          "left": "Higher MTEB avg (63.55)",
+          "right": "Close MTEB avg (62.17) â€” 98% quality"
+        },
+        {
+          "left": "Needs GPU for fast batch encoding",
+          "right": "Runs efficiently on CPU-only devices"
+        },
+        {
+          "left": "Better for quality-critical production",
+          "right": "Ideal for edge, mobile, and budget RAG"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now know how to build resource-efficient RAG with BGE-small â€” compact embeddings, instruction prefixes, and edge-ready deployment!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `CompactEmbeddingIndex` class that simulates a lightweight vector search engine. It stores documents as normalized embedding vectors (simple word-frequency vectors for this exercise). Implement `add_documents(docs)` to compute and store normalized word-frequency vectors, and `search(query, top_k)` to find the most similar documents using dot-product similarity. The normalization ensures dot product equals cosine similarity â€” the same trick BGE uses for fast retrieval."
+      },
+      "starter_code": "import math\n\nclass CompactEmbeddingIndex:\n    def __init__(self):\n        self.docs = []\n        self.vectors = []\n\n    def _text_to_vector(self, text: str) -> dict:\n        # Convert text to a word frequency dict (lowercase)\n        # e.g., \"the cat sat\" -> {\"the\": 1, \"cat\": 1, \"sat\": 1}\n        pass\n\n    def _normalize(self, vector: dict) -> dict:\n        # L2-normalize: divide each value by sqrt(sum of squares)\n        # Return normalized dict (or empty dict if magnitude is 0)\n        pass\n\n    def _dot_product(self, v1: dict, v2: dict) -> float:\n        # Dot product of two sparse vectors (dicts)\n        # Only sum over keys that exist in both\n        pass\n\n    def add_documents(self, documents: list[str]):\n        # Store each document and its normalized vector\n        pass\n\n    def search(self, query: str, top_k: int = 2) -> list[tuple]:\n        # Return top_k (doc_text, score) tuples sorted by similarity descending\n        pass\n\n# Test it:\nindex = CompactEmbeddingIndex()\nindex.add_documents([\n    \"reset your password in settings\",\n    \"password recovery through email\",\n    \"best pizza dough recipe\",\n    \"account security and two factor auth\"\n])\n\nresults = index.search(\"how to change my password\", top_k=2)\nprint(results[0][0])\nprint(results[0][1] > results[1][1])\nprint(len(results))",
+      "expected_output": "reset your password in settings\nTrue\n2",
+      "hints": {
+        "en": [
+          "In _text_to_vector(), split text.lower() and count word occurrences into a dict",
+          "In _normalize(), compute magnitude as math.sqrt(sum(v**2 for v in vector.values())), then divide each value by magnitude",
+          "In search(), compute dot product of normalized query vector against each stored vector, sort by score descending, and return top_k results"
+        ]
+      },
+      "test_code": "idx = CompactEmbeddingIndex()\nassert idx._text_to_vector(\"the cat the cat\") == {\"the\": 2, \"cat\": 2}\nv = idx._normalize({\"a\": 3.0, \"b\": 4.0})\nassert abs(v[\"a\"] - 0.6) < 0.01\nassert abs(v[\"b\"] - 0.8) < 0.01\nassert abs(idx._dot_product({\"a\": 1, \"b\": 2}, {\"a\": 3, \"c\": 4}) - 3.0) < 0.01\nidx.add_documents([\"hello world\", \"world peace\", \"hello there\"])\nresults = idx.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert \"hello\" in results[0][0]\nassert results[0][1] >= results[1][1]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `QueryPrefixRouter` class that simulates BGE's instruction-prefix technique for asymmetric retrieval. The router adds a configurable prefix to queries before encoding (but not to documents). Implement `encode_documents(docs)` to encode documents as-is, `encode_query(query)` to prepend the instruction prefix before encoding, and `retrieve(query, top_k)` to find the best matches. Use simple character-trigram vectors for encoding to simulate the effect of instruction-aware embeddings."
+      },
+      "starter_code": "import math\n\nclass QueryPrefixRouter:\n    def __init__(self, prefix: str = \"search: \"):\n        self.prefix = prefix\n        self.docs = []\n        self.doc_vectors = []\n\n    def _trigram_vector(self, text: str) -> dict:\n        # Convert text to character trigram frequency dict\n        # e.g., \"cat\" -> {\"cat\": 1}, \"cats\" -> {\"cat\": 1, \"ats\": 1}\n        # Lowercase the text first\n        pass\n\n    def _normalize(self, vec: dict) -> dict:\n        # L2-normalize the vector\n        pass\n\n    def _similarity(self, v1: dict, v2: dict) -> float:\n        # Dot product between two normalized vectors\n        pass\n\n    def encode_documents(self, documents: list[str]):\n        # Store documents and their normalized trigram vectors (no prefix)\n        pass\n\n    def encode_query(self, query: str) -> dict:\n        # Prepend self.prefix to query, then return normalized trigram vector\n        pass\n\n    def retrieve(self, query: str, top_k: int = 2) -> list[tuple]:\n        # Encode query with prefix, compare to all docs, return top_k results\n        pass\n\n# Test it:\nrouter = QueryPrefixRouter(prefix=\"search: \")\nrouter.encode_documents([\n    \"reset password in security settings\",\n    \"search settings for password options\",\n    \"pizza recipe with fresh tomatoes\"\n])\n\nresults = router.retrieve(\"search password reset\", top_k=2)\nprint(results[0][0])\nprint(results[0][1] > 0)\nprint(len(results))",
+      "expected_output": "search settings for password options\nTrue\n2",
+      "hints": {
+        "en": [
+          "In _trigram_vector(), iterate over range(len(text)-2) and count each text[i:i+3] trigram in a dict",
+          "The prefix trick works because 'search: ' adds trigrams like 'sea', 'ear', 'arc', 'rch' which overlap with documents containing those character patterns",
+          "In retrieve(), call self.encode_query(query) to get the prefixed vector, then compute similarity against each stored doc vector"
+        ]
+      },
+      "test_code": "r = QueryPrefixRouter(prefix=\"find: \")\ntri = r._trigram_vector(\"abcd\")\nassert tri == {\"abc\": 1, \"bcd\": 1}\ntri2 = r._trigram_vector(\"aaa\")\nassert tri2 == {\"aaa\": 1}\nr.encode_documents([\"hello world\", \"find hello\", \"goodbye\"])\nresults = r.retrieve(\"find hello\", top_k=2)\nassert len(results) == 2\nassert results[0][1] >= results[1][1]\nq_vec = r.encode_query(\"test\")\nassert \"fin\" in r._trigram_vector(r.prefix + \"test\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "BGE embedding models",
+      "lightweight RAG embeddings",
+      "L2 normalization",
+      "instruction prefix encoding",
+      "asymmetric retrieval",
+      "cosine similarity via dot product",
+      "ONNX inference",
+      "edge AI deployment",
+      "sentence-transformers"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "string manipulation",
+      "pip install",
+      "basic linear algebra"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
