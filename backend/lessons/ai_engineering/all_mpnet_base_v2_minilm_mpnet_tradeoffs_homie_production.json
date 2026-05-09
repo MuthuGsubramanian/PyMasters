@@ -1,0 +1,202 @@
+{
+  "id": "all_mpnet_base_v2_minilm_mpnet_tradeoffs_homie_production",
+  "topic": "all_mpnet_base_v2_minilm_mpnet_tradeoffs_homie_production",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "MiniLM vs MPNet: Choosing the Right Embedding Model for Homie Production"
+  },
+  "description": {
+    "en": "Compare all-MiniLM-L6-v2 and all-mpnet-base-v2 with concrete benchmarks, build a decision framework for choosing the right embedding model, and deploy quality-optimized embeddings for Homie's production RAG pipeline."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Embedding Showdown: MiniLM vs MPNet for Production RAG\n\nVaathiyaar claps once. \"You've shipped MiniLM embeddings and they're fast. But your users keep getting wrong answers on subtle queries â€” 'bank loan' pulls up 'river bank' documents. Today we settle this: when do you upgrade to mpnet, and what does it cost you?\"\n\n### The Architecture Split\n\nMiniLM distills a large teacher into 6 layers. MPNet keeps all 12 layers and combines BERT's masked language modeling with XLNet's permuted attention â€” fixing the independence assumption between masked tokens. The result: richer representations at higher compute cost.\n\n### Head-to-Head Benchmark\n\n| Metric | all-MiniLM-L6-v2 | all-mpnet-base-v2 | Winner |\n|---|---|---|---|\n| Embedding Dim | 384 | 768 | mpnet (richer) |\n| Parameters | ~22M | ~109M | MiniLM (lighter) |\n| Model Size | 80 MB | 420 MB | MiniLM (5x smaller) |\n| STS Benchmark | 0.789 | 0.838 | mpnet (+4.9 pts) |\n| Throughput (CPU) | ~14K sent/sec | ~2.8K sent/sec | MiniLM (5x faster) |\n| Max Tokens | 256 | 384 | mpnet (longer ctx) |\n| ONNX Speedup | ~1.3x | ~1.8x | mpnet (gains more) |\n\n### Decision Framework\n\n```python\ndef choose_embedding_model(use_case: dict) -> str:\n    \"\"\"Return the right model for your constraints.\"\"\"\n    if use_case.get(\"latency_budget_ms\", 100) < 10:\n        return \"all-MiniLM-L6-v2\"  # Real-time autocomplete\n    if use_case.get(\"domain\") in (\"legal\", \"medical\", \"compliance\"):\n        return \"all-mpnet-base-v2\"  # Wrong answers cost trust\n    if use_case.get(\"memory_mb\", 1024) < 200:\n        return \"all-MiniLM-L6-v2\"  # Edge/mobile deployment\n    if use_case.get(\"ambiguity\") == \"high\":\n        return \"all-mpnet-base-v2\"  # Polysemy disambiguation\n    return \"all-MiniLM-L6-v2\"  # Default: speed wins\n```\n\n### Measuring the Quality Gap\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmpnet = SentenceTransformer(\"all-mpnet-base-v2\")\nminilm = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ntest_cases = [\n    (\"bank loan application\",\n     [\"The bank approved the mortgage\", \"Flowers on the river bank\"]),\n    (\"python web framework\",\n     [\"Django is a Python web framework\", \"A python snake caught prey\"]),\n]\n\nfor query, docs in test_cases:\n    for name, m in [(\"mpnet\", mpnet), (\"minilm\", minilm)]:\n        q = m.encode(query, convert_to_tensor=True)\n        d = m.encode(docs, convert_to_tensor=True)\n        scores = util.cos_sim(q, d)[0]\n        gap = float(scores[0] - scores[1])\n        print(f\"{name:8s} | gap={gap:.3f} | {query}\")\n```\n\nmpnet consistently produces wider score gaps â€” meaning your retriever makes more confident, correct decisions on ambiguous queries.\n\n### Homie Production Embedding Service\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nclass HomieEmbeddingService:\n    \"\"\"Production embedding service with automatic model selection.\"\"\"\n\n    MODELS = {\n        \"fast\": \"all-MiniLM-L6-v2\",\n        \"quality\": \"all-mpnet-base-v2\",\n    }\n\n    def __init__(self, mode=\"quality\", backend=\"onnx\"):\n        model_name = self.MODELS[mode]\n        kwargs = {\"provider\": \"CPUExecutionProvider\"} if backend == \"onnx\" else {}\n        self.model = SentenceTransformer(\n            model_name, backend=backend, model_kwargs=kwargs\n        )\n        self.mode = mode\n\n    def index(self, documents: list[str]) -> np.ndarray:\n        return self.model.encode(\n            documents, normalize_embeddings=True, show_progress_bar=True\n        )\n\n    def search(self, query: str, doc_embeddings: np.ndarray,\n               documents: list[str], top_k: int = 3) -> list[dict]:\n        q_emb = self.model.encode(query, normalize_embeddings=True)\n        scores = q_emb @ doc_embeddings.T  # dot on normalized = cosine\n        top_idx = np.argsort(-scores)[:top_k]\n        return [{\"doc\": documents[i], \"score\": float(scores[i])} for i in top_idx]\n```\n\nThe service lets Homie switch between MiniLM (fast mode for autocomplete) and mpnet (quality mode for knowledge retrieval) with a single constructor flag.\n\n> **Key Insight:** MiniLM and mpnet are not competitors â€” they're teammates. Use MiniLM for speed-sensitive paths (autocomplete, real-time suggestions) and mpnet for accuracy-sensitive paths (knowledge retrieval, compliance search). The best production systems run both, routing queries to the right model based on the cost of a wrong answer."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "MiniLM is fast. mpnet is accurate. But which one should your production RAG pipeline use? The answer: it depends on what a wrong answer costs you. Today you'll build a decision framework and a dual-model embedding service.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmpnet = SentenceTransformer(\"all-mpnet-base-v2\")\nminilm = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ntest_cases = [\n    (\"bank loan application\",\n     [\"The bank approved the mortgage\", \"Flowers on the river bank\"]),\n    (\"python web framework\",\n     [\"Django is a Python web framework\", \"A python snake caught prey\"]),\n]\n\nfor query, docs in test_cases:\n    for name, m in [(\"mpnet\", mpnet), (\"minilm\", minilm)]:\n        q = m.encode(query, convert_to_tensor=True)\n        d = m.encode(docs, convert_to_tensor=True)\n        scores = util.cos_sim(q, d)[0]\n        gap = float(scores[0] - scores[1])\n        print(f\"{name:8s} | gap={gap:.3f} | {query}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer for model loading and util for similarity computation â€” the two core building blocks."
+        },
+        {
+          "line": 3,
+          "explanation": "Load mpnet: 109M parameters, 768 dims, 0.838 STS. The quality champion of open-source embeddings."
+        },
+        {
+          "line": 4,
+          "explanation": "Load MiniLM side-by-side: 22M parameters, 384 dims, 0.789 STS. Five times faster, five times smaller."
+        },
+        {
+          "line": 6,
+          "explanation": "Two ambiguity traps: 'bank' (financial vs river) and 'python' (language vs snake). Good models separate these cleanly."
+        },
+        {
+          "line": 15,
+          "explanation": "Encode query and documents as tensors for vectorized similarity â€” no Python loops needed."
+        },
+        {
+          "line": 17,
+          "explanation": "cos_sim returns a similarity matrix. We extract the first row: query-to-each-document scores."
+        },
+        {
+          "line": 18,
+          "explanation": "The score gap tells the story: larger gap = more confident retrieval. mpnet consistently wins on ambiguous queries."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nclass HomieEmbeddingService:\n    MODELS = {\n        \"fast\": \"all-MiniLM-L6-v2\",\n        \"quality\": \"all-mpnet-base-v2\",\n    }\n\n    def __init__(self, mode=\"quality\", backend=\"onnx\"):\n        model_name = self.MODELS[mode]\n        kwargs = {\"provider\": \"CPUExecutionProvider\"} if backend == \"onnx\" else {}\n        self.model = SentenceTransformer(\n            model_name, backend=backend, model_kwargs=kwargs\n        )\n        self.mode = mode\n\n    def index(self, documents: list[str]) -> np.ndarray:\n        return self.model.encode(\n            documents, normalize_embeddings=True, show_progress_bar=True\n        )\n\n    def search(self, query: str, doc_embeddings: np.ndarray,\n               documents: list[str], top_k: int = 3) -> list[dict]:\n        q_emb = self.model.encode(query, normalize_embeddings=True)\n        scores = q_emb @ doc_embeddings.T\n        top_idx = np.argsort(-scores)[:top_k]\n        return [{\"doc\": documents[i], \"score\": float(scores[i])} for i in top_idx]",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "HomieEmbeddingService wraps both models behind a single interface â€” swap quality levels with one constructor argument."
+        },
+        {
+          "line": 5,
+          "explanation": "A model registry maps friendly names to HuggingFace model IDs. Add new models here without changing the API."
+        },
+        {
+          "line": 10,
+          "explanation": "Default to 'quality' mode with ONNX backend â€” production-grade accuracy with optimized inference speed."
+        },
+        {
+          "line": 12,
+          "explanation": "ONNX with CPUExecutionProvider gives 1.5-2x speedup over PyTorch, partially offsetting mpnet's larger size."
+        },
+        {
+          "line": 18,
+          "explanation": "index() pre-encodes all documents with normalization. Call once at startup, store the embeddings array."
+        },
+        {
+          "line": 23,
+          "explanation": "search() encodes the query, computes dot product against normalized doc embeddings â€” equivalent to cosine similarity but faster."
+        },
+        {
+          "line": 26,
+          "explanation": "Matrix multiply q_emb @ doc_embeddings.T computes all similarity scores in one vectorized operation."
+        },
+        {
+          "line": 28,
+          "explanation": "Return structured results sorted by relevance. Homie's frontend can display scores as confidence indicators."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "all-MiniLM-L6-v2 (Speed)",
+      "right_label": "all-mpnet-base-v2 (Quality)",
+      "items": [
+        {
+          "left": "384 dimensions â€” compact, fast",
+          "right": "768 dimensions â€” richer semantics"
+        },
+        {
+          "left": "22M params, 80 MB â€” edge-ready",
+          "right": "109M params, 420 MB â€” server-class"
+        },
+        {
+          "left": "~14K sent/sec throughput",
+          "right": "~2.8K sent/sec (ONNX: ~5K)"
+        },
+        {
+          "left": "STS: 0.789 â€” good enough for most",
+          "right": "STS: 0.838 â€” best open-source"
+        },
+        {
+          "left": "Use for: autocomplete, prototyping",
+          "right": "Use for: knowledge RAG, compliance"
+        },
+        {
+          "left": "Wrong answer cost: low (retry ok)",
+          "right": "Wrong answer cost: high (trust lost)"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now make informed embedding model decisions! Use MiniLM for speed, mpnet for quality, and route queries to the right model based on cost-of-error."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ModelSelector` class that recommends the best embedding model based on deployment constraints. Implement `evaluate_constraints(constraints)` that takes a dict with keys like `latency_ms`, `memory_mb`, `domain`, and `ambiguity_level`, then returns `\"minilm\"` or `\"mpnet\"` with a reason string. Also implement `compare_quality(texts, query)` that simulates quality comparison using word-overlap scoring (unigram for 'minilm', bigram for 'mpnet') and returns which model produces a wider score gap between the best and worst match."
+      },
+      "starter_code": "class ModelSelector:\n    def evaluate_constraints(self, constraints: dict) -> tuple:\n        # Rules:\n        # - latency_ms < 10 -> \"minilm\" (need real-time speed)\n        # - memory_mb < 200 -> \"minilm\" (resource constrained)\n        # - domain in (\"legal\", \"medical\") -> \"mpnet\" (accuracy critical)\n        # - ambiguity_level == \"high\" -> \"mpnet\" (disambiguation needed)\n        # - default -> \"minilm\" (speed wins by default)\n        # Return (model_name, reason_string)\n        pass\n\n    def _word_overlap_score(self, text_a: str, text_b: str) -> float:\n        # Unigram overlap: |intersection| / |union| of word sets\n        # Lowercase both texts\n        pass\n\n    def _bigram_overlap_score(self, text_a: str, text_b: str) -> float:\n        # Bigram overlap: |intersection| / |union| of bigram sets\n        # Bigrams: consecutive word pairs joined with '_'\n        pass\n\n    def compare_quality(self, documents: list[str], query: str) -> dict:\n        # Score query against all docs using both methods\n        # For each method, compute: max_score - min_score = gap\n        # Return {\"minilm_gap\": float, \"mpnet_gap\": float,\n        #         \"winner\": \"minilm\" or \"mpnet\"}\n        pass\n\n# Test:\nselector = ModelSelector()\n\nmodel, reason = selector.evaluate_constraints({\"domain\": \"legal\"})\nprint(model)\nprint(type(reason))\n\nmodel2, _ = selector.evaluate_constraints({\"latency_ms\": 5})\nprint(model2)\n\nresult = selector.compare_quality(\n    [\"machine learning algorithms train models\",\n     \"the learning curve was steep today\",\n     \"algorithms optimize training data\"],\n    \"machine learning training\"\n)\nprint(result[\"mpnet_gap\"] >= result[\"minilm_gap\"])\nprint(result[\"winner\"])",
+      "expected_output": "mpnet\n<class 'str'>\nminilm\nTrue\nmpnet",
+      "hints": {
+        "en": [
+          "evaluate_constraints: check constraints in priority order â€” latency and memory first (force minilm), then domain and ambiguity (force mpnet), then default to minilm",
+          "_bigram_overlap_score: split into words, create set of f'{w[i]}_{w[i+1]}' pairs, then compute len(intersection)/len(union) â€” return 0.0 if union is empty",
+          "compare_quality: compute all scores for each method, gap = max(scores) - min(scores), winner is whichever method has the larger gap"
+        ]
+      },
+      "test_code": "s = ModelSelector()\nm, r = s.evaluate_constraints({\"domain\": \"legal\"})\nassert m == \"mpnet\"\nassert isinstance(r, str) and len(r) > 0\nm2, _ = s.evaluate_constraints({\"latency_ms\": 5})\nassert m2 == \"minilm\"\nm3, _ = s.evaluate_constraints({\"memory_mb\": 100})\nassert m3 == \"minilm\"\nm4, _ = s.evaluate_constraints({\"ambiguity_level\": \"high\"})\nassert m4 == \"mpnet\"\nm5, _ = s.evaluate_constraints({})\nassert m5 == \"minilm\"\nwo = s._word_overlap_score(\"a b c\", \"a b d\")\nassert 0 < wo < 1\nassert s._word_overlap_score(\"a\", \"b\") == 0.0\nbo = s._bigram_overlap_score(\"a b c\", \"a b d\")\nassert 0 <= bo <= 1\nresult = s.compare_quality([\"a b c\", \"x y z\"], \"a b\")\nassert \"minilm_gap\" in result and \"mpnet_gap\" in result\nassert result[\"winner\"] in (\"minilm\", \"mpnet\")"
+    },
+    {
+      "instruction": {
+        "en": "Build a `DualModelRetriever` that routes queries to different simulated embedding strategies based on a confidence threshold. Implement `fast_encode(text)` using word frequencies (simulating MiniLM) and `quality_encode(text)` using bigram frequencies (simulating mpnet). The `retrieve(query, threshold)` method should first try fast_encode; if the top score is below the threshold, re-rank using quality_encode for better accuracy. This mirrors production systems that use MiniLM for initial retrieval and mpnet for re-scoring uncertain results."
+      },
+      "starter_code": "import math\n\nclass DualModelRetriever:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.fast_vectors = [self.fast_encode(d) for d in documents]\n        self.quality_vectors = [self.quality_encode(d) for d in documents]\n\n    def fast_encode(self, text: str) -> dict:\n        # Word frequency vector (simulates MiniLM â€” fewer features)\n        # Lowercase, split, count\n        pass\n\n    def quality_encode(self, text: str) -> dict:\n        # Bigram frequency vector (simulates mpnet â€” richer features)\n        # Lowercase, split, create \"word1_word2\" pairs, count\n        pass\n\n    def _cosine_sim(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two dict vectors\n        # Return 0.0 if either is zero-magnitude\n        pass\n\n    def _rank(self, query_vec: dict, doc_vectors: list[dict]) -> list[tuple]:\n        # Return [(index, score), ...] sorted by score descending\n        pass\n\n    def retrieve(self, query: str, top_k: int = 2,\n                 threshold: float = 0.5) -> list[dict]:\n        # 1. Rank with fast_encode\n        # 2. If top score >= threshold: return top_k from fast ranking\n        # 3. If top score < threshold: re-rank with quality_encode\n        # Return [{\"doc\": str, \"score\": float, \"model\": \"fast\"|\"quality\"}]\n        pass\n\n# Test:\nretriever = DualModelRetriever([\n    \"machine learning algorithms optimize models\",\n    \"learning to cook Italian pasta recipes\",\n    \"deep learning neural network training\",\n])\n\n# High-confidence query â€” fast model handles it\nresult1 = retriever.retrieve(\"machine learning\", threshold=0.3)\nprint(result1[0][\"model\"])\nprint(len(result1))\n\n# Low-confidence query â€” falls back to quality model\nresult2 = retriever.retrieve(\"advanced optimization\", threshold=0.99)\nprint(result2[0][\"model\"])\nprint(result2[0][\"score\"] > result2[1][\"score\"])",
+      "expected_output": "fast\n2\nquality\nTrue",
+      "hints": {
+        "en": [
+          "fast_encode: words = text.lower().split(), return {w: count for each word} â€” quality_encode does the same but with bigram pairs like 'word1_word2'",
+          "_cosine_sim: dot = sum(a[k]*b[k] for shared keys), mag = sqrt(sum of squares) for each vec, return dot/(mag_a*mag_b) or 0.0",
+          "retrieve: get fast ranking, check if ranking[0][1] >= threshold â€” if yes use fast results, otherwise re-rank with quality_encode and label model as 'quality'"
+        ]
+      },
+      "test_code": "r = DualModelRetriever([\"a b c\", \"x y z\", \"a b d\"])\nassert r.fast_encode(\"a b\") == {\"a\": 1, \"b\": 1}\nassert r.quality_encode(\"a b c\") == {\"a_b\": 1, \"b_c\": 1}\nsim = r._cosine_sim({\"a\": 1}, {\"a\": 1})\nassert abs(sim - 1.0) < 0.001\nassert r._cosine_sim({\"a\": 1}, {\"b\": 1}) == 0.0\nranked = r._rank({\"a\": 1, \"b\": 1}, r.fast_vectors)\nassert ranked[0][1] >= ranked[1][1]\nres_fast = r.retrieve(\"a b c\", threshold=0.0)\nassert all(item[\"model\"] == \"fast\" for item in res_fast)\nres_qual = r.retrieve(\"a b c\", threshold=1.0)\nassert all(item[\"model\"] == \"quality\" for item in res_qual)\nassert all(\"doc\" in item and \"score\" in item for item in res_qual)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "embedding model comparison",
+      "MiniLM vs mpnet tradeoffs",
+      "model selection framework",
+      "dual-model retrieval",
+      "confidence-based routing",
+      "768-dimensional embeddings",
+      "ONNX acceleration",
+      "normalized embeddings",
+      "production RAG architecture",
+      "Homie embedding service"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "lists",
+      "cosine similarity",
+      "numpy basics",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
