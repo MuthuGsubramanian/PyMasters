@@ -1,0 +1,200 @@
+{
+  "id": "qwen3_06b_edge_deployment_on_device_backbone",
+  "topic": "qwen3_06b_edge_deployment_on_device_backbone",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Edge Deployment & On-Device Assistant Backbone"
+  },
+  "description": {
+    "en": "Deploy Qwen3-0.6B as an on-device AI backbone for edge hardware. Learn quantization, memory-efficient inference, structured tool-calling output, and packaging the model as Homie's offline assistant engine that runs on constrained devices."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Deploying a Tiny LLM on the Edge â€” Your On-Device Assistant Backbone\n\nVaathiyaar here! Cloud models are brilliant, but your assistant shouldn't need Wi-Fi to answer a question. What if your personal AI â€” Homie â€” could live *entirely* on a Raspberry Pi, an old laptop, or even a phone? With **Qwen3-0.6B** and the right optimizations, that's not a dream â€” it's a weekend project.\n\nThis lesson focuses on taking Qwen3-0.6B from a research model to a **production-ready edge backbone**: quantized, memory-budgeted, and capable of structured tool-calling output that powers a real assistant.\n\n### Why Edge Deployment Matters\n\n| Concern | Cloud LLM | Edge Qwen3-0.6B |\n|---|---|---|\n| Latency | 200-800ms network round-trip | <100ms on-device |\n| Privacy | Data leaves your network | Data never leaves device |\n| Cost | $0.01-0.06 per 1K tokens | Zero marginal cost |\n| Availability | Requires internet | Works offline, always |\n| Control | Vendor can change/deprecate | You own the deployment |\n\n### Quantization: Shrinking the Model for Edge\n\nThe full FP16 model needs ~1.2GB. With 4-bit quantization, we compress to ~400MB while retaining most quality:\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig\n\nquant_config = BitsAndBytesConfig(\n    load_in_4bit=True,\n    bnb_4bit_compute_dtype=\"float16\",\n    bnb_4bit_quant_type=\"nf4\",\n    bnb_4bit_use_double_quant=True,\n)\n\ntokenizer = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-0.6B\")\nmodel = AutoModelForCausalLM.from_pretrained(\n    \"Qwen/Qwen3-0.6B\",\n    quantization_config=quant_config,\n    device_map=\"auto\",\n)\n```\n\nDouble quantization (`bnb_4bit_use_double_quant=True`) quantizes the quantization constants themselves â€” squeezing out extra memory savings critical for edge devices.\n\n### Memory-Budgeted Inference\n\nOn constrained hardware, control memory precisely:\n\n```python\nimport torch\n\ndef get_memory_usage_mb():\n    if torch.cuda.is_available():\n        return torch.cuda.memory_allocated() / 1024 / 1024\n    import psutil\n    return psutil.Process().memory_info().rss / 1024 / 1024\n\ndef generate_within_budget(model, tokenizer, messages, max_memory_mb=512):\n    current = get_memory_usage_mb()\n    if current > max_memory_mb * 0.9:\n        messages = messages[-3:]  # Trim history to save memory\n\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\n    with torch.inference_mode():\n        output = model.generate(\n            **inputs, max_new_tokens=150, do_sample=True,\n            temperature=0.6, top_p=0.85, repetition_penalty=1.15\n        )\n    return tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n```\n\n`torch.inference_mode()` disables gradient tracking â€” saving memory and speeding up generation on edge devices.\n\n### Structured Tool-Calling Output\n\nFor Homie to act as a real assistant, it must output structured commands:\n\n```python\nimport json\n\nTOOL_SYSTEM_PROMPT = \"\"\"You are Homie, an on-device assistant. When the user asks you to perform an action, respond ONLY with a JSON object:\n{\"tool\": \"tool_name\", \"args\": {\"key\": \"value\"}}\nAvailable tools: set_timer, search_notes, toggle_light, weather_check\nIf no tool applies, respond with {\"tool\": \"reply\", \"args\": {\"text\": \"your response\"}}\"\"\"\n\ndef parse_tool_call(response: str) -> dict:\n    try:\n        return json.loads(response.strip())\n    except json.JSONDecodeError:\n        return {\"tool\": \"reply\", \"args\": {\"text\": response}}\n\nmessages = [\n    {\"role\": \"system\", \"content\": TOOL_SYSTEM_PROMPT},\n    {\"role\": \"user\", \"content\": \"Set a timer for 5 minutes\"}\n]\nresponse = generate_within_budget(model, tokenizer, messages)\naction = parse_tool_call(response)\nprint(action)  # {\"tool\": \"set_timer\", \"args\": {\"minutes\": 5}}\n```\n\n### Packaging for Deployment\n\n```python\nfrom pathlib import Path\n\ndef export_edge_model(model, tokenizer, output_dir=\"./homie_edge_model\"):\n    path = Path(output_dir)\n    path.mkdir(parents=True, exist_ok=True)\n    model.save_pretrained(path, safe_serialization=True)\n    tokenizer.save_pretrained(path)\n    config = {\n        \"model_id\": \"Qwen/Qwen3-0.6B\",\n        \"quantization\": \"4bit-nf4-double\",\n        \"max_memory_mb\": 512,\n        \"max_new_tokens\": 150,\n        \"version\": \"1.0.0\"\n    }\n    (path / \"edge_config.json\").write_text(json.dumps(config, indent=2))\n    print(f\"Edge model saved to {path} ({sum(f.stat().st_size for f in path.rglob('*')) / 1024 / 1024:.0f} MB)\")\n```\n\n> **Key Insight:** Qwen3-0.6B quantized to 4-bit fits in ~400MB and runs on virtually any hardware made in the last decade. Combined with structured tool-calling prompts and memory-budgeted inference, it becomes the backbone of an always-available, private, on-device assistant â€” Homie's brain, running where your data lives."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Your AI assistant shouldn't need the cloud to think. Qwen3-0.6B quantized to 4-bit fits in 400MB and runs on a Raspberry Pi. Today we turn it into Homie's on-device backbone â€” private, offline, and always ready.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig\n\nquant_config = BitsAndBytesConfig(\n    load_in_4bit=True,\n    bnb_4bit_compute_dtype=\"float16\",\n    bnb_4bit_quant_type=\"nf4\",\n    bnb_4bit_use_double_quant=True,\n)\n\ntokenizer = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-0.6B\")\nmodel = AutoModelForCausalLM.from_pretrained(\n    \"Qwen/Qwen3-0.6B\",\n    quantization_config=quant_config,\n    device_map=\"auto\",\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are Homie, an on-device assistant.\"},\n    {\"role\": \"user\", \"content\": \"Set a timer for 5 minutes\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\nimport torch\nwith torch.inference_mode():\n    output = model.generate(**inputs, max_new_tokens=100, temperature=0.6)\n\nresponse = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(response)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import BitsAndBytesConfig alongside model and tokenizer classes â€” this enables 4-bit quantization for edge-friendly model sizes."
+        },
+        {
+          "line": 3,
+          "explanation": "Configure 4-bit quantization: NF4 (Normal Float 4) is optimized for neural network weight distributions, giving better quality than standard int4."
+        },
+        {
+          "line": 7,
+          "explanation": "Double quantization compresses the quantization constants themselves â€” an extra ~0.4 bits/param savings critical on memory-constrained devices."
+        },
+        {
+          "line": 10,
+          "explanation": "Load the tokenizer normally â€” it's tiny (~2MB) and doesn't need quantization."
+        },
+        {
+          "line": 11,
+          "explanation": "Load model with quantization_config applied. Weights are compressed on-the-fly during loading â€” final model uses ~400MB instead of 1.2GB."
+        },
+        {
+          "line": 17,
+          "explanation": "Structure the conversation for Homie â€” the system prompt defines the assistant persona, the user provides a command to execute."
+        },
+        {
+          "line": 22,
+          "explanation": "apply_chat_template formats messages into Qwen3's special token structure. This is essential â€” raw text won't trigger the model's instruction-following behavior."
+        },
+        {
+          "line": 27,
+          "explanation": "torch.inference_mode() disables autograd entirely â€” more aggressive than no_grad(), saving memory and compute on edge hardware."
+        },
+        {
+          "line": 28,
+          "explanation": "Generate with temperature=0.6 â€” slightly focused for tool-calling reliability while allowing natural language variation."
+        },
+        {
+          "line": 30,
+          "explanation": "Decode only generated tokens (slice off the input prompt) to get the assistant's clean response."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import json\nfrom pathlib import Path\n\nTOOL_SYSTEM_PROMPT = \"\"\"You are Homie, an on-device assistant.\nRespond ONLY with JSON: {\"tool\": \"name\", \"args\": {...}}\nTools: set_timer, search_notes, toggle_light, weather_check\nNo tool needed: {\"tool\": \"reply\", \"args\": {\"text\": \"...\"}}\"\"\"\n\ndef parse_tool_call(response: str) -> dict:\n    try:\n        return json.loads(response.strip())\n    except json.JSONDecodeError:\n        return {\"tool\": \"reply\", \"args\": {\"text\": response}}\n\ndef get_memory_usage_mb():\n    import psutil\n    return psutil.Process().memory_info().rss / 1024 / 1024\n\ndef generate_within_budget(model, tokenizer, messages, max_mem_mb=512):\n    if get_memory_usage_mb() > max_mem_mb * 0.9:\n        messages = messages[-3:]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    with torch.inference_mode():\n        output = model.generate(\n            **inputs, max_new_tokens=150, temperature=0.6,\n            top_p=0.85, repetition_penalty=1.15\n        )\n    return tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import json for parsing structured model output â€” Homie's backbone must produce machine-readable commands, not just text."
+        },
+        {
+          "line": 4,
+          "explanation": "Define a system prompt that constrains Qwen3 to output JSON tool calls â€” small models follow instructions better with strict, explicit formatting rules."
+        },
+        {
+          "line": 9,
+          "explanation": "parse_tool_call safely handles both valid JSON and fallback cases â€” edge models may occasionally produce malformed output."
+        },
+        {
+          "line": 15,
+          "explanation": "Monitor actual process memory usage with psutil â€” essential on edge devices where you share RAM with the OS and other services."
+        },
+        {
+          "line": 19,
+          "explanation": "Memory-budgeted generation: if approaching the limit, trim conversation history to the most recent messages to prevent OOM crashes."
+        },
+        {
+          "line": 26,
+          "explanation": "inference_mode + constrained max_new_tokens keeps generation fast and memory-bounded â€” critical for responsive edge UX."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Full Precision (FP16)",
+      "right_label": "4-bit Quantized (NF4)",
+      "items": [
+        {
+          "left": "~1.2 GB model size",
+          "right": "~400 MB model size"
+        },
+        {
+          "left": "~1.5 GB RAM at inference",
+          "right": "~600 MB RAM at inference"
+        },
+        {
+          "left": "Higher numerical precision",
+          "right": "Minimal quality loss for chat tasks"
+        },
+        {
+          "left": "Needs 4GB+ free RAM",
+          "right": "Runs on 1GB free RAM devices"
+        },
+        {
+          "left": "Standard loading speed",
+          "right": "Faster loading, smaller disk footprint"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie's brain is deployed! A 400MB quantized Qwen3-0.6B backbone running entirely on-device â€” private, fast, and always available."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EdgeModelConfig` class that manages deployment configuration for an on-device LLM. It should validate hardware constraints and determine if a model can run within the given memory budget. Implement `__init__(model_size_mb, available_ram_mb, quantization)` where quantization is one of 'fp16', '8bit', or '4bit'. Implement `get_effective_size_mb()` that returns the model size after quantization (fp16=1x, 8bit=0.5x, 4bit=0.33x), `can_deploy()` that returns True if effective size is less than 80% of available RAM, and `get_max_context_tokens()` that estimates max context tokens as: (available_ram_mb - effective_size_mb) * 400 (tokens per MB of KV cache), clamped to range 256-4096."
+      },
+      "starter_code": "class EdgeModelConfig:\n    QUANT_FACTORS = {\"fp16\": 1.0, \"8bit\": 0.5, \"4bit\": 0.33}\n\n    def __init__(self, model_size_mb: float, available_ram_mb: float, quantization: str):\n        # Validate quantization is one of fp16, 8bit, 4bit\n        # Store all parameters\n        pass\n\n    def get_effective_size_mb(self) -> float:\n        # Return model_size_mb * quantization factor\n        pass\n\n    def can_deploy(self) -> bool:\n        # True if effective size < 80% of available_ram_mb\n        pass\n\n    def get_max_context_tokens(self) -> int:\n        # Remaining RAM = available_ram_mb - effective_size_mb\n        # Tokens = remaining_ram * 400\n        # Clamp between 256 and 4096\n        pass\n\n# Test it:\nconfig = EdgeModelConfig(1200, 2048, \"4bit\")\nprint(config.get_effective_size_mb())\nprint(config.can_deploy())\nprint(config.get_max_context_tokens())\n\nsmall_device = EdgeModelConfig(1200, 512, \"fp16\")\nprint(small_device.can_deploy())",
+      "expected_output": "396.0\nTrue\n4096\nFalse",
+      "hints": {
+        "en": [
+          "Use the QUANT_FACTORS dict to look up the multiplier: self.model_size_mb * self.QUANT_FACTORS[quantization]",
+          "For can_deploy(), compare get_effective_size_mb() against self.available_ram_mb * 0.8",
+          "For clamping, use: max(256, min(4096, int(tokens))) to constrain the value to the valid range"
+        ]
+      },
+      "test_code": "c = EdgeModelConfig(1200, 2048, \"4bit\")\nassert c.get_effective_size_mb() == 396.0\nassert c.can_deploy() == True\nassert c.get_max_context_tokens() == 4096\nc2 = EdgeModelConfig(1200, 512, \"fp16\")\nassert c2.get_effective_size_mb() == 1200.0\nassert c2.can_deploy() == False\nassert c2.get_max_context_tokens() == 256\nc3 = EdgeModelConfig(1200, 2048, \"8bit\")\nassert c3.get_effective_size_mb() == 600.0\nassert c3.can_deploy() == True\nassert c3.get_max_context_tokens() == 4096\nc4 = EdgeModelConfig(400, 1024, \"4bit\")\nassert c4.get_effective_size_mb() == 132.0\nassert c4.can_deploy() == True\nctx = c4.get_max_context_tokens()\nassert 256 <= ctx <= 4096\ntry:\n    EdgeModelConfig(1200, 2048, \"2bit\")\n    assert False\nexcept ValueError:\n    pass"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ToolCallRouter` class that simulates how an on-device assistant parses and routes structured JSON tool calls. Implement `__init__(available_tools)` that takes a list of tool name strings. Implement `parse_response(response_text)` that attempts to parse JSON from the response â€” if valid JSON with a 'tool' key, return the dict; otherwise return `{\"tool\": \"reply\", \"args\": {\"text\": response_text}}`. Implement `route(parsed_call)` that returns 'executed: <tool_name>' if the tool is in available_tools, or 'unknown_tool: <tool_name>' if not. Implement `process(response_text)` that combines parse and route, returning the route result string."
+      },
+      "starter_code": "import json\n\nclass ToolCallRouter:\n    def __init__(self, available_tools: list):\n        # Store the list of available tool names\n        pass\n\n    def parse_response(self, response_text: str) -> dict:\n        # Try to parse as JSON\n        # If valid JSON with 'tool' key: return the parsed dict\n        # Otherwise: return {\"tool\": \"reply\", \"args\": {\"text\": response_text}}\n        pass\n\n    def route(self, parsed_call: dict) -> str:\n        # If parsed_call[\"tool\"] is in available_tools: return \"executed: <tool>\"\n        # Otherwise: return \"unknown_tool: <tool>\"\n        pass\n\n    def process(self, response_text: str) -> str:\n        # Parse then route, return the route result\n        pass\n\n# Test it:\nrouter = ToolCallRouter([\"set_timer\", \"toggle_light\", \"reply\"])\n\nresult1 = router.process('{\"tool\": \"set_timer\", \"args\": {\"minutes\": 5}}')\nprint(result1)\n\nresult2 = router.process('{\"tool\": \"launch_rocket\", \"args\": {}}')\nprint(result2)\n\nresult3 = router.process('Just a plain text response')\nprint(result3)",
+      "expected_output": "executed: set_timer\nunknown_tool: launch_rocket\nexecuted: reply",
+      "hints": {
+        "en": [
+          "In parse_response(), wrap json.loads() in a try/except JSONDecodeError block â€” also check that the result is a dict with a 'tool' key",
+          "The route() method just checks if parsed_call['tool'] is in self.available_tools using the 'in' operator",
+          "process() is simply: return self.route(self.parse_response(response_text))"
+        ]
+      },
+      "test_code": "router = ToolCallRouter([\"set_timer\", \"toggle_light\", \"reply\"])\nassert router.parse_response('{\"tool\": \"set_timer\", \"args\": {}}') == {\"tool\": \"set_timer\", \"args\": {}}\nassert router.parse_response('hello') == {\"tool\": \"reply\", \"args\": {\"text\": \"hello\"}}\nassert router.parse_response('{\"no_tool_key\": true}') == {\"tool\": \"reply\", \"args\": {\"text\": '{\"no_tool_key\": true}'}}\nassert router.route({\"tool\": \"set_timer\", \"args\": {}}) == \"executed: set_timer\"\nassert router.route({\"tool\": \"fly\", \"args\": {}}) == \"unknown_tool: fly\"\nassert router.process('{\"tool\": \"toggle_light\", \"args\": {\"state\": \"on\"}}') == \"executed: toggle_light\"\nassert router.process('{\"tool\": \"unknown\", \"args\": {}}') == \"unknown_tool: unknown\"\nassert router.process('not json at all') == \"executed: reply\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "4-bit quantization",
+      "NF4 quantization",
+      "edge deployment",
+      "memory-budgeted inference",
+      "on-device LLM",
+      "structured tool calling",
+      "inference_mode optimization",
+      "model packaging",
+      "Qwen3-0.6B"
+    ],
+    "concepts_required": [
+      "python classes",
+      "JSON parsing",
+      "dictionaries",
+      "basic ML concepts",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
