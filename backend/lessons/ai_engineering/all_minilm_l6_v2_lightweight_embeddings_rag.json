@@ -1,0 +1,138 @@
+{
+  "id": "all_minilm_l6_v2_lightweight_embeddings_rag",
+  "topic": "all_minilm_l6_v2_lightweight_embeddings_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: Lightweight Embeddings for RAG"
+  },
+  "description": {
+    "en": "Learn how the tiny but mighty all-MiniLM-L6-v2 model powers semantic search and RAG pipelines. Build a working embedding-based retrieval system in under 30 lines of Python."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 80MB Model That Quietly Runs Half the AI World\n\nVaathiyaar leans in with a smile. *Vaa thambi, vaa! Today I'll show you a secret weapon â€” a model so small it fits on a phone, yet so good it powers thousands of production RAG systems. Meet `all-MiniLM-L6-v2` â€” only 80 MB, but it converts sentences into 384-dimensional vectors faster than you can blink.*\n\nWhen people talk about \"RAG\" (Retrieval-Augmented Generation), they imagine giant GPT models. But the unsung hero is the **embedding model** â€” the one that turns your documents into numbers a computer can compare. And for that job, MiniLM-L6 is often the smartest first choice.\n\n### Why This Tiny Model Wins\n\n| Model | Dimensions | Size | Speed (CPU) | MTEB Score |\n|-------|-----------|------|-------------|------------|\n| all-MiniLM-L6-v2 | 384 | 80 MB | ~14,000 sent/sec | 56.3 |\n| all-mpnet-base-v2 | 768 | 420 MB | ~2,800 sent/sec | 57.8 |\n| OpenAI text-embedding-3-small | 1536 | API only | Network bound | 62.3 |\n\nNotice how MiniLM gives you **80% of the quality at 20% of the size** â€” and it runs entirely offline. No API keys. No rate limits. No data leaving your machine.\n\n### How Sentence Embeddings Work\n\nThe model maps any sentence into a fixed 384-dimensional vector where **similar meanings live near each other in space**. So `\"How do I cook rice?\"` and `\"What's the best way to prepare rice?\"` will be close, even though they share few words.\n\n```python\nfrom sentence_transformers import SentenceTransformer\nfrom sklearn.metrics.pairwise import cosine_similarity\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\nsentences = [\n    \"How do I cook rice?\",\n    \"What's the best way to prepare rice?\",\n    \"My car needs an oil change.\"\n]\n\nembeddings = model.encode(sentences)\nprint(embeddings.shape)  # (3, 384)\n\n# Compare meaning similarity\nsim = cosine_similarity([embeddings[0]], [embeddings[1]])\nprint(f\"Rice-rice similarity: {sim[0][0]:.3f}\")  # ~0.85\n\nsim = cosine_similarity([embeddings[0]], [embeddings[2]])\nprint(f\"Rice-car similarity: {sim[0][0]:.3f}\")   # ~0.05\n```\n\n### Building a Mini RAG Retriever\n\nThe retriever side of a RAG pipeline is just: *embed your knowledge base once, then embed each user query and find the nearest neighbors.*\n\n```python\nimport numpy as np\n\ndocs = [\n    \"Python lists are mutable sequences.\",\n    \"Tuples are immutable sequences in Python.\",\n    \"Dictionaries store key-value pairs.\",\n]\ndoc_vecs = model.encode(docs)\n\nquery = \"Can I change items in a Python list?\"\nq_vec = model.encode([query])\n\nscores = cosine_similarity(q_vec, doc_vecs)[0]\nbest = np.argmax(scores)\nprint(f\"Best match: {docs[best]}\")\n```\n\n### When NOT to Use It\n\nMiniLM is trained on **English** general text. For code, multilingual content, or domain-specific jargon (medical, legal), you'll want a specialized model like `bge-small-en` or a fine-tuned variant. But for 90% of everyday RAG prototypes, MiniLM is the right default.\n\n> **Key Insight:** Embedding quality matters more than LLM choice in RAG. A small, fast embedder like all-MiniLM-L6-v2 gives you instant local retrieval, zero API costs, and quality that rivals models 5Ã— its size. Start every RAG project here â€” upgrade only when measurement proves you need to."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "The 80MB Powerhouse",
+      "body": "all-MiniLM-L6-v2 turns sentences into 384-dim vectors at 14,000 sentences/sec on CPU. It's the default embedding model for thousands of RAG pipelines."
+    },
+    {
+      "type": "CodeStepper",
+      "id": "build_retriever",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "explanation": "Import the sentence-transformers library â€” a thin wrapper around Hugging Face transformers optimized for sentence embeddings."
+        },
+        {
+          "code": "from sklearn.metrics.pairwise import cosine_similarity",
+          "explanation": "Cosine similarity measures the angle between two vectors. Values near 1.0 mean very similar meaning; near 0 means unrelated."
+        },
+        {
+          "code": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "explanation": "Downloads ~80 MB on first run, then caches locally. After this, no internet needed."
+        },
+        {
+          "code": "docs = ['Python lists are mutable.', 'Tuples cannot be changed.', 'Dictionaries map keys to values.']",
+          "explanation": "Our tiny knowledge base. In a real RAG system this might be thousands of paragraphs from your docs."
+        },
+        {
+          "code": "doc_embeddings = model.encode(docs)",
+          "explanation": "One forward pass through MiniLM. Returns shape (3, 384) â€” three vectors, each 384 numbers long."
+        },
+        {
+          "code": "query = 'Can I modify a Python list?'",
+          "explanation": "The user's question. Notice it shares almost no words with 'Python lists are mutable' â€” yet semantically they're close."
+        },
+        {
+          "code": "query_embedding = model.encode([query])",
+          "explanation": "Encode the query exactly the same way. The list brackets matter â€” encode expects a list and returns a 2D array."
+        },
+        {
+          "code": "scores = cosine_similarity(query_embedding, doc_embeddings)[0]",
+          "explanation": "Computes similarity between the query and every document. Returns a 1D array of 3 scores."
+        },
+        {
+          "code": "best_idx = scores.argmax()",
+          "explanation": "Pick the document with highest similarity. In a production system you'd take the top-k and feed them to an LLM."
+        },
+        {
+          "code": "print(f'Best match: {docs[best_idx]} (score={scores[best_idx]:.3f})')",
+          "explanation": "Result: 'Python lists are mutable.' wins with score ~0.71 â€” proving the model understands meaning, not just keywords."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "embedding_burst",
+      "message": "You built a working semantic search in 10 lines!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `find_most_similar(query, documents)` function that uses all-MiniLM-L6-v2 to return the document closest in meaning to the query. Return a tuple of (best_document, similarity_score) where score is a float rounded to 3 decimals."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nfrom sklearn.metrics.pairwise import cosine_similarity\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef find_most_similar(query: str, documents: list[str]) -> tuple[str, float]:\n    # Your code here\n    pass\n",
+      "expected_output": "('Python lists can be modified after creation.', 0.712)",
+      "hints": {
+        "en": [
+          "Encode the documents and the query separately using model.encode(). The query should be wrapped in a list so it returns a 2D array.",
+          "cosine_similarity returns a 2D array â€” index [0] to get the row of scores against all docs.",
+          "Use .argmax() to find the index of the highest score, then return (documents[idx], round(score, 3))."
+        ]
+      },
+      "test_code": "docs = [\n    'Python lists can be modified after creation.',\n    'The Eiffel Tower is located in Paris.',\n    'Cats are popular pets in many households.'\n]\nresult = find_most_similar('Can I change elements in a Python list?', docs)\nassert isinstance(result, tuple), 'Must return a tuple'\nassert len(result) == 2, 'Tuple must have 2 elements'\nassert result[0] == 'Python lists can be modified after creation.', f'Wrong doc: {result[0]}'\nassert 0.5 < result[1] < 1.0, f'Score {result[1]} out of expected range'\nprint('PASS')"
+    },
+    {
+      "instruction": {
+        "en": "Write `embed_and_check_dim(sentence)` that encodes a single sentence with all-MiniLM-L6-v2 and returns the dimensionality of the resulting embedding. This verifies you understand the model's output shape."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef embed_and_check_dim(sentence: str) -> int:\n    # Your code here\n    pass\n",
+      "expected_output": "384",
+      "hints": {
+        "en": [
+          "model.encode(sentence) returns a 1D numpy array when given a single string.",
+          "Use the .shape attribute or len() to get the dimensionality.",
+          "all-MiniLM-L6-v2 always outputs 384-dimensional vectors â€” that's its defining feature."
+        ]
+      },
+      "test_code": "result = embed_and_check_dim('Hello world')\nassert result == 384, f'Expected 384, got {result}'\nresult2 = embed_and_check_dim('A completely different sentence with more words in it.')\nassert result2 == 384, 'Dimension should be constant regardless of input length'\nprint('PASS')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "rag_retrieval",
+      "sentence_transformers",
+      "vector_representations"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "function_definition",
+      "list_operations"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on_coding",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "embeddings_track",
+      "homie_local_stack"
+    ]
+  },
+  "generated": true
+}
