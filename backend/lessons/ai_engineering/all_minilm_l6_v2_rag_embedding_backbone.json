@@ -1,0 +1,134 @@
+{
+  "id": "all_minilm_l6_v2_rag_embedding_backbone",
+  "topic": "all_minilm_l6_v2_rag_embedding_backbone",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Building RAG with all-MiniLM-L6-v2: Homie's Lightweight Embedding Backbone"
+  },
+  "description": {
+    "en": "Master sentence-transformers/all-MiniLM-L6-v2 â€” the 22MB embedding model that powers most production RAG pipelines. Learn semantic search, cosine similarity, and how Homie uses it as the default local embedding backbone."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 22MB Model That Runs Half the Internet's RAG\n\nVaathiyaar leans back and smiles. \"Students, when people say 'embeddings,' they imagine GPT-sized monsters. But the model that actually ships in production â€” the one quietly powering search bars, chatbots, and RAG pipelines across the world â€” is only **22 megabytes**. It's called `all-MiniLM-L6-v2`, and today you'll learn why it's the default choice for Homie, our lightweight local embedding backbone.\"\n\n### Why MiniLM Wins in Production\n\nA full BERT model has 110M parameters. MiniLM-L6 has only **22.7M**. Yet on most retrieval benchmarks, MiniLM scores within 5% of its larger cousin. The secret is **knowledge distillation** â€” a smaller \"student\" model learns to mimic a larger \"teacher.\"\n\n| Model | Size | Dim | Speed (sentences/sec, CPU) | MTEB Avg |\n|-------|------|-----|----------------------------|----------|\n| all-MiniLM-L6-v2 | 22 MB | 384 | ~14,000 | 56.3 |\n| all-mpnet-base-v2 | 420 MB | 768 | ~2,800 | 57.8 |\n| BERT-base | 440 MB | 768 | ~1,200 | 38.3 |\n| OpenAI text-embedding-3-small | API | 1536 | network-bound | 62.3 |\n\n### The Core Recipe\n\nMiniLM produces a **384-dimensional vector** for any sentence. Two sentences with similar meaning produce vectors close together in cosine space. That's the entire foundation of RAG.\n\n```python\nfrom sentence_transformers import SentenceTransformer\nfrom sentence_transformers.util import cos_sim\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndocs = [\n    \"Python is a high-level programming language.\",\n    \"Snakes are reptiles found across the world.\",\n    \"FastAPI is a modern Python web framework.\",\n]\nquery = \"Which language do web devs use?\"\n\ndoc_embs = model.encode(docs, normalize_embeddings=True)\nq_emb = model.encode(query, normalize_embeddings=True)\n\nscores = cos_sim(q_emb, doc_embs)[0]\nbest = scores.argmax().item()\nprint(f\"Best match: {docs[best]}  (score={scores[best]:.3f})\")\n```\n\n### How Homie Uses MiniLM\n\nIn the PyMasters Homie pipeline, every user question and every lesson paragraph passes through MiniLM. The 384-dim vectors are stored in FAISS. When you ask Homie a question, it embeds your query, runs a top-k FAISS search in under 5ms, and feeds the matching paragraphs to the LLM as context. **No GPU. No API call. No vendor lock-in.**\n\n### One Gotcha: Normalize Your Vectors\n\nMiniLM was trained with cosine similarity. If you skip `normalize_embeddings=True`, your dot-product math will silently return junk. Always normalize.\n\n```python\nembs = model.encode(texts, normalize_embeddings=True)\nimport numpy as np\nassert np.allclose(np.linalg.norm(embs, axis=1), 1.0)\n```\n\n> **Key Insight**: When choosing an embedding model, bigger isn't better â€” *the right size for your latency budget* is better. MiniLM-L6-v2 hits the sweet spot: small enough for CPU inference, accurate enough for production RAG. That's why it's Homie's default and why it should probably be yours too."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "The 22MB Embedding Giant",
+      "body": "all-MiniLM-L6-v2 is only 22MB but powers most production RAG systems. It maps any sentence to a 384-dimensional vector where meaning becomes geometry."
+    },
+    {
+      "type": "CodeStepper",
+      "id": "build_rag",
+      "title": "Build a Tiny RAG Retriever",
+      "language": "python",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer, util",
+          "explain": "Import the SentenceTransformer wrapper and similarity utilities."
+        },
+        {
+          "line": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "explain": "Loads a 22MB model from HuggingFace. First run downloads it; subsequent runs use the local cache."
+        },
+        {
+          "line": "corpus = ['Python is a programming language', 'Pythons are snakes', 'FastAPI builds web APIs']",
+          "explain": "Your knowledge base. In production this would be thousands of chunked paragraphs."
+        },
+        {
+          "line": "corpus_embs = model.encode(corpus, normalize_embeddings=True, convert_to_tensor=True)",
+          "explain": "Encode every doc. normalize_embeddings=True is critical for cosine similarity to work correctly."
+        },
+        {
+          "line": "query = 'Tell me about Python web frameworks'",
+          "explain": "The user question we want to answer."
+        },
+        {
+          "line": "query_emb = model.encode(query, normalize_embeddings=True, convert_to_tensor=True)",
+          "explain": "Embed the query into the same 384-dim space."
+        },
+        {
+          "line": "scores = util.cos_sim(query_emb, corpus_embs)[0]",
+          "explain": "Cosine similarity between the query and every document. Returns a tensor of scores between -1 and 1."
+        },
+        {
+          "line": "top_idx = scores.argmax().item()",
+          "explain": "Pick the index with the highest similarity score."
+        },
+        {
+          "line": "print(f'Best match: {corpus[top_idx]} (score={scores[top_idx]:.3f})')",
+          "explain": "Should print the FastAPI sentence â€” semantic match wins over the literal 'Python' keyword."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "celebrate",
+      "message": "You just built a working RAG retriever in 9 lines of code."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a function `find_most_similar(query, docs)` that uses all-MiniLM-L6-v2 to return the most semantically similar document to the query. Use normalized embeddings and cosine similarity."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef find_most_similar(query: str, docs: list[str]) -> str:\n    # TODO: encode docs and query with normalize_embeddings=True\n    # TODO: compute cosine similarity\n    # TODO: return the doc with the highest score\n    pass\n",
+      "expected_output": "FastAPI is a modern Python web framework",
+      "hints": {
+        "en": [
+          "Pass normalize_embeddings=True to model.encode() so cosine similarity behaves correctly.",
+          "util.cos_sim returns a 2D tensor â€” index [0] gives you the scores against all docs.",
+          "Use .argmax().item() to get the index of the highest-scoring document as a Python int."
+        ]
+      },
+      "test_code": "docs = [\n    'Snakes are reptiles found worldwide',\n    'Python is a versatile programming language',\n    'FastAPI is a modern Python web framework',\n]\nresult = find_most_similar('Which framework should I use for APIs?', docs)\nassert result == 'FastAPI is a modern Python web framework', f'Expected FastAPI result, got: {result}'\nprint('PASS')\n"
+    },
+    {
+      "instruction": {
+        "en": "Implement `top_k_retrieve(query, docs, k)` that returns the top-k most similar documents along with their cosine scores, sorted descending. This is the core operation inside every RAG pipeline."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef top_k_retrieve(query: str, docs: list[str], k: int = 3) -> list[tuple[str, float]]:\n    # TODO: encode docs and query (normalized)\n    # TODO: compute scores\n    # TODO: return list of (doc, score) tuples sorted by score desc, length k\n    pass\n",
+      "expected_output": "[('FastAPI is a modern Python web framework', ~0.6), ('Python is a versatile programming language', ~0.4)]",
+      "hints": {
+        "en": [
+          "torch.topk(scores, k=k) gives you the top-k values and their indices in one call.",
+          "Iterate through the indices to build (doc, score) tuples.",
+          "Convert scores to Python floats with .item() before returning."
+        ]
+      },
+      "test_code": "docs = [\n    'Snakes are reptiles',\n    'Python is a programming language',\n    'FastAPI is a Python web framework',\n    'Django is a Python web framework',\n    'JavaScript runs in browsers',\n]\nresults = top_k_retrieve('Python web frameworks', docs, k=2)\nassert len(results) == 2, f'Expected 2 results, got {len(results)}'\ntop_docs = [r[0] for r in results]\nassert 'FastAPI is a Python web framework' in top_docs\nassert 'Django is a Python web framework' in top_docs\nassert results[0][1] >= results[1][1], 'Results must be sorted descending by score'\nprint('PASS')\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "cosine_similarity",
+      "semantic_search",
+      "rag_retrieval",
+      "knowledge_distillation",
+      "vector_normalization"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "huggingface_models"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "embeddings",
+    "path_memberships": [
+      "ai_engineering",
+      "rag_fundamentals",
+      "trending_ai",
+      "homie_internals"
+    ]
+  },
+  "generated": true
+}
