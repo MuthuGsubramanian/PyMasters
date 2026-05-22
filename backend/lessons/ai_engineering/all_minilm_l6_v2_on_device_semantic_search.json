@@ -1,0 +1,133 @@
+{
+  "id": "all_minilm_l6_v2_on_device_semantic_search",
+  "topic": "all_minilm_l6_v2_on_device_semantic_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Local RAG with MiniLM: On-Device Semantic Search"
+  },
+  "description": {
+    "en": "Build a lightweight, on-device RAG pipeline using sentence-transformers/all-MiniLM-L6-v2 â€” the tiny 22M-parameter embedding model that powers Homie's default semantic search backbone."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Pocket-Sized Embedding Workhorse\n\nVaathiyaar leans forward with a smile. \"Macha, every RAG tutorial on the internet wants you to call OpenAI's `text-embedding-3-large` for a single sentence. That's like hiring a Boeing 747 to deliver a parotta across the street. Today we use a model that fits in 90 megabytes, runs on a Raspberry Pi, and beats half the giants on retrieval benchmarks â€” `sentence-transformers/all-MiniLM-L6-v2`.\"\n\nThis model has been downloaded over 80 million times a month on the Hugging Face Hub. It's the quiet engine behind countless production RAG systems, including Homie's on-device semantic search. Six transformer layers, 384-dimensional output, and astonishingly competitive quality.\n\n### Why MiniLM Punches Above Its Weight\n\nIt was distilled from a much larger MPNet teacher using contrastive learning over a billion sentence pairs. The student learned to mimic the teacher's similarity geometry, not its raw outputs â€” so the embedding space stays meaningful even after aggressive compression.\n\n| Model | Params | Dim | Speed (CPU) | MTEB Avg |\n|-------|--------|-----|-------------|----------|\n| all-MiniLM-L6-v2 | 22M | 384 | ~14k sent/s | 56.3 |\n| all-mpnet-base-v2 | 110M | 768 | ~2.8k sent/s | 57.8 |\n| text-embedding-3-small | API only | 1536 | network bound | 62.3 |\n| BGE-large-en-v1.5 | 335M | 1024 | ~900 sent/s | 64.2 |\n\nFor most local RAG tasks the 1.5-point quality gap to MPNet is invisible, but the 5x speedup and 5x smaller index are very visible to your users.\n\n### A Minimal RAG Loop\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndocs = [\n    \"Filter coffee needs strong decoction and hot milk.\",\n    \"Idli batter ferments overnight in warm weather.\",\n    \"PyTorch tensors live on CPU unless moved to CUDA.\",\n]\n\ndoc_vecs = model.encode(docs, normalize_embeddings=True)\nquery_vec = model.encode(\"how do I make breakfast rice cakes?\",\n                        normalize_embeddings=True)\n\nscores = doc_vecs @ query_vec\nbest = int(np.argmax(scores))\nprint(docs[best])  # -> the idli sentence\n```\n\nNotice the `normalize_embeddings=True` flag. With L2-normalized vectors, the dot product **is** cosine similarity â€” no extra division, and FAISS's inner-product index becomes a cosine index for free.\n\n### Production-Ready Patterns\n\nThree habits separate toy demos from real deployments:\n\n1. **Batch your encodes.** Calling `model.encode([...])` on 64 sentences at once is ~30x faster than 64 single calls.\n2. **Cache the index, not the model.** Serialize `doc_vecs` to `.npy` or a FAISS index â€” recomputing 10k embeddings on every startup will be your slowest endpoint.\n3. **Truncate aggressively.** MiniLM's context window is 256 tokens. Anything longer is silently chopped. Chunk your documents to ~200 tokens with 20-token overlap.\n\n```python\nimport faiss\nindex = faiss.IndexFlatIP(384)\nindex.add(doc_vecs.astype(\"float32\"))\nD, I = index.search(query_vec[None].astype(\"float32\"), k=3)\n```\n\nThat's a complete vector store in four lines. No Pinecone account, no Weaviate container, no network round-trip.\n\n> **Key Insight:** The best embedding model is the smallest one that still answers your retrieval questions correctly. MiniLM-L6-v2 is the default not because it's the most powerful, but because the quality-per-millisecond ratio is unbeaten â€” and that ratio is what decides whether your RAG feature ships or stalls."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "title": "The 22M-Parameter Champion",
+      "content": "all-MiniLM-L6-v2 turns sentences into 384-dimensional vectors at 14,000 sentences per second on a laptop CPU. It powers Homie's on-device search and millions of production RAG pipelines.",
+      "duration": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "explanation": "Import the sentence-transformers library â€” the canonical wrapper around BERT-family encoders fine-tuned for similarity."
+        },
+        {
+          "code": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "explanation": "Downloads ~90MB on first run, then caches to ~/.cache/huggingface. Subsequent loads are instant."
+        },
+        {
+          "code": "docs = [\"Idli batter ferments overnight.\", \"PyTorch tensors live on CPU.\"]",
+          "explanation": "Your corpus. In production this would be paragraphs from PDFs, support tickets, or product docs â€” chunked to ~200 tokens each."
+        },
+        {
+          "code": "doc_vecs = model.encode(docs, normalize_embeddings=True)",
+          "explanation": "Batch-encode all documents. normalize_embeddings=True L2-normalizes each vector so dot product equals cosine similarity."
+        },
+        {
+          "code": "query = \"how do I make breakfast rice cakes?\"",
+          "explanation": "A natural-language query â€” the user does not need to mention 'idli' for the model to find it."
+        },
+        {
+          "code": "query_vec = model.encode(query, normalize_embeddings=True)",
+          "explanation": "Encode the query into the same 384-dim space using the exact same model. Always use one model for both sides."
+        },
+        {
+          "code": "scores = doc_vecs @ query_vec",
+          "explanation": "Matrix-vector product gives cosine similarity for each doc. NumPy handles the broadcasting in microseconds."
+        },
+        {
+          "code": "best_idx = int(scores.argmax())",
+          "explanation": "Pick the highest-scoring document. For top-k, use np.argsort(scores)[-k:][::-1] instead."
+        },
+        {
+          "code": "print(f\"Best match ({scores[best_idx]:.3f}): {docs[best_idx]}\")",
+          "explanation": "Outputs the idli sentence with a similarity score around 0.55 â€” high signal even though the query shares zero keywords."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "embedding_burst",
+      "message": "You shipped a local RAG retriever â€” no API key required.",
+      "duration": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Encode a list of three sentences with all-MiniLM-L6-v2 using normalized embeddings, then return the cosine similarity matrix as a NumPy array. The function should return a (3, 3) array where the diagonal is 1.0."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndef similarity_matrix(sentences):\n    # TODO: encode with normalize_embeddings=True\n    # TODO: compute pairwise cosine similarity via dot product\n    pass\n\nsentences = [\n    \"The cat sat on the mat.\",\n    \"A feline rested on the rug.\",\n    \"Python is a programming language.\",\n]\nprint(similarity_matrix(sentences))",
+      "expected_output": "[[1.00 0.73 0.07]\n [0.73 1.00 0.08]\n [0.07 0.08 1.00]]",
+      "hints": {
+        "en": [
+          "Pass normalize_embeddings=True to model.encode so dot products become cosines.",
+          "Once vectors are L2-normalized, the pairwise similarity matrix is simply vecs @ vecs.T.",
+          "The diagonal will be ~1.0 because every vector is identical to itself."
+        ]
+      },
+      "test_code": "import numpy as np\nresult = similarity_matrix(sentences)\nassert isinstance(result, np.ndarray), \"Must return a NumPy array\"\nassert result.shape == (3, 3), f\"Expected (3,3), got {result.shape}\"\nassert np.allclose(np.diag(result), 1.0, atol=1e-3), \"Diagonal must be ~1.0\"\nassert result[0, 1] > 0.5, \"Cat/feline sentences should be similar\"\nassert result[0, 2] < 0.3, \"Cat and Python sentences should be dissimilar\"\nassert np.allclose(result, result.T, atol=1e-5), \"Matrix must be symmetric\""
+    },
+    {
+      "instruction": {
+        "en": "Build a retrieve_top_k function that takes a query string, a list of documents, and an integer k, and returns the k most semantically similar documents in descending order of similarity. Use all-MiniLM-L6-v2 with normalized embeddings."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndef retrieve_top_k(query, documents, k=2):\n    # TODO: encode documents and query (normalized)\n    # TODO: score with dot product\n    # TODO: return top-k documents sorted high-to-low\n    pass\n\ndocs = [\n    \"FAISS is a library for fast similarity search.\",\n    \"Bananas grow on trees in tropical climates.\",\n    \"Vector databases store high-dimensional embeddings.\",\n    \"My favorite recipe uses ripe plantains.\",\n]\nprint(retrieve_top_k(\"how do I search through embeddings?\", docs, k=2))",
+      "expected_output": "['FAISS is a library for fast similarity search.', 'Vector databases store high-dimensional embeddings.']",
+      "hints": {
+        "en": [
+          "Encode the documents once as a batch â€” never one at a time inside a loop.",
+          "np.argsort returns ascending order; slice with [::-1] or use [-k:][::-1] for top-k descending.",
+          "Index back into the original documents list using the sorted indices."
+        ]
+      },
+      "test_code": "result = retrieve_top_k(\"how do I search through embeddings?\", docs, k=2)\nassert isinstance(result, list), \"Must return a list\"\nassert len(result) == 2, f\"Expected 2 results, got {len(result)}\"\nassert result[0] == \"FAISS is a library for fast similarity search.\", \"Top result should be the FAISS doc\"\nassert \"Vector databases\" in result[1], \"Second result should be the vector database doc\"\nassert \"Bananas\" not in result, \"Fruit docs should not appear in embedding-search results\"\nfruit_result = retrieve_top_k(\"tasty tropical fruit\", docs, k=1)\nassert \"plantains\" in fruit_result[0] or \"Bananas\" in fruit_result[0], \"Fruit query should retrieve fruit docs\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "local_rag",
+      "cosine_similarity",
+      "vector_normalization",
+      "faiss_indexing",
+      "embedding_distillation"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "huggingface_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "embeddings_and_retrieval",
+    "path_memberships": [
+      "trending_ai",
+      "rag_engineering",
+      "on_device_ai",
+      "homie_stack"
+    ]
+  },
+  "generated": true
+}
