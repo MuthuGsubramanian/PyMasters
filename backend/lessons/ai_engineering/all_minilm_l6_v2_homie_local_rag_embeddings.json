@@ -1,0 +1,157 @@
+{
+  "id": "all_minilm_l6_v2_homie_local_rag_embeddings",
+  "topic": "all_minilm_l6_v2_homie_local_rag_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: Powering Homie's Local RAG with 384-Dim Embeddings"
+  },
+  "description": {
+    "en": "Learn how the sentence-transformers/all-MiniLM-L6-v2 model converts text into 384-dimensional semantic vectors, and use it to power a local Retrieval-Augmented Generation (RAG) pipeline like Homie's."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Vaathiyaar Speaks: The Tiny Model That Punches Above Its Weight\n\nVaanga da paiyya! Today we meet a celebrity that lives quietly inside thousands of production AI apps: **sentence-transformers/all-MiniLM-L6-v2**. Just 22.7 million parameters. Just 80 MB on disk. Yet it powers semantic search for everyone from solo hackers building local chatbots to startups like PyMasters running Homie's RAG pipeline. When OpenAI's `text-embedding-3-small` costs money per token and needs internet, MiniLM runs on your laptop for free in under 50ms per sentence. That is the magic da.\n\n### What Is a Sentence Embedding?\n\nAn embedding is a fixed-length vector of numbers that captures the *meaning* of text. Two sentences with similar meaning end up close together in vector space, even if they share no words. \"The cat sat on the mat\" and \"A feline rested on the rug\" will have cosine similarity around 0.7-0.8 with MiniLM, while \"The stock market crashed\" will be far away.\n\nall-MiniLM-L6-v2 produces a **384-dimensional vector** for any sentence up to 256 tokens. It was distilled from larger BERT models and fine-tuned on over 1 billion sentence pairs.\n\n### Why It Beat the Giants for Local RAG\n\n| Model | Dimensions | Size | Speed (CPU) | Cost |\n|-------|------------|------|-------------|------|\n| all-MiniLM-L6-v2 | 384 | 80 MB | ~50ms/sentence | Free |\n| all-mpnet-base-v2 | 768 | 420 MB | ~200ms/sentence | Free |\n| OpenAI text-embedding-3-small | 1536 | API only | ~300ms (network) | $0.02/1M tokens |\n| OpenAI text-embedding-3-large | 3072 | API only | ~400ms (network) | $0.13/1M tokens |\n\nFor 95% of semantic search tasks, the quality difference is negligible. The smaller dimension also means **4x less memory** in your vector database â€” critical when running Homie on a Raspberry Pi or mobile device.\n\n### The Code That Powers Homie\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\n# Load once, reuse forever (downloads ~80MB first time)\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\n# Your RAG knowledge base\ndocs = [\n    \"PyMasters teaches Python through Tamil-style storytelling.\",\n    \"Homie is an offline AI companion for kids.\",\n    \"Vector databases store embeddings for fast retrieval.\",\n]\n\n# Encode all docs into a (3, 384) matrix\ndoc_embeddings = model.encode(docs, normalize_embeddings=True)\n\n# User asks a question\nquery = \"What is Homie?\"\nquery_embedding = model.encode(query, normalize_embeddings=True)\n\n# Cosine similarity = dot product (since vectors are normalized)\nscores = np.dot(doc_embeddings, query_embedding)\nbest_idx = scores.argmax()\nprint(f\"Best match: {docs[best_idx]}\")\nprint(f\"Score: {scores[best_idx]:.3f}\")\n```\n\nWith `normalize_embeddings=True`, cosine similarity reduces to a simple dot product â€” a single matrix multiply instead of explicit normalization. For Homie's 10,000-document knowledge base, this means **sub-10ms retrieval** on a $35 single-board computer.\n\n### The Pooling Trick\n\nMiniLM-L6-v2 uses **mean pooling** over token embeddings, then L2-normalizes. Other models use [CLS] token pooling. Mean pooling is what makes the resulting vector represent the *whole sentence*, not just the first token.\n\n> **Key Insight:** all-MiniLM-L6-v2 is the workhorse of modern local AI. It is not the most accurate embedding model, but its 6-layer Transformer architecture hits the sweet spot of speed, size, and quality that makes offline RAG actually feasible on consumer hardware. When you see Homie answer a question instantly without WiFi â€” that is MiniLM at work."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "duration": 4000,
+      "content": {
+        "en": "Meet all-MiniLM-L6-v2: 22.7M parameters, 80 MB, and the secret sauce inside Homie's local RAG. Let us see how it turns words into vectors."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "explanation": {
+            "en": "Import the SentenceTransformer wrapper that handles tokenization, model forward pass, and pooling for us."
+          }
+        },
+        {
+          "code": "import numpy as np",
+          "explanation": {
+            "en": "NumPy gives us fast vector math for similarity computation."
+          }
+        },
+        {
+          "code": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "explanation": {
+            "en": "First call downloads ~80MB to ~/.cache/huggingface. Subsequent calls load from disk in under 2 seconds."
+          }
+        },
+        {
+          "code": "docs = ['PyMasters teaches Python.', 'Homie is offline AI for kids.', 'Vector DBs store embeddings.']",
+          "explanation": {
+            "en": "Our tiny knowledge base. In production Homie has ~10,000 docs covering Python concepts, story scripts, and FAQ."
+          }
+        },
+        {
+          "code": "doc_embeddings = model.encode(docs, normalize_embeddings=True)",
+          "explanation": {
+            "en": "Each sentence becomes a 384-dim vector. Shape becomes (3, 384). Normalize once so cosine similarity is just a dot product later."
+          }
+        },
+        {
+          "code": "print(doc_embeddings.shape)  # (3, 384)",
+          "explanation": {
+            "en": "Confirm the matrix shape. Three documents, 384 dimensions each â€” exactly what MiniLM-L6-v2 produces."
+          }
+        },
+        {
+          "code": "query = 'What is Homie?'",
+          "explanation": {
+            "en": "The user's question. Notice it shares only one word ('Homie') with any doc â€” keyword search would struggle here."
+          }
+        },
+        {
+          "code": "query_embedding = model.encode(query, normalize_embeddings=True)",
+          "explanation": {
+            "en": "Encode the query in the same vector space. Shape is (384,) â€” a single 1D vector."
+          }
+        },
+        {
+          "code": "scores = np.dot(doc_embeddings, query_embedding)",
+          "explanation": {
+            "en": "One matrix-vector multiply gives us cosine similarity for all 3 docs. Sub-millisecond for thousands of docs."
+          }
+        },
+        {
+          "code": "print(docs[scores.argmax()])  # 'Homie is offline AI for kids.'",
+          "explanation": {
+            "en": "The highest-scoring document wins. Semantic search succeeded where exact keyword matching would have failed."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "duration": 3000,
+      "content": {
+        "en": "Aiyo super! You just built the retrieval half of a RAG pipeline in 10 lines of Python."
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `find_most_similar(query, docs)` function using all-MiniLM-L6-v2. It should return the document from `docs` that is most semantically similar to `query`. Use `normalize_embeddings=True` so you can use a simple dot product for similarity."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef find_most_similar(query: str, docs: list[str]) -> str:\n    # TODO: encode docs and query with normalize_embeddings=True\n    # TODO: compute dot-product similarity\n    # TODO: return the doc with the highest score\n    pass\n",
+      "expected_output": "Homie is an offline AI companion for children.",
+      "hints": {
+        "en": [
+          "Pass the whole `docs` list to `model.encode()` in one call â€” it batches automatically and is much faster than encoding one at a time.",
+          "When `normalize_embeddings=True`, cosine similarity equals the dot product. Use `np.dot(doc_matrix, query_vector)` to get all scores at once.",
+          "`np.argmax(scores)` gives you the index of the best match â€” then return `docs[that_index]`."
+        ]
+      },
+      "test_code": "docs = [\n    'Python is a programming language.',\n    'Homie is an offline AI companion for children.',\n    'The Eiffel Tower is located in Paris.',\n]\nresult = find_most_similar('Tell me about a kids AI assistant', docs)\nassert result == 'Homie is an offline AI companion for children.', f'Got: {result}'\nprint('PASS')"
+    },
+    {
+      "instruction": {
+        "en": "Write `top_k_search(query, docs, k)` that returns the top-k most similar documents in descending order of similarity. This is the core retrieval step of a RAG pipeline like Homie's."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef top_k_search(query: str, docs: list[str], k: int = 3) -> list[str]:\n    # TODO: encode docs and query (normalize_embeddings=True)\n    # TODO: compute similarity scores\n    # TODO: get the indices of the top-k scores in descending order\n    # TODO: return docs at those indices\n    pass\n",
+      "expected_output": "['Cats are popular pets.', 'Dogs are loyal animals.', 'Birds can fly.']",
+      "hints": {
+        "en": [
+          "`np.argsort(scores)` returns indices sorted ascending â€” slice with `[::-1]` to reverse, then take the first `k`.",
+          "Alternative: `np.argsort(-scores)[:k]` sorts negated scores ascending, which is equivalent to descending.",
+          "Return the docs in score order: `[docs[i] for i in top_indices]`."
+        ]
+      },
+      "test_code": "docs = [\n    'The stock market crashed yesterday.',\n    'Cats are popular pets.',\n    'Dogs are loyal animals.',\n    'Quantum computing uses qubits.',\n    'Birds can fly.',\n]\nresult = top_k_search('Tell me about animals', docs, k=3)\nassert len(result) == 3, f'Expected 3 results, got {len(result)}'\nanimal_docs = {'Cats are popular pets.', 'Dogs are loyal animals.', 'Birds can fly.'}\nassert set(result) == animal_docs, f'Got: {result}'\nprint('PASS')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "retrieval_augmented_generation",
+      "vector_normalization",
+      "mean_pooling"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "homie_internals"
+    ]
+  },
+  "generated": true
+}
