@@ -1,0 +1,159 @@
+{
+  "id": "qwen3_06b_homie_default_llm",
+  "topic": "qwen3_06b_homie_default_llm",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Running Homie's Default Local LLM"
+  },
+  "description": {
+    "en": "Run Alibaba's Qwen3-0.6B entirely on your laptop with Hugging Face Transformers â€” the tiny-but-mighty model that powers Homie's offline brain."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Pocket-Sized Brain That Could\n\nVaathiyaar leans back, a quiet smile on his face. *Da, today we are not loading a 70-billion-parameter beast that eats your RAM for breakfast. We are loading something smaller than your phone's camera roll â€” Qwen3-0.6B â€” and you will be amazed at what 600 million parameters can do when Alibaba's training team gets it right.*\n\nQwen3-0.6B is the smallest member of the Qwen3 family, released in 2025. It fits in under 1.2 GB of memory in fp16, runs comfortably on a CPU, and yet handles chat, reasoning, tool-calling, and even hybrid \"thinking mode\" â€” making it the default local model we picked for **Homie**, the offline coding assistant in PyMasters.\n\n### Why 0.6B Matters\n\n| Model | Params | Disk (fp16) | CPU-only? | Use Case |\n|---|---|---|---|---|\n| Llama-3.1-8B | 8B | ~16 GB | painful | Server-side chat |\n| Mistral-7B | 7B | ~14 GB | painful | Mid-tier inference |\n| Qwen3-0.6B | 0.6B | ~1.2 GB | yes, fast | Edge / embedded / Homie |\n| TinyLlama-1.1B | 1.1B | ~2.2 GB | yes | Lightweight chat |\n\nThe magic is Qwen3's architecture: grouped-query attention, RoPE positional encoding, and a 32K context window even at this tiny size.\n\n### Loading It in Five Lines\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_id = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_id)\nmodel = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=\"auto\", device_map=\"auto\")\n```\n\nThat's it. No GGUF conversion, no llama.cpp build, no CUDA dance for the small case.\n\n### Chatting With It\n\nQwen3 uses a chat template â€” apply it before generating so the model sees the proper `<|im_start|>` tokens:\n\n```python\nmessages = [{\"role\": \"user\", \"content\": \"Explain RoPE in one sentence.\"}]\nprompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)\ninputs = tokenizer(prompt, return_tensors=\"pt\").to(model.device)\nout = model.generate(**inputs, max_new_tokens=128, do_sample=True, temperature=0.7)\nprint(tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True))\n```\n\n### Thinking Mode (the Qwen3 Trick)\n\nQwen3 supports a switch between \"thinking\" and \"non-thinking\" generation. Pass `enable_thinking=False` to `apply_chat_template` for snappy chat; leave it on for harder reasoning tasks. This is why a 0.6B model can punch above its weight on math and code.\n\n### When to Reach for Qwen3-0.6B\n\n- Offline assistants that ship to user laptops (Homie)\n- Rapid prototyping where you don't want to pay per-token\n- CI pipelines that need a deterministic local model\n- Educational demos where downloading 16 GB is a non-starter\n\n*Avoid it when you need long, factual essays or strong multilingual translation â€” that's what 7B+ siblings are for.*\n\n> **Key Insight:** Small models are not toy models anymore. Qwen3-0.6B is the proof that careful pre-training and clever attention beat raw parameter count for 80% of on-device use cases. Master it, and you can ship AI features that run *anywhere* â€” no GPU, no API key, no excuse."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "duration": 4000,
+      "content": {
+        "en": "Today we shrink the LLM down to fit on your laptop â€” and meet Homie's brain."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from transformers import AutoModelForCausalLM, AutoTokenizer",
+          "explanation": {
+            "en": "Import the two workhorse classes from Hugging Face Transformers."
+          }
+        },
+        {
+          "code": "model_id = \"Qwen/Qwen3-0.6B\"",
+          "explanation": {
+            "en": "The Hugging Face Hub identifier â€” Alibaba publishes the weights here."
+          }
+        },
+        {
+          "code": "tokenizer = AutoTokenizer.from_pretrained(model_id)",
+          "explanation": {
+            "en": "Download the tokenizer (BPE-based, shared across all Qwen3 sizes)."
+          }
+        },
+        {
+          "code": "model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=\"auto\", device_map=\"auto\")",
+          "explanation": {
+            "en": "Load weights in fp16/bf16 if a GPU exists, otherwise fp32 on CPU."
+          }
+        },
+        {
+          "code": "messages = [{\"role\": \"user\", \"content\": \"What is RoPE?\"}]",
+          "explanation": {
+            "en": "Build the chat history as a list of role/content dicts."
+          }
+        },
+        {
+          "code": "prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)",
+          "explanation": {
+            "en": "Wrap the messages in Qwen3's special <|im_start|>/<|im_end|> tokens."
+          }
+        },
+        {
+          "code": "inputs = tokenizer(prompt, return_tensors=\"pt\").to(model.device)",
+          "explanation": {
+            "en": "Tokenize and move tensors to the same device as the model."
+          }
+        },
+        {
+          "code": "out = model.generate(**inputs, max_new_tokens=128, do_sample=True, temperature=0.7)",
+          "explanation": {
+            "en": "Sample up to 128 new tokens with a mild temperature for variety."
+          }
+        },
+        {
+          "code": "reply = tokenizer.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)",
+          "explanation": {
+            "en": "Slice off the prompt and decode only the newly generated tokens."
+          }
+        },
+        {
+          "code": "print(reply)",
+          "explanation": {
+            "en": "Ship it â€” your offline LLM just answered."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "confetti",
+      "duration": 3000,
+      "message": {
+        "en": "You just ran a real LLM with no GPU and no API key. Homie approves."
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Load Qwen3-0.6B and generate a one-sentence reply to the question 'What is a transformer?'. Return the decoded string in a variable named `reply`."
+      },
+      "starter_code": "from transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_id = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_id)\nmodel = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=\"auto\", device_map=\"auto\")\n\nmessages = [{\"role\": \"user\", \"content\": \"What is a transformer? Answer in one sentence.\"}]\n\n# TODO: apply the chat template, tokenize, generate, and decode into `reply`\nreply = \"\"\n",
+      "expected_output": "A non-empty string mentioning attention or neural networks.",
+      "hints": {
+        "en": [
+          "Use tokenizer.apply_chat_template with add_generation_prompt=True.",
+          "After model.generate, slice the output tensor to skip the prompt tokens: out[0][inputs.input_ids.shape[1]:].",
+          "Call tokenizer.decode with skip_special_tokens=True."
+        ]
+      },
+      "test_code": "assert isinstance(reply, str), \"reply must be a string\"\nassert len(reply.strip()) > 10, \"reply seems too short â€” did you decode the new tokens?\"\nassert any(word in reply.lower() for word in [\"attention\", \"neural\", \"model\", \"sequence\"]), \"reply should mention a transformer-related concept\"\n"
+    },
+    {
+      "instruction": {
+        "en": "Disable Qwen3's thinking mode for faster chat responses. Build the prompt with enable_thinking=False and confirm the resulting string does NOT contain the special token '<think>'."
+      },
+      "starter_code": "from transformers import AutoTokenizer\n\ntokenizer = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-0.6B\")\nmessages = [{\"role\": \"user\", \"content\": \"Hi!\"}]\n\n# TODO: build `prompt` with thinking mode disabled\nprompt = \"\"\n",
+      "expected_output": "A formatted prompt string with no <think> tag.",
+      "hints": {
+        "en": [
+          "apply_chat_template accepts an enable_thinking keyword argument.",
+          "Set tokenize=False so you get the raw string back, not token ids.",
+          "Verify the absence of '<think>' with a simple `in` check."
+        ]
+      },
+      "test_code": "assert isinstance(prompt, str) and len(prompt) > 0, \"prompt must be a non-empty string\"\nassert \"<think>\" not in prompt, \"thinking mode should be disabled\"\nassert \"<|im_start|>user\" in prompt, \"prompt should still use the Qwen chat template\"\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "qwen3",
+      "small_language_models",
+      "huggingface_transformers",
+      "local_inference",
+      "chat_templates",
+      "thinking_mode"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "huggingface_hub",
+      "pytorch_tensors"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on_code",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "local_llms",
+      "homie_internals",
+      "edge_ai"
+    ]
+  },
+  "generated": true
+}
