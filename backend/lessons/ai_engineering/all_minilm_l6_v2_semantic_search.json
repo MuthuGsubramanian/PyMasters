@@ -1,0 +1,131 @@
+{
+  "id": "all_minilm_l6_v2_semantic_search",
+  "topic": "all_minilm_l6_v2_semantic_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Building Semantic Search with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Learn how to use the tiny-but-mighty all-MiniLM-L6-v2 model to turn sentences into 384-dimensional vectors and build a local semantic search engine â€” the same embedding backbone we use inside Homie's RAG pipeline."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 22-Million-Parameter Workhorse\n\nVaathiyaar leans in: *\"Magaa, when people hear 'AI search', they imagine giant 175-billion-parameter models humming inside a data center. But the model that quietly powers most production RAG systems today is only 22 million parameters â€” small enough to run on a laptop, fast enough to embed thousands of sentences per second, and accurate enough to beat keyword search by a wide margin. That model is `all-MiniLM-L6-v2`.\"*\n\nIt's a distilled cousin of BERT, trained by the Sentence-Transformers team on over 1 billion sentence pairs. Each sentence becomes a 384-dimensional vector â€” and two sentences that mean similar things end up close together in that vector space. That's the entire trick behind semantic search.\n\n### Why this model, not a bigger one?\n\n| Model | Dim | Size | Speed (sent/s, CPU) | Use Case |\n|-------|-----|------|---------------------|----------|\n| all-MiniLM-L6-v2 | 384 | 22M | ~2,800 | Local RAG, prototypes, edge |\n| all-mpnet-base-v2 | 768 | 110M | ~700 | Higher accuracy, server-side |\n| text-embedding-3-large | 3072 | API | network-bound | Cloud-only, paid per token |\n\nFor Homie's local-first RAG pipeline, MiniLM is the sweet spot: it loads in under a second, embeds an entire 10k-document corpus in minutes on CPU, and the 384-dim vectors keep your FAISS index small.\n\n### The three-step recipe\n\nSemantic search with MiniLM is always the same three moves:\n\n1. **Encode** your corpus once â†’ store vectors.\n2. **Encode** the query at runtime â†’ get one vector.\n3. **Compare** with cosine similarity â†’ return the top-k closest.\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ncorpus = [\n    \"Python is a high-level programming language.\",\n    \"The Eiffel Tower is located in Paris.\",\n    \"Pandas is great for data analysis in Python.\",\n    \"Tokyo is the capital of Japan.\"\n]\ncorpus_emb = model.encode(corpus, convert_to_tensor=True)\n\nquery = \"Which library helps with dataframes?\"\nquery_emb = model.encode(query, convert_to_tensor=True)\n\nhits = util.semantic_search(query_emb, corpus_emb, top_k=2)[0]\nfor hit in hits:\n    print(f\"{hit['score']:.3f}  {corpus[hit['corpus_id']]}\")\n```\n\nNotice you never tokenized manually, never called `.eval()`, never moved tensors around. The `sentence-transformers` library wraps all of that. The `util.semantic_search` helper even handles batching for million-scale corpora.\n\n### Where it shines, where it stumbles\n\nMiniLM was trained on **English sentences up to ~256 tokens**. Feed it a 2000-word document and it silently truncates. The fix is chunking â€” split long docs into 200-token windows before encoding. It also struggles with code, math, and non-English text; for those you want `multi-qa-MiniLM` or a domain-specific model.\n\nBut for the 80% case â€” searching FAQs, product descriptions, support tickets, lesson notes â€” it's the model you reach for first.\n\n> **Key Insight:** Embedding quality matters more than model size for RAG. A well-chunked corpus encoded with 22M-parameter MiniLM will beat a poorly-chunked corpus encoded with a 7B-parameter model. Start small, measure recall@k, scale only when the numbers demand it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "Tiny Model, Huge Impact",
+      "body": "all-MiniLM-L6-v2 is 22M parameters of pure semantic muscle â€” the embedding backbone trusted by thousands of production RAG systems. Let's wire one up in 10 lines of Python.",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "build_search",
+      "language": "python",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer, util",
+          "narration": "Import the library â€” one package gives us the model loader and similarity helpers."
+        },
+        {
+          "line": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "narration": "Download and load the model. First call caches ~90MB to ~/.cache/huggingface."
+        },
+        {
+          "line": "corpus = ['Python is a programming language.', 'Paris is in France.', 'Pandas handles dataframes.']",
+          "narration": "Define our tiny corpus â€” in production this would be thousands of documents."
+        },
+        {
+          "line": "corpus_emb = model.encode(corpus, convert_to_tensor=True, show_progress_bar=False)",
+          "narration": "Encode the entire corpus. Output shape is (3, 384) â€” one 384-dim vector per sentence."
+        },
+        {
+          "line": "query = 'What tool works with tabular data?'",
+          "narration": "A natural-language query. Notice no keyword overlap with 'Pandas' or 'dataframes'."
+        },
+        {
+          "line": "query_emb = model.encode(query, convert_to_tensor=True)",
+          "narration": "Embed the query into the same 384-dim space."
+        },
+        {
+          "line": "hits = util.semantic_search(query_emb, corpus_emb, top_k=1)[0]",
+          "narration": "Cosine-similarity search. Returns the closest match by meaning, not keywords."
+        },
+        {
+          "line": "print(corpus[hits[0]['corpus_id']], '->', round(hits[0]['score'], 3))",
+          "narration": "Print the winner. Expect 'Pandas handles dataframes.' with score around 0.45 â€” semantic match without any shared words."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "message": "You just built a semantic search engine!",
+      "duration_ms": 3000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use all-MiniLM-L6-v2 to find which sentence in the corpus is most semantically similar to the query 'How do I deploy a model?'. Return the matching sentence string."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ncorpus = [\n    'Bake a chocolate cake at 180 degrees.',\n    'Push your trained model to a production server.',\n    'The cat sat on the mat.'\n]\n\nquery = 'How do I deploy a model?'\n\n# TODO: encode corpus and query, then find the best match\nbest_match = None\n",
+      "expected_output": "Push your trained model to a production server.",
+      "hints": {
+        "en": [
+          "Call model.encode() on the corpus list AND on the query string separately.",
+          "Use util.semantic_search(query_emb, corpus_emb, top_k=1) â€” it returns a nested list.",
+          "The result has a 'corpus_id' key â€” use it to index back into the original corpus list."
+        ]
+      },
+      "test_code": "corpus_emb = model.encode(corpus, convert_to_tensor=True)\nquery_emb = model.encode(query, convert_to_tensor=True)\nhits = util.semantic_search(query_emb, corpus_emb, top_k=1)[0]\nbest_match = corpus[hits[0]['corpus_id']]\nassert best_match == 'Push your trained model to a production server.', f'Expected deployment sentence, got: {best_match}'\nassert hits[0]['score'] > 0.3, f'Similarity score suspiciously low: {hits[0][\"score\"]}'"
+    },
+    {
+      "instruction": {
+        "en": "Compute the cosine similarity between the two sentences 'I love machine learning' and 'Deep learning is fascinating' using all-MiniLM-L6-v2. Store the result in a float variable named `similarity`."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\nsent_a = 'I love machine learning'\nsent_b = 'Deep learning is fascinating'\n\n# TODO: compute cosine similarity between the two embeddings\nsimilarity = 0.0\n",
+      "expected_output": "similarity > 0.5",
+      "hints": {
+        "en": [
+          "Encode both sentences with model.encode() â€” pass them as a list to embed in one batch.",
+          "util.cos_sim(emb_a, emb_b) returns a 2D tensor â€” call .item() on the [0][0] element to get a float.",
+          "Related ML sentences typically score 0.6-0.8 with this model."
+        ]
+      },
+      "test_code": "embs = model.encode([sent_a, sent_b], convert_to_tensor=True)\nsimilarity = util.cos_sim(embs[0], embs[1]).item()\nassert 0.5 < similarity < 1.0, f'Expected similarity in (0.5, 1.0), got {similarity}'"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "sentence_transformers",
+      "rag_fundamentals",
+      "vector_representations"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "lists_and_iteration",
+      "pip_install_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on_coding",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "embeddings_and_vector_search",
+      "homie_local_rag_backbone"
+    ]
+  },
+  "generated": true
+}
