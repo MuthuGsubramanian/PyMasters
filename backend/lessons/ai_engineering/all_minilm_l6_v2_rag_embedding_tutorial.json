@@ -1,0 +1,143 @@
+{
+  "id": "all_minilm_l6_v2_rag_embedding_tutorial",
+  "topic": "all_minilm_l6_v2_rag_embedding_tutorial",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: Lightweight Embeddings for RAG"
+  },
+  "description": {
+    "en": "Learn how to use sentence-transformers/all-MiniLM-L6-v2 â€” a tiny 80MB model that produces 384-dim embeddings perfect for local RAG, semantic search, and Homie's default retrieval backbone."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Pocket-Sized Champion of Embeddings\n\nVaathiyaar pulls up a chair and grins. \"Students, before we chase 7B-parameter monsters, let me show you a model that fits in a USB stick and still powers half the world's RAG demos. Meet **all-MiniLM-L6-v2** â€” 22 million parameters, 80 MB on disk, 384-dim vectors, and a love for semantic similarity.\"\n\n### Why this model matters\n\nWhen you build Retrieval-Augmented Generation (RAG), the *embedding* model is the unsung hero. It turns text into vectors so a database can find \"semantically nearby\" passages. You don't always need a giant model for this â€” you need a *fast, accurate, cheap* one. That is exactly what `all-MiniLM-L6-v2` delivers.\n\n| Property | Value |\n|---|---|\n| Architecture | 6-layer distilled BERT (MiniLM) |\n| Embedding dim | 384 |\n| Model size | ~80 MB |\n| Max input tokens | 256 |\n| Training pairs | 1B+ sentence pairs |\n| Typical speed (CPU) | ~14k sentences/sec |\n| License | Apache 2.0 |\n\n### Three lines to your first embedding\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\nvecs = model.encode([\"Homie is cute\", \"My dog is adorable\"])\nprint(vecs.shape)  # (2, 384)\n```\n\nThat's it. No GPU, no API key, no rate limits. Runs on a laptop, a Raspberry Pi, or inside your IDE.\n\n### Building a mini RAG\n\nThe full RAG loop looks like this:\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndocs = [\n    \"Python is a high-level programming language.\",\n    \"FastAPI is a modern Python web framework.\",\n    \"Pandas handles tabular data in Python.\",\n    \"React is a JavaScript UI library.\",\n]\ndoc_vecs = model.encode(docs, normalize_embeddings=True)\n\nquery = \"What library do I use for dataframes?\"\nq_vec = model.encode(query, normalize_embeddings=True)\n\nscores = doc_vecs @ q_vec  # cosine sim because we normalized\nbest = int(np.argmax(scores))\nprint(docs[best])  # → Pandas handles tabular data in Python.\n```\n\nBecause we passed `normalize_embeddings=True`, a simple dot product *is* cosine similarity â€” no extra math required.\n\n### When to pick MiniLM vs bigger models\n\n| Use case | Pick this |\n|---|---|\n| Local prototype, <100k docs | **all-MiniLM-L6-v2** |\n| Multilingual content | paraphrase-multilingual-MiniLM-L12-v2 |\n| Highest quality, latency OK | bge-large-en or mpnet-base |\n| Code search | code-specific models (codebert, jina-code) |\n\nFor Homie's default RAG backbone â€” fast, English-mostly, embedded in the app â€” MiniLM is the right call. You can always swap in a larger model later; the vector pipeline stays identical.\n\n### Tips for production\n\n- Always **batch** your `.encode()` calls â€” batches of 32-64 are sweet spots on CPU.\n- Persist vectors to **FAISS**, **Chroma**, or **sqlite-vec** so you don't re-embed on every request.\n- Cap input to ~256 tokens (the model truncates anything longer).\n- Normalize once at write time; never normalize twice.\n\n> **Key Insight:** Embedding quality plateaus quickly for most retrieval tasks. A 22M-param distilled model often beats a 7B LLM at *finding* the right chunk â€” leave the heavy lifting for the generation step, not the search step."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "The Tiny Model That Powers Big RAG",
+      "body": "all-MiniLM-L6-v2 is only 80MB but produces 384-dimensional embeddings that rival models 10x its size on semantic search benchmarks. Today you'll wire it into a working retrieval pipeline.",
+      "emoji": "ðŸ§¬",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "minilm_walkthrough",
+      "language": "python",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer",
+          "narration": "Import the SentenceTransformer wrapper â€” it handles tokenization, pooling, and tensor conversion for us."
+        },
+        {
+          "line": "import numpy as np",
+          "narration": "NumPy will help us compute cosine similarity with a single dot product."
+        },
+        {
+          "line": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "narration": "First call downloads ~80MB from the Hugging Face Hub and caches it locally. Subsequent runs are instant."
+        },
+        {
+          "line": "docs = ['FastAPI is async-first.', 'Django is batteries-included.', 'Flask is minimal.']",
+          "narration": "Our toy corpus â€” three sentences about Python web frameworks."
+        },
+        {
+          "line": "doc_vecs = model.encode(docs, normalize_embeddings=True)",
+          "narration": "Encode all docs in one batch. normalize_embeddings=True scales each vector to unit length so dot products equal cosine similarity."
+        },
+        {
+          "line": "query = 'Which framework is lightweight?'",
+          "narration": "The user's natural-language question. Notice it shares almost no exact words with 'Flask is minimal'."
+        },
+        {
+          "line": "q_vec = model.encode(query, normalize_embeddings=True)",
+          "narration": "Encode the query the same way. Same model, same normalization â€” critical for valid comparisons."
+        },
+        {
+          "line": "scores = doc_vecs @ q_vec",
+          "narration": "Matrix-vector product: each row of doc_vecs dotted with q_vec. Result is a 1D array of cosine similarities."
+        },
+        {
+          "line": "best_idx = int(np.argmax(scores))",
+          "narration": "Pick the index with the highest similarity â€” that's our top retrieval result."
+        },
+        {
+          "line": "print(f'Top match: {docs[best_idx]} (score={scores[best_idx]:.3f})')",
+          "narration": "Should print the Flask line â€” semantic similarity caught that 'lightweight' â‰ˆ 'minimal' even without keyword overlap."
+        }
+      ],
+      "duration_ms": 22000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "particle": "sparkles",
+      "message": "You just built a local semantic search engine!",
+      "duration_ms": 3000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use all-MiniLM-L6-v2 to find which of three documents is most semantically similar to the query 'how do I bake bread?'. Return the index (0, 1, or 2) of the best match. Use cosine similarity via normalized embeddings + dot product."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndocs = [\n    'Python lists support fast appending.',\n    'Sourdough requires flour, water, salt, and time.',\n    'Quantum computers use qubits for superposition.',\n]\nquery = 'how do I bake bread?'\n\ndef find_best_match(query: str, docs: list[str]) -> int:\n    # TODO: encode docs and query with normalize_embeddings=True\n    # TODO: compute cosine similarity via dot product\n    # TODO: return the index of the highest-scoring doc\n    pass\n\nresult = find_best_match(query, docs)\nprint(result)\n",
+      "expected_output": "1",
+      "hints": {
+        "en": [
+          "Call model.encode(docs, normalize_embeddings=True) once on the whole list â€” batching is faster than looping.",
+          "When vectors are unit-normalized, cosine similarity equals the dot product: doc_vecs @ q_vec.",
+          "np.argmax returns the index of the maximum element; wrap it in int() to return a plain Python int."
+        ]
+      },
+      "test_code": "assert find_best_match('how do I bake bread?', docs) == 1, 'Expected index 1 (sourdough doc) to be the best match'\nassert find_best_match('what is a qubit?', docs) == 2, 'Expected index 2 (quantum doc) for a physics query'\nassert find_best_match('how do I append to a list?', docs) == 0, 'Expected index 0 (Python doc) for a Python query'\nprint('All assertions passed!')"
+    },
+    {
+      "instruction": {
+        "en": "Build a tiny RAG retriever class `MiniRAG` with two methods: `add(docs: list[str])` to index documents, and `search(query: str, k: int = 1) -> list[str]` that returns the top-k most similar docs. Use all-MiniLM-L6-v2 and normalized embeddings."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nclass MiniRAG:\n    def __init__(self):\n        self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n        self.docs: list[str] = []\n        self.vecs = None  # will hold a (N, 384) numpy array\n\n    def add(self, docs: list[str]) -> None:\n        # TODO: store docs and compute normalized embeddings\n        pass\n\n    def search(self, query: str, k: int = 1) -> list[str]:\n        # TODO: embed query, compute scores, return top-k docs sorted by score desc\n        pass\n\nrag = MiniRAG()\nrag.add(['cats purr when happy', 'dogs wag their tails', 'fish swim in schools'])\nprint(rag.search('feline behavior', k=1))\n",
+      "expected_output": "['cats purr when happy']",
+      "hints": {
+        "en": [
+          "In add(), save self.docs = docs and self.vecs = self.model.encode(docs, normalize_embeddings=True).",
+          "In search(), embed the query the same way, compute scores = self.vecs @ q_vec, then use np.argsort(scores)[::-1][:k] to get top-k indices.",
+          "Return [self.docs[i] for i in top_indices] â€” a list of the actual document strings, ordered by relevance."
+        ]
+      },
+      "test_code": "rag = MiniRAG()\nrag.add(['cats purr when happy', 'dogs wag their tails', 'fish swim in schools'])\n\nresult = rag.search('feline behavior', k=1)\nassert result == ['cats purr when happy'], f'Expected cat doc, got {result}'\n\ntop2 = rag.search('aquatic animals', k=2)\nassert len(top2) == 2, 'k=2 should return 2 docs'\nassert top2[0] == 'fish swim in schools', f'Expected fish doc first, got {top2[0]}'\n\nassert rag.vecs.shape == (3, 384), f'Expected (3, 384) embedding matrix, got {rag.vecs.shape}'\nprint('MiniRAG works!')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "retrieval_augmented_generation",
+      "vector_normalization",
+      "hugging_face_hub",
+      "sentence_transformers"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "list_comprehensions",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "tutorial_with_code",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "embedding_models",
+      "homie_backbone"
+    ]
+  },
+  "generated": true
+}
