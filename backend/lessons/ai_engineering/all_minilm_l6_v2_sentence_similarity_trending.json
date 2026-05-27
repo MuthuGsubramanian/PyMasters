@@ -1,0 +1,136 @@
+{
+  "id": "all_minilm_l6_v2_sentence_similarity_trending",
+  "topic": "all_minilm_l6_v2_sentence_similarity_trending",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: The 80MB Workhorse Powering Local Semantic Search"
+  },
+  "description": {
+    "en": "Learn why sentence-transformers/all-MiniLM-L6-v2 became the default embedding model for local RAG, and build a semantic search engine in under 30 lines of Python."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Pocket-Sized Giant of Embeddings\n\nVaathiyaar leans forward with a smile. \"Imagine, kanna, that you could pack the meaning of any English sentence into just 384 numbers â€” and do it 14,000 times per second on your laptop CPU. That is `all-MiniLM-L6-v2`. Only 80MB on disk. No GPU required. Yet it powers Homie's local RAG, half of LangChain's tutorials, and thousands of production semantic search systems. Today we learn why it became the workhorse, and we build one ourselves.\"\n\n### What is a sentence embedding?\n\nA sentence embedding is a fixed-length vector that captures the *meaning* of text. Two sentences with similar meaning produce vectors close to each other in space. \"The cat sat on the mat\" and \"A feline rested on the rug\" land near each other â€” even though they share zero words.\n\nMiniLM achieves this with 6 transformer layers (hence `L6`), distilled from larger models. It outputs a 384-dimensional vector per sentence.\n\n### Why MiniLM over larger models?\n\n| Model | Dim | Size | CPU Speed | MTEB Score |\n|-------|-----|------|-----------|------------|\n| all-MiniLM-L6-v2 | 384 | 80MB | ~14k sent/sec | 56.3 |\n| all-mpnet-base-v2 | 768 | 420MB | ~2.8k sent/sec | 57.8 |\n| BGE-large-en | 1024 | 1.3GB | ~0.9k sent/sec | 64.2 |\n| OpenAI text-embedding-3-small | 1536 | API only | network-bound | 62.3 |\n\nFor most local RAG workloads, the 1.5 point MTEB drop from mpnet is invisible to users â€” but the 5x speedup is not. That is why Homie defaults to MiniLM.\n\n### Building semantic search\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ncorpus = [\n    \"Python is a programming language.\",\n    \"Pizza is a popular Italian food.\",\n    \"Machine learning models predict outcomes.\",\n    \"The Colosseum is in Rome.\",\n]\n\ncorpus_embeddings = model.encode(corpus, normalize_embeddings=True)\n\nquery = \"What can I eat in Italy?\"\nquery_embedding = model.encode(query, normalize_embeddings=True)\n\nscores = corpus_embeddings @ query_embedding\nbest = np.argmax(scores)\nprint(corpus[best])\n```\n\n### The normalize_embeddings trick\n\nWith `normalize_embeddings=True`, every vector has unit length. Cosine similarity then reduces to a simple dot product â€” which is just matrix multiplication. This is why MiniLM + FAISS + numpy scales effortlessly to millions of documents.\n\n### When to NOT use MiniLM\n\nMiniLM was trained on English. It is mediocre at:\n- Multilingual text (use `paraphrase-multilingual-MiniLM-L12-v2`)\n- Code search (use `all-MiniLM-L12-v2` or `CodeBERT`)\n- Long documents (>256 tokens get truncated â€” chunk first)\n\n> **Key Insight**: MiniLM wins because semantic search rarely needs the last 2% of accuracy â€” it needs throughput, low latency, and the ability to run anywhere. A model you can ship on a Raspberry Pi beats a model that requires a $40k/month API budget."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "title": "The 80MB Workhorse",
+      "body": "all-MiniLM-L6-v2 turns any English sentence into 384 numbers that capture its meaning. Small enough for your laptop. Smart enough for production RAG."
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "narration": "Import the library. `sentence-transformers` wraps Hugging Face transformers with pooling layers that produce sentence-level vectors."
+        },
+        {
+          "code": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "narration": "Load MiniLM. The first call downloads ~80MB; subsequent loads use the local cache at ~/.cache/huggingface/."
+        },
+        {
+          "code": "corpus = ['Python is a programming language.', 'Pizza is Italian food.', 'Rome has the Colosseum.']",
+          "narration": "Define our document corpus â€” the knowledge base we want to search."
+        },
+        {
+          "code": "corpus_embeddings = model.encode(corpus, normalize_embeddings=True)",
+          "narration": "Encode all docs in a batch. Each sentence becomes a 384-d unit vector. Batching is essential â€” single-sentence calls are ~10x slower."
+        },
+        {
+          "code": "print(corpus_embeddings.shape)  # (3, 384)",
+          "narration": "Verify shape: 3 documents x 384 dimensions. This is your searchable index."
+        },
+        {
+          "code": "query = 'What food comes from Italy?'",
+          "narration": "Our user query. Notice it shares no words with the corpus â€” semantic search will still find the right match."
+        },
+        {
+          "code": "query_embedding = model.encode(query, normalize_embeddings=True)",
+          "narration": "Encode the query the same way. Always use the same model and same normalization for queries and corpus."
+        },
+        {
+          "code": "scores = corpus_embeddings @ query_embedding",
+          "narration": "Matrix-multiply. Because vectors are normalized, dot product equals cosine similarity. Higher score = more similar."
+        },
+        {
+          "code": "best_idx = scores.argmax()",
+          "narration": "Pick the highest-scoring document. For top-k retrieval, use np.argsort(scores)[::-1][:k]."
+        },
+        {
+          "code": "print(corpus[best_idx])  # Pizza is Italian food.",
+          "narration": "MiniLM correctly maps 'food from Italy' to the pizza document. That's semantic search in 10 lines."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "celebration",
+      "message": "You built a semantic search engine with MiniLM â€” the same model powering thousands of production RAG systems."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a function `semantic_search(query, corpus, top_k=3)` that returns the indices of the top_k most similar documents in the corpus. Use all-MiniLM-L6-v2 and normalized cosine similarity."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef semantic_search(query, corpus, top_k=3):\n    # TODO: encode corpus and query with normalize_embeddings=True\n    # TODO: compute dot-product scores\n    # TODO: return indices of top_k highest scores\n    pass\n",
+      "expected_output": "[1, 3, 0]",
+      "hints": {
+        "en": [
+          "Use model.encode(texts, normalize_embeddings=True) for both corpus and query.",
+          "Dot product is just corpus_embeddings @ query_embedding when vectors are unit-normalized.",
+          "np.argsort(scores)[::-1][:top_k] gives you indices of the top_k highest scores in descending order."
+        ]
+      },
+      "test_code": "corpus = ['I love pizza', 'Python is great', 'Pasta is delicious', 'Java is a language']\nresult = semantic_search('Italian food is tasty', corpus, top_k=2)\nassert isinstance(result, (list, np.ndarray)), 'Must return a list or array of indices'\nassert len(result) == 2, 'Must return exactly top_k=2 indices'\nassert 0 in result and 2 in result, 'Top 2 results should be the food-related documents (indices 0 and 2)'\n"
+    },
+    {
+      "instruction": {
+        "en": "Write a function `cluster_similar(sentences, threshold=0.7)` that groups sentences with cosine similarity above the threshold into clusters. Return a list of clusters where each cluster is a list of sentence indices."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef cluster_similar(sentences, threshold=0.7):\n    # TODO: encode all sentences with normalize_embeddings=True\n    # TODO: compute pairwise similarity matrix\n    # TODO: group sentences with similarity > threshold\n    pass\n",
+      "expected_output": "[[0, 2], [1, 3]]",
+      "hints": {
+        "en": [
+          "Pairwise similarity is embeddings @ embeddings.T when vectors are normalized.",
+          "Iterate sentences; for each unassigned one, start a new cluster and pull in any other unassigned sentence whose similarity exceeds the threshold.",
+          "Track which sentence indices are already assigned to avoid putting them in two clusters."
+        ]
+      },
+      "test_code": "sentences = ['I love dogs', 'Cars are fast', 'Puppies are cute', 'Vehicles drive quickly']\nclusters = cluster_similar(sentences, threshold=0.4)\nassert len(clusters) == 2, f'Expected 2 clusters, got {len(clusters)}'\ndog_cluster = next(c for c in clusters if 0 in c)\ncar_cluster = next(c for c in clusters if 1 in c)\nassert 2 in dog_cluster, 'Dogs and puppies should cluster together'\nassert 3 in car_cluster, 'Cars and vehicles should cluster together'\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "minilm_architecture",
+      "normalized_embeddings",
+      "batch_encoding",
+      "local_rag"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "vector_math",
+      "transformers_intuition"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "embeddings",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "embedding_models",
+      "local_ai_stack"
+    ]
+  },
+  "generated": true
+}
