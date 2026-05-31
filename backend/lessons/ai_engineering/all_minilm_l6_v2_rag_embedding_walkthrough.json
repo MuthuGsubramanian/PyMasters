@@ -1,0 +1,139 @@
+{
+  "id": "all_minilm_l6_v2_rag_embedding_walkthrough",
+  "topic": "all_minilm_l6_v2_rag_embedding_walkthrough",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: The Lightweight Embedding Backbone for Local RAG"
+  },
+  "description": {
+    "en": "Learn how to use sentence-transformers/all-MiniLM-L6-v2 to turn sentences into 384-dim vectors, build a tiny RAG retriever, and power Homie's local embedding pipeline without a GPU."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 80MB Model That Punches Above Its Weight\n\nVaathiyaar leans on the whiteboard and grins. \"Students, today we talk about a tiny giant. The model `sentence-transformers/all-MiniLM-L6-v2` is only **~80MB**, runs on a CPU, and produces **384-dimensional embeddings** that are good enough to power most RAG systems you'll ever build. This is the same backbone we use inside Homie for local retrieval â€” no API keys, no latency, no leaked data.\"\n\n### Why MiniLM-L6-v2?\n\nIt's a distilled version of BERT â€” 6 transformer layers instead of 12 â€” fine-tuned on **1B+ sentence pairs** with a contrastive objective. The result: sentences with similar meaning end up close together in vector space, and dissimilar ones drift apart.\n\n| Model | Dim | Size | Speed (CPU, sent/sec) | MTEB avg |\n|---|---|---|---|---|\n| all-MiniLM-L6-v2 | 384 | ~80MB | ~2,800 | 56.3 |\n| all-mpnet-base-v2 | 768 | ~420MB | ~600 | 57.8 |\n| bge-large-en | 1024 | ~1.3GB | ~180 | 64.2 |\n| OpenAI text-embedding-3-small | 1536 | API | API | 62.3 |\n\nNotice the tradeoff: MiniLM gives up ~1-8 MTEB points but is **4-5x faster** than mpnet and an order of magnitude smaller than bge-large. For local RAG over <100K docs, that's the right tradeoff.\n\n### From sentence to vector â€” one call\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\nemb = model.encode(\"Vaathiyaar teaches Python.\")\nprint(emb.shape)  # (384,)\n```\n\nThat's it. The model handles tokenization, pooling (mean-pooled over tokens), and L2 normalization (if `normalize_embeddings=True`).\n\n### A 10-line RAG retriever\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\ndocs = [\n    \"Python is a high-level programming language.\",\n    \"RAG combines retrieval with generation.\",\n    \"MiniLM is a small, fast embedding model.\",\n]\ndoc_vecs = model.encode(docs, normalize_embeddings=True)\n\nquery = \"What is retrieval augmented generation?\"\nq_vec = model.encode(query, normalize_embeddings=True)\n\nscores = doc_vecs @ q_vec  # cosine sim (vectors are unit-norm)\nbest = docs[int(np.argmax(scores))]\nprint(best)  # \"RAG combines retrieval with generation.\"\n```\n\nBecause vectors are unit-normalized, the dot product **is** the cosine similarity. No extra math.\n\n### Where MiniLM-L6-v2 breaks down\n\n- **Long documents** (>256 tokens get truncated). Chunk first.\n- **Domain-specific jargon** (medical, legal). Fine-tune or pick a domain model.\n- **Cross-lingual** queries. Use `paraphrase-multilingual-MiniLM-L12-v2` instead.\n- **Reranking** â€” MiniLM is a *biencoder*; for top-k reranking, pair it with a cross-encoder like `ms-marco-MiniLM-L-6-v2`.\n\n> **Key Insight:** all-MiniLM-L6-v2 is the *default* embedding model you should reach for first. It's small enough to ship inside Homie, fast enough to embed thousands of docs per second on a laptop, and good enough that you only need to upgrade when you've measured a real recall problem â€” not before."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "The 80MB Giant",
+      "body": "all-MiniLM-L6-v2 turns any sentence into a 384-dim vector in milliseconds â€” on your laptop. Today we build a local RAG retriever with it.",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rag_pipeline",
+      "language": "python",
+      "title": "Build a Local RAG Retriever",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "explain": "Import the high-level wrapper. It hides tokenization, pooling, and normalization."
+        },
+        {
+          "code": "import numpy as np",
+          "explain": "We'll need numpy for the similarity math â€” just one dot product."
+        },
+        {
+          "code": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "explain": "Downloads ~80MB on first run, then caches in ~/.cache/huggingface. Loads in <2s on CPU."
+        },
+        {
+          "code": "docs = ['Python is a programming language.', 'RAG combines retrieval with generation.', 'MiniLM is a small embedding model.']",
+          "explain": "Your knowledge base. In real apps these come from chunked PDFs, Notion pages, or a database."
+        },
+        {
+          "code": "doc_vecs = model.encode(docs, normalize_embeddings=True)",
+          "explain": "Batch-encode all docs. normalize_embeddings=True gives unit vectors so dot product == cosine similarity."
+        },
+        {
+          "code": "print(doc_vecs.shape)  # (3, 384)",
+          "explain": "Three documents, each represented as a 384-dim vector. This is your tiny vector store."
+        },
+        {
+          "code": "query = 'What is retrieval augmented generation?'",
+          "explain": "User question â€” note it uses different words than the doc ('combines retrieval with generation')."
+        },
+        {
+          "code": "q_vec = model.encode(query, normalize_embeddings=True)",
+          "explain": "Encode the query with the SAME model. Asymmetric models (e.g. bge) need a prefix â€” MiniLM doesn't."
+        },
+        {
+          "code": "scores = doc_vecs @ q_vec",
+          "explain": "Matrix-vector dot product â†’ cosine similarity scores. Shape (3,). The highest score wins."
+        },
+        {
+          "code": "print(docs[int(np.argmax(scores))])",
+          "explain": "Retrieves the RAG doc even though no words overlap â€” that's semantic search in action."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "message": "You just built a working RAG retriever in 10 lines. Homie does this same thing under the hood.",
+      "duration_ms": 3000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use all-MiniLM-L6-v2 to find the most semantically similar sentence to a query. Encode the docs and query with normalize_embeddings=True, then return the doc with the highest cosine similarity."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndocs = [\n    'The cat sat on the mat.',\n    'Dogs love to play fetch in the park.',\n    'A feline rested on the rug.',\n    'Stock markets closed higher today.',\n]\nquery = 'A cat is lying on a carpet.'\n\ndef most_similar(query: str, docs: list[str]) -> str:\n    # TODO: encode docs and query with normalize_embeddings=True\n    # TODO: compute cosine similarities via dot product\n    # TODO: return the doc with the highest score\n    pass\n\nresult = most_similar(query, docs)\nprint(result)",
+      "expected_output": "A feline rested on the rug.",
+      "hints": {
+        "en": [
+          "Pass normalize_embeddings=True to model.encode() so dot product equals cosine similarity.",
+          "Use np.argmax(scores) to find the index of the highest-scoring document.",
+          "'A feline rested on the rug' has no word overlap with the query, but it's the closest in meaning â€” that's what semantic search rewards."
+        ]
+      },
+      "test_code": "assert result == 'A feline rested on the rug.', f'Expected the feline sentence, got: {result}'\nprint('PASS')"
+    },
+    {
+      "instruction": {
+        "en": "Build a top_k retriever: given a query and a list of docs, return the top 2 most similar docs ordered by descending cosine similarity."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndocs = [\n    'Python decorators wrap functions to add behavior.',\n    'FastAPI uses type hints to generate OpenAPI docs.',\n    'Use @staticmethod for methods that ignore the instance.',\n    'PostgreSQL supports JSONB columns for semi-structured data.',\n]\nquery = 'How do I add functionality to a Python function without modifying it?'\n\ndef top_k(query: str, docs: list[str], k: int = 2) -> list[str]:\n    # TODO: encode docs and query with normalize_embeddings=True\n    # TODO: compute scores and return the top k docs sorted by score (desc)\n    pass\n\nresults = top_k(query, docs, k=2)\nfor r in results:\n    print(r)",
+      "expected_output": "Python decorators wrap functions to add behavior.\nUse @staticmethod for methods that ignore the instance.",
+      "hints": {
+        "en": [
+          "After computing scores = doc_vecs @ q_vec, use np.argsort(scores)[::-1][:k] to get the top-k indices.",
+          "Both decorator-related docs should rank above FastAPI/Postgres because they're semantically about 'adding behavior to functions'.",
+          "Return [docs[i] for i in top_indices] to preserve order."
+        ]
+      },
+      "test_code": "assert len(results) == 2, f'Expected 2 results, got {len(results)}'\nassert results[0] == 'Python decorators wrap functions to add behavior.', f'Top result wrong: {results[0]}'\nassert 'staticmethod' in results[1] or 'decorators' in results[1], f'Second result wrong: {results[1]}'\nprint('PASS')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "rag_retrieval",
+      "biencoder",
+      "local_inference"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "embeddings",
+    "path_memberships": [
+      "trending_ai",
+      "rag_foundations",
+      "homie_internals"
+    ]
+  },
+  "generated": true
+}
