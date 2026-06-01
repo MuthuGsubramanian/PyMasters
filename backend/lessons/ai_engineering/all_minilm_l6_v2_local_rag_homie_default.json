@@ -1,0 +1,243 @@
+{
+  "id": "all_minilm_l6_v2_local_rag_homie_default",
+  "topic": "all_minilm_l6_v2_local_rag_homie_default",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Local RAG with all-MiniLM-L6-v2: Homie's Default Embedding Backbone"
+  },
+  "description": {
+    "en": "Build a complete local RAG pipeline using sentence-transformers/all-MiniLM-L6-v2 â€” the 80MB embedding model Homie ships by default for offline semantic search. Covers chunking, indexing, retrieval, and prompt assembly with zero API keys."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Local RAG, Zero API Keys: Why MiniLM Is Homie's Default\n\nVaathiyaar here! You want a Retrieval-Augmented Generation system that runs on your laptop, respects your data privacy, never hits a paid endpoint, and starts in seconds. That's exactly the gap `sentence-transformers/all-MiniLM-L6-v2` fills â€” and it's why Homie (our local AI assistant) ships it as the default embedding backbone. 80MB on disk. 384-dimensional vectors. ~14,000 sentences per second on a modest CPU. No tokens, no rate limits, no surprises on your bill.\n\nIn this lesson you'll build a complete local RAG pipeline: chunk documents, embed them with MiniLM, store them, retrieve by semantic similarity, and assemble a context-rich prompt â€” the exact loop Homie uses for its offline knowledge base.\n\n### Why MiniLM for Local RAG?\n\n| Property | all-MiniLM-L6-v2 | OpenAI text-embedding-3-small | BGE-large-en |\n|---|---|---|---|\n| Size on disk | 80 MB | API only | 1.34 GB |\n| Output dim | 384 | 1536 | 1024 |\n| CPU throughput | ~14K sent/sec | network-bound | ~1.5K sent/sec |\n| Cost per 1M tokens | $0 (local) | $0.02 | $0 (local) |\n| Cold start | <2 sec | ~50ms network | ~8 sec |\n| Privacy | 100% local | Sent to OpenAI | 100% local |\n\nFor sub-50K-document personal knowledge bases â€” exactly Homie's target â€” MiniLM hits the speed-quality-size sweet spot.\n\n### The Local RAG Loop\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nknowledge_base = [\n    \"Python uses indentation to define code blocks.\",\n    \"FAISS is an efficient library for vector similarity search.\",\n    \"RAG combines retrieval with generation for grounded answers.\",\n    \"Embeddings map text into a continuous vector space.\",\n]\n\nindex = model.encode(knowledge_base, normalize_embeddings=True)\n\ndef retrieve(query, k=2):\n    q = model.encode(query, normalize_embeddings=True)\n    scores = index @ q\n    top = np.argsort(-scores)[:k]\n    return [(knowledge_base[i], float(scores[i])) for i in top]\n\nprint(retrieve(\"How do I do similarity search efficiently?\"))\n```\n\nWith normalized embeddings, a single matrix-vector product `index @ q` gives you cosine similarity for the entire corpus â€” no extra library required.\n\n### Chunking Matters More Than the Model\n\nMiniLM has a 256-token window. Anything longer is silently truncated. For real documents, chunk first:\n\n```python\ndef chunk(text, max_words=120, overlap=20):\n    words = text.split()\n    chunks = []\n    i = 0\n    while i < len(words):\n        chunks.append(\" \".join(words[i:i + max_words]))\n        i += max_words - overlap\n    return chunks\n```\n\nThe overlap preserves context across boundaries â€” a question whose answer straddles two chunks still gets retrieved.\n\n### Assembling the RAG Prompt\n\n```python\ndef build_prompt(query, k=3):\n    hits = retrieve(query, k)\n    context = \"\\n\".join(f\"- {doc}\" for doc, _ in hits)\n    return (\n        \"Use only the context below to answer.\\n\\n\"\n        f\"Context:\\n{context}\\n\\n\"\n        f\"Question: {query}\\nAnswer:\"\n    )\n```\n\nFeed that string to any local LLM â€” Qwen3-0.6B, Phi-3, Llama-3.2-1B â€” and you have a fully offline RAG system. This is the exact pattern Homie wires together for its on-device assistant.\n\n### Production Tips for Local RAG\n\n- **Persist the index**: `np.save(\"index.npy\", embeddings)` â€” recomputing every startup wastes CPU\n- **Batch the encode**: pass a list, never a loop of single strings\n- **Quantize for edge**: ONNX INT8 quantization shrinks MiniLM to ~22MB with <1% quality loss\n- **Re-embed on edits only**: track document hashes; only re-encode changed chunks\n\n> **Key Insight:** Local RAG isn't about matching GPT-4 quality â€” it's about owning your data and shipping something useful without an API bill. all-MiniLM-L6-v2 is the cheapest, fastest, smallest model that still gets retrieval right for personal-scale corpora. That's why it's Homie's default, and why it's the right starting point for every local AI side project you'll ever build."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Local RAG means your documents never leave your laptop. all-MiniLM-L6-v2 is the 80MB embedding model that makes this practical â€” fast enough for interactive use, small enough to ship in an app, and zero cost per query. Homie uses it by default for exactly these reasons.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nknowledge_base = [\n    \"Python uses indentation to define code blocks.\",\n    \"FAISS is a library for efficient vector similarity search.\",\n    \"RAG combines retrieval with generation for grounded answers.\",\n    \"Embeddings map text into a continuous vector space.\",\n]\n\nindex = model.encode(knowledge_base, normalize_embeddings=True)\nprint(index.shape)\nprint(np.linalg.norm(index[0]))",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer â€” the wrapper around hundreds of pretrained embedding models. Install with: pip install sentence-transformers."
+        },
+        {
+          "line": 4,
+          "explanation": "Load all-MiniLM-L6-v2. First call downloads ~80MB to a local cache; subsequent calls load instantly from disk."
+        },
+        {
+          "line": 6,
+          "explanation": "Define a small in-memory knowledge base. In Homie this would be your notes, docs, or chat history chunked into short passages."
+        },
+        {
+          "line": 13,
+          "explanation": "Encode all documents at once. Batch encoding is critical â€” it uses internal mini-batches and is dramatically faster than encoding one at a time."
+        },
+        {
+          "line": 13,
+          "explanation": "normalize_embeddings=True makes every vector unit-length. This lets us use dot product instead of cosine similarity later â€” same result, faster math."
+        },
+        {
+          "line": 14,
+          "explanation": "Output shape is (4, 384): four documents, each represented as a 384-dimensional vector. This is the 'index' for our local RAG system."
+        },
+        {
+          "line": 15,
+          "explanation": "The L2 norm is 1.0 â€” confirming normalization worked. Now dot(a,b) directly equals cos_sim(a,b)."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\nkb = [\n    \"FAISS enables efficient nearest-neighbor search over vectors.\",\n    \"Pasta should be cooked until al dente.\",\n    \"Retrieval-augmented generation grounds LLMs in real documents.\",\n]\nindex = model.encode(kb, normalize_embeddings=True)\n\ndef retrieve(query, k=2):\n    q = model.encode(query, normalize_embeddings=True)\n    scores = index @ q\n    top = np.argsort(-scores)[:k]\n    return [(kb[i], float(scores[i])) for i in top]\n\nfor doc, s in retrieve(\"how do I do fast vector search?\"):\n    print(f\"{s:.3f} | {doc}\")",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "Load MiniLM and prepare a 3-document knowledge base â€” two tech docs and one unrelated cooking doc to verify semantic filtering."
+        },
+        {
+          "line": 9,
+          "explanation": "Encode the corpus once into a normalized matrix of shape (3, 384). This is the persistent 'index' you would save to disk in production."
+        },
+        {
+          "line": 11,
+          "explanation": "Define retrieve() â€” the heart of any RAG system. It takes a query and returns the k most similar documents."
+        },
+        {
+          "line": 12,
+          "explanation": "Encode the query into the same 384-dim space. Critically: the query embedding must use the SAME model as the index. Different model = nonsensical scores."
+        },
+        {
+          "line": 13,
+          "explanation": "index @ q is a matrix-vector product. Because both are normalized, each output value is the cosine similarity between the query and one document â€” all in one BLAS call."
+        },
+        {
+          "line": 14,
+          "explanation": "np.argsort(-scores) sorts indices by descending score. Slicing [:k] gives the top-k document indices."
+        },
+        {
+          "line": 15,
+          "explanation": "Return a list of (document, score) tuples. Scores range from -1 to 1; for sentence-transformers, useful matches usually score above 0.3."
+        },
+        {
+          "line": 18,
+          "explanation": "The vector-search doc ranks #1 even though the query says 'fast' and 'vector' â€” synonyms of 'efficient' and 'nearest-neighbor'. The cooking doc gets filtered out automatically."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef chunk(text, max_words=120, overlap=20):\n    words = text.split()\n    out, i = [], 0\n    while i < len(words):\n        out.append(\" \".join(words[i:i + max_words]))\n        i += max_words - overlap\n    return out\n\ndoc = \"Python is a high-level language. \" * 80\nchunks = chunk(doc)\nindex = model.encode(chunks, normalize_embeddings=True)\n\ndef build_prompt(query, k=3):\n    q = model.encode(query, normalize_embeddings=True)\n    top = np.argsort(-(index @ q))[:k]\n    context = \"\\n\".join(f\"- {chunks[i]}\" for i in top)\n    return f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"\n\nprint(build_prompt(\"What is Python?\")[:200])",
+      "steps": [
+        {
+          "line": 6,
+          "explanation": "Define a sliding-window chunker. MiniLM truncates inputs at 256 tokens â€” anything longer is silently discarded, so chunking is mandatory for real documents."
+        },
+        {
+          "line": 11,
+          "explanation": "The overlap parameter (20 words) keeps context intact across boundaries. A fact that straddles two chunks still gets retrieved by at least one."
+        },
+        {
+          "line": 14,
+          "explanation": "Simulate a long document by repeating a sentence 80 times. In practice this would be a PDF page, a Markdown file, or a transcript."
+        },
+        {
+          "line": 15,
+          "explanation": "Chunk the document. Each chunk becomes one searchable unit â€” finer-grained than full documents, which improves retrieval precision."
+        },
+        {
+          "line": 16,
+          "explanation": "Encode all chunks at once. This is where the model earns its keep â€” ~14K sentences/sec means even a 10K-chunk knowledge base indexes in under a second."
+        },
+        {
+          "line": 18,
+          "explanation": "build_prompt is the second half of RAG: retrieve relevant chunks, then format them into a prompt the LLM can ground its answer in."
+        },
+        {
+          "line": 20,
+          "explanation": "Combine encoding, similarity, and top-k selection in one expression. This is the entire retrieval system in three lines of NumPy."
+        },
+        {
+          "line": 21,
+          "explanation": "Format retrieved chunks as a bulleted context block. The 'Context: ... Question: ... Answer:' template is the canonical RAG prompt â€” works with virtually any instruction-tuned LLM."
+        },
+        {
+          "line": 24,
+          "explanation": "Feed this string to any local LLM (Qwen3, Phi-3, Llama-3.2) and you have a fully offline RAG system â€” Homie's exact pattern."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud RAG (OpenAI embeddings)",
+      "right_label": "Local RAG (all-MiniLM-L6-v2)",
+      "items": [
+        {
+          "left": "Per-query API cost",
+          "right": "Zero cost after model download"
+        },
+        {
+          "left": "Data sent to third-party servers",
+          "right": "100% local â€” data never leaves device"
+        },
+        {
+          "left": "Requires network connection",
+          "right": "Works fully offline"
+        },
+        {
+          "left": "Rate limits and quota errors",
+          "right": "Limited only by your CPU"
+        },
+        {
+          "left": "Network latency per query (~50ms)",
+          "right": "<5ms encoding latency"
+        },
+        {
+          "left": "1536-dim vectors (more storage)",
+          "right": "384-dim vectors (4x smaller index)"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built a local RAG pipeline with MiniLM â€” the same backbone Homie uses for offline semantic search!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LocalRAGIndex` class that simulates Homie's local embedding index. It accepts a list of document chunks at construction. Implement `_embed(text)` that returns a simple deterministic 'embedding' as a dict mapping each unique lowercased word to its count divided by the total word count (a normalized term-frequency vector). Implement `_score(query_vec, doc_vec)` that returns the sum over shared words of `query_vec[w] * doc_vec[w]` (a sparse dot product). Implement `search(query, top_k)` that returns a list of `{\"chunk\": str, \"score\": float}` sorted by score descending. Ties should preserve original chunk order."
+      },
+      "starter_code": "class LocalRAGIndex:\n    def __init__(self, chunks: list[str]):\n        self.chunks = chunks\n        self.vectors = [self._embed(c) for c in chunks]\n\n    def _embed(self, text: str) -> dict:\n        # Lowercase, split on whitespace, count words,\n        # then divide each count by the total number of words.\n        # Return a dict {word: normalized_count}.\n        pass\n\n    def _score(self, query_vec: dict, doc_vec: dict) -> float:\n        # Sparse dot product over the intersection of keys.\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Embed the query, score against every chunk,\n        # return the top_k as [{\"chunk\": ..., \"score\": ...}, ...]\n        # sorted by score descending; ties preserve original order.\n        pass\n\n# Test it:\nindex = LocalRAGIndex([\n    \"python is a programming language\",\n    \"machine learning needs lots of data\",\n    \"python is great for machine learning\",\n    \"pasta cooks in boiling water\",\n])\n\nresults = index.search(\"python machine learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"chunk\"])\nprint(results[0][\"score\"] >= results[1][\"score\"])",
+      "expected_output": "2\npython is great for machine learning\nTrue",
+      "hints": {
+        "en": [
+          "In _embed(), split text.lower().split(), count with a dict, then divide every value by len(words). Return {} for empty strings.",
+          "In _score(), iterate over the smaller of the two dicts and sum query_vec[w] * doc_vec.get(w, 0) for w in shared keys.",
+          "In search(), build a list of (score, original_index, chunk) tuples so a stable sort preserves original order on ties; then format the top_k results."
+        ]
+      },
+      "test_code": "idx = LocalRAGIndex([\"hello world\", \"hello hello\", \"goodbye world\"])\nv = idx._embed(\"hello hello world\")\nassert abs(v[\"hello\"] - 2/3) < 1e-6\nassert abs(v[\"world\"] - 1/3) < 1e-6\nassert idx._embed(\"\") == {}\ns = idx._score({\"a\": 0.5, \"b\": 0.5}, {\"a\": 0.5, \"c\": 0.5})\nassert abs(s - 0.25) < 1e-6\nresults = idx.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"chunk\"] == \"hello hello\"\nassert results[0][\"score\"] >= results[1][\"score\"]\nresults2 = idx.search(\"banana\", top_k=2)\nassert all(r[\"score\"] == 0.0 for r in results2)\nassert len(results2) == 2"
+    },
+    {
+      "instruction": {
+        "en": "Build a `HomieRAGPipeline` class on top of `LocalRAGIndex` that simulates Homie's full local RAG loop. The constructor accepts raw documents (long strings). Implement `_chunk(text, max_words, overlap)` that splits a string into overlapping word windows using a sliding window. Build the underlying index from all chunks across all documents. Implement `answer(query, top_k)` that returns a dict with keys `\"prompt\"` (a string formatted as `\"Context:\\n- chunk1\\n- chunk2\\n\\nQuestion: <query>\\nAnswer:\"`) and `\"sources\"` (the list of retrieved chunks in ranked order). Use `max_words=10, overlap=2` as the chunker defaults."
+      },
+      "starter_code": "class LocalRAGIndex:\n    def __init__(self, chunks):\n        self.chunks = chunks\n        self.vectors = [self._embed(c) for c in chunks]\n\n    def _embed(self, text):\n        words = text.lower().split()\n        if not words:\n            return {}\n        vec = {}\n        for w in words:\n            vec[w] = vec.get(w, 0) + 1\n        return {w: c / len(words) for w, c in vec.items()}\n\n    def _score(self, q, d):\n        return sum(q[w] * d.get(w, 0) for w in q)\n\n    def search(self, query, top_k=3):\n        q = self._embed(query)\n        scored = [\n            (self._score(q, v), i, c)\n            for i, (c, v) in enumerate(zip(self.chunks, self.vectors))\n        ]\n        scored.sort(key=lambda t: (-t[0], t[1]))\n        return [{\"chunk\": c, \"score\": s} for s, _, c in scored[:top_k]]\n\nclass HomieRAGPipeline:\n    def __init__(self, documents: list[str]):\n        # 1. Chunk every document into overlapping windows.\n        # 2. Build a single LocalRAGIndex from all chunks combined.\n        pass\n\n    def _chunk(self, text: str, max_words: int = 10, overlap: int = 2) -> list[str]:\n        # Sliding window over words; step = max_words - overlap.\n        # Return [] for empty text.\n        pass\n\n    def answer(self, query: str, top_k: int = 3) -> dict:\n        # 1. Retrieve top_k chunks via the index.\n        # 2. Format the prompt with the exact template.\n        # 3. Return {\"prompt\": str, \"sources\": list[str]}.\n        pass\n\n# Test it:\ndocs = [\n    \"Python is a high level programming language used for data science and machine learning and web development\",\n    \"FAISS provides efficient nearest neighbor search over high dimensional vector embeddings for retrieval systems\",\n    \"Pasta should be cooked in salted boiling water until it reaches an al dente texture for best results\",\n]\npipeline = HomieRAGPipeline(docs)\nresult = pipeline.answer(\"vector search retrieval\", top_k=2)\nprint(\"Context:\" in result[\"prompt\"])\nprint(\"Question: vector search retrieval\" in result[\"prompt\"])\nprint(result[\"prompt\"].rstrip().endswith(\"Answer:\"))\nprint(len(result[\"sources\"]) == 2)\nprint(any(\"faiss\" in s.lower() or \"vector\" in s.lower() for s in result[\"sources\"]))",
+      "expected_output": "True\nTrue\nTrue\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In _chunk(), step the window by max_words - overlap. Stop when the window's start index is past the last word. Return an empty list for empty input.",
+          "In __init__, flatten chunks from every document into one list, then pass that combined list to LocalRAGIndex.",
+          "In answer(), call self.index.search(query, top_k); the prompt template is exactly 'Context:\\n- a\\n- b\\n\\nQuestion: <query>\\nAnswer:' with each chunk on its own bullet line."
+        ]
+      },
+      "test_code": "p = HomieRAGPipeline([\"alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu\"])\nchunks = p._chunk(\"alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu\", max_words=5, overlap=1)\nassert chunks[0] == \"alpha beta gamma delta epsilon\"\nassert chunks[1].split()[0] == \"epsilon\"\nassert p._chunk(\"\") == []\nresult = p.answer(\"alpha beta\", top_k=1)\nassert isinstance(result, dict)\nassert \"prompt\" in result and \"sources\" in result\nassert result[\"prompt\"].startswith(\"Context:\\n- \")\nassert \"Question: alpha beta\" in result[\"prompt\"]\nassert result[\"prompt\"].rstrip().endswith(\"Answer:\")\nassert len(result[\"sources\"]) == 1\nassert \"alpha\" in result[\"sources\"][0].lower()\nbig = HomieRAGPipeline([\"one two three four five six seven eight\", \"red green blue yellow purple orange black white\"])\nr2 = big.answer(\"red green\", top_k=2)\nassert any(\"red\" in s.lower() for s in r2[\"sources\"])"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "local RAG",
+      "sentence embeddings",
+      "all-MiniLM-L6-v2",
+      "document chunking",
+      "cosine similarity",
+      "prompt assembly",
+      "offline AI",
+      "Homie embedding backbone"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "list comprehensions",
+      "basic numpy"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
