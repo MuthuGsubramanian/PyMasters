@@ -1,0 +1,231 @@
+{
+  "id": "all_minilm_l6_v2_homie_lightweight_rag",
+  "topic": "all_minilm_l6_v2_homie_lightweight_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Building Homie's Local RAG with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Build a fully local Retrieval-Augmented Generation pipeline using all-MiniLM-L6-v2 â€” the 80MB embedding workhorse that powers Homie, a privacy-first assistant. No API keys, no network, just fast semantic retrieval on your laptop."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Homie's Brain: A 80MB Model That Runs Anywhere\n\nVaathiyaar here! Meet **Homie** â€” a personal AI assistant that lives on your laptop, indexes your notes, and never phones home. Homie's secret? It doesn't call OpenAI. It doesn't need GPT-4. It runs entirely offline using a tiny 80MB model called `all-MiniLM-L6-v2`. Today we'll build Homie's retrieval brain from scratch and learn why this model is the default choice for every serious local RAG pipeline shipping in 2026.\n\nThe magic of RAG is simple: before answering a question, retrieve the most relevant chunks of your knowledge base and stuff them into the prompt. The hard part is *retrieval* â€” finding semantically relevant text fast, without an API bill. That's exactly what MiniLM-L6-v2 does in milliseconds, on CPU, with zero dependencies on cloud services.\n\n### Why MiniLM-L6-v2 Wins for Local Assistants\n\n| Factor | all-MiniLM-L6-v2 | OpenAI text-embedding-3-small | all-mpnet-base-v2 |\n|---|---|---|---|\n| Size on disk | 80 MB | API only | 420 MB |\n| Embedding dim | 384 | 1536 | 768 |\n| CPU throughput | ~14K sent/sec | Network-bound | ~2.8K sent/sec |\n| Privacy | 100% local | Data leaves device | 100% local |\n| Cost per 1M tokens | $0 | $0.02 | $0 |\n| Cold-start time | <2s | Network latency | ~5s |\n\nFor a personal assistant indexing your journal, code, or research notes, MiniLM-L6-v2 hits the sweet spot â€” small enough to load instantly, accurate enough for natural-language search, and *yours forever* once downloaded.\n\n### Step 1: Chunk and Embed\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nnotes = [\n    \"I tried Karaikudi chicken curry last Sunday â€” used kalpasi for smokiness\",\n    \"Refactored the auth module to use JWT tokens with 24h expiry\",\n    \"Mum's recipe: temper mustard seeds, curry leaves, then add tomato\",\n    \"Need to renew domain pymasters.net by August 2026\",\n]\n\nembeddings = model.encode(notes, normalize_embeddings=True)\n# embeddings.shape == (4, 384)\n```\n\nNormalized embeddings let us use dot product as cosine similarity â€” a free speedup that matters when your index grows to thousands of notes.\n\n### Step 2: The Retriever\n\n```python\nimport numpy as np\n\nclass HomieRetriever:\n    def __init__(self):\n        self.model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n        self.docs: list[str] = []\n        self.vectors: np.ndarray | None = None\n\n    def add(self, texts: list[str]) -> None:\n        new_vecs = self.model.encode(texts, normalize_embeddings=True)\n        self.docs.extend(texts)\n        self.vectors = new_vecs if self.vectors is None else np.vstack([self.vectors, new_vecs])\n\n    def search(self, query: str, k: int = 3) -> list[tuple[str, float]]:\n        q = self.model.encode(query, normalize_embeddings=True)\n        scores = self.vectors @ q  # dot product == cosine since normalized\n        top_idx = np.argsort(-scores)[:k]\n        return [(self.docs[i], float(scores[i])) for i in top_idx]\n```\n\nNotice `self.vectors @ q` â€” a single matrix-vector multiplication ranks every document at once. NumPy's BLAS routines crunch this in microseconds even for 10,000 documents.\n\n### Step 3: Build the RAG Prompt\n\n```python\ndef ask_homie(retriever: HomieRetriever, question: str, llm) -> str:\n    hits = retriever.search(question, k=3)\n    context = \"\\n\".join(f\"- {text} (score: {score:.2f})\" for text, score in hits)\n    prompt = (\n        f\"You are Homie, a helpful local assistant.\\n\\n\"\n        f\"Context from user's notes:\\n{context}\\n\\n\"\n        f\"Question: {question}\\nAnswer:\"\n    )\n    return llm.generate(prompt)\n```\n\nPair this with a local LLM like Qwen3 0.6B and you have a fully offline assistant â€” no tokens billed, no data leaked.\n\n### Persistence: Save Once, Load Forever\n\n```python\nnp.save(\"homie_index.npy\", retriever.vectors)\nwith open(\"homie_docs.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\"\\n---\\n\".join(retriever.docs))\n```\n\nEmbeddings are deterministic for a given model version â€” compute once, reuse forever. For a 10,000-note knowledge base, the index file is just 15MB.\n\n> **Key Insight:** all-MiniLM-L6-v2 is the bedrock of local-first AI. It's small enough to bundle inside a desktop app, fast enough to re-index on every save, and accurate enough that users won't notice the difference from a cloud embedding API. When you want privacy, zero cost, and offline-capability â€” this is the model you pick first, and only swap if benchmarks force you to."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Homie is a privacy-first personal assistant that runs entirely on your laptop. Its retrieval brain is all-MiniLM-L6-v2 â€” an 80MB sentence-transformers model that turns text into 384-dim meaning-vectors at 14,000 sentences/second on CPU. Today we'll build Homie's local RAG pipeline end to end: chunking, embedding, retrieval, and prompt assembly.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nnotes = [\n    \"Karaikudi chicken curry recipe with kalpasi\",\n    \"Refactored auth module to use JWT tokens\",\n    \"Mum's tempering: mustard seeds then curry leaves\",\n    \"Renew pymasters.net domain by August 2026\",\n]\n\nembeddings = model.encode(notes, normalize_embeddings=True)\nprint(embeddings.shape)\nprint(np.linalg.norm(embeddings[0]))",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer â€” the wrapper around hundreds of pre-trained embedding models. Install: pip install sentence-transformers."
+        },
+        {
+          "line": 4,
+          "explanation": "Load all-MiniLM-L6-v2 â€” 80MB on disk, 22M parameters, 384-dim output. First run downloads weights to ~/.cache/huggingface; subsequent runs are instant."
+        },
+        {
+          "line": 6,
+          "explanation": "Sample notes for Homie's knowledge base â€” a mix of cooking, code, and reminders. The model handles multi-domain content effortlessly."
+        },
+        {
+          "line": 12,
+          "explanation": "model.encode() converts each note to a 384-dim float32 vector. normalize_embeddings=True scales each vector to unit length â€” required for fast dot-product similarity."
+        },
+        {
+          "line": 13,
+          "explanation": "Shape (4, 384): four notes, each encoded as 384 floats. A 10K-note knowledge base would be a (10000, 384) matrix â€” ~15MB on disk."
+        },
+        {
+          "line": 14,
+          "explanation": "Norm of a normalized vector equals 1.0 (within floating-point tolerance). This confirms normalization worked and lets us use dot product instead of cosine similarity downstream."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass HomieRetriever:\n    def __init__(self):\n        self.model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n        self.docs = []\n        self.vectors = None\n\n    def add(self, texts):\n        new_vecs = self.model.encode(texts, normalize_embeddings=True)\n        self.docs.extend(texts)\n        self.vectors = new_vecs if self.vectors is None else np.vstack([self.vectors, new_vecs])\n\n    def search(self, query, k=3):\n        q = self.model.encode(query, normalize_embeddings=True)\n        scores = self.vectors @ q\n        top = np.argsort(-scores)[:k]\n        return [(self.docs[i], float(scores[i])) for i in top]",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "Define HomieRetriever â€” Homie's memory layer. It owns the model, the document list, and the embedding matrix as three parallel data structures."
+        },
+        {
+          "line": 6,
+          "explanation": "Load the embedding model once in __init__. Avoid reloading per-query â€” the model is ~80MB and takes 1-2 seconds to initialize."
+        },
+        {
+          "line": 10,
+          "explanation": "add() lets us grow the knowledge base incrementally. New notes get encoded and appended to both the document list and the vector matrix."
+        },
+        {
+          "line": 11,
+          "explanation": "Encode all new texts in one batch call. Batching is critical â€” encoding 100 texts in one call is 5-10x faster than 100 single-text calls."
+        },
+        {
+          "line": 13,
+          "explanation": "np.vstack stacks the new vectors below existing ones. For the first add(), we initialize self.vectors directly to avoid stacking with None."
+        },
+        {
+          "line": 15,
+          "explanation": "search() is the retrieval endpoint. Encode the query, score against all documents, return the top-k by score."
+        },
+        {
+          "line": 17,
+          "explanation": "self.vectors @ q is a matrix-vector product: every row (document vector) is dotted with q in one BLAS-optimized call. For 10K docs this takes under a millisecond."
+        },
+        {
+          "line": 18,
+          "explanation": "np.argsort returns indices in ascending order. Negating scores flips it to descending, then [:k] grabs the top k. No sort of the full list needed for huge corpora â€” use np.argpartition."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "retriever = HomieRetriever()\nretriever.add([\n    \"Karaikudi chicken curry with kalpasi\",\n    \"JWT auth refactor with 24h expiry\",\n    \"Tempering: mustard seeds then curry leaves\",\n])\n\ndef ask_homie(question, llm):\n    hits = retriever.search(question, k=2)\n    context = \"\\n\".join(f\"- {text}\" for text, _ in hits)\n    prompt = (\n        \"You are Homie, a helpful local assistant.\\n\\n\"\n        f\"Context:\\n{context}\\n\\n\"\n        f\"Question: {question}\\nAnswer:\"\n    )\n    return llm.generate(prompt)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Instantiate Homie's retriever. The model loads once and stays in memory for the lifetime of the assistant."
+        },
+        {
+          "line": 2,
+          "explanation": "Seed the knowledge base with three notes. In a real app these would come from a folder of markdown files, a Notion export, or your IDE history."
+        },
+        {
+          "line": 8,
+          "explanation": "ask_homie() ties retrieval and generation together â€” the heart of any RAG pipeline. Note: llm is any local model with a .generate() method, e.g. Qwen3 via llama.cpp."
+        },
+        {
+          "line": 9,
+          "explanation": "Retrieve top-2 most relevant notes. k=2 keeps the prompt short â€” for small models, less context often beats more context."
+        },
+        {
+          "line": 10,
+          "explanation": "Format retrieved notes as a bulleted list. The bullet prefix helps the LLM treat each item as a separate fact rather than concatenated prose."
+        },
+        {
+          "line": 11,
+          "explanation": "Assemble the final prompt. Persona line ('You are Homie') sets the tone, context block grounds the answer, question and Answer: prompt the completion."
+        },
+        {
+          "line": 16,
+          "explanation": "Hand off to the local LLM. The retriever did the heavy lifting â€” the LLM now only needs to synthesize an answer from the highly-relevant context Homie supplied."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud RAG (OpenAI)",
+      "right_label": "Local RAG (Homie + MiniLM)",
+      "items": [
+        {
+          "left": "Embedding API call per query",
+          "right": "Local CPU inference, no network"
+        },
+        {
+          "left": "Cost scales with usage",
+          "right": "$0 forever after download"
+        },
+        {
+          "left": "Data leaves your device",
+          "right": "Notes never leave your laptop"
+        },
+        {
+          "left": "Requires internet",
+          "right": "Works on airplane mode"
+        },
+        {
+          "left": "1536-dim vectors (~6KB each)",
+          "right": "384-dim vectors (~1.5KB each)"
+        },
+        {
+          "left": "100-300ms network latency",
+          "right": "<10ms local inference"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built Homie's local RAG brain! Privacy-first, zero-cost, and fast enough for real-time assistant workflows."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `HomieIndex` class that simulates Homie's local embedding store. Use a simple character-trigram bag-of-features (no external libraries) to mimic a real embedding. Implement `_featurize(text)` returning a dict mapping each lowercase trigram to its count, `add(text)` storing the text and its features, and `search(query, k)` returning the top-k texts ranked by cosine similarity (using the trigram features). Ties broken by insertion order (stable sort)."
+      },
+      "starter_code": "import math\n\nclass HomieIndex:\n    def __init__(self):\n        self.docs = []\n        self.features = []\n\n    def _featurize(self, text: str) -> dict:\n        # Lowercase, then extract overlapping 3-character substrings.\n        # Return {trigram: count}. Ignore texts shorter than 3 chars (return {}).\n        pass\n\n    def add(self, text: str) -> None:\n        # Store the text and its featurization.\n        pass\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        # Cosine similarity between two trigram dicts.\n        # Return 0.0 if either has zero magnitude.\n        pass\n\n    def search(self, query: str, k: int = 3) -> list:\n        # Return top-k docs as list of (text, score) tuples sorted by score desc.\n        # Stable sort: ties keep insertion order.\n        pass\n\n# Test it:\nidx = HomieIndex()\nfor note in [\n    \"chicken curry recipe\",\n    \"chicken biryani notes\",\n    \"python class design\",\n]:\n    idx.add(note)\n\nresults = idx.search(\"chicken\", k=2)\nprint(len(results))\nprint(results[0][0])\nprint(results[0][1] > results[1][1])",
+      "expected_output": "2\nchicken curry recipe\nTrue",
+      "hints": {
+        "en": [
+          "In _featurize(), iterate i from 0 to len(text)-3 inclusive: trigram = text.lower()[i:i+3]; then count occurrences in a dict",
+          "For _cosine(), dot product = sum(a[t]*b[t] for t in shared trigrams); magnitude = sqrt(sum(v**2 for v in vec.values()))",
+          "Python's sorted() is stable â€” pass key=lambda x: -x[1] (negative score) to sort descending while preserving insertion order on ties"
+        ]
+      },
+      "test_code": "idx = HomieIndex()\nassert idx._featurize(\"ab\") == {}\nassert idx._featurize(\"abc\") == {\"abc\": 1}\nassert idx._featurize(\"ababa\") == {\"aba\": 2, \"bab\": 1}\nidx.add(\"hello world\")\nidx.add(\"hello there\")\nidx.add(\"goodbye friend\")\nassert len(idx.docs) == 3\nassert len(idx.features) == 3\nres = idx.search(\"hello\", k=2)\nassert len(res) == 2\nassert res[0][0] in [\"hello world\", \"hello there\"]\nassert res[0][1] >= res[1][1]\nzero_sim = idx._cosine({\"abc\": 1}, {\"xyz\": 1})\nassert zero_sim == 0.0\nidentical = idx._cosine({\"abc\": 2, \"def\": 1}, {\"abc\": 2, \"def\": 1})\nassert abs(identical - 1.0) < 1e-6\nempty = idx._cosine({}, {\"abc\": 1})\nassert empty == 0.0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `HomieRAG` class that wraps a retriever and assembles RAG prompts. It accepts a pre-built `HomieIndex` and a `persona` string (Homie's identity). Implement `retrieve(query, k)` returning a list of (text, score) tuples, `format_context(hits)` joining the retrieved texts with '- ' bullet prefix on separate lines, and `build_prompt(query, k)` producing the final prompt: '{persona}\\n\\nContext:\\n{bullets}\\n\\nQuestion: {query}\\nAnswer:'. Also add a `filter_by_score(hits, min_score)` static method returning only hits with score >= min_score."
+      },
+      "starter_code": "import math\n\nclass HomieIndex:\n    def __init__(self):\n        self.docs = []\n        self.features = []\n\n    def _featurize(self, text):\n        text = text.lower()\n        if len(text) < 3:\n            return {}\n        out = {}\n        for i in range(len(text) - 2):\n            tri = text[i:i+3]\n            out[tri] = out.get(tri, 0) + 1\n        return out\n\n    def add(self, text):\n        self.docs.append(text)\n        self.features.append(self._featurize(text))\n\n    def _cosine(self, a, b):\n        shared = set(a) & set(b)\n        dot = sum(a[t] * b[t] for t in shared)\n        ma = math.sqrt(sum(v**2 for v in a.values()))\n        mb = math.sqrt(sum(v**2 for v in b.values()))\n        if ma == 0 or mb == 0:\n            return 0.0\n        return dot / (ma * mb)\n\n    def search(self, query, k=3):\n        qf = self._featurize(query)\n        scored = [(d, self._cosine(qf, f)) for d, f in zip(self.docs, self.features)]\n        scored.sort(key=lambda x: -x[1])\n        return scored[:k]\n\nclass HomieRAG:\n    def __init__(self, index: HomieIndex, persona: str):\n        self.index = index\n        self.persona = persona\n\n    def retrieve(self, query: str, k: int = 3) -> list:\n        # Return top-k (text, score) tuples from self.index.\n        pass\n\n    def format_context(self, hits: list) -> str:\n        # Join hit texts with '- ' prefix, newline-separated.\n        pass\n\n    def build_prompt(self, query: str, k: int = 3) -> str:\n        # Assemble: persona + Context block + Question + Answer:\n        pass\n\n    @staticmethod\n    def filter_by_score(hits: list, min_score: float) -> list:\n        # Return only hits where score >= min_score.\n        pass\n\n# Test it:\nidx = HomieIndex()\nfor note in [\"python loops basics\", \"python class methods\", \"dinner ideas tonight\"]:\n    idx.add(note)\n\nrag = HomieRAG(idx, persona=\"You are Homie, a local assistant.\")\nprompt = rag.build_prompt(\"python\", k=2)\nprint(prompt.startswith(\"You are Homie\"))\nprint(\"Context:\" in prompt)\nprint(\"Question: python\" in prompt)\nprint(prompt.rstrip().endswith(\"Answer:\"))",
+      "expected_output": "True\nTrue\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "retrieve() is a thin wrapper around self.index.search(query, k)",
+          "format_context() example: '\\n'.join(f'- {text}' for text, _ in hits)",
+          "build_prompt() uses an f-string template: f'{self.persona}\\n\\nContext:\\n{context}\\n\\nQuestion: {query}\\nAnswer:'"
+        ]
+      },
+      "test_code": "idx = HomieIndex()\nfor n in [\"hello world greeting\", \"goodbye world farewell\", \"hello there friend\"]:\n    idx.add(n)\nrag = HomieRAG(idx, persona=\"You are Homie.\")\nhits = rag.retrieve(\"hello\", k=2)\nassert len(hits) == 2\nassert all(isinstance(h, tuple) and len(h) == 2 for h in hits)\nctx = rag.format_context(hits)\nassert ctx.count(\"- \") == 2\nassert \"\\n\" in ctx\nprompt = rag.build_prompt(\"hello\", k=2)\nassert prompt.startswith(\"You are Homie.\")\nassert \"Context:\" in prompt\nassert \"Question: hello\" in prompt\nassert prompt.rstrip().endswith(\"Answer:\")\nfiltered = HomieRAG.filter_by_score([(\"a\", 0.9), (\"b\", 0.3), (\"c\", 0.5)], min_score=0.5)\nassert len(filtered) == 2\nassert filtered[0][0] == \"a\"\nassert filtered[1][0] == \"c\"\nempty = HomieRAG.filter_by_score([(\"a\", 0.1)], min_score=0.9)\nassert empty == []"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "local RAG",
+      "all-MiniLM-L6-v2",
+      "sentence embeddings",
+      "cosine similarity",
+      "retriever class design",
+      "prompt assembly",
+      "incremental indexing",
+      "privacy-first AI"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "list comprehensions",
+      "f-strings",
+      "basic numpy"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
