@@ -1,0 +1,137 @@
+{
+  "id": "all_minilm_l6_v2_local_rag_embeddings",
+  "topic": "all_minilm_l6_v2_local_rag_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Local RAG Embeddings with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Build a lightweight, fully local Retrieval-Augmented Generation pipeline using sentence-transformers/all-MiniLM-L6-v2 â€” the 22M-parameter embedding model that punches far above its weight."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Tiny Model That Powers Half the RAG World\n\nVaathiyaar here. Pull up a chair, kanna. Today we are going to meet the most downloaded embedding model on Hugging Face â€” `sentence-transformers/all-MiniLM-L6-v2`. It is only 22 million parameters and 80MB on disk, but it quietly powers production RAG pipelines at startups, research labs, and yes â€” it is going to be the default embedding model for **Homie**, our local RAG assistant.\n\nWhy this model? Because embeddings are not where you should spend your GPU budget. You spend it on the LLM. The embedder just needs to be *good enough* and *fast enough* to turn text into 384-dimensional vectors that cluster meaning sensibly.\n\n### What Embeddings Actually Do\n\nAn embedding model maps a sentence to a fixed-length vector. Sentences with similar meaning land near each other in vector space â€” measured by cosine similarity. That's the entire trick behind semantic search and RAG retrieval.\n\n### Why MiniLM-L6-v2 Wins on Cost-Per-Quality\n\n| Model | Params | Dim | Speed (CPU) | MTEB Avg |\n|---|---|---|---|---|\n| all-MiniLM-L6-v2 | 22M | 384 | ~14k sent/sec | 56.3 |\n| all-mpnet-base-v2 | 110M | 768 | ~2.8k sent/sec | 57.8 |\n| BGE-large-en | 335M | 1024 | ~0.6k sent/sec | 64.2 |\n\nFor a 1.5-point MTEB gain, mpnet costs you 5x the inference time. MiniLM is the rational default until you can prove you need more.\n\n### Loading and Encoding\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndocs = [\n    \"Vaathiyaar teaches Python\",\n    \"The teacher explains coding\",\n    \"I love eating dosa\",\n]\nembeddings = model.encode(docs, normalize_embeddings=True)\nprint(embeddings.shape)  # (3, 384)\n```\n\nThe `normalize_embeddings=True` flag is important â€” it makes cosine similarity reduce to a simple dot product, which is much faster at retrieval time.\n\n### A Minimal RAG Retriever\n\n```python\nimport numpy as np\n\nquery = \"Who teaches programming?\"\nq_vec = model.encode([query], normalize_embeddings=True)[0]\nscores = embeddings @ q_vec\ntop_idx = int(np.argmax(scores))\nprint(docs[top_idx], scores[top_idx])\n```\n\nThat is the whole retrieval step. Three lines. The matrix multiply is your search engine. Wrap it in FAISS or Chroma when your corpus crosses ~10k documents, but for prototypes raw NumPy is perfectly fine.\n\n### Where It Falls Short\n\nMiniLM was trained mostly on English web data. If your corpus is multilingual, code-heavy, or domain-specific (legal, medical), benchmark it against `paraphrase-multilingual-MiniLM-L12-v2` or a domain-tuned model before committing.\n\n> **Key Insight:** The embedder is not where your RAG quality bottleneck lives â€” chunking strategy, query rewriting, and reranking matter more. Use MiniLM-L6-v2 as your baseline, measure end-to-end, and only upgrade the embedder when you can prove the swap improves retrieval@k on YOUR data."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "title": "The 80MB Workhorse",
+      "body": "all-MiniLM-L6-v2 is the most downloaded embedding model on Hugging Face â€” small, fast, and good enough for nearly every RAG prototype.",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "narration": "Import the SentenceTransformer wrapper â€” it handles tokenization, pooling, and normalization for you."
+        },
+        {
+          "code": "model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')",
+          "narration": "Load the model. First run downloads ~80MB from the Hub and caches it locally."
+        },
+        {
+          "code": "docs = ['Vaathiyaar teaches Python', 'The teacher explains coding', 'I love eating dosa']",
+          "narration": "Our tiny corpus. Two sentences are semantically close; the dosa one should sit far away in vector space."
+        },
+        {
+          "code": "embeddings = model.encode(docs, normalize_embeddings=True)",
+          "narration": "Encode all three documents at once. Batched encoding is much faster than looping."
+        },
+        {
+          "code": "print(embeddings.shape)",
+          "narration": "Shape is (3, 384) â€” three docs, 384-dimensional vectors each."
+        },
+        {
+          "code": "query = 'Who teaches programming?'",
+          "narration": "A natural-language query â€” note it shares zero exact words with our docs."
+        },
+        {
+          "code": "q_vec = model.encode([query], normalize_embeddings=True)[0]",
+          "narration": "Encode the query the same way. Normalization is critical so dot-product equals cosine similarity."
+        },
+        {
+          "code": "scores = embeddings @ q_vec",
+          "narration": "A single matrix-vector product gives us similarity scores for every doc. This IS the retrieval step."
+        },
+        {
+          "code": "top_idx = int(scores.argmax())",
+          "narration": "Pick the highest-scoring document."
+        },
+        {
+          "code": "print(docs[top_idx])",
+          "narration": "Output: 'Vaathiyaar teaches Python' â€” semantic search worked without a single keyword overlap."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "confetti",
+      "message": "You just built a local semantic search engine in 10 lines!",
+      "duration_ms": 3000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete the `semantic_search` function. It should encode the query and corpus with `all-MiniLM-L6-v2` (with `normalize_embeddings=True`), then return the corpus sentence with the highest cosine similarity to the query."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef semantic_search(query: str, corpus: list[str]) -> str:\n    # 1. Encode the corpus with normalize_embeddings=True\n    # 2. Encode the query the same way\n    # 3. Compute similarity scores via dot product\n    # 4. Return the corpus sentence with the highest score\n    pass\n",
+      "expected_output": "The teacher explains coding",
+      "hints": {
+        "en": [
+          "model.encode(list_of_strings, normalize_embeddings=True) returns a 2-D numpy array.",
+          "Because vectors are normalized, cosine similarity equals corpus_embeddings @ query_vector.",
+          "np.argmax(scores) gives you the index of the best match."
+        ]
+      },
+      "test_code": "corpus = ['I love eating dosa', 'The teacher explains coding', 'Mumbai has heavy rain today']\nresult = semantic_search('Who instructs programming students?', corpus)\nassert result == 'The teacher explains coding', f'Expected the teaching sentence, got: {result}'\nprint('PASS')"
+    },
+    {
+      "instruction": {
+        "en": "Build `top_k_retrieve` that returns the top-K most similar documents to a query, sorted by descending similarity. Return a list of (document, score) tuples."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\n\ndef top_k_retrieve(query: str, corpus: list[str], k: int = 3) -> list[tuple[str, float]]:\n    # Return top-k (doc, score) pairs sorted by score descending\n    pass\n",
+      "expected_output": "[('Python is a popular programming language', 0.62), ('JavaScript runs in the browser', 0.41), ('I had idli for breakfast', 0.05)]",
+      "hints": {
+        "en": [
+          "Use np.argsort(-scores)[:k] to get indices of the top k scores in descending order.",
+          "Convert numpy floats to Python floats with float(score) before returning.",
+          "Round scores to 2 decimals for cleaner output if needed."
+        ]
+      },
+      "test_code": "corpus = ['Python is a popular programming language', 'JavaScript runs in the browser', 'I had idli for breakfast']\nresults = top_k_retrieve('What language do data scientists use?', corpus, k=3)\nassert len(results) == 3\nassert results[0][0] == 'Python is a popular programming language', f'Top result wrong: {results[0]}'\nassert results[0][1] > results[1][1] > results[2][1], 'Scores not sorted descending'\nprint('PASS')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "rag_retrieval",
+      "vector_normalization",
+      "minilm_architecture"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "numpy_arrays",
+      "list_comprehensions",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on_coding",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "embeddings_and_vector_search",
+      "homie_stack"
+    ]
+  },
+  "generated": true
+}
