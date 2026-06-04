@@ -1,0 +1,137 @@
+{
+  "id": "bert_base_uncased_fill_mask",
+  "topic": "bert_base_uncased_fill_mask",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BERT Base Uncased: Mastering Fill-Mask with Bidirectional Transformers"
+  },
+  "description": {
+    "en": "Learn how Google's BERT base uncased model uses masked language modeling to understand context from both directions, and build your first fill-mask pipeline with Hugging Face Transformers."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Model That Reads Both Ways\n\nVaathiyaar leans forward with a smile. \"Imagine reading a sentence with one word hidden â€” 'The cat sat on the [MASK].' Your brain instantly guesses 'mat' or 'sofa.' How? You used context from BEFORE the blank AND AFTER it. That's exactly what BERT does, and in 2018 it changed NLP forever.\"\n\nBERT (Bidirectional Encoder Representations from Transformers) was Google's breakthrough â€” the first transformer model trained to look at words on BOTH sides of a target token simultaneously. The `bert-base-uncased` variant has 110M parameters, 12 transformer layers, and treats all text as lowercase. It's the workhorse of modern NLP.\n\n### Why Bidirectional Matters\n\nOlder models like GPT-1 read left-to-right only. BERT trained on a clever trick called **Masked Language Modeling (MLM)**: randomly hide 15% of tokens and force the model to predict them using surrounding context. This produces incredibly rich representations.\n\n| Model | Direction | Training Objective | Best For |\n|-------|-----------|-------------------|----------|\n| GPT | Left-to-right | Next-token prediction | Generation |\n| BERT | Bidirectional | Masked language modeling | Understanding |\n| T5 | Encoder-decoder | Span corruption | Both |\n\n### The Fill-Mask Pipeline\n\nThe simplest way to use BERT is through Hugging Face's `pipeline` API:\n\n```python\nfrom transformers import pipeline\n\nunmasker = pipeline('fill-mask', model='bert-base-uncased')\nresults = unmasker(\"The capital of France is [MASK].\")\n\nfor r in results[:3]:\n    print(f\"{r['token_str']}: {r['score']:.4f}\")\n# paris: 0.4167\n# lyon:  0.0707\n# lille: 0.0399\n```\n\n### Under the Hood\n\nBERT tokenizes input into WordPieces, adds special `[CLS]` and `[SEP]` tokens, and replaces the target word with `[MASK]` (token ID 103). The model outputs logits over its 30,522-token vocabulary for each position. Softmax over the masked position gives probabilities.\n\n```python\nfrom transformers import BertTokenizer, BertForMaskedLM\nimport torch\n\ntok = BertTokenizer.from_pretrained('bert-base-uncased')\nmodel = BertForMaskedLM.from_pretrained('bert-base-uncased')\n\ninputs = tok(\"Paris is the [MASK] of France.\", return_tensors='pt')\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\nmask_idx = (inputs.input_ids == tok.mask_token_id).nonzero()[0, 1]\npredicted_id = logits[0, mask_idx].argmax(-1)\nprint(tok.decode(predicted_id))  # capital\n```\n\n### Uncased vs Cased\n\nThe **uncased** version lowercases everything and strips accents. This shrinks vocabulary and works well when capitalization isn't meaningful (most general English text). Use **cased** for named entity recognition where 'Apple' (company) differs from 'apple' (fruit).\n\n### Real-World Uses\n\nBeyond fill-mask, BERT's frozen embeddings power semantic search, classification heads, question answering, and sentence similarity. It's the foundation that birthed RoBERTa, DistilBERT, and the entire sentence-transformers family.\n\n> **Key Insight:** BERT's power comes from bidirectional pretraining on masked tokens. Even when you don't use fill-mask in production, that same pretrained encoder is what makes BERT a phenomenal feature extractor for downstream tasks â€” fine-tune the last layers and you have state-of-the-art performance with minimal data."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "title": "Meet BERT",
+      "content": "BERT reads sentences in BOTH directions at once â€” the breakthrough that started the transformer revolution in NLP.",
+      "duration": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from transformers import pipeline",
+          "explanation": "Import Hugging Face's high-level pipeline API â€” the easiest way to use any pretrained model."
+        },
+        {
+          "code": "unmasker = pipeline('fill-mask', model='bert-base-uncased')",
+          "explanation": "Load BERT base uncased configured for the fill-mask task. Downloads ~440MB on first run."
+        },
+        {
+          "code": "text = 'Artificial intelligence is changing the [MASK].'",
+          "explanation": "Create input text with a [MASK] token marking the position you want BERT to predict."
+        },
+        {
+          "code": "results = unmasker(text)",
+          "explanation": "Run inference. BERT tokenizes, embeds, runs 12 transformer layers, then returns top predictions."
+        },
+        {
+          "code": "for r in results:",
+          "explanation": "Iterate over the top-5 candidate fills (returned by default), each with token, score, and full sentence."
+        },
+        {
+          "code": "    print(f\"{r['token_str']:10s} score={r['score']:.4f}\")",
+          "explanation": "Display each candidate token and its probability. Scores sum to ~1.0 across the top-K predictions."
+        },
+        {
+          "code": "# world      score=0.3214",
+          "explanation": "BERT correctly understands the broad context â€” 'world' is the most likely completion."
+        },
+        {
+          "code": "# game       score=0.0921",
+          "explanation": "Other plausible completions appear with lower probability, showing BERT's nuanced understanding."
+        },
+        {
+          "code": "best = results[0]['sequence']",
+          "explanation": "Extract the full sentence with the best mask replacement for downstream use."
+        },
+        {
+          "code": "print(best)",
+          "explanation": "Output the completed sentence â€” a working fill-mask pipeline in just 4 lines of code."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "celebration",
+      "message": "You've used a 110M-parameter transformer to predict masked words!",
+      "duration": 3000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a function `top_prediction(sentence)` that takes a sentence containing one [MASK] token and returns ONLY the highest-probability predicted token as a string (without surrounding whitespace). Use the `bert-base-uncased` fill-mask pipeline."
+      },
+      "starter_code": "from transformers import pipeline\n\nunmasker = pipeline('fill-mask', model='bert-base-uncased')\n\ndef top_prediction(sentence: str) -> str:\n    # Your code here\n    pass\n\nresult = top_prediction('The capital of France is [MASK].')\nprint(result)",
+      "expected_output": "paris",
+      "hints": {
+        "en": [
+          "Calling the pipeline returns a list of dictionaries sorted by descending score.",
+          "Each dict has keys: 'score', 'token', 'token_str', and 'sequence'. You want 'token_str' from index 0.",
+          "Use .strip() on the returned token_str to remove any leading/trailing whitespace."
+        ]
+      },
+      "test_code": "result = top_prediction('The capital of France is [MASK].')\nassert isinstance(result, str), 'Function must return a string'\nassert result.strip().lower() == 'paris', f\"Expected 'paris', got {result!r}\"\nresult2 = top_prediction('The sun rises in the [MASK].')\nassert result2.strip().lower() == 'east', f\"Expected 'east', got {result2!r}\"\nprint('All assertions passed!')"
+    },
+    {
+      "instruction": {
+        "en": "Write a function `mask_confidence(sentence)` that returns the probability score (as a float) of BERT's top prediction for a sentence containing one [MASK]. This is useful for measuring how confident BERT is about its guess."
+      },
+      "starter_code": "from transformers import pipeline\n\nunmasker = pipeline('fill-mask', model='bert-base-uncased')\n\ndef mask_confidence(sentence: str) -> float:\n    # Your code here\n    pass\n\nscore = mask_confidence('Paris is the [MASK] of France.')\nprint(f'{score:.3f}')",
+      "expected_output": "0.815",
+      "hints": {
+        "en": [
+          "The pipeline output's first element contains the highest-scoring prediction.",
+          "Access the 'score' key of that dictionary â€” it's already a float between 0 and 1.",
+          "BERT is very confident about 'capital' here, so the score should be high (above 0.5)."
+        ]
+      },
+      "test_code": "score = mask_confidence('Paris is the [MASK] of France.')\nassert isinstance(score, float), 'Must return a float'\nassert 0.0 <= score <= 1.0, f'Score must be a probability, got {score}'\nassert score > 0.5, f'BERT should be confident about capital, got {score}'\nlow_score = mask_confidence('The [MASK] flew yesterday.')\nassert low_score < score, 'Ambiguous prompt should have lower confidence than clear one'\nprint('All assertions passed!')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "bidirectional_transformers",
+      "masked_language_modeling",
+      "fill_mask_pipeline",
+      "huggingface_transformers",
+      "bert_architecture",
+      "wordpiece_tokenization"
+    ],
+    "concepts_required": [
+      "python_basics",
+      "functions",
+      "pip_install",
+      "basic_nlp_intuition"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "guided_practice",
+    "estimated_minutes": 18,
+    "category": "nlp_foundations",
+    "path_memberships": [
+      "trending_ai",
+      "nlp_fundamentals",
+      "transformers_intro",
+      "huggingface_essentials"
+    ]
+  },
+  "generated": true
+}
