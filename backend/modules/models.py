@@ -3,7 +3,7 @@ from typing import Optional
 
 
 class ModuleRequest(BaseModel):
-    user_id: int
+    user_id: str          # user IDs are UUID strings
     topic: str
     context: Optional[str] = None
 
