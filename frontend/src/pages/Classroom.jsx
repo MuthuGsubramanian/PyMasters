@@ -21,6 +21,7 @@ import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
+import LearnAnything from '../components/LearnAnything';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -874,9 +875,9 @@ export default function Classroom() {
         };
     }, []);
 
-    useEffect(() => {
+    const loadLessons = () => {
         const params = user?.id ? `?user_id=${user.id}` : '';
-        api
+        return api
             .get(`/classroom/lessons${params}`)
             .then((r) => {
                 setLessons(r.data.lessons ?? r.data);
@@ -885,7 +886,9 @@ export default function Classroom() {
             })
             .catch(() => setLessons([]))
             .finally(() => setLessonsLoading(false));
-    }, [user]);
+    };
+
+    useEffect(() => { loadLessons(); }, [user]);
 
     useEffect(() => {
         if (user?.id) {
@@ -920,6 +923,12 @@ export default function Classroom() {
         } catch (err) {
             console.error('Failed to load lesson:', err);
         }
+    };
+
+    // A "Learn anything" generation finished → refresh the list and open the new lesson.
+    const handleGeneratedLessonReady = (lessonId) => {
+        loadLessons();
+        handleSelectLesson({ id: lessonId, track: 'generated' });
     };
 
     const handleIntroComplete = () => {
@@ -1130,6 +1139,11 @@ export default function Classroom() {
                             exit="exit"
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
+                            {user?.id && (
+                                <div className="max-w-5xl mx-auto mb-5">
+                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} />
+                                </div>
+                            )}
                             <LessonSelect
                                 lessons={lessons}
                                 onSelectLesson={handleSelectLesson}
