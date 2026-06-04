@@ -19,7 +19,16 @@ RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
     curl \
+    ca-certificates \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
+
+# --- Litestream (continuous SQLite -> GCS replication) ---
+ARG LITESTREAM_VERSION=v0.3.13
+RUN curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-amd64.tar.gz" \
+      | tar -xz -C /usr/local/bin litestream \
+    && litestream version
+COPY litestream.yml /etc/litestream.yml
 
 # Backend dependencies
 WORKDIR /app/backend

@@ -1,0 +1,29 @@
+# Keep Cloud Build upload lean. Only what the Dockerfile COPYs is needed:
+# frontend/ (minus node_modules), backend/ (minus caches), nginx.conf,
+# supervisord.conf, start.sh, litestream.yml.
+.git/
+.idea/
+.venv/
+__pycache__/
+*.pyc
+.env
+backend/.env
+backend/tests/
+frontend/node_modules/
+frontend/dist/
+.claude/
+.superpowers/
+docs/
+infra/
+data/
+_archive/
+_claude_audit/
+Learning/
+pipeline/
+scripts/
+static/
+*.md
+*.duckdb
+docker-compose.yml
+start_dev.bat
+_write_lesson.py
