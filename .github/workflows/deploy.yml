@@ -52,8 +52,8 @@ jobs:
             --port 8080 \
             --allow-unauthenticated \
             --service-account pymasters-runtime@pymasters-app.iam.gserviceaccount.com \
-            --set-env-vars "OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db" \
-            --set-secrets "OLLAMA_API_KEY=ollama-api-key:latest" \
+            --set-env-vars "OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db,FROM_NAME=PyMasters,APP_BASE_URL=https://pymasters.net,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587" \
+            --set-secrets "OLLAMA_API_KEY=ollama-api-key:latest,SMTP_PASS=smtp-pass:latest,SMTP_USER=smtp-user:latest,FROM_EMAIL=smtp-user:latest" \
             --memory 1Gi \
             --cpu 1 \
             --no-cpu-throttling \
