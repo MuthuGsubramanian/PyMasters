@@ -7,14 +7,48 @@ import os
 import sqlite3
 import uuid
 import secrets
+import threading
 from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+APP_BASE_URL = os.getenv("APP_BASE_URL", "https://pymasters.net")
 
 router = APIRouter(prefix="/api/org", tags=["organizations"])
+
+
+def _send_invite_emails(org_name: str, recipients: list, inviter: str = None):
+    """Send invite emails (best-effort). recipients: list of {email, token, role}."""
+    try:
+        from notifications.email_sender import send_email, build_invite_email
+    except Exception as e:
+        print(f"[invite email] sender unavailable: {e}")
+        return
+    for r in recipients:
+        try:
+            link = f"{APP_BASE_URL}/join/{r['token']}"
+            text, html = build_invite_email(org_name, r.get("role", "member"), link, inviter)
+            send_email(r["email"], f"You're invited to {org_name} on PyMasters", text, html)
+        except Exception as e:
+            print(f"[invite email] failed for {r.get('email')}: {e}")
+
+
+def _dispatch_invite_emails(org_name: str, recipients: list, inviter: str = None):
+    """Fire-and-forget invite emails so the HTTP response isn't blocked on SMTP."""
+    if not recipients:
+        return
+    threading.Thread(
+        target=_send_invite_emails,
+        args=(org_name, recipients, inviter),
+        daemon=True,
+    ).start()
+
+
+def _org_name(conn, org_id: str) -> str:
+    row = conn.execute("SELECT name FROM organizations WHERE id = ?", [org_id]).fetchone()
+    return row[0] if row else "your organization"
 
 # -- Role hierarchy -------------------------------------------------------
 ROLE_LEVELS = {"super_admin": 4, "admin": 3, "manager": 2, "member": 1}
@@ -58,8 +92,9 @@ class InviteRequest(BaseModel):
     user_id: str  # inviter
 
 class BulkInviteRequest(BaseModel):
-    emails: List[str]
-    role: str = "member"
+    emails: Optional[List[str]] = None          # OrgSetup shape: ["a@x.com", ...]
+    invites: Optional[List[dict]] = None        # OrgDashboard shape: [{"email","role"}, ...]
+    role: str = "member"                        # fallback role
     user_id: str
 
 class RoleChangeRequest(BaseModel):
@@ -168,6 +203,28 @@ def join_org(token: str, data: JoinOrgRequest):
         }
     finally:
         conn.close()
+
+
+@router.get("/invite/{token}")
+def get_invite_info(token: str):
+    """Public: look up an invite by token so the join page can show org details."""
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute(
+        """SELECT i.email, i.role, i.expires_at, i.used, o.name, o.type, o.id
+           FROM org_invites i JOIN organizations o ON o.id = i.org_id
+           WHERE i.token = ?""",
+        [token],
+    ).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Invalid invite token")
+    expired = bool(row[2]) and datetime.fromisoformat(row[2]) < datetime.utcnow()
+    return {
+        "email": row[0], "role": row[1], "expires_at": row[2],
+        "used": bool(row[3]), "expired": expired,
+        "org_name": row[4], "org_type": row[5], "org_id": row[6],
+        "valid": (not row[3]) and (not expired),
+    }
 
 
 @router.get("/{org_id}")
@@ -279,34 +336,56 @@ def invite_member(org_id: str, data: InviteRequest):
         [invite_id, org_id, data.email, data.role, token, datetime.utcnow().isoformat(), expires]
     )
     conn.commit()
+    org_name = _org_name(conn, org_id)
     conn.close()
+    _dispatch_invite_emails(org_name, [{"email": data.email.strip(), "token": token, "role": data.role}])
     return {"invite_id": invite_id, "token": token, "email": data.email, "role": data.role, "expires_at": expires}
 
 
 @router.post("/{org_id}/invite/bulk")
 def bulk_invite(org_id: str, data: BulkInviteRequest):
-    """Create multiple invites. Requires admin+."""
+    """Create multiple invites and email each invitee. Requires admin+.
+
+    Accepts either {"emails": [...], "role": "member"} or
+    {"invites": [{"email": ..., "role": ...}, ...]}.
+    """
     require_org_role(DB_PATH, org_id, data.user_id, "admin")
-    if data.role not in ROLE_LEVELS:
-        raise HTTPException(status_code=400, detail=f"Invalid role: {data.role}")
+
+    # Normalize both request shapes into (email, role) pairs.
+    pairs = []
+    if data.invites:
+        for inv in data.invites:
+            em = (inv.get("email") or "").strip()
+            rl = inv.get("role") or data.role
+            if rl not in ROLE_LEVELS:
+                rl = "member"
+            if em and '@' in em:
+                pairs.append((em, rl))
+    elif data.emails:
+        rl = data.role if data.role in ROLE_LEVELS else "member"
+        for em in data.emails:
+            em = (em or "").strip()
+            if em and '@' in em:
+                pairs.append((em, rl))
+    pairs = pairs[:100]  # cap at 100
+
     conn = sqlite3.connect(DB_PATH)
     invites = []
     now = datetime.utcnow().isoformat()
     expires = (datetime.utcnow() + timedelta(days=7)).isoformat()
-    for email in data.emails[:100]:  # cap at 100
-        email = email.strip()
-        if not email or '@' not in email:
-            continue
+    for email, role in pairs:
         invite_id = str(uuid.uuid4())
         token = secrets.token_urlsafe(32)
         conn.execute(
             "INSERT OR IGNORE INTO org_invites (id, org_id, email, role, token, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [invite_id, org_id, email, data.role, token, now, expires]
+            [invite_id, org_id, email, role, token, now, expires]
         )
-        invites.append({"email": email, "token": token})
+        invites.append({"email": email, "token": token, "role": role})
     conn.commit()
+    org_name = _org_name(conn, org_id)
     conn.close()
-    return {"created": len(invites), "invites": invites}
+    _dispatch_invite_emails(org_name, invites)
+    return {"created": len(invites), "invites": invites, "emails_sent": len(invites)}
 
 
 @router.put("/{org_id}/members/{member_id}/role")

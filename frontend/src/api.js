@@ -142,6 +142,7 @@ export const getOrgMembers = (orgId, userId) => api.get(`/org/${orgId}/members`,
 export const inviteToOrg = (orgId, data) => api.post(`/org/${orgId}/invite`, data);
 export const bulkInviteToOrg = (orgId, data) => api.post(`/org/${orgId}/invite/bulk`, data);
 export const joinOrg = (token, data) => api.post(`/org/join/${token}`, data);
+export const getInviteInfo = (token) => api.get(`/org/invite/${token}`);
 export const updateMemberRole = (orgId, memberId, data) => api.put(`/org/${orgId}/members/${memberId}/role`, data);
 export const removeMember = (orgId, memberId, userId) => api.delete(`/org/${orgId}/members/${memberId}`, { params: { user_id: userId } });
 export const getOrgAnalytics = (orgId, userId) => api.get(`/org/${orgId}/analytics`, { params: { user_id: userId } });

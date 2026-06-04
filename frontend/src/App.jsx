@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import Trending from './pages/Trending';
 import OrgSetup from './pages/OrgSetup';
 import OrgDashboard from './pages/OrgDashboard';
+import JoinOrg from './pages/JoinOrg';
 import Challenges from './pages/Challenges';
 import Reference from './pages/Reference';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -55,6 +56,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
             <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+            <Route path="/join/:token" element={<ErrorBoundary><JoinOrg /></ErrorBoundary>} />
             <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
             <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
             <Route path="/security" element={<ErrorBoundary><Security /></ErrorBoundary>} />

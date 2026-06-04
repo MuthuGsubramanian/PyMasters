@@ -44,7 +44,7 @@ export default function Layout() {
             { icon: BookOpen, label: 'Reference', path: '/dashboard/reference', desc: 'Quick cheat sheets' },
         ];
         if (activeOrg && (activeOrg.role === 'super_admin' || activeOrg.role === 'admin')) {
-            items.push({ icon: Building2, label: 'Organization', path: '/dashboard/org', desc: 'Manage your org' });
+            items.push({ icon: Building2, label: 'Admin Console', path: '/dashboard/org', desc: 'Members, invites & analytics' });
         }
         items.push({ icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' });
         return items;
