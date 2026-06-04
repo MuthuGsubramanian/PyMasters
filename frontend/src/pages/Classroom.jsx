@@ -246,7 +246,7 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
     }, [presentTracks.length]);
 
     return (
-        <div className="animate-fade-in space-y-4 max-w-3xl mx-auto">
+        <div className="animate-fade-in space-y-4 max-w-5xl mx-auto">
             <header className="space-y-3">
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold tracking-wider uppercase ${welcome.color}`}>
                     {welcome.icon}
@@ -425,7 +425,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
     return (
-        <div className="animate-fade-in space-y-4 max-w-7xl mx-auto">
+        <div className="animate-fade-in space-y-4 max-w-5xl mx-auto">
             {/* ── Header ── */}
             <header>
                 <div className="flex items-center gap-2 mb-1">
@@ -608,7 +608,7 @@ function PracticePhase({
           'Write your solution below.';
 
     return (
-        <div className="animate-fade-in max-w-4xl mx-auto space-y-4">
+        <div className="animate-fade-in max-w-5xl mx-auto space-y-4">
             {/* Vaathiyaar instruction panel */}
             <div className="panel rounded-2xl p-4 border-l-4 border-l-purple-400 flex items-start gap-3">
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg select-none shadow-lg shadow-purple-500/20">
@@ -720,7 +720,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
     const animationSeq = Array.isArray(rawAnimation) ? rawAnimation : null;
 
     return (
-        <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
+        <div className="animate-fade-in max-w-5xl mx-auto space-y-6">
             {animationSeq && animationSeq.length > 0 && (
                 <AnimationRenderer
                     sequence={animationSeq}
@@ -1105,7 +1105,7 @@ export default function Classroom() {
 
     return (
         <div className="min-h-screen pb-40">
-            <div className="max-w-screen-xl mx-auto px-8 py-8">
+            <div className="max-w-6xl mx-auto px-6 py-8">
                 <VaathiyaarMessage />
                 {/* Back button when in a lesson */}
                 {phase !== 'select' && (
@@ -1205,98 +1205,82 @@ export default function Classroom() {
                     )}
                 </AnimatePresence>
 
-                {/* Chat messages */}
-                {phase !== 'select' && chatMessages.filter((m) => !m._isHint).length > 0 && (
-                    <div className="mt-8 space-y-3">
-                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2 flex items-center gap-2">
-                            <MessageSquare size={12} />
-                            Chat with Vaathiyaar
-                        </p>
-                        {chatMessages
-                            .filter((m) => !m._isHint)
-                            .map((msg, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, y: 6 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className={`flex ${
-                                        msg.role === 'user' ? 'justify-end' : 'justify-start'
-                                    }`}
-                                >
-                                    {msg._isModuleSuggestion ? (
-                                        <div className="max-w-[80%] px-4 py-3 rounded-2xl panel text-text-secondary rounded-bl-none space-y-2">
-                                            <p className="text-sm">{msg.content}</p>
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await requestModule(user.id, msg._topic);
-                                                        setChatMessages(prev => prev.map(m =>
-                                                            m === msg ? { role: 'assistant', content: `Great! I'm preparing a custom lesson on "${msg._topic}" for you. You'll get a notification when it's ready!` } : m
-                                                        ));
-                                                    } catch(e) {
-                                                        console.error(e);
-                                                    }
-                                                }}
-                                                className="btn-neo btn-neo-primary text-sm py-2 px-4"
-                                            >
-                                                Yes, create it!
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div
-                                            className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                                                msg.role === 'user'
-                                                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-br-none shadow-lg shadow-cyan-500/20'
-                                                    : 'panel text-text-secondary rounded-bl-none'
-                                            }`}
-                                        >
-                                            {msg._isThinking ? (
-                                                <ThinkingBubble />
-                                            ) : msg.role === 'assistant' ? (
-                                                <>
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                                        {msg.content}
-                                                    </ReactMarkdown>
-                                                    {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5 rounded-sm" />}
-                                                </>
-                                            ) : (
-                                                msg.content
-                                            )}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            ))}
-                        <div ref={chatEndRef} />
-                    </div>
-                )}
+                {/* Chat history now lives in the docked conversation panel below. */}
             </div>
 
-            {/* Fixed chat bar */}
-            {phase !== 'select' && <TTSControls tts={tts} />}
-
+            {/* ── Docked Vaathiyaar conversation: scrollable history + input as one unit ── */}
             {phase !== 'select' && (
-                <div className="fixed bottom-0 left-0 right-0 z-50">
-                    <div className="h-10 bg-gradient-to-t from-[#f0f4f8] to-transparent pointer-events-none" />
-                    <div className="bg-[#f0f4f8] px-4 pb-4">
-                        <div className="max-w-screen-xl mx-auto flex items-center gap-2">
-                            <div className="flex-1">
-                                <ChatBar
-                                    onSend={handleChat}
-                                    loading={chatLoading}
-                                    placeholder="Ask Vaathiyaar anything..."
-                                />
+                <>
+                    <TTSControls tts={tts} />
+                    <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
+                        <div className="max-w-5xl mx-auto pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_-6px_30px_rgba(0,0,0,0.12)] overflow-hidden">
+                            {chatMessages.filter((m) => !m._isHint).length > 0 && (
+                                <div className="max-h-[38vh] overflow-y-auto px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
+                                    {chatMessages.filter((m) => !m._isHint).map((msg, idx) => (
+                                        <motion.div
+                                            key={idx}
+                                            initial={{ opacity: 0, y: 6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                        >
+                                            {msg._isModuleSuggestion ? (
+                                                <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-bg-elevated text-text-secondary rounded-bl-none space-y-2">
+                                                    <p className="text-sm">{msg.content}</p>
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                await requestModule(user.id, msg._topic);
+                                                                setChatMessages(prev => prev.map(m =>
+                                                                    m === msg ? { role: 'assistant', content: `Great! I'm preparing a custom lesson on "${msg._topic}" for you. You'll get a notification when it's ready!` } : m
+                                                                ));
+                                                            } catch(e) {
+                                                                console.error(e);
+                                                            }
+                                                        }}
+                                                        className="btn-neo btn-neo-primary text-sm py-2 px-4"
+                                                    >
+                                                        Yes, create it!
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-br-none shadow-lg shadow-cyan-500/20' : 'bg-bg-elevated text-text-secondary rounded-bl-none'}`}>
+                                                    {msg._isThinking ? (
+                                                        <ThinkingBubble />
+                                                    ) : msg.role === 'assistant' ? (
+                                                        <>
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{msg.content}</ReactMarkdown>
+                                                            {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5 rounded-sm" />}
+                                                        </>
+                                                    ) : (
+                                                        msg.content
+                                                    )}
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    ))}
+                                    <div ref={chatEndRef} />
+                                </div>
+                            )}
+                            <div className={`flex items-center gap-2 p-3 ${chatMessages.filter((m) => !m._isHint).length > 0 ? 'border-t border-border-default' : ''}`}>
+                                <div className="flex-1">
+                                    <ChatBar
+                                        onSend={handleChat}
+                                        loading={chatLoading}
+                                        placeholder="Ask Vaathiyaar anything..."
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => tts.setEnabled(!tts.enabled)}
+                                    className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
+                                    title={tts.enabled ? 'Voice on' : 'Voice off'}
+                                >
+                                    {tts.enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                                </button>
                             </div>
-                            <button
-                                onClick={() => tts.setEnabled(!tts.enabled)}
-                                className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
-                                title={tts.enabled ? 'Voice on' : 'Voice off'}
-                            >
-                                {tts.enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                            </button>
                         </div>
                     </div>
-                </div>
+                </>
             )}
         </div>
     );
