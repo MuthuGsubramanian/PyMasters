@@ -1,0 +1,12 @@
+# Litestream config — continuous SQLite replication to GCS.
+# Auth: uses Application Default Credentials (the Cloud Run runtime service
+# account pymasters-runtime@, which holds roles/storage.objectAdmin on the bucket).
+dbs:
+  - path: /app/data/pymasters.db
+    replicas:
+      - type: gcs
+        bucket: pymasters-app-db
+        path: pymasters.db
+        # Keep generations for point-in-time recovery.
+        retention: 168h          # 7 days of WAL history
+        snapshot-interval: 6h    # full snapshot every 6h

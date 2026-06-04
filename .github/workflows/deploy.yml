@@ -49,11 +49,15 @@ jobs:
             --platform managed \
             --port 8080 \
             --allow-unauthenticated \
-            --set-env-vars "OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }},OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db" \
+            --service-account pymasters-runtime@pymasters-app.iam.gserviceaccount.com \
+            --set-env-vars "OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db" \
+            --set-secrets "OLLAMA_API_KEY=ollama-api-key:latest" \
             --memory 1Gi \
             --cpu 1 \
+            --no-cpu-throttling \
+            --concurrency 80 \
             --min-instances 1 \
-            --max-instances 3
+            --max-instances 1
 
       - name: Show deployment URL
         run: |
