@@ -7,11 +7,15 @@ import { safeErrorMsg } from '../utils/errorUtils';
 // Friendly labels for each generation stage (maps to backend status values).
 const STAGE_LABELS = {
     queued: 'Vaathiyaar is getting ready…',
-    stage_1: 'Planning the lesson outline…',
-    stage_2: 'Writing the story…',
-    stage_3: 'Designing the animations…',
-    stage_4: 'Creating practice challenges…',
-    stage_5: 'Putting it all together…',
+    stage_1_outline: 'Planning the lesson outline…',
+    stage_1_complete: 'Outline ready…',
+    stage_2_narrative: 'Writing the story…',
+    stage_2_complete: 'Story ready…',
+    stage_3_animation: 'Designing the animations…',
+    stage_3_complete: 'Animations ready…',
+    stage_4_challenges: 'Creating practice challenges…',
+    stage_4_complete: 'Challenges ready…',
+    stage_5_assembly: 'Putting it all together…',
     completed: 'Your lesson is ready!',
 };
 
@@ -47,7 +51,7 @@ export default function LearnAnything({ userId, onLessonReady }) {
                         clearInterval(pollRef.current);
                         setBusy(false); setStatus(null); setTopic('');
                         onLessonReady(s.data.result_lesson_id);
-                    } else if (s.data.status === 'failed' || tries > 50) {
+                    } else if (s.data.status === 'failed' || tries > 90) {
                         clearInterval(pollRef.current);
                         setBusy(false); setStatus(null);
                         setErr(s.data.error_message || 'That took too long — please try again.');
@@ -57,7 +61,7 @@ export default function LearnAnything({ userId, onLessonReady }) {
                     setBusy(false); setStatus(null);
                     setErr(safeErrorMsg(e2, 'Lost connection while generating.'));
                 }
-            }, 3000);
+            }, 4000);
         } catch (e1) {
             setBusy(false); setStatus(null);
             setErr(safeErrorMsg(e1, 'Could not start generation. Please try again.'));
@@ -93,7 +97,7 @@ export default function LearnAnything({ userId, onLessonReady }) {
                                 transition={{ ease: 'easeOut', duration: 0.6 }}
                             />
                         </div>
-                        <p className="mt-1.5 text-[11px] text-text-muted">This usually takes 30–60 seconds. You can keep browsing — your lesson will open when it's ready.</p>
+                        <p className="mt-1.5 text-[11px] text-text-muted">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
                     </motion.div>
                 ) : (
                     <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3">
