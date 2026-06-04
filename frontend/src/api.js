@@ -146,6 +146,7 @@ export const getInviteInfo = (token) => api.get(`/org/invite/${token}`);
 export const updateMemberRole = (orgId, memberId, data) => api.put(`/org/${orgId}/members/${memberId}/role`, data);
 export const removeMember = (orgId, memberId, userId) => api.delete(`/org/${orgId}/members/${memberId}`, { params: { user_id: userId } });
 export const getOrgAnalytics = (orgId, userId) => api.get(`/org/${orgId}/analytics`, { params: { user_id: userId } });
+export const getOrgProgress = (orgId, userId) => api.get(`/org/${orgId}/progress`, { params: { user_id: userId } });
 export const deleteOrg = (orgId, userId) =>
     api.delete(`/org/${orgId}`, { params: { user_id: userId } });
 export const saveOrgOnboarding = (data) => api.post('/profile/onboarding/org', data);

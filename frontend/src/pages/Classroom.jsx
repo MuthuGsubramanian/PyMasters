@@ -426,7 +426,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
     return (
-        <div className="animate-fade-in space-y-4 max-w-5xl mx-auto">
+        <div className="animate-fade-in space-y-4 max-w-6xl mx-auto">
             {/* ── Header ── */}
             <header>
                 <div className="flex items-center gap-2 mb-1">
@@ -475,7 +475,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             </button>
 
             {/* ── Two columns — Code Execution + Flow ── */}
-            <div className="flex flex-col lg:flex-row gap-5" style={{height: 'calc(100vh - 340px)', minHeight: '350px'}}>
+            <div className="flex flex-col lg:flex-row gap-5" style={{height: 'min(60vh, 540px)', minHeight: '360px'}}>
 
                 {/* LEFT: Code Execution (bigger) */}
                 <div className="flex-1 min-w-0 rounded-2xl bg-[#0d1117] overflow-hidden shadow-lg flex flex-col">

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getOrg, getOrgMembers, inviteToOrg, bulkInviteToOrg,
-  updateMemberRole, removeMember, getOrgAnalytics, getMyOrgs, deleteOrg
+  updateMemberRole, removeMember, getOrgAnalytics, getOrgProgress, getMyOrgs, deleteOrg
 } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
@@ -11,7 +11,7 @@ import {
   Building2, Users, Mail, Send, Copy, Shield, Crown,
   UserX, BarChart3, TrendingUp, Trophy, Zap, Search,
   Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
-  Upload, Rocket, X, Loader2
+  Upload, Rocket, X, Loader2, GraduationCap, Activity
 } from 'lucide-react';
 import { read, utils } from 'xlsx';
 
@@ -21,9 +21,38 @@ import { read, utils } from 'xlsx';
 const TABS = [
   { key: 'overview', label: 'Overview', icon: Building2 },
   { key: 'members', label: 'Members', icon: Users },
+  { key: 'students', label: 'Students', icon: GraduationCap },
   { key: 'invites', label: 'Invites', icon: Mail },
   { key: 'analytics', label: 'Analytics', icon: BarChart3 },
 ];
+
+/* Relative time from a UTC-ish timestamp string (SQLite "YYYY-MM-DD HH:MM:SS" or ISO). */
+function relTime(ts) {
+  if (!ts) return 'never';
+  let iso = String(ts).replace(' ', 'T');
+  if (!/[zZ]|[+\-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return '—';
+  const days = Math.floor((Date.now() - then) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return `${days}d ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
+/* Derive a learner status from progress fields. */
+function studentStatus(s) {
+  if ((s.struggle_count || 0) >= 3) return { label: 'At risk', color: 'bg-red-100 text-red-600 border-red-200' };
+  if ((s.signals_7d || 0) > 0) return { label: 'Active', color: 'bg-green-100 text-green-600 border-green-200' };
+  if (s.last_active) {
+    let iso = String(s.last_active).replace(' ', 'T');
+    if (!/[zZ]|[+\-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
+    const then = new Date(iso).getTime();
+    if (!isNaN(then) && (Date.now() - then) < 30 * 86400000) return { label: 'Idle', color: 'bg-amber-100 text-amber-600 border-amber-200' };
+  }
+  return { label: 'Inactive', color: 'bg-slate-100 text-slate-500 border-slate-200' };
+}
 
 const ROLE_BADGES = {
   super_admin: { label: 'Super Admin', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Crown },
@@ -353,6 +382,7 @@ export default function OrgDashboard() {
   const [members, setMembers] = useState([]);
   const [showDeleteOrg, setShowDeleteOrg] = useState(false);
   const [analytics, setAnalytics] = useState(null);
+  const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -384,6 +414,7 @@ export default function OrgDashboard() {
   }, [org, safeMembers, userId, activeOrg]);
 
   const isAdmin = myRole === 'super_admin' || myRole === 'admin';
+  const canViewProgress = isAdmin || myRole === 'manager';
 
   /* ---- Data loading ---- */
   const loadOrg = useCallback(async () => {
@@ -437,6 +468,12 @@ export default function OrgDashboard() {
           setAnalytics(analyticsRes?.data || null);
         } catch {
           /* analytics non-critical */
+        }
+        try {
+          const progRes = await getOrgProgress(orgId, uid);
+          setProgress(progRes?.data?.students || []);
+        } catch {
+          /* progress non-critical */
         }
       }
     } catch (err) {
@@ -664,6 +701,7 @@ export default function OrgDashboard() {
       <div className="flex gap-1 mb-4 bg-bg-surface backdrop-blur-xl rounded-xl p-1 border border-border-default w-fit">
         {TABS.map((t) => {
           if (t.key === 'analytics' && !isAdmin) return null;
+          if (t.key === 'students' && !canViewProgress) return null;
           const isActive = tab === t.key;
           const TabIcon = t.icon;
           return (
@@ -1018,6 +1056,74 @@ export default function OrgDashboard() {
                     ))}
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ========== STUDENTS TAB ========== */}
+          {tab === 'students' && canViewProgress && (
+            <div className="space-y-4">
+              {progress === null ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="animate-spin text-cyan-500" size={22} />
+                </div>
+              ) : progress.length === 0 ? (
+                <div className="text-center py-12 text-text-muted text-sm">
+                  No students yet — invite learners and their progress will appear here.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <StatCard icon={Users} label="Students" value={progress.length} />
+                    <StatCard icon={Activity} label="Active (7d)" value={progress.filter((s) => (s.signals_7d || 0) > 0).length} color="from-green-500 to-emerald-500" />
+                    <StatCard icon={Trophy} label="Lessons Done" value={progress.reduce((a, s) => a + (s.lessons_completed || 0), 0)} color="from-amber-500 to-orange-500" />
+                    <StatCard icon={AlertTriangle} label="At Risk" value={progress.filter((s) => (s.struggle_count || 0) >= 3).length} color="from-red-500 to-rose-500" />
+                  </div>
+
+                  <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <caption className="sr-only">Per-student progress</caption>
+                        <thead>
+                          <tr className="text-left text-xs text-text-muted border-b border-border-default">
+                            <th scope="col" className="px-4 py-3 font-semibold">Student</th>
+                            <th scope="col" className="px-4 py-3 font-semibold">XP</th>
+                            <th scope="col" className="px-4 py-3 font-semibold">Lessons</th>
+                            <th scope="col" className="px-4 py-3 font-semibold">Last active</th>
+                            <th scope="col" className="px-4 py-3 font-semibold">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-default">
+                          {progress.map((s) => {
+                            const st = studentStatus(s);
+                            const name = String(s.name || s.username || '—');
+                            return (
+                              <tr key={s.id} className="hover:bg-bg-elevated/50 transition-colors">
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                      {name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="font-semibold text-text-primary truncate">{name}</div>
+                                      {s.email && <div className="text-xs text-text-muted truncate">{String(s.email)}</div>}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-cyan-600 font-semibold">{s.xp || 0}</td>
+                                <td className="px-4 py-3 text-text-secondary">{s.lessons_completed || 0}</td>
+                                <td className="px-4 py-3 text-text-muted">{relTime(s.last_active)}</td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>{st.label}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
