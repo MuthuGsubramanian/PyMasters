@@ -504,6 +504,30 @@ def org_analytics(org_id: str, user_id: str = Query(...)):
     }
 
 
+@router.get("/{org_id}/progress")
+def org_progress(org_id: str, user_id: str = Query(...)):
+    """Per-student progress for teachers/admins. Requires manager+."""
+    require_org_role(DB_PATH, org_id, user_id, "manager")
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        """
+        SELECT u.id, u.username, u.name, u.email, om.role, om.department,
+               COALESCE(u.points, 0) AS xp,
+               (SELECT COUNT(*) FROM lesson_completions lc WHERE lc.user_id = u.id) AS lessons_completed,
+               (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id = u.id) AS last_active,
+               (SELECT COALESCE(SUM(struggle_count), 0) FROM user_mastery um WHERE um.user_id = u.id) AS struggle_count,
+               (SELECT COUNT(*) FROM learning_signals ls WHERE ls.user_id = u.id AND ls.created_at > datetime('now','-7 days')) AS signals_7d
+        FROM org_members om JOIN users u ON u.id = om.user_id
+        WHERE om.org_id = ?
+        ORDER BY xp DESC
+        """,
+        [org_id],
+    ).fetchall()
+    conn.close()
+    return {"students": [dict(r) for r in rows], "count": len(rows)}
+
+
 @router.delete("/{org_id}")
 def delete_organization(org_id: str, user_id: str = None):
     """
