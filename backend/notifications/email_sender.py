@@ -14,30 +14,50 @@ FROM_EMAIL = os.environ.get("FROM_EMAIL", "vaathiyaar@pymasters.net")
 FROM_NAME = os.environ.get("FROM_NAME", "Vaathiyaar - PyMasters")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://pymasters.net")
 
+# Optional backup SMTP provider (e.g. Brevo) — used if the primary send fails.
+SMTP_BACKUP_HOST = os.environ.get("SMTP_BACKUP_HOST", "")
+SMTP_BACKUP_PORT = int(os.environ.get("SMTP_BACKUP_PORT", "587"))
+SMTP_BACKUP_USER = os.environ.get("SMTP_BACKUP_USER", "")
+SMTP_BACKUP_PASS = os.environ.get("SMTP_BACKUP_PASS", "")
 
-def send_email(to_email: str, subject: str, body_text: str, body_html: str = None) -> bool:
-    """Send an email notification. Returns True on success."""
-    if not SMTP_USER or not SMTP_PASS:
-        return False
 
+def _build_msg(to_email: str, subject: str, body_text: str, body_html: str, from_addr: str):
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+    msg["From"] = f"{FROM_NAME} <{from_addr}>"
     msg["To"] = to_email
-
     msg.attach(MIMEText(body_text, "plain"))
     if body_html:
         msg.attach(MIMEText(body_html, "html"))
+    return msg
 
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-            server.send_message(msg)
-        return True
-    except Exception as e:
-        print(f"Email send failed: {e}")
+
+def _smtp_send(host: str, port: int, user: str, pwd: str, msg) -> None:
+    with smtplib.SMTP(host, port, timeout=30) as server:
+        server.starttls()
+        server.login(user, pwd)
+        server.send_message(msg)
+
+
+def send_email(to_email: str, subject: str, body_text: str, body_html: str = None) -> bool:
+    """Send an email, trying the primary SMTP then a backup provider. Returns True on success."""
+    providers = []
+    if SMTP_USER and SMTP_PASS:
+        providers.append(("primary", SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS))
+    if SMTP_BACKUP_USER and SMTP_BACKUP_PASS:
+        providers.append(("backup", SMTP_BACKUP_HOST, SMTP_BACKUP_PORT, SMTP_BACKUP_USER, SMTP_BACKUP_PASS))
+    if not providers:
         return False
+
+    for label, host, port, user, pwd in providers:
+        try:
+            msg = _build_msg(to_email, subject, body_text, body_html, FROM_EMAIL)
+            _smtp_send(host, port, user, pwd, msg)
+            print(f"[email] sent to {to_email} via {label} ({host})")
+            return True
+        except Exception as e:
+            print(f"[email] {label} ({host}) failed for {to_email}: {e}")
+    return False
 
 
 def build_lesson_ready_email(title: str, topic: str, reason: str, link: str) -> tuple:
