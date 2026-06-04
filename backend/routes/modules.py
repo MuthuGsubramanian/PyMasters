@@ -50,7 +50,15 @@ async def get_job_status(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
 
     status = row["status"]
-    progress_map = {"queued": 0, "stage_1": 20, "stage_2": 40, "stage_3": 60, "stage_4": 80, "stage_5": 90, "completed": 100, "failed": 0}
+    progress_map = {
+        "queued": 5,
+        "stage_1_outline": 15, "stage_1_complete": 25,
+        "stage_2_narrative": 35, "stage_2_complete": 45,
+        "stage_3_animation": 55, "stage_3_complete": 65,
+        "stage_4_challenges": 75, "stage_4_complete": 85,
+        "stage_5_assembly": 92,
+        "completed": 100, "failed": 0,
+    }
 
     return {
         "job_id": row["id"],
