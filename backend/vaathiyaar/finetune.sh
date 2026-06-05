@@ -1,21 +1,15 @@
 #!/bin/bash
-# Export training data and create fine-tuned Vaathiyaar model
-# Usage: ./finetune.sh [min_quality_score]
-
+# Vaathiyaar fine-tuning pipeline — see FINETUNE.md for the full runbook.
+#
+# Usage:
+#   ./finetune.sh                 # dry run against the live site (min quality 0.7)
+#   ./finetune.sh 0.8 --create    # build + create the model on Ollama Cloud
+#
+# Env:
+#   PYMASTERS_URL   base URL to pull training data from (default https://pymasters.net)
+#   OLLAMA_API_KEY  required for --create
 set -e
-
-MIN_QUALITY="${1:-0.7}"
-
-echo "=== Vaathiyaar Fine-Tuning Pipeline ==="
-echo ""
-
-echo "Step 1: Exporting training data (min quality: ${MIN_QUALITY})..."
-python -c "from training_data import export_training_data; count = export_training_data('pymasters.duckdb', 'training_data.jsonl', ${MIN_QUALITY}); print(f'Exported {count} training examples')"
-
-echo ""
-echo "Step 2: Creating Vaathiyaar model from Modelfile..."
-ollama create PyMasters/Vaathiyaar -f Modelfile
-
-echo ""
-echo "Model created: PyMasters/Vaathiyaar"
-ollama list | grep Vaathiyaar
+cd "$(dirname "$0")"
+MIN_QUALITY="${1:-0.7}"; shift || true
+python finetune_pipeline.py --base-url "${PYMASTERS_URL:-https://pymasters.net}" \
+  --min-quality "$MIN_QUALITY" "$@"
