@@ -27,6 +27,7 @@ const OrgDashboard = lazy(() => import('./pages/OrgDashboard'));
 const JoinOrg = lazy(() => import('./pages/JoinOrg'));
 const Challenges = lazy(() => import('./pages/Challenges'));
 const Reference = lazy(() => import('./pages/Reference'));
+const SuperAdmin = lazy(() => import('./pages/SuperAdmin'));
 
 function PageLoader() {
   return (
@@ -91,6 +92,7 @@ export default function App() {
                 <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
                 <Route path="org/setup" element={<ErrorBoundary><OrgSetup /></ErrorBoundary>} />
                 <Route path="org" element={<ErrorBoundary><OrgDashboard /></ErrorBoundary>} />
+                <Route path="admin" element={<ErrorBoundary><SuperAdmin /></ErrorBoundary>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
