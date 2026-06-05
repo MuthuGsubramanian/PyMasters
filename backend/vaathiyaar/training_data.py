@@ -166,50 +166,61 @@ def get_training_stats(db_path: str) -> dict:
     }
 
 
-def export_training_data(output_path: str = "training_export.jsonl", min_quality: float = 0.5) -> int:
-    """Export training data as JSONL for fine-tuning. Returns count."""
-    db_path = os.environ.get("DB_PATH", "pymasters.db")
+def set_training_quality(db_path: str, pair_id: str, quality_score: float) -> bool:
+    """Update the quality score of a recorded pair (e.g. from a student 👍/👎)."""
     conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    try:
+        cur = conn.execute(
+            "UPDATE training_data SET quality_score = ? WHERE id = ?",
+            [quality_score, pair_id],
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
 
-    rows = conn.execute(
-        "SELECT * FROM training_data WHERE quality_score >= ? ORDER BY created_at ASC",
-        [min_quality],
-    ).fetchall()
 
-    count = 0
-    with open(output_path, "w", encoding="utf-8") as f:
-        for row in rows:
-            profile = json.loads(row["profile_json"]) if row["profile_json"] else {}
-            context = json.loads(row["context_json"]) if row["context_json"] else {}
+def build_training_jsonl(db_path: str, min_quality: float = None) -> tuple:
+    """Build fine-tuning JSONL content in memory. Returns (jsonl_string, count)."""
+    conn = sqlite3.connect(db_path)
+    try:
+        if min_quality is not None:
+            rows = conn.execute(
+                "SELECT input_text, output_text, profile_json, context_json "
+                "FROM training_data WHERE quality_score >= ? ORDER BY created_at",
+                [min_quality],
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT input_text, output_text, profile_json, context_json "
+                "FROM training_data ORDER BY created_at"
+            ).fetchall()
+    finally:
+        conn.close()
 
-            from backend.vaathiyaar.modelfile import build_system_prompt
-            system_prompt = build_system_prompt(profile, context)
-
-            output = row["output_text"]
-            try:
-                json.loads(output)
-            except (json.JSONDecodeError, TypeError):
-                output = json.dumps({"message": output})
-
-            entry = {
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": row["input_text"]},
-                    {"role": "assistant", "content": output},
-                ]
-            }
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            count += 1
-
-    conn.close()
-    return count
+    lines = []
+    for input_text, output_text, profile_json, context_json in rows:
+        profile = json.loads(profile_json) if profile_json else {}
+        context = json.loads(context_json) if context_json else {}
+        system_prompt = build_system_prompt(student_profile=profile, lesson_context=context)
+        try:
+            json.loads(output_text)
+            assistant = output_text
+        except (json.JSONDecodeError, TypeError):
+            assistant = json.dumps({"message": output_text}, ensure_ascii=False)
+        lines.append(json.dumps({
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": input_text},
+                {"role": "assistant", "content": assistant},
+            ]
+        }, ensure_ascii=False))
+    return "\n".join(lines), len(lines)
 
 
 def export_curriculum_as_training(lessons_dir: str, output_path: str = "curriculum_training.jsonl") -> int:
     """Convert pre-built lessons into training data format for fine-tuning."""
     from pathlib import Path
-    from backend.vaathiyaar.modelfile import build_system_prompt
 
     base = Path(lessons_dir)
     count = 0
