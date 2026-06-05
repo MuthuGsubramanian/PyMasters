@@ -672,12 +672,20 @@ def register(user: UserRegister):
         default_unlocks = json.dumps(["module_1"])
         account_type = user.account_type if user.account_type in ("individual", "organization") else "individual"
 
+        # Super admins skip the learner onboarding and land straight in the console.
+        try:
+            from routes.admin import SUPER_ADMINS
+            is_super = (user.username or "").strip().lower() in SUPER_ADMINS
+        except Exception:
+            is_super = False
+        onboarding_flag = 1 if is_super else 0
+
         cursor.execute(
-            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed, account_type) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', 0, ?)",
-            [user_id, user.username, hashed, user.name, default_unlocks, account_type]
+            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed, account_type) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', ?, ?)",
+            [user_id, user.username, hashed, user.name, default_unlocks, onboarding_flag, account_type]
         )
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": False, "account_type": account_type}
+        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type}
     finally:
         conn.close()
 
