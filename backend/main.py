@@ -31,6 +31,7 @@ from routes.trending import router as trending_router
 from routes.organizations import router as org_router
 from routes.challenges import router as challenges_router
 from routes.reference import router as reference_router
+from routes.admin import router as admin_router
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -145,6 +146,14 @@ def init_db():
         if 'account_type' not in col_names:
             print("Migrating DB: Adding account_type column")
             cursor.execute("ALTER TABLE users ADD COLUMN account_type TEXT DEFAULT 'individual'")
+
+        if 'is_blocked' not in col_names:
+            print("Migrating DB: Adding is_blocked column")
+            cursor.execute("ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0")
+
+        if 'plan' not in col_names:
+            print("Migrating DB: Adding plan column")
+            cursor.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
 
         # Create user_profiles table
         cursor.execute("""
@@ -597,6 +606,7 @@ app.include_router(trending_router)
 app.include_router(org_router)
 app.include_router(challenges_router)
 app.include_router(reference_router)
+app.include_router(admin_router)
 
 # --- CORS ---
 origins = [
@@ -687,6 +697,11 @@ def login(user: UserLogin):
 
         if not record:
             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Blocked users cannot sign in (super admin can suspend access).
+        blocked_row = cursor.execute("SELECT COALESCE(is_blocked,0) FROM users WHERE id = ?", [record[0]]).fetchone()
+        if blocked_row and blocked_row[0]:
+            raise HTTPException(status_code=403, detail="Your access has been suspended. Please contact your administrator.")
 
         # Check org membership
         org_row = cursor.execute("""

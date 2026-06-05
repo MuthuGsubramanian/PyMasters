@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -16,7 +16,8 @@ import {
     TrendingUp,
     Building2,
     Swords,
-    BookOpen
+    BookOpen,
+    Shield
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -24,12 +25,17 @@ import PymastersIcon from '../assets/pymasters-icon.svg';
 import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
+import { getAdminCheck } from '../api';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isSuper, setIsSuper] = useState(false);
+    useEffect(() => {
+        if (user?.id) getAdminCheck(user.id).then((r) => setIsSuper(!!r.data?.is_super_admin)).catch(() => {});
+    }, [user?.id]);
 
     if (!user) return <Outlet />;
 
@@ -46,9 +52,12 @@ export default function Layout() {
         if (activeOrg && (activeOrg.role === 'super_admin' || activeOrg.role === 'admin')) {
             items.push({ icon: Building2, label: 'Admin Console', path: '/dashboard/org', desc: 'Members, invites & analytics' });
         }
+        if (isSuper) {
+            items.push({ icon: Shield, label: 'Super Admin', path: '/dashboard/admin', desc: 'Platform monitoring & control' });
+        }
         items.push({ icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' });
         return items;
-    }, [activeOrg]);
+    }, [activeOrg, isSuper]);
 
     const rank = user.points > 1000 ? 'ARCHITECT' : user.points > 500 ? 'ENGINEER' : 'CADET';
     const rankColors = {

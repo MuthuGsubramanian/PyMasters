@@ -1,0 +1,183 @@
+"""
+admin.py — Platform SUPER-ADMIN API.  Prefix: /api/admin
+
+Distinct from org admins: these endpoints span the whole platform (all users,
+all orgs) and are gated to an allowlist of super-admin identities.
+"""
+
+import os
+import sqlite3
+from datetime import date, timedelta
+
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
+
+DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+
+# Allowlisted super admins (username OR email), comma-separated, overridable via env.
+SUPER_ADMINS = {
+    e.strip().lower()
+    for e in os.getenv("SUPER_ADMIN_EMAILS", "muthu@pymasters.net,muthu.g.subramanian@gmail.com").split(",")
+    if e.strip()
+}
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+def _conn():
+    c = sqlite3.connect(DB_PATH)
+    c.row_factory = sqlite3.Row
+    return c
+
+
+def require_super_admin(user_id: str):
+    conn = _conn()
+    row = conn.execute("SELECT username, email FROM users WHERE id = ?", [user_id]).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=403, detail="Super admin access required")
+    idents = {(row["username"] or "").lower(), (row["email"] or "").lower()}
+    if not (idents & SUPER_ADMINS):
+        raise HTTPException(status_code=403, detail="Super admin access required")
+    return True
+
+
+class BlockRequest(BaseModel):
+    user_id: str   # the requesting super admin
+    blocked: bool
+
+
+class PlanRequest(BaseModel):
+    user_id: str   # the requesting super admin
+    plan: str      # e.g. free | pro | enterprise
+
+
+@router.get("/check")
+def check(user_id: str = Query(...)):
+    """Lightweight gate so the frontend can decide whether to show the console."""
+    try:
+        require_super_admin(user_id)
+        return {"is_super_admin": True}
+    except HTTPException:
+        return {"is_super_admin": False}
+
+
+@router.get("/overview")
+def overview(user_id: str = Query(...)):
+    require_super_admin(user_id)
+    conn = _conn()
+
+    def one(q, p=()):
+        r = conn.execute(q, p).fetchone()
+        return r[0] if r and r[0] is not None else 0
+
+    orgs_by_type = {r["t"]: r["c"] for r in conn.execute(
+        "SELECT COALESCE(NULLIF(type,''),'other') t, COUNT(*) c FROM organizations GROUP BY t"
+    ).fetchall()}
+
+    data = {
+        "total_users": one("SELECT COUNT(*) FROM users"),
+        "individuals": one("SELECT COUNT(*) FROM users WHERE account_type='individual' OR account_type IS NULL OR account_type=''"),
+        "org_users": one("SELECT COUNT(*) FROM users WHERE account_type='organization'"),
+        "blocked_users": one("SELECT COUNT(*) FROM users WHERE is_blocked=1"),
+        "total_orgs": one("SELECT COUNT(*) FROM organizations"),
+        "orgs_by_type": orgs_by_type,
+        "schools": orgs_by_type.get("school", 0),
+        "universities": orgs_by_type.get("university", 0),
+        "enterprises": orgs_by_type.get("enterprise", 0),
+        "active_7d": one("SELECT COUNT(DISTINCT user_id) FROM learning_signals WHERE created_at > datetime('now','-7 days')"),
+        "active_30d": one("SELECT COUNT(DISTINCT user_id) FROM learning_signals WHERE created_at > datetime('now','-30 days')"),
+        "new_users_7d": one("SELECT COUNT(*) FROM users WHERE created_at > datetime('now','-7 days')"),
+        "new_users_30d": one("SELECT COUNT(*) FROM users WHERE created_at > datetime('now','-30 days')"),
+        "lessons_completed": one("SELECT COUNT(*) FROM lesson_completions"),
+        "generated_lessons": one("SELECT COUNT(*) FROM generated_lessons"),
+        "generation_jobs": one("SELECT COUNT(*) FROM module_generation_jobs"),
+        "training_pairs": one("SELECT COUNT(*) FROM training_data"),
+    }
+    conn.close()
+    return data
+
+
+@router.get("/users")
+def list_users(user_id: str = Query(...), q: str = "", limit: int = 50, offset: int = 0):
+    require_super_admin(user_id)
+    conn = _conn()
+    where, params = "", []
+    if q:
+        where = "WHERE (u.username LIKE ? OR u.name LIKE ? OR u.email LIKE ?)"
+        like = f"%{q}%"
+        params = [like, like, like]
+    rows = conn.execute(f"""
+        SELECT u.id, u.username, u.name, u.email,
+               COALESCE(NULLIF(u.account_type,''),'individual') account_type,
+               u.points, u.created_at, COALESCE(u.onboarding_completed,0) onboarding_completed,
+               COALESCE(u.is_blocked,0) is_blocked, COALESCE(NULLIF(u.plan,''),'free') plan,
+               (SELECT o.name FROM org_members om JOIN organizations o ON o.id=om.org_id WHERE om.user_id=u.id LIMIT 1) org_name,
+               (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id=u.id) last_active
+        FROM users u {where}
+        ORDER BY u.created_at DESC LIMIT ? OFFSET ?
+    """, params + [min(limit, 200), offset]).fetchall()
+    total = conn.execute(f"SELECT COUNT(*) FROM users u {where}", params).fetchone()[0]
+    conn.close()
+    return {"users": [dict(r) for r in rows], "total": total}
+
+
+@router.get("/orgs")
+def list_orgs(user_id: str = Query(...)):
+    require_super_admin(user_id)
+    conn = _conn()
+    rows = conn.execute("""
+        SELECT o.id, o.name, COALESCE(NULLIF(o.type,''),'other') type,
+               COALESCE(NULLIF(o.plan,''),'free') plan, o.created_at,
+               (SELECT COUNT(*) FROM org_members om WHERE om.org_id=o.id) member_count
+        FROM organizations o ORDER BY o.created_at DESC
+    """).fetchall()
+    conn.close()
+    return {"orgs": [dict(r) for r in rows]}
+
+
+@router.post("/users/{target_id}/block")
+def block_user(target_id: str, req: BlockRequest):
+    """Block (suspend) or unblock (grant) a user's access."""
+    require_super_admin(req.user_id)
+    conn = _conn()
+    conn.execute("UPDATE users SET is_blocked = ? WHERE id = ?", [1 if req.blocked else 0, target_id])
+    conn.commit()
+    conn.close()
+    return {"ok": True, "blocked": req.blocked}
+
+
+@router.post("/users/{target_id}/plan")
+def set_user_plan(target_id: str, req: PlanRequest):
+    """Set a user's subscription/access tier."""
+    require_super_admin(req.user_id)
+    conn = _conn()
+    conn.execute("UPDATE users SET plan = ? WHERE id = ?", [req.plan, target_id])
+    conn.commit()
+    conn.close()
+    return {"ok": True, "plan": req.plan}
+
+
+@router.get("/usage")
+def usage(user_id: str = Query(...), days: int = 30):
+    """Daily signups + active learners for the usage graph."""
+    require_super_admin(user_id)
+    days = max(1, min(days, 120))
+    conn = _conn()
+    signups = {r["d"]: r["c"] for r in conn.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM users WHERE created_at > datetime('now', ?) GROUP BY d",
+        [f"-{days} days"]).fetchall()}
+    active = {r["d"]: r["c"] for r in conn.execute(
+        "SELECT date(created_at) d, COUNT(DISTINCT user_id) c FROM learning_signals WHERE created_at > datetime('now', ?) GROUP BY d",
+        [f"-{days} days"]).fetchall()}
+    conn.close()
+    today = date.today()
+    series = [
+        {
+            "date": (today - timedelta(days=i)).isoformat(),
+            "signups": signups.get((today - timedelta(days=i)).isoformat(), 0),
+            "active": active.get((today - timedelta(days=i)).isoformat(), 0),
+        }
+        for i in range(days - 1, -1, -1)
+    ]
+    return {"series": series, "days": days}

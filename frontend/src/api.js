@@ -148,6 +148,15 @@ export const updateMemberRole = (orgId, memberId, data) => api.put(`/org/${orgId
 export const removeMember = (orgId, memberId, userId) => api.delete(`/org/${orgId}/members/${memberId}`, { params: { user_id: userId } });
 export const getOrgAnalytics = (orgId, userId) => api.get(`/org/${orgId}/analytics`, { params: { user_id: userId } });
 export const getOrgProgress = (orgId, userId) => api.get(`/org/${orgId}/progress`, { params: { user_id: userId } });
+
+// Platform super-admin
+export const getAdminCheck = (userId) => api.get('/admin/check', { params: { user_id: userId } });
+export const getAdminOverview = (userId) => api.get('/admin/overview', { params: { user_id: userId } });
+export const getAdminUsers = (userId, q = '', limit = 50, offset = 0) => api.get('/admin/users', { params: { user_id: userId, q, limit, offset } });
+export const getAdminOrgs = (userId) => api.get('/admin/orgs', { params: { user_id: userId } });
+export const getAdminUsage = (userId, days = 30) => api.get('/admin/usage', { params: { user_id: userId, days } });
+export const adminBlockUser = (targetId, userId, blocked) => api.post(`/admin/users/${targetId}/block`, { user_id: userId, blocked });
+export const adminSetPlan = (targetId, userId, plan) => api.post(`/admin/users/${targetId}/plan`, { user_id: userId, plan });
 export const deleteOrg = (orgId, userId) =>
     api.delete(`/org/${orgId}`, { params: { user_id: userId } });
 export const saveOrgOnboarding = (data) => api.post('/profile/onboarding/org', data);
