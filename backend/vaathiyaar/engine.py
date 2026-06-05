@@ -5,6 +5,7 @@ and safe code evaluation.
 
 import json
 import os
+import time
 from typing import Optional
 
 from ollama import Client as OllamaClient
@@ -26,7 +27,8 @@ def get_ollama_client():
     if _ollama_client is None:
         _ollama_client = OllamaClient(
             host="https://ollama.com",
-            headers={"Authorization": f"Bearer {OLLAMA_API_KEY}"}
+            headers={"Authorization": f"Bearer {OLLAMA_API_KEY}"},
+            timeout=90,  # bound each call so a stalled model can't hang a job forever
         )
     return _ollama_client
 
@@ -81,11 +83,22 @@ def call_vaathiyaar(
         {"role": "user", "content": user_message},
     ]
 
-    response = client.chat(
-        model=OLLAMA_MODEL,
-        messages=messages,
-        stream=False,
-    )
+    # Bound the generation: cap output tokens + set temperature (previously ignored,
+    # which let the model run unbounded). Disable "thinking" to cut latency and keep
+    # the JSON clean. Fall back gracefully if the installed client lacks `think`.
+    options = {"temperature": temperature, "num_predict": max_tokens}
+    _t = time.time()
+    try:
+        response = client.chat(
+            model=OLLAMA_MODEL, messages=messages, stream=False,
+            think=False, options=options,
+        )
+    except TypeError:
+        response = client.chat(
+            model=OLLAMA_MODEL, messages=messages, stream=False, options=options,
+        )
+    print(f"[vaathiyaar] chat model={OLLAMA_MODEL} took {time.time() - _t:.1f}s "
+          f"(max_tokens={max_tokens})")
 
     raw_content = response["message"]["content"]
     return parse_vaathiyaar_response(raw_content)
