@@ -1,0 +1,200 @@
+{
+  "id": "all_minilm_l6_v2_homie_semantic_qa",
+  "topic": "all_minilm_l6_v2_homie_semantic_qa",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Sentence Similarity Across Frameworks: all-MiniLM-L6-v2 as Homie's Q&A Backbone"
+  },
+  "description": {
+    "en": "Use sentence-transformers/all-MiniLM-L6-v2 to power local document Q&A â€” encode once, run anywhere (PyTorch, TensorFlow, ONNX, Rust), and rank answers by sentence similarity for Homie's offline RAG."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Model, Four Runtimes: Sentence Similarity Without Limits\n\nVaathiyaar here! Here's a question that trips up most beginners: *what does it actually mean for two sentences to be \"similar\"?* When Homie answers a question from your local PDF, it isn't reading the document â€” it's comparing **meaning-vectors**. Your question and every chunk of the document get turned into 384 numbers, and Homie picks the chunks whose numbers point in the same direction. The model behind this is `all-MiniLM-L6-v2`: 80MB, ~14,000 sentences/sec on a CPU, and â€” uniquely â€” shipped for **PyTorch, TensorFlow, ONNX, and Rust**. Encode once, deploy anywhere.\n\n### Why \"Run Anywhere\" Matters for Local Q&A\n\nHomie runs on a user's own machine â€” sometimes a laptop, sometimes a server, sometimes WebAssembly in a browser tab. A single embedding model with four runtime backends means the *same vectors* come out regardless of where it runs. That guarantees a question encoded on a phone matches a corpus encoded on a server.\n\n| Backend | Best For | Install | Relative CPU Speed |\n|---|---|---|---|\n| PyTorch | Development, GPU training | `pip install sentence-transformers` | 1.0x (baseline) |\n| ONNX Runtime | Production CPU serving | `pip install optimum[onnxruntime]` | 2â€“3x |\n| TensorFlow | TF-native pipelines, TF Serving | `pip install tensorflow` | ~1.0x |\n| Rust (Candle) | Edge / WASM, zero-Python | `cargo add candle` | 2â€“4x, tiny binary |\n\n### Encoding a Question and a Document\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nquestion = \"How do I reset my password?\"\nchunks = [\n    \"To recover access, click 'Forgot password' on the login page.\",\n    \"Our office is open Monday to Friday, 9am to 5pm.\",\n    \"Passwords must contain at least one number and symbol.\",\n]\n\nq_emb = model.encode(question, normalize_embeddings=True)\nc_emb = model.encode(chunks, normalize_embeddings=True)\n```\n\nNote `normalize_embeddings=True`: it makes every vector unit-length, so a plain dot product equals cosine similarity â€” fewer operations per comparison when you're scoring thousands of chunks.\n\n### Ranking by Sentence Similarity\n\n```python\nscores = util.cos_sim(q_emb, c_emb)[0]\nfor chunk, score in sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True):\n    print(f\"{score:.3f} | {chunk}\")\n# 0.611 | To recover access, click 'Forgot password' on the login page.\n# 0.392 | Passwords must contain at least one number and symbol.\n# 0.061 | Our office is open Monday to Friday, 9am to 5pm.\n```\n\nThe top chunk shares **zero keywords** with \"reset my password\" â€” yet it wins because the model learned that *reset â‰ˆ recover* and *password â‰ˆ access*. That semantic bridge is the whole point.\n\n### Exporting to ONNX for Production Serving\n\n```python\n# Same model, ONNX backend â€” identical vectors, 2-3x faster on CPU\nfast = SentenceTransformer(\n    \"all-MiniLM-L6-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\nassert fast.encode(question, normalize_embeddings=True).shape == (384,)\n```\n\nThe ONNX graph drops Python and PyTorch overhead. INT8 quantization shrinks the model to ~22MB â€” small enough to bundle inside Homie's installer.\n\n### A Minimal Local Q&A Loop\n\n```python\nclass HomieQA:\n    def __init__(self, chunks):\n        self.model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n        self.chunks = chunks\n        self.emb = self.model.encode(chunks, normalize_embeddings=True, convert_to_tensor=True)\n\n    def answer(self, question, threshold=0.45):\n        q = self.model.encode(question, normalize_embeddings=True, convert_to_tensor=True)\n        scores = util.cos_sim(q, self.emb)[0]\n        best = int(scores.argmax())\n        if float(scores[best]) < threshold:\n            return \"I don't have enough context to answer that.\"\n        return self.chunks[best]\n```\n\nThe threshold is the safety valve: if nothing scores above 0.45, Homie refuses to guess instead of hallucinating from an irrelevant chunk.\n\n> **Key Insight:** Sentence similarity turns Q&A into geometry â€” encode the question and every chunk into 384-dim unit vectors, then pick the chunk pointing the same way. all-MiniLM-L6-v2 makes this portable: the same 80MB model runs in PyTorch, TensorFlow, ONNX, or Rust and produces identical vectors, so Homie's local document Q&A behaves the same on a laptop, a server, or the edge."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Local document Q&A is sentence similarity in disguise: encode the question and every document chunk into 384-dim meaning-vectors, then return the closest match. all-MiniLM-L6-v2 ships for PyTorch, TensorFlow, ONNX, and Rust â€” one 80MB model, identical vectors everywhere, the perfect backbone for Homie's offline RAG.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nquestion = \"How do I reset my password?\"\nchunks = [\n    \"To recover access, click 'Forgot password' on the login page.\",\n    \"Our office is open Monday to Friday, 9am to 5pm.\",\n    \"Passwords must contain at least one number and symbol.\",\n]\n\nq_emb = model.encode(question, normalize_embeddings=True)\nc_emb = model.encode(chunks, normalize_embeddings=True)\n\nscores = util.cos_sim(q_emb, c_emb)[0]\nbest = scores.argmax()\nprint(f\"{float(scores[best]):.3f} | {chunks[best]}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer to encode text and util for cosine similarity â€” the two building blocks of any retrieval pipeline. Install with: pip install sentence-transformers."
+        },
+        {
+          "line": 3,
+          "explanation": "Load all-MiniLM-L6-v2, a 6-layer distilled transformer producing 384-dim embeddings. First call downloads ~80MB; later calls load from local cache â€” no API key, fully offline."
+        },
+        {
+          "line": 5,
+          "explanation": "The user's question. In Homie this arrives at query time and must be encoded with the exact same model as the corpus, or the vectors won't be comparable."
+        },
+        {
+          "line": 6,
+          "explanation": "Three document chunks. Only the first truly answers the question â€” and it shares no keywords with it, so plain keyword search would miss it entirely."
+        },
+        {
+          "line": 11,
+          "explanation": "Encode the question into a single 384-dim unit vector. normalize_embeddings=True makes dot product equal cosine similarity, saving work at scoring time."
+        },
+        {
+          "line": 12,
+          "explanation": "Encode all chunks in one batched call. Passing a list lets the model use internal batching instead of a slow per-sentence Python loop."
+        },
+        {
+          "line": 14,
+          "explanation": "cos_sim compares the question vector against every chunk vector in one vectorized operation, returning one similarity score per chunk."
+        },
+        {
+          "line": 15,
+          "explanation": "argmax picks the highest-scoring chunk â€” the retrieval step. The 'reset password' question matches 'recover access' despite zero shared words."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nclass HomieQA:\n    def __init__(self, chunks):\n        self.model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n        self.chunks = chunks\n        self.emb = self.model.encode(\n            chunks, normalize_embeddings=True, convert_to_tensor=True\n        )\n\n    def answer(self, question, threshold=0.45):\n        q = self.model.encode(\n            question, normalize_embeddings=True, convert_to_tensor=True\n        )\n        scores = util.cos_sim(q, self.emb)[0]\n        best = int(scores.argmax())\n        if float(scores[best]) < threshold:\n            return \"I don't have enough context to answer that.\"\n        return self.chunks[best]\n\nbot = HomieQA([\"Click 'Forgot password' to recover access.\", \"We are open 9 to 5.\"])\nprint(bot.answer(\"how do I reset my login?\"))\nprint(bot.answer(\"what is the meaning of life?\"))",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Load the model once at construction. Reusing one instance avoids re-downloading and re-initializing the model on every query."
+        },
+        {
+          "line": 7,
+          "explanation": "Encode the corpus once up front and store the vectors. This is the expensive step; doing it eagerly makes every later query cheap."
+        },
+        {
+          "line": 8,
+          "explanation": "convert_to_tensor=True keeps embeddings as PyTorch tensors, which makes the cosine-similarity math faster than converting to NumPy each call."
+        },
+        {
+          "line": 11,
+          "explanation": "answer() takes a question plus a threshold â€” the minimum similarity required before Homie is willing to respond with a chunk."
+        },
+        {
+          "line": 14,
+          "explanation": "Encode the incoming question with the identical model and settings, so its vector lives in the same 384-dim space as the corpus."
+        },
+        {
+          "line": 15,
+          "explanation": "Score the question against all stored chunk vectors in one shot, then take argmax to find the single best-matching chunk."
+        },
+        {
+          "line": 17,
+          "explanation": "The threshold guard: if even the best chunk scores below 0.45, Homie declines instead of returning an irrelevant chunk â€” preventing hallucination."
+        },
+        {
+          "line": 19,
+          "explanation": "When a chunk clears the bar, return it as the grounding context. The off-topic 'meaning of life' query falls below threshold and triggers the refusal."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Keyword Q&A",
+      "right_label": "Sentence-Similarity Q&A (MiniLM)",
+      "items": [
+        {
+          "left": "\"reset password\" misses \"recover access\"",
+          "right": "Matches \"recover access\" by meaning (~0.61)"
+        },
+        {
+          "left": "No way to say \"I don't know\"",
+          "right": "Threshold lets the bot refuse off-topic questions"
+        },
+        {
+          "left": "Tied to one language / runtime",
+          "right": "Same vectors across PyTorch, TF, ONNX, Rust"
+        },
+        {
+          "left": "Ranks by raw word counts",
+          "right": "Ranks by continuous similarity scores"
+        },
+        {
+          "left": "Breaks on paraphrases",
+          "right": "Robust to synonyms and rewording"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now build portable local document Q&A with all-MiniLM-L6-v2 â€” sentence similarity that runs identically across PyTorch, TensorFlow, ONNX, and Rust!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `SentenceMatcher` class that ranks candidate sentences by similarity to a query using word-frequency vectors (a stand-in for real embeddings). Implement `encode(text)` returning a lowercased word-count dict, `cosine_similarity(a, b)` returning the cosine between two such dicts (0.0 if either has zero magnitude), and `most_similar(query, candidates, top_k)` returning the top-k candidates as dicts of {\"sentence\": str, \"score\": float} sorted by score descending."
+      },
+      "starter_code": "import math\n\nclass SentenceMatcher:\n    def encode(self, text: str) -> dict:\n        # Return a lowercased word-frequency dict: {word: count}\n        pass\n\n    def cosine_similarity(self, a: dict, b: dict) -> float:\n        # dot(a,b) / (||a|| * ||b||); return 0.0 if either magnitude is 0\n        pass\n\n    def most_similar(self, query: str, candidates: list[str], top_k: int = 2) -> list[dict]:\n        # Encode query + candidates, score each, return top_k\n        # Each result: {\"sentence\": str, \"score\": float}, sorted by score descending\n        pass\n\n# Test it:\nmatcher = SentenceMatcher()\ncands = [\n    \"reset my account password\",\n    \"office opening hours today\",\n    \"change my login password\",\n]\nresults = matcher.most_similar(\"how to reset password\", cands, top_k=2)\nprint(len(results))\nprint(results[0][\"sentence\"])\nprint(results[0][\"score\"] >= results[1][\"score\"])",
+      "expected_output": "2\nreset my account password\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), do text.lower().split() and tally counts with vec[w] = vec.get(w, 0) + 1",
+          "For cosine_similarity, dot = sum(a[w]*b[w]) over shared words; magnitude = sqrt(sum(v**2 for v in values)); guard against zero magnitude",
+          "In most_similar(), build a list of {\"sentence\", \"score\"} dicts, sort by score reverse=True, then slice [:top_k]"
+        ]
+      },
+      "test_code": "m = SentenceMatcher()\nassert m.encode(\"Hello hello world\") == {\"hello\": 2, \"world\": 1}\nassert abs(m.cosine_similarity({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1}) - 1.0) < 0.001\nassert m.cosine_similarity({\"a\": 1}, {\"b\": 1}) == 0.0\nassert m.cosine_similarity({}, {\"a\": 1}) == 0.0\nres = m.most_similar(\"reset password\", [\"reset password now\", \"buy fresh apples\", \"password reset link\"], top_k=2)\nassert len(res) == 2\nassert res[0][\"score\"] >= res[1][\"score\"]\nassert res[0][\"sentence\"] in [\"reset password now\", \"password reset link\"]\nassert res[1][\"sentence\"] != \"buy fresh apples\" or res[1][\"score\"] == 0.0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `LocalQABot` class that simulates Homie's threshold-gated document Q&A. It indexes document chunks as word-frequency vectors and answers questions only when a chunk is similar enough. Implement `add_chunks(chunks)` to append chunks and their vectors, `best_match(question)` returning {\"chunk\": str, \"score\": float} for the highest-scoring chunk (or score 0.0 when empty), and `answer(question, threshold)` returning the best chunk if its score exceeds the threshold, otherwise the string \"I don't have enough context to answer that.\"."
+      },
+      "starter_code": "import math\n\nclass LocalQABot:\n    def __init__(self):\n        self.chunks = []\n        self.vectors = []\n\n    def _encode(self, text: str) -> dict:\n        words = text.lower().split()\n        vec = {}\n        for w in words:\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        shared = set(a) & set(b)\n        dot = sum(a[w] * b[w] for w in shared)\n        mag_a = math.sqrt(sum(v**2 for v in a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\n    def add_chunks(self, chunks: list[str]):\n        # Append each chunk to self.chunks and its vector to self.vectors\n        pass\n\n    def best_match(self, question: str) -> dict:\n        # Return {\"chunk\": str, \"score\": float} for the top chunk\n        # If no chunks indexed, return {\"chunk\": None, \"score\": 0.0}\n        pass\n\n    def answer(self, question: str, threshold: float = 0.45) -> str:\n        # Return the best chunk if its score > threshold,\n        # else \"I don't have enough context to answer that.\"\n        pass\n\n# Test it:\nbot = LocalQABot()\nbot.add_chunks([\"click forgot password to recover access\", \"office hours are nine to five\"])\nbot.add_chunks([\"passwords need a number and a symbol\"])\nprint(len(bot.chunks))\n\nm = bot.best_match(\"password recover access\")\nprint(m[\"chunk\"])\nprint(bot.answer(\"password recover access\", threshold=0.1) == m[\"chunk\"])\nprint(bot.answer(\"unrelated quantum physics query\", threshold=0.9))",
+      "expected_output": "3\nclick forgot password to recover access\nTrue\nI don't have enough context to answer that.",
+      "hints": {
+        "en": [
+          "add_chunks() should extend both self.chunks and self.vectors â€” encode each chunk with self._encode()",
+          "best_match() encodes the question, scores it against every stored vector with self._cosine(), and returns the max; handle the empty-index case first",
+          "answer() calls best_match() and compares its score to the threshold; return the chunk text on success, the fallback string otherwise"
+        ]
+      },
+      "test_code": "b = LocalQABot()\nb.add_chunks([\"reset your password here\", \"store opening times\"])\nassert len(b.chunks) == 2\nassert len(b.vectors) == 2\nb.add_chunks([\"contact support by email\"])\nassert len(b.chunks) == 3\nm = b.best_match(\"reset password\")\nassert m[\"chunk\"] == \"reset your password here\"\nassert m[\"score\"] > 0\nempty = LocalQABot()\nassert empty.best_match(\"anything\") == {\"chunk\": None, \"score\": 0.0}\nassert b.answer(\"reset password\", threshold=0.1) == \"reset your password here\"\nassert b.answer(\"reset password\", threshold=0.99) == \"I don't have enough context to answer that.\"\nassert b.answer(\"totally different topic xyz\", threshold=0.5) == \"I don't have enough context to answer that.\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence similarity",
+      "semantic search",
+      "all-MiniLM-L6-v2",
+      "cosine similarity",
+      "local document Q&A",
+      "RAG retrieval",
+      "ONNX inference",
+      "multi-framework deployment",
+      "similarity thresholds"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "basic math",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 28,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
