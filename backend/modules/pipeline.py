@@ -454,12 +454,24 @@ def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, chal
 
 
 def run_pipeline(job_id, user_id, topic):
-    """Run full 5-stage pipeline."""
+    """Run the 5-stage pipeline.
+
+    Stages 3 (animation) and 4 (challenges) both depend only on the outline +
+    narrative and are independent of each other, so they run concurrently
+    (both are network-bound Ollama calls) to cut total generation time.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
     try:
         outline = stage_1_outline(job_id, topic, user_id)
         narrative = stage_2_narrative(job_id, outline, user_id)
-        animation = stage_3_animation(job_id, outline, narrative)
-        challenges = stage_4_challenges(job_id, outline, narrative)
+
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f_anim = ex.submit(stage_3_animation, job_id, outline, narrative)
+            f_chal = ex.submit(stage_4_challenges, job_id, outline, narrative)
+            animation = f_anim.result()
+            challenges = f_chal.result()
+
         lesson_id = stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, challenges)
         return lesson_id
     except Exception as e:

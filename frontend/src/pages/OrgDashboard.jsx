@@ -13,7 +13,6 @@ import {
   Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
   Upload, Rocket, X, Loader2, GraduationCap, Activity
 } from 'lucide-react';
-import { read, utils } from 'xlsx';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -74,6 +73,7 @@ async function parseEmailFile(file) {
   const emails = [];
 
   if (ext === 'xlsx' || ext === 'xls') {
+    const { read, utils } = await import('xlsx');  // load the heavy parser only on demand
     const data = await file.arrayBuffer();
     const wb = read(data);
     const ws = wb.Sheets[wb.SheetNames[0]];
