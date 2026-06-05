@@ -5,13 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
-import api, { getAuthHeaders, requestModule, getCompletions, recordSignal } from '../api';
+import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendVaathiyaarFeedback } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX
+    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -33,6 +33,26 @@ function ThinkingBubble() {
             <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}} />
             <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}} />
             <span className="text-sm text-purple-500 ml-2">Vaathiyaar is thinking...</span>
+        </div>
+    );
+}
+
+// 👍/👎 on a Vaathiyaar answer — feeds the training-data quality score so the
+// tutor improves from real student interactions.
+function FeedbackButtons({ pairId }) {
+    const [rated, setRated] = useState(null);
+    if (!pairId) return null;
+    const rate = (helpful) => {
+        if (rated) return;
+        setRated(helpful ? 'up' : 'down');
+        sendVaathiyaarFeedback(pairId, helpful).catch(() => {});
+    };
+    if (rated) return <div className="mt-1.5 text-[11px] text-text-muted">Thanks — that helps Vaathiyaar improve!</div>;
+    return (
+        <div className="mt-1.5 flex items-center gap-1">
+            <span className="text-[10px] text-text-muted mr-0.5">Helpful?</span>
+            <button onClick={() => rate(true)} className="p-1 rounded-md hover:bg-green-50 text-text-muted hover:text-green-600 transition-colors" title="Helpful" aria-label="Mark helpful"><ThumbsUp size={13} /></button>
+            <button onClick={() => rate(false)} className="p-1 rounded-md hover:bg-red-50 text-text-muted hover:text-red-500 transition-colors" title="Not helpful" aria-label="Mark not helpful"><ThumbsDown size={13} /></button>
         </div>
     );
 }
@@ -1044,7 +1064,7 @@ export default function Classroom() {
                     if (data.done) {
                         const finalMsg = data.message || extractMessageFromJSON(rawText) || rawText;
                         setChatMessages((prev) =>
-                            prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
+                            prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg, _pairId: data.pair_id } : m)
                         );
                         if (tts.enabled && finalMsg) {
                             tts.speak(finalMsg);
@@ -1265,6 +1285,7 @@ export default function Classroom() {
                                                         <>
                                                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{msg.content}</ReactMarkdown>
                                                             {msg._isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5 rounded-sm" />}
+                                                            {!msg._isStreaming && msg._pairId && <FeedbackButtons pairId={msg._pairId} />}
                                                         </>
                                                     ) : (
                                                         msg.content

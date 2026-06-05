@@ -17,7 +17,9 @@ from pydantic import BaseModel
 from vaathiyaar.engine import call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
-from vaathiyaar.training_data import record_training_pair
+from vaathiyaar.training_data import (
+    record_training_pair, set_training_quality, build_training_jsonl, get_training_stats,
+)
 from modules.trigger_engine import check_triggers
 from paths.adapter import adapt_path
 
@@ -85,6 +87,11 @@ class DiagnosticRequest(BaseModel):
     user_id: str
     code: str
     challenge_id: str
+
+
+class FeedbackRequest(BaseModel):
+    pair_id: str
+    helpful: bool  # 👍 = True, 👎 = False
 
 
 # ---------------------------------------------------------------------------
@@ -217,15 +224,17 @@ def chat(request: ChatRequest):
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Vaathiyaar AI error: {exc}")
 
-    # Record interaction for future fine-tuning
+    # Record interaction for future fine-tuning; expose pair_id so the client
+    # can attach a 👍/👎 quality signal to this exact response.
     try:
-        record_training_pair(
+        pair_id = record_training_pair(
             db_path=db_path,
             user_message=request.message,
             vaathiyaar_response=response,
             student_profile=profile,
             lesson_context=lesson_context,
         )
+        response["_pair_id"] = pair_id
     except Exception:
         pass  # Best-effort; don't fail the request
 
@@ -266,15 +275,18 @@ def chat_stream(request: ChatRequest):
     def generate():
         full_response = ""
         try:
-            for chunk in client.chat(
-                model=OLLAMA_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    *([{"role": m.get("role", "user"), "content": m.get("content", "")} for m in (request.history or [])[-5:]]),
-                    {"role": "user", "content": request.message},
-                ],
-                stream=True,
-            ):
+            msgs = [
+                {"role": "system", "content": system_prompt},
+                *([{"role": m.get("role", "user"), "content": m.get("content", "")} for m in (request.history or [])[-5:]]),
+                {"role": "user", "content": request.message},
+            ]
+            opts = {"temperature": 0.7, "num_predict": 1500}
+            # Bound the chat too (no unbounded "thinking"); fall back if client lacks `think`.
+            try:
+                stream_iter = client.chat(model=OLLAMA_MODEL, messages=msgs, stream=True, think=False, options=opts)
+            except TypeError:
+                stream_iter = client.chat(model=OLLAMA_MODEL, messages=msgs, stream=True, options=opts)
+            for chunk in stream_iter:
                 token = chunk.get("message", {}).get("content", "")
                 if token:
                     full_response += token
@@ -302,11 +314,11 @@ def chat_stream(request: ChatRequest):
                 # If not valid JSON, use the raw text as the message
                 clean_message = full_response
 
-            yield f"data: {json.dumps({'done': True, 'message': clean_message, 'phase': parsed_response.get('phase') if parsed_response else 'chat', 'full_response': full_response})}\n\n"
-
-            # Record training data (best effort)
+            # Record training data (best effort) BEFORE the done event so the
+            # client gets a pair_id to attach 👍/👎 feedback to this response.
+            pair_id = None
             try:
-                record_training_pair(
+                pair_id = record_training_pair(
                     db_path=db_path,
                     user_message=request.message,
                     vaathiyaar_response=parsed_response or {"message": full_response},
@@ -315,6 +327,8 @@ def chat_stream(request: ChatRequest):
                 )
             except Exception:
                 pass
+
+            yield f"data: {json.dumps({'done': True, 'message': clean_message, 'phase': parsed_response.get('phase') if parsed_response else 'chat', 'full_response': full_response, 'pair_id': pair_id})}\n\n"
         except Exception as exc:
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
@@ -629,6 +643,26 @@ def evaluate(request: EvaluateRequest):
     except Exception:
         pass
 
+    # Record Vaathiyaar's feedback as a training pair, scored by the real outcome
+    # (did the student's code pass?) — an implicit quality signal for fine-tuning.
+    try:
+        fb = result.get("feedback")
+        fb_resp = fb if isinstance(fb, dict) else {"message": str(fb)}
+        record_training_pair(
+            db_path=db_path,
+            user_message=(
+                f"My code for '{request.topic}':\n```python\n{request.code}\n```\n"
+                f"Output: {result.get('output', '')}\n"
+                f"Did it pass? {'yes' if result.get('success') else 'no'}"
+            ),
+            vaathiyaar_response=fb_resp,
+            student_profile=profile,
+            lesson_context=lesson_context,
+            quality_score=0.85 if result.get("success") else 0.4,
+        )
+    except Exception:
+        pass
+
     # Award XP when student completes a challenge successfully
     if result["success"] and request.topic:
         lesson = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
@@ -694,6 +728,37 @@ def evaluate(request: EvaluateRequest):
             pass  # Path adaptation should never block evaluation
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Vaathiyaar self-improvement: feedback signal + training-data export
+# ---------------------------------------------------------------------------
+
+@router.post("/feedback")
+def vaathiyaar_feedback(request: FeedbackRequest):
+    """Student rates a Vaathiyaar response (👍/👎). Sets the pair's quality score
+    so good answers become high-quality fine-tuning data and bad ones are dropped."""
+    score = 1.0 if request.helpful else 0.0
+    updated = set_training_quality(_get_db_path(), request.pair_id, score)
+    return {"ok": updated, "quality_score": score}
+
+
+@router.get("/training/stats")
+def training_stats():
+    """Counts + average quality of collected interactions (for monitoring the loop)."""
+    return get_training_stats(_get_db_path())
+
+
+@router.get("/training/export")
+def training_export(min_quality: float = Query(0.7, ge=0.0, le=1.0)):
+    """Export high-quality interaction pairs as fine-tuning JSONL (chat format).
+    Defaults to quality >= 0.7 so only 👍'd chats and successful-feedback pairs ship."""
+    jsonl, count = build_training_jsonl(_get_db_path(), min_quality=min_quality)
+    headers = {
+        "Content-Disposition": 'attachment; filename="vaathiyaar_training.jsonl"',
+        "X-Pair-Count": str(count),
+    }
+    return StreamingResponse(iter([jsonl]), media_type="application/x-ndjson", headers=headers)
 
 
 @router.post("/diagnostic")

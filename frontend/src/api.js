@@ -82,6 +82,7 @@ export const classroomChat = (data) => api.post('/classroom/chat', data);
 export const getLesson = (lessonId, userId) => api.get(`/classroom/lesson/${lessonId}?user_id=${userId}`);
 export const listLessons = () => api.get('/classroom/lessons');
 export const evaluateCode = (data) => api.post('/classroom/evaluate', data);
+export const sendVaathiyaarFeedback = (pairId, helpful) => api.post('/classroom/feedback', { pair_id: pairId, helpful });
 export const submitDiagnostic = (data) => api.post('/classroom/diagnostic', data);
 
 // Language
