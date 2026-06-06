@@ -638,6 +638,11 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class ChangePasswordRequest(BaseModel):
+    user_id: str
+    current_password: str
+    new_password: str
+
 class QuizSubmission(BaseModel):
     user_id: str
     module_id: str
@@ -741,6 +746,25 @@ def login(user: UserLogin):
             "token": f"mock-jwt-{record[0]}",
             "org": org_info
         }
+    finally:
+        conn.close()
+
+@app.post("/api/auth/change-password")
+def change_password(req: ChangePasswordRequest):
+    """Let a signed-in user change their own password (verifies the current one)."""
+    if not req.new_password or len(req.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        row = cursor.execute("SELECT password_hash FROM users WHERE id = ?", [req.user_id]).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+        if row[0] != hash_pw(req.current_password):
+            raise HTTPException(status_code=401, detail="Current password is incorrect.")
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), req.user_id])
+        conn.commit()
+        return {"ok": True}
     finally:
         conn.close()
 

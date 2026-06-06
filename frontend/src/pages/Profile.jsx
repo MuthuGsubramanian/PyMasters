@@ -9,7 +9,7 @@ import {
     Settings, Eye, Lightbulb, Mic, Lock, ExternalLink, Link,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getProfile, recordSignal } from '../api';
+import { getProfile, recordSignal, changePassword } from '../api';
 import api from '../api';
 import clsx from 'clsx';
 
@@ -282,6 +282,12 @@ export default function Profile() {
     const [toast, setToast] = useState(null);
     const [confirmAction, setConfirmAction] = useState(null);
 
+    // Change-password fields
+    const [curPw, setCurPw] = useState('');
+    const [newPw, setNewPw] = useState('');
+    const [confirmPw, setConfirmPw] = useState('');
+    const [pwSaving, setPwSaving] = useState(false);
+
     // Profile data from server
     const [profileData, setProfileData] = useState(null);
 
@@ -485,6 +491,22 @@ export default function Profile() {
             navigate('/');
         } catch {
             setToast({ message: 'Failed to delete account', type: 'error' });
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!curPw || !newPw) { setToast({ message: 'Fill in all password fields', type: 'error' }); return; }
+        if (newPw.length < 6) { setToast({ message: 'New password must be at least 6 characters', type: 'error' }); return; }
+        if (newPw !== confirmPw) { setToast({ message: 'New passwords do not match', type: 'error' }); return; }
+        setPwSaving(true);
+        try {
+            await changePassword(user.id, curPw, newPw);
+            setToast({ message: 'Password updated successfully', type: 'success' });
+            setCurPw(''); setNewPw(''); setConfirmPw('');
+        } catch (e) {
+            setToast({ message: e?.response?.data?.detail || 'Failed to update password', type: 'error' });
+        } finally {
+            setPwSaving(false);
         }
     };
 
@@ -1029,9 +1051,28 @@ export default function Profile() {
                 </GlassCard>
 
                 {/* ═══════════════════════════════════════════════════════════ */}
-                {/* 7. Account Actions                                        */}
+                {/* Change Password                                           */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 <GlassCard index={6}>
+                    <SectionHeading icon={Lock} title="Change Password" subtitle="Update your account password" />
+                    <div className="space-y-3 max-w-md">
+                        <input type="password" value={curPw} onChange={(e) => setCurPw(e.target.value)} placeholder="Current password" autoComplete="current-password"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
+                        <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6 characters)" autoComplete="new-password"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
+                        <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Confirm new password" autoComplete="new-password"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
+                        <button onClick={handleChangePassword} disabled={pwSaving}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold hover:shadow-md hover:shadow-cyan-500/25 transition-all disabled:opacity-50">
+                            <Lock size={15} /> {pwSaving ? 'Updating…' : 'Update Password'}
+                        </button>
+                    </div>
+                </GlassCard>
+
+                {/* ═══════════════════════════════════════════════════════════ */}
+                {/* 7. Account Actions                                        */}
+                {/* ═══════════════════════════════════════════════════════════ */}
+                <GlassCard index={7}>
                     <SectionHeading icon={Shield} title="Account Actions" />
                     <div className="flex flex-wrap gap-3">
                         <button
