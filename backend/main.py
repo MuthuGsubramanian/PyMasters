@@ -32,6 +32,7 @@ from routes.organizations import router as org_router
 from routes.challenges import router as challenges_router
 from routes.reference import router as reference_router
 from routes.admin import router as admin_router
+from auth import create_access_token, get_current_user_id
 
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
@@ -690,7 +691,7 @@ def register(user: UserRegister):
             [user_id, user.username, hashed, user.name, default_unlocks, onboarding_flag, account_type]
         )
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type}
+        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type, "token": create_access_token(user_id, user.username)}
     finally:
         conn.close()
 
@@ -743,26 +744,26 @@ def login(user: UserLogin):
             "unlocked": unlocks,
             "onboarding_completed": bool(record[4]),
             "account_type": record[5] or "individual",
-            "token": f"mock-jwt-{record[0]}",
+            "token": create_access_token(record[0], user.username),
             "org": org_info
         }
     finally:
         conn.close()
 
 @app.post("/api/auth/change-password")
-def change_password(req: ChangePasswordRequest):
-    """Let a signed-in user change their own password (verifies the current one)."""
+def change_password(req: ChangePasswordRequest, caller: str = Depends(get_current_user_id)):
+    """Change the AUTHENTICATED user's password (identity from the JWT, not the body)."""
     if not req.new_password or len(req.new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
-        row = cursor.execute("SELECT password_hash FROM users WHERE id = ?", [req.user_id]).fetchone()
+        row = cursor.execute("SELECT password_hash FROM users WHERE id = ?", [caller]).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
         if row[0] != hash_pw(req.current_password):
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
-        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), req.user_id])
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), caller])
         conn.commit()
         return {"ok": True}
     finally:

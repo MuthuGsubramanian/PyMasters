@@ -45,6 +45,9 @@ export default function Login() {
                 isNewUser = true;
             }
 
+            // Persist the token now so JWT-protected calls below (e.g. createOrg) are signed.
+            try { localStorage.setItem('pm_user', JSON.stringify(data)); } catch {}
+
             if (accountType === 'organization' && orgName) {
                 const orgRes = await createOrg({
                     name: orgName,

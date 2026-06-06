@@ -10,8 +10,10 @@ import secrets
 import threading
 from datetime import datetime, timedelta
 from typing import Optional, List
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
+
+from auth import get_current_user_id
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 APP_BASE_URL = os.getenv("APP_BASE_URL", "https://pymasters.net")
@@ -107,8 +109,9 @@ class JoinOrgRequest(BaseModel):
 # -- Endpoints (ORDER MATTERS: /my and /join before /{org_id}) -------------
 
 @router.post("")
-def create_org(data: CreateOrgRequest):
+def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id)):
     """Create a new organization. Creator becomes super_admin."""
+    data.user_id = caller
     org_id = str(uuid.uuid4())
     conn = sqlite3.connect(DB_PATH)
     try:
@@ -133,8 +136,9 @@ def create_org(data: CreateOrgRequest):
 
 
 @router.get("/my")
-def my_orgs(user_id: str = Query(...)):
+def my_orgs(caller: str = Depends(get_current_user_id)):
     """List all organizations the user belongs to."""
+    user_id = caller
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute("""
         SELECT o.id, o.name, o.type, o.domain, o.logo_url, o.plan,
@@ -159,8 +163,9 @@ def my_orgs(user_id: str = Query(...)):
 
 
 @router.post("/join/{token}")
-def join_org(token: str, data: JoinOrgRequest):
+def join_org(token: str, data: JoinOrgRequest, caller: str = Depends(get_current_user_id)):
     """Accept an invite using the token."""
+    data.user_id = caller
     conn = sqlite3.connect(DB_PATH)
     try:
         invite = conn.execute(
@@ -228,9 +233,9 @@ def get_invite_info(token: str):
 
 
 @router.get("/{org_id}")
-def get_org(org_id: str, user_id: str = Query(...)):
+def get_org(org_id: str, user_id: str = Query(None), caller: str = Depends(get_current_user_id)):
     """Get organization details. Requires membership."""
-    member_info = require_org_role(DB_PATH, org_id, user_id)
+    member_info = require_org_role(DB_PATH, org_id, caller)
     conn = sqlite3.connect(DB_PATH)
     org = conn.execute(
         "SELECT id, name, type, domain, logo_url, description, settings, plan, created_at FROM organizations WHERE id = ?",
@@ -267,9 +272,9 @@ def get_org(org_id: str, user_id: str = Query(...)):
 
 
 @router.put("/{org_id}")
-def update_org(org_id: str, data: UpdateOrgRequest):
+def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_current_user_id)):
     """Update organization. Requires admin+."""
-    require_org_role(DB_PATH, org_id, data.user_id, "admin")
+    require_org_role(DB_PATH, org_id, caller, "admin")
     conn = sqlite3.connect(DB_PATH)
     updates = []
     values = []
@@ -289,9 +294,9 @@ def update_org(org_id: str, data: UpdateOrgRequest):
 
 
 @router.get("/{org_id}/members")
-def list_members(org_id: str, user_id: str = Query(...), role: Optional[str] = None, department: Optional[str] = None):
+def list_members(org_id: str, role: Optional[str] = None, department: Optional[str] = None, caller: str = Depends(get_current_user_id)):
     """List org members. Requires membership."""
-    require_org_role(DB_PATH, org_id, user_id, "member")
+    require_org_role(DB_PATH, org_id, caller, "member")
     conn = sqlite3.connect(DB_PATH)
     query = """
         SELECT u.id, u.username, u.name, u.email, u.points, u.linkedin_url, u.github_url,
@@ -322,9 +327,9 @@ def list_members(org_id: str, user_id: str = Query(...), role: Optional[str] = N
 
 
 @router.post("/{org_id}/invite")
-def invite_member(org_id: str, data: InviteRequest):
+def invite_member(org_id: str, data: InviteRequest, caller: str = Depends(get_current_user_id)):
     """Create a single invite. Requires admin+."""
-    require_org_role(DB_PATH, org_id, data.user_id, "admin")
+    require_org_role(DB_PATH, org_id, caller, "admin")
     if data.role not in ROLE_LEVELS:
         raise HTTPException(status_code=400, detail=f"Invalid role: {data.role}")
     invite_id = str(uuid.uuid4())
@@ -343,13 +348,13 @@ def invite_member(org_id: str, data: InviteRequest):
 
 
 @router.post("/{org_id}/invite/bulk")
-def bulk_invite(org_id: str, data: BulkInviteRequest):
+def bulk_invite(org_id: str, data: BulkInviteRequest, caller: str = Depends(get_current_user_id)):
     """Create multiple invites and email each invitee. Requires admin+.
 
     Accepts either {"emails": [...], "role": "member"} or
     {"invites": [{"email": ..., "role": ...}, ...]}.
     """
-    require_org_role(DB_PATH, org_id, data.user_id, "admin")
+    require_org_role(DB_PATH, org_id, caller, "admin")
 
     # Normalize both request shapes into (email, role) pairs.
     pairs = []
@@ -389,9 +394,9 @@ def bulk_invite(org_id: str, data: BulkInviteRequest):
 
 
 @router.put("/{org_id}/members/{member_id}/role")
-def change_role(org_id: str, member_id: str, data: RoleChangeRequest):
+def change_role(org_id: str, member_id: str, data: RoleChangeRequest, caller: str = Depends(get_current_user_id)):
     """Change member role. Requires super_admin."""
-    require_org_role(DB_PATH, org_id, data.user_id, "super_admin")
+    require_org_role(DB_PATH, org_id, caller, "super_admin")
     if data.new_role not in ROLE_LEVELS:
         raise HTTPException(status_code=400, detail=f"Invalid role: {data.new_role}")
     conn = sqlite3.connect(DB_PATH)
@@ -418,9 +423,9 @@ def change_role(org_id: str, member_id: str, data: RoleChangeRequest):
 
 
 @router.delete("/{org_id}/members/{member_id}")
-def remove_member(org_id: str, member_id: str, user_id: str = Query(...)):
+def remove_member(org_id: str, member_id: str, caller: str = Depends(get_current_user_id)):
     """Remove a member. Requires admin+. Cannot remove last super_admin."""
-    require_org_role(DB_PATH, org_id, user_id, "admin")
+    require_org_role(DB_PATH, org_id, caller, "admin")
     conn = sqlite3.connect(DB_PATH)
     current = conn.execute(
         "SELECT role FROM org_members WHERE org_id = ? AND user_id = ?",
@@ -444,9 +449,9 @@ def remove_member(org_id: str, member_id: str, user_id: str = Query(...)):
 
 
 @router.get("/{org_id}/analytics")
-def org_analytics(org_id: str, user_id: str = Query(...)):
+def org_analytics(org_id: str, caller: str = Depends(get_current_user_id)):
     """Aggregated org stats. Requires manager+."""
-    member = require_org_role(DB_PATH, org_id, user_id, "manager")
+    member = require_org_role(DB_PATH, org_id, caller, "manager")
     conn = sqlite3.connect(DB_PATH)
 
     # Member count
@@ -505,9 +510,9 @@ def org_analytics(org_id: str, user_id: str = Query(...)):
 
 
 @router.get("/{org_id}/progress")
-def org_progress(org_id: str, user_id: str = Query(...)):
+def org_progress(org_id: str, caller: str = Depends(get_current_user_id)):
     """Per-student progress for teachers/admins. Requires manager+."""
-    require_org_role(DB_PATH, org_id, user_id, "manager")
+    require_org_role(DB_PATH, org_id, caller, "manager")
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
@@ -529,14 +534,12 @@ def org_progress(org_id: str, user_id: str = Query(...)):
 
 
 @router.delete("/{org_id}")
-def delete_organization(org_id: str, user_id: str = None):
+def delete_organization(org_id: str, caller: str = Depends(get_current_user_id)):
     """
     Permanently delete an organization and all associated data.
     Requires super_admin role. Member user accounts are preserved.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail="user_id is required")
-
+    user_id = caller
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:

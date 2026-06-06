@@ -2,19 +2,22 @@
 admin.py — Platform SUPER-ADMIN API.  Prefix: /api/admin
 
 Distinct from org admins: these endpoints span the whole platform (all users,
-all orgs) and are gated to an allowlist of super-admin identities.
+all orgs) and are gated to an allowlist of super-admin identities. The acting
+user is taken from the VERIFIED JWT (never a client-supplied user_id), so a
+forged user_id cannot escalate.
 """
 
 import os
 import sqlite3
 from datetime import date, timedelta
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+
+from auth import get_current_user_id, optional_user_id
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
-# Allowlisted super admins (username OR email), comma-separated, overridable via env.
 SUPER_ADMINS = {
     e.strip().lower()
     for e in os.getenv("SUPER_ADMIN_EMAILS", "muthu@pymasters.net,muthu.g.subramanian@gmail.com").split(",")
@@ -43,28 +46,28 @@ def require_super_admin(user_id: str):
 
 
 class BlockRequest(BaseModel):
-    user_id: str   # the requesting super admin
     blocked: bool
 
 
 class PlanRequest(BaseModel):
-    user_id: str   # the requesting super admin
-    plan: str      # e.g. free | pro | enterprise
+    plan: str  # e.g. free | pro | enterprise
 
 
 @router.get("/check")
-def check(user_id: str = Query(...)):
+def check(caller: str = Depends(optional_user_id)):
     """Lightweight gate so the frontend can decide whether to show the console."""
+    if not caller:
+        return {"is_super_admin": False}
     try:
-        require_super_admin(user_id)
+        require_super_admin(caller)
         return {"is_super_admin": True}
     except HTTPException:
         return {"is_super_admin": False}
 
 
 @router.get("/overview")
-def overview(user_id: str = Query(...)):
-    require_super_admin(user_id)
+def overview(caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
     conn = _conn()
 
     def one(q, p=()):
@@ -99,8 +102,8 @@ def overview(user_id: str = Query(...)):
 
 
 @router.get("/users")
-def list_users(user_id: str = Query(...), q: str = "", limit: int = 50, offset: int = 0):
-    require_super_admin(user_id)
+def list_users(caller: str = Depends(get_current_user_id), q: str = "", limit: int = 50, offset: int = 0):
+    require_super_admin(caller)
     conn = _conn()
     where, params = "", []
     if q:
@@ -123,8 +126,8 @@ def list_users(user_id: str = Query(...), q: str = "", limit: int = 50, offset: 
 
 
 @router.get("/orgs")
-def list_orgs(user_id: str = Query(...)):
-    require_super_admin(user_id)
+def list_orgs(caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
     conn = _conn()
     rows = conn.execute("""
         SELECT o.id, o.name, COALESCE(NULLIF(o.type,''),'other') type,
@@ -137,9 +140,9 @@ def list_orgs(user_id: str = Query(...)):
 
 
 @router.post("/users/{target_id}/block")
-def block_user(target_id: str, req: BlockRequest):
+def block_user(target_id: str, req: BlockRequest, caller: str = Depends(get_current_user_id)):
     """Block (suspend) or unblock (grant) a user's access."""
-    require_super_admin(req.user_id)
+    require_super_admin(caller)
     conn = _conn()
     conn.execute("UPDATE users SET is_blocked = ? WHERE id = ?", [1 if req.blocked else 0, target_id])
     conn.commit()
@@ -148,9 +151,9 @@ def block_user(target_id: str, req: BlockRequest):
 
 
 @router.post("/users/{target_id}/plan")
-def set_user_plan(target_id: str, req: PlanRequest):
+def set_user_plan(target_id: str, req: PlanRequest, caller: str = Depends(get_current_user_id)):
     """Set a user's subscription/access tier."""
-    require_super_admin(req.user_id)
+    require_super_admin(caller)
     conn = _conn()
     conn.execute("UPDATE users SET plan = ? WHERE id = ?", [req.plan, target_id])
     conn.commit()
@@ -159,9 +162,9 @@ def set_user_plan(target_id: str, req: PlanRequest):
 
 
 @router.get("/usage")
-def usage(user_id: str = Query(...), days: int = 30):
+def usage(caller: str = Depends(get_current_user_id), days: int = 30):
     """Daily signups + active learners for the usage graph."""
-    require_super_admin(user_id)
+    require_super_admin(caller)
     days = max(1, min(days, 120))
     conn = _conn()
     signups = {r["d"]: r["c"] for r in conn.execute(
