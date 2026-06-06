@@ -640,7 +640,7 @@ class UserLogin(BaseModel):
     password: str
 
 class ChangePasswordRequest(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None  # ignored — identity comes from the JWT
     current_password: str
     new_password: str
 
