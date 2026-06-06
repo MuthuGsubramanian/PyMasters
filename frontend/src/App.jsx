@@ -28,6 +28,8 @@ const JoinOrg = lazy(() => import('./pages/JoinOrg'));
 const Challenges = lazy(() => import('./pages/Challenges'));
 const Reference = lazy(() => import('./pages/Reference'));
 const SuperAdmin = lazy(() => import('./pages/SuperAdmin'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 function PageLoader() {
   return (
@@ -74,6 +76,8 @@ export default function App() {
               <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
               <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
               <Route path="/join/:token" element={<ErrorBoundary><JoinOrg /></ErrorBoundary>} />
+            <Route path="/forgot-password" element={<ErrorBoundary><ForgotPassword /></ErrorBoundary>} />
+            <Route path="/reset-password/:token" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
               <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
               <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
               <Route path="/security" element={<ErrorBoundary><Security /></ErrorBoundary>} />

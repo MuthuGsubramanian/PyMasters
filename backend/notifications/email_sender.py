@@ -81,6 +81,31 @@ def build_lesson_ready_email(title: str, topic: str, reason: str, link: str) -> 
     return text, html
 
 
+def build_reset_email(name: str, reset_link: str) -> tuple:
+    """Build a password-reset email. Returns (text, html)."""
+    greeting = f"Vanakkam{(' ' + name) if name else ''}!"
+    text = (
+        f"{greeting}\n\nWe received a request to reset your PyMasters password.\n"
+        f"Reset it using the link below (it expires in 1 hour):\n{reset_link}\n\n"
+        f"If you didn't request this, you can safely ignore this email.\n\n— PyMasters"
+    )
+    html = f"""
+    <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 22px; border-radius: 12px 12px 0 0;">
+            <h2 style="margin: 0;">PyMasters</h2>
+            <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">Password reset</p>
+        </div>
+        <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #334155; font-size: 16px;">{greeting}</p>
+            <p style="color: #475569;">We received a request to reset your PyMasters password.</p>
+            <a href="{reset_link}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 12px;">Reset Password</a>
+            <p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">This link expires in 1 hour. If you didn't request it, ignore this email.<br><span style="color:#475569;">{reset_link}</span></p>
+        </div>
+    </div>
+    """
+    return text, html
+
+
 def build_invite_email(org_name: str, role: str, invite_link: str, inviter: str = None) -> tuple:
     """Build email content for an organization invite. Returns (text, html)."""
     who = f"{inviter} has invited you" if inviter else "You've been invited"
