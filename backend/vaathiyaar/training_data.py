@@ -155,11 +155,13 @@ def get_training_stats(db_path: str) -> dict:
             """
         )
         row = cursor.fetchone()
+        hq = cursor.execute("SELECT count(*) FROM training_data WHERE quality_score >= 0.7").fetchone()[0]
     finally:
         conn.close()
 
     return {
         "total_pairs": row[0],
+        "high_quality_count": hq,
         "avg_quality_score": round(row[1], 3) if row[1] is not None else None,
         "min_date": str(row[2]) if row[2] else None,
         "max_date": str(row[3]) if row[3] else None,

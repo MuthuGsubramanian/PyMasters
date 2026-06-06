@@ -42,8 +42,25 @@ OUT_MODELFILE = os.path.join(HERE, "Modelfile.generated")
 MIN_EXAMPLES = 10  # don't bother building a model on too little data
 
 
+def _export_token() -> str:
+    """Export token from env, else fetched from Secret Manager via gcloud."""
+    t = os.environ.get("EXPORT_TOKEN", "").strip()
+    if t:
+        return t
+    try:
+        import subprocess
+        return subprocess.check_output(
+            ["gcloud", "secrets", "versions", "access", "latest",
+             "--secret=export-token", "--project=pymasters-app"],
+            text=True,
+        ).strip()
+    except Exception as e:
+        print(f"(could not read export-token from Secret Manager: {e}; set EXPORT_TOKEN env)")
+        return ""
+
+
 def fetch_jsonl(source: str, base_url: str, min_quality: float) -> str:
-    """Return JSONL training content from the live endpoint or local DB."""
+    """Return JSONL training content from the live (token-gated) endpoint or local DB."""
     if source == "local":
         from vaathiyaar.training_data import build_training_jsonl
         db_path = os.environ.get("DB_PATH", "pymasters.db")
@@ -51,7 +68,10 @@ def fetch_jsonl(source: str, base_url: str, min_quality: float) -> str:
         return jsonl
     url = f"{base_url.rstrip('/')}/api/classroom/training/export?min_quality={min_quality}"
     print(f"Fetching training data: {url}")
-    with urllib.request.urlopen(url, timeout=60) as r:
+    token = _export_token()
+    headers = {"X-Export-Token": token} if token else {}
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=60) as r:
         return r.read().decode("utf-8")
 
 

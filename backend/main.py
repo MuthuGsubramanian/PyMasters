@@ -156,6 +156,16 @@ def init_db():
             print("Migrating DB: Adding plan column")
             cursor.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS password_resets (
+                token TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP,
+                used INTEGER DEFAULT 0
+            )
+        """)
+
         # Create user_profiles table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_profiles (
@@ -644,6 +654,13 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
+class ForgotPasswordRequest(BaseModel):
+    identifier: str  # username or email
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 class QuizSubmission(BaseModel):
     user_id: str
     module_id: str
@@ -764,6 +781,64 @@ def change_password(req: ChangePasswordRequest, caller: str = Depends(get_curren
         if row[0] != hash_pw(req.current_password):
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
         cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), caller])
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    """Email a password-reset link. Always returns ok (doesn't leak account existence)."""
+    import secrets as _secrets
+    from datetime import datetime, timedelta
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        ident = (req.identifier or "").strip()
+        row = cursor.execute(
+            "SELECT id, name, username, email FROM users WHERE username = ? OR email = ?",
+            [ident, ident],
+        ).fetchone()
+        if row:
+            token = _secrets.token_urlsafe(32)
+            now = datetime.utcnow()
+            cursor.execute(
+                "INSERT INTO password_resets (token, user_id, created_at, expires_at, used) VALUES (?, ?, ?, ?, 0)",
+                [token, row[0], now.isoformat(), (now + timedelta(hours=1)).isoformat()],
+            )
+            conn.commit()
+            to_email = (row[3] or "").strip() or (row[2] if "@" in (row[2] or "") else "")
+            if to_email:
+                try:
+                    from notifications.email_sender import send_email, build_reset_email, APP_BASE_URL
+                    link = f"{APP_BASE_URL}/reset-password/{token}"
+                    text, html = build_reset_email(row[1], link)
+                    import threading
+                    threading.Thread(target=send_email, args=(to_email, "Reset your PyMasters password", text, html), daemon=True).start()
+                except Exception as e:
+                    print(f"[forgot-password] email error: {e}")
+    finally:
+        conn.close()
+    return {"ok": True, "message": "If an account exists for that username/email, a reset link has been sent."}
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest):
+    """Complete a password reset using a valid, unexpired token."""
+    if not req.new_password or len(req.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    from datetime import datetime
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        row = cursor.execute(
+            "SELECT user_id, expires_at, used FROM password_resets WHERE token = ?", [req.token]
+        ).fetchone()
+        if not row or row[2]:
+            raise HTTPException(status_code=400, detail="This reset link is invalid or has already been used.")
+        if row[1] and datetime.fromisoformat(row[1]) < datetime.utcnow():
+            raise HTTPException(status_code=400, detail="This reset link has expired. Please request a new one.")
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), row[0]])
+        cursor.execute("UPDATE password_resets SET used = 1 WHERE token = ?", [req.token])
         conn.commit()
         return {"ok": True}
     finally:

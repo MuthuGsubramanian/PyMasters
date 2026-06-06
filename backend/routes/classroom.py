@@ -10,7 +10,7 @@ import sqlite3
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -743,15 +743,35 @@ def vaathiyaar_feedback(request: FeedbackRequest):
     return {"ok": updated, "quality_score": score}
 
 
+EXPORT_TOKEN = os.getenv("EXPORT_TOKEN", "")
+
+
+def _require_export_access(x_export_token: str = Header(None), authorization: str = Header(None)):
+    """Allow training-data export only via the export token OR a super-admin session."""
+    if EXPORT_TOKEN and x_export_token == EXPORT_TOKEN:
+        return True
+    from auth import optional_user_id
+    uid = optional_user_id(authorization)
+    if uid:
+        try:
+            from routes.admin import require_super_admin
+            require_super_admin(uid)
+            return True
+        except HTTPException:
+            pass
+    raise HTTPException(status_code=401, detail="Export requires a valid export token or super-admin session.")
+
+
 @router.get("/training/stats")
 def training_stats():
-    """Counts + average quality of collected interactions (for monitoring the loop)."""
+    """Aggregate counts only (no raw data) — used to monitor the loop / decide when to fine-tune."""
     return get_training_stats(_get_db_path())
 
 
 @router.get("/training/export")
-def training_export(min_quality: float = Query(0.7, ge=0.0, le=1.0)):
+def training_export(min_quality: float = Query(0.7, ge=0.0, le=1.0), _auth=Depends(_require_export_access)):
     """Export high-quality interaction pairs as fine-tuning JSONL (chat format).
+    Gated: requires the export token (X-Export-Token) or a super-admin session.
     Defaults to quality >= 0.7 so only 👍'd chats and successful-feedback pairs ship."""
     jsonl, count = build_training_jsonl(_get_db_path(), min_quality=min_quality)
     headers = {

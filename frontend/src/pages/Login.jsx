@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser, registerUser, createOrg } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
@@ -401,7 +401,12 @@ export default function Login() {
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label htmlFor="password" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Password</label>
+                                        <div className="flex items-center justify-between">
+                                            <label htmlFor="password" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Password</label>
+                                            {isLogin && (
+                                                <Link to="/forgot-password" className="text-xs font-medium text-cyan-600 hover:underline">Forgot?</Link>
+                                            )}
+                                        </div>
                                         <div className="relative group">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
                                             <input

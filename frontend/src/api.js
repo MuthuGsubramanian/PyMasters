@@ -65,6 +65,8 @@ api.interceptors.response.use(
 export const loginUser = (username, password) => api.post('/auth/login', { username, password });
 export const changePassword = (userId, currentPassword, newPassword) =>
     api.post('/auth/change-password', { user_id: userId, current_password: currentPassword, new_password: newPassword });
+export const forgotPassword = (identifier) => api.post('/auth/forgot-password', { identifier });
+export const resetPassword = (token, newPassword) => api.post('/auth/reset-password', { token, new_password: newPassword });
 export const registerUser = (username, password, name, account_type = 'individual') =>
     api.post('/auth/register', { username, password, name, account_type });
 export const runCode = (code) => api.post('/run', { code });
