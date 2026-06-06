@@ -1,0 +1,239 @@
+{
+  "id": "qwen3_0_6b",
+  "topic": "qwen3_0_6b",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Run Qwen3-0.6B Locally: A Tiny Conversational LLM for Your Own AI"
+  },
+  "description": {
+    "en": "Load, chat with, and stream from Qwen/Qwen3-0.6B â€” a 0.6-billion-parameter conversational model that runs offline on a laptop CPU in under 2GB of RAM, making it the perfect default local model for a private AI assistant."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## A Whole Conversational AI That Fits on Your Laptop\n\nVaathiyaar here! Most people think running a real chat AI means renting a GPU or paying a cloud API per token. But Alibaba's Qwen team shipped something quietly revolutionary: **Qwen3-0.6B** â€” a 0.6-billion-parameter conversational model that downloads in about 1.2GB, runs on a plain CPU, fits in roughly 1.5GB of RAM, and still holds a coherent multi-turn conversation. It's small enough to ship *inside* your Python app, yet capable enough to be the default local brain for a personal assistant â€” your own \"Homie\" that never phones home.\n\nIn this lesson we'll load Qwen3 with Hugging Face Transformers, format chat messages the way the model expects, stream tokens in real time, and tune the sampling knobs that control its personality.\n\n### Why a 0.6B model?\n\n| Model | Params | RAM | CPU speed | Cost | Offline |\n|---|---|---|---|---|---|\n| GPT-4o (API) | ~200B+ | Cloud | N/A | $$$/token | No |\n| Llama-3-8B | 8B | ~16 GB | Slow | Free | Yes |\n| Phi-3-mini | 3.8B | ~8 GB | Moderate | Free | Yes |\n| **Qwen3-0.6B** | **0.6B** | **~1.5 GB** | **Fast** | **Free** | **Yes** |\n| TinyLlama-1.1B | 1.1B | ~2.5 GB | Moderate | Free | Yes |\n\nQwen3-0.6B is the smallest member of the Qwen3 family, chat-tuned out of the box. You trade raw capability for speed, privacy, and zero cost â€” an ideal default for prototyping, education, and embedded apps.\n\n### Loading the model\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n```\n\nThe first call downloads weights and caches them under `~/.cache/huggingface`. `device_map=\"auto\"` uses a GPU if one exists, otherwise it runs happily on CPU â€” no code change required.\n\n### Speaking Qwen3's chat language\n\nQwen3 was trained on a chat format with special role tokens. You never write those tokens by hand â€” `apply_chat_template` does it:\n\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are Homie, a friendly local AI.\"},\n    {\"role\": \"user\", \"content\": \"Explain a Python generator in one sentence.\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=120)\nreply = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(reply)\n```\n\nNotice the slice `output[0][inputs[\"input_ids\"].shape[-1]:]` â€” `generate` returns the prompt *plus* the new tokens, so we drop the prompt length to keep only the model's answer.\n\n### Streaming for a real chatbot feel\n\n```python\nfrom transformers import TextStreamer\n\nstreamer = TextStreamer(tokenizer, skip_special_tokens=True)\nmodel.generate(**inputs, max_new_tokens=200, streamer=streamer)\n```\n\nTokens print as they're produced â€” the same typing effect as ChatGPT, but running entirely on your machine.\n\n### Tuning the personality\n\n| Parameter | Effect | Good default |\n|---|---|---|\n| `temperature` | Randomness (0 = focused, 1 = creative) | 0.7 |\n| `top_p` | Nucleus sampling cutoff | 0.8 |\n| `top_k` | Cap on candidate tokens per step | 20 |\n| `repetition_penalty` | Discourage repeated phrases | 1.1 |\n| `max_new_tokens` | Response length ceiling | 100â€“512 |\n\nSmall models can loop or repeat; a `repetition_penalty` of 1.1 quietly fixes most of it.\n\n> **Key Insight:** Qwen3-0.6B proves that useful conversational AI is no longer gated behind big infrastructure. A model you can run on a laptop CPU â€” free, offline, and private â€” is enough to power a personal assistant, prototype prompts before spending on an API, or teach how LLMs actually generate text. Start local with Homie, and only reach for the cloud when a use case genuinely demands it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A real conversational AI that runs on your laptop â€” no API key, no internet, no cost. Qwen3-0.6B is the smallest Qwen3 chat model: ~1.2GB to download, ~1.5GB RAM to run, and coherent enough to be your default local 'Homie'. Let's load it, chat with it, and stream from it.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are Homie, a helpful local AI.\"},\n    {\"role\": \"user\", \"content\": \"What is a Python generator?\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=150)\nreply = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(reply)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the two core Transformers classes: AutoModelForCausalLM loads the language model, AutoTokenizer loads its matching tokenizer."
+        },
+        {
+          "line": 3,
+          "explanation": "The Hugging Face model ID. 'Qwen/Qwen3-0.6B' is the smallest Qwen3 variant â€” about 1.2GB of weights to download once."
+        },
+        {
+          "line": 4,
+          "explanation": "Load the tokenizer, which converts text to token IDs and back. It caches locally after the first download."
+        },
+        {
+          "line": 5,
+          "explanation": "Load the model weights. torch_dtype='auto' picks the best precision for your hardware; device_map='auto' uses a GPU if present, otherwise CPU."
+        },
+        {
+          "line": 9,
+          "explanation": "Qwen3 is chat-tuned â€” structure the input as a list of message dicts with 'role' and 'content', just like the OpenAI chat format."
+        },
+        {
+          "line": 14,
+          "explanation": "apply_chat_template wraps the messages in Qwen3's special role tokens. add_generation_prompt=True appends the marker that tells the model 'your turn'."
+        },
+        {
+          "line": 17,
+          "explanation": "Tokenize the formatted string into a tensor of IDs and move it onto the model's device (CPU or GPU)."
+        },
+        {
+          "line": 19,
+          "explanation": "model.generate() runs autoregressive decoding â€” predicting one token at a time until it hits max_new_tokens=150 or an end-of-text token."
+        },
+        {
+          "line": 20,
+          "explanation": "Slice off the prompt tokens (everything up to the input length) so we decode ONLY the newly generated answer."
+        },
+        {
+          "line": 23,
+          "explanation": "Print Homie's reply â€” generated entirely on your machine, with no network call."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import TextStreamer\n\n# Reuse model, tokenizer, and inputs from before\nstreamer = TextStreamer(tokenizer, skip_special_tokens=True)\n\noutput = model.generate(\n    **inputs,\n    max_new_tokens=200,\n    temperature=0.7,\n    top_p=0.8,\n    top_k=20,\n    repetition_penalty=1.1,\n    streamer=streamer,\n)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "TextStreamer is a callback that prints each token the moment it's generated â€” producing a live typing effect."
+        },
+        {
+          "line": 4,
+          "explanation": "Create the streamer with skip_special_tokens=True so only human-readable text reaches the console."
+        },
+        {
+          "line": 6,
+          "explanation": "Call generate() with the streamer attached â€” tokens appear one by one instead of after the whole response finishes."
+        },
+        {
+          "line": 9,
+          "explanation": "temperature=0.7 adds moderate randomness. Near 0 it becomes focused and repetitive; near 1 it gets more creative."
+        },
+        {
+          "line": 10,
+          "explanation": "top_p=0.8 is nucleus sampling: only the smallest set of tokens whose probabilities sum to 80% are considered, pruning unlikely words."
+        },
+        {
+          "line": 11,
+          "explanation": "top_k=20 further caps candidates to the 20 most probable tokens per step â€” a stability tweak Qwen recommends for this model."
+        },
+        {
+          "line": 12,
+          "explanation": "repetition_penalty=1.1 gently discourages repeating phrases, a common failure mode of very small models."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "history = [{\"role\": \"system\", \"content\": \"You are Homie, a helpful local AI.\"}]\n\ndef chat(user_msg, history, model, tokenizer):\n    history.append({\"role\": \"user\", \"content\": user_msg})\n    text = tokenizer.apply_chat_template(\n        history, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, max_new_tokens=200, temperature=0.7)\n    reply = tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n    history.append({\"role\": \"assistant\", \"content\": reply})\n    return reply\n\nprint(chat(\"What is a list comprehension?\", history, model, tokenizer))\nprint(chat(\"Now give me one example\", history, model, tokenizer))",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Seed the conversation with a system message defining Homie's persona â€” it stays at the front of history every turn."
+        },
+        {
+          "line": 3,
+          "explanation": "A chat() helper that runs the full turn cycle: append the user message, format, generate, decode, store the reply."
+        },
+        {
+          "line": 4,
+          "explanation": "Append the user's message so the model sees the entire conversation, enabling coherent multi-turn dialogue."
+        },
+        {
+          "line": 5,
+          "explanation": "apply_chat_template formats the WHOLE history â€” system plus every prior user/assistant turn â€” into Qwen3's token structure."
+        },
+        {
+          "line": 9,
+          "explanation": "Generate with the full context. Because the model re-reads all prior turns, it can reference earlier answers."
+        },
+        {
+          "line": 13,
+          "explanation": "Save the assistant's reply back into history so the next turn includes it â€” conversational memory accumulates."
+        },
+        {
+          "line": 16,
+          "explanation": "Turn one answers from scratch; turn two sees the first Q&A and builds on it â€” a genuine multi-turn exchange, all local."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud API LLM",
+      "right_label": "Local Qwen3-0.6B",
+      "items": [
+        {
+          "left": "Needs API key and internet",
+          "right": "Runs fully offline, no account"
+        },
+        {
+          "left": "Pay per token",
+          "right": "Free after a one-time download"
+        },
+        {
+          "left": "Prompts sent to third-party servers",
+          "right": "Data never leaves your machine"
+        },
+        {
+          "left": "Highest quality (100B+ params)",
+          "right": "Solid quality for its size (0.6B)"
+        },
+        {
+          "left": "Rate limits and outages",
+          "right": "Always available, no limits"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now run Qwen3-0.6B locally â€” load it, chat, stream, and tune it. Homie lives on your machine now!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ChatSession` class that simulates how a local LLM manages multi-turn conversation history. Implement `add_system(content)` to set a system message, `add_user(content)` and `add_assistant(content)` to append turns, `build_prompt()` that renders all messages as a single string with each line formatted as '<role>: <content>' followed by a trailing 'assistant:' generation prompt, and `turn_count()` that returns how many user+assistant message pairs have occurred (count only 'user' and 'assistant' roles, divided by 2, rounded down)."
+      },
+      "starter_code": "class ChatSession:\n    def __init__(self):\n        self.messages = []\n\n    def add_system(self, content: str):\n        # Append {\"role\": \"system\", \"content\": content}\n        pass\n\n    def add_user(self, content: str):\n        # Append {\"role\": \"user\", \"content\": content}\n        pass\n\n    def add_assistant(self, content: str):\n        # Append {\"role\": \"assistant\", \"content\": content}\n        pass\n\n    def build_prompt(self) -> str:\n        # Render each message as \"<role>: <content>\" on its own line,\n        # then append \"assistant:\" as the generation prompt.\n        pass\n\n    def turn_count(self) -> int:\n        # Count messages with role 'user' or 'assistant', integer-divide by 2.\n        pass\n\n# Test it:\ns = ChatSession()\ns.add_system(\"You are Homie.\")\ns.add_user(\"Hi\")\ns.add_assistant(\"Hello!\")\nprint(s.turn_count())\nprint(s.build_prompt().strip().endswith(\"assistant:\"))",
+      "expected_output": "1\nTrue",
+      "hints": {
+        "en": [
+          "Each method just appends a dict like {\"role\": \"user\", \"content\": content} to self.messages",
+          "In build_prompt(), use a list comprehension f\"{m['role']}: {m['content']}\" for each message, join with '\\n', then add '\\nassistant:' at the end",
+          "In turn_count(), filter messages whose role is 'user' or 'assistant', take the length, and use // 2"
+        ]
+      },
+      "test_code": "s = ChatSession()\ns.add_system(\"sys\")\nassert s.messages[0] == {\"role\": \"system\", \"content\": \"sys\"}\ns.add_user(\"q1\")\ns.add_assistant(\"a1\")\nassert s.turn_count() == 1\ns.add_user(\"q2\")\nassert s.turn_count() == 1\ns.add_assistant(\"a2\")\nassert s.turn_count() == 2\np = s.build_prompt()\nassert p.strip().endswith(\"assistant:\")\nassert \"user: q1\" in p\nassert \"assistant: a1\" in p\nassert \"system: sys\" in p\nlines = p.split(\"\\n\")\nassert lines[0] == \"system: sys\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `SamplingConfig` class that validates Qwen3 generation parameters and reports the resulting style. Accept `temperature` (0.0-2.0), `top_p` (0.0-1.0), `top_k` (1-100 int), and `repetition_penalty` (1.0-2.0). In `__init__`, validate each parameter and raise ValueError with a descriptive message if out of range. Implement `to_dict()` returning all parameters, and `style()` returning 'focused' if temperature < 0.3, 'balanced' if 0.3 <= temperature <= 0.7, and 'creative' if temperature > 0.7."
+      },
+      "starter_code": "class SamplingConfig:\n    def __init__(self, temperature=0.7, top_p=0.8, top_k=20,\n                 repetition_penalty=1.1):\n        # Validate each param, raise ValueError if out of range:\n        # temperature 0.0-2.0, top_p 0.0-1.0, top_k 1-100 (int),\n        # repetition_penalty 1.0-2.0\n        pass\n\n    def to_dict(self) -> dict:\n        # Return all four parameters as a dict\n        pass\n\n    def style(self) -> str:\n        # temperature < 0.3 -> 'focused'\n        # 0.3 <= temperature <= 0.7 -> 'balanced'\n        # temperature > 0.7 -> 'creative'\n        pass\n\n# Test it:\ncfg = SamplingConfig(temperature=0.5)\nprint(cfg.style())\nprint(cfg.to_dict()[\"top_k\"])\ntry:\n    SamplingConfig(temperature=2.5)\nexcept ValueError:\n    print(\"Caught error\")",
+      "expected_output": "balanced\n20\nCaught error",
+      "hints": {
+        "en": [
+          "Validate with simple range checks: if not (0.0 <= temperature <= 2.0): raise ValueError(f'temperature must be 0.0-2.0, got {temperature}')",
+          "Store each value as self.temperature, self.top_p, etc. after validation, and return them in to_dict()",
+          "In style(), use if/elif on self.temperature to return 'focused', 'balanced', or 'creative'"
+        ]
+      },
+      "test_code": "cfg = SamplingConfig()\nassert cfg.to_dict() == {\"temperature\": 0.7, \"top_p\": 0.8, \"top_k\": 20, \"repetition_penalty\": 1.1}\nassert cfg.style() == \"balanced\"\nassert SamplingConfig(temperature=0.1).style() == \"focused\"\nassert SamplingConfig(temperature=0.9).style() == \"creative\"\nassert SamplingConfig(temperature=0.3).style() == \"balanced\"\nassert SamplingConfig(temperature=0.7).style() == \"balanced\"\nfor bad in [{\"temperature\": -0.1}, {\"temperature\": 2.1}, {\"top_p\": 1.5}, {\"top_k\": 0}, {\"top_k\": 200}, {\"repetition_penalty\": 0.9}, {\"repetition_penalty\": 2.5}]:\n    try:\n        SamplingConfig(**bad)\n        assert False, f\"Should have raised for {bad}\"\n    except ValueError:\n        pass"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "local LLM inference",
+      "Qwen3-0.6B",
+      "Hugging Face Transformers",
+      "chat templates",
+      "token streaming",
+      "sampling parameters",
+      "multi-turn conversation",
+      "small language models"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "lists",
+      "pip install",
+      "basic ML concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
