@@ -1,0 +1,166 @@
+{
+  "id": "bge_small_en_v15_local_rag_embedder",
+  "topic": "bge_small_en_v15_local_rag_embedder",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BGE-Small-EN-v1.5: A Tiny High-Quality Embedder for Local RAG"
+  },
+  "description": {
+    "en": "Learn to use BAAI/bge-small-en-v1.5 â€” a 33M-parameter, 384-dimensional embedding model that punches far above its weight on the MTEB leaderboard â€” as the default local RAG backbone for semantic search and retrieval."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 130MB Embedder That Beats Models 10x Its Size\n\nVaathiyaar here! Today we meet one of the best-kept secrets in retrieval: **BAAI/bge-small-en-v1.5**. It's a BERT-based sentence embedder with only ~33 million parameters and a ~130MB footprint, yet it consistently ranks near the top of the MTEB (Massive Text Embedding Benchmark) leaderboard for its size class. For anyone building a local RAG system â€” like Homie â€” it's the sweet spot: small enough to run on a CPU, accurate enough to retrieve the right passage.\n\n### Why BGE-Small Over the Alternatives?\n\nThe classic lightweight choice is `all-MiniLM-L6-v2`. BGE-small matches its 384-dimensional output and tiny size but typically scores higher on retrieval tasks, thanks to contrastive pre-training on a huge corpus of text pairs.\n\n| Model | Params | Dimensions | Size | MTEB Retrieval | Best For |\n|---|---|---|---|---|---|\n| all-MiniLM-L6-v2 | 22M | 384 | 80MB | Good | Fast general embeddings |\n| **bge-small-en-v1.5** | 33M | 384 | 130MB | Better | Local RAG retrieval |\n| bge-base-en-v1.5 | 109M | 768 | 440MB | Best | Quality-first RAG |\n\n### The One Trick You Must Know: Query Instructions\n\nBGE models are trained with an **asymmetric** retrieval setup. When you embed a *query* (the user's question), you prepend a short instruction. When you embed *passages* (the documents), you embed them as-is. This asymmetry boosts retrieval accuracy noticeably.\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ninstruction = \"Represent this sentence for searching relevant passages: \"\n\npassages = [\n    \"FAISS enables fast similarity search over dense vectors.\",\n    \"Python's asyncio runs coroutines on a single thread.\",\n    \"Transformers use self-attention to weigh token relationships.\",\n]\n\nquery = \"How does attention work in neural networks?\"\n\n# Passages: embed directly, normalized\npassage_emb = model.encode(passages, normalize_embeddings=True)\n# Query: prepend the retrieval instruction\nquery_emb = model.encode(instruction + query, normalize_embeddings=True)\n```\n\n### Scoring Matches\n\nBecause we normalized the embeddings, cosine similarity is just a dot product:\n\n```python\nimport numpy as np\n\nscores = passage_emb @ query_emb  # shape (3,)\nbest = int(np.argmax(scores))\nprint(f\"Best match (score={scores[best]:.3f}): {passages[best]}\")\n```\n\nThe transformers/attention passage should win cleanly â€” semantic meaning, not keyword overlap.\n\n### Plugging Into a RAG Pipeline\n\nIn a real system you'd embed your whole knowledge base once, store the vectors in FAISS or a vector DB, then embed each incoming query (with the instruction prefix) and retrieve the top-k passages to feed your LLM. BGE-small's 384 dimensions keep your index compact and your retrieval fast â€” ideal as Homie's default offline embedder where no API call and no GPU are guaranteed.\n\n> **Key Insight:** BGE-small-en-v1.5 gives you near-large-model retrieval quality at MiniLM-class cost. Always `normalize_embeddings=True` so cosine equals dot product, and always prepend the query instruction (`\"Represent this sentence for searching relevant passages: \"`) to questions â€” but never to the passages themselves. That asymmetry is the free accuracy boost most people miss."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if your RAG system's embedder fit in 130MB, ran on a plain CPU, and still beat models 10x its size on retrieval? Meet BAAI/bge-small-en-v1.5 â€” a 33M-parameter, 384-dimensional BERT embedder that's the ideal default for local RAG. The catch? One small trick: queries get an instruction prefix, passages don't.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ninstruction = \"Represent this sentence for searching relevant passages: \"\n\npassages = [\n    \"FAISS enables fast similarity search over dense vectors.\",\n    \"Python's asyncio runs coroutines on a single thread.\",\n    \"Transformers use self-attention to weigh token relationships.\",\n]\n\nquery = \"How does attention work in neural networks?\"\n\npassage_emb = model.encode(passages, normalize_embeddings=True)\nquery_emb = model.encode(instruction + query, normalize_embeddings=True)\n\nscores = passage_emb @ query_emb\nbest = int(np.argmax(scores))\nprint(f\"Best match (score={scores[best]:.3f}): {passages[best]}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer for embeddings and numpy for vector math. Install with: pip install sentence-transformers."
+        },
+        {
+          "line": 4,
+          "explanation": "Load BAAI/bge-small-en-v1.5. First run downloads ~130MB; afterwards it loads from local cache and runs comfortably on CPU."
+        },
+        {
+          "line": 6,
+          "explanation": "Define the BGE retrieval instruction. This exact prefix is what the model was trained with for query-side encoding â€” it tells the model 'this is a search query'."
+        },
+        {
+          "line": 8,
+          "explanation": "Three candidate passages from a knowledge base. In production this would be thousands of document chunks embedded once and stored in a vector index."
+        },
+        {
+          "line": 14,
+          "explanation": "The user's natural-language question. We want the passage closest in MEANING, not in shared keywords."
+        },
+        {
+          "line": 16,
+          "explanation": "Embed passages directly with normalize_embeddings=True. Passages get NO instruction prefix â€” that's the asymmetric retrieval design of BGE."
+        },
+        {
+          "line": 17,
+          "explanation": "Embed the query WITH the instruction prepended. This single difference measurably improves which passage ranks first."
+        },
+        {
+          "line": 19,
+          "explanation": "Because all vectors are normalized, the matrix-vector product gives cosine similarity directly â€” one score per passage."
+        },
+        {
+          "line": 20,
+          "explanation": "argmax finds the highest-scoring passage index. The transformers/attention passage should win, despite sharing few exact words with the query."
+        },
+        {
+          "line": 21,
+          "explanation": "Print the winning passage and its similarity score. Scores near 1.0 mean strong semantic match â€” this is the relevance signal that drives RAG retrieval."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Query Encoding (with instruction)",
+      "right_label": "Passage Encoding (no instruction)",
+      "items": [
+        {
+          "left": "Prepend 'Represent this sentence...'",
+          "right": "Embed raw text as-is"
+        },
+        {
+          "left": "Used for the user's question",
+          "right": "Used for knowledge-base documents"
+        },
+        {
+          "left": "normalize_embeddings=True",
+          "right": "normalize_embeddings=True"
+        },
+        {
+          "left": "Encoded fresh per query",
+          "right": "Encoded once, stored in index"
+        },
+        {
+          "left": "Boosts retrieval accuracy",
+          "right": "Keeps passage vectors clean"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now run BGE-small-en-v1.5 as a local RAG embedder â€” tiny, fast, and accurate, with the query-instruction trick for free retrieval gains!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `build_query_embedding_input(query)` that returns the query string with the BGE retrieval instruction prefix applied, and a function `prepare_passages(passages)` that returns the passages list UNCHANGED (BGE passages get no prefix). The instruction prefix must be exactly 'Represent this sentence for searching relevant passages: '. This enforces BGE's asymmetric encoding rule."
+      },
+      "starter_code": "BGE_INSTRUCTION = \"Represent this sentence for searching relevant passages: \"\n\ndef build_query_embedding_input(query: str) -> str:\n    # Prepend the BGE retrieval instruction to the query\n    pass\n\ndef prepare_passages(passages: list[str]) -> list[str]:\n    # Passages must be returned unchanged (no instruction prefix)\n    pass\n\n# Test it:\nq = build_query_embedding_input(\"What is RAG?\")\nprint(q)\np = prepare_passages([\"RAG combines retrieval with generation.\"])\nprint(p[0])",
+      "expected_output": "Represent this sentence for searching relevant passages: What is RAG?\nRAG combines retrieval with generation.",
+      "hints": {
+        "en": [
+          "build_query_embedding_input just returns BGE_INSTRUCTION + query â€” string concatenation",
+          "prepare_passages returns the list as-is; you can return passages directly or list(passages) to copy it",
+          "Do NOT add the prefix to passages â€” that would hurt retrieval accuracy and break the asymmetric design"
+        ]
+      },
+      "test_code": "assert build_query_embedding_input(\"hi\") == \"Represent this sentence for searching relevant passages: hi\"\nassert build_query_embedding_input(\"What is RAG?\").startswith(\"Represent this sentence for searching relevant passages: \")\nassert build_query_embedding_input(\"x\").endswith(\"x\")\nassert prepare_passages([\"a\", \"b\"]) == [\"a\", \"b\"]\nassert prepare_passages([\"doc one\"])[0] == \"doc one\"\nassert all(not p.startswith(\"Represent\") for p in prepare_passages([\"Represent free text\"]) ) or prepare_passages([\"plain\"]) == [\"plain\"]\nassert prepare_passages([]) == []"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MiniRAGRetriever` class that mimics a BGE-backed retriever using pre-computed numpy embeddings. In __init__ store an embedding `dimension`. Implement `add_passages(passages, embeddings)` to store passage texts and their normalized float32 embeddings, and `retrieve(query_embedding, k)` to return the top-k passages as a list of dicts with 'rank', 'passage', and 'score' keys, sorted by dot-product similarity descending (ranks start at 1). Add a `count` property returning the number of stored passages."
+      },
+      "starter_code": "import numpy as np\n\nclass MiniRAGRetriever:\n    def __init__(self, dimension: int):\n        self.dimension = dimension\n        self.passages = []\n        self.embeddings = np.empty((0, dimension), dtype=\"float32\")\n\n    @property\n    def count(self) -> int:\n        # Return number of stored passages\n        pass\n\n    def add_passages(self, passages: list[str], embeddings: np.ndarray):\n        # Store passages and stack their embeddings\n        # Validate len(passages) == embeddings.shape[0] and dimension matches\n        pass\n\n    def retrieve(self, query_embedding: np.ndarray, k: int = 3) -> list[dict]:\n        # Score by dot product, return top-k dicts sorted descending\n        # Each dict: {\"rank\": int, \"passage\": str, \"score\": float}\n        pass\n\n# Test it:\nr = MiniRAGRetriever(dimension=3)\ndocs = [\"about attention\", \"about asyncio\", \"about faiss\"]\nembs = np.array([\n    [1.0, 0.0, 0.0],\n    [0.0, 1.0, 0.0],\n    [0.0, 0.0, 1.0],\n], dtype=\"float32\")\nr.add_passages(docs, embs)\nprint(f\"Stored: {r.count}\")\nq = np.array([0.9, 0.1, 0.0], dtype=\"float32\")\nres = r.retrieve(q, k=2)\nprint(res[0][\"passage\"])\nprint(res[0][\"rank\"])\nprint(f\"Score: {res[0]['score']:.1f}\")",
+      "expected_output": "Stored: 3\nabout attention\n1\nScore: 0.9",
+      "hints": {
+        "en": [
+          "count returns len(self.passages); keep the passage list and embedding array in sync",
+          "In add_passages use self.passages.extend(passages) and np.vstack to grow self.embeddings; assert lengths and dimension match",
+          "In retrieve compute scores = self.embeddings @ query_embedding, then idx = np.argsort(scores)[::-1][:k] and build dicts with rank starting at 1 and score as float(scores[i])"
+        ]
+      },
+      "test_code": "r = MiniRAGRetriever(dimension=2)\nassert r.count == 0\nr.add_passages([\"a\", \"b\"], np.array([[1,0],[0,1]], dtype='float32'))\nassert r.count == 2\nout = r.retrieve(np.array([1,0], dtype='float32'), k=1)\nassert len(out) == 1\nassert out[0]['passage'] == 'a'\nassert out[0]['rank'] == 1\nassert abs(out[0]['score'] - 1.0) < 0.001\nout2 = r.retrieve(np.array([0,1], dtype='float32'), k=2)\nassert out2[0]['passage'] == 'b'\nassert out2[1]['passage'] == 'a'\nassert out2[0]['rank'] == 1 and out2[1]['rank'] == 2\nr.add_passages([\"c\"], np.array([[0.5,0.5]], dtype='float32'))\nassert r.count == 3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "bge-small-en-v1.5",
+      "sentence embeddings",
+      "local RAG retrieval",
+      "asymmetric query instructions",
+      "normalized embeddings",
+      "cosine similarity",
+      "MTEB benchmark",
+      "embedding model selection"
+    ],
+    "concepts_required": [
+      "python classes",
+      "numpy arrays",
+      "dot product",
+      "sentence-transformers basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
