@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     getAdminOverview, getAdminUsers, getAdminOrgs, getAdminUsage,
-    adminBlockUser, adminSetPlan,
+    adminBlockUser, adminSetPlan, getAdminUserViewAs,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
@@ -54,6 +54,51 @@ function UsageChart({ series }) {
     );
 }
 
+function ViewAsPanel({ adminId, target, onExit }) {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    getAdminUserViewAs(adminId, target.id)
+      .then((r) => setData(r.data)).catch((e) => setErr(safeErrorMsg(e, 'Failed to load')));
+  }, [adminId, target.id]);
+  return (
+    <div className="fixed inset-0 z-50 bg-bg-base overflow-y-auto">
+      <div className="sticky top-0 z-10 bg-amber-500 text-white px-4 py-2 flex items-center justify-between text-sm font-semibold">
+        <span>Viewing {String(target.name || target.username)} · read-only</span>
+        <button onClick={onExit} className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30">Exit</button>
+      </div>
+      <div className="max-w-3xl mx-auto p-6 space-y-4">
+        {err ? <p className="text-red-500 text-sm">{err}</p> : !data ? <p className="text-text-muted text-sm">Loading…</p> : (
+          <>
+            <h2 className="text-xl font-bold text-text-primary">{String(data.profile?.name || data.profile?.username)}</h2>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-bg-surface border border-border-default rounded-2xl p-4 text-center"><div className="text-2xl font-bold text-text-primary">{data.summary?.xp ?? 0}</div><div className="text-xs text-text-muted">XP</div></div>
+              <div className="bg-bg-surface border border-border-default rounded-2xl p-4 text-center"><div className="text-2xl font-bold text-text-primary">{data.summary?.lessons_completed ?? 0}</div><div className="text-xs text-text-muted">Lessons</div></div>
+              <div className="bg-bg-surface border border-border-default rounded-2xl p-4 text-center"><div className="text-2xl font-bold text-text-primary">{data.summary?.signals_7d ?? 0}</div><div className="text-xs text-text-muted">Signals 7d</div></div>
+            </div>
+            <div className="bg-bg-surface border border-border-default rounded-2xl p-4">
+              <h3 className="text-sm font-bold text-text-secondary mb-2">Topic mastery</h3>
+              {(data.mastery || []).length === 0 ? <p className="text-xs text-text-muted">No mastery data.</p> : data.mastery.map((m) => (
+                <div key={m.topic} className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs text-text-secondary w-32 truncate">{m.topic}</span>
+                  <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden"><div className="h-full bg-cyan-400" style={{ width: `${Math.round((Number(m.mastery_level)||0)*100)}%` }} /></div>
+                  <span className="text-[11px] text-text-muted w-9 text-right">{Math.round((Number(m.mastery_level)||0)*100)}%</span>
+                </div>
+              ))}
+            </div>
+            <div className="bg-bg-surface border border-border-default rounded-2xl p-4">
+              <h3 className="text-sm font-bold text-text-secondary mb-2">Recent lessons</h3>
+              {(data.lessons || []).length === 0 ? <p className="text-xs text-text-muted">None yet.</p> : (
+                <ul className="space-y-1">{data.lessons.map((l, i) => <li key={i} className="flex justify-between text-xs"><span className="text-text-secondary">{l.lesson_id}</span><span className="text-text-muted">+{l.xp_awarded||0} XP</span></li>)}</ul>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SuperAdmin() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -66,7 +111,7 @@ export default function SuperAdmin() {
     const [denied, setDenied] = useState(false);
     const [busyId, setBusyId] = useState(null);
     const [openUserId, setOpenUserId] = useState(null);
-    const [viewAsUser, setViewAsUser] = useState(null); // eslint-disable-line no-unused-vars
+    const [viewAsUser, setViewAsUser] = useState(null);
 
     useEffect(() => { document.title = 'Super Admin — PyMasters'; }, []);
 
@@ -242,6 +287,9 @@ export default function SuperAdmin() {
                     onChanged={() => loadUsers(q)}
                     onViewAs={(u) => { setViewAsUser(u); setOpenUserId(null); }}
                 />
+            )}
+            {viewAsUser && (
+                <ViewAsPanel adminId={user.id} target={viewAsUser} onExit={() => setViewAsUser(null)} />
             )}
 
             {/* ORGS */}
