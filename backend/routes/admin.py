@@ -7,9 +7,12 @@ user is taken from the VERIFIED JWT (never a client-supplied user_id), so a
 forged user_id cannot escalate.
 """
 
+import json
 import os
 import sqlite3
+import uuid
 from datetime import date, timedelta
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
@@ -33,16 +36,36 @@ def _conn():
     return c
 
 
+def is_break_glass(username: str, email: str) -> bool:
+    idents = {(username or "").lower(), (email or "").lower()}
+    return bool(idents & SUPER_ADMINS)
+
+
 def require_super_admin(user_id: str):
     conn = _conn()
-    row = conn.execute("SELECT username, email FROM users WHERE id = ?", [user_id]).fetchone()
+    row = conn.execute(
+        "SELECT username, email, COALESCE(is_super_admin,0) FROM users WHERE id = ?", [user_id]
+    ).fetchone()
     conn.close()
     if not row:
         raise HTTPException(status_code=403, detail="Super admin access required")
-    idents = {(row["username"] or "").lower(), (row["email"] or "").lower()}
-    if not (idents & SUPER_ADMINS):
-        raise HTTPException(status_code=403, detail="Super admin access required")
-    return True
+    if is_break_glass(row["username"], row["email"]) or int(row[2]) == 1:
+        return True
+    raise HTTPException(status_code=403, detail="Super admin access required")
+
+
+def _actor_name(conn, user_id: str) -> str:
+    r = conn.execute("SELECT COALESCE(NULLIF(name,''), username) FROM users WHERE id = ?", [user_id]).fetchone()
+    return r[0] if r else user_id
+
+
+def _audit(conn, actor_id, action, target_type=None, target_id=None, detail=None):
+    conn.execute(
+        "INSERT INTO admin_audit (id, actor_id, actor_name, action, target_type, target_id, detail) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [str(uuid.uuid4()), actor_id, _actor_name(conn, actor_id), action, target_type, target_id,
+         json.dumps(detail or {})],
+    )
 
 
 class BlockRequest(BaseModel):
@@ -145,6 +168,7 @@ def block_user(target_id: str, req: BlockRequest, caller: str = Depends(get_curr
     require_super_admin(caller)
     conn = _conn()
     conn.execute("UPDATE users SET is_blocked = ? WHERE id = ?", [1 if req.blocked else 0, target_id])
+    _audit(conn, caller, "user.block", "user", target_id, {"blocked": bool(req.blocked)})
     conn.commit()
     conn.close()
     return {"ok": True, "blocked": req.blocked}
@@ -156,6 +180,7 @@ def set_user_plan(target_id: str, req: PlanRequest, caller: str = Depends(get_cu
     require_super_admin(caller)
     conn = _conn()
     conn.execute("UPDATE users SET plan = ? WHERE id = ?", [req.plan, target_id])
+    _audit(conn, caller, "user.plan", "user", target_id, {"plan": req.plan})
     conn.commit()
     conn.close()
     return {"ok": True, "plan": req.plan}
