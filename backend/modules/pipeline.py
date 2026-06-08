@@ -8,8 +8,27 @@ import os
 from datetime import datetime
 from vaathiyaar.engine import call_vaathiyaar
 from vaathiyaar.profiler import get_student_profile
+from vaathiyaar.modelfile import LANG_NAMES
 from modules.templates import CONCEPT_TEMPLATES, get_template_for_topic
 from notifications.dispatcher import create_notification
+
+
+def _lang_directive(user_id):
+    """Authoring-language directive for generation prompts, or '' for English/unknown."""
+    try:
+        prof = get_student_profile(_get_db_path(), str(user_id)) or {}
+        code = (prof.get("preferred_language") or "en")
+        if code in ("en", "tanglish") or code not in LANG_NAMES:
+            return ""
+        name = LANG_NAMES[code]
+        return (
+            f"\n\nIMPORTANT: Write ALL learner-facing text (titles, descriptions, narrative, "
+            f"story, hints, feedback, explanations) ENTIRELY in {name} using its native script. "
+            f"Keep code, code comments, and identifiers in English. Keep the EXACT same JSON "
+            f"structure and keys.\n"
+        )
+    except Exception:
+        return ""
 
 
 def _get_db_path():
@@ -52,7 +71,7 @@ def _extract_json(raw: str) -> dict:
     return {"raw": raw}
 
 
-def stage_1_outline(job_id, topic, user_id):
+def stage_1_outline(job_id, topic, user_id, directive=""):
     """Stage 1: Generate learning objectives and outline for the topic."""
     _update_job_status(job_id, "stage_1_outline")
 
@@ -77,7 +96,7 @@ def stage_1_outline(job_id, topic, user_id):
     )
 
     response = call_vaathiyaar(
-        user_message=prompt,
+        user_message=prompt + directive,
         student_profile=profile,
         lesson_context={"pipeline_stage": "outline", "topic": topic},
         temperature=0.5,
@@ -101,7 +120,7 @@ def stage_1_outline(job_id, topic, user_id):
     return outline
 
 
-def stage_2_narrative(job_id, outline, user_id):
+def stage_2_narrative(job_id, outline, user_id, directive=""):
     """Stage 2: Generate structured story content (story_variants) for the lesson."""
     _update_job_status(job_id, "stage_2_narrative")
 
@@ -129,7 +148,7 @@ def stage_2_narrative(job_id, outline, user_id):
     )
 
     response = call_vaathiyaar(
-        user_message=prompt,
+        user_message=prompt + directive,
         student_profile=profile,
         lesson_context={"pipeline_stage": "narrative", "outline": outline},
         temperature=0.7,
@@ -154,7 +173,7 @@ def stage_2_narrative(job_id, outline, user_id):
     return narrative
 
 
-def stage_3_animation(job_id, outline, narrative):
+def stage_3_animation(job_id, outline, narrative, directive=""):
     """Stage 3: Select animation template and generate visual flow animations via AI.
 
     Uses the template as a scaffold, then calls Vaathiyaar to generate:
@@ -221,7 +240,7 @@ def stage_3_animation(job_id, outline, narrative):
 
     try:
         response = call_vaathiyaar(
-            user_message=ai_prompt,
+            user_message=ai_prompt + directive,
             lesson_context={"pipeline_stage": "animation", "outline": outline},
             temperature=0.4,
             max_tokens=2000,
@@ -275,7 +294,7 @@ def stage_3_animation(job_id, outline, narrative):
     return result
 
 
-def stage_4_challenges(job_id, outline, narrative):
+def stage_4_challenges(job_id, outline, narrative, directive=""):
     """Stage 4: Generate practice challenges with hints and test code."""
     _update_job_status(job_id, "stage_4_challenges")
 
@@ -303,7 +322,7 @@ def stage_4_challenges(job_id, outline, narrative):
     )
 
     response = call_vaathiyaar(
-        user_message=prompt,
+        user_message=prompt + directive,
         lesson_context={"pipeline_stage": "challenges", "outline": outline},
         temperature=0.6,
         max_tokens=900,
@@ -463,12 +482,14 @@ def run_pipeline(job_id, user_id, topic):
     from concurrent.futures import ThreadPoolExecutor
 
     try:
-        outline = stage_1_outline(job_id, topic, user_id)
-        narrative = stage_2_narrative(job_id, outline, user_id)
+        directive = _lang_directive(user_id)
+
+        outline = stage_1_outline(job_id, topic, user_id, directive=directive)
+        narrative = stage_2_narrative(job_id, outline, user_id, directive=directive)
 
         with ThreadPoolExecutor(max_workers=2) as ex:
-            f_anim = ex.submit(stage_3_animation, job_id, outline, narrative)
-            f_chal = ex.submit(stage_4_challenges, job_id, outline, narrative)
+            f_anim = ex.submit(stage_3_animation, job_id, outline, narrative, directive)
+            f_chal = ex.submit(stage_4_challenges, job_id, outline, narrative, directive)
             animation = f_anim.result()
             challenges = f_chal.result()
 
