@@ -16,7 +16,7 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { const prev = document.activeElement; panelRef.current?.focus(); return () => { try { prev?.focus?.(); } catch { /* gone */ } }; }, []);
   useEffect(() => { const k = (e)=>{ if (e.key==='Escape') onClose(); }; document.addEventListener('keydown', k); return ()=>document.removeEventListener('keydown', k); }, [onClose]);
-  const act = async (key, fn) => { setBusy(key); setError(''); try { await fn(); onChanged?.(); load(); } catch (e) { setError(safeErrorMsg(e,'Failed')); } finally { setBusy(''); } };
+  const act = async (key, fn) => { setBusy(key); setError(''); try { await fn(); onChanged?.(); load(); return true; } catch (e) { setError(safeErrorMsg(e,'Failed')); return false; } finally { setBusy(''); } };
 
   return (
     <AnimatePresence>
@@ -36,7 +36,7 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
                 <select disabled={busy==='type'} value={d.type} onChange={(e)=>act('type',()=>adminSetOrgType(adminId,orgId,e.target.value))} className="input-neo py-2 text-sm">{TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select>
                 <div className="col-span-2">
                   {confirmDel === d.name ? (
-                    <button disabled={busy==='del'} onClick={()=>act('del',()=>adminDeleteOrg(adminId,orgId)).then(()=>onClose())} className="w-full py-2 text-sm font-bold text-white bg-red-500 rounded-xl">Confirm delete org</button>
+                    <button disabled={busy==='del'} onClick={async ()=>{ if (await act('del',()=>adminDeleteOrg(adminId,orgId))) onClose(); }} className="w-full py-2 text-sm font-bold text-white bg-red-500 rounded-xl">Confirm delete org</button>
                   ) : <input className="input-neo w-full py-2 text-sm" placeholder={`Type "${d.name}" to delete`} value={confirmDel} onChange={(e)=>setConfirmDel(e.target.value)} />}
                 </div>
               </div>
