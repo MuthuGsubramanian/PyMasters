@@ -153,6 +153,137 @@ def synth_piper(script, lang, wav_path):
                    input=script.encode("utf-8"), check=True)
 
 
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
+WHISPER_LANGS = {"en", "ta", "te", "ml", "fr", "es", "it", "ko"}
+
+
+def split_cues(script, max_chars=140):
+    """Split the narration into caption cues (text = exact script)."""
+    import re
+    cues = []
+    for s in re.split(r"(?<=[.!?।॥])\s+", script.strip()):
+        s = s.strip()
+        if not s:
+            continue
+        if len(s) <= max_chars:
+            cues.append(s)
+        else:
+            buf = ""
+            for part in re.split(r"(?<=[,;])\s+", s):
+                if len(buf) + len(part) + 1 > max_chars and buf:
+                    cues.append(buf.strip()); buf = part
+                else:
+                    buf = (buf + " " + part) if buf else part
+            if buf.strip():
+                cues.append(buf.strip())
+    return cues or [script.strip()]
+
+
+def _norm(w):
+    import re
+    return re.sub(r"[^\w]", "", w.lower())
+
+
+def whisper_words(mp3_path, lang):
+    """faster-whisper word timestamps -> [(norm_word, start, end)]. [] on any failure."""
+    try:
+        from faster_whisper import WhisperModel
+        model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
+        segments, _ = model.transcribe(
+            mp3_path, language=(lang if lang in WHISPER_LANGS else None), word_timestamps=True)
+        words = []
+        for seg in segments:
+            for w in (seg.words or []):
+                n = _norm(w.word)
+                if n:
+                    words.append((n, float(w.start), float(w.end)))
+        return words
+    except Exception as e:
+        print(f"    captions: whisper unavailable/failed ({e}) — proportional fallback")
+        return []
+
+
+def _proportional(cues, duration):
+    total = sum(len(c) for c in cues) or 1
+    out, t = [], 0.0
+    for c in cues:
+        span = (len(c) / total) * duration
+        out.append((t, min(duration, t + span), c))
+        t += span
+    return out
+
+
+def align_cues(cues, ww, duration):
+    """Assign each cue [start,end] from matched Whisper word timestamps; fill gaps proportionally."""
+    import difflib
+    our = []  # (cue_idx, norm_word)
+    for i, c in enumerate(cues):
+        for tok in c.split():
+            n = _norm(tok)
+            if n:
+                our.append((i, n))
+    if not our or not ww:
+        return _proportional(cues, duration)
+    our_norm = [n for _, n in our]
+    wh_norm = [n for n, _, _ in ww]
+    ts = [None] * len(our)
+    sm = difflib.SequenceMatcher(a=our_norm, b=wh_norm, autojunk=False)
+    for a, b, size in sm.get_matching_blocks():
+        for k in range(size):
+            ts[a + k] = (ww[b + k][1], ww[b + k][2])
+    cue_t = [[None, None] for _ in cues]
+    for (ci, _), t in zip(our, ts):
+        if t is None:
+            continue
+        s, e = t
+        if cue_t[ci][0] is None or s < cue_t[ci][0]:
+            cue_t[ci][0] = s
+        if cue_t[ci][1] is None or e > cue_t[ci][1]:
+            cue_t[ci][1] = e
+    matched = sum(1 for c in cue_t if c[0] is not None)
+    if matched < max(1, len(cues) // 3):
+        return _proportional(cues, duration)
+    prev_end = 0.0
+    out = []
+    for i, (c, (cs, ce)) in enumerate(zip(cues, cue_t)):
+        start = cs if cs is not None else prev_end
+        start = max(prev_end, min(start, duration))
+        if ce is not None:
+            end = max(start + 0.3, min(ce, duration))
+        else:
+            rem_chars = sum(len(x) for x in cues[i:]) or 1
+            rem_time = max(0.3, duration - start)
+            end = min(duration, start + (len(c) / rem_chars) * rem_time)
+        end = max(end, start + 0.3)
+        out.append((start, end, c))
+        prev_end = end
+    return out
+
+
+def _vtt_ts(sec):
+    sec = max(0.0, sec)
+    h = int(sec // 3600); m = int((sec % 3600) // 60); s = sec % 60
+    return f"{h:02d}:{m:02d}:{s:06.3f}"
+
+
+def to_vtt(timed):
+    lines = ["WEBVTT", ""]
+    for start, end, text in timed:
+        lines.append(f"{_vtt_ts(start)} --> {_vtt_ts(end)}")
+        lines.append(text)
+        lines.append("")
+    return "\n".join(lines)
+
+
+def build_captions(mp3_path, script, lang, duration):
+    """Returns a WebVTT string (Whisper-timed where possible, proportional fallback)."""
+    cues = split_cues(script)
+    ww = whisper_words(mp3_path, lang)
+    dur = float(duration or 0) or max(1.0, len(script) / 15.0)
+    timed = align_cues(cues, ww, dur)
+    return to_vtt(timed)
+
+
 def loc(field, lang):
     """resolveText-equivalent: field can be a locale-map or a plain string."""
     if isinstance(field, dict):
@@ -241,7 +372,17 @@ def synth_and_upload(script, lang, content_id):
         base = f"gs://{PODCAST_BUCKET}/{lang}/{safe_id}"
         subprocess.run(["gsutil", "cp", "-a", "public-read", mp3, base + ".mp3"], check=True)
         subprocess.run(["gsutil", "cp", "-a", "public-read", txt, base + ".txt"], check=True)
-        return (f"{PUBLIC_BASE}/{lang}/{safe_id}.mp3", f"{PUBLIC_BASE}/{lang}/{safe_id}.txt", dur)
+        captions_url = None
+        try:
+            vtt_text = build_captions(mp3, script, lang, dur)
+            vtt = os.path.join(tmp, f"{safe_id}.vtt")
+            with open(vtt, "w", encoding="utf-8") as f:
+                f.write(vtt_text)
+            subprocess.run(["gsutil", "cp", "-a", "public-read", vtt, base + ".vtt"], check=True)
+            captions_url = f"{PUBLIC_BASE}/{lang}/{safe_id}.vtt"
+        except Exception as e:
+            print(f"    captions: skipped ({e})")
+        return (f"{PUBLIC_BASE}/{lang}/{safe_id}.mp3", f"{PUBLIC_BASE}/{lang}/{safe_id}.txt", dur, captions_url)
 
 
 def load_manifest():
@@ -298,11 +439,13 @@ def main():
                 print(f"  [{lang}] script failed: {e}"); continue
             print(f"    script chars: {len(script)} — synthesizing + uploading…")
             try:
-                audio_url, transcript_url, dur = synth_and_upload(script, lang, content_id)
+                audio_url, transcript_url, dur, captions_url = synth_and_upload(script, lang, content_id)
             except Exception as e:
                 print(f"  [{lang}] synth/upload failed: {e}"); continue
-            manifest.setdefault(content_id, {})[lang] = {
-                "audio_url": audio_url, "transcript_url": transcript_url, "duration": dur}
+            entry = {"audio_url": audio_url, "transcript_url": transcript_url, "duration": dur}
+            if captions_url:
+                entry["captions_url"] = captions_url
+            manifest.setdefault(content_id, {})[lang] = entry
             save_manifest(manifest)
             print(f"  [{lang}] done: {audio_url} ({dur}s)")
         else:
