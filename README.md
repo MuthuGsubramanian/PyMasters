@@ -6,14 +6,16 @@ PyMasters has been completely rebuilt as a modern, high-performance web applicat
 
 ## Architecture
 
-*   **Frontend**: React (Vite) + Glassmorphism UI + Axios
-*   **Backend**: FastAPI + DuckDB + Simulated Sandbox
-*   **Deployment**: Docker Compose (Nginx + Python)
+*   **Frontend**: React 19 (Vite) + Tailwind CSS 4 + Axios
+*   **Backend**: FastAPI + SQLite (Litestream-replicated in prod) + sandboxed code execution
+*   **AI tutor (Vaathiyaar)**: Ollama Cloud (`https://ollama.com`) via `OLLAMA_API_KEY`
+*   **Deployment**: Docker / Google Cloud Run (Nginx + Uvicorn under supervisord)
 
 ## Prerequisites
 
 *   **Node.js** (v18+)
-*   **Python** (v3.9+)
+*   **Python** (v3.11+)
+*   An **Ollama Cloud** API key for AI features (the rest of the app runs without it)
 *   **Docker** (Optional, for production deployment)
 
 ## Fast Start (Local Development)
@@ -25,7 +27,7 @@ We have provided a launcher script for Windows:
 ```
 
 This will launch:
-1.  **Backend API** at `http://localhost:8000`
+1.  **Backend API** at `http://localhost:8001`
 2.  **Frontend App** at `http://localhost:5173`
 
 ## Manual Start
@@ -34,16 +36,20 @@ This will launch:
 
 ```bash
 cd backend
+cp .env.example .env          # then fill in OLLAMA_API_KEY for AI features
 pip install -r requirements.txt
-python -m uvicorn main:app --reload
+python -m uvicorn main:app --reload --port 8001
 ```
+
+The SQLite database (`backend/pymasters.db`) is created and seeded automatically
+on first start. API docs are served at `http://localhost:8001/docs`.
 
 ### Frontend
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev                   # serves http://localhost:5173, proxies API to :8001
 ```
 
 ## Production Deployment ("Make it live")
@@ -58,11 +64,7 @@ The application will be available at `http://localhost:80` (or your domain).
 
 ### Stack Details
 
-*   **Auth**: Custom JWT-based auth (Username/Password only).
-*   **Database**: DuckDB (Fast, file-based embedded SQL).
-*   **AI**: Mock Instructor enabled by default. Connect to a local LLM by mimicking the OpenAI API if needed.
-*   **Security**: The code execution playground currently uses a restricted `exec` environment. **For public deployment, users strictly advised to wrap the backend in a secure container environment (gVisor/Firecracker).**
-
-## Legacy Code
-
-The previous Streamlit version has been archived in the `/legacy_streamlit` folder.
+*   **Auth**: Custom JWT-based auth (HS256) with session revocation via token versioning.
+*   **Database**: SQLite, replicated to Google Cloud Storage with Litestream in production.
+*   **AI**: Vaathiyaar tutor backed by Ollama Cloud. Set `OLLAMA_API_KEY` to enable.
+*   **Security**: Student code runs in an isolated subprocess with import/resource restrictions and a wall-clock timeout. For high-trust public deployment, additionally wrap the backend in a sandboxed container runtime (gVisor/Firecracker).
