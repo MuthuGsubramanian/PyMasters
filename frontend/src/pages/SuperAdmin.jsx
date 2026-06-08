@@ -6,6 +6,7 @@ import {
     adminBlockUser, adminSetPlan,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
+import UserAdminDrawer from '../components/UserAdminDrawer';
 import {
     Shield, Users, Building2, GraduationCap, Activity, Sparkles, TrendingUp,
     Search, Ban, CheckCircle2, Loader2, School, Briefcase, BookOpen, Lock,
@@ -64,6 +65,8 @@ export default function SuperAdmin() {
     const [q, setQ] = useState('');
     const [denied, setDenied] = useState(false);
     const [busyId, setBusyId] = useState(null);
+    const [openUserId, setOpenUserId] = useState(null);
+    const [viewAsUser, setViewAsUser] = useState(null); // eslint-disable-line no-unused-vars
 
     useEffect(() => { document.title = 'Super Admin — PyMasters'; }, []);
 
@@ -196,7 +199,7 @@ export default function SuperAdmin() {
                                     </tr></thead>
                                     <tbody className="divide-y divide-border-default">
                                         {users.users.map((u) => (
-                                            <tr key={u.id} className={`hover:bg-bg-elevated/50 ${u.is_blocked ? 'opacity-60' : ''}`}>
+                                            <tr key={u.id} onClick={() => setOpenUserId(u.id)} className={`hover:bg-bg-elevated/50 cursor-pointer ${u.is_blocked ? 'opacity-60' : ''}`}>
                                                 <td className="px-4 py-2.5">
                                                     <div className="font-semibold text-text-primary">{u.name || u.username || '—'}</div>
                                                     <div className="text-xs text-text-muted">{u.email || u.username}</div>
@@ -204,7 +207,7 @@ export default function SuperAdmin() {
                                                 <td className="px-4 py-2.5"><span className="text-xs text-text-secondary capitalize">{u.account_type}</span></td>
                                                 <td className="px-4 py-2.5 text-xs text-text-muted">{u.org_name || '—'}</td>
                                                 <td className="px-4 py-2.5 text-cyan-600 font-semibold">{u.points || 0}</td>
-                                                <td className="px-4 py-2.5">
+                                                <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
                                                     <select value={u.plan} disabled={busyId === u.id} onChange={(e) => changePlan(u, e.target.value)}
                                                         className="text-xs rounded-lg border border-border-default bg-bg-surface px-2 py-1 text-text-secondary">
                                                         {PLANS.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -215,7 +218,7 @@ export default function SuperAdmin() {
                                                         ? <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">Blocked</span>
                                                         : <span className="text-[11px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">Active</span>}
                                                 </td>
-                                                <td className="px-4 py-2.5">
+                                                <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
                                                     <button onClick={() => toggleBlock(u)} disabled={busyId === u.id}
                                                         className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors ${u.is_blocked ? 'border-green-200 text-green-600 hover:bg-green-50' : 'border-red-200 text-red-500 hover:bg-red-50'}`}>
                                                         {busyId === u.id ? <Loader2 size={12} className="animate-spin" /> : u.is_blocked ? <><CheckCircle2 size={12} /> Grant</> : <><Ban size={12} /> Block</>}
@@ -229,6 +232,16 @@ export default function SuperAdmin() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {openUserId && (
+                <UserAdminDrawer
+                    adminId={user.id}
+                    targetId={openUserId}
+                    onClose={() => setOpenUserId(null)}
+                    onChanged={() => loadUsers(q)}
+                    onViewAs={(u) => { setViewAsUser(u); setOpenUserId(null); }}
+                />
             )}
 
             {/* ORGS */}
