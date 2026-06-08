@@ -7,6 +7,22 @@ wires them together into a full system prompt tailored to each student.
 """
 
 # ---------------------------------------------------------------------------
+# Supported language names (used for dynamic language instructions)
+# ---------------------------------------------------------------------------
+
+LANG_NAMES = {
+    "en": "English",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "ml": "Malayalam",
+    "fr": "French",
+    "es": "Spanish",
+    "it": "Italian",
+    "ko": "Korean",
+    "tanglish": "Tanglish (Tamil + English mix)",
+}
+
+# ---------------------------------------------------------------------------
 # Core Identity
 # ---------------------------------------------------------------------------
 
@@ -487,11 +503,7 @@ def build_system_prompt(
     diagnostic_score = profile.get("diagnostic_score")
     mastery_topics = profile.get("mastery_topics", [])
 
-    lang_label = {
-        "ta": "Tamil",
-        "en": "English",
-        "tanglish": "Tanglish (Tamil + English mix)",
-    }.get(preferred_language, preferred_language)
+    lang_label = LANG_NAMES.get(preferred_language, preferred_language)
 
     diagnostic_line = (
         f"Diagnostic score: {diagnostic_score:.1f}/100."
@@ -562,7 +574,7 @@ def build_system_prompt(
     else:
         context_block = "\n## Current Lesson Context\n\n- No specific lesson loaded yet.\n"
 
-    # --- Language instruction ---
+    # --- Language instruction (covers all supported languages) ---
     if preferred_language == "ta":
         lang_instruction = (
             "\n## Language Instruction\n\n"
@@ -580,6 +592,15 @@ def build_system_prompt(
             "write full sentences in pure English alone. Technical terms and code stay in "
             "English. All JSON keys and non-message values remain in English. This is "
             "non-negotiable.\n"
+        )
+    elif preferred_language in LANG_NAMES and preferred_language != "en":
+        _ln = LANG_NAMES[preferred_language]
+        lang_instruction = (
+            "\n## Language Instruction\n\n"
+            f"CRITICAL LANGUAGE RULE: You MUST respond ENTIRELY in {_ln} using its native "
+            f"script. Every word of the 'message' field must be in {_ln}. Keep Python "
+            "keywords, code, code identifiers, and ALL JSON keys and non-message values in "
+            "English. Do NOT answer in English prose. This is non-negotiable.\n"
         )
     else:
         lang_instruction = (
