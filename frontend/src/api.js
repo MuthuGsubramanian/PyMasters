@@ -181,6 +181,9 @@ export const adminSetOrgPlan = (userId, orgId, plan) => api.post(`/admin/orgs/${
 export const adminSetOrgType = (userId, orgId, type) => api.post(`/admin/orgs/${orgId}/type`, { user_id: userId, type });
 export const adminDeleteOrg = (userId, orgId) => api.delete(`/admin/orgs/${orgId}`, { params: { user_id: userId } });
 export const getAdminAudit = (userId, params = {}) => api.get('/admin/audit', { params: { user_id: userId, ...params } });
+
+// Podcasts
+export const getPodcastManifest = () => api.get('/podcasts/manifest');
 export const deleteOrg = (orgId, userId) =>
     api.delete(`/org/${orgId}`, { params: { user_id: userId } });
 export const saveOrgOnboarding = (data) => api.post('/profile/onboarding/org', data);
