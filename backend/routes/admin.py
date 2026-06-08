@@ -148,6 +148,74 @@ def list_users(caller: str = Depends(get_current_user_id), q: str = "", limit: i
     return {"users": [dict(r) for r in rows], "total": total}
 
 
+@router.get("/users/{target_id}")
+def user_detail(target_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    u = conn.execute("""
+        SELECT id, username, name, email,
+               COALESCE(NULLIF(account_type,''),'individual') account_type,
+               COALESCE(points,0) points, created_at,
+               COALESCE(onboarding_completed,0) onboarding_completed,
+               COALESCE(is_blocked,0) is_blocked, COALESCE(NULLIF(plan,''),'free') plan,
+               COALESCE(is_super_admin,0) is_super_admin, COALESCE(token_version,0) token_version
+        FROM users WHERE id = ?
+    """, [target_id]).fetchone()
+    if not u:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    lessons = conn.execute("SELECT COUNT(*) FROM lesson_completions WHERE user_id = ?", [target_id]).fetchone()[0]
+    last_active = conn.execute("SELECT MAX(created_at) FROM learning_signals WHERE user_id = ?", [target_id]).fetchone()[0]
+    weak = [dict(r) for r in conn.execute(
+        "SELECT topic, mastery_level, struggle_count FROM user_mastery WHERE user_id = ? "
+        "ORDER BY mastery_level ASC, struggle_count DESC LIMIT 5", [target_id]).fetchall()]
+    activity = [dict(r) for r in conn.execute(
+        "SELECT signal_type, topic, created_at FROM learning_signals WHERE user_id = ? "
+        "ORDER BY created_at DESC LIMIT 10", [target_id]).fetchall()]
+    orgs = [dict(r) for r in conn.execute(
+        "SELECT o.id org_id, o.name org_name, om.role FROM org_members om "
+        "JOIN organizations o ON o.id = om.org_id WHERE om.user_id = ?", [target_id]).fetchall()]
+    audit = [dict(r) for r in conn.execute(
+        "SELECT action, actor_name, detail, created_at FROM admin_audit "
+        "WHERE target_type='user' AND target_id = ? ORDER BY created_at DESC LIMIT 10", [target_id]).fetchall()]
+    conn.close()
+    d = dict(u)
+    d["break_glass"] = is_break_glass(d["username"], d["email"])
+    d["has_email"] = bool((d["email"] or "").strip())
+    d["lessons_completed"] = lessons
+    d["last_active"] = last_active
+    d["weak_topics"] = weak
+    d["activity"] = activity
+    d["orgs"] = orgs
+    d["recent_audit"] = audit
+    return d
+
+
+@router.get("/users/{target_id}/view-as")
+def user_view_as(target_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    u = conn.execute("SELECT id, username, name, COALESCE(points,0) points FROM users WHERE id = ?",
+                     [target_id]).fetchone()
+    if not u:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    lessons = [dict(r) for r in conn.execute(
+        "SELECT lesson_id, xp_awarded, completed_at FROM lesson_completions WHERE user_id = ? "
+        "ORDER BY completed_at DESC LIMIT 20", [target_id]).fetchall()]
+    mastery = [dict(r) for r in conn.execute(
+        "SELECT topic, mastery_level, attempts, struggle_count FROM user_mastery WHERE user_id = ? "
+        "ORDER BY mastery_level DESC LIMIT 30", [target_id]).fetchall()]
+    signals_7d = conn.execute(
+        "SELECT COUNT(*) FROM learning_signals WHERE user_id = ? AND created_at > datetime('now','-7 days')",
+        [target_id]).fetchone()[0]
+    _audit(conn, caller, "user.view_as", "user", target_id, {})
+    conn.commit()
+    conn.close()
+    return {"profile": dict(u), "summary": {"xp": u["points"], "lessons_completed": len(lessons),
+            "signals_7d": signals_7d}, "lessons": lessons, "mastery": mastery}
+
+
 @router.get("/orgs")
 def list_orgs(caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
