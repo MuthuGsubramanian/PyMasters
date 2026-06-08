@@ -44,12 +44,12 @@ def is_break_glass(username: str, email: str) -> bool:
 def require_super_admin(user_id: str):
     conn = _conn()
     row = conn.execute(
-        "SELECT username, email, COALESCE(is_super_admin,0) FROM users WHERE id = ?", [user_id]
+        "SELECT username, email, COALESCE(is_super_admin,0) AS is_super_admin FROM users WHERE id = ?", [user_id]
     ).fetchone()
     conn.close()
     if not row:
         raise HTTPException(status_code=403, detail="Super admin access required")
-    if is_break_glass(row["username"], row["email"]) or int(row[2]) == 1:
+    if is_break_glass(row["username"], row["email"]) or int(row["is_super_admin"]) == 1:
         return True
     raise HTTPException(status_code=403, detail="Super admin access required")
 
