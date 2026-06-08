@@ -87,6 +87,7 @@ class UpdateOrgRequest(BaseModel):
     logo_url: Optional[str] = None
     description: Optional[str] = None
     plan: Optional[str] = None
+    group_label: Optional[str] = None
     user_id: str
 
 class InviteRequest(BaseModel):
@@ -293,6 +294,18 @@ def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_cu
         values.append(datetime.utcnow().isoformat())
         values.append(org_id)
         conn.execute(f"UPDATE organizations SET {', '.join(updates)} WHERE id = ?", values)
+        conn.commit()
+    if data.group_label is not None:
+        row = conn.execute("SELECT settings FROM organizations WHERE id = ?", [org_id]).fetchone()
+        try:
+            settings = json.loads(row[0]) if row and row[0] else {}
+        except Exception:
+            settings = {}
+        settings["group_label"] = data.group_label.strip()[:30]
+        conn.execute(
+            "UPDATE organizations SET settings = ?, updated_at = ? WHERE id = ?",
+            [json.dumps(settings), datetime.utcnow().isoformat(), org_id],
+        )
         conn.commit()
     conn.close()
     return {"updated": True}
@@ -725,6 +738,7 @@ def delete_organization(org_id: str, caller: str = Depends(get_current_user_id))
         # Delete all associated data
         cursor.execute("DELETE FROM org_members WHERE org_id = ?", [org_id])
         cursor.execute("DELETE FROM org_invites WHERE org_id = ?", [org_id])
+        cursor.execute("DELETE FROM org_member_groups WHERE org_id = ?", [org_id])
 
         # Delete org_profiles (may not exist if onboarding wasn't completed)
         try:
