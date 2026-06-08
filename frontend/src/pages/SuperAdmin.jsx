@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     getAdminOverview, getAdminUsers, getAdminOrgs, getAdminUsage,
-    adminBlockUser, adminSetPlan, getAdminUserViewAs,
+    adminBlockUser, adminSetPlan, getAdminUserViewAs, adminSetSuperAdmin,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
@@ -99,6 +99,37 @@ function ViewAsPanel({ adminId, target, onExit }) {
   );
 }
 
+function AdminsList({ adminId }) {
+  const [rows, setRows] = useState(null);
+  const reload = useCallback(() => { getAdminUsers(adminId, '', 200, 0).then((r) => setRows((r.data.users || []).filter(u => u.is_super_admin))); }, [adminId]);
+  useEffect(() => { reload(); }, [reload]);
+  if (rows === null) return <div className="h-16 rounded-xl bg-bg-elevated animate-pulse" />;
+  if (!rows.length) return <p className="text-sm text-text-muted">Only env break-glass admins exist. Promote someone below.</p>;
+  return (
+    <div className="bg-bg-surface border border-border-default rounded-2xl divide-y divide-border-default">
+      {rows.map((u) => (
+        <div key={u.id} className="flex items-center justify-between p-3">
+          <span className="text-sm text-text-primary">{u.name || u.username} <span className="text-text-muted text-xs">@{u.username}</span></span>
+          <button onClick={() => adminSetSuperAdmin(adminId, u.id, false).then(reload).catch(()=>{})} className="text-xs text-red-500 font-bold">Demote</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AdminPromote({ adminId, onChanged }) {
+  const [q, setQ] = useState(''); const [res, setRes] = useState([]); const [msg, setMsg] = useState('');
+  const search = (e) => { e.preventDefault(); if (!q.trim()) return; getAdminUsers(adminId, q.trim(), 10, 0).then((r) => setRes(r.data.users || [])); };
+  const promote = (u) => adminSetSuperAdmin(adminId, u.id, true).then(() => { setMsg(`Promoted ${u.username}`); setRes([]); setQ(''); onChanged?.(); }).catch(()=>setMsg('Failed'));
+  return (
+    <div className="bg-bg-surface border border-border-default rounded-2xl p-4 space-y-2">
+      <form onSubmit={search} className="flex gap-2"><input className="input-neo flex-1 py-2 text-sm" placeholder="Search user to promote…" value={q} onChange={(e)=>setQ(e.target.value)} /><button className="btn-neo btn-neo-primary py-2 px-4 text-sm">Search</button></form>
+      {res.map((u) => <div key={u.id} className="flex items-center justify-between text-sm"><span>{u.name || u.username} <span className="text-text-muted text-xs">@{u.username}</span></span><button onClick={()=>promote(u)} className="text-xs text-cyan-600 font-bold">Make admin</button></div>)}
+      {msg ? <p className="text-xs text-green-600">{msg}</p> : null}
+    </div>
+  );
+}
+
 export default function SuperAdmin() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -173,7 +204,7 @@ export default function SuperAdmin() {
         );
     }
 
-    const TABS = [{ k: 'overview', label: 'Overview', icon: TrendingUp }, { k: 'users', label: 'Users', icon: Users }, { k: 'orgs', label: 'Organizations', icon: Building2 }];
+    const TABS = [{ k: 'overview', label: 'Overview', icon: TrendingUp }, { k: 'users', label: 'Users', icon: Users }, { k: 'orgs', label: 'Organizations', icon: Building2 }, { k: 'admins', label: 'Admins', icon: Shield }];
 
     return (
         <div className="space-y-5">
@@ -319,6 +350,15 @@ export default function SuperAdmin() {
                         </div>
                     </div>
                 )
+            )}
+
+            {/* ADMINS */}
+            {tab === 'admins' && (
+              <div className="space-y-4">
+                <p className="text-sm text-text-muted">Super-admins have full platform control. Env break-glass admins are always active and can't be removed here.</p>
+                <AdminPromote adminId={user.id} onChanged={() => { setUsers(null); }} />
+                <AdminsList adminId={user.id} />
+              </div>
             )}
         </div>
     );
