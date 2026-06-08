@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { X, Trophy, Zap, AlertTriangle, Activity, Loader2, BookOpen } from 'lucide-react';
+import { X, Trophy, Zap, AlertTriangle, Activity, BookOpen } from 'lucide-react';
 import { getStudentDetail } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 
@@ -40,21 +40,27 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
   const [error, setError] = useState('');
   const panelRef = useRef(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true); setError('');
     getStudentDetail(orgId, studentId, userId)
       .then((res) => setData(res?.data || null))
       .catch((err) => setError(safeErrorMsg(err, 'Failed to load student')))
       .finally(() => setLoading(false));
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, [orgId, studentId, userId]);
+  }, [orgId, studentId, userId]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { load(); }, [load]);
 
-  // ESC to close + focus the panel on open
+  // Focus the panel on open; restore focus to the trigger element on close (mount/unmount only)
+  useEffect(() => {
+    const prevFocused = typeof document !== 'undefined' ? document.activeElement : null;
+    panelRef.current?.focus();
+    return () => { try { prevFocused?.focus?.(); } catch { /* trigger no longer in DOM */ } };
+  }, []); // mount/unmount only — intentionally captures trigger element at open time
+
+  // ESC to close
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
-    panelRef.current?.focus();
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
