@@ -24,10 +24,16 @@ def _current_token_version(user_id: str):
     """Returns the user's current token_version, or None if the user row is missing."""
     try:
         conn = sqlite3.connect(DB_PATH)
-        row = conn.execute("SELECT COALESCE(token_version, 0) FROM users WHERE id = ?", [user_id]).fetchone()
-        conn.close()
+        try:
+            row = conn.execute(
+                "SELECT COALESCE(token_version, 0) FROM users WHERE id = ?", [user_id]
+            ).fetchone()
+        finally:
+            conn.close()
         return int(row[0]) if row else None
     except Exception:
+        # Fail-open only for tv=0 tokens: a revoked token has tv>=1 so it is still rejected.
+        # DB being unavailable means the app is broken anyway.
         return 0
 
 
