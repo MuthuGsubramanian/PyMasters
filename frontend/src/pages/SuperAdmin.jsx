@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     getAdminOverview, getAdminUsers, getAdminOrgs, getAdminUsage,
-    adminBlockUser, adminSetPlan, getAdminUserViewAs, adminSetSuperAdmin,
+    adminBlockUser, adminSetPlan, getAdminUserViewAs, adminSetSuperAdmin, getAdminAudit,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
@@ -14,6 +14,16 @@ import {
 } from 'lucide-react';
 
 const PLANS = ['free', 'pro', 'enterprise'];
+
+function relTimeSA(ts) {
+  if (!ts) return '—';
+  let iso = String(ts).replace(' ', 'T');
+  if (!/[zZ]|[+-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return '—';
+  const d = Math.floor((Date.now() - t) / 86400000);
+  return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d < 30 ? `${d}d ago` : `${Math.floor(d/30)}mo ago`;
+}
 
 function StatCard({ icon: Icon, label, value, sub, color = 'from-cyan-500 to-blue-500' }) {
     return (
@@ -145,6 +155,7 @@ export default function SuperAdmin() {
     const [openUserId, setOpenUserId] = useState(null);
     const [openOrgId, setOpenOrgId] = useState(null);
     const [viewAsUser, setViewAsUser] = useState(null);
+    const [audit, setAudit] = useState(null);
 
     useEffect(() => { document.title = 'Super Admin — PyMasters'; }, []);
 
@@ -175,6 +186,7 @@ export default function SuperAdmin() {
 
     useEffect(() => { if (tab === 'users' && users === null) loadUsers(); }, [tab, users, loadUsers]);
     useEffect(() => { if (tab === 'orgs' && orgs === null) loadOrgs(); }, [tab, orgs, loadOrgs]);
+    useEffect(() => { if (tab==='audit' && audit===null) getAdminAudit(user.id, { limit: 100 }).then((r)=>setAudit(r.data.audit)).catch(()=>setAudit([])); }, [tab, audit, user.id]);
 
     const toggleBlock = async (u) => {
         setBusyId(u.id);
@@ -206,7 +218,7 @@ export default function SuperAdmin() {
         );
     }
 
-    const TABS = [{ k: 'overview', label: 'Overview', icon: TrendingUp }, { k: 'users', label: 'Users', icon: Users }, { k: 'orgs', label: 'Organizations', icon: Building2 }, { k: 'admins', label: 'Admins', icon: Shield }];
+    const TABS = [{ k: 'overview', label: 'Overview', icon: TrendingUp }, { k: 'users', label: 'Users', icon: Users }, { k: 'orgs', label: 'Organizations', icon: Building2 }, { k: 'admins', label: 'Admins', icon: Shield }, { k: 'audit', label: 'Audit', icon: Activity }];
 
     return (
         <div className="space-y-5">
@@ -364,6 +376,30 @@ export default function SuperAdmin() {
                 <p className="text-sm text-text-muted">Super-admins have full platform control. Env break-glass admins are always active and can't be removed here.</p>
                 <AdminPromote adminId={user.id} onChanged={() => { setUsers(null); }} />
                 <AdminsList adminId={user.id} />
+              </div>
+            )}
+
+            {/* AUDIT */}
+            {tab === 'audit' && (
+              <div className="bg-bg-surface border border-border-default rounded-2xl overflow-hidden">
+                {audit === null ? <div className="p-6"><div className="h-10 bg-bg-elevated animate-pulse rounded" /></div> : audit.length === 0 ? <div className="p-6 text-sm text-text-muted">No admin actions yet.</div> : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead><tr className="text-left text-xs text-text-muted border-b border-border-default"><th className="px-4 py-3">When</th><th className="px-4 py-3">Actor</th><th className="px-4 py-3">Action</th><th className="px-4 py-3">Target</th><th className="px-4 py-3">Detail</th></tr></thead>
+                      <tbody className="divide-y divide-border-default">
+                        {audit.map((a) => (
+                          <tr key={a.id} className="hover:bg-bg-elevated/50">
+                            <td className="px-4 py-2 text-text-muted whitespace-nowrap">{relTimeSA(a.created_at)}</td>
+                            <td className="px-4 py-2 text-text-secondary">{a.actor_name}</td>
+                            <td className="px-4 py-2"><span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-bg-elevated text-text-secondary">{a.action}</span></td>
+                            <td className="px-4 py-2 text-text-muted">{a.target_type ? `${a.target_type}:${String(a.target_id).slice(0,8)}` : '—'}</td>
+                            <td className="px-4 py-2 text-text-muted truncate max-w-[200px]">{a.detail}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
         </div>
