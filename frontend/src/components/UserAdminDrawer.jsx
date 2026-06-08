@@ -53,8 +53,8 @@ export default function UserAdminDrawer({ adminId, targetId, onClose, onChanged,
 
   const act = async (key, fn) => {
     setBusy(key); setError('');
-    try { await fn(); onChanged?.(); load(); }
-    catch (e) { setError(safeErrorMsg(e, 'Action failed')); }
+    try { await fn(); onChanged?.(); load(); return true; }
+    catch (e) { setError(safeErrorMsg(e, 'Action failed')); return false; }
     finally { setBusy(''); }
   };
 
@@ -146,7 +146,7 @@ export default function UserAdminDrawer({ adminId, targetId, onClose, onChanged,
                 {!d.break_glass && d.id !== adminId ? (
                   <div className="col-span-2">
                     {confirmDel === d.username ? (
-                      <button disabled={busy==='del'} onClick={()=>act('del',()=>adminDeleteUser(adminId,targetId)).then(()=>onClose())} className="w-full py-2 text-sm font-bold text-white bg-red-500 rounded-xl">Confirm delete</button>
+                      <button disabled={busy==='del'} onClick={async ()=>{ if (await act('del',()=>adminDeleteUser(adminId,targetId))) onClose(); }} className="w-full py-2 text-sm font-bold text-white bg-red-500 rounded-xl">Confirm delete</button>
                     ) : (
                       <input className="input-neo w-full py-2 text-sm" placeholder={`Type "${d.username}" to delete`} value={confirmDel} onChange={(e)=>setConfirmDel(e.target.value)} />
                     )}

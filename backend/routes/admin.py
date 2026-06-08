@@ -158,6 +158,7 @@ def list_users(caller: str = Depends(get_current_user_id), q: str = "", limit: i
                COALESCE(NULLIF(u.account_type,''),'individual') account_type,
                u.points, u.created_at, COALESCE(u.onboarding_completed,0) onboarding_completed,
                COALESCE(u.is_blocked,0) is_blocked, COALESCE(NULLIF(u.plan,''),'free') plan,
+               COALESCE(u.is_super_admin,0) is_super_admin,
                (SELECT o.name FROM org_members om JOIN organizations o ON o.id=om.org_id WHERE om.user_id=u.id LIMIT 1) org_name,
                (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id=u.id) last_active
         FROM users u {where}
