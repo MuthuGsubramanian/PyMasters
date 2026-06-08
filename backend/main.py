@@ -537,6 +537,27 @@ def init_db():
             )
         """)
 
+        # ── Institutional console: group tags ─────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS org_member_groups (
+                org_id     TEXT NOT NULL,
+                user_id    TEXT NOT NULL,
+                group_name TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (org_id, user_id, group_name)
+            )
+        """)
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_omg_org_group ON org_member_groups(org_id, group_name)"
+        )
+        # One-time, idempotent backfill: seed group tags from existing department values
+        cursor.execute("""
+            INSERT OR IGNORE INTO org_member_groups (org_id, user_id, group_name)
+            SELECT org_id, user_id, TRIM(department)
+            FROM org_members
+            WHERE department IS NOT NULL AND TRIM(department) != ''
+        """)
+
         # Migrate: add description column to organizations if missing
         org_cols = [r[1] for r in cursor.execute("PRAGMA table_info(organizations)").fetchall()]
         if 'description' not in org_cols:
