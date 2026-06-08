@@ -6,13 +6,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
-import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendVaathiyaarFeedback } from '../api';
+import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendVaathiyaarFeedback, getPodcastManifest } from '../api';
+import PodcastPlayer from '../components/PodcastPlayer';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown
+    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -888,6 +889,8 @@ export default function Classroom() {
     const [hintIndex, setHintIndex] = useState(0);
     const [evalResult, setEvalResult] = useState(null);
     const [completedLessons, setCompletedLessons] = useState(new Set());
+    const [podcastManifest, setPodcastManifest] = useState({});
+    const [podcastOpen, setPodcastOpen] = useState(false);
 
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
@@ -920,6 +923,8 @@ export default function Classroom() {
                 .catch(() => {});
         }
     }, [user?.id]);
+
+    useEffect(() => { getPodcastManifest().then((r) => setPodcastManifest(r.data || {})).catch(() => {}); }, []);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1188,6 +1193,16 @@ export default function Classroom() {
                             exit="exit"
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
+                            {currentLesson?.id && podcastManifest[currentLesson.id] && (
+                                <div className="flex justify-end mb-3">
+                                    <button
+                                        onClick={() => setPodcastOpen(true)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-bg-elevated text-text-secondary border border-border-default hover:bg-bg-inset"
+                                    >
+                                        <Headphones size={15} /> Listen as podcast
+                                    </button>
+                                </div>
+                            )}
                             <IntroPhase
                                 lesson={currentLesson}
                                 language={language}
@@ -1244,6 +1259,15 @@ export default function Classroom() {
 
                 {/* Chat history now lives in the docked conversation panel below. */}
             </div>
+
+            {podcastOpen && currentLesson?.id && (
+                <PodcastPlayer
+                    contentId={currentLesson.id}
+                    language={language}
+                    manifest={podcastManifest}
+                    onClose={() => setPodcastOpen(false)}
+                />
+            )}
 
             {/* ── Docked Vaathiyaar conversation: scrollable history + input as one unit ── */}
             {phase !== 'select' && (
