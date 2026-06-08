@@ -1,0 +1,118 @@
+{
+  "id": "chronos2_homie_predictive_monitoring_plugin",
+  "topic": "chronos2_homie_predictive_monitoring_plugin",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Build a Homie Predictive Monitoring Plugin with Amazon Chronos-2"
+  },
+  "description": {
+    "en": "Build a streaming predictive monitoring plugin for Homie using Amazon Chronos-2 — ingest live metrics, forecast trends with probabilistic confidence bands, and emit smart alerts before anomalies happen."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Streaming Predictions: Build a Homie Monitoring Plugin with Chronos-2\n\nVaathiyaar here! Dashboards show you what *happened*. Alerts fire when something *already broke*. But what if your monitoring system could tell you what's *about to* happen? That's exactly what we'll build today — a **Homie predictive monitoring plugin** powered by Amazon Chronos-2 that ingests live metrics, forecasts their trajectory, and fires alerts *before* thresholds are crossed. This is the difference between firefighting and foresight.\n\n### Traditional vs. Predictive Monitoring\n\n| Aspect | Threshold Alerts | Predictive Monitoring |\n|---|---|---|\n| When it fires | After breach | Before breach |\n| Signal quality | Noisy (one bad reading) | Trend-based (sustained pattern) |\n| Lead time | Zero | Minutes to hours ahead |\n| Context | Single value | Full forecast trajectory |\n| Adaptiveness | Static threshold | Learns from recent history |\n\n### The Architecture: Sliding Window Forecasting\n\nThe plugin maintains a rolling buffer of recent metric values. On each new data point, it slides the window forward and generates a fresh forecast. This streaming pattern keeps predictions grounded in the most recent data.\n\n```python\nimport torch\nimport numpy as np\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"cpu\",\n    torch_dtype=torch.float32\n)\n\ndef sliding_forecast(buffer: list[float], window: int = 20,\n                     horizon: int = 6, num_samples: int = 50) -> dict:\n    recent = buffer[-window:]\n    context = torch.tensor(recent, dtype=torch.float32)\n    forecast = pipeline.predict(context, prediction_length=horizon,\n                                num_samples=num_samples)\n    samples = forecast[0].numpy()\n    return {\n        \"median\": np.median(samples, axis=0).tolist(),\n        \"p10\": np.percentile(samples, 10, axis=0).tolist(),\n        \"p90\": np.percentile(samples, 90, axis=0).tolist()\n    }\n```\n\nThe `p10`-`p90` band captures 80% of predicted outcomes. A narrowing band means the model is confident; a widening band signals growing uncertainty — itself a useful alert trigger.\n\n### Smart Alert Logic: Forecast-Driven Decisions\n\n```python\ndef evaluate_alert(forecast: dict, threshold: float,\n                   urgency_window: int = 3) -> dict | None:\n    median = forecast[\"median\"]\n    p90 = forecast[\"p90\"]\n\n    # Check if upper bound crosses threshold within urgency window\n    for i in range(min(urgency_window, len(p90))):\n        if p90[i] >= threshold:\n            return {\n                \"level\": \"critical\" if i == 0 else \"warning\",\n                \"steps_ahead\": i + 1,\n                \"predicted_value\": round(median[i], 2),\n                \"worst_case\": round(p90[i], 2),\n                \"threshold\": threshold\n            }\n    return None\n```\n\nUsing the 90th percentile instead of the median makes alerts conservative — you're warned when there's a *reasonable chance* of breach, not just when the central forecast crosses. This reduces missed alerts without drowning you in false positives.\n\n### The Complete Homie Plugin\n\n```python\nclass HomieMonitorPlugin:\n    def __init__(self, metrics_config: dict, window: int = 24,\n                 horizon: int = 6):\n        self.pipeline = ChronosPipeline.from_pretrained(\n            \"amazon/chronos-t5-small\",\n            device_map=\"cpu\", torch_dtype=torch.float32\n        )\n        self.config = metrics_config  # {name: {\"threshold\": float}}\n        self.window = window\n        self.horizon = horizon\n        self.buffers = {name: [] for name in metrics_config}\n        self.alerts = []\n\n    def ingest(self, metric: str, value: float) -> dict | None:\n        if metric not in self.buffers:\n            return None\n        self.buffers[metric].append(value)\n        if len(self.buffers[metric]) < self.window:\n            return {\"status\": \"buffering\",\n                    \"points_needed\": self.window - len(self.buffers[metric])}\n\n        recent = self.buffers[metric][-self.window:]\n        ctx = torch.tensor(recent, dtype=torch.float32)\n        fc = self.pipeline.predict(ctx, prediction_length=self.horizon,\n                                   num_samples=50)\n        samples = fc[0].numpy()\n        median = np.median(samples, axis=0)\n        p90 = np.percentile(samples, 90, axis=0)\n\n        threshold = self.config[metric][\"threshold\"]\n        breach_idx = next((i for i, v in enumerate(p90)\n                           if v >= threshold), None)\n\n        if breach_idx is not None:\n            alert = {\n                \"metric\": metric, \"current\": value,\n                \"forecast_median\": round(float(median[breach_idx]), 2),\n                \"steps_to_breach\": breach_idx + 1,\n                \"level\": \"critical\" if breach_idx == 0 else \"warning\"\n            }\n            self.alerts.append(alert)\n            return alert\n        return {\"status\": \"healthy\", \"metric\": metric,\n                \"forecast\": [round(float(v), 1) for v in median]}\n\n    def dashboard(self) -> dict:\n        return {\n            name: {\n                \"buffer_size\": len(buf),\n                \"latest\": buf[-1] if buf else None,\n                \"ready\": len(buf) >= self.window\n            }\n            for name, buf in self.buffers.items()\n        }\n```\n\nHomie's `MonitorPlugin` tracks multiple metrics simultaneously — CPU, memory, latency, error rate — each with its own threshold. Every `ingest()` call returns either a health status with forecast values or a prioritized alert. The `dashboard()` method gives a snapshot of all tracked metrics.\n\n### Configuring for Real-World Use\n\n```python\nconfig = {\n    \"cpu_percent\": {\"threshold\": 90.0},\n    \"memory_mb\": {\"threshold\": 3800.0},\n    \"response_ms\": {\"threshold\": 500.0}\n}\n\nmonitor = HomieMonitorPlugin(config, window=20, horizon=8)\n\n# Simulate streaming data\nfor cpu_val in [55, 58, 60, 62, 65, 67, 69, 71, 73, 75,\n                76, 78, 79, 80, 82, 83, 85, 86, 87, 88, 89, 90]:\n    result = monitor.ingest(\"cpu_percent\", cpu_val)\n    if result and result.get(\"level\"):\n        print(f\"ALERT [{result['level']}]: {result['metric']} \"\n              f\"breach in {result['steps_to_breach']} steps\")\n```\n\n> **Key Insight:** Predictive monitoring with Chronos-2 transforms your Homie assistant from a reactive dashboard into a proactive guardian. By maintaining sliding windows over live metrics and generating probabilistic forecasts on every ingestion, you catch problems *before* they happen — with confidence bands that tell you not just *what* will happen, but *how sure* the model is. One pretrained model, zero training, infinite metrics."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Build a Homie plugin that predicts the future of your metrics. Using Amazon Chronos-2's zero-shot T5-based forecasting, the plugin ingests streaming data, maintains sliding windows, and fires alerts before thresholds are crossed — not after.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import torch\nimport numpy as np\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"cpu\",\n    torch_dtype=torch.float32\n)\n\ndef sliding_forecast(buffer, window=20, horizon=6, num_samples=50):\n    recent = buffer[-window:]\n    context = torch.tensor(recent, dtype=torch.float32)\n    forecast = pipeline.predict(context, prediction_length=horizon,\n                                num_samples=num_samples)\n    samples = forecast[0].numpy()\n    return {\n        \"median\": np.median(samples, axis=0).tolist(),\n        \"p10\": np.percentile(samples, 10, axis=0).tolist(),\n        \"p90\": np.percentile(samples, 90, axis=0).tolist()\n    }",
+      "steps": [
+        {"line": 1, "explanation": "Import PyTorch for tensor operations — Chronos-2 expects tensor inputs and returns tensor forecast samples."},
+        {"line": 2, "explanation": "Import NumPy for computing percentiles across the probabilistic forecast samples."},
+        {"line": 3, "explanation": "Import ChronosPipeline — the high-level API from the chronos-forecasting package that handles tokenization, inference, and detokenization."},
+        {"line": 5, "explanation": "Load the pretrained Chronos-2 small model (65M parameters). It downloads once and caches locally for offline use."},
+        {"line": 7, "explanation": "Run on CPU for local deployment. For GPU, use 'cuda' and torch.bfloat16 for faster inference."},
+        {"line": 11, "explanation": "Define the sliding forecast function — it takes a growing buffer and always uses only the most recent 'window' points."},
+        {"line": 12, "explanation": "Slice the buffer to the last 'window' values. This keeps predictions grounded in recent data, adapting to trend changes."},
+        {"line": 13, "explanation": "Convert the Python list to a float32 tensor — Chronos-2 requires tensor input."},
+        {"line": 14, "explanation": "Generate multiple forecast trajectories. Each sample is an independent future path — together they form a probability distribution."},
+        {"line": 17, "explanation": "Compute the median (central forecast) and 10th/90th percentiles (confidence band) across all sample trajectories."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def evaluate_alert(forecast, threshold, urgency_window=3):\n    median = forecast[\"median\"]\n    p90 = forecast[\"p90\"]\n    for i in range(min(urgency_window, len(p90))):\n        if p90[i] >= threshold:\n            return {\n                \"level\": \"critical\" if i == 0 else \"warning\",\n                \"steps_ahead\": i + 1,\n                \"predicted_value\": round(median[i], 2),\n                \"worst_case\": round(p90[i], 2)\n            }\n    return None\n\nforecast = sliding_forecast(cpu_data, window=20)\nalert = evaluate_alert(forecast, threshold=90.0)\nif alert:\n    print(f\"[{alert['level']}] breach in {alert['steps_ahead']} steps\")",
+      "steps": [
+        {"line": 1, "explanation": "The alert evaluator checks whether the upper confidence bound crosses a threshold within a short urgency window."},
+        {"line": 3, "explanation": "Use the 90th percentile (worst case) rather than the median — this catches problems before they're certain, not after."},
+        {"line": 4, "explanation": "Only check the first few forecast steps (urgency_window). Distant predictions are less reliable and shouldn't trigger alerts."},
+        {"line": 5, "explanation": "If the worst-case forecast crosses the threshold, generate an alert with timing and severity information."},
+        {"line": 7, "explanation": "Immediate breach (step 0) is critical; future breach is a warning. This two-tier system prevents alert fatigue."},
+        {"line": 14, "explanation": "In practice, this runs on every new data point — the sliding window updates and the forecast refreshes continuously."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Static Threshold Alerts",
+      "right_label": "Chronos-2 Predictive Alerts",
+      "items": [
+        {"left": "Fires after threshold breach", "right": "Fires before breach based on forecast"},
+        {"left": "One bad reading = false alarm", "right": "Trend-based — ignores noise"},
+        {"left": "Fixed threshold, no context", "right": "Probabilistic confidence bands"},
+        {"left": "Same alert for all metrics", "right": "Per-metric urgency and timing"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Your Homie plugin now predicts the future! Streaming metrics, sliding-window forecasts, and smart alerts — all powered by Chronos-2, zero-shot."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MetricBuffer` class that simulates the sliding-window forecast system used in predictive monitoring. It maintains a rolling buffer of fixed size, computes simple trend-based forecasts (extending the recent average step), and evaluates whether forecasted values will breach a given threshold. Implement `add(value)` to append and trim, `forecast(horizon)` to project future values, and `will_breach(threshold, horizon)` to check if and when a breach occurs."
+      },
+      "starter_code": "class MetricBuffer:\n    def __init__(self, max_size: int = 20):\n        self.max_size = max_size\n        self.data = []\n\n    def add(self, value: float) -> None:\n        # Append value; if buffer exceeds max_size, remove oldest\n        pass\n\n    def forecast(self, horizon: int = 6) -> list[float]:\n        # Project future values by extending the average step size\n        # avg_step = (data[-1] - data[0]) / (len(data) - 1)\n        # Each forecast point = last_value + avg_step * (i + 1)\n        # Return empty list if fewer than 2 data points\n        pass\n\n    def will_breach(self, threshold: float, horizon: int = 6) -> dict:\n        # Check if any forecasted value >= threshold\n        # Returns {\"breach\": True/False, \"steps_ahead\": int or None,\n        #          \"predicted_value\": float or None}\n        pass\n\n# Test it:\nbuf = MetricBuffer(max_size=10)\nfor v in [60, 63, 66, 69, 72, 75, 78, 81, 84, 87]:\n    buf.add(v)\n\nprint(len(buf.data))\nprint(buf.data[0])\n\nfc = buf.forecast(horizon=4)\nprint(len(fc))\nprint(fc[0])\n\nresult = buf.will_breach(threshold=95.0, horizon=4)\nprint(result[\"breach\"])\nprint(result[\"steps_ahead\"])",
+      "expected_output": "10\n60\n4\n90.0\nTrue\n3",
+      "hints": {
+        "en": [
+          "In add(), use self.data.append(value), then if len(self.data) > self.max_size, remove index 0 with self.data.pop(0)",
+          "In forecast(), compute avg_step = (self.data[-1] - self.data[0]) / (len(self.data) - 1), then return [self.data[-1] + avg_step * (i+1) for i in range(horizon)]",
+          "In will_breach(), call self.forecast(horizon) and iterate — return the first index where value >= threshold, or breach=False if none found"
+        ]
+      },
+      "test_code": "b = MetricBuffer(max_size=5)\nfor v in [1, 2, 3, 4, 5, 6, 7]:\n    b.add(v)\nassert len(b.data) == 5\nassert b.data == [3, 4, 5, 6, 7]\nassert b.forecast(3) == [8.0, 9.0, 10.0]\nassert b.forecast(0) == []\nb2 = MetricBuffer(max_size=10)\nb2.add(5)\nassert b2.forecast(3) == []\nb2.add(10)\nassert b2.forecast(2) == [15.0, 20.0]\nr = b.will_breach(9.5, horizon=3)\nassert r[\"breach\"] == True\nassert r[\"steps_ahead\"] == 2\nassert r[\"predicted_value\"] == 9.0\nr2 = b.will_breach(100.0, horizon=3)\nassert r2[\"breach\"] == False\nassert r2[\"steps_ahead\"] is None"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MultiMetricMonitor` class that tracks multiple named metrics, each with its own threshold and buffer. Implement `register(name, threshold, buffer_size)` to add a metric, `ingest(name, value)` to feed data and check for forecast breaches, and `status()` to return a summary of all metrics including their current value, buffer fill level, and alert state."
+      },
+      "starter_code": "class MultiMetricMonitor:\n    def __init__(self, forecast_horizon: int = 6):\n        self.horizon = forecast_horizon\n        self.metrics = {}  # name -> {\"threshold\", \"buffer\", \"max_size\", \"alerts\"}\n\n    def register(self, name: str, threshold: float,\n                 buffer_size: int = 20) -> None:\n        # Register a new metric with its threshold and empty buffer\n        pass\n\n    def ingest(self, name: str, value: float) -> dict:\n        # Add value to the metric's buffer (trim if over max_size)\n        # If buffer has >= 2 points, compute forecast and check breach\n        # Return {\"metric\": name, \"status\": \"buffering\"/\"healthy\"/\"warning\",\n        #         \"current\": value, ...}\n        # If warning: include \"steps_ahead\" and \"predicted_value\"\n        pass\n\n    def status(self) -> dict:\n        # Return {name: {\"current\", \"buffer_fill\", \"alert_count\"}} for all\n        pass\n\n# Test it:\nmon = MultiMetricMonitor(forecast_horizon=4)\nmon.register(\"cpu\", threshold=90.0, buffer_size=10)\nmon.register(\"mem\", threshold=80.0, buffer_size=10)\n\nfor v in [70, 73, 76, 79, 82, 85, 88]:\n    result = mon.ingest(\"cpu\", v)\n\nprint(result[\"status\"])\nprint(result[\"steps_ahead\"])\n\nfor v in [30, 35, 40, 45]:\n    mon.ingest(\"mem\", v)\n\ns = mon.status()\nprint(s[\"cpu\"][\"alert_count\"] > 0)\nprint(s[\"mem\"][\"current\"])",
+      "expected_output": "warning\n1\nTrue\n45",
+      "hints": {
+        "en": [
+          "In register(), store {\"threshold\": threshold, \"buffer\": [], \"max_size\": buffer_size, \"alerts\": 0} in self.metrics[name]",
+          "In ingest(), append and trim the buffer, compute avg_step from buffer[0] to buffer[-1], project forward, and check if any forecast >= threshold",
+          "In status(), iterate self.metrics and return current (last buffer value or None), buffer_fill as len(buffer)/max_size, and alert_count"
+        ]
+      },
+      "test_code": "m = MultiMetricMonitor(forecast_horizon=3)\nm.register(\"temp\", threshold=100.0, buffer_size=5)\nr = m.ingest(\"temp\", 50)\nassert r[\"status\"] == \"buffering\"\nm.ingest(\"temp\", 60)\nr = m.ingest(\"temp\", 70)\nassert r[\"status\"] in [\"healthy\", \"warning\"]\nfor v in [80, 90, 95]:\n    r = m.ingest(\"temp\", v)\nassert r[\"status\"] == \"warning\"\nassert \"steps_ahead\" in r\ns = m.status()\nassert s[\"temp\"][\"current\"] == 95\nassert s[\"temp\"][\"alert_count\"] > 0\nassert 0 < s[\"temp\"][\"buffer_fill\"] <= 1.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["streaming forecasting", "sliding window prediction", "predictive monitoring", "probabilistic alerting", "multi-metric tracking", "Chronos-2 pipeline", "confidence bands"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "basic statistics", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

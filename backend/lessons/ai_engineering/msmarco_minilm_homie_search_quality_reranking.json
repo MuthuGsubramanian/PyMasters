@@ -1,0 +1,134 @@
+{
+  "id": "msmarco_minilm_homie_search_quality_reranking",
+  "topic": "msmarco_minilm_homie_search_quality_reranking",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Homie Search Quality: Cross-Encoder Reranking with Query Routing & A/B Testing"
+  },
+  "description": {
+    "en": "Boost Homie's search quality with production-grade cross-encoder reranking. Learn to build a query router that decides when reranking is worth the latency, tune dynamic top-K retrieval, and A/B test search quality improvements with MRR lift metrics using cross-encoder/ms-marco-MiniLM-L6-v2."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Making Homie's Search Actually Good: Query Routing & Reranking\n\nVaathiyaar here! You've learned that cross-encoders rerank search results better than bi-encoders alone. But in production, blindly reranking *every* query wastes latency. Some queries are simple — \"What's my plan?\" — and the bi-encoder nails them. Others are nuanced — \"What happens to my data if I downgrade?\" — and *need* reranking. Today we build a **query router** that decides when to rerank, a **dynamic top-K tuner** that adjusts retrieval depth per query, and an **A/B testing harness** to prove reranking actually helps Homie.\n\n### When Does Reranking Actually Help?\n\nReranking adds 50-200ms latency. Not every query benefits. The pattern: rerank when the bi-encoder's top results are **close in score** (ambiguous) or the query is **complex** (multi-clause, negation, comparison).\n\n| Query Type | Bi-Encoder Confidence | Rerank? | Why |\n|---|---|---|---|\n| \"pricing page\" | High (clear winner) | No | Top result already correct |\n| \"cancel my subscription\" | Medium | Maybe | Multiple related docs compete |\n| \"what if I downgrade mid-billing cycle\" | Low (scores clustered) | Yes | Intent is nuanced, needs cross-attention |\n| \"compare pro vs enterprise features\" | Low | Yes | Comparison queries confuse bi-encoders |\n\n### Building a Query Router\n\n```python\nfrom sentence_transformers import SentenceTransformer, CrossEncoder, util\nimport numpy as np\n\nclass QueryRouter:\n    def __init__(self, corpus, score_gap_threshold=0.05):\n        self.bi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n        self.cross_encoder = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n        self.corpus = corpus\n        self.corpus_emb = self.bi_encoder.encode(corpus, convert_to_tensor=True)\n        self.score_gap_threshold = score_gap_threshold\n\n    def should_rerank(self, bi_scores, top_k=5):\n        \"\"\"Rerank if top scores are clustered (ambiguous).\"\"\"\n        top = sorted(bi_scores, reverse=True)[:top_k]\n        gap = top[0] - top[1] if len(top) > 1 else 1.0\n        return gap < self.score_gap_threshold\n\n    def search(self, query, top_k=5):\n        q_emb = self.bi_encoder.encode(query, convert_to_tensor=True)\n        hits = util.semantic_search(q_emb, self.corpus_emb, top_k=20)[0]\n        bi_scores = [h[\"score\"] for h in hits]\n\n        if self.should_rerank(bi_scores):\n            candidates = [self.corpus[h[\"corpus_id\"]] for h in hits[:10]]\n            pairs = [[query, d] for d in candidates]\n            ce_scores = self.cross_encoder.predict(pairs)\n            ranked = sorted(zip(candidates, ce_scores), key=lambda x: x[1], reverse=True)\n            return [{\"text\": t, \"score\": float(s), \"reranked\": True} for t, s in ranked[:top_k]]\n        else:\n            return [{\"text\": self.corpus[h[\"corpus_id\"]], \"score\": h[\"score\"], \"reranked\": False}\n                    for h in hits[:top_k]]\n```\n\nThe router checks the **score gap** between the top-1 and top-2 bi-encoder results. A small gap means the bi-encoder is unsure — exactly when the cross-encoder adds value.\n\n### Dynamic Top-K: Retrieve More When Uncertain\n\n```python\ndef dynamic_top_k(bi_scores, base_k=10, max_k=50):\n    \"\"\"Increase retrieval depth when scores are clustered.\"\"\"\n    top_scores = sorted(bi_scores, reverse=True)[:5]\n    spread = top_scores[0] - top_scores[-1] if len(top_scores) >= 5 else 0\n    if spread < 0.1:\n        return max_k  # Scores clustered — cast wider net\n    elif spread < 0.3:\n        return (base_k + max_k) // 2\n    return base_k  # Clear winner — narrow retrieval is fine\n```\n\nWhen bi-encoder scores are tightly clustered, retrieve more candidates so the cross-encoder has a richer pool to rerank from.\n\n### A/B Testing Search Quality\n\n```python\nimport math\nimport random\n\nclass SearchABTest:\n    def __init__(self, pipeline):\n        self.pipeline = pipeline\n        self.results_a = []  # Without reranking\n        self.results_b = []  # With reranking\n\n    def run_query(self, query, relevant_docs):\n        # Group A: bi-encoder only\n        a_results = self.pipeline.search_bi_only(query)\n        a_mrr = self._mrr([r[\"text\"] for r in a_results], relevant_docs)\n\n        # Group B: two-stage with reranking\n        b_results = self.pipeline.search_with_rerank(query)\n        b_mrr = self._mrr([r[\"text\"] for r in b_results], relevant_docs)\n\n        self.results_a.append(a_mrr)\n        self.results_b.append(b_mrr)\n        return {\"mrr_a\": a_mrr, \"mrr_b\": b_mrr, \"lift\": b_mrr - a_mrr}\n\n    def summary(self):\n        mean_a = sum(self.results_a) / len(self.results_a)\n        mean_b = sum(self.results_b) / len(self.results_b)\n        lift = (mean_b - mean_a) / mean_a * 100 if mean_a > 0 else 0\n        return {\"mean_mrr_a\": mean_a, \"mean_mrr_b\": mean_b, \"lift_pct\": lift}\n\n    def _mrr(self, results, relevant):\n        for i, r in enumerate(results, 1):\n            if r in relevant:\n                return 1.0 / i\n        return 0.0\n```\n\nAlways A/B test before shipping. Cross-encoder reranking typically delivers a **15-30% MRR lift** on ambiguous queries, but negligible improvement on simple ones. The query router ensures you only pay the latency cost when it matters.\n\n### Putting It All Together for Homie\n\n```python\ndef homie_smart_search(router, query, llm_fn):\n    results = router.search(query, top_k=3)\n    if not results or results[0][\"score\"] < -5.0:\n        return \"I don't have enough context to answer that accurately.\"\n    context = \"\\n\".join(f\"- {r['text']}\" for r in results)\n    mode = \"reranked\" if results[0].get(\"reranked\") else \"direct\"\n    answer = llm_fn(f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\")\n    return {\"answer\": answer, \"mode\": mode, \"sources\": len(results)}\n```\n\n> **Key Insight:** Production reranking isn't about always reranking — it's about reranking *when it matters*. A query router that checks bi-encoder score confidence, combined with dynamic top-K retrieval and A/B-tested quality metrics, turns Homie from a keyword matcher into a search engine that truly understands user intent."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Cross-encoder reranking improves search quality — but adds latency. In production, you need a query router that decides WHEN to rerank (ambiguous queries), a dynamic top-K tuner that adjusts HOW MANY candidates to retrieve, and an A/B testing harness to PROVE the improvement. This lesson builds all three for Homie's RAG pipeline.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, CrossEncoder, util\nimport numpy as np\n\nbi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\ncross_encoder = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ncorpus = [\n    \"Upgrade to Pro for advanced analytics and priority support\",\n    \"Downgrading your plan removes access to premium features\",\n    \"Billing cycles reset on the 1st of each month\",\n    \"Data retention policy: 30 days after account closure\",\n    \"Compare plans at pymasters.net/pricing\",\n    \"Mid-cycle downgrades are prorated to the day\",\n]\n\nquery = \"what happens to my data if I downgrade mid-cycle\"\ncorpus_emb = bi_encoder.encode(corpus, convert_to_tensor=True)\nq_emb = bi_encoder.encode(query, convert_to_tensor=True)\nhits = util.semantic_search(q_emb, corpus_emb, top_k=4)[0]\n\nbi_scores = [h[\"score\"] for h in hits]\nscore_gap = bi_scores[0] - bi_scores[1]\nprint(f\"Score gap: {score_gap:.4f}\")\nprint(f\"Should rerank: {score_gap < 0.05}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import both encoder types and util. In production you'd load these once at startup — model loading takes seconds but inference is milliseconds."},
+        {"line": 4, "explanation": "The bi-encoder handles Stage 1 retrieval. It encodes query and docs independently — fast at ~14K docs/sec, but misses cross-attention signals between query and document."},
+        {"line": 5, "explanation": "The cross-encoder handles Stage 2 reranking. It reads query+document together through full transformer attention — slower (~500 pairs/sec) but catches nuance."},
+        {"line": 7, "explanation": "A realistic Homie corpus mixing plan details, billing, data retention, and comparison pages. Multiple docs mention 'downgrade' — the bi-encoder will struggle to rank them."},
+        {"line": 15, "explanation": "A complex, multi-concept query: 'data' + 'downgrade' + 'mid-cycle'. The bi-encoder encodes this independently from docs, likely confusing 'data retention' with 'downgrade prorating'."},
+        {"line": 18, "explanation": "Retrieve top-4 candidates. The bi-encoder finds downgrade-related and data-related docs, but their scores may be clustered — indicating uncertainty."},
+        {"line": 21, "explanation": "The score gap between top-1 and top-2 reveals bi-encoder confidence. A gap < 0.05 means the model can't clearly distinguish the best result — trigger reranking."},
+        {"line": 23, "explanation": "This is the query router's core decision: if the gap is small, the bi-encoder is unsure, and the cross-encoder's pairwise attention will resolve the ambiguity."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "# Query router decides: rerank or return bi-encoder results directly\ndef should_rerank(scores, threshold=0.05):\n    if len(scores) < 2:\n        return False\n    gap = scores[0] - scores[1]\n    return gap < threshold\n\n# When reranking is triggered, cross-encoder rescores the candidates\ncandidates = [corpus[h[\"corpus_id\"]] for h in hits]\npairs = [[query, doc] for doc in candidates]\nce_scores = cross_encoder.predict(pairs)\n\nprint(\"Bi-encoder ranking:\")\nfor h in hits:\n    print(f\"  {h['score']:.4f} | {corpus[h['corpus_id']]}\")\n\nprint(\"\\nCross-encoder reranking:\")\nranked = sorted(zip(candidates, ce_scores), key=lambda x: x[1], reverse=True)\nfor doc, score in ranked:\n    print(f\"  {score:.4f} | {doc}\")\n\n# Show ranking changes\nbi_top = corpus[hits[0][\"corpus_id\"]]\nce_top = ranked[0][0]\nprint(f\"\\nRanking changed: {bi_top != ce_top}\")",
+      "steps": [
+        {"line": 2, "explanation": "The router function: check if the score gap between rank-1 and rank-2 is below threshold. Small gap = ambiguous = rerank. Large gap = confident = skip reranking."},
+        {"line": 9, "explanation": "Extract candidate texts from bi-encoder hits. These 4 candidates move to Stage 2 — the cross-encoder will judge each one's true relevance to the query."},
+        {"line": 10, "explanation": "Create [query, document] pairs for cross-encoder scoring. Unlike bi-encoders, cross-encoders need both texts concatenated with a [SEP] token internally."},
+        {"line": 11, "explanation": "Score all pairs. The cross-encoder reads 'what happens to my data if I downgrade mid-cycle' alongside each document, using full attention to match intent precisely."},
+        {"line": 13, "explanation": "Print bi-encoder ranking first. Notice how scores may be clustered — the bi-encoder struggles with this multi-concept query about data + downgrade + mid-cycle."},
+        {"line": 18, "explanation": "Cross-encoder reranking reveals the true relevance order. It correctly identifies that 'mid-cycle downgrades are prorated' and 'data retention policy' are both relevant."},
+        {"line": 23, "explanation": "Compare top results — when the ranking changes, the cross-encoder caught something the bi-encoder missed. This is the value of two-stage retrieval."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import math\n\n# A/B test: measure MRR lift from reranking\ndef mrr(results, relevant):\n    for i, r in enumerate(results, 1):\n        if r in relevant:\n            return 1.0 / i\n    return 0.0\n\n# Simulate evaluation on multiple queries\neval_set = [\n    {\"query\": \"reset my password\",\n     \"relevant\": {\"Click forgot password on the login page\"}},\n    {\"query\": \"what if I downgrade mid-cycle\",\n     \"relevant\": {\"Mid-cycle downgrades are prorated to the day\"}},\n    {\"query\": \"compare pro vs enterprise\",\n     \"relevant\": {\"Compare plans at pymasters.net/pricing\"}},\n]\n\n# Simulated bi-encoder and cross-encoder results\nbi_mrrs = [1.0, 0.5, 0.333]\nce_mrrs = [1.0, 1.0, 1.0]\n\nmean_bi = sum(bi_mrrs) / len(bi_mrrs)\nmean_ce = sum(ce_mrrs) / len(ce_mrrs)\nlift_pct = (mean_ce - mean_bi) / mean_bi * 100\n\nprint(f\"Bi-encoder mean MRR:    {mean_bi:.3f}\")\nprint(f\"Cross-encoder mean MRR: {mean_ce:.3f}\")\nprint(f\"MRR lift:               {lift_pct:.1f}%\")\nprint(f\"Verdict: {'Ship it!' if lift_pct > 10 else 'Not worth the latency'}\")",
+      "steps": [
+        {"line": 4, "explanation": "MRR (Mean Reciprocal Rank): 1/position of the first relevant result. MRR=1.0 means the correct answer is first. MRR=0.5 means it's second. This is the core metric for search quality."},
+        {"line": 11, "explanation": "An evaluation set with queries and their known relevant documents. In production, build these from user click data, manual labels, or LLM-as-judge annotations."},
+        {"line": 21, "explanation": "Simulated results: the bi-encoder gets 'reset password' right (MRR=1.0) but struggles with complex queries (MRR=0.5, 0.33). Simple queries don't need reranking."},
+        {"line": 22, "explanation": "With cross-encoder reranking, all three queries achieve MRR=1.0. The cross-encoder's pairwise attention resolves ambiguity that the bi-encoder's independent encoding misses."},
+        {"line": 24, "explanation": "Compute mean MRR for both approaches. The average tells you the overall search quality improvement across your query distribution."},
+        {"line": 26, "explanation": "MRR lift percentage: (new - old) / old × 100. A lift above 10% is typically worth the latency cost. Below 10%, the query router should skip reranking for those query types."},
+        {"line": 30, "explanation": "The A/B verdict: with 63.6% MRR lift, reranking is clearly worth shipping. In practice, you'd run this on 100+ queries before making the decision."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Naive Reranking (Always On)",
+      "right_label": "Smart Reranking (Query Router)",
+      "items": [
+        {"left": "Reranks every query — wastes latency on easy ones", "right": "Only reranks ambiguous queries where score gap is small"},
+        {"left": "Fixed top-K retrieval depth", "right": "Dynamic top-K — retrieves more candidates when uncertain"},
+        {"left": "No way to measure if reranking helps", "right": "A/B tests MRR lift before shipping"},
+        {"left": "+100ms latency on every query", "right": "+100ms only on ~30% of queries that need it"},
+        {"left": "All-or-nothing deployment", "right": "Gradual rollout with measured impact"},
+        {"left": "Homie is slower for no reason", "right": "Homie is faster AND more accurate"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a production-grade search system: query routing decides WHEN to rerank, dynamic top-K decides HOW MUCH to retrieve, and A/B testing PROVES the improvement. Homie's search just became both smarter AND faster!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `QueryRouter` class that decides whether to rerank search results based on bi-encoder score confidence. Implement `score_gap(scores)` that returns the difference between the top-1 and top-2 scores, `should_rerank(scores, threshold)` that returns True if the gap is below the threshold, and `dynamic_top_k(scores, base_k, max_k)` that returns a higher K when scores are clustered (spread of top-5 scores < 0.1 returns max_k, spread < 0.3 returns midpoint, else base_k)."
+      },
+      "starter_code": "class QueryRouter:\n    def score_gap(self, scores: list[float]) -> float:\n        # Return difference between highest and second highest score\n        # If fewer than 2 scores, return 1.0 (high confidence)\n        pass\n\n    def should_rerank(self, scores: list[float], threshold: float = 0.05) -> bool:\n        # Return True if score_gap < threshold (bi-encoder is uncertain)\n        pass\n\n    def dynamic_top_k(self, scores: list[float], base_k: int = 10,\n                      max_k: int = 50) -> int:\n        # Sort scores descending, take top 5\n        # Compute spread = top_score - 5th_score\n        # If fewer than 5 scores, return base_k\n        # If spread < 0.1: return max_k (very clustered)\n        # If spread < 0.3: return (base_k + max_k) // 2\n        # Else: return base_k\n        pass\n\n# Test it:\nrouter = QueryRouter()\n\n# High confidence: big gap between top scores\nprint(router.score_gap([0.9, 0.3, 0.1]))\nprint(router.should_rerank([0.9, 0.3, 0.1]))\n\n# Low confidence: scores are clustered\nprint(router.score_gap([0.85, 0.83, 0.81]))\nprint(router.should_rerank([0.85, 0.83, 0.81]))\n\n# Dynamic top-k\nprint(router.dynamic_top_k([0.9, 0.5, 0.3, 0.2, 0.1]))\nprint(router.dynamic_top_k([0.5, 0.49, 0.48, 0.47, 0.46]))",
+      "expected_output": "0.6\nFalse\n0.020000000000000018\nTrue\n10\n50",
+      "hints": {
+        "en": [
+          "In score_gap, sort scores descending (or use max/second-max logic) and return scores[0] - scores[1]. Return 1.0 if len(scores) < 2.",
+          "should_rerank simply checks if score_gap(scores) < threshold — small gap means the bi-encoder can't tell which result is best.",
+          "In dynamic_top_k, sort descending, take first 5 elements, compute spread as first minus last. The spread determines how wide to cast the retrieval net."
+        ]
+      },
+      "test_code": "r = QueryRouter()\nassert r.score_gap([0.9, 0.3]) == 0.6\nassert r.score_gap([0.5]) == 1.0\nassert r.score_gap([]) == 1.0\nassert r.should_rerank([0.9, 0.3]) == False\nassert r.should_rerank([0.9, 0.88]) == True\nassert r.should_rerank([0.5, 0.5]) == True\nassert r.should_rerank([0.9, 0.3], threshold=0.7) == True\nassert r.dynamic_top_k([0.9, 0.5, 0.3, 0.2, 0.1]) == 10\nassert r.dynamic_top_k([0.5, 0.49, 0.48, 0.47, 0.46]) == 50\nassert r.dynamic_top_k([0.5, 0.4, 0.35, 0.3, 0.28]) == 30\nassert r.dynamic_top_k([0.5, 0.4, 0.3]) == 10"
+    },
+    {
+      "instruction": {
+        "en": "Build a `SearchABTest` class that compares search quality between two ranking strategies. Implement `mrr(results, relevant)` for Mean Reciprocal Rank, `record(query, results_a, results_b, relevant)` to record one comparison, and `summary()` that returns mean MRR for both groups and the percentage lift. Use this to simulate an A/B test proving that cross-encoder reranking improves Homie's search quality."
+      },
+      "starter_code": "class SearchABTest:\n    def __init__(self):\n        self.group_a = []  # MRR scores for group A (baseline)\n        self.group_b = []  # MRR scores for group B (reranked)\n\n    def mrr(self, results: list[str], relevant: set[str]) -> float:\n        # Return 1.0 / position of first relevant result (1-indexed)\n        # Return 0.0 if no relevant result found\n        pass\n\n    def record(self, query: str, results_a: list[str],\n               results_b: list[str], relevant: set[str]) -> dict:\n        # Compute MRR for both groups\n        # Append to self.group_a and self.group_b\n        # Return {\"query\": query, \"mrr_a\": float, \"mrr_b\": float, \"lift\": float}\n        # lift = mrr_b - mrr_a\n        pass\n\n    def summary(self) -> dict:\n        # Return {\"mean_mrr_a\": float, \"mean_mrr_b\": float, \"lift_pct\": float,\n        #         \"queries_tested\": int, \"verdict\": str}\n        # lift_pct = (mean_b - mean_a) / mean_a * 100 if mean_a > 0 else 0\n        # verdict = \"Ship reranking\" if lift_pct > 10 else \"Not worth it\"\n        pass\n\n# Test it:\nab = SearchABTest()\n\n# Query 1: both get it right\nr1 = ab.record(\"pricing\", [\"pricing page\", \"about us\"],\n               [\"pricing page\", \"about us\"], {\"pricing page\"})\nprint(r1[\"lift\"])\n\n# Query 2: reranking fixes the order\nr2 = ab.record(\"downgrade data\",\n               [\"plan comparison\", \"data retention after downgrade\"],\n               [\"data retention after downgrade\", \"plan comparison\"],\n               {\"data retention after downgrade\"})\nprint(r2[\"mrr_a\"])\nprint(r2[\"mrr_b\"])\n\n# Query 3: baseline misses entirely\nr3 = ab.record(\"refund policy\",\n               [\"payment methods\", \"contact us\"],\n               [\"refund and cancellation policy\", \"contact us\"],\n               {\"refund and cancellation policy\"})\nprint(r3[\"mrr_a\"])\nprint(r3[\"mrr_b\"])\n\ns = ab.summary()\nprint(s[\"queries_tested\"])\nprint(s[\"verdict\"])",
+      "expected_output": "0.0\n0.5\n1.0\n0.0\n1.0\n3\nShip reranking",
+      "hints": {
+        "en": [
+          "In mrr(), use enumerate(results, 1) so positions are 1-indexed. Return 1.0/i for the first result found in the relevant set.",
+          "In record(), call self.mrr() for both result lists, append to the respective group lists, and return the comparison dict with lift = mrr_b - mrr_a.",
+          "In summary(), compute means with sum()/len(), lift_pct with (mean_b - mean_a) / mean_a * 100, and verdict based on whether lift_pct > 10."
+        ]
+      },
+      "test_code": "ab = SearchABTest()\nassert ab.mrr([\"a\", \"b\"], {\"a\"}) == 1.0\nassert ab.mrr([\"b\", \"a\"], {\"a\"}) == 0.5\nassert ab.mrr([\"b\", \"c\"], {\"a\"}) == 0.0\nr = ab.record(\"q1\", [\"a\", \"b\"], [\"b\", \"a\"], {\"b\"})\nassert r[\"mrr_a\"] == 0.5\nassert r[\"mrr_b\"] == 1.0\nassert r[\"lift\"] == 0.5\nab.record(\"q2\", [\"x\", \"y\"], [\"y\", \"x\"], {\"y\"})\ns = ab.summary()\nassert s[\"queries_tested\"] == 2\nassert abs(s[\"mean_mrr_a\"] - 0.5) < 0.001\nassert abs(s[\"mean_mrr_b\"] - 0.75) < 0.001\nassert s[\"lift_pct\"] > 10\nassert s[\"verdict\"] == \"Ship reranking\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["query routing", "dynamic top-K retrieval", "A/B testing search quality", "MRR lift measurement", "cross-encoder reranking", "score gap analysis", "relevance gating", "production search optimization", "two-stage retrieval", "ms-marco-MiniLM-L6-v2"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "sets", "sorting", "sentence embeddings", "cross-encoders", "bi-encoders"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

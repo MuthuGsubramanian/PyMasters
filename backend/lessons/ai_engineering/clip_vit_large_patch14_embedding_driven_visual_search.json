@@ -1,0 +1,120 @@
+{
+  "id": "clip_vit_large_patch14_embedding_driven_visual_search",
+  "topic": "clip_vit_large_patch14_embedding_driven_visual_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "CLIP Embeddings: Build a Visual Search Engine from Scratch"
+  },
+  "description": {
+    "en": "Harness openai/clip-vit-large-patch14 to build an embedding-driven visual search engine. Learn how CLIP's contrastive learning maps images and text into a shared vector space, then build a Homie plugin that indexes, searches, and auto-tags photos using cosine similarity — no training required."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Pixels to Vectors: Building Visual Search with CLIP Embeddings\n\nVaathiyaar here! Search engines for text are everywhere — but what about searching *images* with words? Traditional approaches need labeled datasets and custom classifiers for every category. **CLIP** (Contrastive Language-Image Pre-training) solves this by learning a shared embedding space where images and text live together. The `openai/clip-vit-large-patch14` model encodes both modalities into 768-dimensional vectors — and similar concepts land near each other. Today we'll build a complete visual search engine powered by these embeddings.\n\n### How Contrastive Learning Creates the Shared Space\n\nCLIP was trained on 400M image-text pairs using a contrastive objective: matching image-text pairs are pulled together, mismatched pairs are pushed apart.\n\n| Concept | How It Works in CLIP |\n|---|---|\n| Image Encoder | ViT-L/14 — splits image into 14×14 patches, processes with 24 transformer layers |\n| Text Encoder | 12-layer transformer, 77-token max context |\n| Embedding Dim | 768 for both modalities |\n| Training Signal | Cosine similarity between matched pairs is maximized |\n| Model Size | ~900MB (safetensors format available) |\n\n### Step 1: Extract Image Embeddings\n\n```python\nfrom transformers import CLIPModel, CLIPProcessor\nimport torch\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\nimage = Image.open(\"beach_sunset.jpg\")\ninputs = processor(images=image, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    embedding = model.get_image_features(**inputs)\n    embedding = embedding / embedding.norm(dim=-1, keepdim=True)\n\nprint(embedding.shape)  # torch.Size([1, 768])\n```\n\nThe L2-normalized embedding is a unit vector — cosine similarity between two unit vectors is just their dot product, making search blazing fast.\n\n### Step 2: Build a Photo Index\n\n```python\nimport numpy as np\nfrom pathlib import Path\n\ndef build_index(photo_dir, model, processor):\n    paths = sorted(Path(photo_dir).glob(\"*.jpg\"))\n    embeddings = []\n    for path in paths:\n        img = Image.open(path).convert(\"RGB\")\n        inputs = processor(images=img, return_tensors=\"pt\")\n        with torch.no_grad():\n            emb = model.get_image_features(**inputs)\n            emb = emb / emb.norm(dim=-1, keepdim=True)\n        embeddings.append(emb.squeeze().numpy())\n    matrix = np.stack(embeddings)\n    np.save(photo_dir + \"/index.npy\", matrix)\n    return paths, matrix\n```\n\nEncoding once and caching as `.npy` means repeat searches cost only a matrix multiply — no GPU needed at query time.\n\n### Step 3: Search with Natural Language\n\n```python\ndef search(query, index_matrix, paths, model, processor, top_k=5):\n    inputs = processor(text=[query], return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        txt_emb = model.get_text_features(**inputs)\n        txt_emb = txt_emb / txt_emb.norm(dim=-1, keepdim=True)\n    scores = (txt_emb.numpy() @ index_matrix.T)[0]\n    ranked = np.argsort(scores)[::-1][:top_k]\n    return [(str(paths[i]), float(scores[i])) for i in ranked]\n\nresults = search(\"sunset over the ocean\", matrix, paths, model, processor)\nfor path, score in results:\n    print(f\"{score:.3f}  {path}\")\n```\n\n### Step 4: Auto-Tag with Threshold Gating\n\n```python\ndef auto_tag(image_path, tag_pool, model, processor, threshold=0.25):\n    image = Image.open(image_path).convert(\"RGB\")\n    prompts = [f\"a photo of {t}\" for t in tag_pool]\n    inputs = processor(text=prompts, images=image,\n                       return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        out = model(**inputs)\n        probs = out.logits_per_image.softmax(dim=1)[0]\n    return {tag: round(float(p), 3)\n            for tag, p in zip(tag_pool, probs) if float(p) >= threshold}\n\ntags = auto_tag(\"photo.jpg\",\n    [\"sunset\", \"beach\", \"mountain\", \"city\", \"food\", \"pet\"],\n    model, processor)\nprint(tags)  # {'sunset': 0.612, 'beach': 0.341}\n```\n\n### Embedding Similarity at a Glance\n\n| Query Type | Method | Speed |\n|---|---|---|\n| Text → Images | Encode text, dot product with image index | <10ms for 10K images |\n| Image → Images | Encode image, dot product with image index | <10ms for 10K images |\n| Image → Text labels | Forward pass through full model, softmax | ~50ms per image |\n\n> **Key Insight:** CLIP's power lies in its shared embedding space — once you encode images into 768-dim vectors, any search is just a dot product. Build the index once, cache it as a NumPy array, and Homie can search thousands of photos by natural language in milliseconds. No APIs, no cloud, no retraining — just linear algebra on vectors that already understand both vision and language."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "CLIP maps images and text into the same 768-dimensional embedding space using contrastive learning on 400M image-text pairs. Similar concepts — whether expressed as pixels or words — land near each other. This means image search becomes a dot product: encode your query, compare against cached image embeddings, rank by similarity.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import CLIPModel, CLIPProcessor\nimport torch\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\nimage = Image.open(\"beach_sunset.jpg\")\ninputs = processor(images=image, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    embedding = model.get_image_features(**inputs)\n    embedding = embedding / embedding.norm(dim=-1, keepdim=True)\n\nprint(embedding.shape)  # torch.Size([1, 768])",
+      "steps": [
+        {"line": 1, "explanation": "Import CLIPModel and CLIPProcessor — the model provides separate image and text encoders, the processor handles preprocessing for both modalities."},
+        {"line": 2, "explanation": "Import torch for tensor operations and no_grad context. CLIP supports PyTorch, TensorFlow, JAX, and safetensors formats."},
+        {"line": 3, "explanation": "PIL (Pillow) is required for image loading. CLIP's processor converts PIL images into the pixel tensors the ViT encoder expects."},
+        {"line": 5, "explanation": "Load the ViT-L/14 model (~900MB). The vision encoder splits images into 14×14 patches and processes them through 24 transformer layers."},
+        {"line": 6, "explanation": "Load the matching processor — it handles image resizing (224×224), normalization, and text tokenization with a single object."},
+        {"line": 8, "explanation": "Open an image with PIL. Any standard format works — JPEG, PNG, WebP. The processor handles all resizing and normalization."},
+        {"line": 9, "explanation": "Process the image into model-ready tensors. return_tensors='pt' gives PyTorch tensors with pixel_values shape [1, 3, 224, 224]."},
+        {"line": 11, "explanation": "Disable gradient tracking — we're extracting embeddings for search, not training. This cuts memory usage significantly."},
+        {"line": 12, "explanation": "get_image_features() runs the image through the ViT encoder and projects to the shared 768-dim space."},
+        {"line": 13, "explanation": "L2-normalize the embedding to a unit vector. Now cosine similarity equals dot product — enabling fast matrix-multiply search."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\n\ndef search(query, index_matrix, paths, model, processor, top_k=5):\n    inputs = processor(text=[query], return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        txt_emb = model.get_text_features(**inputs)\n        txt_emb = txt_emb / txt_emb.norm(dim=-1, keepdim=True)\n    scores = (txt_emb.numpy() @ index_matrix.T)[0]\n    ranked = np.argsort(scores)[::-1][:top_k]\n    return [(str(paths[i]), float(scores[i])) for i in ranked]\n\nresults = search(\"sunset over the ocean\", matrix, paths, model, processor)\nfor path, score in results:\n    print(f\"{score:.3f}  {path}\")",
+      "steps": [
+        {"line": 1, "explanation": "NumPy handles the cached embedding matrix. A 10K-image index is just a (10000, 768) float32 array — about 30MB."},
+        {"line": 3, "explanation": "The search function takes a natural language query, the pre-built index matrix, file paths, and the model/processor pair."},
+        {"line": 4, "explanation": "Tokenize the text query. CLIP's text encoder accepts up to 77 tokens — padding=True handles shorter inputs."},
+        {"line": 6, "explanation": "get_text_features() encodes the query into the same 768-dim space as the images — this is the key to cross-modal search."},
+        {"line": 7, "explanation": "Normalize the text embedding to match the image embeddings. Both are now unit vectors on the same hypersphere."},
+        {"line": 8, "explanation": "Matrix multiply: (1, 768) @ (768, N) gives (1, N) similarity scores. This is the entire search — one dot product per image."},
+        {"line": 9, "explanation": "Sort scores descending and take the top_k indices. argsort + [::-1] gives highest-similarity images first."},
+        {"line": 12, "explanation": "Search for 'sunset over the ocean' — CLIP understands the semantic meaning, not just keywords. It finds visually matching photos."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Traditional Image Search",
+      "right_label": "CLIP Embedding Search",
+      "items": [
+        {"left": "Requires labeled training data per category", "right": "Zero training data — describe categories in text"},
+        {"left": "Fixed categories set at training time", "right": "Open-vocabulary — any text query works"},
+        {"left": "Separate model per task (classify, search, tag)", "right": "One model handles all visual search tasks"},
+        {"left": "Re-index when model changes", "right": "Cache embeddings once, search with any query"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a visual search engine with CLIP! Images and text share one embedding space — search is just a dot product."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `CLIPEmbeddingIndex` class that simulates CLIP's shared embedding space for visual search. It stores normalized embeddings for items (images) and supports searching by a query embedding using cosine similarity (dot product of normalized vectors). Implement `add_item(name, embedding)` that normalizes and stores embeddings, `search(query_embedding, top_k)` that returns the top_k most similar items sorted by score descending, and `auto_tag(item_name, tag_embeddings, threshold)` that returns tags whose similarity to the item exceeds the threshold."
+      },
+      "starter_code": "import math\n\nclass CLIPEmbeddingIndex:\n    def __init__(self):\n        self.items = {}  # name -> normalized embedding\n\n    def _normalize(self, vec: list[float]) -> list[float]:\n        # L2-normalize a vector to unit length\n        pass\n\n    def _dot(self, a: list[float], b: list[float]) -> float:\n        # Dot product of two vectors\n        pass\n\n    def add_item(self, name: str, embedding: list[float]):\n        # Normalize and store the embedding\n        pass\n\n    def search(self, query_embedding: list[float], top_k: int = 3) -> list[dict]:\n        # Return top_k items sorted by cosine similarity (descending)\n        # Each result: {\"name\": str, \"score\": float}\n        pass\n\n    def auto_tag(self, item_name: str, tag_embeddings: dict[str, list[float]],\n                 threshold: float = 0.5) -> dict[str, float]:\n        # Compare item's embedding against each tag embedding\n        # Return tags with similarity >= threshold as {tag: score}\n        pass\n\n# Test it:\nindex = CLIPEmbeddingIndex()\n\n# Simulated 4-dim embeddings (in real CLIP these are 768-dim)\nindex.add_item(\"beach.jpg\", [0.8, 0.5, 0.1, 0.0])\nindex.add_item(\"mountain.jpg\", [0.1, 0.2, 0.9, 0.3])\nindex.add_item(\"sunset.jpg\", [0.7, 0.6, 0.1, 0.1])\n\n# Text query embedding (simulated)\nquery = [0.9, 0.4, 0.0, 0.0]  # similar to beach\nresults = index.search(query, top_k=2)\nprint(results[0][\"name\"])\nprint(results[0][\"score\"] > results[1][\"score\"])\n\n# Auto-tag\ntag_embs = {\n    \"ocean\": [0.85, 0.45, 0.05, 0.0],\n    \"snow\": [0.0, 0.1, 0.8, 0.5],\n    \"warm\": [0.6, 0.7, 0.0, 0.1]\n}\ntags = index.auto_tag(\"beach.jpg\", tag_embs, threshold=0.9)\nprint(\"ocean\" in tags)",
+      "expected_output": "beach.jpg\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In _normalize(), compute the L2 norm as sqrt(sum(x**2 for x in vec)), then divide each element by it",
+          "In search(), normalize the query, compute dot product against every stored item, sort by score descending, and slice top_k",
+          "In auto_tag(), normalize each tag embedding, dot it with the stored item embedding, and keep entries where score >= threshold"
+        ]
+      },
+      "test_code": "idx = CLIPEmbeddingIndex()\nidx.add_item(\"a\", [1.0, 0.0, 0.0])\nidx.add_item(\"b\", [0.0, 1.0, 0.0])\nidx.add_item(\"c\", [0.0, 0.0, 1.0])\nr = idx.search([1.0, 0.0, 0.0], top_k=1)\nassert r[0][\"name\"] == \"a\"\nassert abs(r[0][\"score\"] - 1.0) < 0.01\nr2 = idx.search([0.7, 0.7, 0.0], top_k=2)\nassert set(x[\"name\"] for x in r2) == {\"a\", \"b\"}\ntags = idx.auto_tag(\"a\", {\"x\": [1.0, 0.0, 0.0], \"y\": [0.0, 1.0, 0.0]}, threshold=0.9)\nassert \"x\" in tags\nassert \"y\" not in tags\nassert abs(tags[\"x\"] - 1.0) < 0.01"
+    },
+    {
+      "instruction": {
+        "en": "Build a `PromptEnsembler` class that improves CLIP classification accuracy by averaging scores across multiple prompt templates. Given a list of templates (each containing `{}` as a placeholder), implement `generate_prompts(label)` that fills the placeholder for a single label, and `ensemble_score(label_scores_per_template)` that averages per-label scores across templates. Then implement `classify(image_scores_per_template)` that takes a list of score dicts (one per template) and returns the label with the highest average score."
+      },
+      "starter_code": "class PromptEnsembler:\n    def __init__(self, templates: list[str]):\n        # templates like [\"a photo of {}\", \"an image of {}\"]\n        self.templates = templates\n\n    def generate_prompts(self, label: str) -> list[str]:\n        # Fill {} in each template with the label\n        pass\n\n    def ensemble_score(self, scores_per_template: list[dict[str, float]]) -> dict[str, float]:\n        # Average each label's score across templates\n        # scores_per_template: [{\"dog\": 0.8, \"cat\": 0.2}, {\"dog\": 0.6, \"cat\": 0.4}]\n        # returns: {\"dog\": 0.7, \"cat\": 0.3}\n        pass\n\n    def classify(self, scores_per_template: list[dict[str, float]]) -> str:\n        # Return the label with highest average score\n        pass\n\n# Test it:\ntemplates = [\"a photo of {}\", \"an image of {}\", \"a picture showing {}\"]\nensembler = PromptEnsembler(templates)\n\nprompts = ensembler.generate_prompts(\"golden retriever\")\nprint(len(prompts))\nprint(prompts[0])\n\n# Simulated scores from CLIP for each template\nscores = [\n    {\"dog\": 0.7, \"cat\": 0.2, \"bird\": 0.1},\n    {\"dog\": 0.6, \"cat\": 0.3, \"bird\": 0.1},\n    {\"dog\": 0.8, \"cat\": 0.1, \"bird\": 0.1}\n]\nresult = ensembler.classify(scores)\nprint(result)\n\navg = ensembler.ensemble_score(scores)\nprint(round(avg[\"dog\"], 4))",
+      "expected_output": "3\na photo of golden retriever\ndog\n0.7",
+      "hints": {
+        "en": [
+          "generate_prompts() just calls template.replace('{}', label) or template.format(label) for each template",
+          "In ensemble_score(), collect all labels from the first dict, then for each label average its score across all template dicts",
+          "classify() calls ensemble_score() and returns the key with the maximum value using max() with a key function"
+        ]
+      },
+      "test_code": "e = PromptEnsembler([\"a {} photo\", \"image of {}\"])\nassert e.generate_prompts(\"cat\") == [\"a cat photo\", \"image of cat\"]\nassert e.generate_prompts(\"x\") == [\"a x photo\", \"image of x\"]\ns = [{\"a\": 1.0, \"b\": 0.0}, {\"a\": 0.0, \"b\": 1.0}]\navg = e.ensemble_score(s)\nassert abs(avg[\"a\"] - 0.5) < 0.001\nassert abs(avg[\"b\"] - 0.5) < 0.001\nassert e.classify([{\"x\": 0.9, \"y\": 0.1}, {\"x\": 0.7, \"y\": 0.3}]) == \"x\"\nassert e.classify([{\"x\": 0.1, \"y\": 0.9}]) == \"y\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["CLIP contrastive learning", "vision-language embeddings", "zero-shot image classification", "cosine similarity search", "embedding indexing", "prompt ensembling", "auto-tagging with thresholds"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "basic linear algebra", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

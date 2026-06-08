@@ -1,0 +1,118 @@
+{
+  "id": "colbertv2_local_document_search",
+  "topic": "colbertv2_local_document_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Build a Local Document Search Engine with ColBERTv2"
+  },
+  "description": {
+    "en": "Use colbert-ir/colbertv2.0 to build a fully offline, privacy-preserving document search engine. Index local files, persist embeddings to disk, and retrieve with token-level precision — no API calls, no cloud, no data leaving your machine."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Your Personal Search Engine: ColBERTv2 Running Locally\n\nVaathiyaar here! Cloud search APIs are convenient — until your documents are confidential, your internet is down, or your API budget hits zero. What if you could run a search engine as powerful as the best cloud offerings, entirely on your laptop?\n\n`colbert-ir/colbertv2.0` makes this real. It's a 110M-parameter BERT model that runs on CPU, produces per-token embeddings for surgical retrieval precision, and needs zero external services. Today you'll build a complete local document search engine — from file ingestion to persistent indexing to ranked retrieval.\n\n### Why Local Search with ColBERTv2?\n\n| Concern | Cloud API Search | ColBERTv2 Local Search |\n|---|---|---|\n| Privacy | Documents sent to third-party servers | Everything stays on your machine |\n| Cost | Per-query pricing adds up | Free after model download (~500MB) |\n| Latency | Network round-trip per query | Sub-second on CPU for 1K docs |\n| Offline | Requires internet | Fully offline after setup |\n| Quality | Varies by provider | Near cross-encoder quality via MaxSim |\n\n### Step 1: Load ColBERTv2 Locally\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch, json, os\n\ntokenizer = AutoTokenizer.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel = AutoModel.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel.eval()\n\ndef encode_tokens(text, max_length=128):\n    inputs = tokenizer(text, return_tensors=\"pt\",\n                       padding=\"max_length\", truncation=True,\n                       max_length=max_length)\n    with torch.no_grad():\n        emb = model(**inputs).last_hidden_state\n    mask = inputs[\"attention_mask\"].unsqueeze(-1).float()\n    emb = emb * mask\n    return torch.nn.functional.normalize(emb, dim=-1), inputs[\"attention_mask\"]\n```\n\nThe model downloads once (~500MB) and caches locally via HuggingFace. After that first download, no internet required.\n\n### Step 2: Ingest Local Files\n\n```python\ndef ingest_directory(directory, extensions=(\".txt\", \".md\", \".py\")):\n    documents = []\n    for root, _, files in os.walk(directory):\n        for fname in files:\n            if any(fname.endswith(ext) for ext in extensions):\n                path = os.path.join(root, fname)\n                with open(path, \"r\", encoding=\"utf-8\", errors=\"ignore\") as f:\n                    text = f.read()\n                chunks = chunk_text(text, max_words=100)\n                for i, chunk in enumerate(chunks):\n                    documents.append({\"source\": path, \"chunk\": i, \"text\": chunk})\n    return documents\n\ndef chunk_text(text, max_words=100):\n    words = text.split()\n    return [\" \".join(words[i:i+max_words])\n            for i in range(0, len(words), max_words)]\n```\n\nChunking is essential — ColBERTv2's max sequence length is 512 tokens, but shorter chunks (100 words) yield sharper retrieval because each token embedding represents a focused context.\n\n### Step 3: Build a Persistent Index\n\n```python\ndef build_index(documents):\n    index = []\n    for doc in documents:\n        emb, mask = encode_tokens(doc[\"text\"])\n        index.append({\n            \"source\": doc[\"source\"],\n            \"chunk\": doc[\"chunk\"],\n            \"text\": doc[\"text\"],\n            \"embedding\": emb.squeeze(0).tolist(),\n            \"mask\": mask.squeeze(0).tolist(),\n        })\n    return index\n\ndef save_index(index, path=\"search_index.json\"):\n    with open(path, \"w\") as f:\n        json.dump(index, f)\n\ndef load_index(path=\"search_index.json\"):\n    with open(path, \"r\") as f:\n        return json.load(f)\n```\n\nSerializing embeddings to JSON keeps things simple. For larger corpora (10K+ chunks), switch to numpy `.npz` files or SQLite with blob columns for faster I/O.\n\n### Step 4: MaxSim Search\n\n```python\ndef search(query, index, k=5):\n    q_emb, q_mask = encode_tokens(query, max_length=32)\n    q = q_emb.squeeze(0)\n    q_real = q[q_mask.squeeze(0).bool()]\n\n    results = []\n    for entry in index:\n        d = torch.tensor(entry[\"embedding\"])\n        d_mask = torch.tensor(entry[\"mask\"]).bool()\n        d_real = d[d_mask]\n        sim = torch.matmul(q_real, d_real.T)\n        score = sim.max(dim=1).values.sum().item()\n        results.append({\"source\": entry[\"source\"],\n                        \"text\": entry[\"text\"], \"score\": score})\n\n    results.sort(key=lambda x: x[\"score\"], reverse=True)\n    return results[:k]\n\nresults = search(\"how to handle exceptions in Python\", index)\nfor r in results:\n    print(f\"{r['score']:.2f} | {r['source']} | {r['text'][:80]}...\")\n```\n\nQuery encoding takes ~20ms on CPU. MaxSim scoring against 1,000 cached chunks takes ~50ms. Your local search engine responds in under 100ms — no network needed.\n\n> **Key Insight:** ColBERTv2 turns any laptop into a precision search engine. By encoding documents once and caching token-level embeddings to disk, you get near cross-encoder quality retrieval that works offline, costs nothing per query, and keeps every byte of your data private. This is the foundation for building personal AI assistants — Homie can search your notes, code, and docs without ever phoning home."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Cloud search APIs send your documents to someone else's servers, charge per query, and stop working when the internet does. ColBERTv2 changes the equation — a 110M-parameter model that runs on CPU, produces per-token embeddings for precision retrieval, and needs zero external services. Today you'll build a complete local document search engine: file ingestion, persistent indexing, and ranked MaxSim retrieval — all offline, all private, all free.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoTokenizer, AutoModel\nimport torch, json, os\n\ntokenizer = AutoTokenizer.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel = AutoModel.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel.eval()\n\ndef encode_tokens(text, max_length=128):\n    inputs = tokenizer(text, return_tensors=\"pt\",\n                       padding=\"max_length\", truncation=True,\n                       max_length=max_length)\n    with torch.no_grad():\n        emb = model(**inputs).last_hidden_state\n    mask = inputs[\"attention_mask\"].unsqueeze(-1).float()\n    emb = emb * mask\n    return torch.nn.functional.normalize(emb, dim=-1), inputs[\"attention_mask\"]",
+      "steps": [
+        {"line": 1, "explanation": "Import Transformers and PyTorch — the only dependencies. No cloud SDKs, no API keys, no external services needed for local document search."},
+        {"line": 4, "explanation": "Download colbert-ir/colbertv2.0 tokenizer and model (~500MB). This is cached locally by HuggingFace — after the first download, the model loads from disk with no internet needed."},
+        {"line": 6, "explanation": "Eval mode for deterministic embeddings. Critical for a persistent index: the same document must produce identical vectors every time so cached embeddings remain valid."},
+        {"line": 8, "explanation": "encode_tokens produces per-token embeddings — ColBERT's signature. Unlike bi-encoders that pool into one vector, every token gets its own 128-dim embedding for precise matching."},
+        {"line": 14, "explanation": "Zero out padding tokens by multiplying with the attention mask. Padding positions would pollute MaxSim scoring if left as nonzero vectors."},
+        {"line": 16, "explanation": "L2-normalize each token vector. Return both embeddings and mask — the mask tells the search function which positions are real tokens vs padding."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def ingest_directory(directory, extensions=(\".txt\", \".md\", \".py\")):\n    documents = []\n    for root, _, files in os.walk(directory):\n        for fname in files:\n            if any(fname.endswith(ext) for ext in extensions):\n                path = os.path.join(root, fname)\n                with open(path, \"r\", encoding=\"utf-8\", errors=\"ignore\") as f:\n                    text = f.read()\n                chunks = chunk_text(text, max_words=100)\n                for i, chunk in enumerate(chunks):\n                    documents.append({\"source\": path, \"chunk\": i, \"text\": chunk})\n    return documents\n\ndef chunk_text(text, max_words=100):\n    words = text.split()\n    return [\" \".join(words[i:i+max_words])\n            for i in range(0, len(words), max_words)]\n\ndef build_index(documents):\n    index = []\n    for doc in documents:\n        emb, mask = encode_tokens(doc[\"text\"])\n        index.append({\"source\": doc[\"source\"], \"chunk\": doc[\"chunk\"],\n                      \"text\": doc[\"text\"],\n                      \"embedding\": emb.squeeze(0).tolist(),\n                      \"mask\": mask.squeeze(0).tolist()})\n    return index",
+      "steps": [
+        {"line": 1, "explanation": "Recursively walk a directory and read files matching specified extensions. This turns any folder of notes, code, or docs into a searchable corpus."},
+        {"line": 5, "explanation": "Filter by extension — search only the file types you care about. Add '.rst', '.csv', '.log' or any text format your workflow uses."},
+        {"line": 9, "explanation": "Chunk each file into ~100-word segments. Shorter chunks produce sharper embeddings because each token's context is more focused. ColBERT handles up to 512 tokens but shorter is better."},
+        {"line": 11, "explanation": "Track source file path and chunk index. When search returns a result, you know exactly which file and which section matched — essential for a useful search engine."},
+        {"line": 14, "explanation": "Simple whitespace chunking with fixed word count. For production, consider sentence-boundary or paragraph-boundary splitting to preserve semantic coherence."},
+        {"line": 19, "explanation": "build_index encodes every chunk with ColBERTv2 and stores the per-token embeddings. This is the expensive step — run once, then search thousands of times from cache."},
+        {"line": 25, "explanation": "Serialize embeddings as lists for JSON persistence. Each chunk stores its full token embedding matrix alongside metadata — the foundation of your persistent search index."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def save_index(index, path=\"search_index.json\"):\n    with open(path, \"w\") as f:\n        json.dump(index, f)\n\ndef load_index(path=\"search_index.json\"):\n    with open(path, \"r\") as f:\n        return json.load(f)\n\ndef search(query, index, k=5):\n    q_emb, q_mask = encode_tokens(query, max_length=32)\n    q_real = q_emb.squeeze(0)[q_mask.squeeze(0).bool()]\n    results = []\n    for entry in index:\n        d = torch.tensor(entry[\"embedding\"])\n        d_mask = torch.tensor(entry[\"mask\"]).bool()\n        d_real = d[d_mask]\n        sim = torch.matmul(q_real, d_real.T)\n        score = sim.max(dim=1).values.sum().item()\n        results.append({\"source\": entry[\"source\"],\n                        \"text\": entry[\"text\"], \"score\": score})\n    results.sort(key=lambda x: x[\"score\"], reverse=True)\n    return results[:k]\n\nresults = search(\"handle exceptions gracefully\", index)\nfor r in results:\n    print(f\"{r['score']:.2f} | {r['source']}\")",
+      "steps": [
+        {"line": 1, "explanation": "Persist the index to disk as JSON. Index once, search forever — no re-encoding needed unless your documents change."},
+        {"line": 5, "explanation": "Load a previously built index from disk. This is what makes the search engine practical — startup takes milliseconds instead of re-encoding the entire corpus."},
+        {"line": 9, "explanation": "The search function: encode the query (short — 32 tokens max), then run MaxSim against every cached document embedding. No model inference on documents at search time."},
+        {"line": 11, "explanation": "Extract only real query tokens (no padding). Boolean mask indexing keeps the search math clean and prevents padding from contributing to similarity scores."},
+        {"line": 14, "explanation": "Reconstruct document tensors from cached lists. In production, store as numpy arrays or memory-mapped files to avoid this conversion overhead."},
+        {"line": 17, "explanation": "The MaxSim core: full similarity matrix between query tokens and document tokens. Each query token finds its best document match — this is ColBERT's token-level precision."},
+        {"line": 18, "explanation": "Sum the per-token maximums for the final relevance score. Higher score means more query tokens found strong matches in this document chunk."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a fully local, privacy-preserving search engine with ColBERTv2! Your documents never leave your machine, searches are free, and token-level MaxSim gives you precision that rivals cloud APIs."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LocalSearchEngine` class that simulates ColBERTv2's local document search workflow. Implement `ingest(documents)` to accept a list of dicts with 'source' and 'text' keys, chunk each text into segments of `chunk_size` words, and precompute token embeddings for each chunk. Implement `search(query, k)` for ranked MaxSim retrieval returning results with source, text, and score. Implement `save_index()` and `load_index()` to persist and restore the index as a list of dicts. Use character-frequency vectors (26 dims) as token embeddings."
+      },
+      "starter_code": "class LocalSearchEngine:\n    def __init__(self, chunk_size=5):\n        self.chunk_size = chunk_size\n        self.index = []  # list of {\"source\": str, \"chunk\": int, \"text\": str, \"vectors\": list}\n\n    def _token_vec(self, token: str) -> list[float]:\n        vec = [0.0] * 26\n        for c in token.lower():\n            if 'a' <= c <= 'z':\n                vec[ord(c) - ord('a')] += 1.0\n        return vec\n\n    def _encode(self, text: str) -> list[list[float]]:\n        return [self._token_vec(w) for w in text.lower().split() if w.strip()]\n\n    def _dot(self, a: list[float], b: list[float]) -> float:\n        return sum(x * y for x, y in zip(a, b))\n\n    def _maxsim(self, q_vecs: list[list[float]], d_vecs: list[list[float]]) -> float:\n        if not q_vecs or not d_vecs:\n            return 0.0\n        total = 0.0\n        for qv in q_vecs:\n            total += max(self._dot(qv, dv) for dv in d_vecs)\n        return total\n\n    def _chunk_text(self, text: str) -> list[str]:\n        # Split text into chunks of self.chunk_size words\n        # Return list of chunk strings\n        pass\n\n    def ingest(self, documents: list[dict]):\n        # documents: [{\"source\": \"file.txt\", \"text\": \"full text content\"}, ...]\n        # For each document, chunk the text, encode each chunk,\n        # and add to self.index with source, chunk number, text, and vectors\n        pass\n\n    def search(self, query: str, k: int = 3) -> list[dict]:\n        # Encode query, MaxSim against all indexed chunks\n        # Return top-k: [{\"source\": str, \"text\": str, \"score\": float}]\n        pass\n\n    def save_index(self) -> list[dict]:\n        # Return self.index as a serializable list of dicts\n        # (vectors are already lists, so this is JSON-ready)\n        pass\n\n    def load_index(self, data: list[dict]):\n        # Restore self.index from a previously saved list\n        pass\n\n# Test:\nengine = LocalSearchEngine(chunk_size=4)\nengine.ingest([\n    {\"source\": \"notes.txt\", \"text\": \"gradient descent optimizes neural network weights by updating parameters\"},\n    {\"source\": \"guide.md\", \"text\": \"decision trees split data by feature thresholds for classification\"},\n])\n\n# Search\nresults = engine.search(\"gradient optimization\", k=2)\nprint(results[0][\"source\"])\nprint(results[0][\"score\"] > results[1][\"score\"])\n\n# Persistence round-trip\nsaved = engine.save_index()\nengine2 = LocalSearchEngine(chunk_size=4)\nengine2.load_index(saved)\nresults2 = engine2.search(\"gradient optimization\", k=1)\nprint(results2[0][\"source\"])\nprint(len(saved) > 0)",
+      "expected_output": "notes.txt\nTrue\nnotes.txt\nTrue",
+      "hints": {
+        "en": [
+          "In _chunk_text(), split by whitespace, then group into chunks: [' '.join(words[i:i+self.chunk_size]) for i in range(0, len(words), self.chunk_size)]",
+          "In ingest(), loop over documents, chunk each text, encode each chunk with _encode, and append {source, chunk index, text, vectors} to self.index",
+          "save_index() just returns self.index (it's already a list of dicts with lists). load_index() sets self.index = data"
+        ]
+      },
+      "test_code": "e = LocalSearchEngine(chunk_size=3)\nassert e._chunk_text(\"a b c d e\") == [\"a b c\", \"d e\"]\nassert e._chunk_text(\"\") == []\ne.ingest([{\"source\": \"a.txt\", \"text\": \"hello world foo bar baz\"}])\nassert len(e.index) == 2\nassert e.index[0][\"source\"] == \"a.txt\"\nassert e.index[0][\"chunk\"] == 0\nassert e.index[1][\"chunk\"] == 1\nr = e.search(\"hello\", k=1)\nassert r[0][\"source\"] == \"a.txt\"\nassert r[0][\"score\"] > 0\nsaved = e.save_index()\nassert isinstance(saved, list)\nassert len(saved) == 2\ne2 = LocalSearchEngine(chunk_size=3)\ne2.load_index(saved)\nr2 = e2.search(\"hello\", k=1)\nassert r2[0][\"score\"] == r[0][\"score\"]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `FileSearchCLI` class that wraps the local search engine with file-type filtering and result formatting. Implement `add_files(file_entries)` where each entry has 'path', 'content', and 'filetype' keys. Implement `search(query, k, filetype)` that optionally filters results by filetype before ranking. Implement `stats()` returning index statistics. Use character-frequency token vectors (26 dims) with chunk_size=6 words."
+      },
+      "starter_code": "class FileSearchCLI:\n    def __init__(self):\n        self.chunk_size = 6\n        self.index = []  # {\"path\": str, \"filetype\": str, \"chunk\": int, \"text\": str, \"vectors\": list}\n\n    def _token_vec(self, token: str) -> list[float]:\n        vec = [0.0] * 26\n        for c in token.lower():\n            if 'a' <= c <= 'z':\n                vec[ord(c) - ord('a')] += 1.0\n        return vec\n\n    def _encode(self, text: str) -> list[list[float]]:\n        return [self._token_vec(w) for w in text.lower().split() if w.strip()]\n\n    def _dot(self, a: list[float], b: list[float]) -> float:\n        return sum(x * y for x, y in zip(a, b))\n\n    def _maxsim(self, q_vecs, d_vecs) -> float:\n        if not q_vecs or not d_vecs:\n            return 0.0\n        return sum(max(self._dot(qv, dv) for dv in d_vecs) for qv in q_vecs)\n\n    def _chunk(self, text: str) -> list[str]:\n        words = text.split()\n        if not words:\n            return []\n        return [\" \".join(words[i:i+self.chunk_size])\n                for i in range(0, len(words), self.chunk_size)]\n\n    def add_files(self, file_entries: list[dict]):\n        # file_entries: [{\"path\": str, \"content\": str, \"filetype\": str}, ...]\n        # Chunk each file's content, encode chunks, add to self.index\n        # Each index entry: {path, filetype, chunk, text, vectors}\n        pass\n\n    def search(self, query: str, k: int = 3, filetype: str = None) -> list[dict]:\n        # Search the index. If filetype is given, only score chunks matching that type.\n        # Return top-k: [{\"path\": str, \"filetype\": str, \"text\": str, \"score\": float}]\n        pass\n\n    def stats(self) -> dict:\n        # Return {\"total_chunks\": int, \"total_files\": int,\n        #         \"filetypes\": {\"py\": count, \"md\": count, ...}}\n        # total_files = number of unique paths\n        pass\n\n# Test:\ncli = FileSearchCLI()\ncli.add_files([\n    {\"path\": \"app.py\", \"content\": \"async function handles web requests with error handling\", \"filetype\": \"py\"},\n    {\"path\": \"readme.md\", \"content\": \"installation guide for setting up the project dependencies\", \"filetype\": \"md\"},\n    {\"path\": \"utils.py\", \"content\": \"helper functions for data parsing and validation logic\", \"filetype\": \"py\"},\n])\n\n# Search all files\nr_all = cli.search(\"error handling\", k=2)\nprint(r_all[0][\"path\"])\n\n# Filter by filetype\nr_py = cli.search(\"data parsing\", k=1, filetype=\"py\")\nprint(r_py[0][\"path\"])\n\n# Stats\ns = cli.stats()\nprint(s[\"total_files\"])\nprint(s[\"filetypes\"][\"py\"])",
+      "expected_output": "app.py\nutils.py\n3\n2",
+      "hints": {
+        "en": [
+          "In add_files(), loop over entries, chunk content with _chunk(), encode each chunk, and append to self.index with path, filetype, chunk number, text, and vectors",
+          "In search(), filter self.index by filetype first (if provided), then encode query, compute _maxsim for each remaining entry, sort descending, return top-k",
+          "In stats(), use set() for unique paths, and a dict counting filetype occurrences across all index entries"
+        ]
+      },
+      "test_code": "c = FileSearchCLI()\nc.add_files([{\"path\": \"a.py\", \"content\": \"hello world test\", \"filetype\": \"py\"}, {\"path\": \"b.md\", \"content\": \"hello world guide\", \"filetype\": \"md\"}])\nassert len(c.index) == 2\nr = c.search(\"hello\", k=2)\nassert len(r) == 2\nassert r[0][\"score\"] >= r[1][\"score\"]\nr_py = c.search(\"hello\", k=2, filetype=\"py\")\nassert all(x[\"filetype\"] == \"py\" for x in r_py)\nr_md = c.search(\"guide\", k=1, filetype=\"md\")\nassert r_md[0][\"path\"] == \"b.md\"\ns = c.stats()\nassert s[\"total_files\"] == 2\nassert s[\"total_chunks\"] == 2\nassert s[\"filetypes\"][\"py\"] == 1\nassert s[\"filetypes\"][\"md\"] == 1"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["colbert-ir/colbertv2.0", "local document search", "offline retrieval", "file ingestion and chunking", "persistent embedding index", "MaxSim scoring", "privacy-preserving search", "CPU inference with transformers", "document indexing pipeline"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "file I/O", "dot product", "sentence embeddings", "pip install", "json serialization"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

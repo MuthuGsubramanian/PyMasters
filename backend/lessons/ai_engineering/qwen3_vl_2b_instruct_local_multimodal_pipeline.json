@@ -1,0 +1,119 @@
+{
+  "id": "qwen3_vl_2b_instruct_local_multimodal_pipeline",
+  "topic": "qwen3_vl_2b_instruct_local_multimodal_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-VL-2B: Build a Local Multimodal Pipeline for Document and Scene Analysis"
+  },
+  "description": {
+    "en": "Chain Qwen3-VL-2B-Instruct into a reusable multimodal pipeline that classifies images, extracts structured data from documents, and routes visual tasks — all locally with zero API costs."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Single Prompts to Visual Pipelines\n\nVaathiyaar here! You already know Qwen3-VL-2B can look at an image and describe it. But a single image-to-text call is just the beginning. What if you could build a **pipeline** that classifies the type of image, extracts structured data, and routes each visual task to the right handler — all running locally on your hardware? That is what separates a demo from a real assistant.\n\n### The Pipeline Architecture\n\nA visual pipeline chains multiple inference calls, each narrowing the task:\n\n| Stage | Purpose | Example Output |\n|---|---|---|\n| **Classify** | Determine image type | `\"receipt\"`, `\"screenshot\"`, `\"photo\"` |\n| **Extract** | Pull structured data | `{\"total\": \"$42.50\", \"date\": \"2026-04-19\"}` |\n| **Summarize** | Generate human-readable output | `\"Grocery receipt for $42.50 from...\"` |\n\nEach stage uses the same Qwen3-VL-2B model but with a different system prompt — no extra models needed.\n\n### Step 1: Build the Classification Stage\n\n```python\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\ndef classify_image(image: Image.Image) -> str:\n    messages = [\n        {\"role\": \"system\", \"content\": \"Classify the image into exactly one category: receipt, screenshot, chart, photo, document. Reply with only the category word.\"},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": \"What type of image is this?\"}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(text=[prompt], images=[image],\n                       return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, max_new_tokens=10, temperature=0.1)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip().lower()\n```\n\nLow temperature (0.1) and a strict system prompt force a one-word classification — no rambling.\n\n### Step 2: Route to a Specialized Extractor\n\n```python\nEXTRACTOR_PROMPTS = {\n    \"receipt\": \"Extract: store name, date, items with prices, total. Return as key: value lines.\",\n    \"chart\": \"Describe the chart type, axes, trends, and key data points.\",\n    \"screenshot\": \"Extract all visible text. Identify UI elements and their state.\",\n    \"document\": \"Extract the title, headings, and main body text.\",\n    \"photo\": \"Describe the scene, subjects, setting, and notable details.\",\n}\n\ndef extract_data(image: Image.Image, category: str) -> str:\n    system_prompt = EXTRACTOR_PROMPTS.get(category, EXTRACTOR_PROMPTS[\"photo\"])\n    messages = [\n        {\"role\": \"system\", \"content\": system_prompt},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": \"Analyze this image.\"}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(text=[prompt], images=[image],\n                       return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, max_new_tokens=300, temperature=0.3)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip()\n```\n\n### Step 3: The Full Pipeline\n\n```python\ndef analyze_image(image_path: str) -> dict:\n    image = Image.open(image_path).convert(\"RGB\")\n    category = classify_image(image)\n    extraction = extract_data(image, category)\n    return {\n        \"path\": image_path,\n        \"category\": category,\n        \"analysis\": extraction\n    }\n\nresult = analyze_image(\"receipt.jpg\")\nprint(f\"Type: {result['category']}\")\nprint(f\"Analysis:\\n{result['analysis']}\")\n```\n\n### Batching Multiple Images\n\nProcess a folder of images and collect structured results:\n\n```python\nimport glob\n\ndef batch_analyze(folder: str) -> list:\n    results = []\n    for path in glob.glob(f\"{folder}/*.jpg\") + glob.glob(f\"{folder}/*.png\"):\n        results.append(analyze_image(path))\n    return results\n```\n\n### Performance Tips\n\n| Technique | Effect | When to Use |\n|---|---|---|\n| `torch.float16` | Halves VRAM | Always on GPU |\n| `max_new_tokens=10` | Faster classification | Classification stage only |\n| `temperature=0.1` | Deterministic output | Classification / extraction |\n| Resize to 448px | Faster processing | When fine detail is not needed |\n| `torch.no_grad()` | Saves memory | Always during inference |\n\n> **Key Insight:** A single 2B-parameter model can power an entire visual analysis pipeline when you vary the system prompt per stage. Classification, extraction, and summarization are not three models — they are three prompts. Design your pipeline around *prompt routing*, and Qwen3-VL-2B becomes a local multimodal Swiss army knife."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A single image-to-text call is a demo. A pipeline that classifies, extracts, and routes visual tasks is an assistant. Qwen3-VL-2B-Instruct can power all three stages locally — same model, different system prompts, structured output.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\ndef classify_image(image: Image.Image) -> str:\n    messages = [\n        {\"role\": \"system\", \"content\": \"Classify the image into exactly one category: receipt, screenshot, chart, photo, document. Reply with only the category word.\"},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": \"What type of image is this?\"}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(text=[prompt], images=[image],\n                       return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, max_new_tokens=10, temperature=0.1)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip().lower()",
+      "steps": [
+        {"line": 1, "explanation": "Import the Qwen3-VL model class and AutoProcessor — together they handle both text tokenization and image pixel preprocessing."},
+        {"line": 4, "explanation": "Point to the Hugging Face model ID. The 2B-Instruct variant is instruction-tuned for chat and fits in ~5GB VRAM."},
+        {"line": 6, "explanation": "Load model weights with automatic dtype and device placement. On a GPU machine, layers land on CUDA automatically."},
+        {"line": 10, "explanation": "Define classify_image — the first pipeline stage. It takes a PIL Image and returns a single category string."},
+        {"line": 12, "explanation": "The system prompt constrains the model to reply with exactly one word from a fixed set — this turns a generative model into a classifier."},
+        {"line": 13, "explanation": "The user message combines an image block and a text block. Qwen3-VL's processor knows how to interleave image tokens with text tokens."},
+        {"line": 17, "explanation": "apply_chat_template converts the message list into the special-token format the model was fine-tuned on."},
+        {"line": 22, "explanation": "max_new_tokens=10 and temperature=0.1 — we want a single deterministic word, not a paragraph. Fast and focused."},
+        {"line": 23, "explanation": "Decode only the newly generated tokens (skip the input prompt) and normalize to lowercase for reliable downstream routing."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "EXTRACTOR_PROMPTS = {\n    \"receipt\": \"Extract: store name, date, items with prices, total. Return as key: value lines.\",\n    \"chart\": \"Describe the chart type, axes, trends, and key data points.\",\n    \"screenshot\": \"Extract all visible text. Identify UI elements and their state.\",\n    \"document\": \"Extract the title, headings, and main body text.\",\n    \"photo\": \"Describe the scene, subjects, setting, and notable details.\",\n}\n\ndef extract_data(image: Image.Image, category: str) -> str:\n    system_prompt = EXTRACTOR_PROMPTS.get(category, EXTRACTOR_PROMPTS[\"photo\"])\n    messages = [\n        {\"role\": \"system\", \"content\": system_prompt},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": \"Analyze this image.\"}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(text=[prompt], images=[image],\n                       return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, max_new_tokens=300, temperature=0.3)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip()\n\ndef analyze_image(image_path: str) -> dict:\n    image = Image.open(image_path).convert(\"RGB\")\n    category = classify_image(image)\n    extraction = extract_data(image, category)\n    return {\"path\": image_path, \"category\": category, \"analysis\": extraction}",
+      "steps": [
+        {"line": 1, "explanation": "A dictionary maps each image category to a specialized system prompt — this is the routing table that makes one model behave like five."},
+        {"line": 9, "explanation": "extract_data takes the classified category and selects the matching prompt. Unknown categories fall back to the generic 'photo' handler."},
+        {"line": 12, "explanation": "The system prompt changes per category, but the user message structure stays identical — same image block, same trigger text."},
+        {"line": 23, "explanation": "max_new_tokens=300 gives room for detailed extraction. temperature=0.3 balances accuracy with natural phrasing."},
+        {"line": 29, "explanation": "analyze_image ties the pipeline together: open image, classify it, extract data, return a structured dict with path, category, and analysis."},
+        {"line": 30, "explanation": "convert('RGB') ensures consistency — some PNGs have alpha channels that would cause preprocessing errors."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Single-Prompt Approach",
+      "right_label": "Pipeline Approach",
+      "items": [
+        {"left": "One generic prompt for all images", "right": "Specialized prompt per image type"},
+        {"left": "Unstructured free-text output", "right": "Category + structured extraction"},
+        {"left": "Hard to post-process programmatically", "right": "Dict output ready for downstream code"},
+        {"left": "Same quality for receipts and photos", "right": "Optimized extraction per category"},
+        {"left": "No routing or automation possible", "right": "Category drives automated workflows"},
+        {"left": "Good for exploration", "right": "Good for production assistants"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You have built a local multimodal pipeline! Qwen3-VL-2B classifies images, routes to specialized extractors, and returns structured data — all on your hardware with zero API costs."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `ImagePipeline` class that simulates a multi-stage visual analysis pipeline. It should accept a dictionary of category-to-prompt mappings on init, then process images through two stages: `classify(image_path)` determines the category by checking if any category keyword appears in the filename (case-insensitive), defaulting to 'photo' if none match. `extract(image_path, category)` returns a dict with 'category', 'prompt_used' (from the mapping), and 'output' (a string: 'Extracted {category} data from {filename}'). Finally, `run(image_path)` chains classify then extract and returns the full result dict. Track all processed paths in a `history` list."
+      },
+      "starter_code": "class ImagePipeline:\n    def __init__(self, prompts: dict):\n        # Store prompts mapping and initialize history list\n        pass\n\n    def classify(self, image_path: str) -> str:\n        # Check if any key from self.prompts appears in the\n        # filename (case-insensitive). Return the matching\n        # category or 'photo' as default.\n        pass\n\n    def extract(self, image_path: str, category: str) -> dict:\n        # Return dict with:\n        #   'category': the category string\n        #   'prompt_used': self.prompts.get(category, 'Describe the image.')\n        #   'output': f'Extracted {category} data from {filename}'\n        # where filename is just the file name, not the full path\n        pass\n\n    def run(self, image_path: str) -> dict:\n        # 1. classify the image\n        # 2. extract data using the category\n        # 3. append image_path to self.history\n        # 4. return the extraction result\n        pass\n\n# Test it:\nprompts = {\n    \"receipt\": \"Extract store, date, total.\",\n    \"chart\": \"Describe axes and trends.\",\n    \"screenshot\": \"Extract visible text.\"\n}\npipe = ImagePipeline(prompts)\n\nr1 = pipe.run(\"photos/grocery_receipt.png\")\nprint(r1[\"category\"])\nprint(r1[\"prompt_used\"])\nprint(r1[\"output\"])\n\nr2 = pipe.run(\"imgs/sunset.jpg\")\nprint(r2[\"category\"])\nprint(len(pipe.history))",
+      "expected_output": "receipt\nExtract store, date, total.\nExtracted receipt data from grocery_receipt.png\nphoto\n2",
+      "hints": {
+        "en": [
+          "In classify(), iterate over self.prompts.keys() and check if key.lower() is in image_path.lower() — return the first match or 'photo'",
+          "Use os.path.basename(image_path) or image_path.split('/')[-1] to get just the filename from a full path",
+          "run() simply calls self.classify() then self.extract() with the result, appends to history, and returns the extract dict"
+        ]
+      },
+      "test_code": "prompts = {\"receipt\": \"Get total.\", \"chart\": \"Get trends.\", \"screenshot\": \"Get text.\"}\npipe = ImagePipeline(prompts)\nassert pipe.history == []\nr = pipe.run(\"docs/receipt_march.png\")\nassert r[\"category\"] == \"receipt\"\nassert r[\"prompt_used\"] == \"Get total.\"\nassert r[\"output\"] == \"Extracted receipt data from receipt_march.png\"\nassert pipe.history == [\"docs/receipt_march.png\"]\nr2 = pipe.run(\"pics/dog.jpg\")\nassert r2[\"category\"] == \"photo\"\nassert r2[\"prompt_used\"] == \"Describe the image.\"\nassert r2[\"output\"] == \"Extracted photo data from dog.jpg\"\nassert len(pipe.history) == 2\nr3 = pipe.run(\"data/sales_chart.png\")\nassert r3[\"category\"] == \"chart\"\nassert r3[\"prompt_used\"] == \"Get trends.\"\nc = pipe.classify(\"Screenshot_2026.png\")\nassert c == \"screenshot\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `PromptRouter` class that selects the best system prompt for a visual task based on keywords in the user's question. On init, accept a list of route dicts, each with 'keywords' (list of strings) and 'prompt' (string). Implement `match(question)` that returns the prompt of the first route where ANY keyword appears in the question (case-insensitive), or a default prompt 'Describe what you see.' if no route matches. Implement `route(question, image_path)` that returns a dict with 'question', 'image_path', 'matched_prompt', and 'routed' (True if a route matched, False if default was used). Track the count of routed vs default calls in `stats` dict with keys 'routed' and 'default'."
+      },
+      "starter_code": "class PromptRouter:\n    def __init__(self, routes: list):\n        # Store routes and initialize stats = {'routed': 0, 'default': 0}\n        pass\n\n    def match(self, question: str) -> str:\n        # Check each route: if any keyword in route['keywords']\n        # appears in question (case-insensitive), return route['prompt']\n        # If no match, return 'Describe what you see.'\n        pass\n\n    def route(self, question: str, image_path: str) -> dict:\n        # 1. Call self.match(question)\n        # 2. Determine if it was routed or default\n        # 3. Update self.stats accordingly\n        # 4. Return dict with question, image_path, matched_prompt, routed\n        pass\n\n# Test it:\nroutes = [\n    {\"keywords\": [\"price\", \"cost\", \"total\"], \"prompt\": \"Extract all prices and totals.\"},\n    {\"keywords\": [\"text\", \"read\", \"ocr\"], \"prompt\": \"Extract all visible text.\"},\n    {\"keywords\": [\"trend\", \"graph\", \"chart\"], \"prompt\": \"Analyze the chart data.\"},\n]\nrouter = PromptRouter(routes)\n\nr1 = router.route(\"What is the total cost?\", \"receipt.jpg\")\nprint(r1[\"matched_prompt\"])\nprint(r1[\"routed\"])\n\nr2 = router.route(\"Is this a cat?\", \"cat.jpg\")\nprint(r2[\"matched_prompt\"])\nprint(r2[\"routed\"])\n\nprint(router.stats)",
+      "expected_output": "Extract all prices and totals.\nTrue\nDescribe what you see.\nFalse\n{'routed': 1, 'default': 1}",
+      "hints": {
+        "en": [
+          "In match(), convert question to lowercase once, then for each route check if any(kw.lower() in question_lower for kw in route['keywords'])",
+          "The default prompt is always 'Describe what you see.' — compare match() result to this string to determine if routed is True or False",
+          "In route(), after calling match(), increment stats['routed'] if a route matched or stats['default'] if the default was used"
+        ]
+      },
+      "test_code": "routes = [\n    {\"keywords\": [\"price\", \"cost\"], \"prompt\": \"Get prices.\"},\n    {\"keywords\": [\"text\", \"read\"], \"prompt\": \"Get text.\"},\n]\nrouter = PromptRouter(routes)\nassert router.stats == {\"routed\": 0, \"default\": 0}\nr = router.route(\"What is the price?\", \"img.jpg\")\nassert r[\"matched_prompt\"] == \"Get prices.\"\nassert r[\"routed\"] == True\nassert r[\"question\"] == \"What is the price?\"\nassert r[\"image_path\"] == \"img.jpg\"\nassert router.stats[\"routed\"] == 1\nr2 = router.route(\"How old is this?\", \"x.jpg\")\nassert r2[\"matched_prompt\"] == \"Describe what you see.\"\nassert r2[\"routed\"] == False\nassert router.stats[\"default\"] == 1\nr3 = router.route(\"Can you READ this sign?\", \"sign.jpg\")\nassert r3[\"matched_prompt\"] == \"Get text.\"\nassert r3[\"routed\"] == True\nassert router.stats[\"routed\"] == 2\nm = router.match(\"Show me the COST\")\nassert m == \"Get prices.\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multimodal pipelines", "prompt routing", "image classification with VLMs", "structured extraction", "Qwen3-VL-2B pipeline design", "system prompt engineering", "visual task routing", "batch image processing"],
+    "concepts_required": ["python classes", "dictionaries", "string methods", "file paths", "basic ML concepts"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,119 @@
+{
+  "id": "bge_small_en_v15_edge_device_embeddings",
+  "topic": "bge_small_en_v15_edge_device_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Edge-Device Embeddings with BAAI/bge-small-en-v1.5"
+  },
+  "description": {
+    "en": "Deploy BAAI/bge-small-en-v1.5 on resource-constrained devices like Raspberry Pi and edge servers. Learn ONNX quantization, memory-mapped inference, streaming encode pipelines, and how to build an offline smart-home assistant backbone — all within a 33MB budget."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Embeddings That Fit in Your Pocket: bge-small on Edge Devices\n\nVaathiyaar here! Imagine running a smart-home assistant — let's call it Homie — entirely on a Raspberry Pi. No cloud calls, no API keys, no latency spikes at 2 AM when your internet drops. `BAAI/bge-small-en-v1.5` makes this real. At 33MB with 384-dimensional outputs, it's the ideal embedding backbone for devices where every megabyte counts and every millisecond matters.\n\nThe BGE (BAAI General Embedding) family was purpose-built for retrieval. bge-small-en-v1.5 sits at the sweet spot: small enough for a $35 Raspberry Pi, accurate enough to power semantic search that rivals models 10× its size. When paired with INT8 quantization, it shrinks to ~9MB — lighter than most JPEG photos.\n\n### Edge Deployment Decision Matrix\n\n| Constraint | Cloud API | bge-base (110MB) | bge-small (33MB) | bge-small INT8 (9MB) |\n|---|---|---|---|---|\n| RAM < 256MB | No | Tight | Comfortable | Plenty |\n| No internet | Impossible | Yes | Yes | Yes |\n| Latency < 20ms | Unlikely | ~15ms | ~5ms | ~3ms |\n| Battery device | High drain | Moderate | Low | Minimal |\n| Cost per query | $0.0001+ | Free | Free | Free |\n\n### Loading on Constrained Hardware\n\nOn edge devices, every import matters. sentence-transformers pulls in PyTorch (~2GB). For truly constrained environments, use ONNX Runtime (~50MB) directly:\n\n```python\nfrom optimum.onnxruntime import ORTModelForFeatureExtraction\nfrom transformers import AutoTokenizer\nimport numpy as np\n\ntokenizer = AutoTokenizer.from_pretrained(\"BAAI/bge-small-en-v1.5\")\nmodel = ORTModelForFeatureExtraction.from_pretrained(\n    \"BAAI/bge-small-en-v1.5\",\n    provider=\"CPUExecutionProvider\"\n)\n\ndef encode_edge(texts, batch_size=16):\n    all_embeddings = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        inputs = tokenizer(batch, padding=True, truncation=True,\n                           max_length=512, return_tensors=\"np\")\n        outputs = model(**inputs)\n        cls_embs = outputs.last_hidden_state[:, 0, :]\n        norms = np.linalg.norm(cls_embs, axis=1, keepdims=True)\n        all_embeddings.append(cls_embs / norms)\n    return np.vstack(all_embeddings)\n\nvectors = encode_edge([\"turn off the lights\", \"set alarm for 7am\"])\nprint(vectors.shape)  # (2, 384)\n```\n\n### INT8 Quantization for Minimum Footprint\n\nQuantization converts float32 weights to int8, cutting model size by 4× with minimal accuracy loss:\n\n```python\nfrom optimum.onnxruntime import ORTQuantizer\nfrom optimum.onnxruntime.configuration import AutoQuantizationConfig\n\nquantizer = ORTQuantizer.from_pretrained(\"BAAI/bge-small-en-v1.5\")\nqconfig = AutoQuantizationConfig.avx2(is_static=False)\nquantizer.quantize(save_dir=\"./bge-small-int8\", quantization_config=qconfig)\n# Result: ~9MB model with <2% quality drop on MTEB retrieval benchmarks\n```\n\n### Building Homie's Command Matcher\n\nA smart-home assistant needs to match natural language to device commands. bge-small handles this with zero fine-tuning:\n\n```python\nimport numpy as np\n\ncommand_db = {\n    \"Turn on the living room lights\": \"lights.living_room.on\",\n    \"Turn off all lights\": \"lights.all.off\",\n    \"Set thermostat to 72\": \"thermostat.set.72\",\n    \"Lock the front door\": \"door.front.lock\",\n    \"Play music in kitchen\": \"speaker.kitchen.play\",\n}\n\ndescriptions = list(command_db.keys())\nactions = list(command_db.values())\ncmd_vectors = encode_edge(descriptions)\n\ndef match_command(user_input, threshold=0.5):\n    prefix = \"Represent this sentence: \" + user_input\n    q_vec = encode_edge([prefix])\n    scores = (q_vec @ cmd_vectors.T)[0]\n    best_idx = np.argmax(scores)\n    if scores[best_idx] >= threshold:\n        return {\"action\": actions[best_idx], \"confidence\": float(scores[best_idx])}\n    return {\"action\": \"unknown\", \"confidence\": 0.0}\n\nresult = match_command(\"shut the lights off\")\nprint(f\"{result['action']} ({result['confidence']:.2f})\")\n# lights.all.off (0.82)\n```\n\n### Streaming Encode for Real-Time Ingestion\n\nEdge devices process data as it arrives — sensor logs, voice transcriptions, chat messages. A streaming encoder handles unbounded input without blowing memory:\n\n```python\nimport time\n\ndef streaming_encode(text_stream, model_fn, buffer_size=32):\n    buffer = []\n    results = []\n    for text in text_stream:\n        buffer.append(text)\n        if len(buffer) >= buffer_size:\n            results.extend(model_fn(buffer).tolist())\n            buffer.clear()\n    if buffer:\n        results.extend(model_fn(buffer).tolist())\n    return np.array(results)\n\n# Simulate a stream of sensor descriptions\nstream = (f\"sensor reading {i}: temperature {20+i%10}C\" for i in range(100))\nembeddings = streaming_encode(stream, encode_edge, buffer_size=16)\nprint(embeddings.shape)  # (100, 384)\n```\n\n> **Key Insight:** BAAI/bge-small-en-v1.5 is the ideal embedding backbone for edge AI. At 33MB (or 9MB quantized), it runs on a Raspberry Pi with room to spare. The query instruction prefix gives it retrieval accuracy that rivals larger models, and ONNX Runtime eliminates the PyTorch dependency entirely. For building offline assistants like Homie, it means your device understands natural language commands without ever phoning home — privacy by architecture, not by policy."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BAAI/bge-small-en-v1.5 is a 33MB embedding model built for retrieval. With INT8 quantization it shrinks to 9MB — small enough for Raspberry Pi, smart-home devices, and edge servers. Today we deploy it as Homie's command-matching brain: offline, fast, and private.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from optimum.onnxruntime import ORTModelForFeatureExtraction\nfrom transformers import AutoTokenizer\nimport numpy as np\n\ntokenizer = AutoTokenizer.from_pretrained(\"BAAI/bge-small-en-v1.5\")\nmodel = ORTModelForFeatureExtraction.from_pretrained(\n    \"BAAI/bge-small-en-v1.5\",\n    provider=\"CPUExecutionProvider\"\n)\n\ndef encode_edge(texts, batch_size=16):\n    all_embeddings = []\n    for i in range(0, len(texts), batch_size):\n        batch = texts[i:i + batch_size]\n        inputs = tokenizer(batch, padding=True, truncation=True,\n                           max_length=512, return_tensors=\"np\")\n        outputs = model(**inputs)\n        cls_embs = outputs.last_hidden_state[:, 0, :]\n        norms = np.linalg.norm(cls_embs, axis=1, keepdims=True)\n        all_embeddings.append(cls_embs / norms)\n    return np.vstack(all_embeddings)\n\nvectors = encode_edge([\"turn off lights\", \"set alarm 7am\"])\nprint(vectors.shape)  # (2, 384)",
+      "steps": [
+        {"line": 1, "explanation": "Import ORTModelForFeatureExtraction from Hugging Face Optimum — this loads ONNX models directly, bypassing PyTorch entirely. Install with: pip install optimum[onnxruntime]."},
+        {"line": 5, "explanation": "Load the BGE tokenizer. It uses BERT's WordPiece tokenization. The tokenizer is tiny (~1MB) and loads instantly on any device."},
+        {"line": 6, "explanation": "Load the model in ONNX format with CPU execution provider. No GPU needed — ONNX Runtime is optimized for ARM and x86 CPUs found in edge devices."},
+        {"line": 11, "explanation": "Define encode_edge with explicit batching. On constrained devices, batch_size=16 prevents memory spikes while still amortizing inference overhead."},
+        {"line": 15, "explanation": "Tokenize with return_tensors='np' for NumPy arrays instead of PyTorch tensors. This avoids the PyTorch dependency entirely."},
+        {"line": 18, "explanation": "Extract the CLS token embedding (index 0) from each sequence. BGE uses CLS pooling, not mean pooling — this is an architectural design choice."},
+        {"line": 19, "explanation": "L2-normalize each embedding to unit length. Normalized vectors let us use fast dot-product instead of expensive cosine similarity computation."},
+        {"line": 23, "explanation": "Encode two smart-home commands. Output shape is (2, 384) — each command is now a 384-dimensional vector capturing its semantic meaning."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\n\ncommand_db = {\n    \"Turn on living room lights\": \"lights.living_room.on\",\n    \"Turn off all lights\": \"lights.all.off\",\n    \"Set thermostat to 72\": \"thermostat.set.72\",\n    \"Lock the front door\": \"door.front.lock\",\n    \"Play music in kitchen\": \"speaker.kitchen.play\",\n}\n\ndescriptions = list(command_db.keys())\nactions = list(command_db.values())\ncmd_vectors = encode_edge(descriptions)\n\ndef match_command(user_input, threshold=0.5):\n    prefix = \"Represent this sentence: \" + user_input\n    q_vec = encode_edge([prefix])\n    scores = (q_vec @ cmd_vectors.T)[0]\n    best_idx = np.argmax(scores)\n    if scores[best_idx] >= threshold:\n        return {\"action\": actions[best_idx], \"confidence\": float(scores[best_idx])}\n    return {\"action\": \"unknown\", \"confidence\": 0.0}\n\nresult = match_command(\"shut the lights off\")\nprint(f\"{result['action']} ({result['confidence']:.2f})\")",
+      "steps": [
+        {"line": 3, "explanation": "Define a command database mapping natural language descriptions to device actions. This is Homie's knowledge base — no training needed."},
+        {"line": 11, "explanation": "Separate descriptions and actions into aligned lists. Descriptions get embedded; actions are the outputs we want to retrieve."},
+        {"line": 13, "explanation": "Pre-encode all command descriptions into vectors. This one-time cost (~5ms for 5 commands) creates a searchable index in memory."},
+        {"line": 15, "explanation": "match_command takes free-form user input and finds the closest known command using semantic similarity."},
+        {"line": 16, "explanation": "Prepend the BGE query instruction prefix. This tells the model to optimize the embedding for retrieval matching, boosting accuracy by 2-3%."},
+        {"line": 18, "explanation": "Matrix multiply: (1, 384) × (5, 384).T = (1, 5) → one similarity score per command. Dot product works because vectors are normalized."},
+        {"line": 20, "explanation": "Apply a confidence threshold. If no command scores above 0.5, return 'unknown' — this prevents the assistant from guessing wildly on unrecognized input."},
+        {"line": 24, "explanation": "Test with 'shut the lights off' — despite different wording from 'Turn off all lights', semantic similarity bridges the gap. Expected: lights.all.off with ~0.82 confidence."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "bge-small-en-v1.5 (33MB)",
+      "right_label": "bge-small INT8 Quantized (9MB)",
+      "items": [
+        {"left": "33MB float32 weights", "right": "~9MB int8 weights"},
+        {"left": "384-dim output vectors", "right": "384-dim output vectors (same)"},
+        {"left": "~5ms per query on CPU", "right": "~3ms per query on CPU"},
+        {"left": "MTEB Retrieval: 51.68", "right": "MTEB Retrieval: ~50.5 (<2% drop)"},
+        {"left": "Works on any CPU", "right": "Best with AVX2/ARM NEON"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've deployed bge-small-en-v1.5 on edge hardware — Homie now understands commands offline in under 5ms!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EdgeEmbeddingEngine` class that simulates bge-small-en-v1.5's edge deployment. It should track a model footprint, support INT8 quantization simulation (divides size by 4), encode text into trigram frequency vectors, and estimate whether the model fits within a device's memory budget. Implement `quantize()` to reduce model_size_mb by 4×, `encode(text)` to return a trigram frequency dict, `fits_on_device(device_ram_mb)` to check if model + 50MB overhead fits, and `encode_with_prefix(text)` to prepend 'Represent this sentence: ' before encoding."
+      },
+      "starter_code": "class EdgeEmbeddingEngine:\n    def __init__(self, model_size_mb=33):\n        self.model_size_mb = model_size_mb\n        self.quantized = False\n\n    def quantize(self):\n        # Simulate INT8 quantization: divide model_size_mb by 4\n        # Set quantized = True. If already quantized, do nothing.\n        pass\n\n    def encode(self, text: str) -> dict:\n        # Return trigram frequency dict from lowercased text\n        # e.g. \"hello\" -> {\"hel\": 1, \"ell\": 1, \"llo\": 1}\n        pass\n\n    def encode_with_prefix(self, text: str) -> dict:\n        # Prepend \"Represent this sentence: \" to text, then encode\n        pass\n\n    def fits_on_device(self, device_ram_mb: int) -> bool:\n        # Returns True if model_size_mb + 50 (runtime overhead) <= device_ram_mb\n        pass\n\n# Test it:\nengine = EdgeEmbeddingEngine()\nprint(engine.model_size_mb)\nprint(engine.fits_on_device(256))\n\nengine.quantize()\nprint(engine.model_size_mb)\nprint(engine.quantized)\n\nvec = engine.encode(\"hello world\")\nprint(len(vec) > 0)\n\nprefixed = engine.encode_with_prefix(\"lights off\")\nprint(\"rep\" in prefixed)",
+      "expected_output": "33\nTrue\n8.25\nTrue\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In quantize(), check if self.quantized is False first, then divide self.model_size_mb by 4 and set self.quantized = True",
+          "In encode(), loop over range(len(text.lower()) - 2) and count each 3-character slice using a dictionary with .get(key, 0) + 1",
+          "In encode_with_prefix(), just call self.encode('Represent this sentence: ' + text) — the prefix becomes part of the trigram input"
+        ]
+      },
+      "test_code": "e = EdgeEmbeddingEngine()\nassert e.model_size_mb == 33\nassert e.quantized == False\nassert e.fits_on_device(256) == True\nassert e.fits_on_device(80) == False\ne.quantize()\nassert e.model_size_mb == 8.25\nassert e.quantized == True\nold_size = e.model_size_mb\ne.quantize()\nassert e.model_size_mb == old_size\nassert e.encode(\"abc\") == {\"abc\": 1}\nassert e.encode(\"ab\") == {}\nassert e.encode(\"aaaa\") == {\"aaa\": 2}\np = e.encode_with_prefix(\"hi\")\nassert \"rep\" in p\nassert \"ent\" in p\nassert e.fits_on_device(59) == True\nassert e.fits_on_device(58) == False"
+    },
+    {
+      "instruction": {
+        "en": "Build a `HomieCommandMatcher` class that simulates Homie's smart-home command matching. It uses `EdgeEmbeddingEngine` to index known commands, match user utterances using cosine similarity, and track match statistics. Implement `register_commands(command_map)` to index a dict of descriptions→actions, `match(utterance, threshold)` to return the best matching action with confidence, and `stats()` to return total queries and successful matches."
+      },
+      "starter_code": "import math\n\nclass EdgeEmbeddingEngine:\n    def __init__(self, model_size_mb=33):\n        self.model_size_mb = model_size_mb\n        self.quantized = False\n\n    def quantize(self):\n        if not self.quantized:\n            self.model_size_mb /= 4\n            self.quantized = True\n\n    def encode(self, text):\n        t = text.lower()\n        vec = {}\n        for i in range(len(t) - 2):\n            tri = t[i:i+3]\n            vec[tri] = vec.get(tri, 0) + 1\n        return vec\n\n    def encode_with_prefix(self, text):\n        return self.encode(\"Represent this sentence: \" + text)\n\nclass HomieCommandMatcher:\n    def __init__(self):\n        self.engine = EdgeEmbeddingEngine()\n        self.commands = {}     # description -> action\n        self.cmd_vectors = {}  # description -> trigram dict\n        self.total_queries = 0\n        self.successful_matches = 0\n\n    def register_commands(self, command_map: dict):\n        # Store command_map and pre-encode each description\n        pass\n\n    def _cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Compute cosine similarity between two trigram dicts\n        # Handle zero-magnitude vectors by returning 0.0\n        pass\n\n    def match(self, utterance: str, threshold: float = 0.3) -> dict:\n        # Encode utterance with prefix, find best matching command\n        # Increment total_queries always, successful_matches if score >= threshold\n        # Return {\"action\": str, \"confidence\": float, \"matched\": bool}\n        pass\n\n    def stats(self) -> dict:\n        # Return {\"total_queries\": int, \"successful_matches\": int, \"accuracy\": float}\n        # accuracy = successful / total (0.0 if no queries)\n        pass\n\n# Test it:\nhomie = HomieCommandMatcher()\nhomie.register_commands({\n    \"turn on the lights\": \"lights.on\",\n    \"play some music\": \"speaker.play\",\n    \"lock the door\": \"door.lock\",\n})\n\nr = homie.match(\"switch on the light\")\nprint(r[\"matched\"])\nprint(r[\"action\"])\n\ns = homie.stats()\nprint(s[\"total_queries\"])\nprint(s[\"successful_matches\"])",
+      "expected_output": "True\nlights.on\n1\n1",
+      "hints": {
+        "en": [
+          "In register_commands(), store the command_map and use self.engine.encode(desc) for each description key to build cmd_vectors",
+          "For _cosine_similarity(), find shared keys between two dicts, compute dot product (sum of a[k]*b[k]), and divide by the product of magnitudes (sqrt of sum of squares for each dict). Return 0.0 if either magnitude is zero",
+          "In match(), use self.engine.encode_with_prefix(utterance), compare against all cmd_vectors to find the highest scoring command, then check threshold to determine 'matched'"
+        ]
+      },
+      "test_code": "h = HomieCommandMatcher()\nh.register_commands({\"hello world\": \"greet\", \"goodbye moon\": \"farewell\"})\nassert len(h.commands) == 2\nassert len(h.cmd_vectors) == 2\nr = h.match(\"hello there\")\nassert r[\"matched\"] in [True, False]\nassert isinstance(r[\"confidence\"], float)\nassert r[\"action\"] in [\"greet\", \"farewell\", \"unknown\"]\nassert h.total_queries == 1\nr2 = h.match(\"xyzxyzxyz\", threshold=0.99)\nassert r2[\"matched\"] == False\nassert r2[\"action\"] == \"unknown\"\nassert h.total_queries == 2\ns = h.stats()\nassert s[\"total_queries\"] == 2\nassert isinstance(s[\"accuracy\"], float)\nassert 0.0 <= s[\"accuracy\"] <= 1.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["edge deployment", "ONNX inference", "INT8 quantization", "smart-home command matching", "BGE query prefix", "streaming encode", "memory-constrained embedding", "cosine similarity search", "device fitness estimation"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "basic math", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

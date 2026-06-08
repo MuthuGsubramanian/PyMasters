@@ -1,0 +1,118 @@
+{
+  "id": "electra_rtd_vs_mlm_pretraining",
+  "topic": "electra_rtd_vs_mlm_pretraining",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "ELECTRA vs BERT: Replaced Token Detection vs Masked Language Modeling"
+  },
+  "description": {
+    "en": "Compare ELECTRA's replaced-token-detection pretraining with BERT's masked language modeling approach — understand why ELECTRA learns from every token while BERT only learns from 15%, and see how this translates to better downstream performance with less compute."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Pretraining Showdown: ELECTRA's Clever Alternative to Masking\n\nVaathiyaar here! BERT's masked language modeling was a breakthrough — but it has an inefficiency that bugged researchers at Google. During pretraining, BERT masks only 15% of tokens and learns from predicting just those masked positions. That means **85% of the input is wasted** at each training step. In 2020, Clark et al. introduced **ELECTRA** (Efficiently Learning an Encoder that Classifies Token Replacements Accurately), which learns from *every single token* — making it dramatically more sample-efficient.\n\n### How BERT's MLM Works (The Baseline)\n\nBERT randomly replaces 15% of tokens with `[MASK]` and trains the model to predict the original tokens. The remaining 85% of positions contribute nothing to the loss function. This works well but requires enormous compute to converge.\n\n### How ELECTRA's RTD Works (The Innovation)\n\nELECTRA uses a **generator-discriminator** setup — inspired by GANs but trained differently:\n\n1. A small **generator** (a tiny MLM model) predicts replacements for masked tokens\n2. The **discriminator** sees the corrupted sentence and classifies *every* token as \"original\" or \"replaced\"\n\n| Aspect | BERT (MLM) | ELECTRA (RTD) |\n|---|---|---|\n| Pretraining task | Predict masked tokens | Detect replaced tokens |\n| Learning signal | 15% of tokens per step | 100% of tokens per step |\n| Task type | Generation (predict word) | Discrimination (real or fake?) |\n| Compute efficiency | Baseline | ~4x more efficient |\n| Architecture | Single encoder | Generator + discriminator |\n| Downstream use | Encoder only | Discriminator only |\n\n### Loading ELECTRA for Token Classification\n\n```python\nfrom transformers import pipeline\n\n# ELECTRA discriminator — pretrained on RTD\nclassifier = pipeline(\n    \"text-classification\",\n    model=\"google/electra-base-discriminator\"\n)\n\n# Under the hood, ELECTRA was trained to detect fake tokens\n# Its encoder is now a powerful feature extractor\nfrom transformers import ElectraModel, ElectraTokenizer\n\ntokenizer = ElectraTokenizer.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\nmodel = ElectraModel.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\n\ninputs = tokenizer(\"ELECTRA learns from every token\",\n                   return_tensors=\"pt\")\noutputs = model(**inputs)\nprint(outputs.last_hidden_state.shape)\n# torch.Size([1, 7, 768])\n```\n\n### Simulating the RTD Pretraining Concept\n\n```python\nimport torch\nfrom transformers import (\n    ElectraForPreTraining,\n    ElectraTokenizerFast\n)\n\ntokenizer = ElectraTokenizerFast.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\nmodel = ElectraForPreTraining.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\n\nsentence = \"The chef prepared a delicious meal\"\nfake =     \"The chef consumed a delicious meal\"\n\ninputs = tokenizer(fake, return_tensors=\"pt\")\nfake_labels = torch.tensor(\n    [0, 0, 0, 1, 0, 0, 0, 0]  # 1 = replaced token\n)\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n    predictions = torch.sigmoid(outputs.logits)\n    print(predictions.round(2)[0])\n# Token at position 3 ('consumed') gets high score\n```\n\n### Why ELECTRA Wins on Efficiency\n\nELECTRA-small matches BERT-base performance using **1/4 the compute**. ELECTRA-base outperforms BERT-base on GLUE while using similar compute. The key insight: binary classification (real vs replaced) over every token gives a much denser training signal than predicting words at only 15% of positions.\n\n### When to Choose Each Approach\n\n| Use Case | Best Choice |\n|---|---|\n| Fill-in-the-blank / text generation | BERT (MLM) |\n| Classification / NLU tasks | ELECTRA (RTD) |\n| Limited compute budget | ELECTRA |\n| Need masked predictions at inference | BERT |\n| Research on pretraining methods | Study both |\n\n> **Key Insight:** ELECTRA's replaced-token-detection learns from 100% of input tokens instead of BERT's 15%, making it roughly 4x more compute-efficient. The generator creates plausible fakes, and the discriminator learns rich representations by detecting them at every position — a brilliant example of how changing the pretraining objective can dramatically improve efficiency without changing the underlying transformer architecture."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BERT masks 15% of tokens and predicts them — wasting 85% of positions. ELECTRA flips the script: a small generator creates fake tokens, and the discriminator learns by classifying EVERY token as real or replaced. Same transformer, smarter training signal, 4x more compute-efficient.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import ElectraModel, ElectraTokenizer\nimport torch\n\ntokenizer = ElectraTokenizer.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\nmodel = ElectraModel.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\n\ntext = \"ELECTRA learns from every token\"\ninputs = tokenizer(text, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\nprint(outputs.last_hidden_state.shape)\n# torch.Size([1, 7, 768])",
+      "steps": [
+        {"line": 1, "explanation": "Import ElectraModel and ElectraTokenizer — ELECTRA has its own model class because its pretraining objective differs from BERT's."},
+        {"line": 4, "explanation": "Load the ELECTRA tokenizer. It uses WordPiece like BERT, with the same special tokens [CLS] and [SEP]."},
+        {"line": 7, "explanation": "Load the discriminator — this is the part trained on replaced-token-detection. 12 layers, 768 hidden dim, 110M params (same as BERT-base)."},
+        {"line": 11, "explanation": "Define input text. During pretraining, ELECTRA would check every token here — is it original or generator-replaced?"},
+        {"line": 12, "explanation": "Tokenize with return_tensors='pt'. Like BERT, [CLS] is prepended and [SEP] appended automatically."},
+        {"line": 14, "explanation": "No gradients needed for inference — saves memory. The discriminator produces rich contextual embeddings just like BERT."},
+        {"line": 17, "explanation": "Shape is [1, 7, 768] — batch size 1, 7 tokens (including special tokens), 768-dim embeddings. These are the representations you fine-tune."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import (\n    ElectraForPreTraining,\n    ElectraTokenizerFast\n)\nimport torch\n\ntokenizer = ElectraTokenizerFast.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\nmodel = ElectraForPreTraining.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\n\nfake_sentence = \"The chef consumed a delicious meal\"\ninputs = tokenizer(fake_sentence, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n    scores = torch.sigmoid(outputs.logits)\n\nfor tok, score in zip(\n    tokenizer.convert_ids_to_tokens(inputs['input_ids'][0]),\n    scores[0]\n):\n    label = \"REPLACED\" if score > 0.5 else \"original\"\n    print(f\"{tok:>12} → {score:.3f} ({label})\")",
+      "steps": [
+        {"line": 1, "explanation": "ElectraForPreTraining includes the discrimination head — it outputs a score per token indicating whether it was replaced."},
+        {"line": 7, "explanation": "Load the fast tokenizer variant for efficient encoding. Same vocabulary as the standard tokenizer."},
+        {"line": 10, "explanation": "Load the full pretraining model. Unlike ElectraModel (embeddings only), this includes the binary classification head on top."},
+        {"line": 14, "explanation": "This sentence has 'consumed' where 'prepared' was original. The discriminator's job is to flag this kind of substitution."},
+        {"line": 17, "explanation": "Forward pass returns logits for each token position — one value per token, not per vocabulary word like BERT's MLM."},
+        {"line": 19, "explanation": "Sigmoid converts logits to probabilities: >0.5 means the model thinks the token was replaced by the generator."},
+        {"line": 21, "explanation": "Map each token back to its string form and pair with the discrimination score. Replaced tokens should score higher."},
+        {"line": 25, "explanation": "Print each token with its score and label. A well-trained discriminator catches subtle replacements that preserve grammar but change meaning."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "BERT (Masked LM)",
+      "right_label": "ELECTRA (Replaced Token Detection)",
+      "items": [
+        {"left": "Masks 15% of tokens with [MASK]", "right": "Replaces tokens with generator outputs"},
+        {"left": "Learns from masked positions only", "right": "Learns from every token position"},
+        {"left": "Predicts original word (generation)", "right": "Classifies real vs replaced (discrimination)"},
+        {"left": "Single model trained end-to-end", "right": "Generator + discriminator trained jointly"},
+        {"left": "Baseline compute requirements", "right": "~4x more compute-efficient"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand ELECTRA's replaced-token-detection vs BERT's MLM — and why learning from every token is a game-changer for pretraining efficiency!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ReplacedTokenDetector` class that simulates ELECTRA's pretraining concept. It takes a vocabulary dict mapping words to plausible replacements. Implement `corrupt_sentence(sentence, positions)` that replaces words at given positions with random alternatives from the vocabulary, and `detect_replaced(original, corrupted)` that returns a list of dicts with each token, its index, and whether it was replaced (True/False)."
+      },
+      "starter_code": "import random\n\nclass ReplacedTokenDetector:\n    def __init__(self, replacement_vocab: dict[str, list[str]]):\n        # replacement_vocab maps words to plausible replacements\n        # e.g., {\"prepared\": [\"consumed\", \"cooked\", \"made\"], ...}\n        self.replacement_vocab = replacement_vocab\n\n    def corrupt_sentence(self, sentence: str, positions: list[int]) -> str:\n        # Replace words at given positions with a random alternative\n        # from replacement_vocab. If word not in vocab, keep original.\n        # Return lowercased corrupted sentence.\n        pass\n\n    def detect_replaced(self, original: str, corrupted: str) -> list[dict]:\n        # Compare original and corrupted word by word (lowercased)\n        # Return list of {\"token\": word, \"index\": i, \"replaced\": bool}\n        # for EVERY token (this is the key ELECTRA insight!)\n        pass\n\n# Test it:\nrandom.seed(42)\nvocab = {\n    \"prepared\": [\"consumed\", \"cooked\", \"made\"],\n    \"delicious\": [\"terrible\", \"amazing\", \"bland\"],\n    \"chef\": [\"cook\", \"baker\", \"waiter\"]\n}\n\ndetector = ReplacedTokenDetector(vocab)\n\noriginal = \"The chef prepared a delicious meal\"\ncorrupted = detector.corrupt_sentence(original, [1, 2])\nprint(corrupted)\n\nresults = detector.detect_replaced(original, corrupted)\nreplaced_count = sum(1 for r in results if r[\"replaced\"])\nprint(replaced_count)\nprint(len(results))",
+      "expected_output": "the cook consumed a delicious meal\n2\n6",
+      "hints": {
+        "en": [
+          "In corrupt_sentence(), split the lowercased sentence, then for each position check if that word exists in replacement_vocab and pick a random replacement",
+          "In detect_replaced(), split both sentences (lowercased), zip them together, and compare word by word — any difference means replaced=True",
+          "Remember to return info for EVERY token, not just replaced ones — ELECTRA's advantage is learning from all positions"
+        ]
+      },
+      "test_code": "import random\nrandom.seed(42)\nv = {\"cat\": [\"dog\", \"bird\"], \"sat\": [\"stood\", \"ran\"], \"mat\": [\"rug\", \"floor\"]}\nd = ReplacedTokenDetector(v)\nc = d.corrupt_sentence(\"The cat sat on the mat\", [1, 2])\nwords = c.split()\nassert words[1] != \"cat\"\nassert words[1] in [\"dog\", \"bird\"]\nresults = d.detect_replaced(\"the cat sat on the mat\", c)\nassert len(results) == 6\nassert results[0][\"replaced\"] == False\nassert results[1][\"replaced\"] == True\nassert results[2][\"replaced\"] == True\nassert results[3][\"replaced\"] == False\nassert all(\"token\" in r and \"index\" in r and \"replaced\" in r for r in results)"
+    },
+    {
+      "instruction": {
+        "en": "Build a `PretrainingEfficiencyComparer` class that demonstrates why ELECTRA is more compute-efficient than BERT. Given a sentence length and mask percentage, calculate how many tokens each approach learns from per step. Implement `bert_signal(sentence_length, mask_pct)` returning the count of masked tokens, `electra_signal(sentence_length)` returning the full length, and `efficiency_ratio(sentence_length, mask_pct)` returning how many times more efficient ELECTRA is."
+      },
+      "starter_code": "class PretrainingEfficiencyComparer:\n    def __init__(self):\n        pass\n\n    def bert_signal(self, sentence_length: int, mask_pct: float = 0.15) -> int:\n        # How many tokens BERT learns from per step\n        # Round down to nearest integer\n        pass\n\n    def electra_signal(self, sentence_length: int) -> int:\n        # How many tokens ELECTRA learns from per step\n        pass\n\n    def efficiency_ratio(self, sentence_length: int, mask_pct: float = 0.15) -> float:\n        # How many times more efficient ELECTRA is\n        # Return ratio rounded to 1 decimal place\n        pass\n\n# Test it:\ncomparer = PretrainingEfficiencyComparer()\n\nbert_tokens = comparer.bert_signal(100)\nprint(bert_tokens)\n\nelectra_tokens = comparer.electra_signal(100)\nprint(electra_tokens)\n\nratio = comparer.efficiency_ratio(100)\nprint(ratio)",
+      "expected_output": "15\n100\n6.7",
+      "hints": {
+        "en": [
+          "bert_signal is simply int(sentence_length * mask_pct) — BERT only learns from masked positions",
+          "electra_signal returns sentence_length directly — ELECTRA classifies every single token",
+          "efficiency_ratio divides electra_signal by bert_signal and rounds to 1 decimal place with round()"
+        ]
+      },
+      "test_code": "c = PretrainingEfficiencyComparer()\nassert c.bert_signal(100) == 15\nassert c.bert_signal(200) == 30\nassert c.bert_signal(100, 0.20) == 20\nassert c.electra_signal(100) == 100\nassert c.electra_signal(512) == 512\nassert c.efficiency_ratio(100) == 6.7\nassert c.efficiency_ratio(200) == 6.7\nassert c.efficiency_ratio(100, 0.20) == 5.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["replaced token detection", "ELECTRA architecture", "generator-discriminator pretraining", "MLM vs RTD comparison", "pretraining efficiency", "ElectraForPreTraining", "compute-efficient NLP"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "string manipulation", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

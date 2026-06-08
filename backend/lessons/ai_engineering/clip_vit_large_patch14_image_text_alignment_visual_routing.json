@@ -1,0 +1,120 @@
+{
+  "id": "clip_vit_large_patch14_image_text_alignment_visual_routing",
+  "topic": "clip_vit_large_patch14_image_text_alignment_visual_routing",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "CLIP ViT-L/14: Image-Text Alignment Scoring & Visual Query Routing",
+    "ta": ""
+  },
+  "description": {
+    "en": "Use openai/clip-vit-large-patch14 to measure how well images match text descriptions, build alignment scorecards, and route visual queries to specialized handlers in a Homie plugin architecture.",
+    "ta": ""
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Measure What Eyes See and Words Say — Then Route the Right Way\n\nVaathiyaar here! You've seen CLIP classify images, but there's a deeper capability hiding in plain sight: **image-text alignment scoring**. Instead of asking \"which label fits best?\", you ask \"how well does this specific text describe this specific image?\" That raw similarity score unlocks content verification, caption quality checking, visual moderation, and intelligent query routing. Today we build all of it.\n\n### Beyond Classification: Alignment Scores\n\nZero-shot classification picks the best label from a list. Alignment scoring gives you a **raw compatibility number** between any image and any text — no candidate list needed.\n\n| Use Case | Classification | Alignment Scoring |\n|---|---|---|\n| \"Does this image match its caption?\" | Not designed for this | Direct score 0→1 |\n| \"Is this product photo accurate?\" | Requires label pool | Pair-wise check |\n| \"Route to landscape vs portrait handler\" | Possible but rigid | Score-based routing with thresholds |\n| \"Rate caption quality\" | No | Score correlates with quality |\n| \"Content moderation\" | Needs predefined labels | Score against policy descriptions |\n\n### Computing Raw Alignment Scores\n\n```python\nimport torch\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\ndef alignment_score(image_path: str, text: str) -> float:\n    \"\"\"Score how well text describes an image (0 to 1).\"\"\"\n    image = Image.open(image_path).convert(\"RGB\")\n    inputs = processor(text=[text], images=image,\n                       return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        out = model(**inputs)\n        # logits_per_image is cosine similarity * temperature\n        score = out.logits_per_image.softmax(dim=1)[0][0]\n    return float(score)\n\nscore = alignment_score(\"beach.jpg\", \"a sunny beach with waves\")\nprint(f\"Alignment: {score:.3f}\")  # ~0.92 for a good match\n```\n\n### Building a Caption Quality Checker\n\n```python\ndef rate_caption(image_path: str, caption: str,\n                 decoys: list[str] = None) -> dict:\n    \"\"\"Rate caption accuracy by scoring against decoy descriptions.\"\"\"\n    if decoys is None:\n        decoys = [\n            \"a random unrelated photograph\",\n            \"a blank white image\",\n            \"text on a plain background\"\n        ]\n    all_texts = [caption] + decoys\n    image = Image.open(image_path).convert(\"RGB\")\n    inputs = processor(text=all_texts, images=image,\n                       return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        scores = model(**inputs).logits_per_image.softmax(dim=1)[0]\n    caption_score = float(scores[0])\n    return {\n        \"caption\": caption,\n        \"score\": round(caption_score, 3),\n        \"quality\": \"good\" if caption_score > 0.5 else\n                   \"fair\" if caption_score > 0.25 else \"poor\"\n    }\n```\n\n### Visual Query Router for Homie\n\nThe real power: route incoming image queries to the right handler based on what CLIP sees.\n\n```python\nROUTES = {\n    \"landscape_handler\": [\"a landscape photo\", \"scenery outdoors\"],\n    \"document_handler\": [\"a scanned document\", \"text on paper\"],\n    \"product_handler\": [\"a product photo on white background\"],\n    \"face_handler\": [\"a portrait photo of a person\"],\n}\n\ndef route_image(image_path: str, threshold: float = 0.3) -> str:\n    \"\"\"Route an image to the best-matching handler.\"\"\"\n    image = Image.open(image_path).convert(\"RGB\")\n    best_route, best_score = \"general_handler\", 0.0\n    for handler, descriptions in ROUTES.items():\n        inputs = processor(text=descriptions, images=image,\n                           return_tensors=\"pt\", padding=True)\n        with torch.no_grad():\n            scores = model(**inputs).logits_per_image.softmax(dim=1)[0]\n        max_score = float(scores.max())\n        if max_score > best_score:\n            best_score = max_score\n            best_route = handler\n    if best_score < threshold:\n        return \"general_handler\"\n    return best_route\n```\n\n### Batch Alignment Auditing\n\nScore an entire directory of images against their expected descriptions — perfect for e-commerce product photo audits.\n\n```python\ndef audit_catalog(items: list[dict]) -> list[dict]:\n    \"\"\"Audit image-description pairs. Each item: {path, description}.\"\"\"\n    results = []\n    for item in items:\n        score = alignment_score(item[\"path\"], item[\"description\"])\n        results.append({\n            \"path\": item[\"path\"],\n            \"description\": item[\"description\"],\n            \"alignment\": round(score, 3),\n            \"flag\": score < 0.3\n        })\n    return sorted(results, key=lambda x: x[\"alignment\"])\n```\n\n> **Key Insight:** CLIP's embedding space isn't just for classification — it's a universal image-text compatibility meter. By scoring alignment directly, you can verify captions, audit product catalogs, moderate content, and route visual queries to specialized handlers. The same 768-dim space that powers zero-shot classification becomes an intelligent visual router for Homie.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "CLIP ViT-L/14 doesn't just classify — it measures how well any image matches any text. Today we use that raw alignment score to verify captions, audit product photos, and build an intelligent visual query router that sends images to the right handler automatically. One model, many capabilities.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import torch\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\ndef alignment_score(image_path, text):\n    image = Image.open(image_path).convert(\"RGB\")\n    inputs = processor(\n        text=[text], images=image,\n        return_tensors=\"pt\", padding=True\n    )\n    with torch.no_grad():\n        out = model(**inputs)\n        score = out.logits_per_image.softmax(dim=1)[0][0]\n    return float(score)\n\nresult = alignment_score(\"beach.jpg\", \"a sunny beach\")\nprint(f\"Alignment: {result:.3f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import torch for tensor operations and no_grad inference. CLIP produces raw logits that need softmax normalization."},
+        {"line": 2, "explanation": "CLIPModel gives full access to both image and text encoders. CLIPProcessor handles image resizing (224×224) and text tokenization in one call."},
+        {"line": 5, "explanation": "Load the 428M parameter ViT-L/14 model. 'large' = 24-layer vision transformer, 'patch14' = each image is split into 14×14 pixel patches for processing."},
+        {"line": 8, "explanation": "alignment_score takes a single image-text pair and returns a compatibility score. Unlike classification, there's no candidate list — just one pair."},
+        {"line": 10, "explanation": "processor encodes both modalities together. text must be a list even for one string. padding=True handles variable-length text inputs."},
+        {"line": 14, "explanation": "no_grad disables gradient computation — halves memory usage during inference. Always use this when you're not training."},
+        {"line": 16, "explanation": "logits_per_image contains cosine similarity scaled by a learned temperature parameter. softmax converts to a probability. With one text, the score reflects absolute alignment strength."},
+        {"line": 17, "explanation": "Return a float between 0 and 1. Scores above 0.5 indicate strong alignment; below 0.25 suggests the text poorly describes the image."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "ROUTES = {\n    \"landscape\": [\"a landscape photo\", \"scenery outdoors\"],\n    \"document\": [\"a scanned document\", \"text on paper\"],\n    \"product\": [\"a product on white background\"],\n    \"portrait\": [\"a portrait photo of a person\"],\n}\n\ndef route_image(image_path, routes, threshold=0.3):\n    image = Image.open(image_path).convert(\"RGB\")\n    best_route = \"general\"\n    best_score = 0.0\n\n    for handler, descriptions in routes.items():\n        inputs = processor(\n            text=descriptions, images=image,\n            return_tensors=\"pt\", padding=True\n        )\n        with torch.no_grad():\n            scores = model(**inputs).logits_per_image\n            max_score = float(scores.softmax(dim=1)[0].max())\n        if max_score > best_score:\n            best_score = max_score\n            best_route = handler\n\n    if best_score < threshold:\n        return \"general\"\n    return best_route\n\nhandler = route_image(\"photo.jpg\", ROUTES)\nprint(f\"Routed to: {handler}\")",
+      "steps": [
+        {"line": 1, "explanation": "ROUTES maps handler names to lists of text descriptions. Multiple descriptions per route improve matching — CLIP picks the best-matching description."},
+        {"line": 8, "explanation": "route_image scores an image against all route descriptions and picks the highest-scoring handler. Falls back to 'general' if nothing exceeds the threshold."},
+        {"line": 13, "explanation": "Iterate through each handler's descriptions. For each route, we compute CLIP similarity scores against all its description variants."},
+        {"line": 19, "explanation": "logits_per_image has shape (1, num_descriptions). softmax normalizes across descriptions, then .max() picks the best match for this route."},
+        {"line": 21, "explanation": "Track the globally best-scoring route. The handler whose descriptions best match the image wins — a simple argmax over per-route max scores."},
+        {"line": 25, "explanation": "Threshold guard: if no route scores above 0.3, the image doesn't clearly match any specialized handler. Route to 'general' to avoid misclassification."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Zero-Shot Classification",
+      "right_label": "Alignment Scoring & Routing",
+      "items": [
+        {"left": "Picks the best label from a fixed list", "right": "Scores any image-text pair independently"},
+        {"left": "Outputs probabilities summing to 1.0", "right": "Raw alignment score for each pair"},
+        {"left": "Answers: what is in this image?", "right": "Answers: does this text match this image?"},
+        {"left": "Good for labeling and tagging", "right": "Good for verification, moderation, routing"},
+        {"left": "Needs a candidate label pool", "right": "Works with a single text description"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now know how to score image-text alignment, verify captions, and route visual queries to specialized handlers — all with one CLIP model. Wire this into Homie for intelligent visual triage!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `AlignmentScorer` class that simulates CLIP's image-text alignment scoring using word overlap. Represent an 'image' as a list of descriptive tags and 'text' as a string. Implement `to_vec(words)` that converts a list of strings into a sparse vector (dict mapping each lowercased word to 1), `cosine_sim(vec_a, vec_b)` that computes cosine similarity between two sparse vectors (return 0.0 if either is empty), `alignment_score(image_tags, text)` that computes cosine similarity between image tags and text words (split on spaces), and `rate_caption(image_tags, caption, decoys)` that scores the caption against decoys and returns a dict with 'caption', 'score' (normalized so caption + decoy scores sum to 1.0), and 'quality' ('good' if score > 0.5, 'fair' if > 0.25, else 'poor')."
+      },
+      "starter_code": "import math\n\nclass AlignmentScorer:\n    def to_vec(self, words: list[str]) -> dict:\n        # Sparse vector: {word.lower(): 1}\n        pass\n\n    def cosine_sim(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two sparse vectors\n        # Return 0.0 if either vector is empty\n        pass\n\n    def alignment_score(self, image_tags: list[str], text: str) -> float:\n        # Convert image_tags and text.split() to vectors\n        # Return cosine similarity\n        pass\n\n    def rate_caption(self, image_tags: list[str], caption: str,\n                     decoys: list[str]) -> dict:\n        # 1. Compute alignment_score for caption and each decoy\n        # 2. Normalize: caption_score / sum_of_all_scores\n        #    (if sum is 0, score = 1 / (1 + len(decoys)))\n        # 3. Return {\"caption\": str, \"score\": float (rounded to 3),\n        #            \"quality\": \"good\"/\"fair\"/\"poor\"}\n        pass\n\n# Test:\nscorer = AlignmentScorer()\n\n# Good caption match\nresult = scorer.rate_caption(\n    [\"beach\", \"sunset\", \"ocean\", \"waves\"],\n    \"sunset at the beach with ocean waves\",\n    [\"a snowy mountain\", \"a city street\"]\n)\nprint(result[\"quality\"])\n\n# Direct alignment\nscore = scorer.alignment_score(\n    [\"dog\", \"park\", \"ball\"],\n    \"dog playing in park\"\n)\nprint(f\"{score:.2f}\")",
+      "expected_output": "good\n0.82",
+      "hints": {
+        "en": [
+          "to_vec: return {w.lower(): 1 for w in words}. cosine_sim: shared = set(a) & set(b), dot = len(shared), norms = sqrt(len(a)) * sqrt(len(b)).",
+          "alignment_score: call to_vec on image_tags and text.split(), then return cosine_sim of those two vectors.",
+          "rate_caption: compute raw scores for caption and all decoys, divide caption's score by the total. Round to 3 decimals. Use thresholds 0.5 and 0.25 for quality."
+        ]
+      },
+      "test_code": "import math\ns = AlignmentScorer()\nassert s.to_vec([\"Hello\", \"WORLD\"]) == {\"hello\": 1, \"world\": 1}\nassert s.to_vec([]) == {}\nassert s.cosine_sim({}, {\"a\": 1}) == 0.0\nassert s.cosine_sim({}, {}) == 0.0\nsim = s.cosine_sim({\"a\": 1, \"b\": 1}, {\"b\": 1, \"c\": 1})\nassert abs(sim - 0.5) < 0.01\nscore = s.alignment_score([\"dog\", \"park\"], \"dog in park\")\nassert score > 0.5\nscore2 = s.alignment_score([\"dog\", \"park\"], \"fish in ocean\")\nassert score2 == 0.0\nr = s.rate_caption([\"beach\", \"sunset\"], \"beach sunset\", [\"snow mountain\"])\nassert r[\"quality\"] == \"good\"\nassert abs(r[\"score\"] - 1.0) < 0.01\nassert r[\"caption\"] == \"beach sunset\"\nr2 = s.rate_caption([\"xyz\"], \"abc\", [\"def\"])\nassert r2[\"quality\"] == \"poor\" or r2[\"score\"] == 0.5"
+    },
+    {
+      "instruction": {
+        "en": "Build a `VisualQueryRouter` class that routes images to specialized handlers based on which handler's descriptions best match the image's tags. Implement `add_route(handler_name, descriptions)` to register a handler with a list of text descriptions, `score_route(image_tags, descriptions)` to return the highest cosine similarity between the image tags and any description in the list (split each description into words for comparison), and `route(image_tags, threshold)` to return the handler name with the highest score, or 'general' if the best score is below the threshold (default 0.2). Also implement `route_batch(images, threshold)` that takes a list of dicts with 'id' and 'tags' keys and returns a dict mapping each id to its routed handler."
+      },
+      "starter_code": "import math\n\nclass VisualQueryRouter:\n    def __init__(self):\n        self.routes = {}\n\n    def _to_vec(self, words: list[str]) -> dict:\n        return {w.lower(): 1 for w in words}\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        if not a or not b:\n            return 0.0\n        shared = set(a) & set(b)\n        dot = len(shared)\n        norm = math.sqrt(len(a)) * math.sqrt(len(b))\n        return dot / norm if norm else 0.0\n\n    def add_route(self, handler_name: str, descriptions: list[str]):\n        # Store handler with its descriptions\n        pass\n\n    def score_route(self, image_tags: list[str],\n                    descriptions: list[str]) -> float:\n        # Return the MAX cosine similarity between image_tags\n        # and any single description (split into words)\n        pass\n\n    def route(self, image_tags: list[str],\n              threshold: float = 0.2) -> str:\n        # Score image against all routes, return best handler\n        # Return \"general\" if best score < threshold\n        pass\n\n    def route_batch(self, images: list[dict],\n                    threshold: float = 0.2) -> dict:\n        # Route multiple images: [{\"id\": str, \"tags\": list}]\n        # Return {id: handler_name}\n        pass\n\n# Test:\nrouter = VisualQueryRouter()\nrouter.add_route(\"landscape\", [\"landscape scenery\", \"mountain outdoor\"])\nrouter.add_route(\"document\", [\"scanned document text\", \"paper writing\"])\nrouter.add_route(\"pet\", [\"dog cat animal pet\"])\n\nprint(router.route([\"mountain\", \"trees\", \"outdoor\"]))\nprint(router.route([\"abstract\", \"colorful\"]))\n\nbatch = router.route_batch([\n    {\"id\": \"img1\", \"tags\": [\"dog\", \"park\"]},\n    {\"id\": \"img2\", \"tags\": [\"scanned\", \"text\", \"document\"]},\n])\nprint(batch[\"img1\"])\nprint(batch[\"img2\"])",
+      "expected_output": "landscape\ngeneral\npet\ndocument",
+      "hints": {
+        "en": [
+          "add_route: just store the descriptions list in self.routes[handler_name].",
+          "score_route: for each description, split into words, convert to vec, compute cosine with image_tags vec. Return the max score across all descriptions.",
+          "route: iterate self.routes, call score_route for each, track the best. route_batch: call self.route for each image dict."
+        ]
+      },
+      "test_code": "import math\nr = VisualQueryRouter()\nr.add_route(\"food\", [\"food meal dish\"])\nr.add_route(\"car\", [\"car vehicle road\"])\nassert r.score_route([\"food\", \"meal\"], [\"food meal dish\"]) > 0.5\nassert r.score_route([\"xyz\"], [\"abc def\"]) == 0.0\nassert r.route([\"food\", \"plate\", \"meal\"]) == \"food\"\nassert r.route([\"xyz\", \"abc\"]) == \"general\"\nassert r.route([\"car\", \"road\"]) == \"car\"\nbatch = r.route_batch([{\"id\": \"a\", \"tags\": [\"food\"]}, {\"id\": \"b\", \"tags\": [\"car\"]}])\nassert batch[\"a\"] == \"food\"\nassert batch[\"b\"] == \"car\"\nassert r.route([\"nothing\", \"matches\"], threshold=0.9) == \"general\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["image-text alignment scoring", "CLIP ViT-L/14", "visual query routing", "caption quality rating", "cosine similarity thresholds", "content verification", "multi-route dispatching", "batch image auditing", "prompt engineering for CLIP", "softmax normalization"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "pip install", "basic math operations"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

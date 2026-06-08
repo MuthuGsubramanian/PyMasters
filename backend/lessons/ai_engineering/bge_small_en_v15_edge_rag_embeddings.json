@@ -1,0 +1,132 @@
+{
+  "id": "bge_small_en_v15_edge_rag_embeddings",
+  "topic": "bge_small_en_v15_edge_rag_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Lightweight RAG Embeddings with BAAI/bge-small-en-v1.5 for Edge Deployment"
+  },
+  "description": {
+    "en": "Deploy BAAI/bge-small-en-v1.5 — a 33MB BERT-based embedding model optimized for resource-constrained RAG pipelines, edge devices, and local semantic search with ONNX and quantization support."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Small Model, Big Impact: Edge-Ready Embeddings with BGE-Small\n\nVaathiyaar here! Picture this: you need semantic search on a Raspberry Pi, a $5/month VPS, or an offline kiosk. You cannot afford 400MB models or GPU inference. Enter `BAAI/bge-small-en-v1.5` — a 33MB embedding powerhouse that punches far above its weight. Built by the Beijing Academy of AI, it ranks among the top compact models on the MTEB leaderboard and runs comfortably on devices with just 512MB RAM.\n\nThis lesson shows you how to deploy BGE-small for real-world RAG on the edge — from basic encoding through ONNX optimization to building a retrieval pipeline that fits inside a Docker container smaller than a selfie.\n\n### Why bge-small-en-v1.5?\n\n| Model | Size | Dims | MTEB Avg | Memory (inference) | Best For |\n|---|---|---|---|---|---|\n| bge-small-en-v1.5 | 33 MB | 384 | 62.17 | ~130 MB | Edge, IoT, constrained envs |\n| bge-base-en-v1.5 | 110 MB | 768 | 63.55 | ~450 MB | Balanced quality/cost |\n| all-MiniLM-L6-v2 | 80 MB | 384 | 56.26 | ~260 MB | General lightweight |\n| bge-large-en-v1.5 | 335 MB | 1024 | 64.23 | ~1.3 GB | Quality-first servers |\n\nBGE-small delivers 97% of bge-base quality at 30% of the size. The secret: knowledge distillation from larger teacher models combined with contrastive pre-training on massive text pairs.\n\n### Encoding with the Query Prefix\n\nBGE models use an instruction prefix for queries (not for documents) to improve retrieval accuracy:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\n# Documents are encoded WITHOUT prefix\ndocuments = [\n    \"Python garbage collector uses reference counting\",\n    \"Kubernetes pods share network namespaces\",\n    \"SQLite is a serverless embedded database\",\n    \"Transformers use self-attention mechanisms\",\n]\ndoc_embeddings = model.encode(documents, normalize_embeddings=True)\n\n# Queries are encoded WITH instruction prefix\nquery = \"Represent this sentence for searching relevant passages: How does Python manage memory?\"\nquery_emb = model.encode(query, normalize_embeddings=True)\n\nprint(doc_embeddings.shape)  # (4, 384)\n```\n\nThe prefix tells the model to optimize the query vector for retrieval rather than general similarity — a small trick that boosts recall by 2-5%.\n\n### Building an Edge-Ready Retrieval Pipeline\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass EdgeRetriever:\n    QUERY_PREFIX = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.documents = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.documents = documents\n        self.embeddings = self.model.encode(\n            documents, normalize_embeddings=True, batch_size=32\n        )\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        q_emb = self.model.encode(\n            self.QUERY_PREFIX + query, normalize_embeddings=True\n        )\n        scores = q_emb @ self.embeddings.T  # dot product = cosine (normalized)\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [{\"text\": self.documents[i], \"score\": float(scores[i])} for i in top_idx]\n\n    def save_index(self, path: str):\n        np.savez(path, embeddings=self.embeddings, documents=self.documents)\n\n    def load_index(self, path: str):\n        data = np.load(path, allow_pickle=True)\n        self.embeddings = data[\"embeddings\"]\n        self.documents = list(data[\"documents\"])\n```\n\n### ONNX Quantization: From 33MB to 9MB\n\nFor true edge deployment, ONNX with INT8 quantization shrinks the model dramatically:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\n# ONNX backend — 2-3x faster on CPU\nmodel_onnx = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\n# Quantized to INT8 — model drops to ~9MB\nmodel_q8 = SentenceTransformer(\n    \"BAAI/bge-small-en-v1.5\",\n    backend=\"onnx\",\n    model_kwargs={\n        \"provider\": \"CPUExecutionProvider\",\n        \"quantize\": True,\n    },\n)\n\ntext = \"Test sentence for benchmarking\"\nemb_full = model_onnx.encode(text)\nemb_q8 = model_q8.encode(text)\ncosine = np.dot(emb_full, emb_q8) / (np.linalg.norm(emb_full) * np.linalg.norm(emb_q8))\nprint(f\"Quantization fidelity: {cosine:.4f}\")  # > 0.99\n```\n\n### Deployment Sizing Guide\n\n- **Raspberry Pi 4 (2GB):** INT8 quantized ONNX — handles ~500 docs, ~50ms/query\n- **Docker on 512MB VPS:** ONNX FP32 — handles ~5K docs, ~30ms/query\n- **Laptop CPU:** PyTorch or ONNX — handles ~50K docs, ~15ms/query\n- **Disk budget:** Save embeddings to `.npz` — 1M docs × 384 dims ≈ 1.5GB on disk\n\n> **Key Insight:** BAAI/bge-small-en-v1.5 is the smallest model you should trust for production retrieval — 33MB (9MB quantized), 384 dimensions, and MTEB scores that rival models 3× its size. The query instruction prefix is the one non-obvious trick: skip it for documents, use it for queries, and your recall jumps measurably. For Homie edge deployment or any memory-constrained RAG, this model hits the sweet spot between quality and footprint."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "When your deployment target is a Raspberry Pi, a cheap VPS, or an offline kiosk, every megabyte counts. BAAI/bge-small-en-v1.5 packs MTEB-competitive retrieval quality into just 33MB — with ONNX quantization dropping it to 9MB. It's the smallest model you should trust for production-grade RAG.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndocuments = [\n    \"Python garbage collector uses reference counting\",\n    \"Kubernetes pods share network namespaces\",\n    \"SQLite is a serverless embedded database\",\n    \"Transformers use self-attention mechanisms\",\n]\n\n# Documents encoded WITHOUT instruction prefix\ndoc_embeddings = model.encode(documents, normalize_embeddings=True)\nprint(doc_embeddings.shape)  # (4, 384)\nprint(np.linalg.norm(doc_embeddings[0]))  # ~1.0 (normalized)",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the unified API for loading hundreds of embedding models including BGE. Install with: pip install sentence-transformers."},
+        {"line": 4, "explanation": "Load BAAI/bge-small-en-v1.5 — a 33MB BERT-based model with 384-dim output. Downloads once from Hugging Face, runs locally with no API key."},
+        {"line": 6, "explanation": "Define knowledge base documents. These could be FAQ entries, code documentation chunks, or product descriptions — any text you want to make searchable."},
+        {"line": 13, "explanation": "Critical BGE convention: documents are encoded WITHOUT any prefix. The model treats them as passages to be retrieved. Adding a prefix here would hurt accuracy."},
+        {"line": 14, "explanation": "normalize_embeddings=True makes every vector unit-length. This turns dot product into cosine similarity — saving a division per comparison at search time."},
+        {"line": 15, "explanation": "Shape (4, 384): four documents, each compressed into a 384-dimensional meaning-vector. These 384 floats capture the semantic essence of each passage."},
+        {"line": 16, "explanation": "Norm ≈ 1.0 confirms normalization. From here, similarity search is just matrix multiplication — the fastest operation on any hardware."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\nQUERY_PREFIX = \"Represent this sentence for searching relevant passages: \"\n\ndocs = [\n    \"Python garbage collector uses reference counting\",\n    \"Kubernetes pods share network namespaces\",\n    \"SQLite is a serverless embedded database\",\n]\ndoc_embs = model.encode(docs, normalize_embeddings=True)\n\n# Query WITH instruction prefix\nquery = QUERY_PREFIX + \"How does Python manage memory?\"\nquery_emb = model.encode(query, normalize_embeddings=True)\n\nscores = query_emb @ doc_embs.T  # dot product (cosine for normalized)\nranked_idx = np.argsort(scores)[::-1]\n\nfor i in ranked_idx:\n    print(f\"{scores[i]:.3f} | {docs[i]}\")",
+      "steps": [
+        {"line": 5, "explanation": "BGE's key trick: queries get a special instruction prefix. This asymmetric encoding improves retrieval recall by 2-5% on benchmarks."},
+        {"line": 12, "explanation": "Documents encoded without prefix — they represent the passages being searched, not the search intent."},
+        {"line": 15, "explanation": "Prepend the instruction prefix to the query string. The model then optimizes the embedding for passage retrieval rather than general similarity."},
+        {"line": 16, "explanation": "Encode the prefixed query. The resulting 384-dim vector is tuned to find relevant passages, not just semantically similar text."},
+        {"line": 18, "explanation": "Matrix multiply query vector against all doc vectors. With normalized vectors, this single operation gives cosine similarity scores for the entire corpus."},
+        {"line": 19, "explanation": "argsort descending gives document indices ranked by relevance. The memory management query should rank the Python GC document highest."},
+        {"line": 21, "explanation": "Print ranked results. Despite no word overlap between 'manage memory' and 'garbage collector reference counting', the model bridges the semantic gap."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nclass EdgeRetriever:\n    PREFIX = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.docs = []\n        self.embs = None\n\n    def index(self, documents):\n        self.docs = documents\n        self.embs = self.model.encode(documents, normalize_embeddings=True)\n\n    def search(self, query, top_k=3):\n        q = self.model.encode(self.PREFIX + query, normalize_embeddings=True)\n        scores = q @ self.embs.T\n        idx = np.argsort(scores)[::-1][:top_k]\n        return [{\"text\": self.docs[i], \"score\": float(scores[i])} for i in idx]\n\n    def save_index(self, path):\n        np.savez(path, embs=self.embs, docs=self.docs)\n\nretriever = EdgeRetriever()\nretriever.index([\"Python uses GIL\", \"Rust has no GC\", \"Go has goroutines\"])\nresults = retriever.search(\"concurrency in Go\", top_k=2)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['text']}\")",
+      "steps": [
+        {"line": 4, "explanation": "EdgeRetriever wraps the model, index, and search logic in one class — ready to drop into any edge service or CLI tool."},
+        {"line": 5, "explanation": "Store the BGE query prefix as a class constant. This ensures every search query gets the instruction prefix automatically."},
+        {"line": 12, "explanation": "index() encodes all documents once and caches the embedding matrix. Re-indexing is the expensive step — search is just a dot product."},
+        {"line": 14, "explanation": "Batch encode with normalization. batch_size can be tuned for memory-constrained devices (default 32 works for most edge hardware)."},
+        {"line": 17, "explanation": "Prefix the query, encode, and compute dot-product similarity against all document embeddings in one vectorized operation."},
+        {"line": 19, "explanation": "argsort + slice gives top-k indices. For larger corpora (>100K docs), swap this for FAISS or Annoy approximate nearest neighbors."},
+        {"line": 22, "explanation": "save_index() persists embeddings to disk as .npz. On restart, load embeddings without re-encoding — critical for edge devices with slow CPUs."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "bge-small-en-v1.5 (33MB)",
+      "right_label": "bge-base-en-v1.5 (110MB)",
+      "items": [
+        {"left": "384 dimensions", "right": "768 dimensions"},
+        {"left": "~130 MB inference RAM", "right": "~450 MB inference RAM"},
+        {"left": "MTEB avg: 62.17", "right": "MTEB avg: 63.55"},
+        {"left": "Fits Raspberry Pi / 512MB VPS", "right": "Needs 1GB+ RAM minimum"},
+        {"left": "INT8 quantized: ~9 MB on disk", "right": "INT8 quantized: ~30 MB on disk"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now deploy production-grade semantic search on edge devices — 33MB model, 9MB quantized, zero API keys needed!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `BGERetriever` class that simulates BGE-style asymmetric search. It stores documents as word-frequency vectors (encoded WITHOUT prefix) and encodes queries WITH a prefix tag '[SEARCH]' prepended. Implement `encode(text)` returning a word-frequency dict, `cosine_similarity(vec_a, vec_b)` computing cosine between two dicts, and `search(query, top_k)` that prepends '[SEARCH]' to the query before encoding, then returns top-k results as `{\"document\": str, \"score\": float}` sorted by score descending."
+      },
+      "starter_code": "import math\n\nclass BGERetriever:\n    QUERY_PREFIX = \"[SEARCH] \"\n\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.doc_vectors = [self.encode(doc) for doc in documents]\n\n    def encode(self, text: str) -> dict:\n        # Return word frequency vector as dict {word: count}\n        # Lowercase all words\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two word-frequency vectors\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # 1. Prepend QUERY_PREFIX to query\n        # 2. Encode the prefixed query\n        # 3. Score against all doc_vectors\n        # 4. Return top_k results sorted by score descending\n        pass\n\n# Test it:\nretriever = BGERetriever([\n    \"python memory management garbage collection\",\n    \"kubernetes container orchestration pods\",\n    \"python data science pandas numpy\",\n    \"cooking Italian pasta recipes\"\n])\n\nresults = retriever.search(\"python data\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "2\npython data science pandas numpy\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), split text.lower() by spaces and count each word into a dict",
+          "For cosine_similarity, find shared keys, compute dot product, divide by product of magnitudes (sqrt of sum of squares for each vector)",
+          "In search(), prepend self.QUERY_PREFIX to the query before calling self.encode() — this adds '[SEARCH]' as a token that won't match document tokens but differentiates query encoding"
+        ]
+      },
+      "test_code": "r = BGERetriever([\"hello world\", \"world peace\", \"hello hello world\"])\nassert r.encode(\"hello world\") == {\"hello\": 1, \"world\": 1}\nassert r.encode(\"hello hello\") == {\"hello\": 2}\nsim = r.cosine_similarity({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1})\nassert abs(sim - 1.0) < 0.001\nsim0 = r.cosine_similarity({\"a\": 1}, {\"b\": 1})\nassert sim0 == 0.0\nresults = r.search(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"hello hello world\"\nassert results[0][\"score\"] > results[1][\"score\"]\n# Verify prefix is applied (encode of prefixed query includes [search] token)\nprefixed = r.encode(r.QUERY_PREFIX + \"test\")\nassert \"[search]\" in prefixed"
+    },
+    {
+      "instruction": {
+        "en": "Build an `EdgeRAGPipeline` class that wraps `BGERetriever` to simulate a full RAG pipeline for edge deployment. Implement `retrieve(query, top_k)` to get relevant docs, `build_prompt(query, top_k)` to format a context-enriched prompt as 'Context:\\n- doc1\\n- doc2\\n\\nQuestion: query\\nAnswer:', and `estimate_memory(num_docs, dims)` as a static method that returns estimated memory in MB for storing embeddings (formula: num_docs × dims × 4 bytes per float / 1_000_000)."
+      },
+      "starter_code": "import math\n\nclass BGERetriever:\n    QUERY_PREFIX = \"[SEARCH] \"\n\n    def __init__(self, documents):\n        self.documents = documents\n        self.doc_vectors = [self.encode(doc) for doc in documents]\n\n    def encode(self, text):\n        words = text.lower().split()\n        vec = {}\n        for w in words:\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def cosine_similarity(self, vec_a, vec_b):\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[w] * vec_b[w] for w in shared)\n        mag_a = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in vec_b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\n    def search(self, query, top_k=3):\n        q_vec = self.encode(self.QUERY_PREFIX + query)\n        scored = [\n            {\"document\": doc, \"score\": self.cosine_similarity(q_vec, dv)}\n            for doc, dv in zip(self.documents, self.doc_vectors)\n        ]\n        scored.sort(key=lambda x: x[\"score\"], reverse=True)\n        return scored[:top_k]\n\nclass EdgeRAGPipeline:\n    def __init__(self, documents: list[str]):\n        self.retriever = BGERetriever(documents)\n\n    def retrieve(self, query: str, top_k: int = 3) -> list[dict]:\n        # Return top-k results from the retriever\n        pass\n\n    def build_prompt(self, query: str, top_k: int = 3) -> str:\n        # Format: Context:\\n- doc1\\n- doc2\\n\\nQuestion: query\\nAnswer:\n        pass\n\n    @staticmethod\n    def estimate_memory(num_docs: int, dims: int = 384) -> float:\n        # Return estimated MB: num_docs * dims * 4 / 1_000_000\n        pass\n\n# Test it:\npipeline = EdgeRAGPipeline([\n    \"python supports object oriented programming\",\n    \"kubernetes manages container workloads\",\n    \"python has libraries for machine learning\",\n    \"cooking requires fresh ingredients\"\n])\n\nprompt = pipeline.build_prompt(\"python ML\", top_k=2)\nprint(\"Context:\" in prompt)\nprint(\"Question: python ML\" in prompt)\nprint(\"Answer:\" in prompt)\n\nmem = EdgeRAGPipeline.estimate_memory(1000000, 384)\nprint(f\"{mem:.1f}\")",
+      "expected_output": "True\nTrue\nTrue\n1536.0",
+      "hints": {
+        "en": [
+          "retrieve() delegates directly to self.retriever.search(query, top_k)",
+          "In build_prompt(), join retrieved document texts with '\\n- ' prefix, then assemble the template with Context, Question, and Answer sections",
+          "estimate_memory() is pure math: multiply num_docs × dims × 4 (bytes per float32) and divide by 1_000_000 to convert to MB"
+        ]
+      },
+      "test_code": "p = EdgeRAGPipeline([\"hello world\", \"goodbye world\", \"hello friend\"])\nresults = p.retrieve(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] in [\"hello world\", \"hello friend\"]\nprompt = p.build_prompt(\"hello\", top_k=2)\nassert prompt.startswith(\"Context:\")\nassert \"Question: hello\" in prompt\nassert prompt.strip().endswith(\"Answer:\")\nassert \"- \" in prompt\nmem = EdgeRAGPipeline.estimate_memory(1000, 384)\nassert abs(mem - 1.536) < 0.001\nmem2 = EdgeRAGPipeline.estimate_memory(1000000, 384)\nassert abs(mem2 - 1536.0) < 0.1"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["BGE embeddings", "asymmetric retrieval", "query instruction prefix", "ONNX quantization", "edge deployment", "INT8 quantization", "embedding persistence", "resource-constrained RAG", "cosine similarity", "vector normalization"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

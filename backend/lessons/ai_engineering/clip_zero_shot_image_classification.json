@@ -1,0 +1,137 @@
+{
+  "id": "clip_zero_shot_image_classification",
+  "topic": "clip_zero_shot_image_classification",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Zero-Shot Image Classification with OpenAI CLIP",
+    "ta": ""
+  },
+  "description": {
+    "en": "Classify images into any category without training — using openai/clip-vit-large-patch14. Build zero-shot classifiers, image-text similarity engines, and local image search/tagging systems with CLIP's joint vision-language embeddings.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## See Without Being Taught: Zero-Shot Image Classification with CLIP\n\nVaathiyaar here! What if I told you a model could classify images into categories it has **never been trained on**? No fine-tuning, no labeled dataset, no retraining — just describe what you're looking for in plain English, and the model finds it. That's CLIP (Contrastive Language-Image Pre-training) from OpenAI, and the `clip-vit-large-patch14` variant is the workhorse behind countless production vision systems.\n\nCLIP was trained on 400 million image-text pairs scraped from the internet. It learned to map images and text into the **same embedding space** — so you can directly compare a photo with a sentence. This unlocks zero-shot classification, image search, content moderation, and local photo tagging — all without task-specific training.\n\n### How CLIP Works\n\n| Component | Role | Output |\n|---|---|---|\n| Vision Encoder (ViT-L/14) | Processes image into embedding | 768-dim vector |\n| Text Encoder (Transformer) | Processes text into embedding | 768-dim vector |\n| Contrastive Loss | Aligns matching image-text pairs | Shared embedding space |\n\nImages and text live in the same 768-dimensional space. Classification becomes: which text label is closest to this image?\n\n### Zero-Shot Classification with Transformers\n\n```python\nfrom transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-large-patch14\"\n)\n\nimage = Image.open(\"photo.jpg\")\ncandidates = [\"a dog playing fetch\", \"a cat sleeping\", \"a car on a highway\"]\n\nresults = classifier(image, candidate_labels=candidates)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['label']}\")\n# 0.921 | a dog playing fetch\n# 0.065 | a cat sleeping\n# 0.014 | a car on a highway\n```\n\nNo training loop. No labeled dataset. Just describe your categories and CLIP scores them.\n\n### Direct Embeddings for Image Search\n\n```python\nfrom transformers import CLIPModel, CLIPProcessor\nimport torch\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\nimages = [Image.open(f\"img_{i}.jpg\") for i in range(100)]\ninputs = processor(images=images, return_tensors=\"pt\", padding=True)\n\nwith torch.no_grad():\n    image_embeds = model.get_image_features(**inputs)\n    image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)\n\n# Search: encode a text query and find closest images\ntext_inputs = processor(text=[\"sunset over ocean\"], return_tensors=\"pt\")\nwith torch.no_grad():\n    text_embeds = model.get_text_features(**text_inputs)\n    text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)\n\nsimilarities = (text_embeds @ image_embeds.T)[0]\ntop_indices = similarities.argsort(descending=True)[:5]\n```\n\nThis is the foundation of local image search — encode your photo library once, then search with natural language queries instantly.\n\n### Building a Local Image Tagger\n\n```python\ndef auto_tag_image(image_path, tag_candidates, threshold=0.2):\n    image = Image.open(image_path)\n    results = classifier(image, candidate_labels=tag_candidates)\n    return [r['label'] for r in results if r['score'] >= threshold]\n\ntags = [\n    \"landscape\", \"portrait\", \"food\", \"animal\", \"architecture\",\n    \"sunset\", \"beach\", \"city\", \"nature\", \"indoor\"\n]\n\nmatched = auto_tag_image(\"vacation.jpg\", tags, threshold=0.15)\nprint(matched)  # ['beach', 'sunset', 'landscape', 'nature']\n```\n\n### CLIP vs Traditional Classifiers\n\n| Feature | Traditional CNN | CLIP Zero-Shot |\n|---|---|---|\n| New categories | Retrain required | Just add text labels |\n| Training data needed | Thousands per class | Zero |\n| Accuracy (ImageNet) | ~90% (supervised) | ~76% (zero-shot) |\n| Flexibility | Fixed categories | Any text description |\n| Setup time | Hours to days | Minutes |\n\n### Performance Tips\n\n- **Prompt engineering matters**: \"a photo of a dog\" outperforms \"dog\" — CLIP was trained on full sentences\n- **Batch processing**: Encode all images once, store embeddings, search against them repeatedly\n- **Threshold tuning**: For tagging, set score thresholds per use case — 0.25 for precision, 0.15 for recall\n- **Model size**: ViT-L/14 is ~900MB; for edge deployment, consider ViT-B/32 (~600MB, faster, slightly less accurate)\n\n> **Key Insight:** CLIP bridges vision and language into a shared embedding space — meaning you can classify, search, and tag images using plain English descriptions. No training data, no fine-tuning, no fixed categories. When your label set changes weekly or you need to search photos by description, CLIP turns what was once a retraining problem into a simple text input.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "CLIP maps images and text into the same 768-dimensional space. Classification becomes: which text label is closest to this image? No training, no labeled data — just describe your categories in English. openai/clip-vit-large-patch14 is the production-grade backbone for zero-shot vision tasks.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-large-patch14\"\n)\n\nimage = Image.open(\"photo.jpg\")\n\ncandidates = [\n    \"a dog playing fetch\",\n    \"a cat sleeping on a couch\",\n    \"a car driving on a highway\"\n]\n\nresults = classifier(image, candidate_labels=candidates)\n\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['label']}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import the Hugging Face pipeline — a high-level API that handles model loading, preprocessing, and inference in one call."},
+        {"line": 2, "explanation": "PIL (Pillow) opens images in a format CLIP can process. Install with: pip install Pillow transformers torch."},
+        {"line": 4, "explanation": "Create a zero-shot-image-classification pipeline. This loads CLIP's vision encoder (ViT-L/14) and text encoder together."},
+        {"line": 6, "explanation": "Specify clip-vit-large-patch14 — the large variant with 428M parameters. 'patch14' means the vision transformer splits images into 14×14 pixel patches."},
+        {"line": 9, "explanation": "Load any image as a PIL Image. CLIP handles resizing to 224×224 internally via the processor."},
+        {"line": 11, "explanation": "Define candidate labels as natural language descriptions. These are the 'classes' — you can change them anytime without retraining."},
+        {"line": 17, "explanation": "The pipeline encodes the image and all candidate texts into the same embedding space, then computes cosine similarities and softmax probabilities."},
+        {"line": 19, "explanation": "Results are sorted by score descending. The highest score is the predicted class. Scores sum to 1.0 (softmax over similarities)."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import CLIPModel, CLIPProcessor\nimport torch\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\nimage = Image.open(\"beach.jpg\")\ninputs = processor(\n    text=[\"sunset at the beach\", \"snowy mountain\", \"city skyline\"],\n    images=image,\n    return_tensors=\"pt\",\n    padding=True\n)\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n    logits = outputs.logits_per_image\n    probs = logits.softmax(dim=1)\n\nprint(probs)  # tensor([[0.92, 0.05, 0.03]])",
+      "steps": [
+        {"line": 1, "explanation": "Import CLIPModel and CLIPProcessor for lower-level access — more control than the pipeline, needed for custom workflows."},
+        {"line": 5, "explanation": "Load the pre-trained CLIP model (~900MB). This downloads both the vision transformer and text transformer weights."},
+        {"line": 6, "explanation": "CLIPProcessor handles tokenizing text AND preprocessing images — resizing, normalizing, converting to tensors."},
+        {"line": 9, "explanation": "Process text labels and image together. The processor returns input_ids for text and pixel_values for the image in a single dict."},
+        {"line": 12, "explanation": "return_tensors='pt' gives PyTorch tensors. padding=True pads text sequences to equal length for batched encoding."},
+        {"line": 16, "explanation": "torch.no_grad() disables gradient computation — we're doing inference only, saving memory and compute."},
+        {"line": 18, "explanation": "logits_per_image contains raw similarity scores between the image and each text label. Shape: (1, num_labels)."},
+        {"line": 19, "explanation": "Softmax converts raw logits into probabilities summing to 1.0. The highest probability is CLIP's classification answer."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from transformers import CLIPModel, CLIPProcessor\nimport torch\nfrom PIL import Image\nimport os\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\ndef build_image_index(image_dir):\n    paths = [os.path.join(image_dir, f) for f in os.listdir(image_dir)]\n    images = [Image.open(p) for p in paths]\n    inputs = processor(images=images, return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        embeds = model.get_image_features(**inputs)\n        embeds = embeds / embeds.norm(dim=-1, keepdim=True)\n    return paths, embeds\n\ndef search_images(query, paths, image_embeds, top_k=5):\n    inputs = processor(text=[query], return_tensors=\"pt\")\n    with torch.no_grad():\n        text_emb = model.get_text_features(**inputs)\n        text_emb = text_emb / text_emb.norm(dim=-1, keepdim=True)\n    scores = (text_emb @ image_embeds.T)[0]\n    top_idx = scores.argsort(descending=True)[:top_k]\n    return [(paths[i], float(scores[i])) for i in top_idx]",
+      "steps": [
+        {"line": 9, "explanation": "build_image_index encodes an entire directory of images into normalized embeddings — do this once and cache the result."},
+        {"line": 14, "explanation": "get_image_features returns only the image embedding (768-dim), skipping the cross-attention — faster for indexing."},
+        {"line": 15, "explanation": "L2-normalize embeddings so dot product equals cosine similarity. This makes search a simple matrix multiplication."},
+        {"line": 18, "explanation": "search_images takes a natural language query and finds the most similar images. This is the core of a local image search engine."},
+        {"line": 21, "explanation": "get_text_features encodes the query into the same 768-dim space as images. Text and images are now directly comparable."},
+        {"line": 23, "explanation": "Matrix multiply: (1, 768) @ (N, 768).T = (1, N) similarity scores. One line computes similarity against every indexed image."},
+        {"line": 24, "explanation": "Sort by similarity descending and take top_k. Return file paths with scores — ready for a UI or Homie plugin."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Traditional Image Classifier",
+      "right_label": "CLIP Zero-Shot",
+      "items": [
+        {"left": "Fixed categories defined at training", "right": "Any category described in natural language"},
+        {"left": "Needs thousands of labeled images", "right": "Zero training images required"},
+        {"left": "Retrain to add new classes", "right": "Just add a new text label"},
+        {"left": "Higher accuracy on trained classes", "right": "Good accuracy on any class (~76% ImageNet)"},
+        {"left": "Cannot search images by text", "right": "Natural language image search built-in"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now classify and search images using natural language — no training data needed, powered by CLIP!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `CLIPSimulator` class that mimics how CLIP classifies images using text-image similarity. Since we can't load the real model in a practice environment, simulate it: represent an 'image' as a list of keywords (tags) and a 'text label' as a string of words. Compute similarity by measuring word overlap between image tags and label words. Implement `encode_image(tags)` that returns a set of lowercased words, `encode_text(label)` that returns a set of lowercased words, `similarity(image_tags, label)` that returns Jaccard similarity (intersection / union), and `classify(image_tags, candidate_labels)` that returns a list of {label, score} dicts sorted by score descending with scores normalized to sum to 1.0."
+      },
+      "starter_code": "class CLIPSimulator:\n    def encode_image(self, tags: list[str]) -> set:\n        # Return a set of lowercased words from image tags\n        pass\n\n    def encode_text(self, label: str) -> set:\n        # Return a set of lowercased words from the text label\n        pass\n\n    def similarity(self, image_tags: list[str], label: str) -> float:\n        # Compute Jaccard similarity: |intersection| / |union|\n        # Return 0.0 if union is empty\n        pass\n\n    def classify(self, image_tags: list[str], candidate_labels: list[str]) -> list[dict]:\n        # 1. Compute similarity for each candidate label\n        # 2. Normalize scores to sum to 1.0 (like softmax)\n        #    If total is 0, assign equal probability to each label\n        # 3. Return sorted by score descending\n        #    Each dict: {\"label\": str, \"score\": float}\n        pass\n\n# Test it:\nclip = CLIPSimulator()\nimage = [\"dog\", \"playing\", \"fetch\", \"park\", \"grass\"]\nlabels = [\"a dog playing fetch\", \"a cat sleeping\", \"a car on road\"]\n\nresults = clip.classify(image, labels)\nprint(results[0][\"label\"])\nprint(len(results))\nprint(f\"{sum(r['score'] for r in results):.1f}\")",
+      "expected_output": "a dog playing fetch\n3\n1.0",
+      "hints": {
+        "en": [
+          "encode_image: return {tag.lower() for tag in tags}. encode_text: return set(label.lower().split())",
+          "For Jaccard similarity: get intersection = img_set & text_set, union = img_set | text_set, return len(intersection)/len(union)",
+          "In classify, compute all scores, sum them, then divide each by the total. If total is 0, use 1/len(labels) for each."
+        ]
+      },
+      "test_code": "c = CLIPSimulator()\nassert c.encode_image([\"Dog\", \"Cat\"]) == {\"dog\", \"cat\"}\nassert c.encode_text(\"A Big Dog\") == {\"a\", \"big\", \"dog\"}\nsim = c.similarity([\"dog\", \"park\"], \"dog in park\")\nassert abs(sim - 2/3) < 0.01\nassert c.similarity([], \"\") == 0.0\nresults = c.classify([\"dog\", \"fetch\"], [\"dog fetch\", \"cat sleep\"])\nassert results[0][\"label\"] == \"dog fetch\"\nassert results[0][\"score\"] > results[1][\"score\"]\nassert abs(sum(r[\"score\"] for r in results) - 1.0) < 0.001\nequal = c.classify([\"xyz\"], [\"aaa\", \"bbb\"])\nassert abs(equal[0][\"score\"] - 0.5) < 0.001"
+    },
+    {
+      "instruction": {
+        "en": "Build an `ImageSearchEngine` class that simulates CLIP-based image search. Each 'image' is stored as a dict with 'path' (string) and 'tags' (list of keyword strings). Implement `index(images)` to store the image list, `search(query, top_k)` to find the top-k most similar images to a text query (using Jaccard similarity between query words and image tags), and `auto_tag(image_tags, all_tags, threshold)` that returns which tags from a master tag list match the image above the given threshold. Return search results as a list of {path, score} dicts sorted by score descending."
+      },
+      "starter_code": "class ImageSearchEngine:\n    def __init__(self):\n        self.images = []\n\n    def index(self, images: list[dict]):\n        # Store images. Each image: {\"path\": str, \"tags\": list[str]}\n        pass\n\n    def _jaccard(self, set_a: set, set_b: set) -> float:\n        # Jaccard similarity: |intersection| / |union|\n        # Return 0.0 if union is empty\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # 1. Convert query to a set of lowercased words\n        # 2. For each image, compute Jaccard similarity\n        #    between query words and image tags (lowercased)\n        # 3. Return top-k results: [{\"path\": str, \"score\": float}]\n        pass\n\n    def auto_tag(self, image_tags: list[str], all_tags: list[str], threshold: float = 0.2) -> list[str]:\n        # For each candidate tag, compute Jaccard similarity\n        # between image_tags and the words in the candidate tag.\n        # Return tags with score >= threshold, sorted by score descending.\n        pass\n\n# Test it:\nengine = ImageSearchEngine()\nengine.index([\n    {\"path\": \"beach_sunset.jpg\", \"tags\": [\"beach\", \"sunset\", \"ocean\", \"sand\"]},\n    {\"path\": \"city_night.jpg\", \"tags\": [\"city\", \"night\", \"lights\", \"buildings\"]},\n    {\"path\": \"dog_park.jpg\", \"tags\": [\"dog\", \"park\", \"grass\", \"playing\"]},\n])\n\nresults = engine.search(\"sunset at the beach\", top_k=2)\nprint(results[0][\"path\"])\nprint(len(results))\n\nmatched = engine.auto_tag(\n    [\"beach\", \"sunset\", \"waves\"],\n    [\"beach scenery\", \"mountain view\", \"ocean sunset\", \"indoor photo\"],\n    threshold=0.2\n)\nprint(matched[0])",
+      "expected_output": "beach_sunset.jpg\n2\nocean sunset",
+      "hints": {
+        "en": [
+          "In _jaccard, handle empty union by returning 0.0, otherwise return len(intersection) / len(union)",
+          "In search, convert each image's tags to a lowercase set and compute _jaccard against the query word set, then sort descending",
+          "In auto_tag, for each candidate tag split it into words, compute _jaccard against the image tags set, and filter by threshold"
+        ]
+      },
+      "test_code": "e = ImageSearchEngine()\ne.index([{\"path\": \"a.jpg\", \"tags\": [\"dog\", \"cat\"]}, {\"path\": \"b.jpg\", \"tags\": [\"car\", \"road\"]}])\nassert e._jaccard({\"a\", \"b\"}, {\"b\", \"c\"}) == 1/3\nassert e._jaccard(set(), set()) == 0.0\nresults = e.search(\"dog\", top_k=1)\nassert len(results) == 1\nassert results[0][\"path\"] == \"a.jpg\"\nassert results[0][\"score\"] > 0\nresults2 = e.search(\"car road\", top_k=2)\nassert results2[0][\"path\"] == \"b.jpg\"\ntags = e.auto_tag([\"dog\", \"park\"], [\"dog walking\", \"car racing\", \"park fun\"], threshold=0.2)\nassert \"dog walking\" in tags\nassert \"park fun\" in tags\nassert \"car racing\" not in tags"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["zero-shot classification", "CLIP model", "vision-language embeddings", "image-text similarity", "image search", "auto-tagging", "ViT architecture", "contrastive learning"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "pip install", "basic image handling"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,121 @@
+{
+  "id": "qwen3_vl_2b_instruct_document_intelligence_plugin",
+  "topic": "qwen3_vl_2b_instruct_document_intelligence_plugin",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-VL-2B-Instruct: Build a Local Document Intelligence Plugin for Homie"
+  },
+  "description": {
+    "en": "Turn Qwen3-VL-2B-Instruct into a document intelligence plugin that extracts structured data from receipts, invoices, and screenshots — all locally. Learn prompt engineering for structured visual extraction, JSON output parsing, and how to wire the model as a lightweight Homie plugin."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Document Intelligence: Extract Structured Data from Images Locally\n\nVaathiyaar here! Cloud OCR services charge per page and send your private documents to third-party servers. What if Homie could read a receipt, pull out the merchant name, total, and line items — then hand you clean JSON — all without leaving your machine? Today we build a **Document Intelligence Plugin** using Qwen3-VL-2B-Instruct that extracts structured data from images using carefully crafted prompts.\n\n### Why Structured Extraction Beats Free-Form Captioning\n\n| Approach | Output | Downstream Use | Reliability |\n|---|---|---|---|\n| Free-form description | \"This is a receipt from...\" | Requires NLP to parse | Low |\n| OCR only | Raw text dump | Needs layout understanding | Medium |\n| **Structured extraction** | **JSON with named fields** | **Direct database insert** | **High** |\n\nThe key insight: vision-language models can do more than describe — they can *extract and format* when you prompt them correctly.\n\n### Loading the Model\n\n```python\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nimport json\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n```\n\n### Prompting for Structured Output\n\nThe secret sauce is a system prompt that demands JSON:\n\n```python\nfrom PIL import Image\n\ndef extract_document_data(image, schema_description):\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"You are a document analysis assistant. \"\n            \"Extract information exactly as requested. \"\n            \"Return ONLY valid JSON, no markdown fences, no explanation.\"\n        )},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": schema_description}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[image], return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(\n        **inputs, max_new_tokens=500,\n        temperature=0.1, repetition_penalty=1.1\n    )\n    raw = processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    )\n    return json.loads(raw)\n```\n\nTemperature 0.1 keeps the output deterministic — critical when you need parseable JSON, not creative prose.\n\n### Building the Plugin Interface\n\nWrap extraction into a plugin Homie can call:\n\n```python\nclass DocumentPlugin:\n    SCHEMAS = {\n        \"receipt\": 'Extract: {\"merchant\": str, \"date\": str, \"total\": float, \"items\": [{\"name\": str, \"price\": float}]}',\n        \"invoice\": 'Extract: {\"vendor\": str, \"invoice_number\": str, \"due_date\": str, \"amount_due\": float}',\n        \"screenshot\": 'Extract: {\"app_name\": str, \"visible_text\": [str], \"ui_elements\": [str]}',\n    }\n\n    def __init__(self, model, processor):\n        self.model = model\n        self.processor = processor\n\n    def analyze(self, image, doc_type):\n        schema = self.SCHEMAS.get(doc_type, self.SCHEMAS[\"screenshot\"])\n        return extract_document_data(image, schema)\n```\n\n### Extraction Strategies by Document Type\n\n| Document | Key Prompt Technique | Why It Works |\n|---|---|---|\n| Receipts | Specify field names and types | Model maps visual layout to named fields |\n| Invoices | Ask for specific IDs and dates | Structured docs have predictable layouts |\n| Screenshots | Request text and UI elements separately | Separates content from interface chrome |\n| Forms | Provide field labels to look for | Model searches for label-value pairs |\n| Charts | Ask for axis labels, values, trends | Forces numerical rather than narrative output |\n\n### Handling Extraction Failures Gracefully\n\n```python\ndef safe_extract(image, schema, fallback=None):\n    try:\n        return extract_document_data(image, schema)\n    except json.JSONDecodeError:\n        return fallback or {\"error\": \"Could not parse structured output\",\n                            \"raw\": raw}\n```\n\nAlways wrap extraction in a try/except — even with low temperature, a 2B model can occasionally produce malformed JSON. The fallback preserves the raw text for manual review.\n\n### Integration Pattern for Homie\n\n```python\n# In your Homie plugin registry:\nplugins = {\n    \"document_intelligence\": DocumentPlugin(model, processor)\n}\n\n# When user sends an image:\nresult = plugins[\"document_intelligence\"].analyze(user_image, \"receipt\")\n# result: {\"merchant\": \"Coffee Shop\", \"total\": 12.50, ...}\n```\n\nHomie receives clean structured data it can store, query, or act on — no parsing gymnastics required.\n\n> **Key Insight:** The leap from \"describe this image\" to \"extract this JSON\" is mostly a prompting problem, not a model size problem. Qwen3-VL-2B-Instruct with a precise system prompt and low temperature can reliably extract structured data from documents — making it the perfect lightweight vision plugin for Homie's toolkit."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Cloud OCR costs money and leaks your data. Qwen3-VL-2B-Instruct can extract structured JSON from receipts, invoices, and screenshots — entirely on your local hardware. Build a Document Intelligence plugin that gives Homie the ability to read and understand documents.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\nimport json\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\ndef extract_document_data(image, schema_description):\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"You are a document analysis assistant. \"\n            \"Extract information exactly as requested. \"\n            \"Return ONLY valid JSON, no markdown fences, no explanation.\"\n        )},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image},\n            {\"type\": \"text\", \"text\": schema_description}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[image], return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(\n        **inputs, max_new_tokens=500,\n        temperature=0.1, repetition_penalty=1.1\n    )\n    raw = processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    )\n    return json.loads(raw)",
+      "steps": [
+        {"line": 1, "explanation": "Import Qwen3VLForConditionalGeneration for the vision-language model and AutoProcessor which handles both text tokenization and image pixel preprocessing."},
+        {"line": 3, "explanation": "We import json because our goal is structured extraction — the model returns JSON strings that we parse into Python dicts."},
+        {"line": 5, "explanation": "Target the Instruct variant — instruction-tuning makes the model follow format constraints like 'return only JSON' far more reliably."},
+        {"line": 7, "explanation": "Load ~4GB of weights. device_map='auto' distributes layers across GPU/CPU; torch_dtype='auto' picks the best precision for your hardware."},
+        {"line": 11, "explanation": "Define the core extraction function. It takes a PIL Image and a schema description string that tells the model exactly what fields to extract."},
+        {"line": 13, "explanation": "The system prompt is critical: it commands JSON-only output with no markdown or explanation. This is the key to reliable structured extraction."},
+        {"line": 18, "explanation": "The user message pairs the image with the schema description. The model sees the document visually while knowing exactly which fields you want."},
+        {"line": 29, "explanation": "Temperature 0.1 makes output nearly deterministic — essential when you need parseable JSON, not creative prose. repetition_penalty prevents token loops."},
+        {"line": 35, "explanation": "json.loads parses the model's string output into a Python dict. If the model followed instructions, you get clean structured data ready for database insert."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "class DocumentPlugin:\n    SCHEMAS = {\n        \"receipt\": 'Extract: {\"merchant\": str, \"date\": str, \"total\": float, \"items\": [{\"name\": str, \"price\": float}]}',\n        \"invoice\": 'Extract: {\"vendor\": str, \"invoice_number\": str, \"due_date\": str, \"amount_due\": float}',\n        \"screenshot\": 'Extract: {\"app_name\": str, \"visible_text\": [str], \"ui_elements\": [str]}',\n    }\n\n    def __init__(self, model, processor):\n        self.model = model\n        self.processor = processor\n        self.history = []\n\n    def analyze(self, image, doc_type):\n        schema = self.SCHEMAS.get(doc_type, self.SCHEMAS[\"screenshot\"])\n        result = extract_document_data(image, schema)\n        self.history.append({\"doc_type\": doc_type, \"result\": result})\n        return result\n\n    def get_history(self):\n        return self.history\n\ndef safe_extract(image, schema, fallback=None):\n    try:\n        return extract_document_data(image, schema)\n    except json.JSONDecodeError:\n        return fallback or {\"error\": \"Could not parse structured output\"}\n\n# Homie plugin registry integration:\nplugins = {\"document_intelligence\": DocumentPlugin(model, processor)}\n# result = plugins[\"document_intelligence\"].analyze(user_image, \"receipt\")\n# -> {\"merchant\": \"Coffee Shop\", \"total\": 12.50, ...}",
+      "steps": [
+        {"line": 1, "explanation": "DocumentPlugin wraps extraction into a class Homie can register. SCHEMAS maps document types to extraction prompts with explicit field names and types."},
+        {"line": 3, "explanation": "The receipt schema tells the model exactly what to extract: merchant, date, total, and a list of line items. Type hints guide the model's output format."},
+        {"line": 4, "explanation": "Invoice schema targets business documents — vendor, invoice number, due date, and amount. Each schema is tailored to its document type's expected fields."},
+        {"line": 8, "explanation": "The plugin stores the model and processor as instance attributes. history tracks every extraction for audit and debugging."},
+        {"line": 13, "explanation": "analyze() looks up the right schema for the doc_type, runs extraction, logs the result to history, and returns clean structured data."},
+        {"line": 14, "explanation": "SCHEMAS.get with a fallback to 'screenshot' handles unknown document types gracefully — screenshot extraction is the most generic."},
+        {"line": 22, "explanation": "safe_extract wraps the JSON parsing in try/except. Even with low temperature, a 2B model occasionally produces malformed output — the fallback preserves usability."},
+        {"line": 29, "explanation": "The plugin registry pattern lets Homie discover and call document_intelligence alongside other plugins — clean separation of concerns."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud OCR Service",
+      "right_label": "Local Document Plugin",
+      "items": [
+        {"left": "Documents uploaded to third-party servers", "right": "Documents never leave your machine"},
+        {"left": "Pay per page ($0.01-0.10)", "right": "Free after one-time model download"},
+        {"left": "Returns raw text — you parse structure", "right": "Returns structured JSON directly"},
+        {"left": "Requires internet connection", "right": "Works fully offline"},
+        {"left": "Generic API — same for all docs", "right": "Custom schemas per document type"},
+        {"left": "High accuracy (large models)", "right": "Good accuracy, improvable with prompt tuning"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie can now read documents! Your local Document Intelligence plugin extracts structured JSON from receipts, invoices, and screenshots — privately, offline, and for free."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `DocumentExtractor` class that manages structured data extraction from documents. Initialize with `model_name` (string), an empty `extractions` list, and a `schemas` dict mapping document types to prompt strings. Pre-populate schemas with: 'receipt' -> 'Extract merchant, date, and total', 'invoice' -> 'Extract vendor, invoice_number, and amount_due', 'screenshot' -> 'Extract app_name and visible_text'. Implement `add_schema(doc_type, prompt)` to add or update a schema. Implement `extract(image_path, doc_type)` that raises ValueError if doc_type is not in schemas, otherwise appends `{\"image\": image_path, \"doc_type\": doc_type, \"schema\": self.schemas[doc_type], \"result\": result}` to extractions and returns a mock result dict: `{\"merchant\": \"MockStore\", \"total\": 9.99}` for 'receipt', `{\"vendor\": \"MockVendor\", \"amount_due\": 100.0}` for 'invoice', or `{\"app_name\": \"MockApp\", \"visible_text\": [\"hello\"]}` otherwise. Implement `summary()` returning `{\"total_extractions\": int, \"by_type\": dict}` where by_type maps each doc_type to its count of extractions."
+      },
+      "starter_code": "class DocumentExtractor:\n    def __init__(self, model_name: str):\n        self.model_name = model_name\n        self.extractions = []\n        self.schemas = {}\n        # Pre-populate default schemas\n        pass\n\n    def add_schema(self, doc_type: str, prompt: str):\n        # Add or update a schema\n        pass\n\n    def extract(self, image_path: str, doc_type: str) -> dict:\n        # Validate doc_type, mock extract, log, return\n        pass\n\n    def summary(self) -> dict:\n        # Return extraction summary\n        pass\n\n# Test it:\next = DocumentExtractor(\"Qwen/Qwen3-VL-2B-Instruct\")\nr1 = ext.extract(\"receipt.jpg\", \"receipt\")\nprint(r1[\"merchant\"], r1[\"total\"])\n\nr2 = ext.extract(\"bill.pdf\", \"invoice\")\nprint(r2[\"vendor\"], r2[\"amount_due\"])\n\next.add_schema(\"form\", \"Extract all field-value pairs\")\nr3 = ext.extract(\"form.png\", \"form\")\nprint(r3[\"app_name\"])\n\ns = ext.summary()\nprint(s[\"total_extractions\"])\nprint(sorted(s[\"by_type\"].items()))\n\ntry:\n    ext.extract(\"x.jpg\", \"unknown\")\nexcept ValueError:\n    print(\"Unknown type\")",
+      "expected_output": "MockStore 9.99\nMockVendor 100.0\nMockApp\n3\n[('form', 1), ('invoice', 1), ('receipt', 1)]\nUnknown type",
+      "hints": {
+        "en": [
+          "In __init__, set self.schemas to a dict with keys 'receipt', 'invoice', 'screenshot' mapped to their prompt strings",
+          "In extract(), check if doc_type == 'receipt' return the receipt mock dict, elif doc_type == 'invoice' return the invoice mock dict, else return the screenshot mock dict",
+          "For summary(), build by_type by counting extractions per doc_type using a loop or collections.Counter"
+        ]
+      },
+      "test_code": "e = DocumentExtractor(\"Qwen/Qwen3-VL-2B-Instruct\")\nassert e.model_name == \"Qwen/Qwen3-VL-2B-Instruct\"\nassert e.extractions == []\nassert \"receipt\" in e.schemas\nassert \"invoice\" in e.schemas\nassert \"screenshot\" in e.schemas\n\nr1 = e.extract(\"r.jpg\", \"receipt\")\nassert r1 == {\"merchant\": \"MockStore\", \"total\": 9.99}\nassert len(e.extractions) == 1\nassert e.extractions[0][\"image\"] == \"r.jpg\"\nassert e.extractions[0][\"doc_type\"] == \"receipt\"\nassert e.extractions[0][\"result\"] == r1\n\nr2 = e.extract(\"i.jpg\", \"invoice\")\nassert r2 == {\"vendor\": \"MockVendor\", \"amount_due\": 100.0}\nassert len(e.extractions) == 2\n\nr3 = e.extract(\"s.jpg\", \"screenshot\")\nassert r3 == {\"app_name\": \"MockApp\", \"visible_text\": [\"hello\"]}\n\ne.add_schema(\"form\", \"Extract fields\")\nassert e.schemas[\"form\"] == \"Extract fields\"\nr4 = e.extract(\"f.jpg\", \"form\")\nassert r4 == {\"app_name\": \"MockApp\", \"visible_text\": [\"hello\"]}\n\ns = e.summary()\nassert s[\"total_extractions\"] == 4\nassert s[\"by_type\"][\"receipt\"] == 1\nassert s[\"by_type\"][\"invoice\"] == 1\nassert s[\"by_type\"][\"screenshot\"] == 1\nassert s[\"by_type\"][\"form\"] == 1\n\ntry:\n    e.extract(\"x.jpg\", \"unknown\")\n    assert False\nexcept ValueError:\n    pass\n\ne.add_schema(\"receipt\", \"Updated prompt\")\nassert e.schemas[\"receipt\"] == \"Updated prompt\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `SchemaRegistry` class for managing document extraction schemas. Initialize with an empty `schemas` dict and a `usage_log` list. Implement `register(name, fields)` where fields is a list of field name strings — store `{\"fields\": fields, \"times_used\": 0}` under the name key. Implement `get_prompt(name)` that raises KeyError if name is not registered, otherwise increments times_used, appends `{\"schema\": name}` to usage_log, and returns the string `'Extract: ' + ', '.join(fields)`. Implement `most_used()` that returns the name of the schema with the highest times_used, or None if no schemas are registered. Implement `list_schemas()` that returns a sorted list of all registered schema names."
+      },
+      "starter_code": "class SchemaRegistry:\n    def __init__(self):\n        self.schemas = {}\n        self.usage_log = []\n\n    def register(self, name: str, fields: list):\n        # Register a schema with its field names\n        pass\n\n    def get_prompt(self, name: str) -> str:\n        # Get extraction prompt, track usage\n        pass\n\n    def most_used(self):\n        # Return name of most-used schema or None\n        pass\n\n    def list_schemas(self) -> list:\n        # Return sorted list of schema names\n        pass\n\n# Test it:\nreg = SchemaRegistry()\nreg.register(\"receipt\", [\"merchant\", \"date\", \"total\"])\nreg.register(\"invoice\", [\"vendor\", \"amount_due\"])\n\np1 = reg.get_prompt(\"receipt\")\nprint(p1)\n_ = reg.get_prompt(\"receipt\")\n_ = reg.get_prompt(\"invoice\")\n\nprint(reg.most_used())\nprint(reg.list_schemas())\nprint(len(reg.usage_log))\n\ntry:\n    reg.get_prompt(\"unknown\")\nexcept KeyError:\n    print(\"Not found\")",
+      "expected_output": "Extract: merchant, date, total\nreceipt\n['invoice', 'receipt']\n3\nNot found",
+      "hints": {
+        "en": [
+          "register() stores {'fields': fields, 'times_used': 0} in self.schemas[name]",
+          "get_prompt() increments self.schemas[name]['times_used'] before building the prompt string with ', '.join()",
+          "most_used() can use max() with a key function on self.schemas.items(), but handle the empty dict case first"
+        ]
+      },
+      "test_code": "r = SchemaRegistry()\nassert r.schemas == {}\nassert r.usage_log == []\n\nr.register(\"receipt\", [\"merchant\", \"total\"])\nassert r.schemas[\"receipt\"][\"fields\"] == [\"merchant\", \"total\"]\nassert r.schemas[\"receipt\"][\"times_used\"] == 0\n\np = r.get_prompt(\"receipt\")\nassert p == \"Extract: merchant, total\"\nassert r.schemas[\"receipt\"][\"times_used\"] == 1\nassert len(r.usage_log) == 1\nassert r.usage_log[0] == {\"schema\": \"receipt\"}\n\nr.register(\"invoice\", [\"vendor\", \"amount\"])\nr.get_prompt(\"receipt\")\nr.get_prompt(\"invoice\")\nassert r.schemas[\"receipt\"][\"times_used\"] == 2\nassert r.schemas[\"invoice\"][\"times_used\"] == 1\nassert r.most_used() == \"receipt\"\n\nassert r.list_schemas() == [\"invoice\", \"receipt\"]\nassert len(r.usage_log) == 3\n\ntry:\n    r.get_prompt(\"missing\")\n    assert False\nexcept KeyError:\n    pass\n\nr2 = SchemaRegistry()\nassert r2.most_used() is None\nassert r2.list_schemas() == []"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["document intelligence", "structured extraction from images", "JSON output prompting", "vision-language plugin architecture", "schema-driven extraction", "Qwen3-VL-2B-Instruct", "multimodal inference", "image-text-to-text models", "error handling for LLM output"],
+    "concepts_required": ["python classes", "dictionaries", "JSON parsing", "string methods", "exception handling", "Hugging Face Transformers basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,119 @@
+{
+  "id": "qwen3_vl_2b_instruct_visual_diff_change_detection",
+  "topic": "qwen3_vl_2b_instruct_visual_diff_change_detection",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-VL-2B: Build a Visual Diff and Change Detection Pipeline"
+  },
+  "description": {
+    "en": "Use Qwen3-VL-2B-Instruct to compare before/after images, detect visual changes, and generate structured change reports — a practical pattern for monitoring dashboards, UI regression testing, and Homie visual alerting."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Seeing What Changed: Visual Diff with a 2B VLM\n\nVaathiyaar here! Humans are great at spotting differences between two images — but doing it programmatically has always required complex computer vision pipelines. With Qwen3-VL-2B-Instruct, you can feed two images into a single prompt and ask the model to describe what changed. This unlocks **visual diff** — a pattern for monitoring dashboards, catching UI regressions, and building visual alerting into Homie.\n\n### Why Visual Diff Matters\n\n| Use Case | Before VLMs | With Qwen3-VL-2B |\n|---|---|---|\n| Dashboard monitoring | Pixel-diff libraries, threshold tuning | \"What metrics changed between these two screenshots?\" |\n| UI regression testing | Screenshot comparison tools + manual review | \"Describe any layout or text differences\" |\n| Physical space monitoring | Motion detection + object detection models | \"What objects moved or appeared?\" |\n| Document versioning | Text-based diff only | \"What changed between these two document pages?\" |\n\nThe key insight: Qwen3-VL-2B handles **multi-image inputs** natively. You pass two images in a single conversation turn.\n\n### Loading the Model\n\n```python\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n```\n\n### Building the Visual Diff Function\n\n```python\ndef visual_diff(before_path: str, after_path: str, focus: str = \"all changes\") -> str:\n    before = Image.open(before_path).convert(\"RGB\")\n    after = Image.open(after_path).convert(\"RGB\")\n\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"You are a visual change detector. Compare the two images \"\n            \"(first is BEFORE, second is AFTER). List every difference \"\n            \"you observe. Be specific about locations and values.\"\n        )},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": before},\n            {\"type\": \"image\", \"image\": after},\n            {\"type\": \"text\", \"text\": f\"What changed? Focus on: {focus}\"}\n        ]}\n    ]\n\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[before, after],\n        return_tensors=\"pt\"\n    ).to(model.device)\n\n    output = model.generate(**inputs, max_new_tokens=400, temperature=0.2)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip()\n```\n\nTwo images are passed in the `content` array. The system prompt establishes the BEFORE/AFTER convention so the model knows which is which.\n\n### Structured Change Reports\n\nFor programmatic use, ask for JSON output:\n\n```python\ndef structured_diff(before_path: str, after_path: str) -> str:\n    before = Image.open(before_path).convert(\"RGB\")\n    after = Image.open(after_path).convert(\"RGB\")\n\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"Compare BEFORE (image 1) and AFTER (image 2). \"\n            \"Return a JSON object with keys: \"\n            \"'changes' (list of strings), 'severity' (low/medium/high), \"\n            \"'summary' (one sentence).\"\n        )},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": before},\n            {\"type\": \"image\", \"image\": after},\n            {\"type\": \"text\", \"text\": \"Analyze differences.\"}\n        ]}\n    ]\n\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[before, after],\n        return_tensors=\"pt\"\n    ).to(model.device)\n\n    output = model.generate(**inputs, max_new_tokens=300, temperature=0.1)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip()\n```\n\n### Homie Visual Alert Integration\n\nWrap the diff function into a monitoring loop:\n\n```python\nimport time\nimport json\n\ndef monitor_screen(capture_fn, interval=60, threshold=\"medium\"):\n    severity_rank = {\"low\": 1, \"medium\": 2, \"high\": 3}\n    previous = capture_fn()  # returns a saved image path\n\n    while True:\n        time.sleep(interval)\n        current = capture_fn()\n        report = structured_diff(previous, current)\n        try:\n            data = json.loads(report)\n            if severity_rank.get(data[\"severity\"], 0) >= severity_rank[threshold]:\n                print(f\"ALERT: {data['summary']}\")\n        except json.JSONDecodeError:\n            print(f\"Raw diff: {report}\")\n        previous = current\n```\n\n### Performance Considerations\n\n| Setting | Value | Why |\n|---|---|---|\n| `temperature` | 0.1–0.2 | Deterministic change descriptions |\n| `max_new_tokens` | 300–400 | Enough for detailed diffs |\n| Image resize | 448–672px | Balance detail vs speed |\n| `torch.no_grad()` | Always | Saves memory during inference |\n\n> **Key Insight:** Visual diff is not about pixel-level comparison — it is about *semantic* change detection. Qwen3-VL-2B understands that a number changing from 42 to 87 on a dashboard is more significant than a timestamp updating. By framing change detection as a multi-image conversation, you get human-like change reports without any computer vision preprocessing."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Pixel diffs tell you THAT something changed. A vision-language model tells you WHAT changed and WHY it matters. Qwen3-VL-2B-Instruct accepts multiple images in a single prompt — feed it before and after, and it becomes a semantic visual diff engine running locally.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\ndef visual_diff(before_path: str, after_path: str, focus: str = \"all changes\") -> str:\n    before = Image.open(before_path).convert(\"RGB\")\n    after = Image.open(after_path).convert(\"RGB\")\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"You are a visual change detector. Compare the two images \"\n            \"(first is BEFORE, second is AFTER). List every difference.\"\n        )},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": before},\n            {\"type\": \"image\", \"image\": after},\n            {\"type\": \"text\", \"text\": f\"What changed? Focus on: {focus}\"}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[before, after],\n        return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(**inputs, max_new_tokens=400, temperature=0.2)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip()",
+      "steps": [
+        {"line": 1, "explanation": "Import Qwen3VLForConditionalGeneration and AutoProcessor — the model class handles vision-language generation, the processor handles both text and image inputs."},
+        {"line": 4, "explanation": "The 2B-Instruct variant is small enough for local inference (~5GB VRAM) yet capable of multi-image understanding."},
+        {"line": 6, "explanation": "device_map='auto' places model layers on GPU if available, CPU otherwise. torch_dtype='auto' picks the best precision."},
+        {"line": 10, "explanation": "visual_diff takes two image paths and an optional focus area. The focus parameter lets you narrow the diff to specific aspects like 'text changes' or 'layout shifts'."},
+        {"line": 11, "explanation": "Both images are opened and converted to RGB to ensure consistent pixel format — PNGs with alpha channels would otherwise cause errors."},
+        {"line": 14, "explanation": "The system prompt establishes the BEFORE/AFTER convention. Without this, the model would not know which image came first."},
+        {"line": 18, "explanation": "Two image blocks in the user content — Qwen3-VL natively supports multi-image inputs. The text block ties them together with the comparison instruction."},
+        {"line": 27, "explanation": "Both images are passed to the processor together. It handles resizing, normalization, and interleaving image tokens with text tokens."},
+        {"line": 30, "explanation": "temperature=0.2 keeps the diff description factual and deterministic. max_new_tokens=400 allows detailed change reports."},
+        {"line": 31, "explanation": "Decode only the generated tokens by slicing past the input length. strip() cleans whitespace from the edges."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import json\n\ndef structured_diff(before_path: str, after_path: str) -> dict:\n    before = Image.open(before_path).convert(\"RGB\")\n    after = Image.open(after_path).convert(\"RGB\")\n    messages = [\n        {\"role\": \"system\", \"content\": (\n            \"Compare BEFORE (image 1) and AFTER (image 2). \"\n            \"Return JSON: {'changes': [...], 'severity': 'low/medium/high', \"\n            \"'summary': '...'}\"\n        )},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": before},\n            {\"type\": \"image\", \"image\": after},\n            {\"type\": \"text\", \"text\": \"Analyze differences.\"}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[before, after],\n        return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(**inputs, max_new_tokens=300, temperature=0.1)\n    raw = processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:],\n        skip_special_tokens=True\n    ).strip()\n    try:\n        return json.loads(raw)\n    except json.JSONDecodeError:\n        return {\"changes\": [raw], \"severity\": \"unknown\", \"summary\": raw[:100]}",
+      "steps": [
+        {"line": 1, "explanation": "Import json for parsing the model's structured output — we will ask Qwen3-VL to return JSON instead of free text."},
+        {"line": 7, "explanation": "The system prompt specifies the exact JSON schema we want. Small models respond better to explicit key names and example structure."},
+        {"line": 25, "explanation": "temperature=0.1 is even lower here — structured output needs maximum determinism to produce valid JSON."},
+        {"line": 30, "explanation": "Wrap json.loads in try/except — a 2B model may occasionally produce malformed JSON. The fallback preserves the raw output in a compatible dict structure."},
+        {"line": 33, "explanation": "The fallback dict uses the same keys as the expected output so downstream code never breaks, even if parsing fails."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Pixel-Level Diff",
+      "right_label": "VLM Semantic Diff",
+      "items": [
+        {"left": "Highlights every changed pixel", "right": "Reports meaningful changes only"},
+        {"left": "Sensitive to compression artifacts", "right": "Ignores irrelevant noise"},
+        {"left": "No understanding of content", "right": "Knows '42 → 87' is a metric change"},
+        {"left": "Requires threshold tuning", "right": "Works with natural language prompts"},
+        {"left": "Fast but noisy", "right": "Slower but semantically accurate"},
+        {"left": "Cannot explain changes", "right": "Generates human-readable summaries"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You have built a semantic visual diff pipeline! Qwen3-VL-2B compares before/after images and generates structured change reports — turning visual monitoring into a conversation with a local model."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ChangeDetector` class that simulates a visual change detection pipeline. On init, accept a list of `watch_zones` (strings like 'header', 'sidebar', 'metrics'). Implement `compare(before_desc, after_desc)` that takes two description strings and returns a dict of changes: for each watch zone, check if that zone keyword appears in either description (case-insensitive). If it appears in `after_desc` but NOT in `before_desc`, record it as 'added'. If in `before_desc` but NOT in `after_desc`, record it as 'removed'. If in both, record as 'unchanged'. If in neither, skip it. Implement `severity(changes)` that takes the changes dict and returns 'high' if any value is 'added' or 'removed', otherwise 'low'. Implement `report(before_desc, after_desc)` that calls compare and severity, returning a dict with 'changes', 'severity', and 'zone_count' (number of zones in the changes dict)."
+      },
+      "starter_code": "class ChangeDetector:\n    def __init__(self, watch_zones: list):\n        # Store watch_zones\n        pass\n\n    def compare(self, before_desc: str, after_desc: str) -> dict:\n        # For each zone in self.watch_zones:\n        #   Check if zone appears in before_desc and/or after_desc\n        #   (case-insensitive). Classify as 'added', 'removed',\n        #   'unchanged', or skip if in neither.\n        # Return dict mapping zone -> status\n        pass\n\n    def severity(self, changes: dict) -> str:\n        # Return 'high' if any change is 'added' or 'removed'\n        # Otherwise return 'low'\n        pass\n\n    def report(self, before_desc: str, after_desc: str) -> dict:\n        # 1. Get changes from compare()\n        # 2. Get severity from severity()\n        # 3. Return dict with 'changes', 'severity', 'zone_count'\n        pass\n\n# Test it:\ndetector = ChangeDetector([\"header\", \"sidebar\", \"metrics\", \"footer\"])\n\nr = detector.report(\n    \"The header shows the logo and sidebar has navigation\",\n    \"The header shows the logo and metrics panel displays revenue\"\n)\nprint(r[\"changes\"][\"header\"])\nprint(r[\"changes\"][\"sidebar\"])\nprint(r[\"changes\"][\"metrics\"])\nprint(r[\"severity\"])\nprint(r[\"zone_count\"])",
+      "expected_output": "unchanged\nremoved\nadded\nhigh\n3",
+      "hints": {
+        "en": [
+          "In compare(), use 'zone.lower() in before_desc.lower()' to check presence — build two booleans (in_before, in_after) then use if/elif to classify",
+          "Skip zones where both in_before and in_after are False — only include zones that appear in at least one description",
+          "severity() just needs: any(v in ('added', 'removed') for v in changes.values()) — if True return 'high', else 'low'"
+        ]
+      },
+      "test_code": "d = ChangeDetector([\"header\", \"sidebar\", \"footer\"])\nc = d.compare(\"header is blue\", \"header is blue and footer is red\")\nassert c[\"header\"] == \"unchanged\"\nassert c[\"footer\"] == \"added\"\nassert \"sidebar\" not in c\nassert d.severity(c) == \"high\"\nassert d.severity({\"a\": \"unchanged\"}) == \"low\"\nr = d.report(\"sidebar has links and header is green\", \"header is green\")\nassert r[\"changes\"][\"sidebar\"] == \"removed\"\nassert r[\"changes\"][\"header\"] == \"unchanged\"\nassert r[\"severity\"] == \"high\"\nassert r[\"zone_count\"] == 2\nr2 = d.report(\"header exists\", \"header exists\")\nassert r2[\"severity\"] == \"low\"\nassert r2[\"zone_count\"] == 1"
+    },
+    {
+      "instruction": {
+        "en": "Build a `DiffScheduler` class that manages periodic visual diff checks. On init, accept an `interval` (int, seconds between checks) and start with an empty `snapshots` list and `alerts` list. Implement `capture(description)` that appends the description string to snapshots and returns its index. Implement `check()` that compares the last two snapshots: if there are fewer than 2 snapshots, return None. Otherwise, compare the two strings — if they are different, append a dict to alerts with 'from_index', 'to_index', 'before' (truncated to 50 chars), 'after' (truncated to 50 chars), and return that dict. If identical, return None. Implement `status()` that returns a dict with 'total_snapshots', 'total_alerts', 'interval', and 'last_alert' (the most recent alert dict, or None)."
+      },
+      "starter_code": "class DiffScheduler:\n    def __init__(self, interval: int):\n        # Store interval, initialize snapshots and alerts lists\n        pass\n\n    def capture(self, description: str) -> int:\n        # Append description to snapshots\n        # Return the index of the new snapshot\n        pass\n\n    def check(self) -> dict | None:\n        # If < 2 snapshots, return None\n        # Compare last two snapshots\n        # If different: create alert dict, append to alerts, return it\n        # If same: return None\n        pass\n\n    def status(self) -> dict:\n        # Return dict with total_snapshots, total_alerts,\n        # interval, and last_alert\n        pass\n\n# Test it:\nscheduler = DiffScheduler(interval=30)\n\nscheduler.capture(\"Dashboard shows 42 active users\")\nprint(scheduler.check())\n\nscheduler.capture(\"Dashboard shows 87 active users\")\nalert = scheduler.check()\nprint(alert[\"from_index\"])\nprint(alert[\"to_index\"])\n\nscheduler.capture(\"Dashboard shows 87 active users\")\nprint(scheduler.check())\n\ns = scheduler.status()\nprint(s[\"total_snapshots\"])\nprint(s[\"total_alerts\"])",
+      "expected_output": "None\n0\n1\nNone\n3\n1",
+      "hints": {
+        "en": [
+          "capture() appends to self.snapshots and returns len(self.snapshots) - 1 as the index",
+          "In check(), use self.snapshots[-2] and self.snapshots[-1] to get the last two. Compare with != to detect changes",
+          "Truncate with description[:50] for the 'before' and 'after' fields in the alert dict"
+        ]
+      },
+      "test_code": "s = DiffScheduler(interval=60)\nassert s.check() is None\nassert s.capture(\"A\") == 0\nassert s.check() is None\nassert s.capture(\"B\") == 1\na = s.check()\nassert a is not None\nassert a[\"from_index\"] == 0\nassert a[\"to_index\"] == 1\nassert a[\"before\"] == \"A\"\nassert a[\"after\"] == \"B\"\nassert s.capture(\"B\") == 2\nassert s.check() is None\nassert s.capture(\"C\") == 3\na2 = s.check()\nassert a2[\"from_index\"] == 2\nassert a2[\"to_index\"] == 3\nst = s.status()\nassert st[\"total_snapshots\"] == 4\nassert st[\"total_alerts\"] == 2\nassert st[\"interval\"] == 60\nassert st[\"last_alert\"][\"after\"] == \"C\"\nlong_desc = \"x\" * 100\ns2 = DiffScheduler(10)\ns2.capture(\"short\")\ns2.capture(long_desc)\na3 = s2.check()\nassert len(a3[\"after\"]) == 50"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["visual change detection", "multi-image VLM prompting", "semantic diff analysis", "structured JSON output from VLMs", "Qwen3-VL-2B multi-image input", "visual monitoring pipelines", "before-after comparison", "system prompt engineering"],
+    "concepts_required": ["python classes", "dictionaries", "string methods", "JSON parsing", "basic ML concepts"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}
