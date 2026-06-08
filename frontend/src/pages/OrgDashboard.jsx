@@ -668,6 +668,8 @@ export default function OrgDashboard() {
   const deptValues = Object.values(deptDistribution);
   const maxDeptCount = deptValues.length > 0 ? Math.max(...deptValues) : 1;
 
+  const maxGroupCount = groups.length ? Math.max(1, ...groups.map((g) => g.count)) : 1;
+
   const roleDistribution = {};
   safeMembers.forEach((m) => {
     const role = String(m.role || 'member');
@@ -787,26 +789,25 @@ export default function OrgDashboard() {
                 <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
                   <h3 className="text-sm font-bold text-text-secondary mb-4">{groupLabel} Distribution</h3>
                   <div className="space-y-3">
-                    {groups.map((g) => {
-                      const max = Math.max(1, ...groups.map((x) => x.count));
-                      return (
-                        <div key={g.name} className="flex items-center gap-3">
-                          <span className="text-xs text-text-muted w-24 truncate">{g.name}</span>
-                          <div className="flex-1 h-6 bg-bg-elevated rounded-lg overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg" style={{ width: `${(g.count / max) * 100}%` }} />
-                          </div>
-                          <span className="text-xs font-bold text-text-secondary w-8 text-right">{g.count}</span>
+                    {groups.map((g) => (
+                      <div key={g.name} className="flex items-center gap-3">
+                        <span className="text-xs text-text-muted w-24 truncate">{g.name}</span>
+                        <div className="flex-1 h-6 bg-bg-elevated rounded-lg overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg" style={{ width: `${(g.count / maxGroupCount) * 100}%` }} />
                         </div>
-                      );
-                    })}
+                        <span className="text-xs font-bold text-text-secondary w-8 text-right">{g.count}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {isAdmin && (
                 <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm flex items-center gap-3 flex-wrap">
-                  <label className="text-sm font-bold text-text-secondary">Group label</label>
+                  <label htmlFor="org-group-label" className="text-sm font-bold text-text-secondary">Group label</label>
                   <input
+                    id="org-group-label"
+                    key={getOrgId(activeOrg)}
                     defaultValue={groupLabel}
                     onBlur={async (e) => {
                       const v = e.target.value.trim().slice(0, 30);
