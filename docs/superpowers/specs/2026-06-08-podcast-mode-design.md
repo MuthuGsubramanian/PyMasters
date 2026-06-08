@@ -12,7 +12,7 @@ Let a learner **listen to a lesson or section as a podcast** in their selected l
 
 ### Decisions locked during brainstorming
 - **Full podcast:** AI-scripted narration + real TTS audio + transcript + download + player (not just read-aloud).
-- **Engine:** **local/self-hosted TTS (Piper)** — free/offline. No GPU on laptop or Cloud Run, so quality is "good Piper TTS where a voice exists," weaker for Tamil/Telugu/Malayalam until better local voices exist.
+- **Engine (HF-research-backed, 2026-06-08):** **per-language local TTS map**, all free + CPU + commercially licensed — `ai4bharat/indic-parler-tts` (**Apache-2.0**, description-prompted, covers en/ta/te/ml incl. Dravidian) for **en/ta/te/ml**; **Piper** (fast CPU, good voices) for **fr/es/it/ko**. Configurable via `TTS_ENGINE_MAP_JSON`. (Meta MMS-TTS was rejected — `cc-by-nc-4.0` non-commercial; Kokoro/MeloTTS lack Dravidian; no single free CPU model covers all 8 commercially.) No GPU, so parler is slow-but-OK for an offline batch.
 - **Generation locus:** **offline laptop batch → GCS** (mirrors the translation pipeline). Covers **pre-rendered** lessons/sections, NOT arbitrary on-demand topics. Keeps load off the single Cloud Run instance.
 - **Format:** **single narrator** (Vaathiyaar-style), structured episode; one voice per language.
 - **Script engine:** **local Ollama** model writes the script in the selected language (consistent with the local-everything approach).
@@ -55,7 +55,9 @@ The runtime is read-only (serve a small JSON + stream public audio). No new heav
 
 ### 3.1 Config (env + CLI)
 - `LOCAL_OLLAMA_URL` (default `http://localhost:11434`), `PODCAST_SCRIPT_MODEL` (default `qwen2.5:7b`).
-- `PIPER_BIN` (path to the `piper` executable), `PIPER_VOICES` — a JSON/dict mapping `lang -> voice.onnx path` (env `PIPER_VOICES_JSON` or a `--voices` file). Languages without a configured voice are skipped with a warning.
+- **Engine map** `TTS_ENGINE_MAP_JSON` (default: en/ta/te/ml→`parler`, fr/es/it/ko→`piper`).
+- **parler** engine: `PARLER_MODEL` (default `ai4bharat/indic-parler-tts`), `PARLER_DESCRIPTIONS_JSON` (per-language voice descriptions; defaults pick a recommended speaker per language). Lazy-imports `parler-tts`/`transformers`/`torch`/`soundfile` only when used; the gated model needs `huggingface-cli login` + accepting terms.
+- **piper** engine: `PIPER_BIN` + `PIPER_VOICES_JSON` (`lang -> voice.onnx`). Languages without a configured voice/engine are skipped with a warning.
 - `PODCAST_BUCKET` (default `pymasters-podcasts`), `PODCAST_PUBLIC_BASE` (default `https://storage.googleapis.com/pymasters-podcasts`).
 - CLI: `--langs`, `--track`, `--lesson <id>`, `--section <track>` (whole-section episode), `--write` (default dry-run), `--overwrite`, `--limit`.
 
