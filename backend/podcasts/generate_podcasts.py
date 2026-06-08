@@ -254,7 +254,7 @@ def align_cues(cues, ww, duration):
             rem_chars = sum(len(x) for x in cues[i:]) or 1
             rem_time = max(0.3, duration - start)
             end = min(duration, start + (len(c) / rem_chars) * rem_time)
-        end = max(end, start + 0.3)
+        end = min(duration, max(end, start + 0.3)) if start < duration else duration
         out.append((start, end, c))
         prev_end = end
     return out
@@ -345,8 +345,8 @@ def write_script(source, lang_name):
 
 
 def synth_and_upload(script, lang, content_id):
-    """Synthesize (engine per language: parler|piper) -> ffmpeg MP3 -> gsutil upload.
-    Returns (audio_url, transcript_url, duration) or raises."""
+    """Synthesize (engine per language: parler|piper) -> ffmpeg MP3 -> captions -> gsutil upload.
+    Returns (audio_url, transcript_url, duration, captions_url) or raises."""
     engine = _engine_map().get(lang, "piper")
     safe_id = content_id.replace(":", "_")
     with tempfile.TemporaryDirectory() as tmp:
