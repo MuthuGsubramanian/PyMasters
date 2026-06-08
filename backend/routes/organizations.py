@@ -282,32 +282,34 @@ def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_cu
     """Update organization. Requires admin+."""
     require_org_role(DB_PATH, org_id, caller, "admin")
     conn = sqlite3.connect(DB_PATH)
-    updates = []
-    values = []
-    for field in ["name", "type", "domain", "logo_url", "description", "plan"]:
-        val = getattr(data, field, None)
-        if val is not None:
-            updates.append(f"{field} = ?")
-            values.append(val)
-    if updates:
-        updates.append("updated_at = ?")
-        values.append(datetime.utcnow().isoformat())
-        values.append(org_id)
-        conn.execute(f"UPDATE organizations SET {', '.join(updates)} WHERE id = ?", values)
-        conn.commit()
-    if data.group_label is not None:
-        row = conn.execute("SELECT settings FROM organizations WHERE id = ?", [org_id]).fetchone()
-        try:
-            settings = json.loads(row[0]) if row and row[0] else {}
-        except Exception:
-            settings = {}
-        settings["group_label"] = data.group_label.strip()[:30]
-        conn.execute(
-            "UPDATE organizations SET settings = ?, updated_at = ? WHERE id = ?",
-            [json.dumps(settings), datetime.utcnow().isoformat(), org_id],
-        )
-        conn.commit()
-    conn.close()
+    try:
+        updates = []
+        values = []
+        for field in ["name", "type", "domain", "logo_url", "description", "plan"]:
+            val = getattr(data, field, None)
+            if val is not None:
+                updates.append(f"{field} = ?")
+                values.append(val)
+        # group_label lives in the settings JSON blob, not a top-level column
+        if data.group_label is not None:
+            label = data.group_label.strip()[:30]
+            if label:
+                row = conn.execute("SELECT settings FROM organizations WHERE id = ?", [org_id]).fetchone()
+                try:
+                    settings = json.loads(row[0]) if row and row[0] else {}
+                except Exception:
+                    settings = {}
+                settings["group_label"] = label
+                updates.append("settings = ?")
+                values.append(json.dumps(settings))
+        if updates:
+            updates.append("updated_at = ?")
+            values.append(datetime.utcnow().isoformat())
+            values.append(org_id)
+            conn.execute(f"UPDATE organizations SET {', '.join(updates)} WHERE id = ?", values)
+            conn.commit()
+    finally:
+        conn.close()
     return {"updated": True}
 
 
