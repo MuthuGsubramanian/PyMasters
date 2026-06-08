@@ -1,0 +1,118 @@
+{
+  "id": "roberta_base_masked_prediction_bert_comparison",
+  "topic": "roberta_base_masked_prediction_bert_comparison",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "RoBERTa vs BERT: Masked Prediction and Training Improvements"
+  },
+  "description": {
+    "en": "Compare FacebookAI/roberta-base against BERT through fill-mask predictions, dynamic masking, and BPE tokenization — understanding why better training methodology beats architectural changes for downstream NLP."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RoBERTa vs BERT: Same Architecture, Superior Training\n\nVaathiyaar here! In 2019, Facebook AI asked a provocative question: what if BERT was simply *undertrained*? They didn't touch the transformer architecture — instead they fixed the training recipe. The result was **RoBERTa** (Robustly Optimized BERT Pretraining Approach), and it beat BERT on every single benchmark. Today we'll put both models side by side, run fill-mask predictions, and see exactly where RoBERTa's training improvements show up in practice.\n\n### The Five Training Changes That Matter\n\n| Change | BERT | RoBERTa | Why It Helps |\n|---|---|---|---|\n| Training data | 16GB | 160GB (10x more) | More diverse patterns to learn |\n| Masking | Static (fixed once) | Dynamic (re-masked each epoch) | Sees different masks → better generalization |\n| NSP objective | Yes | Removed | NSP hurts single-sentence tasks |\n| Batch size | 256 | 8,000 | Larger batches stabilize gradient estimates |\n| Tokenizer | WordPiece (30K) | BPE (50K vocab) | Better subword coverage |\n\nThese aren't minor tweaks — dynamic masking alone means RoBERTa sees each training example with different tokens masked across epochs, forcing deeper contextual understanding.\n\n### Head-to-Head Fill-Mask Comparison\n\n```python\nfrom transformers import pipeline\n\nbert = pipeline(\"fill-mask\", model=\"bert-base-uncased\")\nroberta = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\n# BERT uses [MASK], RoBERTa uses <mask>\nbert_results = bert(\"The scientist published a [MASK] in Nature.\")\nroberta_results = roberta(\"The scientist published a <mask> in Nature.\")\n\nprint(\"BERT predictions:\")\nfor r in bert_results[:3]:\n    print(f\"  {r['score']:.4f} => {r['token_str']}\")\n\nprint(\"RoBERTa predictions:\")\nfor r in roberta_results[:3]:\n    print(f\"  {r['score']:.4f} => {r['token_str']}\")\n```\n\nRoBERTa typically shows higher confidence on its top prediction and more contextually precise answers. The `<mask>` token (not `[MASK]`) and case-preserving output are visible differences.\n\n### Tokenization: BPE vs WordPiece\n\n```python\nfrom transformers import BertTokenizer, RobertaTokenizer\n\nbert_tok = BertTokenizer.from_pretrained(\"bert-base-uncased\")\nroberta_tok = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-base\")\n\ntext = \"Immunohistochemistry reveals biomarkers\"\n\nprint(\"BERT:\", bert_tok.tokenize(text))\n# ['immune', '##oh', '##ist', '##oc', '##hem', '##istry', 'reveals', 'bio', '##marker', '##s']\n\nprint(\"RoBERTa:\", roberta_tok.tokenize(text))\n# ['Imm', 'un', 'oh', 'ist', 'ochemistry', 'Ġreveals', 'Ġbio', 'markers']\n\nprint(f\"BERT vocab: {bert_tok.vocab_size}\")\nprint(f\"RoBERTa vocab: {roberta_tok.vocab_size}\")\n```\n\nRoBERTa's BPE tokenizer with 50,265 tokens produces fewer subword pieces for technical terms than BERT's 30,522-token WordPiece. Fewer tokens means shorter sequences and faster inference.\n\n### Probing Knowledge with Targeted Masks\n\n```python\nfrom transformers import pipeline\n\nroberta = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\nprobes = [\n    \"Python is a <mask> language.\",\n    \"The mitochondria is the <mask> of the cell.\",\n    \"Machine learning models are trained using <mask> descent.\",\n]\n\nfor probe in probes:\n    top = roberta(probe)[0]\n    print(f\"{probe}\")\n    print(f\"  => {top['token_str'].strip()} ({top['score']:.2%})\\n\")\n```\n\nThese probes test factual, scientific, and technical knowledge. RoBERTa's 160GB training corpus gives it stronger recall on domain-specific facts compared to BERT.\n\n### Dynamic Masking: Why It Works\n\n```python\nimport random\n\ndef static_mask(tokens, mask_rate=0.15, seed=42):\n    \"\"\"BERT-style: same mask every epoch\"\"\"\n    random.seed(seed)\n    return [\"[MASK]\" if random.random() < mask_rate else t\n            for t in tokens]\n\ndef dynamic_mask(tokens, mask_rate=0.15):\n    \"\"\"RoBERTa-style: different mask each call\"\"\"\n    return [\"[MASK]\" if random.random() < mask_rate else t\n            for t in tokens]\n\ntokens = [\"the\", \"cat\", \"sat\", \"on\", \"the\", \"mat\"]\nprint(\"Static (always same):\", static_mask(tokens))\nprint(\"Static (always same):\", static_mask(tokens))\nprint(\"Dynamic (varies):\", dynamic_mask(tokens))\nprint(\"Dynamic (varies):\", dynamic_mask(tokens))\n```\n\nStatic masking means BERT sees the exact same masked positions every epoch — it can memorize patterns. Dynamic masking forces the model to predict every token in every position over training, building robust representations.\n\n### Choosing the Right Model\n\n| Scenario | Pick | Reason |\n|---|---|---|\n| New classification project | RoBERTa | Strictly better accuracy |\n| Memory-constrained edge device | BERT | Smaller vocab, 15M fewer params |\n| Case-sensitive NER | RoBERTa | Preserves casing natively |\n| Multilingual needs | Neither | Use XLM-RoBERTa instead |\n| Teaching transformer basics | BERT | Simpler tokenizer, more tutorials |\n\n> **Key Insight:** RoBERTa's lesson for AI engineers is profound — the same 12-layer transformer architecture that powers BERT can deliver dramatically better results when trained with more data, dynamic masking, no NSP, and larger batches. Before changing your model architecture, exhaust your training recipe improvements first. This principle applies far beyond BERT: better data and training methodology often outperform clever architectural tweaks."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RoBERTa didn't change BERT's architecture — it fixed the training recipe. Dynamic masking, 10x more data, no Next Sentence Prediction, and larger batches turned the same 12-layer transformer into a consistently stronger model for every downstream NLP task.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nbert = pipeline(\"fill-mask\", model=\"bert-base-uncased\")\nroberta = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\nbert_results = bert(\"The scientist published a [MASK] in Nature.\")\nroberta_results = roberta(\"The scientist published a <mask> in Nature.\")\n\nprint(\"BERT top:\", bert_results[0]['token_str'])\nprint(\"RoBERTa top:\", roberta_results[0]['token_str'])",
+      "steps": [
+        {"line": 1, "explanation": "Import the pipeline abstraction — it handles model loading, tokenization, and inference in one call."},
+        {"line": 3, "explanation": "Load BERT's fill-mask pipeline. The model downloads once (~440MB) and caches locally for reuse."},
+        {"line": 4, "explanation": "Load RoBERTa's fill-mask pipeline (~500MB). Both models use 12 transformer layers with 768 hidden dimensions."},
+        {"line": 6, "explanation": "BERT uses [MASK] as its mask token. The uncased model lowercases all input before prediction."},
+        {"line": 7, "explanation": "RoBERTa uses <mask> instead. It preserves casing, so predictions like 'Paper' vs 'paper' carry meaning."},
+        {"line": 9, "explanation": "BERT returns its top prediction. Results include score, token_str, token ID, and the filled sequence."},
+        {"line": 10, "explanation": "RoBERTa typically predicts with higher confidence — a direct result of 10x more training data and dynamic masking."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import BertTokenizer, RobertaTokenizer\n\nbert_tok = BertTokenizer.from_pretrained(\"bert-base-uncased\")\nroberta_tok = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-base\")\n\ntext = \"Immunohistochemistry reveals biomarkers\"\n\nbert_tokens = bert_tok.tokenize(text)\nroberta_tokens = roberta_tok.tokenize(text)\n\nprint(f\"BERT: {len(bert_tokens)} tokens => {bert_tokens}\")\nprint(f\"RoBERTa: {len(roberta_tokens)} tokens => {roberta_tokens}\")\nprint(f\"BERT vocab: {bert_tok.vocab_size}\")\nprint(f\"RoBERTa vocab: {roberta_tok.vocab_size}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import both tokenizers separately to compare how each model splits text into subword tokens."},
+        {"line": 3, "explanation": "BERT uses WordPiece tokenization with a 30,522-token vocabulary. Subwords get ## prefixes."},
+        {"line": 4, "explanation": "RoBERTa uses Byte-Pair Encoding (BPE) with 50,265 tokens — the same tokenizer as GPT-2."},
+        {"line": 6, "explanation": "A technical term tests subword handling. Rare words reveal tokenizer quality differences."},
+        {"line": 8, "explanation": "BERT's smaller vocab splits rare words into many pieces, increasing sequence length."},
+        {"line": 9, "explanation": "RoBERTa's larger BPE vocab typically produces fewer pieces for the same text."},
+        {"line": 11, "explanation": "Fewer tokens means shorter sequences, lower memory usage, and faster inference per input."},
+        {"line": 13, "explanation": "RoBERTa's 50K vocabulary is 65% larger than BERT's 30K — this matters for domain-specific text."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "BERT-base",
+      "right_label": "RoBERTa-base",
+      "items": [
+        {"left": "16GB training data", "right": "160GB training data (10x more)"},
+        {"left": "Static masking (fixed once)", "right": "Dynamic masking (re-masked each epoch)"},
+        {"left": "Uses Next Sentence Prediction", "right": "NSP removed (hurts performance)"},
+        {"left": "WordPiece tokenizer (30K vocab)", "right": "BPE tokenizer (50K vocab)"},
+        {"left": "Lowercase only (uncased)", "right": "Case-preserving by default"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered the BERT vs RoBERTa comparison — training methodology beats architectural changes!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `DynamicMaskingTrainer` class that demonstrates the difference between BERT's static masking and RoBERTa's dynamic masking. The trainer takes a list of sentences and a mask rate. Implement `static_mask(sentence, seed)` that always produces the same mask pattern for a given seed, and `dynamic_mask(sentence)` that produces a different mask pattern each call. Also implement `training_diversity(sentence, epochs)` that runs both strategies for N epochs and returns how many unique masked versions each strategy produced."
+      },
+      "starter_code": "import random\n\nclass DynamicMaskingTrainer:\n    def __init__(self, mask_rate: float = 0.15):\n        self.mask_rate = mask_rate\n\n    def static_mask(self, sentence: str, seed: int = 42) -> str:\n        # BERT-style: same seed => same mask pattern every time\n        # Split sentence into words, replace each word with <mask>\n        # based on mask_rate using the given seed\n        # Return the masked sentence joined by spaces\n        pass\n\n    def dynamic_mask(self, sentence: str) -> str:\n        # RoBERTa-style: different mask pattern each call\n        # Split sentence into words, replace each word with <mask>\n        # based on mask_rate (no fixed seed)\n        # Return the masked sentence joined by spaces\n        pass\n\n    def training_diversity(self, sentence: str, epochs: int) -> dict:\n        # Run both masking strategies for N epochs\n        # Return {\"static\": count_unique_static, \"dynamic\": count_unique_dynamic}\n        pass\n\n# Test it:\ntrainer = DynamicMaskingTrainer(mask_rate=0.3)\n\n# Static always gives same result\nprint(trainer.static_mask(\"the cat sat on the mat\", seed=42))\nprint(trainer.static_mask(\"the cat sat on the mat\", seed=42))\n\n# Check diversity over many epochs\nresult = trainer.training_diversity(\"the cat sat on the mat\", epochs=50)\nprint(result[\"static\"])\nprint(result[\"dynamic\"] > result[\"static\"])",
+      "expected_output": "the cat <mask> on the mat\nthe cat <mask> on the mat\n1\nTrue",
+      "hints": {
+        "en": [
+          "In static_mask(), call random.seed(seed) before iterating over words so the same seed always produces the same random choices",
+          "In dynamic_mask(), do NOT set a seed — let random.random() produce different values each call",
+          "In training_diversity(), collect masked sentences in two sets (one for static, one for dynamic), then return the length of each set"
+        ]
+      },
+      "test_code": "t = DynamicMaskingTrainer(mask_rate=0.3)\ns1 = t.static_mask(\"a b c d e f g h i j\", seed=10)\ns2 = t.static_mask(\"a b c d e f g h i j\", seed=10)\nassert s1 == s2, \"Static mask must be deterministic with same seed\"\ns3 = t.static_mask(\"a b c d e f g h i j\", seed=99)\nassert \"<mask>\" in s1\nresult = t.training_diversity(\"a b c d e f g h i j\", epochs=100)\nassert result[\"static\"] == 1, \"Static should produce exactly 1 unique version\"\nassert result[\"dynamic\"] > 1, \"Dynamic should produce multiple unique versions\"\nassert result[\"dynamic\"] >= 5, \"With 100 epochs and 10 words, dynamic should produce many variants\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `MaskPredictionComparator` class that simulates comparing fill-mask predictions between two models. Each model is represented as a dictionary mapping context keywords to predicted words with scores. Implement `predict(model_name, masked_sentence)` that finds the best-matching prediction by counting context keyword matches, and `compare(masked_sentence)` that runs both models and returns which model was more confident (higher score)."
+      },
+      "starter_code": "class MaskPredictionComparator:\n    def __init__(self, models: dict):\n        # models = {\n        #   \"bert\": {\"paper\": {\"words\": [\"publish\", \"science\", \"research\"], \"score\": 0.82},\n        #            \"code\": {\"words\": [\"program\", \"software\", \"python\"], \"score\": 0.75}},\n        #   \"roberta\": {\"paper\": {\"words\": [\"publish\", \"science\", \"research\"], \"score\": 0.95},\n        #               \"code\": {\"words\": [\"program\", \"software\", \"python\"], \"score\": 0.91}}\n        # }\n        self.models = models\n\n    def predict(self, model_name: str, masked_sentence: str) -> dict:\n        # Find which prediction key best matches the sentence context\n        # by counting how many of that key's context words appear\n        # in the sentence (case-insensitive)\n        # Return {\"token\": best_key, \"score\": score, \"model\": model_name}\n        # If no matches found, return {\"token\": \"[UNK]\", \"score\": 0.0, \"model\": model_name}\n        pass\n\n    def compare(self, masked_sentence: str) -> str:\n        # Run predict for each model, return the name of the model\n        # with the higher score. If tied, return \"tie\".\n        pass\n\n# Test it:\nmodels = {\n    \"bert\": {\n        \"paper\": {\"words\": [\"publish\", \"journal\", \"research\"], \"score\": 0.82},\n        \"code\": {\"words\": [\"program\", \"software\", \"python\"], \"score\": 0.75}\n    },\n    \"roberta\": {\n        \"paper\": {\"words\": [\"publish\", \"journal\", \"research\"], \"score\": 0.95},\n        \"code\": {\"words\": [\"program\", \"software\", \"python\"], \"score\": 0.91}\n    }\n}\n\ncomp = MaskPredictionComparator(models)\n\nresult = comp.predict(\"roberta\", \"the researcher will publish a <mask> in the journal\")\nprint(result[\"token\"])\nprint(result[\"score\"])\n\nwinner = comp.compare(\"the researcher will publish a <mask> in the journal\")\nprint(winner)",
+      "expected_output": "paper\n0.95\nroberta",
+      "hints": {
+        "en": [
+          "In predict(), lowercase the sentence and split into words, then for each prediction key count how many of its context words appear in those words",
+          "Pick the prediction key with the highest context match count; if there's a tie in matches, pick the one with the higher score",
+          "In compare(), call predict() for each model name in self.models and compare their scores"
+        ]
+      },
+      "test_code": "m = {\"a\": {\"x\": {\"words\": [\"hello\", \"world\"], \"score\": 0.5}, \"y\": {\"words\": [\"foo\"], \"score\": 0.3}}, \"b\": {\"x\": {\"words\": [\"hello\", \"world\"], \"score\": 0.9}, \"y\": {\"words\": [\"foo\"], \"score\": 0.8}}}\nc = MaskPredictionComparator(m)\np = c.predict(\"a\", \"hello world test\")\nassert p[\"token\"] == \"x\"\nassert p[\"score\"] == 0.5\nassert p[\"model\"] == \"a\"\np2 = c.predict(\"b\", \"hello world test\")\nassert p2[\"score\"] == 0.9\nassert c.compare(\"hello world test\") == \"b\"\np3 = c.predict(\"a\", \"nothing matches here\")\nassert p3[\"token\"] == \"[UNK]\"\nassert p3[\"score\"] == 0.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["RoBERTa vs BERT comparison", "dynamic masking", "BPE tokenization", "fill-mask pipeline", "static vs dynamic masking", "training methodology", "model selection criteria"],
+    "concepts_required": ["python classes", "dictionaries", "string manipulation", "random module", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

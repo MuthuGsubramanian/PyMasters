@@ -1,0 +1,118 @@
+{
+  "id": "electra_cooperative_pretraining_dynamics",
+  "topic": "electra_cooperative_pretraining_dynamics",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "ELECTRA Pretraining Mechanics: How Generator and Discriminator Learn Together"
+  },
+  "description": {
+    "en": "Understand the cooperative training loop inside google/electra-base-discriminator — how the generator's MLM loss and the discriminator's binary cross-entropy work together, why weight sharing matters, and how to simulate the full pretraining pipeline from scratch."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Inside ELECTRA's Training Loop: Cooperation, Not Competition\n\nVaathiyaar here! Most explanations of ELECTRA call it \"GAN-inspired\" and move on. But ELECTRA is **not** a GAN — and that distinction is critical. In a GAN, the generator tries to fool the discriminator. In ELECTRA, both networks cooperate toward the same goal: training the best possible discriminator. The generator is a disposable scaffolding — a small MLM model whose only job is to produce plausible-but-detectable replacements. Let's build the full training loop from scratch to understand exactly how this works.\n\n### The Joint Loss Function\n\nELECTRA's total loss combines two terms:\n\n```\nL_total = L_mlm(generator) + λ · L_rtd(discriminator)\n```\n\n| Loss Component | Network | Formula | Weight |\n|---|---|---|---|\n| L_mlm | Generator | Cross-entropy over 30K vocab at masked positions | 1.0 |\n| L_rtd | Discriminator | Binary cross-entropy at ALL positions | λ = 50 |\n\nThe high λ = 50 weight on the discriminator loss ensures the generator serves the discriminator, not the other way around.\n\n### Weight Sharing: The Embedding Trick\n\nThe generator and discriminator share their token embedding matrix. This is crucial — without sharing, the generator learns a different token space and produces replacements the discriminator can detect trivially (different embedding fingerprint). Shared embeddings force the generator to produce replacements that are hard to detect based on meaning, not just embedding artifacts.\n\n```python\nfrom transformers import ElectraForPreTraining, ElectraForMaskedLM\n\ndisc = ElectraForPreTraining.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\ngen = ElectraForMaskedLM.from_pretrained(\n    \"google/electra-base-generator\"\n)\n\n# Both share the same embedding dimension\nprint(f\"Generator hidden: {gen.config.hidden_size}\")   # 256\nprint(f\"Discriminator hidden: {disc.config.hidden_size}\") # 768\nprint(f\"Both vocab size: {gen.config.vocab_size}\")        # 30522\n# Embeddings project into shared vocab space\n```\n\n### Simulating the Full Pretraining Step\n\n```python\nimport torch\nimport torch.nn.functional as F\nimport random\n\ndef electra_training_step(tokens, vocab_size,\n                          mask_ratio=0.15, lam=50):\n    n = len(tokens)\n    n_mask = max(1, round(n * mask_ratio))\n    mask_idx = sorted(random.sample(range(n), n_mask))\n\n    # Step 1: Generator fills masked positions (MLM)\n    gen_preds = [random.randint(0, vocab_size-1)\n                 for _ in mask_idx]\n    gen_correct = sum(1 for i, p in zip(mask_idx, gen_preds)\n                      if p == tokens[i])\n    l_mlm = -gen_correct / n_mask  # simplified log-prob\n\n    # Step 2: Build corrupted input for discriminator\n    corrupted = tokens.copy()\n    for i, pred in zip(mask_idx, gen_preds):\n        corrupted[i] = pred\n\n    # Step 3: Discriminator labels — ALL positions\n    labels = [corrupted[i] != tokens[i] for i in range(n)]\n    disc_correct = sum(1 for i in range(n)\n                       if (corrupted[i] != tokens[i]) == labels[i])\n    l_rtd = 1.0 - disc_correct / n  # simplified BCE\n\n    l_total = l_mlm + lam * l_rtd\n    return l_mlm, l_rtd, l_total, sum(labels), n\n\nl_mlm, l_rtd, l_total, replaced, total = electra_training_step(\n    [10, 42, 7, 99, 55, 23, 81, 4], vocab_size=100\n)\nprint(f\"MLM loss: {l_mlm:.3f}\")\nprint(f\"RTD loss: {l_rtd:.3f}\")\nprint(f\"Signals: {total}/{total} (100% coverage)\")\n```\n\n### Why Not a GAN?\n\n| Property | GAN | ELECTRA |\n|---|---|---|\n| Generator goal | Fool discriminator | Produce plausible fills (MLM) |\n| Training dynamic | Adversarial (minimax) | Cooperative (joint loss) |\n| Generator gradient from disc? | Yes (through disc output) | No (only MLM loss) |\n| Mode collapse risk | High | None |\n| Stability | Fragile | Stable (standard MLM + BCE) |\n\nThe generator never receives gradients from the discriminator. It is trained purely with MLM loss. This eliminates the instability of adversarial training while still producing challenging replacements.\n\n### Training Curriculum: Generator Quality Over Time\n\nEarly in training, the generator makes obvious mistakes — the discriminator learns basic syntax. As the generator improves, its replacements become more plausible, naturally increasing difficulty for the discriminator. This built-in curriculum is why ELECTRA converges faster than BERT.\n\n> **Key Insight:** ELECTRA's power comes from cooperative, not adversarial, training. The generator never tries to fool the discriminator — it simply learns MLM while its outputs become increasingly challenging fakes. The discriminator's binary task at every position extracts 6.7x more training signal per example than MLM, and shared embeddings ensure the challenge is semantic, not superficial. This stable, curriculum-like training dynamic is why ELECTRA matches BERT-large quality with just 25% of the compute budget."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "ELECTRA is often called 'GAN-inspired' — but it's NOT a GAN. The generator and discriminator cooperate through a joint loss function, not adversarial minimax. The generator trains with standard MLM loss, its outputs feed the discriminator, and the discriminator trains with binary cross-entropy on ALL tokens. This stable cooperation is why ELECTRA trains reliably where GANs would collapse.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import ElectraForPreTraining\nfrom transformers import ElectraTokenizerFast\nimport torch\n\ntokenizer = ElectraTokenizerFast.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\nmodel = ElectraForPreTraining.from_pretrained(\n    \"google/electra-base-discriminator\"\n)\n\noriginal = \"the quick brown fox jumps\"\nfake =     \"the quick green fox leaps\"\n\norig_inputs = tokenizer(original, return_tensors=\"pt\")\nfake_inputs = tokenizer(fake, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    orig_logits = model(**orig_inputs).logits[0]\n    fake_logits = model(**fake_inputs).logits[0]\n\ntokens = tokenizer.convert_ids_to_tokens(\n    fake_inputs[\"input_ids\"][0]\n)\nfor tok, o, f in zip(tokens, orig_logits, fake_logits):\n    print(f\"{tok:>8} orig={o:+.2f} fake={f:+.2f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import ElectraForPreTraining — this model class includes the discriminator head that outputs per-token 'real vs replaced' logits, unlike ElectraModel which returns raw embeddings."},
+        {"line": 2, "explanation": "Import the fast tokenizer for ELECTRA. The 'Fast' variant uses Rust-backed HuggingFace tokenizers for ~5x faster encoding."},
+        {"line": 5, "explanation": "Load the tokenizer — same WordPiece vocabulary as BERT (30,522 tokens). The generator and discriminator share this vocabulary through weight-tied embeddings."},
+        {"line": 8, "explanation": "Load the discriminator with its pretraining head — a single linear layer that maps each 768-dim hidden state to a scalar logit (real vs replaced)."},
+        {"line": 12, "explanation": "Define the original sentence and a version with two words replaced — simulating what the generator would produce during pretraining."},
+        {"line": 16, "explanation": "Tokenize both versions. The discriminator never sees [MASK] tokens — it receives complete sentences where some tokens may have been swapped by the generator."},
+        {"line": 19, "explanation": "Run inference on both versions. The original should produce all-negative logits (confident everything is real), while the fake should show positive logits at replaced positions."},
+        {"line": 23, "explanation": "Convert token IDs back to readable tokens and compare logit shifts. Positions where words were replaced should show the largest positive shifts — the discriminator's training signal."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import random\nimport math\n\nclass ElectraTrainingLoop:\n    def __init__(self, vocab_size, mask_ratio=0.15,\n                 lambda_weight=50):\n        self.vocab_size = vocab_size\n        self.mask_ratio = mask_ratio\n        self.lam = lambda_weight\n        self.history = []\n\n    def generator_step(self, tokens, mask_indices):\n        preds = {i: random.randint(0, self.vocab_size - 1)\n                 for i in mask_indices}\n        correct = sum(1 for i in mask_indices\n                      if preds[i] == tokens[i])\n        loss = -math.log(max(correct / len(mask_indices),\n                             1e-8))\n        return preds, loss\n\n    def discriminator_step(self, original, corrupted):\n        labels = [o != c for o, c in zip(original, corrupted)]\n        n_signals = len(labels)\n        return labels, n_signals\n\n    def train_step(self, tokens, seed=None):\n        if seed is not None:\n            random.seed(seed)\n        n_mask = max(1, round(len(tokens) * self.mask_ratio))\n        mask_idx = random.sample(range(len(tokens)), n_mask)\n        gen_preds, l_mlm = self.generator_step(tokens, mask_idx)\n        corrupted = tokens.copy()\n        for i, p in gen_preds.items():\n            corrupted[i] = p\n        labels, n_sig = self.discriminator_step(tokens, corrupted)\n        l_rtd = sum(labels) / len(labels)\n        l_total = l_mlm + self.lam * l_rtd\n        self.history.append({\n            \"l_mlm\": l_mlm, \"l_rtd\": l_rtd, \"signals\": n_sig\n        })\n        return l_total, labels, n_sig\n\nloop = ElectraTrainingLoop(vocab_size=100)\ntokens = [10, 42, 7, 99, 55, 23, 81, 4]\nl_total, labels, n_sig = loop.train_step(tokens, seed=42)\nprint(f\"Signals: {n_sig}/{len(tokens)}\")\nprint(f\"Coverage: {n_sig/len(tokens)*100:.0f}%\")\nprint(f\"Steps logged: {len(loop.history)}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import random for simulating stochastic generator outputs, and math for log-probability loss calculation."},
+        {"line": 4, "explanation": "Define the training loop class with three key hyperparameters: vocab_size (generator's output space), mask_ratio (fraction of tokens to corrupt), and lambda_weight (how much to weight the discriminator loss — 50x in the original paper)."},
+        {"line": 12, "explanation": "Generator step: predict replacement tokens at masked positions using MLM. The loss is negative log-probability of getting the original token right — standard cross-entropy."},
+        {"line": 21, "explanation": "Discriminator step: compare original vs corrupted tokens at EVERY position. This produces binary labels for all tokens — the key 100% coverage advantage over MLM."},
+        {"line": 27, "explanation": "Full training step: mask → generate → corrupt → discriminate. The joint loss L_total = L_mlm + 50 * L_rtd heavily weights the discriminator, making its quality the primary training objective."},
+        {"line": 39, "explanation": "Track training history for monitoring convergence. In real ELECTRA training, you watch L_rtd decrease as the discriminator improves, while L_mlm stabilizes as the generator reaches its capacity."},
+        {"line": 44, "explanation": "Run one training step and verify 100% signal coverage — all 8 tokens produce a training signal for the discriminator, compared to just 1-2 tokens (15%) with BERT's MLM."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "GAN Training",
+      "right_label": "ELECTRA Cooperative Training",
+      "items": [
+        {"left": "Generator tries to fool discriminator", "right": "Generator just does MLM — no adversarial goal"},
+        {"left": "Generator gets gradients from discriminator", "right": "Generator gets gradients only from MLM loss"},
+        {"left": "Minimax optimization — hard to stabilize", "right": "Joint loss — standard gradient descent"},
+        {"left": "Mode collapse is a constant risk", "right": "No mode collapse — MLM is well-behaved"},
+        {"left": "Requires careful hyperparameter tuning", "right": "Stable with default hyperparameters (λ=50)"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand ELECTRA's cooperative pretraining loop — how the generator and discriminator work together through a joint loss function, producing stable training that extracts 6.7x more signal per example than BERT's MLM!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `ElectraPretrainer` class that simulates the full ELECTRA cooperative training loop. The pretrainer has a generator that fills masked positions and a discriminator that labels every token as 'original' or 'replaced'. Implement:\n- `mask_and_generate(tokens, seed)`: mask `round(len(tokens) * mask_ratio)` positions, replace each with a random token from `range(vocab_size)` using the seed. Return the corrupted list and the set of masked indices.\n- `discriminate(original, corrupted)`: produce a label for every position — 'replaced' if tokens differ, 'original' if they match. Return the labels list.\n- `compute_joint_loss(n_replaced, n_total, lambda_w)`: compute a simplified joint loss = (n_replaced / n_total) + lambda_w * (n_replaced / n_total). Return the float.\n- `run_epoch(token_batches, seed)`: run mask_and_generate + discriminate for each batch (re-seeding with seed+batch_index), accumulate total signals (always len(batch) per batch), and return total signals across all batches."
+      },
+      "starter_code": "import random\n\nclass ElectraPretrainer:\n    def __init__(self, vocab_size: int, mask_ratio: float = 0.15):\n        self.vocab_size = vocab_size\n        self.mask_ratio = mask_ratio\n        self.total_signals = 0\n\n    def mask_and_generate(self, tokens: list[int],\n                          seed: int) -> tuple[list[int], set[int]]:\n        # 1. Create rng = random.Random(seed)\n        # 2. Compute n_mask = round(len(tokens) * mask_ratio)\n        #    (minimum 1)\n        # 3. Pick mask_indices using rng.sample\n        # 4. For each masked index, replace with\n        #    rng.randint(0, vocab_size - 1)\n        # 5. Return (corrupted_tokens, set(mask_indices))\n        pass\n\n    def discriminate(self, original: list[int],\n                     corrupted: list[int]) -> list[str]:\n        # For each position, return 'replaced' if tokens\n        # differ, 'original' if they match\n        pass\n\n    def compute_joint_loss(self, n_replaced: int,\n                           n_total: int,\n                           lambda_w: float = 50.0) -> float:\n        # Simplified: (n_replaced/n_total) + lambda_w * (n_replaced/n_total)\n        # = (1 + lambda_w) * (n_replaced / n_total)\n        pass\n\n    def run_epoch(self, token_batches: list[list[int]],\n                  seed: int) -> int:\n        # For each batch at index i:\n        #   mask_and_generate with seed=(seed + i)\n        #   discriminate\n        #   self.total_signals += len(batch)\n        # Return total signals added this epoch\n        pass\n\n# Test:\npt = ElectraPretrainer(vocab_size=50, mask_ratio=0.5)\n\ntokens = [1, 2, 3, 4, 5, 6]\ncorrupted, masked = pt.mask_and_generate(tokens, seed=42)\nprint(len(masked))\nprint(len(corrupted) == len(tokens))\n\nlabels = pt.discriminate(tokens, corrupted)\nprint(labels.count('original') + labels.count('replaced') == 6)\n\nloss = pt.compute_joint_loss(3, 6, lambda_w=50.0)\nprint(f\"{loss:.1f}\")\n\nbatches = [[10, 20, 30, 40], [50, 60, 70, 80], [90, 100, 110, 120]]\nsignals = pt.run_epoch(batches, seed=0)\nprint(signals)\nprint(pt.total_signals)",
+      "expected_output": "3\nTrue\nTrue\n25.5\n12\n12",
+      "hints": {
+        "en": [
+          "In mask_and_generate, use rng = random.Random(seed), then n_mask = max(1, round(len(tokens) * self.mask_ratio)), mask_indices = rng.sample(range(len(tokens)), n_mask), and replace each with rng.randint(0, self.vocab_size - 1)",
+          "discriminate is a simple list comprehension: 'replaced' if original[i] != corrupted[i] else 'original' for each position",
+          "compute_joint_loss returns (1 + lambda_w) * (n_replaced / n_total) — this reflects that both generator and discriminator losses scale with the replacement ratio, weighted by lambda"
+        ]
+      },
+      "test_code": "pt = ElectraPretrainer(vocab_size=50, mask_ratio=0.5)\ntoks = [1, 2, 3, 4, 5, 6]\nc, m = pt.mask_and_generate(toks, seed=42)\nassert len(m) == 3\nassert len(c) == 6\nassert isinstance(m, set)\nassert all(c[i] != toks[i] or c[i] == toks[i] for i in range(6))\nlbls = pt.discriminate(toks, c)\nassert len(lbls) == 6\nassert all(l in ('original', 'replaced') for l in lbls)\nassert lbls.count('replaced') == sum(1 for i in range(6) if toks[i] != c[i])\nassert abs(pt.compute_joint_loss(3, 6, 50.0) - 25.5) < 0.01\nassert abs(pt.compute_joint_loss(0, 10, 50.0) - 0.0) < 0.01\nassert abs(pt.compute_joint_loss(10, 10, 50.0) - 51.0) < 0.01\npt2 = ElectraPretrainer(vocab_size=100, mask_ratio=0.3)\nbatches = [[1,2,3,4,5], [6,7,8,9,10]]\nsigs = pt2.run_epoch(batches, seed=7)\nassert sigs == 10\nassert pt2.total_signals == 10\nsigs2 = pt2.run_epoch(batches, seed=99)\nassert sigs2 == 10\nassert pt2.total_signals == 20"
+    },
+    {
+      "instruction": {
+        "en": "Build a `TrainingDynamicsAnalyzer` that tracks how ELECTRA's generator and discriminator interact over multiple training steps. Implement:\n- `record_step(gen_accuracy, disc_accuracy)`: store the accuracy pair and compute the 'challenge_score' = gen_accuracy * (1 - disc_accuracy) — high when the generator is good but the discriminator is struggling.\n- `get_curriculum_phase(step_index)`: return 'easy' if gen_accuracy < 0.3 at that step, 'medium' if 0.3 <= gen_accuracy < 0.7, 'hard' if gen_accuracy >= 0.7.\n- `signal_advantage(mask_ratio)`: return 1.0 / mask_ratio (ELECTRA vs BERT signal ratio).\n- `total_steps` property: number of recorded steps.\n- `avg_challenge_score` property: mean of all challenge scores."
+      },
+      "starter_code": "class TrainingDynamicsAnalyzer:\n    def __init__(self):\n        self.steps = []  # list of dicts\n\n    def record_step(self, gen_accuracy: float,\n                    disc_accuracy: float) -> float:\n        # Compute challenge_score = gen_accuracy * (1 - disc_accuracy)\n        # Store {gen_accuracy, disc_accuracy, challenge_score}\n        # Return challenge_score\n        pass\n\n    def get_curriculum_phase(self, step_index: int) -> str:\n        # Look up gen_accuracy at step_index\n        # < 0.3 -> 'easy', 0.3-0.7 -> 'medium', >= 0.7 -> 'hard'\n        pass\n\n    def signal_advantage(self, mask_ratio: float) -> float:\n        # Return 1.0 / mask_ratio\n        pass\n\n    @property\n    def total_steps(self) -> int:\n        pass\n\n    @property\n    def avg_challenge_score(self) -> float:\n        pass\n\n# Test:\nanalyzer = TrainingDynamicsAnalyzer()\n\n# Early training: bad generator, easy for discriminator\ncs1 = analyzer.record_step(0.1, 0.9)\nprint(f\"{cs1:.2f}\")\nprint(analyzer.get_curriculum_phase(0))\n\n# Mid training: decent generator, challenged discriminator\ncs2 = analyzer.record_step(0.5, 0.6)\nprint(f\"{cs2:.2f}\")\nprint(analyzer.get_curriculum_phase(1))\n\n# Late training: strong generator, discriminator catching up\ncs3 = analyzer.record_step(0.8, 0.85)\nprint(f\"{cs3:.2f}\")\nprint(analyzer.get_curriculum_phase(2))\n\nprint(analyzer.total_steps)\nprint(f\"{analyzer.avg_challenge_score:.2f}\")\nprint(f\"{analyzer.signal_advantage(0.15):.1f}\")",
+      "expected_output": "0.01\neasy\n0.20\nmedium\n0.12\nhard\n3\n0.11\n6.7",
+      "hints": {
+        "en": [
+          "challenge_score = gen_accuracy * (1 - disc_accuracy) — this peaks when the generator produces convincing fakes that the discriminator hasn't learned to catch yet",
+          "get_curriculum_phase checks self.steps[step_index]['gen_accuracy'] against thresholds: < 0.3 is 'easy', < 0.7 is 'medium', >= 0.7 is 'hard'",
+          "avg_challenge_score is sum(s['challenge_score'] for s in self.steps) / len(self.steps)"
+        ]
+      },
+      "test_code": "a = TrainingDynamicsAnalyzer()\nassert a.total_steps == 0\ncs = a.record_step(0.1, 0.9)\nassert abs(cs - 0.01) < 0.001\nassert a.get_curriculum_phase(0) == 'easy'\ncs2 = a.record_step(0.5, 0.6)\nassert abs(cs2 - 0.20) < 0.001\nassert a.get_curriculum_phase(1) == 'medium'\ncs3 = a.record_step(0.8, 0.85)\nassert abs(cs3 - 0.12) < 0.001\nassert a.get_curriculum_phase(2) == 'hard'\nassert a.total_steps == 3\nassert abs(a.avg_challenge_score - 0.11) < 0.01\nassert abs(a.signal_advantage(0.15) - 6.6667) < 0.01\nassert abs(a.signal_advantage(0.5) - 2.0) < 0.01\na.record_step(0.29, 0.5)\nassert a.get_curriculum_phase(3) == 'easy'\na.record_step(0.3, 0.5)\nassert a.get_curriculum_phase(4) == 'medium'\nassert a.total_steps == 5"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["ELECTRA cooperative training", "generator-discriminator joint loss", "replaced token detection mechanics", "MLM vs RTD loss functions", "weight sharing in ELECTRA", "training curriculum dynamics", "GAN vs cooperative training", "pretraining signal efficiency"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "basic probability", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

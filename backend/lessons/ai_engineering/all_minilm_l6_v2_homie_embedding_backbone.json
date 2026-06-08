@@ -1,0 +1,132 @@
+{
+  "id": "all_minilm_l6_v2_homie_embedding_backbone",
+  "topic": "all_minilm_l6_v2_homie_embedding_backbone",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Building Homie's Brain: all-MiniLM-L6-v2 as Your RAG Embedding Backbone"
+  },
+  "description": {
+    "en": "Wire up sentence-transformers/all-MiniLM-L6-v2 as the default embedding backbone for a RAG assistant like Homie — covering sentence similarity scoring, multi-backend deployment (PyTorch, ONNX, TensorFlow), and a production-ready retrieval layer."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Giving Homie a Memory: The Embedding Backbone\n\nVaathiyaar here! Homie is your local AI assistant, but without a retrieval layer it can only hallucinate answers. The fix? Give Homie a **semantic memory** powered by `all-MiniLM-L6-v2` — an 80 MB model that converts any text into a 384-dimensional meaning vector. When a user asks a question, Homie encodes it, searches its knowledge base by cosine similarity, and feeds the top matches into an LLM prompt. That's RAG, and MiniLM is the backbone that makes it work offline, on CPU, with zero API costs.\n\nThis lesson wires up that backbone end-to-end: encode documents, score similarity, retrieve context, and deploy across PyTorch, ONNX, and TensorFlow backends.\n\n### Why MiniLM for Homie?\n\n| Requirement | MiniLM-L6-v2 |\n|---|---|\n| Runs on CPU laptop | 80 MB, no GPU needed |\n| Fast enough for interactive chat | ~14K sentences/sec |\n| No API key or internet at query time | Fully local after first download |\n| Good enough quality for general QA | 0.789 STS benchmark |\n| Multi-framework deployment | PyTorch, ONNX, TF, Rust, OpenVINO |\n\nIt's not the highest-quality model — `all-mpnet-base-v2` scores higher — but it's the best trade-off between speed, size, and accuracy for a local assistant.\n\n### Step 1: Encode Homie's Knowledge Base\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nknowledge_base = [\n    \"Homie stores user preferences in ~/.homie/config.yaml\",\n    \"Use /remind to set a timed reminder\",\n    \"Homie can summarize PDFs with the /summarize command\",\n    \"To change the LLM backend, edit the 'model' field in config\",\n    \"Homie supports plugins via the ~/.homie/plugins/ directory\",\n]\n\nembeddings = model.encode(knowledge_base, normalize_embeddings=True)\nnp.save(\"homie_kb.npy\", embeddings)  # cache to disk\nprint(f\"Indexed {len(knowledge_base)} docs → shape {embeddings.shape}\")\n```\n\n### Step 2: Score Sentence Similarity\n\nSentence similarity is the core operation — every retrieval query boils down to \"which stored sentence is closest in meaning to this question?\"\n\n```python\nfrom sentence_transformers import util\n\nquery = \"How do I configure which model Homie uses?\"\nq_emb = model.encode(query, normalize_embeddings=True)\nscores = util.cos_sim(q_emb, embeddings)[0]\n\nfor doc, score in sorted(zip(knowledge_base, scores), key=lambda x: x[1], reverse=True):\n    print(f\"{score:.3f} | {doc}\")\n# Top hit: \"To change the LLM backend, edit the 'model' field in config\"\n```\n\nNotice: the query says \"configure which model\" — the top result says \"change the LLM backend\" and \"edit the 'model' field\". Zero word overlap on the key verb, yet the model bridges the gap.\n\n### Step 3: Build the Retrieval Layer\n\n```python\nclass HomieRetriever:\n    def __init__(self, docs, model_name=\"all-MiniLM-L6-v2\", backend=\"pytorch\"):\n        kwargs = {}\n        if backend == \"onnx\":\n            kwargs = {\"backend\": \"onnx\", \"model_kwargs\": {\"provider\": \"CPUExecutionProvider\"}}\n        self.model = SentenceTransformer(model_name, **kwargs)\n        self.docs = docs\n        self.index = self.model.encode(docs, normalize_embeddings=True, convert_to_tensor=True)\n\n    def query(self, text, top_k=3, threshold=0.3):\n        q = self.model.encode(text, normalize_embeddings=True, convert_to_tensor=True)\n        scores = util.cos_sim(q, self.index)[0]\n        ranked = scores.argsort(descending=True)[:top_k]\n        return [\n            {\"text\": self.docs[i], \"score\": float(scores[i])}\n            for i in ranked if float(scores[i]) >= threshold\n        ]\n\n    def build_prompt(self, user_msg, top_k=3):\n        hits = self.query(user_msg, top_k=top_k)\n        if not hits:\n            return f\"Question: {user_msg}\\nAnswer:\"\n        ctx = \"\\n\".join(f\"- {h['text']}\" for h in hits)\n        return f\"Context:\\n{ctx}\\n\\nQuestion: {user_msg}\\nAnswer:\"\n```\n\n### Step 4: Multi-Backend Deployment\n\nHomie should start fast on any machine. Choose the backend at init:\n\n```python\n# PyTorch — universal, GPU-capable\nretriever_pt = HomieRetriever(knowledge_base, backend=\"pytorch\")\n\n# ONNX — 2-3x faster on CPU, ideal for laptops\nretriever_onnx = HomieRetriever(knowledge_base, backend=\"onnx\")\n```\n\nFor TensorFlow or Rust (via `candle`), export the model once and load with the respective runtime. The embedding vectors are identical across backends — you can index with PyTorch and query with ONNX.\n\n### Similarity Thresholds for Homie\n\n| Threshold | Use Case | Behavior |\n|---|---|---|\n| 0.70+ | Exact answer retrieval | Only returns near-exact matches |\n| 0.50–0.70 | General QA | Good balance for Homie's chat |\n| 0.30–0.50 | Broad context gathering | Pulls in loosely related docs |\n| < 0.30 | Noise | Filter out — irrelevant results |\n\nHomie's default threshold of 0.30 with top_k=3 ensures the LLM always gets some context, while truly irrelevant noise stays out.\n\n> **Key Insight:** all-MiniLM-L6-v2 is Homie's default embedding backbone because it nails the local-assistant sweet spot — 80 MB, 384 dims, ~14K sent/sec, no API key, and identical output across PyTorch/ONNX/TF backends. Wire it up as a retriever, cache embeddings to disk, and your RAG assistant has a semantic memory that works offline on a $300 laptop."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Homie needs a memory. all-MiniLM-L6-v2 gives it one — an 80 MB model that converts any text into a 384-dim meaning vector. Encode your knowledge base once, search by cosine similarity at query time, and feed the top hits into an LLM. That's RAG, and MiniLM is the backbone.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nknowledge_base = [\n    \"Homie stores preferences in ~/.homie/config.yaml\",\n    \"Use /remind to set a timed reminder\",\n    \"Homie summarizes PDFs with /summarize\",\n    \"Edit the 'model' field in config to change LLM\",\n]\n\nembeddings = model.encode(knowledge_base, normalize_embeddings=True)\nprint(embeddings.shape)  # (4, 384)\nnp.save(\"homie_kb.npy\", embeddings)",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the library that wraps pre-trained embedding models. Install: pip install sentence-transformers."},
+        {"line": 4, "explanation": "Load all-MiniLM-L6-v2 — downloads once (~80 MB), then runs fully offline. This is Homie's default embedding model."},
+        {"line": 6, "explanation": "Define Homie's knowledge base — these are the docs the assistant can retrieve from. In production, these come from files, databases, or scraped pages."},
+        {"line": 13, "explanation": "Encode all documents into 384-dim vectors. normalize_embeddings=True makes dot product equal cosine similarity — a free speedup."},
+        {"line": 14, "explanation": "Shape (4, 384): four documents, each compressed into 384 floating-point numbers that capture semantic meaning."},
+        {"line": 15, "explanation": "Cache embeddings to disk with np.save(). Re-encoding on every startup is wasteful — load from cache instead."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\ndocs = [\n    \"Edit the model field to switch LLM backends\",\n    \"Use /remind for timed reminders\",\n    \"Homie reads PDF files with /summarize\",\n]\nembeddings = model.encode(docs, normalize_embeddings=True)\n\nquery = \"How do I change which AI model Homie uses?\"\nq_emb = model.encode(query, normalize_embeddings=True)\nscores = util.cos_sim(q_emb, embeddings)[0]\n\nfor doc, score in sorted(zip(docs, scores), key=lambda x: x[1], reverse=True):\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import util alongside SentenceTransformer — it provides cos_sim for vectorized cosine similarity."},
+        {"line": 4, "explanation": "Three knowledge base entries about different Homie features. Only one is relevant to our query."},
+        {"line": 9, "explanation": "Encode docs with normalization. In production, these embeddings would be loaded from the cached .npy file."},
+        {"line": 11, "explanation": "User asks about changing the AI model. No exact word matches with the top result, but the meaning aligns perfectly."},
+        {"line": 12, "explanation": "Encode the query the same way. The query vector lives in the same 384-dim space as the document vectors."},
+        {"line": 13, "explanation": "cos_sim computes similarity between query and all docs in one vectorized call. Returns a tensor of scores."},
+        {"line": 15, "explanation": "Sort by score. 'Edit the model field to switch LLM backends' ranks first — the model bridged 'change AI model' to 'switch LLM backends'."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nclass HomieRetriever:\n    def __init__(self, docs, backend=\"pytorch\"):\n        kwargs = {}\n        if backend == \"onnx\":\n            kwargs = {\"backend\": \"onnx\",\n                      \"model_kwargs\": {\"provider\": \"CPUExecutionProvider\"}}\n        self.model = SentenceTransformer(\"all-MiniLM-L6-v2\", **kwargs)\n        self.docs = docs\n        self.index = self.model.encode(docs, normalize_embeddings=True)\n\n    def query(self, text, top_k=3, threshold=0.3):\n        q = self.model.encode(text, normalize_embeddings=True)\n        scores = util.cos_sim(q, self.index)[0].tolist()\n        ranked = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)\n        return [\n            {\"text\": self.docs[i], \"score\": scores[i]}\n            for i in ranked[:top_k] if scores[i] >= threshold\n        ]\n\n    def build_prompt(self, user_msg, top_k=3):\n        hits = self.query(user_msg, top_k)\n        ctx = \"\\n\".join(f\"- {h['text']}\" for h in hits)\n        return f\"Context:\\n{ctx}\\n\\nQuestion: {user_msg}\\nAnswer:\"",
+      "steps": [
+        {"line": 3, "explanation": "HomieRetriever wraps the entire encode-index-search pipeline into a reusable class — Homie's semantic memory."},
+        {"line": 4, "explanation": "Accept a backend parameter: 'pytorch' (default, universal) or 'onnx' (2-3x faster on CPU). Same vectors, different runtime."},
+        {"line": 6, "explanation": "ONNX backend requires optimum[onnxruntime]. CPUExecutionProvider is the safe default — swap for CUDAExecutionProvider on GPU."},
+        {"line": 11, "explanation": "Pre-encode all documents at init time. This is the 'indexing' step — done once, queried many times."},
+        {"line": 13, "explanation": "query() encodes the user's text and computes cosine similarity against the pre-built index."},
+        {"line": 16, "explanation": "Sort indices by score descending, slice to top_k, and filter by threshold to remove noise."},
+        {"line": 22, "explanation": "build_prompt() assembles a RAG prompt: retrieved context + user question. This goes straight to the LLM."},
+        {"line": 25, "explanation": "The prompt format is Context/Question/Answer — the LLM sees relevant docs first, then answers grounded in them."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "No Retrieval (Pure LLM)",
+      "right_label": "MiniLM RAG Backbone",
+      "items": [
+        {"left": "LLM hallucinates unknown facts", "right": "LLM answers from retrieved evidence"},
+        {"left": "No access to private knowledge", "right": "Searches user's own documents"},
+        {"left": "Requires large context window", "right": "Only passes top-k relevant chunks"},
+        {"left": "API cost per token of context", "right": "Embedding search is free and local"},
+        {"left": "No confidence signal", "right": "Similarity scores show retrieval quality"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie now has a semantic memory! all-MiniLM-L6-v2 encodes, indexes, and retrieves — locally, on CPU, across any backend."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `SimilarityScorer` class that simulates how MiniLM computes sentence similarity. Given a vocabulary and documents, it builds TF (term frequency) vectors and computes cosine similarity. Implement `encode(text)` to return a list of floats (one per vocab word, representing normalized term frequency), `cosine_similarity(vec_a, vec_b)` to compute similarity between two encoded vectors, and `most_similar(query, top_k)` to find the top-k most similar documents to a query."
+      },
+      "starter_code": "import math\n\nclass SimilarityScorer:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        # Build vocabulary from all documents\n        all_words = set()\n        for doc in documents:\n            all_words.update(doc.lower().split())\n        self.vocab = sorted(all_words)\n        self.doc_vectors = [self.encode(doc) for doc in documents]\n\n    def encode(self, text: str) -> list[float]:\n        # Return a vector of term frequencies aligned to self.vocab\n        # Normalize by dividing each count by total word count in text\n        # Return [0.0, ...] for empty text\n        pass\n\n    def cosine_similarity(self, vec_a: list[float], vec_b: list[float]) -> float:\n        # Compute cosine similarity between two vectors\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def most_similar(self, query: str, top_k: int = 2) -> list[dict]:\n        # Return top-k docs sorted by similarity descending\n        # Each result: {\"document\": str, \"score\": float (rounded to 3 decimals)}\n        pass\n\n# Test:\nscorer = SimilarityScorer([\n    \"python machine learning\",\n    \"machine learning algorithms\",\n    \"cooking delicious pasta\",\n])\nresults = scorer.most_similar(\"python learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])",
+      "expected_output": "2\npython machine learning\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), count how many times each vocab word appears in the text, then divide each count by the total number of words in the text",
+          "For cosine_similarity, compute dot product (sum of a[i]*b[i]), then divide by the product of magnitudes (sqrt of sum of squares for each vector)",
+          "In most_similar(), encode the query using the same vocab, compute cosine_similarity against each doc_vector, sort descending, and return top_k results"
+        ]
+      },
+      "test_code": "s = SimilarityScorer([\"hello world\", \"world peace\", \"hello hello world\"])\nvec = s.encode(\"hello world\")\nassert len(vec) == len(s.vocab)\nassert sum(1 for v in vec if v > 0) == 2\nsim = s.cosine_similarity([1, 0, 0], [1, 0, 0])\nassert abs(sim - 1.0) < 0.001\nsim0 = s.cosine_similarity([1, 0], [0, 1])\nassert sim0 == 0.0\nresults = s.most_similar(\"hello\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"hello hello world\"\nassert results[0][\"score\"] > results[1][\"score\"]\nassert isinstance(results[0][\"score\"], float)"
+    },
+    {
+      "instruction": {
+        "en": "Build a `HomieMemory` class that acts as Homie's retrieval backbone. It stores documents, supports adding new documents dynamically with `add(text)`, retrieves relevant context with `retrieve(query, top_k)`, and builds RAG prompts with `build_prompt(query, top_k)`. The prompt format must be exactly: 'Context:\\n- doc1\\n- doc2\\n\\nQuestion: {query}\\nAnswer:'. If no documents score above `threshold` (default 0.1), `build_prompt` should return 'Question: {query}\\nAnswer:' with no context block. Use the provided `SimilarityScorer` for encoding."
+      },
+      "starter_code": "import math\n\nclass SimilarityScorer:\n    def __init__(self, documents):\n        self.documents = list(documents)\n        all_words = set()\n        for doc in self.documents:\n            all_words.update(doc.lower().split())\n        self.vocab = sorted(all_words)\n        self.doc_vectors = [self.encode(doc) for doc in self.documents]\n\n    def encode(self, text):\n        words = text.lower().split()\n        if not words:\n            return [0.0] * len(self.vocab)\n        counts = {}\n        for w in words:\n            counts[w] = counts.get(w, 0) + 1\n        return [counts.get(v, 0) / len(words) for v in self.vocab]\n\n    def cosine_similarity(self, vec_a, vec_b):\n        dot = sum(a * b for a, b in zip(vec_a, vec_b))\n        mag_a = math.sqrt(sum(a ** 2 for a in vec_a))\n        mag_b = math.sqrt(sum(b ** 2 for b in vec_b))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\nclass HomieMemory:\n    def __init__(self, documents: list[str], threshold: float = 0.1):\n        self.threshold = threshold\n        self.scorer = SimilarityScorer(documents)\n\n    def add(self, text: str):\n        # Add a new document — rebuild the scorer with updated docs\n        pass\n\n    def retrieve(self, query: str, top_k: int = 3) -> list[dict]:\n        # Return top-k docs above threshold, sorted by score desc\n        # Each: {\"text\": str, \"score\": float}\n        pass\n\n    def build_prompt(self, query: str, top_k: int = 3) -> str:\n        # Build RAG prompt with retrieved context\n        # If no results above threshold: 'Question: {query}\\nAnswer:'\n        # Otherwise: 'Context:\\n- doc1\\n- doc2\\n\\nQuestion: {query}\\nAnswer:'\n        pass\n\n# Test:\nmemory = HomieMemory([\n    \"homie stores config in yaml\",\n    \"use remind command for timers\",\n    \"homie summarizes pdf files\",\n])\nmemory.add(\"homie supports python plugins\")\nprompt = memory.build_prompt(\"how to add plugins\", top_k=2)\nprint(\"Context:\" in prompt)\nprint(\"Question: how to add plugins\" in prompt)\nprint(\"Answer:\" in prompt)\n\nresults = memory.retrieve(\"config settings\", top_k=1)\nprint(len(results))",
+      "expected_output": "True\nTrue\nTrue\n1",
+      "hints": {
+        "en": [
+          "In add(), append the text to self.scorer.documents and rebuild self.scorer = SimilarityScorer(self.scorer.documents)",
+          "In retrieve(), encode the query, compute cosine_similarity against each doc_vector, filter by threshold, sort descending, and slice to top_k",
+          "In build_prompt(), call retrieve() first — if the result list is empty, return the no-context format; otherwise join docs with '\\n- ' and use the full format"
+        ]
+      },
+      "test_code": "m = HomieMemory([\"hello world\", \"goodbye world\"], threshold=0.1)\nm.add(\"hello friend\")\nassert len(m.scorer.documents) == 3\nresults = m.retrieve(\"hello\", top_k=2)\nassert len(results) <= 2\nassert all(r[\"score\"] >= 0.1 for r in results)\nprompt = m.build_prompt(\"hello\", top_k=2)\nassert prompt.startswith(\"Context:\")\nassert \"Question: hello\" in prompt\nassert prompt.strip().endswith(\"Answer:\")\nassert \"- \" in prompt\nm2 = HomieMemory([\"aaa bbb\"], threshold=0.99)\nprompt2 = m2.build_prompt(\"zzz yyy\", top_k=1)\nassert prompt2 == \"Question: zzz yyy\\nAnswer:\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sentence similarity", "embedding backbone", "RAG retrieval", "all-MiniLM-L6-v2", "cosine similarity", "multi-backend deployment", "ONNX inference", "similarity thresholds", "prompt construction"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

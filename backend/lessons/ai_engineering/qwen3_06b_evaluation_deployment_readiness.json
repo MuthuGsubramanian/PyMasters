@@ -1,0 +1,131 @@
+{
+  "id": "qwen3_06b_evaluation_deployment_readiness",
+  "topic": "qwen3_06b_evaluation_deployment_readiness",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Evaluate and Validate a Tiny LLM Before Deploying as Homie's Backbone"
+  },
+  "description": {
+    "en": "Build an evaluation harness for Qwen3-0.6B — measure response quality, latency, memory footprint, and task accuracy to decide whether a 0.6B model is production-ready for Homie's on-device assistant."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Prove It Before You Ship It: Evaluating Qwen3-0.6B for Production\n\nVaathiyaar here! Everyone loves the idea of a tiny LLM running on-device — but how do you *know* it's good enough? You wouldn't ship an untested API, so why ship an untested model? Before Qwen3-0.6B becomes Homie's backbone, we need cold, hard numbers: how fast is it, how much memory does it eat, and does it actually give useful answers?\n\nThis lesson teaches you to build an **evaluation harness** — a systematic way to measure model quality before deployment. This is the missing step between \"cool demo\" and \"reliable product.\"\n\n### Why Evaluate Before Deploying?\n\n| Skip Evaluation | Evaluate First |\n|---|---|\n| Ship broken answers to users | Catch quality gaps early |\n| Discover latency issues in prod | Set latency budgets upfront |\n| OOM crashes on target hardware | Know exact memory requirements |\n| No baseline for improvements | Track quality across model versions |\n| \"It works on my machine\" | Reproducible benchmarks |\n\n### Step 1: Measure Memory Footprint\n\n```python\nimport torch\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nimport os, psutil\n\nprocess = psutil.Process(os.getpid())\nmem_before = process.memory_info().rss / 1024**2  # MB\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=torch.float32, device_map=\"cpu\"\n)\n\nmem_after = process.memory_info().rss / 1024**2\nprint(f\"Model memory: {mem_after - mem_before:.0f} MB\")\nprint(f\"Parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.1f}M\")\n```\n\nKnowing the exact footprint tells you whether Qwen3-0.6B fits your target device — a Raspberry Pi, a laptop, or a container with a memory limit.\n\n### Step 2: Benchmark Inference Latency\n\n```python\nimport time\n\ndef benchmark_latency(model, tokenizer, prompt, n_runs=5, max_tokens=50):\n    messages = [{\"role\": \"user\", \"content\": prompt}]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\n    # Warmup run\n    model.generate(**inputs, max_new_tokens=max_tokens)\n\n    latencies = []\n    for _ in range(n_runs):\n        start = time.perf_counter()\n        model.generate(**inputs, max_new_tokens=max_tokens)\n        latencies.append(time.perf_counter() - start)\n\n    avg = sum(latencies) / len(latencies)\n    tokens_per_sec = max_tokens / avg\n    print(f\"Avg latency: {avg:.2f}s | {tokens_per_sec:.1f} tok/s\")\n    return avg, tokens_per_sec\n\nbenchmark_latency(model, tokenizer, \"What is a Python decorator?\")\n```\n\nAlways do a warmup run — the first inference is slower due to memory allocation and kernel compilation.\n\n### Step 3: Task Accuracy with a Test Suite\n\n```python\ntest_cases = [\n    {\"prompt\": \"What is 2 + 2?\", \"expected_contains\": [\"4\"]},\n    {\"prompt\": \"Name a Python data structure\", \"expected_contains\": [\"list\", \"dict\", \"set\", \"tuple\"]},\n    {\"prompt\": \"Is Python compiled or interpreted?\", \"expected_contains\": [\"interpret\"]},\n]\n\ndef evaluate_accuracy(model, tokenizer, test_cases):\n    passed = 0\n    for tc in test_cases:\n        messages = [{\"role\": \"user\", \"content\": tc[\"prompt\"]}]\n        text = tokenizer.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n        output = model.generate(**inputs, max_new_tokens=100)\n        response = tokenizer.decode(\n            output[0][inputs[\"input_ids\"].shape[-1]:],\n            skip_special_tokens=True\n        ).lower()\n        hit = any(kw in response for kw in tc[\"expected_contains\"])\n        print(f\"{'PASS' if hit else 'FAIL'}: {tc['prompt']}\")\n        passed += hit\n    score = passed / len(test_cases) * 100\n    print(f\"\\nAccuracy: {score:.0f}% ({passed}/{len(test_cases)})\")\n    return score\n\nevaluate_accuracy(model, tokenizer, test_cases)\n```\n\n### Step 4: The Deployment Readiness Report\n\nCombine all metrics into a go/no-go decision:\n\n```python\ndef deployment_report(memory_mb, tokens_per_sec, accuracy_pct,\n                      max_memory=2000, min_speed=5, min_accuracy=70):\n    checks = {\n        \"Memory\": memory_mb <= max_memory,\n        \"Speed\": tokens_per_sec >= min_speed,\n        \"Accuracy\": accuracy_pct >= min_accuracy,\n    }\n    for check, passed in checks.items():\n        status = \"PASS\" if passed else \"FAIL\"\n        print(f\"  [{status}] {check}\")\n    ready = all(checks.values())\n    print(f\"\\nDeployment ready: {'YES' if ready else 'NO'}\")\n    return ready\n```\n\nSet thresholds based on your use case. Homie's on-device assistant needs low memory and fast responses — accuracy can be supplemented with RAG retrieval for domain-specific questions.\n\n> **Key Insight:** A model evaluation harness is the bridge between \"this model is cool\" and \"this model is ready for users.\" By measuring memory, latency, and accuracy *before* deployment, you catch failures early, set baselines for improvement, and make data-driven decisions about whether Qwen3-0.6B — or any small LLM — belongs in your production stack."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A tiny LLM demo is not a deployment. Before Qwen3-0.6B becomes Homie's on-device backbone, you need proof: How much memory? How fast? How accurate? Build an evaluation harness that answers these questions with numbers, not guesses.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import torch\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nimport os, psutil\n\nprocess = psutil.Process(os.getpid())\nmem_before = process.memory_info().rss / 1024**2\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=torch.float32, device_map=\"cpu\"\n)\n\nmem_after = process.memory_info().rss / 1024**2\nprint(f\"Model memory: {mem_after - mem_before:.0f} MB\")\nprint(f\"Parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.1f}M\")",
+      "steps": [
+        {"line": 1, "explanation": "Import PyTorch for tensor operations and dtype control — we'll force float32 to measure true uncompressed memory."},
+        {"line": 4, "explanation": "psutil gives access to process-level memory stats. We measure RSS (Resident Set Size) — the actual RAM the process uses."},
+        {"line": 5, "explanation": "Snapshot memory BEFORE loading the model. The difference after loading tells us the model's true footprint."},
+        {"line": 6, "explanation": "Convert bytes to megabytes (1024^2) for human-readable output."},
+        {"line": 8, "explanation": "Target the 0.6B variant — smallest in the Qwen3 family, ideal for on-device deployment."},
+        {"line": 10, "explanation": "Load with float32 on CPU to measure worst-case memory. In production you'd use float16 or quantization to halve this."},
+        {"line": 14, "explanation": "Second memory snapshot. The delta gives model memory — excluding Python overhead and tokenizer."},
+        {"line": 16, "explanation": "Count total parameters to verify model size. Expect ~600M for Qwen3-0.6B."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import time\n\ndef benchmark_latency(model, tokenizer, prompt, n_runs=5, max_tokens=50):\n    messages = [{\"role\": \"user\", \"content\": prompt}]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\n    # Warmup run — first inference is always slower\n    model.generate(**inputs, max_new_tokens=max_tokens)\n\n    latencies = []\n    for _ in range(n_runs):\n        start = time.perf_counter()\n        model.generate(**inputs, max_new_tokens=max_tokens)\n        latencies.append(time.perf_counter() - start)\n\n    avg = sum(latencies) / len(latencies)\n    tokens_per_sec = max_tokens / avg\n    print(f\"Avg latency: {avg:.2f}s | {tokens_per_sec:.1f} tok/s\")\n    return avg, tokens_per_sec\n\nbenchmark_latency(model, tokenizer, \"What is a Python decorator?\")",
+      "steps": [
+        {"line": 1, "explanation": "time.perf_counter gives the highest resolution timer available — essential for accurate latency measurement."},
+        {"line": 3, "explanation": "The function takes model, tokenizer, and a test prompt. n_runs controls how many iterations to average over."},
+        {"line": 5, "explanation": "Format the prompt using chat template — same pipeline the model will use in production."},
+        {"line": 11, "explanation": "Warmup run: the first generate() call allocates KV cache and compiles kernels. Discard this timing."},
+        {"line": 15, "explanation": "perf_counter() before and after each generate() gives wall-clock latency per inference."},
+        {"line": 19, "explanation": "Average over n_runs to smooth out OS scheduling jitter. Report both seconds and tokens/second."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "test_cases = [\n    {\"prompt\": \"What is 2 + 2?\", \"expected_contains\": [\"4\"]},\n    {\"prompt\": \"Name a Python data structure\",\n     \"expected_contains\": [\"list\", \"dict\", \"set\", \"tuple\"]},\n    {\"prompt\": \"Is Python compiled or interpreted?\",\n     \"expected_contains\": [\"interpret\"]},\n]\n\ndef evaluate_accuracy(model, tokenizer, test_cases):\n    passed = 0\n    for tc in test_cases:\n        messages = [{\"role\": \"user\", \"content\": tc[\"prompt\"]}]\n        text = tokenizer.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n        output = model.generate(**inputs, max_new_tokens=100)\n        response = tokenizer.decode(\n            output[0][inputs[\"input_ids\"].shape[-1]:],\n            skip_special_tokens=True\n        ).lower()\n        hit = any(kw in response for kw in tc[\"expected_contains\"])\n        print(f\"{'PASS' if hit else 'FAIL'}: {tc['prompt']}\")\n        passed += hit\n    score = passed / len(test_cases) * 100\n    print(f\"Accuracy: {score:.0f}% ({passed}/{len(test_cases)})\")\n    return score",
+      "steps": [
+        {"line": 1, "explanation": "Define test cases as prompt-expectation pairs. expected_contains lists keywords — if ANY appear in the response, the test passes."},
+        {"line": 9, "explanation": "The evaluation function iterates over test cases, generates responses, and checks for expected keywords."},
+        {"line": 17, "explanation": "Generate with max_new_tokens=100 — enough for a short answer without wasting compute."},
+        {"line": 18, "explanation": "Decode only the model's new tokens by slicing off the input. Convert to lowercase for case-insensitive matching."},
+        {"line": 22, "explanation": "any() with a keyword list gives flexible matching — the model can phrase answers differently and still pass."},
+        {"line": 25, "explanation": "Calculate accuracy as percentage. This becomes your baseline — track it across model versions and quantization levels."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Ship Without Evaluation",
+      "right_label": "Evaluate Then Ship",
+      "items": [
+        {"left": "Users report broken answers", "right": "Catch bad outputs in test suite"},
+        {"left": "OOM crash on Raspberry Pi", "right": "Know exact memory: 1.2GB float32"},
+        {"left": "\"Feels fast enough\"", "right": "Measured: 12 tok/s on i7 CPU"},
+        {"left": "No upgrade baseline", "right": "Compare Qwen3-0.6B vs 1.7B with data"},
+        {"left": "Guess if quantization helps", "right": "Measure accuracy drop from int8"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built a model evaluation harness! Now every deployment decision is backed by data, not guesses."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ModelEvaluator` class that runs a test suite against a simulated LLM and produces a deployment readiness report. Implement `__init__(self, model_name, memory_mb, tokens_per_sec)` to store model metadata, `add_test_case(prompt, expected_keywords)` to register test cases, `run_tests()` that simulates model responses using a mock function and returns accuracy as a float (0.0-1.0), and `deployment_report(max_memory, min_speed, min_accuracy)` that returns a dict with keys 'memory_ok', 'speed_ok', 'accuracy_ok', and 'ready' (True only if ALL checks pass). For the mock, if 'python' appears in the prompt (case-insensitive) respond 'Python is an interpreted language with lists and dicts', if 'math' or 'add' appears respond 'The answer is 4', otherwise respond 'I can help with that question'."
+      },
+      "starter_code": "class ModelEvaluator:\n    def __init__(self, model_name: str, memory_mb: float, tokens_per_sec: float):\n        # Store model metadata and initialize empty test_cases list\n        pass\n\n    def add_test_case(self, prompt: str, expected_keywords: list):\n        # Append {\"prompt\": prompt, \"expected_keywords\": expected_keywords}\n        pass\n\n    def _mock_generate(self, prompt: str) -> str:\n        # Simulate LLM response based on keywords in prompt:\n        # 'python' -> 'Python is an interpreted language with lists and dicts'\n        # 'math' or 'add' -> 'The answer is 4'\n        # default -> 'I can help with that question'\n        pass\n\n    def run_tests(self) -> float:\n        # Run each test case through _mock_generate\n        # Check if ANY expected keyword appears in response (case-insensitive)\n        # Return accuracy as float 0.0-1.0\n        pass\n\n    def deployment_report(self, max_memory=2000, min_speed=5, min_accuracy=0.7) -> dict:\n        # Run tests to get accuracy, then return:\n        # {'memory_ok': bool, 'speed_ok': bool, 'accuracy_ok': bool, 'ready': bool}\n        pass\n\n# Test it:\nev = ModelEvaluator(\"Qwen3-0.6B\", memory_mb=1200, tokens_per_sec=12.0)\nev.add_test_case(\"Tell me about Python\", [\"interpreted\", \"language\"])\nev.add_test_case(\"What is 2 + 2?\", [\"4\"])\nev.add_test_case(\"Explain quantum physics\", [\"quantum\"])\nacc = ev.run_tests()\nprint(f\"{acc:.2f}\")\nreport = ev.deployment_report(max_memory=2000, min_speed=10, min_accuracy=0.6)\nprint(report[\"ready\"])",
+      "expected_output": "0.67\nTrue",
+      "hints": {
+        "en": [
+          "Store test_cases as a list of dicts. In run_tests(), iterate over them and count how many pass the keyword check.",
+          "In _mock_generate(), convert the prompt to lowercase and use 'in' checks: if 'python' in prompt.lower() returns the Python response, etc.",
+          "In deployment_report(), call self.run_tests() to get accuracy, then compare self.memory_mb <= max_memory, self.tokens_per_sec >= min_speed, and accuracy >= min_accuracy. 'ready' is True only if all three are True."
+        ]
+      },
+      "test_code": "ev = ModelEvaluator(\"test-model\", memory_mb=1500, tokens_per_sec=8.0)\nassert ev.model_name == \"test-model\"\nassert ev.memory_mb == 1500\nassert ev.tokens_per_sec == 8.0\nassert ev.run_tests() == 0.0\nev.add_test_case(\"Tell me about Python\", [\"interpreted\"])\nassert ev.run_tests() == 1.0\nev.add_test_case(\"What is 2+2? Do the math\", [\"4\"])\nassert ev.run_tests() == 1.0\nev.add_test_case(\"Explain quantum physics\", [\"quantum\"])\nassert abs(ev.run_tests() - 0.6666666666666666) < 0.01\nreport = ev.deployment_report(max_memory=2000, min_speed=5, min_accuracy=0.6)\nassert report[\"memory_ok\"] == True\nassert report[\"speed_ok\"] == True\nassert report[\"accuracy_ok\"] == True\nassert report[\"ready\"] == True\nreport2 = ev.deployment_report(max_memory=1000, min_speed=10, min_accuracy=0.9)\nassert report2[\"memory_ok\"] == False\nassert report2[\"speed_ok\"] == False\nassert report2[\"accuracy_ok\"] == False\nassert report2[\"ready\"] == False\nev2 = ModelEvaluator(\"big-model\", memory_mb=3000, tokens_per_sec=20.0)\nev2.add_test_case(\"Add numbers\", [\"4\"])\nassert ev2.run_tests() == 1.0\nassert ev2._mock_generate(\"tell me about PYTHON\") == \"Python is an interpreted language with lists and dicts\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `LatencyBenchmark` class that simulates measuring inference latency. Implement `__init__(self, n_runs)` to set the number of runs, `record(latency_seconds)` to log a single latency measurement, `stats()` that returns a dict with 'avg', 'min', 'max', and 'p95' (95th percentile) of recorded latencies — all rounded to 3 decimal places, and `meets_sla(max_avg, max_p95)` that returns True if the average latency is <= max_avg AND the p95 is <= max_p95. If no latencies recorded, stats() should return all zeros and meets_sla() should return False."
+      },
+      "starter_code": "class LatencyBenchmark:\n    def __init__(self, n_runs: int = 10):\n        # Store n_runs and initialize empty latencies list\n        pass\n\n    def record(self, latency_seconds: float):\n        # Append the latency to self.latencies\n        pass\n\n    def stats(self) -> dict:\n        # Return {'avg': ..., 'min': ..., 'max': ..., 'p95': ...}\n        # All values rounded to 3 decimal places\n        # If no latencies, return all zeros\n        # p95 = value at the 95th percentile (index-based)\n        pass\n\n    def meets_sla(self, max_avg: float, max_p95: float) -> bool:\n        # True if avg <= max_avg AND p95 <= max_p95\n        # False if no latencies recorded\n        pass\n\n# Test it:\nbench = LatencyBenchmark(n_runs=5)\nfor t in [0.5, 0.6, 0.55, 0.7, 0.52, 0.58, 0.61, 0.9, 0.53, 0.54]:\n    bench.record(t)\ns = bench.stats()\nprint(s[\"avg\"])\nprint(s[\"p95\"])\nprint(bench.meets_sla(max_avg=0.7, max_p95=1.0))",
+      "expected_output": "0.603\n0.9\nTrue",
+      "hints": {
+        "en": [
+          "Store latencies in a list. In stats(), use sum()/len() for avg, min() and max() for extremes.",
+          "For p95: sort the latencies, compute index = int(0.95 * (len - 1)), and return sorted_latencies[index]. Round all values to 3 decimal places.",
+          "In meets_sla(), first check if latencies is empty (return False), then get stats and compare avg and p95 against the thresholds."
+        ]
+      },
+      "test_code": "b = LatencyBenchmark(n_runs=5)\nassert b.stats() == {'avg': 0.0, 'min': 0.0, 'max': 0.0, 'p95': 0.0}\nassert b.meets_sla(1.0, 1.0) == False\nb.record(1.0)\nassert b.stats()['avg'] == 1.0\nassert b.stats()['min'] == 1.0\nassert b.stats()['max'] == 1.0\nb2 = LatencyBenchmark()\nfor t in [0.5, 0.6, 0.55, 0.7, 0.52, 0.58, 0.61, 0.9, 0.53, 0.54]:\n    b2.record(t)\ns = b2.stats()\nassert s['avg'] == 0.603\nassert s['min'] == 0.5\nassert s['max'] == 0.9\nassert s['p95'] == 0.9\nassert b2.meets_sla(0.7, 1.0) == True\nassert b2.meets_sla(0.5, 1.0) == False\nassert b2.meets_sla(0.7, 0.5) == False"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["model evaluation", "Qwen3-0.6B", "deployment readiness", "latency benchmarking", "memory profiling", "accuracy testing", "small LLM validation", "on-device deployment"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "basic statistics", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

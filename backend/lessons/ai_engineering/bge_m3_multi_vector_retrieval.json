@@ -1,0 +1,133 @@
+{
+  "id": "bge_m3_multi_vector_retrieval",
+  "topic": "bge_m3_multi_vector_retrieval",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BGE-M3 Multi-Vector Retrieval: Dense, Sparse & ColBERT in One Model",
+    "ta": ""
+  },
+  "description": {
+    "en": "Unlock the full power of BAAI/bge-m3 — the only embedding model that outputs dense, sparse, and ColBERT vectors simultaneously. Build hybrid retrieval pipelines that combine lexical precision with semantic understanding across 100+ languages.",
+    "ta": ""
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Triple Threat: BGE-M3's Three Retrieval Modes\n\nVaathiyaar here! Most embedding models give you one output — a single dense vector. BGE-M3 gives you **three**: dense vectors for semantic matching, sparse vectors for keyword precision, and ColBERT multi-vectors for fine-grained token interaction. The \"M3\" stands for **Multi-linguality, Multi-functionality, and Multi-granularity** — and today you'll learn to use all three.\n\nWhy does this matter? Dense retrieval excels at understanding meaning but sometimes misses exact terms. Sparse retrieval (like BM25) catches exact keywords but misses synonyms. ColBERT offers a middle ground with token-level matching. BGE-M3 produces all three from a single forward pass — letting you build hybrid pipelines that combine their strengths.\n\n### The Three Output Types\n\n| Output | Shape | Best For | Weakness |\n|---|---|---|---|\n| Dense | (1, 1024) | Semantic similarity, cross-lingual | Misses exact rare terms |\n| Sparse | (1, vocab_size) | Exact keyword matching | Misses synonyms |\n| ColBERT | (seq_len, 1024) | Token-level fine-grained matching | Larger storage footprint |\n\n### Extracting All Three Vectors\n\n```python\nfrom FlagEmbedding import BGEM3FlagModel\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\nsentences = [\n    \"Python decorators modify function behavior\",\n    \"Decorators in Python wrap callable objects\",\n]\n\n# return_dense, return_sparse, return_colbert_vecs\noutput = model.encode(\n    sentences,\n    return_dense=True,\n    return_sparse=True,\n    return_colbert_vecs=True,\n)\n\nprint(output[\"dense_vecs\"].shape)      # (2, 1024)\nprint(type(output[\"lexical_weights\"]))  # list of dicts\nprint(output[\"colbert_vecs\"][0].shape)  # (token_count, 1024)\n```\n\nOne `encode()` call, three retrieval signals. The dense vectors capture overall meaning, sparse weights identify important terms, and ColBERT vectors enable late-interaction scoring.\n\n### Hybrid Scoring: Dense + Sparse\n\n```python\nimport numpy as np\n\ndef hybrid_score(model, query, documents, dense_weight=0.7, sparse_weight=0.3):\n    q_out = model.encode([query], return_dense=True, return_sparse=True)\n    d_out = model.encode(documents, return_dense=True, return_sparse=True)\n\n    # Dense scores via dot product\n    dense_scores = (q_out[\"dense_vecs\"] @ d_out[\"dense_vecs\"].T)[0]\n\n    # Sparse scores via lexical weight overlap\n    q_weights = q_out[\"lexical_weights\"][0]\n    sparse_scores = []\n    for d_weights in d_out[\"lexical_weights\"]:\n        overlap = sum(\n            q_weights[tok] * d_weights.get(tok, 0)\n            for tok in q_weights\n        )\n        sparse_scores.append(overlap)\n\n    sparse_scores = np.array(sparse_scores)\n\n    # Normalize both to [0, 1] range before combining\n    if dense_scores.max() > 0:\n        dense_scores = dense_scores / dense_scores.max()\n    if sparse_scores.max() > 0:\n        sparse_scores = sparse_scores / sparse_scores.max()\n\n    combined = dense_weight * dense_scores + sparse_weight * sparse_scores\n    ranked = np.argsort(combined)[::-1]\n    return [(documents[i], float(combined[i])) for i in ranked]\n```\n\nThe hybrid approach catches documents that either match semantically (dense) or contain exact query terms (sparse).\n\n### ColBERT Late Interaction Scoring\n\nColBERT computes token-level maximum similarity — each query token finds its best match among document tokens:\n\n```python\ndef colbert_score(q_vecs, d_vecs):\n    # q_vecs: (q_len, 1024), d_vecs: (d_len, 1024)\n    token_scores = q_vecs @ d_vecs.T  # (q_len, d_len)\n    # Each query token takes its max match\n    max_per_query_token = token_scores.max(axis=1)  # (q_len,)\n    return float(max_per_query_token.mean())\n\nq_out = model.encode([\"Python decorator pattern\"],\n                     return_colbert_vecs=True)\nd_out = model.encode([\"decorators wrap functions in Python\",\n                      \"cooking pasta al dente\"],\n                     return_colbert_vecs=True)\n\nfor i, doc in enumerate([\"decorators wrap functions\", \"cooking pasta\"]):\n    score = colbert_score(q_out[\"colbert_vecs\"][0],\n                          d_out[\"colbert_vecs\"][i])\n    print(f\"{score:.3f} | {doc}\")\n```\n\n### When to Use Which Retrieval Mode\n\n| Scenario | Recommended Mode |\n|---|---|\n| General semantic search | Dense only — fast and effective |\n| Exact term matching matters (legal, medical) | Dense + Sparse hybrid |\n| Long documents, fine-grained matching | ColBERT late interaction |\n| Maximum recall, re-ranking pipeline | All three — retrieve with dense+sparse, re-rank with ColBERT |\n| Low storage budget | Dense only (1024 floats per doc) |\n| Cross-lingual search | Dense — best cross-lingual signal |\n\n### Production Pipeline: Three-Stage Retrieval\n\n```python\ndef three_stage_retrieve(model, query, documents, top_k=5):\n    q = model.encode([query], return_dense=True,\n                     return_sparse=True, return_colbert_vecs=True)\n    d = model.encode(documents, return_dense=True,\n                     return_sparse=True, return_colbert_vecs=True)\n\n    # Stage 1: Dense retrieval (fast, broad recall)\n    dense_scores = (q[\"dense_vecs\"] @ d[\"dense_vecs\"].T)[0]\n    candidates = np.argsort(dense_scores)[::-1][:top_k * 2]\n\n    # Stage 2: Sparse re-scoring (keyword precision)\n    q_w = q[\"lexical_weights\"][0]\n    sparse = [sum(q_w[t] * d[\"lexical_weights\"][i].get(t, 0)\n              for t in q_w) for i in candidates]\n\n    # Stage 3: ColBERT re-ranking (fine-grained)\n    final_scores = []\n    for idx, s_score in zip(candidates, sparse):\n        c_score = colbert_score(q[\"colbert_vecs\"][0],\n                                d[\"colbert_vecs\"][idx])\n        combined = 0.4 * dense_scores[idx] + 0.3 * s_score + 0.3 * c_score\n        final_scores.append((idx, combined))\n\n    final_scores.sort(key=lambda x: x[1], reverse=True)\n    return [(documents[i], float(s)) for i, s in final_scores[:top_k]]\n```\n\n> **Key Insight:** BGE-M3 is the only open-source model that outputs dense, sparse, and ColBERT vectors in a single forward pass. Dense vectors understand meaning, sparse vectors catch exact terms, and ColBERT provides token-level precision. Combine all three for retrieval quality that rivals systems using separate specialized models — with half the compute cost and a single 2.2GB model.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Most embedding models produce one output. BGE-M3 produces three — dense vectors for semantic matching, sparse vectors for keyword precision, and ColBERT multi-vectors for token-level interaction. One model, three retrieval signals, 100+ languages. The M3 stands for Multi-linguality, Multi-functionality, Multi-granularity.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from FlagEmbedding import BGEM3FlagModel\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\nsentences = [\n    \"Python decorators modify function behavior\",\n    \"Decorators in Python wrap callable objects\",\n]\n\noutput = model.encode(\n    sentences,\n    return_dense=True,\n    return_sparse=True,\n    return_colbert_vecs=True,\n)\n\nprint(output[\"dense_vecs\"].shape)\nprint(len(output[\"lexical_weights\"]))\nprint(output[\"colbert_vecs\"][0].shape)",
+      "steps": [
+        {"line": 1, "explanation": "Import BGEM3FlagModel from the FlagEmbedding library. Install with: pip install FlagEmbedding. This is the official BAAI library that exposes all three output types."},
+        {"line": 3, "explanation": "Load BGE-M3 with FP16 precision. The model is ~2.2GB and runs locally. use_fp16=True halves memory with negligible quality loss."},
+        {"line": 5, "explanation": "Two sentences about Python decorators — similar meaning, different wording. BGE-M3 will produce three types of representations for each."},
+        {"line": 10, "explanation": "The key differentiator: three boolean flags control which outputs you get. Set all three to True for the full M3 experience. Each adds minimal overhead since they share the transformer backbone."},
+        {"line": 17, "explanation": "Dense vectors: shape (2, 1024). One 1024-dimensional vector per sentence capturing overall semantic meaning — the same output other embedding models give you."},
+        {"line": 18, "explanation": "Lexical weights: a list of dicts mapping token IDs to importance scores. This is BGE-M3's learned sparse representation — like a smarter version of TF-IDF."},
+        {"line": 19, "explanation": "ColBERT vectors: shape (token_count, 1024). One 1024-d vector per token, enabling fine-grained token-level matching between queries and documents."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from FlagEmbedding import BGEM3FlagModel\nimport numpy as np\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\nquery = \"Python function wrappers\"\ndocs = [\n    \"Python decorators modify function behavior\",\n    \"Decorators in Python wrap callable objects\",\n    \"Cooking Italian pasta al dente\",\n]\n\nq = model.encode([query], return_dense=True, return_sparse=True)\nd = model.encode(docs, return_dense=True, return_sparse=True)\n\ndense_scores = (q[\"dense_vecs\"] @ d[\"dense_vecs\"].T)[0]\nprint(\"Dense scores:\", [f\"{s:.3f}\" for s in dense_scores])\n\nq_w = q[\"lexical_weights\"][0]\nsparse_scores = []\nfor d_w in d[\"lexical_weights\"]:\n    overlap = sum(q_w[t] * d_w.get(t, 0) for t in q_w)\n    sparse_scores.append(overlap)\nprint(\"Sparse scores:\", [f\"{s:.3f}\" for s in sparse_scores])\n\ncombined = 0.7 * dense_scores + 0.3 * np.array(sparse_scores)\nfor doc, score in sorted(zip(docs, combined), key=lambda x: -x[1]):\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 6, "explanation": "Query uses 'wrappers' — a synonym for decorators. Dense retrieval catches this semantic match; sparse retrieval looks for exact token overlap."},
+        {"line": 13, "explanation": "Encode query and documents with both dense and sparse outputs. One forward pass through the shared transformer backbone produces both."},
+        {"line": 16, "explanation": "Dense scoring: matrix multiply query vector (1×1024) with document matrix (3×1024 transposed). Captures semantic similarity regardless of exact wording."},
+        {"line": 19, "explanation": "Extract the query's learned lexical weights — a sparse dict mapping tokens to importance scores. Higher weight means the token is more critical for matching."},
+        {"line": 22, "explanation": "Sparse scoring: sum the product of shared token weights between query and each document. This catches exact term matches that dense embeddings might underweight."},
+        {"line": 26, "explanation": "Hybrid combination: 70% dense + 30% sparse. The dense signal handles synonym matching while the sparse signal boosts exact term hits. Both decorator documents rank above cooking."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from FlagEmbedding import BGEM3FlagModel\nimport numpy as np\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\ndef colbert_score(q_vecs, d_vecs):\n    token_sims = q_vecs @ d_vecs.T\n    max_per_query = token_sims.max(axis=1)\n    return float(max_per_query.mean())\n\nquery = \"Python decorator pattern\"\ndocs = [\n    \"decorators wrap functions in Python\",\n    \"the observer design pattern in Java\",\n    \"cooking pasta with garlic\",\n]\n\nq = model.encode([query], return_colbert_vecs=True)\nd = model.encode(docs, return_colbert_vecs=True)\n\nfor i, doc in enumerate(docs):\n    score = colbert_score(q[\"colbert_vecs\"][0],\n                          d[\"colbert_vecs\"][i])\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 6, "explanation": "ColBERT scoring function: each query token finds its best-matching document token (max similarity), then we average across all query tokens."},
+        {"line": 7, "explanation": "Matrix multiply query tokens (q_len × 1024) with document tokens (d_len × 1024 transposed). Result: a q_len × d_len similarity matrix."},
+        {"line": 8, "explanation": "For each query token, take the maximum similarity across all document tokens. This 'late interaction' captures fine-grained token-level alignment."},
+        {"line": 9, "explanation": "Average the max similarities across query tokens. This produces a single score representing how well the document covers each aspect of the query."},
+        {"line": 17, "explanation": "Encode with return_colbert_vecs=True. Each sentence gets a matrix of shape (token_count, 1024) — one vector per token, not one per sentence."},
+        {"line": 21, "explanation": "ColBERT scoring ranks the decorator document highest. The 'pattern' token in the query partially matches 'pattern' in the Java doc, showing token-level precision."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Single-Vector (Dense Only)",
+      "right_label": "BGE-M3 Multi-Vector",
+      "items": [
+        {"left": "One 1024-d vector per document", "right": "Dense + Sparse + ColBERT vectors"},
+        {"left": "Semantic meaning only", "right": "Semantic + lexical + token-level"},
+        {"left": "May miss exact rare terms", "right": "Sparse vectors catch exact matches"},
+        {"left": "Coarse document-level scoring", "right": "Fine-grained token interaction"},
+        {"left": "One retrieval signal", "right": "Three signals — hybrid for best results"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've unlocked all three retrieval modes of BGE-M3 — dense, sparse, and ColBERT — from a single model!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `HybridRetriever` class that simulates BGE-M3's multi-vector retrieval. It produces two types of representations for each document: a word-frequency 'dense' vector (dict of word counts) and a 'sparse' vector (dict of unique words mapped to 1.0). Implement `encode(text)` returning both vectors, `dense_score(vec_a, vec_b)` using cosine similarity, `sparse_score(vec_a, vec_b)` using exact term overlap count, and `hybrid_search(query, dense_weight, sparse_weight, top_k)` that combines both scores."
+      },
+      "starter_code": "import math\n\nclass HybridRetriever:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.doc_encoded = [self.encode(doc) for doc in documents]\n\n    def encode(self, text: str) -> dict:\n        # Return {\"dense\": word_freq_dict, \"sparse\": unique_words_dict}\n        # dense: {word: count} from lowercased text\n        # sparse: {word: 1.0} for each unique word in lowercased text\n        pass\n\n    def dense_score(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two word-frequency vectors\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[w] * vec_b[w] for w in shared)\n        ma = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mb = math.sqrt(sum(v**2 for v in vec_b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def sparse_score(self, vec_a: dict, vec_b: dict) -> float:\n        # Count of overlapping keys (shared unique terms)\n        # Return as float\n        pass\n\n    def hybrid_search(self, query: str, dense_weight: float = 0.7,\n                      sparse_weight: float = 0.3,\n                      top_k: int = 3) -> list[dict]:\n        # 1. Encode query\n        # 2. For each document, compute:\n        #    combined = dense_weight * dense_score + sparse_weight * sparse_score\n        #    (normalize sparse_score by dividing by max sparse score, or 1 if max is 0)\n        # 3. Sort descending, return top_k as [{\"document\": str, \"score\": float}]\n        pass\n\n# Test it:\nretriever = HybridRetriever([\n    \"python decorators modify functions\",\n    \"python wrappers change behavior\",\n    \"cooking pasta with garlic\",\n    \"python functions and closures\",\n])\n\nresults = retriever.hybrid_search(\"python decorators\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])\n\n# Pure dense search\nresults_d = retriever.hybrid_search(\"function wrappers\",\n                                     dense_weight=1.0, sparse_weight=0.0, top_k=1)\nprint(results_d[0][\"document\"])",
+      "expected_output": "2\npython decorators modify functions\nTrue\npython wrappers change behavior",
+      "hints": {
+        "en": [
+          "In encode(), split text.lower() into words — dense counts each word's frequency, sparse sets each unique word to 1.0",
+          "sparse_score() returns len(set(vec_a) & set(vec_b)) as a float — the count of shared unique terms",
+          "In hybrid_search(), first compute all sparse scores, find the max, then divide each by max (if max > 0) before combining with dense scores"
+        ]
+      },
+      "test_code": "r = HybridRetriever([\"hello world\", \"hello earth\", \"goodbye moon\"])\ne = r.encode(\"hello hello world\")\nassert e[\"dense\"] == {\"hello\": 2, \"world\": 1}\nassert e[\"sparse\"] == {\"hello\": 1.0, \"world\": 1.0}\nassert r.sparse_score({\"a\": 1.0, \"b\": 1.0}, {\"b\": 1.0, \"c\": 1.0}) == 1.0\nassert r.sparse_score({\"a\": 1.0}, {\"b\": 1.0}) == 0.0\nresults = r.hybrid_search(\"hello world\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"hello world\"\nassert results[0][\"score\"] > results[1][\"score\"]\nresults2 = r.hybrid_search(\"goodbye\", top_k=1)\nassert results2[0][\"document\"] == \"goodbye moon\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `ColBERTScorer` class that simulates ColBERT-style late interaction scoring. It represents each token as a character-trigram vector (dict of trigram counts). Implement `tokenize(text)` that splits into lowercase words, `token_vector(word)` that returns a trigram frequency dict, `token_similarity(vec_a, vec_b)` using cosine similarity, and `late_interaction_score(query, document)` where each query token takes its max similarity across all document tokens, then returns the mean."
+      },
+      "starter_code": "import math\n\nclass ColBERTScorer:\n    def tokenize(self, text: str) -> list[str]:\n        # Split text into lowercase words\n        pass\n\n    def token_vector(self, word: str) -> dict:\n        # Return character trigram frequency dict for a word\n        # e.g., \"hello\" -> {\"hel\": 1, \"ell\": 1, \"llo\": 1}\n        # Words shorter than 3 chars: return {word: 1}\n        pass\n\n    def token_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two trigram vectors\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[k] * vec_b[k] for k in shared)\n        ma = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mb = math.sqrt(sum(v**2 for v in vec_b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def late_interaction_score(self, query: str, document: str) -> float:\n        # 1. Tokenize query and document\n        # 2. Get token_vector for each token\n        # 3. For each query token, find max similarity across all doc tokens\n        # 4. Return mean of these max similarities\n        # Return 0.0 if query or document has no tokens\n        pass\n\n# Test it:\nscorer = ColBERTScorer()\n\nv = scorer.token_vector(\"hello\")\nprint(v)\n\nscore1 = scorer.late_interaction_score(\n    \"python decorators\",\n    \"decorators in python wrap functions\"\n)\nscore2 = scorer.late_interaction_score(\n    \"python decorators\",\n    \"cooking pasta recipes\"\n)\nprint(f\"{score1:.3f}\")\nprint(f\"{score2:.3f}\")\nprint(score1 > score2)\n\n# Empty edge case\nprint(scorer.late_interaction_score(\"\", \"hello\"))",
+      "expected_output": "{'hel': 1, 'ell': 1, 'llo': 1}\n1.000\n0.000\nTrue\n0.0",
+      "hints": {
+        "en": [
+          "tokenize() is simply text.lower().split()",
+          "In token_vector(), handle words with len < 3 by returning {word: 1}, otherwise iterate range(len(word)-2) extracting word[i:i+3]",
+          "In late_interaction_score(), for each query token vector find max(token_similarity(q_vec, d_vec) for d_vec in doc_vecs), then return the average"
+        ]
+      },
+      "test_code": "s = ColBERTScorer()\nassert s.tokenize(\"Hello World\") == [\"hello\", \"world\"]\nassert s.token_vector(\"ab\") == {\"ab\": 1}\nassert s.token_vector(\"abc\") == {\"abc\": 1}\nassert s.token_vector(\"abcd\") == {\"abc\": 1, \"bcd\": 1}\nassert s.late_interaction_score(\"\", \"hello\") == 0.0\nassert s.late_interaction_score(\"hello\", \"\") == 0.0\nscore_same = s.late_interaction_score(\"hello world\", \"hello world\")\nassert abs(score_same - 1.0) < 0.001\nscore_diff = s.late_interaction_score(\"abc def\", \"xyz uvw\")\nassert score_diff == 0.0\nscore_partial = s.late_interaction_score(\"hello xyz\", \"hello world\")\nassert 0.4 < score_partial < 0.6"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multi-vector retrieval", "BGE-M3 dense sparse ColBERT", "hybrid search scoring", "ColBERT late interaction", "lexical weights", "three-stage retrieval", "BAAI bge-m3", "FlagEmbedding multi-output"],
+    "concepts_required": ["python classes", "dictionaries", "numpy basics", "cosine similarity", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

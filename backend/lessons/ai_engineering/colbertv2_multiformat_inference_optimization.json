@@ -1,0 +1,130 @@
+{
+  "id": "colbertv2_multiformat_inference_optimization",
+  "topic": "colbertv2_multiformat_inference_optimization",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "ColBERTv2 Multi-Format Inference: PyTorch, ONNX & SafeTensors"
+  },
+  "description": {
+    "en": "Load colbert-ir/colbertv2.0 across PyTorch, ONNX, and SafeTensors formats. Benchmark inference speed, understand format trade-offs, and build a format-agnostic retrieval pipeline for production deployment."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Multi-Format Model Inference: One Model, Three Runtimes\n\nVaathiyaar here! You've seen ColBERTv2's late-interaction magic — but in production, *how* you load the model matters as much as *what* it does. The `colbert-ir/colbertv2.0` checkpoint ships in three formats: PyTorch (`.bin`), SafeTensors (`.safetensors`), and ONNX (`.onnx`). Each format has distinct trade-offs in load time, inference speed, portability, and safety.\n\nToday you'll load the same ColBERTv2 model three ways, benchmark each, and build a format-agnostic inference wrapper for production.\n\n### Why Multiple Formats Exist\n\n| Format | Serialization | Load Speed | Inference | Safety | Portability |\n|---|---|---|---|---|---|\n| PyTorch `.bin` | Python pickle | Baseline | GPU-optimized | Arbitrary code execution risk | Python only |\n| SafeTensors `.safetensors` | Zero-copy mmap | 2-5x faster load | Same as PyTorch | No code execution — data only | Cross-framework |\n| ONNX `.onnx` | Protocol Buffers | Moderate | CPU-optimized, quantizable | Safe graph format | Any ONNX runtime (C++, Java, JS) |\n\nSafeTensors was created by Hugging Face specifically to solve pickle's security risks. ONNX targets deployment on edge devices and non-Python environments.\n\n### Loading ColBERTv2 in All Three Formats\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\nimport time\n\ntokenizer = AutoTokenizer.from_pretrained(\"colbert-ir/colbertv2.0\")\n\n# Format 1: Standard PyTorch\nmodel_pt = AutoModel.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel_pt.eval()\n\n# Format 2: SafeTensors (preferred for HF Hub)\nmodel_sf = AutoModel.from_pretrained(\n    \"colbert-ir/colbertv2.0\", use_safetensors=True\n)\nmodel_sf.eval()\n```\n\nBoth PyTorch and SafeTensors loading use the same `AutoModel` API — SafeTensors simply swaps the deserialization backend. The model architecture, weights, and outputs are identical.\n\n### ONNX Runtime for CPU-Optimized Inference\n\n```python\nfrom optimum.onnxruntime import ORTModelForFeatureExtraction\n\n# ONNX loading via HF Optimum\nmodel_onnx = ORTModelForFeatureExtraction.from_pretrained(\n    \"colbert-ir/colbertv2.0\", export=True\n)\n\ndef encode_onnx(text, max_length=128):\n    inputs = tokenizer(text, return_tensors=\"np\",\n                       padding=\"max_length\", truncation=True,\n                       max_length=max_length)\n    outputs = model_onnx(**inputs)\n    return outputs.last_hidden_state\n```\n\nONNX Runtime uses graph-level optimizations: operator fusion, constant folding, and memory planning. On CPU-only servers, ONNX often delivers 2-4x speedup over PyTorch without any code changes.\n\n### Benchmarking All Formats\n\n```python\ndef benchmark_format(model, text, n_runs=20):\n    inputs = tokenizer(text, return_tensors=\"pt\",\n                       padding=\"max_length\", truncation=True,\n                       max_length=128)\n    # Warmup\n    for _ in range(3):\n        with torch.no_grad():\n            model(**inputs)\n    # Timed runs\n    start = time.time()\n    for _ in range(n_runs):\n        with torch.no_grad():\n            model(**inputs)\n    elapsed = (time.time() - start) / n_runs * 1000\n    return round(elapsed, 2)\n\nquery = \"how does late interaction improve retrieval quality\"\nprint(f\"PyTorch:     {benchmark_format(model_pt, query)} ms/inference\")\nprint(f\"SafeTensors: {benchmark_format(model_sf, query)} ms/inference\")\n```\n\nSafeTensors and PyTorch have identical inference speed — the difference is in load time and security. SafeTensors loads 2-5x faster because it uses memory-mapped I/O instead of pickle deserialization.\n\n### Format-Agnostic Retrieval Wrapper\n\n```python\nclass ColBERTInference:\n    def __init__(self, model_name, fmt=\"safetensors\"):\n        self.tokenizer = AutoTokenizer.from_pretrained(model_name)\n        if fmt == \"onnx\":\n            self.model = ORTModelForFeatureExtraction.from_pretrained(\n                model_name, export=True)\n            self.backend = \"onnx\"\n        else:\n            self.model = AutoModel.from_pretrained(\n                model_name, use_safetensors=(fmt == \"safetensors\"))\n            self.model.eval()\n            self.backend = \"torch\"\n\n    def encode(self, text, max_length=128):\n        tensor_type = \"np\" if self.backend == \"onnx\" else \"pt\"\n        inputs = self.tokenizer(text, return_tensors=tensor_type,\n                                padding=\"max_length\", truncation=True,\n                                max_length=max_length)\n        if self.backend == \"torch\":\n            with torch.no_grad():\n                return self.model(**inputs).last_hidden_state\n        return self.model(**inputs).last_hidden_state\n```\n\nThis wrapper abstracts the format choice behind a single `encode()` interface. Production systems can switch formats via configuration without changing retrieval logic.\n\n> **Key Insight:** Model format is a deployment decision, not a quality decision — PyTorch, SafeTensors, and ONNX produce identical embeddings from the same weights. Choose SafeTensors for fast, safe loading in Python; ONNX for CPU deployment and cross-language portability; PyTorch only when you need custom training or fine-tuning hooks."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "ColBERTv2 ships in three formats: PyTorch, SafeTensors, and ONNX. Same model, same weights, same embeddings — but vastly different deployment characteristics. Today you'll load all three, benchmark them, and build a format-agnostic inference wrapper that lets production systems switch runtimes without changing retrieval logic.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoTokenizer, AutoModel\nimport torch\nimport time\n\ntokenizer = AutoTokenizer.from_pretrained(\"colbert-ir/colbertv2.0\")\n\n# PyTorch format — uses pickle, full GPU support\nmodel_pt = AutoModel.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel_pt.eval()\n\n# SafeTensors format — zero-copy mmap, no code execution\nmodel_sf = AutoModel.from_pretrained(\n    \"colbert-ir/colbertv2.0\", use_safetensors=True\n)\nmodel_sf.eval()\n\n# Verify identical outputs\ninputs = tokenizer(\"test query\", return_tensors=\"pt\")\nwith torch.no_grad():\n    out_pt = model_pt(**inputs).last_hidden_state\n    out_sf = model_sf(**inputs).last_hidden_state\nprint(f\"Outputs match: {torch.allclose(out_pt, out_sf, atol=1e-6)}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import HuggingFace Transformers and PyTorch. These are the only dependencies needed for PyTorch and SafeTensors loading — both use the same AutoModel interface."},
+        {"line": 5, "explanation": "Load the tokenizer once — it's format-independent. ColBERTv2 uses BERT's WordPiece tokenizer with 30,522 vocabulary entries."},
+        {"line": 8, "explanation": "Standard PyTorch loading via pickle deserialization. This reads .bin files, which can contain arbitrary Python code — a known security concern for untrusted checkpoints."},
+        {"line": 12, "explanation": "SafeTensors loading with use_safetensors=True. Uses memory-mapped I/O for 2-5x faster loads. The .safetensors format stores only tensor data — no executable code, no pickle."},
+        {"line": 18, "explanation": "Tokenize a test input to verify both models produce identical embeddings. Same weights, same architecture, different serialization — outputs must match."},
+        {"line": 21, "explanation": "torch.allclose confirms numerical equivalence within floating-point tolerance. This proves format choice affects deployment, not model quality."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from optimum.onnxruntime import ORTModelForFeatureExtraction\nimport numpy as np\n\n# ONNX format — graph-optimized, CPU-friendly\nmodel_onnx = ORTModelForFeatureExtraction.from_pretrained(\n    \"colbert-ir/colbertv2.0\", export=True\n)\n\ndef encode_torch(text, model, max_length=128):\n    inputs = tokenizer(text, return_tensors=\"pt\",\n                       padding=\"max_length\", truncation=True,\n                       max_length=max_length)\n    with torch.no_grad():\n        emb = model(**inputs).last_hidden_state\n    mask = inputs[\"attention_mask\"].unsqueeze(-1)\n    return (emb * mask).numpy()\n\ndef encode_onnx(text, max_length=128):\n    inputs = tokenizer(text, return_tensors=\"np\",\n                       padding=\"max_length\", truncation=True,\n                       max_length=max_length)\n    emb = model_onnx(**inputs).last_hidden_state\n    mask = np.expand_dims(inputs[\"attention_mask\"], -1)\n    return emb * mask\n\npt_emb = encode_torch(\"gradient descent optimization\", model_pt)\nonnx_emb = encode_onnx(\"gradient descent optimization\")\nprint(f\"Shape match: {pt_emb.shape == onnx_emb.shape}\")\nprint(f\"Values close: {np.allclose(pt_emb, onnx_emb, atol=1e-4)}\")",
+      "steps": [
+        {"line": 1, "explanation": "HuggingFace Optimum provides ORTModelForFeatureExtraction — a drop-in replacement for AutoModel that runs on ONNX Runtime instead of PyTorch."},
+        {"line": 5, "explanation": "export=True converts the PyTorch model to ONNX graph format automatically. This traces the model, applies graph optimizations like operator fusion, and saves the .onnx file."},
+        {"line": 9, "explanation": "PyTorch encode function returns numpy arrays for comparison. Note return_tensors='pt' — PyTorch expects torch tensors as input."},
+        {"line": 18, "explanation": "ONNX encode function uses return_tensors='np' — ONNX Runtime works with numpy arrays directly, no PyTorch dependency needed at inference time."},
+        {"line": 22, "explanation": "ONNX Runtime applies CPU optimizations internally: GEMM fusion, attention kernel optimization, and memory-efficient scheduling. The API looks identical."},
+        {"line": 28, "explanation": "Cross-format validation: same text produces same embeddings (within floating-point tolerance) regardless of runtime. The retrieval quality is format-independent."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def benchmark_load(model_name, fmt):\n    start = time.time()\n    if fmt == \"pytorch\":\n        m = AutoModel.from_pretrained(model_name)\n    elif fmt == \"safetensors\":\n        m = AutoModel.from_pretrained(model_name, use_safetensors=True)\n    elif fmt == \"onnx\":\n        m = ORTModelForFeatureExtraction.from_pretrained(\n            model_name, export=True)\n    elapsed = (time.time() - start) * 1000\n    return round(elapsed, 1)\n\ndef benchmark_inference(encode_fn, text, n_runs=50):\n    # Warmup\n    for _ in range(5):\n        encode_fn(text)\n    start = time.time()\n    for _ in range(n_runs):\n        encode_fn(text)\n    elapsed = (time.time() - start) / n_runs * 1000\n    return round(elapsed, 2)\n\nmodel_name = \"colbert-ir/colbertv2.0\"\nquery = \"how does late interaction improve retrieval\"\n\nfor fmt in [\"pytorch\", \"safetensors\", \"onnx\"]:\n    load_ms = benchmark_load(model_name, fmt)\n    print(f\"{fmt:12s} load: {load_ms:>8.1f} ms\")\n\npt_ms = benchmark_inference(\n    lambda t: encode_torch(t, model_pt), query)\nonnx_ms = benchmark_inference(\n    lambda t: encode_onnx(t), query)\nprint(f\"PyTorch inference:  {pt_ms} ms\")\nprint(f\"ONNX inference:     {onnx_ms} ms\")\nprint(f\"ONNX speedup:       {pt_ms/onnx_ms:.1f}x\")",
+      "steps": [
+        {"line": 1, "explanation": "benchmark_load measures cold-start time — how long it takes to deserialize weights from disk into memory. SafeTensors shines here with memory-mapped zero-copy loading."},
+        {"line": 13, "explanation": "benchmark_inference measures steady-state throughput. Warmup runs let JIT compilation and memory allocation stabilize before timing begins."},
+        {"line": 15, "explanation": "5 warmup iterations ensure the first-run overhead (CUDA kernel compilation, ONNX graph optimization) doesn't skew the timing results."},
+        {"line": 26, "explanation": "Loop through all three formats measuring load time. Expect SafeTensors to load 2-5x faster than PyTorch, with ONNX varying based on export overhead."},
+        {"line": 30, "explanation": "Compare inference speed between PyTorch and ONNX. On CPU, ONNX typically achieves 2-4x speedup. On GPU, PyTorch is usually comparable or faster."},
+        {"line": 35, "explanation": "The speedup ratio quantifies the ONNX advantage. For CPU-only deployment (serverless, edge), this can be the difference between viable and too-slow."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "PyTorch / SafeTensors",
+      "right_label": "ONNX Runtime",
+      "items": [
+        {"left": "Native Python — pip install torch", "right": "Language-agnostic — C++, Java, JS runtimes"},
+        {"left": "GPU-first design with CUDA kernels", "right": "CPU-optimized with graph-level fusion"},
+        {"left": "Full training + inference support", "right": "Inference only — no backpropagation"},
+        {"left": "SafeTensors: 2-5x faster cold load", "right": "Moderate load, but fast steady-state CPU"},
+        {"left": "Dynamic shapes, custom ops, easy debug", "right": "Static graph enables aggressive optimization"},
+        {"left": "~440MB per model instance in memory", "right": "~200MB with INT8 quantization support"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered multi-format model deployment! You can now load ColBERTv2 in PyTorch, SafeTensors, and ONNX — and you know when to choose each format for production retrieval systems."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ModelFormatBenchmark` class that simulates loading and benchmarking models in different serialization formats. Implement `register_format(name, load_time_ms, inference_time_ms)` to register a format, `compare_formats()` to return a sorted comparison by inference speed, and `recommend(use_case)` that returns the best format for 'cpu_deploy' (fastest inference), 'fast_load' (fastest load), or 'training' (returns 'pytorch'). Track formats as a dict of dicts."
+      },
+      "starter_code": "class ModelFormatBenchmark:\n    def __init__(self):\n        self.formats = {}  # name -> {\"load_ms\": float, \"inference_ms\": float}\n\n    def register_format(self, name: str, load_time_ms: float, inference_time_ms: float):\n        # Store the format's timing data\n        pass\n\n    def compare_formats(self) -> list[dict]:\n        # Return list of {\"format\": str, \"load_ms\": float, \"inference_ms\": float}\n        # Sorted by inference_ms ascending (fastest first)\n        pass\n\n    def recommend(self, use_case: str) -> str:\n        # 'cpu_deploy' -> format with lowest inference_ms\n        # 'fast_load' -> format with lowest load_ms\n        # 'training' -> always 'pytorch'\n        # Return format name, or 'pytorch' for unknown use_case\n        pass\n\n# Test:\nbench = ModelFormatBenchmark()\nbench.register_format(\"pytorch\", load_time_ms=1200.0, inference_time_ms=45.0)\nbench.register_format(\"safetensors\", load_time_ms=350.0, inference_time_ms=44.5)\nbench.register_format(\"onnx\", load_time_ms=800.0, inference_time_ms=18.0)\n\ncomp = bench.compare_formats()\nprint(comp[0][\"format\"])\nprint(comp[-1][\"format\"])\nprint(len(comp))\n\nprint(bench.recommend(\"cpu_deploy\"))\nprint(bench.recommend(\"fast_load\"))\nprint(bench.recommend(\"training\"))\nprint(bench.recommend(\"unknown\"))",
+      "expected_output": "onnx\npytorch\n3\nonnx\nsafetensors\npytorch\npytorch",
+      "hints": {
+        "en": [
+          "register_format: just set self.formats[name] = {\"load_ms\": load_time_ms, \"inference_ms\": inference_time_ms}",
+          "compare_formats: build a list of dicts from self.formats.items(), then sort by the 'inference_ms' key",
+          "recommend: for 'cpu_deploy' use min(self.formats, key=...) on inference_ms; for 'fast_load' on load_ms; for 'training' or unknown return 'pytorch'"
+        ]
+      },
+      "test_code": "b = ModelFormatBenchmark()\nb.register_format(\"pytorch\", 1200.0, 45.0)\nb.register_format(\"safetensors\", 350.0, 44.5)\nb.register_format(\"onnx\", 800.0, 18.0)\nassert len(b.formats) == 3\nc = b.compare_formats()\nassert c[0][\"format\"] == \"onnx\"\nassert c[0][\"inference_ms\"] == 18.0\nassert c[-1][\"format\"] == \"pytorch\"\nassert b.recommend(\"cpu_deploy\") == \"onnx\"\nassert b.recommend(\"fast_load\") == \"safetensors\"\nassert b.recommend(\"training\") == \"pytorch\"\nassert b.recommend(\"unknown\") == \"pytorch\"\nb.register_format(\"tensorrt\", 900.0, 10.0)\nassert b.recommend(\"cpu_deploy\") == \"tensorrt\"\nassert b.compare_formats()[0][\"format\"] == \"tensorrt\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `FormatAgnosticEncoder` class that wraps multiple encoding backends behind a single interface. Implement `add_backend(name, encode_fn)` to register an encoding function, `encode(text, backend)` to encode text using a named backend, `validate_consistency(text)` to check all backends produce the same shape and verify outputs are close (return a dict with 'consistent' bool, 'shapes' dict, and 'num_backends' int), and `fastest_backend(text, n_runs)` that benchmarks all backends and returns the name of the fastest one."
+      },
+      "starter_code": "import time\n\nclass FormatAgnosticEncoder:\n    def __init__(self):\n        self.backends = {}  # name -> callable(text) -> list[list[float]]\n\n    def add_backend(self, name: str, encode_fn):\n        # Register an encoding function\n        pass\n\n    def encode(self, text: str, backend: str) -> list[list[float]]:\n        # Call the named backend's encode function\n        # Raise KeyError if backend not found\n        pass\n\n    def validate_consistency(self, text: str) -> dict:\n        # Run all backends on the same text\n        # Return {\"consistent\": bool, \"shapes\": {name: (rows, cols)}, \"num_backends\": int}\n        # \"consistent\" is True if all shapes match\n        pass\n\n    def fastest_backend(self, text: str, n_runs: int = 10) -> str:\n        # Benchmark each backend, return the name of the fastest\n        pass\n\n# Simulated backends using character-frequency vectors\ndef make_encoder(dims):\n    def encode(text):\n        result = []\n        for word in text.lower().split():\n            vec = [0.0] * dims\n            for c in word:\n                if 'a' <= c <= 'z':\n                    vec[ord(c) - ord('a')] += 1.0\n            result.append(vec)\n        return result\n    return encode\n\nenc = FormatAgnosticEncoder()\nenc.add_backend(\"pytorch\", make_encoder(26))\nenc.add_backend(\"safetensors\", make_encoder(26))\nenc.add_backend(\"onnx\", make_encoder(26))\n\nresult = enc.encode(\"hello world\", \"pytorch\")\nprint(len(result))\nprint(len(result[0]))\n\nv = enc.validate_consistency(\"test query\")\nprint(v[\"consistent\"])\nprint(v[\"num_backends\"])\n\nfastest = enc.fastest_backend(\"benchmark text\", n_runs=100)\nprint(fastest in [\"pytorch\", \"safetensors\", \"onnx\"])",
+      "expected_output": "2\n26\nTrue\n3\nTrue",
+      "hints": {
+        "en": [
+          "add_backend: self.backends[name] = encode_fn. encode: return self.backends[backend](text), let KeyError propagate naturally",
+          "validate_consistency: run each backend, record (len(output), len(output[0])) as the shape. 'consistent' is True if all shapes in the dict are equal",
+          "fastest_backend: time each backend over n_runs iterations, return the name with the lowest total time using min() with a key function"
+        ]
+      },
+      "test_code": "enc = FormatAgnosticEncoder()\nenc.add_backend(\"a\", make_encoder(26))\nenc.add_backend(\"b\", make_encoder(26))\nr = enc.encode(\"hello\", \"a\")\nassert len(r) == 1\nassert len(r[0]) == 26\ntry:\n    enc.encode(\"x\", \"missing\")\n    assert False\nexcept KeyError:\n    pass\nv = enc.validate_consistency(\"test\")\nassert v[\"consistent\"] == True\nassert v[\"num_backends\"] == 2\nassert v[\"shapes\"][\"a\"] == v[\"shapes\"][\"b\"]\nenc.add_backend(\"c\", make_encoder(10))\nv2 = enc.validate_consistency(\"test\")\nassert v2[\"consistent\"] == False\nassert v2[\"num_backends\"] == 3\nf = enc.fastest_backend(\"speed\", n_runs=50)\nassert f in [\"a\", \"b\", \"c\"]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["colbert-ir/colbertv2.0", "multi-format model loading", "SafeTensors vs PyTorch vs ONNX", "ONNX Runtime inference", "HuggingFace Optimum", "model serialization formats", "inference benchmarking", "format-agnostic deployment", "memory-mapped model loading"],
+    "concepts_required": ["python classes", "dictionaries", "functions as arguments", "pip install", "pytorch basics", "sentence embeddings", "model loading"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

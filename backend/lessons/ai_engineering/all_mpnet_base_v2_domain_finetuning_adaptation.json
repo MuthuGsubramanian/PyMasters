@@ -1,0 +1,117 @@
+{
+  "id": "all_mpnet_base_v2_domain_finetuning_adaptation",
+  "topic": "all_mpnet_base_v2_domain_finetuning_adaptation",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Domain Fine-Tuning all-mpnet-base-v2 for Custom RAG Retrieval"
+  },
+  "description": {
+    "en": "Fine-tune all-mpnet-base-v2 on your own domain data to boost RAG retrieval accuracy beyond the general-purpose baseline. Covers training pair construction, contrastive loss functions, evaluation during training, and exporting to ONNX/SafeTensors for production deployment."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Domain Fine-Tuning all-mpnet-base-v2 for Custom RAG Retrieval\n\nVaathiyaar here! You plugged `all-mpnet-base-v2` into your RAG pipeline and retrieval improved overnight — but your medical, legal, or financial documents still confuse the model. \"Myocardial infarction\" and \"heart attack\" should be near-identical vectors, but the general-purpose model doesn't know your domain's synonyms. The fix isn't a bigger model — it's **fine-tuning on your domain data**. With 500 sentence pairs and 20 minutes of training, you can push retrieval precision from good to exceptional.\n\n### Why General-Purpose Embeddings Fall Short\n\nall-mpnet-base-v2 was trained on 1B+ general web sentence pairs. It understands everyday English brilliantly, but domain-specific jargon, abbreviations, and synonym patterns aren't in its training data.\n\n| Scenario | General Model | Fine-Tuned Model |\n|---|---|---|\n| \"MI\" → \"heart attack\" | Low similarity (~0.3) | High similarity (~0.85) |\n| \"tort\" → \"civil wrongdoing\" | Moderate (~0.5) | High similarity (~0.88) |\n| \"yield curve\" → \"term structure\" | Moderate (~0.5) | High similarity (~0.90) |\n| General queries | Excellent (0.838 STS) | Excellent (0.838 STS) |\n\nFine-tuning improves domain queries without degrading general performance — because you start from an already-strong checkpoint.\n\n### Constructing Training Pairs\n\n```python\nfrom sentence_transformers import InputExample\n\n# Positive pairs: sentences that SHOULD be similar\n# Negative pairs: sentences that should NOT be similar\ntrain_examples = [\n    InputExample(texts=[\"myocardial infarction symptoms\", \"heart attack warning signs\"], label=1.0),\n    InputExample(texts=[\"myocardial infarction symptoms\", \"cardiac surgery recovery\"], label=0.1),\n    InputExample(texts=[\"acute coronary syndrome\", \"heart attack emergency\"], label=0.9),\n    InputExample(texts=[\"blood pressure medication\", \"orthopedic surgery\"], label=0.0),\n]\n\nprint(f\"Training pairs: {len(train_examples)}\")\nprint(f\"First pair label: {train_examples[0].label}\")\n```\n\nLabels are float scores from 0.0 (unrelated) to 1.0 (identical meaning). You need at least 200-500 pairs for meaningful improvement. Mine these from your FAQ logs, search click-through data, or manual annotation.\n\n### Fine-Tuning with CosineSimilarityLoss\n\n```python\nfrom sentence_transformers import SentenceTransformer, losses\nfrom torch.utils.data import DataLoader\n\nmodel = SentenceTransformer(\"all-mpnet-base-v2\")\n\ntrain_dataloader = DataLoader(train_examples, shuffle=True, batch_size=16)\ntrain_loss = losses.CosineSimilarityLoss(model)\n\nmodel.fit(\n    train_objectives=[(train_dataloader, train_loss)],\n    epochs=3,\n    warmup_steps=100,\n    output_path=\"./mpnet-domain-finetuned\",\n    show_progress_bar=True,\n)\n\nprint(\"Fine-tuning complete!\")\n```\n\n`CosineSimilarityLoss` pushes positive pairs closer and negative pairs apart in the embedding space. Three epochs with warmup is usually enough — more risks overfitting on small datasets.\n\n### Evaluating During Training\n\n```python\nfrom sentence_transformers.evaluation import EmbeddingSimilarityEvaluator\n\neval_sentences1 = [\"chest pain symptoms\", \"cardiac arrest\"]\neval_sentences2 = [\"heart attack signs\", \"heart failure emergency\"]\neval_scores = [0.9, 0.85]\n\nevaluator = EmbeddingSimilarityEvaluator(\n    eval_sentences1, eval_sentences2, eval_scores,\n    name=\"domain-eval\"\n)\n\nmodel.fit(\n    train_objectives=[(train_dataloader, train_loss)],\n    epochs=3,\n    evaluator=evaluator,\n    evaluation_steps=50,\n    output_path=\"./mpnet-domain-finetuned\",\n)\n```\n\nThe evaluator computes Spearman correlation between predicted and expected similarity scores every 50 steps. If correlation drops, you're overfitting — stop training and use the best checkpoint.\n\n### Loading and Comparing Results\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\nfrom sentence_transformers.util import cos_sim\n\nbase_model = SentenceTransformer(\"all-mpnet-base-v2\")\ntuned_model = SentenceTransformer(\"./mpnet-domain-finetuned\")\n\nquery = \"myocardial infarction treatment\"\ndoc = \"heart attack therapy options\"\n\nbase_embs = base_model.encode([query, doc])\ntuned_embs = tuned_model.encode([query, doc])\n\nbase_score = cos_sim(base_embs[0], base_embs[1]).item()\ntuned_score = cos_sim(tuned_embs[0], tuned_embs[1]).item()\n\nprint(f\"Base model:  {base_score:.3f}\")\nprint(f\"Tuned model: {tuned_score:.3f}\")\nprint(f\"Improvement: +{tuned_score - base_score:.3f}\")\n```\n\nA well-fine-tuned model should show 0.1-0.3 improvement on domain-specific pairs while maintaining baseline performance on general sentences.\n\n### Exporting for Production\n\n```python\ntuned = SentenceTransformer(\"./mpnet-domain-finetuned\")\n\n# Save as SafeTensors (safe, fast loading)\ntuned.save(\"./mpnet-production\", safe_serialization=True)\n\n# Export to ONNX for CPU-optimized inference\ntuned.export_to_onnx(\"./mpnet-production-onnx\")\n\nprint(\"Exported: SafeTensors + ONNX\")\n```\n\nSafeTensors for safe model loading in Python services, ONNX for cross-platform deployment. Your fine-tuned domain knowledge travels with the model weights.\n\n> **Key Insight:** Fine-tuning all-mpnet-base-v2 on 500+ domain sentence pairs can boost retrieval precision by 10-30% on domain-specific queries — without degrading general performance. Start from the strongest open-source checkpoint, train for 3 epochs with CosineSimilarityLoss, and always evaluate with held-out domain pairs. The investment is 20 minutes of training for months of better RAG answers."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "all-mpnet-base-v2 is the strongest open-source embedding model — but it was trained on general web data. Your domain has its own vocabulary, synonyms, and semantic patterns. Fine-tuning on 500+ sentence pairs adapts the model to your domain in minutes, boosting RAG retrieval precision by 10-30%.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import InputExample\n\ntrain_examples = [\n    InputExample(texts=[\"myocardial infarction symptoms\", \"heart attack warning signs\"], label=1.0),\n    InputExample(texts=[\"myocardial infarction symptoms\", \"cardiac surgery recovery\"], label=0.1),\n    InputExample(texts=[\"acute coronary syndrome\", \"heart attack emergency\"], label=0.9),\n    InputExample(texts=[\"blood pressure medication\", \"orthopedic surgery\"], label=0.0),\n]\n\nprint(f\"Training pairs: {len(train_examples)}\")\nprint(f\"First pair label: {train_examples[0].label}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import InputExample — the data container for sentence-transformers training. Each example holds two texts and a similarity label."},
+        {"line": 3, "explanation": "Build training pairs. Positive pairs (label ~1.0) contain semantically equivalent sentences. The model learns to map these to nearby vectors."},
+        {"line": 4, "explanation": "This negative pair (label 0.1) teaches the model that 'MI symptoms' and 'surgery recovery' are related but NOT equivalent. Low labels push vectors apart."},
+        {"line": 6, "explanation": "Another positive pair at 0.9 — 'acute coronary syndrome' and 'heart attack emergency' are near-synonyms. The float label captures degrees of similarity, not just binary same/different."},
+        {"line": 7, "explanation": "A hard negative at 0.0: completely unrelated medical topics. Including these prevents the model from collapsing all medical text into one cluster."},
+        {"line": 10, "explanation": "You need 200-500+ pairs for meaningful improvement. Mine them from FAQ logs, search click-through data, or have domain experts annotate them."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, losses\nfrom torch.utils.data import DataLoader\n\nmodel = SentenceTransformer(\"all-mpnet-base-v2\")\n\ntrain_dataloader = DataLoader(train_examples, shuffle=True, batch_size=16)\ntrain_loss = losses.CosineSimilarityLoss(model)\n\nmodel.fit(\n    train_objectives=[(train_dataloader, train_loss)],\n    epochs=3,\n    warmup_steps=100,\n    output_path=\"./mpnet-domain-finetuned\",\n    show_progress_bar=True,\n)\n\nprint(\"Fine-tuning complete!\")",
+      "steps": [
+        {"line": 1, "explanation": "Import the model class and loss functions. sentence-transformers wraps the full training loop — you configure it, not code it from scratch."},
+        {"line": 4, "explanation": "Load the pre-trained all-mpnet-base-v2 as your starting checkpoint. Fine-tuning adjusts these weights — you're not training from scratch."},
+        {"line": 6, "explanation": "Wrap training examples in a DataLoader. batch_size=16 works well for fine-tuning — large enough for gradient stability, small enough for consumer GPUs."},
+        {"line": 7, "explanation": "CosineSimilarityLoss computes cosine similarity between the two sentence embeddings and regresses it toward the label. It pushes positive pairs closer, negative pairs apart."},
+        {"line": 9, "explanation": "model.fit() runs the training loop. train_objectives pairs a DataLoader with its loss — you can combine multiple losses for multi-task training."},
+        {"line": 11, "explanation": "3 epochs is usually enough for fine-tuning. More risks overfitting on small datasets. The model checkpoints are saved to output_path after each epoch."},
+        {"line": 12, "explanation": "warmup_steps=100 gradually increases the learning rate from zero. This prevents the pre-trained weights from being disrupted by large initial gradients."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\nfrom sentence_transformers.util import cos_sim\n\nbase_model = SentenceTransformer(\"all-mpnet-base-v2\")\ntuned_model = SentenceTransformer(\"./mpnet-domain-finetuned\")\n\nquery = \"myocardial infarction treatment\"\ndoc = \"heart attack therapy options\"\n\nbase_embs = base_model.encode([query, doc])\ntuned_embs = tuned_model.encode([query, doc])\n\nbase_score = cos_sim(base_embs[0], base_embs[1]).item()\ntuned_score = cos_sim(tuned_embs[0], tuned_embs[1]).item()\n\nprint(f\"Base model:  {base_score:.3f}\")\nprint(f\"Tuned model: {tuned_score:.3f}\")\nprint(f\"Improvement: +{tuned_score - base_score:.3f}\")",
+      "steps": [
+        {"line": 3, "explanation": "cos_sim is a utility that computes cosine similarity between embedding tensors. It handles both single vectors and batches."},
+        {"line": 5, "explanation": "Load the original base model alongside your fine-tuned version. This lets you compare scores side by side on the same inputs."},
+        {"line": 8, "explanation": "A domain-specific query-document pair. The base model may score this at ~0.5 because it doesn't know MI = heart attack."},
+        {"line": 11, "explanation": "Encode the same pair with both models. The base model uses its original weights; the fine-tuned model uses your domain-adapted weights."},
+        {"line": 14, "explanation": "cos_sim returns a tensor; .item() extracts the Python float. Compare the two scores to measure your fine-tuning improvement."},
+        {"line": 17, "explanation": "A well-fine-tuned model shows +0.1 to +0.3 improvement on domain pairs. If improvement is <0.05, you need more training data or harder negatives."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now fine-tune all-mpnet-base-v2 on your domain data! With 500 sentence pairs and 20 minutes of training, your RAG pipeline will understand domain jargon, synonyms, and semantic patterns that the general-purpose model misses."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `TrainingPairBuilder` class that constructs and validates training pairs for fine-tuning an embedding model. Implement `add_pair(text_a, text_b, label)` that stores a training pair (label must be 0.0-1.0 float), `get_positives(threshold)` returning pairs with label >= threshold, `get_negatives(threshold)` returning pairs with label < threshold, and `summary()` returning a dict with keys 'total', 'positives', 'negatives', and 'avg_label'. Use threshold=0.5 as the default boundary between positive and negative pairs."
+      },
+      "starter_code": "class TrainingPairBuilder:\n    def __init__(self):\n        self.pairs = []  # list of (text_a, text_b, label)\n\n    def add_pair(self, text_a: str, text_b: str, label: float):\n        # Validate label is between 0.0 and 1.0\n        # Store the pair as a tuple\n        pass\n\n    def get_positives(self, threshold: float = 0.5) -> list:\n        # Return pairs where label >= threshold\n        pass\n\n    def get_negatives(self, threshold: float = 0.5) -> list:\n        # Return pairs where label < threshold\n        pass\n\n    def summary(self, threshold: float = 0.5) -> dict:\n        # Return {'total': int, 'positives': int, 'negatives': int, 'avg_label': float}\n        # avg_label should be 0.0 if no pairs exist\n        pass\n\n# Test it:\nbuilder = TrainingPairBuilder()\nbuilder.add_pair(\"heart attack\", \"myocardial infarction\", 0.95)\nbuilder.add_pair(\"heart attack\", \"knee surgery\", 0.1)\nbuilder.add_pair(\"chest pain\", \"angina symptoms\", 0.85)\nbuilder.add_pair(\"blood test\", \"car repair\", 0.0)\n\nprint(len(builder.get_positives()))\nprint(len(builder.get_negatives()))\ns = builder.summary()\nprint(s['total'])\nprint(round(s['avg_label'], 2))",
+      "expected_output": "2\n2\n4\n0.48",
+      "hints": {
+        "en": [
+          "add_pair: check 0.0 <= label <= 1.0 with a ValueError, then append (text_a, text_b, label) to self.pairs",
+          "get_positives/get_negatives: use list comprehension filtering self.pairs on the label value against the threshold",
+          "summary: avg_label is sum(label for all pairs) / len(pairs), or 0.0 if pairs is empty"
+        ]
+      },
+      "test_code": "b = TrainingPairBuilder()\nassert b.summary()['total'] == 0\nassert b.summary()['avg_label'] == 0.0\nb.add_pair('a', 'b', 0.9)\nb.add_pair('c', 'd', 0.1)\nassert len(b.pairs) == 2\nassert len(b.get_positives()) == 1\nassert len(b.get_negatives()) == 1\nassert b.get_positives()[0][2] >= 0.5\nassert b.get_negatives()[0][2] < 0.5\nassert b.summary()['total'] == 2\nassert b.summary()['positives'] == 1\nassert b.summary()['negatives'] == 1\nassert abs(b.summary()['avg_label'] - 0.5) < 0.001\ntry:\n    b.add_pair('x', 'y', 1.5)\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass\ntry:\n    b.add_pair('x', 'y', -0.1)\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass\nb2 = TrainingPairBuilder()\nb2.add_pair('a', 'b', 0.0)\nb2.add_pair('c', 'd', 1.0)\nassert len(b2.get_positives(0.5)) == 1\nassert len(b2.get_negatives(0.5)) == 1"
+    },
+    {
+      "instruction": {
+        "en": "Build a `FineTuneEvaluator` class that compares a base model's similarity scores against a fine-tuned model's scores on domain test pairs. Implement `add_test_pair(text_a, text_b, expected_score)` to store test pairs (score 0.0-1.0), `evaluate(encode_fn)` that takes an encode function returning a mock similarity dict and returns avg absolute error, and `compare(base_encode_fn, tuned_encode_fn)` that returns a dict with 'base_error', 'tuned_error', and 'improvement' (base_error - tuned_error). The encode_fn takes two texts and returns {'similarity': float}."
+      },
+      "starter_code": "class FineTuneEvaluator:\n    def __init__(self):\n        self.test_pairs = []  # list of (text_a, text_b, expected_score)\n\n    def add_test_pair(self, text_a: str, text_b: str, expected_score: float):\n        # Validate expected_score is 0.0-1.0, store the pair\n        pass\n\n    def evaluate(self, encode_fn) -> float:\n        # For each test pair, call encode_fn(text_a, text_b) -> {'similarity': float}\n        # Return average absolute error: mean(|predicted - expected|)\n        # Return 0.0 if no test pairs\n        pass\n\n    def compare(self, base_encode_fn, tuned_encode_fn) -> dict:\n        # Evaluate both encode functions\n        # Return {'base_error': float, 'tuned_error': float, 'improvement': float}\n        # improvement = base_error - tuned_error (positive means tuned is better)\n        pass\n\n# Test it:\neval = FineTuneEvaluator()\neval.add_test_pair(\"heart attack\", \"MI\", 0.9)\neval.add_test_pair(\"heart attack\", \"knee pain\", 0.1)\n\n# Simulate base model (mediocre on domain)\ndef base_fn(a, b):\n    return {\"similarity\": 0.5}\n\n# Simulate fine-tuned model (better on domain)\ndef tuned_fn(a, b):\n    if \"heart\" in a and \"MI\" in b:\n        return {\"similarity\": 0.85}\n    return {\"similarity\": 0.15}\n\nresult = eval.compare(base_fn, tuned_fn)\nprint(round(result['base_error'], 2))\nprint(round(result['tuned_error'], 2))\nprint(result['improvement'] > 0)",
+      "expected_output": "0.4\n0.05\nTrue",
+      "hints": {
+        "en": [
+          "evaluate: iterate test_pairs, call encode_fn(text_a, text_b), compute abs(result['similarity'] - expected_score), return the mean",
+          "compare: call self.evaluate() with each encode_fn, compute improvement as base_error - tuned_error",
+          "For base_fn: all pairs return 0.5, so errors are |0.5-0.9|=0.4 and |0.5-0.1|=0.4, avg=0.4"
+        ]
+      },
+      "test_code": "e = FineTuneEvaluator()\nassert e.evaluate(lambda a, b: {'similarity': 0.5}) == 0.0\ne.add_test_pair('a', 'b', 1.0)\nassert abs(e.evaluate(lambda a, b: {'similarity': 1.0}) - 0.0) < 0.001\nassert abs(e.evaluate(lambda a, b: {'similarity': 0.0}) - 1.0) < 0.001\ne2 = FineTuneEvaluator()\ne2.add_test_pair('x', 'y', 0.8)\ne2.add_test_pair('a', 'b', 0.2)\nresult = e2.compare(\n    lambda a, b: {'similarity': 0.5},\n    lambda a, b: {'similarity': 0.5}\n)\nassert abs(result['improvement']) < 0.001\nassert abs(result['base_error'] - result['tuned_error']) < 0.001\ntry:\n    e2.add_test_pair('x', 'y', 1.5)\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["fine-tuning sentence transformers", "domain adaptation", "CosineSimilarityLoss", "training pair construction", "embedding evaluation", "contrastive learning", "model checkpointing", "ONNX export", "SafeTensors export", "RAG retrieval optimization", "all-mpnet-base-v2", "transfer learning"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "pip install", "basic machine learning concepts"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

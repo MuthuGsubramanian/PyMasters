@@ -1,0 +1,120 @@
+{
+  "id": "qwen3_06b_streaming_on_device_assistant",
+  "topic": "qwen3_06b_streaming_on_device_assistant",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Build a Streaming On-Device Assistant with Real-Time Token Output"
+  },
+  "description": {
+    "en": "Build a streaming on-device assistant powered by Qwen3-0.6B that outputs tokens in real time using Hugging Face's TextIteratorStreamer. Learn streamer threading, chat template formatting, latency measurement, and how Homie can deliver ChatGPT-style streaming responses entirely offline on CPU."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Stream Tokens Like ChatGPT — On Your Own CPU\n\nVaathiyaar here! Every modern chat interface streams words as they arrive — no one stares at a blank screen for ten seconds. Today we'll give **Qwen3-0.6B** that same streaming superpower, running entirely on your device. Using Hugging Face's `TextIteratorStreamer` and a background thread, you'll build an assistant that prints tokens the instant they're generated — exactly how ChatGPT feels, but offline and free.\n\nFor Homie, this means responsive, real-time conversations without a single network request.\n\n### Why Streaming Matters for Small Models\n\nSmall models generate fewer tokens per second than cloud APIs, so perceived latency is even more important. Streaming hides generation time behind reading time.\n\n| Metric | Batch (wait-then-show) | Streaming (token-by-token) |\n|---|---|---|\n| Time to first token | Full generation time | ~0.3s (first token only) |\n| Perceived speed | Slow — blank screen | Fast — words appear live |\n| User can read while generating | No | Yes |\n| Memory overhead | Same | Same (+tiny queue) |\n| Implementation complexity | Lower | Slightly higher (thread) |\n\n### Step 1: Load Model and Tokenizer\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"cpu\"\n)\nmodel.eval()\n```\n\nSame one-line load as any Hugging Face model. Cached after first download.\n\n### Step 2: Set Up the TextIteratorStreamer\n\n```python\nfrom transformers import TextIteratorStreamer\nfrom threading import Thread\nimport time\n\ndef stream_response(user_message, max_tokens=200, temperature=0.7):\n    messages = [{\"role\": \"user\", \"content\": user_message}]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\")\n\n    streamer = TextIteratorStreamer(\n        tokenizer, skip_prompt=True, skip_special_tokens=True\n    )\n\n    gen_kwargs = {\n        **inputs,\n        \"max_new_tokens\": max_tokens,\n        \"temperature\": temperature,\n        \"do_sample\": temperature > 0,\n        \"streamer\": streamer,\n    }\n\n    thread = Thread(target=model.generate, kwargs=gen_kwargs)\n    thread.start()\n\n    token_count = 0\n    start = time.time()\n    for chunk in streamer:\n        print(chunk, end=\"\", flush=True)\n        token_count += 1\n    elapsed = time.time() - start\n    print(f\"\\n--- {token_count} chunks in {elapsed:.1f}s ---\")\n    thread.join()\n```\n\nThe key pattern: `model.generate` runs in a **background thread** while the main thread consumes tokens from the streamer iterator as they arrive. `skip_prompt=True` ensures you only see new output.\n\n### Step 3: Measure Time-to-First-Token\n\n```python\ndef stream_with_metrics(user_message, max_tokens=200):\n    messages = [{\"role\": \"user\", \"content\": user_message}]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\")\n    streamer = TextIteratorStreamer(\n        tokenizer, skip_prompt=True, skip_special_tokens=True\n    )\n    gen_kwargs = {**inputs, \"max_new_tokens\": max_tokens, \"streamer\": streamer}\n\n    thread = Thread(target=model.generate, kwargs=gen_kwargs)\n    wall_start = time.time()\n    thread.start()\n\n    first_token_time = None\n    chunks = []\n    for chunk in streamer:\n        if first_token_time is None:\n            first_token_time = time.time() - wall_start\n        chunks.append(chunk)\n\n    total_time = time.time() - wall_start\n    thread.join()\n    return {\n        \"text\": \"\".join(chunks),\n        \"ttft_s\": round(first_token_time or 0, 3),\n        \"total_s\": round(total_time, 2),\n        \"chunks\": len(chunks),\n    }\n```\n\n**TTFT (Time to First Token)** is the metric that defines perceived speed. On CPU, Qwen3-0.6B typically delivers the first token in 0.2–0.5 seconds.\n\n### Step 4: Wire Streaming Into Homie\n\n```python\nclass HomieStreaming:\n    def __init__(self):\n        self.system = \"You are Homie, a concise local assistant.\"\n\n    def chat(self, question, callback=None):\n        messages = [\n            {\"role\": \"system\", \"content\": self.system},\n            {\"role\": \"user\", \"content\": question},\n        ]\n        text = tokenizer.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = tokenizer(text, return_tensors=\"pt\")\n        streamer = TextIteratorStreamer(\n            tokenizer, skip_prompt=True, skip_special_tokens=True\n        )\n        gen_kwargs = {**inputs, \"max_new_tokens\": 150, \"streamer\": streamer}\n        Thread(target=model.generate, kwargs=gen_kwargs).start()\n        full = []\n        for chunk in streamer:\n            full.append(chunk)\n            if callback:\n                callback(chunk)\n        return \"\".join(full)\n\nhomie = HomieStreaming()\nhomie.chat(\"Explain list comprehensions.\", callback=lambda c: print(c, end=\"\"))\n```\n\nThe `callback` parameter lets any frontend — terminal, web socket, GUI — receive tokens live. Homie becomes a real-time conversational assistant with zero cloud dependency.\n\n> **Key Insight:** Streaming isn't a luxury — it's what transforms a \"slow local model\" into a responsive assistant. With `TextIteratorStreamer` and a single background thread, Qwen3-0.6B delivers its first token in under half a second on CPU. Homie doesn't need to be fast — it just needs to *feel* fast."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "ChatGPT streams words as they appear — and so can your local 0.6B model. Using TextIteratorStreamer and a background thread, Qwen3-0.6B delivers real-time token output on CPU with sub-500ms time-to-first-token. Let's build a streaming on-device assistant.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\nfrom transformers import TextIteratorStreamer\nfrom threading import Thread\nimport time\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"cpu\"\n)\nmodel.eval()\n\ndef stream_response(user_message, max_tokens=200, temperature=0.7):\n    messages = [{\"role\": \"user\", \"content\": user_message}]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\")\n\n    streamer = TextIteratorStreamer(\n        tokenizer, skip_prompt=True, skip_special_tokens=True\n    )\n    gen_kwargs = {\n        **inputs,\n        \"max_new_tokens\": max_tokens,\n        \"temperature\": temperature,\n        \"do_sample\": temperature > 0,\n        \"streamer\": streamer,\n    }\n\n    thread = Thread(target=model.generate, kwargs=gen_kwargs)\n    thread.start()\n\n    token_count = 0\n    start = time.time()\n    for chunk in streamer:\n        print(chunk, end=\"\", flush=True)\n        token_count += 1\n    elapsed = time.time() - start\n    print(f\"\\n--- {token_count} chunks in {elapsed:.1f}s ---\")\n    thread.join()",
+      "steps": [
+        {"line": 1, "explanation": "Import AutoModelForCausalLM and AutoTokenizer — the standard Hugging Face classes for loading any causal language model."},
+        {"line": 2, "explanation": "Import TextIteratorStreamer — this class creates an iterator that yields decoded text chunks as the model generates them, enabling real-time output."},
+        {"line": 3, "explanation": "Import Thread from threading — model.generate will run in a background thread so the main thread can consume streamed tokens immediately."},
+        {"line": 8, "explanation": "Load Qwen3-0.6B with device_map='cpu' for CPU-only inference. torch_dtype='auto' selects the optimal precision automatically."},
+        {"line": 11, "explanation": "model.eval() disables dropout and other training-only layers for faster, deterministic inference."},
+        {"line": 20, "explanation": "Create the TextIteratorStreamer with skip_prompt=True so it only yields newly generated tokens, not the input prompt echoed back."},
+        {"line": 23, "explanation": "Bundle all generation arguments including the streamer. The streamer intercepts each decoded token batch inside model.generate and queues it for the iterator."},
+        {"line": 31, "explanation": "Start model.generate in a background thread. This is the key pattern — generation happens concurrently while we iterate over the streamer."},
+        {"line": 36, "explanation": "Iterate over the streamer in the main thread. Each chunk is a decoded string fragment printed immediately with flush=True for real-time display."},
+        {"line": 40, "explanation": "After all tokens are consumed, join the background thread to ensure generation is fully complete before continuing."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "class HomieStreaming:\n    def __init__(self, system_msg=\"You are Homie, a concise local assistant.\"):\n        self.system = system_msg\n        self.stats = {\"queries\": 0, \"total_ttft\": 0.0}\n\n    def chat(self, question, callback=None, max_tokens=150):\n        messages = [\n            {\"role\": \"system\", \"content\": self.system},\n            {\"role\": \"user\", \"content\": question},\n        ]\n        text = tokenizer.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = tokenizer(text, return_tensors=\"pt\")\n        streamer = TextIteratorStreamer(\n            tokenizer, skip_prompt=True, skip_special_tokens=True\n        )\n        gen_kwargs = {**inputs, \"max_new_tokens\": max_tokens, \"streamer\": streamer}\n        wall_start = time.time()\n        Thread(target=model.generate, kwargs=gen_kwargs).start()\n\n        first_token_time = None\n        chunks = []\n        for chunk in streamer:\n            if first_token_time is None:\n                first_token_time = time.time() - wall_start\n            chunks.append(chunk)\n            if callback:\n                callback(chunk)\n\n        self.stats[\"queries\"] += 1\n        self.stats[\"total_ttft\"] += first_token_time or 0\n        return \"\".join(chunks)\n\n    def avg_ttft(self):\n        if self.stats[\"queries\"] == 0:\n            return 0.0\n        return round(self.stats[\"total_ttft\"] / self.stats[\"queries\"], 3)\n\nhomie = HomieStreaming()\nhomie.chat(\"Explain decorators.\", callback=lambda c: print(c, end=\"\"))\nprint(f\"\\nAvg TTFT: {homie.avg_ttft()}s\")",
+      "steps": [
+        {"line": 1, "explanation": "HomieStreaming wraps the streaming pipeline into a reusable assistant class that tracks time-to-first-token across conversations."},
+        {"line": 6, "explanation": "The chat method accepts a callback function that receives each text chunk — this lets any frontend (terminal, WebSocket, GUI) handle streaming output."},
+        {"line": 11, "explanation": "Format the conversation using apply_chat_template to inject Qwen3's special role tokens correctly."},
+        {"line": 19, "explanation": "Record the wall clock start time just before launching the generation thread — this is the baseline for TTFT measurement."},
+        {"line": 22, "explanation": "Track when the first chunk arrives. TTFT (Time to First Token) is the single most important metric for perceived streaming responsiveness."},
+        {"line": 30, "explanation": "Accumulate TTFT statistics after each query. avg_ttft gives you a running average to monitor assistant responsiveness over time."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Batch Generation",
+      "right_label": "Streaming Generation",
+      "items": [
+        {"left": "User waits for full response", "right": "Tokens appear as generated"},
+        {"left": "Simple single-threaded code", "right": "Requires background thread + streamer"},
+        {"left": "Time-to-first-token = total time", "right": "TTFT ~0.3s on CPU"},
+        {"left": "No partial result possible", "right": "Can cancel mid-generation"},
+        {"left": "Good for batch pipelines", "right": "Essential for interactive chat"},
+        {"left": "Feels slow on small models", "right": "Feels responsive even at 15 tok/s"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a streaming on-device assistant with Qwen3-0.6B! Homie now delivers real-time token output on CPU — ChatGPT-style responsiveness, zero cloud dependency."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `StreamSimulator` class that simulates streaming text generation. Implement `__init__` that sets `self.chunks = []` and `self.ttft = None`. Implement `generate_chunks(text, chunk_size=3)` that splits `text` into a list of substrings of `chunk_size` characters each (the last chunk may be shorter), stores them in `self.chunks`, sets `self.ttft = 0.05` (simulated time-to-first-token), and returns the list of chunks. Implement `full_text()` that joins `self.chunks` with empty string and returns the result. Implement `metrics()` that returns `{\"ttft\": self.ttft, \"chunk_count\": len(self.chunks), \"total_chars\": len(self.full_text())}`."
+      },
+      "starter_code": "class StreamSimulator:\n    def __init__(self):\n        # Initialize chunks list and ttft\n        pass\n\n    def generate_chunks(self, text, chunk_size=3):\n        # Split text into chunks of chunk_size, store in self.chunks\n        # Set self.ttft = 0.05, return the chunks list\n        pass\n\n    def full_text(self):\n        # Join chunks and return full string\n        pass\n\n    def metrics(self):\n        # Return dict with ttft, chunk_count, total_chars\n        pass\n\n# Test it:\ns = StreamSimulator()\nchunks = s.generate_chunks(\"Hello World!\")\nprint(chunks)\nprint(s.full_text())\nprint(s.metrics()[\"chunk_count\"])\nprint(s.metrics()[\"total_chars\"])\nprint(s.ttft)",
+      "expected_output": "['Hel', 'lo ', 'Wor', 'ld!']\nHello World!\n4\n12\n0.05",
+      "hints": {
+        "en": [
+          "Use a list comprehension with range: [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]",
+          "full_text is simply: return ''.join(self.chunks)",
+          "metrics returns a dict with three keys — ttft from self.ttft, chunk_count from len(self.chunks), total_chars from len(self.full_text())"
+        ]
+      },
+      "test_code": "s = StreamSimulator()\nassert s.chunks == []\nassert s.ttft is None\nc = s.generate_chunks(\"Hello World!\")\nassert c == [\"Hel\", \"lo \", \"Wor\", \"ld!\"]\nassert s.chunks == [\"Hel\", \"lo \", \"Wor\", \"ld!\"]\nassert s.ttft == 0.05\nassert s.full_text() == \"Hello World!\"\nm = s.metrics()\nassert m == {\"ttft\": 0.05, \"chunk_count\": 4, \"total_chars\": 12}\nc2 = s.generate_chunks(\"ABCDE\", chunk_size=2)\nassert c2 == [\"AB\", \"CD\", \"E\"]\nassert s.full_text() == \"ABCDE\"\nassert s.metrics()[\"chunk_count\"] == 3\nassert s.metrics()[\"total_chars\"] == 5\nc3 = s.generate_chunks(\"\", chunk_size=5)\nassert c3 == []\nassert s.full_text() == \"\"\nassert s.metrics() == {\"ttft\": 0.05, \"chunk_count\": 0, \"total_chars\": 0}"
+    },
+    {
+      "instruction": {
+        "en": "Build a `TTFTTracker` class that tracks time-to-first-token metrics across multiple streaming sessions. Implement `__init__` that sets `self.records = []`. Implement `record(ttft_value)` that appends the float `ttft_value` to `self.records`. Implement `average()` that returns the mean of all recorded TTFT values rounded to 3 decimal places, or `0.0` if no records exist. Implement `best()` that returns the minimum TTFT value, or `0.0` if no records. Implement `summary()` that returns `{\"count\": len(records), \"avg_ttft\": self.average(), \"best_ttft\": self.best()}`."
+      },
+      "starter_code": "class TTFTTracker:\n    def __init__(self):\n        # Initialize records list\n        pass\n\n    def record(self, ttft_value):\n        # Append ttft_value to records\n        pass\n\n    def average(self):\n        # Return rounded mean or 0.0\n        pass\n\n    def best(self):\n        # Return min or 0.0\n        pass\n\n    def summary(self):\n        # Return dict with count, avg_ttft, best_ttft\n        pass\n\n# Test it:\nt = TTFTTracker()\nprint(t.average())\nt.record(0.3)\nt.record(0.5)\nt.record(0.2)\nprint(t.average())\nprint(t.best())\nprint(t.summary()[\"count\"])",
+      "expected_output": "0.0\n0.333\n0.2\n3",
+      "hints": {
+        "en": [
+          "average() uses sum(self.records) / len(self.records) wrapped in round(..., 3), with a guard for empty list",
+          "best() is simply min(self.records) with a guard returning 0.0 for empty records",
+          "summary() builds a dict calling self.average() and self.best() directly"
+        ]
+      },
+      "test_code": "t = TTFTTracker()\nassert t.records == []\nassert t.average() == 0.0\nassert t.best() == 0.0\nassert t.summary() == {\"count\": 0, \"avg_ttft\": 0.0, \"best_ttft\": 0.0}\nt.record(0.3)\nt.record(0.5)\nt.record(0.2)\nassert len(t.records) == 3\nassert t.average() == 0.333\nassert t.best() == 0.2\ns = t.summary()\nassert s[\"count\"] == 3\nassert s[\"avg_ttft\"] == 0.333\nassert s[\"best_ttft\"] == 0.2\nt.record(0.1)\nassert t.best() == 0.1\nassert t.average() == 0.275\nassert t.summary()[\"count\"] == 4"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["streaming text generation", "TextIteratorStreamer", "time-to-first-token", "threaded inference", "Qwen3-0.6B", "on-device assistant", "real-time token output", "CPU inference", "TTFT metrics", "Homie streaming assistant"],
+    "concepts_required": ["python classes", "threading basics", "dictionaries", "list slicing", "string operations"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

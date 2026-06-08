@@ -1,0 +1,125 @@
+{
+  "id": "smol_training_playbook",
+  "topic": "smol_training_playbook",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The Smol Training Playbook: Training Small Language Models Efficiently"
+  },
+  "description": {
+    "en": "Learn the complete methodology behind SmolLM3 — from ablation-driven architecture choices and data curation to multi-stage pretraining and post-training with SFT, DPO, and GRPO."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Training a World-Class Small Language Model\n\nWelcome back, coder! Vaathiyaar here. Today we dive into one of the most transparent guides ever published on LLM training: the **Smol Training Playbook** from Hugging Face. It documents every decision — and every failure — behind **SmolLM3**, a 3B-parameter model trained on 11 trillion tokens that punches well above its weight. Let's learn what separates great training runs from mediocre ones.\n\n### Why Small Models Matter\n\nNot every problem needs 70B parameters. A well-trained 3B model can run on a single GPU, deploy on edge devices, and still outperform larger models that were trained carelessly. The secret? **Data curation and systematic ablations.**\n\n### The Ablation Framework\n\nBefore committing massive compute to the full run, the SmolLM3 team trained a **1B baseline on 45B tokens** (~1.5 days on 8×H100s) to test one variable at a time. Ablations consumed over 50% of the main training budget — but prevented catastrophic mistakes.\n\n| Decision | Options Tested | Winner | Why |\n|----------|---------------|--------|-----|\n| **Attention** | MHA, GQA-4, GQA-8, MQA | GQA-4 | Matches MHA quality, 4× less KV cache |\n| **Position Encoding** | RoPE, NoPE | NoPE | Superior long-context generalization |\n| **Embeddings** | Tied, Untied | Tied | 18% fewer params, no quality loss |\n| **FFN Activation** | SwiGLU, GELU | SwiGLU | Better downstream performance |\n\n### Data Curation — The Real Differentiator\n\nThe playbook's core thesis: *\"Teams that excel in LLM training are obsessed with high quality data more than anything else.\"* Counter-intuitively, the highest-quality data doesn't always produce the best model — diversity matters.\n\n```python\n# SmolLM3 data mixture configuration\ndata_mix = {\n    \"FineWeb-Edu\":          0.70,   # English web (curated)\n    \"Stack-Edu-Python\":     0.20,   # Code\n    \"FineMath-3plus\":       0.10,   # Mathematics\n}\n\n# Multilingual content within web mix\nmultilingual_ratio = 0.12  # 12% found optimal via ablation\n\n# Three-stage training schedule\nstages = {\n    \"stage_1\": {\"tokens\": \"0-7T\",   \"focus\": \"Foundation mix\"},\n    \"stage_2\": {\"tokens\": \"7T-9T\",  \"focus\": \"Specialized content boost\"},\n    \"stage_3\": {\"tokens\": \"9T-11T\", \"focus\": \"Long context (4K→128K)\"},\n}\n```\n\n### Hyperparameters That Matter\n\n```python\n# SmolLM3 optimizer configuration\noptimizer_config = {\n    \"type\": \"AdamW\",\n    \"betas\": (0.9, 0.95),\n    \"eps\": 1e-8,\n    \"lr\": 5e-4,\n    \"warmup_steps\": 2000,\n    \"schedule\": \"cosine\",       # WSD also explored\n    \"gradient_clipping\": 1.0,\n    \"global_batch_tokens\": 2_300_000,  # ~2.3M tokens\n}\n```\n\n### Post-Training Pipeline\n\nThe base model is just the beginning. SmolLM3 uses a three-step post-training pipeline: **SFT** (supervised fine-tuning on curated instructions) → **DPO** (Direct Preference Optimization for alignment) → **GRPO** (Group Relative Policy Optimization for reasoning). Each stage transforms raw language modeling capability into a model that follows instructions, reasons through problems, and writes clean code.\n\n```python\n# Post-training pipeline stages\npost_training = [\n    {\"stage\": \"SFT\",  \"data\": \"curated_instructions\", \"objective\": \"instruction_following\"},\n    {\"stage\": \"DPO\",  \"data\": \"preference_pairs\",     \"objective\": \"alignment\"},\n    {\"stage\": \"GRPO\", \"data\": \"on_policy_rollouts\",    \"objective\": \"reasoning\"},\n]\n```\n\n### Compute Budget Breakdown\n\nThe total training consumed **437,760 GPU-hours** on 384 H100s:\n- Main pretraining: 63% (276,480 GPU-hours)\n- Ablations: 26% (115,200 GPU-hours)\n- Debugging and restarts: 11% (46,080 GPU-hours)\n\n> **Key Insight:** The biggest gains in LLM training come not from architecture novelty but from **systematic ablations and relentless data curation**. Spending 26% of your compute budget on ablations isn't waste — it's the cheapest insurance against a failed training run."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "The Smol Training Playbook documents every decision behind SmolLM3 — a 3B model trained on 11T tokens. It proves that small models, trained carefully with systematic ablations and curated data, can outperform larger models trained carelessly.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "ConceptMap",
+      "id": "concept_1",
+      "nodes": [
+        {"id": "playbook", "label": "Smol Training Playbook"},
+        {"id": "ablations", "label": "Ablation Framework"},
+        {"id": "data", "label": "Data Curation"},
+        {"id": "arch", "label": "Architecture (GQA, NoPE)"},
+        {"id": "stages", "label": "3-Stage Pretraining"},
+        {"id": "post", "label": "Post-Training (SFT→DPO→GRPO)"}
+      ],
+      "edges": [
+        {"from": "playbook", "to": "ablations"},
+        {"from": "playbook", "to": "data"},
+        {"from": "ablations", "to": "arch"},
+        {"from": "data", "to": "stages"},
+        {"from": "stages", "to": "post"}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "# SmolLM3 Training Configuration\n\n# 1. Architecture choices (validated by ablation)\narch_config = {\n    \"hidden_size\": 2048,\n    \"num_layers\": 16,\n    \"attention_heads\": 32,\n    \"kv_heads\": 8,              # GQA with 4 groups\n    \"intermediate_size\": 8192,\n    \"position_encoding\": \"NoPE\",  # No positional embedding\n    \"embedding_tying\": True,      # 18% fewer params\n    \"activation\": \"SwiGLU\",\n}\n\n# 2. Data mixture (the real differentiator)\ndata_mix = {\n    \"FineWeb-Edu\": 0.70,\n    \"Stack-Edu-Python\": 0.20,\n    \"FineMath-3plus\": 0.10,\n}\n\n# 3. Optimizer (AdamW with cosine schedule)\noptimizer = {\n    \"type\": \"AdamW\",\n    \"lr\": 5e-4,\n    \"betas\": (0.9, 0.95),\n    \"warmup_steps\": 2000,\n    \"schedule\": \"cosine\",\n}\n\n# 4. Three-stage training\nstages = [\n    {\"name\": \"foundation\",  \"tokens\": \"7T\",  \"seq_len\": 4096},\n    {\"name\": \"specialization\", \"tokens\": \"2T\", \"seq_len\": 4096},\n    {\"name\": \"long_context\",  \"tokens\": \"2T\", \"seq_len\": 131072},\n]\n\nprint(f\"Architecture: {arch_config['attention_heads']} heads, \"\n      f\"{arch_config['kv_heads']} KV heads (GQA ratio: \"\n      f\"{arch_config['attention_heads'] // arch_config['kv_heads']}x)\")\nprint(f\"Data split: {data_mix}\")\nprint(f\"Training stages: {len(stages)}\")",
+      "steps": [
+        {"line": 5, "explanation": "hidden_size=2048 — the embedding dimension for each token flowing through the transformer."},
+        {"line": 8, "explanation": "GQA with 32 attention heads sharing 8 KV heads (4 groups). Matches MHA quality with 4x less KV cache memory."},
+        {"line": 10, "explanation": "NoPE — No Positional Embedding. Ablations showed it generalizes better to long contexts than RoPE."},
+        {"line": 11, "explanation": "Tied embeddings share weights between input and output layers, cutting 18% of parameters with zero quality loss."},
+        {"line": 18, "explanation": "70% FineWeb-Edu — curated English web data forms the foundation of the training mix."},
+        {"line": 19, "explanation": "20% code data — essential for coding capability. Python-focused to match common downstream use."},
+        {"line": 20, "explanation": "10% math data — FineMath-3plus provides structured mathematical reasoning examples."},
+        {"line": 26, "explanation": "AdamW with lr=5e-4, betas=(0.9, 0.95) — the standard recipe validated by ablations on the 1B baseline."},
+        {"line": 34, "explanation": "Stage 1 trains on 7T tokens at 4K context — building the model's core language understanding."},
+        {"line": 36, "explanation": "Stage 3 extends context from 4K to 128K using intra-document masking to prevent cross-document attention leakage."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "# Post-Training Pipeline: SFT → DPO → GRPO\n\ndef run_post_training(base_model):\n    \"\"\"Transform a base model into an instruction-following,\n    reasoning-capable assistant.\"\"\"\n\n    # Stage 1: Supervised Fine-Tuning\n    sft_model = supervised_finetune(\n        model=base_model,\n        dataset=\"curated_instructions\",\n        epochs=3,\n        lr=2e-5,\n    )\n\n    # Stage 2: Direct Preference Optimization\n    dpo_model = preference_optimize(\n        model=sft_model,\n        preference_pairs=\"human_rankings\",\n        beta=0.1,  # KL penalty coefficient\n    )\n\n    # Stage 3: Group Relative Policy Optimization\n    grpo_model = group_relative_policy_optimize(\n        model=dpo_model,\n        reward_fn=\"correctness_verifier\",\n        group_size=8,  # compare 8 rollouts\n    )\n\n    return grpo_model\n\n# Evaluation benchmarks\nbenchmarks = [\n    \"MMLU (14K questions, 57 subjects)\",\n    \"ARC (7K science reasoning)\",\n    \"HellaSwag (10K commonsense)\",\n    \"GSM8K (1.3K math problems)\",\n    \"HumanEval (164 code tasks)\",\n]\n\nprint(\"Post-training pipeline: SFT → DPO → GRPO\")\nprint(f\"Evaluated on {len(benchmarks)} benchmarks\")",
+      "steps": [
+        {"line": 3, "explanation": "Post-training is a multi-stage pipeline that transforms raw language modeling into useful instruction-following."},
+        {"line": 8, "explanation": "SFT fine-tunes on curated instruction-response pairs — teaching the model the format of helpful responses."},
+        {"line": 16, "explanation": "DPO uses pairs of preferred/rejected responses to align the model with human preferences without a reward model."},
+        {"line": 19, "explanation": "beta=0.1 controls the KL penalty — how much the model can deviate from SFT. Too high = no learning, too low = instability."},
+        {"line": 23, "explanation": "GRPO generates multiple rollouts per prompt and uses relative rankings to improve reasoning, no critic model needed."},
+        {"line": 26, "explanation": "group_size=8 means 8 completions per prompt are compared — the best ones reinforce the policy."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand the complete SmolLM3 training methodology — from ablation-driven architecture to post-training alignment. Time to train smarter, not bigger!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a `compute_data_mix` function that takes a dictionary of dataset weights and a total token count, then returns a dictionary mapping each dataset to its token allocation. The weights should be normalized to sum to 1.0 if they don't already. This simulates how training teams plan their data mixtures."
+      },
+      "starter_code": "def compute_data_mix(weights: dict[str, float], total_tokens: int) -> dict[str, int]:\n    \"\"\"Given dataset weights and total token count,\n    return token allocation per dataset.\n    Weights are normalized to sum to 1.0.\"\"\"\n    # Your code here\n    pass\n\n# Test\nmix = compute_data_mix(\n    {\"FineWeb-Edu\": 0.70, \"Stack-Edu-Python\": 0.20, \"FineMath\": 0.10},\n    total_tokens=11_000_000_000_000\n)\nfor name, tokens in mix.items():\n    print(f\"{name}: {tokens:,} tokens\")",
+      "expected_output": "FineWeb-Edu: 7,700,000,000,000 tokens\nStack-Edu-Python: 2,200,000,000,000 tokens\nFineMath: 1,100,000,000,000 tokens",
+      "hints": {
+        "en": [
+          "First compute the sum of all weights, then divide each weight by the sum to normalize",
+          "Multiply each normalized weight by total_tokens and convert to int with int()",
+          "Return a dictionary comprehension: {name: int(w/total_w * total_tokens) for name, w in weights.items()}"
+        ]
+      },
+      "test_code": "r = compute_data_mix({'A': 0.7, 'B': 0.2, 'C': 0.1}, 11_000_000_000_000)\nassert r['A'] == 7_700_000_000_000\nassert r['B'] == 2_200_000_000_000\nassert r['C'] == 1_100_000_000_000\nassert sum(r.values()) == 11_000_000_000_000\n# Test normalization of non-unit weights\nr2 = compute_data_mix({'X': 7, 'Y': 3}, 1000)\nassert r2['X'] == 700\nassert r2['Y'] == 300\n# Single dataset\nr3 = compute_data_mix({'only': 5.0}, 500)\nassert r3['only'] == 500"
+    },
+    {
+      "instruction": {
+        "en": "Implement an `ablation_report` function that takes a list of ablation results (each a dict with 'name', 'config', and 'score') and returns a formatted report string. The report should rank experiments by score (highest first), show the winner, and compute the improvement of the best over the worst. This simulates how teams analyze ablation experiments."
+      },
+      "starter_code": "def ablation_report(results: list[dict]) -> str:\n    \"\"\"Generate a ranked ablation report from experiment results.\n    Each result has 'name' (str), 'config' (str), and 'score' (float).\n    Returns a formatted multi-line report string.\"\"\"\n    # Your code here\n    pass\n\n# Test\nexperiments = [\n    {\"name\": \"GQA-4\",  \"config\": \"32 heads, 8 KV\",  \"score\": 0.72},\n    {\"name\": \"MHA\",    \"config\": \"32 heads, 32 KV\", \"score\": 0.71},\n    {\"name\": \"MQA\",    \"config\": \"32 heads, 1 KV\",  \"score\": 0.65},\n    {\"name\": \"GQA-8\",  \"config\": \"32 heads, 4 KV\",  \"score\": 0.69},\n]\nprint(ablation_report(experiments))",
+      "expected_output": "Ablation Report (4 experiments)\n1. GQA-4 (32 heads, 8 KV) — score: 0.7200\n2. MHA (32 heads, 32 KV) — score: 0.7100\n3. GQA-8 (32 heads, 4 KV) — score: 0.6900\n4. MQA (32 heads, 1 KV) — score: 0.6500\nWinner: GQA-4 (+10.77% over worst)",
+      "hints": {
+        "en": [
+          "Sort results by score in descending order using sorted() with a lambda key",
+          "Calculate improvement as (best - worst) / worst * 100",
+          "Use f-strings with :.4f for scores and :.2f for percentages"
+        ]
+      },
+      "test_code": "exps = [\n    {\"name\": \"GQA-4\", \"config\": \"32h,8kv\", \"score\": 0.72},\n    {\"name\": \"MHA\", \"config\": \"32h,32kv\", \"score\": 0.71},\n    {\"name\": \"MQA\", \"config\": \"32h,1kv\", \"score\": 0.65},\n    {\"name\": \"GQA-8\", \"config\": \"32h,4kv\", \"score\": 0.69},\n]\nreport = ablation_report(exps)\nassert 'Ablation Report (4 experiments)' in report\nassert '1. GQA-4' in report\nassert '4. MQA' in report\nassert 'Winner: GQA-4' in report\nassert '+10.77%' in report\n# Two experiments\nr2 = ablation_report([{'name': 'A', 'config': 'x', 'score': 0.8}, {'name': 'B', 'config': 'y', 'score': 0.6}])\nassert 'Winner: A' in r2\nassert '2 experiments' in r2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["LLM pretraining", "ablation studies", "data curation", "grouped query attention", "multi-stage training", "post-training alignment", "SFT", "DPO", "GRPO", "hyperparameter optimization"],
+    "concepts_required": ["python functions", "dictionaries", "PyTorch basics", "transformer architecture"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

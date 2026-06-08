@@ -1,0 +1,131 @@
+{
+  "id": "msmarco_minilm_domain_finetuning_reranker",
+  "topic": "msmarco_minilm_domain_finetuning_reranker",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Fine-Tuning ms-marco-MiniLM-L6-v2 for Domain-Specific Reranking"
+  },
+  "description": {
+    "en": "Fine-tune cross-encoder/ms-marco-MiniLM-L6-v2 on domain-specific query-document pairs to build a custom reranker that outperforms the generic model on your data. Learn training data preparation, the CrossEncoder.fit() API, evaluation with before/after comparison, and when fine-tuning is worth the effort for Homie's RAG pipeline."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Teaching the Reranker Your Domain: Fine-Tuning ms-marco-MiniLM-L6-v2\n\nVaathiyaar here! The generic ms-marco-MiniLM-L6-v2 cross-encoder is trained on web search queries from Bing — it knows that \"reset password\" matches \"forgot credentials.\" But does it know that in *your* codebase, \"ORM session leak\" should rank above \"database connection pooling\" for the query \"why is my app running out of DB connections\"? Probably not. **Domain fine-tuning** teaches the cross-encoder the relevance patterns specific to your data — and with sentence-transformers, it takes under 50 lines of code.\n\n### When Fine-Tuning Is Worth It\n\n| Scenario | Generic Model | Fine-Tuned Model | Verdict |\n|---|---|---|---|\n| General Q&A over docs | Good (MRR ~0.75) | Slightly better (~0.80) | Skip fine-tuning |\n| Technical domain (code, medical) | Moderate (~0.55) | Strong (~0.78) | Fine-tune |\n| Internal jargon / acronyms | Poor (~0.35) | Strong (~0.75) | Must fine-tune |\n| Multilingual domain content | Weak (~0.30) | Moderate (~0.55) | Fine-tune + consider multilingual base |\n\nThe rule: if your domain uses vocabulary or relevance patterns absent from web search, fine-tuning pays off.\n\n### Preparing Training Data\n\nCross-encoder training data is simple: `(query, passage, label)` triples where label is 0 (irrelevant) or 1 (relevant). The hard part is mining good negatives — passages that *look* related but don't answer the query.\n\n```python\nfrom sentence_transformers import InputExample\n\n# Domain-specific training examples\ntrain_examples = [\n    # Positive: query + relevant passage\n    InputExample(texts=[\"ORM session leak\",\n        \"Close SQLAlchemy sessions in a finally block to prevent connection pool exhaustion\"], label=1.0),\n    # Hard negative: related but doesn't answer\n    InputExample(texts=[\"ORM session leak\",\n        \"SQLAlchemy supports multiple database backends including PostgreSQL and MySQL\"], label=0.0),\n    # Positive: domain jargon\n    InputExample(texts=[\"flaky test in CI\",\n        \"Add retry logic with pytest-rerunfailures for tests that fail due to race conditions\"], label=1.0),\n    # Hard negative: same keywords, wrong intent\n    InputExample(texts=[\"flaky test in CI\",\n        \"CI pipeline configuration for running unit tests on every pull request\"], label=0.0),\n]\n\n# In practice, generate hundreds of examples from:\n# 1. User search logs (query + clicked doc = positive)\n# 2. Bi-encoder top-K results manually labeled\n# 3. LLM-generated query-passage pairs from your corpus\nprint(f\"Training examples: {len(train_examples)}\")\n```\n\n### Mining Hard Negatives from Your Bi-Encoder\n\nThe best negatives come from your existing retrieval pipeline — passages the bi-encoder ranks highly but that aren't actually relevant:\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\ndef mine_hard_negatives(queries, corpus, relevant_map, bi_encoder, n_neg=3):\n    \"\"\"Mine hard negatives from bi-encoder top-K results.\"\"\"\n    c_emb = bi_encoder.encode(corpus, convert_to_tensor=True)\n    examples = []\n    for query, rel_ids in zip(queries, relevant_map):\n        q_emb = bi_encoder.encode(query, convert_to_tensor=True)\n        hits = util.semantic_search(q_emb, c_emb, top_k=20)[0]\n        # Positives\n        for rid in rel_ids:\n            examples.append(InputExample(\n                texts=[query, corpus[rid]], label=1.0))\n        # Hard negatives: top bi-encoder results that aren't relevant\n        neg_count = 0\n        for hit in hits:\n            if hit[\"corpus_id\"] not in rel_ids and neg_count < n_neg:\n                examples.append(InputExample(\n                    texts=[query, corpus[hit[\"corpus_id\"]]], label=0.0))\n                neg_count += 1\n    return examples\n```\n\n### Fine-Tuning with CrossEncoder.fit()\n\n```python\nfrom sentence_transformers import CrossEncoder\nfrom sentence_transformers.cross_encoder.evaluation import CEBinaryClassificationEvaluator\nfrom torch.utils.data import DataLoader\n\n# Load pre-trained cross-encoder\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", num_labels=1)\n\n# Create DataLoader\ntrain_dataloader = DataLoader(train_examples, shuffle=True, batch_size=16)\n\n# Optional: evaluation during training\nevaluator = CEBinaryClassificationEvaluator.from_input_examples(\n    train_examples[:20], name=\"domain-eval\"  # use held-out set in practice\n)\n\n# Fine-tune — typically 2-5 epochs is enough\nmodel.fit(\n    train_dataloader=train_dataloader,\n    epochs=3,\n    warmup_steps=100,\n    evaluation_steps=500,\n    evaluator=evaluator,\n    output_path=\"./domain-reranker\",\n)\n\n# Load fine-tuned model\nfinetuned = CrossEncoder(\"./domain-reranker\")\n```\n\n### Before vs After: Measuring the Improvement\n\n```python\ndef compare_models(queries, corpus, relevant_map, generic, finetuned):\n    \"\"\"Compare MRR of generic vs fine-tuned cross-encoder.\"\"\"\n    for name, model in [(\"Generic\", generic), (\"Fine-tuned\", finetuned)]:\n        mrr_total = 0.0\n        for query, rel_ids in zip(queries, relevant_map):\n            pairs = [[query, doc] for doc in corpus]\n            scores = model.predict(pairs)\n            ranked = sorted(range(len(corpus)), key=lambda i: scores[i], reverse=True)\n            for rank, idx in enumerate(ranked, 1):\n                if idx in rel_ids:\n                    mrr_total += 1.0 / rank\n                    break\n        print(f\"{name:12s} MRR: {mrr_total / len(queries):.4f}\")\n```\n\nExpect 15-40% MRR improvement on domain-specific queries after fine-tuning with as few as 200-500 training examples. The generic model already understands language — fine-tuning just teaches it *your* relevance patterns.\n\n### Training Data Budget Guide\n\n| Training Examples | Expected Improvement | Effort |\n|---|---|---|\n| 50-100 | Marginal (5-10% MRR) | 1-2 hours labeling |\n| 200-500 | Solid (15-25% MRR) | Half day labeling |\n| 1000-5000 | Strong (25-40% MRR) | Use LLM-assisted labeling |\n| 5000+ | Diminishing returns | Only if domain is very specialized |\n\n### Saving and Loading for Production\n\n```python\n# Save fine-tuned model\nfinetuned.save(\"./models/domain-reranker-v1\")\n\n# Load in production with ONNX for speed\nprod_model = CrossEncoder(\n    \"./models/domain-reranker-v1\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\n# Same predict() API — drop-in replacement\nscores = prod_model.predict([[\"ORM session leak\", \"Close SQLAlchemy sessions in finally block\"]])\nprint(f\"Domain relevance score: {scores[0]:.4f}\")\n```\n\n> **Key Insight:** The generic ms-marco-MiniLM-L6-v2 understands *language* but not your *domain*. Fine-tuning on 200-500 labeled query-passage pairs — especially with hard negatives mined from your bi-encoder — teaches it relevance patterns specific to your data. For Homie, this means the reranker stops treating generic keyword matches as highly relevant and starts prioritizing passages that actually solve the user's problem. Start with hard-negative mining from your existing pipeline — it's the highest-ROI training data source."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "The generic ms-marco-MiniLM-L6-v2 cross-encoder was trained on Bing web searches — it doesn't know your domain's jargon, acronyms, or relevance patterns. Fine-tuning on as few as 200-500 labeled query-passage pairs teaches the reranker what 'relevant' means in YOUR context. This lesson covers training data preparation, hard-negative mining, the CrossEncoder.fit() API, and before/after evaluation.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import InputExample\n\ntrain_examples = [\n    InputExample(texts=[\"ORM session leak\",\n        \"Close SQLAlchemy sessions in a finally block to prevent pool exhaustion\"], label=1.0),\n    InputExample(texts=[\"ORM session leak\",\n        \"SQLAlchemy supports PostgreSQL and MySQL backends\"], label=0.0),\n    InputExample(texts=[\"flaky test in CI\",\n        \"Add pytest-rerunfailures for race-condition test failures\"], label=1.0),\n    InputExample(texts=[\"flaky test in CI\",\n        \"CI pipeline runs unit tests on every pull request\"], label=0.0),\n]\n\nprint(f\"Positives: {sum(1 for e in train_examples if e.label == 1.0)}\")\nprint(f\"Negatives: {sum(1 for e in train_examples if e.label == 0.0)}\")\nprint(f\"Total: {len(train_examples)}\")",
+      "steps": [
+        {"line": 1, "explanation": "InputExample is the standard training format for sentence-transformers. Each example holds a pair of texts and a relevance label (1.0 = relevant, 0.0 = irrelevant)."},
+        {"line": 3, "explanation": "Create training pairs from your domain. This positive pair teaches the model that 'ORM session leak' is answered by advice about closing SQLAlchemy sessions."},
+        {"line": 6, "explanation": "Hard negative: same query, related passage — but it describes backend support, not how to fix session leaks. The model must learn this distinction."},
+        {"line": 8, "explanation": "Another domain-specific pair. 'Flaky test in CI' is jargon the generic model hasn't seen — fine-tuning teaches it that retry logic is the relevant answer."},
+        {"line": 10, "explanation": "Second hard negative. CI pipeline configuration is keyword-related to the query but doesn't address flaky tests. Hard negatives are the most valuable training signal."},
+        {"line": 14, "explanation": "Balance check: aim for 1:2 to 1:3 positive-to-negative ratio. More negatives help the model distinguish 'related' from 'relevant'."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\nfrom torch.utils.data import DataLoader\n\n# Load pre-trained cross-encoder as starting point\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\", num_labels=1)\n\n# Wrap training data in a DataLoader\ntrain_dataloader = DataLoader(train_examples, shuffle=True, batch_size=16)\n\n# Fine-tune: 2-5 epochs is usually enough\nmodel.fit(\n    train_dataloader=train_dataloader,\n    epochs=3,\n    warmup_steps=50,\n    output_path=\"./domain-reranker\",\n)\n\n# Load fine-tuned model for inference\nfinetuned = CrossEncoder(\"./domain-reranker\")\n\n# Test on domain query\nscores = finetuned.predict([\n    [\"ORM session leak\", \"Close sessions in finally block\"],\n    [\"ORM session leak\", \"SQLAlchemy supports multiple backends\"],\n])\nprint(f\"Relevant: {scores[0]:.4f}\")\nprint(f\"Irrelevant: {scores[1]:.4f}\")\nprint(f\"Correct ranking: {scores[0] > scores[1]}\")",
+      "steps": [
+        {"line": 5, "explanation": "Load the pre-trained ms-marco model — fine-tuning starts from these weights rather than random initialization. num_labels=1 means single relevance score output."},
+        {"line": 8, "explanation": "DataLoader handles batching and shuffling. batch_size=16 is good for MiniLM — increase to 32 with GPU, decrease to 8 for limited memory."},
+        {"line": 11, "explanation": "model.fit() handles the training loop internally — optimizer setup, loss computation, gradient updates. No manual training code needed."},
+        {"line": 13, "explanation": "3 epochs over a small dataset. Cross-encoders converge fast since the pre-trained weights already understand language — you're only adjusting relevance patterns."},
+        {"line": 14, "explanation": "warmup_steps ramps the learning rate gradually to avoid catastrophic forgetting of the pre-trained knowledge during early training steps."},
+        {"line": 19, "explanation": "Load the saved fine-tuned model. The API is identical to the generic model — it's a drop-in replacement in your existing pipeline."},
+        {"line": 22, "explanation": "Test the fine-tuned model on a domain query. The relevant passage should score higher than the irrelevant one — confirming the model learned your domain's relevance patterns."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def compare_rerankers(queries, corpus, relevant_map, generic, finetuned):\n    \"\"\"Compare MRR between generic and fine-tuned cross-encoders.\"\"\"\n    for name, model in [(\"Generic\", generic), (\"Fine-tuned\", finetuned)]:\n        mrr_total = 0.0\n        for query, rel_ids in zip(queries, relevant_map):\n            pairs = [[query, doc] for doc in corpus]\n            scores = model.predict(pairs)\n            ranked = sorted(range(len(corpus)),\n                           key=lambda i: scores[i], reverse=True)\n            for rank, idx in enumerate(ranked, 1):\n                if idx in rel_ids:\n                    mrr_total += 1.0 / rank\n                    break\n        mrr = mrr_total / len(queries)\n        print(f\"{name:12s} MRR: {mrr:.4f}\")\n\n# Production deployment with ONNX\nprod_model = CrossEncoder(\n    \"./domain-reranker\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\nprint(\"Fine-tuned ONNX model loaded for production\")",
+      "steps": [
+        {"line": 1, "explanation": "Side-by-side comparison function. Run both models on the same queries and corpus to measure exactly how much fine-tuning improves ranking quality."},
+        {"line": 5, "explanation": "For each query, score every document in the corpus against the query — then rank by score. This gives a complete ranking for MRR computation."},
+        {"line": 8, "explanation": "Sort document indices by their cross-encoder scores, highest first. This is the model's predicted ranking of documents for this query."},
+        {"line": 10, "explanation": "Find the first relevant document in the ranking and compute 1/rank. MRR averages these across all queries — higher means relevant docs rank closer to position 1."},
+        {"line": 14, "explanation": "Print the average MRR. Expect 15-40% improvement on domain queries after fine-tuning — the generic model already understands language, fine-tuning adds domain relevance."},
+        {"line": 18, "explanation": "Deploy the fine-tuned model with ONNX for 2-3x CPU speedup. Same fine-tuned weights, optimized inference — the best of both worlds for production."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Generic ms-marco-MiniLM-L6-v2",
+      "right_label": "Domain Fine-Tuned",
+      "items": [
+        {"left": "Trained on 500K+ Bing web search queries", "right": "Further trained on YOUR domain query-passage pairs"},
+        {"left": "Understands general language relevance", "right": "Understands domain jargon, acronyms, and patterns"},
+        {"left": "Good for general-purpose RAG", "right": "15-40% MRR improvement on domain queries"},
+        {"left": "No training data needed", "right": "Needs 200-500 labeled examples for solid gains"},
+        {"left": "Misses domain-specific relevance signals", "right": "Catches nuanced domain relevance"},
+        {"left": "Ready to use immediately", "right": "Requires labeling effort — but pays off in accuracy"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Your cross-encoder now speaks your domain's language! Fine-tuning with hard negatives from your own pipeline is the highest-ROI investment in retrieval quality. Homie's reranker just went from generic to domain-expert."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `TrainingDataBuilder` class that creates cross-encoder training examples from a corpus with relevance judgments. Implement `build_positives(query, corpus, relevant_ids)` that creates positive training pairs, `build_hard_negatives(query, corpus, relevant_ids, similarity_scores, n_neg)` that selects the top-N highest-similarity non-relevant passages as hard negatives, and `build_dataset(queries, corpus, relevant_map, similarity_fn)` that combines both for all queries. Return training examples as lists of `{\"query\": str, \"passage\": str, \"label\": float}` dicts."
+      },
+      "starter_code": "class TrainingDataBuilder:\n    def build_positives(self, query: str, corpus: list[str],\n                        relevant_ids: set[int]) -> list[dict]:\n        # Create positive examples: {\"query\": query, \"passage\": corpus[id], \"label\": 1.0}\n        # for each id in relevant_ids\n        pass\n\n    def build_hard_negatives(self, query: str, corpus: list[str],\n                             relevant_ids: set[int],\n                             similarity_scores: list[float],\n                             n_neg: int = 2) -> list[dict]:\n        # 1. Find all non-relevant doc indices (not in relevant_ids)\n        # 2. Sort them by similarity_scores descending (hardest negatives first)\n        # 3. Take top n_neg as hard negatives\n        # 4. Return [{\"query\": query, \"passage\": corpus[id], \"label\": 0.0}, ...]\n        pass\n\n    def build_dataset(self, queries: list[str], corpus: list[str],\n                      relevant_map: list[set[int]],\n                      similarity_fn) -> list[dict]:\n        # For each (query, relevant_ids) pair:\n        #   1. Build positives\n        #   2. Get similarity_scores from similarity_fn(query, corpus)\n        #   3. Build hard negatives (n_neg=2)\n        #   4. Collect all examples\n        # Return combined list\n        pass\n\n# Test it:\nbuilder = TrainingDataBuilder()\n\ncorpus = [\"close sessions in finally\", \"supports multiple backends\",\n          \"retry on connection failure\", \"database schema design\"]\n\n# Build positives\npositives = builder.build_positives(\"session leak\", corpus, {0, 2})\nprint(len(positives))\nprint(positives[0][\"label\"])\n\n# Build hard negatives with mock similarity scores\nnegatives = builder.build_hard_negatives(\n    \"session leak\", corpus, {0, 2},\n    similarity_scores=[0.9, 0.7, 0.8, 0.3], n_neg=2)\nprint(len(negatives))\nprint(negatives[0][\"passage\"])  # highest sim non-relevant\nprint(negatives[0][\"label\"])\n\n# Full dataset\ndef mock_sim(query, corpus):\n    return [0.5] * len(corpus)\n\ndataset = builder.build_dataset(\n    [\"q1\", \"q2\"], corpus, [{0}, {1, 2}], mock_sim)\nprint(len(dataset))",
+      "expected_output": "2\n1.0\n2\nsupports multiple backends\n0.0\n7",
+      "hints": {
+        "en": [
+          "In build_positives, iterate over relevant_ids and create a dict with label=1.0 for each. Use corpus[rid] to get the passage text.",
+          "In build_hard_negatives, create a list of (index, score) for indices NOT in relevant_ids, sort by score descending, take the first n_neg, and create dicts with label=0.0.",
+          "In build_dataset, loop over zip(queries, relevant_map), call build_positives and build_hard_negatives for each, and extend a results list. For q1 with 1 relevant: 1 positive + 2 negatives = 3. For q2 with 2 relevant: 2 positives + 2 negatives = 4. Total = 7."
+        ]
+      },
+      "test_code": "b = TrainingDataBuilder()\ncorpus = [\"a\", \"b\", \"c\", \"d\"]\np = b.build_positives(\"q\", corpus, {0, 2})\nassert len(p) == 2\nassert all(x[\"label\"] == 1.0 for x in p)\nassert {x[\"passage\"] for x in p} == {\"a\", \"c\"}\nn = b.build_hard_negatives(\"q\", corpus, {0}, [0.9, 0.8, 0.3, 0.7], n_neg=2)\nassert len(n) == 2\nassert all(x[\"label\"] == 0.0 for x in n)\nassert n[0][\"passage\"] == \"b\"\nassert n[1][\"passage\"] == \"d\"\ndef sim(q, c): return [0.5] * len(c)\nds = b.build_dataset([\"q1\"], corpus, [{0}], sim)\nassert len(ds) == 3\nassert sum(1 for x in ds if x[\"label\"] == 1.0) == 1\nassert sum(1 for x in ds if x[\"label\"] == 0.0) == 2"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RerankerEvaluator` class that compares a generic vs fine-tuned reranker on the same queries. Implement `rank_documents(query, corpus, score_fn)` that ranks corpus indices by score descending, `mrr(ranked_ids, relevant_ids)` that returns the mean reciprocal rank, and `compare(queries, corpus, relevant_map, generic_fn, finetuned_fn)` that returns MRR for both and the improvement percentage."
+      },
+      "starter_code": "class RerankerEvaluator:\n    def rank_documents(self, query: str, corpus: list[str],\n                       score_fn) -> list[int]:\n        # Score each (query, doc) pair using score_fn(query, doc)\n        # Return corpus indices sorted by score descending\n        pass\n\n    def mrr(self, ranked_ids: list[int], relevant_ids: set[int]) -> float:\n        # Return 1/rank of the first relevant doc (1-based rank)\n        # Return 0.0 if no relevant doc found\n        pass\n\n    def compare(self, queries: list[str], corpus: list[str],\n                relevant_map: list[set[int]],\n                generic_fn, finetuned_fn) -> dict:\n        # Compute average MRR for both score functions\n        # Return {\"generic_mrr\": float, \"finetuned_mrr\": float,\n        #         \"improvement_pct\": float}\n        # improvement_pct = ((finetuned - generic) / generic) * 100\n        # if generic_mrr is 0, set improvement_pct to 0.0\n        pass\n\n# Test it:\nev = RerankerEvaluator()\n\ncorpus = [\"doc_a\", \"doc_b\", \"doc_c\", \"doc_d\"]\n\n# Mock generic scorer: scores by position (bad ranking)\ndef generic_fn(query, doc):\n    return corpus.index(doc)  # 0,1,2,3 — worst doc scores highest\n\n# Mock finetuned scorer: relevant docs score highest\ndef finetuned_fn(query, doc):\n    return 10.0 if doc in [\"doc_a\", \"doc_c\"] else 1.0\n\nranked = ev.rank_documents(\"test\", corpus, generic_fn)\nprint(ranked[0])  # highest score = index 3\n\nprint(ev.mrr([3, 2, 0, 1], {0, 1}))\n\nresult = ev.compare(\n    [\"q1\", \"q2\"], corpus,\n    [{0}, {2}],\n    generic_fn, finetuned_fn)\nprint(f\"{result['generic_mrr']:.4f}\")\nprint(f\"{result['finetuned_mrr']:.4f}\")\nprint(result['finetuned_mrr'] > result['generic_mrr'])",
+      "expected_output": "3\n0.3333333333333333\n0.25\n1.0\nTrue",
+      "hints": {
+        "en": [
+          "In rank_documents, create a list of (index, score) by calling score_fn(query, corpus[i]) for each i, sort by score descending, then return just the indices.",
+          "In mrr, use enumerate(ranked_ids, start=1) to get 1-based ranks, return 1.0/rank for the first match in relevant_ids.",
+          "In compare, call rank_documents + mrr for each query with both score functions, average the MRR values, then compute improvement_pct as ((ft - gen) / gen) * 100."
+        ]
+      },
+      "test_code": "ev = RerankerEvaluator()\nc = [\"a\", \"b\", \"c\"]\ndef sf(q, d): return {\"a\": 3, \"b\": 1, \"c\": 2}[d]\nr = ev.rank_documents(\"q\", c, sf)\nassert r == [0, 2, 1]\nassert ev.mrr([0, 1, 2], {0}) == 1.0\nassert ev.mrr([1, 0, 2], {0}) == 0.5\nassert ev.mrr([1, 2, 3], {0}) == 0.0\ndef g(q, d): return 0\ndef f(q, d): return 10 if d == \"a\" else 0\nres = ev.compare([\"q\"], c, [{0}], g, f)\nassert res[\"finetuned_mrr\"] == 1.0\nassert \"improvement_pct\" in res\nres2 = ev.compare([\"q\"], c, [{0}], lambda q,d: 0, lambda q,d: 0)\nassert res2[\"improvement_pct\"] == 0.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["cross-encoder fine-tuning", "domain-specific reranking", "hard negative mining", "InputExample training format", "CrossEncoder.fit() API", "training data preparation", "before-after evaluation", "MRR comparison", "ONNX production deployment", "relevance pattern learning"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "sets", "cross-encoders", "bi-encoder vs cross-encoder", "RAG pipelines", "sentence embeddings", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,120 @@
+{
+  "id": "all_mpnet_base_v2_similarity_scoring_retrieval",
+  "topic": "all_mpnet_base_v2_similarity_scoring_retrieval",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Similarity Scoring & Threshold-Tuned Retrieval with all-mpnet-base-v2"
+  },
+  "description": {
+    "en": "Build a production similarity scoring pipeline with all-mpnet-base-v2 — tune similarity thresholds for precision vs recall, evaluate retrieval quality with ground-truth labels, and deploy a scored retrieval system that filters low-confidence results before they reach your LLM."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Similarity Scoring & Threshold-Tuned Retrieval with all-mpnet-base-v2\n\nVaathiyaar here! Your RAG pipeline retrieves the top-5 chunks for every query — but what happens when **none** of those chunks are actually relevant? Your LLM gets garbage context and confidently hallucinates an answer. The fix isn't better embeddings alone — it's **similarity scoring with thresholds**. By setting a minimum cosine similarity cutoff, you reject low-confidence retrievals before they poison your LLM's context window. And `all-mpnet-base-v2` makes this practical because its 0.838 STS score means the similarity numbers it produces are **calibrated** — high scores genuinely mean high relevance.\n\n### Why Raw Top-K Retrieval Fails\n\nTop-K retrieval always returns K results, even when the query has no match in your corpus. A threshold-based system returns **zero results** when nothing is relevant — letting your application say \"I don't know\" instead of hallucinating.\n\n| Strategy | Returns | Handles Out-of-Scope | Precision Control |\n|---|---|---|---|\n| Top-K only | Always K results | No — returns noise | None |\n| Top-K + threshold | 0 to K results | Yes — filters noise | Tunable |\n| Threshold only | 0 to all results | Yes | Full control |\n\n### Computing Calibrated Similarity Scores\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-mpnet-base-v2\")\n\ncorpus = [\n    \"Python list comprehensions create new lists from iterables\",\n    \"Dictionary unpacking merges multiple dicts with **\",\n    \"Async generators yield values from coroutines\",\n    \"CSS flexbox aligns items along a main axis\",\n    \"SQL joins combine rows from related tables\",\n]\ncorpus_embs = model.encode(corpus, normalize_embeddings=True)\n\nquery = \"How do I create a list from a loop in Python?\"\nquery_emb = model.encode(query, normalize_embeddings=True)\n\nscores = (corpus_embs @ query_emb.T).flatten()\nfor text, score in sorted(zip(corpus, scores), key=lambda x: -x[1]):\n    print(f\"{score:.3f} | {text}\")\n```\n\nWith normalized embeddings, the dot product equals cosine similarity. The list comprehension chunk scores highest (~0.6+), while CSS and SQL chunks score low (~0.1). These score gaps are what make threshold filtering reliable.\n\n### Building a Threshold-Tuned Retriever\n\n```python\nclass ScoredRetriever:\n    def __init__(self, model_name=\"all-mpnet-base-v2\", threshold=0.4):\n        self.model = SentenceTransformer(model_name)\n        self.threshold = threshold\n        self.texts = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.texts = documents\n        self.embeddings = self.model.encode(documents, normalize_embeddings=True)\n\n    def retrieve(self, query: str, top_k: int = 5) -> list[dict]:\n        q_emb = self.model.encode(query, normalize_embeddings=True)\n        scores = (self.embeddings @ q_emb.T).flatten()\n        ranked = sorted(enumerate(scores), key=lambda x: -x[1])\n        results = []\n        for idx, score in ranked[:top_k]:\n            if score >= self.threshold:\n                results.append({\"text\": self.texts[idx], \"score\": float(score)})\n        return results  # May return fewer than top_k or even empty list\n\nretriever = ScoredRetriever(threshold=0.35)\nretriever.index(corpus)\n\n# Relevant query — returns matches\nprint(retriever.retrieve(\"Python list creation\"))\n\n# Out-of-scope query — returns empty\nprint(retriever.retrieve(\"How to bake chocolate cake\"))\n```\n\nThe empty list on irrelevant queries is the key feature. Your application can catch this and respond with \"I don't have information on that topic\" instead of fabricating an answer.\n\n### Evaluating Threshold Quality with Ground Truth\n\n```python\ndef evaluate_threshold(retriever, test_cases, threshold):\n    retriever.threshold = threshold\n    tp = fp = fn = 0\n    for query, relevant_indices in test_cases:\n        results = retriever.retrieve(query)\n        retrieved_texts = {r[\"text\"] for r in results}\n        relevant_texts = {retriever.texts[i] for i in relevant_indices}\n        tp += len(retrieved_texts & relevant_texts)\n        fp += len(retrieved_texts - relevant_texts)\n        fn += len(relevant_texts - retrieved_texts)\n    precision = tp / (tp + fp) if (tp + fp) > 0 else 0\n    recall = tp / (tp + fn) if (tp + fn) > 0 else 0\n    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0\n    return {\"threshold\": threshold, \"precision\": precision, \"recall\": recall, \"f1\": f1}\n\n# Ground truth: (query, list of relevant corpus indices)\ntest_cases = [\n    (\"Python list creation\", [0]),\n    (\"merging dictionaries\", [1]),\n    (\"async programming\", [2]),\n    (\"baking recipes\", []),  # no relevant docs\n]\n\nfor t in [0.2, 0.3, 0.4, 0.5, 0.6]:\n    result = evaluate_threshold(retriever, test_cases, t)\n    print(f\"t={t:.1f} | P={result['precision']:.2f} R={result['recall']:.2f} F1={result['f1']:.2f}\")\n```\n\nSweep thresholds on labeled test data to find the sweet spot for your domain. Lower thresholds favor recall (fewer missed docs), higher thresholds favor precision (fewer wrong docs). The optimal threshold depends on your cost of hallucination vs cost of \"I don't know.\"\n\n> **Key Insight:** Top-K retrieval always returns results — even for out-of-scope queries. Adding a similarity threshold with all-mpnet-base-v2 turns your retriever into a **gatekeeper**: relevant chunks pass through, irrelevant queries get filtered out. Evaluate your threshold on labeled data to balance precision vs recall — the right cutoff depends on whether hallucination or silence is more costly in your application."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Raw top-K retrieval always returns results — even when nothing is relevant. Your LLM gets bad context and hallucinates. The fix: similarity scoring with thresholds using all-mpnet-base-v2. Its calibrated 768-dim embeddings let you set a cutoff that filters noise before it reaches your LLM.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"all-mpnet-base-v2\")\n\ncorpus = [\n    \"Python list comprehensions create new lists from iterables\",\n    \"Dictionary unpacking merges multiple dicts with **\",\n    \"Async generators yield values from coroutines\",\n    \"CSS flexbox aligns items along a main axis\",\n]\ncorpus_embs = model.encode(corpus, normalize_embeddings=True)\n\nquery = \"How do I create a list from a loop in Python?\"\nquery_emb = model.encode(query, normalize_embeddings=True)\n\nscores = (corpus_embs @ query_emb.T).flatten()\nfor i in scores.argsort()[::-1]:\n    print(f\"{scores[i]:.3f} | {corpus[i][:50]}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — wraps transformer models to produce fixed-size embeddings from variable-length text. all-mpnet-base-v2 produces 768-dimensional vectors."},
+        {"line": 4, "explanation": "Load the model. all-mpnet-base-v2 scores 0.838 on STS benchmark — the highest among open-source sentence transformers. This means its similarity scores are well-calibrated."},
+        {"line": 6, "explanation": "A mixed-domain corpus: three Python topics and one CSS topic. A good embedding model should score Python queries high against Python chunks and low against CSS."},
+        {"line": 11, "explanation": "normalize_embeddings=True produces unit-length vectors. This is critical: it means dot product equals cosine similarity, and scores fall neatly between -1 and 1."},
+        {"line": 14, "explanation": "Encode the query with the same model and normalization. Query and corpus embeddings must come from the same model — mixing models produces meaningless scores."},
+        {"line": 17, "explanation": "Matrix multiply corpus_embs @ query_emb.T computes all similarity scores in one vectorized operation. Each score tells you how semantically close the query is to that chunk."},
+        {"line": 18, "explanation": "argsort()[::-1] sorts indices by descending score. The Python list comprehension chunk should rank first, CSS flexbox last — these score differences are what make thresholds work."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nclass ScoredRetriever:\n    def __init__(self, model_name, threshold=0.4):\n        self.model = SentenceTransformer(model_name)\n        self.threshold = threshold\n        self.texts = []\n        self.embeddings = None\n\n    def index(self, documents: list[str]):\n        self.texts = documents\n        self.embeddings = self.model.encode(\n            documents, normalize_embeddings=True\n        )\n\n    def retrieve(self, query: str, top_k: int = 5):\n        q_emb = self.model.encode(query, normalize_embeddings=True)\n        scores = (self.embeddings @ q_emb.T).flatten()\n        ranked = sorted(enumerate(scores), key=lambda x: -x[1])\n        return [\n            {\"text\": self.texts[i], \"score\": float(s)}\n            for i, s in ranked[:top_k] if s >= self.threshold\n        ]\n\nretriever = ScoredRetriever(\"all-mpnet-base-v2\", threshold=0.35)\nretriever.index([\"Python lists\", \"SQL joins\", \"CSS grids\"])\nprint(retriever.retrieve(\"Python data structures\"))\nprint(retriever.retrieve(\"baking recipes\"))  # empty list",
+      "steps": [
+        {"line": 4, "explanation": "ScoredRetriever wraps the embedding model with threshold filtering. Unlike raw top-K, it can return zero results — the key to preventing hallucination on out-of-scope queries."},
+        {"line": 5, "explanation": "threshold is the minimum cosine similarity for a result to be returned. 0.4 is a reasonable default for mpnet — but the optimal value depends on your domain and tolerance for errors."},
+        {"line": 11, "explanation": "index() pre-encodes all documents. In production, you'd store these in a vector database. The embeddings are normalized once at index time and never re-normalized."},
+        {"line": 17, "explanation": "retrieve() encodes the query, computes dot-product scores against all indexed documents, sorts by score, and filters by threshold. The result may contain 0 to top_k items."},
+        {"line": 20, "explanation": "The list comprehension with `if s >= self.threshold` is where filtering happens. Chunks below the threshold are silently dropped — no bad context reaches your LLM."},
+        {"line": 23, "explanation": "The conditional filter means this returns only items above 0.35 similarity. If the query mentions 'Python data structures', 'Python lists' should pass; 'CSS grids' should not."},
+        {"line": 26, "explanation": "Test with a relevant query and an irrelevant one. 'baking recipes' has no semantic overlap with any indexed document, so retrieve() returns an empty list — the correct behavior."},
+        {"line": 28, "explanation": "An empty list signals 'no relevant information found.' Your app can respond with 'I don't know' instead of hallucinating from irrelevant chunks — a huge quality improvement for production RAG."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def evaluate_threshold(retriever, test_cases, threshold):\n    retriever.threshold = threshold\n    tp = fp = fn = 0\n    for query, relevant_idx in test_cases:\n        results = retriever.retrieve(query)\n        retrieved = {r[\"text\"] for r in results}\n        expected = {retriever.texts[i] for i in relevant_idx}\n        tp += len(retrieved & expected)\n        fp += len(retrieved - expected)\n        fn += len(expected - retrieved)\n    prec = tp / (tp + fp) if (tp + fp) else 0\n    rec = tp / (tp + fn) if (tp + fn) else 0\n    f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0\n    return {\"t\": threshold, \"P\": prec, \"R\": rec, \"F1\": f1}\n\n# Ground truth: (query, relevant_indices)\ncases = [\n    (\"Python list creation\", [0]),\n    (\"database queries\", [1]),\n    (\"unrelated topic\", []),\n]\n\nfor t in [0.2, 0.3, 0.4, 0.5]:\n    r = evaluate_threshold(retriever, cases, t)\n    print(f\"t={r['t']:.1f} P={r['P']:.2f} R={r['R']:.2f} F1={r['F1']:.2f}\")",
+      "steps": [
+        {"line": 1, "explanation": "evaluate_threshold takes labeled test cases and measures how well a given threshold separates relevant from irrelevant results. This is how you tune your retriever scientifically."},
+        {"line": 3, "explanation": "Track true positives (correct retrievals), false positives (wrong retrievals), and false negatives (missed relevant docs). These three counts give you precision, recall, and F1."},
+        {"line": 8, "explanation": "Set intersection (retrieved & expected) counts documents that were both retrieved AND relevant — true positives. Set difference counts errors in each direction."},
+        {"line": 11, "explanation": "Precision = tp/(tp+fp): of everything you retrieved, what fraction was relevant? High precision means fewer hallucination-causing chunks."},
+        {"line": 12, "explanation": "Recall = tp/(tp+fn): of everything relevant, what fraction did you retrieve? High recall means fewer missed answers."},
+        {"line": 13, "explanation": "F1 is the harmonic mean of precision and recall — a single number that balances both. Sweep thresholds and pick the one with the best F1 for your use case."},
+        {"line": 23, "explanation": "Test multiple thresholds. Lower values (0.2) favor recall — you get more results but risk noise. Higher values (0.5) favor precision — fewer results but higher quality. The right balance depends on your application."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now build threshold-tuned retrieval pipelines! Your RAG system no longer blindly returns top-K results — it scores, filters, and rejects low-confidence retrievals. Evaluate thresholds on labeled data to find the precision-recall sweet spot for your domain."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ScoredRetriever` class that uses word-frequency vectors to simulate embedding-based retrieval with threshold filtering. Implement: `encode(text)` returns a lowercase word frequency dict, `normalize(vec)` returns a unit-length copy, `index(documents)` stores texts and their normalized embeddings, and `retrieve(query, top_k, threshold)` returns a list of `{\"text\": ..., \"score\": ...}` dicts for results above the threshold, sorted by score descending. The retriever must return an empty list when no result exceeds the threshold — this is the key behavior that prevents hallucination in RAG systems."
+      },
+      "starter_code": "import math\n\nclass ScoredRetriever:\n    def __init__(self):\n        self.texts = []\n        self.embeddings = []  # list of normalized dicts\n\n    def encode(self, text: str) -> dict:\n        # Return word frequency vector: {word: count}\n        # Lowercase all words\n        pass\n\n    def normalize(self, vec: dict) -> dict:\n        # Return a unit-length copy of vec\n        # magnitude = sqrt(sum of squared values)\n        # Return empty dict if magnitude is 0\n        pass\n\n    def _dot(self, a: dict, b: dict) -> float:\n        # Dot product of two sparse vectors\n        return sum(a.get(k, 0) * b[k] for k in b)\n\n    def index(self, documents: list[str]):\n        # Encode each doc, normalize it, store text and embedding\n        pass\n\n    def retrieve(self, query: str, top_k: int = 3, threshold: float = 0.3) -> list:\n        # 1. Encode and normalize the query\n        # 2. Compute dot product with each stored embedding\n        # 3. Filter by threshold\n        # 4. Return top_k results as [{\"text\": ..., \"score\": ...}] sorted desc\n        pass\n\n# Test it:\nretriever = ScoredRetriever()\nretriever.index([\n    \"python list comprehension tutorial\",\n    \"machine learning with python\",\n    \"baking chocolate cake recipe\",\n    \"sql database query optimization\",\n])\n\n# Relevant query\nresults = retriever.retrieve(\"python programming\", top_k=2, threshold=0.3)\nprint(len(results) > 0)\nprint(all(r[\"score\"] >= 0.3 for r in results))\n\n# Out-of-scope query — should return empty\nresults_empty = retriever.retrieve(\"weather forecast tomorrow\", top_k=3, threshold=0.3)\nprint(len(results_empty))\n\n# Verify scores are sorted descending\nresults_sorted = retriever.retrieve(\"python\", top_k=4, threshold=0.0)\nscores = [r[\"score\"] for r in results_sorted]\nprint(scores == sorted(scores, reverse=True))",
+      "expected_output": "True\nTrue\n0\nTrue",
+      "hints": {
+        "en": [
+          "encode: use text.lower().split() and count occurrences with a dict — {'word': count}",
+          "normalize: compute magnitude with math.sqrt(sum(v**2 for v in vec.values())), then return {k: v/magnitude for k, v in vec.items()}. Return {} if magnitude is 0",
+          "retrieve: compute _dot(query_norm, doc_norm) for each doc, filter scores >= threshold, sort descending, return top_k as list of dicts with 'text' and 'score' keys"
+        ]
+      },
+      "test_code": "r = ScoredRetriever()\nassert r.encode(\"hello world\") == {\"hello\": 1, \"world\": 1}\nassert r.encode(\"go go go\") == {\"go\": 3}\nvec = r.normalize({\"a\": 3, \"b\": 4})\nassert abs(math.sqrt(sum(v**2 for v in vec.values())) - 1.0) < 0.001\nassert r.normalize({}) == {}\nr.index([\"alpha beta\", \"gamma delta\", \"alpha gamma\"])\nassert len(r.texts) == 3\nassert len(r.embeddings) == 3\nres = r.retrieve(\"alpha\", top_k=2, threshold=0.0)\nassert len(res) <= 2\nassert all(isinstance(x, dict) for x in res)\nassert all(\"text\" in x and \"score\" in x for x in res)\nassert res[0][\"score\"] >= res[-1][\"score\"]\nres_empty = r.retrieve(\"zzzzz\", top_k=3, threshold=0.5)\nassert res_empty == []\nres_all = r.retrieve(\"alpha\", top_k=10, threshold=0.0)\nassert len(res_all) == 3\nscores = [x[\"score\"] for x in res_all]\nassert scores == sorted(scores, reverse=True)"
+    },
+    {
+      "instruction": {
+        "en": "Build an `evaluate_threshold` function that measures precision, recall, and F1 score for a retrieval system at a given threshold. The function takes a `ScoredRetriever` instance, a list of test cases (each is a tuple of `(query_string, list_of_relevant_doc_indices)`), and a threshold value. It should call `retriever.retrieve()` for each test case, compare retrieved texts against expected relevant texts, and return a dict with keys 'precision', 'recall', and 'f1'. This mirrors how production RAG systems are evaluated before deployment."
+      },
+      "starter_code": "import math\n\n# Assumes ScoredRetriever from Challenge 1 is available\n\ndef evaluate_threshold(retriever, test_cases, threshold):\n    # test_cases: list of (query, relevant_indices)\n    # relevant_indices: list of ints pointing into retriever.texts\n    #\n    # For each test case:\n    #   1. Call retriever.retrieve(query, top_k=len(retriever.texts), threshold=threshold)\n    #   2. Compare retrieved texts with expected relevant texts\n    #   3. Count true positives, false positives, false negatives\n    #\n    # Return {\"precision\": ..., \"recall\": ..., \"f1\": ...}\n    # Handle division by zero: return 0 for any metric where denominator is 0\n    pass\n\n# Test it:\nretriever = ScoredRetriever()\nretriever.index([\"python basics\", \"java basics\", \"cooking tips\"])\n\n# Test cases: query + indices of relevant docs\ncases = [\n    (\"python programming\", [0]),       # only \"python basics\" is relevant\n    (\"java programming\", [1]),         # only \"java basics\" is relevant\n    (\"unrelated query xyz\", []),        # nothing is relevant\n]\n\n# At threshold=0.0, everything is retrieved\nresult_low = evaluate_threshold(retriever, cases, threshold=0.0)\nprint(round(result_low[\"recall\"], 1))\n\n# At very high threshold, nothing is retrieved\nresult_high = evaluate_threshold(retriever, cases, threshold=0.99)\nprint(round(result_high[\"precision\"], 1))\nprint(round(result_high[\"recall\"], 1))",
+      "expected_output": "1.0\n0\n0.0",
+      "hints": {
+        "en": [
+          "For each test case, get retrieved_texts as a set of text strings from the results, and expected_texts as a set from retriever.texts[i] for each relevant index",
+          "tp = len(retrieved & expected), fp = len(retrieved - expected), fn = len(expected - retrieved) — accumulate across all test cases",
+          "precision = tp/(tp+fp), recall = tp/(tp+fn), f1 = 2*p*r/(p+r) — return 0 when denominators are 0"
+        ]
+      },
+      "test_code": "r2 = ScoredRetriever()\nr2.index([\"alpha beta\", \"gamma delta\", \"epsilon zeta\"])\nc = [(\"alpha\", [0]), (\"gamma\", [1]), (\"nothing\", [])]\nres = evaluate_threshold(r2, c, 0.0)\nassert isinstance(res, dict)\nassert \"precision\" in res and \"recall\" in res and \"f1\" in res\nassert res[\"recall\"] == 1.0\nres_high = evaluate_threshold(r2, c, 0.99)\nassert res_high[\"recall\"] == 0.0\nassert res_high[\"precision\"] == 0\nres_mid = evaluate_threshold(r2, c, 0.5)\nassert 0 <= res_mid[\"precision\"] <= 1\nassert 0 <= res_mid[\"recall\"] <= 1\nassert 0 <= res_mid[\"f1\"] <= 1\nempty_res = evaluate_threshold(r2, [], 0.5)\nassert empty_res[\"precision\"] == 0\nassert empty_res[\"recall\"] == 0\nassert empty_res[\"f1\"] == 0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["similarity scoring", "threshold-tuned retrieval", "precision and recall", "F1 evaluation", "all-mpnet-base-v2", "normalized embeddings", "dot-product search", "retrieval quality evaluation", "out-of-scope detection", "RAG hallucination prevention", "cosine similarity thresholds", "ground-truth evaluation"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "functions", "set operations", "basic math"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

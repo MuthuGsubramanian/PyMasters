@@ -1,0 +1,120 @@
+{
+  "id": "qwen3_vl_2b_instruct_visual_qa_pipeline",
+  "topic": "qwen3_vl_2b_instruct_visual_qa_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-VL-2B-Instruct: Build a Visual Q&A Pipeline with Image Comparison and Grounding"
+  },
+  "description": {
+    "en": "Go beyond single-image captioning — build a visual question-answering pipeline using Qwen3-VL-2B-Instruct that compares multiple images, grounds answers in visual evidence, and chains reasoning across follow-up questions for a Homie that truly understands what it sees."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Visual Q&A: Teach Homie to Answer Questions About What It Sees\n\nVaathiyaar here! Describing an image is step one. The real test of visual intelligence is *answering questions* — \"Which of these two rooms is cleaner?\", \"Does this chart show an upward trend?\", \"What's wrong with this circuit diagram?\" Today we build a **Visual Q&A pipeline** with Qwen3-VL-2B-Instruct that handles multi-image comparison, grounded reasoning, and chained follow-up questions. This is how Homie graduates from image describer to visual analyst.\n\n### Why Visual Q&A Is Harder Than Captioning\n\n| Capability | Captioning | Visual Q&A |\n|---|---|---|\n| Task | \"Describe this image\" | \"Answer this specific question about the image\" |\n| Reasoning | Surface-level observation | Targeted analysis and inference |\n| Multi-image | Not typical | Compare, contrast, relate |\n| Grounding | Optional | Must reference specific visual evidence |\n| Follow-ups | None | Chain reasoning across turns |\n\n### Setting Up the VQA Pipeline\n\n```python\nfrom transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\ndef visual_qa(image, question, system_prompt=None):\n    messages = []\n    if system_prompt:\n        messages.append({\"role\": \"system\", \"content\": system_prompt})\n    messages.append({\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": image},\n        {\"type\": \"text\", \"text\": question}\n    ]})\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[image], return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(**inputs, max_new_tokens=250, temperature=0.3)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n```\n\nThe `visual_qa` function wraps the full inference cycle — template, encode, generate, decode — into one reusable call.\n\n### Multi-Image Comparison\n\nQwen3-VL can process multiple images in a single prompt:\n\n```python\ndef compare_images(image_a, image_b, question):\n    messages = [\n        {\"role\": \"system\", \"content\": \"Compare the two images carefully. Reference specific details from each.\"},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image_a},\n            {\"type\": \"image\", \"image\": image_b},\n            {\"type\": \"text\", \"text\": question}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[image_a, image_b], return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(**inputs, max_new_tokens=350, temperature=0.3)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n```\n\nPass both images in the content list *and* in the processor's `images` argument. The model sees both simultaneously.\n\n### Chained Visual Reasoning\n\nBuild a conversation where each answer informs the next question:\n\n```python\ndef chained_vqa(image, questions):\n    messages = [{\"role\": \"system\", \"content\": \"Answer precisely. Reference what you see.\"}]\n    answers = []\n    for q in questions:\n        content = [{\"type\": \"text\", \"text\": q}]\n        if not answers:\n            content.insert(0, {\"type\": \"image\", \"image\": image})\n        messages.append({\"role\": \"user\", \"content\": content})\n        prompt = processor.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        imgs = [image] if not answers else [image]\n        inputs = processor(\n            text=[prompt], images=imgs, return_tensors=\"pt\"\n        ).to(model.device)\n        output = model.generate(**inputs, max_new_tokens=200, temperature=0.3)\n        answer = processor.decode(\n            output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n        )\n        messages.append({\"role\": \"assistant\", \"content\": answer})\n        answers.append(answer)\n    return answers\n```\n\nEach question builds on the model's prior answers — the conversation accumulates visual reasoning.\n\n### VQA Task Templates\n\n| Task | Example Question | System Prompt Hint |\n|---|---|---|\n| Object counting | \"How many people are in this photo?\" | \"Count precisely. If unsure, give a range.\" |\n| Spatial reasoning | \"Is the red box to the left or right of the blue one?\" | \"Describe spatial relationships explicitly.\" |\n| Before/after comparison | \"What changed between these two images?\" | \"List every difference you can find.\" |\n| Document verification | \"Does the signature match the printed name?\" | \"Focus on text and handwriting details.\" |\n| Defect detection | \"Are there any cracks or damage visible?\" | \"Flag anomalies. If none, say 'No defects found.'\" |\n\n> **Key Insight:** Visual Q&A transforms a vision-language model from a passive describer into an active analyst. By combining multi-image comparison, system prompt steering, and chained reasoning, Qwen3-VL-2B-Instruct becomes a local visual Q&A engine that can compare, count, verify, and reason — all on your own hardware with zero cloud dependency."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Captioning is easy — answering questions is the real test. Qwen3-VL-2B-Instruct can compare two images, chain multi-turn reasoning, and ground answers in visual evidence. Build a Visual Q&A pipeline that turns Homie into an analyst, not just a narrator.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import Qwen3VLForConditionalGeneration, AutoProcessor\nfrom PIL import Image\n\nmodel_name = \"Qwen/Qwen3-VL-2B-Instruct\"\nprocessor = AutoProcessor.from_pretrained(model_name)\nmodel = Qwen3VLForConditionalGeneration.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\ndef visual_qa(image, question, system_prompt=None):\n    messages = []\n    if system_prompt:\n        messages.append({\"role\": \"system\", \"content\": system_prompt})\n    messages.append({\"role\": \"user\", \"content\": [\n        {\"type\": \"image\", \"image\": image},\n        {\"type\": \"text\", \"text\": question}\n    ]})\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[image], return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(**inputs, max_new_tokens=250, temperature=0.3)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )",
+      "steps": [
+        {"line": 1, "explanation": "Import Qwen3VLForConditionalGeneration for the vision-language model and AutoProcessor which handles both text tokenization and image preprocessing."},
+        {"line": 4, "explanation": "Target the Instruct variant — this model is fine-tuned to follow instructions, making it ideal for precise Q&A rather than open-ended generation."},
+        {"line": 6, "explanation": "Load ~4GB of model weights. device_map='auto' places layers on the best available hardware; torch_dtype='auto' picks optimal precision for your GPU."},
+        {"line": 10, "explanation": "Define a reusable visual_qa function that wraps the full inference cycle — build messages, encode, generate, decode — into a single call."},
+        {"line": 12, "explanation": "Optionally inject a system prompt to steer the model's behavior. For counting tasks you might say 'Count precisely'; for comparisons, 'Reference specific details.'"},
+        {"line": 14, "explanation": "Build the user message with both an image content block and a text question. The model processes both modalities simultaneously during attention."},
+        {"line": 18, "explanation": "apply_chat_template converts the message list into the special-token format Qwen3-VL was trained on, inserting image placeholder tokens at the right positions."},
+        {"line": 21, "explanation": "The processor encodes the text prompt to token IDs and the image to pixel values — both tensors are sent to the model's device together."},
+        {"line": 24, "explanation": "Generate with temperature=0.3 for factual Q&A. Low temperature keeps answers grounded in what the model actually sees, reducing hallucination."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "def compare_images(image_a, image_b, question):\n    messages = [\n        {\"role\": \"system\", \"content\": \"Compare the two images. Reference specific details from each.\"},\n        {\"role\": \"user\", \"content\": [\n            {\"type\": \"image\", \"image\": image_a},\n            {\"type\": \"image\", \"image\": image_b},\n            {\"type\": \"text\", \"text\": question}\n        ]}\n    ]\n    prompt = processor.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = processor(\n        text=[prompt], images=[image_a, image_b], return_tensors=\"pt\"\n    ).to(model.device)\n    output = model.generate(**inputs, max_new_tokens=350, temperature=0.3)\n    return processor.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n\ndef chained_vqa(image, questions):\n    messages = [{\"role\": \"system\", \"content\": \"Answer precisely. Reference what you see.\"}]\n    answers = []\n    for q in questions:\n        content = [{\"type\": \"text\", \"text\": q}]\n        if not answers:\n            content.insert(0, {\"type\": \"image\", \"image\": image})\n        messages.append({\"role\": \"user\", \"content\": content})\n        prompt = processor.apply_chat_template(\n            messages, tokenize=False, add_generation_prompt=True\n        )\n        inputs = processor(\n            text=[prompt], images=[image], return_tensors=\"pt\"\n        ).to(model.device)\n        output = model.generate(**inputs, max_new_tokens=200, temperature=0.3)\n        answer = processor.decode(\n            output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n        )\n        messages.append({\"role\": \"assistant\", \"content\": answer})\n        answers.append(answer)\n    return answers",
+      "steps": [
+        {"line": 1, "explanation": "compare_images takes two PIL Images and a question. The model will see both images simultaneously and reason about their differences or similarities."},
+        {"line": 4, "explanation": "Both images go into the user's content list as separate image blocks. The model assigns internal position tokens to distinguish 'first image' from 'second image.'"},
+        {"line": 13, "explanation": "Pass BOTH images to the processor's images parameter as a list. This ensures both get preprocessed and their pixel tensors are batched correctly."},
+        {"line": 16, "explanation": "Higher max_new_tokens (350) for comparisons — the model needs room to describe differences in both images."},
+        {"line": 21, "explanation": "chained_vqa takes one image and a list of questions. Each answer feeds into the conversation history for the next question — building cumulative visual reasoning."},
+        {"line": 25, "explanation": "Only the first question includes the image block. Follow-up questions reference the visual context already established in the conversation."},
+        {"line": 39, "explanation": "Append each answer to the message history before the next question. The model sees the full chain: image → Q1 → A1 → Q2 → A2 → Q3..."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Single-Image Captioning",
+      "right_label": "Visual Q&A Pipeline",
+      "items": [
+        {"left": "One image, one description", "right": "Targeted questions get precise answers"},
+        {"left": "No multi-image support", "right": "Compare and contrast two or more images"},
+        {"left": "Standalone — no follow-ups", "right": "Chained reasoning across conversation turns"},
+        {"left": "Generic output format", "right": "System prompts steer answer style per task"},
+        {"left": "Passive observation", "right": "Active analysis: count, verify, detect anomalies"},
+        {"left": "Fixed generation params", "right": "Temperature tuned for factual vs. creative Q&A"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie can now answer visual questions! You've built a VQA pipeline that compares images, chains reasoning, and grounds answers — all locally with Qwen3-VL-2B-Instruct."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `VisualQAPipeline` class for managing visual question-answering sessions. Initialize with `model_name` (string) and an empty `history` list. Implement `ask(image_path, question)` that appends a dict `{\"image\": image_path, \"question\": question, \"turn\": len(self.history)+1}` to history and returns a mock answer: 'Objects detected: 3 items.' if 'how many' is in the lowercase question, 'Yes, differences found.' if 'compar' is in the lowercase question, or 'Visual analysis complete.' otherwise. Implement `follow_up(question)` that raises a RuntimeError if history is empty (no image context), otherwise appends `{\"image\": self.history[-1][\"image\"], \"question\": question, \"turn\": len(self.history)+1}` and returns the same mock logic. Implement `get_chain()` that returns a list of `(turn, question, answer)` tuples for the full session. Each entry in history should also store the `\"answer\"` key."
+      },
+      "starter_code": "class VisualQAPipeline:\n    def __init__(self, model_name: str):\n        self.model_name = model_name\n        self.history = []\n\n    def _mock_answer(self, question: str) -> str:\n        # Return mock answer based on question content\n        pass\n\n    def ask(self, image_path: str, question: str) -> str:\n        # Add to history and return mock answer\n        pass\n\n    def follow_up(self, question: str) -> str:\n        # Raise RuntimeError if no history, else continue session\n        pass\n\n    def get_chain(self) -> list:\n        # Return list of (turn, question, answer) tuples\n        pass\n\n# Test it:\npipe = VisualQAPipeline(\"Qwen/Qwen3-VL-2B-Instruct\")\na1 = pipe.ask(\"photo.jpg\", \"How many cats are in this image?\")\nprint(a1)\n\na2 = pipe.follow_up(\"What colors are they?\")\nprint(a2)\n\na3 = pipe.follow_up(\"Compare them to typical house cats\")\nprint(a3)\n\nchain = pipe.get_chain()\nfor turn, q, a in chain:\n    print(f\"Turn {turn}: {q[:20]}...\")\n\npipe2 = VisualQAPipeline(\"Qwen/Qwen3-VL-2B-Instruct\")\ntry:\n    pipe2.follow_up(\"test\")\nexcept RuntimeError:\n    print(\"No context\")",
+      "expected_output": "Objects detected: 3 items.\nVisual analysis complete.\nYes, differences found.\nTurn 1: How many cats are in...\nTurn 2: What colors are they...\nTurn 3: Compare them to typi...\nNo context",
+      "hints": {
+        "en": [
+          "_mock_answer checks 'how many' in question.lower() first, then 'compar' in question.lower(), then returns the default",
+          "Both ask() and follow_up() should store the answer in the history dict under the 'answer' key before returning it",
+          "follow_up() reuses self.history[-1]['image'] as the image path — it continues the session on the same image"
+        ]
+      },
+      "test_code": "p = VisualQAPipeline(\"Qwen/Qwen3-VL-2B-Instruct\")\nassert p.model_name == \"Qwen/Qwen3-VL-2B-Instruct\"\nassert p.history == []\n\na1 = p.ask(\"img.jpg\", \"How many objects?\")\nassert a1 == \"Objects detected: 3 items.\"\nassert len(p.history) == 1\nassert p.history[0][\"image\"] == \"img.jpg\"\nassert p.history[0][\"turn\"] == 1\nassert p.history[0][\"answer\"] == a1\n\na2 = p.follow_up(\"Describe them\")\nassert a2 == \"Visual analysis complete.\"\nassert len(p.history) == 2\nassert p.history[1][\"image\"] == \"img.jpg\"\nassert p.history[1][\"turn\"] == 2\n\na3 = p.follow_up(\"Compare these to the reference\")\nassert a3 == \"Yes, differences found.\"\nassert p.history[2][\"turn\"] == 3\n\nchain = p.get_chain()\nassert len(chain) == 3\nassert chain[0] == (1, \"How many objects?\", \"Objects detected: 3 items.\")\nassert chain[1] == (2, \"Describe them\", \"Visual analysis complete.\")\nassert chain[2][0] == 3\n\np2 = VisualQAPipeline(\"test\")\ntry:\n    p2.follow_up(\"q\")\n    assert False\nexcept RuntimeError:\n    pass\n\na4 = p.ask(\"new.jpg\", \"Comparing two versions\")\nassert a4 == \"Yes, differences found.\"\nassert p.history[-1][\"image\"] == \"new.jpg\""
+    },
+    {
+      "instruction": {
+        "en": "Build an `ImageComparator` class that manages side-by-side image comparison tasks. Initialize with an empty `comparisons` list. Implement `compare(image_a, image_b, question)` that stores `{\"image_a\": image_a, \"image_b\": image_b, \"question\": question, \"result\": result}` and returns a mock result string: 'Images are similar.' if 'similar' in question.lower(), 'Key differences: layout, color, content.' if 'differ' in question.lower(), or 'Comparison complete.' otherwise. Implement `summary()` that returns a dict with 'total_comparisons' (int count), 'unique_images' (sorted list of all unique image paths from both image_a and image_b across all comparisons), and 'questions' (list of all questions asked)."
+      },
+      "starter_code": "class ImageComparator:\n    def __init__(self):\n        self.comparisons = []\n\n    def compare(self, image_a: str, image_b: str, question: str) -> str:\n        # Mock comparison logic and store result\n        pass\n\n    def summary(self) -> dict:\n        # Return summary dict with total, unique images, questions\n        pass\n\n# Test it:\ncomp = ImageComparator()\nr1 = comp.compare(\"before.jpg\", \"after.jpg\", \"What differences do you see?\")\nprint(r1)\n\nr2 = comp.compare(\"v1.png\", \"v2.png\", \"Are these similar?\")\nprint(r2)\n\nr3 = comp.compare(\"before.jpg\", \"v2.png\", \"Analyze both\")\nprint(r3)\n\ns = comp.summary()\nprint(s[\"total_comparisons\"])\nprint(s[\"unique_images\"])",
+      "expected_output": "Key differences: layout, color, content.\nImages are similar.\nComparison complete.\n3\n['after.jpg', 'before.jpg', 'v1.png', 'v2.png']",
+      "hints": {
+        "en": [
+          "Check 'similar' in question.lower() and 'differ' in question.lower() to pick the mock result string",
+          "For unique_images, collect all image_a and image_b values into a set, then return sorted(list(that_set))",
+          "summary()['questions'] is simply [c['question'] for c in self.comparisons]"
+        ]
+      },
+      "test_code": "c = ImageComparator()\nassert c.comparisons == []\n\nr1 = c.compare(\"a.jpg\", \"b.jpg\", \"What are the differences?\")\nassert r1 == \"Key differences: layout, color, content.\"\nassert len(c.comparisons) == 1\nassert c.comparisons[0][\"image_a\"] == \"a.jpg\"\nassert c.comparisons[0][\"result\"] == r1\n\nr2 = c.compare(\"a.jpg\", \"c.jpg\", \"Are these similar?\")\nassert r2 == \"Images are similar.\"\n\nr3 = c.compare(\"d.jpg\", \"e.jpg\", \"Analyze these\")\nassert r3 == \"Comparison complete.\"\n\ns = c.summary()\nassert s[\"total_comparisons\"] == 3\nassert s[\"unique_images\"] == [\"a.jpg\", \"b.jpg\", \"c.jpg\", \"d.jpg\", \"e.jpg\"]\nassert s[\"questions\"] == [\"What are the differences?\", \"Are these similar?\", \"Analyze these\"]\n\nc2 = ImageComparator()\ns2 = c2.summary()\nassert s2[\"total_comparisons\"] == 0\nassert s2[\"unique_images\"] == []\nassert s2[\"questions\"] == []"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["visual question answering", "multi-image comparison", "chained visual reasoning", "VQA pipelines", "grounded image analysis", "conversation history management", "Qwen3-VL-2B-Instruct", "multimodal inference", "image-text-to-text models"],
+    "concepts_required": ["python classes", "lists and dictionaries", "string methods", "basic ML concepts", "Hugging Face Transformers basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

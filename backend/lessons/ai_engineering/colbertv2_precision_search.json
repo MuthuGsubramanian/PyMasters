@@ -1,0 +1,131 @@
+{
+  "id": "colbertv2_precision_search",
+  "topic": "colbertv2_precision_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Precision Search with ColBERTv2: When Every Token Matters"
+  },
+  "description": {
+    "en": "Use colbert-ir/colbertv2.0 to build precision search pipelines that outperform dense retrievers on hard queries. Learn how token-level MaxSim handles negation, specificity, and multi-constraint queries where single-vector models fail."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Precision Search: Where Dense Retrievers Break and ColBERT Shines\n\nVaathiyaar here! Dense retrievers are great — until they aren't. Ask a single-vector model to find \"Python errors that are NOT about imports\" and it happily returns import error docs, because the pooled embedding can't represent negation. ColBERTv2's token-level matching handles these hard queries with surgical precision.\n\nToday you'll build a precision search system using `colbert-ir/colbertv2.0` that tackles the queries dense retrievers fumble: negation, multi-constraint filtering, and fine-grained specificity.\n\n### Why Dense Retrieval Fails on Hard Queries\n\n| Query Type | Dense Retriever | ColBERTv2 (Token-Level) |\n|---|---|---|\n| Negation: \"errors NOT about imports\" | Returns import errors (negation lost in pooling) | Each token matched independently — \"NOT\" steers scoring |\n| Multi-constraint: \"async Python with type hints\" | Blends constraints into one fuzzy vector | \"async\", \"Python\", \"type\", \"hints\" each find best matches |\n| Specificity: \"reset password\" vs \"password policy\" | Both score similarly | \"reset\" aligns precisely with \"reset\", not \"policy\" |\n| Lexical overlap matters: \"TCP vs UDP\" | Semantic pooling may miss exact terms | Token-level match catches exact acronyms |\n\nThe root cause: dense models compress all tokens into a single 768-dim vector. Subtle distinctions — negation words, qualifier terms, specific acronyms — get diluted. ColBERTv2 keeps every token's embedding alive through retrieval.\n\n### Building a Precision Search Pipeline\n\n```python\nfrom ragatouille import RAGPretrainedModel\n\nRAG = RAGPretrainedModel.from_pretrained(\"colbert-ir/colbertv2.0\")\n\nknowledge_base = [\n    \"ImportError occurs when a module cannot be found\",\n    \"TypeError happens when an operation receives the wrong type\",\n    \"ValueError is raised for correct type but invalid value\",\n    \"SyntaxError means Python cannot parse your code\",\n    \"KeyError is raised when a dictionary key is missing\",\n    \"AttributeError occurs when an object lacks the attribute\",\n    \"Reset your account password from the settings page\",\n    \"Password policies require special characters and length\",\n]\n\nRAG.index(index_name=\"precision_kb\", collection=knowledge_base)\n\n# Hard query: specificity matters\nresults = RAG.search(\"errors about wrong types not imports\", k=3)\nfor r in results:\n    print(f\"{r['score']:.4f} | {r['content']}\")\n```\n\nColBERTv2 scores \"TypeError\" high because \"wrong types\" aligns token-by-token with \"wrong type\". \"ImportError\" scores lower because while \"import\" matches, the negative context around \"not imports\" reduces alignment.\n\n### Analyzing Token-Level Alignment\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\n\ntokenizer = AutoTokenizer.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel = AutoModel.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel.eval()\n\ndef token_alignment(query, document, max_len=32):\n    \"\"\"Show which query tokens align with which doc tokens.\"\"\"\n    q_inputs = tokenizer(query, return_tensors=\"pt\",\n                         padding=\"max_length\", truncation=True,\n                         max_length=max_len)\n    d_inputs = tokenizer(document, return_tensors=\"pt\",\n                         padding=\"max_length\", truncation=True,\n                         max_length=64)\n    with torch.no_grad():\n        q_emb = model(**q_inputs).last_hidden_state.squeeze(0)\n        d_emb = model(**d_inputs).last_hidden_state.squeeze(0)\n\n    q_emb = torch.nn.functional.normalize(q_emb, dim=-1)\n    d_emb = torch.nn.functional.normalize(d_emb, dim=-1)\n\n    sim = torch.matmul(q_emb, d_emb.T)\n    q_mask = q_inputs[\"attention_mask\"].squeeze().bool()\n    d_mask = d_inputs[\"attention_mask\"].squeeze().bool()\n    sim = sim[q_mask][:, d_mask]\n\n    q_tokens = tokenizer.convert_ids_to_tokens(\n        q_inputs[\"input_ids\"][0][q_mask])\n    d_tokens = tokenizer.convert_ids_to_tokens(\n        d_inputs[\"input_ids\"][0][d_mask])\n\n    for i, qt in enumerate(q_tokens):\n        best_j = sim[i].argmax().item()\n        print(f\"  {qt:>12} -> {d_tokens[best_j]:<12} \"\n              f\"(sim={sim[i][best_j]:.3f})\")\n\ntoken_alignment(\"reset password\", \"reset your account password\")\ntoken_alignment(\"reset password\", \"password policy requirements\")\n```\n\nThis diagnostic tool reveals exactly why ColBERTv2 ranks one document above another. You can see \"reset\" aligning with \"reset\" (high sim) versus \"reset\" aligning with \"password\" (lower sim) — the precision gap is visible at the token level.\n\n### Multi-Constraint Query Scoring\n\n```python\ndef precision_search(rag_model, query, k=3, min_score=None):\n    \"\"\"Search with optional minimum score threshold.\"\"\"\n    results = rag_model.search(query=query, k=k)\n    if min_score is not None:\n        results = [r for r in results if r[\"score\"] >= min_score]\n    return results\n\ndef multi_constraint_search(rag_model, constraints, k=3):\n    \"\"\"Score documents against multiple query constraints.\"\"\"\n    all_scores = {}\n    for constraint in constraints:\n        results = rag_model.search(query=constraint, k=100)\n        for r in results:\n            doc = r[\"content\"]\n            if doc not in all_scores:\n                all_scores[doc] = []\n            all_scores[doc].append(r[\"score\"])\n\n    ranked = []\n    for doc, scores in all_scores.items():\n        # Documents must score well on ALL constraints\n        combined = min(scores)  # bottleneck scoring\n        ranked.append({\"document\": doc, \"score\": combined,\n                       \"constraint_scores\": scores})\n    ranked.sort(key=lambda x: x[\"score\"], reverse=True)\n    return ranked[:k]\n\n# Find docs matching ALL constraints\nresults = multi_constraint_search(RAG, [\n    \"password reset\",\n    \"account settings\",\n], k=2)\n```\n\nBottleneck scoring uses `min()` across constraint scores — a document must satisfy every constraint to rank high. This leverages ColBERTv2's per-token precision: each constraint is independently evaluated with full token alignment.\n\n> **Key Insight:** Dense retrievers pool tokens into a single vector, losing the ability to represent negation, specificity, and multi-part constraints. ColBERTv2's per-token MaxSim preserves these distinctions because each query token independently finds its best document match. For precision-critical RAG — medical search, legal retrieval, technical troubleshooting — this token-level fidelity is the difference between a helpful answer and a dangerous hallucination."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Dense retrievers compress all tokens into one vector — and lose negation, specificity, and multi-constraint nuance in the process. ColBERTv2 keeps per-token embeddings alive through retrieval, so 'errors NOT about imports' actually avoids import errors, and 'reset password' precisely matches 'reset' — not 'policy'. Today you'll build precision search that handles the queries dense models fumble.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from ragatouille import RAGPretrainedModel\n\nRAG = RAGPretrainedModel.from_pretrained(\"colbert-ir/colbertv2.0\")\n\nknowledge_base = [\n    \"ImportError occurs when a module cannot be found\",\n    \"TypeError happens when an operation receives the wrong type\",\n    \"ValueError is raised for correct type but invalid value\",\n    \"SyntaxError means Python cannot parse your code\",\n    \"KeyError is raised when a dictionary key is missing\",\n]\n\nRAG.index(index_name=\"error_kb\", collection=knowledge_base)\n\nresults = RAG.search(\"errors about wrong types not imports\", k=3)\n\nfor r in results:\n    print(f\"{r['score']:.4f} | {r['content']}\")",
+      "steps": [
+        {"line": 1, "explanation": "RAGatouille wraps ColBERTv2 with a clean API. Under the hood, it loads the BERT-base model fine-tuned on MS MARCO for token-level retrieval."},
+        {"line": 3, "explanation": "Load colbert-ir/colbertv2.0 — produces 128-dim embeddings per token. Available in PyTorch, ONNX, and SafeTensors formats on HuggingFace."},
+        {"line": 5, "explanation": "A corpus of Python error descriptions. The hard query 'errors about wrong types not imports' should rank TypeError above ImportError — a challenge for single-vector models."},
+        {"line": 13, "explanation": "index() encodes every token in every document and stores the embeddings. This is the precomputation step — happens once, enables fast MaxSim search later."},
+        {"line": 15, "explanation": "The precision test: 'wrong types' should align strongly with TypeError's 'wrong type'. Dense retrievers often return ImportError because 'imports' dominates the pooled vector."},
+        {"line": 17, "explanation": "Each result shows the MaxSim score. ColBERTv2's token-level matching lets 'wrong types' find 'wrong type' while 'not imports' weakens the ImportError alignment."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import AutoTokenizer, AutoModel\nimport torch\n\ntokenizer = AutoTokenizer.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel = AutoModel.from_pretrained(\"colbert-ir/colbertv2.0\")\nmodel.eval()\n\ndef token_alignment(query, document):\n    q_in = tokenizer(query, return_tensors=\"pt\",\n                     padding=\"max_length\", truncation=True, max_length=32)\n    d_in = tokenizer(document, return_tensors=\"pt\",\n                     padding=\"max_length\", truncation=True, max_length=64)\n    with torch.no_grad():\n        q_emb = model(**q_in).last_hidden_state.squeeze(0)\n        d_emb = model(**d_in).last_hidden_state.squeeze(0)\n\n    q_emb = torch.nn.functional.normalize(q_emb, dim=-1)\n    d_emb = torch.nn.functional.normalize(d_emb, dim=-1)\n    sim = torch.matmul(q_emb, d_emb.T)\n\n    q_mask = q_in[\"attention_mask\"].squeeze().bool()\n    d_mask = d_in[\"attention_mask\"].squeeze().bool()\n    sim = sim[q_mask][:, d_mask]\n\n    q_tokens = tokenizer.convert_ids_to_tokens(q_in[\"input_ids\"][0][q_mask])\n    d_tokens = tokenizer.convert_ids_to_tokens(d_in[\"input_ids\"][0][d_mask])\n\n    for i, qt in enumerate(q_tokens):\n        best_j = sim[i].argmax().item()\n        print(f\"  {qt:>12} -> {d_tokens[best_j]:<12} (sim={sim[i][best_j]:.3f})\")\n\ntoken_alignment(\"reset password\", \"reset your account password\")",
+      "steps": [
+        {"line": 1, "explanation": "Load ColBERTv2 directly with Transformers for diagnostic access. This lets you inspect exactly which query token aligns with which document token."},
+        {"line": 8, "explanation": "token_alignment() is a diagnostic tool that visualizes ColBERT's MaxSim at the individual token level — crucial for understanding precision search behavior."},
+        {"line": 13, "explanation": "Encode query and document separately (ColBERT's key design). torch.no_grad() saves memory since we only need forward inference, not training."},
+        {"line": 17, "explanation": "L2-normalize embeddings so dot product equals cosine similarity. ColBERTv2 was trained with normalized vectors — skip this and scores become meaningless."},
+        {"line": 19, "explanation": "Full similarity matrix: every query token against every document token. Boolean masking removes padding positions that would pollute the alignment."},
+        {"line": 28, "explanation": "For each query token, find its strongest document match. This reveals WHY ColBERT ranks one doc higher — 'reset' aligns with 'reset' (high sim) not 'policy' (low sim)."},
+        {"line": 31, "explanation": "Run the alignment on a matching pair. You'll see 'reset' → 'reset' and 'password' → 'password' with high similarity — this is token-level precision in action."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def multi_constraint_search(rag_model, constraints, k=3):\n    \"\"\"Score documents against multiple query constraints.\"\"\"\n    all_scores = {}\n\n    for constraint in constraints:\n        results = rag_model.search(query=constraint, k=100)\n        for r in results:\n            doc = r[\"content\"]\n            if doc not in all_scores:\n                all_scores[doc] = []\n            all_scores[doc].append(r[\"score\"])\n\n    ranked = []\n    for doc, scores in all_scores.items():\n        combined = min(scores)  # bottleneck: must satisfy ALL\n        ranked.append({\"document\": doc, \"score\": combined})\n\n    ranked.sort(key=lambda x: x[\"score\"], reverse=True)\n    return ranked[:k]\n\nresults = multi_constraint_search(RAG, [\n    \"password reset\",\n    \"account settings\",\n], k=2)\n\nfor r in results:\n    print(f\"{r['score']:.4f} | {r['document']}\")",
+      "steps": [
+        {"line": 1, "explanation": "Multi-constraint search runs separate ColBERT queries for each constraint, then combines scores. This handles complex queries like 'async Python with type hints' by evaluating each part independently."},
+        {"line": 5, "explanation": "Each constraint is searched independently with full ColBERT token-level matching. k=100 ensures we capture all potentially relevant documents for each constraint."},
+        {"line": 9, "explanation": "Accumulate per-document scores from each constraint. A document that appears in results for ALL constraints has the best chance of satisfying the full query."},
+        {"line": 15, "explanation": "Bottleneck scoring: a document's final score is the MINIMUM across all constraints. This ensures a doc must satisfy every constraint — not just average well on some."},
+        {"line": 18, "explanation": "Sort by combined score descending. Documents that score well on their weakest constraint float to the top — they're the true multi-constraint matches."},
+        {"line": 21, "explanation": "Test with two constraints. Only documents about BOTH password reset AND account settings should rank high — ColBERT's token precision ensures each constraint is evaluated faithfully."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Dense Retriever (Single Vector)",
+      "right_label": "ColBERTv2 (Precision Search)",
+      "items": [
+        {"left": "Negation words diluted in pooled vector", "right": "Each token — including 'NOT' — contributes to scoring"},
+        {"left": "Multi-constraint queries blurred together", "right": "Constraints evaluated independently with full token fidelity"},
+        {"left": "Acronyms lost in semantic averaging", "right": "Exact token matches preserved: TCP ≠ UDP"},
+        {"left": "'reset password' ≈ 'password policy'", "right": "'reset' aligns with 'reset', not 'policy'"},
+        {"left": "Fast but imprecise on hard queries", "right": "Fast AND precise — token-level MaxSim handles edge cases"},
+        {"left": "Needs cross-encoder re-ranking for quality", "right": "Often precise enough to skip re-ranking entirely"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a precision search system with ColBERTv2! Token-level MaxSim handles negation, specificity, and multi-constraint queries that break dense retrievers — the key to trustworthy RAG."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `PrecisionScorer` class that demonstrates why token-level matching beats single-vector matching for hard queries. Implement two scoring strategies: `single_vector_score(query, document)` that averages all token vectors into one vector and computes cosine similarity (simulating a dense retriever), and `maxsim_score(query, document)` that uses ColBERT-style per-token MaxSim. Use character-frequency vectors (26 dims, one per letter) as token embeddings. Show that MaxSim correctly distinguishes 'reset password' from 'password policy' while the single-vector approach cannot."
+      },
+      "starter_code": "import math\n\nclass PrecisionScorer:\n    def _token_vector(self, token: str) -> list[float]:\n        vec = [0.0] * 26\n        for c in token.lower():\n            if 'a' <= c <= 'z':\n                vec[ord(c) - ord('a')] += 1.0\n        return vec\n\n    def _encode(self, text: str) -> list[list[float]]:\n        return [self._token_vector(w) for w in text.lower().split()]\n\n    def _dot(self, a: list[float], b: list[float]) -> float:\n        return sum(x * y for x, y in zip(a, b))\n\n    def _norm(self, v: list[float]) -> float:\n        return math.sqrt(sum(x * x for x in v))\n\n    def _cosine(self, a: list[float], b: list[float]) -> float:\n        d = self._dot(a, b)\n        na, nb = self._norm(a), self._norm(b)\n        if na == 0 or nb == 0:\n            return 0.0\n        return d / (na * nb)\n\n    def _avg_vector(self, vectors: list[list[float]]) -> list[float]:\n        # Average all token vectors into a single vector\n        # Return element-wise mean across all vectors\n        pass\n\n    def single_vector_score(self, query: str, document: str) -> float:\n        # Encode both texts, average each into ONE vector, return cosine sim\n        # This simulates a dense retriever's approach\n        pass\n\n    def maxsim_score(self, query: str, document: str) -> float:\n        # Encode both texts, compute ColBERT-style MaxSim:\n        #   For each query token: max dot product with any doc token\n        #   Return sum of these maximums\n        pass\n\n# Test:\nscorer = PrecisionScorer()\n\n# Single-vector can't distinguish these well\nsv1 = scorer.single_vector_score(\"reset password\", \"password reset guide\")\nsv2 = scorer.single_vector_score(\"reset password\", \"password policy rules\")\nprint(f\"{sv1:.4f}\")\nprint(f\"{sv2:.4f}\")\nprint(abs(sv1 - sv2) < 0.15)  # Very close scores!\n\n# MaxSim CAN distinguish — token-level precision\nms1 = scorer.maxsim_score(\"reset password\", \"password reset guide\")\nms2 = scorer.maxsim_score(\"reset password\", \"password policy rules\")\nprint(ms1 > ms2)\n\n# Verify maxsim basics\nprint(scorer.maxsim_score(\"abc\", \"xyz\") == 0.0)",
+      "expected_output": "0.9461\n0.8660\nTrue\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In _avg_vector(), initialize a result list of 26 zeros, sum each dimension across all vectors, then divide each by len(vectors)",
+          "In single_vector_score(), call _encode on both texts, average each list of vectors with _avg_vector, then return _cosine of the two averaged vectors",
+          "In maxsim_score(), for each query token vector compute _dot with every doc token vector, take max, then sum all maxes — no averaging, no cosine normalization"
+        ]
+      },
+      "test_code": "s = PrecisionScorer()\nassert len(s._avg_vector([[1,2],[3,4]])) == 2\nassert s._avg_vector([[1,2],[3,4]]) == [2.0, 3.0]\nassert s.single_vector_score(\"abc\", \"abc\") > 0.99\nassert s.single_vector_score(\"abc\", \"xyz\") == 0.0\nassert s.maxsim_score(\"abc\", \"xyz\") == 0.0\nassert s.maxsim_score(\"abc\", \"abc\") > 0\nsv_close = abs(s.single_vector_score(\"reset password\", \"password reset guide\") - s.single_vector_score(\"reset password\", \"password policy rules\"))\nassert sv_close < 0.15\nms1 = s.maxsim_score(\"reset password\", \"password reset guide\")\nms2 = s.maxsim_score(\"reset password\", \"password policy rules\")\nassert ms1 > ms2"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ConstraintRetriever` class that implements multi-constraint search using ColBERT-style token matching. Index a corpus of documents, then implement `search(query, k)` for standard MaxSim retrieval and `constrained_search(constraints, k)` that evaluates each constraint separately and uses bottleneck scoring (minimum across constraints) to find documents that satisfy ALL constraints. Use character-frequency token vectors (26 dims)."
+      },
+      "starter_code": "class ConstraintRetriever:\n    def __init__(self):\n        self.corpus = []\n        self.doc_embeddings = []\n\n    def _token_vec(self, token: str) -> list[float]:\n        vec = [0.0] * 26\n        for c in token.lower():\n            if 'a' <= c <= 'z':\n                vec[ord(c) - ord('a')] += 1.0\n        return vec\n\n    def _encode(self, text: str) -> list[list[float]]:\n        return [self._token_vec(w) for w in text.lower().split()]\n\n    def _dot(self, a: list[float], b: list[float]) -> float:\n        return sum(x * y for x, y in zip(a, b))\n\n    def _maxsim(self, q_vecs, d_vecs) -> float:\n        if not q_vecs or not d_vecs:\n            return 0.0\n        total = 0.0\n        for qv in q_vecs:\n            total += max(self._dot(qv, dv) for dv in d_vecs)\n        return total\n\n    def index(self, corpus: list[str]):\n        # Store corpus and precompute token embeddings for each doc\n        pass\n\n    def search(self, query: str, k: int = 3) -> list[dict]:\n        # Standard MaxSim retrieval: encode query, score against\n        # all docs, return top-k [{\"document\": str, \"score\": float}]\n        pass\n\n    def constrained_search(self, constraints: list[str], k: int = 3) -> list[dict]:\n        # Multi-constraint retrieval:\n        # 1. For each constraint, compute MaxSim score for EVERY doc\n        # 2. For each doc, final score = min(scores across constraints)\n        # 3. Return top-k by final score\n        # Result: [{\"document\": str, \"score\": float, \"per_constraint\": list[float]}]\n        pass\n\n# Test:\nret = ConstraintRetriever()\nret.index([\n    \"async python functions with type hints\",\n    \"python type hints for beginners\",\n    \"async javascript promises explained\",\n    \"python decorators and generators\",\n    \"advanced async patterns in python code\",\n])\n\n# Single query\nr = ret.search(\"async python\", k=2)\nprint(r[0][\"document\"])\n\n# Multi-constraint: must match BOTH async AND type hints\ncr = ret.constrained_search([\"async functions\", \"type hints\"], k=2)\nprint(cr[0][\"document\"])\nprint(cr[0][\"score\"] > cr[1][\"score\"])\n\n# Verify constraint scores are included\nprint(len(cr[0][\"per_constraint\"]))",
+      "expected_output": "async python functions with type hints\nasync python functions with type hints\nTrue\n2",
+      "hints": {
+        "en": [
+          "In index(), set self.corpus = corpus and self.doc_embeddings = [self._encode(doc) for doc in corpus]",
+          "In search(), encode the query, compute _maxsim against each doc's cached embeddings, sort descending, slice to k",
+          "In constrained_search(), for each document compute MaxSim for each constraint, store all scores, then use min(scores) as the bottleneck — sort by this minimum descending"
+        ]
+      },
+      "test_code": "r = ConstraintRetriever()\nr.index([\"ab cd\", \"ab ef\", \"cd ef\"])\nresults = r.search(\"ab\", k=2)\nassert len(results) == 2\nassert results[0][\"score\"] >= results[1][\"score\"]\ncr = r.constrained_search([\"ab\", \"cd\"], k=3)\nassert cr[0][\"document\"] == \"ab cd\"\nassert cr[0][\"score\"] > cr[1][\"score\"]\nassert len(cr[0][\"per_constraint\"]) == 2\nassert cr[0][\"per_constraint\"][0] > 0\nassert cr[0][\"per_constraint\"][1] > 0\nr2 = ConstraintRetriever()\nr2.index([\"xyz only\"])\ncr2 = r2.constrained_search([\"abc\", \"xyz\"], k=1)\nassert cr2[0][\"score\"] == 0.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["colbert-ir/colbertv2.0", "precision search", "token-level alignment diagnostics", "multi-constraint retrieval", "bottleneck scoring", "MaxSim for hard queries", "dense retriever failure modes", "negation handling in retrieval", "RAGatouille search API"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "dot product", "cosine similarity", "sentence embeddings", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}
