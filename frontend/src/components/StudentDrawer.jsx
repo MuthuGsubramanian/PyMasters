@@ -44,7 +44,7 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
   const panelRef = useRef(null);
 
   const load = useCallback(() => {
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setTags([]);
     getStudentDetail(orgId, studentId, userId)
       .then((res) => { setData(res?.data || null); setTags(res?.data?.profile?.groups || []); })
       .catch((err) => setError(safeErrorMsg(err, 'Failed to load student')))
@@ -85,12 +85,13 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
     }
   };
   const addTag = () => {
+    if (savingTags) return;
     const t = newTag.trim().slice(0, 50);
     if (!t || tags.includes(t) || tags.length >= 20) { setNewTag(''); return; }
     setNewTag('');
     persistTags([...tags, t]);
   };
-  const removeTag = (t) => persistTags(tags.filter((x) => x !== t));
+  const removeTag = (t) => { if (!savingTags) persistTags(tags.filter((x) => x !== t)); };
 
   return (
     <AnimatePresence>
@@ -153,7 +154,9 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
                           onChange={(e) => setNewTag(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') addTag(); }}
                           placeholder={`Add ${groupLabel.toLowerCase()}`}
-                          className="text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-bg-surface w-28 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                          aria-label={`Add ${groupLabel.toLowerCase()}`}
+                          disabled={savingTags}
+                          className="text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-bg-surface w-28 focus:outline-none focus:ring-1 focus:ring-cyan-400 disabled:opacity-50"
                         />
                         <button onClick={addTag} disabled={savingTags} aria-label="Add tag" className="text-cyan-600 hover:text-cyan-700">
                           {savingTags ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
