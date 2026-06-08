@@ -13,20 +13,20 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_COLORS = {
-  'AI Agents':       { bg: 'bg-orange-500/20', text: 'text-orange-300', border: 'border-orange-500/30' },
-  'LLMs':            { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30' },
-  'Computer Vision': { bg: 'bg-cyan-500/20',   text: 'text-cyan-300',   border: 'border-cyan-500/30' },
-  'NLP':             { bg: 'bg-blue-500/20',    text: 'text-blue-300',   border: 'border-blue-500/30' },
-  'MLOps':           { bg: 'bg-emerald-500/20', text: 'text-emerald-300',border: 'border-emerald-500/30' },
-  'Python':          { bg: 'bg-yellow-500/20',  text: 'text-yellow-300', border: 'border-yellow-500/30' },
-  'Deep Learning':   { bg: 'bg-rose-500/20',    text: 'text-rose-300',   border: 'border-rose-500/30' },
-  'Data Science':    { bg: 'bg-teal-500/20',    text: 'text-teal-300',   border: 'border-teal-500/30' },
+  'AI Agents':       { bg: 'bg-orange-500/20', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-500/30' },
+  'LLMs':            { bg: 'bg-purple-500/20', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-500/30' },
+  'Computer Vision': { bg: 'bg-cyan-500/20',   text: 'text-cyan-700 dark:text-cyan-300',   border: 'border-cyan-500/30' },
+  'NLP':             { bg: 'bg-blue-500/20',    text: 'text-blue-700 dark:text-blue-300',   border: 'border-blue-500/30' },
+  'MLOps':           { bg: 'bg-emerald-500/20', text: 'text-emerald-700 dark:text-emerald-300',border: 'border-emerald-500/30' },
+  'Python':          { bg: 'bg-yellow-500/20',  text: 'text-yellow-700 dark:text-yellow-300', border: 'border-yellow-500/30' },
+  'Deep Learning':   { bg: 'bg-rose-500/20',    text: 'text-rose-700 dark:text-rose-300',   border: 'border-rose-500/30' },
+  'Data Science':    { bg: 'bg-teal-500/20',    text: 'text-teal-700 dark:text-teal-300',   border: 'border-teal-500/30' },
 };
 
 const DIFFICULTY_STYLES = {
-  Beginner:     'bg-green-500/20 text-green-300 border-green-500/30',
-  Intermediate: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  Advanced:     'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  Beginner:     'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30',
+  Intermediate: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30',
+  Advanced:     'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/30',
 };
 
 const TRENDING_TOPICS = [
@@ -791,7 +791,7 @@ export default function Trending() {
   const toggleCode = (id) =>
     setExpandedCode(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const catColor = (cat) => CATEGORY_COLORS[cat] || { bg: 'bg-slate-500/20', text: 'text-slate-300', border: 'border-slate-500/30' };
+  const catColor = (cat) => CATEGORY_COLORS[cat] || { bg: 'bg-slate-500/20', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-500/30' };
 
   return (
     <div className="min-h-screen p-4 md:p-8 space-y-8">
@@ -804,13 +804,13 @@ export default function Trending() {
       >
         <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
           <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30">
-            <Flame className="w-7 h-7 text-orange-400" />
+            <Flame className="w-7 h-7 text-orange-500 dark:text-orange-400" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold font-display bg-gradient-to-r from-orange-400 via-red-400 to-purple-400 bg-clip-text text-transparent">
-            Trending in AI & Python
+          <h1 className="text-3xl md:text-4xl font-extrabold font-display leading-tight pb-1 bg-gradient-to-r from-orange-600 via-red-600 to-purple-600 dark:from-orange-400 dark:via-red-400 dark:to-purple-400 bg-clip-text text-transparent">
+            Trending in AI &amp; Python
           </h1>
         </div>
-        <p className="text-slate-600 text-lg ml-0 md:ml-14">
+        <p className="text-text-secondary text-base md:text-lg ml-0 md:ml-14">
           Stay ahead with the latest developments
         </p>
       </motion.div>
@@ -829,7 +829,7 @@ export default function Trending() {
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
               ${activeCategory === cat
                 ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20'
-                : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 hover:border-white/20'
+                : 'bg-bg-elevated text-text-secondary border border-border-default hover:bg-bg-inset hover:border-border-strong'
               }`}
           >
             {cat}
@@ -844,13 +844,13 @@ export default function Trending() {
         transition={{ delay: 0.25, duration: 0.4 }}
         className="relative max-w-xl"
       >
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
         <input
           type="text"
           placeholder="Search trending topics..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.07] transition-all"
+          className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-surface border border-border-default text-text-primary placeholder-text-disabled focus:outline-none focus:border-border-focus focus:bg-bg-elevated transition-all"
         />
       </motion.div>
 
@@ -874,7 +874,7 @@ export default function Trending() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06, duration: 0.4 }}
                   whileHover={{ scale: 1.02, y: -4 }}
-                  className="group relative rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md overflow-hidden hover:border-purple-500/30 hover:bg-white/[0.07] transition-colors duration-300"
+                  className="group relative rounded-2xl bg-bg-surface border border-border-default backdrop-blur-md overflow-hidden hover:border-purple-500/30 hover:bg-bg-elevated transition-colors duration-300"
                 >
                   <div className="p-5 space-y-4">
                     {/* Category + Difficulty */}
@@ -888,12 +888,12 @@ export default function Trending() {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-2">
                       {topic.title}
                     </h3>
 
                     {/* Summary */}
-                    <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
+                    <p className="text-sm text-text-secondary line-clamp-3 leading-relaxed">
                       {topic.summary}
                     </p>
 
@@ -901,9 +901,9 @@ export default function Trending() {
                     <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20">
                       <div className="flex items-center gap-1.5 mb-1">
                         <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
-                        <span className="text-xs font-semibold text-orange-300">Why Trending</span>
+                        <span className="text-xs font-semibold text-orange-600 dark:text-orange-300">Why Trending</span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+                      <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
                         {topic.whyTrending}
                       </p>
                     </div>
@@ -911,12 +911,12 @@ export default function Trending() {
                     {/* Concepts Tags */}
                     <div className="flex flex-wrap gap-1.5">
                       {topic.concepts.slice(0, 4).map(c => (
-                        <span key={c} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
+                        <span key={c} className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border-default text-xs text-text-secondary">
                           {c}
                         </span>
                       ))}
                       {topic.concepts.length > 4 && (
-                        <span className="px-2 py-0.5 rounded-md bg-white/5 text-xs text-slate-500">
+                        <span className="px-2 py-0.5 rounded-md bg-bg-elevated text-xs text-text-muted">
                           +{topic.concepts.length - 4}
                         </span>
                       )}
@@ -927,7 +927,7 @@ export default function Trending() {
                       <div>
                         <button
                           onClick={() => toggleCode(topic.id)}
-                          className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                          className="flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors"
                         >
                           <Code2 className="w-3.5 h-3.5" />
                           {expandedCode[topic.id] ? 'Hide' : 'Show'} Code Preview
@@ -942,7 +942,7 @@ export default function Trending() {
                               transition={{ duration: 0.25 }}
                               className="overflow-hidden"
                             >
-                              <pre className="mt-2 p-3 rounded-lg bg-black/40 border border-white/5 text-[11px] text-green-300 overflow-x-auto leading-relaxed max-h-48 overflow-y-auto">
+                              <pre className="mt-2 p-3 rounded-lg bg-bg-inset border border-border-default text-[11px] text-green-700 dark:text-green-300 overflow-x-auto leading-relaxed max-h-48 overflow-y-auto">
                                 <code>{topic.codeExample}</code>
                               </pre>
                             </motion.div>
@@ -972,9 +972,9 @@ export default function Trending() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <Search className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-600 text-lg">No topics found matching your search</p>
-              <p className="text-slate-500 text-sm mt-1">Try adjusting your filters or search query</p>
+              <Search className="w-12 h-12 text-text-muted mx-auto mb-4" />
+              <p className="text-text-muted text-lg">No topics found matching your search</p>
+              <p className="text-text-disabled text-sm mt-1">Try adjusting your filters or search query</p>
             </motion.div>
           )}
         </div>
@@ -986,12 +986,12 @@ export default function Trending() {
           transition={{ delay: 0.35, duration: 0.5 }}
           className="lg:w-80 shrink-0"
         >
-          <div className="sticky top-8 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md p-5 space-y-5">
+          <div className="sticky top-8 rounded-2xl bg-bg-surface border border-border-default backdrop-blur-md p-5 space-y-5">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-yellow-400" />
-              <h2 className="text-lg font-bold text-white">Daily Picks for You</h2>
+              <h2 className="text-lg font-bold text-text-primary">Daily Picks for You</h2>
             </div>
-            <p className="text-xs text-slate-500">Personalized recommendations based on your interests</p>
+            <p className="text-xs text-text-muted">Personalized recommendations based on your interests</p>
 
             <div className="space-y-4">
               {dailyPicks.map((pick, i) => (
@@ -1002,28 +1002,28 @@ export default function Trending() {
                   transition={{ delay: 0.5 + i * 0.1, duration: 0.4 }}
                   whileHover={{ scale: 1.02 }}
                   onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(pick.title)}`)}
-                  className="p-4 rounded-xl bg-white/[0.04] border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.07] cursor-pointer transition-all duration-200 group"
+                  className="p-4 rounded-xl bg-bg-surface border border-border-default hover:border-purple-500/30 hover:bg-bg-elevated cursor-pointer transition-all duration-200 group"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shrink-0">
-                      <Star className="w-4 h-4 text-purple-300" />
+                      <Star className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                     </div>
                     <div className="min-w-0">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium mb-1.5 border ${catColor(pick.category).bg} ${catColor(pick.category).text} ${catColor(pick.category).border}`}>
                         {pick.category}
                       </span>
-                      <h4 className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
+                      <h4 className="text-sm font-semibold text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-2">
                         {pick.title}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{pick.summary}</p>
+                      <p className="text-xs text-text-muted mt-1 line-clamp-2">{pick.summary}</p>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <div className="pt-3 border-t border-white/5">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="pt-3 border-t border-border-default">
+              <div className="flex items-center gap-2 text-xs text-text-muted">
                 <Zap className="w-3.5 h-3.5 text-yellow-500" />
                 Updated daily based on community activity
               </div>
