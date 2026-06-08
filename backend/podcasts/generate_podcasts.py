@@ -8,14 +8,26 @@ backend/podcasts/manifest.json.
 
 Dry-run by default (prints a source preview; no Ollama/Piper/GCS/manifest writes).
 
-Prereqs (user, offline): local Ollama + model; piper + per-language .onnx voices;
-ffmpeg; gsutil auth; a public gs://pymasters-podcasts bucket.
+TTS engine per language (research-backed best fit, all free + CPU + commercial license):
+  - en/ta/te/ml -> ai4bharat/indic-parler-tts (Apache-2.0, VITS/Parler, covers Dravidian)
+  - fr/es/it/ko -> Piper (.onnx voices, fast on CPU)
+Override the map with TTS_ENGINE_MAP_JSON.
+
+Prereqs (user, offline):
+  - local Ollama + script model (script generation)
+  - for parler langs: `pip install parler-tts transformers torch soundfile` and accept the
+    gated model terms at https://hf.co/ai4bharat/indic-parler-tts (huggingface-cli login)
+  - for piper langs: the `piper` binary + per-language .onnx voices (PIPER_VOICES_JSON)
+  - ffmpeg (+ ffprobe); gsutil auth; a public gs://pymasters-podcasts bucket
 
 Env:
   LOCAL_OLLAMA_URL        default http://localhost:11434
   PODCAST_SCRIPT_MODEL    default qwen2.5:7b
+  TTS_ENGINE_MAP_JSON     override per-language engine, e.g. {"ko":"parler"}
+  PARLER_MODEL            default ai4bharat/indic-parler-tts
+  PARLER_DESCRIPTIONS_JSON override per-language voice descriptions
   PIPER_BIN               default 'piper'
-  PIPER_VOICES_JSON       JSON map {"en":"/path/en.onnx","ta":"/path/ta.onnx",...}
+  PIPER_VOICES_JSON       JSON map {"fr":"/path/fr.onnx","it":"/path/it.onnx",...}
   PODCAST_BUCKET          default pymasters-podcasts
   PODCAST_PUBLIC_BASE     default https://storage.googleapis.com/pymasters-podcasts
 
@@ -46,12 +58,99 @@ PUBLIC_BASE = os.getenv("PODCAST_PUBLIC_BASE", "https://storage.googleapis.com/p
 LANG_NAMES = {"en": "English", "ta": "Tamil", "te": "Telugu", "ml": "Malayalam",
               "fr": "French", "es": "Spanish", "it": "Italian", "ko": "Korean"}
 
+# Per-language TTS engine. Default: "parler" (ai4bharat/indic-parler-tts, Apache-2.0,
+# CPU-runnable, covers en/ta/te/ml incl. Dravidian) for the Indian languages + English;
+# "piper" (fast CPU, good fr/es/it/ko voices) for the rest. Override TTS_ENGINE_MAP_JSON.
+DEFAULT_ENGINE_MAP = {"en": "parler", "ta": "parler", "te": "parler", "ml": "parler",
+                      "fr": "piper", "es": "piper", "it": "piper", "ko": "piper"}
+PARLER_MODEL = os.getenv("PARLER_MODEL", "ai4bharat/indic-parler-tts")
+
+# indic-parler-tts picks the voice from a natural-language DESCRIPTION (use a recommended
+# speaker name per language; see the model card). Override PARLER_DESCRIPTIONS_JSON.
+DEFAULT_PARLER_DESCRIPTIONS = {
+    "en": "Mary speaks in a warm, clear voice with expressive, friendly delivery at a moderate pace, with very high recording quality and no background noise.",
+    "ta": "Jaya speaks in a warm, clear Tamil voice with expressive, friendly delivery at a moderate pace, with very high recording quality and no background noise.",
+    "te": "Prakash speaks in a warm, clear Telugu voice with expressive, friendly delivery at a moderate pace, with very high recording quality and no background noise.",
+    "ml": "Anjali speaks in a warm, clear Malayalam voice with expressive, friendly delivery at a moderate pace, with very high recording quality and no background noise.",
+}
+
+_PARLER = {}  # lazy-loaded cache: {model, desc_tok, prompt_tok}
+
+
+def _engine_map():
+    try:
+        m = dict(DEFAULT_ENGINE_MAP)
+        m.update(json.loads(os.getenv("TTS_ENGINE_MAP_JSON", "{}")))
+        return m
+    except Exception:
+        return dict(DEFAULT_ENGINE_MAP)
+
+
+def _parler_descriptions():
+    try:
+        d = dict(DEFAULT_PARLER_DESCRIPTIONS)
+        d.update(json.loads(os.getenv("PARLER_DESCRIPTIONS_JSON", "{}")))
+        return d
+    except Exception:
+        return dict(DEFAULT_PARLER_DESCRIPTIONS)
+
 
 def _voices():
     try:
         return json.loads(os.getenv("PIPER_VOICES_JSON", "{}"))
     except Exception:
         return {}
+
+
+def _chunk(text, max_chars=350):
+    """Split long narration so each parler generation stays within a sane length."""
+    import re
+    parts, buf = [], ""
+    for s in re.split(r"(?<=[.!?।॥])\s+", text):
+        if len(buf) + len(s) + 1 > max_chars and buf:
+            parts.append(buf.strip()); buf = s
+        else:
+            buf = (buf + " " + s) if buf else s
+    if buf.strip():
+        parts.append(buf.strip())
+    return parts or [text]
+
+
+def synth_parler(script, lang, wav_path):
+    """Synthesize with ai4bharat/indic-parler-tts on CPU. Heavy deps are lazy-imported
+    (transformers, torch, parler_tts, soundfile, numpy) so dry-run/py_compile don't need them."""
+    import numpy as np
+    import soundfile as sf
+    import torch
+    from parler_tts import ParlerTTSForConditionalGeneration
+    from transformers import AutoTokenizer
+    if not _PARLER:
+        model = ParlerTTSForConditionalGeneration.from_pretrained(PARLER_MODEL)
+        model.eval()
+        _PARLER["model"] = model
+        _PARLER["desc_tok"] = AutoTokenizer.from_pretrained(model.config.text_encoder._name_or_path)
+        _PARLER["prompt_tok"] = AutoTokenizer.from_pretrained(PARLER_MODEL)
+    model, desc_tok, prompt_tok = _PARLER["model"], _PARLER["desc_tok"], _PARLER["prompt_tok"]
+    descs = _parler_descriptions()
+    description = descs.get(lang) or descs.get("en")
+    desc = desc_tok(description, return_tensors="pt")
+    chunks = []
+    for chunk in _chunk(script):
+        p = prompt_tok(chunk, return_tensors="pt")
+        with torch.no_grad():
+            gen = model.generate(input_ids=desc.input_ids, attention_mask=desc.attention_mask,
+                                 prompt_input_ids=p.input_ids, prompt_attention_mask=p.attention_mask)
+        chunks.append(gen.cpu().numpy().squeeze())
+    audio = np.concatenate(chunks) if len(chunks) > 1 else chunks[0]
+    sf.write(wav_path, audio, model.config.sampling_rate)
+
+
+def synth_piper(script, lang, wav_path):
+    voice = _voices().get(lang)
+    if not voice:
+        raise RuntimeError(f"no Piper voice configured for '{lang}' (set PIPER_VOICES_JSON)")
+    subprocess.run([PIPER_BIN, "--model", voice, "--output_file", wav_path],
+                   input=script.encode("utf-8"), check=True)
 
 
 def loc(field, lang):
@@ -115,10 +214,9 @@ def write_script(source, lang_name):
 
 
 def synth_and_upload(script, lang, content_id):
-    """Piper -> ffmpeg -> gsutil upload. Returns (audio_url, transcript_url, duration) or raises."""
-    voice = _voices().get(lang)
-    if not voice:
-        raise RuntimeError(f"no Piper voice configured for '{lang}' (set PIPER_VOICES_JSON)")
+    """Synthesize (engine per language: parler|piper) -> ffmpeg MP3 -> gsutil upload.
+    Returns (audio_url, transcript_url, duration) or raises."""
+    engine = _engine_map().get(lang, "piper")
     safe_id = content_id.replace(":", "_")
     with tempfile.TemporaryDirectory() as tmp:
         wav = os.path.join(tmp, "out.wav")
@@ -126,8 +224,10 @@ def synth_and_upload(script, lang, content_id):
         txt = os.path.join(tmp, f"{safe_id}.txt")
         with open(txt, "w", encoding="utf-8") as f:
             f.write(script)
-        subprocess.run([PIPER_BIN, "--model", voice, "--output_file", wav],
-                       input=script.encode("utf-8"), check=True)
+        if engine == "parler":
+            synth_parler(script, lang, wav)
+        else:
+            synth_piper(script, lang, wav)
         subprocess.run(["ffmpeg", "-y", "-i", wav, "-b:a", "96k", mp3], check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         dur = 0
@@ -207,8 +307,9 @@ def main():
             print(f"  [{lang}] done: {audio_url} ({dur}s)")
         else:
             preview = (source[:200] + "…") if len(source) > 200 else source
-            print(f"  [{lang}] source preview: {preview}")
-            print(f"    (dry-run) would generate script + synth + upload to gs://{PODCAST_BUCKET}/{lang}/{content_id}.mp3")
+            engine = _engine_map().get(lang, "piper")
+            print(f"  [{lang}] engine={engine} | source preview: {preview}")
+            print(f"    (dry-run) would generate script + synth via {engine} + upload to gs://{PODCAST_BUCKET}/{lang}/{content_id}.mp3")
     print("manifest:", MANIFEST_PATH)
 
 
