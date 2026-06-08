@@ -628,6 +628,68 @@ def org_progress(org_id: str, group: Optional[str] = None, caller: str = Depends
     return {"students": students, "count": len(students)}
 
 
+@router.get("/{org_id}/students/{member_id}")
+def student_detail(org_id: str, member_id: str, caller: str = Depends(get_current_user_id)):
+    """Drill-down detail for one student. Requires manager+. Target must be an org member."""
+    require_org_role(DB_PATH, org_id, caller, "manager")
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        prof = conn.execute(
+            """SELECT u.id, u.username, u.name, u.email, om.role, om.department, om.joined_at,
+                      COALESCE(u.points, 0) AS xp
+               FROM org_members om JOIN users u ON u.id = om.user_id
+               WHERE om.org_id = ? AND om.user_id = ?""",
+            [org_id, member_id],
+        ).fetchone()
+        if not prof:
+            raise HTTPException(status_code=404, detail="Member not found in this organization")
+
+        groups = [r[0] for r in conn.execute(
+            "SELECT group_name FROM org_member_groups WHERE org_id = ? AND user_id = ? ORDER BY group_name",
+            [org_id, member_id]).fetchall()]
+        lessons_completed = conn.execute(
+            "SELECT COUNT(*) FROM lesson_completions WHERE user_id = ?", [member_id]).fetchone()[0]
+        struggle_total = conn.execute(
+            "SELECT COALESCE(SUM(struggle_count), 0) FROM user_mastery WHERE user_id = ?", [member_id]).fetchone()[0]
+        last_active = conn.execute(
+            "SELECT MAX(created_at) FROM learning_signals WHERE user_id = ?", [member_id]).fetchone()[0]
+        signals_7d = conn.execute(
+            "SELECT COUNT(*) FROM learning_signals WHERE user_id = ? AND created_at > datetime('now','-7 days')",
+            [member_id]).fetchone()[0]
+        mastery = [dict(r) for r in conn.execute(
+            """SELECT topic, mastery_level, attempts, struggle_count, last_practiced
+               FROM user_mastery WHERE user_id = ?
+               ORDER BY mastery_level ASC, struggle_count DESC""", [member_id]).fetchall()]
+        activity = [dict(r) for r in conn.execute(
+            """SELECT signal_type, topic, created_at FROM learning_signals
+               WHERE user_id = ? ORDER BY created_at DESC LIMIT 30""", [member_id]).fetchall()]
+        lessons = [dict(r) for r in conn.execute(
+            """SELECT lesson_id, xp_awarded, completed_at FROM lesson_completions
+               WHERE user_id = ? ORDER BY completed_at DESC LIMIT 20""", [member_id]).fetchall()]
+    finally:
+        conn.close()
+
+    # Status derivation mirrors the frontend studentStatus() ordering.
+    if struggle_total and struggle_total >= 3:
+        status = "at_risk"
+    elif signals_7d and signals_7d > 0:
+        status = "active"
+    elif last_active:
+        status = "idle"
+    else:
+        status = "inactive"
+
+    return {
+        "profile": {**dict(prof), "groups": groups},
+        "summary": {
+            "xp": prof["xp"], "lessons_completed": lessons_completed,
+            "struggle_total": struggle_total, "last_active": last_active, "status": status,
+        },
+        "mastery": mastery, "activity": activity, "lessons": lessons,
+    }
+
+
 @router.delete("/{org_id}")
 def delete_organization(org_id: str, caller: str = Depends(get_current_user_id)):
     """
