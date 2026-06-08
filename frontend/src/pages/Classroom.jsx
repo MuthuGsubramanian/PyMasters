@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -849,6 +850,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Classroom() {
     const { user } = useAuth();
+    const { language: ctxLanguage } = useProfile();
     const tts = useTTS();
 
     useEffect(() => { document.title = 'Classroom — PyMasters'; }, []);
@@ -864,6 +866,7 @@ export default function Classroom() {
     }, [user]);
 
     const language =
+        ctxLanguage ||
         profile?.preferred_language ||
         user?.preferred_language ||
         'en';

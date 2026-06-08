@@ -9,9 +9,11 @@ import {
     Settings, Eye, Lightbulb, Mic, Lock, ExternalLink, Link,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { getProfile, recordSignal, changePassword } from '../api';
 import api from '../api';
 import clsx from 'clsx';
+import LanguageSelector from '../components/LanguageSelector';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -274,6 +276,7 @@ function Toast({ message, type = 'success', onClose }) {
 
 export default function Profile() {
     const { user, updateUser, logout } = useAuth();
+    const { language, setLanguage } = useProfile();
     const navigate = useNavigate();
 
     // Loading & error state
@@ -853,6 +856,13 @@ export default function Profile() {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 <GlassCard index={3}>
                     <SectionHeading icon={Mic} title="Vaathiyaar Settings" subtitle="Customize your AI tutor's behavior" />
+                    <div className="flex items-center justify-between gap-3 py-3 border-b border-border-default">
+                        <div>
+                            <div className="text-sm font-semibold text-text-primary">Language</div>
+                            <div className="text-xs text-text-muted">Vaathiyaar and lessons appear in this language.</div>
+                        </div>
+                        <LanguageSelector currentLanguage={language} onSelect={setLanguage} />
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
                         {/* Left column */}
                         <div className="space-y-5">
