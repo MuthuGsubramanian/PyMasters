@@ -4,6 +4,7 @@ Prefix: /api/org
 """
 
 import os
+import json
 import sqlite3
 import uuid
 import secrets
@@ -448,6 +449,41 @@ def remove_member(org_id: str, member_id: str, caller: str = Depends(get_current
     return {"removed": True}
 
 
+@router.get("/{org_id}/groups")
+def list_groups(org_id: str, caller: str = Depends(get_current_user_id)):
+    """Distinct group names + member counts for the org. Requires manager+."""
+    require_org_role(DB_PATH, org_id, caller, "manager")
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        rows = conn.execute(
+            "SELECT group_name, COUNT(*) FROM org_member_groups WHERE org_id = ? "
+            "GROUP BY group_name ORDER BY group_name",
+            [org_id],
+        ).fetchall()
+        total = conn.execute(
+            "SELECT COUNT(*) FROM org_members WHERE org_id = ?", [org_id]
+        ).fetchone()[0]
+        tagged = conn.execute(
+            "SELECT COUNT(DISTINCT user_id) FROM org_member_groups WHERE org_id = ?", [org_id]
+        ).fetchone()[0]
+        settings_row = conn.execute(
+            "SELECT settings FROM organizations WHERE id = ?", [org_id]
+        ).fetchone()
+    finally:
+        conn.close()
+    label = "Group"
+    if settings_row and settings_row[0]:
+        try:
+            label = (json.loads(settings_row[0]) or {}).get("group_label") or "Group"
+        except Exception:
+            label = "Group"
+    return {
+        "groups": [{"name": r[0], "count": r[1]} for r in rows],
+        "ungrouped": max(0, total - tagged),
+        "group_label": label,
+    }
+
+
 @router.get("/{org_id}/analytics")
 def org_analytics(org_id: str, caller: str = Depends(get_current_user_id)):
     """Aggregated org stats. Requires manager+."""
@@ -510,27 +546,47 @@ def org_analytics(org_id: str, caller: str = Depends(get_current_user_id)):
 
 
 @router.get("/{org_id}/progress")
-def org_progress(org_id: str, caller: str = Depends(get_current_user_id)):
-    """Per-student progress for teachers/admins. Requires manager+."""
+def org_progress(org_id: str, group: Optional[str] = None, caller: str = Depends(get_current_user_id)):
+    """Per-student progress for teachers/admins. Requires manager+.
+    Optional `group` filters by tag; `__ungrouped__` returns untagged members.
+    Each student includes a `groups` list."""
     require_org_role(DB_PATH, org_id, caller, "manager")
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    rows = conn.execute(
+    try:
+        query = """
+            SELECT u.id, u.username, u.name, u.email, om.role, om.department,
+                   COALESCE(u.points, 0) AS xp,
+                   (SELECT COUNT(*) FROM lesson_completions lc WHERE lc.user_id = u.id) AS lessons_completed,
+                   (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id = u.id) AS last_active,
+                   (SELECT COALESCE(SUM(struggle_count), 0) FROM user_mastery um WHERE um.user_id = u.id) AS struggle_count,
+                   (SELECT COUNT(*) FROM learning_signals ls WHERE ls.user_id = u.id AND ls.created_at > datetime('now','-7 days')) AS signals_7d
+            FROM org_members om JOIN users u ON u.id = om.user_id
+            WHERE om.org_id = ?
         """
-        SELECT u.id, u.username, u.name, u.email, om.role, om.department,
-               COALESCE(u.points, 0) AS xp,
-               (SELECT COUNT(*) FROM lesson_completions lc WHERE lc.user_id = u.id) AS lessons_completed,
-               (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id = u.id) AS last_active,
-               (SELECT COALESCE(SUM(struggle_count), 0) FROM user_mastery um WHERE um.user_id = u.id) AS struggle_count,
-               (SELECT COUNT(*) FROM learning_signals ls WHERE ls.user_id = u.id AND ls.created_at > datetime('now','-7 days')) AS signals_7d
-        FROM org_members om JOIN users u ON u.id = om.user_id
-        WHERE om.org_id = ?
-        ORDER BY xp DESC
-        """,
-        [org_id],
-    ).fetchall()
-    conn.close()
-    return {"students": [dict(r) for r in rows], "count": len(rows)}
+        params = [org_id]
+        if group == "__ungrouped__":
+            query += " AND u.id NOT IN (SELECT user_id FROM org_member_groups WHERE org_id = ?)"
+            params.append(org_id)
+        elif group:
+            query += " AND u.id IN (SELECT user_id FROM org_member_groups WHERE org_id = ? AND group_name = ?)"
+            params.extend([org_id, group])
+        query += " ORDER BY xp DESC"
+        rows = conn.execute(query, params).fetchall()
+
+        gmap = {}
+        for uid, gname in conn.execute(
+            "SELECT user_id, group_name FROM org_member_groups WHERE org_id = ?", [org_id]
+        ).fetchall():
+            gmap.setdefault(uid, []).append(gname)
+    finally:
+        conn.close()
+    students = []
+    for r in rows:
+        d = dict(r)
+        d["groups"] = sorted(gmap.get(d["id"], []))
+        students.append(d)
+    return {"students": students, "count": len(students)}
 
 
 @router.delete("/{org_id}")
