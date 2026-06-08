@@ -34,6 +34,16 @@ from routes.reference import router as reference_router
 from routes.admin import router as admin_router
 from auth import create_access_token, get_current_user_id
 
+
+def _login_token_version(user_id):
+    try:
+        c = sqlite3.connect(DB_PATH)
+        r = c.execute("SELECT COALESCE(token_version,0) FROM users WHERE id = ?", [user_id]).fetchone()
+        c.close()
+        return int(r[0]) if r else 0
+    except Exception:
+        return 0
+
 # Seed Data: Tutorials & Quizzes (kept for /api/content/* backward compatibility)
 CONTENT_MAP = {
     "module_1": {
@@ -752,7 +762,7 @@ def register(user: UserRegister):
             [user_id, user.username, hashed, user.name, default_unlocks, onboarding_flag, account_type]
         )
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type, "token": create_access_token(user_id, user.username)}
+        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type, "token": create_access_token(user_id, user.username, 0)}
     finally:
         conn.close()
 
@@ -805,7 +815,7 @@ def login(user: UserLogin):
             "unlocked": unlocks,
             "onboarding_completed": bool(record[4]),
             "account_type": record[5] or "individual",
-            "token": create_access_token(record[0], user.username),
+            "token": create_access_token(record[0], user.username, _login_token_version(record[0])),
             "org": org_info
         }
     finally:
