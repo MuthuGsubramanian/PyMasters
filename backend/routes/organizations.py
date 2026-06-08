@@ -670,15 +670,20 @@ def student_detail(org_id: str, member_id: str, caller: str = Depends(get_curren
     finally:
         conn.close()
 
-    # Status derivation mirrors the frontend studentStatus() ordering.
-    if struggle_total and struggle_total >= 3:
+    # Status derivation mirrors the frontend studentStatus() (incl. the 30-day idle cutoff).
+    if struggle_total >= 3:
         status = "at_risk"
-    elif signals_7d and signals_7d > 0:
+    elif signals_7d > 0:
         status = "active"
-    elif last_active:
-        status = "idle"
     else:
         status = "inactive"
+        if last_active:
+            try:
+                ts = datetime.fromisoformat(str(last_active).replace(" ", "T"))
+                if (datetime.utcnow() - ts) < timedelta(days=30):
+                    status = "idle"
+            except Exception:
+                status = "idle"
 
     return {
         "profile": {**dict(prof), "groups": groups},
