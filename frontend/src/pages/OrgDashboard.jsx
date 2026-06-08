@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getOrg, getOrgMembers, inviteToOrg, bulkInviteToOrg,
-  updateMemberRole, removeMember, getOrgAnalytics, getOrgProgress, getMyOrgs, deleteOrg
+  updateMemberRole, removeMember, getOrgAnalytics, getOrgProgress, getMyOrgs, deleteOrg,
+  getOrgGroups
 } from '../api';
+import StudentDrawer from '../components/StudentDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
@@ -399,6 +401,14 @@ export default function OrgDashboard() {
   const [confirmRemove, setConfirmRemove] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
 
+  // Groups / drawer state
+  const [groups, setGroups] = useState([]);          // [{name, count}]
+  const [ungrouped, setUngrouped] = useState(0);
+  const [groupLabel, setGroupLabel] = useState('Group');
+  const [groupFilter, setGroupFilter] = useState(null); // null = all; '__ungrouped__' = untagged
+  const [openStudentId, setOpenStudentId] = useState(null);
+  const [refreshTick, setRefreshTick] = useState(0);
+
   /* ---- Derived (safe) ---- */
   const userId = user?.id || null;
 
@@ -484,6 +494,29 @@ export default function OrgDashboard() {
   }, [activeOrg, userId, user]);
 
   useEffect(() => { loadOrg(); }, [loadOrg]);
+
+  const loadGroups = useCallback(async () => {
+    const orgId = getOrgId(activeOrg);
+    const uid = user?.id;
+    if (!orgId || !uid) return;
+    try {
+      const res = await getOrgGroups(orgId, uid);
+      setGroups(res?.data?.groups || []);
+      setUngrouped(res?.data?.ungrouped || 0);
+      setGroupLabel(res?.data?.group_label || 'Group');
+    } catch { /* groups non-critical */ }
+  }, [activeOrg, user]);
+
+  useEffect(() => { if (canViewProgress) loadGroups(); }, [canViewProgress, loadGroups]);
+
+  useEffect(() => {
+    const orgId = getOrgId(activeOrg);
+    const uid = user?.id;
+    if (!orgId || !uid || !canViewProgress) return;
+    getOrgProgress(orgId, uid, groupFilter)
+      .then((res) => setProgress(res?.data?.students || []))
+      .catch(() => { /* keep prior progress */ });
+  }, [groupFilter, refreshTick, activeOrg, user, canViewProgress]);
 
   // Auto-fetch user's orgs if none active
   useEffect(() => {
@@ -1063,6 +1096,45 @@ export default function OrgDashboard() {
           {/* ========== STUDENTS TAB ========== */}
           {tab === 'students' && canViewProgress && (
             <div className="space-y-4">
+              {(groups.length > 0 || ungrouped > 0) && (
+                <div className="flex flex-wrap gap-2" role="group" aria-label={`Filter by ${groupLabel}`}>
+                  <button
+                    onClick={() => setGroupFilter(null)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                      groupFilter === null
+                        ? 'bg-cyan-500 text-white border-cyan-500'
+                        : 'bg-bg-surface text-text-secondary border-border-default hover:bg-bg-elevated'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {groups.map((g) => (
+                    <button
+                      key={g.name}
+                      onClick={() => setGroupFilter(g.name)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                        groupFilter === g.name
+                          ? 'bg-cyan-500 text-white border-cyan-500'
+                          : 'bg-bg-surface text-text-secondary border-border-default hover:bg-bg-elevated'
+                      }`}
+                    >
+                      {g.name} <span className="opacity-70">({g.count})</span>
+                    </button>
+                  ))}
+                  {ungrouped > 0 && (
+                    <button
+                      onClick={() => setGroupFilter('__ungrouped__')}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                        groupFilter === '__ungrouped__'
+                          ? 'bg-cyan-500 text-white border-cyan-500'
+                          : 'bg-bg-surface text-text-secondary border-border-default hover:bg-bg-elevated'
+                      }`}
+                    >
+                      Ungrouped <span className="opacity-70">({ungrouped})</span>
+                    </button>
+                  )}
+                </div>
+              )}
               {progress === null ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="animate-spin text-cyan-500" size={22} />
@@ -1090,6 +1162,7 @@ export default function OrgDashboard() {
                             <th scope="col" className="px-4 py-3 font-semibold">XP</th>
                             <th scope="col" className="px-4 py-3 font-semibold">Lessons</th>
                             <th scope="col" className="px-4 py-3 font-semibold">Last active</th>
+                            <th scope="col" className="px-4 py-3 font-semibold">{groupLabel}s</th>
                             <th scope="col" className="px-4 py-3 font-semibold">Status</th>
                           </tr>
                         </thead>
@@ -1098,7 +1171,15 @@ export default function OrgDashboard() {
                             const st = studentStatus(s);
                             const name = String(s.name || s.username || '—');
                             return (
-                              <tr key={s.id} className="hover:bg-bg-elevated/50 transition-colors">
+                              <tr
+                                key={s.id}
+                                onClick={() => setOpenStudentId(s.id)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenStudentId(s.id); }}
+                                tabIndex={0}
+                                role="button"
+                                aria-label={`Open ${name} detail`}
+                                className="hover:bg-bg-elevated/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                              >
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2.5">
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -1114,6 +1195,16 @@ export default function OrgDashboard() {
                                 <td className="px-4 py-3 text-text-secondary">{s.lessons_completed || 0}</td>
                                 <td className="px-4 py-3 text-text-muted">{relTime(s.last_active)}</td>
                                 <td className="px-4 py-3">
+                                  <div className="flex flex-wrap gap-1">
+                                    {(s.groups || []).slice(0, 3).map((g) => (
+                                      <span key={g} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 border border-cyan-200">{g}</span>
+                                    ))}
+                                    {(s.groups || []).length > 3 && (
+                                      <span className="text-[10px] text-text-muted">+{s.groups.length - 3}</span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
                                   <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>{st.label}</span>
                                 </td>
                               </tr>
@@ -1124,6 +1215,17 @@ export default function OrgDashboard() {
                     </div>
                   </div>
                 </>
+              )}
+              {openStudentId && (
+                <StudentDrawer
+                  orgId={getOrgId(activeOrg)}
+                  userId={user?.id}
+                  studentId={openStudentId}
+                  canEdit={isAdmin}
+                  groupLabel={groupLabel}
+                  onClose={() => setOpenStudentId(null)}
+                  onGroupsChanged={() => { loadGroups(); setRefreshTick((t) => t + 1); }}
+                />
               )}
             </div>
           )}
