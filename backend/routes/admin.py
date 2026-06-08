@@ -89,6 +89,13 @@ class UserRoleRequest(BaseModel):
     role: str
 
 
+class OrgPlanRequest(BaseModel):
+    plan: str
+
+class OrgTypeRequest(BaseModel):
+    type: str
+
+
 @router.get("/check")
 def check(caller: str = Depends(optional_user_id)):
     """Lightweight gate so the frontend can decide whether to show the console."""
@@ -360,6 +367,79 @@ def list_orgs(caller: str = Depends(get_current_user_id)):
     """).fetchall()
     conn.close()
     return {"orgs": [dict(r) for r in rows]}
+
+
+@router.get("/orgs/{org_id}")
+def org_detail(org_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    o = conn.execute("""SELECT id, name, COALESCE(NULLIF(type,''),'other') type,
+                        COALESCE(NULLIF(plan,''),'free') plan, created_at FROM organizations WHERE id = ?""",
+                     [org_id]).fetchone()
+    if not o:
+        conn.close(); raise HTTPException(status_code=404, detail="Org not found")
+    members = [dict(r) for r in conn.execute(
+        "SELECT u.id, COALESCE(NULLIF(u.name,''), u.username) name, om.role "
+        "FROM org_members om JOIN users u ON u.id = om.user_id WHERE om.org_id = ? ORDER BY om.role",
+        [org_id]).fetchall()]
+    conn.close()
+    d = dict(o); d["members"] = members; d["member_count"] = len(members)
+    return d
+
+
+@router.post("/orgs/{org_id}/plan")
+def set_org_plan(org_id: str, req: OrgPlanRequest, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    conn.execute("UPDATE organizations SET plan = ? WHERE id = ?", [req.plan, org_id])
+    _audit(conn, caller, "org.plan", "org", org_id, {"plan": req.plan})
+    conn.commit(); conn.close()
+    return {"ok": True, "plan": req.plan}
+
+
+@router.post("/orgs/{org_id}/type")
+def set_org_type(org_id: str, req: OrgTypeRequest, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    conn.execute("UPDATE organizations SET type = ? WHERE id = ?", [req.type, org_id])
+    _audit(conn, caller, "org.type", "org", org_id, {"type": req.type})
+    conn.commit(); conn.close()
+    return {"ok": True, "type": req.type}
+
+
+@router.delete("/orgs/{org_id}")
+def delete_org_admin(org_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    for tbl in ["org_members", "org_invites", "org_member_groups", "org_profiles"]:
+        try:
+            conn.execute(f"DELETE FROM {tbl} WHERE org_id = ?", [org_id])
+        except Exception:
+            pass
+    conn.execute("DELETE FROM organizations WHERE id = ?", [org_id])
+    _audit(conn, caller, "org.delete", "org", org_id, {})
+    conn.commit(); conn.close()
+    return {"ok": True, "deleted": org_id}
+
+
+@router.get("/audit")
+def list_audit(caller: str = Depends(get_current_user_id), limit: int = 50, offset: int = 0,
+               target_type: str = None, target_id: str = None):
+    require_super_admin(caller)
+    conn = _conn()
+    where, params = [], []
+    if target_type:
+        where.append("target_type = ?"); params.append(target_type)
+    if target_id:
+        where.append("target_id = ?"); params.append(target_id)
+    clause = ("WHERE " + " AND ".join(where)) if where else ""
+    rows = conn.execute(
+        f"SELECT id, actor_id, actor_name, action, target_type, target_id, detail, created_at "
+        f"FROM admin_audit {clause} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        params + [min(limit, 200), offset]).fetchall()
+    total = conn.execute(f"SELECT COUNT(*) FROM admin_audit {clause}", params).fetchone()[0]
+    conn.close()
+    return {"audit": [dict(r) for r in rows], "total": total}
 
 
 @router.post("/users/{target_id}/block")
