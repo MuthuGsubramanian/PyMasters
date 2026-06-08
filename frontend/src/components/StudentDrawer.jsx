@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { X, Trophy, Zap, AlertTriangle, Activity, BookOpen } from 'lucide-react';
-import { getStudentDetail } from '../api';
+import { X, Trophy, Zap, AlertTriangle, Activity, BookOpen, Loader2, Plus } from 'lucide-react';
+import { getStudentDetail, setMemberGroups } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 
 const STATUS_PILL = {
@@ -33,21 +33,23 @@ function masteryColor(level) {
   return 'bg-green-400';
 }
 
-export default function StudentDrawer({ orgId, userId, studentId, canEdit, groupLabel = 'Group', onClose, onGroupsChanged }) { // eslint-disable-line no-unused-vars
+export default function StudentDrawer({ orgId, userId, studentId, canEdit, groupLabel = 'Group', onClose, onGroupsChanged }) {
   const reduced = useReducedMotion();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tags, setTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
+  const [savingTags, setSavingTags] = useState(false);
   const panelRef = useRef(null);
 
   const load = useCallback(() => {
     setLoading(true); setError('');
     getStudentDetail(orgId, studentId, userId)
-      .then((res) => setData(res?.data || null))
+      .then((res) => { setData(res?.data || null); setTags(res?.data?.profile?.groups || []); })
       .catch((err) => setError(safeErrorMsg(err, 'Failed to load student')))
       .finally(() => setLoading(false));
   }, [orgId, studentId, userId]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   // Focus the panel on open; restore focus to the trigger element on close (mount/unmount only)
@@ -68,6 +70,27 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
   const s = data?.summary;
   const pill = STATUS_PILL[s?.status] || STATUS_PILL.inactive;
   const name = String(p?.name || p?.username || '—');
+
+  const persistTags = async (next) => {
+    setSavingTags(true);
+    const prev = tags;
+    setTags(next); // optimistic
+    try {
+      await setMemberGroups(orgId, studentId, next);
+      onGroupsChanged?.();
+    } catch {
+      setTags(prev); // revert on failure
+    } finally {
+      setSavingTags(false);
+    }
+  };
+  const addTag = () => {
+    const t = newTag.trim().slice(0, 50);
+    if (!t || tags.includes(t) || tags.length >= 20) { setNewTag(''); return; }
+    setNewTag('');
+    persistTags([...tags, t]);
+  };
+  const removeTag = (t) => persistTags(tags.filter((x) => x !== t));
 
   return (
     <AnimatePresence>
@@ -114,10 +137,29 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${pill.color}`}>{pill.label}</span>
                   </div>
                   {p?.email && <p className="text-xs text-text-muted truncate">{String(p.email)}</p>}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {(p?.groups || []).map((g) => (
-                      <span key={g} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 border border-cyan-200">{g}</span>
+                  <div className="flex flex-wrap items-center gap-1 mt-2">
+                    {(canEdit ? tags : (p?.groups || [])).map((g) => (
+                      <span key={g} className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 border border-cyan-200">
+                        {g}
+                        {canEdit && (
+                          <button onClick={() => removeTag(g)} aria-label={`Remove ${g}`} className="hover:text-red-500"><X size={10} /></button>
+                        )}
+                      </span>
                     ))}
+                    {canEdit && (
+                      <span className="inline-flex items-center gap-1">
+                        <input
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') addTag(); }}
+                          placeholder={`Add ${groupLabel.toLowerCase()}`}
+                          className="text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-bg-surface w-28 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        />
+                        <button onClick={addTag} disabled={savingTags} aria-label="Add tag" className="text-cyan-600 hover:text-cyan-700">
+                          {savingTags ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                        </button>
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button onClick={onClose} className="text-text-muted hover:text-text-secondary p-1" aria-label="Close"><X size={18} /></button>
