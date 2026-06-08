@@ -151,7 +151,14 @@ export const getInviteInfo = (token) => api.get(`/org/invite/${token}`);
 export const updateMemberRole = (orgId, memberId, data) => api.put(`/org/${orgId}/members/${memberId}/role`, data);
 export const removeMember = (orgId, memberId, userId) => api.delete(`/org/${orgId}/members/${memberId}`, { params: { user_id: userId } });
 export const getOrgAnalytics = (orgId, userId) => api.get(`/org/${orgId}/analytics`, { params: { user_id: userId } });
-export const getOrgProgress = (orgId, userId) => api.get(`/org/${orgId}/progress`, { params: { user_id: userId } });
+export const getOrgProgress = (orgId, userId, group) =>
+  api.get(`/org/${orgId}/progress`, { params: { user_id: userId, ...(group ? { group } : {}) } });
+export const getOrgGroups = (orgId, userId) =>
+  api.get(`/org/${orgId}/groups`, { params: { user_id: userId } });
+export const setMemberGroups = (orgId, memberId, groups) =>
+  api.put(`/org/${orgId}/members/${memberId}/groups`, { groups });
+export const getStudentDetail = (orgId, memberId, userId) =>
+  api.get(`/org/${orgId}/students/${memberId}`, { params: { user_id: userId } });
 
 // Platform super-admin
 export const getAdminCheck = (userId) => api.get('/admin/check', { params: { user_id: userId } });
