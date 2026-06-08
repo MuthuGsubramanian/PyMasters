@@ -1,0 +1,232 @@
+{
+  "id": "gpt2_text_generation",
+  "topic": "gpt2_text_generation",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Understand & Build a GPT: Text Generation with openai-community/gpt2"
+  },
+  "description": {
+    "en": "Learn how GPT-2 actually generates text â€” tokens, logits, sampling â€” by running the original 124M-parameter openai-community/gpt2 model locally, then building a tiny next-token predictor from scratch to demystify the magic."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## How a GPT Really Works: Demystifying openai-community/gpt2\n\nVaathiyaar here! In 2019, OpenAI released a model so good at writing text they initially called it \"too dangerous\" to publish in full. That model was **GPT-2**. Today its smallest version â€” `openai-community/gpt2`, just 124 million parameters and ~500MB â€” downloads in seconds and runs on your laptop CPU. It is the *perfect* teaching model: small enough to understand, real enough to feel the magic.\n\nHere is the secret every beginner needs to hear: a GPT does exactly **one** thing. It looks at a sequence of tokens and predicts the *next* token. That's it. Generation is just doing that prediction over and over, feeding each new token back in. Everything else â€” chatbots, code assistants, essays â€” is built on this single loop.\n\n### The Three-Step Mental Model\n\n| Step | What Happens | Example |\n|---|---|---|\n| 1. Tokenize | Text â†’ integer IDs | \"Hello\" â†’ [15496] |\n| 2. Predict | Model outputs logits over 50,257 tokens | [.., 8.2, .., 1.1, ..] |\n| 3. Sample | Pick the next token, append, repeat | 15496 â†’ 995 (\" world\") |\n\nGPT-2's vocabulary has **50,257** tokens. For every position, the model produces a score (logit) for each one. Turn those scores into probabilities with softmax, choose one, and you've generated a token.\n\n### Running the Real GPT-2\n\n```python\nfrom transformers import pipeline\n\n# Loads openai-community/gpt2 (124M params, ~500MB) â€” no API key, fully local\ngenerator = pipeline(\"text-generation\", model=\"gpt2\")\n\nresult = generator(\n    \"In the future, artificial intelligence will\",\n    max_new_tokens=30,\n    do_sample=True,\n    temperature=0.7,\n)\nprint(result[0][\"generated_text\"])\n```\n\nThe `pipeline` hides the loop, but it's still just predict-and-append under the hood.\n\n### Seeing the Tokens\n\n```python\nfrom transformers import GPT2Tokenizer\n\ntok = GPT2Tokenizer.from_pretrained(\"gpt2\")\nids = tok.encode(\"Hello world\")\nprint(ids)               # [15496, 995]\nprint(tok.convert_ids_to_tokens(ids))  # ['Hello', 'Ä world']\n```\n\nThat `Ä ` marks a leading space â€” GPT-2 uses byte-pair encoding (BPE), so common words are one token while rare words split into pieces.\n\n### The Generation Loop, Unwrapped\n\n```python\nimport torch\nfrom transformers import GPT2LMHeadModel, GPT2Tokenizer\n\ntok = GPT2Tokenizer.from_pretrained(\"gpt2\")\nmodel = GPT2LMHeadModel.from_pretrained(\"gpt2\").eval()\n\nids = tok.encode(\"The meaning of life is\", return_tensors=\"pt\")\nfor _ in range(20):\n    with torch.no_grad():\n        logits = model(ids).logits[:, -1, :]   # scores for the NEXT token\n    next_id = torch.argmax(logits, dim=-1, keepdim=True)  # greedy pick\n    ids = torch.cat([ids, next_id], dim=1)     # append, repeat\nprint(tok.decode(ids[0]))\n```\n\nThis *is* `model.generate()` distilled to its essence: take the last position's logits, pick a token, append, loop.\n\n### Temperature & Sampling\n\nGreedy decoding (`argmax`) is repetitive. Real generation **samples**:\n\n- **temperature** â€” divides logits before softmax. Low (0.2) = focused/boring, high (1.2) = creative/chaotic.\n- **top-k** â€” only sample from the k most likely tokens.\n- **top-p (nucleus)** â€” sample from the smallest set whose probabilities sum to p.\n\n```python\nprobs = torch.softmax(logits / temperature, dim=-1)\nnext_id = torch.multinomial(probs, num_samples=1)\n```\n\n> **Key Insight:** A GPT is not a database of answers â€” it is a next-token prediction engine run in a loop. GPT-2 proves it with just 124M parameters you can run locally. Once you internalize tokenize â†’ predict logits â†’ sample â†’ append, every large language model from GPT-2 to the newest frontier model becomes the *same idea* scaled up. Master the loop, and you understand them all."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "GPT-2 stunned the world in 2019. Its smallest version, openai-community/gpt2, is only 124M parameters and runs on your laptop â€” no API key. It does exactly one thing: predict the next token. Generation is that single prediction, looped. Understand the loop and you understand every LLM.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import GPT2Tokenizer\n\ntok = GPT2Tokenizer.from_pretrained(\"gpt2\")\n\ntext = \"Hello world\"\nids = tok.encode(text)\nprint(ids)\n\ntokens = tok.convert_ids_to_tokens(ids)\nprint(tokens)\n\nprint(tok.decode(ids))\nprint(\"Vocab size:\", tok.vocab_size)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the GPT-2 tokenizer. Install with: pip install transformers torch. The tokenizer converts text to the integer IDs the model understands."
+        },
+        {
+          "line": 3,
+          "explanation": "Load the tokenizer for 'gpt2' (openai-community/gpt2). It downloads a small vocab/merges file once, then works offline forever."
+        },
+        {
+          "line": 6,
+          "explanation": "encode() turns text into a list of integer token IDs. The model never sees letters â€” only these numbers."
+        },
+        {
+          "line": 7,
+          "explanation": "Prints [15496, 995]. 'Hello' is token 15496 and ' world' is 995. Common words map to a single token."
+        },
+        {
+          "line": 9,
+          "explanation": "convert_ids_to_tokens reveals the human-readable pieces: ['Hello', 'Ä world']. The Ä  symbol marks a leading space in GPT-2's byte-pair encoding."
+        },
+        {
+          "line": 12,
+          "explanation": "decode() reverses the process: IDs back to text. Encoding then decoding round-trips perfectly."
+        },
+        {
+          "line": 13,
+          "explanation": "GPT-2's vocabulary is 50,257 tokens. For every position the model scores all 50,257 â€” that's what 'predict the next token' really means."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import torch\nfrom transformers import GPT2LMHeadModel, GPT2Tokenizer\n\ntok = GPT2Tokenizer.from_pretrained(\"gpt2\")\nmodel = GPT2LMHeadModel.from_pretrained(\"gpt2\").eval()\n\nids = tok.encode(\"The meaning of life is\", return_tensors=\"pt\")\n\nfor _ in range(20):\n    with torch.no_grad():\n        logits = model(ids).logits[:, -1, :]\n    next_id = torch.argmax(logits, dim=-1, keepdim=True)\n    ids = torch.cat([ids, next_id], dim=1)\n\nprint(tok.decode(ids[0]))",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "Load the tokenizer and the GPT2LMHeadModel â€” the full 124M-parameter network with a language-modeling 'head' that outputs token scores."
+        },
+        {
+          "line": 5,
+          "explanation": ".eval() switches the model to inference mode (disables dropout). Always do this when generating, not training."
+        },
+        {
+          "line": 7,
+          "explanation": "Encode the prompt with return_tensors='pt' to get a PyTorch tensor of shape (1, num_tokens) â€” the model expects batched tensors."
+        },
+        {
+          "line": 9,
+          "explanation": "The generation loop: we'll produce 20 new tokens, one per iteration, each conditioned on everything generated so far."
+        },
+        {
+          "line": 11,
+          "explanation": "Run the model. .logits has shape (1, seq_len, 50257). We slice [:, -1, :] to get scores for ONLY the next token after the last position."
+        },
+        {
+          "line": 12,
+          "explanation": "argmax picks the single highest-scoring token â€” 'greedy' decoding. Deterministic but tends to repeat. torch.no_grad() saves memory by skipping gradients."
+        },
+        {
+          "line": 13,
+          "explanation": "Append the new token to our sequence with torch.cat. Next iteration the model sees the longer context â€” this feedback IS generation."
+        },
+        {
+          "line": 15,
+          "explanation": "After 20 loops, decode the full ID sequence back to text. You just reimplemented model.generate() by hand!"
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import torch\nfrom transformers import GPT2LMHeadModel, GPT2Tokenizer\n\ntok = GPT2Tokenizer.from_pretrained(\"gpt2\")\nmodel = GPT2LMHeadModel.from_pretrained(\"gpt2\").eval()\n\nids = tok.encode(\"Once upon a time\", return_tensors=\"pt\")\ntemperature = 0.8\n\nwith torch.no_grad():\n    logits = model(ids).logits[:, -1, :]\n\nprobs = torch.softmax(logits / temperature, dim=-1)\nnext_id = torch.multinomial(probs, num_samples=1)\nprint(tok.decode(next_id[0]))\n\ntop = torch.topk(probs, 5)\nfor p, i in zip(top.values[0], top.indices[0]):\n    print(f\"{p.item():.3f} -> {tok.decode([i])!r}\")",
+      "steps": [
+        {
+          "line": 8,
+          "explanation": "Set temperature=0.8. This scales the logits before softmax to control randomness â€” the single most important generation knob."
+        },
+        {
+          "line": 11,
+          "explanation": "Get the next-token logits as before. These raw scores can be any real number, positive or negative."
+        },
+        {
+          "line": 13,
+          "explanation": "Divide logits by temperature, then softmax to get a probability distribution over all 50,257 tokens. Low temp sharpens it; high temp flattens it."
+        },
+        {
+          "line": 14,
+          "explanation": "torch.multinomial SAMPLES from the distribution instead of taking the max. This is why creative text varies run to run."
+        },
+        {
+          "line": 15,
+          "explanation": "Decode and print the sampled token. Run it again and you'll often get a different word â€” that's the randomness in action."
+        },
+        {
+          "line": 17,
+          "explanation": "torch.topk grabs the 5 most likely next tokens so we can inspect what the model is 'thinking'."
+        },
+        {
+          "line": 18,
+          "explanation": "Print each candidate's probability and text. You see the model's actual uncertainty â€” often a handful of plausible continuations."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Greedy (argmax)",
+      "right_label": "Sampling (temperature/top-p)",
+      "items": [
+        {
+          "left": "Always picks highest-probability token",
+          "right": "Randomly picks weighted by probability"
+        },
+        {
+          "left": "Deterministic â€” same output every time",
+          "right": "Varied â€” different output each run"
+        },
+        {
+          "left": "Often loops/repeats phrases",
+          "right": "Diverse, natural-sounding text"
+        },
+        {
+          "left": "No tuning knobs",
+          "right": "temperature, top-k, top-p to control style"
+        },
+        {
+          "left": "Good for factual/code completion",
+          "right": "Good for stories and creative writing"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand how a GPT works â€” tokenize, predict logits, sample, append, repeat. The same loop powers every LLM!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `TinyGPT` class that simulates the core text-generation loop without any ML library. Given a training corpus of token lists, build a bigram next-token frequency table. Implement `fit(sequences)` to count which token follows which, `next_token_probs(token)` returning a dict of {next_token: probability}, and `generate(start, length)` that greedily picks the most likely next token repeatedly (ties broken alphabetically) and returns the generated list of tokens. This is GPT's predict-and-append loop in miniature."
+      },
+      "starter_code": "class TinyGPT:\n    def __init__(self):\n        # counts[token][next_token] = how many times next_token followed token\n        self.counts = {}\n\n    def fit(self, sequences: list[list[str]]):\n        # For each adjacent pair (a, b) in every sequence, increment counts[a][b]\n        pass\n\n    def next_token_probs(self, token: str) -> dict:\n        # Return {next_token: probability} from counts[token]\n        # Probability = count / total_count_for_token. Empty dict if unseen.\n        pass\n\n    def generate(self, start: str, length: int) -> list[str]:\n        # Start with [start]. Repeatedly pick the highest-probability next token.\n        # Break ties by choosing the alphabetically smallest token.\n        # Stop early if the current token has no known successors.\n        pass\n\n# Test it:\ngpt = TinyGPT()\ngpt.fit([\n    [\"the\", \"cat\", \"sat\"],\n    [\"the\", \"cat\", \"ran\"],\n    [\"the\", \"cat\", \"sat\"],\n])\nprint(gpt.next_token_probs(\"the\"))\nprint(gpt.generate(\"the\", 3))",
+      "expected_output": "{'cat': 1.0}\n['the', 'cat', 'sat']",
+      "hints": {
+        "en": [
+          "In fit(), loop over each sequence and use zip(seq, seq[1:]) to get adjacent (a, b) pairs, then increment a nested dict with self.counts.setdefault(a, {})",
+          "In next_token_probs(), sum the counts for the token, then divide each successor count by that total",
+          "In generate(), use max() on next_token_probs with a key that sorts by (-probability, token) so highest prob wins and ties go alphabetically; stop when probs is empty"
+        ]
+      },
+      "test_code": "g = TinyGPT()\ng.fit([[\"a\", \"b\", \"c\"], [\"a\", \"b\", \"d\"], [\"a\", \"b\", \"c\"]])\nassert g.next_token_probs(\"a\") == {\"b\": 1.0}\nprobs_b = g.next_token_probs(\"b\")\nassert abs(probs_b[\"c\"] - 2/3) < 0.001\nassert abs(probs_b[\"d\"] - 1/3) < 0.001\nassert g.next_token_probs(\"zzz\") == {}\nassert g.generate(\"a\", 3) == [\"a\", \"b\", \"c\"]\nassert g.generate(\"a\", 1) == [\"a\"]\ng2 = TinyGPT()\ng2.fit([[\"x\", \"m\"], [\"x\", \"a\"]])\nassert g2.generate(\"x\", 2) == [\"x\", \"a\"]"
+    },
+    {
+      "instruction": {
+        "en": "Extend your understanding of sampling by building a `Sampler` class that mimics how GPT-2 turns logits into tokens. Implement `softmax(logits)` returning a probability list, `apply_temperature(logits, temperature)` that divides each logit by temperature before returning new logits, and `top_k_tokens(logits, k)` that returns the indices of the k highest logits sorted from highest to lowest. These are the exact transformations real GPT-2 generation applies."
+      },
+      "starter_code": "import math\n\nclass Sampler:\n    def softmax(self, logits: list[float]) -> list[float]:\n        # Convert logits to probabilities that sum to 1.0\n        # Subtract max(logits) first for numerical stability\n        pass\n\n    def apply_temperature(self, logits: list[float], temperature: float) -> list[float]:\n        # Divide every logit by temperature and return the new list\n        pass\n\n    def top_k_tokens(self, logits: list[float], k: int) -> list[int]:\n        # Return indices of the k largest logits, highest first\n        pass\n\n# Test it:\ns = Sampler()\nprobs = s.softmax([2.0, 1.0, 0.0])\nprint(round(sum(probs), 5))\nprint(probs[0] > probs[1] > probs[2])\nprint(s.top_k_tokens([0.1, 5.0, 2.0, 5.0], 2))",
+      "expected_output": "1.0\nTrue\n[1, 3]",
+      "hints": {
+        "en": [
+          "For softmax, compute exps = [math.exp(x - max(logits)) for x in logits], then divide each by sum(exps)",
+          "apply_temperature is a one-liner: return [x / temperature for x in logits]",
+          "For top_k_tokens, sort the indices range(len(logits)) by key lambda i: (-logits[i], i) and slice [:k] so highest logits come first and ties break by index"
+        ]
+      },
+      "test_code": "s = Sampler()\np = s.softmax([2.0, 1.0, 0.0])\nassert abs(sum(p) - 1.0) < 1e-6\nassert p[0] > p[1] > p[2]\np_eq = s.softmax([0.0, 0.0])\nassert abs(p_eq[0] - 0.5) < 1e-6\nassert abs(p_eq[1] - 0.5) < 1e-6\nt = s.apply_temperature([2.0, 4.0], 2.0)\nassert t == [1.0, 2.0]\nlow_temp = s.softmax(s.apply_temperature([1.0, 2.0], 0.1))\nhigh_temp = s.softmax(s.apply_temperature([1.0, 2.0], 2.0))\nassert low_temp[1] > high_temp[1]\nassert s.top_k_tokens([0.1, 5.0, 2.0, 5.0], 2) == [1, 3]\nassert s.top_k_tokens([3.0, 1.0, 2.0], 1) == [0]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "GPT-2",
+      "text generation",
+      "tokenization",
+      "byte-pair encoding",
+      "logits and softmax",
+      "next-token prediction",
+      "temperature sampling",
+      "top-k sampling",
+      "autoregressive generation"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "loops",
+      "pip install"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "tutorial",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
