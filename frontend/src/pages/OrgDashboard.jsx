@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   getOrg, getOrgMembers, inviteToOrg, bulkInviteToOrg,
   updateMemberRole, removeMember, getOrgAnalytics, getOrgProgress, getMyOrgs, deleteOrg,
-  getOrgGroups
+  getOrgGroups, updateOrg
 } from '../api';
 import StudentDrawer from '../components/StudentDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -783,28 +783,41 @@ export default function OrgDashboard() {
                 <StatCard icon={Trophy} label="Lessons Completed" value={lessonsCompleted} color="from-amber-500 to-orange-500" />
               </div>
 
-              {/* Department Distribution */}
-              {Object.keys(deptDistribution).length > 0 && (
+              {groups.length > 0 && (
                 <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-text-secondary mb-4">Department Distribution</h3>
+                  <h3 className="text-sm font-bold text-text-secondary mb-4">{groupLabel} Distribution</h3>
                   <div className="space-y-3">
-                    {Object.entries(deptDistribution)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([dept, count]) => (
-                        <div key={dept} className="flex items-center gap-3">
-                          <span className="text-xs text-text-muted w-24 truncate">{dept}</span>
+                    {groups.map((g) => {
+                      const max = Math.max(1, ...groups.map((x) => x.count));
+                      return (
+                        <div key={g.name} className="flex items-center gap-3">
+                          <span className="text-xs text-text-muted w-24 truncate">{g.name}</span>
                           <div className="flex-1 h-6 bg-bg-elevated rounded-lg overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${(count / maxDeptCount) * 100}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                              className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg"
-                            />
+                            <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg" style={{ width: `${(g.count / max) * 100}%` }} />
                           </div>
-                          <span className="text-xs font-bold text-text-secondary w-8 text-right">{count}</span>
+                          <span className="text-xs font-bold text-text-secondary w-8 text-right">{g.count}</span>
                         </div>
-                      ))}
+                      );
+                    })}
                   </div>
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm flex items-center gap-3 flex-wrap">
+                  <label className="text-sm font-bold text-text-secondary">Group label</label>
+                  <input
+                    defaultValue={groupLabel}
+                    onBlur={async (e) => {
+                      const v = e.target.value.trim().slice(0, 30);
+                      if (v && v !== groupLabel) {
+                        try { await updateOrg(getOrgId(activeOrg), { group_label: v, user_id: user?.id }); setGroupLabel(v); loadGroups(); } catch { /* ignore */ }
+                      }
+                    }}
+                    className="input-neo py-1.5 px-3 text-sm w-40"
+                    placeholder="Group"
+                  />
+                  <span className="text-xs text-text-muted">What a group is called for your org (e.g. Class, Batch, Team).</span>
                 </div>
               )}
 
@@ -1132,8 +1145,8 @@ export default function OrgDashboard() {
                 </div>
               )}
               {progress === null ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="animate-spin text-cyan-500" size={22} />
+                <div className="space-y-2">
+                  {[0, 1, 2, 3].map((i) => <div key={i} className="h-14 rounded-xl bg-bg-elevated animate-pulse" />)}
                 </div>
               ) : progress.length === 0 ? (
                 <div className="text-center py-12 text-text-muted text-sm">
