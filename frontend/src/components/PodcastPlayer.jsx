@@ -3,6 +3,27 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'; // es
 import { X, Play, Pause, Rewind, FastForward, Download, Headphones } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../i18n/index.js';
 
+function parseVtt(text) {
+  if (!text) return [];
+  const cues = [];
+  const toSec = (t) => {
+    const m = t.trim().match(/(?:(\d+):)?(\d{2}):(\d{2})\.(\d{3})/);
+    if (!m) return null;
+    return (Number(m[1] || 0) * 3600) + (Number(m[2]) * 60) + Number(m[3]) + (Number(m[4]) / 1000);
+  };
+  for (const b of text.replace(/\r/g, '').split(/\n\n+/)) {
+    const lines = b.split('\n').filter(Boolean);
+    const tl = lines.find((l) => l.includes('-->'));
+    if (!tl) continue;
+    const [a, bb] = tl.split('-->');
+    const start = toSec(a); const end = toSec(bb);
+    if (start == null || end == null) continue;
+    const txt = lines.slice(lines.indexOf(tl) + 1).join(' ').trim();
+    if (txt) cues.push({ start, end, text: txt });
+  }
+  return cues;
+}
+
 function langName(code) {
   return SUPPORTED_LANGUAGES.find((l) => l.code === code)?.name || code;
 }
@@ -23,6 +44,10 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
   const [rate, setRate] = useState(1);
   const [transcript, setTranscript] = useState('');
   const [audioErr, setAudioErr] = useState(false);
+  const [cues, setCues] = useState([]);
+  const [showCaptions, setShowCaptions] = useState(true);
+  const [activeCue, setActiveCue] = useState(-1);
+  const cueRefs = useRef([]);
 
   const byLang = manifest?.[contentId] || {};
   const entry = byLang[language] || null;
@@ -35,6 +60,16 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('keydown', onKey); try { prev?.focus?.(); } catch { /* gone */ } };
   }, [onClose]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!entry?.captions_url) {
+      Promise.resolve().then(() => { if (!cancelled) { setCues([]); setActiveCue(-1); } });
+    } else {
+      fetch(entry.captions_url).then((r) => (r.ok ? r.text() : '')).then((t) => { if (!cancelled) { setCues(parseVtt(t)); setActiveCue(-1); } }).catch(() => {});
+    }
+    return () => { cancelled = true; };
+  }, [entry]);
 
   const transcriptUrl = entry?.transcript_url ?? null;
   useEffect(() => {
@@ -49,6 +84,12 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
     }
     return () => { cancelled = true; };
   }, [transcriptUrl]);
+
+  useEffect(() => {
+    if (activeCue >= 0 && cueRefs.current[activeCue]) {
+      cueRefs.current[activeCue].scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+    }
+  }, [activeCue, reduced]);
 
   const a = audioRef.current;
   const toggle = () => { if (!a) return; if (a.paused) { a.play(); } else { a.pause(); } };
@@ -76,7 +117,14 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
                 src={entry.audio_url}
                 onPlay={() => setPlaying(true)}
                 onPause={() => setPlaying(false)}
-                onTimeUpdate={(e) => setCur(e.currentTarget.currentTime)}
+                onTimeUpdate={(e) => {
+                  const t = e.currentTarget.currentTime;
+                  setCur(t);
+                  if (cues.length) {
+                    const idx = cues.findIndex((c) => t >= c.start && t < c.end);
+                    if (idx !== -1 && idx !== activeCue) setActiveCue(idx);
+                  }
+                }}
                 onLoadedMetadata={(e) => { setDur(e.currentTarget.duration); e.currentTarget.playbackRate = rate; }}
                 onError={() => setAudioErr(true)}
                 preload="metadata"
@@ -110,10 +158,32 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
                 </a>
               </div>
 
-              {transcript ? (
+              {(cues.length > 0 || transcript) ? (
                 <div className="border-t border-border-default pt-3">
-                  <h3 className="text-sm font-bold text-text-secondary mb-2">Transcript</h3>
-                  <div className="text-sm text-text-secondary whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed">{transcript}</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-text-secondary">{cues.length > 0 ? 'Captions' : 'Transcript'}</h3>
+                    {cues.length > 0 && (
+                      <button onClick={() => setShowCaptions((v) => !v)} className="text-xs text-text-muted hover:text-text-secondary">
+                        {showCaptions ? 'Hide sync' : 'Show sync'}
+                      </button>
+                    )}
+                  </div>
+                  {cues.length > 0 && showCaptions ? (
+                    <div className="max-h-60 overflow-y-auto space-y-1">
+                      {cues.map((c, i) => (
+                        <p
+                          key={i}
+                          ref={(el) => { cueRefs.current[i] = el; }}
+                          onClick={() => { if (a) a.currentTime = c.start; }}
+                          className={`text-sm leading-relaxed cursor-pointer rounded px-2 py-1 transition-colors ${i === activeCue ? 'bg-cyan-500/10 text-text-primary font-medium' : 'text-text-muted hover:bg-bg-elevated'}`}
+                        >
+                          {c.text}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-text-secondary whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed">{transcript}</div>
+                  )}
                 </div>
               ) : null}
             </div>
