@@ -107,6 +107,10 @@ class RoleChangeRequest(BaseModel):
 class JoinOrgRequest(BaseModel):
     user_id: str
 
+class SetGroupsRequest(BaseModel):
+    groups: List[str] = []
+    user_id: Optional[str] = None  # ignored; caller derived from token
+
 # -- Endpoints (ORDER MATTERS: /my and /join before /{org_id}) -------------
 
 @router.post("")
@@ -447,6 +451,41 @@ def remove_member(org_id: str, member_id: str, caller: str = Depends(get_current
     conn.commit()
     conn.close()
     return {"removed": True}
+
+
+@router.put("/{org_id}/members/{member_id}/groups")
+def set_member_groups(org_id: str, member_id: str, data: SetGroupsRequest,
+                      caller: str = Depends(get_current_user_id)):
+    """Replace a member's full group-tag list. Requires admin+."""
+    require_org_role(DB_PATH, org_id, caller, "admin")
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        is_member = conn.execute(
+            "SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?", [org_id, member_id]
+        ).fetchone()
+        if not is_member:
+            raise HTTPException(status_code=404, detail="Member not found in this organization")
+
+        # Normalize: trim, cap length 50, drop blanks, dedupe (preserve order), cap 20 tags
+        cleaned = []
+        for g in (data.groups or []):
+            name = (g or "").strip()[:50]
+            if name and name not in cleaned:
+                cleaned.append(name)
+        cleaned = cleaned[:20]
+
+        now = datetime.utcnow().isoformat()
+        conn.execute("DELETE FROM org_member_groups WHERE org_id = ? AND user_id = ?", [org_id, member_id])
+        for name in cleaned:
+            conn.execute(
+                "INSERT OR IGNORE INTO org_member_groups (org_id, user_id, group_name, created_at) "
+                "VALUES (?, ?, ?, ?)",
+                [org_id, member_id, name, now],
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return {"updated": True, "groups": cleaned}
 
 
 @router.get("/{org_id}/groups")
