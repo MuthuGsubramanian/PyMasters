@@ -17,8 +17,18 @@ backend/vaathiyaar/Modelfile.generated
 *.pyc
 .superpowers/
 .claude/
+# ...but DO track example templates
+!.env.example
+!**/.env.example
 
 # Terraform
 infra/terraform/.terraform/
 infra/terraform/*.tfstate*
 infra/terraform/terraform.tfvars
+
+# Local audit/scratch artifacts (kept on disk, not committed)
+_claude_audit/
+_archive/
+_*.py
+# Stray temp-path writes (Windows paths with drive letters captured as filenames)
+C:Users*
