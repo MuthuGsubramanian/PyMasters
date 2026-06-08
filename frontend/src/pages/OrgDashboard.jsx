@@ -479,12 +479,6 @@ export default function OrgDashboard() {
         } catch {
           /* analytics non-critical */
         }
-        try {
-          const progRes = await getOrgProgress(orgId, uid);
-          setProgress(progRes?.data?.students || []);
-        } catch {
-          /* progress non-critical */
-        }
       }
     } catch (err) {
       setError(safeErrorMsg(err, 'Failed to load organization'));
@@ -513,9 +507,11 @@ export default function OrgDashboard() {
     const orgId = getOrgId(activeOrg);
     const uid = user?.id;
     if (!orgId || !uid || !canViewProgress) return;
+    let cancelled = false;
     getOrgProgress(orgId, uid, groupFilter)
-      .then((res) => setProgress(res?.data?.students || []))
+      .then((res) => { if (!cancelled) setProgress(res?.data?.students || []); })
       .catch(() => { /* keep prior progress */ });
+    return () => { cancelled = true; };
   }, [groupFilter, refreshTick, activeOrg, user, canViewProgress]);
 
   // Auto-fetch user's orgs if none active
@@ -1174,7 +1170,7 @@ export default function OrgDashboard() {
                               <tr
                                 key={s.id}
                                 onClick={() => setOpenStudentId(s.id)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenStudentId(s.id); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenStudentId(s.id); } }}
                                 tabIndex={0}
                                 role="button"
                                 aria-label={`Open ${name} detail`}
