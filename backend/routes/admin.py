@@ -76,6 +76,19 @@ class PlanRequest(BaseModel):
     plan: str  # e.g. free | pro | enterprise
 
 
+class EditUserRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    account_type: Optional[str] = None
+
+class SuperAdminRequest(BaseModel):
+    value: bool
+
+class UserRoleRequest(BaseModel):
+    org_id: str
+    role: str
+
+
 @router.get("/check")
 def check(caller: str = Depends(optional_user_id)):
     """Lightweight gate so the frontend can decide whether to show the console."""
@@ -214,6 +227,125 @@ def user_view_as(target_id: str, caller: str = Depends(get_current_user_id)):
     conn.close()
     return {"profile": dict(u), "summary": {"xp": u["points"], "lessons_completed": len(lessons),
             "signals_7d": signals_7d}, "lessons": lessons, "mastery": mastery}
+
+
+@router.patch("/users/{target_id}")
+def edit_user(target_id: str, req: EditUserRequest, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    sets, vals, detail = [], [], {}
+    for f in ["name", "email", "account_type"]:
+        v = getattr(req, f, None)
+        if v is not None:
+            sets.append(f"{f} = ?"); vals.append(v.strip()); detail[f] = v.strip()
+    if sets:
+        vals.append(target_id)
+        conn.execute(f"UPDATE users SET {', '.join(sets)} WHERE id = ?", vals)
+        _audit(conn, caller, "user.edit", "user", target_id, detail)
+        conn.commit()
+    conn.close()
+    return {"ok": True, "updated": detail}
+
+
+@router.delete("/users/{target_id}")
+def delete_user(target_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    if target_id == caller:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+    conn = _conn()
+    row = conn.execute("SELECT username, email FROM users WHERE id = ?", [target_id]).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    if is_break_glass(row["username"], row["email"]):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Cannot delete a break-glass (env) super admin")
+    for tbl in ["org_members", "lesson_completions", "learning_signals", "user_mastery",
+                "generated_lessons", "module_generation_jobs", "notifications"]:
+        try:
+            conn.execute(f"DELETE FROM {tbl} WHERE user_id = ?", [target_id])
+        except Exception:
+            pass
+    try:
+        conn.execute("DELETE FROM playground_conversations WHERE user_id = ?", [target_id])
+    except Exception:
+        pass
+    conn.execute("DELETE FROM users WHERE id = ?", [target_id])
+    _audit(conn, caller, "user.delete", "user", target_id, {"username": row["username"]})
+    conn.commit()
+    conn.close()
+    return {"ok": True, "deleted": target_id}
+
+
+@router.post("/users/{target_id}/super-admin")
+def set_super_admin(target_id: str, req: SuperAdminRequest, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    row = conn.execute("SELECT username, email FROM users WHERE id = ?", [target_id]).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    if is_break_glass(row["username"], row["email"]):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Break-glass (env) admins are managed via env, not the console")
+    if target_id == caller and not req.value:
+        conn.close()
+        raise HTTPException(status_code=400, detail="You cannot remove your own super-admin access")
+    conn.execute("UPDATE users SET is_super_admin = ? WHERE id = ?", [1 if req.value else 0, target_id])
+    _audit(conn, caller, "user.super_admin", "user", target_id, {"value": bool(req.value)})
+    conn.commit()
+    conn.close()
+    return {"ok": True, "is_super_admin": bool(req.value)}
+
+
+@router.post("/users/{target_id}/role")
+def set_user_org_role(target_id: str, req: UserRoleRequest, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    if req.role not in ("super_admin", "admin", "manager", "member"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+    conn = _conn()
+    member = conn.execute("SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?",
+                          [req.org_id, target_id]).fetchone()
+    if not member:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User is not a member of that org")
+    conn.execute("UPDATE org_members SET role = ? WHERE org_id = ? AND user_id = ?",
+                 [req.role, req.org_id, target_id])
+    _audit(conn, caller, "user.role", "user", target_id, {"org_id": req.org_id, "role": req.role})
+    conn.commit()
+    conn.close()
+    return {"ok": True, "role": req.role}
+
+
+@router.post("/users/{target_id}/reset-password")
+def admin_reset_password(target_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    row = conn.execute("SELECT username, email FROM users WHERE id = ?", [target_id]).fetchone()
+    if not row:
+        conn.close(); raise HTTPException(status_code=404, detail="User not found")
+    identifier = (row["email"] or "").strip() or (row["username"] or "").strip()
+    if "@" not in identifier:
+        conn.close(); raise HTTPException(status_code=400, detail="User has no email on file; add one via Edit first")
+    _audit(conn, caller, "user.reset", "user", target_id, {"identifier": identifier})
+    conn.commit(); conn.close()
+    try:
+        from main import forgot_password, ForgotPasswordRequest
+        forgot_password(ForgotPasswordRequest(identifier=identifier))
+    except Exception as e:
+        print(f"[admin reset] send failed: {e}")
+    return {"ok": True}
+
+
+@router.post("/users/{target_id}/revoke-sessions")
+def revoke_sessions(target_id: str, caller: str = Depends(get_current_user_id)):
+    require_super_admin(caller)
+    conn = _conn()
+    conn.execute("UPDATE users SET token_version = COALESCE(token_version,0) + 1 WHERE id = ?", [target_id])
+    _audit(conn, caller, "user.revoke", "user", target_id, {})
+    conn.commit()
+    conn.close()
+    return {"ok": True}
 
 
 @router.get("/orgs")
