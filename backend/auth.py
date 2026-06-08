@@ -7,6 +7,7 @@ endpoints. Privileged endpoints derive the acting user from the verified token
 """
 
 import os
+import sqlite3
 import time
 
 from fastapi import Header, HTTPException
@@ -16,10 +17,24 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-insecure-secret-change-me")
 JWT_ALG = "HS256"
 JWT_TTL_SECONDS = 60 * 60 * 24 * 30  # 30 days
 
+DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
-def create_access_token(user_id: str, username: str = None) -> str:
+
+def _current_token_version(user_id: str):
+    """Returns the user's current token_version, or None if the user row is missing."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        row = conn.execute("SELECT COALESCE(token_version, 0) FROM users WHERE id = ?", [user_id]).fetchone()
+        conn.close()
+        return int(row[0]) if row else None
+    except Exception:
+        return 0
+
+
+def create_access_token(user_id: str, username: str = None, token_version: int = 0) -> str:
     now = int(time.time())
-    payload = {"sub": str(user_id), "username": username, "iat": now, "exp": now + JWT_TTL_SECONDS}
+    payload = {"sub": str(user_id), "username": username, "tv": int(token_version or 0),
+               "iat": now, "exp": now + JWT_TTL_SECONDS}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 
@@ -38,6 +53,11 @@ def _extract(authorization: str) -> str:
     sub = payload.get("sub")
     if not sub:
         raise HTTPException(status_code=401, detail="Invalid token")
+    current = _current_token_version(sub)
+    if current is None:
+        raise HTTPException(status_code=401, detail="Account no longer exists.")
+    if int(payload.get("tv") or 0) != current:
+        raise HTTPException(status_code=401, detail="Session ended. Please sign in again.")
     return sub
 
 
