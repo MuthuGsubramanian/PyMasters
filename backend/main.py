@@ -156,6 +156,13 @@ def init_db():
             print("Migrating DB: Adding plan column")
             cursor.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
 
+        if 'is_super_admin' not in col_names:
+            print("Migrating DB: Adding is_super_admin column")
+            cursor.execute("ALTER TABLE users ADD COLUMN is_super_admin INTEGER DEFAULT 0")
+        if 'token_version' not in col_names:
+            print("Migrating DB: Adding token_version column")
+            cursor.execute("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS password_resets (
                 token TEXT PRIMARY KEY,
@@ -550,6 +557,22 @@ def init_db():
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_omg_org_group ON org_member_groups(org_id, group_name)"
         )
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admin_audit (
+                id          TEXT PRIMARY KEY,
+                actor_id    TEXT NOT NULL,
+                actor_name  TEXT,
+                action      TEXT NOT NULL,
+                target_type TEXT,
+                target_id   TEXT,
+                detail      TEXT,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit(created_at)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_admin_audit_target ON admin_audit(target_type, target_id)")
+
         # One-time, idempotent backfill: seed group tags from existing department values
         cursor.execute("""
             INSERT OR IGNORE INTO org_member_groups (org_id, user_id, group_name)
