@@ -93,7 +93,7 @@ WHERE department IS NOT NULL AND TRIM(department) != '';
 
 - Default when absent: `"Group"`.
 - Lets a school relabel to "Class", a university to "Batch", an enterprise to "Team".
-- Editable via the existing `PUT /api/org/{org_id}` (settings merge — see §4.5). v1 may ship with default only and the setter; a settings UI control is a nice-to-have within polish.
+- Editable via the existing `PUT /api/org/{org_id}` (settings merge — see §4.5), surfaced as a small admin-only label input in the console so it is live-testable (flow #10). Default `"Group"` is used everywhere the key is absent.
 
 ### 3.4 Constraints / guardrails
 - `group_name`: trimmed; reject empty; max length **50**.
@@ -198,6 +198,7 @@ Right-side slide-over panel (Approach A). Contents:
 - **Skeleton loaders** for the roster and the drawer (replace bare spinners).
 - **Empty states:** "No students in this {label} yet," "No mastery data yet — {name} hasn't practiced," "Ungrouped" handling.
 - Theme-token parity (dark-mode correct), consistent focus rings, institutional microcopy using `group_label`.
+- Admin-only `group_label` input (e.g. on the Overview/settings area) so the org can relabel Groups → Class/Batch/Team.
 
 ---
 
