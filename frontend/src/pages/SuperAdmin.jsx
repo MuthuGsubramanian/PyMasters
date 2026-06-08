@@ -7,6 +7,7 @@ import {
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
+import OrgAdminDrawer from '../components/OrgAdminDrawer';
 import {
     Shield, Users, Building2, GraduationCap, Activity, Sparkles, TrendingUp,
     Search, Ban, CheckCircle2, Loader2, School, Briefcase, BookOpen, Lock,
@@ -142,6 +143,7 @@ export default function SuperAdmin() {
     const [denied, setDenied] = useState(false);
     const [busyId, setBusyId] = useState(null);
     const [openUserId, setOpenUserId] = useState(null);
+    const [openOrgId, setOpenOrgId] = useState(null);
     const [viewAsUser, setViewAsUser] = useState(null);
 
     useEffect(() => { document.title = 'Super Admin — PyMasters'; }, []);
@@ -336,7 +338,7 @@ export default function SuperAdmin() {
                                 </tr></thead>
                                 <tbody className="divide-y divide-border-default">
                                     {orgs.map((o) => (
-                                        <tr key={o.id} className="hover:bg-bg-elevated/50">
+                                        <tr key={o.id} onClick={() => setOpenOrgId(o.id)} className="hover:bg-bg-elevated/50 cursor-pointer">
                                             <td className="px-4 py-2.5 font-semibold text-text-primary">{o.name}</td>
                                             <td className="px-4 py-2.5"><span className="text-xs capitalize text-text-secondary">{o.type}</span></td>
                                             <td className="px-4 py-2.5 text-text-secondary">{o.member_count}</td>
@@ -350,6 +352,10 @@ export default function SuperAdmin() {
                         </div>
                     </div>
                 )
+            )}
+
+            {openOrgId && (
+                <OrgAdminDrawer adminId={user.id} orgId={openOrgId} onClose={() => setOpenOrgId(null)} onChanged={loadOrgs} />
             )}
 
             {/* ADMINS */}
