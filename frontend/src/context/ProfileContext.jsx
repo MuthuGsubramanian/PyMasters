@@ -1,42 +1,61 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api';
 import { useAuth } from './AuthContext';
+import { updateProfileSettings } from '../api';
 
 const ProfileContext = createContext();
 
 export function ProfileProvider({ children }) {
-    const { user } = useAuth();
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [language, setLanguageState] = useState(() => {
+    try { return localStorage.getItem('pm_language') || 'en'; } catch { return 'en'; }
+  });
 
-    const fetchProfile = async () => {
-        if (!user?.id) return;
-        setLoading(true);
-        try {
-            const res = await api.get(`/profile/${user.id}`);
-            setProfile(res.data);
-        } catch (err) {
-            console.error('Failed to fetch profile:', err);
-            setProfile(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchProfile = async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const res = await api.get(`/profile/${user.id}`);
+      setProfile(res.data);
+      const lang = res.data?.preferred_language;
+      if (lang) {
+        setLanguageState(lang);
+        try { localStorage.setItem('pm_language', lang); } catch { /* ignore */ }
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        fetchProfile();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.id]);
+  useEffect(() => {
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-    const refreshProfile = () => fetchProfile();
+  const setLanguage = (code) => {
+    if (!code) return;
+    setLanguageState(code);
+    try { localStorage.setItem('pm_language', code); } catch { /* ignore */ }
+    if (user?.id) {
+      updateProfileSettings(user.id, { preferred_language: code }).catch(() => { /* best-effort */ });
+    }
+    setProfile((p) => (p ? { ...p, preferred_language: code } : p));
+  };
 
-    return (
-        <ProfileContext.Provider value={{ profile, loading, refreshProfile }}>
-            {children}
-        </ProfileContext.Provider>
-    );
+  const refreshProfile = () => fetchProfile();
+
+  return (
+    <ProfileContext.Provider value={{ profile, loading, refreshProfile, language, setLanguage }}>
+      {children}
+    </ProfileContext.Provider>
+  );
 }
 
 export function useProfile() {
-    return useContext(ProfileContext);
+  return useContext(ProfileContext);
 }
