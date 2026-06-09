@@ -62,6 +62,23 @@ Also: consolidated the auto-generated `ai_engineering` bloat **361 → 124**.
 - Playwright/Chromium installed in `_claude_audit/pwtools/` (gitignored) for visual
   verification; screenshots under `_claude_audit/screenshots/`.
 
+## Update — curated paths + a critical seeding fix
+- Added **5 curated learning journeys** through the new tracks (AI-Assisted
+  Developer, Python Internals Mastery, Robust Python Engineering, Build a
+  Transformer, Practical Python Toolkit) — `backend/paths/definitions.py`. 20 paths total.
+- **Fixed silent prod seeding failure**: `init_db` committed AFTER calling
+  `seed_concepts`/`seed_paths`, so their separate connections hit "database is
+  locked" under Litestream/WAL and seeding was skipped every startup. Now commits
+  first (+ 30s busy_timeout). Prod went from a partial seed to the full
+  **233 concepts / 295 edges / 20 paths** — so the knowledge graph (recommendations,
+  concept maps) and any future path/concept additions now actually land in prod.
+
+## Final tally
+10 new unique tracks (66 lessons) + 5 curated paths · ai_engineering 361→124 ·
+catalogue 434 lessons / 0 broken · 3 real prod bugs fixed (trends, password
+recovery, seeding) · security hardened · struggle-aware tutoring · test suite
+127 passed · Home redesign + SEO · ~17 production deploys.
+
 ## Remaining opportunities (not blockers)
 - Decompose the 1300-line `Classroom.jsx` / `OrgDashboard.jsx` / `Profile.jsx`.
 - Roll `StateViews` out to more data pages (Trending, Paths, Challenges).
