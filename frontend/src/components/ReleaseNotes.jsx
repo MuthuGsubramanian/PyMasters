@@ -11,9 +11,55 @@ import {
     Route,
     Rocket,
     ChevronRight,
+    Cpu,
+    Zap,
+    ShieldCheck,
 } from 'lucide-react';
 
 const RELEASE_NOTES = [
+    {
+        version: '2.0.0',
+        date: '2026-06-09',
+        title: 'Four New Deep-Dive Tracks',
+        subtitle: 'Master AI-assisted development, Python internals, and transformers — taught hands-on, found nowhere else.',
+        features: [
+            {
+                icon: Sparkles,
+                title: 'Vibe-Coding Track',
+                description:
+                    'The dos & don’ts of building with AI: verify don’t trust, catch hallucinated APIs, stay the architect. 14 lessons.',
+                color: 'from-emerald-500 to-cyan-600',
+            },
+            {
+                icon: Cpu,
+                title: 'Python Internals Track',
+                description:
+                    'How Python really works — the object model, refcounting & GC, the GIL, descriptors, metaclasses. 10 lessons.',
+                color: 'from-violet-500 to-purple-600',
+            },
+            {
+                icon: BrainCircuit,
+                title: 'Transformers from Scratch',
+                description:
+                    'Build softmax, attention, and the transformer block by hand in pure Python. 8 lessons.',
+                color: 'from-amber-500 to-orange-600',
+            },
+            {
+                icon: Zap,
+                title: 'Async & Concurrency',
+                description:
+                    'The event loop, await/gather, async vs threads vs processes, structured concurrency. 5 lessons.',
+                color: 'from-blue-500 to-indigo-600',
+            },
+            {
+                icon: ShieldCheck,
+                title: 'Smarter, Safer Tutoring',
+                description:
+                    'Vaathiyaar now escalates help when you’re stuck, and the code sandbox is hardened.',
+                color: 'from-rose-500 to-pink-600',
+            },
+        ],
+    },
     {
         version: '1.0.0',
         date: '2026-03-29',
