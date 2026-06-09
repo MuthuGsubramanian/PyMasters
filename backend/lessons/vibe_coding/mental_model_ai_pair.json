@@ -1,0 +1,148 @@
+{
+  "id": "mental_model_ai_pair",
+  "topic": "mental_model_ai_pair",
+  "track": "vibe_coding",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "Your AI Pair: A Brilliant Intern With No Memory"
+  },
+  "description": {
+    "en": "To work well with a coding AI you need an accurate mental model of what it is: a pattern-matcher that predicts plausible text, not a reasoner that knows things. That single insight explains hallucinated APIs, confident wrong answers, and how to prompt around them."
+  },
+  "xp_reward": 80,
+  "next_unlock": "verify_dont_trust",
+  "story_variants": {
+    "en": "## A Brilliant Intern With No Memory and No Shame\n\nThe most useful way to picture your coding AI: an intern who has read **all** the code on the internet, types faster than you can think, is endlessly eager — and has **no memory of yesterday, no idea what's actually in your codebase, and no ability to feel uncertain.**\n\nThat last part is the dangerous one. A human junior dev who doesn't know an API will say \"hmm, let me check the docs.\" The AI will *never* do that on its own. It will produce something that **looks** exactly like the right answer, with the same confidence whether it's correct or invented.\n\n### Why It Hallucinates\n\nA large language model doesn't *look up* facts. It predicts the next most plausible token given everything so far. When you ask for `pandas` code, it generates text that *statistically resembles* correct pandas code. Usually that resemblance is so tight the code is correct. But sometimes the most plausible-looking method — `df.drop_duplicates_by('id')` — simply **doesn't exist.** It sounds right. Pandas has `drop_duplicates(subset='id')`. The model pattern-matched the vibe and missed.\n\nThis isn't a bug to be fixed. It's how the technology works. Plan around it.\n\n### What This Means In Practice\n\n| Because the AI... | You should... |\n|-------------------|---------------|\n| has no memory across chats | Re-supply context every session; don't assume it 'remembers' |\n| can't see your codebase | Paste the real function signatures and types it must use |\n| can't feel uncertain | Treat confident tone as zero evidence; verify anyway |\n| predicts plausible text | Be suspicious of any API/method you can't personally confirm |\n| has a knowledge cutoff | Assume it's behind on the newest library versions |\n\n### The Flip Side: It's Genuinely Brilliant\n\nNone of this means the AI is dumb. It will out-recall you on syntax, suggest approaches you didn't know, and write correct boilerplate instantly. The move isn't to distrust everything — it's to **calibrate**. Trust it like you'd trust a fast, well-read intern: lean on its speed and breadth, and put a check on anything that would hurt if it were wrong.\n\n> **Key idea:** The AI optimizes for *plausible*, not *true*. Your job is to supply the truth it can't see (your code, your constraints) and to be the one source of *certainty* in the loop. Hold that model and the rest of vibe coding becomes common sense."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "eager_intern",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "human_vs_ai",
+      "left": {
+        "label": "Human junior: 'I'm not sure, let me check the docs'",
+        "result": true
+      },
+      "right": {
+        "label": "AI: confidently invents df.drop_duplicates_by('id')",
+        "result": false
+      },
+      "description": {
+        "en": "The AI cannot feel uncertain. Confident tone is not evidence of correctness."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "id": "hallucination_demo",
+      "steps": [
+        {
+          "line": "# AI suggested this — looks perfect:",
+          "highlight": "comment",
+          "explanation": { "en": "Plausible, well-named, confidently offered" }
+        },
+        {
+          "line": "unique = df.drop_duplicates_by('id')",
+          "highlight": "drop_duplicates_by",
+          "explanation": { "en": "This method does not exist in pandas" }
+        },
+        {
+          "line": "# The real API:",
+          "highlight": "comment",
+          "explanation": { "en": "Close, but you have to know the difference" }
+        },
+        {
+          "line": "unique = df.drop_duplicates(subset='id')",
+          "highlight": "drop_duplicates",
+          "explanation": { "en": "Verify against docs, not against the vibe" }
+        }
+      ]
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "The AI optimizes for PLAUSIBLE, not TRUE.",
+        "You supply the truth it can't see.",
+        "You are the certainty in the loop."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An AI wrote this function to count unique words. It used a 'plausible' string method that doesn't exist (str has no .count_unique()). Fix it using real Python so it returns the number of distinct words. Expected output: 3"
+      },
+      "starter_code": "def unique_word_count(text):\n    words = text.split()\n    # AI wrote: return words.count_unique()  <- not a real method!\n    # Fix it using a real Python built-in:\n    return 0  # replace this line\n\nprint(unique_word_count(\"red blue red green blue\"))",
+      "expected_output": "3",
+      "hints": {
+        "en": [
+          "A set keeps only distinct items.",
+          "len(set(words)) gives the number of unique words.",
+          "Distinct words here: red, blue, green -> 3."
+        ]
+      },
+      "test_code": "assert unique_word_count('red blue red green blue') == 3\nassert unique_word_count('a a a') == 1\nassert unique_word_count('') == 0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does a coding AI confidently suggest methods that don't exist?"
+      },
+      "options": {
+        "en": [
+          "It is deliberately lying",
+          "It predicts plausible-looking text rather than looking up facts",
+          "Its internet connection failed",
+          "The library was uninstalled"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How much should the AI's confident tone increase your trust in an unfamiliar API it suggests?"
+      },
+      "options": {
+        "en": [
+          "A lot — confidence means it's sure",
+          "Not at all — it sounds equally confident when right or wrong",
+          "Somewhat",
+          "Only for standard-library code"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "The AI can't see your codebase. What's the best way to get code that fits it?"
+      },
+      "options": {
+        "en": [
+          "Hope it guesses your function names",
+          "Paste the real signatures, types, and constraints it must use",
+          "Ask it to remember last week's chat",
+          "Use a longer prompt with no specifics"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["llm_mental_model", "hallucination", "ai_assisted_development"],
+    "concepts_required": ["what_is_vibe_coding"],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 15,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}
