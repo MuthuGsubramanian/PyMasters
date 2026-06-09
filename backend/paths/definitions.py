@@ -359,6 +359,90 @@ PATH_DEFINITIONS = [
          "numpy", "pandas", "ml", "regression", "classification", "clustering",
          "neural_network", "cnn", "rnn", "transformer", "pytorch"],
     ),
+
+    # ── Curated journeys through the 2026 deep-dive tracks ──
+
+    _p(
+        "ai_assisted_developer",
+        "AI-Assisted Developer",
+        "Master building software with AI the right way — verify don't trust, catch hallucinated APIs, avoid silent security holes, and stay the architect.",
+        "bot",
+        "intermediate", "advanced",
+        "engineering",
+        10,
+        [
+            "what_is_vibe_coding", "mental_model_ai_pair", "verify_dont_trust",
+            "spec_first_prompting", "prompting_for_code", "tight_feedback_loops",
+            "the_hallucinated_api", "silent_security_holes", "copy_paste_debt", "when_not_to_vibe_code",
+            "debugging_with_ai", "refactoring_with_ai", "reviewing_ai_code", "staying_the_architect",
+        ],
+        ["ai_assisted_development", "verification", "prompting", "code_review", "security", "architecture"],
+    ),
+
+    _p(
+        "python_internals_mastery",
+        "Python Internals Mastery",
+        "Understand how CPython really works — the object model, the GIL, descriptors, metaclasses — then use it to write genuinely fast code.",
+        "cpu",
+        "advanced", "advanced",
+        "foundation",
+        12,
+        [
+            "how_python_objects_work", "reference_counting_gc", "mutability_and_aliasing", "interning_and_caching",
+            "names_scopes_closures", "the_gil", "how_imports_work",
+            "descriptors", "metaclasses", "dunder_protocols",
+            "measure_dont_guess", "complexity_that_matters", "choosing_data_structures",
+            "avoid_repeated_work", "readable_then_fast",
+        ],
+        ["object_model", "refcounting", "gil", "descriptors", "metaclasses", "performance", "complexity"],
+    ),
+
+    _p(
+        "robust_python_engineering",
+        "Robust Python Engineering",
+        "Write code that fails well and is easy to fix — disciplined exceptions, guaranteed cleanup, systematic debugging, and clean functional design.",
+        "shield",
+        "intermediate", "advanced",
+        "engineering",
+        11,
+        [
+            "exceptions_done_right", "custom_exceptions_and_chaining", "context_managers_and_cleanup", "retry_and_fallback",
+            "the_debugging_mindset", "reading_tracebacks", "narrow_it_down", "print_and_inspect", "defensive_programming",
+            "pure_functions_and_immutability", "map_filter_reduce", "functools_toolkit", "itertools_powerhouse", "composing_functions",
+        ],
+        ["error_handling", "resilience", "debugging", "functional", "pure_functions", "composition"],
+    ),
+
+    _p(
+        "build_a_transformer",
+        "Build a Transformer from Scratch",
+        "Implement the architecture behind modern AI by hand in pure Python — softmax, attention, multi-head, positional encoding, and the training objective.",
+        "brain",
+        "advanced", "advanced",
+        "ai",
+        8,
+        [
+            "softmax_from_scratch", "dot_product_attention", "self_attention", "multi_head_attention",
+            "positional_encoding", "the_transformer_block", "tokenization_embeddings", "how_transformers_learn",
+        ],
+        ["softmax", "attention", "self_attention", "transformers", "embeddings", "language_modeling"],
+    ),
+
+    _p(
+        "practical_python_toolkit",
+        "Practical Python Toolkit",
+        "The everyday skills that make you productive — regular expressions, files/JSON/CSV/dates, and asyncio concurrency.",
+        "wrench",
+        "intermediate", "advanced",
+        "foundation",
+        10,
+        [
+            "regex_fundamentals", "character_classes_and_quantifiers", "groups_and_capturing", "anchors_and_lookarounds", "regex_in_practice",
+            "reading_and_writing_files", "json_handling", "csv_processing", "working_with_dates", "building_a_data_pipeline",
+            "event_loop_and_coroutines", "awaiting_and_gather", "async_vs_threads_vs_processes", "common_async_pitfalls", "structured_concurrency",
+        ],
+        ["regex", "files", "json", "csv", "dates", "async", "concurrency"],
+    ),
 ]
 
 
