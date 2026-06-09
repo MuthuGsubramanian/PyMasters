@@ -1,0 +1,171 @@
+{
+  "id": "awaiting_and_gather",
+  "topic": "awaiting_and_gather",
+  "track": "async_concurrency",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "await and asyncio.gather: Running Things Concurrently"
+  },
+  "description": {
+    "en": "You wrote async code, sprinkled await everywhere, and it's no faster than the blocking version. The reason: awaiting coroutines one by one is still sequential. Learn what await really does, why awaits in a loop are slow for I/O, and how asyncio.gather schedules many coroutines at once and returns their results in order."
+  },
+  "xp_reward": 95,
+  "next_unlock": "async_vs_threads_vs_processes",
+  "story_variants": {
+    "en": "## The Slow Async Program\n\nYou converted your code to `async`. You `await` every network call. And yet fetching ten URLs takes ten times as long as fetching one. You did everything the tutorial said, so why is it sequential?\n\nBecause `await` does not mean \"run this in the background.\" It means **\"pause here until this finishes, and let the event loop do something else while I wait.\"** If there is nothing else *scheduled*, the loop has nothing else to do — so it just waits for your one call, then moves to the next line. Ten awaits in a row is ten waits in a row.\n\n## What `await` Actually Does\n\nA coroutine is a paused-able function. When you write `await something`, three things happen:\n\n1. The current coroutine **suspends** at that point.\n2. Control returns to the **event loop**, which is free to run any *other* ready coroutine.\n3. When the awaited thing completes, the loop **resumes** your coroutine right where it paused, with the result.\n\nThe critical detail: `await` only yields control. It does **not** start any other work for you. Calling `square(1)` creates a coroutine object — but nothing runs until something *awaits* it or *schedules* it.\n\n## Sequential awaits vs gather\n\nLook at the difference:\n\n```python\n# Sequential: each await finishes before the next starts\nr1 = await fetch(a)   # wait...\nr2 = await fetch(b)   # ...then wait again\nr3 = await fetch(c)   # ...then wait again\n# total time ~= a + b + c\n```\n\n```python\n# Concurrent: schedule all three, then wait once for all\nr1, r2, r3 = await asyncio.gather(fetch(a), fetch(b), fetch(c))\n# total time ~= max(a, b, c)\n```\n\n`asyncio.gather(*coros)` takes several awaitables, **schedules them all on the loop immediately**, and gives you a single awaitable that completes when *all* of them are done. While one is waiting on I/O, the others make progress. That is real concurrency.\n\n| | Sequential awaits | `asyncio.gather(*coros)` |\n|---|---|---|\n| Scheduling | One at a time, on demand | All at once, eagerly |\n| Total time (I/O) | Sum of every wait | About the longest single wait |\n| Result order | Source order (you assign each) | **Input order**, not finish order |\n| Failure | Stops at the failing await | Propagates first exception (or `return_exceptions=True`) |\n| Best for | Steps that depend on each other | Independent I/O tasks |\n\n## Order Is Preserved\n\nThe result you get back from `gather` is a list lined up with the **order you passed the coroutines in** — never the order they happened to finish. So `await asyncio.gather(square(1), square(2), square(3))` is always `[1, 4, 9]`, even if `square(3)` somehow finished first. You can rely on positional results without tracking which task completed when.\n\n## Scheduling Eagerly with create_task\n\n`asyncio.create_task(coro)` is the lower-level building block: it wraps a coroutine in a **Task** and schedules it on the loop *right now*, returning immediately. `gather` uses this under the hood. Use `create_task` when you want a coroutine running in the background while you do other things, then `await` the task later for its result.\n\n```python\nt = asyncio.create_task(fetch(a))   # starts now\n... do other work ...\nresult = await t                    # collect when needed\n```\n\n## The One Big Caveat: I/O Only\n\nConcurrency here comes entirely from coroutines **yielding while they wait**. `gather` makes things faster only when the work is **I/O-bound** — network, disk, sleeping — because that is when a coroutine hands control back to the loop.\n\nFor **CPU-bound** work (crunching numbers in pure Python), there is no waiting and nothing to yield. Gathering CPU-bound coroutines does **not** speed them up — they still run one after another on a single thread, and you've added overhead for nothing. For CPU work you need threads or processes, not `gather`. Async buys you concurrency for *waiting*, not for *computing*.\n\n> **Key idea:** `await` pauses the current coroutine and yields control to the event loop, but it does not start other work — so awaiting coroutines one by one is sequential. `asyncio.gather(*coros)` schedules them all at once and waits for all, returning results **in input order** regardless of who finished first. This is a win only for I/O-bound work, where coroutines yield while they wait; it does nothing for CPU-bound work."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "parallel_arrows",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "await_gather_model",
+      "nodes": [
+        {
+          "label": "await + gather",
+          "children": [
+            "await: pause coroutine, yield to the event loop",
+            "await does NOT start other work for you",
+            "Sequential awaits = one wait after another",
+            "gather(*coros): schedule all, wait for all",
+            "gather returns results in INPUT order",
+            "Helps I/O-bound work only, not CPU-bound"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "sequential_vs_gather",
+      "left": {
+        "label": "Sequential awaits: total time = sum of every wait (a + b + c)",
+        "result": false
+      },
+      "right": {
+        "label": "asyncio.gather(*coros): all scheduled at once, total time = the longest single wait",
+        "result": true
+      },
+      "description": {
+        "en": "For independent I/O tasks, gather overlaps the waiting. Results still come back in the order you passed the coroutines in."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "gather_order_demo",
+      "code": "import asyncio\n\nasync def square(n):\n    return n * n\n\nasync def main():\n    return await asyncio.gather(square(1), square(2), square(3))\n\nprint(asyncio.run(main()))",
+      "executionSteps": [
+        { "line": 7, "variables": { "coros": "square(1), square(2), square(3)" }, "output": "all three scheduled", "description": "gather schedules every coroutine on the loop at once." },
+        { "line": 7, "variables": { "results": "[1, 4, 9]" }, "output": "[1, 4, 9]", "description": "All complete; results come back in INPUT order, not finish order." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "await = pause + yield to the loop. It does NOT start other work.",
+        "Awaiting one-by-one is sequential; gather(*coros) runs them concurrently.",
+        "gather returns results in INPUT order — and only helps I/O-bound work."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Run several coroutines concurrently and collect their results in order. Given async def square(n): return n * n, finish main() so it gathers square(1), square(2), and square(3) with a single asyncio.gather call and returns their results. gather preserves INPUT order, so the result must be [1, 4, 9] — not whatever order they finished in. Expected output: [1, 4, 9]"
+      },
+      "starter_code": "import asyncio\n\nasync def square(n):\n    return n * n\n\nasync def main():\n    # TODO: schedule all three coroutines concurrently with ONE asyncio.gather\n    # call and return the list of results (in input order).\n    results = await asyncio.gather()  # fix this line\n    return results\n\nprint(asyncio.run(main()))",
+      "expected_output": "[1, 4, 9]",
+      "hints": {
+        "en": [
+          "Pass every coroutine to a single gather call: asyncio.gather(square(1), square(2), square(3)).",
+          "gather returns an awaitable, so you must await it: results = await asyncio.gather(...).",
+          "The results list lines up with the ORDER you passed the coroutines in, so square(1) -> 1, square(2) -> 4, square(3) -> 9.",
+          "asyncio.run(main()) drives the event loop and prints the returned list [1, 4, 9]."
+        ]
+      },
+      "test_code": "import asyncio\nresult = asyncio.run(main())\nassert result == [1, 4, 9], result\n# gather preserves INPUT order regardless of completion order:\nasync def _g(*coros):\n    return await asyncio.gather(*coros)\nassert asyncio.run(_g(square(3), square(1), square(2))) == [9, 1, 4]\nassert asyncio.run(_g(square(2), square(1))) == [4, 1]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does `await something` actually do?"
+      },
+      "options": {
+        "en": [
+          "It runs the awaited coroutine in a background thread",
+          "It pauses the current coroutine and yields control to the event loop until the awaited thing completes",
+          "It starts every other coroutine in the program",
+          "It blocks the whole interpreter until the result is ready"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is awaiting three I/O coroutines one after another slow?"
+      },
+      "options": {
+        "en": [
+          "await secretly adds extra delays between calls",
+          "Each await finishes before the next starts, so the total time is the sum of all three waits",
+          "Coroutines can only run one per second",
+          "The event loop refuses to run more than one coroutine ever"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "asyncio.gather(square(3), square(1), square(2)) returns what?"
+      },
+      "options": {
+        "en": [
+          "Results in finish order, which is unpredictable",
+          "[9, 1, 4] — results in the INPUT order you passed the coroutines",
+          "[1, 4, 9] — always sorted ascending",
+          "A single coroutine you still have to await again"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "For which kind of work does asyncio.gather actually make things faster?"
+      },
+      "options": {
+        "en": [
+          "CPU-bound work, because gather runs coroutines on multiple cores",
+          "I/O-bound work, because coroutines yield to the loop while they wait so the waits overlap",
+          "Any work at all, since gather always parallelizes",
+          "Only work wrapped in asyncio.create_task, never plain coroutines"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["await_semantics", "asyncio_gather", "concurrent_vs_sequential", "create_task", "io_bound_concurrency"],
+    "concepts_required": ["event_loop_and_coroutines"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}

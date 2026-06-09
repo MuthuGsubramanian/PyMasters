@@ -1,0 +1,171 @@
+{
+  "id": "async_vs_threads_vs_processes",
+  "topic": "async_vs_threads_vs_processes",
+  "track": "async_concurrency",
+  "module": "foundations",
+  "order": 3,
+  "title": {
+    "en": "asyncio vs Threads vs Processes: Choosing the Right Tool"
+  },
+  "description": {
+    "en": "Three concurrency models, three jobs. asyncio juggles thousands of awaitable I/O calls on one thread; threads handle blocking I/O libraries that don't speak async; processes give you true multi-core parallelism for CPU-bound work. Learn the one decision rule that picks the right tool every time."
+  },
+  "xp_reward": 95,
+  "next_unlock": "common_async_pitfalls",
+  "story_variants": {
+    "en": "## Three Tools, Not One Hammer\n\nNewcomers ask \"is asyncio faster than threads?\" — which is like asking whether a screwdriver is faster than a saw. They do different jobs. Python hands you **three** concurrency models, and picking the wrong one is how you end up with code that's slower, buggier, or both. The good news: the decision is almost mechanical once you understand what each tool actually does.\n\nThe whole game comes down to one question you ask about your workload first: **is it I/O-bound or CPU-bound?** I/O-bound work spends its life *waiting* — on a network response, a disk read, a database reply. CPU-bound work spends its life *computing* — hashing, resizing images, crunching numbers. Everything else follows from that split, and from the [GIL](the_gil): only one thread runs Python bytecode at a time.\n\n## asyncio: One Thread, Thousands of Waits\n\n`asyncio` runs a single thread with an **event loop**. Your coroutines voluntarily hand control back at each `await`, so while one network call is in flight, the loop starts the next, and the next — thousands of them interleaved on one thread. This is **cooperative** concurrency: no thread overhead, no lock contention, just one loop juggling waits.\n\nThe catch is the price of admission: **every library in the path must support `await`.** You need `aiohttp` instead of `requests`, an async database driver instead of a blocking one. If any call blocks the thread without awaiting, the *entire* loop freezes — every other coroutine stalls behind it. So asyncio is the champion for **massive I/O concurrency with async-aware libraries**: ten thousand HTTP requests, a chat server with 50k open sockets.\n\n## Threads: Preemptive, for Blocking Libraries\n\nThreads are the answer when your work is I/O-bound but your library **doesn't speak async**. The OS scheduler **preemptively** switches between threads, and crucially, the GIL is *released during blocking I/O* — so while one thread waits on a socket, another runs. You get real concurrency for waiting work without rewriting everything to be awaitable.\n\nThreads carry more overhead than coroutines (each has its own stack, context switches cost more), so you scale to hundreds, not hundreds of thousands. And because of the GIL, threads give you **no speedup for CPU-bound pure-Python work** — they just take turns on one core. Reach for threads when you have a blocking driver, a legacy SDK, or a synchronous library you can't replace.\n\n## Processes: True Parallelism for CPU Work\n\nWhen the work is **CPU-bound**, neither asyncio nor threads helps — both are pinned to a single core by the GIL. The fix is `multiprocessing` (or `ProcessPoolExecutor`): separate processes, each with its **own interpreter and its own GIL**. Eight processes on eight cores genuinely run in parallel.\n\nThe cost is real: each process has its own memory (no shared variables), startup is slower, and data must be **serialized and shipped between processes** (IPC). For heavy number-crunching, image processing, or model inference in pure Python, that cost is worth paying — it's the only way to use all your cores.\n\n## The Decision Table\n\n| Workload | Bound by | Library style | Right tool |\n|---|---|---|---|\n| 10k concurrent HTTP requests | I/O | async (`aiohttp`) | **asyncio** |\n| Query a blocking DB driver | I/O | blocking | **threads** |\n| Call a legacy synchronous SDK | I/O | blocking | **threads** |\n| Resize 1000 images / hash files | CPU | any | **processes** |\n| Crunch big matrices in pure Python | CPU | any | **processes** |\n| 50k open websockets | I/O | async | **asyncio** |\n\nRead it top to bottom and the rule writes itself.\n\n## The One Rule\n\n1. **CPU-bound?** -> **processes** (separate GILs = real parallelism).\n2. **I/O-bound with async-aware libraries?** -> **asyncio** (one thread, massive concurrency).\n3. **I/O-bound with blocking libraries?** -> **threads** (GIL released while waiting).\n\nThat's the entire decision. Note the order matters: rule out CPU-bound first, then choose between asyncio and threads based on whether your libraries support `await`.\n\n> **Key idea:** First ask CPU-bound or I/O-bound. CPU-bound work needs **processes** for true parallelism (each gets its own GIL). I/O-bound work needs **asyncio** when your libraries support `await` (thousands of waits on one thread) and **threads** when they're blocking (the GIL is released while waiting). Wrong tool, wrong outcome — but the rule never changes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "three_tools",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "three_models",
+      "nodes": [
+        {
+          "label": "Pick by workload",
+          "children": [
+            "CPU-bound -> processes (own GIL each, true parallelism)",
+            "I/O-bound + async libs -> asyncio (1 thread, 1000s of awaits)",
+            "I/O-bound + blocking libs -> threads (GIL freed while waiting)",
+            "GIL: only 1 thread runs bytecode at a time",
+            "Order: rule out CPU-bound first"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "async_vs_threads",
+      "left": {
+        "label": "asyncio: cooperative, 1 thread, scales to 10k+ waits — but every call must await",
+        "result": true
+      },
+      "right": {
+        "label": "threads: preemptive, works with BLOCKING libs — but ~hundreds, and no CPU speedup (GIL)",
+        "result": false
+      },
+      "description": {
+        "en": "Both serve I/O-bound work. asyncio wins on raw concurrency with async libraries; threads win when you can't rewrite a blocking library to be awaitable."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "choose_model_demo",
+      "code": "# Classify each workload, then choose:\nchoose_model(\"10k async HTTP requests\")     # asyncio\nchoose_model(\"CPU-heavy image processing\")  # processes\nchoose_model(\"blocking DB driver queries\")  # threads",
+      "executionSteps": [
+        { "line": 2, "variables": { "bound": "io", "libs": "async" }, "output": "asyncio", "description": "I/O-bound and the library awaits -> one event loop, thousands of calls." },
+        { "line": 3, "variables": { "bound": "cpu" }, "output": "processes", "description": "CPU-bound -> separate processes, each with its own GIL, real parallelism." },
+        { "line": 4, "variables": { "bound": "io", "libs": "blocking" }, "output": "threads", "description": "I/O-bound but the driver blocks -> threads; the GIL is released while waiting." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "CPU-bound?            -> processes (separate GILs, true parallelism)",
+        "I/O + async libs?     -> asyncio  (one thread, thousands of awaits)",
+        "I/O + blocking libs?  -> threads  (GIL freed while waiting)"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Be the dispatcher. Each workload is tagged with its true nature: whether it is CPU-bound or I/O-bound, and (for I/O) whether its libraries support async or are blocking. Apply the one rule: CPU-bound -> 'processes'; I/O-bound + async libs -> 'asyncio'; I/O-bound + blocking libs -> 'threads'. This is a classification exercise, so do NOT start any real threads, processes, or event loops. Write choose_model(workload) using the workloads table. With the given data, the demo prints the choice for '10k async HTTP requests'. Expected output: asyncio"
+      },
+      "starter_code": "# Each workload is tagged with (bound, libs):\n#   bound: 'cpu' or 'io'\n#   libs:  'async' or 'blocking'  (only meaningful for I/O work)\n# THE RULE:\n#   cpu                  -> 'processes'  (separate processes = separate GILs)\n#   io + async libraries -> 'asyncio'    (one thread, thousands of awaits)\n#   io + blocking libs   -> 'threads'    (GIL released while waiting)\nworkloads = {\n    \"10k async HTTP requests\":     (\"io\",  \"async\"),\n    \"CPU-heavy image processing\":  (\"cpu\", \"blocking\"),\n    \"blocking DB driver queries\":  (\"io\",  \"blocking\"),\n    \"50k open websockets\":         (\"io\",  \"async\"),\n    \"hash 1000 large files\":       (\"cpu\", \"blocking\"),\n    \"legacy synchronous SDK call\": (\"io\",  \"blocking\"),\n    \"crunch big matrices (pure Python)\": (\"cpu\", \"async\"),\n}\n\ndef choose_model(workload):\n    # TODO: look up (bound, libs) in `workloads` and apply THE RULE.\n    # 1) CPU-bound first -> 'processes'\n    # 2) else I/O + 'async'    -> 'asyncio'\n    # 3) else I/O + 'blocking' -> 'threads'\n    return \"\"\n\nprint(choose_model(\"10k async HTTP requests\"))",
+      "expected_output": "asyncio",
+      "hints": {
+        "en": [
+          "Unpack the tag first: bound, libs = workloads[workload].",
+          "Check CPU-bound BEFORE anything else: if bound == 'cpu': return 'processes'. Real parallelism needs separate processes (separate GILs).",
+          "If it's I/O-bound, the library style decides: 'async' -> 'asyncio' (one event loop, thousands of awaits), 'blocking' -> 'threads' (the GIL is released while waiting).",
+          "One clean shape: if bound == 'cpu': return 'processes'; return 'asyncio' if libs == 'async' else 'threads'."
+        ]
+      },
+      "test_code": "assert choose_model(\"10k async HTTP requests\") == \"asyncio\"\nassert choose_model(\"CPU-heavy image processing\") == \"processes\"\nassert choose_model(\"blocking DB driver queries\") == \"threads\"\nassert choose_model(\"50k open websockets\") == \"asyncio\"\nassert choose_model(\"hash 1000 large files\") == \"processes\"\nassert choose_model(\"legacy synchronous SDK call\") == \"threads\"\nassert choose_model(\"crunch big matrices (pure Python)\") == \"processes\"\nassert all(choose_model(w) in (\"asyncio\", \"threads\", \"processes\") for w in workloads)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the FIRST question you should ask to pick a concurrency model?"
+      },
+      "options": {
+        "en": [
+          "Is the workload CPU-bound or I/O-bound?",
+          "How many CPU cores does the machine have?",
+          "Is the code written in a function or a class?",
+          "Does the project already import asyncio?"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does asyncio require every call in the path to support `await`?"
+      },
+      "options": {
+        "en": [
+          "Because asyncio spawns one OS thread per coroutine",
+          "Because it runs a single event loop on one thread, so any blocking call freezes every other coroutine",
+          "Because await is faster than normal function calls",
+          "Because the GIL only releases for coroutines"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You have I/O-bound work but the only available database driver is blocking (no async support). What's the right tool?"
+      },
+      "options": {
+        "en": [
+          "asyncio, because all I/O-bound work belongs on the event loop",
+          "processes, because the driver is slow",
+          "threads, because the GIL is released during blocking I/O so other threads run while one waits",
+          "Nothing helps; blocking drivers can't be made concurrent"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why do processes (not threads or asyncio) give true parallelism for CPU-bound pure-Python work?"
+      },
+      "options": {
+        "en": [
+          "Processes skip the interpreter entirely",
+          "Each process has its own interpreter and its own GIL, so they run Python bytecode on multiple cores at once",
+          "Processes share memory so they avoid the GIL",
+          "asyncio and threads are simply older technologies"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["asyncio_event_loop", "threading_vs_multiprocessing", "io_bound_vs_cpu_bound", "cooperative_vs_preemptive", "choosing_concurrency_model"],
+    "concepts_required": ["awaiting_and_gather"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}
