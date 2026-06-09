@@ -1,0 +1,171 @@
+{
+  "id": "how_imports_work",
+  "topic": "how_imports_work",
+  "track": "python_internals",
+  "module": "execution_model",
+  "order": 3,
+  "title": {
+    "en": "How Imports Really Work: sys.modules, Caching & Circular Imports"
+  },
+  "description": {
+    "en": "Why does a module's top-level code run only once, no matter how many files import it? Because import finds, loads, executes, then CACHES the module object in sys.modules — and every later import just rebinds that cached object. Learn the real import steps, why module-level state behaves like a singleton, why circular imports blow up with partially-initialized modules, the difference between `import x` and `from x import y`, and how to import by name string with importlib."
+  },
+  "xp_reward": 95,
+  "next_unlock": "descriptors",
+  "story_variants": {
+    "en": "## The Surprise: Top-Level Code Runs Once\n\nPut a `print(\"loading!\")` at the top level of a module, then import that module from ten different files. How many times does `\"loading!\"` print? Once. Not ten times. That single fact is the doorway to understanding how Python's import system actually works — and why circular imports break in the strange way they do.\n\n## The Five Steps of an Import\n\nWhen you run `import json`, Python does five things in order:\n\n1. **Check the cache.** Look in `sys.modules` — a plain dict mapping module names to module objects. If `\"json\"` is already there, skip everything else and jump to step 5.\n2. **Find** the module. Finders locate the source: a `.py` file on `sys.path`, a built-in, a package, a zip, whatever.\n3. **Load & create** an empty module object, and — crucially — **insert it into `sys.modules` *before* running its code.** (Remember this; it's the key to circular imports.)\n4. **Execute** the module's top-level code, line by line, populating that module object's namespace with its functions, classes, and variables.\n5. **Bind** the name in *your* namespace to the module object.\n\nThe expensive work — finding and executing — happens only in steps 2-4, and only on the **first** import. Every import after that is just step 1 (cache hit) plus step 5 (bind the name). That is why top-level code runs exactly once.\n\n> **Key idea:** `import` executes a module's top-level code **once**, caches the resulting module object in `sys.modules`, and every later import just rebinds that same cached object. Module-level state is effectively a process-wide singleton.\n\n## Module State Is a Singleton\n\nBecause the module object is created once and reused, anything you define at module level is shared across the whole program. A module-level `_cache = {}`, a configured logger, a database connection — every file that imports the module sees the *same* object. This is the idiomatic Python way to build a singleton: just put it at module level. It is powerful, and it is a trap if you expected fresh state per import.\n\n## `import x` vs `from x import y`\n\nBoth run the *exact same* five steps — the whole module is always fully loaded and cached. They differ only in **what name they bind** in your namespace.\n\n| Aspect | `import json` | `from json import dumps` |\n|---|---|---|\n| Runs `json`'s top-level code? | Yes (once, then cached) | Yes (once, then cached) |\n| Name bound locally | `json` (the module) | `dumps` (one attribute) |\n| Access a member | `json.dumps(...)` | `dumps(...)` |\n| Sees later reassignment of the attribute? | Yes — `json.X` is looked up live | No — `X` is a snapshot of the binding at import time |\n| Vulnerable to circular-import gaps? | Less (you grab the module, use attrs later) | More (the attribute must already exist *now*) |\n\nThe last two rows matter for circular imports. `from x import y` demands that `y` **already exists** on module `x` at the moment the import line runs. `import x` only needs the module object to exist; you reach into it later, by which time it's usually finished loading.\n\n## Circular Imports: The Partially-Initialized Module\n\nNow the payoff. Suppose `a.py` does `import b` at its top, and `b.py` does `from a import thing` at its top. Watch the steps:\n\n1. Something imports `a`. Python creates an empty `a` module, **puts it in `sys.modules` immediately**, and starts running `a.py`.\n2. Line 1 of `a.py` is `import b`. Python starts running `b.py`.\n3. `b.py` says `from a import thing`. Python checks `sys.modules`, finds `a` — but `a` is only **partially initialized**: its top-level code hasn't reached the line that defines `thing` yet. So `thing` doesn't exist on `a`.\n4. **`ImportError: cannot import name 'thing' from partially initialized module 'a'`** — sometimes phrased as \"most likely due to a circular import.\"\n\nThe module is in `sys.modules` (so Python won't re-run it and loop forever), but it's a half-built object. `from a import thing` failed because it needed a name that wasn't defined yet.\n\n### How to Fix Circular Imports\n\n- **Move the import inside the function** that uses it. By the time the function actually *runs*, both modules have finished loading, so the name exists. This is the most common, lowest-friction fix.\n- **Use `import a` and reference `a.thing` lazily** instead of `from a import thing`. You bind the module early but only touch `thing` later, after it's defined.\n- **Restructure**: pull the shared thing into a third module both can import, breaking the cycle. The cleanest long-term fix.\n\n## Dynamic Imports with importlib\n\nSometimes the module name isn't known until runtime — it's a string from a config file or a plugin registry. You can't write `import that_string`. Instead use the standard library:\n\n```python\nimport importlib\nmod = importlib.import_module(\"math\")   # same as import math, but by string\nfunc = getattr(mod, \"factorial\")        # fetch an attribute by string name\nprint(func(5))                          # -> 120\n```\n\n`importlib.import_module` runs the identical five steps (cache included), so a dynamically imported module is the *same cached object* as a statically imported one. Pair it with `getattr` to pull functions out by name, and you have a clean plugin loader.\n\n> **Key idea:** Imports are find → load → **insert into sys.modules** → execute → bind. The early insertion is what makes circular imports surface as *partially-initialized* modules instead of infinite loops — and `from x import y` is fragile in a cycle because it needs `y` to exist right now. Defer the import or restructure, and reach for `importlib.import_module` when the name is a string."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "module_cache",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "import_steps_map",
+      "nodes": [
+        {
+          "label": "The 5 Steps of import x",
+          "children": [
+            "1. Check sys.modules cache (hit -> skip to bind)",
+            "2. Find the module on sys.path",
+            "3. Create empty module + INSERT into sys.modules",
+            "4. Execute top-level code ONCE",
+            "5. Bind the name in your namespace"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "import_vs_from",
+      "left": {
+        "label": "import json -> binds the MODULE; use json.dumps(...). Safer in cycles: you grab attrs later.",
+        "result": true
+      },
+      "right": {
+        "label": "from json import dumps -> binds ONE attribute; needs it to exist NOW. Fragile in circular imports.",
+        "result": false
+      },
+      "description": {
+        "en": "Both run the module's top-level code once and cache it. They differ only in which NAME gets bound in your namespace."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "circular_import_demo",
+      "code": "# a.py\nimport b              # (1) start loading b\nthing = \"A's thing\"   # defined AFTER the import\n\n# b.py\nfrom a import thing   # (2) a is half-built: 'thing' not defined yet!",
+      "executionSteps": [
+        { "line": 2, "variables": { "sys.modules": "{'a': <partial>}", "a.thing": "NOT YET DEFINED" }, "output": "loading b...", "description": "a is inserted into sys.modules immediately, THEN its code runs. It pauses at 'import b'." },
+        { "line": 6, "variables": { "sys.modules['a']": "<partially initialized>", "a.thing": "missing" }, "output": "ImportError: cannot import name 'thing' from partially initialized module 'a'", "description": "b asks for a.thing, but a hasn't reached that line yet. Fix: import inside a function, or use 'import a' and ref a.thing later." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "import runs top-level code ONCE, then caches the module in sys.modules.",
+        "Later imports just rebind the cached object -> module state is a singleton.",
+        "Circular import? You get a PARTIALLY initialized module, not a loop.",
+        "Dynamic name? importlib.import_module('math') + getattr(mod, 'factorial')."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Import a module by its NAME STRING at runtime. Sometimes you don't know which module you need until the program runs (a plugin name from config, say), so you can't write `import that_string`. Use importlib instead. Complete load_and_run(mod_name, func_name, arg): import the module with importlib.import_module(mod_name), grab the function off it with getattr(mod, func_name), call it with arg, and return the result. The demo imports the stdlib 'math' module and calls factorial(5). Expected output: 120"
+      },
+      "starter_code": "import importlib\n\ndef load_and_run(mod_name, func_name, arg):\n    # TODO: import the module named by the STRING mod_name\n    #   mod = importlib.import_module(mod_name)\n    # TODO: fetch the function named by func_name off that module\n    #   func = getattr(mod, func_name)\n    # TODO: call it with arg and return the result\n    return None\n\n# Dynamically import the stdlib 'math' module and call math.factorial(5).\nprint(load_and_run(\"math\", \"factorial\", 5))",
+      "expected_output": "120",
+      "hints": {
+        "en": [
+          "importlib.import_module(mod_name) runs the exact same import steps as `import math`, but takes the module name as a STRING — returning the (cached) module object.",
+          "getattr(mod, func_name) fetches an attribute by its string name: getattr(math_module, 'factorial') is the same as math_module.factorial.",
+          "Chain them: mod = importlib.import_module(mod_name); func = getattr(mod, func_name); return func(arg).",
+          "math.factorial(5) == 120 (5 * 4 * 3 * 2 * 1). The function should also work for other stdlib calls, e.g. load_and_run('math', 'sqrt', 144) -> 12.0."
+        ]
+      },
+      "test_code": "assert load_and_run(\"math\", \"factorial\", 5) == 120\nassert load_and_run(\"math\", \"factorial\", 0) == 1\nassert load_and_run(\"math\", \"sqrt\", 144) == 12.0\nassert load_and_run(\"math\", \"factorial\", 6) == 720\nimport sys\nassert \"math\" in sys.modules"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "You import the same module from ten different files. How many times does its top-level code execute?"
+      },
+      "options": {
+        "en": [
+          "Ten times — once per import statement",
+          "Once — the module object is cached in sys.modules and reused",
+          "Zero times until you call a function from it",
+          "It depends on how many threads are running"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is sys.modules?"
+      },
+      "options": {
+        "en": [
+          "A list of files on sys.path that Python will search",
+          "A dict cache mapping module names to already-loaded module objects",
+          "The set of built-in modules compiled into the interpreter",
+          "A log of every import statement in the program"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does a circular import raise 'cannot import name X from partially initialized module'?"
+      },
+      "options": {
+        "en": [
+          "Python forgot to add the module to sys.modules",
+          "The module was inserted into sys.modules before its code finished, so X isn't defined yet when the other module asks for it",
+          "Two modules can never import each other under any circumstances",
+          "The name X was deleted by the garbage collector"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You need to import a module whose name is a string only known at runtime. What do you use?"
+      },
+      "options": {
+        "en": [
+          "eval('import ' + name)",
+          "importlib.import_module(name)",
+          "sys.path.append(name)",
+          "__name__ = name"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["import_system", "sys_modules_cache", "circular_imports", "import_vs_from_import", "importlib_dynamic_import"],
+    "concepts_required": ["names_scopes_closures"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}
