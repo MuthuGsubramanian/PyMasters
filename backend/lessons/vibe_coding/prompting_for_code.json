@@ -1,0 +1,170 @@
+{
+  "id": "prompting_for_code",
+  "topic": "prompting_for_code",
+  "track": "vibe_coding",
+  "module": "practices",
+  "order": 3,
+  "title": {
+    "en": "Prompting for Code That Actually Works"
+  },
+  "description": {
+    "en": "A good code prompt isn't a magic incantation — it's engineering. Learn the five high-leverage ingredients (context, constraints, examples, interface-first, role/format) and exactly which class of failure each one removes."
+  },
+  "xp_reward": 85,
+  "next_unlock": "tight_feedback_loops",
+  "story_variants": {
+    "en": "## Prompting Is Engineering, Not Magic Words\n\nThere's a myth that getting good code out of an AI is about secret phrases — \"act as a senior engineer,\" \"think step by step,\" a sprinkle of *please*. It isn't. The model already knows how to write Python. What it *doesn't* know is the eleven specific facts about **your** code that make the difference between a snippet that drops in and a snippet that fights you for an hour.\n\nA good code prompt is just the act of handing over those eleven facts on purpose. Every vague prompt is a guess the model is forced to make, and every guess is a place it can be wrong. Loading the prompt removes the guesses. That's the whole game.\n\n### The lazy prompt vs the loaded prompt\n\nWatch what happens with the lazy version:\n\n```\nWrite a function to fetch a user's orders and total them.\n```\n\nThe model has to invent everything: what a user is, where orders live, what an order looks like, what \"total\" means, what library you use. It will confidently invent an ORM method that doesn't exist and a field named `order.price` when yours is `order.amount_cents`. It looks right. It isn't yours.\n\nNow the loaded version:\n\n```\nPython 3.11, no new dependencies (stdlib + the existing `db` module only).\nHere's the real code it must fit:\n\n    def get_orders(user_id: int) -> list[Order]: ...\n    @dataclass\n    class Order: id: int; amount_cents: int; refunded: bool\n\nWrite: def order_total(user_id: int) -> int\nReturn the sum of amount_cents for non-refunded orders, in cents.\nExample: orders [120 (ok), 80 (refunded), 50 (ok)] -> 170\nReturn just the function, no explanation.\n```\n\nSame model, same minute. The second prompt can only produce something close to right, because every place it *could* have guessed, you already answered.\n\n### The five ingredients\n\nEach ingredient removes a specific, predictable class of failure.\n\n1. **Context** — Paste the real function signatures, types, dataclasses, and the surrounding code the AI must fit into. The number-one failure of AI code is calling an API that doesn't exist or a field with the wrong name. The cure is not hoping; it's *showing it the real thing.*\n2. **Constraints** — State the language version, \"no new dependencies,\" performance limits, and style rules. Unstated constraints get violated by default — the model will happily `pip install` a library you don't want or use 3.12 syntax on your 3.9 runtime.\n3. **Examples** — Give concrete input -> output pairs. A single `[120, 80(refunded), 50] -> 170` pins the *shape and the meaning* of the answer better than a paragraph of prose. Examples kill the \"wrong shape\" failure: off-by-one units (dollars vs cents), wrong return type, edge cases the words didn't cover.\n4. **Interface-first** — Specify the exact signature you want back: `def order_total(user_id: int) -> int`. Now the result snaps into your codebase instead of arriving as `def calculate(data)` that you have to rewire.\n5. **Role / format** — Tell it what to hand back: just the function, or with a docstring, or with three pytest tests. This controls scope so you don't get a 200-line framework when you wanted six lines.\n\n| Ingredient | Failure it prevents |\n|------------|---------------------|\n| Context (real signatures & types) | Hallucinated API / wrong field names |\n| Constraints (version, no new deps) | Unwanted libraries, wrong-version syntax |\n| Examples (input -> output) | Wrong shape, wrong units, missed edge cases |\n| Interface-first (exact signature) | Code that won't drop into your codebase |\n| Role / format (just the fn / +tests) | Over- or under-scoped answers |\n\n### Why this is leverage, not bureaucracy\n\nWriting a loaded prompt feels slower for thirty seconds. But the thirty seconds you spend pasting a real type signature is thirty seconds the model *can't* spend hallucinating one. You are trading a tiny, certain cost up front for the elimination of a whole category of \"looks right, isn't\" bugs you'd otherwise debug at 3am.\n\nAnd notice the move underneath all five ingredients: you are converting your *implicit* knowledge — the stuff in your head about how your code works — into *explicit* text the model can act on. That conversion is the actual skill. The phrasing barely matters.\n\n> **Key idea:** Every ambiguity in your prompt is a guess the AI is forced to make, and every guess is a place it can be wrong. A good prompt isn't magic words — it's the deliberate act of replacing each guess with a fact: the real signature, the real constraint, the real example."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "blueprint",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "five_ingredients_map",
+      "nodes": [
+        {
+          "label": "A Loaded Code Prompt",
+          "children": [
+            "Context: real signatures & types",
+            "Constraints: version, no new deps",
+            "Examples: input -> output",
+            "Interface-first: exact signature",
+            "Role/format: just the fn / +tests"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "lazy_vs_loaded",
+      "left": {
+        "label": "Lazy: 'Write a function to total a user's orders' (model invents the API, fields, units)",
+        "result": false
+      },
+      "right": {
+        "label": "Loaded: real Order type + exact signature + example [120, 80 refunded, 50] -> 170",
+        "result": true
+      },
+      "description": {
+        "en": "Same model, same minute. The loaded prompt removes every guess — so the only thing the model can produce is something close to right."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "example_pins_shape",
+      "code": "# A concrete example pins units the words missed (cents, not dollars)\norders = [120, 80, 50]      # amount_cents\nrefunded = [False, True, False]\ntotal = sum(a for a, r in zip(orders, refunded) if not r)\nprint(total)",
+      "executionSteps": [
+        { "line": 4, "variables": { "orders": "[120, 80, 50]", "refunded": "[F, T, F]" }, "output": "", "description": "Sum only non-refunded: 120 + 50." },
+        { "line": 5, "variables": { "total": "170" }, "output": "170", "description": "The example '... -> 170' is what proved the shape and units were right." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Prompting for code is engineering, not magic words.",
+        "Every ambiguity is a guess the AI is forced to make.",
+        "Replace each guess with a fact: signature, constraint, example."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "A checkout bug traced back to a vague prompt: 'write round_price to round a price to 2 decimals.' The word 'round' was ambiguous, so the AI used Python's built-in round() — which does banker's rounding (round-half-to-even). That makes round_price(2.675) come out as 2.67 and round_price(0.125) as 0.12, and float repr makes it worse. The PRECISE spec the business actually needs is: round half-UP to exactly 2 decimal places. Rewrite round_price to meet that exact spec (hint: the decimal module with ROUND_HALF_UP is the reliable way). It must return a float. Expected output: 2.68 1.01 0.13 10.0"
+      },
+      "starter_code": "# AMBIGUOUS prompt -> wrong implementation.\n# The AI read 'round to 2 decimals' and reached for built-in round(),\n# which does banker's rounding (half-to-even), not half-up:\n#   round(2.675, 2) -> 2.67   (we need 2.68)\n#   round(0.125, 2) -> 0.12   (we need 0.13)\n#\n# PRECISE SPEC: round half-UP to exactly 2 decimal places, return a float.\ndef round_price(amount):\n    # TODO: replace this ambiguous implementation with the precise one.\n    return round(amount, 2)\n\nprint(round_price(2.675), round_price(1.005), round_price(0.125), round_price(10.0))",
+      "expected_output": "2.68 1.01 0.13 10.0",
+      "hints": {
+        "en": [
+          "Built-in round() uses round-half-to-even (banker's rounding), so it can't satisfy a half-UP spec.",
+          "Import the tools: from decimal import Decimal, ROUND_HALF_UP.",
+          "Build the Decimal from the string form of the number — Decimal(str(amount)) — so 2.675 isn't already corrupted by float before you round.",
+          "Quantize to 2 places, then convert back: float(Decimal(str(amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))."
+        ]
+      },
+      "test_code": "assert round_price(2.675) == 2.68\nassert round_price(1.005) == 1.01\nassert round_price(0.125) == 0.13\nassert round_price(10.0) == 10.0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "According to the lesson, what actually makes a code prompt good?"
+      },
+      "options": {
+        "en": [
+          "Polite phrasing and magic words like 'act as a senior engineer'",
+          "Replacing each guess the model is forced to make with a concrete fact about your code",
+          "Making the prompt as short as possible",
+          "Always asking for the longest possible answer"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Pasting the real function signatures and dataclasses (the 'Context' ingredient) primarily prevents which failure?"
+      },
+      "options": {
+        "en": [
+          "Code that runs too slowly",
+          "The model calling an API that doesn't exist or using the wrong field names",
+          "The model adding too many comments",
+          "Syntax errors in the prompt itself"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why include a concrete input -> output example like '[120, 80 refunded, 50] -> 170'?"
+      },
+      "options": {
+        "en": [
+          "It makes the AI respond faster",
+          "It pins the shape, units, and meaning of the answer better than a paragraph of prose",
+          "It is required by Python syntax",
+          "It replaces the need to verify the code"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "The challenge's round_price bug came from an ambiguous prompt. What was the root cause?"
+      },
+      "options": {
+        "en": [
+          "The AI was using an outdated model",
+          "'Round to 2 decimals' didn't specify half-up vs banker's rounding, so the AI guessed wrong",
+          "Python cannot round numbers at all",
+          "The function name was misspelled"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["prompt_engineering", "context_loading", "interface_first_prompting", "specification_precision"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}
