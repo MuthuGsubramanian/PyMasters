@@ -11,7 +11,7 @@ def db_path(tmp_path):
     path = str(tmp_path / "test.db")
     os.environ["DB_PATH"] = path
     import importlib
-    import backend.main as main_mod
+    import main as main_mod
     importlib.reload(main_mod)
     main_mod.init_db()
     return path
