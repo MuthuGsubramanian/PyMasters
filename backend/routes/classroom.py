@@ -81,6 +81,7 @@ class EvaluateRequest(BaseModel):
     expected_output: Optional[str] = ""
     lesson_id: Optional[str] = None
     topic: Optional[str] = None
+    attempt_count: Optional[int] = 0
 
 
 class DiagnosticRequest(BaseModel):
@@ -626,6 +627,7 @@ def evaluate(request: EvaluateRequest):
         expected_output=request.expected_output,
         student_profile=profile,
         lesson_context=lesson_context,
+        attempt_count=request.attempt_count or 0,
     )
 
     # Record the evaluation as a learning signal
