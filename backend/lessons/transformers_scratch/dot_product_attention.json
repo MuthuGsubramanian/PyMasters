@@ -1,0 +1,173 @@
+{
+  "id": "dot_product_attention",
+  "topic": "dot_product_attention",
+  "track": "transformers_scratch",
+  "module": "attention",
+  "order": 2,
+  "title": {
+    "en": "Scaled Dot-Product Attention: The Heart of the Transformer"
+  },
+  "description": {
+    "en": "Attention is the one idea the whole Transformer is built around. It lets every position look at every other position and pull in exactly the information it needs. In this lesson you derive the famous formula Attention(Q,K,V)=softmax(QKᵀ/√d)V piece by piece, walk a tiny numeric example by hand, then implement single-query attention in pure Python."
+  },
+  "xp_reward": 100,
+  "next_unlock": "self_attention",
+  "story_variants": {
+    "en": "## The Question Attention Answers\n\nImagine you are one word in a sentence — say the word *it* in \"The cat drank the milk because **it** was hungry.\" To understand yourself, you need to look back at the other words and decide which ones matter. *Cat* matters a lot. *Milk* matters a little. *The* barely matters at all. Attention is the precise, differentiable machinery that does exactly this looking-and-weighing.\n\nEvery position produces three vectors, and the names are the whole intuition:\n\n- **Query (Q)** — *what I am looking for.* The current position's question.\n- **Key (K)** — *what I offer.* Each position advertises itself with a key.\n- **Value (V)** — *what I actually give* if you decide to attend to me.\n\n> **Key idea:** Attention compares one Query against every Key to get relevance scores, turns those scores into weights that sum to 1, and returns a weighted blend of the Values. \"Look at everything, but pay attention in proportion to relevance.\"\n\n## Step 1 — Score with the Dot Product\n\nHow do we measure how well a Query matches a Key? The **dot product** Q·K. When two vectors point in a similar direction, their dot product is large; when they are unrelated (orthogonal), it is near zero. So Q·K is a natural *relevance* score: a high number means \"this key answers my query well.\"\n\nFor a query against several keys we compute one score per key. In matrix form that is QKᵀ — every query dotted with every key at once.\n\n## Step 2 — Scale by √d\n\nThere is a subtle problem. If the vectors have dimension `d`, the dot product sums `d` products, so as `d` grows the raw scores grow too — their variance scales with `d`. Large scores push softmax into a region where one weight is ≈ 1 and the rest are ≈ 0, and the gradients there are tiny (the model stops learning). The fix is one division:\n\n```\nscore = (Q · K) / √d\n```\n\nDividing by **√d** (the square root of the key dimension) keeps the scores in a sane range no matter how big `d` is. This is why the mechanism is called **scaled** dot-product attention.\n\n## Step 3 — Softmax into Weights\n\nScores can be any real numbers — negative, large, small. We need *weights*: all non-negative and summing to 1, so the output is a proper weighted average. That is exactly what **softmax** does:\n\n```\nweight_i = exp(score_i) / Σ_j exp(score_j)\n```\n\nThe biggest score gets the biggest weight, but every position still gets some share. (You built softmax from scratch in the previous lesson — you will reuse it here.)\n\n## Step 4 — Weighted Sum of Values\n\nFinally, blend the Values using those weights:\n\n```\noutput = Σ_i  weight_i · V_i\n```\n\nPositions you attended to strongly contribute most of their value; positions you ignored contribute almost nothing. That blended vector **is** the attention output. Stacking all four steps gives the formula every Transformer paper opens with:\n\n```\nAttention(Q, K, V) = softmax( Q Kᵀ / √d ) V\n```\n\n## A Tiny Example, By Hand\n\nLet `d = 4`, so `√d = 2`. One query against three key/value pairs:\n\n```\nQ  = [1, 0, 1, 0]\nK1 = [1, 0, 1, 0]   V1 = [10,  0]\nK2 = [0, 1, 0, 1]   V2 = [ 0, 10]\nK3 = [1, 1, 0, 0]   V3 = [ 5,  5]\n```\n\nWork the four steps across the table:\n\n| Key | Q·K (raw) | / √d (scaled) | softmax weight | weight × V |\n|-----|-----------|---------------|----------------|------------|\n| K1  | 2         | 1.0           | 0.5065         | [5.065, 0.000] |\n| K2  | 0         | 0.0           | 0.1863         | [0.000, 1.863] |\n| K3  | 1         | 0.5           | 0.3072         | [1.536, 1.536] |\n| **sum** |       |               | **1.0000**     | **[6.6008, 3.3992]** |\n\nThe query `[1,0,1,0]` is identical to K1, so K1 earns the largest weight (0.5065) and the output leans toward V1 = `[10, 0]`. The final blended vector is **`[6.6008, 3.3992]`** — and notice the weights sum to exactly 1, the signature of a valid attention distribution.\n\nThat is the entire mechanism. No magic, no neural-network mystery — a dot product, a divide, a softmax, and a weighted sum. Every other piece of the Transformer (multi-head attention, self-attention, cross-attention) is this same four-step core wired up in different ways. Master these four steps and you have understood the heart of the architecture."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "attention_flow",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "qkv_roles",
+      "nodes": [
+        {
+          "label": "Attention(Q,K,V) = softmax(QKᵀ/√d)V",
+          "children": [
+            "Query  -> what I am looking for",
+            "Key    -> what I offer (scored by Q·K)",
+            "Value  -> what I give (blended by weights)",
+            "softmax -> turn scores into weights summing to 1"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "why_scale",
+      "left": {
+        "label": "Unscaled: big d -> huge scores -> softmax saturates, gradients vanish",
+        "result": false
+      },
+      "right": {
+        "label": "Scaled by √d: scores stay sane -> healthy softmax & gradients",
+        "result": true
+      },
+      "description": {
+        "en": "Dividing by √d (the key dimension) keeps dot-product scores from blowing up as vectors get longer. This is why it is called SCALED dot-product attention."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "attention_walkthrough",
+      "code": "Q  = [1,0,1,0]\nK1 = [1,0,1,0]   # score = Q·K1 / √4\nK2 = [0,1,0,1]\nK3 = [1,1,0,0]\n# scaled scores -> softmax -> weighted sum of V\nout = attention(Q, [K1,K2,K3], [[10,0],[0,10],[5,5]])\nprint(out)",
+      "executionSteps": [
+        { "line": 1, "variables": { "Q": "[1,0,1,0]", "d": "4", "√d": "2" }, "output": "", "description": "Query asks its question; key dimension d=4 so scale factor is 2" },
+        { "line": 2, "variables": { "Q·K1": "2", "scaled": "1.0" }, "output": "", "description": "Q matches K1 exactly -> highest raw score 2, scaled to 1.0" },
+        { "line": 3, "variables": { "Q·K2": "0", "scaled": "0.0" }, "output": "", "description": "Q is orthogonal to K2 -> score 0" },
+        { "line": 4, "variables": { "Q·K3": "1", "scaled": "0.5" }, "output": "", "description": "Partial overlap with K3 -> middling score 0.5" },
+        { "line": 6, "variables": { "weights": "[0.5065, 0.1863, 0.3072]" }, "output": "", "description": "softmax turns scores into weights that sum to 1.0" },
+        { "line": 7, "variables": { "out": "[6.6008, 3.3992]" }, "output": "[6.6008, 3.3992]", "description": "Weighted sum of Values, leaning toward V1 since K1 won most weight" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Attention(Q,K,V) = softmax(QKᵀ/√d)V",
+        "Dot product = relevance.  /√d = keep it sane.",
+        "softmax = weights summing to 1.  Weighted Values = output."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement scaled dot-product attention for a SINGLE query against several key/value pairs — pure Python, lists and the math module only, NO numpy. Follow the four steps: (1) score each key with the dot product Q·K, (2) divide each score by √d where d = len(query), (3) turn the scaled scores into weights with softmax, (4) return the weighted sum of the value vectors. A `softmax` helper and a `dot` helper are provided. Complete `attention(query, keys, values)` so it returns the output VALUE vector (a list). With the given tiny integer inputs the query [1,0,1,0] matches K1 exactly, so the output leans toward V1. Expected output: [6.6008, 3.3992]"
+      },
+      "starter_code": "import math\n\ndef softmax(scores):\n    m = max(scores)\n    exps = [math.exp(s - m) for s in scores]\n    total = sum(exps)\n    return [e / total for e in exps]\n\ndef dot(a, b):\n    return sum(x * y for x, y in zip(a, b))\n\ndef attention(query, keys, values):\n    d = len(query)\n    scale = math.sqrt(d)\n    # Step 1+2: scaled score for each key  -> scores = [ (Q·K)/√d for each K ]\n    scores = None  # TODO\n    # Step 3: scores -> weights that sum to 1\n    weights = None  # TODO\n    # Step 4: weighted sum of the value vectors -> output list\n    out = [0.0] * len(values[0])\n    # TODO: accumulate weight_i * V_i into out\n    return out\n\n# --- demo (do not change) ---\nquery = [1, 0, 1, 0]\nkeys = [[1, 0, 1, 0], [0, 1, 0, 1], [1, 1, 0, 0]]\nvalues = [[10, 0], [0, 10], [5, 5]]\n\nout = attention(query, keys, values)\nprint([round(x, 4) for x in out])",
+      "expected_output": "[6.6008, 3.3992]",
+      "hints": {
+        "en": [
+          "Step 1+2 in one comprehension: scores = [dot(query, k) / scale for k in keys]. With d=4, scale=2.",
+          "Step 3 is just the helper: weights = softmax(scores). These weights are non-negative and sum to 1.",
+          "Step 4: loop over (w, v) in zip(weights, values); for each component index i do out[i] += w * v[i].",
+          "Q=[1,0,1,0] equals K1, so Q·K1=2 (scaled 1.0) is the top score and the output is pulled toward V1=[10,0]."
+        ]
+      },
+      "test_code": "out = attention([1, 0, 1, 0], [[1, 0, 1, 0], [0, 1, 0, 1], [1, 1, 0, 0]], [[10, 0], [0, 10], [5, 5]])\nassert len(out) == 2\nassert [round(x, 4) for x in out] == [6.6008, 3.3992]\n\ndef _weights(query, keys):\n    scale = math.sqrt(len(query))\n    return softmax([dot(query, k) / scale for k in keys])\n\nw = _weights([1, 0, 1, 0], [[1, 0, 1, 0], [0, 1, 0, 1], [1, 1, 0, 0]])\nassert abs(sum(w) - 1.0) < 1e-9\nassert all(x >= 0 for x in w)\nassert w[0] == max(w)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In attention, what do the Query, Key, and Value vectors represent intuitively?"
+      },
+      "options": {
+        "en": [
+          "Input, hidden, and output layers of a network",
+          "Query = what I'm looking for, Key = what I offer, Value = what I give if attended to",
+          "Three copies of the same vector used for redundancy",
+          "Learning rate, momentum, and weight decay"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is the dot product Q·K used as the relevance score between a query and a key?"
+      },
+      "options": {
+        "en": [
+          "Because it is the only operation a computer can do quickly",
+          "Because it is large when the two vectors point in similar directions and near zero when they are unrelated",
+          "Because it always returns a probability between 0 and 1",
+          "Because it averages the two vectors"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are the scores divided by √d before the softmax?"
+      },
+      "options": {
+        "en": [
+          "To convert the scores into integers",
+          "Because as the dimension d grows, raw dot products grow too; √d keeps scores in a range where softmax doesn't saturate and gradients stay healthy",
+          "To make the output sum to 1",
+          "It is optional and has no real effect"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "After softmax produces the attention weights, how is the final output computed?"
+      },
+      "options": {
+        "en": [
+          "By taking the Key with the single highest weight",
+          "By averaging all the Query vectors",
+          "As the weighted sum of the Value vectors, using the softmax weights",
+          "By multiplying all the weights together"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["scaled_dot_product_attention", "query_key_value", "attention_weights", "dot_product_similarity", "softmax_weighting"],
+    "concepts_required": ["softmax_from_scratch"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}
