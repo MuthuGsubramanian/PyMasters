@@ -1,0 +1,120 @@
+{
+  "id": "all_minilm_l6_v2_local_semantic_search",
+  "topic": "all_minilm_l6_v2_local_semantic_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Build Local Semantic Search with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Build a fully offline semantic search engine using sentence-transformers/all-MiniLM-L6-v2 — encode a corpus into 384-dim vectors, rank results by cosine similarity, and run it CPU/ONNX-friendly like Homie's RAG embedding layer."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Search That Understands Meaning, Not Just Words\n\nVaathiyaar here! Keyword search has a fatal flaw: ask it for \"how to make my code faster\" and it misses a document titled \"performance optimization techniques\" — zero shared words, identical meaning. Semantic search fixes this by comparing *meaning vectors* instead of matching strings. And you don't need a cloud API to do it. `sentence-transformers/all-MiniLM-L6-v2` is an 80MB model that turns any sentence into a 384-dimensional vector at ~14,000 sentences/sec on a plain CPU. It's the exact embedding backbone Homie's RAG layer uses, precisely because it runs CPU/ONNX-friendly with no GPU, no API key, and no internet.\n\nIn this lesson you'll build a complete local semantic search engine from scratch: encode a corpus once, then answer queries by ranking documents on cosine similarity.\n\n### Why all-MiniLM-L6-v2 for Local Search?\n\n| Criterion | all-MiniLM-L6-v2 | Keyword (BM25) | API Embeddings |\n|---|---|---|---|\n| Understands synonyms | Yes | No | Yes |\n| Runs offline | Yes | Yes | No |\n| Model size | 80 MB | ~0 | N/A (cloud) |\n| Vector dimensions | 384 | N/A | 1536 |\n| Speed on CPU | ~14K sent/sec | Very fast | Network-bound |\n| Cost | Free forever | Free | Per token |\n\nFor internal docs, FAQ bots, note search, or a RAG retrieval layer, MiniLM hits the sweet spot of quality, speed, and portability.\n\n### How Semantic Search Works\n\nThree steps, always the same:\n\n1. **Index** — encode every document into a normalized vector, once.\n2. **Query** — encode the incoming query into the same vector space.\n3. **Rank** — score query-vs-documents by cosine similarity, return the top matches.\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ncorpus = [\n    \"How to optimize Python code for performance\",\n    \"Baking the perfect sourdough bread at home\",\n    \"Understanding async and await in Python\",\n]\ndoc_emb = model.encode(corpus, normalize_embeddings=True)\n\nquery = \"make my program run faster\"\nq_emb = model.encode(query, normalize_embeddings=True)\n\nhits = util.semantic_search(q_emb, doc_emb, top_k=2)[0]\nfor h in hits:\n    print(f\"{h['score']:.3f}  {corpus[h['corpus_id']]}\")\n```\n\nNotice the top hit is the performance document despite sharing *no words* with the query — meaning won over vocabulary.\n\n### Running CPU/ONNX-Friendly (the Homie way)\n\nThe same model loads on an ONNX backend for a 2-3x CPU speedup with identical output:\n\n```python\nmodel = SentenceTransformer(\n    \"all-MiniLM-L6-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n```\n\nBecause embeddings are normalized, cosine similarity is just a dot product — one matrix-vector multiply scores your whole corpus in microseconds. Persist `doc_emb` with `np.save` and your search engine reloads in milliseconds, no re-encoding.\n\n> **Key Insight:** Semantic search = encode once, then rank by cosine similarity. all-MiniLM-L6-v2 makes it free, offline, and fast enough for CPU — 80MB, 384 dims, 14K sent/sec. Normalize your embeddings so similarity becomes a cheap dot product, cache the index to disk, and you have the same retrieval backbone that powers production RAG systems like Homie."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Keyword search matches strings; semantic search matches meaning. Ask for 'make my code faster' and it finds 'performance optimization' with zero shared words. all-MiniLM-L6-v2 makes this free and offline: 80MB, 384-dim vectors, ~14K sentences/sec on CPU — the same engine behind Homie's RAG retrieval.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ncorpus = [\n    \"How to optimize Python code for performance\",\n    \"Baking the perfect sourdough bread at home\",\n    \"Understanding async and await in Python\",\n    \"A beginner's guide to machine learning\",\n]\n\ndoc_emb = model.encode(corpus, normalize_embeddings=True)\nprint(f\"Indexed {doc_emb.shape[0]} docs, {doc_emb.shape[1]} dims\")\n\nquery = \"make my program run faster\"\nq_emb = model.encode(query, normalize_embeddings=True)\n\nhits = util.semantic_search(q_emb, doc_emb, top_k=2)[0]\nfor h in hits:\n    print(f\"{h['score']:.3f}  {corpus[h['corpus_id']]}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer (the model wrapper) and util (helper functions like semantic_search). Install with: pip install sentence-transformers."},
+        {"line": 3, "explanation": "Load all-MiniLM-L6-v2 — an 80MB download on first run, cached locally afterward. Runs entirely on CPU, no GPU needed."},
+        {"line": 5, "explanation": "Define the corpus — the documents you want to make searchable. In production these are chunks from docs, wikis, or a database."},
+        {"line": 12, "explanation": "Encode the whole corpus in one batch call. normalize_embeddings=True makes every vector unit-length so cosine similarity becomes a plain dot product."},
+        {"line": 13, "explanation": "doc_emb is a (4, 384) matrix — four documents, each a 384-dimensional meaning vector. This is your search index."},
+        {"line": 15, "explanation": "The user's query. Note it shares no words with the performance document — keyword search would miss it entirely."},
+        {"line": 16, "explanation": "Encode the query into the same 384-dim space, with the same normalization, so it's directly comparable to the documents."},
+        {"line": 18, "explanation": "util.semantic_search ranks the query against all documents and returns the top_k matches as {corpus_id, score} dicts."},
+        {"line": 19, "explanation": "Iterate the hits. The top result is the performance doc despite zero shared words — meaning beat vocabulary. That's semantic search."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\nimport os\n\nclass SemanticSearch:\n    def __init__(self, model_name=\"all-MiniLM-L6-v2\"):\n        self.model = SentenceTransformer(model_name)\n        self.corpus = []\n        self.embeddings = None\n\n    def index(self, documents):\n        self.corpus = documents\n        self.embeddings = self.model.encode(documents, normalize_embeddings=True)\n\n    def save(self, path=\"search_index.npy\"):\n        np.save(path, self.embeddings)\n\n    def load(self, path, documents):\n        self.corpus = documents\n        self.embeddings = np.load(path)\n\n    def search(self, query, top_k=3):\n        q = self.model.encode(query, normalize_embeddings=True)\n        scores = np.dot(self.embeddings, q)\n        order = np.argsort(scores)[::-1][:top_k]\n        return [{\"doc\": self.corpus[i], \"score\": float(scores[i])} for i in order]\n\nengine = SemanticSearch()\nengine.index([\"reset my password\", \"update billing info\", \"cancel subscription\"])\nfor r in engine.search(\"I forgot my login\", top_k=1):\n    print(f\"{r['score']:.3f}  {r['doc']}\")",
+      "steps": [
+        {"line": 5, "explanation": "Wrap the model in a reusable class. You index once, then search many times — this pattern keeps the model loaded and the index in memory."},
+        {"line": 7, "explanation": "Load the model a single time at construction. Loading takes ~1 second; each search takes milliseconds, so reuse one instance."},
+        {"line": 11, "explanation": "index() encodes the corpus into normalized vectors and stores both the text and its embeddings — the searchable index."},
+        {"line": 15, "explanation": "save() persists the embedding matrix with np.save. A 10K-document index is only ~15MB at 384 dimensions."},
+        {"line": 18, "explanation": "load() reloads the matrix from disk so you skip re-encoding on restart — your engine is ready in milliseconds."},
+        {"line": 22, "explanation": "search() encodes the query and computes a dot product against all document vectors at once — that's cosine similarity for normalized vectors."},
+        {"line": 24, "explanation": "argsort + reverse + slice picks the indices of the top_k highest scores. Simple and fast for small-to-medium corpora."},
+        {"line": 29, "explanation": "Query 'I forgot my login' best matches 'reset my password' — semantic intent, not keyword overlap. Exactly what an FAQ bot needs."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Keyword Search (BM25 / LIKE)",
+      "right_label": "Semantic Search (MiniLM-L6-v2)",
+      "items": [
+        {"left": "Matches only exact words", "right": "Matches meaning and synonyms"},
+        {"left": "'login' won't find 'password reset'", "right": "Intent-aware: bridges vocabulary gaps"},
+        {"left": "No model, instant setup", "right": "80MB model, runs offline on CPU"},
+        {"left": "Fails on paraphrases", "right": "Robust to rephrasing and word order"},
+        {"left": "No embeddings to store", "right": "384-dim vectors, ~15MB per 10K docs"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built a local semantic search engine — index, query, rank by cosine similarity — fully offline with all-MiniLM-L6-v2!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MiniSemanticSearch` class that mimics an embedding-based search engine using word-frequency vectors. Implement `_encode(text)` returning a lowercase word-frequency dict, `_cosine(a, b)` computing cosine similarity between two frequency dicts (return 0.0 if either has zero magnitude), and `search(query, top_k)` returning the top-k documents as {\"doc\": str, \"score\": float} sorted by score descending. Index the corpus in __init__."
+      },
+      "starter_code": "import math\n\nclass MiniSemanticSearch:\n    def __init__(self, corpus: list[str]):\n        self.corpus = corpus\n        self.vectors = [self._encode(d) for d in corpus]\n\n    def _encode(self, text: str) -> dict:\n        # Lowercase, split on whitespace, count words into a dict\n        pass\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        # Dot product over shared keys / (magnitude_a * magnitude_b)\n        # Return 0.0 if either magnitude is zero\n        pass\n\n    def search(self, query: str, top_k: int = 2) -> list[dict]:\n        # Encode query, score against every document vector,\n        # return top_k as {\"doc\": str, \"score\": float} sorted descending\n        pass\n\n# Test it:\nengine = MiniSemanticSearch([\n    \"reset my account password\",\n    \"update my billing information\",\n    \"how to optimize python performance\",\n    \"make my python code run faster\",\n])\n\nresults = engine.search(\"speed up my python program\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] >= results[1][\"score\"])\nprint(\"python\" in results[0][\"doc\"])",
+      "expected_output": "2\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "_encode(): words = text.lower().split(); then vec[w] = vec.get(w, 0) + 1 for each word",
+          "_cosine(): dot = sum(a[w]*b[w] for w in set(a) & set(b)); divide by product of sqrt(sum(v**2)) of each vector",
+          "search(): build [{'doc': d, 'score': self._cosine(qvec, v)} ...], then sorted(..., key=lambda r: r['score'], reverse=True)[:top_k]"
+        ]
+      },
+      "test_code": "e = MiniSemanticSearch([\"hello world\", \"goodbye world\", \"hello friend\"])\nassert e._encode(\"Hello hello WORLD\") == {\"hello\": 2, \"world\": 1}\nassert e._cosine({\"a\": 1}, {\"b\": 1}) == 0.0\nassert abs(e._cosine({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1}) - 1.0) < 1e-6\nassert e._cosine({}, {\"a\": 1}) == 0.0\nr = e.search(\"hello\", top_k=2)\nassert len(r) == 2\nassert r[0][\"score\"] >= r[1][\"score\"]\nassert all(\"doc\" in x and \"score\" in x for x in r)\nassert r[0][\"score\"] > 0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RankedRetriever` class that returns search results with formatted output. It reuses the word-frequency cosine approach (provided). Implement `top_match(query)` returning just the single best document string (or None if the corpus is empty), and `format_results(query, top_k)` returning a string with one line per result formatted as '{rank}. [{score:.2f}] {doc}' starting at rank 1, sorted by score descending."
+      },
+      "starter_code": "import math\n\nclass RankedRetriever:\n    def __init__(self, corpus: list[str]):\n        self.corpus = corpus\n        self.vectors = [self._encode(d) for d in corpus]\n\n    def _encode(self, text: str) -> dict:\n        vec = {}\n        for w in text.lower().split():\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        shared = set(a) & set(b)\n        dot = sum(a[w] * b[w] for w in shared)\n        ma = math.sqrt(sum(v**2 for v in a.values()))\n        mb = math.sqrt(sum(v**2 for v in b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def _ranked(self, query: str) -> list[dict]:\n        q = self._encode(query)\n        scored = [{\"doc\": d, \"score\": self._cosine(q, v)}\n                  for d, v in zip(self.corpus, self.vectors)]\n        return sorted(scored, key=lambda r: r[\"score\"], reverse=True)\n\n    def top_match(self, query: str):\n        # Return the single best-matching document string, or None if corpus is empty\n        pass\n\n    def format_results(self, query: str, top_k: int = 3) -> str:\n        # Return one line per result: '{rank}. [{score:.2f}] {doc}' starting at rank 1\n        # Join lines with '\\n'\n        pass\n\n# Test it:\nr = RankedRetriever([\n    \"python web development with flask\",\n    \"data science with pandas and numpy\",\n    \"build rest apis in python\",\n])\nprint(r.top_match(\"how to build an api\"))\nprint(r.format_results(\"python data analysis\", top_k=2))",
+      "expected_output": "build rest apis in python\n1. [0.26] python web development with flask\n2. [0.26] build rest apis in python",
+      "hints": {
+        "en": [
+          "top_match(): if not self.corpus return None; otherwise return self._ranked(query)[0]['doc']",
+          "format_results(): take self._ranked(query)[:top_k], then enumerate(results, start=1)",
+          "Build each line with an f-string: f\"{i}. [{res['score']:.2f}] {res['doc']}\" and join with '\\n'"
+        ]
+      },
+      "test_code": "r = RankedRetriever([\"alpha beta\", \"beta gamma\", \"gamma delta\"])\nassert r.top_match(\"beta\") in (\"alpha beta\", \"beta gamma\")\nassert RankedRetriever([]).top_match(\"x\") is None\nout = r.format_results(\"alpha beta\", top_k=2)\nlines = out.split(\"\\n\")\nassert len(lines) == 2\nassert lines[0].startswith(\"1. [\")\nassert lines[1].startswith(\"2. [\")\nassert \"]\" in lines[0] and \".\" in lines[0]\nfull = r.format_results(\"gamma\", top_k=3)\nassert len(full.split(\"\\n\")) == 3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["semantic search", "sentence embeddings", "cosine similarity", "vector indexing", "offline inference", "ONNX backend", "all-MiniLM-L6-v2", "query ranking", "RAG retrieval"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "numpy basics", "functions"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}
