@@ -1,0 +1,171 @@
+{
+  "id": "reading_tracebacks",
+  "topic": "reading_tracebacks",
+  "track": "debugging_mastery",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "Reading Python Tracebacks Like a Map"
+  },
+  "description": {
+    "en": "A traceback is not noise — it is a precise map to the bug, printed at the exact moment things went wrong. Learn to read it bottom-up, find the deepest frame that is YOUR code, and decode what each common exception type is actually telling you."
+  },
+  "xp_reward": 90,
+  "next_unlock": "narrow_it_down",
+  "story_variants": {
+    "en": "## The Wall of Red Is a Map\n\nThe first instinct most beginners have when a traceback fills the screen is to panic, scroll, or copy the whole thing into a search box and pray. But a traceback is not a punishment. It is the single most honest, precise document your program will ever hand you: a map drawn at the exact instant the program failed, pointing straight at the bug. You just have to read it the right way — and the right way is **bottom-up.**\n\n## Read It Bottom-Up\n\nA Python traceback is printed in *most-recent-call-last* order. That phrase is doing a lot of work. It means the call chain grows downward: the function that started everything is near the top, and the function where the crash actually happened is at the **bottom.** So you read from the bottom.\n\nHere is a real one, annotated:\n\n```\nTraceback (most recent call last):\n  File \"app.py\", line 18, in <module>      <- where it all started\n    main()\n  File \"app.py\", line 12, in main          <- main() called load_user()\n    load_user(data)\n  File \"app.py\", line 6, in load_user      <- THE deepest YOUR-code frame\n    return record[\"email\"]                  <- the exact failing line\nKeyError: 'email'                            <- the WHAT: type + message\n```\n\nWork it from the bottom:\n\n1. **The last line is the verdict.** `KeyError: 'email'` tells you the *exception type* (`KeyError`) and the *message* (`'email'`). This is the **WHAT** — what went wrong.\n2. **The line just above the bottom is usually the WHERE.** `File \"app.py\", line 6, in load_user` plus the source line `return record[\"email\"]` tells you the exact spot in your code that blew up.\n3. **The frames above that are the HOW you got there** — the call chain. `main()` called `load_user(data)`, and `load_user` tried `record[\"email\"]`. That story explains *why* the bad value reached the failing line.\n\n> **Key idea:** Read a traceback from the bottom up. The last line is the WHAT (exception type + message). The frame just above it is usually the WHERE (the failing line in your code). The frames above that are the HOW — the call chain that delivered the bad data.\n\n## Find the Deepest Frame That Is YOUR Code\n\nReal tracebacks often have many frames, and a lot of them live inside libraries — `site-packages`, `requests`, `pandas`, the standard library. When the bottom frame is library code, do not assume the library is broken. Scan **upward from the bottom** until you hit the **deepest frame whose file path is your own code.** That frame is almost always where *you* handed the library something it didn't like. The library is just the messenger; your frame is the scene of the crime.\n\n## Decode the Exception Type\n\nThe exception type on the last line is a diagnosis, not just an error. Each one points you at a specific kind of mistake:\n\n| Exception | What it usually means |\n|-----------|------------------------|\n| `NameError` | You used a name that doesn't exist — a typo, or used before it was defined/imported |\n| `TypeError` | An operation got the wrong *type* — e.g. `\"3\" + 5`, or calling something that isn't callable |\n| `KeyError` | You asked a dict for a key it doesn't have |\n| `IndexError` | You indexed a list/tuple past its end (`xs[10]` on a 3-item list) |\n| `AttributeError` | You used `.something` that the object doesn't have — often a typo or a `None` where you expected an object |\n| `ValueError` | The type was right but the *value* was wrong — e.g. `int(\"hello\")` |\n\nPattern-match the type first, then read the message, then jump to your failing line. `KeyError: 'email'` plus a dict lookup means *that key is missing from that dict.* `TypeError: can only concatenate str (not \"int\") to str` means *you mixed a string and an int in a `+`.* The message often names the exact culprit.\n\n## A Worked Read\n\nSuppose you see this at the very bottom:\n\n```\n  File \"report.py\", line 9, in total_price\n    return price + tax\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n```\n\nRead it: the **WHAT** is a `TypeError` about `+` mixing `int` and `str`. The **WHERE** is `report.py` line 9, `return price + tax`. The diagnosis writes itself — one of `price` or `tax` is a string when you expected a number. You don't guess; the map told you the operator, the two types, and the exact line. Fix the type (e.g. `int(tax)`) and the crash is gone.\n\nA traceback rewards the reader who slows down for five seconds. Bottom line first, your-code frame next, exception type as the diagnosis. Do that every time and the wall of red stops being scary — it becomes the fastest debugging tool you own."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "treasure_map",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "read_bottom_up",
+      "nodes": [
+        {
+          "label": "Read a Traceback Bottom-Up",
+          "children": [
+            "Last line = WHAT (exception type + message)",
+            "Line above bottom = WHERE (your failing line)",
+            "Frames above = HOW (the call chain)",
+            "Deepest YOUR-code frame = scene of the crime"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "what_vs_where",
+      "left": {
+        "label": "Last line: KeyError: 'email'  (the WHAT)",
+        "result": true
+      },
+      "right": {
+        "label": "Frame above: line 6, record['email']  (the WHERE)",
+        "result": true
+      },
+      "description": {
+        "en": "The bottom line names WHAT went wrong (exception type + message). The frame just above names WHERE in your code it happened."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "keyerror_demo",
+      "code": "def load_user(record):\n    return record[\"email\"]\n\ndata = {\"name\": \"Ada\"}\nprint(load_user(data))",
+      "executionSteps": [
+        { "line": 4, "variables": { "data": "{'name': 'Ada'}" }, "output": "", "description": "data has 'name' but no 'email' key" },
+        { "line": 5, "variables": { "data": "{'name': 'Ada'}" }, "output": "", "description": "call load_user(data)" },
+        { "line": 2, "variables": { "record": "{'name': 'Ada'}" }, "output": "KeyError: 'email'", "description": "record['email'] -> key missing. Bottom line says exactly this." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Read the traceback BOTTOM-UP.",
+        "Last line = WHAT (exception type + message).",
+        "Frame above = WHERE (your failing line).",
+        "Find the deepest frame that is YOUR code."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This code crashes with a traceback whose bottom line reads `KeyError: 'price'`. Read the map: the WHAT is a KeyError for the key 'price', and the WHERE is the line `total += item['price']` inside order_total. One of the items has no 'price' key. Fix order_total so a missing 'price' is treated as 0 instead of crashing, and the function returns the correct total. With the given cart, the total must be 30. Print it. Expected output: 30"
+      },
+      "starter_code": "def order_total(cart):\n    total = 0\n    for item in cart:\n        # Buggy line: crashes with KeyError when 'price' is missing.\n        total += item[\"price\"]\n    return total\n\ncart = [\n    {\"name\": \"pen\", \"price\": 10},\n    {\"name\": \"free_sample\"},          # no 'price' key!\n    {\"name\": \"mug\", \"price\": 20},\n]\n\nprint(order_total(cart))",
+      "expected_output": "30",
+      "hints": {
+        "en": [
+          "The bottom line of the traceback is the WHAT: `KeyError: 'price'` means a dict was asked for a 'price' key it doesn't have.",
+          "The frame above the bottom is the WHERE: the failing line is `total += item['price']` inside order_total.",
+          "item['price'] raises KeyError when the key is missing. Use item.get('price', 0) to default missing prices to 0.",
+          "After the fix, 10 + 0 + 20 = 30, and no exception is raised."
+        ]
+      },
+      "test_code": "assert order_total([{\"name\": \"pen\", \"price\": 10}, {\"name\": \"free_sample\"}, {\"name\": \"mug\", \"price\": 20}]) == 30\nassert order_total([]) == 0\nassert order_total([{\"name\": \"a\"}, {\"name\": \"b\"}]) == 0\nassert order_total([{\"name\": \"x\", \"price\": 5}]) == 5\nassert order_total([{\"name\": \"p\", \"price\": 1}, {\"name\": \"q\", \"price\": 2}, {\"name\": \"r\", \"price\": 3}]) == 6"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In what order should you read a Python traceback, and why?"
+      },
+      "options": {
+        "en": [
+          "Top-down, because the first line names the bug",
+          "Bottom-up, because Python prints most-recent-call-last so the actual crash is at the bottom",
+          "Middle-out, starting from the longest line",
+          "It doesn't matter; tracebacks are random"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the very LAST line of a traceback tell you?"
+      },
+      "options": {
+        "en": [
+          "Which file you started the program from",
+          "The exception type and its message — the WHAT that went wrong",
+          "How long the program ran",
+          "The name of the first function called"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "The bottom frame of a traceback points inside a library in site-packages. What's the best next move?"
+      },
+      "options": {
+        "en": [
+          "Assume the library is broken and report a bug",
+          "Scan upward to the deepest frame that is YOUR code — that's usually where you handed the library bad input",
+          "Ignore the traceback and rerun",
+          "Delete the library"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You see `TypeError: unsupported operand type(s) for +: 'int' and 'str'`. What is it diagnosing?"
+      },
+      "options": {
+        "en": [
+          "A dict was missing a key",
+          "A list index was out of range",
+          "A `+` operation mixed an int and a str — one value is the wrong type",
+          "A variable name was misspelled"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["reading_tracebacks", "exception_types", "call_stack", "bottom_up_debugging"],
+    "concepts_required": ["the_debugging_mindset"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "debugging",
+    "path_memberships": []
+  },
+  "generated": false
+}

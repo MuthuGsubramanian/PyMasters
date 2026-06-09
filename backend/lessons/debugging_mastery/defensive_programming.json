@@ -1,0 +1,161 @@
+{
+  "id": "defensive_programming",
+  "topic": "defensive_programming",
+  "track": "debugging_mastery",
+  "module": "technique",
+  "order": 3,
+  "title": {
+    "en": "Defensive Programming: Fail Fast, Guard Edges, Prevent Bugs (Capstone)"
+  },
+  "description": {
+    "en": "The capstone of the debugging track: the best debugging is the bug that never ships. Learn to fail fast and loud at the boundary with guard clauses, use assertions as tripwires for your invariants, handle the edge cases bugs love (empty, None, zero, negative, duplicates, off-by-one), and never swallow errors silently."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Bug That Never Ships\n\nThis whole track has been about *finding* bugs — building the mindset, reading tracebacks, narrowing down with bisection, inspecting state with `print`. Those are the skills you reach for when something is already broken. This capstone is about the opposite move: writing code so that the bug never gets a chance to break anything in the first place.\n\nThat is **defensive programming.** It doesn't mean paranoid, bloated code that checks everything twice. It means a few cheap, deliberate habits that catch bad data at the door instead of letting it wander deep into your program and corrupt things three functions later — where the traceback points at the wrong place and you waste an afternoon.\n\n> **Key idea:** The cheapest bug to fix is the one that never ships. Validate inputs at the boundary, fail fast and loud when an assumption breaks, guard the edges bugs love, and never swallow an error in silence. Defensive code turns a 3am mystery into a clear exception on line one.\n\n## Fail Fast, Fail Loud\n\nThe core instinct is counter-intuitive: when something is wrong, you want your program to **stop immediately and shout**, not to limp along quietly. Bad data that flows deep is the worst kind of bug, because the crash happens far from the cause.\n\nA **guard clause** is the simplest tool. At the top of a function, check your assumptions and reject bad input with a clear exception *before* doing any real work:\n\n```python\ndef withdraw(balance, amount):\n    if amount <= 0:\n        raise ValueError(f\"amount must be positive, got {amount}\")\n    if amount > balance:\n        raise ValueError(f\"insufficient funds: {amount} > {balance}\")\n    return balance - amount\n```\n\nNow a bad call fails on line one with a message that *names the problem*. Compare that to silently returning a negative balance that someone discovers next week.\n\n## Assertions: Documentation With Teeth\n\nAn `assert` states an invariant — something you believe is *always* true at that point. It is two things at once: a comment that can't go stale, and a tripwire that fires the instant reality disagrees.\n\n```python\ndef average(nums):\n    assert len(nums) > 0, \"average() requires a non-empty list\"\n    total = sum(nums)\n    result = total / len(nums)\n    assert 0 <= result, \"average of positives can't be negative\"\n    return result\n```\n\nUse assertions for *programmer errors* and internal invariants — the things that should never happen if your logic is right. Use guard clauses with real exceptions for *expected bad input* from the outside world. (Note: `assert` can be stripped with `python -O`, so never use it to validate untrusted user input — use a guard clause there.)\n\n## The Edges Bugs Love\n\nBugs cluster at the boundaries. Whenever you write a function, run this checklist of inputs in your head:\n\n| Edge case | The guard |\n|---|---|\n| Empty collection `[]` / `\"\"` | Check `if not items:` and return a safe default |\n| `None` instead of a value | `if x is None:` before you use `x` |\n| Zero (division, denominators) | `if denom == 0:` before dividing |\n| Negative when you assumed positive | `if n < 0: raise ValueError(...)` |\n| Duplicates when you assumed unique | dedupe, or `set()`, or assert uniqueness |\n| Off-by-one / boundary index | test `first`, `last`, `len-1`, and `len` |\n\nYou don't guard every line against every case — that's noise. You guard the ones that actually matter for *this* function. The skill is asking the question every time.\n\n## Never Swallow Errors Silently\n\nThe most dangerous pattern in this whole lesson is the silent catch:\n\n```python\ntry:\n    risky_thing()\nexcept:        # bare except — catches EVERYTHING, hides EVERYTHING\n    pass       # and tells you nothing\n```\n\nThis is the opposite of fail-fast. It takes a loud, informative crash and turns it into a quiet wrong answer that surfaces somewhere unrelated, hours later, with no traceback to follow. If you catch an error, catch a *specific* one, and either handle it meaningfully or re-raise it. A swallowed exception is a future debugging session you scheduled for yourself.\n\n## The Whole Track, In One Line\n\nYou now have the full loop. **Mindset:** assume nothing, reproduce it. **Tracebacks:** read the error, it's telling you where and what. **Narrow down:** bisect until the bug has nowhere to hide. **Inspect:** `print` the state, see reality instead of guessing. And now, **prevent:** fail fast, guard the edges, assert your invariants, never swallow errors. The first four skills make you fast at killing bugs. This last one means there are fewer to kill."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "shield",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "track_recap",
+      "nodes": [
+        {
+          "label": "The Debugging Loop",
+          "children": [
+            "Mindset: assume nothing, reproduce",
+            "Tracebacks: read where & what",
+            "Narrow down: bisect the bug",
+            "Inspect: print the real state",
+            "Prevent: fail fast & guard edges"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "deep_vs_boundary",
+      "left": {
+        "label": "No guard: bad data flows deep, corrupts state, crashes far from the cause",
+        "result": false
+      },
+      "right": {
+        "label": "Guard clause: bad input rejected on line one with a clear exception",
+        "result": true
+      },
+      "description": {
+        "en": "Both functions receive the same bad input. Without a guard, the failure surfaces three functions away where the traceback lies to you. With a guard clause at the boundary, it fails fast and loud — naming the exact problem at the door."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "guard_demo",
+      "code": "def safe_average(nums):\n    if not nums:\n        return 0.0\n    return sum(nums) / len(nums)\n\nprint(safe_average([2, 4, 6]))\nprint(safe_average([]))",
+      "executionSteps": [
+        { "line": 5, "variables": { "nums": "[2, 4, 6]" }, "output": "4.0", "description": "Happy path: guard passes, normal average returned." },
+        { "line": 6, "variables": { "nums": "[]" }, "output": "0.0", "description": "Empty edge case: the 'if not nums' guard returns a safe default instead of ZeroDivisionError." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This safe_average() function computes the average of a list. The happy path works, but it crashes with ZeroDivisionError on an empty list because sum([]) / len([]) divides by zero. Be the defensive programmer: add a guard clause at the top so an empty list returns the safe default 0.0 instead of crashing, while keeping the happy path identical. With the given data, safe_average([]) must return 0.0. Expected output: 0.0"
+      },
+      "starter_code": "def safe_average(nums):\n    # BUG: on an empty list this does sum([]) / len([]) == 0 / 0\n    # which raises ZeroDivisionError. Add a guard clause so an\n    # empty list returns 0.0, and keep the happy path unchanged.\n    return sum(nums) / len(nums)\n\nprint(safe_average([]))",
+      "expected_output": "0.0",
+      "hints": {
+        "en": [
+          "The edge case bugs love here is the empty list. Ask: 'what happens when nums is empty?' — len(nums) is 0, so you divide by zero.",
+          "Fail safe at the boundary: add a guard clause as the FIRST line of the function, before any division.",
+          "Use 'if not nums: return 0.0' — an empty list is falsy, so 'not nums' is True exactly when there is nothing to average.",
+          "Keep the happy path identical: when nums is non-empty, still return sum(nums) / len(nums). Return the float 0.0 so the type matches a normal average."
+        ]
+      },
+      "test_code": "assert safe_average([]) == 0.0, \"empty list must return 0.0, not crash\"\nassert safe_average([2, 4, 6]) == 4.0, \"happy path must be unchanged\"\nassert safe_average([10]) == 10.0, \"single element must average to itself\"\nassert safe_average([-2, 2]) == 0.0, \"negatives must still average correctly\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the core idea of 'fail fast, fail loud' in defensive programming?"
+      },
+      "options": {
+        "en": [
+          "Catch every error and silently continue so the program never stops",
+          "Stop immediately with a clear exception when an assumption breaks, instead of letting bad data flow deep",
+          "Make the program run as fast as possible",
+          "Only check for errors in production"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is a guard clause?"
+      },
+      "options": {
+        "en": [
+          "A comment that explains the function",
+          "A check at the top of a function that rejects bad input before doing real work",
+          "A loop that retries on failure",
+          "A way to make code run in parallel"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is a bare 'except: pass' so dangerous?"
+      },
+      "options": {
+        "en": [
+          "It makes the code slower",
+          "It turns a loud, informative crash into a silent wrong answer with no traceback to follow",
+          "It is a syntax error in Python",
+          "It only catches ValueError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "An assertion like 'assert len(nums) > 0' is best described as:"
+      },
+      "options": {
+        "en": [
+          "A way to validate untrusted user input in production",
+          "Documentation with teeth — it states an invariant you believe is always true and fires the instant reality disagrees",
+          "A faster alternative to a for loop",
+          "A comment that the interpreter ignores"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["defensive_programming", "guard_clauses", "fail_fast", "assertions", "edge_cases", "error_handling"],
+    "concepts_required": ["print_and_inspect"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "debugging",
+    "estimated_minutes": 20,
+    "path_memberships": []
+  },
+  "generated": false
+}
