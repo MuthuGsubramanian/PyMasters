@@ -1,0 +1,165 @@
+{
+  "id": "self_attention",
+  "topic": "self_attention",
+  "track": "transformers_scratch",
+  "module": "attention",
+  "order": 3,
+  "title": {
+    "en": "Self-Attention: How Every Token Talks to Every Other Token"
+  },
+  "description": {
+    "en": "Self-attention is dot-product attention turned inward: the queries, keys, and values all come from the SAME input sequence. Every token looks at every other token (including itself) and builds a new, context-enriched representation of itself. Learn how token embeddings become Q, K, V through learned weight matrices, how to read the seq_len x seq_len attention matrix of who-attends-to-whom, and why decoders mask out the future."
+  },
+  "xp_reward": 100,
+  "next_unlock": "multi_head_attention",
+  "story_variants": {
+    "en": "## The Word 'bank' Has No Fixed Meaning\n\nTake the sentence *\"I sat by the river bank.\"* The embedding for `bank` that goes into a transformer is the **same vector** whether the next words are *river* or *money*. A raw embedding is context-blind. Self-attention is the mechanism that fixes this: it lets `bank` *look at* `river`, absorb a little of its meaning, and emerge as a new vector that leans toward the geography sense. Every token does this, simultaneously, for every other token.\n\nThat is the whole idea. **Self-attention takes a sequence of context-blind embeddings and returns a sequence of context-aware ones**, where each token's new representation is a blend of the tokens it found relevant.\n\n## From One Embedding to Three Roles: Q, K, V\n\nIn the previous lesson you saw dot-product attention with separate queries, keys, and values. Self-attention is the special case where **all three are projections of the same input sequence**.\n\nStart with a matrix `X` of shape `(seq_len, d_model)` — one embedding row per token. Three *learned* weight matrices turn each token into three different vectors:\n\n```python\nQ = X @ W_q   # what am I looking for?\nK = X @ W_k   # what do I offer to others?\nV = X @ W_v   # what do I actually pass along if attended to?\n```\n\nThe same token now plays three roles: as a **query** it asks a question, as a **key** it advertises what it has, and as a **value** it carries the content that gets mixed into whoever attends to it. `W_q`, `W_k`, `W_v` are the parameters the network learns — they decide *what kinds of relationships* attention pays attention to.\n\n> **Key idea:** Self-attention is dot-product attention where Q, K, and V are all derived from one input sequence. Each token attends to all tokens (itself included) and is rebuilt as a context-weighted blend of the value vectors.\n\n## The Attention Matrix: Who Attends to Whom\n\nThe heart of the computation is one square matrix. Score every query against every key, scale, and softmax each row:\n\n```\nscores  = Q @ K^T / sqrt(d_k)      # shape (seq_len, seq_len)\nweights = softmax(scores, axis=row) # each ROW sums to 1\noutput  = weights @ V               # shape (seq_len, d_model)\n```\n\nThat `weights` matrix is `seq_len x seq_len`. Row *i* tells you **how much token *i* attends to each token** in the sequence — and because of the softmax, those numbers are a probability distribution that sums to 1. The output for token *i* is simply row *i* used as mixing coefficients over the value vectors.\n\n| Symbol | Shape | Meaning |\n|--------|-------|---------|\n| `X` | (seq_len, d_model) | input token embeddings |\n| `Q, K, V` | (seq_len, d_k) | three learned projections of `X` |\n| `scores` / `weights` | (seq_len, seq_len) | who-attends-to-whom (each row sums to 1) |\n| `output` | (seq_len, d_model) | context-enriched tokens |\n\nNotice the diagonal of the weight matrix is a token attending to *itself* — perfectly allowed, and often large, because a token's own value is usually relevant to its own new representation.\n\n## Causal Masking: No Peeking at the Future\n\nThere is one crucial variant. In a **decoder** that generates text left-to-right, token *i* must predict the next token using only tokens `0..i` — it cannot be allowed to see what comes after it, or training would be cheating. We enforce this with a **causal mask**: before the softmax, set every score where `j > i` (a key in the future) to negative infinity. After softmax, those positions become exactly 0, so the upper triangle of the attention matrix is zeroed out and each token attends only to itself and the past.\n\n```\nfull (encoder)        causal (decoder)\n[* * *]               [* . .]\n[* * *]               [* * .]\n[* * *]               [* * *]   (. = masked to 0)\n```\n\nEncoders (like BERT) use the full matrix — every token sees the whole sentence. Decoders (like GPT) use the causal lower-triangular version. Same machinery, one mask of difference.\n\n## Putting It Together\n\nSelf-attention is three moves: **project** each token into Q/K/V, **score** every query against every key and softmax into a who-attends-to-whom matrix, then **mix** the value vectors by those weights. The result is a sequence the same length as the input, but where `bank` now knows it sat by a `river`. In the challenge below you'll build this end-to-end in pure Python for a tiny three-token sequence — using identity projections so Q = K = V = the input, which keeps the math clean while exercising every step."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "attention_web",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "qkv_pipeline",
+      "nodes": [
+        {
+          "label": "Self-Attention Pipeline",
+          "children": [
+            "1. Project: Q,K,V = X @ W_q, W_k, W_v",
+            "2. Score: Q @ K^T / sqrt(d_k)",
+            "3. Softmax each row -> weights (sum=1)",
+            "4. Mix: output = weights @ V"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "encoder_vs_decoder",
+      "left": {
+        "label": "Encoder (BERT): full attention — every token sees all",
+        "result": true
+      },
+      "right": {
+        "label": "Decoder (GPT): causal mask — future scores set to -inf",
+        "result": true
+      },
+      "description": {
+        "en": "Same Q,K,V machinery. The only difference is a causal mask that zeroes the upper triangle so a token never attends to the future."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "attention_matrix_demo",
+      "code": "tokens = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]\nweights_row0 = [0.401, 0.401, 0.198]\noutput_row0 = [0.8022, 0.5989]",
+      "executionSteps": [
+        { "line": 1, "variables": { "tokens": "[[1,0],[0,1],[1,1]]" }, "output": "", "description": "3 tokens, d=2. Identity projection: Q=K=V=tokens." },
+        { "line": 2, "variables": { "scores_row0": "[0.707, 0.0, 0.707]" }, "output": "", "description": "Token 0 scores itself & token 2 highest (shared dim), token 1 lowest." },
+        { "line": 2, "variables": { "weights_row0": "[0.401, 0.401, 0.198]" }, "output": "", "description": "Softmax -> row sums to 1.0. This is row 0 of the attention matrix." },
+        { "line": 3, "variables": { "output_row0": "[0.8022, 0.5989]" }, "output": "[0.8022, 0.5989]", "description": "Mix value vectors by those weights -> token 0's new context vector." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Self-attention = dot-product attention with Q, K, V from ONE sequence.",
+        "The seq_len x seq_len matrix says who attends to whom; each row sums to 1.",
+        "Encoder = full matrix. Decoder = causal mask (no peeking at the future)."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement self-attention in PURE PYTHON (lists + math, NO numpy) for a tiny sequence of three 2-D token vectors. Use an IDENTITY projection so Q = K = V = the input tokens — every token is its own query, key, and value. For each position: (1) score its query against every key as a dot product divided by sqrt(d), (2) softmax those scores into attention weights that sum to 1, (3) return the weighted sum of the value vectors. Print the context vector for POSITION 0, with each component rounded to 4 decimals. With the given tokens the answer is deterministic. Expected output: [0.8022, 0.5989]"
+      },
+      "starter_code": "import math\n\ndef self_attention(tokens):\n    \"\"\"tokens: list of equal-length vectors. Identity projection => Q=K=V=tokens.\n    Return the context vector for every position (a list of vectors).\"\"\"\n    d = len(tokens[0])\n    scale = math.sqrt(d)\n    outputs = []\n    for q in tokens:                 # each token is the query in turn\n        # TODO 1: scores[j] = dot(q, tokens[j]) / scale  for every key j\n        scores = []\n        # ...\n        # TODO 2: softmax(scores) -> weights (must sum to 1)\n        weights = []\n        # ...\n        # TODO 3: context = sum over j of weights[j] * tokens[j]\n        context = [0.0] * d\n        # ...\n        outputs.append(context)\n    return outputs\n\ntokens = [\n    [1.0, 0.0],\n    [0.0, 1.0],\n    [1.0, 1.0],\n]\n\nout = self_attention(tokens)\nprint([round(x, 4) for x in out[0]])",
+      "expected_output": "[0.8022, 0.5989]",
+      "hints": {
+        "en": [
+          "Dot product of two vectors: sum(qi * ki for qi, ki in zip(q, k)). Divide each score by scale = sqrt(d).",
+          "Stable softmax: subtract max(scores) before exp to avoid overflow, then divide each exp by the total. The weights will sum to 1.",
+          "Context vector: start with [0.0]*d, then for each key index j add weights[j] * tokens[j][dim] into context[dim].",
+          "out[0] is position 0's context. Round each component with round(x, 4) before printing the list."
+        ]
+      },
+      "test_code": "out = self_attention(tokens)\n# shape: 3 positions, each a 2-D vector\nassert len(out) == 3\nassert all(len(row) == 2 for row in out)\n# position 0 rounded values\nassert [round(x, 4) for x in out[0]] == [0.8022, 0.5989]\n# symmetry: position 1 is the mirror of position 0\nassert [round(x, 4) for x in out[1]] == [0.5989, 0.8022]\n# position 2 attends symmetrically -> equal components\nassert round(out[2][0], 4) == round(out[2][1], 4)\n# each row's attention weights must sum to ~1\nimport math as _m\ndef _weights(q):\n    scale = _m.sqrt(len(q))\n    sc = [sum(a*b for a, b in zip(q, k)) / scale for k in tokens]\n    mx = max(sc)\n    ex = [_m.exp(s - mx) for s in sc]\n    tot = sum(ex)\n    return [e / tot for e in ex]\nfor q in tokens:\n    assert abs(sum(_weights(q)) - 1.0) < 1e-9"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What makes attention 'self'-attention as opposed to general dot-product attention?"
+      },
+      "options": {
+        "en": [
+          "It only ever attends to a single token",
+          "The queries, keys, and values are all projections of the SAME input sequence",
+          "It uses no weight matrices at all",
+          "It runs without a softmax"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A token embedding is projected three ways via W_q, W_k, W_v. What role does the VALUE vector play?"
+      },
+      "options": {
+        "en": [
+          "It is the question the token asks of others",
+          "It advertises what the token offers so others can match it",
+          "It is the content mixed into whichever tokens attend to it",
+          "It stores the token's position index"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In the seq_len x seq_len attention matrix, what is true of each ROW?"
+      },
+      "options": {
+        "en": [
+          "It is the raw dot products with no normalization",
+          "It is a probability distribution that sums to 1 — how much that token attends to every token",
+          "It always has its largest value off the diagonal",
+          "It sums to the sequence length"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How does a causal (decoder) mask change the attention matrix, and why?"
+      },
+      "options": {
+        "en": [
+          "It sets future-position scores to -infinity so they become 0 after softmax, preventing a token from seeing the future",
+          "It doubles the weights of past tokens to emphasize history",
+          "It removes the softmax so scores stay raw",
+          "It makes every token attend only to itself"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["self_attention", "query_key_value", "attention_matrix", "causal_masking", "context_vector"],
+    "concepts_required": ["dot_product_attention"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

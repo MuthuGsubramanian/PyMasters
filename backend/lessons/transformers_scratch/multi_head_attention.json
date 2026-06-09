@@ -1,0 +1,171 @@
+{
+  "id": "multi_head_attention",
+  "topic": "multi_head_attention",
+  "track": "transformers_scratch",
+  "module": "attention",
+  "order": 4,
+  "title": {
+    "en": "Multi-Head Attention: Many Perspectives at Once"
+  },
+  "description": {
+    "en": "One attention computation can only attend one way at a time. Transformers run several attention 'heads' in parallel — each with its own Q/K/V projections — then concatenate their outputs and mix them with a final linear layer. Learn why multiple heads matter, the exact split/concat mechanics, and why the cost stays close to a single big head."
+  },
+  "xp_reward": 100,
+  "next_unlock": "positional_encoding",
+  "story_variants": {
+    "en": "## One Head Can Only Look One Way\n\nIn the previous lesson you built scaled dot-product attention: a token forms a **query**, compares it against every **key**, and uses the resulting weights to take a weighted sum of **values**. It works — but it has a quiet limitation. A single attention computation produces *one* set of attention weights per token. That means it can emphasize *one* kind of relationship at a time.\n\nReal language needs several at once. Consider the sentence *\"The dog that chased the cat was tired.\"* To understand `was`, the model must (a) track grammar to find its subject `dog`, (b) reach across the long relative clause `that chased the cat`, and (c) keep `dog` and `cat` distinct so it does not attach `was` to the wrong noun. One head, forced to average all of these signals into a single weight pattern, does each of them poorly.\n\n> **Key idea:** Multi-head attention runs *h* independent attention computations in parallel, each free to specialize in a different kind of relationship, then merges their answers. More perspectives, almost the same cost.\n\n## Split, Attend, Concat, Project\n\nThe mechanics are precise and worth holding in your head as four steps. Suppose the model dimension is `d_model = 512` and we want `h = 8` heads. We choose a per-head dimension `d_k = d_model / h = 64`.\n\n1. **Project into Q, K, V.** Each token's embedding is linearly projected to queries, keys, and values. In practice the model learns separate weight matrices per head — equivalently, it produces full `d_model` Q/K/V vectors and **splits** each into `h` slices of size `d_k`. Head 0 gets dimensions `0..63`, head 1 gets `64..127`, and so on.\n2. **Attend, per head.** Each head runs the *same* scaled dot-product attention you already know, but only on its own 64-dim slice. Head 1 might learn to track the subject; head 5 might learn coreference; head 7 might watch the immediately preceding token. Crucially, the scaling factor is now `sqrt(d_k)`, not `sqrt(d_model)`.\n3. **Concatenate.** Each head outputs a `d_k`-dimensional vector per token. Lay the `h` head-outputs back-to-back **in head order** to rebuild a single `d_model`-dimensional vector: `[head0 | head1 | ... | head7]`. This concatenation is pure bookkeeping — no math, just placing slices in the right positions.\n4. **Final linear mix.** A learned output matrix `W_O` (shape `d_model x d_model`) mixes the concatenated heads so information discovered by one head can influence the others. Without this step the heads would never talk.\n\n## Why It Costs About the Same\n\nA tempting worry: eight heads must cost eight times more. It does not. Each head works in `d_k = d_model / h` dimensions, so the attention math per head is roughly `1/h` of a full-dimension computation. Multiply by `h` heads and you are back near the cost of a *single* full-width attention — plus the one extra `W_O` projection.\n\n| Aspect | Single head (d=512) | 8 heads (d_k=64 each) |\n|--------|---------------------|------------------------|\n| Attention patterns per token | 1 | 8 (one per head) |\n| Dim each head works in | 512 | 64 |\n| Relationships captured | one blended signal | up to 8 specialized signals |\n| Total attention compute | baseline | ~same as baseline |\n| Extra parameters | — | one output matrix W_O |\n\nSo you pay almost nothing in compute and gain a large jump in **representational power**: the model can attend to syntax, long-range dependencies, and coreference *simultaneously* instead of smearing them together.\n\n## The Part You Will Build\n\nThe learnable projections (Q/K/V and W_O) are trained by gradient descent — not something you hand-code in this lesson. But the **split** and **concat** steps are pure, deterministic plumbing, and getting their *ordering* right is what makes multi-head attention actually work. Swap two head slices and the final `W_O` mixes garbage. In the challenge you will implement that bookkeeping yourself: take a list of per-head output vectors and concatenate them, in order, into the combined multi-head output. Master this and the rest of multi-head attention is just the dot-product attention you already know, run eight times in parallel."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "parallel_heads",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "four_steps",
+      "nodes": [
+        {
+          "label": "Multi-Head Attention",
+          "children": [
+            "1. Split: d_model -> h heads of d_k",
+            "2. Attend: dot-product attention per head",
+            "3. Concat: lay head outputs back-to-back (in order)",
+            "4. Project: mix with output matrix W_O"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "one_vs_many",
+      "left": {
+        "label": "Single head (d=512): one blended attention pattern",
+        "result": false
+      },
+      "right": {
+        "label": "8 heads (d_k=64): syntax + long-range + coreference at once",
+        "result": true
+      },
+      "description": {
+        "en": "Same total compute, far more representational power. Each head specializes; W_O lets them share what they found."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "split_concat_demo",
+      "code": "def split_heads(vec, h):\n    d_k = len(vec) // h\n    return [vec[i*d_k:(i+1)*d_k] for i in range(h)]\n\ndef concat_heads(heads):\n    out = []\n    for head in heads:\n        out.extend(head)\n    return out\n\nv = [1, 2, 3, 4, 5, 6]\nheads = split_heads(v, 3)\nprint(heads)\nprint(concat_heads(heads))",
+      "executionSteps": [
+        { "line": 12, "variables": { "v": "[1, 2, 3, 4, 5, 6]" }, "output": "", "description": "A 6-dim Q/K/V vector to split across 3 heads" },
+        { "line": 13, "variables": { "d_k": "2", "heads": "[[1, 2], [3, 4], [5, 6]]" }, "output": "", "description": "split_heads: each head gets a contiguous 2-dim slice, in order" },
+        { "line": 14, "variables": { "heads": "[[1, 2], [3, 4], [5, 6]]" }, "output": "[[1, 2], [3, 4], [5, 6]]", "description": "Head 0 = dims 0..1, head 1 = dims 2..3, head 2 = dims 4..5" },
+        { "line": 15, "variables": { "out": "[1, 2, 3, 4, 5, 6]" }, "output": "[1, 2, 3, 4, 5, 6]", "description": "concat_heads rebuilds the full vector — split and concat are inverses" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "h heads run dot-product attention in PARALLEL.",
+        "Each works in d_k = d_model / h dims, so total cost ~ one big head.",
+        "Concat in head ORDER, then mix with W_O. Order matters."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "You are building the split/concat plumbing of multi-head attention. Implement two pure-Python functions. concat_heads(heads): given a list of per-head output vectors (lists of numbers), concatenate them back-to-back IN ORDER into one combined vector. split_heads(vec, h): given a flat vector and a head count h, split it into h contiguous, equal-size slices in order (the inverse of concat). No numpy — just lists. With the demo data, concat_heads([[1, 2], [3, 4], [5, 6]]) must give [1, 2, 3, 4, 5, 6] and split_heads([10, 20, 30, 40], 2) must give [[10, 20], [30, 40]]. Print the two results on one line. Expected output: [1, 2, 3, 4, 5, 6] [[10, 20], [30, 40]]"
+      },
+      "starter_code": "def concat_heads(heads):\n    # TODO: lay each head's vector back-to-back, in order, into one flat list\n    return None\n\ndef split_heads(vec, h):\n    # TODO: split vec into h contiguous equal-size slices, in order\n    # (this is the inverse of concat_heads)\n    return None\n\n# --- demo (do not change) ---\ncombined = concat_heads([[1, 2], [3, 4], [5, 6]])\nheads = split_heads([10, 20, 30, 40], 2)\nprint(combined, heads)",
+      "expected_output": "[1, 2, 3, 4, 5, 6] [[10, 20], [30, 40]]",
+      "hints": {
+        "en": [
+          "concat_heads: start with an empty list and extend it with each head in turn, e.g. out.extend(head). Order is just the order they appear in the input list.",
+          "split_heads: the per-head size is d_k = len(vec) // h. Head i covers indices i*d_k up to (i+1)*d_k.",
+          "A clean split: [vec[i*d_k:(i+1)*d_k] for i in range(h)] where d_k = len(vec)//h.",
+          "Sanity check the inverse property: split_heads(concat_heads(x), len(x)) should return x."
+        ]
+      },
+      "test_code": "assert concat_heads([[1, 2], [3, 4], [5, 6]]) == [1, 2, 3, 4, 5, 6]\nassert concat_heads([[7]]) == [7]\nassert concat_heads([[1, 2, 3], [4, 5, 6]]) == [1, 2, 3, 4, 5, 6]\nassert split_heads([10, 20, 30, 40], 2) == [[10, 20], [30, 40]]\nassert split_heads([1, 2, 3, 4, 5, 6], 3) == [[1, 2], [3, 4], [5, 6]]\nassert split_heads([1, 2, 3, 4, 5, 6], 1) == [[1, 2, 3, 4, 5, 6]]\nx = [[1, 2], [3, 4], [5, 6]]\nassert split_heads(concat_heads(x), len(x)) == x"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the main reason transformers use multiple attention heads instead of one?"
+      },
+      "options": {
+        "en": [
+          "It makes the model use less memory",
+          "Each head can specialize in a different kind of relationship (syntax, long-range, coreference) instead of blending them into one pattern",
+          "It removes the need for the softmax",
+          "A single head cannot run on a GPU"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "With d_model = 512 and h = 8 heads, what dimension does each head work in?"
+      },
+      "options": {
+        "en": [
+          "512, the full model dimension",
+          "8, the number of heads",
+          "64, because d_k = d_model / h = 512 / 8",
+          "4096, because the dimensions are multiplied"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "After the h heads each produce their output, what are the next two steps?"
+      },
+      "options": {
+        "en": [
+          "Average the heads, then apply softmax",
+          "Concatenate the head outputs in order, then mix them with a learned output matrix W_O",
+          "Drop the smallest head, then normalize",
+          "Add the heads together, then split again"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why doesn't using 8 heads cost roughly 8x the compute of a single head?"
+      },
+      "options": {
+        "en": [
+          "Because heads share the same weights",
+          "Because each head works in d_model/h dimensions, so 8 heads of 1/8 the size sum to about one full-width attention",
+          "Because the heads run on separate machines",
+          "Because softmax is skipped for extra heads"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multi_head_attention", "attention_heads", "split_concat", "head_specialization", "output_projection"],
+    "concepts_required": ["self_attention"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}
