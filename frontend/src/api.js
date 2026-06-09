@@ -67,8 +67,8 @@ export const changePassword = (userId, currentPassword, newPassword) =>
     api.post('/auth/change-password', { user_id: userId, current_password: currentPassword, new_password: newPassword });
 export const forgotPassword = (identifier) => api.post('/auth/forgot-password', { identifier });
 export const resetPassword = (token, newPassword) => api.post('/auth/reset-password', { token, new_password: newPassword });
-export const registerUser = (username, password, name, account_type = 'individual') =>
-    api.post('/auth/register', { username, password, name, account_type });
+export const registerUser = (username, password, name, account_type = 'individual', email = '') =>
+    api.post('/auth/register', { username, password, name, account_type, email });
 export const runCode = (code) => api.post('/run', { code });
 export const chatAI = (prompt, context = "") => api.post('/ai/chat', { prompt, context });
 export const getModules = () => api.get('/content/modules');
