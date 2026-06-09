@@ -1,0 +1,175 @@
+{
+  "id": "metaclasses",
+  "topic": "metaclasses",
+  "track": "python_internals",
+  "module": "object_model",
+  "order": 2,
+  "title": {
+    "en": "Metaclasses: Classes That Build Classes"
+  },
+  "description": {
+    "en": "A class is not a blueprint frozen in syntax — it is itself an object, created at runtime by its metaclass (default `type`). Learn how `type(name, bases, namespace)` builds classes dynamically, how a metaclass hooks into class-creation time to inspect or modify a class as it's defined, the real jobs metaclasses do well — and the famous warning that almost every case you imagine is better served by `__init_subclass__` or a class decorator."
+  },
+  "xp_reward": 100,
+  "next_unlock": "dunder_protocols",
+  "story_variants": {
+    "en": "## A Class Is an Object Too\n\nYou already know that in Python *everything is an object* — integers, lists, functions. Here is the part that bends people's brains: **a class is an object as well.** When you write `class Dog: ...`, you don't just describe a type; you *create an object* named `Dog` that lives on the heap like any other value. You can put it in a list, pass it to a function, give it attributes.\n\nAnd every object has a type. So what is the type of a *class*?\n\n```python\nclass Dog:\n    pass\n\nprint(type(Dog))   # <class 'type'>\nprint(type(42))    # <class 'int'>\nprint(type(int))   # <class 'type'>\n```\n\n`42` is an instance of `int`. `Dog` is an instance of `type`. **`type` is the metaclass** — the class whose instances are themselves classes. A metaclass is to a class what a class is to an instance.\n\n> **Key idea:** A class is an instance of its metaclass. The default metaclass is `type`. Writing `class Foo:` is really *calling* `type` to manufacture a new class object at runtime.\n\n## `type` Has Two Faces\n\nCalled with **one** argument, `type(obj)` tells you an object's type. Called with **three**, `type(...)` *builds a brand-new class* on the spot. These two `Dog` definitions are equivalent:\n\n```python\n# The familiar statement form\nclass Dog:\n    legs = 4\n    def speak(self):\n        return \"woof\"\n\n# The dynamic, three-argument form — identical result\ndef speak(self):\n    return \"woof\"\n\nDog = type(\"Dog\", (), {\"legs\": 4, \"speak\": speak})\n```\n\nThe `class` keyword is *syntactic sugar*. Under the hood the interpreter gathers the three ingredients and hands them to `type`:\n\n| Argument | Name | What it is | In `class Dog(Animal):` |\n|----------|------|------------|--------------------------|\n| 1 | `name` | the class's `__name__` string | `\"Dog\"` |\n| 2 | `bases` | tuple of parent classes | `(Animal,)` |\n| 3 | `namespace` | dict of the class body (methods, attrs) | `{\"legs\": 4, \"speak\": <fn>}` |\n\nSo `type(name, bases, namespace)` is the literal machinery of class creation. A **metaclass** is simply a callable — almost always a subclass of `type` — that you slot in to run *instead of* `type` at that moment.\n\n## Hooking Class Creation\n\nDefine a metaclass by subclassing `type` and overriding `__new__` or `__init__`. Either runs **once, at class-definition time** — not when instances are created:\n\n```python\nclass Loud(type):\n    def __new__(mcs, name, bases, namespace):\n        namespace[\"shout\"] = lambda self: name.upper() + \"!\"\n        return super().__new__(mcs, name, bases, namespace)\n\nclass Greeter(metaclass=Loud):\n    pass\n\nprint(Greeter().shout())   # GREETER!\n```\n\nWhen Python sees `metaclass=Loud`, it calls `Loud(\"Greeter\", (), {...})` instead of `type(...)`. `Loud.__new__` receives the same three ingredients, *edits the namespace* (here injecting a `shout` method), and returns the finished class. The metaclass got to inspect and modify the class **as it was being born.**\n\n## What Metaclasses Are Actually Good For\n\nThe legitimate, classic uses all share one trait: they need to act on a class *itself*, automatically, the moment it's defined.\n\n- **Auto-registration** — record every subclass into a registry the instant it's declared (plugin systems, serializers, ORM model tables). No manual `register(MyClass)` calls to forget.\n- **Enforcing conventions** — reject a class at definition time if it's missing a required method or attribute, turning a runtime surprise into an import-time error.\n- **Injecting behavior** — add methods, wrap existing ones, or compute attributes for every class in a hierarchy uniformly.\n\n## ...And the Famous Warning\n\nMetaclasses are powerful, implicit, and easy to over-apply. Tim Peters' advice has aged perfectly:\n\n> *\"Metaclasses are deeper magic than 99% of users should ever worry about. If you wonder whether you need them, you don't.\"*\n\nSince Python 3.6, most cases that *used* to demand a metaclass have a simpler answer:\n\n- **`__init_subclass__`** — a hook on the **base class** that runs whenever it's subclassed. Perfect for registration and validation, with none of the metaclass machinery.\n- **Class decorators** — `@something` above a class can transform it after creation. Explicit, composable, and easy to read.\n\nReach for a real metaclass only when you must control creation across an entire hierarchy in a way those two can't express. Understand them deeply — then usually pick the lighter tool.\n\nWhat you've gained is the model: `class` is sugar for a call to `type`, every class is an instance of a metaclass, and that creation moment is a hook you can occupy. That single idea demystifies ORMs, plugin registries, and half the \"magic\" in serious Python frameworks."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "class_factory",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "metaclass_model",
+      "nodes": [
+        {
+          "label": "The Instance-Of Chain",
+          "children": [
+            "42        is an instance of  int",
+            "int / Dog is an instance of  type (the metaclass)",
+            "type      is an instance of  type (itself)",
+            "class Foo: ... really CALLS type(name, bases, ns)",
+            "metaclass = a callable (subclass of type) run at class creation"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "type_three_arg",
+      "title": "class is sugar for type(name, bases, namespace)",
+      "steps": [
+        { "code": "Dog = type(\"Dog\", (), {\"legs\": 4})", "description": "Arg 1 'Dog' -> __name__. Arg 2 () -> no bases. Arg 3 dict -> the class body." },
+        { "code": "print(type(Dog))", "description": "Dog is an instance of `type` -> <class 'type'>. A class is an object." },
+        { "code": "print(Dog.legs)", "description": "The namespace dict became the class attributes: prints 4." }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "metaclass_vs_lighter",
+      "left": {
+        "label": "Metaclass(type): controls creation across a whole hierarchy — powerful, implicit",
+        "result": true
+      },
+      "right": {
+        "label": "__init_subclass__ / class decorator: covers most cases — simpler, explicit",
+        "result": true
+      },
+      "description": {
+        "en": "'If you wonder whether you need a metaclass, you don't.' Reach for __init_subclass__ or a decorator first; use a metaclass only when you truly must hook creation itself."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "registry_meta_demo",
+      "code": "class RegistryMeta(type):\n    registry = {}\n    def __init__(cls, name, bases, ns):\n        super().__init__(name, bases, ns)\n        RegistryMeta.registry[name] = cls\n\nclass Dog(metaclass=RegistryMeta):\n    pass\nclass Cat(metaclass=RegistryMeta):\n    pass\nprint(sorted(RegistryMeta.registry))",
+      "executionSteps": [
+        { "line": 7, "variables": { "registry": "{'Dog': <class Dog>}" }, "output": "", "description": "Defining Dog runs RegistryMeta.__init__ once -> Dog records itself." },
+        { "line": 9, "variables": { "registry": "{'Dog': ..., 'Cat': ...}" }, "output": "", "description": "Defining Cat runs the metaclass again -> Cat auto-registers too." },
+        { "line": 10, "variables": { "registry": "{'Cat': ..., 'Dog': ...}" }, "output": "['Cat', 'Dog']", "description": "No manual register() calls — creation-time hook did it all." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A class is an object: an instance of its metaclass (default `type`).",
+        "`class` is sugar for type(name, bases, namespace).",
+        "Metaclasses hook class CREATION — but prefer __init_subclass__ or a decorator."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a metaclass that auto-registers every class that uses it. Complete `RegistryMeta(type)` so that defining a class records it into the class-level `registry` dict, keyed by the class's name. Use the `__init__` hook (which runs once, at class-creation time) and store `cls` under `name`. Do NOT register manually — the whole point is that `class Dog(metaclass=RegistryMeta): ...` registers itself automatically. The demo defines Dog and Cat, then prints the sorted registry keys. Expected output: ['Cat', 'Dog']"
+      },
+      "starter_code": "class RegistryMeta(type):\n    # Class-level registry shared by every class built with this metaclass.\n    registry = {}\n\n    def __init__(cls, name, bases, namespace):\n        # Always let type finish building the class first.\n        super().__init__(name, bases, namespace)\n        # TODO: record THIS class (cls) into RegistryMeta.registry under `name`.\n        # e.g. RegistryMeta.registry[name] = cls\n        pass\n\n# --- demo (do not change) ---\nclass Dog(metaclass=RegistryMeta):\n    pass\n\nclass Cat(metaclass=RegistryMeta):\n    pass\n\nprint(sorted(RegistryMeta.registry))",
+      "expected_output": "['Cat', 'Dog']",
+      "hints": {
+        "en": [
+          "A metaclass's __init__ runs ONCE when a class is defined — not when instances are made. Its `cls` argument is the freshly built class object itself.",
+          "Call super().__init__(name, bases, namespace) first so `type` finishes constructing the class normally.",
+          "To auto-register, add one line: RegistryMeta.registry[name] = cls — keying the dict by the class name string.",
+          "sorted() on a dict iterates its keys, so sorted(RegistryMeta.registry) yields the names alphabetically: ['Cat', 'Dog']."
+        ]
+      },
+      "test_code": "assert \"Dog\" in RegistryMeta.registry\nassert \"Cat\" in RegistryMeta.registry\nassert RegistryMeta.registry[\"Dog\"] is Dog\nassert RegistryMeta.registry[\"Cat\"] is Cat\nassert sorted(RegistryMeta.registry) == [\"Cat\", \"Dog\"]\n# The base type itself must not have been swept into the registry.\nassert \"type\" not in RegistryMeta.registry\nassert \"object\" not in RegistryMeta.registry\nassert len(RegistryMeta.registry) == 2"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In Python, what is the type of a class such as `Dog` (defined with a plain `class Dog: ...`)?"
+      },
+      "options": {
+        "en": [
+          "It has no type; only instances have types",
+          "`type` — a class is an instance of its metaclass, which defaults to `type`",
+          "`object`, because every class inherits from object",
+          "`Dog` is its own type"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the three-argument form `type(name, bases, namespace)` do?"
+      },
+      "options": {
+        "en": [
+          "Returns the type of an existing object",
+          "Renames an existing class in place",
+          "Creates a brand-new class object dynamically from its name, parent tuple, and body dict",
+          "Converts a dict into an instance"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "When does a metaclass's `__new__`/`__init__` run?"
+      },
+      "options": {
+        "en": [
+          "Every time an instance of the class is created",
+          "Once, at class-definition (creation) time",
+          "Only when the module is garbage-collected",
+          "Each time a method on the class is called"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "For simply registering or validating subclasses, what's usually preferred over writing a metaclass?"
+      },
+      "options": {
+        "en": [
+          "Always write a metaclass — there is no lighter option",
+          "Monkey-patching `type` globally",
+          "`__init_subclass__` on the base class, or a class decorator — simpler and more explicit",
+          "Using `eval()` on the class body"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["metaclasses", "type_three_arg", "class_creation", "auto_registration", "init_subclass_alternative"],
+    "concepts_required": ["descriptors"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}

@@ -1,0 +1,172 @@
+{
+  "id": "interning_and_caching",
+  "topic": "interning_and_caching",
+  "track": "python_internals",
+  "module": "memory_model",
+  "order": 4,
+  "title": {
+    "en": "Interning & Caching: Why `256 is 256` but `257 is 257` Can Differ"
+  },
+  "description": {
+    "en": "CPython quietly reuses certain immutable objects so identical values share one object in memory. Learn the small-integer cache, string interning, why you must never use `is` for value comparison, and how the same caching idea generalizes to memoization with functools.lru_cache."
+  },
+  "xp_reward": 90,
+  "next_unlock": "how_imports_work",
+  "story_variants": {
+    "en": "## The Optimization Hiding in Plain Sight\n\nRun this in a fresh Python shell and watch it betray your intuition:\n\n```python\na = 256\nb = 256\nprint(a is b)   # True\n\nc = 257\nd = 257\nprint(c is d)   # often False!\n```\n\nSame syntax, two different answers. Nothing about `256` or `257` makes one \"more equal\" than the other. The difference is an **optimization inside CPython** that reuses some objects and not others. Understanding it cures a whole category of `is`-related bugs and teaches you how caching works in general.\n\n> **Key idea:** CPython caches certain immutable objects so identical values share one object. This is a performance detail you may observe but must NEVER depend on. Compare values with `==`; reserve `is` for `None` and sentinels.\n\n## The Small-Integer Cache\n\nWhen CPython starts, it pre-creates a fixed pool of integer objects for the range **-5 to 256** and keeps them alive forever. Every time your program produces a value in that range, it hands back a pointer to the *same* pre-built singleton instead of allocating a new object.\n\n```python\na = 256\nb = 256\nprint(a is b)        # True  -> both names point at the cached 256\n```\n\nAsk for `257` and you fall off the end of the pool. CPython allocates a brand-new int object, so two separate `257` literals can be two distinct objects:\n\n```python\nc = 257\nd = 257\nprint(c is d)        # CPython detail: often False (distinct objects)\nprint(c == d)        # True  -> values are equal, which is all that matters\n```\n\nWhy -5 to 256? Small integers appear constantly — loop counters, indices, flags, byte values — so caching them saves enormous amounts of allocation. Large integers are comparatively rare, so caching them wouldn't pay off. The exact bounds are an implementation choice, not a language guarantee.\n\n## String Interning\n\nStrings get a similar treatment called **interning**: storing exactly one copy of a string and reusing it. CPython automatically interns string literals that *look like identifiers* (letters, digits, underscores) because they show up everywhere as variable names, attribute names, and dict keys.\n\n```python\nx = \"hello\"\ny = \"hello\"\nprint(x is y)        # often True  -> identifier-like literal, auto-interned\n\np = \"hello world!\"\nq = \"hello world!\"\nprint(p is q)        # often False -> has a space/punctuation, not auto-interned\nprint(p == q)        # True        -> equal value, as always\n```\n\nInterning makes dictionary lookups and name resolution faster: comparing two interned strings can short-circuit on identity before checking characters. When you want to *force* interning — say you're processing millions of repeated strings and want them to share storage — call `sys.intern()`:\n\n```python\nimport sys\nname = sys.intern(\"a string built at runtime\")\n```\n\nBut just like the int cache, automatic interning is an optimization you observe, not a contract you rely on.\n\n## The Rule: `==` for Value, `is` for Identity\n\n| You want to know... | Use | Why |\n|---------------------|-----|-----|\n| Do these have the same value? | `==` | Compares contents; always correct |\n| Is this literally the same object? | `is` | Compares identity (`id`) |\n| Is this `None`? | `is None` | `None` is a unique singleton |\n\nThe `256 is 256` trap exists precisely because caching sometimes makes `is` *accidentally* agree with `==`. That accident is fragile: change the value to 257, or run on a different Python implementation (PyPy, Jython), and it vanishes. **If you ever wrote `if count is 0:` and it worked, it worked by luck.** Write `if count == 0:`.\n\n## Caching, Generalized: Memoization\n\nThe int cache and string interning are both instances of one idea: **compute or allocate something once, then reuse it**. You can apply that same idea to expensive function calls. This is **memoization** — caching results keyed by arguments.\n\nThe naive recursive Fibonacci recomputes the same subproblems exponentially. A cache fixes it:\n\n```python\n_cache = {}\ndef fib(n):\n    if n in _cache:\n        return _cache[n]          # reuse a computed result\n    result = n if n < 2 else fib(n - 1) + fib(n - 2)\n    _cache[n] = result            # store it for next time\n    return result\n```\n\nPython ships this pattern as a decorator, `functools.lru_cache`, so you don't hand-roll the dict:\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n```\n\nSame principle the interpreter uses on small ints and strings, now in your hands: identical inputs reuse one stored result instead of redoing the work.\n\nMaster these three layers — the small-int cache, string interning, and explicit memoization — and you understand both why `is` lies about values and how to make reuse work *for* you instead of surprising you."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "object_graph",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "caching_map",
+      "nodes": [
+        {
+          "label": "CPython Reuses Immutables",
+          "children": [
+            "Small ints -5..256 -> cached singletons",
+            "Identifier-like str literals -> auto-interned",
+            "sys.intern() -> force interning",
+            "Optimization only -> never rely on it with `is`",
+            "Same idea -> memoization / lru_cache"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cached_vs_uncached",
+      "left": {
+        "label": "256 is 256  (within cached range -5..256)",
+        "result": true
+      },
+      "right": {
+        "label": "257 is 257  (outside the cache)",
+        "result": false
+      },
+      "description": {
+        "en": "Both are equal by ==. But `is` only agrees inside the cached range. That accidental agreement is exactly why `is` must never be used to compare values."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "memoization_demo",
+      "code": "_cache = {}\ndef fib(n):\n    if n in _cache:\n        return _cache[n]\n    r = n if n < 2 else fib(n-1) + fib(n-2)\n    _cache[n] = r\n    return r\n\nprint(fib(10))",
+      "executionSteps": [
+        { "line": 2, "variables": { "_cache": "{}" }, "output": "", "description": "Cache starts empty; first call for each n does real work." },
+        { "line": 6, "variables": { "_cache": "{0:0, 1:1, 2:1}" }, "output": "", "description": "Each computed result is stored, keyed by its argument." },
+        { "line": 3, "variables": { "_cache": "{...has n...}" }, "output": "", "description": "A repeated n hits the cache and returns instantly — no recomputation." },
+        { "line": 10, "variables": { "_cache": "{0:0,1:1,...,10:55}" }, "output": "55", "description": "fib(10) is 55, computed once per subproblem thanks to caching." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "CPython caches small ints (-5..256) and interns identifier-like strings.",
+        "That makes `is` SOMETIMES agree with `==` — by luck, not by rule.",
+        "Use == for values, `is` only for None/sentinels. Caching = reuse on purpose."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a memoized Fibonacci. The naive recursive version recomputes the same subproblems exponentially. Use a module-level cache dict so each fib(n) is computed only once and repeated calls are instant. Rules: fib(0)=0, fib(1)=1, and fib(n)=fib(n-1)+fib(n-2) for n>=2. Store every result in the cache keyed by n, and check the cache before doing any work. Do NOT use impl-specific `is` checks — only correct values matter. Print fib(10). Expected output:\n55"
+      },
+      "starter_code": "# A module-level cache: results are stored here keyed by n so we never recompute.\n_cache = {}\n\ndef fib(n):\n    # TODO 1: if n is already in _cache, return the stored result immediately.\n    # TODO 2: otherwise compute it: 0 if n==0, 1 if n==1, else fib(n-1)+fib(n-2).\n    # TODO 3: store the result in _cache[n] before returning it.\n    pass\n\nprint(fib(10))",
+      "expected_output": "55",
+      "hints": {
+        "en": [
+          "Start the body with a cache check: if n in _cache: return _cache[n].",
+          "Compute the value with: result = n if n < 2 else fib(n - 1) + fib(n - 2). (n<2 covers both fib(0)=0 and fib(1)=1.)",
+          "Before returning, save it so future calls are free: _cache[n] = result.",
+          "Use == / value logic only. Never compare these numbers with `is` — small-int caching would make that unreliable across values and Python implementations."
+        ]
+      },
+      "test_code": "assert fib(0) == 0, f\"fib(0) should be 0, got {fib(0)}\"\nassert fib(1) == 1, f\"fib(1) should be 1, got {fib(1)}\"\nassert fib(10) == 55, f\"fib(10) should be 55, got {fib(10)}\"\nassert isinstance(_cache, dict), \"_cache must be a dict\"\nassert _cache, \"the cache dict must be populated after calls\"\nassert _cache.get(10) == 55, f\"_cache should store fib(10)=55, got {_cache.get(10)}\"\nassert fib(15) == 610, f\"fib(15) should be 610, got {fib(15)}\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is `a = 256; b = 256; a is b` True, but `c = 257; d = 257; c is d` can be False in CPython?"
+      },
+      "options": {
+        "en": [
+          "257 is not a valid integer literal",
+          "CPython pre-creates and reuses small ints (-5..256), so 256 is a shared singleton while 257 is freshly allocated",
+          "`is` is broken for odd numbers",
+          "256 is even and 257 is odd, which changes identity"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does string interning mean in CPython?"
+      },
+      "options": {
+        "en": [
+          "Encrypting strings so they can't be read",
+          "Storing exactly one copy of a string and reusing it, so equal interned strings can share one object",
+          "Converting every string to bytes automatically",
+          "Making all strings mutable"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Given caching and interning exist, what is the correct rule for comparing values?"
+      },
+      "options": {
+        "en": [
+          "Use `is` for everything — it's faster",
+          "Use `==` to compare values, and reserve `is` for identity checks like `is None`",
+          "Use `is` for ints and `==` for strings",
+          "Always use `is` because caching guarantees identity"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How does `functools.lru_cache` relate to the small-integer cache and string interning?"
+      },
+      "options": {
+        "en": [
+          "It is unrelated; lru_cache only works on integers",
+          "They are all the same idea — reuse a previously computed/allocated result instead of redoing the work (memoization)",
+          "lru_cache disables interning",
+          "lru_cache replaces == with is inside functions"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["small_integer_cache", "string_interning", "is_vs_equals", "memoization", "lru_cache"],
+    "concepts_required": ["how_python_objects_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}
