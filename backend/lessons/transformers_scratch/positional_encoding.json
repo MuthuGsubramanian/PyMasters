@@ -1,0 +1,174 @@
+{
+  "id": "positional_encoding",
+  "topic": "positional_encoding",
+  "track": "transformers_scratch",
+  "module": "architecture",
+  "order": 1,
+  "title": {
+    "en": "Positional Encoding: Giving Transformers a Sense of Order"
+  },
+  "description": {
+    "en": "Raw self-attention is a bag-of-words: it has NO built-in notion of which token came first. To attention, 'dog bites man' and 'man bites dog' are identical. Positional encoding fixes this by ADDING a unique, position-dependent vector to every token embedding. In this lesson you derive the famous sinusoidal formula PE(pos,2i)=sin(pos/10000^(2i/d)), PE(pos,2i+1)=cos(pos/10000^(2i/d)), see why sinusoids are the clever choice, and implement the encoder in pure Python."
+  },
+  "xp_reward": 95,
+  "next_unlock": "the_transformer_block",
+  "story_variants": {
+    "en": "## Attention Is Blind to Order\n\nSelf-attention has a secret weakness that is easy to miss. It computes its output as a weighted sum of value vectors — and a sum does not care about order. Shuffle the tokens of a sentence and feed them back in, and raw attention produces the *same* set of outputs, just shuffled to match. In math terms, self-attention is **permutation-invariant**.\n\nThat is a disaster for language. The sentence \"**dog bites man**\" and the sentence \"**man bites dog**\" contain exactly the same word embeddings; only the *order* differs. Yet to raw attention they are indistinguishable. A model that cannot tell them apart cannot understand language at all.\n\nRecurrent networks never had this problem — they read tokens one at a time, so order was baked into the computation. But the Transformer threw out recurrence to gain parallelism, and in doing so it threw out its sense of sequence. We have to put order back in by hand.\n\n> **Key idea:** Self-attention is permutation-invariant — it has no inherent notion of token order. Positional encoding restores order by ADDING a unique, position-dependent vector to each token's embedding before attention ever runs.\n\n## The Fix: Add a Position Vector\n\nThe idea is delightfully simple. Each token already has an embedding vector of dimension `d`. We build a second vector of the same dimension `d` that depends only on the token's **position** in the sequence (0, 1, 2, ...), and we **add** the two together:\n\n```\ninput_to_attention = token_embedding + positional_encoding(pos)\n```\n\nNow position 0 and position 5 carry different signals even if their words are identical, so attention can finally tell \"the first the\" from \"the second the.\" Note it is *added*, not concatenated — the position information rides along inside the same `d` dimensions, and the model learns to read it.\n\n## The Sinusoidal Formula\n\nThe original Transformer paper builds the position vector out of sines and cosines of different frequencies. For position `pos` and dimension index `i` (from 0 to d-1):\n\n```\nPE(pos, 2i)   = sin( pos / 10000^(2i/d) )\nPE(pos, 2i+1) = cos( pos / 10000^(2i/d) )\n```\n\nIn words: walk across the `d` slots of the vector two at a time. **Even** indices get a `sin`, **odd** indices get a `cos`. The number inside — the angle — is `pos` divided by `10000` raised to a power that grows with the dimension index. Low dimensions use a high frequency (the value spins quickly as `pos` increases); high dimensions use a very low frequency (it barely changes). The result is that each position gets a unique \"barcode\" of sinusoids, like the hands of many clocks ticking at different speeds.\n\n## Why Sinusoids?\n\nWhy this elaborate choice instead of just numbering positions 1, 2, 3, ...? Three real advantages:\n\n1. **Bounded and smooth.** Every value lives in `[-1, 1]`, so the position signal never overwhelms the embedding, no matter how long the sequence gets. A raw counter like `pos = 5000` would.\n2. **Relative positions are linear.** Because of the trig angle-addition identities, the encoding of `pos + k` is a fixed linear function of the encoding of `pos`. That makes it easy for the model to learn to attend to *relative* offsets — \"the token three back\" — which is what language actually cares about.\n3. **Generalizes to longer sequences.** The formula is defined for *any* position, so a model can be evaluated on sequences longer than any it saw in training. There are no new parameters to run out of.\n\n## A Tiny Example\n\nLet `d = 4`. Compute the position vectors for positions 0 and 1:\n\n| pos | slot 0 (sin) | slot 1 (cos) | slot 2 (sin) | slot 3 (cos) |\n|-----|--------------|--------------|--------------|--------------|\n| 0   | sin(0)=0.0   | cos(0)=1.0   | sin(0)=0.0   | cos(0)=1.0   |\n| 1   | sin(1)=0.8415| cos(1)=0.5403| sin(0.01)=0.01| cos(0.01)=1.0 |\n\nNotice position 0 gives the clean pattern `[0, 1, 0, 1]` — every `sin(0)` is 0 and every `cos(0)` is 1. That is a perfect sanity check for your implementation. Position 1 differs in every slot, so the two positions are now clearly distinguishable.\n\n## The Modern Alternatives\n\nSinusoidal encoding is the classic, but it is not the only option. Two are worth knowing:\n\n- **Learned positional embeddings** — instead of a fixed formula, treat each position's vector as trainable parameters the model learns from data (used by BERT and GPT-2). Simple and effective, but capped at a maximum length and they do not extrapolate.\n- **Rotary Position Embedding (RoPE)** — rather than *adding* a vector, RoPE *rotates* the query and key vectors by an angle proportional to position. This injects relative position directly into the attention dot product and is the dominant choice in modern LLMs (LLaMA, GPT-NeoX, Qwen).\n\nAll of them solve the same problem you now understand at its root: attention is order-blind, so we must hand it a sense of position. Get the sinusoidal version right and the rest are variations on the theme."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "sequence_order",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "permutation_problem",
+      "left": {
+        "label": "Raw attention: 'dog bites man' == 'man bites dog' (order-blind, permutation-invariant)",
+        "result": false
+      },
+      "right": {
+        "label": "+ Positional Encoding: each position carries a unique vector -> order restored",
+        "result": true
+      },
+      "description": {
+        "en": "Self-attention is a weighted SUM, and sums ignore order. Adding a position-dependent vector to each token embedding is what gives the Transformer a sense of sequence."
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "pe_formula",
+      "nodes": [
+        {
+          "label": "PE(pos, i)  ADDED to token embedding",
+          "children": [
+            "even index 2i   -> sin( pos / 10000^(2i/d) )",
+            "odd  index 2i+1 -> cos( pos / 10000^(2i/d) )",
+            "low dims = high frequency, high dims = low frequency",
+            "values in [-1,1]: bounded, smooth, generalize to longer seqs"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "pe_walkthrough",
+      "code": "import math\ndef positional_encoding(pos, d):\n    pe = []\n    for i in range(d):\n        angle = pos / (10000 ** ((2 * (i // 2)) / d))\n        pe.append(math.sin(angle) if i % 2 == 0 else math.cos(angle))\n    return pe\nprint([round(x, 4) for x in positional_encoding(1, 4)])",
+      "executionSteps": [
+        { "line": 2, "variables": { "pos": "1", "d": "4" }, "output": "", "description": "Build the d=4 position vector for position 1" },
+        { "line": 5, "variables": { "i": "0", "angle": "1.0", "type": "sin (even)" }, "output": "", "description": "Slot 0 is even -> sin(1/10000^0)=sin(1)=0.8415" },
+        { "line": 5, "variables": { "i": "1", "angle": "1.0", "type": "cos (odd)" }, "output": "", "description": "Slot 1 is odd -> cos(1)=0.5403, same frequency as slot 0" },
+        { "line": 5, "variables": { "i": "2", "angle": "0.01", "type": "sin (even)" }, "output": "", "description": "Slot 2 uses a much lower frequency -> sin(0.01)=0.01" },
+        { "line": 5, "variables": { "i": "3", "angle": "0.01", "type": "cos (odd)" }, "output": "", "description": "Slot 3 -> cos(0.01)=1.0 (rounded)" },
+        { "line": 7, "variables": { "pe": "[0.8415, 0.5403, 0.01, 1.0]" }, "output": "[0.8415, 0.5403, 0.01, 1.0]", "description": "Position 1's unique barcode of sinusoids" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Attention is permutation-invariant: it cannot see order.",
+        "Fix: ADD a position vector to each token embedding.",
+        "PE(pos,2i)=sin(pos/10000^(2i/d)), PE(pos,2i+1)=cos(...).",
+        "Position 0 -> [0,1,0,1]. Modern variants: learned & RoPE."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement the sinusoidal positional encoding in PURE Python (math module only, NO numpy — it is not available in the sandbox). Write `positional_encoding(pos, d)` that returns the d-dimensional position vector for position `pos`. Walk the d slots with index i from 0 to d-1. For EVEN i use sin, for ODD i use cos, and the angle is `pos / 10000 ** ((2 * (i // 2)) / d)` — note the `i // 2` so that an even slot and the odd slot right after it share the same frequency. The demo prints the vector for pos=1, d=4 rounded to 4 decimals. As a sanity check, positional_encoding(0, 4) gives the clean pattern [0, 1, 0, 1] (every sin(0)=0, every cos(0)=1). Expected output: [0.8415, 0.5403, 0.01, 1.0]"
+      },
+      "starter_code": "import math\n\ndef positional_encoding(pos, d):\n    pe = []\n    for i in range(d):\n        # angle = pos / 10000 ** ((2 * (i // 2)) / d)\n        # even index -> sin(angle), odd index -> cos(angle)\n        angle = None  # TODO\n        if i % 2 == 0:\n            pass  # TODO: append sin(angle)\n        else:\n            pass  # TODO: append cos(angle)\n    return pe\n\n# --- demo (do not change) ---\nprint([round(x, 4) for x in positional_encoding(1, 4)])",
+      "expected_output": "[0.8415, 0.5403, 0.01, 1.0]",
+      "hints": {
+        "en": [
+          "The angle for slot i is angle = pos / (10000 ** ((2 * (i // 2)) / d)). The `i // 2` makes slots (0,1) share a frequency, (2,3) share the next, and so on.",
+          "Even index i (i % 2 == 0) -> pe.append(math.sin(angle)). Odd index -> pe.append(math.cos(angle)).",
+          "Sanity check: positional_encoding(0, 4) must be [0.0, 1.0, 0.0, 1.0], because sin(0)=0 and cos(0)=1 for every slot.",
+          "Every value comes from sin or cos, so it is guaranteed to lie within [-1, 1]. The returned list must have exactly d entries."
+        ]
+      },
+      "test_code": "pe1 = positional_encoding(1, 4)\nassert len(pe1) == 4, 'vector must have length d'\nassert [round(x, 4) for x in pe1] == [0.8415, 0.5403, 0.01, 1.0]\nassert all(-1.0 <= x <= 1.0 for x in pe1), 'all values must be in [-1, 1]'\n\n# pos=0 gives the clean sin/cos pattern [0, 1, 0, 1]\npe0 = positional_encoding(0, 4)\nassert [round(x, 6) for x in pe0] == [0.0, 1.0, 0.0, 1.0]\n\n# even indices use sin, odd indices use cos\nfor i in range(8):\n    angle = 3 / (10000 ** ((2 * (i // 2)) / 8))\n    expected = math.sin(angle) if i % 2 == 0 else math.cos(angle)\n    assert abs(positional_encoding(3, 8)[i] - expected) < 1e-9\n\n# length always equals d\nassert len(positional_encoding(7, 16)) == 16"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does raw self-attention need positional encoding at all?"
+      },
+      "options": {
+        "en": [
+          "Because softmax can only handle inputs that are already sorted",
+          "Because self-attention is permutation-invariant — it computes a weighted sum and has no inherent notion of token order",
+          "Because embeddings are too large and must be compressed by position",
+          "Because attention can only process one token at a time"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How is the positional encoding combined with the token embedding?"
+      },
+      "options": {
+        "en": [
+          "It REPLACES the token embedding entirely",
+          "It is concatenated, doubling the vector dimension",
+          "It is ADDED element-wise to the token embedding (same dimension d)",
+          "It is multiplied element-wise with the token embedding"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In the sinusoidal formula PE(pos,2i)=sin(...), PE(pos,2i+1)=cos(...), which dimensions use sine and which use cosine?"
+      },
+      "options": {
+        "en": [
+          "Even-indexed dimensions use sine, odd-indexed dimensions use cosine",
+          "Odd-indexed dimensions use sine, even-indexed use cosine",
+          "The first half uses sine, the second half uses cosine",
+          "All dimensions use both, then average the two"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which is a real advantage of sinusoidal encoding over simply numbering positions 0, 1, 2, ...?"
+      },
+      "options": {
+        "en": [
+          "It makes the embeddings exactly twice as large",
+          "Its values stay bounded in [-1,1], relative offsets are a linear function of position, and it generalizes to sequences longer than those seen in training",
+          "It removes the need for the attention mechanism entirely",
+          "It guarantees every token gets identical weight"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["positional_encoding", "permutation_invariance", "sinusoidal_encoding", "relative_position", "rotary_embeddings"],
+    "concepts_required": ["multi_head_attention"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

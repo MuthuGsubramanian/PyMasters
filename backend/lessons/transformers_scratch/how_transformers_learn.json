@@ -1,0 +1,172 @@
+{
+  "id": "how_transformers_learn",
+  "topic": "how_transformers_learn",
+  "track": "transformers_scratch",
+  "module": "training",
+  "order": 1,
+  "title": {
+    "en": "How Transformers Learn: Loss, Gradients & the Big Picture"
+  },
+  "description": {
+    "en": "This is the capstone that ties the whole track together. You have built tokens, embeddings, positional encodings, softmax, and attention. Now see how they LEARN. A transformer trains by predicting the next token and adjusting its weights to make the correct token more likely. You will meet the language-modeling objective, see logits become probabilities via softmax, derive cross-entropy loss = -log(probability of the correct token), and walk the training loop: forward -> loss -> backward -> update. Then the scale story: more data, parameters, and compute -> emergent capability."
+  },
+  "xp_reward": 100,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The One Job a Transformer Has\n\nEverything in this track — tokenization, embeddings, positional encodings, softmax, scaled dot-product attention — exists to serve a single, almost embarrassingly simple goal: **predict the next token.** Give the model the text \"The cat sat on the\" and its job is to put high probability on \" mat\". That's it. From this one objective, called **language modeling**, all of the model's apparent intelligence emerges.\n\n> **Key idea:** A transformer learns by repeatedly guessing the next token, measuring how wrong it was with a loss, and nudging every weight a tiny bit in the direction that would have made the correct token more likely. Do this billions of times and grammar, facts, and reasoning fall out for free.\n\n## From Logits to Probabilities\n\nAfter the input flows through the embedding layer and the stack of attention blocks, the final layer produces one raw score per word in the vocabulary. These raw scores are called **logits** — one number for every possible next token (50,000+ of them in a real model). Logits can be any real number, positive or negative.\n\nYou already know how to turn a vector of raw scores into a probability distribution: **softmax**. Apply it to the logits and you get a clean distribution `p` over the whole vocabulary — every entry positive, all of them summing to 1. Now `p[i]` is the model's claimed probability that token `i` comes next.\n\n## Cross-Entropy: Measuring the Wrongness\n\nWe know the *actual* next token from the training text — call its index `c`. So we ask one question: **what probability did the model assign to the correct token?** That single number, `p[c]`, is all we need to score the prediction. The loss is:\n\n```\nloss = -log( p[c] )\n```\n\nThis is **cross-entropy loss**, and the minus-log shape is doing all the work:\n\n| `p[c]` (prob on correct token) | `-log(p[c])` (loss) | Interpretation |\n|--------------------------------|---------------------|----------------|\n| 1.00 | 0.000 | perfect — certain and right |\n| 0.70 | 0.357 | confident and right — low loss |\n| 0.20 | 1.609 | unsure — moderate loss |\n| 0.01 | 4.605 | confidently wrong — huge loss |\n\nWhen the model is **confident and right** (`p[c]` near 1) the loss is near 0. When it puts low probability on the correct token, the loss shoots up — and it explodes toward infinity if the model was *certain* about the wrong answer. Cross-entropy doesn't just punish being wrong; it punishes being *confidently* wrong far more harshly. That asymmetry is exactly what we want: it teaches the model humility.\n\n## Backpropagation and the Optimizer\n\nThe loss is a single number, but it depends — through that long chain of attention blocks — on **every weight in the network**. **Backpropagation** is the algorithm (just the chain rule from calculus, applied mechanically) that computes the *gradient*: how much the loss would change if you nudged each weight up a little. The gradient points uphill, toward more loss.\n\nSo we step the opposite way. An **optimizer** — in practice almost always **Adam** — takes the gradients and updates every weight a tiny amount downhill, scaled by a **learning rate**. Each weight moves just enough to make the correct token slightly more likely *next* time it sees a similar context.\n\n## The Training Loop\n\nThe entire process is a four-step loop, repeated millions of times:\n\n```\n1. FORWARD   — run the input through the model to get logits, then probabilities\n2. LOSS      — compute cross-entropy: how wrong was the prediction?\n3. BACKWARD  — backpropagate to get the gradient of the loss w.r.t. every weight\n4. UPDATE    — the optimizer (Adam) nudges every weight downhill\n```\n\nForward, loss, backward, update. Over and over, on mountains of text. There is no other secret. The model that can write essays and code is the same architecture you built, run through this loop enough times.\n\n## The Whole Track, In One Breath\n\nLet's recap the entire journey you just completed:\n\n1. **Tokens** — text is chopped into discrete tokens (subwords).\n2. **Embeddings + positional encoding** — each token becomes a vector, and position information is added so order matters.\n3. **Stacked attention blocks** — scaled dot-product attention (built on softmax) lets every position gather information from every other, layer after layer, building richer representations.\n4. **Predict** — the final layer emits logits, softmax makes them probabilities, and the model commits to a next-token guess.\n5. **Learn** — cross-entropy scores the guess, backprop finds the gradients, Adam updates the weights.\n\n## The Scale Story\n\nHere is the part that still astonishes researchers. This humble \"predict the next token\" objective, when you pour in **more data, more parameters, and more compute**, doesn't just get marginally better at filling in blanks. New capabilities **emerge** that nobody explicitly trained for: translation, arithmetic, summarization, chain-of-thought reasoning. A small model trained this way mostly learns grammar. A large one trained on the same objective learns to reason. The recipe never changed — only the scale did.\n\nThat is the big picture. You now understand, end to end, how a transformer turns raw text into a learned predictor — and why scaling that predictor produced the models reshaping the world."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "training_loop",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "training_loop_map",
+      "nodes": [
+        {
+          "label": "The Training Loop",
+          "children": [
+            "FORWARD  -> logits -> softmax -> probabilities over the vocab",
+            "LOSS     -> cross-entropy = -log(prob of correct token)",
+            "BACKWARD -> backprop computes gradient of loss w.r.t. every weight",
+            "UPDATE   -> Adam nudges every weight downhill (lower loss)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "loss_shape",
+      "left": {
+        "label": "Confident & RIGHT: p[c]=0.99 -> loss = -log(0.99) = 0.01 (tiny)",
+        "result": true
+      },
+      "right": {
+        "label": "Confident & WRONG: p[c]=0.01 -> loss = -log(0.01) = 4.61 (huge)",
+        "result": false
+      },
+      "description": {
+        "en": "Cross-entropy = -log(probability assigned to the correct token). Loss is near 0 when the model is confident and right, and explodes toward infinity when it is confidently wrong. It punishes confident mistakes hardest."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "cross_entropy_demo",
+      "code": "import math\n\ndef cross_entropy(probs, correct_index):\n    return -math.log(probs[correct_index])\n\n# model is confident the correct token (index 0) is right\nprint(round(cross_entropy([0.7, 0.2, 0.1], 0), 4))\n# model put low prob on the correct token -> higher loss\nprint(round(cross_entropy([0.1, 0.2, 0.7], 0), 4))",
+      "executionSteps": [
+        { "line": 4, "variables": { "probs": "[0.7, 0.2, 0.1]", "correct_index": "0" }, "output": "", "description": "The correct next token is index 0; the model gave it probability 0.7" },
+        { "line": 7, "variables": { "p[c]": "0.7" }, "output": "0.3567", "description": "-log(0.7) = 0.3567 — confident and right, so the loss is low" },
+        { "line": 9, "variables": { "p[c]": "0.1" }, "output": "0.3567\n2.3026", "description": "Same correct token, but only 0.1 probability -> -log(0.1) = 2.3026, a much HIGHER loss" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Predict the next token. That is the whole objective.",
+        "logits -> softmax -> probabilities; loss = -log(prob of correct token).",
+        "backprop -> gradients; Adam -> nudge every weight downhill.",
+        "tokens -> embeddings+position -> attention blocks -> predict -> learn.",
+        "Scale it up (data + params + compute) and capability EMERGES."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2200
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement the cross-entropy loss in PURE Python (math module only, NO numpy — it is not available in the sandbox). Given a list `probs` (a probability distribution over the vocabulary, already produced by softmax) and `correct_index` (the index of the actual next token from the training text), the loss is simply the negative log of the probability the model assigned to the correct token: cross_entropy(probs, correct_index) = -math.log(probs[correct_index]). The loss is near 0 when the model is confident and right, and grows large when it puts low probability on the correct token. The demo prints two cases rounded to 4 decimals. Expected output:\n0.3567\n2.3026"
+      },
+      "starter_code": "import math\n\ndef cross_entropy(probs, correct_index):\n    # The loss is the negative log of the probability assigned to the\n    # CORRECT token. Low loss = confident and right; high loss otherwise.\n    # TODO: return -math.log(probs[correct_index])\n    return None\n\n# --- demo (do not change) ---\n# Case A: correct token is index 0, model gave it 0.7 -> confident & right -> low loss\nprint(round(cross_entropy([0.7, 0.2, 0.1], 0), 4))\n# Case B: correct token is still index 0, but model gave it only 0.1 -> higher loss\nprint(round(cross_entropy([0.1, 0.2, 0.7], 0), 4))",
+      "expected_output": "0.3567\n2.3026",
+      "hints": {
+        "en": [
+          "Cross-entropy for a single prediction only cares about ONE number: the probability the model put on the correct token, probs[correct_index].",
+          "The formula is literally one line: return -math.log(probs[correct_index]). Use math.log (natural log), not math.log10.",
+          "Sanity check the shape: when probs[correct_index] is close to 1, -log is close to 0 (low loss). When it is small, -log is large (high loss).",
+          "Case A: -math.log(0.7) = 0.3567. Case B: the correct token (index 0) only got 0.1, so -math.log(0.1) = 2.3026 — a higher loss for the same correct answer."
+        ]
+      },
+      "test_code": "# exact rounded value for the confident-and-right case\nassert round(cross_entropy([0.7, 0.2, 0.1], 0), 4) == 0.3567\n# perfect prediction -> zero loss\nassert abs(cross_entropy([1.0, 0.0, 0.0], 0)) < 1e-9\n# confident & right gives LOW loss\nlow = cross_entropy([0.9, 0.05, 0.05], 0)\nassert low < 0.2\n# a LOWER probability on the correct token yields a HIGHER loss\nhigher = cross_entropy([0.1, 0.2, 0.7], 0)\nassert higher > low\nassert round(higher, 4) == 2.3026\n# monotonic: less probability on the correct token -> strictly more loss\nassert cross_entropy([0.3, 0.7], 0) > cross_entropy([0.6, 0.4], 0)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the core training objective of a (language-model) transformer?"
+      },
+      "options": {
+        "en": [
+          "To memorize the entire training set word for word",
+          "To predict the next token, putting high probability on the token that actually comes next",
+          "To compress the input text into the smallest possible file",
+          "To classify each sentence as grammatical or not"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do the model's final-layer logits become a probability distribution over the vocabulary?"
+      },
+      "options": {
+        "en": [
+          "By taking the single largest logit and setting everything else to 0",
+          "By applying softmax, which makes every value positive and the whole vector sum to 1",
+          "By dividing each logit by the number of tokens",
+          "By rounding each logit to the nearest integer"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Cross-entropy loss is -log(p[c]) where p[c] is the probability assigned to the correct token. When is the loss LOW?"
+      },
+      "options": {
+        "en": [
+          "When the model spreads probability evenly over all tokens",
+          "When the model assigns high probability to the correct token (confident and right)",
+          "When the model assigns high probability to a wrong token",
+          "When all the logits are exactly zero"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the training loop, what do backpropagation and the optimizer (Adam) each do?"
+      },
+      "options": {
+        "en": [
+          "Backprop picks the next batch of data; Adam shuffles it",
+          "Backprop computes the gradient of the loss w.r.t. every weight; Adam nudges each weight downhill to lower the loss",
+          "Backprop runs the forward pass; Adam computes the loss",
+          "Both simply increase the learning rate over time"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["language_modeling_objective", "cross_entropy_loss", "logits_to_probabilities", "backpropagation", "optimizer_adam", "training_loop", "scaling_emergence"],
+    "concepts_required": ["softmax_from_scratch"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}
