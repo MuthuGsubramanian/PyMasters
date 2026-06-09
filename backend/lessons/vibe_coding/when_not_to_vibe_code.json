@@ -1,0 +1,172 @@
+{
+  "id": "when_not_to_vibe_code",
+  "topic": "when_not_to_vibe_code",
+  "track": "vibe_coding",
+  "module": "antipatterns",
+  "order": 4,
+  "title": {
+    "en": "When NOT to Vibe Code"
+  },
+  "description": {
+    "en": "Maturity isn't trusting the AI more — it's knowing exactly where to STOP trusting it to drive. Some domains punish a confident-but-wrong answer brutally and resist quick verification. Learn the two-axis map that tells you when to slow down, and what to do instead in the danger zone."
+  },
+  "xp_reward": 90,
+  "next_unlock": "debugging_with_ai",
+  "story_variants": {
+    "en": "## The Skill Is Knowing When to Stop\n\nEverything in this track so far has made the AI your engine. This lesson is the brake.\n\nBeginners think mastering AI-assisted development means handing the model *more*: bigger features, fewer questions, more trust. The opposite is true. The senior move is recognizing the handful of domains where you take your hands off the AI and put them firmly back on the wheel — where you slow down, read every line, write the tests first, and often type it yourself or reach for a battle-tested library instead.\n\nThe reason is a single, ruthless idea.\n\n### The Two-Axis Map\n\nEvery coding task lives somewhere on two axes:\n\n- **Cost of being wrong** — if this is subtly broken, what happens? A typo in a log message? Or a leaked password database, a double-charged customer, a deleted table?\n- **Ease of verification** — can you *prove* it's right by just running it? Or does \"wrong\" look identical to \"right\" until a specific date, a specific concurrent request, or a specific attacker shows up?\n\nVibe coding is a gift in the corner where both are cheap: wrong is harmless and checking is instant. It is a **landmine** in the opposite corner: wrong is catastrophic and you can't tell by looking.\n\n| Cost of wrong \\ Verify | Easy to verify | Hard to verify |\n|---|---|---|\n| **Low cost** | Vibe freely (glue, prototypes) | Vibe, but test edges |\n| **High cost** | Slow down, add tests | **DANGER ZONE — own every line** |\n\nThe bottom-right cell is where careers and companies get hurt. Let's name its residents.\n\n### The Danger Zone, by Name\n\n**Cryptography.** The oldest rule in security: *never roll your own crypto* — and that now includes never trusting AI to roll it for you. AI will happily produce code that encrypts, decrypts, and passes your test... while using ECB mode, a hardcoded IV, or a broken key-derivation that a real attacker cracks in minutes. It *looks* like crypto. Use `libsodium`, `cryptography`, your platform's vetted primitives — never a hand-prompted cipher.\n\n**Authentication & authorization.** \"Check if the user is an admin\" is one line that, wrong, exposes everything. AI loves to write `if user.role == 'admin'` and forget the user can set their own role. Auth bugs don't crash; they silently let the wrong people in.\n\n**Anything moving money.** Payments, refunds, balances, invoicing. A wrong answer here isn't an exception — it's a chargeback, a lawsuit, or a customer charged $1,000 instead of $10.00. (We'll fix exactly that bug in the challenge.)\n\n**Database migrations & bulk deletes.** A `DELETE` or `DROP` or an `UPDATE` missing its `WHERE` runs perfectly and verifies as \"success\" — after it has destroyed data you can't get back. The happy path *is* the disaster.\n\n**Concurrency & threading.** Race conditions are the textbook \"works on my machine forever, then corrupts data once a week at scale.\" Running it proves nothing; the bug only appears under timing you can't reproduce on demand.\n\n**Floating-point & financial precision.** `0.1 + 0.2 != 0.3`. AI will write money math with `float` because that's what most tutorials do, and your books will drift by a cent at a time until an auditor notices.\n\n**Medical, legal, and safety-critical code.** Dosages, tax rules, brake logic. \"Looks plausible\" is not a standard anyone gets to use here.\n\n**Code you must maintain for years.** Even if the stakes seem low today, vibe-coded code you don't understand becomes a liability the day it breaks and you have no mental model to debug it.\n\n### What to Do Instead\n\nYou don't abandon the AI in the danger zone — you *demote* it from driver to assistant:\n\n1. **Reach for vetted libraries first.** The correct answer to \"how do I hash passwords?\" is `bcrypt`/`argon2`, not a prompt.\n2. **Write the tests before the code.** Pin the behavior — including the nasty edge — so the AI's output has to earn its place.\n3. **Get a human review.** A second pair of eyes on auth and money is non-negotiable.\n4. **Understand every single line.** If you can't explain why it's correct, you can't ship it. That's the whole job.\n\n> **Key idea:** Vibe coding's danger isn't measured by difficulty — it's measured by **cost-of-wrong × hardness-to-verify**. Stay fast where both are low. The moment a task touches crypto, auth, money, data destruction, concurrency, or human safety, take the wheel back. Knowing where to stop trusting the AI *is* the senior skill."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "warning_brake",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "two_axis_corners",
+      "left": {
+        "label": "Low cost + easy verify: vibe freely (glue, prototypes)",
+        "result": true
+      },
+      "right": {
+        "label": "High cost + hard verify: DANGER ZONE (crypto, auth, money)",
+        "result": false
+      },
+      "description": {
+        "en": "The danger of a task isn't its difficulty. It's cost-of-wrong times hardness-to-verify."
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "danger_zone_map",
+      "nodes": [
+        {
+          "label": "Danger Zone (own every line)",
+          "children": [
+            "Cryptography (use vetted libs)",
+            "Auth & authorization",
+            "Money / payments",
+            "Migrations & bulk deletes",
+            "Concurrency / threading",
+            "Float & financial precision",
+            "Medical / legal / safety"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "float_money_demo",
+      "code": "price = 19.99\nqty = 3\ntotal = price * qty\nprint(total)\nprint(total == 59.97)",
+      "executionSteps": [
+        { "line": 3, "variables": { "price": "19.99", "qty": "3" }, "output": "59.97000000000001", "description": "Float money math drifts — looks fine, isn't." },
+        { "line": 5, "variables": { "total": "59.97000000000001" }, "output": "False", "description": "59.97 in floats is not 59.97. Money must use integer cents or Decimal." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Maturity is knowing where to STOP trusting the AI to drive.",
+        "Crypto, auth, money, migrations, concurrency, safety:",
+        "take the wheel back and own every line."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Danger zone: money math. An AI wrote a checkout total using floats. It 'looks right' but drifts: 19.99 * 3 in floats is 59.97000000000001, and summing prices loses cents over time. Money lives in the danger zone — own every line. Fix line_total_cents and order_total_cents so they work in INTEGER CENTS (no floats) and return exact whole-cent integers. With the given cart, the order total must be 5497 cents ($54.97). Expected output: 5497"
+      },
+      "starter_code": "# Prices are given in cents (integers) so there is NO float drift.\n# cart: (unit_price_cents, quantity)\ncart = [\n    (1999, 3),   # 3 x $19.99 = $59.97\n    (550, 1),    # 1 x $5.50\n    (1050, -1),  # a $10.50 discount line (negative qty)\n]\n\ndef line_total_cents(unit_price_cents, quantity):\n    # BUG: AI wrote this with floats/dollars. Fix it to stay in integer cents.\n    return (unit_price_cents / 100.0) * quantity\n\ndef order_total_cents(cart):\n    # BUG: AI summed dollar floats. Fix it to sum exact integer cents.\n    total = 0.0\n    for unit_price_cents, quantity in cart:\n        total += line_total_cents(unit_price_cents, quantity)\n    return total\n\nprint(order_total_cents(cart))",
+      "expected_output": "5497",
+      "hints": {
+        "en": [
+          "Never use float for money. The cart is already in integer cents — keep it there.",
+          "line_total_cents should just be unit_price_cents * quantity (an int), with no division by 100.",
+          "order_total_cents should start total at 0 (an int) and add integer line totals.",
+          "5997 + 550 - 1050 = 5497. The negative-quantity discount line must subtract cleanly."
+        ]
+      },
+      "test_code": "assert line_total_cents(1999, 3) == 5997\nassert isinstance(line_total_cents(1999, 3), int)\nassert line_total_cents(1050, -1) == -1050\nassert order_total_cents(cart) == 5497\nassert isinstance(order_total_cents(cart), int)\nassert order_total_cents([]) == 0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What single idea decides whether a task is safe to vibe code or belongs in the danger zone?"
+      },
+      "options": {
+        "en": [
+          "How many lines of code it takes",
+          "Cost of being wrong multiplied by how hard it is to verify",
+          "Whether the AI sounds confident about it",
+          "How new the programming language is"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is cryptography a place to NEVER trust hand-prompted AI code?"
+      },
+      "options": {
+        "en": [
+          "AI cannot write encryption at all",
+          "Crypto code can pass your tests yet be broken (e.g. ECB mode, hardcoded IV) — use vetted libraries instead",
+          "Encryption is illegal to write yourself",
+          "Crypto always throws an obvious error when wrong"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are database bulk deletes and migrations especially dangerous to vibe code?"
+      },
+      "options": {
+        "en": [
+          "They run too slowly to test",
+          "A DELETE/DROP missing its WHERE runs 'successfully' after destroying data you can't recover",
+          "They require a special license",
+          "Databases reject AI-written SQL"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the danger zone, what should you do instead of letting the AI drive?"
+      },
+      "options": {
+        "en": [
+          "Prompt harder and trust the output more",
+          "Use vetted libraries, write tests first, get human review, and understand every line",
+          "Skip tests since the AI already checked it",
+          "Avoid writing any code in those domains"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["engineering_judgment", "risk_assessment", "financial_precision", "when_to_stop"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

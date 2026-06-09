@@ -1,0 +1,166 @@
+{
+  "id": "silent_security_holes",
+  "topic": "silent_security_holes",
+  "track": "vibe_coding",
+  "module": "antipatterns",
+  "order": 2,
+  "title": {
+    "en": "Silent Security Holes: The Vulnerabilities AI Code Loves to Add"
+  },
+  "description": {
+    "en": "AI code is trained on the average of the internet — including insecure code. It cheerfully produces SQL injection, command injection, hardcoded secrets, and eval() on input. The code works in the demo and is a breach in production. Learn the most common AI-introduced vulnerabilities and the security-pass habit that catches them."
+  },
+  "xp_reward": 95,
+  "next_unlock": "copy_paste_debt",
+  "story_variants": {
+    "en": "## The Demo Works. That's the Problem.\n\nYou ask the AI for a login lookup, a file downloader, or a quick admin endpoint. It hands you clean, readable code. You run it, the happy path works, you ship. Three weeks later someone types `' OR '1'='1` into your search box and walks out with your users table.\n\nThe AI didn't sabotage you. It did exactly what it was trained to do. A language model learns from **the average of the internet** — Stack Overflow answers from 2011, abandoned tutorials, half the GitHub repos ever pushed. A huge slice of that code is insecure. So when the model predicts \"the most plausible way to build a SQL query,\" the most *plausible* pattern is often an f-string, because that's what millions of examples did. The AI optimizes for **\"works\"**, not **\"safe\"** — and insecure code works perfectly in a demo. Security holes are invisible until someone goes looking. That's what makes them *silent*.\n\n### The Greatest Hits\n\nThese are the vulnerabilities AI introduces over and over. None of them throw an error. All of them ship.\n\n| Vulnerability | What the AI writes | Why it's dangerous |\n|---|---|---|\n| SQL injection | `f\"SELECT * FROM users WHERE name='{name}'\"` | User input becomes SQL; attacker rewrites the query |\n| Command injection | `os.system(f\"ping {host}\")` | `host = \"x; rm -rf /\"` runs as a shell command |\n| `eval()` on input | `eval(user_expression)` | Arbitrary Python execution from a text box |\n| Hardcoded secrets | `API_KEY = \"sk-live-abc123\"` | Key leaks the moment the code hits a repo |\n| Leaky subprocess env | `subprocess.run(cmd, env=os.environ)` | Child process inherits every secret you hold |\n| Weak/no validation | trusting `request.json['amount']` raw | Negative balances, oversized payloads, type confusion |\n| Wide-open CORS | `allow_origins=[\"*\"]` with credentials | Any site can call your API as the logged-in user |\n\n### Why a String Becomes a Breach\n\nThe canonical example. The AI writes:\n\n```python\ndef find_user(name):\n    query = f\"SELECT * FROM users WHERE name = '{name}'\"\n    return db.execute(query)\n```\n\nThis is *correct* for `name = \"alice\"`. It is a catastrophe for `name = \"x'; DROP TABLE users; --\"`. The fix is to stop building strings and let the database driver separate **code from data** with a placeholder:\n\n```python\ndef find_user(name):\n    query = \"SELECT * FROM users WHERE name = ?\"\n    return db.execute(query, (name,))   # name can never become SQL\n```\n\nThe `?` is a promise: \"this slot is data, never code.\" The same principle saves you everywhere. Don't hand the shell a string — hand it a list, so the OS never re-parses your arguments:\n\n```python\n# DANGEROUS: os.system(f\"ping {host}\")   <- shell parses the whole line\nimport subprocess\nsubprocess.run([\"ping\", \"-c\", \"1\", host], shell=False)   # host is one literal arg\n```\n\nAnd when you must run untrusted or AI-generated code, **strip the environment**. Real production code-execution sandboxes never pass `os.environ` to the child — they build a minimal env so no API key, token, or DB password leaks into code you don't control:\n\n```python\nsafe_env = {\"PATH\": \"/usr/bin\"}   # secrets deliberately excluded\nsubprocess.run([\"python\", \"snippet.py\"], env=safe_env)\n```\n\n### The Habit: A Security Pass on Every Snippet\n\nYou can't rely on the AI to flag these — it produced them. You need a five-second reflex. Any time an AI snippet touches **input, a query, the shell, a secret, or the network**, stop and ask one question for each:\n\n- **Input** — is anything from the user dropped straight into a string?\n- **Query** — are there placeholders, or is this an f-string SQL?\n- **Shell** — is it a list of args with `shell=False`, or a formatted command line?\n- **Secrets** — is a key hardcoded, and does any subprocess inherit the full env?\n- **Network** — is CORS `*` with credentials, is validation present?\n\nThis isn't paranoia; it's the same move as the verification ladder, aimed at the blast radius instead of the happy path. The AI is a brilliant intern who has never been breached and feels no fear. **You** are the one who has to imagine the attacker.\n\n> **Key idea:** AI code is trained to look plausible and run in the demo, not to survive an attacker. Insecure patterns are the *most common* patterns on the internet, so they're the model's default. Treat every snippet that touches input, queries, the shell, secrets, or the network as guilty until you've done a deliberate security pass."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "broken_lock",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "vuln_map",
+      "nodes": [
+        {
+          "label": "AI's Favorite Vulnerabilities",
+          "children": [
+            "SQL injection (f-string queries)",
+            "Command injection (os.system + input)",
+            "eval() on user input",
+            "Hardcoded secrets",
+            "Leaky subprocess env",
+            "Wide-open CORS '*'"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "vulnerable_vs_safe",
+      "left": {
+        "label": "AI default: f\"SELECT * FROM users WHERE name='{name}'\" — input becomes SQL",
+        "result": false
+      },
+      "right": {
+        "label": "Safe: \"... WHERE name = ?\" with (name,) — input can never be code",
+        "result": true
+      },
+      "description": {
+        "en": "The '?' placeholder separates code from data. The database driver guarantees the value is treated as data, never as executable SQL."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "injection_demo",
+      "code": "name = \"x'; DROP TABLE users; --\"\nquery = f\"SELECT * FROM users WHERE name = '{name}'\"\nprint(query)",
+      "executionSteps": [
+        { "line": 1, "variables": { "name": "x'; DROP TABLE users; --" }, "output": "", "description": "Attacker types this into a search box" },
+        { "line": 2, "variables": { "query": "SELECT * FROM users WHERE name = 'x'; DROP TABLE users; --'" }, "output": "", "description": "The input escaped the quotes and became SQL" },
+        { "line": 3, "variables": {}, "output": "SELECT * FROM users WHERE name = 'x'; DROP TABLE users; --'", "description": "Two statements now run. The table is gone." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "AI optimizes for 'works', not 'safe'.",
+        "Insecure code is the most common code on the internet.",
+        "Security pass every snippet: input, query, shell, secrets, network."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An AI wrote build_user_query() using an f-string — classic SQL injection. Rewrite it to return a (query, params) tuple where the query uses a '?' placeholder and the username is passed separately as data, never interpolated into the string. Keep it runnable without a real database: just build and return the safe query and params. With username 'alice', it must return (\"SELECT * FROM users WHERE name = ?\", (\"alice\",)). Expected output: ('SELECT * FROM users WHERE name = ?', ('alice',))"
+      },
+      "starter_code": "def build_user_query(username):\n    # AI wrote this (VULNERABLE to SQL injection):\n    #   query = f\"SELECT * FROM users WHERE name = '{username}'\"\n    #   return query\n    # Fix it: return a (query, params) tuple using a '?' placeholder\n    # so the username is passed as DATA, not built into the SQL string.\n    query = f\"SELECT * FROM users WHERE name = '{username}'\"  # replace this\n    return query  # replace this\n\nprint(build_user_query(\"alice\"))",
+      "expected_output": "('SELECT * FROM users WHERE name = ?', ('alice',))",
+      "hints": {
+        "en": [
+          "Never put the username inside the SQL string. The query text should be a fixed constant with a '?' where the value goes.",
+          "Return two things: the query string and a tuple of the parameters, e.g. return query, (username,).",
+          "The query should be exactly \"SELECT * FROM users WHERE name = ?\" — notice there is no f-string and no quotes around a value.",
+          "A malicious username like \"x'; DROP TABLE users; --\" must NOT appear anywhere inside the query string you return."
+        ]
+      },
+      "test_code": "q, params = build_user_query(\"alice\")\nassert q == \"SELECT * FROM users WHERE name = ?\", \"query must use a ? placeholder\"\nassert \"?\" in q, \"query must contain a ? placeholder\"\nassert params == (\"alice\",), \"username must be passed as a separate param tuple\"\nassert \"alice\" not in q, \"username must NOT be interpolated into the query string\"\nattack = \"x'; DROP TABLE users; --\"\nq2, p2 = build_user_query(attack)\nassert attack not in q2, \"malicious input must never appear in the query string\"\nassert q2 == \"SELECT * FROM users WHERE name = ?\", \"query text must stay constant regardless of input\"\nassert p2 == (attack,), \"the attack string is safely confined to the params tuple\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does AI code so often contain insecure patterns like f-string SQL queries?"
+      },
+      "options": {
+        "en": [
+          "The AI is deliberately malicious",
+          "It's trained on the average of the internet, where insecure patterns are common, and it optimizes for 'works' not 'safe'",
+          "Python makes secure code impossible",
+          "Security bugs only happen in compiled languages"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What makes a parameterized query (\"... WHERE name = ?\", (name,)) safe from SQL injection?"
+      },
+      "options": {
+        "en": [
+          "It runs faster than an f-string",
+          "The '?' placeholder separates code from data, so the value can never be parsed as SQL",
+          "It hides the query from attackers",
+          "It encrypts the database"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "An AI suggests os.system(f\"ping {host}\"). What's the safer replacement?"
+      },
+      "options": {
+        "en": [
+          "Add a try/except around it",
+          "subprocess.run([\"ping\", \"-c\", \"1\", host], shell=False) so host is one literal argument the shell never re-parses",
+          "Wrap host in quotes inside the f-string",
+          "Run it as root so it never fails"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do production code-execution sandboxes refuse to pass os.environ to a child process?"
+      },
+      "options": {
+        "en": [
+          "It slows down the subprocess",
+          "The full environment carries secrets (API keys, tokens, DB passwords) that would leak into untrusted code",
+          "os.environ is always empty",
+          "Subprocesses can't read environment variables"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["security", "sql_injection", "command_injection", "secrets_management", "input_validation", "ai_assisted_development"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}
