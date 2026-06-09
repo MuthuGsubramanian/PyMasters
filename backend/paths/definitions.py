@@ -449,8 +449,9 @@ PATH_DEFINITIONS = [
 # ── Seed function ────────────────────────────────────────────────────────
 
 def seed_paths(db_path: str):
-    """Insert all 15 path definitions into learning_paths (idempotent)."""
-    conn = sqlite3.connect(db_path)
+    """Insert all path definitions into learning_paths (idempotent)."""
+    conn = sqlite3.connect(db_path, timeout=30)
+    conn.execute("PRAGMA busy_timeout=30000")  # wait out Litestream/WAL locks
     conn.execute("PRAGMA journal_mode=WAL")
     cursor = conn.cursor()
     for p in PATH_DEFINITIONS:
