@@ -1,0 +1,171 @@
+{
+  "id": "functools_toolkit",
+  "topic": "functools_toolkit",
+  "track": "functional_python",
+  "module": "tools",
+  "order": 1,
+  "title": {
+    "en": "The functools Toolkit: partial, reduce, lru_cache, wraps"
+  },
+  "description": {
+    "en": "functools is the standard library's workshop for building functions out of functions. Pre-fill arguments with partial, fold a sequence with reduce, memoize pure functions with lru_cache/cache for huge speedups, and keep your decorators honest with wraps. Four small tools that make functional Python practical."
+  },
+  "xp_reward": 90,
+  "next_unlock": "itertools_powerhouse",
+  "story_variants": {
+    "en": "## Functions That Build Functions\n\nIn functional Python, functions are just values — you pass them around, return them, and combine them. The `functools` module is the standard library's small workshop of power tools for exactly that: taking functions you already have and producing new, more useful ones. No third-party install, no magic — just four tools you'll reach for constantly.\n\n> **Key idea:** `functools` gives you tools to build functions *from* functions — pre-fill arguments, fold sequences, cache results, and write honest decorators.\n\n## partial: Pre-Fill Some Arguments\n\n`functools.partial` takes a function and locks in some of its arguments, handing you back a new, more specialized function. Suppose you have a generic `multiply`:\n\n```python\nfrom functools import partial\n\ndef multiply(x, y):\n    return x * y\n\ndouble = partial(multiply, 2)   # lock x=2\ntriple = partial(multiply, 3)   # lock y... no, x=3\n\nprint(double(10))   # 20  -> multiply(2, 10)\nprint(triple(10))   # 30  -> multiply(3, 10)\n```\n\n`double` *is* `multiply` with its first argument frozen at `2`. This is cleaner than writing a one-line wrapper by hand, and it's perfect for adapting a general function to an API that wants a simpler one (think callbacks, `map`, or event handlers).\n\n## reduce: Fold a Sequence Into One Value\n\nYou met `reduce` with map/filter/reduce. Quick recap: `functools.reduce(func, iterable, start)` walks the iterable, carrying an accumulator and combining it with each element using `func`. It *folds* many values into one:\n\n```python\nfrom functools import reduce\n\nproduct = reduce(lambda acc, n: acc * n, [1, 2, 3, 4], 1)\nprint(product)   # 24\n```\n\n**reduce vs sum:** for plain addition, never reach for `reduce` — `sum([1, 2, 3, 4])` is clearer and faster. `reduce` earns its place when the combine step is *not* built in: a running product, flattening, or folding with a custom function. Use the simplest tool that says what you mean.\n\n## lru_cache / cache: Memoize Pure Functions\n\nThis is the tool that feels like cheating. A **pure** function (same inputs always give the same output, no side effects) can have its results *remembered*. `functools.lru_cache` does this automatically — decorate a function and repeated calls with the same arguments return instantly from a cache instead of recomputing.\n\nThe classic case is naive recursive Fibonacci, which is catastrophically slow because it recomputes the same values exponentially:\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n\nprint(fib(50))   # 12586269025 -- instant, not minutes\n```\n\nWithout the cache, `fib(50)` makes billions of calls. With it, each `n` is computed once. `functools.cache` (Python 3.9+) is simply `lru_cache(maxsize=None)` with a shorter name. **Only ever cache pure functions** — caching something with side effects or changing data will hand you stale, wrong answers.\n\n## wraps: Honest Decorators\n\nWhen you write a decorator, the inner wrapper function *replaces* the original. Without help, the wrapped function loses its real name and docstring — `help()` and debuggers start lying to you:\n\n```python\nfrom functools import wraps\n\ndef log_calls(func):\n    @wraps(func)            # copy func's name, docstring, etc. onto wrapper\n    def wrapper(*args, **kwargs):\n        return func(*args, **kwargs)\n    return wrapper\n\n@log_calls\ndef greet(name):\n    \"\"\"Say hello.\"\"\"\n    return f\"Hi {name}\"\n\nprint(greet.__name__)   # 'greet'  (not 'wrapper')\nprint(greet.__doc__)    # 'Say hello.'\n```\n\n`@wraps(func)` copies the original's identity onto the wrapper. It's one line, and it's the difference between a decorator that's invisible and one that quietly corrupts your introspection.\n\n## The Toolkit at a Glance\n\n| functools tool | What it does | Reach for it when |\n|----------------|--------------|-------------------|\n| `partial`      | Pre-fills arguments, returns a specialized function | Adapting a general function to a simpler call site |\n| `reduce`       | Folds an iterable into one value with a combine function | The combine step isn't a built-in like `sum` |\n| `lru_cache` / `cache` | Memoizes a pure function's results | Expensive or recursive pure functions |\n| `wraps`        | Copies name/docstring onto a wrapper | Writing any decorator |\n\nFour tools, one theme: take a function, get a better function back. Master these and functional Python stops being academic and starts saving you real time."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "toolbox",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "functools_tools",
+      "nodes": [
+        {
+          "label": "functools gives you",
+          "children": [
+            "partial   -> pre-fill arguments",
+            "reduce    -> fold into one value",
+            "lru_cache -> memoize pure functions",
+            "wraps     -> honest decorators"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "reduce_vs_sum",
+      "left": {
+        "label": "reduce(mul, nums, 1)  -> running PRODUCT (24)",
+        "result": true
+      },
+      "right": {
+        "label": "sum(nums)  -> use for plain addition, not reduce",
+        "result": true
+      },
+      "description": {
+        "en": "Use sum for addition — it's clearer and faster. Reach for reduce only when the combine step (like a product) isn't a built-in."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "lru_cache_demo",
+      "code": "from functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n\nprint(fib(5))",
+      "executionSteps": [
+        { "line": 9, "variables": { "n": "5" }, "output": "", "description": "fib(5) recurses, but each n is computed only ONCE" },
+        { "line": 7, "variables": { "cached": "fib(2), fib(3), fib(4)" }, "output": "", "description": "Repeated subcalls hit the cache and return instantly" },
+        { "line": 9, "variables": { "n": "5" }, "output": "5", "description": "Result: 5 — memoization turns exponential into linear" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "functools = tools to build functions FROM functions.",
+        "partial pre-fills, reduce folds, lru_cache remembers.",
+        "Cache ONLY pure functions. Wrap decorators with @wraps."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use functools meaningfully. (1) Write `to_base(n, base)` that returns the digits of n in the given base as an uppercase string (use digits 0-9 then A-F for bases up to 16; assume n >= 0). (2) Use functools.partial to build two specialized functions: `to_hex` (base 16) and `to_bin` (base 2). (3) Use functools.reduce to compute the product of [1, 2, 3, 4, 5]. The demo prints the deterministic line exactly. Expected output: to_hex(255)=FF to_bin(5)=101 product=120",
+        "type": "code"
+      },
+      "starter_code": "from functools import partial, reduce\n\nDIGITS = \"0123456789ABCDEF\"\n\ndef to_base(n, base):\n    # TODO: return n written in `base` as an uppercase string.\n    # Use DIGITS for each remainder. Handle n == 0 -> \"0\".\n    return \"\"\n\n# TODO: use functools.partial to specialize to_base:\nto_hex = None   # base 16\nto_bin = None   # base 2\n\n# TODO: use functools.reduce to compute the product of these numbers:\nproduct = None  # 1 * 2 * 3 * 4 * 5\n\nprint(f\"to_hex(255)={to_hex(255)} to_bin(5)={to_bin(5)} product={product}\")",
+      "expected_output": "to_hex(255)=FF to_bin(5)=101 product=120",
+      "hints": {
+        "en": [
+          "Build to_base with repeated divmod: digits.append(DIGITS[n % base]); n //= base; then reverse. Special-case n == 0 to return '0'.",
+          "partial locks an argument. Since to_base(n, base) takes base SECOND, pass it by keyword: to_hex = partial(to_base, base=16) and to_bin = partial(to_base, base=2).",
+          "reduce folds a sequence with a function: reduce(lambda acc, x: acc * x, [1, 2, 3, 4, 5], 1) gives 120.",
+          "255 in base 16 is FF; 5 in base 2 is 101; the product 1*2*3*4*5 is 120."
+        ]
+      },
+      "test_code": "assert to_base(255, 16) == \"FF\"\nassert to_base(0, 16) == \"0\"\nassert to_base(0, 2) == \"0\"\nassert to_hex(255) == \"FF\"\nassert to_hex(16) == \"10\"\nassert to_bin(5) == \"101\"\nassert to_bin(8) == \"1000\"\nassert to_base(10, 16) == \"A\"\nassert product == 120\nassert reduce(lambda acc, x: acc * x, [1, 2, 3, 4], 1) == 24"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does functools.partial(multiply, 2) produce, given def multiply(x, y): return x * y?"
+      },
+      "options": {
+        "en": [
+          "A new function that multiplies its argument by 2 (x is frozen at 2)",
+          "The number 2",
+          "A function that always returns multiply unchanged",
+          "An error, because partial needs both arguments"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does @lru_cache make naive recursive fib(n) dramatically faster?"
+      },
+      "options": {
+        "en": [
+          "It rewrites the recursion into a loop",
+          "It remembers each result, so every fib(n) is computed only once instead of exponentially many times",
+          "It runs the function on multiple CPU cores",
+          "It lowers the precision of the numbers"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which kind of function is safe to memoize with lru_cache?"
+      },
+      "options": {
+        "en": [
+          "Any function at all",
+          "A pure function — same inputs always give the same output, with no side effects",
+          "A function that reads a changing database",
+          "A function that prints to the screen each call"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What problem does functools.wraps solve when writing a decorator?"
+      },
+      "options": {
+        "en": [
+          "It makes the decorated function run faster",
+          "It copies the original function's name and docstring onto the wrapper, so introspection (__name__, __doc__, help) stays correct",
+          "It caches the function's results",
+          "It allows the decorator to take arguments"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["functools", "partial_application", "reduce_fold", "memoization", "decorator_wraps"],
+    "concepts_required": ["map_filter_reduce"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "functional",
+    "path_memberships": []
+  },
+  "generated": false
+}

@@ -1,0 +1,172 @@
+{
+  "id": "itertools_powerhouse",
+  "topic": "itertools_powerhouse",
+  "track": "functional_python",
+  "module": "tools",
+  "order": 2,
+  "title": {
+    "en": "itertools: Lazy, Composable Iteration"
+  },
+  "description": {
+    "en": "itertools is the standard library's box of iterator power tools — fast, memory-efficient, and lazy. Learn the handful you'll reach for constantly: chain, groupby, combinations, product, islice, count/cycle/repeat, and accumulate. Master laziness (compute on demand, even over infinite streams) and composition (snap tools together like LEGO)."
+  },
+  "xp_reward": 90,
+  "next_unlock": "composing_functions",
+  "story_variants": {
+    "en": "## The Power Tools You Keep Reinventing\n\nEvery Python programmer has written the same loops a hundred times: stitch two lists together, group records by a key, count running totals, take the first ten items of something big. You can always do it by hand with a `for` loop and an accumulator. But the standard library already ships fast, battle-tested versions of every one of these — in a module called **`itertools`**.\n\nThe magic isn't just that they're written in C and quick. It's that they're **lazy** and they **compose**. Lazy means they compute one item at a time, on demand — so they sip memory and can even work over *infinite* streams. Composable means each one takes an iterable and returns an iterator, so you can snap them together like pipes.\n\n## Laziness: Compute Only What You Need\n\nAn `itertools` tool doesn't build a giant list in memory. It hands you an **iterator** — a thing that produces the next value only when you ask. That's why you can do this without your machine catching fire:\n\n```python\nfrom itertools import count, islice\n\n# count() is an INFINITE stream: 0, 1, 2, 3, ...\nfirst_five = list(islice(count(), 5))   # [0, 1, 2, 3, 4]\n```\n\n`count()` would run forever, but `islice` only ever pulls five values from it. Nothing past the fifth item is ever computed. That is laziness paying rent.\n\n## The Toolbox\n\n| itertools function | What it does |\n|---|---|\n| `chain(a, b, ...)` | Concatenate iterables into one stream |\n| `groupby(iterable, key)` | Group **consecutive** items sharing a key |\n| `combinations(it, r)` | All r-length subsets (order ignored) |\n| `permutations(it, r)` | All r-length orderings (order matters) |\n| `product(a, b)` | Cartesian product (nested loops, flattened) |\n| `islice(it, stop)` | Slice an iterator (no list needed) |\n| `count(start, step)` | Infinite counter: start, start+step, ... |\n| `cycle(it)` | Repeat an iterable forever |\n| `repeat(x, n)` | Yield `x` n times (or forever) |\n| `accumulate(it, func)` | Running totals (or running anything) |\n\n## groupby: The One That Bites People\n\n`groupby` is the most useful — and the most misunderstood. It groups **consecutive** items, not all matching items globally. It walks the stream once and starts a new group every time the key *changes*.\n\n```python\nfrom itertools import groupby\n\ndata = ['apple', 'avocado', 'banana', 'apricot']\nfor key, grp in groupby(data, key=lambda w: w[0]):\n    print(key, list(grp))\n# a ['apple', 'avocado']\n# b ['banana']\n# a ['apricot']   <-- a SECOND 'a' group!\n```\n\nWe got *two* `a` groups because `'apricot'` wasn't next to the other `a`-words. **If you want one group per key globally, sort by the same key first.** Sort, then group — that's the rule.\n\n## Composition: Snapping Tools Together\n\nBecause every tool consumes and returns an iterator, they chain naturally. Want running totals of the first three numbers from two lists glued end-to-end?\n\n```python\nfrom itertools import chain, accumulate, islice\n\nstream = chain([1, 2, 3], [4, 5, 6])     # 1 2 3 4 5 6 (lazily)\nrunning = accumulate(stream)             # 1 3 6 10 15 21\nfirst3 = list(islice(running, 3))        # [1, 3, 6]\n```\n\nNo intermediate lists, no manual bookkeeping — just pipes feeding pipes.\n\n## When to Reach For Each\n\n- **Glue streams** → `chain`\n- **Group records** (after sorting) → `groupby`\n- **Pick pairs / arrangements** → `combinations` / `permutations`\n- **Every combo of two sets** → `product`\n- **Take N from a big/infinite source** → `islice`\n- **Running totals or running max** → `accumulate`\n- **Infinite generators** → `count` / `cycle` / `repeat` (always pair with `islice` or a break — they never stop on their own)\n\n> **Key idea:** `itertools` gives you fast, lazy, composable iteration building blocks. Laziness lets you work over huge or infinite streams without building them in memory; composition lets you snap tools together into pipelines. Remember the one gotcha: `groupby` only groups *consecutive* items, so **sort by the key first** when you want global groups."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pipeline_tools",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "itertools_toolbox",
+      "nodes": [
+        {
+          "label": "itertools (lazy + composable)",
+          "children": [
+            "chain: glue iterables together",
+            "groupby: group CONSECUTIVE items (sort first!)",
+            "combinations / permutations / product: combinatorics",
+            "islice: slice an iterator",
+            "count / cycle / repeat: infinite streams",
+            "accumulate: running totals"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "groupby_gotcha",
+      "left": {
+        "label": "Unsorted: groupby splits 'apple','avocado',...,'apricot' into TWO separate 'a' groups",
+        "result": false
+      },
+      "right": {
+        "label": "Sorted first: groupby yields ONE 'a' group with all a-words — correct global grouping",
+        "result": true
+      },
+      "description": {
+        "en": "groupby only groups items that are NEXT TO each other. Sort by the same key first to get one group per key."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "lazy_pipeline_demo",
+      "code": "from itertools import chain, accumulate, islice\n\nstream  = chain([1, 2, 3], [4, 5, 6])  # lazy: 1 2 3 4 5 6\nrunning = accumulate(stream)           # lazy: 1 3 6 10 15 21\nfirst3  = list(islice(running, 3))     # pull only 3",
+      "executionSteps": [
+        { "line": 3, "variables": { "stream": "<chain iterator>" }, "output": "nothing computed yet", "description": "chain returns a lazy iterator — no values produced until pulled." },
+        { "line": 4, "variables": { "running": "<accumulate iterator>" }, "output": "still nothing", "description": "accumulate wraps the stream lazily. The pipeline is built, not run." },
+        { "line": 5, "variables": { "first3": "[1, 3, 6]" }, "output": "[1, 3, 6]", "description": "islice pulls exactly 3 values through the whole pipe. Items 4,5,6 are never touched." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "itertools = fast, lazy, composable iteration.",
+        "Lazy: works over huge / infinite streams without building them.",
+        "groupby gotcha: it only groups CONSECUTIVE items — sort by the key first."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use itertools.groupby to tally words by their first letter. Because groupby only groups CONSECUTIVE items, you must SORT the words by first letter first. Write count_by_first_letter(words) that returns a dict mapping each first letter to how many words start with it. With the given data, the result is {'a': 3, 'b': 2, 'c': 1}, and the demo prints the count for 'a'. Expected output: 3"
+      },
+      "starter_code": "from itertools import groupby\n\nwords = [\"apple\", \"banana\", \"cherry\", \"avocado\", \"blueberry\", \"apricot\"]\n\ndef count_by_first_letter(words):\n    key = lambda w: w[0]\n    # groupby only groups CONSECUTIVE items, so sort by the key first:\n    ordered = sorted(words, key=key)\n    counts = {}\n    # TODO: group `ordered` by first letter and count each group's size\n    for letter, group in groupby(ordered, key=key):\n        counts[letter] = 0  # replace 0 with the size of this group\n    return counts\n\nresult = count_by_first_letter(words)\nprint(result[\"a\"])",
+      "expected_output": "3",
+      "hints": {
+        "en": [
+          "groupby groups only CONSECUTIVE items, so sort the words by their first letter before grouping — sorted(words, key=key).",
+          "Each iteration of groupby gives you (letter, group) where group is itself an iterator over the words in that group.",
+          "The group iterator is one-shot — materialize it with list(group) (or sum a 1 per item) to count its members.",
+          "Set counts[letter] = len(list(group)) for each (letter, group) pair."
+        ]
+      },
+      "test_code": "assert count_by_first_letter(words) == {\"a\": 3, \"b\": 2, \"c\": 1}\nassert count_by_first_letter([]) == {}\nassert count_by_first_letter([\"zebra\"]) == {\"z\": 1}\nassert count_by_first_letter([\"dog\", \"deer\", \"cat\"]) == {\"c\": 1, \"d\": 2}\nassert count_by_first_letter([\"ant\", \"cat\", \"ape\", \"cow\", \"ant\"]) == {\"a\": 3, \"c\": 2}\nassert sum(count_by_first_letter(words).values()) == len(words)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does it mean that itertools tools are 'lazy'?"
+      },
+      "options": {
+        "en": [
+          "They run slowly to save battery",
+          "They produce each value on demand instead of building a full list in memory",
+          "They only work on lists, never on generators",
+          "They cache every result forever"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does itertools.groupby require sorted input to group items globally?"
+      },
+      "options": {
+        "en": [
+          "Because sorting makes it run faster",
+          "Because groupby only groups CONSECUTIVE items with the same key, so equal keys must be adjacent",
+          "Because groupby cannot accept a key function",
+          "Because unsorted input raises an error"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How can you safely take the first 5 values from an infinite itertools.count() stream?"
+      },
+      "options": {
+        "en": [
+          "list(count()) then slice — it stops on its own",
+          "Wrap it with islice(count(), 5) so only 5 values are ever pulled",
+          "You can't; count() always hangs the program",
+          "Call count(5) to limit it to 5"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does itertools.accumulate([1, 2, 3, 4]) produce by default?"
+      },
+      "options": {
+        "en": [
+          "The single sum 10",
+          "The running totals 1, 3, 6, 10",
+          "The original list unchanged",
+          "Every pair-wise combination"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["itertools", "lazy_evaluation", "iterator_composition", "groupby", "combinatorics", "accumulate"],
+    "concepts_required": ["functools_toolkit"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "functional",
+    "path_memberships": []
+  },
+  "generated": false
+}
