@@ -1,0 +1,164 @@
+{
+  "id": "avoid_repeated_work",
+  "topic": "avoid_repeated_work",
+  "track": "performance_optimization",
+  "module": "practice",
+  "order": 2,
+  "title": {
+    "en": "Don't Compute It Twice: Caching, Hoisting & Precomputation"
+  },
+  "description": {
+    "en": "A huge share of slow code isn't doing hard work — it's doing the SAME work over and over. Learn the four practical moves that kill repeated computation: memoize pure functions, hoist invariant work out of loops, precompute a lookup table, and reuse results instead of rebuilding them."
+  },
+  "xp_reward": 90,
+  "next_unlock": "readable_then_fast",
+  "story_variants": {
+    "en": "## The Slowest Code Isn't Doing Hard Work\n\nWhen people picture slow code, they picture something heavy: a giant matrix multiply, a deep crunch of numbers. But in real programs the most common cause of slowness is far dumber. The code is doing the **same work over and over**, throwing the answer away each time, and computing it again. The fix is almost never a cleverer algorithm. It's a simple question asked at every loop and every function call: *did I already compute this?*\n\nThere are four practical moves that eliminate repeated work. None of them require new libraries. All of them are just discipline.\n\n## 1. Memoize Pure Functions (Caching)\n\nA **pure** function always returns the same output for the same input and has no side effects. That makes it perfectly safe to remember its answers. The poster child is recursive Fibonacci:\n\n```python\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n```\n\nThis is *exponential* — `fib(35)` recomputes `fib(10)` thousands of times. Add one line and it becomes linear:\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n```\n\nNow each `fib(n)` is computed once and remembered. The work collapses from exponential to linear. The rule: **if a function is pure and gets called with repeating arguments, cache it.**\n\n## 2. Hoist Invariant Work Out of Loops\n\nLook at this:\n\n```python\nfor row in rows:\n    cutoff = expensive_threshold(config)   # same every iteration!\n    if row.value > cutoff:\n        keep(row)\n```\n\n`expensive_threshold(config)` does not change across iterations — it's **loop-invariant**. Computing it inside the loop multiplies its cost by the number of rows. **Hoist** it out:\n\n```python\ncutoff = expensive_threshold(config)   # computed ONCE\nfor row in rows:\n    if row.value > cutoff:\n        keep(row)\n```\n\nThe output is identical; the work drops from N times to once. The same applies to attribute lookups, length calls, and method bindings pulled out of hot loops.\n\n## 3. Precompute a Lookup Table (Index Once, Query O(1))\n\nThis one is everywhere and costs the most when missed. Suppose you need to look up users by id while processing a stream of events:\n\n```python\nfor event in events:\n    user = next(u for u in users if u['id'] == event['user_id'])   # re-scans the list every time!\n```\n\nThat inner scan is **O(n) per event** — for M events over N users it's O(M·N). Build the index **once** and every lookup becomes O(1):\n\n```python\nby_id = {u['id']: u for u in users}    # built once: O(n)\nfor event in events:\n    user = by_id[event['user_id']]      # O(1) each\n```\n\nTotal cost drops from O(M·N) to O(N + M). You traded a tiny bit of memory for a massive amount of saved searching.\n\n## 4. Reuse Results Instead of Rebuilding\n\nIf you sort the same list three times, sort it once and reuse it. If you compile a regex inside a loop, compile it once outside. If two callers need the same parsed config, parse it once and pass it around. Repeated rebuilding is just repeated work wearing a different hat.\n\n## The Pattern Table\n\n| Symptom (the repeated work) | The technique |\n|---|---|\n| Pure function called with the same args | Memoize (`functools.lru_cache`) |\n| Constant recomputed every iteration | Hoist it out of the loop |\n| Re-searching a list inside a loop | Precompute a dict / index, then O(1) lookups |\n| Same value rebuilt by many callers | Compute once, reuse / pass it around |\n\n## How to Spot It\n\nThe tell is always the same: a computation whose **inputs didn't change** runs more than once. Scan your hot loops and ask of every line, \"does this depend on the loop variable?\" If not, it doesn't belong inside the loop. Ask of every expensive pure function, \"do I call this with repeating arguments?\" If yes, cache it. This isn't micro-optimization — eliminating redundant work routinely turns seconds into milliseconds without changing what the code produces.\n\n> **Key idea:** A great deal of slowness is simply **repeated work** — the same answer computed again and again. Before reaching for a fancier algorithm, eliminate the redundancy: **memoize** pure functions, **hoist** loop-invariant work out of the loop, **precompute** a lookup table so searches become O(1), and **reuse** results instead of rebuilding them. Same output, a fraction of the work."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "recycling_loop",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "four_moves",
+      "nodes": [
+        {
+          "label": "Eliminate Repeated Work",
+          "children": [
+            "Memoize pure functions (lru_cache)",
+            "Hoist invariant work out of loops",
+            "Precompute a lookup table (O(1) queries)",
+            "Reuse results instead of rebuilding"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "rescan_vs_index",
+      "left": {
+        "label": "Re-search list every iteration: O(M*N) — repeated scanning",
+        "result": false
+      },
+      "right": {
+        "label": "Build dict once, then O(1) lookups: O(N+M) — work done once",
+        "result": true
+      },
+      "description": {
+        "en": "Same output, but precomputing an index turns a per-iteration scan into a single build plus constant-time queries."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "fib_memoize_demo",
+      "code": "# Naive fib recomputes the same calls exponentially\n# lru_cache remembers each result -> each n computed ONCE\nfib(5)  # without cache: fib(2) computed 3 times\nfib(5)  # with cache: every fib(n) computed once",
+      "executionSteps": [
+        { "line": 4, "variables": { "calls_to_fib2": "3", "complexity": "exponential" }, "output": "slow: repeated work", "description": "Naive recursion recomputes fib(2), fib(3)... many times." },
+        { "line": 5, "variables": { "calls_to_fib2": "1", "complexity": "linear" }, "output": "fast: each n once", "description": "lru_cache caches results — repeated calls are free lookups." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Most slowness is REPEATED work, not hard work.",
+        "Memoize pure functions. Hoist invariants out of loops.",
+        "Precompute a lookup table. Reuse, don't rebuild.",
+        "Same output — a fraction of the work."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This function counts how many of the given order user_ids belong to 'active' users. It works, but it RE-SEARCHES the users list on every single order — O(M*N) repeated work. Make it fast WITHOUT changing the output: precompute a lookup (a dict or set built ONCE from users) so each order is an O(1) check. With the given data, 3 of the 5 orders belong to active users. Expected output: 3"
+      },
+      "starter_code": "users = [\n    {\"id\": 1, \"active\": True},\n    {\"id\": 2, \"active\": False},\n    {\"id\": 3, \"active\": True},\n    {\"id\": 4, \"active\": True},\n    {\"id\": 5, \"active\": False},\n]\norders = [1, 2, 3, 3, 5]  # user_ids that placed orders\n\ndef count_active_orders(users, orders):\n    count = 0\n    for uid in orders:\n        # SLOW: re-scans the whole users list for every order\n        user = next(u for u in users if u[\"id\"] == uid)\n        if user[\"active\"]:\n            count += 1\n    return count\n\n# TODO: rewrite count_active_orders to precompute a lookup ONCE,\n# then do an O(1) check per order. The output must stay the same.\n\nprint(count_active_orders(users, orders))",
+      "expected_output": "3",
+      "hints": {
+        "en": [
+          "The repeated work is the inner scan: `next(u for u in users if u['id'] == uid)` runs once per order.",
+          "Build a lookup ONCE before the loop: active_ids = {u['id'] for u in users if u['active']}.",
+          "Then each order is just an O(1) membership test: if uid in active_ids.",
+          "Loop over orders adding 1 when uid is in active_ids; the count must still be 3."
+        ]
+      },
+      "test_code": "assert count_active_orders(users, orders) == 3\nassert count_active_orders(users, []) == 0\nassert count_active_orders(users, [2, 5, 5]) == 0\nassert count_active_orders(users, [1, 1, 3, 4]) == 4\nassert count_active_orders([{\"id\": 9, \"active\": True}], [9, 9, 9]) == 3"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "According to the lesson, what is the most common cause of slow code in real programs?"
+      },
+      "options": {
+        "en": [
+          "Using the wrong programming language",
+          "Doing the same work over and over and throwing the answer away",
+          "Not having enough RAM",
+          "Heavy matrix multiplication"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What property must a function have for it to be safe to memoize with functools.lru_cache?"
+      },
+      "options": {
+        "en": [
+          "It must be recursive",
+          "It must be pure — same input always gives same output, no side effects",
+          "It must return a list",
+          "It must take exactly one argument"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A loop computes `cutoff = expensive_threshold(config)` on every iteration, but config never changes. What is the fix?"
+      },
+      "options": {
+        "en": [
+          "Hoist the computation out of the loop so it runs once before it",
+          "Add more threads to the loop",
+          "Compute it twice to be safe",
+          "Move it into a separate process"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "You re-search a list of N users inside a loop over M events. What does precomputing a dict index achieve?"
+      },
+      "options": {
+        "en": [
+          "It changes the output to be more accurate",
+          "It turns O(M*N) repeated scanning into O(N+M): build once, then O(1) lookups",
+          "It removes the need to ever store the users",
+          "It makes the lookups slower but uses less memory"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["memoization", "loop_invariant_hoisting", "precomputed_lookup", "result_reuse"],
+    "concepts_required": ["choosing_data_structures"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "performance",
+    "path_memberships": []
+  },
+  "generated": false
+}
