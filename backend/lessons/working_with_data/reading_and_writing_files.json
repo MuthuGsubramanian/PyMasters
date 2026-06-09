@@ -1,0 +1,174 @@
+{
+  "id": "reading_and_writing_files",
+  "topic": "reading_and_writing_files",
+  "track": "working_with_data",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "Reading & Writing Files the Right Way"
+  },
+  "description": {
+    "en": "Files are how programs persist and exchange data. Learn to open files with a `with` block so they auto-close, pick the right mode ('r', 'w', 'a', 'x'), handle text vs binary, and — the habit that saves you from the #1 portability bug — always pass `encoding='utf-8'`. Then read whole, line by line, or in bulk, and write cleanly."
+  },
+  "xp_reward": 85,
+  "next_unlock": "json_handling",
+  "story_variants": {
+    "en": "## Files Are How Programs Remember\n\nA running program keeps its data in memory, and when it exits that memory is gone. Files are how a program *persists* what it computed and how two programs *exchange* data without talking to each other directly. Configuration, logs, exported reports, a CSV your teammate opens in a spreadsheet — all of it is reading and writing files. Python makes this easy, but a couple of habits separate code that works on your laptop from code that works everywhere.\n\nEvery file interaction starts with `open()`, which hands you a *file object*. The catch: an open file holds an operating-system handle that must be released. Forget to close it and you leak handles; in a loop you can exhaust the OS limit and crash.\n\n> **Key idea:** Always open files in a `with` block. It closes the file for you the moment the block ends — even if your code raises an exception in the middle. You literally cannot forget.\n\n```python\nwith open('notes.txt', 'r', encoding='utf-8') as f:\n    content = f.read()\n# f is closed here, guaranteed\n```\n\n## Modes: What Do You Want to Do?\n\nThe second argument to `open()` is the **mode** — it declares your intent. Choosing the wrong one silently destroys data, so know them cold:\n\n| Mode | Meaning |\n|------|---------|\n| `'r'` | Read. The default. Errors if the file doesn't exist. |\n| `'w'` | Write. **Truncates** (empties) the file first, or creates it. |\n| `'a'` | Append. Writes to the end; creates the file if missing. |\n| `'x'` | Exclusive create. Makes a new file; errors if it already exists. |\n| `'b'` | Binary suffix, e.g. `'rb'`/`'wb'` — bytes, not text. |\n\nThe mode every beginner gets burned by is `'w'`: opening an existing file with `'w'` erases it instantly, before you write a single byte. When you want to add to a file, you want `'a'`. When you must not clobber an existing file, `'x'` fails loudly instead of overwriting.\n\n## Text vs Binary, and the encoding Trap\n\nBy default `open()` works in **text mode**: you read and write `str`, and Python decodes the raw bytes on disk into characters using an encoding. Add `'b'` to the mode for **binary mode** — images, audio, anything that isn't text — where you read and write raw `bytes`.\n\nHere is the single most important habit in this lesson: **always pass `encoding='utf-8'`.** If you omit it, Python uses the *platform default*, which differs between machines — UTF-8 on Linux and macOS, often a legacy code page on Windows. Code that reads a file with an emoji or an accented name works on your machine and then throws `UnicodeDecodeError` on someone else's. Specifying the encoding makes your program behave identically everywhere.\n\n```python\nwith open('report.txt', 'w', encoding='utf-8') as f:\n    f.write('café ☕\\n')   # works the same on every OS\n```\n\n## Three Ways to Read\n\nOnce a file is open in read mode, you have choices:\n\n```python\nwith open('big.log', 'r', encoding='utf-8') as f:\n    whole = f.read()          # the entire file as one big string\n```\n\n`.read()` is simple but loads everything into memory at once — fine for small files, dangerous for a multi-gigabyte log. The memory-efficient idiom is to iterate the file object directly, which yields **one line at a time**:\n\n```python\nwith open('big.log', 'r', encoding='utf-8') as f:\n    for line in f:            # one line at a time, low memory\n        process(line)\n```\n\nThere's also `.readlines()`, which returns a `list` of all lines — convenient, but it loads everything like `.read()` does. One gotcha across all of these: each line keeps its trailing newline (`\\n`). Strip it when you need the clean text:\n\n```python\nfor line in f:\n    clean = line.strip()     # drop the trailing newline and surrounding whitespace\n```\n\n## Writing It Back\n\nWriting mirrors reading. `.write()` takes a string and adds exactly what you give it — it does **not** append a newline, so include `\\n` yourself. `.writelines()` writes an iterable of strings (again, no newlines added for you):\n\n```python\nlines = ['first\\n', 'second\\n', 'third\\n']\nwith open('out.txt', 'w', encoding='utf-8') as f:\n    f.write('header\\n')\n    f.writelines(lines)\n```\n\nPut the habits together and the recipe is short: open in a `with` block, choose the mode deliberately, always name the encoding, iterate line by line for big files, and strip newlines when you process the text. Do that and your file code is correct, memory-safe, and portable across every machine it runs on."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "file_io",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cm_fileio",
+      "nodes": [
+        {
+          "label": "open() the right way",
+          "children": [
+            "with open(...) as f: -> auto-closes, even on error",
+            "mode: 'r' read | 'w' truncate | 'a' append | 'x' create",
+            "'b' suffix -> binary bytes; default is text str",
+            "encoding='utf-8' ALWAYS -> portable across OSes",
+            "for line in f: -> memory-efficient; .strip() the newline"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "read_vs_iterate",
+      "left": {
+        "label": "f.read() -> whole file into memory (risky for big files)",
+        "result": false
+      },
+      "right": {
+        "label": "for line in f -> one line at a time (memory-safe)",
+        "result": true
+      },
+      "description": {
+        "en": "Both read the same content, but iterating the file object streams one line at a time, so it stays cheap even on a multi-gigabyte log. Reach for `.read()` only when the file is known to be small."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "count_lines_demo",
+      "code": "import io\n\ntext = \"10\\n\\n20\\n  \\n30\\n\"\nf = io.StringIO(text)\n\ntotal = 0\nfor line in f:\n    if line.strip():\n        total += int(line)\nprint(total)",
+      "executionSteps": [
+        { "line": 7, "variables": { "line": "'10\\n'", "total": "0" }, "output": "", "description": "First line is non-blank -> add 10" },
+        { "line": 7, "variables": { "line": "'\\n'", "total": "10" }, "output": "", "description": "Blank line: strip() is empty -> skipped" },
+        { "line": 7, "variables": { "line": "'20\\n'", "total": "10" }, "output": "", "description": "Add 20 -> total 30" },
+        { "line": 7, "variables": { "line": "'  \\n'", "total": "30" }, "output": "", "description": "Whitespace-only line skipped after strip()" },
+        { "line": 7, "variables": { "line": "'30\\n'", "total": "30" }, "output": "", "description": "Add 30 -> total 60" },
+        { "line": 10, "variables": { "total": "60" }, "output": "60", "description": "Trailing newline yields no extra line; prints 60" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "with open(...) as f:  ->  it closes itself, even on errors.",
+        "encoding='utf-8' every time  ->  same result on every OS.",
+        "for line in f + .strip()  ->  memory-safe and clean."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Files arrive as text with one number per line — but real data is messy: there are blank lines, whitespace-only lines, and a trailing newline at the end. Write `sum_numbers(text)` that takes the file's full contents as a string, wraps it in `io.StringIO(text)` so you can iterate it just like a real file, and returns the sum of the numbers on the non-blank lines. Iterate line by line, skip any line that is empty after `.strip()`, and `int()` the rest. The demo feeds in '10\\n\\n20\\n  \\n30\\n' and prints the total. Expected output: 60"
+      },
+      "starter_code": "import io\n\ndef sum_numbers(text):\n    f = io.StringIO(text)          # an in-memory 'file' you can iterate\n    total = 0\n    for line in f:\n        # TODO: skip blank / whitespace-only lines\n        # TODO: int() the rest and add to total\n        pass\n    return total\n\n# --- demo (do not change) ---\ndata = \"10\\n\\n20\\n  \\n30\\n\"\nprint(sum_numbers(data))",
+      "expected_output": "60",
+      "hints": {
+        "en": [
+          "io.StringIO(text) gives you an object you can loop over with `for line in f:`, exactly like a real opened file — each iteration yields one line including its trailing newline.",
+          "Each `line` keeps its trailing '\\n'. Call `line.strip()` to drop the newline and surrounding spaces.",
+          "If `line.strip()` is an empty string, it was a blank or whitespace-only line — `continue` to skip it.",
+          "For the remaining lines, convert the stripped text with `int(line.strip())` and add it to a running `total`."
+        ]
+      },
+      "test_code": "assert sum_numbers(\"10\\n\\n20\\n  \\n30\\n\") == 60\nassert sum_numbers(\"\") == 0\nassert sum_numbers(\"5\") == 5\nassert sum_numbers(\"1\\n2\\n3\\n\") == 6\nassert sum_numbers(\"\\n\\n\\n\") == 0\nassert sum_numbers(\"  7  \\n\\n  3\\n\") == 10\nassert sum_numbers(\"42\\n\") == 42"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why open a file inside a `with open(...) as f:` block?"
+      },
+      "options": {
+        "en": [
+          "It makes reading the file faster",
+          "It closes the file automatically when the block ends, even if an exception is raised",
+          "It is the only way to read text files",
+          "It converts the file to binary"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You want to add lines to the end of an existing log file without erasing it. Which mode do you use?"
+      },
+      "options": {
+        "en": [
+          "'w' — write",
+          "'r' — read",
+          "'a' — append",
+          "'x' — exclusive create"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why should you almost always pass `encoding='utf-8'` to `open()`?"
+      },
+      "options": {
+        "en": [
+          "It makes the file smaller on disk",
+          "Without it Python uses the platform default encoding, so the same code can fail with UnicodeDecodeError on a different OS",
+          "It is required syntax or open() raises an error",
+          "It automatically strips newlines for you"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "For a multi-gigabyte log file, what is the memory-safe way to process it line by line?"
+      },
+      "options": {
+        "en": [
+          "Call f.read() to load it all, then split on '\\n'",
+          "Call f.readlines() to get a list of every line",
+          "Iterate the file object directly with `for line in f:`, which yields one line at a time",
+          "Open it in binary mode with 'rb'"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["file_io", "open_with_block", "file_modes", "text_vs_binary", "utf8_encoding", "line_iteration"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "data",
+    "path_memberships": []
+  },
+  "generated": false
+}
