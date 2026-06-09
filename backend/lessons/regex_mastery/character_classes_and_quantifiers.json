@@ -1,0 +1,170 @@
+{
+  "id": "character_classes_and_quantifiers",
+  "topic": "character_classes_and_quantifiers",
+  "track": "regex_mastery",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "Character Classes & Quantifiers: Building Real Patterns"
+  },
+  "description": {
+    "en": "Literal patterns only match exactly what you type. Character classes let a single position match a whole *set* of characters, and quantifiers let one piece repeat. Together they turn rigid strings into real patterns that match numbers, words, and structured text — and they introduce the most famous regex gotcha of all: greedy vs lazy matching."
+  },
+  "xp_reward": 90,
+  "next_unlock": "groups_and_capturing",
+  "story_variants": {
+    "en": "## From Literals to Patterns\n\nA literal regex like `cat` matches exactly three characters in a row: `c`, then `a`, then `t`. Useful, but rigid. Real text isn't rigid — phone numbers vary, words have different lengths, IDs mix letters and digits. To match *shapes* instead of exact strings, you need two tools: **character classes** (match one of a *set* of characters) and **quantifiers** (let a piece *repeat*). Master these two and you can already match the vast majority of real-world patterns.\n\n## Character Classes: One Slot, Many Options\n\nA character class uses square brackets to mean \"match exactly one character from this set.\"\n\n- `[abc]` matches a single `a`, `b`, or `c`.\n- `[a-z]` uses a **range**: any one lowercase letter. `[0-9]` is any one digit. You can combine: `[a-z0-9]` is one lowercase letter *or* digit.\n- `[^abc]` is **negation** — the leading `^` means \"any character that is *not* a, b, or c.\"\n\nBecause some classes are so common, regex gives you **shorthand classes**:\n\n| Metacharacter | Meaning |\n|---|---|\n| `\\d` | a digit, same as `[0-9]` |\n| `\\D` | a non-digit, same as `[^0-9]` |\n| `\\w` | a word character: letter, digit, or underscore |\n| `\\W` | a non-word character |\n| `\\s` | whitespace (space, tab, newline) |\n| `\\S` | non-whitespace |\n| `.` | any character except newline |\n\nThe uppercase versions are always the *negation* of the lowercase ones. And `.` is the wildcard — it matches almost anything, which makes it powerful and dangerous (more on that below).\n\n## Quantifiers: Let It Repeat\n\nA character class matches **one** character. Quantifiers say *how many times* the thing before them may repeat:\n\n- `*` — zero or more (`a*` matches `''`, `'a'`, `'aaaa'`)\n- `+` — one or more (`a+` needs at least one `a`)\n- `?` — zero or one, i.e. optional (`colou?r` matches both `color` and `colour`)\n- `{n}` — exactly *n* times (`\\d{4}` matches a 4-digit year)\n- `{n,m}` — between *n* and *m* times (`\\d{2,4}` matches 2 to 4 digits)\n\nNow the classics fall out naturally. **Match a whole number:** `\\d+` — one or more digits. **Match a word:** `\\w+` — one or more word characters. **Match a price like 19.99:** `\\d+\\.\\d{2}`. You're combining a class with a quantifier, and suddenly you're parsing real text.\n\n## The Greedy Gotcha\n\nHere is the single most important trap in all of regex. By default, quantifiers are **greedy**: they grab as *much* as they possibly can while still letting the overall pattern match.\n\nSuppose you have the text `<b>hi</b>` and you write `<.*>` to match a tag. You expect `<b>`. You get the *entire* string `<b>hi</b>` — because `.*` is greedy: it swallows everything up to the *last* `>` it can find, then backtracks just enough to succeed. The `.*` over-match is a bug that has bitten every regex user alive.\n\nThe fix is a **lazy** (non-greedy) quantifier: add a `?` after it. `*?`, `+?`, and `??` grab as *little* as possible. So `<.*?>` matches just `<b>` — it stops at the *first* `>`.\n\n> **Key idea:** Character classes (`[a-z]`, `\\d`, `\\w`, `\\s`, `.`) decide *what* a single position can be; quantifiers (`*`, `+`, `?`, `{n,m}`) decide *how many times* it repeats. Quantifiers are **greedy** by default — they grab as much as possible, which is why `.*` over-matches — and adding `?` makes them **lazy**, grabbing as little as possible.\n\n## Putting It Together\n\nWith just these tools you can write `\\d+` to pull every integer out of a log line, `\\w+` to tokenize words, `[A-Z][a-z]+` to find capitalized names, or `#[0-9a-fA-F]{6}` to match a hex color. Character classes plus quantifiers are the workhorse of practical pattern matching — everything that follows (groups, anchors, lookarounds) is built on top of this foundation."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pattern_blocks",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "classes_and_quantifiers_map",
+      "nodes": [
+        {
+          "label": "Classes (WHAT) + Quantifiers (HOW MANY)",
+          "children": [
+            "[abc] / [a-z0-9] / [^abc] — a set of characters",
+            "\\d \\w \\s and \\D \\W \\S — shorthand classes",
+            ". — any character except newline",
+            "* + ? {n} {n,m} — repetition",
+            "greedy by default; add ? for lazy"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "greedy_vs_lazy",
+      "left": {
+        "label": "Greedy <.*> on '<b>hi</b>' grabs EVERYTHING: '<b>hi</b>'",
+        "result": false
+      },
+      "right": {
+        "label": "Lazy <.*?> on '<b>hi</b>' grabs as little as possible: '<b>'",
+        "result": true
+      },
+      "description": {
+        "en": "Greedy quantifiers swallow as much as they can then backtrack; adding ? makes them lazy and stop at the first match."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "findall_demo",
+      "code": "import re\ntext = \"room 12, floor 3, 250 chairs\"\nnums = re.findall(r\"\\d+\", text)\nprint(nums)",
+      "executionSteps": [
+        { "line": 3, "variables": { "pattern": "\\d+", "text": "room 12, floor 3, 250 chairs" }, "output": "scanning...", "description": "\\d+ means one-or-more digits; findall scans left to right for every run." },
+        { "line": 4, "variables": { "nums": "['12', '3', '250']" }, "output": "['12', '3', '250']", "description": "Each maximal run of digits becomes one match — greedy + grabs the whole number." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Classes pick WHAT a slot matches: [a-z], \\d, \\w, \\s, .",
+        "Quantifiers pick HOW MANY times: * + ? {n} {n,m}",
+        "Greedy grabs as much as possible (.*) — add ? for lazy (.*?)."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use character classes and quantifiers to extract structured data. Write extract_ints(text) that returns a list of every integer in the string, in order, as Python ints. Use re.findall with the pattern \\d+ (a digit class with the one-or-more quantifier) to grab each maximal run of digits, then convert each to int. With the given data, extract_ints('order 42: 7 boxes, 1000 units') must return [42, 7, 1000]. Expected output: [42, 7, 1000]"
+      },
+      "starter_code": "import re\n\ndef extract_ints(text):\n    # TODO: \\d+ matches one or more digits (a whole number).\n    # re.findall(r\"\\d+\", text) returns a list of digit-run STRINGS.\n    # Convert each match to an int and return the list.\n    matches = re.findall(r\"\", text)  # fix the pattern\n    return matches\n\nprint(extract_ints(\"order 42: 7 boxes, 1000 units\"))",
+      "expected_output": "[42, 7, 1000]",
+      "hints": {
+        "en": [
+          "The pattern for 'one or more digits' is \\d+ — the class \\d is a single digit, and + means repeat one or more times.",
+          "re.findall(r\"\\d+\", text) returns the matches as strings like ['42', '7', '1000'].",
+          "Because + is greedy, \\d+ grabs the WHOLE number ('1000'), not one digit at a time — exactly what you want here.",
+          "Convert each string to int: return [int(m) for m in re.findall(r\"\\d+\", text)]."
+        ]
+      },
+      "test_code": "assert extract_ints(\"order 42: 7 boxes, 1000 units\") == [42, 7, 1000]\nassert extract_ints(\"no digits here\") == []\nassert extract_ints(\"a1b22c333\") == [1, 22, 333]\nassert extract_ints(\"\") == []\nassert extract_ints(\"007 then 0\") == [7, 0]\nassert all(isinstance(n, int) for n in extract_ints(\"5 and 6\"))"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the character class [^a-z] match?"
+      },
+      "options": {
+        "en": [
+          "Exactly the three characters ^, a, and z",
+          "Any single character that is NOT a lowercase letter",
+          "Any lowercase letter, one or more times",
+          "The start of a line followed by a-z"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which pattern matches one or more digits (a whole number)?"
+      },
+      "options": {
+        "en": [
+          "\\d?",
+          "\\d*",
+          "\\d+",
+          "\\D+"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "On the text '<b>hi</b>', what does the greedy pattern <.*> match?"
+      },
+      "options": {
+        "en": [
+          "Just '<b>', because it stops at the first >",
+          "The entire string '<b>hi</b>', because .* grabs as much as possible",
+          "Nothing, because .* is invalid",
+          "Only 'hi' between the tags"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you make a quantifier lazy (grab as little as possible)?"
+      },
+      "options": {
+        "en": [
+          "Put a ^ before it, like ^.*",
+          "Use {0} instead of *",
+          "Add a ? after it, like .*? or \\d+?",
+          "Lazy matching is the default; you make it greedy with ?"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["character_classes", "shorthand_classes", "quantifiers", "greedy_vs_lazy", "re_findall"],
+    "concepts_required": ["regex_fundamentals"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 16,
+    "category": "regex",
+    "path_memberships": []
+  },
+  "generated": false
+}
