@@ -1,0 +1,172 @@
+{
+  "id": "regex_in_practice",
+  "topic": "regex_in_practice",
+  "track": "regex_mastery",
+  "module": "patterns",
+  "order": 3,
+  "title": {
+    "en": "Regex in Practice: Performance, Readability & When NOT to Use It (Capstone)"
+  },
+  "description": {
+    "en": "You can now write patterns that match almost anything. This capstone is the brake. Learn to compile once and reuse, to make scary patterns readable with re.VERBOSE, to recognize catastrophic backtracking that can hang your program for seconds, and — most importantly — when to put the regex down and reach for a real parser or a plain string method instead."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Powerful Regex Is Dangerous Regex\n\nAcross this track you learned the machinery: character classes, quantifiers, groups, anchors, and lookarounds. You can now write a pattern that matches almost anything. This capstone is the part nobody teaches: the wisdom to use that power *well*, and the judgment to not use it at all.\n\nThree practical skills separate someone who *knows* regex from someone who ships it safely: **compiling for reuse**, **writing it so a human can read it**, and **never letting it hang your program**. And one piece of judgment outranks all three: knowing when regex is the wrong tool entirely.\n\n## Compile Once, Use Many\n\nEvery time you call `re.search(pattern, text)` with a *string* pattern, Python parses and compiles that pattern into a state machine. Python caches the most recent patterns, but in a tight loop over thousands of inputs you're relying on luck. The explicit, fast move is to compile once:\n\n```python\nimport re\nCODE = re.compile(r\"^[A-Z]{2}-\\d{4}$\")\nvalid = [s for s in items if CODE.match(s)]\n```\n\nThe compiled object carries `.match`, `.search`, `.findall`, and friends. Compile it at module load, reuse it forever. It documents intent (\"this pattern is a reusable thing\") and removes repeated compilation from your hot path.\n\n## Make It Readable: re.VERBOSE\n\nA dense pattern like `r\"^(?:\\+?1[-.\\s]?)?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$\"` is write-only code. Six months later, even you can't read it. The `re.VERBOSE` flag (also written inline as `(?x)`) lets whitespace and `#` comments live *inside* the pattern, so you can lay it out like real code:\n\n```python\nPHONE = re.compile(r\"\"\"\n    ^\n    (?:\\+?1[-.\\s]?)?    # optional country code\n    \\(?\\d{3}\\)?         # area code, optional parens\n    [-.\\s]?\n    \\d{3}[-.\\s]?\\d{4}   # local number\n    $\n\"\"\", re.VERBOSE)\n```\n\nSame engine, same speed — but now it is *maintainable*. In verbose mode, to match a literal space you must use `\\ ` or `[ ]`, since unescaped whitespace is ignored.\n\n## The Trap: Catastrophic Backtracking (ReDoS)\n\nHere is the one that ends careers' worth of uptime. A pattern with **nested quantifiers** — a quantified group that is itself quantified, like `(a+)+` — can, on input that *almost* matches, force the engine to try an exponential number of ways to split the string before giving up. A 30-character string can mean billions of attempts. Your CPU pins at 100% and the request hangs for *seconds*. An attacker who can send input turns this into a denial-of-service: **ReDoS**.\n\n```python\nevil = re.compile(r\"^(a+)+$\")\nevil.match(\"a\" * 30 + \"!\")   # tries to match, backtracks forever\n```\n\nThe fix is discipline, not cleverness:\n\n- **Avoid nested quantifiers.** `(a+)+`, `(a*)*`, `(.*)*` are red flags. Rewrite `(a+)+` as simply `a+`.\n- **Be specific.** Prefer `[^\"]*` (\"anything but a quote\") over `.*` when scanning between delimiters — a precise class can't overlap with the delimiter, so there's nothing to backtrack.\n- **Anchor your patterns** with `^` and `$` so the engine isn't retrying at every position.\n- **Bound your repetition** with `{0,100}` instead of an open-ended `*` when you know the real limit.\n\n## When NOT to Use Regex At All\n\nThe sharpest skill is restraint. Regex matches *regular* languages — flat, non-recursive patterns. Reach for something else when:\n\n| Use regex | Don't use regex — use this instead |\n|---|---|\n| Validate a postal code / phone / SKU format | **Parse HTML/XML** → a parser (`html.parser`, `lxml`, BeautifulSoup) |\n| Extract all dates from a log line | **Parse JSON** → `json.loads`, never a pattern |\n| Split on a complex delimiter | **Nested/recursive structures** (brackets, code) → a real parser |\n| Find/replace a token pattern | **Simple fixed checks** → `str` methods |\n\nHTML and JSON are **recursive** — tags nest inside tags, objects inside objects — and a regular expression provably *cannot* parse arbitrary nesting. The famous Stack Overflow scream \"you can't parse HTML with regex\" is literally true, not just grumpy. Use a parser that understands structure.\n\nAnd often the humblest tool wins. If you're checking a prefix, `s.startswith(\"ERROR\")` is clearer and faster than `re.match(r\"ERROR\", s)`. Splitting on commas? `s.split(\",\")`. Membership? `\"err\" in s`. Plain `str` methods are more readable, faster, and impossible to ReDoS. Regex earns its place only when the *pattern itself* is genuinely variable.\n\n## The Track, Recapped\n\nYou built up the whole toolbox: literals and classes, quantifiers, groups and alternation, anchors and the zero-width lookarounds — and now the practitioner's layer on top: compile for reuse, write it readably with VERBOSE, defuse catastrophic backtracking, and recognize the jobs that belong to a parser or a `str` method. That last instinct — knowing when *not* to reach for regex — is what turns a pattern-writer into an engineer.\n\n> **Key idea:** A regex that works isn't enough — it must be reusable (`re.compile`), readable (`re.VERBOSE`), and safe (no nested quantifiers, or it ReDoS-hangs on bad input). And the wisest regex is the one you don't write: parse HTML/JSON/recursive data with a real parser, and use plain `str` methods when they're clearer. Power without restraint is just a slower, scarier bug."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "regex_brake",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "practitioner_layer",
+      "nodes": [
+        {
+          "label": "Regex in Practice",
+          "children": [
+            "re.compile — compile once, use many",
+            "re.VERBOSE (?x) — readable patterns + comments",
+            "Catastrophic backtracking (ReDoS) — avoid (a+)+",
+            "Be specific, anchor, bound repetition",
+            "Don't parse HTML/JSON with regex — use a parser",
+            "Prefer str methods when clearer"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "use_vs_dont",
+      "left": {
+        "label": "USE regex: validate codes, extract tokens, find/replace patterns",
+        "result": true
+      },
+      "right": {
+        "label": "DON'T: parse HTML/JSON/recursive data, or when .startswith/.split/'in' is clearer",
+        "result": false
+      },
+      "description": {
+        "en": "Regex matches flat, non-recursive patterns. Recursive structure needs a real parser; simple checks need plain str methods."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "redos_demo",
+      "code": "import re\n# Nested quantifier: (a+)+ — a ReDoS trap\nevil = re.compile(r\"^(a+)+$\")\nevil.match(\"aaaaaaaaaa!\")  # almost matches, then backtracks\n# Fix: drop the nesting\nsafe = re.compile(r\"^a+$\")",
+      "executionSteps": [
+        { "line": 4, "variables": { "pattern": "^(a+)+$", "input": "aaaaaaaaaa!" }, "output": "...still trying...", "description": "The trailing '!' blocks the match. (a+)+ tries every way to split the a's — exponential backtracking." },
+        { "line": 6, "variables": { "pattern": "^a+$" }, "output": "fast, no match", "description": "Removing the nested quantifier makes it linear. Same intent, no hang." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Reusable: re.compile once, use many.",
+        "Readable: re.VERBOSE + comments.",
+        "Safe: no nested quantifiers (a+)+ -> ReDoS.",
+        "Wisest regex of all: the one you DON'T write — parse HTML/JSON with a parser."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Capstone synthesis. A teammate wrote a fragile, slow validator using a string pattern re-compiled on every call and a nested quantifier that risks catastrophic backtracking. Rewrite it the right way. Compile ONE clear, anchored pattern (module level) for a product code: exactly two uppercase letters, a hyphen, then exactly four digits — e.g. 'AB-1234'. Implement extract_valid_codes(items) to return ONLY the items that fully match, in their original order. No nested quantifiers, fully anchored. With the given list, the result is ['AB-1234', 'ZZ-0007', 'QA-9999']. Expected output: ['AB-1234', 'ZZ-0007', 'QA-9999']"
+      },
+      "starter_code": "import re\n\nitems = [\n    \"AB-1234\",     # valid\n    \"ab-1234\",     # invalid: lowercase letters\n    \"ZZ-0007\",     # valid\n    \"A1-2345\",     # invalid: second char is a digit\n    \"QA-9999\",     # valid\n    \"AB-12345\",    # invalid: 5 digits\n    \"AB-123\",      # invalid: 3 digits\n    \" AB-1234\",    # invalid: leading space\n    \"AB1234\",      # invalid: missing hyphen\n]\n\n# BUG: re-compiles on every call AND uses a nested quantifier (([A-Z]+)+)\n# that risks catastrophic backtracking. Fix both problems.\ndef extract_valid_codes(items):\n    out = []\n    for s in items:\n        if re.match(r\"^(([A-Z]+)+)-(\\d+)$\", s):\n            out.append(s)\n    return out\n\nprint(extract_valid_codes(items))",
+      "expected_output": "['AB-1234', 'ZZ-0007', 'QA-9999']",
+      "hints": {
+        "en": [
+          "Compile ONE pattern at module level with re.compile so it isn't rebuilt on every call: CODE = re.compile(r\"...\").",
+          "Be exact, not open-ended: two uppercase letters is [A-Z]{2}, four digits is \\d{4}. No '+' quantifiers needed, so no nesting and no ReDoS.",
+          "Anchor fully with ^ and $ so ' AB-1234' (leading space) and 'AB-12345' (extra digit) are rejected. Using CODE.fullmatch also works.",
+          "Loop in order and keep only items where CODE.match(s) (with $ anchor) is truthy — a list comprehension reads cleanly."
+        ]
+      },
+      "test_code": "assert extract_valid_codes(items) == ['AB-1234', 'ZZ-0007', 'QA-9999']\nassert extract_valid_codes([]) == []\nassert extract_valid_codes(['AB-0000', 'XY-9999']) == ['AB-0000', 'XY-9999']\nassert extract_valid_codes(['ab-1234', 'A1-2345', 'AB-12345', 'AB-123', ' AB-1234', 'AB1234']) == []\nassert extract_valid_codes(['QA-9999', 'AB-1234']) == ['QA-9999', 'AB-1234']\nimport re as _re\nassert isinstance(CODE, _re.Pattern), 'CODE must be a module-level compiled pattern (re.compile)'"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why compile a regex with re.compile when you'll use it many times?"
+      },
+      "options": {
+        "en": [
+          "It changes what the pattern matches",
+          "It builds the pattern's state machine once instead of re-parsing it on every call, and documents intent",
+          "It is the only way to use anchors",
+          "Compiled patterns can parse recursive structures"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the re.VERBOSE (?x) flag let you do?"
+      },
+      "options": {
+        "en": [
+          "Make the regex run faster at the cost of accuracy",
+          "Spread the pattern across lines with whitespace and # comments so it's readable (literal spaces must then be escaped)",
+          "Automatically prevent catastrophic backtracking",
+          "Turn a regex into a JSON parser"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why can a pattern like (a+)+ hang your program on certain inputs?"
+      },
+      "options": {
+        "en": [
+          "It uses too much memory to load",
+          "Nested quantifiers cause catastrophic backtracking — on near-matching input the engine tries an exponential number of splits (ReDoS)",
+          "Python forbids nested groups and loops forever",
+          "It silently matches everything, including invalid input"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When should you NOT use a regular expression?"
+      },
+      "options": {
+        "en": [
+          "Whenever you need to validate a fixed format like a postal code",
+          "To parse HTML/XML/JSON or recursive structures (use a real parser), or when a plain str method like .startswith / .split / 'in' is clearer",
+          "Any time the input is longer than ten characters",
+          "When you want to find and replace a token pattern"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["re_compile", "re_verbose", "catastrophic_backtracking", "redos", "when_not_to_use_regex", "regex_performance"],
+    "concepts_required": ["anchors_and_lookarounds"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "regex",
+    "path_memberships": []
+  },
+  "generated": false
+}

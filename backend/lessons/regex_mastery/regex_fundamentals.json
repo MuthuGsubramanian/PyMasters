@@ -1,0 +1,173 @@
+{
+  "id": "regex_fundamentals",
+  "topic": "regex_fundamentals",
+  "track": "regex_mastery",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "Regex Fundamentals: Pattern Matching in Python"
+  },
+  "description": {
+    "en": "A regular expression is a tiny language for describing text patterns. Learn what regex is for — search, validate, extract, replace — and master the core Python re functions, the difference between literal characters and metacharacters, why patterns live in raw strings, and how to read a Match object."
+  },
+  "xp_reward": 85,
+  "next_unlock": "character_classes_and_quantifiers",
+  "story_variants": {
+    "en": "## A Tiny Language Inside Python\n\nYou have a wall of text and a question: *Where are the email addresses? Is this a valid phone number? Pull out every word that starts with a capital. Replace every double space with one.* You could write loops and index gymnastics for each. Or you could describe the **pattern** once and let an engine find it.\n\nThat description language is a **regular expression** — a *regex*. It's a tiny, dense language whose entire job is to describe shapes of text. Python speaks it through the built-in `re` module, no install required.\n\n> **Key idea:** A regex is not code that loops over characters. It's a *pattern* — a compact description of what matching text looks like — and the `re` engine does the searching for you.\n\n## The Four Jobs of Regex\n\nAlmost everything you'll do with `re` is one of four verbs:\n\n- **Search** — *is this pattern in there, and where?*\n- **Validate** — *does the whole string match this shape?*\n- **Extract** — *pull out every piece that matches.*\n- **Replace** — *swap matches for something else.*\n\nPython gives you one function per job, plus a couple of cousins.\n\n## The Core `re` Functions\n\n| Function | What it does |\n|---|---|\n| `re.search(pat, s)` | Finds the **first** match **anywhere** in `s`. Returns a Match or `None`. |\n| `re.match(pat, s)` | Matches only at the **start** of `s` (anchored at the beginning). |\n| `re.fullmatch(pat, s)` | Matches only if the pattern consumes the **whole** string. |\n| `re.findall(pat, s)` | Returns a **list** of every match as strings. |\n| `re.sub(pat, repl, s)` | **Replaces** every match with `repl`, returns the new string. |\n\nA quick taste:\n\n```python\nimport re\n\nre.search(r\"\\d+\", \"room 237 floor 4\")   # <Match 'room 237...'> -> '237'\nre.match(r\"\\d+\", \"room 237\")            # None (string starts with 'r', not a digit)\nre.fullmatch(r\"\\d+\", \"237\")             # matches: the WHOLE string is digits\nre.findall(r\"\\d+\", \"a1 b22 c333\")       # ['1', '22', '333']\nre.sub(r\"\\s+\", \" \", \"too    many   spaces\")  # 'too many spaces'\n```\n\nNotice the difference between `search`, `match`, and `fullmatch`: they're the same pattern, but anchored differently. `search` roams the whole string, `match` is pinned to the start, `fullmatch` demands the pattern *be* the entire string. Confusing them is the #1 beginner bug.\n\n## Literal Characters vs Metacharacters\n\nMost characters in a pattern are **literal** — `cat` matches the three letters c-a-t. But a handful are **metacharacters** with special powers:\n\n```\n.  ^  $  *  +  ?  {  }  [  ]  \\  |  (  )\n```\n\nFor example: `.` means *any character*, `^` means *start of string*, `$` means *end of string*, `*` means *zero or more of the thing before it*, `+` means *one or more*, `?` means *optional*. So `a.c` matches `abc`, `axc`, `a9c` — the dot is a wildcard, not a literal period. To match a *real* dot you escape it: `a\\.c` matches only `a.c`.\n\nThis is the heart of regex: knowing which characters are literal and which are magic.\n\n## Why Patterns Live in Raw Strings\n\nRegex leans on the backslash constantly — `\\d` (digit), `\\w` (word char), `\\s` (whitespace), `\\b` (word boundary). But the backslash is *also* special to Python strings: `\"\\n\"` is a newline, `\"\\t\"` a tab. So `\"\\d\"` confuses two layers at once, and Python may mangle your pattern before `re` ever sees it.\n\nThe fix is the **raw string** prefix `r\"...\"`, which tells Python *don't interpret backslashes — hand them to regex untouched*:\n\n```python\nr\"\\bword\\b\"   # the regex engine sees \\b literally\n\"\\bword\\b\"    # \\b is a backspace char in Python! Bug.\n```\n\nRule of thumb: **always write regex patterns as raw strings.** It costs one letter and saves hours.\n\n## Reading the Match Object\n\nWhen `search`, `match`, or `fullmatch` succeed, they return a **Match object** — not the string itself. You ask it questions:\n\n```python\nm = re.search(r\"\\d+\", \"order 42 shipped\")\nif m:                 # truthy when matched, None otherwise\n    m.group()         # '42'   -> the matched text\n    m.start()         # 6      -> where it begins\n    m.end()           # 8      -> where it ends\n```\n\nAlways guard with `if m:` because a failed search returns `None`, and `None.group()` crashes. `findall`, by contrast, skips Match objects entirely and hands you plain strings in a list — which is why it's the workhorse for extraction.\n\nThat's the foundation: four jobs, five functions, the literal/metacharacter split, raw strings, and the Match object. Everything else in this track is just richer patterns built on top."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pattern_grid",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "regex_mental_model",
+      "nodes": [
+        {
+          "label": "Regex = a tiny pattern language",
+          "children": [
+            "Four jobs: search, validate, extract, replace",
+            "re.search finds first match anywhere",
+            "re.match is anchored at the start",
+            "re.fullmatch must match the whole string",
+            "re.findall returns all matches as a list",
+            "re.sub replaces matches"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "literal_vs_meta",
+      "left": {
+        "label": "Literal chars: 'cat' matches the letters c-a-t exactly",
+        "result": true
+      },
+      "right": {
+        "label": "Metacharacters . ^ $ * + ? are MAGIC: '.' matches any char, not a real dot",
+        "result": false
+      },
+      "description": {
+        "en": "Most characters are literal. A handful are metacharacters with special meaning. Escape a metacharacter with a backslash to match it literally."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "search_vs_match_demo",
+      "code": "import re\n\nre.search(r\"\\d+\", \"room 237\")   # roams anywhere\nre.match(r\"\\d+\", \"room 237\")    # anchored at start\nre.findall(r\"\\d+\", \"a1 b22 c3\") # all matches",
+      "executionSteps": [
+        { "line": 3, "variables": { "pattern": "\\d+", "anchored": "no" }, "output": "Match -> '237'", "description": "search scans the whole string and finds the first run of digits." },
+        { "line": 4, "variables": { "pattern": "\\d+", "anchored": "start" }, "output": "None", "description": "match is pinned to the start; the string begins with 'r', so it fails." },
+        { "line": 5, "variables": { "pattern": "\\d+", "anchored": "no" }, "output": "['1', '22', '3']", "description": "findall returns every match as plain strings in a list." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A regex describes a text PATTERN; the re engine does the searching.",
+        "search = anywhere, match = at start, fullmatch = whole string.",
+        "findall = all matches as a list, sub = replace.",
+        "Always write patterns as raw strings: r\"\\bword\\b\"."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Extraction is one of the four jobs of regex, and re.findall is the workhorse for it. Write extract_capitalized(text): return a list of every word that starts with a capital letter, in order. Use re.findall with a RAW-STRING pattern: a word boundary, one uppercase letter, then any remaining letters. With the given data, the demo prints the capitalized words found in the sentence. Expected output: ['The', 'Python', 'Search', 'Replace', 'PyMasters']"
+      },
+      "starter_code": "import re\n\ndef extract_capitalized(text):\n    # TODO: use re.findall with a raw-string pattern.\n    # Match: a word boundary (\\b), an UPPERCASE letter [A-Z],\n    # then zero or more letters [a-zA-Z].\n    # Pattern hint: r\"\\b[A-Z][a-zA-Z]*\"\n    return []\n\ndemo = \"The Python re module powers Search and Replace in PyMasters.\"\nprint(extract_capitalized(demo))",
+      "expected_output": "['The', 'Python', 'Search', 'Replace', 'PyMasters']",
+      "hints": {
+        "en": [
+          "re.findall(pattern, text) returns every match as a list of plain strings — perfect for extraction.",
+          "Write the pattern as a RAW string so the backslash in \\b reaches the regex engine untouched: r\"\\b[A-Z][a-zA-Z]*\".",
+          "[A-Z] matches one uppercase letter; [a-zA-Z]* matches the rest of the word (zero or more letters).",
+          "Putting it together: return re.findall(r\"\\b[A-Z][a-zA-Z]*\", text)."
+        ]
+      },
+      "test_code": "assert extract_capitalized(\"The Python re module powers Search and Replace in PyMasters.\") == ['The', 'Python', 'Search', 'Replace', 'PyMasters']\nassert extract_capitalized(\"hello world\") == []\nassert extract_capitalized(\"Alice met Bob\") == ['Alice', 'Bob']\nassert extract_capitalized(\"\") == []\nassert extract_capitalized(\"NASA and IBM\") == ['NASA', 'IBM']"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which re function returns a list of ALL matches as plain strings?"
+      },
+      "options": {
+        "en": [
+          "re.search",
+          "re.match",
+          "re.findall",
+          "re.fullmatch"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the difference between re.search and re.match?"
+      },
+      "options": {
+        "en": [
+          "search looks anywhere in the string; match is anchored at the start",
+          "match looks anywhere; search is anchored at the start",
+          "They are identical; match is just an alias for search",
+          "search returns a list; match returns a single string"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why do we write regex patterns as raw strings like r\"\\d+\"?"
+      },
+      "options": {
+        "en": [
+          "Raw strings run faster than normal strings",
+          "So Python doesn't interpret backslash escapes, passing the pattern to the regex engine untouched",
+          "Raw strings are required by the re module or it raises an error",
+          "It converts the pattern to lowercase automatically"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "After m = re.search(r\"\\d+\", \"order 42\"), how do you get the matched text and where it starts?"
+      },
+      "options": {
+        "en": [
+          "m.text() and m.index()",
+          "m.group() and m.start()",
+          "m[0] and m[1]",
+          "m.value and m.position"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["regular_expressions", "re_module_functions", "metacharacters", "raw_strings", "match_object"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "regex",
+    "path_memberships": []
+  },
+  "generated": false
+}

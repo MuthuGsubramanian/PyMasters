@@ -1,0 +1,171 @@
+{
+  "id": "anchors_and_lookarounds",
+  "topic": "anchors_and_lookarounds",
+  "track": "regex_mastery",
+  "module": "patterns",
+  "order": 2,
+  "title": {
+    "en": "Anchors & Lookarounds: Matching by Context"
+  },
+  "description": {
+    "en": "Sometimes WHERE a match sits matters as much as what it is. Learn the anchors ^, $, \\b and \\B, then graduate to lookarounds — positive/negative lookahead and lookbehind — zero-width assertions that check what surrounds a match without ever consuming it. Match whole words, validate passwords, and extract a number only when it follows a '$'."
+  },
+  "xp_reward": 95,
+  "next_unlock": "regex_in_practice",
+  "story_variants": {
+    "en": "## Position Is Everything\n\nMost regex beginners think in terms of *characters*: match a digit, match a letter, match three of them. But some of the most powerful patterns don't match characters at all — they match a **position**. They answer the question \"am I at the right *place*?\" before they let a match succeed.\n\nSearch for `cat` in the text `the cat sat on a scatter mat` and you'll match the `cat` inside `scatter` too. That's almost never what you want. The cure isn't a better spelling of `cat` — it's telling the engine *where* `cat` is allowed to live. That's what anchors and lookarounds do.\n\n## Anchors: Pinning to Edges\n\nAnchors are **zero-width** — they match a *boundary between characters*, not a character itself.\n\n- `^` asserts \"start of the string (or line)\".\n- `$` asserts \"end of the string (or line)\".\n- `\\b` asserts a **word boundary**: the seam between a word character (`[A-Za-z0-9_]`) and a non-word character (or the string edge).\n- `\\B` asserts the opposite: a position that is *not* a word boundary.\n\n### \\b: The Unsung Hero\n\nThe pattern `\\bcat\\b` matches the standalone word `cat` but refuses `scatter`, `category`, and `bobcat`. Why? Because inside `scatter`, the `c` of `cat` is glued to the `s` before it — that's a word-character-to-word-character seam, which is *not* a boundary. `\\b` quietly demands a real edge on both sides. It is the difference between find-and-replace that works and find-and-replace that mangles your text.\n\n## Lookarounds: Checking the Neighbours\n\nA lookaround lets you assert what comes **before** or **after** the current position — *without consuming those characters*. The match \"uses up\" nothing inside a lookaround; it only succeeds or fails based on what it sees. This is why lookarounds are called **zero-width**: they match a position, not a span of text.\n\nThere are four:\n\n| Construct | Name | Asserts that... |\n|---|---|---|\n| `^` | start anchor | position is at start of string/line |\n| `$` | end anchor | position is at end of string/line |\n| `\\b` / `\\B` | word boundary / non-boundary | there is / isn't a word edge here |\n| `(?=...)` | positive lookahead | what FOLLOWS matches `...` |\n| `(?!...)` | negative lookahead | what FOLLOWS does NOT match `...` |\n| `(?<=...)` | positive lookbehind | what PRECEDES matches `...` |\n| `(?<!...)` | negative lookbehind | what PRECEDES does NOT match `...` |\n\n### Lookahead in Action: Password Strength\n\nSay a password must contain at least one digit and at least one lowercase letter, and be 8+ characters. You can stack lookaheads at the start, each checking the whole string from position zero without moving the cursor:\n\n```python\nimport re\nstrong = re.compile(r\"^(?=.*\\d)(?=.*[a-z]).{8,}$\")\nbool(strong.match(\"hunter2pass\"))  # True\nbool(strong.match(\"NODIGITSHERE\"))  # False (no digit, no lowercase)\n```\n\nEach `(?=...)` runs from the same spot, asserts its condition, then hands the cursor back untouched. Then `.{8,}` actually consumes the characters. Lookaheads are the regex way of saying \"and also\" without backtracking gymnastics.\n\n### Lookbehind in Action: Extract the Amount\n\nYou want the number in `$42`, but not the `42` in `room 42`. A lookbehind nails it:\n\n```python\nimport re\nre.findall(r\"(?<=\\$)\\d+\", \"price $42, aisle 42, $7 off\")  # ['42', '7']\n```\n\nThe `(?<=\\$)` says \"only here if a literal `$` sits immediately to the left\" — but the `$` is **not** included in the match. The result is the digits alone, already stripped of their currency sign. No slicing, no post-processing.\n\n## Why Zero-Width Matters\n\nBecause lookarounds consume nothing, you can chain several at one position, and they never \"steal\" characters that a later part of the pattern needs. That's what makes the password trick work: three assertions and a length check all reasoning about the *same* eight-plus characters. Anchors and lookarounds turn regex from \"find these characters\" into \"find these characters **in this context**\" — and context is usually the whole game.\n\n> **Key idea:** Anchors (`^ $ \\b \\B`) and lookarounds (`(?=) (?!) (?<=) (?<!)`) are **zero-width assertions**: they match a *position*, not characters. `\\b` matches whole words instead of substrings; lookahead asserts what follows and lookbehind asserts what precedes — both without consuming anything — so you can validate and extract by **context** rather than raw content."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "boundary_marker",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "zero_width_model",
+      "nodes": [
+        {
+          "label": "Zero-width assertions (match a POSITION)",
+          "children": [
+            "^ start, $ end",
+            "\\b word boundary, \\B non-boundary",
+            "(?=...) positive lookahead — what FOLLOWS",
+            "(?!...) negative lookahead — what does NOT follow",
+            "(?<=...) lookbehind — what PRECEDES",
+            "Consume nothing — can stack many at one spot"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "boundary_vs_naive",
+      "left": {
+        "label": "\\bcat\\b matches the WORD 'cat' only — skips 'scatter', 'category'",
+        "result": true
+      },
+      "right": {
+        "label": "Plain 'cat' matches the substring inside 'scatter' too — usually wrong",
+        "result": false
+      },
+      "description": {
+        "en": "\\b demands a real word edge on both sides, so whole-word matching just works."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "lookbehind_demo",
+      "code": "import re\ntext = \"price $42, aisle 42, $7 off\"\n# (?<=\\$) asserts a '$' to the left but does NOT include it\nprint(re.findall(r\"(?<=\\$)\\d+\", text))",
+      "executionSteps": [
+        { "line": 3, "variables": { "text": "price $42, aisle 42, $7 off" }, "output": "scanning...", "description": "Engine looks for digits, but only where a '$' precedes them." },
+        { "line": 4, "variables": { "matched": "['42', '7']" }, "output": "['42', '7']", "description": "Plain 42 in 'aisle 42' is rejected — no '$' before it. Zero-width: the '$' isn't in the result." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Anchors & lookarounds match a POSITION, not characters (zero-width).",
+        "\\bword\\b -> whole words, not substrings.",
+        "(?=...) follows, (?<=...) precedes — assert context, consume nothing."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use a zero-width lookbehind to pull out dollar amounts. Write extract_prices(text): return a list of integers, one for each run of digits that is immediately preceded by a literal '$'. Use the pattern (?<=\\$)\\d+ so the '$' is asserted but NOT captured, and convert each match to int. A bare number like the '42' in 'aisle 42' must be excluded because no '$' precedes it. With the given data, the demo prints the prices found in the sample line. Expected output: [42, 7, 100]"
+      },
+      "starter_code": "import re\n\nsample = \"price $42, aisle 42, $7 off, was $100, code 55\"\n\ndef extract_prices(text):\n    # TODO: find every run of digits preceded by a literal '$'.\n    # Lookbehind (?<=\\$) asserts the '$' is there WITHOUT consuming it,\n    # so each match is just the digits. Convert them to ints.\n    return []\n\nprint(extract_prices(sample))",
+      "expected_output": "[42, 7, 100]",
+      "hints": {
+        "en": [
+          "Escape the dollar sign inside the lookbehind: the pattern is r\"(?<=\\$)\\d+\".",
+          "A lookbehind is zero-width — it checks what PRECEDES the position but does not consume it, so re.findall returns only the digits.",
+          "The '42' in 'aisle 42' has a space before it, not a '$', so the lookbehind fails there and it is correctly excluded.",
+          "re.findall(r\"(?<=\\$)\\d+\", text) gives a list of digit strings; wrap each in int(): [int(m) for m in re.findall(...)]."
+        ]
+      },
+      "test_code": "assert extract_prices(sample) == [42, 7, 100]\nassert extract_prices(\"\") == []\nassert extract_prices(\"no money here, just 42 and 99\") == []\nassert extract_prices(\"$5\") == [5]\nassert extract_prices(\"aisle 42, room 7\") == []\nassert extract_prices(\"$1 $2 $3\") == [1, 2, 3]\nassert extract_prices(\"cost was $250 not 250\") == [250]\nassert all(isinstance(x, int) for x in extract_prices(sample))"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does it mean that anchors and lookarounds are 'zero-width'?"
+      },
+      "options": {
+        "en": [
+          "They can only match strings of length zero",
+          "They match a position between characters and consume no characters themselves",
+          "They are slower than character matches",
+          "They only work at the very start of a string"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does \\bcat\\b match 'cat' as a standalone word but not the 'cat' inside 'scatter'?"
+      },
+      "options": {
+        "en": [
+          "\\b only matches lowercase letters",
+          "Inside 'scatter' the 'c' is glued to a word character, so there is no word boundary there",
+          "\\b requires the word to be at the end of the string",
+          "'scatter' is too long for \\b to handle"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does the positive lookahead (?=.*\\d) assert in a password pattern?"
+      },
+      "options": {
+        "en": [
+          "That the string ends with a digit",
+          "That somewhere ahead from this position there is a digit, without consuming any characters",
+          "That every character is a digit",
+          "That the string contains no digits"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In re.findall(r\"(?<=\\$)\\d+\", \"$42 and 42\"), what is returned and why?"
+      },
+      "options": {
+        "en": [
+          "['$42', '42'] — both numbers with their context",
+          "['42'] — only the digits preceded by '$'; the lookbehind asserts the '$' but does not include it",
+          "['42', '42'] — every number in the string",
+          "[] — lookbehind cannot match digits"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["anchors", "word_boundaries", "lookahead", "lookbehind", "zero_width_assertions"],
+    "concepts_required": ["groups_and_capturing"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "regex",
+    "path_memberships": []
+  },
+  "generated": false
+}
