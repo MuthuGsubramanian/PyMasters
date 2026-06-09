@@ -225,12 +225,16 @@ export function Overview() {
                 }
             }
 
-            // Fetch trends (graceful fallback)
+            // Fetch trends (graceful fallback). Endpoint is /trending and returns
+            // { topics: [...] }; topics use `summary`, the UI expects `desc`.
             try {
-                const res = await axios.get(`${API_URL}/trends`, {
+                const res = await axios.get(`${API_URL}/trending`, {
                     headers: { Authorization: `Bearer ${user?.token}` },
                 });
-                if (Array.isArray(res.data) && res.data.length > 0) setTrends(res.data);
+                const topics = res.data?.topics;
+                if (Array.isArray(topics) && topics.length > 0) {
+                    setTrends(topics.map((t) => ({ ...t, desc: t.desc ?? t.summary ?? '' })));
+                }
             } catch {}
 
             setLoading(false);
