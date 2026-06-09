@@ -1,0 +1,171 @@
+{
+  "id": "mutability_and_aliasing",
+  "topic": "mutability_and_aliasing",
+  "track": "python_internals",
+  "module": "memory_model",
+  "order": 3,
+  "title": {
+    "en": "Mutability, Aliasing, and the Mutable-Default Trap"
+  },
+  "description": {
+    "en": "Why two names pointing at one mutable object cause Python's most notorious bugs. Learn mutable vs immutable types, aliasing vs copying (shallow vs deep), and the classic mutable-default-argument trap — plus the one-line idiom that defuses it."
+  },
+  "xp_reward": 90,
+  "next_unlock": "names_scopes_closures",
+  "story_variants": {
+    "en": "## Two Names, One Object\n\nIn Python a variable is not a box that holds a value. It is a **name** stuck onto an object that lives somewhere in memory. Assignment never copies the object — it just sticks another name onto the *same* object. That single fact is the root of an entire family of bugs.\n\n```python\na = [1, 2, 3]\nb = a            # b is not a copy — it is a second name for the SAME list\nb.append(4)\nprint(a)         # [1, 2, 3, 4]  -- a changed too!\n```\n\nTwo names pointing at one object is called **aliasing**. `a` and `b` are aliases. Mutate the object through one name and the change is visible through *every* name, because there is only one object. `id(a) == id(b)` is `True`.\n\n## Mutable vs Immutable\n\nAliasing only bites you when the shared object can *change in place*. So the first thing to know is which types can.\n\n| Type | Mutable? | Changes in place? | Aliasing risk |\n|------|----------|-------------------|---------------|\n| `int`, `float`, `bool` | Immutable | No | None |\n| `str` | Immutable | No | None |\n| `tuple` | Immutable | No | None (but can hold mutables) |\n| `frozenset` | Immutable | No | None |\n| `list` | **Mutable** | Yes | **High** |\n| `dict` | **Mutable** | Yes | **High** |\n| `set` | **Mutable** | Yes | **High** |\n\nWith an **immutable** object there is no \"mutate in place\" operation, so aliasing is harmless. When you write `x = 5; y = x; y += 1`, the `+= 1` builds a *new* int and rebinds `y` to it — `x` is untouched. There was never a shared object to corrupt.\n\nWith a **mutable** object, methods like `.append()`, `.update()`, `d[k] = v`, or `s.add()` reach into the existing object and change it. Every alias sees the result.\n\n> **Key idea:** Rebinding a name (`y = ...`, `y += 1` on an immutable) only moves *that* name. Mutating an object in place (`.append`, `d[k]=v`) changes the *object*, and every name aliased to it sees the change.\n\n## Copying: Shallow vs Deep\n\nWhen you actually want an independent object, you must copy on purpose:\n\n- **Shallow copy** — `lst[:]`, `list(lst)`, `copy.copy(obj)`, `dict(d)`. Builds a new outer container, but the *elements inside* are still shared aliases.\n- **Deep copy** — `copy.deepcopy(obj)`. Recursively copies the container *and* everything nested inside it. Fully independent.\n\n```python\nimport copy\nouter = [[1, 2], [3, 4]]\nshallow = outer[:]          # new outer list...\nshallow[0].append(99)       # ...but inner lists are still shared!\nprint(outer)                # [[1, 2, 99], [3, 4]]  -- leaked\n\ndeep = copy.deepcopy(outer)\ndeep[0].append(0)\nprint(outer)                # unchanged -- truly separate\n```\n\nA shallow copy is enough only when the contents are immutable. The moment you have nested mutables, reach for `deepcopy`.\n\n## The Classic Trap: Mutable Default Arguments\n\nNow the bug that catches almost every Python programmer once:\n\n```python\ndef add_item(item, basket=[]):\n    basket.append(item)\n    return basket\n\nprint(add_item(\"apple\"))    # ['apple']\nprint(add_item(\"banana\"))   # ['apple', 'banana']  -- WHY?!\n```\n\nThe second call was supposed to start with an empty basket. Instead the apple is still there. The reason is a deep truth about how functions work:\n\n**Default argument values are evaluated exactly once — when the `def` statement runs — not on each call.** That one list object is created at definition time and stored as an attribute on the function object itself (you can literally see it at `add_item.__defaults__`). Every call that doesn't pass `basket` is *aliased to that same persistent list*. So `.append()` accumulates across calls, like a bucket nailed to the function.\n\nThe fix is the standard sentinel idiom: default to the immutable `None`, then create a fresh list *inside* the call.\n\n```python\ndef add_item(item, basket=None):\n    if basket is None:\n        basket = []        # a brand-new list on every call\n    basket.append(item)\n    return basket\n```\n\nBecause `None` is immutable and harmless, and the real list is built per call, each invocation now starts clean. This same trap and fix apply to `dict` and `set` defaults too — never put a mutable literal in a default; default to `None` and build it inside.\n\nMaster these three ideas — names alias objects, only mutables can be corrupted through an alias, and defaults are evaluated once — and you have closed off Python's most common silent bugs."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "linked_nodes",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "aliasing_map",
+      "nodes": [
+        {
+          "label": "Names & Objects",
+          "children": [
+            "A name is a label on an object",
+            "Assignment aliases, never copies",
+            "Mutate in place -> all aliases see it",
+            "Only mutables (list/dict/set) can be corrupted",
+            "Defaults evaluated ONCE at def time"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "immutable_vs_mutable",
+      "left": {
+        "label": "Immutable (int/str/tuple): y = x then change y -> x is safe",
+        "result": true
+      },
+      "right": {
+        "label": "Mutable (list/dict/set): b = a then b.append(4) -> a changed too",
+        "result": false
+      },
+      "description": {
+        "en": "Rebinding a name only moves that name. Mutating an object in place changes the one shared object, so every alias sees it. That's why mutables are the aliasing risk."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "mutable_default_demo",
+      "code": "def add_item(item, basket=[]):\n    basket.append(item)\n    return basket\n\nprint(add_item('apple'))\nprint(add_item('banana'))",
+      "executionSteps": [
+        { "line": 1, "variables": { "add_item.__defaults__": "([],)" }, "output": "", "description": "def runs: the default [] is created ONCE and stored on the function." },
+        { "line": 5, "variables": { "basket": "['apple']" }, "output": "['apple']", "description": "First call uses the stored list, appends 'apple'." },
+        { "line": 6, "variables": { "basket": "['apple', 'banana']" }, "output": "['apple', 'banana']", "description": "Second call reuses the SAME list — the bug. It accumulated." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Assignment aliases an object; it never copies it.",
+        "Only mutables (list/dict/set) get corrupted through an alias.",
+        "Default args are evaluated ONCE — never use a mutable default; use None."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This add_item function has Python's most notorious bug: a MUTABLE DEFAULT ARGUMENT. Because basket=[] is created only once (at definition time) and stored on the function, every call that omits basket shares the SAME list — so it wrongly accumulates across calls. Watch: the first call returns ['apple'], but the second call returns ['apple', 'banana'] instead of just ['banana']. Fix it with the sentinel idiom: default basket to None, and if basket is None create a fresh [] inside the function. Then each call starts empty and is independent. With the demo below, the expected output is:\n['apple']\n['banana']"
+      },
+      "starter_code": "# BUG: basket=[] is evaluated ONCE at def time and shared across all calls.\ndef add_item(item, basket=[]):\n    basket.append(item)\n    return basket\n\n# Fix the function above using the basket=None / if basket is None idiom\n# so each call starts with a fresh, independent list.\n\nprint(add_item(\"apple\"))\nprint(add_item(\"banana\"))",
+      "expected_output": "['apple']\n['banana']",
+      "hints": {
+        "en": [
+          "Never use a mutable object like [] as a default value — it is created once and reused forever.",
+          "Change the signature to def add_item(item, basket=None): so the default is the safe, immutable None.",
+          "As the first line of the body, add: if basket is None: basket = [] — this builds a brand-new list on every call.",
+          "Use 'is None' (identity), not '== None'. Keep the .append(item) and return basket lines as they are."
+        ]
+      },
+      "test_code": "first = add_item(\"apple\")\nsecond = add_item(\"banana\")\nassert first == [\"apple\"], f\"first call should be ['apple'], got {first}\"\nassert second == [\"banana\"], f\"second call must NOT share state, got {second}\"\nassert first is not second, \"each call must return an independent list\"\nassert add_item(\"x\") == [\"x\"], \"a third independent call should also start empty\"\nimport inspect\nassert inspect.signature(add_item).parameters[\"basket\"].default is None, \"default must be None, not a mutable\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "After a = [1, 2, 3]; b = a; b.append(4), what is the value of a?"
+      },
+      "options": {
+        "en": [
+          "[1, 2, 3] — b is a separate copy",
+          "[1, 2, 3, 4] — a and b are aliases for the same list",
+          "[4] — append replaces the list",
+          "It raises an error"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is aliasing harmless for immutable types like int and str?"
+      },
+      "options": {
+        "en": [
+          "Python forbids more than one name per immutable object",
+          "There is no in-place mutation; operations build a new object and rebind only that name",
+          "Immutable objects are automatically deep-copied on assignment",
+          "Immutable objects cannot be assigned to variables"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You do shallow = outer[:] on outer = [[1, 2], [3, 4]], then shallow[0].append(99). What happens to outer?"
+      },
+      "options": {
+        "en": [
+          "Nothing — a slice copy is fully independent",
+          "outer becomes [[1, 2, 99], [3, 4]] — the inner lists are still shared aliases",
+          "It raises a TypeError",
+          "outer is replaced entirely by shallow"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In def add_item(item, basket=[]), why does the basket accumulate across separate calls?"
+      },
+      "options": {
+        "en": [
+          "Because Python caches return values automatically",
+          "Because the default [] is evaluated once at definition time and stored on the function, so every default call shares that one list",
+          "Because .append() is a global operation",
+          "Because lists cannot be passed as arguments"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["mutability", "aliasing", "shallow_vs_deep_copy", "mutable_default_arguments", "identity_vs_equality"],
+    "concepts_required": ["how_python_objects_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}
