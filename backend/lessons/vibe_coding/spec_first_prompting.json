@@ -1,0 +1,171 @@
+{
+  "id": "spec_first_prompting",
+  "topic": "spec_first_prompting",
+  "track": "vibe_coding",
+  "module": "practices",
+  "order": 2,
+  "title": {
+    "en": "Spec-First Vibe Coding: Decide What 'Done' Means Before You Prompt"
+  },
+  "description": {
+    "en": "The biggest leverage in AI coding isn't a clever prompt — it's writing the spec first: exact inputs, outputs, edge cases, and ideally the tests, BEFORE you ask for an implementation. A precise spec turns 'make it work' into a verifiable target you can check in one second."
+  },
+  "xp_reward": 90,
+  "next_unlock": "prompting_for_code",
+  "story_variants": {
+    "en": "## The Two Prompts\n\nWatch two developers ask an AI for the *same* function. The first types:\n\n> \"Write a Python function to make a URL slug from a title.\"\n\nThe second types:\n\n> \"Write `slugify(text)`. It lowercases the text, replaces runs of spaces with a single hyphen, strips out every character that isn't a letter, digit, or hyphen, and trims leading/trailing hyphens. `slugify('Hello, World!')` must return `'hello-world'`. `slugify('Python 3.12 Rocks!')` must return `'python-312-rocks'`. Make this assertion pass: `assert slugify('  A--B  ') == 'a-b'`.\"\n\nBoth get working-looking code back. But only the second developer **knows what they got.** The first will spend the next ten minutes squinting at output, discovering that *their* AI decided to keep the comma, or used underscores, or left the title in uppercase. They never said. So the AI guessed — and a guess that *looks* right is the most expensive thing in software.\n\nThis is the core move of spec-first vibe coding: **decide what 'done' means before you prompt.**\n\n## A Spec Is a Verifiable Target\n\nA vague prompt asks the AI to *both* invent the requirements *and* implement them. You've handed away the one decision only you can make — what the thing is actually supposed to do — to a pattern-completion engine that will cheerfully pick the most statistically average interpretation.\n\nA spec separates the two jobs. **You** define the target. **The AI** hits it. And because the target is concrete, you can check the result instantly instead of arguing with code in your head.\n\nA good spec answers four questions out loud:\n\n| Question | Vague prompt | Spec-first prompt |\n|----------|--------------|-------------------|\n| **Inputs?** | \"a title\" | `text: str`, may be empty, may have punctuation/extra spaces |\n| **Outputs?** | \"a slug\" | lowercase, hyphen-separated, `[a-z0-9-]` only |\n| **Examples?** | none | `'Hello, World!' -> 'hello-world'` |\n| **Edge cases?** | none | empty string, leading/trailing spaces, runs of spaces, symbols |\n\nNotice the spec is shorter to *read* than the bugs it prevents are to *debug*.\n\n## Write the Assertions First\n\nThe strongest version of spec-first borrows the oldest trick in engineering: **write the test before the code.** You don't describe the behavior in prose and hope — you pin it down as runnable assertions:\n\n```python\nassert slugify('Hello, World!') == 'hello-world'\nassert slugify('Python 3.12 Rocks!') == 'python-312-rocks'\nassert slugify('  Multiple   Spaces  ') == 'multiple-spaces'\nassert slugify('') == ''\n```\n\nNow your prompt becomes almost trivial: *\"Make these assertions pass.\"* Three things happen at once:\n\n1. **The target is unambiguous.** There is no interpretation left for the AI to get wrong. The examples *are* the requirement.\n2. **Verification is free.** The moment the AI returns code, you run the asserts. Green means done. Red means not done. No squinting.\n3. **You caught your own confusion early.** Writing `assert slugify('A & B') == ?` forces *you* to decide what the ampersand becomes — *before* a single line of implementation exists. Half of all bugs are really just a question nobody asked at spec time.\n\n## The Loop\n\nSpec-first vibe coding is a tight, fast loop:\n\n- **Spec** — write the inputs, outputs, examples, and edge cases.\n- **Assert** — turn the examples into runnable assertions (the definition of *done*).\n- **Prompt** — \"implement this so these tests pass.\"\n- **Run** — execute the asserts. Green? Ship. Red? Paste the failure back and let the AI fix it against a target it can now see too.\n\nThe magic is that the AI is no longer guessing your intent — it's chasing a finish line *you both* can see. When a test fails, you don't debate; you point at the red.\n\n> **Key idea:** The leverage in AI coding is upstream of the prompt. Decide what 'done' means — as concrete inputs, outputs, and assertions — *before* you ask for code. A spec turns a vague 'make it work' into a target the AI can hit and you can verify in one second. Write the test first, then prompt 'make it pass.'"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "blueprint",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "vague_vs_spec",
+      "left": {
+        "label": "Vague: 'Write a function to make a URL slug.' -> AI guesses; you squint at output",
+        "result": false
+      },
+      "right": {
+        "label": "Spec-first: exact inputs, outputs, examples + 'make these asserts pass' -> verify in 1 second",
+        "result": true
+      },
+      "description": {
+        "en": "Same function, same model. The spec-first developer KNOWS what they got; the vague one has to discover it."
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "spec_loop",
+      "nodes": [
+        {
+          "label": "The Spec-First Loop",
+          "children": [
+            "1. Spec: inputs, outputs, edge cases",
+            "2. Assert: examples become runnable tests",
+            "3. Prompt: 'make these tests pass'",
+            "4. Run: green = done, red = point at it"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "asserts_define_done",
+      "code": "def slugify(text):\n    import re\n    t = re.sub(r'[^a-z0-9\\s-]', '', text.strip().lower())\n    return re.sub(r'[\\s-]+', '-', t).strip('-')\n\nassert slugify('Hello, World!') == 'hello-world'\nassert slugify('Python 3.12 Rocks!') == 'python-312-rocks'\nprint('done')",
+      "executionSteps": [
+        { "line": 5, "variables": { "input": "'Hello, World!'", "result": "'hello-world'" }, "output": "(passes silently)", "description": "The assertion IS the spec. Green means the target was hit." },
+        { "line": 6, "variables": { "input": "'Python 3.12 Rocks!'", "result": "'python-312-rocks'" }, "output": "(passes silently)", "description": "Digits kept, symbols stripped — exactly as specified up front." },
+        { "line": 7, "variables": {}, "output": "done", "description": "No squinting required. The tests already proved it's done." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A vague prompt makes the AI invent BOTH the requirements and the code.",
+        "A spec separates them: you define 'done', the AI just hits the target.",
+        "Write the assertions first, then prompt: 'make these pass'.",
+        "Green = done. Red = point at it. No arguing with code in your head."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Spec-first in action. You're given a precise spec and a stub. Implement slugify(text) so it satisfies the spec: (1) lowercase the text; (2) strip leading/trailing whitespace; (3) remove every character that isn't a letter, digit, space, or hyphen; (4) collapse any run of spaces/hyphens into a single hyphen; (5) trim leading/trailing hyphens. The assertions in the test panel ARE the definition of done — make them all pass. With the given data, slugify('  Hello, World!  ') returns 'hello-world'. Expected output: hello-world"
+      },
+      "starter_code": "import re\n\n# SPEC:\n#   slugify(text) -> str\n#   - lowercase, strip outer whitespace\n#   - remove any char that is NOT a letter, digit, space, or hyphen\n#   - collapse runs of spaces/hyphens into a single '-'\n#   - trim leading/trailing '-'\n#   Examples:\n#     'Hello, World!'        -> 'hello-world'\n#     'Python 3.12 Rocks!'   -> 'python-312-rocks'\n#     '  A--B  '             -> 'a-b'\ndef slugify(text):\n    pass  # implement to satisfy the spec above\n\nprint(slugify(\"  Hello, World!  \"))",
+      "expected_output": "hello-world",
+      "hints": {
+        "en": [
+          "Start by normalizing: text.strip().lower() handles outer whitespace and casing in one step.",
+          "Remove unwanted characters with a regex: re.sub(r'[^a-z0-9\\s-]', '', text) deletes anything that isn't a lowercase letter, digit, whitespace, or hyphen.",
+          "Collapse runs of spaces AND hyphens into one hyphen: re.sub(r'[\\s-]+', '-', text). This turns 'A--B' and 'A  B' both into 'A-B'.",
+          "Finally trim stray hyphens from the ends with .strip('-') so inputs like '-Hi-' don't keep a leading/trailing dash."
+        ]
+      },
+      "test_code": "assert slugify('Hello, World!') == 'hello-world'\nassert slugify('Python 3.12 Rocks!') == 'python-312-rocks'\nassert slugify('  A--B  ') == 'a-b'\nassert slugify('') == ''"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the core move of spec-first vibe coding?"
+      },
+      "options": {
+        "en": [
+          "Writing the most detailed prompt you can after seeing the code",
+          "Deciding what 'done' means — exact inputs, outputs, and examples — BEFORE you prompt",
+          "Letting the AI choose the requirements so you write less",
+          "Reading the generated code very carefully three times"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is a vague prompt like 'make a URL slug' risky?"
+      },
+      "options": {
+        "en": [
+          "The AI refuses to answer prompts that are too short",
+          "It forces the AI to invent BOTH the requirements and the implementation, so it guesses your intent",
+          "It always produces code that won't run",
+          "Slugs are impossible to generate in Python"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the advantage of writing the assertions BEFORE the implementation?"
+      },
+      "options": {
+        "en": [
+          "It makes the function run faster at runtime",
+          "The examples become an unambiguous target, verification is free, and you catch your own confusion early",
+          "It lets you skip running the code entirely",
+          "It replaces the need for the function itself"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the spec-first loop, what do you do when a test comes back red?"
+      },
+      "options": {
+        "en": [
+          "Argue with the code in your head until it seems right",
+          "Delete the failing assertion so everything passes",
+          "Paste the failure back and let the AI fix it against a target you both can now see",
+          "Rewrite the whole spec from scratch"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["spec_first_development", "test_driven_prompting", "requirements_clarity", "ai_assisted_development"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

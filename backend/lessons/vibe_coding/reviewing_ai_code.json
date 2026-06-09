@@ -1,0 +1,167 @@
+{
+  "id": "reviewing_ai_code",
+  "topic": "reviewing_ai_code",
+  "track": "vibe_coding",
+  "module": "mastery",
+  "order": 3,
+  "title": {
+    "en": "Reviewing AI Code Like a Senior Engineer"
+  },
+  "description": {
+    "en": "Every time you accept an AI suggestion, you are doing a code review — and most people rubber-stamp it. Learn the concrete checklist a senior engineer runs on AI output: edge cases, error handling, security, spec match, hidden behavior, needless complexity, and the one question that catches the most bugs — 'do I understand every line?'"
+  },
+  "xp_reward": 95,
+  "next_unlock": "staying_the_architect",
+  "story_variants": {
+    "en": "## Accepting Is Reviewing\n\nHere is a fact most vibe coders never say out loud: **every time you hit 'Accept' on an AI suggestion, you just performed a code review.** You were the reviewer. You approved the change. And if you're honest, you probably approved it the way an exhausted teammate approves a 400-line pull request at 6pm on a Friday — a quick scroll, a vibe check, a thumbs up.\n\nThat is rubber-stamping, and it's the most common failure mode in AI-assisted development. The code looks clean, the variable names are sensible, it *reads* like something that works — so you wave it through. A senior engineer doesn't do that. A senior engineer reviews AI output the same way they'd review a brilliant, fast, overconfident junior who has never been on call: with respect for the speed and zero trust in the result.\n\n## Reading for Intent, Thinking Like an Attacker\n\nThe junior reviewer reads code asking *\"does this look like working code?\"* The senior reviewer reads asking two very different questions:\n\n1. **Intent:** *What is this actually supposed to do — and does this code do exactly that, no more, no less?* You compare the code against the spec in your head, not against your sense of style.\n2. **Adversarial:** *How could this be wrong?* You actively hunt for the input that breaks it. You assume there is a bug and try to find it, instead of assuming it's fine and hoping.\n\nThat second mindset is the whole game. Happy-path code is easy to write and easy to approve. The bugs live at the edges — and AI is *especially* drawn to the happy path, because the happy path is what most code on the internet demonstrates.\n\n## The Senior Review Checklist\n\nRun this on every non-trivial AI snippet. It takes a minute and saves a 3am incident.\n\n| Check | The question you ask | What you're hunting |\n|---|---|---|\n| Edge cases | What happens on empty / zero / negative / huge / `None`? | Crashes and wrong answers at the boundaries |\n| Error handling | What happens on bad input — does it fail loud or fail silent? | Swallowed errors, bare `except`, wrong defaults |\n| Security | Any injection, `eval`, secrets, unvalidated input? | The silent holes from the security lesson |\n| Spec match | Does it do *exactly* what I asked — no more, no less? | Helpful extras you never wanted; missing requirements |\n| Hidden behavior | Did it quietly change something I didn't ask it to? | Mutated inputs, changed defaults, reordered logic |\n| Complexity | Is there a simpler version? Did it add a dependency? | Needless abstraction, a new library for a one-liner |\n| Readability | Are the names honest? Will I understand this in a month? | Clever code that hides intent |\n| Comprehension | **Do I understand every single line?** | The line you can't explain is the line that bites you |\n\nThe last row is the master check. If there is one line you cannot explain — a flag you didn't know existed, a regex you can't read, an API call you can't vouch for — **you have not reviewed the code. You have admired it.** Senior engineers refuse to approve code they don't understand, no matter how confident the author. The author here is a model that is confident about everything, including its mistakes.\n\n## A One-Minute Review in Action\n\nYou ask for a function that returns what percent `part` is of `whole`. The AI hands you:\n\n```python\ndef percentage(part, whole):\n    return round(part / whole * 100, 2)\n```\n\nRubber-stamp reaction: *clean, readable, ship it.* Senior reaction: run the checklist. **Edge cases — what is `whole == 0`?** `percentage(5, 0)` throws `ZeroDivisionError`. The AI answered the question you asked (\"compute a percentage\") and ignored the one you needed (\"compute a percentage *safely*\"). One row of the checklist, two seconds, caught a production crash:\n\n```python\ndef percentage(part, whole):\n    if whole == 0:\n        return 0.0\n    return round(part / whole * 100, 2)\n```\n\nNotice what happened. You didn't out-read the model on style — its style was fine. You out-reviewed it on **intent and edges.** That is the senior move, and it's a checklist, not a talent.\n\n## Make the Checklist a Reflex\n\nYou will not run a formal eight-row review on a one-line rename. You *will* run it on anything that touches input, money, the database, the shell, or a user. The skill is knowing the difference, and then actually doing the pass instead of vibing. Accepting AI code is a code review. Start acting like the reviewer.\n\n> **Key idea:** Hitting 'Accept' is approving a pull request, and most people rubber-stamp it. Review AI output like a senior engineer: read for intent, think adversarially about how it could be wrong, and run a concrete checklist — edge cases, error handling, security, spec match, hidden behavior, complexity, readability, and above all, 'do I understand every line?' The line you can't explain is the bug you'll ship."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifying_glass",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "review_checklist",
+      "nodes": [
+        {
+          "label": "Senior Review Checklist",
+          "children": [
+            "Edge cases (empty/zero/negative/huge)",
+            "Error handling (bad input?)",
+            "Security (injection/secrets/eval)",
+            "Spec match (no more, no less)",
+            "Hidden behavior changes",
+            "Needless complexity / deps",
+            "Naming & readability",
+            "Do I understand every line?"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "rubber_stamp_vs_review",
+      "left": {
+        "label": "Junior: 'looks clean, names are fine, ship it' — rubber-stamp the suggestion",
+        "result": false
+      },
+      "right": {
+        "label": "Senior: 'how could this be wrong?' — run the checklist, find whole==0",
+        "result": true
+      },
+      "description": {
+        "en": "Both readers see the same clean code. The senior reads for intent and thinks adversarially, asking what breaks it — and catches the ZeroDivisionError the junior approves straight into production."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "percentage_review_demo",
+      "code": "def percentage(part, whole):\n    return round(part / whole * 100, 2)\n\nprint(percentage(25, 50))\nprint(percentage(5, 0))",
+      "executionSteps": [
+        { "line": 4, "variables": { "part": "25", "whole": "50" }, "output": "50.0", "description": "Happy path works — the junior reviewer approves here." },
+        { "line": 5, "variables": { "part": "5", "whole": "0" }, "output": "ZeroDivisionError", "description": "Edge-case row of the checklist: whole==0 crashes. The senior caught it." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Hitting 'Accept' is approving a pull request.",
+        "Don't rubber-stamp it. Read for intent. Ask: how could this be wrong?",
+        "The line you can't explain is the bug you'll ship."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An AI wrote this percentage() function. It looks clean and the happy path works — but run the senior checklist's edge-case row: what happens when whole == 0? It throws ZeroDivisionError. Be the reviewer: fix it so a zero whole returns 0.0 instead of crashing, without changing the correct happy-path behavior. With the given data, percentage(5, 0) must return 0.0. Expected output: 0.0"
+      },
+      "starter_code": "def percentage(part, whole):\n    # AI wrote this. Happy path is fine: percentage(25, 50) == 50.0\n    # But the reviewer's edge-case check finds a bug: whole == 0 crashes.\n    # Fix it so percentage(5, 0) returns 0.0 instead of ZeroDivisionError.\n    return round(part / whole * 100, 2)\n\nprint(percentage(5, 0))",
+      "expected_output": "0.0",
+      "hints": {
+        "en": [
+          "Checklist row 1 — edge cases: ask 'what happens on zero?'. percentage(5, 0) divides by zero and raises ZeroDivisionError.",
+          "Guard the boundary before you divide: if whole == 0, return 0.0.",
+          "Keep the happy path identical: when whole != 0, still return round(part / whole * 100, 2).",
+          "Return the float 0.0 (not the int 0 or a string) so the type matches the normal result."
+        ]
+      },
+      "test_code": "assert percentage(5, 0) == 0.0, \"whole == 0 must return 0.0, not crash\"\nassert percentage(25, 50) == 50.0, \"happy path must be unchanged\"\nassert percentage(1, 3) == 33.33, \"rounding to 2 dp must still work\"\nassert percentage(0, 0) == 0.0, \"zero over zero is the edge case too\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is actually happening every time you hit 'Accept' on an AI code suggestion?"
+      },
+      "options": {
+        "en": [
+          "Nothing — the AI already verified it",
+          "You are performing a code review and approving the change, whether or not you really reviewed it",
+          "The code is automatically tested before it lands",
+          "You are only saving a draft"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which question best captures the senior, adversarial way of reading AI code?"
+      },
+      "options": {
+        "en": [
+          "Does this look like working code?",
+          "Are the variable names pretty?",
+          "How could this be wrong — what input breaks it?",
+          "Did the AI sound confident?"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "On the review checklist, why is 'Do I understand every single line?' the master check?"
+      },
+      "options": {
+        "en": [
+          "Because long code is always wrong",
+          "Because a line you can't explain is one you can't vouch for — you admired the code instead of reviewing it",
+          "Because comments are required by Python",
+          "Because the AI hides bugs only in short lines"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "The AI's percentage() worked on (25, 50) but crashed on (5, 0). What does the senior reviewer conclude?"
+      },
+      "options": {
+        "en": [
+          "AI code is always broken and unusable",
+          "The AI answered the question asked ('compute a percentage') but not the one needed ('compute it safely') — so check the edges",
+          "Division should never be used",
+          "Percentages can't be computed in Python"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["code_review", "adversarial_thinking", "edge_cases", "reviewing_ai_output", "ai_assisted_development"],
+    "concepts_required": ["verify_dont_trust", "silent_security_holes"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}
