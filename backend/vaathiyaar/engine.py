@@ -156,16 +156,60 @@ def parse_vaathiyaar_response(raw: str) -> dict:
             for key, default_val in _DEFAULTS.items():
                 parsed.setdefault(key, default_val)
             if "message" not in parsed:
-                parsed["message"] = raw  # last resort
+                parsed["message"] = _salvage_message(text) or raw
             return parsed
     except json.JSONDecodeError:
         pass
 
-    # Plain-text fallback: wrap in standard structure
-    return {
-        "message": raw,
-        **_DEFAULTS,
-    }
+    # JSON was malformed/truncated (e.g. the reply hit the token cap mid-value).
+    # Salvage the human message rather than ever showing the student raw JSON.
+    salvaged = _salvage_message(text)
+    if salvaged is not None:
+        return {"message": salvaged, **_DEFAULTS}
+
+    # Looks like JSON but no recoverable message → friendly fallback, no braces.
+    if text.lstrip().startswith("{"):
+        return {
+            "message": "Sorry — I had a hiccup forming that reply. Could you ask again?",
+            **_DEFAULTS,
+        }
+
+    # Genuine plain text → use it directly.
+    return {"message": raw, **_DEFAULTS}
+
+
+# JSON string-escape sequences we decode when salvaging a partial message.
+_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", '"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f"}
+
+
+def _salvage_message(text: str) -> Optional[str]:
+    """
+    Extract the value of a JSON "message" field from a possibly-truncated or
+    malformed string, decoding escape sequences and tolerating a missing closing
+    quote (the reply was cut off at the token limit). Returns None if no
+    "message" field is present.
+    """
+    import re
+
+    m = re.search(r'"message"\s*:\s*"', text)
+    if not m:
+        return None
+    i = m.end()
+    out = []
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == "\\":
+            if i + 1 < n:
+                out.append(_ESCAPES.get(text[i + 1], text[i + 1]))
+                i += 2
+                continue
+            break  # trailing backslash from truncation
+        if c == '"':
+            break  # closing quote of the message value
+        out.append(c)
+        i += 1
+    return "".join(out)
 
 
 def evaluate_code(
