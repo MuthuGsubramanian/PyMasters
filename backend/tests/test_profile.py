@@ -266,6 +266,7 @@ def _setup_db(db_path: str):
             skill_level TEXT,
             diagnostic_score REAL,
             onboarding_completed INTEGER DEFAULT 0,
+            user_type TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)

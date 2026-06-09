@@ -11,7 +11,7 @@ def db_path(tmp_path):
     path = str(tmp_path / "test.db")
     os.environ["DB_PATH"] = path
     import importlib
-    import backend.main as main_mod
+    import main as main_mod
     importlib.reload(main_mod)
     main_mod.init_db()
     conn = sqlite3.connect(path)
@@ -23,7 +23,7 @@ def db_path(tmp_path):
 
 
 def test_struggle_detection_triggers(db_path):
-    from backend.modules.trigger_engine import check_triggers
+    from modules.trigger_engine import check_triggers
     conn = sqlite3.connect(db_path)
     conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES ('s1', 1, 'code_evaluation', 'closures', '{\"success\": false}', 'sess1')")
     conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES ('s2', 1, 'code_evaluation', 'closures', '{\"success\": false}', 'sess1')")
@@ -36,7 +36,7 @@ def test_struggle_detection_triggers(db_path):
 
 
 def test_no_trigger_on_single_failure(db_path):
-    from backend.modules.trigger_engine import check_triggers
+    from modules.trigger_engine import check_triggers
     conn = sqlite3.connect(db_path)
     conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES ('s1', 1, 'code_evaluation', 'closures', '{\"success\": false}', 'sess1')")
     conn.commit()
@@ -47,7 +47,7 @@ def test_no_trigger_on_single_failure(db_path):
 
 
 def test_no_duplicate_generation(db_path):
-    from backend.modules.trigger_engine import check_triggers
+    from modules.trigger_engine import check_triggers
     conn = sqlite3.connect(db_path)
     conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES ('s1', 1, 'code_evaluation', 'closures', '{\"success\": false}', 'sess1')")
     conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES ('s2', 1, 'code_evaluation', 'closures', '{\"success\": false}', 'sess1')")
