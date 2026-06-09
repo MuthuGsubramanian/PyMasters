@@ -594,7 +594,8 @@ CONCEPT_EDGES = [
 
 def seed_concepts(db_path: str):
     """Insert all concepts and edges into the SQLite database."""
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30)
+    conn.execute("PRAGMA busy_timeout=30000")  # wait out Litestream/WAL locks
     cursor = conn.cursor()
     cursor.executemany(
         "INSERT OR IGNORE INTO concepts (id, name, category, difficulty, description) VALUES (?, ?, ?, ?, ?)",

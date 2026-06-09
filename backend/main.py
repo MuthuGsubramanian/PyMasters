@@ -618,6 +618,13 @@ def init_db():
                 [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", 0]
             )
 
+        # Commit schema + migrations BEFORE seeding. The seed routines open their
+        # own connections; if the outer write transaction is still open they hit
+        # "database is locked" (notably under Litestream/WAL in production) and the
+        # seed is silently skipped — which kept new learning paths / graph concepts
+        # from ever reaching the prod DB.
+        conn.commit()
+
         # Seed knowledge graph concepts
         try:
             from graph.concepts import seed_concepts
@@ -631,8 +638,6 @@ def init_db():
             seed_paths(DB_PATH)
         except Exception as e:
             print(f"Paths seed: {e}")
-
-        conn.commit()
 
     except Exception as e:
         print(f"DB Init Error: {e}")
