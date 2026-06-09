@@ -1,0 +1,172 @@
+{
+  "id": "event_loop_and_coroutines",
+  "topic": "event_loop_and_coroutines",
+  "track": "async_concurrency",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "The Event Loop & Coroutines: How async/await Really Works"
+  },
+  "description": {
+    "en": "Everyone says async makes Python 'faster' — and most people picture many threads running in parallel. Both pictures are wrong. async lets ONE thread juggle thousands of tasks by pausing any task that would sit around waiting for I/O and running another in the meantime. Learn what a coroutine actually is, what the event loop does, and why a CPU-bound task that never awaits freezes the whole show."
+  },
+  "xp_reward": 90,
+  "next_unlock": "awaiting_and_gather",
+  "story_variants": {
+    "en": "## The Myth We Need to Kill First\n\nAsk ten developers what `async` does and most will say: \"it makes code run in parallel\" or \"it makes things faster.\" Both are wrong, and believing them leads to code that mysteriously freezes.\n\nHere is the real picture. `async` lets **one** thread juggle **many** tasks by pausing any task the moment it would sit idle **waiting** — for a network reply, a database row, a file, a timer — and running a different task during that idle gap. There is still only one thread. Nothing runs in parallel. Async just refuses to let your single thread stand around doing nothing while it waits.\n\n> **Key idea:** async is concurrency by *overlapping waiting*, not parallelism by *overlapping computing*. One thread, many tasks, paused at every `await`.\n\n## A Coroutine Is a Pausable Function\n\nWhen you put `async` in front of `def`, the function becomes a **coroutine**. The single most surprising fact about coroutines:\n\n```python\nasync def compute(n):\n    return n * n\n\nresult = compute(7)   # this does NOT run the function!\nprint(result)         # <coroutine object compute at 0x...>\n```\n\nCalling `compute(7)` runs **none** of the body. It hands you back a *coroutine object* — a recipe that is paused at the very first line, waiting to be driven. A normal function call is \"do it now.\" A coroutine call is \"here is something you *could* do, when someone runs it.\"\n\nSomething has to actually drive that recipe to completion. That something is the **event loop**.\n\n## The Event Loop Is the Scheduler\n\nThe event loop is a single-threaded scheduler that runs your coroutines. Its job loop is simple:\n\n1. Pick a ready task and run its coroutine **until it hits an `await`**.\n2. At the `await`, the coroutine *pauses itself* and hands control back to the loop, saying \"wake me when this I/O is done.\"\n3. The loop picks **another** ready task and runs it while the first one waits.\n4. When the awaited thing finishes, the loop **resumes** the paused coroutine right where it left off.\n\nEvery `await` is a *yield point* — a place the task voluntarily gives the loop a chance to run something else. Between awaits, a coroutine runs straight through with nobody interrupting it.\n\n## Starting the Loop: asyncio.run\n\nYou don't normally build the loop by hand. `asyncio.run(coro)` does it for you: it starts a fresh event loop, drives the coroutine you pass it to completion, returns its value, then shuts the loop down.\n\n```python\nimport asyncio\n\nasync def compute(n):\n    return n * n\n\nprint(asyncio.run(compute(7)))   # 49\n```\n\n`compute(7)` builds the paused coroutine; `asyncio.run(...)` is what finally *executes* it and unwraps the `49`.\n\n## Cooperative, Not Preemptive\n\nThis is the part that bites people. Async concurrency is **cooperative**: a task only ever pauses when *it* chooses to, by hitting an `await`. The loop cannot forcibly interrupt a running coroutine.\n\nSo if one coroutine does a long **CPU-bound** computation with no `await` inside it — crunching numbers in a tight loop — it never yields control. The event loop is stuck. Every other task is frozen until that one finishes. Async did not magically parallelize the math; there is still only one thread, and that thread is busy.\n\nThe rule that follows: **async shines when tasks spend their time waiting** (I/O-bound work), because pausing-while-waiting is exactly what it overlaps. It does **nothing** for CPU-bound work — for that you need real parallelism (processes).\n\n## Blocking vs Awaiting\n\n| | Blocking call (`time.sleep`, plain socket read) | Awaiting (`await asyncio.sleep`, async I/O) |\n|---|---|---|\n| Who is busy while waiting? | The whole thread is frozen | The thread is freed for other tasks |\n| Can the loop run other tasks? | No — everything stalls | Yes — that's the entire point |\n| Mechanism | Thread parks, nothing yields | Coroutine pauses, yields to the loop |\n| Result | One slow wait blocks all | Many waits overlap on one thread |\n\nThe whole skill of async is replacing **blocking** waits with **awaitable** ones, so the one thread you have is never idle when there is other work to do.\n\n## Does This Beat the GIL?\n\nSort of — by sidestepping it, not defeating it. The GIL says only one thread runs Python bytecode at a time. Async never fights that: it uses **one** thread on purpose. It wins not by computing in parallel but by **overlapping the waiting**. While one task waits on the network, another task's bytecode runs — on the same single thread, fully GIL-legal. No parallelism, no extra cores, just a thread that is never caught standing around.\n\n> **Key idea:** A coroutine (`async def`) is a pausable function; *calling* it returns a coroutine object that does nothing until it is run. The **event loop** drives coroutines, pausing each one at its `await` points and resuming it when its wait is over, so one thread juggles many tasks. `asyncio.run(coro)` starts that loop and runs a coroutine to completion. It's cooperative concurrency — a task that never awaits blocks everyone — and it overlaps *waiting*, not *computing*, so it helps I/O-bound work and does nothing for CPU-bound work."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "spinning_loop",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "async_mental_model",
+      "nodes": [
+        {
+          "label": "The Event Loop (one thread)",
+          "children": [
+            "Coroutine = pausable async def function",
+            "Calling it returns a coroutine object (does nothing yet)",
+            "Loop runs a coroutine until it hits await",
+            "At await the task pauses and yields control",
+            "Loop runs another task while the first waits",
+            "asyncio.run(coro) starts the loop & runs to completion"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "blocking_vs_awaiting",
+      "left": {
+        "label": "Awaiting (await asyncio.sleep): the task pauses and yields — the loop runs other tasks while it waits",
+        "result": true
+      },
+      "right": {
+        "label": "Blocking (time.sleep) or a CPU loop with no await: the one thread freezes — every other task stalls",
+        "result": false
+      },
+      "description": {
+        "en": "Async is cooperative: a task only yields when it hits await. Overlap waiting, never block the single thread."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "coroutine_run_demo",
+      "code": "import asyncio\n\nasync def compute(n):\n    return n * n\n\nc = compute(7)          # builds a paused coroutine\nprint(asyncio.run(c))   # the loop runs it -> 49",
+      "executionSteps": [
+        { "line": 6, "variables": { "c": "<coroutine object>", "ran_body": "False" }, "output": "(nothing printed yet)", "description": "Calling compute(7) returns a coroutine object. The body has NOT run." },
+        { "line": 7, "variables": { "loop": "started", "ran_body": "True", "return_value": "49" }, "output": "49", "description": "asyncio.run starts the event loop, drives the coroutine to completion, and unwraps 49." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "async = ONE thread juggling many tasks by pausing at every await.",
+        "A coroutine call returns an object; asyncio.run actually executes it.",
+        "Cooperative: a task that never awaits freezes the whole loop.",
+        "It overlaps WAITING (I/O), not COMPUTING. Not parallel. Not faster for CPU work."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Prove you understand coroutines. Write an async def coroutine compute(n) that returns n * n. Remember: calling compute(7) by itself runs NOTHING — it just builds a coroutine object. You have to hand it to asyncio.run() to actually execute it and get the value back. Run compute(7) with asyncio.run and print the result. Expected output: 49"
+      },
+      "starter_code": "import asyncio\n\n# An 'async def' makes a COROUTINE: a pausable function.\n# Calling it returns a coroutine object that does nothing\n# until the event loop runs it.\nasync def compute(n):\n    # TODO: return n squared\n    return 0\n\n# asyncio.run(...) starts the event loop, runs the coroutine\n# to completion, and returns its value.\nprint(asyncio.run(compute(7)))",
+      "expected_output": "49",
+      "hints": {
+        "en": [
+          "Inside the coroutine, just return n * n — async functions can return values like any function.",
+          "compute(7) on its own does NOT run the body; it returns a coroutine object. Don't print that.",
+          "asyncio.run(compute(7)) starts the event loop, executes the coroutine, and gives you back 49.",
+          "Putting it together: print(asyncio.run(compute(7)))."
+        ]
+      },
+      "test_code": "import asyncio, inspect\n# Calling the coroutine without running it returns a coroutine object (the body has NOT run).\nco = compute(7)\nassert inspect.iscoroutine(co), \"compute(7) should return a coroutine object, not a computed value\"\nco.close()  # tidy up the un-awaited coroutine\n# Running it via asyncio.run drives the event loop and returns the value.\nassert asyncio.run(compute(7)) == 49\nassert asyncio.run(compute(0)) == 0\nassert asyncio.run(compute(12)) == 144"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What do you get when you call an async def function like compute(7) directly (without awaiting or asyncio.run)?"
+      },
+      "options": {
+        "en": [
+          "The computed return value, immediately",
+          "A coroutine object — the body has not run yet",
+          "A new thread that runs the function in parallel",
+          "An error, because async functions can't be called"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the event loop's core job?"
+      },
+      "options": {
+        "en": [
+          "To run coroutines in parallel across multiple CPU cores",
+          "To run a coroutine until an await, pause it there, run other ready tasks, and resume it when its wait is done",
+          "To remove the GIL so threads run simultaneously",
+          "To speed up CPU-bound number crunching"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A coroutine runs a long CPU-bound loop with no await inside it. What happens to the other tasks on the event loop?"
+      },
+      "options": {
+        "en": [
+          "They keep running in parallel on other threads",
+          "They are frozen until that coroutine finishes — async is cooperative, so it never yields without an await",
+          "The loop forcibly interrupts the CPU loop to run them",
+          "They run faster because async is always faster"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does async help I/O-bound work but not CPU-bound work, even though it sidesteps the GIL?"
+      },
+      "options": {
+        "en": [
+          "Because it runs computations on many cores at once",
+          "Because it overlaps WAITING (I/O) on one thread, but a CPU task still has to compute and there's only one thread",
+          "Because async disables the GIL during CPU work",
+          "Because asyncio.run spawns one process per task"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["event_loop", "coroutines", "async_await", "cooperative_concurrency", "asyncio_run", "concurrency_vs_parallelism"],
+    "concepts_required": [],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}

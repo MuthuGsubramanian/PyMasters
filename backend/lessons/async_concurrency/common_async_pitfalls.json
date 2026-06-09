@@ -1,0 +1,164 @@
+{
+  "id": "common_async_pitfalls",
+  "topic": "common_async_pitfalls",
+  "track": "async_concurrency",
+  "module": "practice",
+  "order": 1,
+  "title": {
+    "en": "Common async Pitfalls (and How to Avoid Them)"
+  },
+  "description": {
+    "en": "async bugs are sneaky: they don't crash loudly, they just quietly do the wrong thing. Your code runs, returns 'something', and the bug hides in plain sight. Learn the four traps that catch everyone — forgetting await, blocking the event loop, fire-and-forget tasks, and mixing sync with async — and the exact fix for each."
+  },
+  "xp_reward": 90,
+  "next_unlock": "structured_concurrency",
+  "story_variants": {
+    "en": "## Why async Bugs Are Sneaky\n\nMost bugs are loud. They throw an exception, the stack trace points at the line, you fix it. async bugs are different: they're **quiet**. Your program runs, it returns *something*, nothing crashes — and yet the result is wrong. The four traps below are the ones that catch almost everyone. Each has a tell, and each has a one-line fix.\n\n## Trap 1: Forgetting `await`\n\nThis is the number-one async bug. A coroutine function doesn't *run* when you call it — calling it just *builds* a coroutine object. The work only happens when you `await` it.\n\n```python\nasync def get_value():\n    return 42\n\nasync def main():\n    result = get_value()   # BUG: result is a coroutine, not 42\n    return result\n```\n\nHere `result` is a `<coroutine object>`, not `42`. The body of `get_value` never ran. Python will usually warn you at exit: **`RuntimeWarning: coroutine 'get_value' was never awaited`** — but the program already produced a wrong answer silently. **The fix is one word:**\n\n```python\nresult = await get_value()   # now result is 42\n```\n\n## Trap 2: Blocking the Event Loop\n\nasyncio runs *everything* on a **single thread** with **one event loop**. Cooperation is the deal: each coroutine runs until it hits an `await`, then yields control so others can run. If you call a slow **synchronous** function — `time.sleep(5)`, a heavy CPU loop, a blocking `requests.get()` — that coroutine never yields, and **every other task freezes** with it. One greedy line stalls the whole program.\n\n```python\nasync def handler():\n    time.sleep(5)        # BUG: freezes the ENTIRE loop for 5s\n```\n\nFixes, depending on the work:\n\n- **Sleeping / waiting?** Use the async version: `await asyncio.sleep(5)`.\n- **Blocking I/O or CPU you can't avoid?** Push it off the loop into a thread or process: `await asyncio.to_thread(blocking_call, arg)` (or `loop.run_in_executor(...)`).\n\n## Trap 3: Fire-and-Forget Tasks\n\nYou want something to run in the background, so you create a task and walk away:\n\n```python\nasyncio.create_task(do_work())   # BUG: nobody holds the reference\n```\n\nTwo things bite you. First, `create_task` returns a `Task` that the event loop only holds a **weak** reference to — if you don't keep a reference, it can be **garbage-collected mid-flight** and vanish. Second, if the task raises, the exception is **swallowed** — you never see it because nobody ever `await`ed the task. **The fix:** keep a reference and await it (or gather it).\n\n```python\ntask = asyncio.create_task(do_work())\n# ... do other things ...\nawait task   # keeps it alive AND surfaces any exception\n```\n\n## Trap 4: Mixing Sync and async Incorrectly\n\nYou can't `await` from a normal (non-`async`) function, and you can't call an `async` function and expect a value back without awaiting it. Don't reach for `asyncio.run()` to bridge the gap *inside* already-running async code — `asyncio.run()` starts a **new** event loop and raises if one is already running. To go from sync into async, call `asyncio.run(main())` **once** at the top level (the entry point) and stay inside async from there down.\n\n## The Cheat Sheet\n\n| Pitfall | The tell | The fix |\n|---|---|---|\n| Forgot `await` | Got a `<coroutine>` object; `coroutine was never awaited` warning | Add `await` before the call |\n| Blocking the loop | Everything freezes; no concurrency | `await asyncio.sleep()` / `asyncio.to_thread()` |\n| Fire-and-forget task | Task vanishes or errors silently | Keep a reference, then `await` it |\n| Mixing sync/async | `await` outside async, or nested `asyncio.run()` | One `asyncio.run()` at the top; stay async below |\n\n> **Key idea:** async failures are quiet, not loud. A forgotten `await` returns a coroutine instead of a value, a blocking call freezes every task, and an unreferenced task disappears with its exception. The defense is a habit: `await` everything you call, never run blocking work on the loop, and always keep a handle on the tasks you start."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "hidden_trap",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "four_traps",
+      "nodes": [
+        {
+          "label": "Four async Traps",
+          "children": [
+            "1. Forgot await -> got a coroutine, not a value",
+            "2. Blocked the loop -> everything freezes",
+            "3. Fire-and-forget -> task GC'd / error swallowed",
+            "4. Mixed sync+async -> await outside async, nested run()"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "forgot_await_demo",
+      "code": "async def get_value():\n    return 42\n\nasync def main():\n    result = get_value()        # forgot await\n    return result\n\nprint(asyncio.run(main()))",
+      "executionSteps": [
+        { "line": 5, "variables": { "result": "<coroutine object>" }, "output": "", "description": "Calling get_value() WITHOUT await builds a coroutine — the body never runs." },
+        { "line": 8, "variables": { "result": "<coroutine object>" }, "output": "<coroutine object get_value> + RuntimeWarning: never awaited", "description": "Wrong result returned silently. The fix: add 'await' on line 5." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "block_vs_yield",
+      "left": {
+        "label": "time.sleep(5) inside a coroutine: freezes the ENTIRE event loop for 5s",
+        "result": false
+      },
+      "right": {
+        "label": "await asyncio.sleep(5): yields control so other tasks run while waiting",
+        "result": true
+      },
+      "description": {
+        "en": "One thread, one loop. A blocking call never yields, so every other task starves. The async version yields at await."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "async bugs are QUIET, not loud.",
+        "await everything you call (a coroutine isn't a value).",
+        "Never block the loop — asyncio.sleep / to_thread.",
+        "Keep a reference to tasks you start, then await them."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Fix the #1 async bug: a forgotten await. get_value() is a coroutine — calling it WITHOUT await returns a coroutine object, not the number 42. The buggy main() does `result = get_value()` and returns that coroutine. Add the missing `await` so main() returns the actual integer 42. With the given code, print(asyncio.run(main())) must print 42. Expected output: 42"
+      },
+      "starter_code": "import asyncio\n\nasync def get_value():\n    return 42\n\nasync def main():\n    # BUG: get_value() is called WITHOUT await, so result is a\n    # coroutine object, not 42. Add the missing keyword below.\n    result = get_value()\n    return result\n\nprint(asyncio.run(main()))",
+      "expected_output": "42",
+      "hints": {
+        "en": [
+          "Calling an async function does NOT run it — it only builds a coroutine object. The body runs only when you await it.",
+          "Right now `result` holds a <coroutine object>, which is why you'd see 'coroutine was never awaited' instead of 42.",
+          "Put the keyword `await` in front of the call: result = await get_value().",
+          "After the fix, asyncio.run(main()) returns the int 42, not a coroutine."
+        ]
+      },
+      "test_code": "import asyncio\nout = asyncio.run(main())\nassert out == 42, f\"expected 42, got {out!r}\"\nassert isinstance(out, int), f\"expected an int, got {type(out).__name__} — did you forget to await?\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "You write `result = get_value()` where get_value is an async function. What is in `result`?"
+      },
+      "options": {
+        "en": [
+          "The value the function returns",
+          "A coroutine object — the function body has not run yet",
+          "None, always",
+          "A syntax error at that line"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Inside a coroutine you call time.sleep(5). What happens to the other tasks on the event loop?"
+      },
+      "options": {
+        "en": [
+          "They keep running in parallel on other threads",
+          "They all freeze for 5 seconds — the blocking call never yields the loop",
+          "They are automatically moved to separate processes",
+          "Nothing; time.sleep is async-safe"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You call `asyncio.create_task(work())` but keep no reference to the returned task. What are the two risks?"
+      },
+      "options": {
+        "en": [
+          "It runs twice, and it blocks the loop",
+          "It can be garbage-collected mid-flight, and if it raises, the exception is swallowed",
+          "It always raises immediately, and it cancels other tasks",
+          "There are no risks; this is the recommended pattern"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the correct fix for forgetting to await a coroutine call?"
+      },
+      "options": {
+        "en": [
+          "Wrap it in time.sleep()",
+          "Call asyncio.run() on it inside the loop",
+          "Put `await` in front of the call so its body actually runs and returns a value",
+          "Add the @async decorator"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["forgetting_await", "blocking_the_event_loop", "fire_and_forget_tasks", "mixing_sync_and_async"],
+    "concepts_required": ["awaiting_and_gather"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}
