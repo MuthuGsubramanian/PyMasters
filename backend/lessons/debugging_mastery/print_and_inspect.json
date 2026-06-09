@@ -1,0 +1,173 @@
+{
+  "id": "print_and_inspect",
+  "topic": "print_and_inspect",
+  "track": "debugging_mastery",
+  "module": "technique",
+  "order": 2,
+  "title": {
+    "en": "Print, Inspect, and pdb: Seeing What's Actually Happening"
+  },
+  "description": {
+    "en": "Most bugs are a wrong belief about a value. The cure isn't staring harder at the code — it's observing reality. Learn to print the variable AND its repr and type, why repr() beats str() for debugging, and the pdb basics (breakpoint, n/s/c/p/q) that let you walk through a running program."
+  },
+  "xp_reward": 90,
+  "next_unlock": "defensive_programming",
+  "story_variants": {
+    "en": "## Every Bug Is a Wrong Belief About a Value\n\nStop and notice what a bug actually *is*. You believed `count` was an `int`. You believed `data` was a non-empty list. You believed `user_id` came back as a number. The code ran on those beliefs — and one of them was false. The bug isn't really in the code; it's in your head. Debugging is the act of replacing a wrong belief with an observed fact.\n\nThat reframes the whole job. You don't fix bugs by *reasoning harder* about what the value *should* be. You fix them by *looking* at what the value *is*. And looking is cheap.\n\n> **Key idea:** Print the thing you ASSUME is true and check it. The fastest debugger in the world is a `print()` placed on the exact assumption you never thought to question.\n\n## Print the Value AND What It Is\n\nA naked `print(x)` is a weak observation. `5` and `\"5\"` look identical on screen, and that single ambiguity hides a huge share of bugs. Strong observation prints three things: the value, its `repr`, and its `type`.\n\n```python\nprint(f\"{x=}\")          # self-documenting: shows  x=5\nprint(repr(x))           # '5' (a string!) vs 5 (an int)\nprint(type(x))           # <class 'str'>  -- the smoking gun\n```\n\nThe `f\"{x=}\"` form (Python 3.8+) is the single best print-debugging trick: it prints the variable's *name* and its `repr` together, so your logs stay readable and you can't mislabel them. When confused about *why* an operation misbehaves, print `type()` — a `+` that concatenates instead of adding is always a type you didn't expect.\n\n## Why repr() Beats str() for Debugging\n\n`str()` is for humans; `repr()` is for programmers. `str()` hides exactly the details that cause bugs, and `repr()` reveals them:\n\n```python\nprint(str(\"\"))    #            (blank line -- is it empty? whitespace? None?)\nprint(repr(\"\"))   # ''         (unambiguous: empty string)\nprint(repr(None)) # None       (str(None) prints the word too, but repr never lies)\nprint(repr(\" 5 \"))# ' 5 '      (the spaces are VISIBLE)\n```\n\nWith `repr`, quotes appear around strings, `None` is obvious, and trailing whitespace stops being invisible. The `f\"{x=}\"` form already uses `repr` for you — another reason to reach for it first.\n\n## Stepping Into a Running Program: pdb\n\nPrints are fast, but sometimes you need to *walk* through execution and poke at any variable live. That's `pdb`. Drop a `breakpoint()` on the line you suspect, run the program, and it pauses there with an interactive prompt:\n\n```python\ndef order_total(prices):\n    subtotal = 0\n    for p in prices:\n        breakpoint()          # execution pauses HERE, every loop\n        subtotal += int(p)\n    return subtotal\n```\n\nAt the `(Pdb)` prompt, five commands do almost everything:\n\n| Command | What it does |\n|---------|--------------|\n| `n` (next) | run the current line, step *over* function calls |\n| `s` (step) | step *into* a function call to debug inside it |\n| `c` (continue) | resume until the next breakpoint |\n| `p expr` | print any expression — `p p`, `p type(p)`, `p subtotal` |\n| `q` (quit) | abort the program |\n\nThe move is always the same: at the pause, `p` the variable you assumed was true and check its `type`. The lie reveals itself in one keystroke.\n\n## Print vs Logging: Throwaway vs Keeps\n\nPrints are perfect for a quick hunt and should be *deleted* the moment the bug dies. For anything you want to keep — long-running services, intermittent failures you can't reproduce on demand — use `logging` instead. It gives you levels (`debug`/`info`/`warning`/`error`), timestamps, the source module, and a switch to silence or amplify output without touching code.\n\n```python\nimport logging\nlogging.basicConfig(level=logging.DEBUG)\nlogging.debug(\"subtotal so far: %r\", subtotal)   # %r uses repr, of course\n```\n\n| Tool | When to use |\n|------|-------------|\n| `print(f\"{x=}\")` | quick, throwaway hunt for one wrong value — delete after |\n| `repr(x)` / `type(x)` | when value or type is ambiguous (`5` vs `'5'`, empty vs `None`) |\n| `breakpoint()` + pdb | you need to walk live execution and inspect many variables |\n| `logging` | observations you want to KEEP: services, rare/intermittent bugs |\n\nThe meta-skill underneath all four tools is the same: **narrow it down by observing reality instead of trusting memory.** Print the assumption. Check the type. The bug was never hiding — you just hadn't looked at the one value you were sure about."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifying_glass",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "observe_reality",
+      "nodes": [
+        {
+          "label": "Observe the Value",
+          "children": [
+            "print(f\"{x=}\") -> name + repr",
+            "repr(x) -> quotes, None, spaces visible",
+            "type(x) -> the smoking gun",
+            "breakpoint() -> walk it live with pdb",
+            "logging -> observations you KEEP"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "repr_vs_str",
+      "left": {
+        "label": "print(x)  ->  5   (int? str? can't tell)",
+        "result": false
+      },
+      "right": {
+        "label": "print(f\"{x=}\")  ->  x='5'  (it's a STRING!)",
+        "result": true
+      },
+      "description": {
+        "en": "A naked print hides the bug; repr reveals quotes around strings, makes None obvious, and shows hidden whitespace. f\"{x=}\" uses repr for you."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "type_mismatch_demo",
+      "code": "def order_total(prices):\n    subtotal = \"\"\n    for p in prices:\n        subtotal = subtotal + p\n    return subtotal\n\nprint(order_total([\"12\", \"8\", \"5\"]))",
+      "executionSteps": [
+        { "line": 2, "variables": { "subtotal": "'' (a str!)" }, "output": "", "description": "subtotal starts as a STRING, not 0 — the hidden wrong belief" },
+        { "line": 4, "variables": { "subtotal": "'12'", "p": "'12'" }, "output": "", "description": "'' + '12' CONCATENATES strings instead of adding" },
+        { "line": 4, "variables": { "subtotal": "'128'", "p": "'8'" }, "output": "", "description": "Still concatenating — no crash, just silently wrong" },
+        { "line": 4, "variables": { "subtotal": "'1285'", "p": "'5'" }, "output": "", "description": "print(type(p)) here would have shown <class 'str'> instantly" },
+        { "line": 7, "variables": { "subtotal": "'1285'" }, "output": "1285", "description": "Wrong result. The fix: start at 0 and int(p). Answer should be 25." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Every bug is a wrong belief about a value.",
+        "Print the thing you ASSUME is true: print(f\"{x=}\")  and  print(type(x)).",
+        "repr beats str. breakpoint() walks it live. logging is for keeps."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This order_total function looks right but returns the wrong answer with NO error. The prices came from a web form, so they are strings (\"12\", not 12), and subtotal starts as \"\" — so the loop CONCATENATES the strings into \"1285\" instead of summing to 25. Be the inspector: add a print of repr and type if you want to see it (print(f\"{p=} {type(p)=}\")), then FIX the type mismatch so it sums numbers. Start subtotal at 0 and convert each price with int(p). The total of [\"12\", \"8\", \"5\"] must be 25. Expected output: total=25"
+      },
+      "starter_code": "def order_total(prices):\n    subtotal = \"\"          # BUG: this is a STRING, so + concatenates\n    for p in prices:\n        # Tip: uncomment to inspect what p REALLY is\n        # print(f\"{p=} {type(p)=}\")\n        subtotal = subtotal + p   # '' + '12' + '8' + '5' -> '1285'  (wrong!)\n    return subtotal\n\nprices = [\"12\", \"8\", \"5\"]   # came from a web form as strings\nprint(f\"total={order_total(prices)}\")",
+      "expected_output": "total=25",
+      "hints": {
+        "en": [
+          "Inspect the assumption: add print(f\"{p=} {type(p)=}\") inside the loop. It prints p='12' <class 'str'> — p is a STRING, not an int.",
+          "repr (which f\"{p=}\" uses) shows the quotes around '12', making the string-vs-number confusion obvious at a glance.",
+          "subtotal starts as \"\" (empty string), so + concatenates instead of adding. Start it at 0 instead.",
+          "Convert each string to a number before adding: subtotal = subtotal + int(p). Now [\"12\",\"8\",\"5\"] sums to 25, an int."
+        ]
+      },
+      "test_code": "assert order_total([\"12\", \"8\", \"5\"]) == 25\nassert isinstance(order_total([\"12\", \"8\", \"5\"]), int)\nassert order_total([\"100\"]) == 100\nassert order_total([]) == 0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the core reason most bugs exist, according to this lesson?"
+      },
+      "options": {
+        "en": [
+          "The Python interpreter has a bug",
+          "A wrong belief about a value — you assumed a type or contents that weren't real",
+          "The computer is too slow",
+          "Variables are stored in boxes"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why prefer print(f\"{x=}\") over a plain print(x)?"
+      },
+      "options": {
+        "en": [
+          "It runs faster",
+          "It prints the variable's name plus its repr, so logs are self-documenting and unambiguous",
+          "It only works for integers",
+          "It silences all errors"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does repr() beat str() when debugging?"
+      },
+      "options": {
+        "en": [
+          "repr() is shorter to type",
+          "repr() shows quotes around strings, makes None obvious, and reveals hidden whitespace — str() hides exactly those details",
+          "str() does not exist in Python 3",
+          "repr() converts everything to integers"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "At a pdb prompt, which command prints the current value of a variable so you can check your assumption?"
+      },
+      "options": {
+        "en": [
+          "n (next)",
+          "c (continue)",
+          "p expr (e.g. p subtotal or p type(p))",
+          "q (quit)"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["print_debugging", "repr_vs_str", "type_inspection", "pdb_basics", "logging_vs_print"],
+    "concepts_required": ["narrow_it_down"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "debugging",
+    "path_memberships": []
+  },
+  "generated": false
+}

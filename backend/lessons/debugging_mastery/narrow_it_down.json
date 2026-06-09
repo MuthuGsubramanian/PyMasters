@@ -1,0 +1,169 @@
+{
+  "id": "narrow_it_down",
+  "topic": "narrow_it_down",
+  "track": "debugging_mastery",
+  "module": "technique",
+  "order": 1,
+  "title": {
+    "en": "Narrow It Down: Minimal Repros & Bisection"
+  },
+  "description": {
+    "en": "The fastest path to a bug isn't a flash of insight — it's shrinking the search space until the bug has nowhere to hide. Learn to build a minimal reproducible example, bisect code, data, and git history by halving, and check your assumptions at the midpoint to turn 'somewhere in 1000 lines' into 'this one line' in a handful of steps."
+  },
+  "xp_reward": 90,
+  "next_unlock": "print_and_inspect",
+  "story_variants": {
+    "en": "## The Bug Is Somewhere in 1000 Lines\n\nA report lands: *\"the export is corrupting some rows.\"* You open the file. It's a thousand lines — parsing, three transforms, a merge, a serializer. The bug is *somewhere* in there. The beginner's instinct is to stare at all thousand lines and hope the bug glows. It never does.\n\nThe expert does something almost mechanical instead: they **shrink the search space**. Not by being smarter about the code, but by repeatedly cutting the place the bug could be living in half. This is the single highest-leverage debugging skill, and it's pure procedure — anyone can run it.\n\n## Step 1: Build a Minimal Reproducible Example\n\nBefore you can hunt a bug, you have to *trap* it. A **minimal reproducible example** (a \"minimal repro\") is the smallest piece of code and data that still triggers the bug. You build one by **deleting everything that doesn't change the behavior.**\n\nStart from the failing case and start cutting:\n\n- Remove a transform. Still broken? It wasn't that transform — leave it out.\n- Strip the input from 10,000 rows to 100, then to 3. Still broken? Keep the 3.\n- Delete the logging, the config, the unrelated branch. Still broken? Gone.\n\nHalf the time, **the bug reveals itself while you're shrinking** — the moment you delete the line that \"couldn't possibly matter\" and the bug vanishes, you've found it. The other half, you're left with a 10-line repro you can actually reason about, and a repro you can paste into a bug report, a test, or a question.\n\n> **Key idea:** You don't find a bug by understanding more code. You find it by deleting code until only the bug is left.\n\n## Step 2: Bisection — Binary Search Your Code\n\nOnce you have a repro that's still too big to eyeball, **bisect** it. Bisection is binary search applied to *where* the bug is:\n\n1. Find the rough midpoint of the suspect region.\n2. Check whether the bug has happened *yet* at that midpoint — print the value, add an assert, set a breakpoint.\n3. If the data is already wrong at the midpoint, the bug is in the **first half**. If it's still correct, the bug is in the **second half**.\n4. Throw away the half you cleared. Repeat on the half that's left.\n\nEach check **halves** the search space. That's the magic of binary search: 1000 lines takes ~10 checks to pin to a single line, because 2¹⁰ ≈ 1000. Sixteen transforms? Four checks. It feels almost unfair how fast it collapses.\n\n| Suspect region | Checks to pin one line | Why |\n|---|---|---|\n| 8 steps | 3 | 2³ = 8 |\n| 1,000 lines | ~10 | 2¹⁰ ≈ 1024 |\n| 1,000,000 lines | ~20 | 2²⁰ ≈ 1,000,000 |\n\nThe same move works on more than code:\n\n- **Data:** the parser chokes on a 50,000-line file. Cut it in half, feed each half. Whichever half still crashes holds the bad row. Repeat — ~16 cuts finds the one poisoned line.\n- **Git history:** *\"it worked last week, it's broken now.\"* `git bisect start`, mark a known-good commit `good` and the broken one `bad`, and git checks out the midpoint commit. You test, say `git bisect good` or `git bisect bad`, and it halves the range until it names the exact commit that introduced the bug — across hundreds of commits in a dozen steps.\n\n## Step 3: Check Your Assumptions at the Midpoint\n\nBisection only works if your **midpoint check is honest**. And the most valuable thing to check is the assumption you didn't know you were making: *is the data actually what I think it is right here?*\n\nThe id you assume is an `int` is a string `\"42\"`. The list you assume is sorted isn't. The dict you assume has the key doesn't. Bugs love to hide in the gap between what you *believe* is true at a point in the code and what's *actually* true there. So at each midpoint, don't just check \"did it break yet\" — check \"is reality matching my mental model here?\" The mismatch *is* the bug, more often than not.\n\n```python\n# Midpoint check: don't trust — verify the value AND its type\nprint(\"at step 2:\", repr(value), type(value).__name__)\nassert isinstance(value, list), f\"expected list, got {type(value)}\"\n```\n\n## The Discipline\n\nNone of this requires being clever. Shrink the repro by deleting what doesn't matter. Bisect by halving and checking the midpoint. Verify your assumptions where you check. That mechanical loop is what turns \"somewhere in a thousand lines\" into \"line 412\" in a handful of steps — every time, on code, data, and history alike.\n\n> **Key idea:** Don't search for a bug — *shrink the space it can hide in.* Build a minimal repro by deleting everything that doesn't affect the failure, then binary-search (bisect) the rest by halving and checking the value at each midpoint. Halving turns thousands of possibilities into one in a handful of steps, and verifying your assumptions at the midpoint is where the bug usually turns out to be."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "search_space",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "narrowing_toolkit",
+      "nodes": [
+        {
+          "label": "Shrink the Search Space",
+          "children": [
+            "Minimal repro: delete what doesn't affect the bug",
+            "Bisect: halve the suspect region, check the midpoint",
+            "Works on code, data, and git history (git bisect)",
+            "Verify assumptions: is the data what you think it is?"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "stare_vs_bisect",
+      "left": {
+        "label": "Stare at all 1000 lines and hope the bug glows — it never does",
+        "result": false
+      },
+      "right": {
+        "label": "Bisect: ~10 midpoint checks halve 1000 lines down to one",
+        "result": true
+      },
+      "description": {
+        "en": "You don't find a bug by understanding more code. You find it by halving the space it can hide in until one line is left."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "midpoint_check_demo",
+      "code": "data = step1(raw)      # check value here?\ndata = step2(data)     # ...or here?\ndata = step3(data)     # bug shows up by the end\nprint(repr(data))",
+      "executionSteps": [
+        { "line": 1, "variables": { "data": "[10, 20, 30]", "looks_right": "True" }, "output": "", "description": "Midpoint check after step1: value is correct. The bug is in the SECOND half — drop step1 from suspicion." },
+        { "line": 2, "variables": { "data": "[10, 20, 31]", "looks_right": "False" }, "output": "", "description": "After step2 it's wrong. We just halved the search: the bug is step2. One more check pins the line." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Don't search the bug — shrink where it can hide.",
+        "Minimal repro: delete everything that doesn't change the failure.",
+        "Bisect by halving; check the value at each midpoint. 1000 lines -> 1 in ~10 steps."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "A 4-step pipeline should turn the raw string \"3,1,2\" into the string \"2-4-6\": parse the numbers, double each one, sort them, then join with dashes. But the final output is wrong. Don't rewrite the whole pipeline — bisect it. Check the value AFTER each step to find the ONE broken step, then fix only that step. Exactly one step has a single bug; the other three are correct. With the given input the pipeline must print \"2-4-6\". Expected output: 2-4-6"
+      },
+      "starter_code": "# A 4-step pipeline. ONE step has a single bug.\n# Don't rewrite everything — bisect: print the value AFTER each step,\n# find the step where it first goes wrong, and fix only that step.\n\ndef step1_parse(raw):\n    # Correct: \"3,1,2\" -> [3, 1, 2]\n    return [int(x) for x in raw.split(\",\")]\n\ndef step2_double(nums):\n    # Should DOUBLE each number: [3, 1, 2] -> [6, 2, 4]\n    return [n * 3 for n in nums]   # BUG: multiplies by 3, not 2\n\ndef step3_sort(nums):\n    # Correct: [6, 2, 4] -> [2, 4, 6]\n    return sorted(nums)\n\ndef step4_join(nums):\n    # Correct: [2, 4, 6] -> \"2-4-6\"\n    return \"-\".join(str(n) for n in nums)\n\ndef pipeline(raw):\n    a = step1_parse(raw)\n    b = step2_double(a)\n    c = step3_sort(b)\n    return step4_join(c)\n\nprint(pipeline(\"3,1,2\"))",
+      "expected_output": "2-4-6",
+      "hints": {
+        "en": [
+          "Bisect by checking the value after each step. Run step1_parse(\"3,1,2\") -> [3, 1, 2]. That's correct, so step 1 is clear.",
+          "Now check the midpoint. Run step2_double([3, 1, 2]). You expected doubling to give [6, 2, 4], but you get [9, 3, 6] — already wrong here. The bug is in step2.",
+          "Confirm the later steps are innocent: step3_sort([2, 4, 6]) -> [2, 4, 6] and step4_join([2, 4, 6]) -> \"2-4-6\" both behave. Only step2 misbehaves.",
+          "Fix only the broken step: change 'n * 3' to 'n * 2' in step2_double. Don't touch the working steps — small diff, then re-run."
+        ]
+      },
+      "test_code": "assert step1_parse(\"3,1,2\") == [3, 1, 2]\nassert step2_double([3, 1, 2]) == [6, 2, 4]\nassert step3_sort([6, 2, 4]) == [2, 4, 6]\nassert step4_join([2, 4, 6]) == \"2-4-6\"\nassert pipeline(\"3,1,2\") == \"2-4-6\"\nassert pipeline(\"5\") == \"10\"\nassert pipeline(\"2,2,1\") == \"2-4-4\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the core idea behind 'narrowing it down' when debugging?"
+      },
+      "options": {
+        "en": [
+          "Understanding every line of the codebase before you start",
+          "Shrinking the space the bug can hide in until only the bug is left",
+          "Rewriting the failing module from scratch",
+          "Adding more features so the bug becomes obvious"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you build a minimal reproducible example?"
+      },
+      "options": {
+        "en": [
+          "Add more inputs and code until the bug happens more often",
+          "Delete everything that doesn't change the failure, keeping the smallest case that still breaks",
+          "Run the full program with extra logging and read all of it",
+          "Wait for the bug to reproduce on its own in production"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Roughly how many midpoint checks does bisection need to pin a bug to one line out of 1,000?"
+      },
+      "options": {
+        "en": [
+          "About 1,000 — one per line",
+          "About 500 — half the lines",
+          "About 10 — because each check halves the search space (2^10 ≈ 1024)",
+          "Exactly 1 — binary search always finds it in one step"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why is checking your assumptions at the bisection midpoint so valuable?"
+      },
+      "options": {
+        "en": [
+          "It makes the program run faster at that point",
+          "Bugs often hide in the gap between what you believe is true there and what's actually true — e.g. a value's type or shape isn't what you assumed",
+          "It lets you skip writing a minimal repro entirely",
+          "It guarantees the bug is always in the second half"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["minimal_reproducible_example", "bisection", "binary_search_debugging", "git_bisect", "checking_assumptions"],
+    "concepts_required": ["reading_tracebacks"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "debugging",
+    "path_memberships": []
+  },
+  "generated": false
+}
