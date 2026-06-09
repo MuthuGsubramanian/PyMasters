@@ -1,0 +1,154 @@
+{
+  "id": "verify_dont_trust",
+  "topic": "verify_dont_trust",
+  "track": "vibe_coding",
+  "module": "practices",
+  "order": 1,
+  "title": {
+    "en": "Verify, Don't Trust: Beating the 'Looks Right' Trap"
+  },
+  "description": {
+    "en": "The single habit that separates safe vibe coders from dangerous ones: never accept AI code because it looks right — accept it because you watched it produce the right result. Learn the cheapest, fastest ways to verify."
+  },
+  "xp_reward": 90,
+  "next_unlock": "spec_first_prompting",
+  "story_variants": {
+    "en": "## The 'Looks Right' Trap\n\nAI code has a special danger that handwritten code doesn't: it is *optimized to look correct.* Clean names, sensible structure, no obvious smell. Your brain reads it, pattern-matches \"this looks like working code,\" and ships it. That feeling — **\"looks right\"** — is the single most expensive feeling in software.\n\nThe fix is a reflex: replace *looks right* with **proved right.** You don't argue with code. You make it prove itself.\n\n### The Verification Ladder (cheapest first)\n\nReach for the lowest rung that gives you confidence:\n\n1. **Run it.** The fastest check. Does it execute and produce the output you expected on a real input? Most hallucinated APIs die instantly here with an `AttributeError`.\n2. **Run it on an edge case.** Empty input, zero, negative, a duplicate, a huge value. AI code loves the happy path and forgets the edges.\n3. **Write one assertion.** `assert f(2, 3) == 5`. A single line that pins the behavior you actually need. Now the computer checks, not your tired eyes.\n4. **Diff against the docs.** For any method you can't personally vouch for, confirm it exists and takes those arguments. Thirty seconds beats a 3am incident.\n5. **Read it for intent, not style.** Ask \"what does this *do* on bad input?\" not \"is this pretty?\"\n\n### A Worked Example\n\nYou ask for a function to average a list. The AI returns:\n\n```python\ndef average(nums):\n    return sum(nums) / len(nums)\n```\n\nLooks right. It even *is* right — until `average([])` throws `ZeroDivisionError` in production. One edge-case run (rung 2) or one assertion (rung 3) catches it in two seconds:\n\n```python\nassert average([]) == 0   # fails -> now you know\n```\n\nThe AI didn't lie. It answered the question you asked, not the one you needed. **Verification is how you find the gap between those two.**\n\n### Make It Automatic\n\nGood vibe coders don't *decide* to verify — they've made it muscle memory. Every AI snippet gets run before it's trusted. Every function that matters gets one assertion. The loop is so fast it costs nothing, and it turns \"I think this works\" into \"I know this works.\"\n\n> **Key idea:** You can't out-read a model that writes code designed to look right. You can only out-*run* it. Cheap, ruthless, automatic verification is the core skill of AI-assisted development — everything else in this track is a way to make verification easier."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifying_glass",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "verification_ladder",
+      "nodes": [
+        {
+          "label": "Verification Ladder",
+          "children": [
+            "1. Run it",
+            "2. Run an edge case",
+            "3. Write one assertion",
+            "4. Diff against docs",
+            "5. Read for intent"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "edge_case_demo",
+      "code": "def average(nums):\n    return sum(nums) / len(nums)\n\nprint(average([2, 4, 6]))\nprint(average([]))",
+      "executionSteps": [
+        { "line": 4, "variables": { "nums": "[2, 4, 6]" }, "output": "4.0", "description": "Happy path works — looks right!" },
+        { "line": 5, "variables": { "nums": "[]" }, "output": "ZeroDivisionError", "description": "Edge case explodes. Verification caught it." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "'Looks right' is the most expensive feeling in software.",
+        "Replace it with 'proved right'.",
+        "You can't out-read the model. Out-RUN it."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An AI wrote this median function. It looks right but is subtly wrong for even-length lists (it returns the lower-middle element instead of averaging the two middle ones). Be the verifier: fix the function so it's correct. With the given data, the median of [1, 2, 3, 4] must be 2.5. Expected output: 2.5"
+      },
+      "starter_code": "def median(nums):\n    s = sorted(nums)\n    n = len(s)\n    # AI's buggy line: return s[n // 2]\n    # Fix it to handle even-length lists correctly:\n    return s[n // 2]\n\nprint(median([4, 1, 3, 2]))",
+      "expected_output": "2.5",
+      "hints": {
+        "en": [
+          "For odd n, the middle element s[n//2] is correct.",
+          "For even n, average the two middle elements: s[n//2 - 1] and s[n//2].",
+          "Use: (s[n//2 - 1] + s[n//2]) / 2 when n is even, else s[n//2]."
+        ]
+      },
+      "test_code": "assert median([4, 1, 3, 2]) == 2.5\nassert median([1, 2, 3]) == 2\nassert median([10]) == 10"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is AI-generated code especially prone to the 'looks right' trap?"
+      },
+      "options": {
+        "en": [
+          "It is written in a different language",
+          "It is optimized to look correct — clean names and structure — even when wrong",
+          "It always has syntax errors you can spot",
+          "It refuses to run"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the cheapest first rung on the verification ladder?"
+      },
+      "options": {
+        "en": [
+          "Run it and see if it produces the expected output",
+          "Write a full test suite",
+          "Ask another AI to review it",
+          "Read every line three times"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "The average() function worked on [2,4,6] but crashed on []. What does this teach?"
+      },
+      "options": {
+        "en": [
+          "AI code is always broken",
+          "AI answers the question you asked, not the edge cases you needed — so test edges",
+          "You should never use division",
+          "Empty lists are illegal in Python"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What's the role of a single assertion like assert f(2,3) == 5?"
+      },
+      "options": {
+        "en": [
+          "It makes code run faster",
+          "It lets the computer check the behavior you need instead of your tired eyes",
+          "It is only for production",
+          "It replaces the function"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["verification", "testing_mindset", "ai_assisted_development"],
+    "concepts_required": ["mental_model_ai_pair"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}
