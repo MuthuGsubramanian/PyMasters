@@ -1,0 +1,205 @@
+{
+  "id": "names_scopes_closures",
+  "topic": "names_scopes_closures",
+  "track": "python_internals",
+  "module": "execution_model",
+  "order": 1,
+  "title": {
+    "en": "Names, Scopes, and Closures: The LEGB Rule and Late Binding"
+  },
+  "description": {
+    "en": "How Python actually resolves a name. The LEGB rule (Local, Enclosing, Global, Built-in), how closures capture the VARIABLE not its value (late binding), the classic loop-of-lambdas bug, the global and nonlocal keywords, and why assigning a name makes it local for the whole function — the source of UnboundLocalError."
+  },
+  "xp_reward": 95,
+  "next_unlock": "the_gil",
+  "story_variants": {
+    "en": "## A Name Is Not a Box\n\nThe first lie most of us learn is that a variable is a box that holds a value. In Python it is closer to a *label* on an object. When you write `x = 5`, Python creates the integer `5` and binds the **name** `x` to it in some **namespace**. So the real question Python answers thousands of times per second is: *given a name, which namespace owns it?* The answer is the **LEGB rule**.\n\n## The LEGB Rule\n\nWhen Python evaluates a bare name like `total`, it searches four scopes **in order** and stops at the first hit:\n\n| Level | Stands for | What it is | Example source |\n|-------|-----------|------------|----------------|\n| **L** | Local | Names bound inside the current function | a parameter or `x = 1` in the function |\n| **E** | Enclosing | Locals of any function wrapping this one | the outer function of a nested `def` |\n| **G** | Global | Names at module top level | a constant defined in the file |\n| **B** | Built-in | Names Python always provides | `len`, `print`, `range` |\n\nIf the name is found in none of them, you get `NameError`. The search is strictly L then E then G then B — a local `len` would shadow the built-in `len` for that whole function.\n\n> **Key idea:** Python doesn't look up a *value*; it looks up a *name* in a chain of scopes. Everything strange about closures and `UnboundLocalError` follows from this one fact.\n\n## Assignment Decides Scope — For the Whole Function\n\nHere is the rule that surprises everyone: **whether a name is local is decided by the compiler at function-definition time, by scanning for assignments — not line by line as the code runs.** If a function assigns to a name *anywhere* in its body, that name is local for the *entire* function, including lines that run *before* the assignment.\n\n```python\nx = 10\ndef f():\n    print(x)   # UnboundLocalError!\n    x = 20\n```\n\nYou might expect `print(x)` to find the global `10`. It doesn't. Because `x = 20` appears later, the compiler marked `x` as **local** for all of `f`. When `print(x)` runs, the local `x` exists but hasn't been bound yet — so Python raises `UnboundLocalError`, a special kind of `NameError`. The fix is to *tell* Python what you mean.\n\n## `global` and `nonlocal`\n\nThese two keywords override the assignment-makes-it-local rule:\n\n- **`global x`** says: don't make `x` local; bind the module-level `x` instead. Now `x = 20` inside the function changes the global.\n- **`nonlocal x`** says: bind the `x` in the nearest *enclosing* function scope (the E in LEGB), not a new local and not the global. This is how an inner function can *modify* a variable owned by its outer function.\n\nWithout `nonlocal`, an inner function can *read* an enclosing variable but cannot *rebind* it — an assignment would silently create a new local instead.\n\n## Closures Capture the Variable, Not the Value\n\nWhen an inner function refers to a name from its enclosing function, Python keeps that enclosing variable alive in a **cell** after the outer function returns. The inner function plus its captured cells is a **closure**. The crucial detail: the cell holds a *reference to the variable*, and the closure reads it **when it is called**, not when it was defined. This is **late binding**.\n\n```python\ndef make():\n    msg = \"hi\"\n    def show():\n        return msg      # reads the cell at call time\n    msg = \"bye\"\n    return show\nmake()()                # -> 'bye', not 'hi'\n```\n\n## The Classic Loop Bug\n\nLate binding causes the single most famous Python gotcha:\n\n```python\nfuncs = [lambda: i for i in range(3)]\nprint([f() for f in funcs])   # [2, 2, 2] -- surprise!\n```\n\nEvery lambda captured the **same variable** `i`, not three snapshots of its value. By the time you *call* them, the loop has finished and `i` is `2`, so all three return `2`. The cure is to capture the value *at definition time* using a default argument, which is evaluated immediately when the `lambda` is created:\n\n```python\nfuncs = [lambda i=i: i for i in range(3)]\nprint([f() for f in funcs])   # [0, 1, 2]\n```\n\nThe `i=i` freezes the current value of `i` into the parameter's default. Same idea, different mechanism: default arguments bind early; free variables bind late.\n\n> **Key idea:** A closure remembers a *variable*, not a snapshot. If you need the value as it was *now*, capture it explicitly — a default argument is the classic, deterministic fix."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "name_tags",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "legb_chain",
+      "nodes": [
+        {
+          "label": "LEGB Name Resolution",
+          "children": [
+            "L — Local (this function)",
+            "E — Enclosing (outer functions)",
+            "G — Global (module top level)",
+            "B — Built-in (len, print, range)",
+            "Not found -> NameError"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "unbound_local_demo",
+      "steps": [
+        {
+          "line": "x = 10",
+          "highlight": "x",
+          "explanation": {
+            "en": "A global name x bound to 10."
+          }
+        },
+        {
+          "line": "def f():",
+          "highlight": "f",
+          "explanation": {
+            "en": "Compiler scans f's body BEFORE any line runs."
+          }
+        },
+        {
+          "line": "    print(x)",
+          "highlight": "x",
+          "explanation": {
+            "en": "x is read here — but it was marked local because of the line below."
+          }
+        },
+        {
+          "line": "    x = 20",
+          "highlight": "x",
+          "explanation": {
+            "en": "This assignment makes x local for ALL of f, so print(x) above raises UnboundLocalError."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "late_binding_loop",
+      "code": "funcs = [lambda: i for i in range(3)]\nprint([f() for f in funcs])\n\nfuncs = [lambda i=i: i for i in range(3)]\nprint([f() for f in funcs])",
+      "executionSteps": [
+        { "line": 2, "variables": { "i (final)": "2", "captured": "the variable i" }, "output": "[2, 2, 2]", "description": "All lambdas share one cell for i. Called after the loop, i is 2." },
+        { "line": 5, "variables": { "default i": "0,1,2 frozen", "captured": "the value at definition" }, "output": "[0, 1, 2]", "description": "Default arg i=i freezes the value early. Bug fixed." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "late_vs_early",
+      "left": {
+        "label": "lambda: i  -> reads variable i at CALL time (late binding) -> 2,2,2",
+        "result": false
+      },
+      "right": {
+        "label": "lambda i=i: i  -> freezes value at DEFINITION time (early bind) -> 0,1,2",
+        "result": true
+      },
+      "description": {
+        "en": "A closure captures the variable, not a snapshot. Default arguments are the deterministic fix."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A name is a label, not a box.",
+        "Assignment makes a name local for the WHOLE function.",
+        "Closures capture the variable, not its value -> late binding.",
+        "Need the value now? Capture it: lambda i=i: i"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "The classic late-binding closure bug. This code builds a list of functions in a loop with `lambda: i`. Because closures capture the VARIABLE i (not its value), every function reads i AFTER the loop finishes — when i is 2 — so all three return 2. The current output is '2 2 2'. Be the fixer: capture each loop value at definition time using a default argument (`lambda i=i: i`) so the functions return 0, 1, and 2 respectively. Expected output: 0 1 2"
+      },
+      "starter_code": "# Build a list of functions in a loop.\n# BUG: lambda: i captures the variable i (late binding),\n# so every function returns the FINAL value of i (which is 2).\nfuncs = [lambda: i for i in range(3)]\n\n# Fix the lambda above so each function returns its own loop value.\nresults = [f() for f in funcs]\nprint(\" \".join(str(r) for r in results))",
+      "expected_output": "0 1 2",
+      "hints": {
+        "en": [
+          "Run the starter code: it prints '2 2 2'. All three lambdas share ONE variable i, and by the time you call them the loop has ended with i == 2.",
+          "Closures capture the variable, not its value. You need to freeze the current value of i at the moment each lambda is created.",
+          "A default argument is evaluated immediately when the lambda is defined. Change `lambda: i` to `lambda i=i: i` — the `i=i` snapshots the current i into the parameter's default.",
+          "After the fix: funcs = [lambda i=i: i for i in range(3)] gives functions returning 0, 1, 2."
+        ]
+      },
+      "test_code": "funcs = [lambda i=i: i for i in range(3)]\nassert funcs[0]() == 0\nassert funcs[1]() == 1\nassert funcs[2]() == 2\nassert [f() for f in funcs] == [0, 1, 2]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In the LEGB rule, what order does Python search for a bare name?"
+      },
+      "options": {
+        "en": [
+          "Built-in, Global, Enclosing, Local",
+          "Local, Enclosing, Global, Built-in",
+          "Global, Local, Built-in, Enclosing",
+          "Local, Global, Enclosing, Built-in"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does `funcs = [lambda: i for i in range(3)]` make every function return 2?"
+      },
+      "options": {
+        "en": [
+          "The lambdas share the same captured variable i, read at call time, when i is already 2",
+          "range(3) actually produces 2, 2, 2",
+          "Lambdas cannot return integers",
+          "Python copies i by value into each lambda but rounds it up"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "This raises UnboundLocalError. Why?\n\n    x = 10\n    def f():\n        print(x)\n        x = 20"
+      },
+      "options": {
+        "en": [
+          "print is not built-in inside functions",
+          "The global x is None until assigned",
+          "Assigning x anywhere in f makes x local for the WHOLE function, so print(x) reads an unbound local",
+          "You must call f() twice before x exists"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does the `nonlocal` keyword do?"
+      },
+      "options": {
+        "en": [
+          "Binds the name in the nearest enclosing function scope so an inner function can rebind it",
+          "Always binds the module-level (global) name",
+          "Deletes the name from all scopes",
+          "Makes the name a built-in"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["legb_rule", "closures", "late_binding", "global_nonlocal", "unbound_local_error"],
+    "concepts_required": ["how_python_objects_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}

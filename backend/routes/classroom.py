@@ -432,12 +432,12 @@ async def list_lessons(user_id: str = None):
                         "beginner": {"python_fundamentals", "fun_automation", "vibe_coding"},
                         "intermediate": {"python_fundamentals", "fun_automation", "python_intermediate",
                                          "ai_ml_foundations", "web_development", "dsa", "testing_devops",
-                                         "python_modern", "vibe_coding"},
+                                         "python_modern", "vibe_coding", "python_internals"},
                         "advanced": {"python_fundamentals", "fun_automation", "python_intermediate",
                                      "ai_ml_foundations", "deep_learning", "web_development", "dsa",
                                      "ai_fundamentals", "machine_learning", "deep_learning_complete",
                                      "testing_devops", "ai_agents", "python_modern", "ai_engineering",
-                                     "vibe_coding"},
+                                     "vibe_coding", "python_internals"},
                     }
                     visible_tracks = skill_visible.get(skill_level, {"python_fundamentals", "fun_automation"})
 

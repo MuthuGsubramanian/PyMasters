@@ -1,0 +1,170 @@
+{
+  "id": "the_gil",
+  "topic": "the_gil",
+  "track": "python_internals",
+  "module": "execution_model",
+  "order": 2,
+  "title": {
+    "en": "The GIL: Why Python Threads Don't Run Python in Parallel"
+  },
+  "description": {
+    "en": "Spin up four threads on a four-core machine to crunch numbers and you'll be heartbroken: it's no faster, sometimes slower. The culprit is the Global Interpreter Lock. Learn exactly what the GIL is, why CPython has one, when it helps, when it hurts, and how to pick the right tool every time."
+  },
+  "xp_reward": 100,
+  "next_unlock": "interning_and_caching",
+  "story_variants": {
+    "en": "## The Heartbreak\n\nYou have a machine with eight cores. You have a slow, CPU-heavy Python loop. The obvious move: split the work across eight threads and go eight times faster. You write it, you run it, and... it's exactly as slow as one thread. Sometimes *slower*. Eight cores sitting idle while one does all the work.\n\nWelcome to the **Global Interpreter Lock** — the most misunderstood three letters in Python.\n\n## What the GIL Actually Is\n\nThe GIL is a single **mutex** (a lock) inside the CPython interpreter. The rule it enforces is simple and brutal:\n\n> Only **one** thread can execute Python bytecode at a time.\n\nA thread must *hold* the GIL to run Python code. So even with 100 threads on a 64-core CPU, exactly one of them is interpreting Python bytecode at any instant. The others are waiting for the lock. They take turns — the interpreter hands the GIL around every few milliseconds — but they never run Python *in parallel*. They run *concurrently* (interleaved), not *in parallel* (simultaneously). That distinction is the whole lesson.\n\n## Why Does It Exist?\n\nThis isn't a bug someone forgot to fix. The GIL buys CPython something valuable: **simplicity and speed in the single-threaded case.**\n\nCPython manages memory with **reference counting** — every object carries a count of how many things point to it, and when that count hits zero the object is freed. Those counts are incremented and decremented constantly, on almost every operation. If two threads could touch the same object's refcount at the same time, the count would corrupt — you'd get crashes, leaks, or freed-but-still-used memory.\n\nThe GIL makes refcounting **thread-safe for free**: since only one thread runs at a time, no two threads ever race on a refcount. It also lets C extension authors write code without sprinkling locks everywhere. The price is that CPU-bound Python can't use multiple cores. For decades that trade was considered worth it.\n\n## The Part Everyone Gets Wrong\n\nHere's the myth-buster: **the GIL is released during blocking I/O.**\n\nWhen a thread waits on the network, reads a file, or sleeps, it *drops the GIL* so another thread can run. The same is true inside many C extensions — NumPy, for instance, releases the GIL during heavy array math, so NumPy threads really can use multiple cores.\n\nSo threads are not useless. They're useless for **pure-Python CPU work** and genuinely helpful for **I/O-bound work**, where threads spend most of their time waiting, not computing.\n\n## The Decision Table\n\n| Workload type | What it's doing | GIL released? | Right tool |\n|---|---|---|---|\n| **I/O-bound** | Waiting on network, disk, DB, sleep | Yes (while waiting) | `threading` or `asyncio` |\n| **CPU-bound** | Crunching numbers in pure Python | No | `multiprocessing` |\n| **CPU-bound in C** | NumPy / native libs | Often yes | threads can work |\n\nThe key insight: for CPU-bound work you need **separate processes**, because each process gets its **own interpreter and its own GIL**. Eight processes on eight cores really do run in parallel. That's what `multiprocessing` (and `concurrent.futures.ProcessPoolExecutor`) gives you — at the cost of not sharing memory directly.\n\n## A Quick Mental Model\n\n- **One core, taking turns** = threads under the GIL.\n- **Want true parallelism for math?** Use processes (separate GILs).\n- **Lots of waiting?** Threads or asyncio shine — the GIL is free while you wait.\n\n## What's Changing\n\nThe GIL isn't eternal. **Python 3.13 (2024) shipped an experimental free-threaded build** (PEP 703) — a no-GIL CPython where threads *can* run Python bytecode in parallel. It's opt-in, still maturing, and trades some single-threaded speed for true multi-core threading. Over the next few releases it's expected to stabilize. But for the Python you almost certainly run today, the GIL is very much alive — and knowing how it behaves is the difference between code that flies and code that mysteriously refuses to.\n\n> **Key idea:** The GIL lets only one thread execute Python bytecode at a time, which is why threads never speed up CPU-bound pure-Python code. But the GIL is released during I/O and inside many C extensions, so threads *do* help I/O-bound work. The rule that follows: use **threads/asyncio for I/O-bound** work and **multiprocessing for CPU-bound** work — separate processes mean separate GILs and real parallelism."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "single_lock",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "gil_mental_model",
+      "nodes": [
+        {
+          "label": "The GIL (one mutex)",
+          "children": [
+            "Only 1 thread runs bytecode at a time",
+            "Makes refcounting thread-safe",
+            "Released during blocking I/O",
+            "Released inside many C extensions (NumPy)",
+            "Each process has its OWN GIL"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "io_vs_cpu",
+      "left": {
+        "label": "I/O-bound (waiting): threads/asyncio help — GIL is released while waiting",
+        "result": true
+      },
+      "right": {
+        "label": "CPU-bound pure Python: threads DON'T help — use multiprocessing (separate GILs)",
+        "result": false
+      },
+      "description": {
+        "en": "Threads time-slice on one core for Python bytecode. True parallelism for CPU work needs separate processes."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "threads_timeslice_demo",
+      "code": "# 2 threads, 1 CPU-bound loop each\n# Under the GIL they take TURNS, not run together\nrun_thread_A()  # holds GIL\nrun_thread_B()  # waits for GIL",
+      "executionSteps": [
+        { "line": 4, "variables": { "GIL_holder": "thread_A", "thread_B": "blocked" }, "output": "A runs bytecode", "description": "Thread A holds the GIL and executes Python." },
+        { "line": 5, "variables": { "GIL_holder": "thread_B", "thread_A": "blocked" }, "output": "B runs bytecode", "description": "GIL handed to B. A now waits. Never both at once." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Only ONE thread runs Python bytecode at a time.",
+        "I/O-bound? threads / asyncio (GIL is freed while waiting).",
+        "CPU-bound? multiprocessing (separate processes = separate GILs)."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Pick the right tool. The GIL means threads help I/O-bound work (lots of waiting) but NOT CPU-bound pure-Python work (use separate processes). Write best_tool(workload): return 'threads' if the workload is I/O-bound, and 'processes' if it is CPU-bound. The workloads dict maps each task to its true nature ('io' or 'cpu') — use that to decide. This is a decision exercise, so do NOT start any real threads or timers. With the given data, the demo prints the choice for 'download 100 URLs'. Expected output: threads"
+      },
+      "starter_code": "# Each workload is tagged with its TRUE nature:\n#   'io'  -> I/O-bound  (mostly waiting on network/disk) -> threads\n#   'cpu' -> CPU-bound  (mostly crunching numbers)        -> processes\nworkloads = {\n    \"download 100 URLs\": \"io\",\n    \"hash a huge file\": \"cpu\",\n    \"scrape pages\": \"io\",\n    \"multiply big matrices in pure Python\": \"cpu\",\n    \"read 1000 small files\": \"io\",\n    \"compute primes up to 10 million\": \"cpu\",\n}\n\ndef best_tool(workload):\n    # TODO: look up the workload's nature in `workloads`.\n    # I/O-bound -> 'threads' (the GIL is released while waiting)\n    # CPU-bound -> 'processes' (separate processes = separate GILs)\n    return \"\"\n\nprint(best_tool(\"download 100 URLs\"))",
+      "expected_output": "threads",
+      "hints": {
+        "en": [
+          "Look up the workload's nature with workloads[workload] — it is either 'io' or 'cpu'.",
+          "I/O-bound work spends its time WAITING, and the GIL is released while waiting, so threads help: return 'threads'.",
+          "CPU-bound pure-Python work is blocked by the GIL on one core, so you need separate processes: return 'processes'.",
+          "One clean way: return 'threads' if workloads[workload] == 'io' else 'processes'."
+        ]
+      },
+      "test_code": "assert best_tool(\"download 100 URLs\") == \"threads\"\nassert best_tool(\"hash a huge file\") == \"processes\"\nassert best_tool(\"scrape pages\") == \"threads\"\nassert best_tool(\"multiply big matrices in pure Python\") == \"processes\"\nassert best_tool(\"read 1000 small files\") == \"threads\"\nassert best_tool(\"compute primes up to 10 million\") == \"processes\"\nassert all(best_tool(w) in (\"threads\", \"processes\") for w in workloads)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the Global Interpreter Lock actually enforce in CPython?"
+      },
+      "options": {
+        "en": [
+          "Only one process can run on the machine at a time",
+          "Only one thread can execute Python bytecode at a time",
+          "Python code can never use more than one thread",
+          "Threads are disabled unless you remove the GIL"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does CPython have a GIL in the first place?"
+      },
+      "options": {
+        "en": [
+          "To make Python run faster than C",
+          "To make reference counting thread-safe and simplify the C internals",
+          "To stop programmers from using threads",
+          "Because the operating system requires it"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do threads still help with I/O-bound work despite the GIL?"
+      },
+      "options": {
+        "en": [
+          "I/O-bound work never touches the interpreter",
+          "The GIL is released during blocking I/O, so other threads can run while one waits",
+          "I/O-bound work runs in separate processes automatically",
+          "The GIL only applies to CPU-bound work written in C"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You have a CPU-bound pure-Python computation and a multi-core machine. What gives you real parallelism?"
+      },
+      "options": {
+        "en": [
+          "More threads, since each thread gets its own core",
+          "asyncio, because it runs coroutines in parallel",
+          "multiprocessing — separate processes each get their own GIL",
+          "Nothing; Python can never use more than one core"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["global_interpreter_lock", "threading_vs_multiprocessing", "io_bound_vs_cpu_bound", "reference_counting", "free_threading"],
+    "concepts_required": ["names_scopes_closures"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}
