@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { loginUser, registerUser, createOrg } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft } from 'lucide-react';
+import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
 import PymastersIcon from '../assets/pymasters-icon.svg';
 
@@ -14,6 +14,7 @@ export default function Login() {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -38,7 +39,7 @@ export default function Login() {
                 const res = await loginUser(username, password);
                 data = res.data;
             } else {
-                const res = await registerUser(username, password, username, accountType === 'organization' ? 'organization' : 'individual');
+                const res = await registerUser(username, password, username, accountType === 'organization' ? 'organization' : 'individual', email);
                 data = res.data;
                 if (!data.token) data.token = `mock-jwt-${data.id}`;
                 if (!data.account_type) data.account_type = accountType === 'organization' ? 'organization' : 'individual';
@@ -399,6 +400,24 @@ export default function Login() {
                                             />
                                         </div>
                                     </div>
+
+                                    {!isLogin && (
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="email" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Email <span className="text-slate-600 normal-case font-medium">(for password recovery)</span></label>
+                                            <div className="relative group">
+                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
+                                                <input
+                                                    id="email"
+                                                    type="email"
+                                                    value={email}
+                                                    onChange={e => setEmail(e.target.value)}
+                                                    autoComplete="email"
+                                                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
+                                                    placeholder="you@example.com"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between">
