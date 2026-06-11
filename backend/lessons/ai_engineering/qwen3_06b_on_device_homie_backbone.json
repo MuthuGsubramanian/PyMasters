@@ -1,0 +1,171 @@
+{
+  "id": "qwen3_06b_on_device_homie_backbone",
+  "topic": "qwen3_06b_on_device_homie_backbone",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: On-Device Assistant Backbone for Homie"
+  },
+  "description": {
+    "en": "Deploy Qwen3-0.6B as a private on-device assistant backbone. Learn to package, optimize, and serve a tiny 0.6B LLM as a local REST API powering Homie â€” your personal AI that never leaves your hardware."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Turn Your Machine into an AI Server with Qwen3-0.6B\n\nVaathiyaar here! Imagine shipping a personal AI assistant â€” let's call it **Homie** â€” that runs entirely on a user's device. No cloud dependency, no subscription, no data leaks. The backbone? **Qwen3-0.6B**, a 0.6-billion-parameter chat model tiny enough for CPU inference yet capable enough to power a real conversational assistant.\n\nThis lesson goes beyond loading a model. We'll package Qwen3-0.6B behind a FastAPI server, add system-prompt injection for Homie's personality, implement request queuing for concurrent users, and benchmark latency â€” everything you need to deploy a local LLM as a production-grade assistant backbone.\n\n### Deployment Architecture\n\n| Component | Role | Technology |\n|---|---|---|\n| Model Layer | Generate responses | Qwen3-0.6B + Transformers |\n| API Layer | Expose chat endpoint | FastAPI + Uvicorn |\n| Prompt Manager | Inject Homie persona | System message templating |\n| Optimizer | Reduce latency | torch.compile + BF16 |\n| Client | Send requests | httpx / curl |\n\n### Step 1: Load and Optimize the Model\n\n```python\nimport torch\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nMODEL_ID = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(MODEL_ID)\nmodel = AutoModelForCausalLM.from_pretrained(\n    MODEL_ID, torch_dtype=torch.bfloat16, device_map=\"cpu\"\n)\nmodel = torch.compile(model, mode=\"reduce-overhead\")\n```\n\n`torch.compile` with `reduce-overhead` fuses operations and caches kernel launches. On CPU, this can cut latency by 15-30% for repeated inference calls â€” critical for an always-on assistant.\n\n### Step 2: Build the Homie Persona Manager\n\n```python\nHOMIE_SYSTEM = (\n    \"You are Homie, a concise and friendly personal AI assistant. \"\n    \"You run locally on the user's device. Keep answers under 3 sentences \"\n    \"unless asked for detail. Never mention being an AI or having limitations.\"\n)\n\ndef build_prompt(user_message: str, history: list[dict]) -> str:\n    messages = [{\"role\": \"system\", \"content\": HOMIE_SYSTEM}]\n    messages.extend(history)\n    messages.append({\"role\": \"user\", \"content\": user_message})\n    return tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n```\n\nThe system prompt constrains Homie's behavior â€” short answers, friendly tone, no self-referential hedging. This is how small models punch above their weight: tight system prompts compensate for fewer parameters.\n\n### Step 3: Serve via FastAPI\n\n```python\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel\nimport asyncio\n\napp = FastAPI()\ngeneration_lock = asyncio.Lock()\n\nclass ChatRequest(BaseModel):\n    message: str\n    history: list[dict] = []\n\n@app.post(\"/chat\")\nasync def chat(req: ChatRequest):\n    prompt = build_prompt(req.message, req.history)\n    inputs = tokenizer(prompt, return_tensors=\"pt\").to(model.device)\n    async with generation_lock:\n        output = model.generate(\n            **inputs, max_new_tokens=150,\n            temperature=0.6, top_p=0.85, repetition_penalty=1.1\n        )\n    response = tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n    return {\"reply\": response}\n```\n\nThe `asyncio.Lock` ensures only one generation runs at a time â€” critical because the model isn't thread-safe. Concurrent requests queue up instead of corrupting state.\n\n### Step 4: Benchmark Latency\n\n```python\nimport time\n\ndef benchmark(prompt_text: str, n_runs: int = 5) -> dict:\n    inputs = tokenizer(prompt_text, return_tensors=\"pt\").to(model.device)\n    times = []\n    for _ in range(n_runs):\n        start = time.perf_counter()\n        model.generate(**inputs, max_new_tokens=50)\n        times.append(time.perf_counter() - start)\n    return {\n        \"avg_ms\": sum(times) / n_runs * 1000,\n        \"tokens_per_sec\": 50 / (sum(times) / n_runs)\n    }\n```\n\n| Hardware | Avg Latency (50 tokens) | Tokens/sec |\n|---|---|---|\n| M1 MacBook Air (CPU) | ~800ms | ~62 |\n| Intel i7-12700 (CPU) | ~1200ms | ~42 |\n| RTX 3060 (GPU) | ~180ms | ~278 |\n| Raspberry Pi 5 (ARM) | ~4500ms | ~11 |\n\nEven on a Raspberry Pi, Homie responds in under 5 seconds â€” usable for a home automation assistant.\n\n### Production Checklist\n\n- **Health endpoint**: Add `/health` returning model load status\n- **Token budget**: Cap `max_new_tokens` to prevent runaway generation\n- **Graceful shutdown**: Save conversation state on SIGTERM\n- **Warm-up**: Run one dummy inference at startup to trigger torch.compile\n\n> **Key Insight:** A 0.6B model behind a well-designed API becomes a deployment-ready assistant backbone. Qwen3-0.6B's tiny footprint means Homie can run on anything from a laptop to a Raspberry Pi â€” giving users a private, always-available AI that costs nothing after the initial download. The secret isn't model size; it's tight system prompts, optimized inference, and proper API design."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "What if your personal AI assistant lived on your device â€” no cloud, no subscription, no data leaving your hardware? Qwen3-0.6B is tiny enough to run on a Raspberry Pi yet smart enough to power a real assistant. Let's deploy Homie as a local API service.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import torch\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nMODEL_ID = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(MODEL_ID)\nmodel = AutoModelForCausalLM.from_pretrained(\n    MODEL_ID, torch_dtype=torch.bfloat16, device_map=\"cpu\"\n)\nmodel = torch.compile(model, mode=\"reduce-overhead\")\n\nHOMIE_SYSTEM = (\n    \"You are Homie, a concise and friendly personal AI assistant. \"\n    \"Keep answers under 3 sentences unless asked for detail.\"\n)\n\ndef generate_reply(user_message: str, history: list[dict]) -> str:\n    messages = [{\"role\": \"system\", \"content\": HOMIE_SYSTEM}]\n    messages.extend(history)\n    messages.append({\"role\": \"user\", \"content\": user_message})\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(\n        **inputs, max_new_tokens=150,\n        temperature=0.6, top_p=0.85, repetition_penalty=1.1\n    )\n    return tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n\nprint(generate_reply(\"What's the weather protocol?\", []))",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import torch for dtype control and compile optimization â€” key for squeezing performance from CPU inference."
+        },
+        {
+          "line": 4,
+          "explanation": "Define the model ID. Qwen3-0.6B downloads ~1.2GB of weights on first use and caches them locally."
+        },
+        {
+          "line": 6,
+          "explanation": "Load with bfloat16 precision â€” halves memory usage vs float32 while maintaining quality. device_map='cpu' explicitly targets CPU deployment."
+        },
+        {
+          "line": 9,
+          "explanation": "torch.compile with 'reduce-overhead' mode fuses operations and caches kernels â€” 15-30% faster on repeated calls."
+        },
+        {
+          "line": 11,
+          "explanation": "Define Homie's personality as a system prompt. Tight constraints ('under 3 sentences') help small models produce focused output."
+        },
+        {
+          "line": 16,
+          "explanation": "The generate_reply function encapsulates the full pipeline: build messages, format prompt, tokenize, generate, decode."
+        },
+        {
+          "line": 20,
+          "explanation": "apply_chat_template converts the message list into Qwen3's special-token format â€” the model only understands this structure."
+        },
+        {
+          "line": 24,
+          "explanation": "Generate with conservative parameters: temperature=0.6 for focused output, repetition_penalty=1.1 to prevent loops."
+        },
+        {
+          "line": 28,
+          "explanation": "Slice off the input tokens and decode only the model's new output â€” this is the assistant's reply."
+        },
+        {
+          "line": 31,
+          "explanation": "Call the function with an empty history â€” Homie responds using only the system prompt and the user's question."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from fastapi import FastAPI\nfrom pydantic import BaseModel\nimport asyncio\n\napp = FastAPI(title=\"Homie Assistant API\")\ngeneration_lock = asyncio.Lock()\n\nclass ChatRequest(BaseModel):\n    message: str\n    history: list[dict] = []\n\n@app.get(\"/health\")\nasync def health():\n    return {\"status\": \"ready\", \"model\": \"Qwen3-0.6B\"}\n\n@app.post(\"/chat\")\nasync def chat(req: ChatRequest):\n    async with generation_lock:\n        reply = generate_reply(req.message, req.history)\n    return {\"reply\": reply}\n\n# Run: uvicorn app:app --host 0.0.0.0 --port 8000",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "FastAPI provides an async web framework â€” perfect for wrapping ML models as REST APIs with automatic OpenAPI docs."
+        },
+        {
+          "line": 6,
+          "explanation": "asyncio.Lock ensures only one generation runs at a time â€” the model isn't thread-safe, so concurrent requests must queue."
+        },
+        {
+          "line": 8,
+          "explanation": "Pydantic model validates incoming requests: message is required, history defaults to empty list."
+        },
+        {
+          "line": 12,
+          "explanation": "Health endpoint lets monitoring systems check if Homie is loaded and ready to serve requests."
+        },
+        {
+          "line": 16,
+          "explanation": "The /chat endpoint acquires the lock, generates a reply, and returns JSON â€” clean REST interface for any client."
+        },
+        {
+          "line": 22,
+          "explanation": "Uvicorn serves the app on all interfaces. Any device on your network can now talk to Homie via HTTP."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie is deployed! You now have a private AI assistant running as a local API â€” no cloud, no cost, no data leaks."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `HomieBackbone` class that simulates the on-device assistant deployment pattern. It should manage a system prompt, conversation history, request queuing, and response generation. Implement: `__init__(system_prompt)` to set the persona, `generate(user_message)` that adds the user message to history, builds the full prompt string, creates a mock response, stores it in history, and returns it. The mock logic: if 'time' appears in the message return 'It is currently 3:42 PM.', if 'weather' appears return 'Clear skies, 22Â°C.', otherwise return 'How can I help you further?'. Also implement `get_prompt_tokens()` returning the total character count of all messages (simulating token count), and `reset()` to clear history but keep the system prompt."
+      },
+      "starter_code": "class HomieBackbone:\n    def __init__(self, system_prompt: str):\n        # Store system_prompt and initialize history with it\n        # History format: list of {\"role\": ..., \"content\": ...} dicts\n        pass\n\n    def generate(self, user_message: str) -> str:\n        # 1. Append user message to history\n        # 2. Mock response: check user_message (case-insensitive)\n        #    - 'time' in message -> 'It is currently 3:42 PM.'\n        #    - 'weather' in message -> 'Clear skies, 22Â°C.'\n        #    - otherwise -> 'How can I help you further?'\n        # 3. Append assistant response to history\n        # 4. Return the response\n        pass\n\n    def get_prompt_tokens(self) -> int:\n        # Return total character count of all message 'content' fields\n        pass\n\n    def reset(self):\n        # Clear history but keep the system prompt as first message\n        pass\n\n# Test:\nhomie = HomieBackbone(\"You are Homie, a helpful assistant.\")\nprint(homie.generate(\"What time is it?\"))\nprint(homie.generate(\"How's the weather?\"))\nprint(len(homie.reset() or homie.get_prompt_tokens() > 0 and \"reset\" or \"\"))\nprint(homie.get_prompt_tokens())",
+      "expected_output": "It is currently 3:42 PM.\nClear skies, 22Â°C.\n5\n34",
+      "hints": {
+        "en": [
+          "In __init__, store system_prompt and set self.history = [{'role': 'system', 'content': system_prompt}]",
+          "In generate(), use 'time' in user_message.lower() to check keywords, then append both user and assistant messages to self.history",
+          "In get_prompt_tokens(), sum len(msg['content']) for all messages in self.history. In reset(), set self.history back to just the system message."
+        ]
+      },
+      "test_code": "h = HomieBackbone(\"Test system.\")\nassert h.generate(\"What time is it?\") == \"It is currently 3:42 PM.\"\nassert h.generate(\"Check weather please\") == \"Clear skies, 22\\u00b0C.\"\nassert h.generate(\"Hello\") == \"How can I help you further?\"\nassert len(h.history) == 7\ntokens_before = h.get_prompt_tokens()\nassert tokens_before > 0\nh.reset()\nassert len(h.history) == 1\nassert h.history[0][\"role\"] == \"system\"\nassert h.get_prompt_tokens() == len(\"Test system.\")"
+    },
+    {
+      "instruction": {
+        "en": "Build an `InferenceBenchmark` class to measure and report model latency statistics. Implement `__init__(model_name)` to store the model name and an empty list of timings, `record(latency_ms)` to add a timing (must be positive float, raise ValueError otherwise), `stats()` returning a dict with 'model', 'runs', 'avg_ms', 'min_ms', 'max_ms', and 'tokens_per_sec' (assume 50 tokens per run), and `is_realtime(threshold_ms=2000)` returning True if average latency is below the threshold."
+      },
+      "starter_code": "class InferenceBenchmark:\n    def __init__(self, model_name: str):\n        # Store model name and empty timings list\n        pass\n\n    def record(self, latency_ms: float):\n        # Add latency_ms to timings list\n        # Raise ValueError if latency_ms <= 0\n        pass\n\n    def stats(self) -> dict:\n        # Return dict with: model, runs, avg_ms, min_ms, max_ms, tokens_per_sec\n        # tokens_per_sec = 50 / (avg_ms / 1000)\n        # If no timings recorded, return all numeric values as 0\n        pass\n\n    def is_realtime(self, threshold_ms: float = 2000.0) -> bool:\n        # Return True if avg latency < threshold_ms\n        # Return False if no timings recorded\n        pass\n\n# Test:\nbench = InferenceBenchmark(\"Qwen3-0.6B\")\nbench.record(800.0)\nbench.record(1200.0)\nbench.record(1000.0)\ns = bench.stats()\nprint(s[\"avg_ms\"])\nprint(s[\"tokens_per_sec\"])\nprint(bench.is_realtime())",
+      "expected_output": "1000.0\n50.0\nTrue",
+      "hints": {
+        "en": [
+          "Store timings as self.timings = [] and append each valid latency_ms in record()",
+          "For stats(), use sum(self.timings)/len(self.timings) for avg, and compute tokens_per_sec as 50 / (avg_ms / 1000)",
+          "For is_realtime(), return False if self.timings is empty, otherwise check if the average is below the threshold"
+        ]
+      },
+      "test_code": "b = InferenceBenchmark(\"Qwen3-0.6B\")\ntry:\n    b.record(-1.0)\n    assert False\nexcept ValueError:\n    pass\ntry:\n    b.record(0)\n    assert False\nexcept ValueError:\n    pass\nassert b.stats()[\"runs\"] == 0\nassert b.stats()[\"avg_ms\"] == 0\nassert b.is_realtime() == False\nb.record(500.0)\nb.record(1500.0)\ns = b.stats()\nassert s[\"model\"] == \"Qwen3-0.6B\"\nassert s[\"runs\"] == 2\nassert s[\"avg_ms\"] == 1000.0\nassert s[\"min_ms\"] == 500.0\nassert s[\"max_ms\"] == 1500.0\nassert s[\"tokens_per_sec\"] == 50.0\nassert b.is_realtime(threshold_ms=1001.0) == True\nassert b.is_realtime(threshold_ms=999.0) == False"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "on-device LLM deployment",
+      "Qwen3-0.6B",
+      "FastAPI model serving",
+      "torch.compile optimization",
+      "async request queuing",
+      "system prompt engineering",
+      "inference benchmarking",
+      "local AI assistant architecture"
+    ],
+    "concepts_required": [
+      "python classes",
+      "REST APIs basics",
+      "async/await",
+      "pip install",
+      "basic ML concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
