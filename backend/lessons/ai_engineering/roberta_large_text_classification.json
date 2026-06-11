@@ -1,0 +1,196 @@
+{
+  "id": "roberta_large_text_classification",
+  "topic": "roberta_large_text_classification",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "RoBERTa vs BERT: Text Classification and NLU Mastery"
+  },
+  "description": {
+    "en": "Compare FacebookAI/roberta-large against BERT for text classification and natural language understanding â€” learn how RoBERTa's optimized pre-training strategy delivers superior NLU performance without any architectural changes."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RoBERTa: The BERT That Trained Harder\n\nVaathiyaar here! In 2019, Facebook AI asked a bold question: what if BERT wasn't undertrained? They took the exact same architecture, removed shortcuts, added more data, trained longer â€” and created **RoBERTa** (Robustly Optimized BERT Pre-training Approach). The result? State-of-the-art performance across every major NLU benchmark. The `roberta-large` model with 355M parameters remains a go-to choice for serious text classification and understanding tasks. Let's see how it compares to BERT and when you should reach for it.\n\n### What Did RoBERTa Change?\n\n| Design Choice | BERT | RoBERTa |\n|---|---|---|\n| Next Sentence Prediction (NSP) | Yes â€” trained with NSP loss | Removed â€” NSP hurt performance |\n| Masking Strategy | Static â€” masks fixed before training | Dynamic â€” masks regenerated each epoch |\n| Training Data | 16GB (BookCorpus + Wikipedia) | 160GB (+ CC-News, OpenWebText, Stories) |\n| Batch Size | 256 | 8,000 |\n| Training Steps | 1M | 500K (but larger batches = more data seen) |\n| Mask Token | `[MASK]` | `<mask>` |\n| Tokenizer | WordPiece (30K vocab) | Byte-Pair Encoding (50K vocab) |\n\nThe takeaway: RoBERTa proves that **training recipe matters as much as architecture**. No new layers, no new attention mechanisms â€” just better training.\n\n### Fill-Mask with RoBERTa\n\n```python\nfrom transformers import pipeline\n\nbert_unmasker = pipeline(\"fill-mask\", model=\"bert-base-uncased\")\nroberta_unmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-large\")\n\nbert_results = bert_unmasker(\"The scientist published a [MASK] paper.\")\nroberta_results = roberta_unmasker(\"The scientist published a <mask> paper.\")\n\nprint(\"BERT top:\", bert_results[0]['token_str'])\nprint(\"RoBERTa top:\", roberta_results[0]['token_str'])\n# BERT top: research\n# RoBERTa top: research\n```\n\nNotice RoBERTa uses `<mask>` instead of `[MASK]`. It also uses BPE tokenization instead of WordPiece, giving it a larger 50,265-token vocabulary.\n\n### Text Classification: Sentiment Analysis Head-to-Head\n\n```python\nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\nimport torch\n\ndef classify_with_model(model_name, text, id2label):\n    tokenizer = AutoTokenizer.from_pretrained(model_name)\n    model = AutoModelForSequenceClassification.from_pretrained(model_name)\n    inputs = tokenizer(text, return_tensors=\"pt\", truncation=True)\n    with torch.no_grad():\n        logits = model(**inputs).logits\n    probs = torch.softmax(logits, dim=-1)\n    pred = probs.argmax().item()\n    return id2label[pred], probs[0][pred].item()\n\n# Using fine-tuned RoBERTa for sentiment\nlabel, conf = classify_with_model(\n    \"cardiffnlp/twitter-roberta-base-sentiment-latest\",\n    \"This new model is absolutely incredible!\",\n    {0: \"negative\", 1: \"neutral\", 2: \"positive\"}\n)\nprint(f\"{label}: {conf:.4f}\")  # positive: 0.9741\n```\n\nRoBERTa-based fine-tuned models consistently outperform BERT-based equivalents on sentiment, NLI, and text classification benchmarks.\n\n### Extracting Embeddings from RoBERTa-Large\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\n\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = AutoModel.from_pretrained(\"FacebookAI/roberta-large\")\n\ntext = \"RoBERTa learns richer representations than BERT\"\ninputs = tokenizer(text, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\ncls_embedding = outputs.last_hidden_state[:, 0, :]\nprint(cls_embedding.shape)  # torch.Size([1, 1024])\n```\n\nRoBERTa-large produces 1024-dimensional embeddings (vs BERT-base's 768), capturing richer semantic representations across its 24 transformer layers and 16 attention heads.\n\n### When to Choose RoBERTa Over BERT\n\n| Scenario | Recommended Model |\n|---|---|\n| Quick prototyping, limited compute | bert-base-uncased (110M params) |\n| Best NLU accuracy, GPU available | roberta-large (355M params) |\n| Balanced accuracy vs speed | roberta-base (125M params) |\n| Multilingual tasks | xlm-roberta-large |\n| Cutting-edge NLU benchmarks | DeBERTa-v3 |\n\n> **Key Insight:** RoBERTa proves a powerful lesson in AI engineering â€” you don't always need a new architecture to get better results. By removing the flawed NSP objective, using dynamic masking, training on 10x more data with larger batches, and training longer, RoBERTa turned BERT's same architecture into a significantly stronger model. When choosing between BERT and RoBERTa for text classification or NLU, RoBERTa-large is almost always the better starting point if you have the compute budget."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RoBERTa took BERT's exact architecture and optimized the training recipe â€” removing Next Sentence Prediction, using dynamic masking, 10x more data, and larger batches. The result: state-of-the-art NLU performance that proves training strategy matters as much as model design.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nbert_unmasker = pipeline(\"fill-mask\", model=\"bert-base-uncased\")\nroberta_unmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-large\")\n\nbert_results = bert_unmasker(\"The scientist published a [MASK] paper.\")\nroberta_results = roberta_unmasker(\"The scientist published a <mask> paper.\")\n\nprint(\"BERT top:\", bert_results[0]['token_str'])\nprint(\"RoBERTa top:\", roberta_results[0]['token_str'])",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the pipeline utility from Hugging Face transformers â€” it abstracts model loading and inference into a single callable."
+        },
+        {
+          "line": 3,
+          "explanation": "Load BERT's fill-mask pipeline. BERT uses [MASK] as its mask token and WordPiece tokenization with a 30K vocabulary."
+        },
+        {
+          "line": 4,
+          "explanation": "Load RoBERTa-large's fill-mask pipeline. At 355M parameters (vs BERT's 110M), it has 24 layers, 1024 hidden dims, and 16 attention heads."
+        },
+        {
+          "line": 6,
+          "explanation": "BERT uses [MASK] â€” its special mask token. The model predicts the missing word using bidirectional context from both sides."
+        },
+        {
+          "line": 7,
+          "explanation": "RoBERTa uses <mask> instead of [MASK]. This difference comes from its BPE tokenizer (GPT-2 style) vs BERT's WordPiece tokenizer."
+        },
+        {
+          "line": 9,
+          "explanation": "Both models predict 'research' as the top candidate, but RoBERTa typically assigns higher confidence scores thanks to its superior pre-training."
+        },
+        {
+          "line": 10,
+          "explanation": "RoBERTa's predictions benefit from dynamic masking â€” seeing different masks each epoch during training â€” producing more robust language understanding."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import AutoTokenizer, AutoModel\nimport torch\n\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = AutoModel.from_pretrained(\"FacebookAI/roberta-large\")\n\ntext = \"RoBERTa learns richer representations\"\ninputs = tokenizer(text, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    outputs = model(**inputs)\n\ncls_embedding = outputs.last_hidden_state[:, 0, :]\nprint(cls_embedding.shape)  # torch.Size([1, 1024])",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Use Auto classes instead of model-specific classes â€” they automatically detect the correct tokenizer and model architecture from the model name."
+        },
+        {
+          "line": 4,
+          "explanation": "AutoTokenizer loads RoBERTa's BPE tokenizer with a 50,265-token vocabulary â€” larger than BERT's 30,522 WordPiece vocab."
+        },
+        {
+          "line": 5,
+          "explanation": "Load the full roberta-large model â€” 24 transformer layers, 355M parameters. Requires ~1.4GB of memory for inference."
+        },
+        {
+          "line": 7,
+          "explanation": "Define input text. RoBERTa uses <s> and </s> as special tokens (like BERT's [CLS] and [SEP]) â€” the tokenizer adds them automatically."
+        },
+        {
+          "line": 8,
+          "explanation": "Tokenize with return_tensors='pt' for PyTorch. RoBERTa's BPE handles rare words by encoding at the byte level â€” no [UNK] tokens needed."
+        },
+        {
+          "line": 10,
+          "explanation": "Disable gradients for inference â€” saves memory and computation since we're extracting embeddings, not training."
+        },
+        {
+          "line": 13,
+          "explanation": "Extract the <s> token embedding at position 0. RoBERTa-large outputs 1024 dimensions vs BERT-base's 768 â€” richer representations."
+        },
+        {
+          "line": 14,
+          "explanation": "The 1024-dim vector captures sentence semantics. Feed this into a classification head for downstream tasks like sentiment analysis or NLI."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "BERT (Original)",
+      "right_label": "RoBERTa (Optimized)",
+      "items": [
+        {
+          "left": "Static masking â€” same masks every epoch",
+          "right": "Dynamic masking â€” different masks each epoch"
+        },
+        {
+          "left": "NSP objective included",
+          "right": "NSP removed (it hurt performance)"
+        },
+        {
+          "left": "16GB training data",
+          "right": "160GB training data (10x more)"
+        },
+        {
+          "left": "WordPiece tokenizer, 30K vocab",
+          "right": "BPE tokenizer, 50K vocab"
+        },
+        {
+          "left": "768-dim embeddings (base)",
+          "right": "1024-dim embeddings (large)"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You now understand how RoBERTa optimizes BERT's training â€” proving that better data and training strategy can beat architectural novelty!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `DynamicMasker` class that demonstrates the difference between BERT's static masking and RoBERTa's dynamic masking. Given a sentence and a mask ratio, `static_mask(sentence)` always masks the same positions (determined by the sentence length), while `dynamic_mask(sentence, seed)` uses the seed to randomly select positions each time. Both methods replace selected words with '<mask>'. Also implement `compare_masks(sentence, num_rounds)` that returns how many unique masked versions dynamic masking produces across rounds (seeds 0 to num_rounds-1) vs static (always 1)."
+      },
+      "starter_code": "import random\n\nclass DynamicMasker:\n    def __init__(self, mask_ratio: float = 0.15):\n        # mask_ratio: fraction of words to mask (round up)\n        self.mask_ratio = mask_ratio\n\n    def static_mask(self, sentence: str) -> str:\n        # Always mask the same positions (first N words where N = ceil(len * ratio))\n        # Replace with '<mask>', return lowercase\n        pass\n\n    def dynamic_mask(self, sentence: str, seed: int) -> str:\n        # Use random.seed(seed) then random.sample to pick positions\n        # Replace chosen words with '<mask>', return lowercase\n        pass\n\n    def compare_masks(self, sentence: str, num_rounds: int) -> dict:\n        # Generate static masks for num_rounds â€” count unique versions\n        # Generate dynamic masks with seeds 0..num_rounds-1 â€” count unique\n        # Return {\"static_unique\": int, \"dynamic_unique\": int}\n        pass\n\n# Test it:\nmasker = DynamicMasker(mask_ratio=0.3)\n\nstatic1 = masker.static_mask(\"The cat sat on the mat\")\nstatic2 = masker.static_mask(\"The cat sat on the mat\")\nprint(static1 == static2)\n\ndyn1 = masker.dynamic_mask(\"The cat sat on the mat\", seed=0)\ndyn2 = masker.dynamic_mask(\"The cat sat on the mat\", seed=1)\nprint(dyn1 != dyn2)\n\nresult = masker.compare_masks(\"The quick brown fox jumps over the lazy dog\", 10)\nprint(result[\"static_unique\"])\nprint(result[\"dynamic_unique\"] > 1)",
+      "expected_output": "True\nTrue\n1\nTrue",
+      "hints": {
+        "en": [
+          "For static_mask, compute num_to_mask = ceil(len(words) * mask_ratio), then always mask indices 0 through num_to_mask-1",
+          "For dynamic_mask, use random.seed(seed) then random.sample(range(len(words)), num_to_mask) to pick random positions each time",
+          "In compare_masks, collect results in sets â€” static always produces the same string so set size is 1, dynamic varies by seed"
+        ]
+      },
+      "test_code": "import math\nm = DynamicMasker(mask_ratio=0.5)\nwords = \"one two three four\"\ns1 = m.static_mask(words)\ns2 = m.static_mask(words)\nassert s1 == s2, \"Static mask must be deterministic\"\nassert s1.count('<mask>') == 2, \"Should mask ceil(4*0.5)=2 words\"\nassert s1 == '<mask> <mask> three four'\nd1 = m.dynamic_mask(words, seed=42)\nassert d1.count('<mask>') == 2\nd2 = m.dynamic_mask(words, seed=42)\nassert d1 == d2, \"Same seed must give same result\"\nresult = m.compare_masks(\"a b c d e f g h i j\", 20)\nassert result['static_unique'] == 1\nassert result['dynamic_unique'] >= 3"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ModelBenchmark` class that simulates comparing BERT and RoBERTa on NLU benchmarks. Initialize it with a dictionary of benchmark results where each model maps to task scores. Implement `average_score(model)` to compute the mean across tasks, `head_to_head(model_a, model_b)` to return which model wins on each task, and `recommend(task)` to return the model with the highest score on that specific task."
+      },
+      "starter_code": "class ModelBenchmark:\n    def __init__(self, results: dict[str, dict[str, float]]):\n        # results: {\"bert\": {\"SST-2\": 93.5, \"MNLI\": 86.7, ...}, \"roberta\": {...}}\n        self.results = results\n\n    def average_score(self, model: str) -> float:\n        # Return mean score across all tasks, rounded to 1 decimal\n        pass\n\n    def head_to_head(self, model_a: str, model_b: str) -> dict:\n        # Compare two models on all tasks they share\n        # Return {\"task_name\": \"winning_model\", ...}\n        # If tied, the value should be \"tie\"\n        pass\n\n    def recommend(self, task: str) -> str:\n        # Return the model name with the highest score on the given task\n        pass\n\n# Test it:\nbenchmarks = {\n    \"bert-base\": {\"SST-2\": 93.5, \"MNLI\": 86.7, \"QNLI\": 91.7, \"QQP\": 89.3},\n    \"roberta-large\": {\"SST-2\": 96.4, \"MNLI\": 90.2, \"QNLI\": 94.7, \"QQP\": 90.2}\n}\n\nbench = ModelBenchmark(benchmarks)\nprint(bench.average_score(\"roberta-large\"))\nprint(bench.head_to_head(\"bert-base\", \"roberta-large\")[\"SST-2\"])\nprint(bench.recommend(\"MNLI\"))",
+      "expected_output": "92.9\nroberta-large\nroberta-large",
+      "hints": {
+        "en": [
+          "For average_score, use sum(scores.values()) / len(scores) and round to 1 decimal place",
+          "In head_to_head, iterate over tasks that exist in both models, compare scores, and map each task to the winner's name or 'tie'",
+          "For recommend, iterate over all models and find the one with the max score for the given task"
+        ]
+      },
+      "test_code": "r = {\"a\": {\"t1\": 90.0, \"t2\": 80.0}, \"b\": {\"t1\": 85.0, \"t2\": 85.0}, \"c\": {\"t1\": 90.0, \"t2\": 90.0}}\nb = ModelBenchmark(r)\nassert b.average_score(\"a\") == 85.0\nassert b.average_score(\"b\") == 85.0\nassert b.average_score(\"c\") == 90.0\nh2h = b.head_to_head(\"a\", \"b\")\nassert h2h[\"t1\"] == \"a\"\nassert h2h[\"t2\"] == \"b\"\nh2h2 = b.head_to_head(\"a\", \"c\")\nassert h2h2[\"t1\"] == \"tie\"\nassert h2h2[\"t2\"] == \"c\"\nassert b.recommend(\"t1\") in [\"a\", \"c\"]\nassert b.recommend(\"t2\") == \"c\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "RoBERTa architecture",
+      "BERT vs RoBERTa comparison",
+      "dynamic masking",
+      "BPE tokenization",
+      "text classification",
+      "NLU benchmarks",
+      "fill-mask pipeline",
+      "transfer learning optimization"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "string manipulation",
+      "pip install",
+      "basic BERT understanding"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
