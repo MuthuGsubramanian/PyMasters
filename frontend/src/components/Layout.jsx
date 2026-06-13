@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import PymastersIcon from '../assets/pymasters-icon.svg';
+import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
@@ -93,7 +93,7 @@ export default function Layout() {
                     <div className="relative group cursor-pointer" onClick={() => navigate('/')}>
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" />
                         <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
-                            <img src={PymastersIcon} alt="PyMasters" className="w-5 h-5" style={{ filter: 'brightness(2)' }} />
+                            <img src={PymastersGlyph} alt="PyMasters" className="w-[18px] h-[18px]" />
                         </div>
                     </div>
                     <span className="font-display font-bold text-base text-text-primary tracking-tight">PYMASTERS</span>

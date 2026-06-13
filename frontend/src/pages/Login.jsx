@@ -6,7 +6,7 @@ import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft } from 'lucide-react';
 import clsx from 'clsx';
-import PymastersIcon from '../assets/pymasters-icon.svg';
+import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
 export default function Login() {
     useEffect(() => { document.title = 'Sign In — PyMasters'; }, []);
@@ -160,7 +160,7 @@ export default function Login() {
                     >
                         <div className="absolute inset-0 bg-purple-600/30 blur-[40px] rounded-full scale-150" />
                         <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-2xl shadow-purple-500/30 border border-white/10">
-                            <img src={PymastersIcon} alt="PyMasters" className="w-12 h-12" style={{ filter: 'brightness(2)' }} />
+                            <img src={PymastersGlyph} alt="PyMasters" className="w-11 h-11" />
                         </div>
                     </motion.div>
 

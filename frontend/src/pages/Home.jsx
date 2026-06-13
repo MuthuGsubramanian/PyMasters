@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PymastersIcon from '../assets/pymasters-icon.svg';
+import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
 // Headline totals across the full catalogue (15 tracks). The cards below are a
@@ -312,7 +313,7 @@ export default function Home() {
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                     <button onClick={() => navigate('/')} className="flex items-center gap-2.5 group" aria-label="PyMasters home">
-                        <img src={PymastersIcon} alt="" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 6px rgba(124,58,237,0.6))' }} />
+                        <img src={PymastersGlyph} alt="" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 6px rgba(124,58,237,0.6))' }} />
                         <span className="font-display font-bold text-base sm:text-lg tracking-tight text-white">PYMASTERS</span>
                     </button>
                     <div className="hidden sm:flex items-center gap-6">
@@ -486,7 +487,7 @@ export default function Home() {
                                 <div className="relative rounded-2xl bg-[#0d1117] border border-white/10 overflow-hidden shadow-2xl">
                                     <div className="h-11 border-b border-white/10 flex items-center px-4 gap-2.5 bg-slate-800/50">
                                         <div className="w-6 h-6 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-600 to-cyan-500">
-                                            <img src={PymastersIcon} alt="" className="w-3.5 h-3.5" />
+                                            <img src={PymastersGlyph} alt="" className="w-3.5 h-3.5" />
                                         </div>
                                         <span className="text-white text-sm font-semibold font-display">Vaathiyaar</span>
                                         <span className="ml-auto text-[11px] text-emerald-400 flex items-center gap-1.5">
@@ -497,7 +498,7 @@ export default function Home() {
                                     <div className="p-5 space-y-4 text-sm">
                                         <div className="flex gap-2.5">
                                             <div className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-cyan-500">
-                                                <img src={PymastersIcon} alt="" className="w-4 h-4" />
+                                                <img src={PymastersGlyph} alt="" className="w-4 h-4" />
                                             </div>
                                             <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-4 py-2.5 text-slate-200 max-w-[80%] leading-relaxed">
                                                 Vanakkam! What concept would you like to master today?
@@ -510,7 +511,7 @@ export default function Home() {
                                         </div>
                                         <div className="flex gap-2.5">
                                             <div className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-cyan-500">
-                                                <img src={PymastersIcon} alt="" className="w-4 h-4" />
+                                                <img src={PymastersGlyph} alt="" className="w-4 h-4" />
                                             </div>
                                             <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-4 py-2.5 text-slate-200 max-w-[80%] leading-relaxed">
                                                 A decorator is a function that wraps another — adding behavior without changing the original code...
@@ -629,7 +630,7 @@ export default function Home() {
             <footer className="relative border-t border-white/10 bg-[#020617]/80 py-8 px-4 sm:px-6">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <img src={PymastersIcon} alt="" className="w-6 h-6 opacity-80" />
+                        <img src={PymastersGlyph} alt="" className="w-6 h-6 opacity-80" />
                         <p className="text-xs text-slate-400">
                             &copy; {new Date().getFullYear()} PyMasters &mdash; <a href="https://www.pymasters.net" className="hover:text-cyan-400 transition-colors">www.pymasters.net</a>
                         </p>
