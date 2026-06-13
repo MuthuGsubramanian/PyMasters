@@ -1,0 +1,235 @@
+{
+  "id": "all_minilm_l6_v2_sentence_similarity_practical_applications",
+  "topic": "all_minilm_l6_v2_sentence_similarity_practical_applications",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Sentence Similarity in Practice: Deduplication, Clustering & FAQ Matching with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Master practical sentence similarity workflows using all-MiniLM-L6-v2 â€” from duplicate detection and document clustering to intent-matching FAQ bots, all running locally with no API keys."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Beyond Search: Practical Sentence Similarity with MiniLM\n\nVaathiyaar here! Everyone talks about semantic *search* with embedding models, but sentence similarity unlocks far more than retrieval. Duplicate detection in support tickets, clustering documents by topic, matching user questions to FAQ entries, even plagiarism detection â€” all powered by one operation: comparing two vectors. And `all-MiniLM-L6-v2` makes it trivially fast at 80MB.\n\nLet's explore three real-world similarity workflows that go beyond basic search.\n\n### The Similarity Matrix: See All Relationships at Once\n\nInstead of query-vs-documents, sometimes you need the full picture â€” how similar is *every* document to *every other* document?\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ntickets = [\n    \"Cannot log in to my account\",\n    \"Login page shows error 403\",\n    \"How do I reset my password?\",\n    \"Password reset link expired\",\n    \"App crashes on startup\",\n]\n\nembeddings = model.encode(tickets, normalize_embeddings=True, convert_to_tensor=True)\nsim_matrix = util.cos_sim(embeddings, embeddings)\nprint(sim_matrix.shape)  # (5, 5)\n```\n\nThis 5Ã—5 matrix reveals hidden structure: tickets 0â€“1 cluster (login issues), tickets 2â€“3 cluster (password issues), and ticket 4 stands alone.\n\n### Workflow 1: Duplicate Detection\n\nSupport teams waste hours on duplicate tickets. A similarity threshold solves this:\n\n```python\ndef find_duplicates(texts, model, threshold=0.8):\n    embeddings = model.encode(texts, normalize_embeddings=True, convert_to_tensor=True)\n    sim_matrix = util.cos_sim(embeddings, embeddings)\n    duplicates = []\n    for i in range(len(texts)):\n        for j in range(i + 1, len(texts)):\n            if sim_matrix[i][j] >= threshold:\n                duplicates.append((i, j, float(sim_matrix[i][j])))\n    return duplicates\n\ndupes = find_duplicates(tickets, model, threshold=0.75)\nfor i, j, score in dupes:\n    print(f\"{score:.3f} | '{tickets[i]}' â‰ˆ '{tickets[j]}'\")\n```\n\n| Threshold | Behavior | Use Case |\n|---|---|---|\n| 0.90+ | Near-exact matches only | Plagiarism detection |\n| 0.80 | Strong semantic overlap | Ticket deduplication |\n| 0.65 | Related topics | Topic clustering |\n| 0.50 | Loose association | Recommendation systems |\n\n### Workflow 2: FAQ Intent Matching\n\nMap free-form user questions to your closest FAQ entry â€” no keyword rules needed:\n\n```python\nfaq_questions = [\n    \"How do I cancel my subscription?\",\n    \"What payment methods do you accept?\",\n    \"How do I contact support?\",\n    \"Can I get a refund?\",\n]\nfaq_answers = [\n    \"Go to Settings â†’ Billing â†’ Cancel Plan.\",\n    \"We accept Visa, Mastercard, and PayPal.\",\n    \"Email support@example.com or use live chat.\",\n    \"Refunds are available within 30 days of purchase.\",\n]\n\nfaq_embeddings = model.encode(faq_questions, normalize_embeddings=True, convert_to_tensor=True)\n\ndef match_faq(user_question, threshold=0.6):\n    q_emb = model.encode(user_question, normalize_embeddings=True, convert_to_tensor=True)\n    scores = util.cos_sim(q_emb, faq_embeddings)[0]\n    best_idx = scores.argmax().item()\n    best_score = scores[best_idx].item()\n    if best_score < threshold:\n        return \"Sorry, I couldn't find a matching FAQ. Please contact support.\"\n    return f\"(confidence: {best_score:.2f}) {faq_answers[best_idx]}\"\n\nprint(match_faq(\"I want to stop paying\"))\n# (confidence: 0.72) Go to Settings â†’ Billing â†’ Cancel Plan.\n```\n\nThe user said \"stop paying\" â€” no overlap with \"cancel my subscription\" â€” yet MiniLM bridges the gap.\n\n### Workflow 3: Agglomerative Clustering\n\n```python\nfrom sentence_transformers import util\nimport numpy as np\n\ndef simple_cluster(texts, model, threshold=0.65):\n    embeddings = model.encode(texts, normalize_embeddings=True)\n    clusters = {i: [i] for i in range(len(texts))}\n    sim_matrix = util.cos_sim(embeddings, embeddings).numpy()\n    np.fill_diagonal(sim_matrix, 0)\n    while True:\n        max_val = sim_matrix.max()\n        if max_val < threshold:\n            break\n        i, j = np.unravel_index(sim_matrix.argmax(), sim_matrix.shape)\n        root_i = [k for k, v in clusters.items() if i in v][0]\n        root_j = [k for k, v in clusters.items() if j in v][0]\n        if root_i != root_j:\n            clusters[root_i].extend(clusters.pop(root_j))\n        sim_matrix[i][j] = sim_matrix[j][i] = 0\n    return [[texts[idx] for idx in members] for members in clusters.values()]\n```\n\nThis groups documents into topic clusters without predefined categories â€” useful for organizing knowledge bases before feeding them into RAG.\n\n### Choosing the Right Similarity Threshold\n\nThere's no universal threshold. Always calibrate with your actual data:\n\n1. Embed 50â€“100 sample pairs you've manually labeled as \"similar\" or \"not similar\"\n2. Plot score distributions for both groups\n3. Pick the threshold that maximizes separation\n\n> **Key Insight:** Sentence similarity isn't just for search â€” it's a universal building block. Deduplication, clustering, FAQ matching, anomaly detection, and content moderation all reduce to the same operation: encode, compare, threshold. all-MiniLM-L6-v2 makes this operation fast enough (14K sentences/sec) and cheap enough (80MB, no API) to embed everywhere in your pipeline."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Sentence similarity powers more than search â€” duplicate detection, FAQ matching, document clustering, and content moderation all reduce to one operation: encode text into vectors and compare them. all-MiniLM-L6-v2 runs this at 14K sentences/sec in just 80MB.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ntickets = [\n    \"Cannot log in to my account\",\n    \"Login page shows error 403\",\n    \"How do I reset my password?\",\n    \"Password reset link expired\",\n    \"App crashes on startup\",\n]\n\nembeddings = model.encode(tickets, normalize_embeddings=True, convert_to_tensor=True)\nsim_matrix = util.cos_sim(embeddings, embeddings)\n\nprint(sim_matrix.shape)\nprint(f\"Login pair: {sim_matrix[0][1]:.3f}\")\nprint(f\"Unrelated:  {sim_matrix[0][4]:.3f}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer for loading the model and util for vectorized similarity computation across all pairs."
+        },
+        {
+          "line": 3,
+          "explanation": "Load all-MiniLM-L6-v2 â€” 80MB, 384 dimensions, runs on CPU with no API key. The workhorse of local embedding pipelines."
+        },
+        {
+          "line": 5,
+          "explanation": "Five support tickets with hidden structure: two login issues, two password issues, and one unrelated crash report."
+        },
+        {
+          "line": 13,
+          "explanation": "Encode all tickets at once with normalization. Batch encoding is 5-10x faster than encoding one at a time due to internal batching."
+        },
+        {
+          "line": 14,
+          "explanation": "cos_sim(embeddings, embeddings) produces a 5Ã—5 similarity matrix â€” every ticket compared to every other ticket in one call."
+        },
+        {
+          "line": 16,
+          "explanation": "Shape (5, 5) â€” a symmetric matrix where entry [i][j] is the cosine similarity between ticket i and ticket j."
+        },
+        {
+          "line": 17,
+          "explanation": "Login tickets score high (~0.6+) despite different wording. The model understands 'cannot log in' and 'login error 403' are the same topic."
+        },
+        {
+          "line": 18,
+          "explanation": "Login vs crash scores low (~0.1). The similarity matrix reveals cluster structure you can exploit for deduplication and routing."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef find_duplicates(texts, threshold=0.8):\n    embs = model.encode(texts, normalize_embeddings=True, convert_to_tensor=True)\n    sim = util.cos_sim(embs, embs)\n    dupes = []\n    for i in range(len(texts)):\n        for j in range(i + 1, len(texts)):\n            if sim[i][j] >= threshold:\n                dupes.append((texts[i], texts[j], float(sim[i][j])))\n    return dupes\n\ntickets = [\n    \"I can't access my account\",\n    \"Unable to log into my account\",\n    \"How do I upgrade my plan?\",\n]\n\ndupes = find_duplicates(tickets, threshold=0.75)\nfor a, b, score in dupes:\n    print(f\"{score:.3f} | '{a}' â‰ˆ '{b}'\")",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Define a reusable duplicate finder. The threshold parameter controls how similar two texts must be to count as duplicates."
+        },
+        {
+          "line": 6,
+          "explanation": "Encode all texts at once â€” normalized so dot product equals cosine similarity, tensors for fast GPU-compatible computation."
+        },
+        {
+          "line": 7,
+          "explanation": "Build the full similarity matrix. For N texts this is O(NÂ²) comparisons â€” fine for up to ~10K texts."
+        },
+        {
+          "line": 9,
+          "explanation": "Only check upper triangle (i < j) to avoid counting each pair twice and comparing a text to itself."
+        },
+        {
+          "line": 11,
+          "explanation": "Threshold gate: only pairs scoring above 0.75 are flagged. Tune this per use case â€” 0.8 for strict, 0.65 for loose."
+        },
+        {
+          "line": 21,
+          "explanation": "Test with two login-related tickets (different wording, same intent) and one unrelated ticket. Only the login pair should match."
+        },
+        {
+          "line": 22,
+          "explanation": "Output shows the login pair scoring ~0.85+ despite zero shared keywords. The upgrade ticket correctly stays below threshold."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nfaq_questions = [\n    \"How do I cancel my subscription?\",\n    \"What payment methods do you accept?\",\n    \"How do I contact support?\",\n]\nfaq_answers = [\n    \"Go to Settings > Billing > Cancel Plan.\",\n    \"We accept Visa, Mastercard, and PayPal.\",\n    \"Email help@example.com or use live chat.\",\n]\n\nfaq_embs = model.encode(faq_questions, normalize_embeddings=True, convert_to_tensor=True)\n\ndef match_faq(question, threshold=0.6):\n    q_emb = model.encode(question, normalize_embeddings=True, convert_to_tensor=True)\n    scores = util.cos_sim(q_emb, faq_embs)[0]\n    best_idx = scores.argmax().item()\n    best_score = scores[best_idx].item()\n    if best_score < threshold:\n        return {\"answer\": None, \"confidence\": best_score}\n    return {\"answer\": faq_answers[best_idx], \"confidence\": round(best_score, 3)}\n\nprint(match_faq(\"I want to stop paying\"))\nprint(match_faq(\"do you take visa?\"))\nprint(match_faq(\"what is the weather today?\"))",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Define FAQ question-answer pairs. The questions serve as intent anchors â€” user queries get matched against these, not the answers."
+        },
+        {
+          "line": 16,
+          "explanation": "Pre-compute FAQ embeddings once. In production, do this at startup and cache â€” never re-encode static content per request."
+        },
+        {
+          "line": 18,
+          "explanation": "match_faq encodes the user question on the fly and compares it against all FAQ embeddings in one vectorized operation."
+        },
+        {
+          "line": 20,
+          "explanation": "cos_sim returns a 1Ã—N tensor. [0] extracts the row, argmax finds the best-matching FAQ index."
+        },
+        {
+          "line": 23,
+          "explanation": "Threshold guard: if no FAQ scores above 0.6, return None instead of a wrong answer. This prevents confident wrong matches."
+        },
+        {
+          "line": 27,
+          "explanation": "'stop paying' maps to 'cancel subscription' despite zero word overlap â€” the model understands intent, not keywords."
+        },
+        {
+          "line": 28,
+          "explanation": "'do you take visa?' maps to 'payment methods' â€” the model bridges 'take' and 'accept', 'visa' and 'payment methods'."
+        },
+        {
+          "line": 29,
+          "explanation": "Weather question has no FAQ match â€” scores below threshold, returns None. The threshold prevents hallucinated matches."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Rule-Based Matching",
+      "right_label": "Embedding Similarity (MiniLM)",
+      "items": [
+        {
+          "left": "Requires explicit keyword rules",
+          "right": "Learns meaning from context automatically"
+        },
+        {
+          "left": "Breaks with new phrasing",
+          "right": "Handles unseen phrasings naturally"
+        },
+        {
+          "left": "O(rules Ã— queries) scaling",
+          "right": "O(1) per comparison after encoding"
+        },
+        {
+          "left": "High maintenance as FAQs grow",
+          "right": "Add new entries, re-encode, done"
+        },
+        {
+          "left": "Binary match/no-match",
+          "right": "Continuous confidence scores for routing"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now detect duplicates, match intents, and cluster documents using sentence similarity â€” all running locally with MiniLM!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `DuplicateDetector` class that finds near-duplicate text pairs using bag-of-words cosine similarity. It should accept a list of texts and a similarity threshold, then identify all pairs that exceed the threshold. Implement `encode(text)` to create word-frequency vectors, `cosine_similarity(vec_a, vec_b)` to compare two vectors, and `find_duplicates()` to return all duplicate pairs as a list of tuples: (index_i, index_j, score)."
+      },
+      "starter_code": "import math\n\nclass DuplicateDetector:\n    def __init__(self, texts: list[str], threshold: float = 0.5):\n        self.texts = texts\n        self.threshold = threshold\n        self.vectors = [self.encode(t) for t in texts]\n\n    def encode(self, text: str) -> dict:\n        # Return word frequency dict from lowercased text\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Compute cosine similarity between two word-frequency vectors\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def find_duplicates(self) -> list[tuple]:\n        # Return list of (i, j, score) for all pairs where score >= threshold\n        # Only check i < j to avoid duplicate pairs\n        pass\n\n# Test it:\ndetector = DuplicateDetector([\n    \"the cat sat on the mat\",\n    \"a cat is sitting on a mat\",\n    \"dogs love to play fetch\",\n    \"the dog plays with a ball\",\n], threshold=0.3)\n\ndupes = detector.find_duplicates()\nprint(len(dupes) > 0)\n\n# Cat sentences should match\ncat_pair = [d for d in dupes if 0 in (d[0], d[1]) and 1 in (d[0], d[1])]\nprint(len(cat_pair) == 1)\nprint(cat_pair[0][2] > 0.3)",
+      "expected_output": "True\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), split lowercased text and count each word in a dict: {'the': 2, 'cat': 1, ...}",
+          "For cosine_similarity, compute dot product over shared keys, divide by product of magnitudes (sqrt of sum of squared values)",
+          "In find_duplicates(), use nested loops with i < j and only append pairs where similarity >= self.threshold"
+        ]
+      },
+      "test_code": "d = DuplicateDetector([\"hello world\", \"hello world\", \"goodbye moon\"], threshold=0.9)\nassert d.encode(\"hello hello world\") == {\"hello\": 2, \"world\": 1}\nsim = d.cosine_similarity({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1})\nassert abs(sim - 1.0) < 0.001\nsim0 = d.cosine_similarity({\"a\": 1}, {\"b\": 1})\nassert sim0 == 0.0\ndupes = d.find_duplicates()\nassert len(dupes) == 1\nassert dupes[0][0] == 0 and dupes[0][1] == 1\nassert abs(dupes[0][2] - 1.0) < 0.001\nd2 = DuplicateDetector([\"x y\", \"a b\"], threshold=0.9)\nassert len(d2.find_duplicates()) == 0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `FAQMatcher` class that matches user questions to the closest FAQ entry using bag-of-words cosine similarity. It takes a dict mapping questions to answers. Implement `match(user_question)` that returns a dict with 'answer', 'matched_question', and 'confidence'. If the best match scores below the threshold, return answer=None. Also implement `batch_match(questions)` that processes multiple user questions and returns a list of match results."
+      },
+      "starter_code": "import math\n\nclass FAQMatcher:\n    def __init__(self, faq: dict, threshold: float = 0.3):\n        # faq is {question: answer, ...}\n        self.faq = faq\n        self.threshold = threshold\n        self.questions = list(faq.keys())\n        self.answers = list(faq.values())\n        self.vectors = [self._encode(q) for q in self.questions]\n\n    def _encode(self, text: str) -> dict:\n        words = text.lower().split()\n        vec = {}\n        for w in words:\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def _cosine_sim(self, a: dict, b: dict) -> float:\n        shared = set(a) & set(b)\n        dot = sum(a[w] * b[w] for w in shared)\n        mag_a = math.sqrt(sum(v**2 for v in a.values()))\n        mag_b = math.sqrt(sum(v**2 for v in b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        return dot / (mag_a * mag_b)\n\n    def match(self, user_question: str) -> dict:\n        # Return {\"answer\": str|None, \"matched_question\": str|None, \"confidence\": float}\n        # If best score < threshold, answer and matched_question should be None\n        pass\n\n    def batch_match(self, questions: list[str]) -> list[dict]:\n        # Match each question and return list of results\n        pass\n\n# Test it:\nmatcher = FAQMatcher({\n    \"how do I cancel\": \"Go to settings and cancel.\",\n    \"what is the price\": \"Plans start at $10/month.\",\n    \"how to contact support\": \"Email help@example.com.\",\n}, threshold=0.3)\n\nresult = matcher.match(\"I want to cancel\")\nprint(result[\"answer\"])\nprint(result[\"confidence\"] > 0.3)\n\nno_match = matcher.match(\"what is quantum physics\")\nprint(no_match[\"answer\"] is None)\n\nbatch = matcher.batch_match([\"cancel please\", \"the price\"])\nprint(len(batch))",
+      "expected_output": "Go to settings and cancel.\nTrue\nTrue\n2",
+      "hints": {
+        "en": [
+          "In match(), encode the user question, compute cosine similarity against all FAQ vectors, and find the index with the highest score",
+          "Use max() with a key function or enumerate to find the best-scoring FAQ entry, then check if it exceeds the threshold",
+          "batch_match() simply calls self.match() for each question in the input list"
+        ]
+      },
+      "test_code": "m = FAQMatcher({\"hello world\": \"greeting\", \"goodbye world\": \"farewell\"}, threshold=0.5)\nr = m.match(\"hello world\")\nassert r[\"answer\"] == \"greeting\"\nassert abs(r[\"confidence\"] - 1.0) < 0.001\nassert r[\"matched_question\"] == \"hello world\"\nr2 = m.match(\"xyz abc\")\nassert r2[\"answer\"] is None\nassert r2[\"matched_question\"] is None\nassert r2[\"confidence\"] < 0.5\nbatch = m.batch_match([\"hello world\", \"goodbye world\"])\nassert len(batch) == 2\nassert batch[0][\"answer\"] == \"greeting\"\nassert batch[1][\"answer\"] == \"farewell\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence similarity",
+      "cosine similarity matrix",
+      "duplicate detection",
+      "FAQ intent matching",
+      "similarity thresholds",
+      "document clustering",
+      "all-MiniLM-L6-v2",
+      "embedding applications"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "basic math",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
