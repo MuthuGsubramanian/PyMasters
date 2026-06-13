@@ -20,6 +20,15 @@ const DIFFICULTY = {
 };
 
 // ─── Countdown timer hook ───────────────────────────────────────────────────
+// Next weekly reset = upcoming Monday 00:00 UTC (backend doesn't supply this yet).
+function nextMondayUTC() {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const add = ((8 - d.getUTCDay()) % 7) || 7;
+  d.setUTCDate(d.getUTCDate() + add);
+  return d.toISOString();
+}
+
 function useCountdown(targetDate) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -114,8 +123,19 @@ export default function Challenges() {
           getChallengeLeaderboard(),
         ]);
         if (chalRes.status === 'fulfilled') {
-          setChallenge(chalRes.value.data);
-          setCode(chalRes.value.data?.starter_code || '# Write your solution here\n');
+          // API shape: { week_number, year, challenge: {…}, total_challenges }.
+          // Flatten the nested challenge and map field names the UI expects.
+          const env = chalRes.value.data || {};
+          const c = env.challenge || env;
+          const ch = {
+            ...c,
+            week: env.week_number ?? c.week,
+            xp: c.xp_reward ?? c.xp,
+            hints: Array.isArray(c.hints) ? c.hints[0] : c.hints,
+            next_challenge_at: env.next_challenge_at || c.next_challenge_at || nextMondayUTC(),
+          };
+          setChallenge(ch);
+          setCode(c.starter_code || '# Write your solution here\n');
         }
         if (lbRes.status === 'fulfilled') {
           setLeaderboard(Array.isArray(lbRes.value.data) ? lbRes.value.data : lbRes.value.data?.entries || []);
@@ -138,7 +158,7 @@ export default function Challenges() {
     try {
       const res = await submitChallenge({
         challenge_id: challenge?.id,
-        user_id: user?.user_id,
+        user_id: user?.id || user?.user_id,
         code,
       });
       setResult(res.data);
