@@ -79,10 +79,45 @@ catalogue 434 lessons / 0 broken · 3 real prod bugs fixed (trends, password
 recovery, seeding) · security hardened · struggle-aware tutoring · test suite
 127 passed · Home redesign + SEO · ~17 production deploys.
 
+## Update — full UI/UX audit + hardening (2026-06-13, weekend)
+Live visual audit of **every module** in both light & dark mode (+ mobile),
+driven via Playwright (`_claude_audit/pwtools/`). Zero JS/console errors on any
+page. Found and fixed several real, user-facing issues — all committed on
+`feat/autonomous-week-2026-06`, builds green, NOT yet deployed (gcloud token
+expired; needs re-auth before the deploy recipe can run):
+
+- **Brand logo invisible/muddy app-wide.** The detailed logo SVG (triangle +
+  reactor + "Py"/"MASTERS" lockup) was illegible at small sizes and washed out
+  by a `brightness(2)` hack inside the gradient brand boxes (sidebar, login,
+  onboarding, landing nav, footer, chat-avatar mockups). Added a clean
+  small-format white glyph (`pymasters-glyph.svg` — triangle + reactor
+  aperture) that reads crisply from 14px up; kept the rich logo for the large
+  hero/showcase. Commit `4e75086`.
+- **Dark mode broken on Dashboard, Paths, Profile, and the legacy Learn map.**
+  The theme overhaul deleted the global dark `!important` overrides but never
+  migrated these pages, so their cards + form inputs rendered as washed-out
+  white blocks in dark mode. Migrated to semantic tokens (3 files via parallel
+  subagents). Commit `d1cc4f8`.
+- **Challenges page stuck on "Loading challenge description…"** — the weekly API
+  nests fields under `.challenge` and uses `week_number`/`xp_reward`, but the
+  page read them flat (also a 00:00:00 countdown and a `user.user_id` submit bug
+  that mis-attributed submissions). Flattened/field-mapped; computes next-Monday
+  reset. Commit `01ecf16`.
+- **OrgSetup dark-mode inputs** were hardcoded `bg-white/60` → invisible text in
+  dark mode; migrated to `bg-bg-inset`. Commit `01ecf16`.
+- Verified Admin Console (org invite-prompt + delete-org) and Super Admin render
+  correctly in dark mode; no responsive/horizontal-overflow issues on mobile.
+
 ## Remaining opportunities (not blockers)
+- **Deploy the 2026-06-13 UI fixes** once gcloud is re-authed (image-only swap
+  per the recipe above). Branch is ready.
 - Decompose the 1300-line `Classroom.jsx` / `OrgDashboard.jsx` / `Profile.jsx`.
 - Roll `StateViews` out to more data pages (Trending, Paths, Challenges).
 - Dual content systems: `/dashboard/learn` uses a legacy in-memory `CONTENT_MAP`
-  while `/dashboard/classroom` serves the 420-lesson catalogue — consolidate.
+  while `/dashboard/classroom` serves the 420-lesson catalogue — consolidate
+  (the legacy Learn map isn't in the nav and only shows 4 generic modules).
+- `Trending.jsx` still uses old `dark:` variants (works) — migrate to tokens for
+  consistency. Reference cards repeat generic "Quick reference for this topic"
+  copy; Profile shows "Member since N/A".
 - Finish i18n for the new English-only tracks via `backend/i18n/translate_lessons.py`.
 - Rotate the Ollama key that was historically committed in `cloudbuild.yaml`.
