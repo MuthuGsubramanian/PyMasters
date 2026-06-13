@@ -50,7 +50,7 @@ function ProgressRing({ progress, size = 80, strokeWidth = 6, color = '#06b6d4' 
         <svg width={size} height={size} className="transform -rotate-90">
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none"
                 stroke="currentColor" strokeWidth={strokeWidth}
-                className="text-slate-100" />
+                className="text-bg-inset" />
             <motion.circle
                 cx={size / 2} cy={size / 2} r={radius} fill="none"
                 stroke={color} strokeWidth={strokeWidth}
@@ -97,7 +97,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
             onClick={onClick}
-            className="group relative rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-sm overflow-hidden hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+            className="group relative rounded-2xl border border-border-default bg-bg-surface backdrop-blur-sm overflow-hidden hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
         >
             <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="p-5">
@@ -115,17 +115,17 @@ function PathCard({ path, index, onClick, isRecommended }) {
                         <div className="relative">
                             <ProgressRing progress={progress} size={40} strokeWidth={3} />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-[9px] font-bold text-slate-600">{progress}%</span>
+                                <span className="text-[9px] font-bold text-text-secondary">{progress}%</span>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <h3 className="text-sm font-bold text-slate-800 group-hover:text-cyan-600 transition-colors font-display mb-1 line-clamp-1">
+                <h3 className="text-sm font-bold text-text-primary group-hover:text-cyan-600 transition-colors font-display mb-1 line-clamp-1">
                     {path.name || path.title}
                 </h3>
 
-                <div className="flex items-center gap-3 text-[10px] text-slate-400 mb-3">
+                <div className="flex items-center gap-3 text-[10px] text-text-muted mb-3">
                     <span className="flex items-center gap-1">
                         <BookOpen size={10} />
                         <AnimatedNumber value={path.lesson_count || path.lessons?.length || 0} /> lessons
@@ -152,7 +152,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
 // ─── Skeleton ───────────────────────────────────────────────────────────────
 function Skeleton({ className }) {
     return (
-        <div className={`animate-pulse bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 rounded-lg ${className}`}
+        <div className={`animate-pulse bg-gradient-to-r from-bg-inset via-bg-elevated to-bg-inset rounded-lg ${className}`}
             style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }}
         />
     );
@@ -205,7 +205,7 @@ function PathList() {
                     >
                         Evolution
                     </motion.h1>
-                    <p className="text-slate-500">Your AI learning journey, tailored to your goals.</p>
+                    <p className="text-text-secondary">Your AI learning journey, tailored to your goals.</p>
                 </div>
             </header>
 
@@ -215,19 +215,19 @@ function PathList() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-sm shadow-sm group hover:shadow-lg transition-all duration-500"
+                        className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm group hover:shadow-lg transition-all duration-500"
                     >
                         <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
                         <div className="p-6 flex justify-between items-center">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <TrendingUp size={16} className="text-cyan-500" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Path</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Active Path</span>
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 font-display mb-1">
+                                <h3 className="text-xl font-bold text-text-primary font-display mb-1">
                                     {activePath.name || activePath.title}
                                 </h3>
-                                <p className="text-sm text-slate-500 mb-4">
+                                <p className="text-sm text-text-secondary mb-4">
                                     {activePath.completed_lessons || 0} of {activePath.total_lessons || activePath.lesson_count || 0} lessons completed
                                 </p>
                                 <button
@@ -245,7 +245,7 @@ function PathList() {
                                     strokeWidth={7}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-lg font-bold text-slate-700 font-display">
+                                    <span className="text-lg font-bold text-text-secondary font-display">
                                         {activePath.progress_pct || 0}%
                                     </span>
                                 </div>
@@ -260,7 +260,7 @@ function PathList() {
                 <section>
                     <div className="flex items-center gap-2 mb-4">
                         <Sparkles size={16} className="text-amber-500" />
-                        <h2 className="text-lg font-bold text-slate-800 font-display">Recommended For You</h2>
+                        <h2 className="text-lg font-bold text-text-primary font-display">Recommended For You</h2>
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {recommended.slice(0, 3).map((path, idx) => (
@@ -279,9 +279,9 @@ function PathList() {
             {/* All Paths */}
             <section>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-slate-800 font-display">All Paths</h2>
+                    <h2 className="text-lg font-bold text-text-primary font-display">All Paths</h2>
                     <div className="flex items-center gap-2">
-                        <Filter size={14} className="text-slate-400" />
+                        <Filter size={14} className="text-text-muted" />
                         {['all', 'beginner', 'intermediate', 'advanced'].map(f => (
                             <button
                                 key={f}
@@ -290,7 +290,7 @@ function PathList() {
                                     'text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200',
                                     filter === f
                                         ? 'bg-cyan-50 text-cyan-700 border border-cyan-200'
-                                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 border border-transparent'
+                                        : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated border border-transparent'
                                 )}
                             >
                                 {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -307,8 +307,8 @@ function PathList() {
                     </div>
                 ) : filteredPaths.length === 0 ? (
                     <div className="text-center py-16">
-                        <Map size={32} className="text-slate-300 mx-auto mb-3" />
-                        <p className="text-sm text-slate-400">No paths found for this filter.</p>
+                        <Map size={32} className="text-text-muted mx-auto mb-3" />
+                        <p className="text-sm text-text-muted">No paths found for this filter.</p>
                     </div>
                 ) : (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -399,8 +399,8 @@ function PathDetail() {
     if (!path) {
         return (
             <div className="text-center py-20">
-                <Map size={40} className="text-slate-300 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-slate-700 font-display mb-2">Path not found</h2>
+                <Map size={40} className="text-text-muted mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-text-secondary font-display mb-2">Path not found</h2>
                 <button
                     onClick={() => navigate('/dashboard/paths')}
                     className="btn-neo btn-neo-ghost mt-4"
@@ -425,7 +425,7 @@ function PathDetail() {
             {/* Back */}
             <button
                 onClick={() => navigate('/dashboard/paths')}
-                className="mb-6 flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 transition-colors group"
+                className="mb-6 flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors group"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Evolution
@@ -435,21 +435,21 @@ function PathDetail() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-sm shadow-sm mb-8"
+                className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm mb-8"
             >
-                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-black/[0.04] p-8 flex items-end overflow-hidden">
+                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-border-default p-8 flex items-end overflow-hidden">
                     <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                     <div className="relative z-10 flex-1">
-                        <h1 className="text-3xl font-bold text-slate-900 font-display">{path.name || path.title}</h1>
-                        <p className="text-sm text-slate-500 mt-1 max-w-2xl line-clamp-2">{path.description}</p>
+                        <h1 className="text-3xl font-bold text-text-primary font-display">{path.name || path.title}</h1>
+                        <p className="text-sm text-text-secondary mt-1 max-w-2xl line-clamp-2">{path.description}</p>
                         <div className="flex items-center gap-3 mt-2">
                             <DifficultyBadge level={path.difficulty || 'beginner'} />
-                            <span className="text-xs font-mono text-slate-400 flex items-center gap-1">
+                            <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                 <BookOpen size={12} />
                                 {lessons.length} lessons
                             </span>
                             {path.estimated_hours && (
-                                <span className="text-xs font-mono text-slate-400 flex items-center gap-1">
+                                <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                     <Clock size={12} />
                                     {path.estimated_hours}h total
                                 </span>
@@ -459,7 +459,7 @@ function PathDetail() {
                     <div className="relative hidden sm:block">
                         <ProgressRing progress={progressPct} size={90} strokeWidth={7} />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg font-bold text-slate-700 font-display">{progressPct}%</span>
+                            <span className="text-lg font-bold text-text-secondary font-display">{progressPct}%</span>
                         </div>
                     </div>
                 </div>
@@ -467,11 +467,11 @@ function PathDetail() {
                 {/* Progress bar */}
                 <div className="px-8 py-4 flex items-center justify-between">
                     <div className="flex-1 mr-6">
-                        <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+                        <div className="flex justify-between text-[10px] font-mono text-text-muted mb-1">
                             <span>{completedIds.size} / {lessons.length} completed</span>
                             {remainingHours && <span>~{remainingHours}h remaining</span>}
                         </div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-2 bg-bg-inset rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progressPct}%` }}
@@ -495,13 +495,13 @@ function PathDetail() {
 
             {/* Timeline */}
             <section className="mb-10">
-                <h2 className="text-lg font-bold text-slate-800 font-display mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-text-primary font-display mb-4 flex items-center gap-2">
                     <Target size={18} className="text-cyan-500" />
                     Lesson Timeline
                 </h2>
                 <div className="space-y-3 relative">
                     {/* Vertical line */}
-                    <div className="absolute left-[1.35rem] top-6 bottom-6 w-[2px] bg-slate-100" />
+                    <div className="absolute left-[1.35rem] top-6 bottom-6 w-[2px] bg-bg-inset" />
 
                     {lessons.map((lesson, idx) => {
                         const isCompleted = completedIds.has(lesson.id);
@@ -520,8 +520,8 @@ function PathDetail() {
                                     isCompleted
                                         ? 'bg-green-50/50 border-green-200/60'
                                         : isNext
-                                        ? 'bg-white/80 border-cyan-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5'
-                                        : 'bg-slate-50/50 border-transparent opacity-60'
+                                        ? 'bg-bg-surface border-cyan-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5'
+                                        : 'bg-bg-elevated/50 border-transparent opacity-60'
                                 )}
                                 onClick={isNext ? () => navigate(`/dashboard/classroom`) : undefined}
                             >
@@ -532,7 +532,7 @@ function PathDetail() {
                                         ? 'bg-green-500 border-green-500 text-white shadow-md shadow-green-200'
                                         : isNext
                                         ? 'bg-cyan-50 border-cyan-300 text-cyan-600 group-hover:bg-cyan-500 group-hover:text-white group-hover:border-cyan-500 group-hover:shadow-md group-hover:shadow-cyan-200'
-                                        : 'bg-slate-100 border-slate-200 text-slate-400'
+                                        : 'bg-bg-inset border-border-default text-text-muted'
                                 )}>
                                     {isCompleted ? <CheckCircle2 size={18} /> :
                                      isNext ? <Play size={16} /> :
@@ -545,8 +545,8 @@ function PathDetail() {
                                         <h3 className={clsx(
                                             'text-sm font-bold font-display transition-colors',
                                             isCompleted ? 'text-green-700' :
-                                            isNext ? 'text-slate-800 group-hover:text-cyan-600' :
-                                            'text-slate-500'
+                                            isNext ? 'text-text-primary group-hover:text-cyan-600' :
+                                            'text-text-secondary'
                                         )}>
                                             {lesson.title || lesson.name || `Lesson ${idx + 1}`}
                                         </h3>
@@ -557,7 +557,7 @@ function PathDetail() {
                                         )}
                                     </div>
                                     {lesson.description && (
-                                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{lesson.description}</p>
+                                        <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{lesson.description}</p>
                                     )}
                                 </div>
 
