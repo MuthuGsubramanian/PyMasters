@@ -1,0 +1,119 @@
+{
+  "id": "bge_small_en_v15_constrained_rag_lightweight_embeddings",
+  "topic": "bge_small_en_v15_constrained_rag_lightweight_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Resource-Constrained RAG with BAAI/bge-small-en-v1.5"
+  },
+  "description": {
+    "en": "Build a RAG pipeline that runs on minimal hardware using BAAI/bge-small-en-v1.5. Learn memory budgeting, quantized vector storage, chunk-aware retrieval, and how to power lightweight Homie embeddings under strict RAM and CPU limits."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RAG That Runs on a Raspberry Pi\n\nVaathiyaar here! Everyone assumes RAG needs beefy GPUs and cloud vector databases. Not true. `BAAI/bge-small-en-v1.5` is a 33MB embedding model that produces 384-dim vectors — small enough to power a full retrieval pipeline on a Raspberry Pi, a $5/month VPS, or Homie's edge runtime. Today we'll build a complete RAG system under brutally tight resource constraints.\n\n### The Constraint Budget\n\nBefore writing code, smart engineers set a resource budget:\n\n| Resource | Typical RAG | Our Budget |\n|---|---|---|\n| Model Size | 400MB–2GB | 33MB |\n| Vector Dimensions | 768–1536 | 384 |\n| RAM for 10K docs | 60–120MB | 15MB |\n| Inference Device | GPU | CPU only |\n| Dependencies | FAISS + DB + API | NumPy only |\n\nWith bge-small, 10,000 document chunks consume just ~14.6MB of vector memory. That leaves plenty of headroom on a 512MB device.\n\n### Chunk-Aware Embedding Pipeline\n\nRAG quality hinges on how you chunk documents before embedding. Smaller chunks retrieve more precisely; larger chunks carry more context:\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndef chunk_text(text, chunk_size=200, overlap=50):\n    words = text.split()\n    chunks = []\n    for i in range(0, len(words), chunk_size - overlap):\n        chunk = \" \".join(words[i:i + chunk_size])\n        if chunk:\n            chunks.append(chunk)\n    return chunks\n\ndocument = \"Artificial intelligence is transforming industries. \" * 100\nchunks = chunk_text(document, chunk_size=40, overlap=10)\n\nembeddings = model.encode(chunks, normalize_embeddings=True, batch_size=64)\nprint(f\"Chunks: {len(chunks)}, Shape: {embeddings.shape}\")\nprint(f\"Vector memory: {embeddings.nbytes / 1024:.1f} KB\")\n```\n\n### Quantized Vector Storage\n\nFloat32 vectors are overkill for retrieval. Casting to float16 halves memory with negligible quality loss:\n\n```python\nimport numpy as np\n\nembeddings_f16 = embeddings.astype(np.float16)\nprint(f\"float32: {embeddings.nbytes / 1024:.1f} KB\")\nprint(f\"float16: {embeddings_f16.nbytes / 1024:.1f} KB\")\nprint(f\"Savings: {(1 - embeddings_f16.nbytes / embeddings.nbytes) * 100:.0f}%\")\n\n# Retrieval quality check — cosine similarity is preserved\nq = model.encode(\"What is AI?\", normalize_embeddings=True)\nscores_f32 = q @ embeddings.T\nscores_f16 = q.astype(np.float16) @ embeddings_f16.T\nrank_correlation = np.corrcoef(\n    np.argsort(scores_f32), np.argsort(scores_f16.astype(np.float32))\n)[0, 1]\nprint(f\"Rank correlation: {rank_correlation:.4f}\")  # > 0.999\n```\n\n### Lightweight RAG Retriever\n\nCombine chunking, embedding, and retrieval into a single class that fits inside Homie's plugin system:\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass LightweightRAG:\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\", use_f16=True):\n        self.model = SentenceTransformer(model_name)\n        self.use_f16 = use_f16\n        self.chunks = []\n        self.index = None\n\n    def ingest(self, texts, chunk_size=40, overlap=10):\n        for text in texts:\n            words = text.split()\n            for i in range(0, len(words), chunk_size - overlap):\n                chunk = \" \".join(words[i:i + chunk_size])\n                if chunk:\n                    self.chunks.append(chunk)\n        vecs = self.model.encode(self.chunks, normalize_embeddings=True, batch_size=64)\n        self.index = vecs.astype(np.float16) if self.use_f16 else vecs\n\n    def retrieve(self, query, top_k=3):\n        q_vec = self.model.encode(\n            \"Represent this sentence: \" + query, normalize_embeddings=True\n        )\n        if self.use_f16:\n            q_vec = q_vec.astype(np.float16)\n        scores = (q_vec @ self.index.T).astype(np.float32)\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [{\"chunk\": self.chunks[i], \"score\": float(scores[i])} for i in top_idx]\n\n    def memory_usage_mb(self):\n        if self.index is None:\n            return 0.0\n        return self.index.nbytes / (1024 ** 2)\n\nrag = LightweightRAG(use_f16=True)\nrag.ingest([\"Python is great for data science and machine learning applications.\"] * 50)\nresults = rag.retrieve(\"data analysis\")\nprint(f\"Top result score: {results[0]['score']:.3f}\")\nprint(f\"Index memory: {rag.memory_usage_mb():.3f} MB\")\n```\n\n### Memory Budget Calculator\n\nBefore deploying, verify your corpus fits the hardware:\n\n```python\ndef can_fit(n_docs, ram_mb, dim=384, use_f16=True):\n    bytes_per_vec = dim * (2 if use_f16 else 4)\n    needed_mb = (n_docs * bytes_per_vec) / (1024 ** 2)\n    fits = needed_mb <= ram_mb\n    print(f\"{n_docs:,} docs @ {'f16' if use_f16 else 'f32'}: {needed_mb:.1f}MB / {ram_mb}MB → {'OK' if fits else 'OVER'}\")\n    return fits\n\ncan_fit(50_000, ram_mb=64)   # Edge device\ncan_fit(500_000, ram_mb=512) # Small VPS\ncan_fit(1_000_000, ram_mb=256, use_f16=False)  # Won't fit\n```\n\n> **Key Insight:** Resource-constrained RAG isn't about compromising quality — it's about right-sizing every component. BAAI/bge-small-en-v1.5 at 33MB with float16 quantization stores 1.3 million vectors per GB of RAM. Pair that with smart chunking and the BGE query prefix, and you get retrieval quality that rivals models 10x its size — running on hardware that costs less than a single cloud API call."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BAAI/bge-small-en-v1.5 is a 33MB embedding model that makes RAG possible on minimal hardware. With 384-dim vectors, float16 quantization, and smart chunking, you can build a full retrieval pipeline on a Raspberry Pi or $5 VPS — no GPU, no cloud, no vector database required.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndef chunk_text(text, chunk_size=40, overlap=10):\n    words = text.split()\n    chunks = []\n    for i in range(0, len(words), chunk_size - overlap):\n        chunk = \" \".join(words[i:i + chunk_size])\n        if chunk:\n            chunks.append(chunk)\n    return chunks\n\ndoc = \"AI is transforming every industry worldwide. \" * 80\nchunks = chunk_text(doc)\n\nembeddings = model.encode(chunks, normalize_embeddings=True, batch_size=64)\nembeddings_f16 = embeddings.astype(np.float16)\n\nprint(f\"Chunks: {len(chunks)}\")\nprint(f\"f32 memory: {embeddings.nbytes / 1024:.1f} KB\")\nprint(f\"f16 memory: {embeddings_f16.nbytes / 1024:.1f} KB\")\nprint(f\"Savings: {(1 - embeddings_f16.nbytes / embeddings.nbytes) * 100:.0f}%\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the high-level API that wraps tokenization, model inference, and pooling into a single encode() call."},
+        {"line": 4, "explanation": "Load bge-small-en-v1.5 — only 33MB. After the first download, the model is cached locally and works fully offline."},
+        {"line": 6, "explanation": "Define a chunking function with overlap. Overlap ensures no information is lost at chunk boundaries — critical for retrieval quality."},
+        {"line": 9, "explanation": "Sliding window: step by (chunk_size - overlap) words so consecutive chunks share 'overlap' words of context."},
+        {"line": 15, "explanation": "Simulate a large document. In production, this would be your knowledge base, documentation, or FAQ corpus."},
+        {"line": 18, "explanation": "Batch encode all chunks with normalization. Normalized vectors enable dot-product similarity instead of expensive cosine computation."},
+        {"line": 19, "explanation": "Cast to float16 — halves memory with virtually no impact on retrieval ranking. This is the key trick for constrained environments."},
+        {"line": 23, "explanation": "50% memory savings means you can index twice as many documents in the same RAM budget — critical on edge devices."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass LightweightRAG:\n    def __init__(self, use_f16=True):\n        self.model = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n        self.use_f16 = use_f16\n        self.chunks = []\n        self.index = None\n\n    def ingest(self, texts, chunk_size=40, overlap=10):\n        for text in texts:\n            words = text.split()\n            for i in range(0, len(words), chunk_size - overlap):\n                c = \" \".join(words[i:i + chunk_size])\n                if c:\n                    self.chunks.append(c)\n        vecs = self.model.encode(self.chunks, normalize_embeddings=True)\n        self.index = vecs.astype(np.float16) if self.use_f16 else vecs\n\n    def retrieve(self, query, top_k=3):\n        q = self.model.encode(\"Represent this sentence: \" + query, normalize_embeddings=True)\n        if self.use_f16:\n            q = q.astype(np.float16)\n        scores = (q @ self.index.T).astype(np.float32)\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [{\"chunk\": self.chunks[i], \"score\": float(scores[i])} for i in top_idx]\n\n    def memory_usage_mb(self):\n        return self.index.nbytes / (1024 ** 2) if self.index is not None else 0.0",
+      "steps": [
+        {"line": 4, "explanation": "LightweightRAG encapsulates the entire retrieval pipeline — chunking, embedding, quantization, and search — in one portable class."},
+        {"line": 5, "explanation": "use_f16 flag controls whether vectors are stored as float16 (half memory) or float32 (full precision). Default is True for constrained environments."},
+        {"line": 11, "explanation": "ingest() handles both chunking and encoding. Pass raw documents — the method splits, overlaps, encodes, and optionally quantizes."},
+        {"line": 18, "explanation": "Encode all chunks in one batch call. Batching is far more efficient than encoding one chunk at a time."},
+        {"line": 19, "explanation": "Conditional quantization: if use_f16, cast the entire index to float16. This single line halves your memory footprint."},
+        {"line": 22, "explanation": "The BGE query prefix 'Represent this sentence:' aligns query embeddings with document embeddings, boosting retrieval accuracy by 2-3%."},
+        {"line": 25, "explanation": "Dot product between query and all index vectors. Cast back to float32 for sorting — float16 argsort can have precision issues."},
+        {"line": 29, "explanation": "memory_usage_mb() lets you monitor actual index size at runtime — essential when deploying on memory-constrained hardware."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Standard RAG Stack",
+      "right_label": "Constrained RAG with bge-small",
+      "items": [
+        {"left": "768–1536 dim embeddings", "right": "384 dim — 50–75% smaller vectors"},
+        {"left": "Float32 storage (4 bytes/dim)", "right": "Float16 storage (2 bytes/dim)"},
+        {"left": "Requires FAISS or vector DB", "right": "NumPy dot product, zero dependencies"},
+        {"left": "400MB+ model footprint", "right": "33MB model, fits in Lambda/edge"},
+        {"left": "GPU recommended", "right": "Fast on CPU, works on Raspberry Pi"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a resource-constrained RAG pipeline with bge-small-en-v1.5 — lightweight, quantized, and ready for edge deployment!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MemoryBudgetPlanner` class that helps engineers determine whether their document corpus fits a given hardware budget. Implement `vector_memory_mb(n_docs, dim, use_f16)` to calculate the memory needed for n_docs vectors (float16 uses 2 bytes per dim, float32 uses 4), `max_docs(ram_mb, dim, use_f16)` to return the maximum number of documents that fit in the given RAM, and `plan(n_docs, ram_mb, dim)` to return a dict with keys 'fits_f32', 'fits_f16', 'memory_f32_mb', 'memory_f16_mb', and 'recommendation' ('f32', 'f16', or 'reduce_corpus')."
+      },
+      "starter_code": "class MemoryBudgetPlanner:\n    def __init__(self, model_size_mb=33):\n        self.model_size_mb = model_size_mb\n\n    def vector_memory_mb(self, n_docs: int, dim: int = 384, use_f16: bool = False) -> float:\n        # Calculate memory in MB for n_docs vectors\n        # float32 = 4 bytes/dim, float16 = 2 bytes/dim\n        pass\n\n    def max_docs(self, ram_mb: float, dim: int = 384, use_f16: bool = False) -> int:\n        # Return max number of docs that fit in ram_mb\n        # Use integer division (floor)\n        pass\n\n    def plan(self, n_docs: int, ram_mb: float, dim: int = 384) -> dict:\n        # Return planning dict with:\n        # 'fits_f32': bool, 'fits_f16': bool,\n        # 'memory_f32_mb': float, 'memory_f16_mb': float,\n        # 'recommendation': 'f32' if fits_f32, else 'f16' if fits_f16, else 'reduce_corpus'\n        pass\n\n# Test it:\nplanner = MemoryBudgetPlanner()\n\nmem = planner.vector_memory_mb(100000, 384, use_f16=False)\nprint(f\"{mem:.1f}\")\n\nmem16 = planner.vector_memory_mb(100000, 384, use_f16=True)\nprint(f\"{mem16:.1f}\")\n\nmax_d = planner.max_docs(64, 384, use_f16=True)\nprint(max_d)\n\np = planner.plan(50000, ram_mb=64)\nprint(p[\"recommendation\"])",
+      "expected_output": "146.5\n73.2\n87381\nf16",
+      "hints": {
+        "en": [
+          "vector_memory_mb: bytes_per_dim is 2 if use_f16 else 4, then (n_docs * dim * bytes_per_dim) / (1024 ** 2)",
+          "max_docs: invert the formula — int(ram_mb * 1024 * 1024 / (dim * bytes_per_dim))",
+          "plan: compute both f32 and f16 memory, check which fits, return 'f32' if both fit, 'f16' if only f16 fits, else 'reduce_corpus'"
+        ]
+      },
+      "test_code": "p = MemoryBudgetPlanner()\nassert abs(p.vector_memory_mb(100000, 384, False) - 146.484375) < 0.01\nassert abs(p.vector_memory_mb(100000, 384, True) - 73.2421875) < 0.01\nassert p.vector_memory_mb(0, 384) == 0.0\nassert p.max_docs(64, 384, use_f16=True) == 87381\nassert p.max_docs(64, 384, use_f16=False) == 43690\nassert p.max_docs(0, 384) == 0\npl = p.plan(50000, 64)\nassert pl['fits_f32'] == False\nassert pl['fits_f16'] == True\nassert pl['recommendation'] == 'f16'\npl2 = p.plan(1000, 64)\nassert pl2['fits_f32'] == True\nassert pl2['recommendation'] == 'f32'\npl3 = p.plan(10000000, 1)\nassert pl3['recommendation'] == 'reduce_corpus'"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ChunkedRAGIndex` class that simulates the core of a resource-constrained RAG pipeline. Implement `chunk_text(text, chunk_size, overlap)` to split text into word-level chunks with overlap, `ingest(documents)` to chunk and encode all documents using trigram vectors, `retrieve(query, top_k)` to find the most similar chunks using cosine similarity, and `stats()` to return a dict with 'total_chunks', 'avg_chunk_words', and 'index_memory_bytes'."
+      },
+      "starter_code": "import math\n\nclass ChunkedRAGIndex:\n    def __init__(self, chunk_size=10, overlap=3):\n        self.chunk_size = chunk_size\n        self.overlap = overlap\n        self.chunks = []\n        self.vectors = []\n\n    def chunk_text(self, text: str) -> list:\n        # Split text into word-level chunks with overlap\n        # Step size = chunk_size - overlap\n        # Return list of chunk strings\n        pass\n\n    def _encode(self, text: str) -> dict:\n        # Return trigram frequency dict from lowercased text\n        t = text.lower()\n        vec = {}\n        for i in range(len(t) - 2):\n            tri = t[i:i+3]\n            vec[tri] = vec.get(tri, 0) + 1\n        return vec\n\n    def _cosine_sim(self, a: dict, b: dict) -> float:\n        # Cosine similarity between two trigram dicts\n        # Return 0.0 if either vector has zero magnitude\n        pass\n\n    def ingest(self, documents: list):\n        # Chunk each document, encode each chunk, store in self.chunks and self.vectors\n        pass\n\n    def retrieve(self, query: str, top_k: int = 3) -> list:\n        # Encode query, compute similarity to all chunks, return top_k results\n        # Each result: {\"chunk\": str, \"score\": float, \"rank\": int}\n        pass\n\n    def stats(self) -> dict:\n        # Return {\"total_chunks\": int, \"avg_chunk_words\": float, \"index_memory_bytes\": int}\n        # index_memory_bytes = sum of sys.getsizeof for each vector dict (use 56 + 72*len(vec) as estimate)\n        pass\n\n# Test it:\nidx = ChunkedRAGIndex(chunk_size=5, overlap=2)\n\nchunks = idx.chunk_text(\"one two three four five six seven eight nine ten\")\nprint(len(chunks))\n\nidx.ingest([\"machine learning is great for data\", \"cooking pasta is fun and easy\"])\nresults = idx.retrieve(\"data science\", top_k=1)\nprint(results[0][\"rank\"])\n\nst = idx.stats()\nprint(st[\"total_chunks\"])",
+      "expected_output": "3\n1\n4",
+      "hints": {
+        "en": [
+          "chunk_text: split into words, loop with step = chunk_size - overlap, join each slice of chunk_size words",
+          "For _cosine_sim, find shared keys between dicts, compute dot product as sum of a[k]*b[k], then divide by sqrt(sum of squares) for each vector",
+          "In stats(), estimate index_memory_bytes as sum of (56 + 72 * len(vec)) for each vector dict — this approximates Python dict overhead"
+        ]
+      },
+      "test_code": "idx = ChunkedRAGIndex(chunk_size=5, overlap=2)\nc = idx.chunk_text(\"a b c d e f g h i j\")\nassert len(c) == 3\nassert c[0] == \"a b c d e\"\nassert c[1] == \"d e f g h\"\nassert c[2] == \"g h i j\"\nc2 = idx.chunk_text(\"a b\")\nassert c2 == [\"a b\"]\nassert idx._cosine_sim({}, {\"a\": 1}) == 0.0\nassert idx._cosine_sim({\"abc\": 1}, {\"abc\": 1}) == 1.0\nidx.ingest([\"hello world from python\", \"goodbye moon\"])\nassert len(idx.chunks) > 0\nassert len(idx.vectors) == len(idx.chunks)\nr = idx.retrieve(\"hello\", top_k=2)\nassert r[0][\"rank\"] == 1\nassert r[0][\"score\"] >= r[1][\"score\"]\nst = idx.stats()\nassert st[\"total_chunks\"] == len(idx.chunks)\nassert isinstance(st[\"avg_chunk_words\"], float)\nassert st[\"index_memory_bytes\"] > 0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["resource-constrained RAG", "float16 vector quantization", "chunk-aware embedding", "memory budget planning", "lightweight retrieval pipeline", "BGE query prefix", "edge deployment", "cosine similarity search", "overlap chunking", "vector memory estimation"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "basic math", "numpy basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

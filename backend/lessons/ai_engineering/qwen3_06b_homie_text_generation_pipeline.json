@@ -1,0 +1,122 @@
+{
+  "id": "qwen3_06b_homie_text_generation_pipeline",
+  "topic": "qwen3_06b_homie_text_generation_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Build Homie's On-Device Text Generation Pipeline"
+  },
+  "description": {
+    "en": "Architect a complete on-device text generation pipeline using Qwen3-0.6B as Homie's brain. Learn prompt routing, response formatting, context windowing, and graceful fallback — all running locally with zero API costs."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Give Homie a Brain That Runs on Your Hardware\n\nVaathiyaar here! You've seen how to load Qwen3-0.6B and chat with it. Now let's go further — let's build a **complete text generation pipeline** that turns a raw model into Homie's intelligent backbone. We're talking prompt routing, context management, output formatting, and graceful degradation — everything a production-worthy on-device assistant needs.\n\nThe goal: a single `HomiePipeline` class that accepts user intent, picks the right generation strategy, manages memory within token budgets, and returns clean, formatted responses — all in under 2GB of RAM.\n\n### Pipeline Architecture\n\n| Component | Responsibility | Why It Matters |\n|---|---|---|\n| **Prompt Router** | Selects system prompt by intent category | Focused prompts = better small-model output |\n| **Context Window** | Manages token budget across turns | Prevents OOM on long conversations |\n| **Generation Strategy** | Picks temperature/top-k per task type | Deterministic for facts, creative for brainstorming |\n| **Output Formatter** | Cleans and structures raw model output | Strips artifacts, enforces response shape |\n| **Fallback Handler** | Graceful degradation on low-quality output | Retries with tighter params or returns safe default |\n\n### Step 1: Prompt Routing by Intent\n\nSmall models shine when you give them focused, specific system prompts rather than one generic instruction:\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nSYSTEM_PROMPTS = {\n    \"code\": \"You are a Python coding assistant. Give concise code answers.\",\n    \"explain\": \"You are a tutor. Explain concepts simply in 2-3 sentences.\",\n    \"creative\": \"You are a creative writer. Be imaginative and expressive.\",\n    \"default\": \"You are Homie, a helpful local AI assistant.\"\n}\n\ndef route_intent(user_message: str) -> str:\n    keywords = {\n        \"code\": [\"write\", \"code\", \"function\", \"implement\", \"debug\"],\n        \"explain\": [\"explain\", \"what is\", \"how does\", \"why\"],\n        \"creative\": [\"story\", \"poem\", \"imagine\", \"creative\"]\n    }\n    msg_lower = user_message.lower()\n    for intent, words in keywords.items():\n        if any(w in msg_lower for w in words):\n            return intent\n    return \"default\"\n```\n\n### Step 2: Context Window Management\n\nQwen3-0.6B supports 32K tokens, but keeping context lean improves speed and coherence:\n\n```python\ndef trim_context(messages: list, max_tokens: int = 2048) -> list:\n    \"\"\"Keep system + most recent messages within token budget.\"\"\"\n    system_msgs = [m for m in messages if m[\"role\"] == \"system\"]\n    other_msgs = [m for m in messages if m[\"role\"] != \"system\"]\n\n    total = sum(len(tokenizer.encode(m[\"content\"])) for m in system_msgs)\n    kept = []\n\n    for msg in reversed(other_msgs):\n        msg_tokens = len(tokenizer.encode(msg[\"content\"]))\n        if total + msg_tokens > max_tokens:\n            break\n        kept.insert(0, msg)\n        total += msg_tokens\n\n    return system_msgs + kept\n```\n\n### Step 3: Adaptive Generation Strategy\n\n```python\nGEN_CONFIGS = {\n    \"code\": {\"temperature\": 0.2, \"top_p\": 0.9, \"top_k\": 10, \"max_new_tokens\": 300},\n    \"explain\": {\"temperature\": 0.5, \"top_p\": 0.85, \"top_k\": 30, \"max_new_tokens\": 150},\n    \"creative\": {\"temperature\": 0.9, \"top_p\": 0.95, \"top_k\": 50, \"max_new_tokens\": 250},\n    \"default\": {\"temperature\": 0.7, \"top_p\": 0.9, \"top_k\": 20, \"max_new_tokens\": 200}\n}\n\ndef generate(messages: list, intent: str) -> str:\n    config = GEN_CONFIGS[intent]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, **config, repetition_penalty=1.15)\n    return tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )\n```\n\n### Step 4: Output Formatting and Fallback\n\n```python\ndef format_output(response: str, intent: str) -> str:\n    response = response.strip()\n    # Remove incomplete sentences at the end\n    if response and response[-1] not in '.!?:'\n        last_period = response.rfind('.')\n        if last_period > len(response) // 2:\n            response = response[:last_period + 1]\n    return response\n\ndef generate_with_fallback(messages: list, intent: str, retries: int = 2) -> str:\n    for attempt in range(retries):\n        response = generate(messages, intent)\n        formatted = format_output(response, intent)\n        if len(formatted) > 10:  # Minimum quality check\n            return formatted\n        # Retry with lower temperature for more focused output\n        intent = \"default\"\n    return \"I'm not sure about that. Could you rephrase your question?\"\n```\n\n### Putting It All Together\n\n```python\nclass HomiePipeline:\n    def __init__(self):\n        self.history = []\n\n    def chat(self, user_message: str) -> str:\n        intent = route_intent(user_message)\n        system = {\"role\": \"system\", \"content\": SYSTEM_PROMPTS[intent]}\n        self.history.append({\"role\": \"user\", \"content\": user_message})\n        context = trim_context([system] + self.history)\n        response = generate_with_fallback(context, intent)\n        self.history.append({\"role\": \"assistant\", \"content\": response})\n        return response\n\nhomie = HomiePipeline()\nprint(homie.chat(\"Write a function to reverse a string\"))\nprint(homie.chat(\"Explain what recursion means\"))\n```\n\n> **Key Insight:** A raw LLM is just the engine — the pipeline around it (routing, context management, adaptive parameters, fallbacks) is what transforms a 0.6B model from a toy into a reliable on-device assistant. Homie's intelligence comes not just from the model weights, but from the engineering that wraps them."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "A raw model is just an engine — to build Homie, you need a full pipeline: routing prompts by intent, managing context windows, adapting generation parameters per task, and handling failures gracefully. Let's build all of that on top of Qwen3-0.6B, running entirely on your device.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nSYSTEM_PROMPTS = {\n    \"code\": \"You are a Python coding assistant. Give concise code answers.\",\n    \"explain\": \"You are a tutor. Explain concepts simply in 2-3 sentences.\",\n    \"creative\": \"You are a creative writer. Be imaginative.\",\n    \"default\": \"You are Homie, a helpful local AI assistant.\"\n}\n\ndef route_intent(user_message: str) -> str:\n    keywords = {\n        \"code\": [\"write\", \"code\", \"function\", \"implement\"],\n        \"explain\": [\"explain\", \"what is\", \"how does\"],\n        \"creative\": [\"story\", \"poem\", \"imagine\"]\n    }\n    msg_lower = user_message.lower()\n    for intent, words in keywords.items():\n        if any(w in msg_lower for w in words):\n            return intent\n    return \"default\"\n\nprint(route_intent(\"Write a sorting function\"))\nprint(route_intent(\"What is a closure?\"))\nprint(route_intent(\"Hello there!\"))",
+      "steps": [
+        {"line": 1, "explanation": "Import Hugging Face Transformers classes for loading the model and tokenizer."},
+        {"line": 3, "explanation": "Target Qwen3-0.6B — small enough for any laptop, capable enough for structured tasks."},
+        {"line": 5, "explanation": "Load model with automatic device placement and precision selection."},
+        {"line": 9, "explanation": "Define task-specific system prompts. Small models produce much better output with focused instructions than with one generic prompt."},
+        {"line": 16, "explanation": "Build an intent router — scan the user message for keyword patterns and map to the best system prompt category."},
+        {"line": 23, "explanation": "Simple keyword matching iterates through intent categories. First match wins — order matters for priority."},
+        {"line": 26, "explanation": "Fall back to a general-purpose prompt when no specific intent is detected."},
+        {"line": 28, "explanation": "Test the router: 'Write a sorting function' routes to 'code', 'What is a closure?' to 'explain', 'Hello there!' to 'default'."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "GEN_CONFIGS = {\n    \"code\": {\"temperature\": 0.2, \"top_p\": 0.9, \"top_k\": 10, \"max_new_tokens\": 300},\n    \"explain\": {\"temperature\": 0.5, \"top_p\": 0.85, \"top_k\": 30, \"max_new_tokens\": 150},\n    \"creative\": {\"temperature\": 0.9, \"top_p\": 0.95, \"top_k\": 50, \"max_new_tokens\": 250},\n    \"default\": {\"temperature\": 0.7, \"top_p\": 0.9, \"top_k\": 20, \"max_new_tokens\": 200}\n}\n\ndef trim_context(messages, tokenizer, max_tokens=2048):\n    system_msgs = [m for m in messages if m[\"role\"] == \"system\"]\n    other_msgs = [m for m in messages if m[\"role\"] != \"system\"]\n    total = sum(len(tokenizer.encode(m[\"content\"])) for m in system_msgs)\n    kept = []\n    for msg in reversed(other_msgs):\n        msg_tokens = len(tokenizer.encode(msg[\"content\"]))\n        if total + msg_tokens > max_tokens:\n            break\n        kept.insert(0, msg)\n        total += msg_tokens\n    return system_msgs + kept\n\ndef generate(messages, intent, model, tokenizer):\n    config = GEN_CONFIGS[intent]\n    text = tokenizer.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True\n    )\n    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    output = model.generate(**inputs, **config, repetition_penalty=1.15)\n    return tokenizer.decode(\n        output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n    )",
+      "steps": [
+        {"line": 1, "explanation": "Define generation configs per intent. Code tasks use low temperature for precision; creative tasks use high temperature for variety."},
+        {"line": 2, "explanation": "Code generation: temperature=0.2 is nearly deterministic — you want the most likely correct answer, not creative guesses."},
+        {"line": 4, "explanation": "Creative tasks: temperature=0.9 with wide top_k=50 gives the model freedom to pick surprising, expressive tokens."},
+        {"line": 8, "explanation": "Context trimming keeps total tokens under budget. Start from most recent messages and work backwards — preserves recency."},
+        {"line": 13, "explanation": "Iterate in reverse (newest first), accumulating token counts. Stop when budget is exceeded — older messages get dropped first."},
+        {"line": 21, "explanation": "The generate function ties it together: pick config by intent, format messages, tokenize, generate, decode."},
+        {"line": 27, "explanation": "Unpack config dict into generate() kwargs with **config. repetition_penalty prevents the small model from looping."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "class HomiePipeline:\n    def __init__(self, model, tokenizer, max_context_tokens=2048):\n        self.model = model\n        self.tokenizer = tokenizer\n        self.max_context_tokens = max_context_tokens\n        self.history = []\n\n    def chat(self, user_message: str) -> str:\n        intent = route_intent(user_message)\n        system = {\"role\": \"system\", \"content\": SYSTEM_PROMPTS[intent]}\n        self.history.append({\"role\": \"user\", \"content\": user_message})\n        context = trim_context(\n            [system] + self.history, self.tokenizer, self.max_context_tokens\n        )\n        response = generate(context, intent, self.model, self.tokenizer)\n        response = response.strip()\n        self.history.append({\"role\": \"assistant\", \"content\": response})\n        return response\n\n    def reset(self):\n        self.history = []\n\nhomie = HomiePipeline(model, tokenizer)\nprint(homie.chat(\"Write a function to check if a number is even\"))\nprint(homie.chat(\"Explain what that function does\"))\nprint(f\"History length: {len(homie.history)}\")",
+      "steps": [
+        {"line": 1, "explanation": "The HomiePipeline class encapsulates the entire text generation workflow — routing, context, generation, and history management."},
+        {"line": 2, "explanation": "Accept model, tokenizer, and a configurable max context token budget at initialization."},
+        {"line": 8, "explanation": "The chat method is Homie's main interface: pass in a user message, get back a formatted response."},
+        {"line": 9, "explanation": "Route intent first — this determines both the system prompt and the generation parameters used."},
+        {"line": 11, "explanation": "Append user message to persistent history BEFORE trimming — ensures it's always included in context."},
+        {"line": 12, "explanation": "Trim context: system prompt + as much recent history as fits within the token budget."},
+        {"line": 15, "explanation": "Generate response using intent-appropriate parameters. The model sees the trimmed context with the right system prompt."},
+        {"line": 17, "explanation": "Store assistant response in history for multi-turn coherence — next turn will see this exchange."},
+        {"line": 20, "explanation": "Reset method clears history — useful for starting fresh conversations without reloading the model."}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie now has a full text generation pipeline — routing, context management, adaptive generation, and multi-turn memory, all running on-device!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `PromptRouter` class that routes user messages to the correct intent category based on keyword matching. Implement `__init__` that accepts a dictionary mapping intent names to lists of trigger keywords, `classify(message)` that returns the first matching intent (case-insensitive match) or 'default' if none match, and `get_system_prompt(intent)` that returns a system prompt string from an internal mapping. The internal system prompts should be: 'code' -> 'You are a coding assistant.', 'explain' -> 'You are a tutor.', 'creative' -> 'You are a creative writer.', 'default' -> 'You are a helpful assistant.'"
+      },
+      "starter_code": "class PromptRouter:\n    SYSTEM_PROMPTS = {\n        \"code\": \"You are a coding assistant.\",\n        \"explain\": \"You are a tutor.\",\n        \"creative\": \"You are a creative writer.\",\n        \"default\": \"You are a helpful assistant.\"\n    }\n\n    def __init__(self, keyword_map: dict):\n        # Store the keyword_map: {\"intent_name\": [\"keyword1\", \"keyword2\", ...]}\n        pass\n\n    def classify(self, message: str) -> str:\n        # Check message (case-insensitive) against each intent's keywords\n        # Return first matching intent, or 'default' if no match\n        pass\n\n    def get_system_prompt(self, intent: str) -> str:\n        # Return the system prompt for the given intent\n        # Fall back to 'default' if intent not in SYSTEM_PROMPTS\n        pass\n\n    def route(self, message: str) -> dict:\n        # Classify the message and return a dict with:\n        # {\"intent\": <classified intent>, \"system_prompt\": <matching prompt>}\n        pass\n\n# Test it:\nrouter = PromptRouter({\n    \"code\": [\"write\", \"function\", \"implement\"],\n    \"explain\": [\"explain\", \"what is\"],\n    \"creative\": [\"story\", \"poem\"]\n})\nprint(router.classify(\"Write a sorting function\"))\nprint(router.classify(\"What is recursion?\"))\nprint(router.classify(\"Hello there\"))\nresult = router.route(\"Tell me a story\")\nprint(result[\"intent\"])\nprint(result[\"system_prompt\"])",
+      "expected_output": "code\nexplain\ndefault\ncreative\nYou are a creative writer.",
+      "hints": {
+        "en": [
+          "Store keyword_map as self.keyword_map in __init__. In classify(), convert message to lowercase and use 'any(kw in message_lower for kw in keywords)' to check each intent.",
+          "In get_system_prompt(), use self.SYSTEM_PROMPTS.get(intent, self.SYSTEM_PROMPTS['default']) to safely fall back.",
+          "In route(), call self.classify(message) to get the intent, then self.get_system_prompt(intent) to get the prompt, and return both in a dict."
+        ]
+      },
+      "test_code": "router = PromptRouter({\"code\": [\"write\", \"function\"], \"explain\": [\"explain\", \"what is\"], \"creative\": [\"story\", \"poem\"]})\nassert router.classify(\"Write a function\") == \"code\"\nassert router.classify(\"WRITE CODE\") == \"code\"\nassert router.classify(\"What is Python?\") == \"explain\"\nassert router.classify(\"Tell me a story\") == \"creative\"\nassert router.classify(\"Hello\") == \"default\"\nassert router.get_system_prompt(\"code\") == \"You are a coding assistant.\"\nassert router.get_system_prompt(\"unknown\") == \"You are a helpful assistant.\"\nresult = router.route(\"Explain decorators\")\nassert result == {\"intent\": \"explain\", \"system_prompt\": \"You are a tutor.\"}\nresult2 = router.route(\"Hi\")\nassert result2 == {\"intent\": \"default\", \"system_prompt\": \"You are a helpful assistant.\"}"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ContextWindow` class that manages conversation messages within a token budget. Implement `__init__(max_tokens)` that sets the budget and initializes an empty message list, `add_message(role, content)` that appends a message dict, `count_tokens(text)` that returns `len(text.split())` as a simple word-based token approximation, `get_trimmed_context()` that returns messages fitting within max_tokens (always keep system messages, then fill from most recent non-system messages), and `message_count()` that returns the total number of stored messages."
+      },
+      "starter_code": "class ContextWindow:\n    def __init__(self, max_tokens: int = 100):\n        # Set self.max_tokens and initialize self.messages as empty list\n        pass\n\n    def add_message(self, role: str, content: str):\n        # Append {\"role\": role, \"content\": content} to self.messages\n        pass\n\n    def count_tokens(self, text: str) -> int:\n        # Simple approximation: split on whitespace and return word count\n        pass\n\n    def get_trimmed_context(self) -> list:\n        # 1. Separate system messages from non-system messages\n        # 2. Count tokens used by system messages\n        # 3. Iterate non-system messages in REVERSE (newest first)\n        # 4. Add messages while total tokens <= max_tokens\n        # 5. Return system_messages + kept messages (in original order)\n        pass\n\n    def message_count(self) -> int:\n        return len(self.messages)\n\n# Test it:\nctx = ContextWindow(max_tokens=20)\nctx.add_message(\"system\", \"You are helpful.\")\nctx.add_message(\"user\", \"First message that is somewhat long\")\nctx.add_message(\"user\", \"Second short msg\")\nctx.add_message(\"assistant\", \"Quick reply\")\ntrimmed = ctx.get_trimmed_context()\nprint(len(trimmed))\nprint(trimmed[0][\"role\"])\nprint(ctx.message_count())",
+      "expected_output": "3\nsystem\n4",
+      "hints": {
+        "en": [
+          "In get_trimmed_context(), use list comprehensions to split system vs non-system: [m for m in self.messages if m['role'] == 'system']",
+          "When iterating reversed non-system messages, use kept.insert(0, msg) to maintain original chronological order in the final result.",
+          "The token budget check: calculate total tokens from system messages first, then add non-system messages from newest to oldest until budget is exceeded."
+        ]
+      },
+      "test_code": "ctx = ContextWindow(max_tokens=20)\nctx.add_message(\"system\", \"Be helpful.\")\nassert ctx.message_count() == 1\nassert ctx.count_tokens(\"hello world test\") == 3\nctx.add_message(\"user\", \"one two three four five six seven eight nine ten\")\nctx.add_message(\"user\", \"short msg\")\nctx.add_message(\"assistant\", \"reply here\")\ntrimmed = ctx.get_trimmed_context()\nassert trimmed[0][\"role\"] == \"system\"\nassert trimmed[0][\"content\"] == \"Be helpful.\"\nassert all(m[\"role\"] != \"system\" for m in trimmed[1:])\ntotal_tokens = sum(ctx.count_tokens(m[\"content\"]) for m in trimmed)\nassert total_tokens <= 20\nassert ctx.message_count() == 4\nctx2 = ContextWindow(max_tokens=5)\nctx2.add_message(\"system\", \"Hi\")\nctx2.add_message(\"user\", \"a b c d e f g h i j\")\ntrimmed2 = ctx2.get_trimmed_context()\nassert len(trimmed2) == 1\nassert trimmed2[0][\"role\"] == \"system\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["text generation pipeline", "prompt routing", "intent classification", "context window management", "adaptive generation parameters", "on-device inference", "Qwen3-0.6B", "multi-turn conversation architecture"],
+    "concepts_required": ["python classes", "dictionaries", "list comprehensions", "string methods", "basic ML concepts"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

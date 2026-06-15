@@ -1,0 +1,118 @@
+{
+  "id": "mteb_leaderboard_rag_embedding_selection_pipeline",
+  "topic": "mteb_leaderboard_rag_embedding_selection_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "MTEB Leaderboard: End-to-End Embedding Selection Pipeline for RAG",
+    "ta": ""
+  },
+  "description": {
+    "en": "Build a systematic pipeline that queries MTEB benchmark data, filters embedding models by RAG-relevant metrics and hardware constraints, and produces a ranked shortlist ready for production evaluation.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Building Your Own MTEB-Powered Model Selection Pipeline\n\nVaathiyaar here! Reading the MTEB leaderboard manually is fine when you have two models to compare — but what happens when your team needs to evaluate a dozen candidates across retrieval, similarity, and reranking scores, while respecting memory budgets and latency targets? You build a **pipeline** that does the filtering for you. Today we turn benchmark data into an automated model shortlisting system.\n\n### Why Automate Model Selection?\n\nThe MTEB leaderboard evaluates models across 8 task categories and 58+ datasets. Manually scanning rows is error-prone when you need to cross-reference:\n\n| Constraint | Why It Matters | How to Measure |\n|---|---|---|\n| Retrieval nDCG@10 | Core RAG quality — how well top-10 results match | MTEB Retrieval tab |\n| Embedding dimensions | Vector storage cost scales linearly | Model card metadata |\n| Model size (params) | GPU/CPU memory budget | Hugging Face API |\n| STS Spearman | Semantic caching & dedup quality | MTEB STS tab |\n| Inference speed | Latency per query at your batch size | Local benchmark |\n\n### Step 1: Collecting Model Benchmark Profiles\n\nFirst, structure each model's MTEB scores into a queryable profile.\n\n```python\nclass ModelProfile:\n    \"\"\"A single embedding model's MTEB benchmark profile.\"\"\"\n    def __init__(self, name, dims, params, retrieval, sts, reranking,\n                 speed_tok_per_sec=None):\n        self.name = name\n        self.dims = dims\n        self.params = params\n        self.retrieval = retrieval      # nDCG@10\n        self.sts = sts                  # Spearman correlation\n        self.reranking = reranking      # MAP score\n        self.speed = speed_tok_per_sec  # optional local benchmark\n\n    def rag_score(self, weights=None):\n        \"\"\"Weighted composite score for RAG suitability.\"\"\"\n        w = weights or {\"retrieval\": 0.6, \"sts\": 0.25, \"reranking\": 0.15}\n        return round(\n            self.retrieval * w[\"retrieval\"] +\n            self.sts * w[\"sts\"] +\n            self.reranking * w[\"reranking\"], 4\n        )\n```\n\n### Step 2: The Selection Pipeline\n\nThe pipeline applies hard filters first (dimensions, size, minimum quality floor), then ranks survivors by a weighted RAG score.\n\n```python\nclass EmbeddingSelectionPipeline:\n    def __init__(self):\n        self.candidates = []\n\n    def add(self, profile: ModelProfile):\n        self.candidates.append(profile)\n\n    def filter(self, max_dims=1024, max_params=500_000_000,\n               min_retrieval=0.40):\n        return [\n            m for m in self.candidates\n            if m.dims <= max_dims\n            and m.params <= max_params\n            and m.retrieval >= min_retrieval\n        ]\n\n    def rank(self, filtered, weights=None):\n        for m in filtered:\n            m._rag_score = m.rag_score(weights)\n        return sorted(filtered, key=lambda m: m._rag_score, reverse=True)\n\n    def select(self, max_dims=1024, max_params=500_000_000,\n               min_retrieval=0.40, top_k=3, weights=None):\n        viable = self.filter(max_dims, max_params, min_retrieval)\n        ranked = self.rank(viable, weights)\n        return ranked[:top_k]\n```\n\n### Step 3: Running the Pipeline\n\n```python\npipeline = EmbeddingSelectionPipeline()\n\npipeline.add(ModelProfile(\"all-MiniLM-L6-v2\", 384, 22_700_000,\n                          retrieval=0.419, sts=0.788, reranking=0.580))\npipeline.add(ModelProfile(\"bge-small-en-v1.5\", 384, 33_400_000,\n                          retrieval=0.512, sts=0.820, reranking=0.593))\npipeline.add(ModelProfile(\"bge-large-en-v1.5\", 1024, 335_000_000,\n                          retrieval=0.544, sts=0.837, reranking=0.610))\npipeline.add(ModelProfile(\"NV-Embed-v2\", 4096, 7_800_000_000,\n                          retrieval=0.723, sts=0.698, reranking=0.654))\npipeline.add(ModelProfile(\"gte-large-en-v1.5\", 1024, 434_000_000,\n                          retrieval=0.558, sts=0.842, reranking=0.620))\n\n# Small deployment: CPU-only, 384-dim limit, under 100M params\nresults = pipeline.select(max_dims=384, max_params=100_000_000, top_k=2)\nfor m in results:\n    print(f\"{m.name:25s}  RAG={m._rag_score:.4f}  dims={m.dims}\")\n\n# Larger deployment: GPU available, 1024-dim limit\nresults = pipeline.select(max_dims=1024, max_params=500_000_000, top_k=3)\nfor m in results:\n    print(f\"{m.name:25s}  RAG={m._rag_score:.4f}  dims={m.dims}\")\n```\n\n### Understanding the Weighted RAG Score\n\nThe default weights prioritize retrieval because it directly determines what context your LLM sees:\n\n| Component | Weight | Rationale |\n|---|---|---|\n| Retrieval nDCG@10 | 60% | Core document ranking quality |\n| STS Spearman | 25% | Semantic similarity for caching & dedup |\n| Reranking MAP | 15% | Second-stage candidate reordering |\n\nYou can adjust weights based on your architecture — if you use a separate cross-encoder reranker, lower the reranking weight and redistribute to retrieval.\n\n### Extending with Local Benchmarks\n\nLeaderboard scores use standardized hardware. Your actual latency depends on your hardware. After shortlisting with MTEB scores, validate locally:\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport time\n\ndef local_benchmark(model_name, texts, batch_size=32):\n    model = SentenceTransformer(model_name)\n    start = time.time()\n    model.encode(texts, batch_size=batch_size, normalize_embeddings=True)\n    elapsed = time.time() - start\n    return {\"model\": model_name,\n            \"total_ms\": round(elapsed * 1000, 1),\n            \"per_text_ms\": round(elapsed * 1000 / len(texts), 2)}\n\ntexts = [\"sample query\"] * 100\nprint(local_benchmark(\"BAAI/bge-small-en-v1.5\", texts))\n```\n\n> **Key Insight:** Treat MTEB scores as your first filter, not your final answer. Build a pipeline that applies hard constraints (dims, params, quality floor), ranks survivors by a weighted composite score tuned to your RAG architecture, then validate the top 2-3 candidates with local latency benchmarks. Automation removes bias and makes the decision reproducible across your team.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "With hundreds of embedding models on MTEB, manual comparison breaks down fast. Today you'll build an automated selection pipeline: collect benchmark profiles, apply hardware constraints as hard filters, rank survivors by a weighted RAG score, and validate finalists with local benchmarks.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "class ModelProfile:\n    def __init__(self, name, dims, params, retrieval, sts, reranking,\n                 speed_tok_per_sec=None):\n        self.name = name\n        self.dims = dims\n        self.params = params\n        self.retrieval = retrieval\n        self.sts = sts\n        self.reranking = reranking\n        self.speed = speed_tok_per_sec\n\n    def rag_score(self, weights=None):\n        w = weights or {\"retrieval\": 0.6, \"sts\": 0.25, \"reranking\": 0.15}\n        return round(\n            self.retrieval * w[\"retrieval\"] +\n            self.sts * w[\"sts\"] +\n            self.reranking * w[\"reranking\"], 4\n        )",
+      "steps": [
+        {"line": 1, "explanation": "Define a ModelProfile class that encapsulates one embedding model's MTEB benchmark data."},
+        {"line": 2, "explanation": "Constructor accepts the model's name, embedding dimensions, parameter count, and three key MTEB scores."},
+        {"line": 5, "explanation": "Store retrieval nDCG@10 — the most critical metric for RAG document ranking quality."},
+        {"line": 8, "explanation": "STS (Semantic Textual Similarity) and reranking scores round out the RAG-relevant benchmark picture."},
+        {"line": 12, "explanation": "The rag_score method computes a weighted composite — 60% retrieval, 25% STS, 15% reranking by default."},
+        {"line": 14, "explanation": "Allow custom weights so teams can tune the formula to their architecture (e.g., lower reranking if using a cross-encoder)."},
+        {"line": 15, "explanation": "Return the weighted sum rounded to 4 decimal places for clean comparisons."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "class EmbeddingSelectionPipeline:\n    def __init__(self):\n        self.candidates = []\n\n    def add(self, profile):\n        self.candidates.append(profile)\n\n    def filter(self, max_dims=1024, max_params=500_000_000,\n               min_retrieval=0.40):\n        return [\n            m for m in self.candidates\n            if m.dims <= max_dims\n            and m.params <= max_params\n            and m.retrieval >= min_retrieval\n        ]\n\n    def rank(self, filtered, weights=None):\n        for m in filtered:\n            m._rag_score = m.rag_score(weights)\n        return sorted(filtered, key=lambda m: m._rag_score, reverse=True)\n\n    def select(self, max_dims=1024, max_params=500_000_000,\n               min_retrieval=0.40, top_k=3, weights=None):\n        viable = self.filter(max_dims, max_params, min_retrieval)\n        ranked = self.rank(viable, weights)\n        return ranked[:top_k]",
+      "steps": [
+        {"line": 1, "explanation": "The pipeline class orchestrates the full selection workflow: add → filter → rank → select."},
+        {"line": 5, "explanation": "add() collects ModelProfile instances — each representing one embedding model candidate."},
+        {"line": 8, "explanation": "filter() applies hard constraints: max embedding dimensions, max parameter count, and a quality floor."},
+        {"line": 10, "explanation": "List comprehension keeps only models that pass ALL three constraints simultaneously."},
+        {"line": 17, "explanation": "rank() computes each model's weighted RAG score and sorts descending — best first."},
+        {"line": 22, "explanation": "select() chains filter → rank → slice, returning the top-k finalists ready for local validation."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Manual Leaderboard Browsing",
+      "right_label": "Automated Selection Pipeline",
+      "items": [
+        {"left": "Scroll through rows visually", "right": "Programmatic hard filters remove non-starters instantly"},
+        {"left": "Compare 2-3 models by memory", "right": "Score dozens of candidates with consistent weights"},
+        {"left": "Forget to check dimension limits", "right": "Constraints enforced every time — no oversights"},
+        {"left": "Decision varies by who's looking", "right": "Reproducible, auditable selection across your team"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built an automated MTEB-powered embedding selection pipeline — from benchmark profiles to ranked shortlists!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ModelProfile` class and an `EmbeddingSelectionPipeline` class. ModelProfile stores a model's name, dims, params, retrieval score, sts score, and reranking score. It has a `rag_score()` method that returns a weighted composite: retrieval*0.6 + sts*0.25 + reranking*0.15, rounded to 4 decimal places. EmbeddingSelectionPipeline has `add(profile)`, `filter(max_dims, max_params, min_retrieval)` returning models meeting all constraints, and `select(max_dims, max_params, min_retrieval, top_k)` returning the top-k models sorted by rag_score descending."
+      },
+      "starter_code": "class ModelProfile:\n    def __init__(self, name, dims, params, retrieval, sts, reranking):\n        # Store all attributes\n        pass\n\n    def rag_score(self):\n        # Return retrieval*0.6 + sts*0.25 + reranking*0.15, rounded to 4\n        pass\n\nclass EmbeddingSelectionPipeline:\n    def __init__(self):\n        self.candidates = []\n\n    def add(self, profile):\n        # Append profile to candidates\n        pass\n\n    def filter(self, max_dims=1024, max_params=500_000_000,\n               min_retrieval=0.40):\n        # Return list of models meeting ALL constraints\n        pass\n\n    def select(self, max_dims=1024, max_params=500_000_000,\n               min_retrieval=0.40, top_k=3):\n        # Filter, sort by rag_score descending, return top_k\n        pass\n\n# Test it:\npipe = EmbeddingSelectionPipeline()\npipe.add(ModelProfile(\"MiniLM\", 384, 22_700_000, 0.419, 0.788, 0.580))\npipe.add(ModelProfile(\"bge-small\", 384, 33_400_000, 0.512, 0.820, 0.593))\npipe.add(ModelProfile(\"bge-large\", 1024, 335_000_000, 0.544, 0.837, 0.610))\npipe.add(ModelProfile(\"NV-Embed\", 4096, 7_800_000_000, 0.723, 0.698, 0.654))\n\n# Filter to small models only\nsmall = pipe.filter(max_dims=384, max_params=100_000_000)\nprint(len(small))\nprint(small[0].name if small else \"none\")\n\n# Select top 2 under 500M params, 1024 dims\ntop = pipe.select(max_dims=1024, max_params=500_000_000, top_k=2)\nprint(top[0].name)\nprint(top[1].name)\nprint(round(top[0].rag_score(), 4))",
+      "expected_output": "2\nMiniLM\nbge-large\nbge-small\n0.5274",
+      "hints": {
+        "en": [
+          "In ModelProfile.__init__, store each parameter as self.name = name, self.dims = dims, etc.",
+          "rag_score returns round(self.retrieval * 0.6 + self.sts * 0.25 + self.reranking * 0.15, 4)",
+          "In select(), call self.filter() first, then sort the result with sorted(filtered, key=lambda m: m.rag_score(), reverse=True) and return [:top_k]"
+        ]
+      },
+      "test_code": "p1 = ModelProfile(\"A\", 384, 30_000_000, 0.50, 0.80, 0.60)\nassert p1.rag_score() == round(0.50*0.6 + 0.80*0.25 + 0.60*0.15, 4)\np2 = ModelProfile(\"B\", 768, 200_000_000, 0.60, 0.85, 0.65)\npipe = EmbeddingSelectionPipeline()\npipe.add(p1)\npipe.add(p2)\nf = pipe.filter(max_dims=512, max_params=100_000_000)\nassert len(f) == 1\nassert f[0].name == \"A\"\ns = pipe.select(max_dims=1024, max_params=500_000_000, top_k=1)\nassert s[0].name == \"B\"\nassert s[0].rag_score() > p1.rag_score()"
+    },
+    {
+      "instruction": {
+        "en": "Build an `MTEBTaskFilter` class that helps you identify which MTEB task categories matter for a given use case. It stores task categories with their metrics and relevance weights. Implement `add_task(category, metric, rag_weight)`, `rag_relevant(min_weight)` returning categories with weight >= min_weight sorted by weight descending, `total_weight()` returning sum of all weights, and `normalized_weights()` returning a dict mapping each category to its weight divided by total_weight, rounded to 3 decimal places."
+      },
+      "starter_code": "class MTEBTaskFilter:\n    def __init__(self):\n        self.tasks = {}  # category -> {\"metric\": str, \"weight\": float}\n\n    def add_task(self, category: str, metric: str, rag_weight: float):\n        # Store task info keyed by category\n        pass\n\n    def rag_relevant(self, min_weight: float = 0.1) -> list:\n        # Return category names with weight >= min_weight\n        # Sorted by weight descending\n        pass\n\n    def total_weight(self) -> float:\n        # Sum of all rag_weights\n        pass\n\n    def normalized_weights(self) -> dict:\n        # {category: weight/total_weight} rounded to 3 decimals\n        pass\n\n# Test it:\ntf = MTEBTaskFilter()\ntf.add_task(\"Retrieval\", \"nDCG@10\", 0.60)\ntf.add_task(\"STS\", \"Spearman\", 0.25)\ntf.add_task(\"Reranking\", \"MAP\", 0.15)\ntf.add_task(\"Classification\", \"Accuracy\", 0.05)\ntf.add_task(\"Clustering\", \"V-measure\", 0.03)\n\nrelevant = tf.rag_relevant(min_weight=0.10)\nprint(len(relevant))\nprint(relevant[0])\nprint(relevant[-1])\n\nprint(tf.total_weight())\n\nnw = tf.normalized_weights()\nprint(nw[\"Retrieval\"])\nprint(nw[\"STS\"])",
+      "expected_output": "3\nRetrieval\nReranking\n1.08\n0.556\n0.231",
+      "hints": {
+        "en": [
+          "Store as self.tasks[category] = {\"metric\": metric, \"weight\": rag_weight}",
+          "For rag_relevant, filter tasks.items() where weight >= min_weight, sort by weight descending, return category names",
+          "For normalized_weights, divide each weight by total_weight() and round to 3 decimal places"
+        ]
+      },
+      "test_code": "t = MTEBTaskFilter()\nt.add_task(\"A\", \"m1\", 0.5)\nt.add_task(\"B\", \"m2\", 0.3)\nt.add_task(\"C\", \"m3\", 0.05)\nassert t.rag_relevant(0.1) == [\"A\", \"B\"]\nassert t.total_weight() == 0.85\nnw = t.normalized_weights()\nassert nw[\"A\"] == round(0.5 / 0.85, 3)\nassert nw[\"B\"] == round(0.3 / 0.85, 3)\nassert nw[\"C\"] == round(0.05 / 0.85, 3)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["MTEB benchmark", "embedding model evaluation", "weighted scoring", "constraint-based filtering", "nDCG@10", "model selection pipeline", "RAG embedding selection"],
+    "concepts_required": ["python classes", "list comprehensions", "sorting", "dictionaries", "basic embeddings concept"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

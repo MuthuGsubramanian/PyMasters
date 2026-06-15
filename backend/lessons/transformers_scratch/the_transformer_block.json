@@ -1,0 +1,174 @@
+{
+  "id": "the_transformer_block",
+  "topic": "the_transformer_block",
+  "track": "transformers_scratch",
+  "module": "architecture",
+  "order": 2,
+  "title": {
+    "en": "The Transformer Block: Attention + FFN + Residuals + LayerNorm"
+  },
+  "description": {
+    "en": "A transformer is not one giant network — it is a stack of identical BLOCKS, each one a small, self-contained refinement step. In this lesson you assemble a single block from four parts: multi-head self-attention, a residual connection, layer normalization, and a position-wise feed-forward network — then wrap that in a second residual + norm. Learn WHY residual connections let gradients flow and let each block refine rather than replace, WHY layer normalization stabilizes activations by re-centering every token vector to mean 0 / std 1, what the FFN actually computes, and the pre-norm vs post-norm choice. Then implement layer_norm in pure Python."
+  },
+  "xp_reward": 100,
+  "next_unlock": "tokenization_embeddings",
+  "story_variants": {
+    "en": "## A Transformer Is a Stack of Identical Blocks\n\nWhen people say \"a 12-layer transformer\" or \"GPT has 96 layers,\" the *layer* they mean is the **transformer block** — and every one of those blocks is structurally identical. You learned attention in the previous lessons; attention alone is not a transformer. The transformer is what you get when you wrap attention inside a repeatable unit and stack that unit N times. Understand one block and you understand the whole tower, because layer 2 is just layer 1 again with its own weights.\n\nSo what is inside a single block? Four ingredients, wired in a very specific order:\n\n1. **Multi-head self-attention** — every token mixes in information from every other token.\n2. **A residual connection** — the block's input is added back to attention's output.\n3. **Layer normalization** — the summed vector is re-centered and re-scaled.\n4. **A position-wise feed-forward network (FFN)** — each token is independently transformed, then a *second* residual + norm closes the block.\n\n> **Key idea:** One transformer block = self-attention -> add residual -> layer-norm -> feed-forward -> add residual -> layer-norm. Attention lets tokens *talk to each other*; the FFN lets each token *think on its own*; residuals and norms are the scaffolding that makes a deep stack of these actually trainable.\n\n## Sub-layer 1: Attention, Then Add and Normalize\n\nThe block opens with self-attention: each token looks across the sequence and pulls in relevant context. But instead of throwing away the original token, we **add it back**:\n\n```\nh = x + SelfAttention(x)      # residual connection\nh = LayerNorm(h)              # normalize the sum\n```\n\nThat `x +` is the residual (or skip) connection, and it is doing two jobs at once. First, it gives **gradients a highway**: during backprop the gradient can flow straight through the `+` to earlier layers without being repeatedly squashed by every sub-layer, which is what historically killed very deep networks (vanishing gradients). Second, it reframes what each sub-layer has to learn — attention no longer has to reproduce the whole token, it only has to compute a *correction* to add. Each block **refines** the representation rather than **replacing** it.\n\n## Why Layer Normalization\n\nAfter the add, the numbers in the vector can drift — some components large, some small, the scale wandering as we go deeper. **Layer normalization** fixes this per token: for a single token's vector it subtracts that vector's mean and divides by its standard deviation, so the vector comes out with **mean 0 and std 1**.\n\n```\nmean = average(v)\nvar  = average((vi - mean)^2)\nnorm = (v - mean) / sqrt(var + eps)\n```\n\nThe tiny `eps` (e.g. 1e-5) just guards against dividing by zero when a vector is flat. Crucially, layer norm normalizes **across the features of one token**, independently of the batch and of the other tokens — unlike batch norm, it does not care how many tokens are in the sequence or how big the batch is, which is exactly what you want for variable-length text. Stable, well-scaled activations mean the next sub-layer always receives inputs in a sane range, keeping training steady all the way down a deep stack.\n\n## Sub-layer 2: The Position-Wise Feed-Forward Network\n\nAttention mixes information *between* tokens. The FFN does the opposite: it processes **each token independently**, the same small network applied to every position (hence *position-wise*). It is just two linear layers with a nonlinearity between them:\n\n```\nFFN(z) = W2 @ activation(W1 @ z + b1) + b2\n```\n\nThe first matrix **expands** the dimension (typically d_model -> 4*d_model), an activation like ReLU or GELU adds nonlinearity, and the second matrix **contracts** back to d_model. This expand-then-contract gives each token room to compute a richer nonlinear transform of itself — think of attention as gathering the raw material and the FFN as the per-token workshop that processes it. Then, exactly like the attention sub-layer, we wrap it in a residual and a norm:\n\n```\nblock_out = LayerNorm(h + FFN(h))\n```\n\n## The Whole Block at a Glance\n\n| Component | What it does | Operates across | Why it's there |\n|-----------|--------------|-----------------|----------------|\n| Multi-head attention | mix context from other tokens | the sequence (token-to-token) | gather relevant information |\n| Residual (skip) add | add input back to sub-layer output | same token | gradient highway; refine not replace |\n| Layer normalization | re-center to mean 0, std 1 | features of one token | stabilize activation scale |\n| Feed-forward network | per-token expand -> activate -> contract | each token alone | nonlinear per-token processing |\n\n## Pre-Norm vs Post-Norm\n\nWhere exactly does the norm go? The original 2017 transformer used **post-norm**: `LayerNorm(x + Sublayer(x))` — normalize *after* adding (the order shown above). Modern deep models (GPT-2 onward) overwhelmingly use **pre-norm**: `x + Sublayer(LayerNorm(x))` — normalize the input *before* the sub-layer, leaving the residual path completely clean. Pre-norm keeps an unobstructed identity path from input to output, which makes very deep stacks far more stable to train (often without delicate learning-rate warmup). The components are identical; only the *placement* of the norm relative to the residual add differs.\n\nThat is the entire architecture. Attention to share context, an FFN to think per token, residuals so gradients flow and blocks refine, and layer norm to keep the numbers sane — stack this unit N times and you have a transformer. In the challenge below you'll implement the one piece that does the stabilizing: `layer_norm`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "architecture_stack",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "block_anatomy",
+      "nodes": [
+        {
+          "label": "One Transformer Block",
+          "children": [
+            "1. Multi-head self-attention -> mix context across tokens",
+            "2. Add residual (x + attn) -> gradient highway, refine not replace",
+            "3. LayerNorm -> each token vector to mean 0 / std 1",
+            "4. Feed-forward (expand -> activate -> contract) per token",
+            "5. Add residual + LayerNorm again -> block output"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "prenorm_vs_postnorm",
+      "left": {
+        "label": "Post-norm (2017): LayerNorm(x + Sublayer(x)) — norm after the add",
+        "result": true
+      },
+      "right": {
+        "label": "Pre-norm (GPT-2+): x + Sublayer(LayerNorm(x)) — clean residual path, deeper & more stable",
+        "result": true
+      },
+      "description": {
+        "en": "Same four components, only the placement of LayerNorm relative to the residual add differs. Pre-norm leaves an unobstructed identity path from input to output, which makes very deep stacks far easier to train."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "layernorm_walkthrough",
+      "code": "v = [2.0, 4.0, 6.0, 8.0]\nmean = sum(v) / len(v)            # 5.0\nvar  = sum((x-mean)**2 for x in v) / len(v)  # 5.0\nnorm = [(x-mean) / (var+1e-5)**0.5 for x in v]\nprint([round(x, 4) for x in norm])",
+      "executionSteps": [
+        { "line": 1, "variables": { "v": "[2.0, 4.0, 6.0, 8.0]" }, "output": "", "description": "One token's feature vector before normalization." },
+        { "line": 2, "variables": { "mean": "5.0" }, "output": "", "description": "Average of the components — this is what we subtract to re-center." },
+        { "line": 3, "variables": { "var": "5.0", "std": "2.2360" }, "output": "", "description": "Variance, then sqrt(var + eps) gives the scale we divide by." },
+        { "line": 4, "variables": { "norm": "[-1.3416, -0.4472, 0.4472, 1.3416]" }, "output": "", "description": "(x - mean) / std for each component. Symmetric around 0." },
+        { "line": 5, "variables": { "mean(norm)": "0.0", "std(norm)": "1.0" }, "output": "[-1.3416, -0.4472, 0.4472, 1.3416]", "description": "Result has mean 0 and std 1 — the activation scale is now controlled." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Block = Attention -> +residual -> LayerNorm -> FFN -> +residual -> LayerNorm.",
+        "Residuals: gradient highway + each block REFINES instead of replacing.",
+        "LayerNorm: every token vector to mean 0 / std 1.  FFN: per-token expand->act->contract.",
+        "Stack this identical block N times and you have a transformer."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement layer normalization for a SINGLE token vector in PURE PYTHON (lists + math, NO numpy). Layer norm does three things: (1) compute the mean of the vector's components, (2) compute the variance — the average squared distance from that mean, (3) return each component re-centered and re-scaled as (x - mean) / sqrt(variance + eps). The tiny eps (default 1e-5) guards against dividing by zero on a flat vector. Complete `layer_norm(x, eps=1e-5)` so it returns the normalized list. The result should have mean ~0 and std ~1. Print layer_norm([2.0, 4.0, 6.0, 8.0]) with each component rounded to 4 decimals. Expected output: [-1.3416, -0.4472, 0.4472, 1.3416]"
+      },
+      "starter_code": "import math\n\ndef layer_norm(x, eps=1e-5):\n    \"\"\"Normalize one vector to ~mean 0 / ~std 1.\n    Return (x - mean) / sqrt(variance + eps) for each component.\"\"\"\n    n = len(x)\n    # TODO 1: mean of the components\n    mean = None\n    # TODO 2: variance = average squared distance from the mean\n    var = None\n    # TODO 3: std = sqrt(var + eps), then normalize each component\n    std = None\n    return []  # TODO: [(v - mean) / std for v in x]\n\nvec = [2.0, 4.0, 6.0, 8.0]\nout = layer_norm(vec)\nprint([round(v, 4) for v in out])",
+      "expected_output": "[-1.3416, -0.4472, 0.4472, 1.3416]",
+      "hints": {
+        "en": [
+          "mean = sum(x) / n. For [2,4,6,8] that is 5.0.",
+          "var = sum((v - mean) ** 2 for v in x) / n. Use the SAME n (population variance, divide by n, not n-1). Here var = 5.0.",
+          "std = math.sqrt(var + eps). Then return [(v - mean) / std for v in x] — one comprehension does the whole normalization.",
+          "Sanity check: the returned values are symmetric around 0 and their average is ~0, which is the whole point of layer norm."
+        ]
+      },
+      "test_code": "out = layer_norm([2.0, 4.0, 6.0, 8.0])\nassert len(out) == 4\n# exact rounded output\nassert [round(v, 4) for v in out] == [-1.3416, -0.4472, 0.4472, 1.3416]\n# normalized vector has ~0 mean\nmean_out = sum(out) / len(out)\nassert abs(mean_out) < 1e-6\n# and ~unit standard deviation\nvar_out = sum((v - mean_out) ** 2 for v in out) / len(out)\nassert abs(math.sqrt(var_out) - 1.0) < 1e-4\n# works on another vector and stays ~0 mean\nout2 = layer_norm([1.0, 2.0, 3.0])\nassert abs(sum(out2) / len(out2)) < 1e-6\n# eps guards a flat vector against divide-by-zero (no exception, finite values)\nflat = layer_norm([7.0, 7.0, 7.0])\nassert all(abs(v) < 1.0 for v in flat)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the correct structure of a single transformer block?"
+      },
+      "options": {
+        "en": [
+          "A single giant linear layer applied once to the whole sequence",
+          "Self-attention -> add residual -> layer-norm -> feed-forward -> add residual -> layer-norm",
+          "Feed-forward only, repeated N times with no attention",
+          "Softmax -> dropout -> softmax, with no normalization"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does a transformer block use residual (skip) connections that add the input back to each sub-layer's output?"
+      },
+      "options": {
+        "en": [
+          "To make the model smaller by reusing weights",
+          "They give gradients a direct path to flow backward and let each sub-layer learn a correction (refine) instead of reproducing the whole input (replace)",
+          "To convert the activations into probabilities",
+          "They are required only for the final output layer"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What exactly does layer normalization do, and across what does it normalize?"
+      },
+      "options": {
+        "en": [
+          "It normalizes across the batch dimension, so it depends on how many sequences are processed together",
+          "It re-centers and re-scales each TOKEN's feature vector to mean 0 and std 1, independently of the batch and other tokens",
+          "It sets every activation to exactly 1 to remove all variation",
+          "It scales the attention weights so each row sums to 1"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the role of the position-wise feed-forward network (FFN) in a block?"
+      },
+      "options": {
+        "en": [
+          "It mixes information between different tokens like a second attention",
+          "It applies the same two-linear-layer-with-activation network to each token independently, expanding then contracting the dimension for per-token nonlinear processing",
+          "It computes the mean and variance used by layer norm",
+          "It generates the query, key, and value matrices"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["transformer_block", "residual_connection", "layer_normalization", "feed_forward_network", "pre_norm_post_norm"],
+    "concepts_required": ["self_attention"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 24,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

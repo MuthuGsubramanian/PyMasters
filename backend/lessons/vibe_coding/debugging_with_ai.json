@@ -1,0 +1,165 @@
+{
+  "id": "debugging_with_ai",
+  "topic": "debugging_with_ai",
+  "track": "vibe_coding",
+  "module": "mastery",
+  "order": 1,
+  "title": {
+    "en": "Debugging With AI Without Going in Circles"
+  },
+  "description": {
+    "en": "Most people debug with AI badly: they paste 'it doesn't work' and get a confident wrong guess, then spiral for an hour. Learn the disciplined loop — exact error, minimal repro, expected vs actual — and how to break the confident-fix spiral before it eats your afternoon."
+  },
+  "xp_reward": 90,
+  "next_unlock": "refactoring_with_ai",
+  "story_variants": {
+    "en": "## The Hour You Lost to 'It Doesn't Work'\n\nYou hit a bug. You paste your function into the AI with the message: *\"this doesn't work, fix it.\"* The AI — which has never seen your error, your data, or your stack trace — does the only thing it can do: it *guesses*, confidently. It rewrites three lines, changes a variable name, and says \"This should fix it!\" You run it. Still broken. You reply \"still broken.\" It guesses again, just as confidently, in a slightly different direction. Forty minutes later you have a function that's been rewritten four times, you understand it *less* than when you started, and the original bug is still there.\n\nThis is the **confident-fix spiral**, and almost everyone falls into it. The AI is not malfunctioning — you starved it of the one thing that makes debugging possible: *evidence*. A model that can't see the error can only pattern-match on vibes. Garbage in, confident garbage out.\n\nGood debugging with AI is a discipline, not a vibe. Here is the loop.\n\n## The Disciplined Debugging Loop\n\n**1. Give the EXACT error — the full traceback, not a paraphrase.** \"It crashes\" tells the AI nothing. `IndexError: list index out of range` on line 14 tells it almost everything. The traceback names the *file*, the *line*, the *exception type*, and the *call chain that led there*. Paste all of it. A paraphrase like \"some index thing\" throws away the exact signal that would have localized the bug in one shot.\n\n**2. Give a MINIMAL reproducible example — not the whole repo.** Strip the bug down to the smallest snippet that still fails. This does two things: it often reveals the bug *to you* before you even ask, and it stops the AI from drowning in 400 lines of irrelevant context and guessing about the wrong part.\n\n**3. State EXPECTED vs ACTUAL.** \"I expected `[1, 2, 3]`, I got `[1, 2]`.\" This single sentence converts a vague complaint into a precise target. The AI now debugs *toward a known answer* instead of toward your mood.\n\n**4. When a fix fails, say PRECISELY how.** Not \"still broken.\" Instead: \"Now it raises `KeyError: 'age'` on line 9 instead.\" Each failure is data. \"Still broken\" deletes the data and forces another blind guess. Precise failure reports turn the AI from a slot machine into an instrument.\n\n**5. Break the spiral after two failed attempts.** This is the rule that saves your afternoon. If two real fixes haven't worked, **stop asking for fixes.** The AI is now guessing in the dark and you're following it there. Take back the wheel: form a hypothesis yourself, add a `print()` to check one assumption, or bisect — comment out half the code and see if the bug survives. The AI is a brilliant rubber duck, but *you* steer.\n\n## Bad Prompt vs Good Prompt\n\n| Bad debugging prompt | Good debugging prompt |\n|----------------------|-----------------------|\n| \"It doesn't work, fix it.\" | \"`IndexError: list index out of range` on line 14. Here's the 6-line repro.\" |\n| \"Something's wrong with my loop.\" | \"I expected sum=10, got sum=6. Loop runs 3 times instead of 4.\" |\n| \"Still broken.\" | \"Your fix removed the IndexError but now returns `[]` instead of `[1,2,3]`.\" |\n| Pastes the entire 400-line file | Pastes the 8 lines that actually fail, with sample input |\n| \"Just make it work somehow.\" | \"Here's the traceback + expected vs actual. What's the most likely cause?\" |\n\nNotice the pattern: every good prompt hands the AI *evidence*. Every bad prompt hands it a *feeling*.\n\n## The AI Is a Rubber Duck You Can Talk Back\n\nThe classic debugging trick is to explain your bug to a rubber duck on your desk — half the time you solve it mid-sentence, because articulating the problem forces you to confront your assumptions. The AI is that duck, except it answers. The value isn't that it magically knows your bug; it's that *preparing a good question* (exact error, minimal repro, expected vs actual) is itself most of the debugging. If you find you can't write the minimal repro, that's not a failure — that's the bug telling you that you don't yet understand where it lives. Go find out, then ask.\n\n> **Key idea:** The AI can't debug what it can't see. Feed it the exact error, a minimal repro, and expected-vs-actual — and when two fixes fail, stop the spiral and form your own hypothesis. You are the debugger; the AI is your fastest assistant, not your replacement."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "tangled_wires",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "debugging_loop",
+      "nodes": [
+        {
+          "label": "The Disciplined Debugging Loop",
+          "children": [
+            "1. Exact error + full traceback",
+            "2. Minimal reproducible example",
+            "3. Expected vs Actual",
+            "4. Say precisely how a fix failed",
+            "5. After 2 fails: stop, hypothesize, bisect"
+          ]
+        }
+      ],
+      "duration_ms": 3800
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "feeling_vs_evidence",
+      "left": {
+        "label": "Feeling: 'It doesn't work, fix it.'  ->  confident wrong guess",
+        "result": false
+      },
+      "right": {
+        "label": "Evidence: 'IndexError line 14 + 6-line repro + expected vs actual'  ->  targeted fix",
+        "result": true
+      },
+      "description": {
+        "en": "Every good debugging prompt hands the AI EVIDENCE. Every bad one hands it a FEELING."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "exact_error_demo",
+      "code": "def last_three(items):\n    return [items[i] for i in range(len(items) - 3, len(items))]\n\nprint(last_three([10, 20]))",
+      "executionSteps": [
+        { "line": 2, "variables": { "items": "[10, 20]", "range": "range(-1, 2)" }, "output": "running...", "description": "len is 2, so it indexes -1, 0, 1 — that -1 wraps, then index 2 is out of range." },
+        { "line": 2, "variables": { "items": "[10, 20]", "i": "2" }, "output": "IndexError: list index out of range", "description": "The EXACT error + line is the signal. Paste this, not 'it doesn't work'." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "break_the_spiral",
+      "output": [
+        "Attempt 1 failed. Attempt 2 failed. STOP.",
+        "Two confident fixes = the AI is guessing in the dark.",
+        "Take the wheel: hypothesize -> add a print() -> bisect.",
+        "The AI is your rubber duck. YOU are the debugger."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Be the debugger. This function should return the last 3 items of a list. Running it on [10, 20, 30, 40] raises 'IndexError: list index out of range' (see the comment). Read the EXACT error, localize it to the indexing line, and fix the off-by-one so it returns the last 3 items. With the given data the answer is [20, 30, 40]. Expected output: [20, 30, 40]"
+      },
+      "starter_code": "def last_three(items):\n    result = []\n    # ERROR when run: IndexError: list index out of range\n    # The loop indexes one position too far (off-by-one).\n    for i in range(len(items) - 3, len(items) + 1):\n        result.append(items[i])\n    return result\n\nprint(last_three([10, 20, 30, 40]))",
+      "expected_output": "[20, 30, 40]",
+      "hints": {
+        "en": [
+          "Read the EXACT error: 'IndexError: list index out of range' means you indexed past the end of the list.",
+          "Localize it: valid indices for a length-4 list are 0..3. The loop runs while i is in range(1, 5), so i=4 is out of range — that's the off-by-one.",
+          "range(start, stop) already stops BEFORE stop. Change range(len(items) - 3, len(items) + 1) to range(len(items) - 3, len(items)).",
+          "After the fix, i takes values 1, 2, 3 -> items[1], items[2], items[3] -> [20, 30, 40]."
+        ]
+      },
+      "test_code": "assert last_three([10, 20, 30, 40]) == [20, 30, 40]\nassert last_three([1, 2, 3]) == [1, 2, 3]\nassert last_three([5, 6, 7, 8, 9]) == [7, 8, 9]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "You paste your function with 'this doesn't work, fix it.' Why does the AI give a confident WRONG guess?"
+      },
+      "options": {
+        "en": [
+          "The model is broken and needs restarting",
+          "You gave it a feeling instead of evidence — with no error or repro it can only pattern-match on vibes",
+          "Python errors are random",
+          "The AI is deliberately misleading you"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What should you paste instead of paraphrasing the error as 'some index thing'?"
+      },
+      "options": {
+        "en": [
+          "The full, exact traceback — file, line, exception type, and call chain",
+          "A screenshot of your whole screen",
+          "Just the function name",
+          "The number of times it crashed"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "After a fix fails, why is 'still broken' worse than 'now it raises KeyError: age on line 9'?"
+      },
+      "options": {
+        "en": [
+          "'Still broken' is shorter and that's bad",
+          "The precise failure is DATA that steers the next fix; 'still broken' deletes it and forces another blind guess",
+          "There is no difference",
+          "KeyError is always more important than other errors"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Two real fixes from the AI have both failed. What's the disciplined next move?"
+      },
+      "options": {
+        "en": [
+          "Ask for a third fix, then a fourth, until one sticks",
+          "Stop the spiral — form your own hypothesis, add a print(), or bisect the code yourself",
+          "Rewrite the whole file from scratch",
+          "Paste the entire repo and ask again"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["debugging", "minimal_reproducible_example", "expected_vs_actual", "ai_assisted_development"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

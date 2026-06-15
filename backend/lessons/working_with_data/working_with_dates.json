@@ -1,0 +1,173 @@
+{
+  "id": "working_with_dates",
+  "topic": "working_with_dates",
+  "track": "working_with_data",
+  "module": "formats",
+  "order": 2,
+  "title": {
+    "en": "Dates & Times Without Losing Your Mind"
+  },
+  "description": {
+    "en": "Date and time handling is a classic source of subtle, expensive bugs. Python's `datetime` module tames it: parse strings into real date objects, do arithmetic with `timedelta`, format for humans with `strftime`, and store everything in UTC. Learn the naive-vs-aware distinction that quietly breaks production systems."
+  },
+  "xp_reward": 90,
+  "next_unlock": "building_a_data_pipeline",
+  "story_variants": {
+    "en": "## Strings Are Not Dates\n\nThe number one date bug in real codebases is treating dates as text. You read `\"2026-06-09\"` from a CSV, compare it to `\"2026-1-15\"`, and the comparison is *alphabetical*, not chronological. `\"2026-1-15\" < \"2026-06-09\"` is `True` as strings — but as dates it's the opposite. Subtracting two date strings to find \"days between\" is impossible without first turning them into real objects.\n\nPython's `datetime` module gives you those real objects. Once a string becomes a `date` or `datetime`, the language knows how to compare it, subtract it, and add days to it correctly.\n\n> **Key idea:** A date is not a string. Parse text into a real `date`/`datetime` object as early as possible, do all your logic on objects, and only turn it back into a string at the very end for display or storage.\n\n## The Four Core Types\n\nThe module gives you four building blocks:\n\n- **`date`** — a calendar day: year, month, day. No time. `date(2026, 6, 9)`.\n- **`datetime`** — a day *and* a time: `datetime(2026, 6, 9, 14, 30, 0)`.\n- **`time`** — a time of day with no date: `time(14, 30)`.\n- **`timedelta`** — a *duration*: \"5 days\", \"3 hours\". This is what you get when you subtract two dates, and what you add to move forward or backward.\n\n## Parsing and Formatting: strptime and strftime\n\nTwo mirror-image functions connect strings and objects.\n\n- **`strptime(text, format)`** — *parse* text into a `datetime`. The `p` is for *parse*. You hand it the exact format the string is in.\n- **`strftime(format)`** — *format* an object back into text. The `f` is for *format*.\n\nBoth use the same `%`-codes:\n\n| Code | Meaning | Example |\n|------|---------|---------|\n| `%Y` | 4-digit year | `2026` |\n| `%m` | 2-digit month | `06` |\n| `%d` | 2-digit day | `09` |\n| `%H` | hour (24h) | `14` |\n| `%M` | minute | `30` |\n| `%S` | second | `05` |\n| `%A` | weekday name | `Tuesday` |\n| `%B` | month name | `June` |\n\n```python\nfrom datetime import datetime\n\ndt = datetime.strptime(\"2026-06-09\", \"%Y-%m-%d\")  # text -> object\nprint(dt.strftime(\"%A, %B %d %Y\"))                # object -> text\n# 'Tuesday, June 09 2026'\n```\n\n## ISO Format: The Sane Default\n\nThere's an even easier path when your strings are already in the standard `YYYY-MM-DD` shape. Every `date`/`datetime` has `.isoformat()`, and the classes have `.fromisoformat()`:\n\n```python\nfrom datetime import date\n\nd = date.fromisoformat(\"2026-06-09\")  # no format string needed\nprint(d.isoformat())                  # '2026-06-09'\n```\n\nISO 8601 (`2026-06-09`) sorts correctly *even as text*, is unambiguous worldwide, and is the format you should write to files and databases. Prefer it.\n\n## Date Arithmetic with timedelta\n\nThis is where objects pay off. Subtract two dates and you get a `timedelta`; read `.days` off it:\n\n```python\nfrom datetime import date, timedelta\n\nstart = date(2026, 1, 1)\nend   = date(2026, 6, 9)\nprint((end - start).days)        # 159\n\nlaunch = start + timedelta(days=90)\nprint(launch.isoformat())        # '2026-04-01'\n```\n\nNo month-length tables, no leap-year math — `timedelta` handles February and year boundaries for you.\n\n## Naive vs Aware: The Timezone Trap\n\nThe deepest pitfall is *naive* datetimes. A naive `datetime` has **no timezone attached** — it's just wall-clock numbers with no idea whether they mean Tokyo or New York. An *aware* datetime carries a `tzinfo`, so it pins an exact instant on Earth.\n\nMixing them bites you: you can't subtract a naive datetime from an aware one (Python raises `TypeError`), and storing naive local times means a value recorded at \"9:00\" is meaningless six months later when clocks have shifted.\n\nThe professional rule is simple:\n\n```python\nfrom datetime import datetime, timezone\n\nnow_utc = datetime.now(timezone.utc)   # AWARE, in UTC\n```\n\n**Store and compute in UTC (aware). Convert to the user's local timezone only for display.** Your database, your logs, and your arithmetic all live in one unambiguous timezone; the messy local formatting happens at the last possible moment, right before a human reads it.\n\nFollow that one rule and an entire category of \"it works on my machine but breaks for users abroad\" bugs simply disappears."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "calendar_clock",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "core_types",
+      "nodes": [
+        {
+          "label": "datetime module",
+          "children": [
+            "date      -> a calendar day (y, m, d)",
+            "datetime  -> day + time",
+            "time      -> time of day only",
+            "timedelta -> a DURATION you add/subtract"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "naive_vs_aware",
+      "left": {
+        "label": "Naive datetime (no tzinfo) -> ambiguous instant",
+        "result": false
+      },
+      "right": {
+        "label": "Aware datetime (UTC) -> exact instant, safe to store",
+        "result": true
+      },
+      "description": {
+        "en": "Naive datetimes have no timezone, so '9:00' could mean anywhere. Store and compute in UTC (aware); format to local time only for display."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "arithmetic_demo",
+      "code": "from datetime import date, timedelta\n\nstart = date.fromisoformat(\"2026-01-01\")\nend = date.fromisoformat(\"2026-06-09\")\ndiff = (end - start).days\nprint(diff)\n\nlaunch = start + timedelta(days=90)\nprint(launch.isoformat())",
+      "executionSteps": [
+        { "line": 3, "variables": { "start": "date(2026, 1, 1)" }, "output": "", "description": "fromisoformat parses the ISO string into a real date object" },
+        { "line": 4, "variables": { "end": "date(2026, 6, 9)" }, "output": "", "description": "Second string parsed the same way" },
+        { "line": 5, "variables": { "diff": "159" }, "output": "", "description": "Subtracting two dates gives a timedelta; .days reads the count" },
+        { "line": 6, "variables": { "diff": "159" }, "output": "159", "description": "159 days between Jan 1 and Jun 9, 2026" },
+        { "line": 8, "variables": { "launch": "date(2026, 4, 1)" }, "output": "", "description": "Adding timedelta(days=90) moves forward, handling month lengths" },
+        { "line": 9, "variables": { "launch": "date(2026, 4, 1)" }, "output": "2026-04-01", "description": "isoformat turns the object back into a clean string" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A date is NOT a string. Parse to an object first.",
+        "strptime parses text -> object.  strftime formats object -> text.",
+        "Subtract dates for a timedelta; read .days. Store in UTC (aware)."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `days_between(d1, d2)`: parse two ISO date strings (format 'YYYY-MM-DD') into real `date` objects and return the whole number of days from d1 to d2 as an integer. Use `date.fromisoformat` (or `datetime.strptime(s, \"%Y-%m-%d\").date()`), subtract to get a `timedelta`, and return its `.days`. Everything is deterministic — do NOT use `date.today()` or `datetime.now()`. The demo computes the days from 2026-01-01 to 2026-06-09. Expected output: 159"
+      },
+      "starter_code": "from datetime import date\n\ndef days_between(d1, d2):\n    # Parse both ISO strings into real date objects, then subtract.\n    # TODO: return the integer number of days from d1 to d2\n    return None\n\n# --- demo (do not change) ---\nprint(days_between(\"2026-01-01\", \"2026-06-09\"))",
+      "expected_output": "159",
+      "hints": {
+        "en": [
+          "Turn each string into a date object: date.fromisoformat(d1). (Or datetime.strptime(d1, \"%Y-%m-%d\").date().)",
+          "Subtracting two date objects gives a timedelta, not a number: gap = date2 - date1.",
+          "Read the whole-day count off the timedelta with .days: return gap.days.",
+          "It's deterministic — both dates are fixed strings, so never call date.today() or datetime.now()."
+        ]
+      },
+      "test_code": "assert days_between(\"2026-01-01\", \"2026-06-09\") == 159\nassert days_between(\"2026-01-01\", \"2026-01-01\") == 0\nassert days_between(\"2026-06-09\", \"2026-01-01\") == -159\nassert days_between(\"2024-02-28\", \"2024-03-01\") == 2\nassert days_between(\"2026-01-01\", \"2027-01-01\") == 365"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is comparing dates as plain strings dangerous?"
+      },
+      "options": {
+        "en": [
+          "Strings can't be compared at all in Python",
+          "String comparison is alphabetical, not chronological, so '2026-1-15' < '2026-06-09' gives the wrong order",
+          "Strings use too much memory",
+          "It always raises a TypeError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `datetime.strptime(s, fmt)` do, and how is it different from `strftime`?"
+      },
+      "options": {
+        "en": [
+          "strptime parses text into a datetime object; strftime formats an object back into text",
+          "They are identical aliases",
+          "strptime formats an object; strftime parses text",
+          "Both only work on integers"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "You subtract two `date` objects, `end - start`. What do you get, and how do you read the number of days?"
+      },
+      "options": {
+        "en": [
+          "An integer directly",
+          "A string you must parse again",
+          "A timedelta object; read its .days attribute",
+          "A tuple of (years, months, days)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the recommended rule for handling timezones in stored data?"
+      },
+      "options": {
+        "en": [
+          "Always store naive local times so they're easy to read",
+          "Store and compute in UTC (aware datetimes), and convert to local time only for display",
+          "Never use timezones at all",
+          "Store each value in a random timezone for security"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["datetime_module", "strptime_strftime", "timedelta_arithmetic", "iso_format", "naive_vs_aware_timezones"],
+    "concepts_required": ["csv_processing"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "data",
+    "path_memberships": []
+  },
+  "generated": false
+}

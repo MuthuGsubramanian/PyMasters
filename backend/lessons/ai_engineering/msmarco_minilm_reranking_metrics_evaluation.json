@@ -1,0 +1,136 @@
+{
+  "id": "msmarco_minilm_reranking_metrics_evaluation",
+  "topic": "msmarco_minilm_reranking_metrics_evaluation",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Measuring Reranking Quality: MRR and NDCG for ms-marco-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Evaluate cross-encoder reranking performance with information retrieval metrics. Learn to compute Mean Reciprocal Rank (MRR) and Normalized Discounted Cumulative Gain (NDCG) to quantify how much ms-marco-MiniLM-L6-v2 improves your RAG pipeline's retrieval quality."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Measuring What Matters: Reranking Evaluation Metrics\n\nVaathiyaar here! You've plugged `cross-encoder/ms-marco-MiniLM-L6-v2` into your pipeline and results *feel* better — but feelings don't ship. How much better is your reranked list? Did position 5 jump to position 1, or did nothing change? Without metrics, you're flying blind. This lesson teaches you the two metrics that matter most for reranking evaluation: **MRR** (Mean Reciprocal Rank) and **NDCG** (Normalized Discounted Cumulative Gain).\n\nThese aren't just academic — they're how you decide whether to deploy a reranker, which model to choose, and whether your fine-tuning helped or hurt.\n\n### The Core Metrics\n\n| Metric | What It Measures | Formula Intuition | Best For |\n|---|---|---|---|\n| MRR@K | Position of first relevant result | 1/rank of first hit | Single-answer queries |\n| NDCG@K | Quality of entire ranked list | Rewards relevant docs at top positions | Multi-document context |\n| Hit Rate@K | Whether any relevant doc appears in top-K | Binary: found or not | Minimum viability |\n| MAP@K | Average precision across recall levels | Area under P-R curve | Comprehensive evaluation |\n\nFor RAG pipelines, **NDCG@5** is the gold standard — it tells you how good your top-5 context documents are, which directly correlates with LLM answer quality.\n\n### Computing MRR: Where's the First Relevant Doc?\n\n```python\nfrom sentence_transformers import CrossEncoder\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ndef reciprocal_rank(ranked_docs, relevant_set):\n    \"\"\"Find position of first relevant doc, return 1/position.\"\"\"\n    for i, doc in enumerate(ranked_docs, start=1):\n        if doc in relevant_set:\n            return 1.0 / i\n    return 0.0\n\ndef mrr(queries_results, queries_relevant):\n    \"\"\"Mean Reciprocal Rank across all queries.\"\"\"\n    rr_scores = [\n        reciprocal_rank(results, relevant)\n        for results, relevant in zip(queries_results, queries_relevant)\n    ]\n    return sum(rr_scores) / len(rr_scores)\n\n# Evaluate before and after reranking\nquery = \"how to handle Python exceptions\"\ndocs = [\n    \"Python list comprehension tutorial\",\n    \"Try/except blocks for error handling in Python\",\n    \"Python dictionary methods overview\",\n    \"Raising custom exceptions in Python\",\n    \"Python string formatting guide\",\n]\nrelevant = {\"Try/except blocks for error handling in Python\", \"Raising custom exceptions in Python\"}\n\n# Before reranking (bi-encoder order)\nrr_before = reciprocal_rank(docs, relevant)\n\n# After reranking\npairs = [[query, d] for d in docs]\nscores = model.predict(pairs)\nreranked = [d for _, d in sorted(zip(scores, docs), reverse=True)]\nrr_after = reciprocal_rank(reranked, relevant)\n\nprint(f\"RR before: {rr_before:.3f} | RR after: {rr_after:.3f}\")\n```\n\nMRR of 1.0 means the first relevant doc is at position 1. MRR of 0.5 means it's at position 2. For RAG, you want MRR as close to 1.0 as possible — the LLM sees the best context first.\n\n### Computing NDCG: How Good Is the Whole List?\n\n```python\nimport math\n\ndef dcg_at_k(relevance_scores, k):\n    \"\"\"Discounted Cumulative Gain: rewards relevant docs at top positions.\"\"\"\n    dcg = 0.0\n    for i, rel in enumerate(relevance_scores[:k]):\n        dcg += rel / math.log2(i + 2)  # +2 because log2(1) = 0\n    return dcg\n\ndef ndcg_at_k(relevance_scores, k):\n    \"\"\"Normalized DCG: DCG divided by ideal DCG (perfect ranking).\"\"\"\n    dcg = dcg_at_k(relevance_scores, k)\n    ideal = dcg_at_k(sorted(relevance_scores, reverse=True), k)\n    return dcg / ideal if ideal > 0 else 0.0\n\n# Grade each document's relevance (3=perfect, 2=good, 1=marginal, 0=irrelevant)\nrelevance_map = {\n    \"Try/except blocks for error handling in Python\": 3,\n    \"Raising custom exceptions in Python\": 2,\n    \"Python list comprehension tutorial\": 0,\n    \"Python dictionary methods overview\": 0,\n    \"Python string formatting guide\": 0,\n}\n\n# NDCG before reranking\nrels_before = [relevance_map[d] for d in docs]\nndcg_before = ndcg_at_k(rels_before, k=3)\n\n# NDCG after reranking\nrels_after = [relevance_map[d] for d in reranked]\nndcg_after = ndcg_at_k(rels_after, k=3)\n\nprint(f\"NDCG@3 before: {ndcg_before:.3f} | NDCG@3 after: {ndcg_after:.3f}\")\n```\n\nNDCG captures *graded* relevance — a perfect match at position 1 is worth more than a marginal match. It also penalizes relevant documents that appear too low in the list.\n\n### A/B Evaluation: Bi-Encoder vs Cross-Encoder\n\n```python\ndef evaluate_reranking(queries, corpus, relevance_labels, model, k=5):\n    \"\"\"Compare bi-encoder ordering vs cross-encoder reranking.\"\"\"\n    from sentence_transformers import SentenceTransformer, util\n\n    bi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n    c_emb = bi_encoder.encode(corpus, convert_to_tensor=True)\n\n    mrr_bi, mrr_ce = [], []\n    ndcg_bi, ndcg_ce = [], []\n\n    for query, relevant_ids in zip(queries, relevance_labels):\n        q_emb = bi_encoder.encode(query, convert_to_tensor=True)\n        hits = util.semantic_search(q_emb, c_emb, top_k=k)[0]\n        bi_docs = [corpus[h[\"corpus_id\"]] for h in hits]\n\n        # Cross-encoder rerank\n        pairs = [[query, d] for d in bi_docs]\n        ce_scores = model.predict(pairs)\n        ce_docs = [d for _, d in sorted(zip(ce_scores, bi_docs), reverse=True)]\n\n        relevant_set = {corpus[i] for i in relevant_ids}\n        mrr_bi.append(reciprocal_rank(bi_docs, relevant_set))\n        mrr_ce.append(reciprocal_rank(ce_docs, relevant_set))\n\n    return {\n        \"mrr_bi_encoder\": sum(mrr_bi) / len(mrr_bi),\n        \"mrr_cross_encoder\": sum(mrr_ce) / len(mrr_ce),\n        \"improvement\": (sum(mrr_ce) - sum(mrr_bi)) / len(mrr_bi),\n    }\n```\n\nRun this on a labeled evaluation set of 50-100 queries and you'll know *exactly* how much value the cross-encoder adds. Typical improvement: MRR jumps from 0.65 to 0.85+ — that's the difference between the right answer at position 2 vs position 1.\n\n> **Key Insight:** Never deploy a reranker without measuring its impact. MRR tells you if the *first* relevant document improved position; NDCG tells you if the *entire* top-K improved quality. For Homie's RAG pipeline, track NDCG@5 before and after ms-marco-MiniLM-L6-v2 reranking — aim for 0.85+ to ensure the LLM gets high-quality context every time."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Adding a cross-encoder reranker to your RAG pipeline feels like an improvement — but how much? Information retrieval metrics like MRR and NDCG quantify exactly how much ms-marco-MiniLM-L6-v2 improves your ranking. These metrics are the difference between guessing and knowing whether your pipeline is production-ready.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ndef reciprocal_rank(ranked_docs, relevant_set):\n    for i, doc in enumerate(ranked_docs, start=1):\n        if doc in relevant_set:\n            return 1.0 / i\n    return 0.0\n\nquery = \"how to handle Python exceptions\"\ndocs = [\n    \"Python list comprehension tutorial\",\n    \"Try/except blocks for error handling in Python\",\n    \"Python dictionary methods overview\",\n    \"Raising custom exceptions in Python\",\n]\nrelevant = {\"Try/except blocks for error handling in Python\", \"Raising custom exceptions in Python\"}\n\nrr_before = reciprocal_rank(docs, relevant)\n\npairs = [[query, d] for d in docs]\nscores = model.predict(pairs)\nreranked = [d for _, d in sorted(zip(scores, docs), reverse=True)]\nrr_after = reciprocal_rank(reranked, relevant)\n\nprint(f\"RR before: {rr_before:.3f} | RR after: {rr_after:.3f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import CrossEncoder for pairwise relevance scoring. We'll use it to rerank documents and then measure how much the ranking improved."},
+        {"line": 3, "explanation": "Load ms-marco-MiniLM-L6-v2 — trained on 500K+ real Bing queries with human relevance labels. The model predicts how relevant a document is to a query."},
+        {"line": 5, "explanation": "Reciprocal Rank: scan the ranked list top-to-bottom, find the first relevant document, return 1/position. Position 1 gives RR=1.0, position 2 gives RR=0.5, etc."},
+        {"line": 11, "explanation": "A query about exception handling. In the original order, the first relevant doc is at position 2 (RR = 0.5) — not ideal for RAG."},
+        {"line": 18, "explanation": "The ground truth: which documents are actually relevant to the query. In production, you'd build this from user click data or manual annotation."},
+        {"line": 20, "explanation": "RR before reranking: the bi-encoder placed the relevant doc at position 2, so RR = 0.5. The cross-encoder should push it to position 1."},
+        {"line": 22, "explanation": "Score all query-document pairs with the cross-encoder. Higher scores = more relevant. The model reads query + doc together with full attention."},
+        {"line": 24, "explanation": "Sort documents by cross-encoder score descending. The most relevant documents now sit at the top of the list — ready for the LLM context."},
+        {"line": 26, "explanation": "Compare RR before and after. A jump from 0.5 to 1.0 means the cross-encoder moved the best answer from position 2 to position 1."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import math\n\ndef dcg_at_k(relevance_scores, k):\n    dcg = 0.0\n    for i, rel in enumerate(relevance_scores[:k]):\n        dcg += rel / math.log2(i + 2)\n    return dcg\n\ndef ndcg_at_k(relevance_scores, k):\n    dcg = dcg_at_k(relevance_scores, k)\n    ideal = dcg_at_k(sorted(relevance_scores, reverse=True), k)\n    return dcg / ideal if ideal > 0 else 0.0\n\n# Graded relevance: 3=perfect, 2=good, 1=marginal, 0=irrelevant\nrelevance_map = {\n    \"Try/except blocks for error handling\": 3,\n    \"Raising custom exceptions\": 2,\n    \"Python list comprehension\": 0,\n    \"Python dictionary methods\": 0,\n}\n\n# Before reranking: relevant docs buried\norder_before = [0, 3, 0, 2]\nndcg_before = ndcg_at_k(order_before, k=3)\n\n# After reranking: relevant docs on top\norder_after = [3, 2, 0, 0]\nndcg_after = ndcg_at_k(order_after, k=3)\n\nprint(f\"NDCG@3 before: {ndcg_before:.3f}\")\nprint(f\"NDCG@3 after:  {ndcg_after:.3f}\")\nprint(f\"Improvement:   {ndcg_after - ndcg_before:.3f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import math for log2. NDCG uses logarithmic discounting — documents at lower positions contribute less to the score."},
+        {"line": 3, "explanation": "DCG (Discounted Cumulative Gain): sum relevance scores weighted by 1/log2(position+1). Position 1 gets full weight, position 5 gets ~1/3 weight."},
+        {"line": 6, "explanation": "The +2 offset: position 0 uses log2(2)=1, position 1 uses log2(3)=1.58, etc. This prevents division by zero and applies logarithmic decay."},
+        {"line": 9, "explanation": "NDCG normalizes DCG by the ideal (perfect) ranking. NDCG=1.0 means your ranking is perfect; NDCG=0.5 means it's halfway to ideal."},
+        {"line": 11, "explanation": "The ideal ranking sorts all relevance scores descending — the best possible arrangement. NDCG = actual_DCG / ideal_DCG."},
+        {"line": 14, "explanation": "Graded relevance captures nuance: a 'perfect' match (3) matters more than a 'marginal' one (1). Binary relevant/irrelevant loses this signal."},
+        {"line": 23, "explanation": "Before reranking: irrelevant doc at position 1, best doc at position 2. NDCG will be low because high-relevance docs are buried."},
+        {"line": 27, "explanation": "After reranking: perfect doc at position 1, good doc at position 2. NDCG jumps because the cross-encoder placed the best context first."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def evaluate_pipeline(queries, corpus, ground_truth, model, k=5):\n    \"\"\"Compute MRR and NDCG before/after reranking.\"\"\"\n    from sentence_transformers import SentenceTransformer, util\n\n    bi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n    c_emb = bi_encoder.encode(corpus, convert_to_tensor=True)\n\n    metrics = {\"mrr_before\": [], \"mrr_after\": [], \"ndcg_before\": [], \"ndcg_after\": []}\n\n    for query, relevance in zip(queries, ground_truth):\n        q_emb = bi_encoder.encode(query, convert_to_tensor=True)\n        hits = util.semantic_search(q_emb, c_emb, top_k=k)[0]\n        bi_docs = [corpus[h[\"corpus_id\"]] for h in hits]\n\n        pairs = [[query, d] for d in bi_docs]\n        ce_scores = model.predict(pairs)\n        ce_docs = [d for _, d in sorted(zip(ce_scores, bi_docs), reverse=True)]\n\n        relevant_set = {corpus[i] for i in relevance}\n        metrics[\"mrr_before\"].append(reciprocal_rank(bi_docs, relevant_set))\n        metrics[\"mrr_after\"].append(reciprocal_rank(ce_docs, relevant_set))\n\n    return {k: sum(v)/len(v) for k, v in metrics.items() if v}",
+      "steps": [
+        {"line": 1, "explanation": "A full evaluation function that benchmarks your pipeline on a labeled dataset. This is what you run before deploying or after fine-tuning to measure impact."},
+        {"line": 5, "explanation": "The bi-encoder handles stage 1 retrieval. We encode the full corpus once — this is O(n) cost paid upfront, then O(1) per query via vector similarity."},
+        {"line": 8, "explanation": "Track metrics for both pipelines: before (bi-encoder only) and after (bi-encoder + cross-encoder). The delta is the value of your reranker."},
+        {"line": 12, "explanation": "semantic_search returns top-k candidates ordered by cosine similarity. These candidates are the input to the cross-encoder reranking stage."},
+        {"line": 16, "explanation": "Cross-encoder scores each candidate against the query. This is the expensive step — O(k) forward passes, but k is small (5-50) so it's fast enough."},
+        {"line": 17, "explanation": "Sort candidates by cross-encoder score. The reranked list should place truly relevant documents higher than the bi-encoder's approximate ordering."},
+        {"line": 23, "explanation": "Average metrics across all queries. MRR improvement of 0.15+ typically justifies the added latency of cross-encoder reranking in production."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "MRR (Mean Reciprocal Rank)",
+      "right_label": "NDCG (Normalized DCG)",
+      "items": [
+        {"left": "Measures position of FIRST relevant doc", "right": "Measures quality of ENTIRE ranked list"},
+        {"left": "Binary relevance: relevant or not", "right": "Graded relevance: 0, 1, 2, 3..."},
+        {"left": "Best for single-answer queries", "right": "Best for multi-document RAG context"},
+        {"left": "RR=1.0 means relevant doc at position 1", "right": "NDCG=1.0 means perfect ranking order"},
+        {"left": "Simple to compute and interpret", "right": "Captures nuance of ranking quality"},
+        {"left": "Use for: FAQ, QA, search", "right": "Use for: RAG context, recommendations"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now measure reranking quality with MRR and NDCG! No more guessing — you know exactly how much ms-marco-MiniLM-L6-v2 improves your RAG pipeline's retrieval. Data-driven decisions for the win!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `RetrievalEvaluator` class that computes MRR@K and NDCG@K for ranked document lists. Implement `reciprocal_rank(ranked_docs, relevant_set)` to find the first relevant document's position, `dcg_at_k(relevance_scores, k)` using logarithmic discounting, and `ndcg_at_k(relevance_scores, k)` normalized against the ideal ranking. These are the core metrics for evaluating whether a cross-encoder reranker actually improves your RAG pipeline."
+      },
+      "starter_code": "import math\n\nclass RetrievalEvaluator:\n    def reciprocal_rank(self, ranked_docs: list[str], relevant_set: set) -> float:\n        # Find the position (1-indexed) of the first relevant document\n        # Return 1.0 / position\n        # If no relevant doc found, return 0.0\n        pass\n\n    def dcg_at_k(self, relevance_scores: list[int], k: int) -> float:\n        # Discounted Cumulative Gain at position k\n        # For each position i (0-indexed) in relevance_scores[:k]:\n        #   gain = relevance_scores[i] / log2(i + 2)\n        # Return the sum of gains\n        pass\n\n    def ndcg_at_k(self, relevance_scores: list[int], k: int) -> float:\n        # Normalized DCG = DCG / ideal_DCG\n        # ideal_DCG = DCG of the perfect ranking (sorted descending)\n        # Return 0.0 if ideal_DCG is 0\n        pass\n\n    def mrr(self, all_ranked: list[list[str]], all_relevant: list[set]) -> float:\n        # Mean Reciprocal Rank across multiple queries\n        # Average of reciprocal_rank for each query\n        pass\n\n# Test it:\nev = RetrievalEvaluator()\n\n# Reciprocal rank\nprint(ev.reciprocal_rank([\"a\", \"b\", \"c\"], {\"b\", \"c\"}))\nprint(ev.reciprocal_rank([\"x\", \"y\"], {\"z\"}))\n\n# NDCG\nprint(f\"{ev.ndcg_at_k([3, 2, 0, 0], k=3):.4f}\")\nprint(f\"{ev.ndcg_at_k([0, 0, 3, 2], k=3):.4f}\")\n\n# MRR\nresult = ev.mrr(\n    [[\"a\", \"b\", \"c\"], [\"x\", \"y\", \"z\"]],\n    [{\"b\"}, {\"x\"}]\n)\nprint(f\"{result:.2f}\")",
+      "expected_output": "0.5\n0.0\n1.0000\n0.3562\n0.75",
+      "hints": {
+        "en": [
+          "In reciprocal_rank, use enumerate(ranked_docs, start=1) to get 1-indexed positions, then return 1.0/i for the first doc in relevant_set",
+          "In dcg_at_k, iterate over relevance_scores[:k] with enumerate and compute sum of rel / math.log2(i + 2) for each position i",
+          "In ndcg_at_k, compute dcg of the input, then compute dcg of sorted(relevance_scores, reverse=True) as the ideal — divide actual by ideal"
+        ]
+      },
+      "test_code": "ev = RetrievalEvaluator()\nassert ev.reciprocal_rank([\"a\", \"b\", \"c\"], {\"a\"}) == 1.0\nassert ev.reciprocal_rank([\"a\", \"b\", \"c\"], {\"b\"}) == 0.5\nassert abs(ev.reciprocal_rank([\"a\", \"b\", \"c\"], {\"c\"}) - 1/3) < 0.001\nassert ev.reciprocal_rank([\"a\", \"b\"], {\"z\"}) == 0.0\nassert abs(ev.dcg_at_k([3, 2, 1], 3) - (3/math.log2(2) + 2/math.log2(3) + 1/math.log2(4))) < 0.001\nassert ev.dcg_at_k([0, 0, 0], 3) == 0.0\nassert abs(ev.ndcg_at_k([3, 2, 0, 0], 3) - 1.0) < 0.001\nassert ev.ndcg_at_k([0, 0, 0], 3) == 0.0\nassert 0 < ev.ndcg_at_k([0, 0, 3, 2], 3) < 1.0\nassert abs(ev.mrr([[\"a\",\"b\"],[\"x\",\"y\"]], [{\"b\"},{\"x\"}]) - 0.75) < 0.001"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RerankerBenchmark` class that compares bi-encoder retrieval against cross-encoder reranking using MRR. It uses a simple word-overlap bi-encoder simulator and a positional-weight cross-encoder simulator. Implement `bi_encoder_rank(query, docs)` that ranks by shared word count, `cross_encoder_rank(query, docs)` that ranks by positional word overlap, and `compare(queries, corpus, relevant_labels)` that returns MRR for both approaches."
+      },
+      "starter_code": "class RerankerBenchmark:\n    def bi_encoder_rank(self, query: str, docs: list[str]) -> list[str]:\n        # Rank documents by number of shared words with query\n        # Return docs sorted by shared word count descending\n        # Ties: preserve original order\n        pass\n\n    def cross_encoder_score(self, query: str, doc: str) -> float:\n        # Score = sum of 1/(position+1) for each query word found in doc\n        # position = index of first occurrence in doc words\n        # Words not found contribute 0\n        pass\n\n    def cross_encoder_rank(self, query: str, docs: list[str]) -> list[str]:\n        # Rank documents by cross_encoder_score descending\n        pass\n\n    def reciprocal_rank(self, ranked: list[str], relevant: set) -> float:\n        for i, doc in enumerate(ranked, 1):\n            if doc in relevant:\n                return 1.0 / i\n        return 0.0\n\n    def compare(self, queries: list[str], corpus: list[str],\n                relevant_labels: list[set]) -> dict:\n        # For each query:\n        #   1. Rank corpus with bi_encoder_rank\n        #   2. Rank corpus with cross_encoder_rank\n        #   3. Compute reciprocal_rank for both\n        # Return {\"mrr_bi\": float, \"mrr_ce\": float, \"improvement\": float}\n        # improvement = mrr_ce - mrr_bi\n        pass\n\n# Test it:\nbench = RerankerBenchmark()\n\n# Cross-encoder score\nprint(f\"{bench.cross_encoder_score('reset password', 'password reset steps'):.2f}\")\n\n# Bi-encoder rank\nbi = bench.bi_encoder_rank(\"reset password\", [\n    \"account settings page\",\n    \"password reset instructions\",\n    \"reset your password now\",\n])\nprint(bi[0])\n\n# Compare\nresult = bench.compare(\n    [\"reset password\", \"login help\"],\n    [\"password reset guide\", \"login assistance portal\", \"general faq\"],\n    [{\"password reset guide\"}, {\"login assistance portal\"}]\n)\nprint(result[\"mrr_bi\"] <= result[\"mrr_ce\"])",
+      "expected_output": "1.50\nreset your password now\nTrue",
+      "hints": {
+        "en": [
+          "In bi_encoder_rank, compute len(set(query.lower().split()) & set(doc.lower().split())) for each doc, then sort by count descending using sorted() with a key",
+          "In cross_encoder_score, for each query word found in doc_words, add 1.0/(doc_words.index(word)+1) — use try/except or 'if word in doc_words'",
+          "In compare, loop over queries, call both ranking methods on the full corpus, compute reciprocal_rank for each, then average across all queries"
+        ]
+      },
+      "test_code": "b = RerankerBenchmark()\nassert abs(b.cross_encoder_score(\"a b\", \"a b c\") - 1.5) < 0.001\nassert b.cross_encoder_score(\"x\", \"a b c\") == 0.0\nassert abs(b.cross_encoder_score(\"a\", \"b a\") - 0.5) < 0.001\nbi = b.bi_encoder_rank(\"a b\", [\"x y\", \"a x\", \"a b c\"])\nassert bi[0] == \"a b c\"\nassert bi[-1] == \"x y\"\nce = b.cross_encoder_rank(\"a b\", [\"b a c\", \"a b c\"])\nassert ce[0] == \"a b c\"\nresult = b.compare([\"a b\"], [\"a b c\", \"x y z\", \"a x\"], [{\"a b c\"}])\nassert result[\"mrr_bi\"] == 1.0\nassert result[\"mrr_ce\"] == 1.0\nassert \"improvement\" in result"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["MRR", "NDCG", "DCG", "retrieval evaluation metrics", "reranking quality measurement", "graded relevance", "logarithmic discounting", "A/B evaluation for search", "cross-encoder benchmarking", "information retrieval metrics"],
+    "concepts_required": ["python classes", "lists", "sets", "dictionaries", "sorting", "cross-encoders", "bi-encoder vs cross-encoder", "RAG pipelines"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

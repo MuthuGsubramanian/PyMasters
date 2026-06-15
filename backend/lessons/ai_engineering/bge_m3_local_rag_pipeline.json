@@ -1,0 +1,132 @@
+{
+  "id": "bge_m3_local_rag_pipeline",
+  "topic": "bge_m3_local_rag_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Build a Local RAG Pipeline with BGE-M3 and Sentence-Transformers",
+    "ta": ""
+  },
+  "description": {
+    "en": "Build a fully local retrieval-augmented generation pipeline using BAAI/bge-m3 via sentence-transformers. Combine dense and sparse vectors for hybrid search that runs offline with zero API costs.",
+    "ta": ""
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Your Own RAG Pipeline — No API Keys Required\n\nVaathiyaar here! Everyone talks about RAG, but most tutorials chain you to cloud APIs. Today you'll build a **fully local** retrieval-augmented generation pipeline using BGE-M3 through the `sentence-transformers` library. Dense vectors for semantic understanding, sparse vectors for keyword precision — all running on your machine, offline, for free.\n\nBGE-M3 is the only open-source embedding model that outputs both dense and sparse representations from a single forward pass. The \"M3\" stands for **Multi-linguality, Multi-functionality, Multi-granularity**. Combined with sentence-transformers' clean API, you get a production-quality retrieval backend in under 50 lines.\n\n### Why sentence-transformers Instead of FlagEmbedding?\n\n| Feature | sentence-transformers | FlagEmbedding |\n|---|---|---|\n| Install | `pip install sentence-transformers` | `pip install FlagEmbedding` |\n| API style | Familiar `.encode()` interface | Custom BGEM3FlagModel |\n| ONNX support | Built-in `backend=\"onnx\"` | Manual export |\n| Ecosystem | Works with FAISS, ChromaDB, etc. | Standalone |\n| Sparse output | Via `model.encode(..., return_type=\"sparse\")` | Via `return_sparse=True` |\n\nsentence-transformers gives you the same model with better ecosystem integration.\n\n### Step 1: Load BGE-M3 with sentence-transformers\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-m3\")\n\n# Your knowledge base\ndocuments = [\n    \"Python decorators wrap functions to modify their behavior\",\n    \"List comprehensions provide concise syntax for creating lists\",\n    \"The GIL prevents true multi-threading in CPython\",\n    \"asyncio enables concurrent I/O-bound operations\",\n    \"Type hints improve code readability and IDE support\",\n    \"Virtual environments isolate project dependencies\",\n]\n\n# Dense embeddings — the familiar interface\ndense_embeddings = model.encode(documents)\nprint(dense_embeddings.shape)  # (6, 1024)\n```\n\n### Step 2: Build the Hybrid Index\n\n```python\nimport numpy as np\nfrom collections import defaultdict\n\nclass LocalRAGIndex:\n    def __init__(self, model, documents):\n        self.model = model\n        self.documents = documents\n        self.dense_index = model.encode(documents,\n                                        normalize_embeddings=True)\n        # Build sparse index: simple term-frequency approach\n        self.sparse_index = []\n        for doc in documents:\n            terms = doc.lower().split()\n            tf = defaultdict(float)\n            for t in terms:\n                tf[t] += 1.0 / len(terms)\n            self.sparse_index.append(dict(tf))\n\n    def search(self, query, top_k=3, dense_weight=0.7,\n               sparse_weight=0.3):\n        # Dense scoring\n        q_dense = self.model.encode([query],\n                                     normalize_embeddings=True)\n        dense_scores = (q_dense @ self.dense_index.T)[0]\n\n        # Sparse scoring\n        q_terms = query.lower().split()\n        q_tf = defaultdict(float)\n        for t in q_terms:\n            q_tf[t] += 1.0 / len(q_terms)\n\n        sparse_scores = np.zeros(len(self.documents))\n        for i, d_tf in enumerate(self.sparse_index):\n            sparse_scores[i] = sum(\n                q_tf[t] * d_tf.get(t, 0) for t in q_tf\n            )\n\n        # Normalize and combine\n        if dense_scores.max() > 0:\n            dense_scores /= dense_scores.max()\n        if sparse_scores.max() > 0:\n            sparse_scores /= sparse_scores.max()\n\n        combined = (dense_weight * dense_scores +\n                    sparse_weight * sparse_scores)\n        ranked_idx = np.argsort(combined)[::-1][:top_k]\n        return [(self.documents[i], float(combined[i]))\n                for i in ranked_idx]\n```\n\n### Step 3: Query Your Local RAG\n\n```python\nindex = LocalRAGIndex(model, documents)\n\n# Semantic query — dense vectors shine\nresults = index.search(\"How do I run things concurrently?\")\nfor doc, score in results:\n    print(f\"{score:.3f} | {doc}\")\n# asyncio doc ranks first via semantic match\n\n# Keyword query — sparse vectors help\nresults = index.search(\"GIL threading\")\nfor doc, score in results:\n    print(f\"{score:.3f} | {doc}\")\n# GIL doc ranks first via exact term match\n```\n\n### Step 4: Add a Generation Layer\n\n```python\ndef rag_answer(index, question, top_k=3):\n    results = index.search(question, top_k=top_k)\n    context = \"\\n\".join(f\"- {doc}\" for doc, _ in results)\n    prompt = (\n        f\"Context:\\n{context}\\n\\n\"\n        f\"Question: {question}\\n\"\n        f\"Answer based only on the context above:\"\n    )\n    return prompt  # Feed to any local LLM\n\nprompt = rag_answer(index, \"How do I handle concurrent I/O?\")\nprint(prompt)\n```\n\nThis prompt goes to any local LLM — Ollama, llama.cpp, or a HuggingFace model. The entire pipeline runs offline.\n\n### Dense vs Hybrid: When It Matters\n\n| Query Type | Dense Only | Hybrid (Dense + Sparse) |\n|---|---|---|\n| Synonym-heavy (\"concurrent\" → asyncio) | Excellent | Excellent |\n| Exact term (\"GIL\") | May miss | Catches it |\n| Mixed (\"Python type checking\") | Good | Better — boosts exact \"type\" match |\n| Cross-lingual | Excellent | Dense dominates (sparse less useful) |\n\n> **Key Insight:** A local RAG pipeline with BGE-M3 gives you hybrid dense+sparse retrieval with zero API costs. The sentence-transformers integration means you use the familiar `.encode()` API, and the hybrid approach catches both semantic and keyword matches. For most local RAG use cases, this single 2.2GB model replaces a separate embedding service AND a keyword search index.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Most RAG tutorials chain you to cloud APIs. BGE-M3 runs entirely on your machine — producing dense AND sparse vectors from a single model. Combined with sentence-transformers' clean API, you get a production-quality local retrieval pipeline in under 50 lines of Python.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-m3\")\n\ndocuments = [\n    \"Python decorators wrap functions to modify their behavior\",\n    \"List comprehensions provide concise syntax for creating lists\",\n    \"The GIL prevents true multi-threading in CPython\",\n    \"asyncio enables concurrent I/O-bound operations\",\n    \"Type hints improve code readability and IDE support\",\n    \"Virtual environments isolate project dependencies\",\n]\n\ndense_embeddings = model.encode(documents, normalize_embeddings=True)\nprint(dense_embeddings.shape)\nprint(f\"Each doc -> {dense_embeddings.shape[1]}-dim vector\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the familiar interface for loading any embedding model from Hugging Face Hub. Install with: pip install sentence-transformers."},
+        {"line": 3, "explanation": "Load BGE-M3 with one line. First run downloads ~2.2GB. The model handles 8192 tokens and supports 100+ languages — all locally."},
+        {"line": 5, "explanation": "Six Python knowledge-base documents. In production, these could be chunks from documentation, code comments, or any text corpus you want to search."},
+        {"line": 14, "explanation": "Encode all documents into dense vectors. normalize_embeddings=True ensures unit vectors, so dot product equals cosine similarity — faster math."},
+        {"line": 15, "explanation": "Shape is (6, 1024) — six documents, each represented as a 1024-dimensional dense vector. This is the semantic backbone of your retrieval system."},
+        {"line": 16, "explanation": "Each document is now a point in 1024-d space. Semantically similar documents cluster together. This dense representation captures meaning, not just keywords."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom collections import defaultdict\n\nclass LocalRAGIndex:\n    def __init__(self, model, documents):\n        self.model = model\n        self.documents = documents\n        self.dense_index = model.encode(\n            documents, normalize_embeddings=True)\n        self.sparse_index = []\n        for doc in documents:\n            terms = doc.lower().split()\n            tf = defaultdict(float)\n            for t in terms:\n                tf[t] += 1.0 / len(terms)\n            self.sparse_index.append(dict(tf))\n\n    def search(self, query, top_k=3,\n               dense_weight=0.7, sparse_weight=0.3):\n        q_dense = self.model.encode(\n            [query], normalize_embeddings=True)\n        dense_scores = (q_dense @ self.dense_index.T)[0]\n        q_terms = query.lower().split()\n        q_tf = {t: 1.0/len(q_terms) for t in q_terms}\n        sparse_scores = np.array([\n            sum(q_tf[t] * d.get(t, 0) for t in q_tf)\n            for d in self.sparse_index\n        ])\n        if dense_scores.max() > 0:\n            dense_scores /= dense_scores.max()\n        if sparse_scores.max() > 0:\n            sparse_scores /= sparse_scores.max()\n        combined = (dense_weight * dense_scores\n                    + sparse_weight * sparse_scores)\n        ranked = np.argsort(combined)[::-1][:top_k]\n        return [(self.documents[i], float(combined[i]))\n                for i in ranked]",
+      "steps": [
+        {"line": 4, "explanation": "LocalRAGIndex wraps the entire retrieval pipeline: model, documents, dense vectors, and a sparse term-frequency index — all in one class."},
+        {"line": 8, "explanation": "Pre-compute dense embeddings for all documents at init time. This is the expensive step — but it only runs once. Normalized for fast cosine similarity."},
+        {"line": 11, "explanation": "Build a simple sparse index: for each document, compute term frequencies by splitting on whitespace. Each term gets weight = 1/total_terms."},
+        {"line": 18, "explanation": "The search method takes a query, optional top_k count, and weighting between dense (semantic) and sparse (keyword) signals."},
+        {"line": 20, "explanation": "Encode the query once into a dense vector. Matrix multiply against the document index gives all cosine similarities in one operation."},
+        {"line": 25, "explanation": "Sparse scoring: compute dot product of query and document term frequencies. Documents sharing exact query terms get boosted."},
+        {"line": 29, "explanation": "Normalize both score arrays to [0, 1] range before combining. This ensures neither signal dominates due to scale differences."},
+        {"line": 33, "explanation": "Weighted combination: 70% dense + 30% sparse by default. Sort descending and return the top_k documents with their scores."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "def rag_answer(index, question, top_k=3):\n    results = index.search(question, top_k=top_k)\n    context = \"\\n\".join(f\"- {doc}\" for doc, _ in results)\n    prompt = (\n        f\"Context:\\n{context}\\n\\n\"\n        f\"Question: {question}\\n\"\n        f\"Answer based only on the context above:\"\n    )\n    return prompt\n\nindex = LocalRAGIndex(model, documents)\nprompt = rag_answer(index, \"How do I handle concurrent I/O?\")\nprint(prompt)",
+      "steps": [
+        {"line": 1, "explanation": "The generation layer: retrieve relevant documents, format them as context, and build a prompt for any LLM — local or remote."},
+        {"line": 3, "explanation": "Join the top-k retrieved documents into a bulleted context block. Only the most relevant docs feed into the prompt, reducing noise."},
+        {"line": 4, "explanation": "Build a structured prompt with context, question, and instruction to ground the answer. This 'context stuffing' pattern is the core of RAG."},
+        {"line": 11, "explanation": "Create the index once, then query it repeatedly. Each search is fast — just a matrix multiply plus sparse scoring. The entire pipeline is local and offline."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "API-Based RAG",
+      "right_label": "Local RAG with BGE-M3",
+      "items": [
+        {"left": "Requires API keys and internet", "right": "Runs fully offline on your machine"},
+        {"left": "Pay per embedding call", "right": "Free after model download"},
+        {"left": "Data leaves your network", "right": "Data stays on your machine"},
+        {"left": "Dense vectors only (most APIs)", "right": "Dense + sparse hybrid retrieval"},
+        {"left": "Rate limits and latency", "right": "Limited only by your hardware"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a fully local RAG pipeline with hybrid dense+sparse retrieval — no API keys, no cloud, no costs!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `LocalRAGIndex` class that implements hybrid dense+sparse retrieval. Dense vectors are simulated as word-frequency dicts with cosine similarity. Sparse scoring uses exact term overlap count. The `search()` method combines both with configurable weights, normalizes scores to [0,1], and returns ranked results. Finally, implement `build_rag_prompt()` that formats retrieved documents into a structured prompt."
+      },
+      "starter_code": "import math\nfrom collections import defaultdict\n\nclass LocalRAGIndex:\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        self.dense_index = [self._dense_encode(doc) for doc in documents]\n        self.sparse_index = [self._sparse_encode(doc) for doc in documents]\n\n    def _dense_encode(self, text: str) -> dict:\n        # Return word frequency dict from lowercased text\n        # {word: count / total_words}\n        pass\n\n    def _sparse_encode(self, text: str) -> set:\n        # Return set of unique lowercased words\n        pass\n\n    def _cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two word-frequency dicts\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[w] * vec_b[w] for w in shared)\n        ma = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mb = math.sqrt(sum(v**2 for v in vec_b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def _sparse_score(self, query_terms: set, doc_terms: set) -> float:\n        # Return count of shared terms as float\n        pass\n\n    def search(self, query: str, top_k: int = 3,\n               dense_weight: float = 0.7,\n               sparse_weight: float = 0.3) -> list[dict]:\n        # 1. Encode query (dense + sparse)\n        # 2. Score each document: dense_score and sparse_score\n        # 3. Normalize each score array to [0,1] by dividing by max\n        #    (if max is 0, leave as zeros)\n        # 4. Combine: dense_weight * dense + sparse_weight * sparse\n        # 5. Return top_k results as [{\"document\": str, \"score\": float}]\n        #    sorted descending by score\n        pass\n\n    def build_rag_prompt(self, question: str, top_k: int = 3) -> str:\n        # 1. Search for top_k results\n        # 2. Format as:\n        #    Context:\n        #    - doc1\n        #    - doc2\n        #\n        #    Question: {question}\n        #    Answer based only on the context above:\n        pass\n\n# Test it:\nindex = LocalRAGIndex([\n    \"python decorators wrap functions\",\n    \"list comprehensions create lists concisely\",\n    \"the GIL prevents multi-threading\",\n    \"asyncio handles concurrent IO\",\n])\n\nresults = index.search(\"python decorators\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])\n\n# Keyword-heavy query\nresults2 = index.search(\"GIL threading\", top_k=1)\nprint(results2[0][\"document\"])\n\n# RAG prompt\nprompt = index.build_rag_prompt(\"What is the GIL?\")\nprint(\"Context:\" in prompt)\nprint(\"Question: What is the GIL?\" in prompt)",
+      "expected_output": "2\npython decorators wrap functions\nTrue\nthe GIL prevents multi-threading\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In _dense_encode(), split text.lower() into words, count each word, then divide by total word count to get term frequency",
+          "In _sparse_score(), return float(len(query_terms & doc_terms)) — the count of shared unique terms",
+          "In search(), compute all dense and sparse scores first, find the max of each array, normalize by dividing by max (guard against 0), then combine with weights"
+        ]
+      },
+      "test_code": "idx = LocalRAGIndex([\"hello world\", \"hello earth\", \"goodbye moon\"])\nd = idx._dense_encode(\"hello hello world\")\nassert abs(d[\"hello\"] - 2/3) < 0.001\nassert abs(d[\"world\"] - 1/3) < 0.001\nassert idx._sparse_encode(\"Hello World\") == {\"hello\", \"world\"}\nassert idx._sparse_score({\"a\", \"b\"}, {\"b\", \"c\"}) == 1.0\nassert idx._sparse_score({\"a\"}, {\"b\"}) == 0.0\nresults = idx.search(\"hello world\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"hello world\"\nassert results[0][\"score\"] > results[1][\"score\"]\nr2 = idx.search(\"goodbye\", top_k=1)\nassert r2[0][\"document\"] == \"goodbye moon\"\nprompt = idx.build_rag_prompt(\"test question\")\nassert \"Context:\" in prompt\nassert \"- hello world\" in prompt or \"- goodbye moon\" in prompt\nassert \"Question: test question\" in prompt\nassert \"Answer based only on the context above:\" in prompt"
+    },
+    {
+      "instruction": {
+        "en": "Build a `WeightTuner` class that finds the optimal dense/sparse weight combination for a given set of test queries. It takes a `LocalRAGIndex` and a list of test cases (each with a query and expected top document). The `evaluate()` method tests a specific weight pair and returns accuracy (fraction of queries where expected doc is #1). The `find_best_weights()` method tries all combinations from 0.0 to 1.0 in steps of 0.1 (where dense + sparse = 1.0) and returns the best pair."
+      },
+      "starter_code": "class WeightTuner:\n    def __init__(self, index, test_cases: list[dict]):\n        # index: a LocalRAGIndex instance\n        # test_cases: [{\"query\": str, \"expected\": str}, ...]\n        self.index = index\n        self.test_cases = test_cases\n\n    def evaluate(self, dense_weight: float,\n                 sparse_weight: float) -> float:\n        # For each test case, run index.search with top_k=1\n        # Return fraction where results[0][\"document\"] == expected\n        pass\n\n    def find_best_weights(self) -> dict:\n        # Try all (dense, sparse) pairs where:\n        #   dense goes from 0.0 to 1.0 in steps of 0.1\n        #   sparse = 1.0 - dense\n        #   (use round(x, 1) to avoid float issues)\n        # Return {\"dense_weight\": float, \"sparse_weight\": float,\n        #         \"accuracy\": float}\n        # If tied, prefer higher dense_weight\n        pass\n\n# Test it:\nindex = LocalRAGIndex([\n    \"python decorators wrap functions\",\n    \"asyncio handles concurrent IO\",\n    \"the GIL prevents multi-threading\",\n])\n\ntuner = WeightTuner(index, [\n    {\"query\": \"decorators\", \"expected\": \"python decorators wrap functions\"},\n    {\"query\": \"concurrent\", \"expected\": \"asyncio handles concurrent IO\"},\n    {\"query\": \"GIL\", \"expected\": \"the GIL prevents multi-threading\"},\n])\n\nacc = tuner.evaluate(0.7, 0.3)\nprint(acc)\n\nbest = tuner.find_best_weights()\nprint(best[\"accuracy\"])\nprint(best[\"dense_weight\"] + best[\"sparse_weight\"])",
+      "expected_output": "1.0\n1.0\n1.0",
+      "hints": {
+        "en": [
+          "In evaluate(), loop through test_cases, call self.index.search(case['query'], top_k=1, dense_weight=..., sparse_weight=...) and check if the top result matches",
+          "In find_best_weights(), use a loop: for i in range(11): dense = round(i * 0.1, 1); sparse = round(1.0 - dense, 1)",
+          "Track best accuracy and best weights. If accuracy ties, the loop order (starting from dense=0.0 going up) plus a >= comparison gives you the highest dense weight on ties"
+        ]
+      },
+      "test_code": "idx2 = LocalRAGIndex([\"alpha beta\", \"gamma delta\", \"epsilon zeta\"])\nt = WeightTuner(idx2, [\n    {\"query\": \"alpha\", \"expected\": \"alpha beta\"},\n    {\"query\": \"gamma\", \"expected\": \"gamma delta\"},\n])\nacc_full = t.evaluate(0.5, 0.5)\nassert isinstance(acc_full, float)\nassert 0.0 <= acc_full <= 1.0\nbest2 = t.find_best_weights()\nassert \"dense_weight\" in best2\nassert \"sparse_weight\" in best2\nassert \"accuracy\" in best2\nassert abs(best2[\"dense_weight\"] + best2[\"sparse_weight\"] - 1.0) < 0.001\nassert best2[\"accuracy\"] >= acc_full or abs(best2[\"accuracy\"] - acc_full) < 0.001"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["local RAG pipeline", "hybrid dense sparse retrieval", "sentence-transformers BGE-M3", "retrieval-augmented generation", "term frequency scoring", "cosine similarity search", "prompt engineering for RAG", "weight tuning retrieval"],
+    "concepts_required": ["python classes", "dictionaries", "list comprehensions", "basic math operations", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

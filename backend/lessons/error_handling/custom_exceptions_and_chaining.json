@@ -1,0 +1,171 @@
+{
+  "id": "custom_exceptions_and_chaining",
+  "topic": "custom_exceptions_and_chaining",
+  "track": "error_handling",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "Custom Exceptions & Chaining: Errors That Explain Themselves"
+  },
+  "description": {
+    "en": "A generic `Exception` tells you something broke. A well-named custom exception tells you what broke, where, and why — and chaining with `raise ... from ...` keeps the root cause attached so the traceback reads like a story instead of a riddle. Learn to design a small exception hierarchy, translate low-level errors at your boundaries, and re-raise without losing information."
+  },
+  "xp_reward": 90,
+  "next_unlock": "context_managers_and_cleanup",
+  "story_variants": {
+    "en": "## Errors Are Messages to a Future Human\n\nEvery exception you raise is a note to whoever debugs the failure at 3am — often future-you. A bare `raise Exception(\"error\")` is a note that says *\"something went wrong, good luck.\"* A well-designed exception says *\"the withdrawal failed because the amount exceeded the balance,\"* and its **type** alone lets a caller decide what to do. The goal of this lesson: make your errors carry meaning.\n\n> **Key idea:** A good exception answers three questions before anyone reads the traceback — *what kind* of failure (its class), *what specifically* happened (its message), and *what caused it* (its `__cause__`, via chaining).\n\n## Defining Custom Exceptions\n\nA custom exception is just a class that subclasses `Exception` (or a subclass of it). Often the body is empty — the **name itself** is the information:\n\n```python\nclass InsufficientFundsError(Exception):\n    \"\"\"Raised when a withdrawal exceeds the available balance.\"\"\"\n```\n\nThat is a complete, useful exception. You raise it with a clear, human message:\n\n```python\nraise InsufficientFundsError(\"withdrawal of 150 exceeds balance of 100\")\n```\n\nNow a caller can catch *exactly* this failure and nothing else:\n\n```python\ntry:\n    balance = withdraw(100, 150)\nexcept InsufficientFundsError as e:\n    print(f\"Declined: {e}\")\n```\n\nCatching `InsufficientFundsError` is precise. Catching bare `Exception` is a shotgun — it swallows typos, `KeyboardInterrupt`-adjacent bugs, and everything else, hiding real problems.\n\n## A Small Hierarchy for Your Domain\n\nReal apps don't define one exception — they define a tiny **family** with a common base. This lets callers catch broadly or narrowly:\n\n```python\nclass AppError(Exception):\n    \"\"\"Base for every error this application raises on purpose.\"\"\"\n\nclass ValidationError(AppError):\n    \"\"\"Input failed a rule.\"\"\"\n\nclass InsufficientFundsError(AppError):\n    \"\"\"A debit exceeded the balance.\"\"\"\n```\n\nBecause both subclass `AppError`, one handler can catch the whole family:\n\n```python\ntry:\n    do_work()\nexcept AppError as e:        # catches Validation AND InsufficientFunds\n    log(e)\n```\n\n...while a caller who cares about one specific case can still catch just `ValidationError`. The base class is the seam that keeps \"handle all of *our* errors\" separate from \"handle every error in the universe.\"\n\n## Chaining: `raise NewError(...) from original`\n\nMost failures begin life as a low-level error — a `KeyError`, a `ValueError`, a database timeout. Re-raising your own domain error is great for the caller, but you must not **throw away the root cause**. That is what `from` does:\n\n```python\ntry:\n    user = registry[user_id]\nexcept KeyError as err:\n    raise ValidationError(f\"unknown user {user_id!r}\") from err\n```\n\nThe `from err` sets `__cause__`, so the traceback prints **both** layers:\n\n```text\nKeyError: 42\n\nThe above exception was the direct cause of the following exception:\n\nValidationError: unknown user 42\n```\n\nThe caller sees a clean `ValidationError`; the debugger sees the `KeyError` that started it. Nothing is lost.\n\n## Explicit `from` vs Accidental Chaining\n\nIf you raise a new error *inside* an `except` block **without** `from`, Python still attaches the original — but with a different, weaker phrasing:\n\n| You write | Traceback says | Means |\n|-----------|----------------|-------|\n| `raise New() from err` | \"the direct cause of\" | deliberate translation — `__cause__` set |\n| `raise New()` (in except) | \"During handling... another occurred\" | *accidental* — `__context__` only |\n| `raise New() from None` | (no chain shown) | you intentionally hid the cause |\n\nThe \"During handling of the above exception, another occurred\" wording is Python quietly telling you a *second* error happened while handling the first — often a bug in your handler. When the translation is intentional, say so with `from`; it documents intent and reads better.\n\n## Catch, Translate, Re-raise — at Boundaries\n\nWhere should you translate a low-level error into a domain error? At a **boundary** — the edge of a layer, like a function that wraps a database or a third-party API. Inside the boundary you deal with raw `KeyError`/`TimeoutError`; at the seam you convert them to *your* vocabulary so callers above never depend on the internals.\n\nAnd when you catch an error only to *inspect or log* it but you don't want to change it, re-raise it **bare** to preserve the original completely:\n\n```python\ntry:\n    risky()\nexcept AppError:\n    metrics.increment(\"app_error\")\n    raise            # same exception, same traceback — re-thrown untouched\n```\n\nA bare `raise` (no argument) re-raises the exception currently being handled, with its original traceback intact. Writing `raise e` instead can truncate or reset the traceback — so prefer the bare form when you're just passing it along.\n\nPut together: subclass `Exception` for a named, catchable type; group related errors under one base; chain with `from` to keep the root cause; and re-raise bare when you only meant to look. Do this and your stack traces stop being riddles — they explain themselves."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "error_trace",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "exception_anatomy",
+      "nodes": [
+        {
+          "label": "A Good Exception Carries",
+          "children": [
+            "Type   -> a named class (subclass Exception)",
+            "Message-> a clear, human 'what happened'",
+            "Cause  -> __cause__ via `raise ... from original`",
+            "Family -> a base class (AppError) to catch broadly"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "from_vs_accidental",
+      "left": {
+        "label": "raise New() from err  (deliberate: 'direct cause of')",
+        "result": true
+      },
+      "right": {
+        "label": "raise New() in except  (accidental: 'During handling...')",
+        "result": false
+      },
+      "description": {
+        "en": "`from err` sets __cause__ and reads as an intentional translation. A bare raise inside except only sets __context__ — Python's way of saying a second error happened while handling the first."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "chaining_demo",
+      "code": "class AppError(Exception):\n    pass\n\nclass ValidationError(AppError):\n    pass\n\nregistry = {1: \"Ada\"}\n\ntry:\n    name = registry[42]\nexcept KeyError as err:\n    raise ValidationError(\"unknown user 42\") from err",
+      "executionSteps": [
+        { "line": 9, "variables": { "registry": "{1: 'Ada'}" }, "output": "", "description": "registry[42] -> the key is missing" },
+        { "line": 10, "variables": { "err": "KeyError(42)" }, "output": "", "description": "Low-level KeyError is caught at the boundary" },
+        { "line": 11, "variables": { "__cause__": "KeyError(42)" }, "output": "ValidationError: unknown user 42", "description": "Re-raised as a domain error; `from err` keeps the KeyError as __cause__" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Subclass Exception -> a named, catchable type.",
+        "Group under a base (AppError) -> catch broad or narrow.",
+        "raise New(...) from err -> translate, keep the root cause.",
+        "bare `raise` -> re-throw untouched, traceback intact."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a tiny banking guard. (1) Define a custom exception `InsufficientFundsError` that subclasses `Exception`. (2) In `withdraw(balance, amount)`, raise `InsufficientFundsError(\"insufficient funds\")` when `amount > balance`; otherwise return the new balance `balance - amount`. The demo calls `withdraw` twice: a successful withdrawal of 30 from 100 (prints the new balance), then an overdraft of 150 from 100, which the caller catches and reports. Print the two lines exactly. Expected output:\nBalance after withdrawal: 70\nDeclined: insufficient funds"
+      },
+      "starter_code": "# 1) Define a custom exception by subclassing Exception\nclass InsufficientFundsError(Exception):\n    pass\n\ndef withdraw(balance, amount):\n    # 2) Raise InsufficientFundsError when amount > balance,\n    #    otherwise return the new balance.\n    # TODO: implement\n    return None\n\n# --- demo (do not change) ---\nprint(f\"Balance after withdrawal: {withdraw(100, 30)}\")\n\ntry:\n    withdraw(100, 150)\nexcept InsufficientFundsError as e:\n    print(f\"Declined: {e}\")",
+      "expected_output": "Balance after withdrawal: 70\nDeclined: insufficient funds",
+      "hints": {
+        "en": [
+          "A custom exception is just a class: `class InsufficientFundsError(Exception): pass`. The name is the information.",
+          "Inside withdraw, check the failing condition first: `if amount > balance: raise InsufficientFundsError(\"insufficient funds\")`.",
+          "Raise with a clear message string — that string is what `str(e)` prints when the caller catches it.",
+          "If the condition passes, just `return balance - amount` so withdraw(100, 30) gives 70."
+        ]
+      },
+      "test_code": "import pytest\n\n# Happy path returns the correct new balance\nassert withdraw(100, 30) == 70\nassert withdraw(50, 50) == 0\n\n# Overdraft raises the custom exception\ntry:\n    withdraw(100, 150)\n    raised = False\nexcept InsufficientFundsError as e:\n    raised = True\n    assert str(e) == \"insufficient funds\"\nassert raised is True\n\n# It really is a subclass of Exception\nassert issubclass(InsufficientFundsError, Exception)\n\n# pytest.raises-style confirmation\nwith pytest.raises(InsufficientFundsError):\n    withdraw(0, 1)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the minimum needed to define a useful custom exception?"
+      },
+      "options": {
+        "en": [
+          "Override __init__ and store an error code",
+          "Subclass Exception (often with an empty body) and give it a clear name",
+          "Register it with the interpreter",
+          "Inherit from BaseException directly"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why group related exceptions under a common base class like `AppError`?"
+      },
+      "options": {
+        "en": [
+          "It makes them run faster",
+          "So a caller can catch the whole family with one `except AppError`, or a specific one when needed",
+          "Python requires every exception to have a base",
+          "It automatically logs the errors"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `raise NewError(...) from original` accomplish?"
+      },
+      "options": {
+        "en": [
+          "It deletes the original exception",
+          "It sets __cause__ so the traceback shows the new error AS the 'direct cause of' the original — keeping the root cause",
+          "It silences the new exception",
+          "It converts the error into a warning"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Inside an `except` block you write a bare `raise` with no argument. What happens?"
+      },
+      "options": {
+        "en": [
+          "It raises a new generic Exception",
+          "It re-raises the exception currently being handled, with its original traceback intact",
+          "It is a syntax error outside of functions",
+          "It clears the exception and continues"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["custom_exceptions", "exception_hierarchy", "exception_chaining", "raise_from", "bare_raise", "error_translation"],
+    "concepts_required": ["exceptions_done_right"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "error_handling",
+    "path_memberships": []
+  },
+  "generated": false
+}

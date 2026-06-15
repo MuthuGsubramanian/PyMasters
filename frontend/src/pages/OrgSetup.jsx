@@ -230,7 +230,7 @@ export default function OrgSetup() {
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
                     placeholder="e.g., Acme Academy"
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border-default bg-bg-inset focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
                   />
                 </div>
 
@@ -265,7 +265,7 @@ export default function OrgSetup() {
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
                     placeholder="e.g., company.com"
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border-default bg-bg-inset focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
                   />
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default function OrgSetup() {
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border-default bg-bg-inset focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all"
                   />
                   {logoUrl && (
                     <div className="mt-3 flex items-center gap-3">
@@ -306,7 +306,7 @@ export default function OrgSetup() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description of your organization..."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-border-default bg-bg-inset focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-text-primary placeholder:text-text-muted transition-all resize-none"
                   />
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function OrgSetup() {
                       onChange={(e) => setEmailInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addEmail()}
                       placeholder="member@example.com"
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all"
                     />
                     <button
                       onClick={addEmail}
@@ -347,7 +347,7 @@ export default function OrgSetup() {
                         <select
                           value={m.role}
                           onChange={(e) => changeRole(m.email, e.target.value)}
-                          className="text-xs px-2 py-1 rounded-lg border border-black/[0.08] bg-bg-surface text-text-secondary focus:outline-none"
+                          className="text-xs px-2 py-1 rounded-lg border border-border-default bg-bg-surface text-text-secondary focus:outline-none"
                         >
                           {ROLES.map((r) => (
                             <option key={r} value={r}>{r}</option>
@@ -373,7 +373,7 @@ export default function OrgSetup() {
                     onChange={(e) => setBulkText(e.target.value)}
                     placeholder={"alice@example.com, bob@example.com\ncharlie@example.com"}
                     rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-border-default bg-bg-inset focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all resize-none"
                   />
                   {bulkText.trim() && (
                     <button

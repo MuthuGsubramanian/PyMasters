@@ -1,0 +1,171 @@
+{
+  "id": "how_python_objects_work",
+  "topic": "how_python_objects_work",
+  "track": "python_internals",
+  "module": "memory_model",
+  "order": 1,
+  "title": {
+    "en": "Everything Is an Object: Identity, Type, and Value"
+  },
+  "description": {
+    "en": "In CPython every value you ever touch is a heap-allocated object with three properties: an identity, a type, and a value. Variables are not boxes — they are names bound to those objects. Master this and aliasing, copying, `is` vs `==`, and a whole class of subtle bugs stop being mysterious."
+  },
+  "xp_reward": 90,
+  "next_unlock": "reference_counting_gc",
+  "story_variants": {
+    "en": "## Variables Are Names, Not Boxes\n\nMost people first learn variables with a wrong picture: a box labeled `x` that *holds* the number `5`. In Python that picture causes real bugs. The accurate picture is different and, once you see it, permanent.\n\nIn CPython, **every value is a heap-allocated object** — integers, strings, lists, functions, even types themselves. When you write `x = 5`, Python creates (or reuses) an integer object somewhere in memory and makes the *name* `x` point at it. The name is a label on the object, not a container for it. A single object can have many labels.\n\n> **Key idea:** A variable is a name bound to an object. Assignment never copies the object — it only makes another name point at the same object.\n\n## The Three Things Every Object Has\n\nThe official model says every object has exactly three attributes:\n\n- **Identity** — *which* object it is. Fixed for the object's whole life. You read it with `id(obj)`, which in CPython returns its memory address. The `is` operator compares identity.\n- **Type** — *what kind* of object it is (`int`, `list`, `str`, ...). Fixed for life. You read it with `type(obj)`.\n- **Value** — *what it contains*. May change (for mutable objects like lists) or not (for immutable ones like ints and strings). The `==` operator compares value.\n\nConceptually, deep inside CPython, every object starts with a small **PyObject header** carrying two fields: a **reference count** (how many names point at it — the subject of the next lesson) and a **type pointer** (which links to the object's type). The value lives right after that header. You never touch the header directly, but knowing it's there explains why `id()` and `type()` are so cheap and why everything feels uniform.\n\n## Identity vs Value: `is` vs `==`\n\nThis is where the box-picture costs people hours. Consider:\n\n```python\na = [1, 2, 3]\nb = a          # b is another NAME for the same list\nc = [1, 2, 3]  # a brand new, separate list\n\nprint(a == b)  # True  -> same value\nprint(a is b)  # True  -> same object (id(a) == id(b))\nprint(a == c)  # True  -> same value\nprint(a is c)  # False -> different objects!\n```\n\n`a` and `c` are *equal* (same contents) but not *identical* (different objects at different addresses). `a` and `b` are both — because `b = a` copied the reference, not the list.\n\n| Operator | Question it answers | Compares | True when |\n|----------|---------------------|----------|-----------|\n| `==`     | \"Do they look the same?\" | value | contents are equal |\n| `is`     | \"Are they the same object?\" | identity (`id`) | it's literally the same object in memory |\n\nUse `==` for almost everything. Reserve `is` for identity checks — overwhelmingly `is None`, `is True`, `is False`.\n\n## Aliasing: The Bug That `is` Reveals\n\nBecause assignment shares objects, two names can point at the **same mutable list**. Mutating through one is visible through the other:\n\n```python\na = [1, 2]\nb = a          # alias: SAME object\nb.append(99)\nprint(a)       # [1, 2, 99]  -- a changed too!\n```\n\nIf you wanted an independent copy, you must make one explicitly:\n\n```python\na = [1, 2]\nb = a[:]       # slice copy: a NEW list with the same values\nb.append(99)\nprint(a)       # [1, 2]      -- a is untouched\nprint(a is b)  # False       -- different objects\nprint(a == b)  # False       -- now even values differ\n```\n\n`a[:]`, `list(a)`, and `a.copy()` all build a fresh object. `b = a` does not.\n\n## The `is`-with-small-ints Trap\n\nNever use `is` to compare values — it sometimes *appears* to work and then betrays you:\n\n```python\nx = 1000\ny = 1000\nprint(x == y)  # True  -> correct, compare value\nprint(x is y)  # CPython detail: often False!\n```\n\nCPython caches small integers (roughly -5 to 256), so `256 is 256` is `True` but `1000 is 1000` may be `False`. The fix is simple: **compare values with `==`, identity with `is`.** If you ever wrote `if total is 1000:`, that was always a value comparison wearing the wrong operator.\n\nOnce you see variables as names bound to three-part objects, aliasing, copying, and `is`/`==` stop being trivia. They become one consistent mental model — the foundation for everything else in Python's memory model."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "object_graph",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "three_attributes",
+      "nodes": [
+        {
+          "label": "Every Object Has",
+          "children": [
+            "Identity  -> id(), compared by `is`",
+            "Type      -> type(), fixed for life",
+            "Value     -> contents, compared by `==`"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "is_vs_eq",
+      "left": {
+        "label": "a == c  (same VALUE [1,2,3])",
+        "result": true
+      },
+      "right": {
+        "label": "a is c  (same OBJECT?)",
+        "result": false
+      },
+      "description": {
+        "en": "Equal contents do not mean the same object. `==` compares value; `is` compares identity (id)."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "aliasing_demo",
+      "code": "a = [1, 2]\nb = a\nb.append(99)\nprint(a)\n\nc = a[:]\nc.append(7)\nprint(a)",
+      "executionSteps": [
+        { "line": 2, "variables": { "a": "[1, 2]", "b": "[1, 2] (same obj)" }, "output": "", "description": "b = a -> b is just another NAME for a's list" },
+        { "line": 3, "variables": { "a": "[1, 2, 99]", "b": "[1, 2, 99]" }, "output": "", "description": "Mutating via b changes a — same object!" },
+        { "line": 4, "variables": { "a": "[1, 2, 99]" }, "output": "[1, 2, 99]", "description": "a sees the change" },
+        { "line": 6, "variables": { "a": "[1, 2, 99]", "c": "[1, 2, 99] (NEW obj)" }, "output": "", "description": "c = a[:] makes a real copy" },
+        { "line": 8, "variables": { "a": "[1, 2, 99]" }, "output": "[1, 2, 99]", "description": "Mutating the copy leaves a untouched" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A variable is a NAME bound to an object, not a box.",
+        "`is` compares identity (id).  `==` compares value.",
+        "b = a aliases.  b = a[:] copies.  Know the difference."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "A teammate wrote code that uses `is` where they meant `==`. Their `values_match` function uses `is` to compare two large totals, which silently breaks for big integers (CPython only caches small ints). Fix `values_match` to compare VALUE with `==`. Then implement `is_same_object` to compare IDENTITY with `is`. The demo at the bottom proves the difference: two equal-but-distinct lists are NOT the same object, but an alias IS. Print the deterministic summary line exactly. Expected output: values_match=True same_distinct=False alias=True"
+      },
+      "starter_code": "def values_match(a, b):\n    # BUG: 'is' compares identity, not value. For big ints this can be False!\n    return a is b\n\ndef is_same_object(a, b):\n    # TODO: return True only when a and b are the SAME object\n    return None\n\n# --- demo (do not change) ---\ntotal_a = 1000\ntotal_b = 500 + 500           # equal value, may be a different object\n\nlist_a = [1, 2, 3]\nlist_b = [1, 2, 3]            # equal value, definitely a different object\nalias = list_a               # same object as list_a\n\nprint(\n    f\"values_match={values_match(total_a, total_b)} \"\n    f\"same_distinct={is_same_object(list_a, list_b)} \"\n    f\"alias={is_same_object(list_a, alias)}\"\n)",
+      "expected_output": "values_match=True same_distinct=False alias=True",
+      "hints": {
+        "en": [
+          "To compare VALUE (do they look the same?), use ==. So values_match should return a == b.",
+          "To compare IDENTITY (are they the literal same object?), use is. So is_same_object should return a is b.",
+          "Two separately-built lists [1,2,3] and [1,2,3] are equal (==) but not identical (is) — different objects, different id().",
+          "An alias made with `alias = list_a` points at the SAME object, so `list_a is alias` is True."
+        ]
+      },
+      "test_code": "assert values_match(1000, 500 + 500) is True\nassert values_match(1000, 999) is False\nassert is_same_object([1, 2, 3], [1, 2, 3]) is False\nx = [1, 2, 3]\nassert is_same_object(x, x) is True\nassert is_same_object(x, x[:]) is False"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In CPython, what are the three properties every object has?"
+      },
+      "options": {
+        "en": [
+          "Name, scope, and lifetime",
+          "Identity, type, and value",
+          "Address, size, and color",
+          "Key, value, and hash"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "After `a = [1, 2]; b = a`, why does `b.append(99)` also change `a`?"
+      },
+      "options": {
+        "en": [
+          "Because lists are copied on assignment",
+          "Because b = a binds b to the SAME object a points at — they are aliases",
+          "Because append always edits every list",
+          "Because a and b have equal values"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Two lists `a = [1,2,3]` and `c = [1,2,3]` are built separately. What do `a == c` and `a is c` return?"
+      },
+      "options": {
+        "en": [
+          "Both True",
+          "Both False",
+          "`a == c` is True (same value) but `a is c` is False (different objects)",
+          "`a == c` is False but `a is c` is True"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why can `x = 1000; y = 1000; x is y` be False even though `x == y` is True?"
+      },
+      "options": {
+        "en": [
+          "Because 1000 is not a valid integer",
+          "Because `is` compares identity, and CPython only caches small ints (~-5..256), so large equal ints may be distinct objects",
+          "Because `==` is broken for large numbers",
+          "Because integers are mutable"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["object_model", "identity_vs_equality", "aliasing", "is_vs_equals", "pyobject_header"],
+    "concepts_required": [],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}

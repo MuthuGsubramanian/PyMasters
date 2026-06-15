@@ -1,0 +1,121 @@
+{
+  "id": "chronos2_anomaly_detection_monitoring",
+  "topic": "chronos2_anomaly_detection_monitoring",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Anomaly Detection & Monitoring with Amazon Chronos-2"
+  },
+  "description": {
+    "en": "Build a real-time anomaly detection and monitoring system using Amazon Chronos-2 — detect unexpected spikes, drops, and drift in any time series by comparing live values against probabilistic forecast bands, packaged as a Homie monitoring plugin."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Catching the Unexpected: Anomaly Detection with Chronos-2\n\nVaathiyaar here! Forecasting tells you what *should* happen next. But the real power comes from flipping the question: what happens when reality *doesn't* match the forecast? That's **anomaly detection** — and Chronos-2's probabilistic output makes it almost trivially easy. If a live data point falls outside the model's prediction interval, something unusual just happened. Today we build a complete monitoring pipeline that watches any metric and fires alerts when things go sideways.\n\n### Why Chronos-2 for Anomaly Detection?\n\n| Approach | Setup Effort | Adaptability | False Positive Rate | Uncertainty Aware |\n|---|---|---|---|---|\n| Static thresholds | Low | None — breaks on trends | High | No |\n| Statistical (Z-score) | Medium | Moderate | Medium | Partially |\n| ML models (Isolation Forest) | High | Good after training | Low | No |\n| **Chronos-2 forecast bands** | **Low** | **Automatic — zero-shot** | **Tunable via percentile** | **Yes — built in** |\n\nChronos-2 generates multiple sample trajectories for the next time step. The spread of those samples *is* the expected range. Any observation outside that range is an anomaly — with a severity score proportional to how far it deviates.\n\n### One-Step-Ahead Anomaly Detection\n\n```python\nimport torch\nimport numpy as np\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"cpu\", torch_dtype=torch.float32\n)\n\ndef detect_anomaly(history: list[float], actual: float,\n                   threshold_pct: float = 5.0) -> dict:\n    context = torch.tensor(history, dtype=torch.float32)\n    forecast = pipeline.predict(context, prediction_length=1, num_samples=100)\n    samples = forecast[0].numpy().flatten()\n\n    low = np.percentile(samples, threshold_pct)\n    high = np.percentile(samples, 100 - threshold_pct)\n    median = np.percentile(samples, 50)\n\n    is_anomaly = actual < low or actual > high\n    deviation = (actual - median) / (high - low) if high != low else 0.0\n\n    return {\n        \"is_anomaly\": is_anomaly,\n        \"actual\": actual,\n        \"expected_range\": [float(low), float(high)],\n        \"median\": float(median),\n        \"deviation_score\": round(abs(deviation), 2)\n    }\n\nhistory = [100, 102, 98, 104, 101, 99, 103, 100, 105, 102]\nprint(detect_anomaly(history, actual=103))  # Normal\nprint(detect_anomaly(history, actual=150))  # Anomaly!\n```\n\nThe `threshold_pct` parameter controls sensitivity: 5% uses the 5th-95th percentile band (catches only extreme outliers), while 25% uses the 25th-75th (flags moderate deviations too).\n\n### Rolling Window Monitor\n\n```python\ndef monitor_stream(data: list[float], window: int = 12,\n                   threshold_pct: float = 5.0) -> list[dict]:\n    alerts = []\n    for i in range(window, len(data)):\n        history = data[i - window:i]\n        actual = data[i]\n        result = detect_anomaly(history, actual, threshold_pct)\n        if result[\"is_anomaly\"]:\n            result[\"index\"] = i\n            alerts.append(result)\n    return alerts\n\nmetrics = [100, 102, 98, 104, 101, 99, 103, 100, 105, 102,\n           98, 101, 103, 99, 250, 102, 100, 5, 98, 101]\n\nfor alert in monitor_stream(metrics, window=12):\n    print(f\"ALERT at index {alert['index']}: \"\n          f\"value={alert['actual']}, expected={alert['expected_range']}, \"\n          f\"severity={alert['deviation_score']}\")\n```\n\nThe rolling window slides forward, always using the most recent observations as context. This naturally adapts to trends, seasonality, and level shifts — no manual reconfiguration needed.\n\n### Building a Homie Anomaly Monitor Plugin\n\n```python\nclass HomieAnomalyMonitor:\n    def __init__(self, model=\"amazon/chronos-t5-small\",\n                 window=24, sensitivity=5.0):\n        self.pipeline = ChronosPipeline.from_pretrained(\n            model, device_map=\"cpu\", torch_dtype=torch.float32\n        )\n        self.window = window\n        self.sensitivity = sensitivity\n        self.buffer = []\n        self.alert_log = []\n\n    def ingest(self, value: float) -> dict | None:\n        self.buffer.append(value)\n        if len(self.buffer) < self.window + 1:\n            return None\n\n        history = self.buffer[-self.window - 1:-1]\n        ctx = torch.tensor(history, dtype=torch.float32)\n        fc = self.pipeline.predict(ctx, prediction_length=1, num_samples=100)\n        samples = fc[0].numpy().flatten()\n\n        low = float(np.percentile(samples, self.sensitivity))\n        high = float(np.percentile(samples, 100 - self.sensitivity))\n        median = float(np.percentile(samples, 50))\n\n        if value < low or value > high:\n            alert = {\n                \"type\": \"spike\" if value > high else \"drop\",\n                \"value\": value,\n                \"expected\": [low, high],\n                \"severity\": round(abs(value - median) / max(high - low, 1e-6), 2)\n            }\n            self.alert_log.append(alert)\n            return alert\n        return None\n\n    def health_report(self) -> dict:\n        checked = max(len(self.buffer) - self.window, 0)\n        anomalies = len(self.alert_log)\n        rate = anomalies / checked if checked > 0 else 0.0\n        return {\n            \"total_checked\": checked,\n            \"anomalies\": anomalies,\n            \"anomaly_rate\": round(rate, 4),\n            \"health\": \"healthy\" if anomalies == 0 else\n                      \"degraded\" if anomalies <= 3 else \"critical\"\n        }\n```\n\nHomie calls `ingest()` on every new data point — from a cron job, webhook, or streaming source. The plugin maintains its own rolling buffer, computes forecast bands on the fly, and returns an alert dict only when something breaks the pattern. Call `health_report()` anytime for a summary.\n\n### Tuning Sensitivity vs. Alert Fatigue\n\n| Percentile Band | Sensitivity | False Positives | Use Case |\n|---|---|---|---|\n| 1st–99th | Very low | Rare | Critical-only (outages) |\n| 5th–95th | Low | Few | Production monitoring |\n| 10th–90th | Moderate | Some | Quality assurance |\n| 25th–75th | High | Many | Exploratory / research |\n\nStart with 5th–95th for production. Tighten to 10th–90th if you're missing anomalies. Widen to 1st–99th if alert fatigue is a problem.\n\n> **Key Insight:** Chronos-2's probabilistic forecasts are a natural anomaly detector — the prediction interval *is* the expected range, and anything outside it is anomalous by definition. No separate anomaly model needed, no threshold tuning by hand, no training on labeled anomalies. The same foundation model that forecasts your metrics also guards them."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Chronos-2 doesn't just forecast — it detects anomalies. By comparing live values against probabilistic prediction bands, you get a zero-shot anomaly detector for any time series. No labeled data, no separate model, no manual thresholds.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import torch\nimport numpy as np\nfrom chronos import ChronosPipeline\n\npipeline = ChronosPipeline.from_pretrained(\n    \"amazon/chronos-t5-small\",\n    device_map=\"cpu\", torch_dtype=torch.float32\n)\n\ndef detect_anomaly(history, actual, threshold_pct=5.0):\n    context = torch.tensor(history, dtype=torch.float32)\n    forecast = pipeline.predict(context, prediction_length=1, num_samples=100)\n    samples = forecast[0].numpy().flatten()\n    low = np.percentile(samples, threshold_pct)\n    high = np.percentile(samples, 100 - threshold_pct)\n    median = np.percentile(samples, 50)\n    is_anomaly = actual < low or actual > high\n    deviation = abs(actual - median) / max(high - low, 1e-6)\n    return {\"is_anomaly\": is_anomaly, \"deviation\": round(deviation, 2)}",
+      "steps": [
+        {"line": 1, "explanation": "Import PyTorch for tensor operations — Chronos-2 expects tensor input for the historical context window."},
+        {"line": 2, "explanation": "NumPy's percentile function will compute the upper and lower bounds of the expected range from forecast samples."},
+        {"line": 3, "explanation": "ChronosPipeline is the high-level API that handles tokenization, T5 inference, and detokenization in one call."},
+        {"line": 5, "explanation": "Load the pretrained model once. For monitoring, keep this loaded in memory — initialization is the expensive part."},
+        {"line": 10, "explanation": "detect_anomaly() takes a history window, one actual observation, and a sensitivity threshold (percentile cutoff)."},
+        {"line": 12, "explanation": "Predict just 1 step ahead with 100 samples. More samples give a smoother estimate of the expected distribution."},
+        {"line": 13, "explanation": "Flatten the samples into a 1D array — each value is one possible 'next step' the model considers plausible."},
+        {"line": 14, "explanation": "The low bound at 5th percentile: only 5% of the model's predicted futures fall below this value."},
+        {"line": 15, "explanation": "The high bound at 95th percentile: together with low, this band captures 90% of predicted outcomes."},
+        {"line": 17, "explanation": "If the actual value falls outside [low, high], the model considers it anomalous — it didn't predict this outcome."},
+        {"line": 18, "explanation": "Deviation score: how far outside the band the value is, normalized by band width. Higher = more severe anomaly."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "class HomieAnomalyMonitor:\n    def __init__(self, window=24, sensitivity=5.0):\n        self.pipeline = ChronosPipeline.from_pretrained(\n            \"amazon/chronos-t5-small\",\n            device_map=\"cpu\", torch_dtype=torch.float32\n        )\n        self.window = window\n        self.sensitivity = sensitivity\n        self.buffer = []\n        self.alert_log = []\n\n    def ingest(self, value):\n        self.buffer.append(value)\n        if len(self.buffer) <= self.window:\n            return None\n        history = self.buffer[-self.window - 1:-1]\n        ctx = torch.tensor(history, dtype=torch.float32)\n        fc = self.pipeline.predict(ctx, prediction_length=1, num_samples=100)\n        samples = fc[0].numpy().flatten()\n        low = float(np.percentile(samples, self.sensitivity))\n        high = float(np.percentile(samples, 100 - self.sensitivity))\n        if value < low or value > high:\n            alert = {\"type\": \"spike\" if value > high else \"drop\",\n                     \"value\": value, \"expected\": [low, high]}\n            self.alert_log.append(alert)\n            return alert\n        return None",
+      "steps": [
+        {"line": 1, "explanation": "HomieAnomalyMonitor wraps Chronos-2 into a stateful plugin that accumulates data and fires alerts."},
+        {"line": 2, "explanation": "window sets how many recent observations the model sees. sensitivity controls the percentile band width."},
+        {"line": 7, "explanation": "Store the window size — larger windows capture more context but may smooth over abrupt regime changes."},
+        {"line": 9, "explanation": "The buffer accumulates all ingested values. In production, you'd cap this to save memory."},
+        {"line": 12, "explanation": "ingest() is called for each new data point — from a cron job, webhook, or real-time stream."},
+        {"line": 14, "explanation": "Wait until we have enough data to fill the context window before making predictions."},
+        {"line": 16, "explanation": "Slice the most recent 'window' values as context, excluding the current value we're testing."},
+        {"line": 22, "explanation": "If the value falls outside the forecast band, return a typed alert: 'spike' for too high, 'drop' for too low."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Static Threshold Monitoring",
+      "right_label": "Chronos-2 Anomaly Detection",
+      "items": [
+        {"left": "Manually set fixed upper/lower bounds", "right": "Bounds computed automatically from forecast distribution"},
+        {"left": "Breaks when trends or seasonality change", "right": "Adapts via rolling context window — zero reconfiguration"},
+        {"left": "No severity scoring", "right": "Deviation score quantifies how anomalous each event is"},
+        {"left": "Requires domain expertise to configure", "right": "One sensitivity parameter controls everything"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a Chronos-2 anomaly monitor! Any metric — server latency, sales, sensor data — now has intelligent, adaptive anomaly detection."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `AnomalyDetector` class that simulates Chronos-2's forecast-based anomaly detection. Given a history window, it predicts the expected range for the next value using linear trend extrapolation with random noise samples, then checks whether an actual observation falls inside or outside that range. Implement `_forecast_distribution(history, num_samples)` to generate sample predictions for the next step, and `check(history, actual, threshold_pct)` to determine if the actual value is anomalous and compute a deviation score."
+      },
+      "starter_code": "import random\n\nclass AnomalyDetector:\n    def __init__(self, noise_scale: float = 0.05):\n        self.noise_scale = noise_scale\n\n    def _forecast_distribution(self, history: list[float],\n                                num_samples: int = 100) -> list[float]:\n        # Generate num_samples predicted next-values using:\n        # trend = (history[-1] - history[0]) / (len(history) - 1)\n        # base = history[-1] + trend\n        # Each sample = base + random.gauss(0, abs(base * self.noise_scale))\n        # Returns sorted list of sample values\n        pass\n\n    def check(self, history: list[float], actual: float,\n              threshold_pct: float = 5.0) -> dict:\n        # Get sorted forecast samples\n        # low = sample at index int(threshold_pct / 100 * n)\n        # high = sample at index int((100 - threshold_pct) / 100 * n)\n        # median = sample at index n // 2\n        # is_anomaly = actual < low or actual > high\n        # deviation_score = abs(actual - median) / max(high - low, 1e-6)\n        # anomaly_type: \"spike\" if actual > high, \"drop\" if actual < low, \"normal\"\n        # Returns dict with keys: is_anomaly, actual, expected_range,\n        #                         median, deviation_score, anomaly_type\n        pass\n\n# Test it:\nrandom.seed(42)\ndetector = AnomalyDetector(noise_scale=0.05)\n\nstable = [100, 102, 98, 104, 101, 99, 103, 100]\nresult_normal = detector.check(stable, actual=103)\nprint(result_normal[\"is_anomaly\"])\nprint(result_normal[\"anomaly_type\"])\n\nresult_spike = detector.check(stable, actual=200)\nprint(result_spike[\"is_anomaly\"])\nprint(result_spike[\"anomaly_type\"])\nprint(result_spike[\"deviation_score\"] > 5)",
+      "expected_output": "False\nnormal\nTrue\nspike\nTrue",
+      "hints": {
+        "en": [
+          "In _forecast_distribution(), compute trend = (history[-1] - history[0]) / (len(history) - 1), then base = history[-1] + trend. Generate each sample as base + random.gauss(0, abs(base * noise_scale)), then return sorted samples.",
+          "In check(), use int(threshold_pct / 100 * len(samples)) for the low index and int((100 - threshold_pct) / 100 * len(samples)) for the high index. Clamp indices to valid range.",
+          "Set anomaly_type to 'spike' if actual > high, 'drop' if actual < low, otherwise 'normal'. Deviation score uses abs(actual - median) / max(high - low, 1e-6)."
+        ]
+      },
+      "test_code": "random.seed(0)\nd = AnomalyDetector(noise_scale=0.05)\nsamples = d._forecast_distribution([10, 20, 30], num_samples=50)\nassert len(samples) == 50\nassert samples == sorted(samples)\nassert all(s > 30 for s in samples)\nr = d.check([10, 20, 30], actual=40.0)\nassert r['is_anomaly'] == False\nassert r['anomaly_type'] == 'normal'\nassert 'expected_range' in r and len(r['expected_range']) == 2\nr2 = d.check([10, 20, 30], actual=500.0)\nassert r2['is_anomaly'] == True\nassert r2['anomaly_type'] == 'spike'\nassert r2['deviation_score'] > 1.0\nr3 = d.check([10, 20, 30], actual=-100.0)\nassert r3['is_anomaly'] == True\nassert r3['anomaly_type'] == 'drop'"
+    },
+    {
+      "instruction": {
+        "en": "Build a `StreamMonitor` class that processes a stream of values and maintains a rolling buffer for anomaly detection. It uses an `AnomalyDetector` internally and fires alerts when values fall outside the expected range. Implement `ingest(value)` which adds a value to the buffer, checks for anomalies once enough data is collected, and returns an alert dict or None. Also implement `get_summary()` which returns stats about total points ingested, anomalies detected, and the anomaly rate."
+      },
+      "starter_code": "import random\n\nclass StreamMonitor:\n    def __init__(self, window: int = 8, sensitivity: float = 5.0,\n                 noise_scale: float = 0.05):\n        self.window = window\n        self.sensitivity = sensitivity\n        self.detector = AnomalyDetector(noise_scale=noise_scale)\n        self.buffer = []\n        self.total_checked = 0\n        self.anomaly_count = 0\n\n    def ingest(self, value: float) -> dict | None:\n        # Append value to buffer\n        # If buffer length <= window, return None (not enough context)\n        # Otherwise, use buffer[-window-1:-1] as history\n        # Call detector.check(history, value, self.sensitivity)\n        # Increment total_checked\n        # If anomaly, increment anomaly_count and return the result dict\n        # Otherwise return None\n        pass\n\n    def get_summary(self) -> dict:\n        # Returns {\"total_ingested\": len(buffer),\n        #          \"total_checked\": self.total_checked,\n        #          \"anomalies\": self.anomaly_count,\n        #          \"anomaly_rate\": anomaly_count / total_checked or 0.0}\n        pass\n\n# Test it:\nrandom.seed(42)\nmonitor = StreamMonitor(window=6, sensitivity=5.0)\n\nnormal_data = [100, 102, 98, 104, 101, 99, 103]\nfor v in normal_data:\n    result = monitor.ingest(v)\n\nprint(monitor.get_summary()[\"anomalies\"] == 0)\n\nalert = monitor.ingest(250)\nprint(alert is not None)\nprint(alert[\"anomaly_type\"])\n\nsummary = monitor.get_summary()\nprint(summary[\"total_checked\"])\nprint(summary[\"anomaly_rate\"] > 0)",
+      "expected_output": "True\nTrue\nspike\n2\nTrue",
+      "hints": {
+        "en": [
+          "In ingest(), append value first, then check if len(self.buffer) > self.window. If so, slice history as self.buffer[-self.window-1:-1].",
+          "Call self.detector.check(history, value, self.sensitivity). Always increment total_checked. Only increment anomaly_count and return the result if is_anomaly is True.",
+          "In get_summary(), anomaly_rate = self.anomaly_count / self.total_checked if self.total_checked > 0 else 0.0"
+        ]
+      },
+      "test_code": "random.seed(0)\nm = StreamMonitor(window=4, sensitivity=5.0)\nfor v in [10, 20, 30, 40]:\n    assert m.ingest(v) is None\nr = m.ingest(50)\nassert m.get_summary()['total_ingested'] == 5\nr2 = m.ingest(999)\nassert r2 is not None\nassert r2['is_anomaly'] == True\nassert r2['anomaly_type'] == 'spike'\ns = m.get_summary()\nassert s['anomalies'] >= 1\nassert s['anomaly_rate'] > 0\nassert s['total_checked'] >= 2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["anomaly detection", "forecast-based monitoring", "rolling window analysis", "deviation scoring", "alert severity classification", "Chronos-2 for monitoring", "Homie plugin architecture", "stream processing"],
+    "concepts_required": ["python classes", "lists and dicts", "basic statistics", "pip install", "percentiles"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

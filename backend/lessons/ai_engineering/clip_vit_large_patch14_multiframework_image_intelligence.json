@@ -1,0 +1,135 @@
+{
+  "id": "clip_vit_large_patch14_multiframework_image_intelligence",
+  "topic": "clip_vit_large_patch14_multiframework_image_intelligence",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "CLIP ViT-L/14: Multi-Framework Image Intelligence & Homie Tagging Plugin",
+    "ta": ""
+  },
+  "description": {
+    "en": "Deploy openai/clip-vit-large-patch14 across PyTorch, TensorFlow, JAX, and safetensors backends. Build a complete Homie plugin that auto-tags photos, performs natural language image search, and runs on whichever framework your stack supports.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Model, Four Frameworks: Deploy CLIP Anywhere\n\nVaathiyaar here! The `openai/clip-vit-large-patch14` model ships in **four formats** — PyTorch, TensorFlow, JAX, and safetensors — so you can plug zero-shot image classification into any ML stack. But loading the right backend is only half the battle. Today we'll master cross-framework deployment and build a Homie image intelligence plugin that works regardless of your backend.\n\n### Why Multi-Framework Matters\n\nProduction teams don't all use PyTorch. Your ML pipeline might run TensorFlow Serving, your research team prefers JAX, and your edge devices need the fastest cold-start possible via safetensors. CLIP supports all of them:\n\n| Backend | Load Command | Best For | Cold Start |\n|---|---|---|---|\n| PyTorch | `CLIPModel.from_pretrained(...)` | Research, prototyping | ~4s |\n| TensorFlow | `TFCLIPModel.from_pretrained(...)` | TF Serving, TFLite export | ~5s |\n| JAX/Flax | `FlaxCLIPModel.from_pretrained(...)` | TPU workloads, XLA JIT | ~3s (JIT) |\n| safetensors | `from_pretrained(..., use_safetensors=True)` | Fast loading, memory-mapped | ~2s |\n\n### Loading CLIP Across Backends\n\n```python\n# PyTorch (default)\nfrom transformers import CLIPModel, CLIPProcessor\nmodel_pt = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\n\n# TensorFlow\nfrom transformers import TFCLIPModel\nmodel_tf = TFCLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\n\n# JAX / Flax\nfrom transformers import FlaxCLIPModel\nmodel_jax = FlaxCLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\n\n# safetensors — faster, safer loading\nmodel_safe = CLIPModel.from_pretrained(\n    \"openai/clip-vit-large-patch14\", use_safetensors=True\n)\n\n# Processor is framework-agnostic\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n```\n\n### Framework-Agnostic Classification\n\n```python\nfrom transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-large-patch14\",\n    framework=\"pt\"  # or \"tf\"\n)\n\nimage = Image.open(\"photo.jpg\")\nresults = classifier(image, candidate_labels=[\n    \"a photo of a dog\", \"a photo of a cat\", \"a landscape photo\"\n])\nfor r in results:\n    print(f\"{r['score']:.1%} {r['label']}\")\n```\n\n### Building the Homie Image Intelligence Plugin\n\nThis plugin auto-tags photos and enables natural language search across your local library:\n\n```python\nimport torch\nimport numpy as np\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\nfrom pathlib import Path\n\nclass HomieImageIntelligence:\n    def __init__(self, use_safetensors=True):\n        self.model = CLIPModel.from_pretrained(\n            \"openai/clip-vit-large-patch14\",\n            use_safetensors=use_safetensors\n        )\n        self.processor = CLIPProcessor.from_pretrained(\n            \"openai/clip-vit-large-patch14\"\n        )\n        self.index = {}  # path -> embedding\n\n    def index_photos(self, photo_dir):\n        paths = list(Path(photo_dir).glob(\"*.jpg\"))\n        for p in paths:\n            img = Image.open(p)\n            inputs = self.processor(images=img, return_tensors=\"pt\")\n            with torch.no_grad():\n                emb = self.model.get_image_features(**inputs)\n                emb = emb / emb.norm(dim=-1, keepdim=True)\n            self.index[str(p)] = emb[0].numpy()\n\n    def search(self, query, top_k=5):\n        inp = self.processor(text=[query], return_tensors=\"pt\")\n        with torch.no_grad():\n            q = self.model.get_text_features(**inp)\n            q = q / q.norm(dim=-1, keepdim=True)\n        q = q[0].numpy()\n        scores = {p: float(q @ e) for p, e in self.index.items()}\n        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)\n        return ranked[:top_k]\n\n    def auto_tag(self, image_path, tag_pool, threshold=0.15):\n        img = Image.open(image_path)\n        prompts = [f\"a photo of {t}\" for t in tag_pool]\n        inputs = self.processor(\n            text=prompts, images=img,\n            return_tensors=\"pt\", padding=True\n        )\n        with torch.no_grad():\n            out = self.model(**inputs)\n            scores = out.logits_per_image.softmax(dim=1)[0]\n        return [\n            {\"tag\": t, \"score\": float(s)}\n            for t, s in zip(tag_pool, scores)\n            if float(s) >= threshold\n        ]\n```\n\n### safetensors: Why It Matters\n\n| Feature | pickle (.bin) | safetensors (.safetensors) |\n|---|---|---|\n| Load speed | Baseline | 2-4x faster |\n| Memory mapping | No | Yes — lazy loading |\n| Security | Arbitrary code execution risk | Safe — no code execution |\n| Partial loading | No | Yes — load specific tensors |\n\n> **Key Insight:** CLIP's multi-framework support means your image intelligence pipeline isn't locked to one ML stack. Use safetensors for fast cold starts, PyTorch for research flexibility, TensorFlow for serving infrastructure, or JAX for TPU-scale workloads — the same model weights, the same accuracy, deployed wherever your Homie plugin needs to run.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "openai/clip-vit-large-patch14 ships in PyTorch, TensorFlow, JAX, and safetensors formats — same 428M parameters, same 768-dim embedding space, four deployment options. Today we build a framework-agnostic Homie plugin that auto-tags and searches photos using whichever backend fits your stack.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import CLIPModel, CLIPProcessor\nfrom transformers import TFCLIPModel\nfrom transformers import FlaxCLIPModel\n\nmodel_pt = CLIPModel.from_pretrained(\n    \"openai/clip-vit-large-patch14\"\n)\n\nmodel_safe = CLIPModel.from_pretrained(\n    \"openai/clip-vit-large-patch14\",\n    use_safetensors=True\n)\n\nprocessor = CLIPProcessor.from_pretrained(\n    \"openai/clip-vit-large-patch14\"\n)",
+      "steps": [
+        {"line": 1, "explanation": "CLIPModel loads the PyTorch variant — the default and most widely used. It provides get_image_features() and get_text_features() for embedding extraction."},
+        {"line": 2, "explanation": "TFCLIPModel is the TensorFlow equivalent. Same architecture, same weights, but returns tf.Tensor instead of torch.Tensor. Ideal for TF Serving pipelines."},
+        {"line": 3, "explanation": "FlaxCLIPModel loads the JAX/Flax variant — best for TPU workloads and XLA JIT compilation. Returns JAX DeviceArrays."},
+        {"line": 5, "explanation": "Load PyTorch CLIP. First call downloads ~900MB from Hugging Face Hub to ~/.cache/huggingface/. Subsequent calls load from local cache."},
+        {"line": 9, "explanation": "use_safetensors=True loads weights from the .safetensors file — 2-4x faster cold start via memory mapping, and no arbitrary code execution risk from pickle."},
+        {"line": 14, "explanation": "CLIPProcessor is framework-agnostic — it handles image resizing (224×224), normalization, and text tokenization regardless of which model backend you chose."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-large-patch14\",\n    framework=\"pt\"\n)\n\nimage = Image.open(\"photo.jpg\")\n\ncandidates = [\n    \"a photo of a dog\",\n    \"a photo of a cat\",\n    \"a landscape photo\"\n]\n\nresults = classifier(image, candidate_labels=candidates)\n\nfor r in results:\n    print(f\"{r['score']:.1%} {r['label']}\")",
+      "steps": [
+        {"line": 1, "explanation": "The pipeline API abstracts away framework differences. It works identically whether you choose 'pt' (PyTorch) or 'tf' (TensorFlow) as the framework."},
+        {"line": 4, "explanation": "Create a zero-shot-image-classification pipeline. This wraps model loading, preprocessing, inference, and postprocessing into a single callable."},
+        {"line": 7, "explanation": "framework='pt' selects PyTorch inference. Switch to 'tf' for TensorFlow. The pipeline auto-detects if you omit this, but explicit is better for production."},
+        {"line": 10, "explanation": "PIL Image is the universal input format. The processor internally converts it to the framework-specific tensor type."},
+        {"line": 12, "explanation": "Candidate labels use the 'a photo of ...' template — CLIP was trained on natural language captions, so full sentences outperform bare keywords by 3-5%."},
+        {"line": 18, "explanation": "The pipeline encodes the image and all texts, computes cosine similarities in the 768-dim shared space, and applies softmax. Results are sorted descending."},
+        {"line": 20, "explanation": "Each result contains 'label' and 'score' (0-1, summing to 1.0). The highest score is the predicted class — works for any number of candidate labels."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import torch\nimport numpy as np\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\nfrom pathlib import Path\n\nmodel = CLIPModel.from_pretrained(\n    \"openai/clip-vit-large-patch14\",\n    use_safetensors=True\n)\nprocessor = CLIPProcessor.from_pretrained(\n    \"openai/clip-vit-large-patch14\"\n)\n\ndef index_directory(photo_dir):\n    paths = list(Path(photo_dir).glob(\"*.jpg\"))\n    embeddings = []\n    for p in paths:\n        img = Image.open(p)\n        inp = processor(images=img, return_tensors=\"pt\")\n        with torch.no_grad():\n            emb = model.get_image_features(**inp)\n            emb = emb / emb.norm(dim=-1, keepdim=True)\n        embeddings.append(emb[0].numpy())\n    emb_matrix = np.stack(embeddings)\n    np.save(\"index.npy\", emb_matrix)\n    return paths, emb_matrix\n\ndef search(query, paths, emb_matrix, top_k=5):\n    inp = processor(text=[query], return_tensors=\"pt\")\n    with torch.no_grad():\n        q = model.get_text_features(**inp)\n        q = q / q.norm(dim=-1, keepdim=True)\n    q = q[0].numpy()\n    scores = emb_matrix @ q\n    top_idx = np.argsort(scores)[::-1][:top_k]\n    return [(str(paths[i]), float(scores[i])) for i in top_idx]\n\ndef auto_tag(image_path, tag_pool, threshold=0.15):\n    img = Image.open(image_path)\n    prompts = [f\"a photo of {t}\" for t in tag_pool]\n    inputs = processor(\n        text=prompts, images=img,\n        return_tensors=\"pt\", padding=True\n    )\n    with torch.no_grad():\n        out = model(**inputs)\n        scores = out.logits_per_image.softmax(dim=1)[0]\n    return [\n        {\"tag\": t, \"score\": float(s)}\n        for t, s in zip(tag_pool, scores)\n        if float(s) >= threshold\n    ]",
+      "steps": [
+        {"line": 7, "explanation": "Load CLIP with safetensors for fastest cold start. Memory-mapped loading means the OS pages in weights on demand — lower peak RAM usage."},
+        {"line": 15, "explanation": "index_directory encodes every JPG in a folder into a 768-dim normalized embedding. This is the one-time setup for your Homie photo library."},
+        {"line": 23, "explanation": "L2-normalize each embedding so dot product equals cosine similarity. This converts search from expensive cosine computation to simple matrix multiply."},
+        {"line": 26, "explanation": "np.save caches the embedding matrix to disk. On restart, np.load('index.npy') skips re-encoding — instant startup for the Homie plugin."},
+        {"line": 29, "explanation": "search encodes a natural language query and ranks all indexed photos by cosine similarity. 'sunset at beach' finds beach sunset photos without exact keyword matching."},
+        {"line": 36, "explanation": "np.argsort with reverse gives indices of highest-scoring photos. Return top_k paths with scores — ready to display in Homie's search results."},
+        {"line": 39, "explanation": "auto_tag classifies a single image against a pool of candidate tags. Tags above the threshold get assigned — turning CLIP into an automatic photo tagger."},
+        {"line": 48, "explanation": "softmax over logits_per_image converts raw similarities into probabilities. Threshold 0.15 gives broad tagging; raise to 0.25 for precision."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Single-Framework Deployment",
+      "right_label": "Multi-Framework CLIP",
+      "items": [
+        {"left": "Locked to one ML stack", "right": "Deploy on PyTorch, TF, JAX, or safetensors"},
+        {"left": "Pickle weights — code execution risk", "right": "safetensors — memory-mapped, secure loading"},
+        {"left": "Same cold start regardless of format", "right": "safetensors loads 2-4x faster via mmap"},
+        {"left": "Framework migration = rebuild pipeline", "right": "Same processor, swap model class"},
+        {"left": "Cannot target TPU without rewrite", "right": "FlaxCLIPModel runs natively on TPU/XLA"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now deploy CLIP across any ML framework — PyTorch, TensorFlow, JAX, or safetensors — and build a Homie image intelligence plugin that auto-tags and searches your photo library!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MultiBackendCLIP` class that simulates how CLIP can be loaded across different frameworks. Implement `load_model(backend)` that accepts 'pytorch', 'tensorflow', 'jax', or 'safetensors' and stores the backend name (raise ValueError for unknown backends), `get_backend()` returning the current backend string, `embed_image(tags)` that converts a list of image tag strings into a sparse vector (dict mapping each lowercased tag to 1), `embed_text(label)` that converts a text label string into a sparse vector (dict mapping each lowercased word to 1), `classify(image_tags, candidate_labels)` that computes cosine similarity between the image embedding and each label embedding, normalizes scores to sum to 1.0, and returns results sorted by score descending as [{\"label\": str, \"score\": float}], and `apply_template(labels, template)` that formats each label using a template string with '{}' placeholder."
+      },
+      "starter_code": "import math\n\nclass MultiBackendCLIP:\n    SUPPORTED_BACKENDS = [\"pytorch\", \"tensorflow\", \"jax\", \"safetensors\"]\n\n    def __init__(self):\n        self.backend = None\n\n    def load_model(self, backend: str):\n        # Set self.backend if valid, else raise ValueError\n        pass\n\n    def get_backend(self) -> str:\n        return self.backend\n\n    def embed_image(self, tags: list[str]) -> dict:\n        # Sparse vector: {tag.lower(): 1}\n        pass\n\n    def embed_text(self, label: str) -> dict:\n        # Sparse vector: {word.lower(): 1} from label.split()\n        pass\n\n    def _cosine(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two sparse vectors\n        # Return 0.0 if either is empty\n        pass\n\n    def apply_template(self, labels: list[str], template: str) -> list[str]:\n        # Replace {} in template with each label\n        pass\n\n    def classify(self, image_tags: list[str],\n                 candidate_labels: list[str]) -> list[dict]:\n        # 1. Embed image tags\n        # 2. For each label, embed its words, compute cosine similarity\n        # 3. Normalize scores to sum to 1.0\n        #    (if total is 0, assign 1/len(labels) to each)\n        # 4. Return [{\"label\": str, \"score\": float}] sorted desc\n        pass\n\n# Test:\nclip = MultiBackendCLIP()\nclip.load_model(\"safetensors\")\nprint(clip.get_backend())\n\ntemplated = clip.apply_template([\"dog\", \"cat\"], \"a photo of {}\")\nprint(templated[0])\n\nimage = [\"sunset\", \"beach\", \"ocean\", \"waves\"]\nlabels = [\"sunset at the beach\", \"snowy mountain peak\", \"city at night\"]\nresults = clip.classify(image, labels)\nprint(results[0][\"label\"])\nprint(f\"{sum(r['score'] for r in results):.1f}\")",
+      "expected_output": "safetensors\na photo of dog\nsunset at the beach\n1.0",
+      "hints": {
+        "en": [
+          "load_model: check if backend is in SUPPORTED_BACKENDS, raise ValueError if not, otherwise set self.backend = backend.",
+          "embed_image: return {t.lower(): 1 for t in tags}. embed_text: return {w.lower(): 1 for w in label.split()}.",
+          "_cosine: shared = set(vec_a) & set(vec_b), dot = len(shared), norms = math.sqrt(len(vec_a)) * math.sqrt(len(vec_b)). Return 0.0 if norms is 0."
+        ]
+      },
+      "test_code": "import math\nc = MultiBackendCLIP()\nc.load_model(\"pytorch\")\nassert c.get_backend() == \"pytorch\"\nc.load_model(\"safetensors\")\nassert c.get_backend() == \"safetensors\"\ntry:\n    c.load_model(\"unknown\")\n    assert False, \"Should have raised ValueError\"\nexcept ValueError:\n    pass\nassert c.embed_image([\"Dog\", \"CAT\"]) == {\"dog\": 1, \"cat\": 1}\nassert c.embed_text(\"A Big Dog\") == {\"a\": 1, \"big\": 1, \"dog\": 1}\nassert c.embed_image([]) == {}\nsim = c._cosine({\"a\": 1, \"b\": 1}, {\"b\": 1, \"c\": 1})\nassert abs(sim - 0.5) < 0.01\nassert c._cosine({}, {\"a\": 1}) == 0.0\nt = c.apply_template([\"dog\", \"cat\"], \"a photo of {}\")\nassert t == [\"a photo of dog\", \"a photo of cat\"]\nresults = c.classify([\"dog\", \"park\"], [\"dog park\", \"cat bed\"])\nassert results[0][\"label\"] == \"dog park\"\nassert abs(sum(r[\"score\"] for r in results) - 1.0) < 0.001\neq = c.classify([\"xyz\"], [\"aaa\", \"bbb\"])\nassert abs(eq[0][\"score\"] - 0.5) < 0.001"
+    },
+    {
+      "instruction": {
+        "en": "Build a `HomiePhotoPlugin` class that simulates a Homie image intelligence plugin with indexing, search, and auto-tagging. Implement `add_photos(photos)` to store photo dicts (each with 'path' and 'tags' keys), `search(query, top_k)` to find the top-k photos matching a natural language query using cosine similarity between query words and photo tags, `auto_tag(photo_tags, tag_pool, threshold)` to assign tags from a pool where cosine similarity with the photo's tags meets the threshold, `batch_index(tag_pool, threshold)` that runs auto_tag on every stored photo and returns a dict mapping path to assigned tags, and `save_index()` / `load_index(data)` to export and import the photo index as a list of dicts."
+      },
+      "starter_code": "import math\n\nclass HomiePhotoPlugin:\n    def __init__(self):\n        self.photos = []\n\n    def _vec(self, words: list[str]) -> dict:\n        # Sparse vector: {word.lower(): 1}\n        pass\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        # Cosine similarity; return 0.0 if either is empty\n        pass\n\n    def add_photos(self, photos: list[dict]):\n        # Store photos. Each: {\"path\": str, \"tags\": list[str]}\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # 1. Build query vector from query.split()\n        # 2. Cosine similarity against each photo's tags\n        # 3. Return [{\"path\": str, \"score\": float}] top_k, desc\n        pass\n\n    def auto_tag(self, photo_tags: list[str], tag_pool: list[str],\n                 threshold: float = 0.2) -> list[str]:\n        # For each tag in pool, compute cosine between photo_tags\n        # and tag.split() words. Return tags >= threshold, desc.\n        pass\n\n    def batch_index(self, tag_pool: list[str],\n                    threshold: float = 0.2) -> dict:\n        # Run auto_tag on every photo.\n        # Return {path: [matched_tags]}\n        pass\n\n    def save_index(self) -> list[dict]:\n        # Return a copy of self.photos\n        pass\n\n    def load_index(self, data: list[dict]):\n        # Replace self.photos with data\n        pass\n\n# Test:\nplugin = HomiePhotoPlugin()\nplugin.add_photos([\n    {\"path\": \"vacation/beach.jpg\", \"tags\": [\"beach\", \"sunset\", \"ocean\"]},\n    {\"path\": \"pets/max.jpg\", \"tags\": [\"dog\", \"park\", \"playing\", \"ball\"]},\n    {\"path\": \"city/downtown.jpg\", \"tags\": [\"city\", \"night\", \"lights\"]},\n])\n\nresults = plugin.search(\"beach sunset\", top_k=1)\nprint(results[0][\"path\"])\n\ntags = plugin.auto_tag(\n    [\"dog\", \"running\", \"park\"],\n    [\"dog walking\", \"beach vacation\", \"park activities\"],\n    threshold=0.2\n)\nprint(tags[0])\n\nsaved = plugin.save_index()\nplugin2 = HomiePhotoPlugin()\nplugin2.load_index(saved)\nprint(len(plugin2.photos))",
+      "expected_output": "vacation/beach.jpg\ndog walking\n3",
+      "hints": {
+        "en": [
+          "_vec: return {w.lower(): 1 for w in words}. _cosine: shared = set(a) & set(b), dot = len(shared), norms = sqrt(len(a)) * sqrt(len(b)), return 0.0 if norms == 0.",
+          "search: build query_vec from query.split(), compare with _vec(photo['tags']) for each photo, sort desc, return top_k.",
+          "batch_index: iterate self.photos, call auto_tag(photo['tags'], tag_pool, threshold), build {path: tags} dict. save_index returns a copy, load_index replaces self.photos."
+        ]
+      },
+      "test_code": "import math\np = HomiePhotoPlugin()\np.add_photos([{\"path\": \"a.jpg\", \"tags\": [\"dog\", \"cat\"]}, {\"path\": \"b.jpg\", \"tags\": [\"car\", \"road\"]}])\nassert p._vec([\"Hello\", \"World\"]) == {\"hello\": 1, \"world\": 1}\nassert abs(p._cosine({\"a\": 1, \"b\": 1}, {\"b\": 1, \"c\": 1}) - 0.5) < 0.01\nassert p._cosine({}, {}) == 0.0\nresults = p.search(\"dog\", top_k=1)\nassert results[0][\"path\"] == \"a.jpg\"\nresults2 = p.search(\"car road\", top_k=2)\nassert results2[0][\"path\"] == \"b.jpg\"\ntags = p.auto_tag([\"dog\", \"walk\"], [\"dog walking\", \"car racing\"], threshold=0.2)\nassert \"dog walking\" in tags\nassert \"car racing\" not in tags\nbatch = p.batch_index([\"dog walking\", \"car racing\"], threshold=0.2)\nassert \"a.jpg\" in batch\nassert \"dog walking\" in batch[\"a.jpg\"]\nassert \"b.jpg\" in batch\nassert \"car racing\" in batch[\"b.jpg\"]\nsaved = p.save_index()\nassert len(saved) == 2\np2 = HomiePhotoPlugin()\np2.load_index(saved)\nassert len(p2.photos) == 2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multi-framework ML deployment", "CLIP ViT-L/14", "zero-shot image classification", "safetensors loading", "PyTorch TensorFlow JAX interop", "image auto-tagging", "natural language image search", "embedding indexing", "prompt engineering for CLIP", "framework-agnostic inference"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "pip install", "basic file I/O"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -903,6 +903,24 @@ _CARD_LOOKUP: dict[str, dict] = {card["id"]: card for card in REFERENCE_CARDS}
 # Routes
 # ---------------------------------------------------------------------------
 
+# Concise one-line descriptions so topic cards read as finished content
+# instead of a repeated generic placeholder.
+_TOPIC_DESCRIPTIONS = {
+    "python_basics": "Variables, types, operators, and the core syntax every program is built on.",
+    "data_structures": "Lists, dicts, sets, and tuples — when to use each and their key operations.",
+    "string_methods": "Slicing, formatting, and the essential str methods for text manipulation.",
+    "list_comprehensions": "Concise list, dict, and set comprehensions — and when a loop reads better.",
+    "decorators": "Wrap and extend functions with reusable behavior using @decorators.",
+    "async_await": "async/await, the event loop, and running coroutines concurrently.",
+    "regex": "Pattern syntax, groups, and lookarounds for matching and extracting text.",
+    "file_io": "Reading, writing, and safely handling files with context managers.",
+    "error_handling": "try/except/finally, raising exceptions, and writing resilient code.",
+    "type_hints": "Annotations, generics, and Optional for clearer, checkable code.",
+    "ai_agents": "Build LLM agents with tools, memory, and frameworks like PydanticAI & LangGraph.",
+    "polars": "Fast DataFrame work with Polars — lazy queries and expressions.",
+}
+
+
 @router.get("/topics")
 def list_topics():
     """Return all available quick reference topics."""
@@ -912,6 +930,7 @@ def list_topics():
             "title": card["title"],
             "category": card["category"],
             "section_count": len(card["sections"]),
+            "description": _TOPIC_DESCRIPTIONS.get(card["id"], ""),
         }
         for card in REFERENCE_CARDS
     ]

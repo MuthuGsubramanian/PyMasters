@@ -1,0 +1,174 @@
+{
+  "id": "refactoring_with_ai",
+  "topic": "refactoring_with_ai",
+  "track": "vibe_coding",
+  "module": "mastery",
+  "order": 2,
+  "title": {
+    "en": "Refactoring Safely With AI: Tests Are Your Safety Net"
+  },
+  "description": {
+    "en": "AI is brilliant at making ugly code clean — and just as brilliant at silently changing what it does along the way. Learn the one discipline that makes AI refactoring safe: get tests GREEN first, refactor in tiny verified steps, and never let 'improve' and 'change behavior' happen in the same move."
+  },
+  "xp_reward": 90,
+  "next_unlock": "reviewing_ai_code",
+  "story_variants": {
+    "en": "## Refactoring Is a Promise You Can Break by Accident\n\nRefactoring has a precise meaning that almost everyone forgets: **changing the shape of code without changing what it does.** Same inputs, same outputs, prettier insides. That word — *without* — is a promise. And AI breaks that promise constantly, not out of malice, but because it can't tell the difference between \"this is ugly\" and \"this is ugly *on purpose*.\"\n\nYou ask the AI to \"clean up\" a gnarly function. It hands back something gorgeous: better names, no nesting, a slick comprehension. It looks like a strict improvement. But buried in the rewrite, the off-by-one in a boundary check quietly vanished, or a `>=` became a `>`, or an edge case the ugly code handled on purpose is now gone. The code got *prettier* and *wrong* in the same breath, and your eyes — trained to trust clean code — wave it through.\n\n> **Key idea:** A refactor that changes behavior isn't a refactor. It's a rewrite wearing a refactor's clothes. The only way to keep AI honest is to make the *computer* check that behavior didn't move — because your eyes can't.\n\n## The One Rule: Green Before, Green After\n\nHere is the entire discipline in a sentence: **have tests passing before you touch the code, and keep them passing after every step.** That set of passing tests is your safety net. Without it, refactoring with AI is just changing code and *hoping*.\n\nThe net works because it inverts who's responsible for catching mistakes. Without tests, *you* have to notice the AI silently flipped a comparison. With tests, the comparison flips and a red `AssertionError` screams at you in two seconds. You stop trusting your eyes and start trusting a failing test.\n\n## Characterization Tests: Pin the Behavior First\n\nBut what if the legacy code has no tests, and you're not even sure what it's *supposed* to do? You write **characterization tests** — tests that capture what the code *currently does*, right or wrong. You're not asserting correctness; you're taking a photograph of present behavior so you'll know the instant the AI alters it.\n\nRun the ugly function on a handful of inputs, see what it returns, and freeze those answers into asserts:\n\n```python\nassert shipping_fee(120, 'US') == 0      # whatever it does today\nassert shipping_fee(40, 'US') == 5\nassert shipping_fee(40, 'CA') == 12\n```\n\nNow you have a net. *Then* you let the AI refactor. If a characterization test goes red, the AI changed behavior — which is exactly the thing a refactor must never do.\n\n## Small Steps, Each One Verified\n\nThe second half of the discipline is **size**. Don't ask the AI to refactor a 60-line monster in one shot — you'll get back 60 changed lines and no idea which one moved the behavior. Refactor in *small steps*, running the tests between each:\n\n1. Flatten one nested `if`. Run tests. Green? Keep going.\n2. Extract one helper function. Run tests. Green? Keep going.\n3. Replace one loop with a comprehension. Run tests. Red? You know *exactly* which step did it — undo just that one.\n\nSmall steps turn debugging from a manhunt into a pinpoint. A red test after one tiny change tells you precisely where behavior moved.\n\n## Never 'Improve' and 'Change Behavior' in the Same Step\n\nThis is the rule that catches the sneakiest failure. The AI will often say, \"While I was in here, I also fixed a bug and added validation.\" Stop. **Refactoring and behavior change must be separate commits, separate steps, separate moments.** Mixing them means your safety net is useless: a test goes red and you can't tell whether that's the *intended* new behavior or an *accidental* regression. Refactor with green tests. *Then*, separately, change behavior and update the tests on purpose.\n\n## Refactor-With-a-Net vs Refactor-on-Vibes\n\n| | Refactor on vibes | Refactor with a net |\n|---|---|---|\n| Before touching code | Just start editing | Get tests green first |\n| Step size | One giant AI rewrite | Small steps, tests between each |\n| Catching behavior drift | Your tired eyes reading a diff | A red test in 2 seconds |\n| Improve + behavior change | Tangled in one commit | Strictly separated |\n| When a test goes red | \"...which of these 60 lines?\" | \"That last tiny step — undo it\" |\n| Confidence at the end | \"I *think* it still works\" | \"I *know* it still works\" |\n\n## Read the Diff for What the AI Snuck In\n\nThe net is your first line of defense; the diff review is your second. After the AI refactors, read the diff specifically hunting for behavior changes: a flipped comparison, a changed default, a dropped edge case, a `+1` that became a `+0`. Tests catch the behaviors you thought to pin; the diff review catches the ones you didn't. Together they make AI refactoring something you can actually trust — not because the AI is trustworthy, but because you stopped needing it to be."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "safety_net",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "safe_refactor_map",
+      "nodes": [
+        {
+          "label": "Safe AI Refactoring",
+          "children": [
+            "1. Get tests GREEN first",
+            "2. Characterization tests pin current behavior",
+            "3. Refactor in small steps",
+            "4. Run tests between each step",
+            "5. Never mix 'improve' + 'change behavior'",
+            "6. Review the diff for sneaky changes"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "vibes_vs_net",
+      "left": {
+        "label": "Refactor on vibes: one giant AI rewrite, trust your eyes on the diff, 'I think it still works'",
+        "result": false
+      },
+      "right": {
+        "label": "Refactor with a net: green tests first, small verified steps, a red test catches drift in 2 seconds",
+        "result": true
+      },
+      "description": {
+        "en": "A refactor that changes behavior isn't a refactor. Green-before / green-after is what keeps the AI honest."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "silent_change_demo",
+      "code": "# AI 'cleaned up' a fee check and quietly flipped >= to >\n# Original: free shipping for orders of 100 OR MORE\ndef fee_old(total):\n    if total >= 100:\n        return 0\n    return 5\n\ndef fee_new(total):   # AI's 'refactor'\n    return 0 if total > 100 else 5\n\nprint(fee_old(100), fee_new(100))",
+      "executionSteps": [
+        { "line": 11, "variables": { "total": "100" }, "output": "", "description": "Order of exactly 100 — the boundary case." },
+        { "line": 4, "variables": { "fee_old(100)": "0" }, "output": "", "description": "Original: 100 >= 100 is True -> free shipping. Correct." },
+        { "line": 9, "variables": { "fee_new(100)": "5" }, "output": "", "description": "AI flipped >= to >. Now 100 > 100 is False -> charges $5!" },
+        { "line": 11, "variables": {}, "output": "0 5", "description": "Prettier, and WRONG. A characterization test on fee(100)==0 catches this instantly." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Refactoring = change the shape, NOT the behavior.",
+        "Green before. Green after. Every small step.",
+        "Never 'improve' and 'change behavior' in the same move.",
+        "Your eyes trust clean code. A red test doesn't."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Here's a working-but-ugly shipping_fee function full of nested ifs, and a set of asserts that capture its CURRENT behavior (your characterization tests / safety net). Your job: refactor the function to be clean and readable WHILE keeping every assert green — behavior must be preserved exactly. The rules: domestic ('US') orders of 100 or more ship free, otherwise $5; international orders cost $12, plus a $3 surcharge if the order is under 50. Run the tests before AND after you refactor. Expected output: 0 12 15"
+      },
+      "starter_code": "# Working but UGLY. Refactor the body, keep the behavior identical.\ndef shipping_fee(total, country):\n    if country == 'US':\n        if total >= 100:\n            return 0\n        else:\n            return 5\n    else:\n        if total < 50:\n            base = 12\n            surcharge = 3\n            return base + surcharge\n        else:\n            base = 12\n            return base\n\n# Characterization tests = your safety net. Keep these GREEN.\n# (Run them BEFORE refactoring to confirm they pass, then AFTER.)\nprint(shipping_fee(120, 'US'), shipping_fee(80, 'CA'), shipping_fee(40, 'CA'))",
+      "expected_output": "0 12 15",
+      "hints": {
+        "en": [
+          "FIRST run the starter code and confirm the asserts pass. That green bar is your safety net — you must keep it green.",
+          "Refactor in small steps. Flatten the US branch first: return 0 if total >= 100 else 5. Run the tests. Still green?",
+          "For international: the fee is 12, plus 3 only when total < 50. Try: surcharge = 3 if total < 50 else 0; return 12 + surcharge.",
+          "Run the asserts AGAIN after refactoring. If any go red, the AI (or you) changed behavior — undo the last small step, don't push forward."
+        ]
+      },
+      "test_code": "assert shipping_fee(120, 'US') == 0\nassert shipping_fee(99, 'US') == 5\nassert shipping_fee(100, 'US') == 0\nassert shipping_fee(80, 'CA') == 12\nassert shipping_fee(40, 'CA') == 15"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the precise definition of refactoring that AI tends to violate?"
+      },
+      "options": {
+        "en": [
+          "Rewriting code in a new programming language",
+          "Changing the shape of code without changing what it does",
+          "Adding new features as fast as possible",
+          "Deleting all the comments to make code shorter"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why are passing tests called your 'safety net' when refactoring with AI?"
+      },
+      "options": {
+        "en": [
+          "They make the code run faster after refactoring",
+          "They prove the new code is prettier than the old code",
+          "If a test goes red, the computer caught a behavior change your eyes would have missed",
+          "They let you skip reading the AI's output entirely"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Legacy code has no tests and you're unsure what it should do. What do you write first?"
+      },
+      "options": {
+        "en": [
+          "Characterization tests that capture what the code currently does, right or wrong",
+          "A full rewrite from scratch, then tests",
+          "Nothing — just let the AI refactor and trust it",
+          "Documentation explaining the intended behavior"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why must you never let the AI 'improve' and 'change behavior' in the same step?"
+      },
+      "options": {
+        "en": [
+          "Because the AI charges more for combined changes",
+          "Because a red test then can't tell you if it's intended new behavior or an accidental regression",
+          "Because behavior changes are never allowed in any codebase",
+          "Because small steps make the code uglier"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["refactoring_with_ai", "characterization_tests", "safety_net", "small_steps", "behavior_preservation"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

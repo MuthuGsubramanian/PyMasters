@@ -1,0 +1,172 @@
+{
+  "id": "context_managers_and_cleanup",
+  "topic": "context_managers_and_cleanup",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 1,
+  "title": {
+    "en": "Context Managers: Guaranteed Cleanup with `with`"
+  },
+  "description": {
+    "en": "Files, locks, and connections must be released even when the code that uses them blows up. The `with` statement makes that release automatic and impossible to forget. Learn the `__enter__`/`__exit__` protocol, the lighter `@contextmanager` generator style, and why both beat hand-written try/finally."
+  },
+  "xp_reward": 95,
+  "next_unlock": "retry_and_fallback",
+  "story_variants": {
+    "en": "## The Resource That Never Got Released\n\nYou open a file, read a few lines, do some work, and close it. Simple — until the \"do some work\" part raises an exception. Now the `close()` on the next line never runs. The file handle leaks. Do that in a loop and you exhaust the OS limit; do it with a database connection and your pool dries up; do it with a lock and your program deadlocks forever.\n\nThe naive fix is to remember to clean up. But humans forget, and exceptions jump over code. The real fix is to make cleanup **structural** — tied to a block of code so the language guarantees it runs no matter how the block exits.\n\n> **Key idea:** A context manager guarantees that its release step runs whether the block finishes normally, returns early, or raises an exception. The cleanup is attached to the block, not to your memory.\n\n## try/finally: Correct but Clumsy\n\nBefore `with`, the guarantee came from `try`/`finally`. The `finally` clause always runs — normal exit or exception:\n\n```python\nf = open('data.txt')\ntry:\n    process(f)        # may raise\nfinally:\n    f.close()         # runs no matter what\n```\n\nThis works. But you must write the acquire, the `try`, and the `finally` by hand every single time, and you can still forget the `finally` or close the wrong variable. Nest two resources and the indentation pyramid gets ugly fast.\n\n## The `with` Statement\n\nThe `with` statement folds that whole pattern into one line:\n\n```python\nwith open('data.txt') as f:\n    process(f)        # may raise\n# f is closed here — guaranteed, even if process raised\n```\n\nWhen the block ends — normally *or* via an exception — Python releases the resource for you. You literally cannot forget to close it, because closing isn't your job anymore.\n\n| | Manual `try`/`finally` | `with` statement |\n|---|---|---|\n| Cleanup guaranteed on exception | Yes | Yes |\n| Lines of boilerplate per resource | 4+ | 1 |\n| Can you forget to clean up? | Yes — easy to omit `finally` | No — it's automatic |\n| Reusable across call sites | No, copy-pasted | Yes, lives in the manager |\n| Reads top-to-bottom | Pyramids when nested | Flat and clear |\n\n## The Protocol: `__enter__` and `__exit__`\n\n`with` works on any object that implements two methods:\n\n- **`__enter__(self)`** — runs at the top of the block. It *acquires* the resource and **returns** the value bound by `as` (often `self`).\n- **`__exit__(self, exc_type, exc_value, traceback)`** — runs when the block ends, **for any reason**. This is the cleanup. The three arguments describe the exception if one occurred (all `None` on a clean exit). Returning a falsy value lets the exception propagate; returning `True` would suppress it.\n\nHere is a class-based manager that times a block — and the timer prints **even if the block raises**:\n\n```python\nimport time\n\nclass Timer:\n    def __enter__(self):\n        self.start = time.perf_counter()\n        return self                      # bound to `as t`\n    def __exit__(self, exc_type, exc_value, tb):\n        elapsed = time.perf_counter() - self.start\n        print(f'took {elapsed:.4f}s')    # ALWAYS runs\n        return False                     # don't swallow exceptions\n\nwith Timer() as t:\n    do_work()                            # even if this raises, we still time it\n```\n\nBecause `__exit__` is called on the way out regardless of how we leave, the timing line is guaranteed. Swap the body for closing a file or releasing a lock and you have the same ironclad guarantee.\n\n## The Easier Way: `@contextmanager`\n\nWriting a whole class for a tiny manager is heavy. `contextlib.contextmanager` lets you write one generator: everything **before** `yield` is setup, the `yield`ed value is what `as` binds, and everything **after** `yield` is cleanup. Put the cleanup in a `finally` so it runs even when the block raises:\n\n```python\nfrom contextlib import contextmanager\n\n@contextmanager\ndef managed(log):\n    log.append('open')          # setup (like __enter__)\n    try:\n        yield log               # hand control to the with-block\n    finally:\n        log.append('closed')    # cleanup (like __exit__) — ALWAYS runs\n\nlog = []\ntry:\n    with managed(log):\n        raise ValueError('boom')\nexcept ValueError:\n    pass\nprint(log)                      # ['open', 'closed'] — closed recorded despite the error\n```\n\nThe `try/finally` *inside* the generator is exactly what gives the guarantee — `contextmanager` turns the part after `yield` into `__exit__`.\n\n## Many Managers, One `with`\n\nYou can manage several resources in a single statement; each is released in reverse order on the way out:\n\n```python\nwith open('in.txt') as src, open('out.txt', 'w') as dst:\n    dst.write(src.read())\n# both files closed, even if write() raised\n```\n\nWhether you reach for a class with `__enter__`/`__exit__` or a `@contextmanager` generator, the promise is the same and it is the whole point: **the cleanup runs no matter what happens inside the block.**"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "resource_lifecycle",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cm_protocol",
+      "nodes": [
+        {
+          "label": "Context Manager",
+          "children": [
+            "__enter__  -> acquire, return the resource (`as`)",
+            "__exit__   -> release, runs on ANY exit (even exception)",
+            "@contextmanager -> setup; yield; finally: cleanup",
+            "with a, b: -> manage many, released in reverse"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "tryfinally_vs_with",
+      "left": {
+        "label": "Manual try/finally (4+ lines, easy to forget)",
+        "result": false
+      },
+      "right": {
+        "label": "with statement (1 line, can't forget)",
+        "result": true
+      },
+      "description": {
+        "en": "Both guarantee cleanup on exception, but `with` puts the guarantee inside the manager so every call site gets it for free — no boilerplate to forget."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "cleanup_on_raise",
+      "code": "from contextlib import contextmanager\n\n@contextmanager\ndef managed(log):\n    log.append('open')\n    try:\n        yield log\n    finally:\n        log.append('closed')\n\nlog = []\ntry:\n    with managed(log):\n        raise ValueError('boom')\nexcept ValueError:\n    pass\nprint(log)",
+      "executionSteps": [
+        { "line": 5, "variables": { "log": "['open']" }, "output": "", "description": "Setup before yield runs — 'open' recorded" },
+        { "line": 13, "variables": { "log": "['open']" }, "output": "", "description": "Block body raises ValueError('boom')" },
+        { "line": 9, "variables": { "log": "['open', 'closed']" }, "output": "", "description": "finally runs anyway — 'closed' recorded despite the error" },
+        { "line": 15, "variables": { "log": "['open', 'closed']" }, "output": "", "description": "Exception caught outside the with-block" },
+        { "line": 16, "variables": { "log": "['open', 'closed']" }, "output": "['open', 'closed']", "description": "Cleanup ran even though the body blew up" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "__exit__ / the finally part runs no matter what.",
+        "with = try/finally folded into one unforgettable line.",
+        "Acquire in __enter__, release in __exit__. Done."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a context manager `managed_resource(log)` that appends 'open' to the given log list on entry and 'closed' on exit — and the 'closed' must be recorded even if the with-block raises. Use either a class with __enter__/__exit__ or @contextlib.contextmanager with a yield in a try/finally. The demo runs the manager twice: once on the happy path, and once where the body raises ValueError (caught outside). It then prints both logs, proving 'closed' is recorded in both cases. Print the deterministic summary line exactly. Expected output: normal=['open', 'closed'] error=['open', 'closed']"
+      },
+      "starter_code": "from contextlib import contextmanager\n\n@contextmanager\ndef managed_resource(log):\n    # TODO: append 'open' on enter\n    # TODO: yield the resource\n    # TODO: append 'closed' on exit -- MUST run even if the block raises\n    pass\n\n# --- demo (do not change) ---\nnormal_log = []\nwith managed_resource(normal_log):\n    pass                              # happy path, no error\n\nerror_log = []\ntry:\n    with managed_resource(error_log):\n        raise ValueError('boom')      # body raises\nexcept ValueError:\n    pass                              # caught outside the with-block\n\nprint(f\"normal={normal_log} error={error_log}\")",
+      "expected_output": "normal=['open', 'closed'] error=['open', 'closed']",
+      "hints": {
+        "en": [
+          "With @contextmanager, code before `yield` is the setup (like __enter__) and code after `yield` is the cleanup (like __exit__).",
+          "Append 'open' first, then `yield log`, then append 'closed'.",
+          "Put the `yield` inside a try and the 'closed' append inside a `finally:` — that is what makes cleanup run even when the block raises.",
+          "Class alternative: __enter__ appends 'open' and returns self; __exit__(self, exc_type, exc, tb) appends 'closed' and returns False so the exception still propagates."
+        ]
+      },
+      "test_code": "log1 = []\nwith managed_resource(log1):\n    pass\nassert log1 == ['open', 'closed'], log1\n\nlog2 = []\ntry:\n    with managed_resource(log2):\n        raise ValueError('boom')\nexcept ValueError:\n    pass\nassert log2 == ['open', 'closed'], log2\n\n# cleanup must run on a non-ValueError too\nlog3 = []\ntry:\n    with managed_resource(log3):\n        raise KeyError('k')\nexcept KeyError:\n    pass\nassert log3 == ['open', 'closed'], log3"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a context manager guarantee that a plain `open()` + `close()` on separate lines does not?"
+      },
+      "options": {
+        "en": [
+          "That the file opens faster",
+          "That the release step runs even if the code in between raises an exception",
+          "That the file can never raise an error",
+          "That the file is read in one call"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the `__enter__`/`__exit__` protocol, which method runs the cleanup, and when?"
+      },
+      "options": {
+        "en": [
+          "`__enter__`, only on success",
+          "`__exit__`, only when an exception occurs",
+          "`__exit__`, when the block ends for ANY reason (normal exit or exception)",
+          "`__init__`, when the object is created"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Using `@contextlib.contextmanager`, where does the cleanup code go so it runs even when the with-block raises?"
+      },
+      "options": {
+        "en": [
+          "Before the `yield`",
+          "In a `finally:` block after `yield log` is wrapped in `try:`",
+          "In the function's return statement",
+          "Nowhere — contextmanager cleans up automatically without a finally"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the main advantage of `with` over hand-written `try`/`finally`?"
+      },
+      "options": {
+        "en": [
+          "It runs without Python",
+          "It puts the cleanup inside the manager so every call site gets it with one line and can't forget the `finally`",
+          "It makes exceptions disappear",
+          "It is the only way to open a file"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["context_managers", "with_statement", "enter_exit_protocol", "contextlib_contextmanager", "guaranteed_cleanup"],
+    "concepts_required": ["custom_exceptions_and_chaining"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "error_handling",
+    "path_memberships": []
+  },
+  "generated": false
+}

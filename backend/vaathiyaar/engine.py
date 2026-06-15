@@ -156,16 +156,106 @@ def parse_vaathiyaar_response(raw: str) -> dict:
             for key, default_val in _DEFAULTS.items():
                 parsed.setdefault(key, default_val)
             if "message" not in parsed:
-                parsed["message"] = raw  # last resort
+                parsed["message"] = _salvage_message(text) or raw
             return parsed
     except json.JSONDecodeError:
         pass
 
-    # Plain-text fallback: wrap in standard structure
-    return {
-        "message": raw,
-        **_DEFAULTS,
-    }
+    # JSON was malformed/truncated (e.g. the reply hit the token cap mid-value).
+    # Salvage the human message rather than ever showing the student raw JSON.
+    salvaged = _salvage_message(text)
+    if salvaged is not None:
+        return {"message": salvaged, **_DEFAULTS}
+
+    # Looks like JSON but no recoverable message → friendly fallback, no braces.
+    if text.lstrip().startswith("{"):
+        return {
+            "message": "Sorry — I had a hiccup forming that reply. Could you ask again?",
+            **_DEFAULTS,
+        }
+
+    # Genuine plain text → use it directly.
+    return {"message": raw, **_DEFAULTS}
+
+
+# JSON string-escape sequences we decode when salvaging a partial message.
+_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", '"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f"}
+
+
+def _salvage_message(text: str) -> Optional[str]:
+    """
+    Extract the value of a JSON "message" field from a possibly-truncated or
+    malformed string, decoding escape sequences and tolerating a missing closing
+    quote (the reply was cut off at the token limit). Returns None if no
+    "message" field is present.
+    """
+    import re
+
+    m = re.search(r'"message"\s*:\s*"', text)
+    if not m:
+        return None
+    i = m.end()
+    out = []
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == "\\":
+            if i + 1 < n:
+                out.append(_ESCAPES.get(text[i + 1], text[i + 1]))
+                i += 2
+                continue
+            break  # trailing backslash from truncation
+        if c == '"':
+            break  # closing quote of the message value
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+STRUGGLE_THRESHOLD = 3
+
+
+def is_struggling(success: bool, attempt_count: int, threshold: int = STRUGGLE_THRESHOLD) -> bool:
+    """True when a student keeps failing the same challenge and needs more scaffolding."""
+    if success:
+        return False
+    return attempt_count >= threshold
+
+
+def build_feedback_prompt(
+    success: bool,
+    struggling: bool,
+    student_code: str,
+    expected_output: str,
+    actual_output: str,
+    error_msg: str,
+) -> str:
+    """Choose the tutoring prompt by outcome: celebrate success, hint on early
+    failures, and escalate to concrete step-by-step help once the student is stuck."""
+    if success:
+        return (
+            f"The student's code ran successfully and produced the correct output:\n"
+            f"```\n{actual_output}\n```\n"
+            "Please give encouraging, animated feedback and suggest what to explore next."
+        )
+    base = (
+        f"The student submitted this code:\n```python\n{student_code}\n```\n"
+        f"Expected output: {expected_output!r}\n"
+        f"Actual output:   {actual_output!r}\n"
+        f"Error (if any):  {error_msg!r}\n"
+    )
+    if struggling:
+        return base + (
+            "The student has tried several times and is clearly struggling. Be extra "
+            "supportive and patient — acknowledge their effort. Break the problem into the "
+            "smallest possible next step and walk them through it concretely: explain the "
+            "specific error in plain language, show a tiny worked example or pseudocode for "
+            "just the stuck part (never the whole solution), and give one clear action to try next."
+        )
+    return base + (
+        "Please provide a hint — do NOT reveal the full solution yet. "
+        "Use the Story→Visual→Code arc to guide them."
+    )
 
 
 def evaluate_code(
@@ -173,6 +263,7 @@ def evaluate_code(
     expected_output: str,
     student_profile: Optional[dict] = None,
     lesson_context: Optional[dict] = None,
+    attempt_count: int = 0,
 ) -> dict:
     """
     Safely execute student-submitted code, compare output with expected, then
@@ -247,23 +338,12 @@ def evaluate_code(
     error_msg = exec_error or stderr_output
 
     success = actual_output.strip() == expected_output.strip()
+    struggling = is_struggling(success, attempt_count)
 
-    # Build a feedback message for Vaathiyaar
-    if success:
-        feedback_prompt = (
-            f"The student's code ran successfully and produced the correct output:\n"
-            f"```\n{actual_output}\n```\n"
-            "Please give encouraging, animated feedback and suggest what to explore next."
-        )
-    else:
-        feedback_prompt = (
-            f"The student submitted this code:\n```python\n{student_code}\n```\n"
-            f"Expected output: {expected_output!r}\n"
-            f"Actual output:   {actual_output!r}\n"
-            f"Error (if any):  {error_msg!r}\n"
-            "Please provide a hint — do NOT reveal the full solution yet. "
-            "Use the Story→Visual→Code arc to guide them."
-        )
+    # Build a feedback message for Vaathiyaar, escalating help if the student is stuck.
+    feedback_prompt = build_feedback_prompt(
+        success, struggling, student_code, expected_output, actual_output, error_msg
+    )
 
     # Add feedback context to lesson_context
     feedback_context = dict(lesson_context or {})
@@ -304,5 +384,6 @@ def evaluate_code(
         "success": success,
         "output": actual_output,
         "error": error_msg,
+        "struggling": struggling,
         "feedback": feedback,
     }

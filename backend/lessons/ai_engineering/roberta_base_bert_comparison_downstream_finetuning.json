@@ -1,0 +1,118 @@
+{
+  "id": "roberta_base_bert_comparison_downstream_finetuning",
+  "topic": "roberta_base_bert_comparison_downstream_finetuning",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "RoBERTa vs BERT: Head-to-Head Comparison and Downstream Fine-Tuning"
+  },
+  "description": {
+    "en": "Run BERT and RoBERTa side by side on fill-mask, feature extraction, and text classification — measure exactly where RoBERTa's training improvements translate into real downstream gains."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RoBERTa vs BERT: Prove It With Code\n\nVaathiyaar here! Everyone says RoBERTa is \"better than BERT\" — but *how much* better, and *why*? In this lesson we won't take benchmarks on faith. We'll run both models head-to-head on fill-mask predictions, embedding quality, and downstream classification, then measure the differences ourselves. By the end, you'll know exactly when to reach for `FacebookAI/roberta-base` over `google-bert/bert-base-uncased`.\n\n### The Training Recipe That Changed Everything\n\nRoBERTa's architecture is identical to BERT — 12 layers, 768 hidden dimensions, 12 attention heads. The breakthrough was entirely in **how** it was trained:\n\n| Training Decision | BERT-base | RoBERTa-base | Why It Matters |\n|---|---|---|---|\n| Training data | 16GB | 160GB (10x) | More diverse patterns learned |\n| Masking | Static (fixed once) | Dynamic (re-masked each epoch) | Sees more masking variations |\n| NSP objective | Yes | Removed | NSP hurt single-sentence tasks |\n| Batch size | 256 | 8,000 | Better gradient estimates |\n| Tokenizer | WordPiece (30K) | Byte-level BPE (50K) | No unknown tokens, preserves case |\n\n### Side-by-Side Fill-Mask Comparison\n\n```python\nfrom transformers import pipeline\n\nbert = pipeline(\"fill-mask\", model=\"google-bert/bert-base-uncased\")\nroberta = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\nprompts = [\n    (\"The capital of Japan is [MASK].\",\n     \"The capital of Japan is <mask>.\"),\n    (\"Python is a [MASK] language.\",\n     \"Python is a <mask> language.\"),\n]\n\nfor bert_p, roberta_p in prompts:\n    b = bert(bert_p)[0]\n    r = roberta(roberta_p)[0]\n    print(f\"BERT: {b['token_str']:>12} ({b['score']:.3f})\")\n    print(f\"RoBERTa: {r['token_str']:>12} ({r['score']:.3f})\")\n    print()\n```\n\nRoBERTa consistently shows higher confidence on factual queries and handles cased proper nouns (\"Tokyo\" vs \"tokyo\") naturally.\n\n### Embedding Quality Comparison\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\nfrom torch.nn.functional import cosine_similarity\n\ndef get_cls_embedding(model_name, text):\n    tokenizer = AutoTokenizer.from_pretrained(model_name)\n    model = AutoModel.from_pretrained(model_name)\n    inputs = tokenizer(text, return_tensors=\"pt\")\n    with torch.no_grad():\n        outputs = model(**inputs)\n    return outputs.last_hidden_state[:, 0, :]\n\npairs = [\n    (\"The movie was great\", \"I loved the film\"),\n    (\"The movie was great\", \"The weather is sunny\"),\n]\n\nfor s1, s2 in pairs:\n    b1 = get_cls_embedding(\"google-bert/bert-base-uncased\", s1)\n    b2 = get_cls_embedding(\"google-bert/bert-base-uncased\", s2)\n    r1 = get_cls_embedding(\"FacebookAI/roberta-base\", s1)\n    r2 = get_cls_embedding(\"FacebookAI/roberta-base\", s2)\n    print(f\"BERT sim: {cosine_similarity(b1, b2).item():.4f}\")\n    print(f\"RoBERTa sim: {cosine_similarity(r1, r2).item():.4f}\")\n```\n\nRoBERTa embeddings tend to separate semantically different sentences more cleanly — the gap between similar and dissimilar pairs is wider.\n\n### Fine-Tuning Both for Classification\n\n```python\nfrom transformers import (\n    AutoModelForSequenceClassification,\n    AutoTokenizer,\n    TrainingArguments,\n    Trainer\n)\n\ndef build_trainer(model_name, train_ds, eval_ds, num_labels=2):\n    tokenizer = AutoTokenizer.from_pretrained(model_name)\n    model = AutoModelForSequenceClassification.from_pretrained(\n        model_name, num_labels=num_labels\n    )\n    args = TrainingArguments(\n        output_dir=f\"./results-{model_name.split('/')[-1]}\",\n        num_train_epochs=3,\n        per_device_train_batch_size=16,\n        learning_rate=2e-5,\n        weight_decay=0.01,\n        evaluation_strategy=\"epoch\",\n        save_strategy=\"epoch\",\n        load_best_model_at_end=True,\n    )\n    return Trainer(model=model, args=args,\n                   train_dataset=train_ds, eval_dataset=eval_ds)\n\n# Train both with identical hyperparameters\nbert_trainer = build_trainer(\"google-bert/bert-base-uncased\",\n                              train_ds, eval_ds)\nroberta_trainer = build_trainer(\"FacebookAI/roberta-base\",\n                                 train_ds, eval_ds)\n```\n\nUsing identical hyperparameters isolates the model quality difference. RoBERTa typically gains 1-3% accuracy on GLUE tasks with zero extra tuning effort.\n\n### Tokenizer Differences in Practice\n\n| Input Text | BERT Tokens | RoBERTa Tokens |\n|---|---|---|\n| `\"ChatGPT\"` | `['chat', '##gp', '##t']` | `['Chat', 'GPT']` |\n| `\"café\"` | `['cafe', '##\\u0301']` | `['caf', 'é']` |\n| `\"don't\"` | `['don', \"'\", 't']` | `['don', \"'t\"]` |\n\nRoBERTa's byte-level BPE never produces `[UNK]` tokens and handles mixed-case text, contractions, and Unicode more naturally.\n\n> **Key Insight:** RoBERTa and BERT share the same transformer architecture — every performance difference comes from training methodology. Dynamic masking, NSP removal, 10x data, and byte-level BPE compound to give RoBERTa 1-3% higher accuracy on downstream tasks with zero architectural changes. When starting a new NLP project, RoBERTa-base is the strictly superior default over BERT-base."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RoBERTa and BERT share the same transformer architecture — 12 layers, 768 dimensions, 12 attention heads. Every performance difference comes from training: dynamic masking, no NSP, 10x data, and byte-level BPE. Let's run them side by side and measure the real impact.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nbert = pipeline(\"fill-mask\", model=\"google-bert/bert-base-uncased\")\nroberta = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\nbert_result = bert(\"The capital of Japan is [MASK].\")\nroberta_result = roberta(\"The capital of Japan is <mask>.\")\n\nprint(f\"BERT:    {bert_result[0]['token_str']} ({bert_result[0]['score']:.3f})\")\nprint(f\"RoBERTa: {roberta_result[0]['token_str']} ({roberta_result[0]['score']:.3f})\")",
+      "steps": [
+        {"line": 1, "explanation": "Import the pipeline abstraction — it handles tokenization, model loading, and postprocessing in a single function call."},
+        {"line": 3, "explanation": "Load BERT-base-uncased (~440MB). The 'uncased' variant lowercases all input — 'Tokyo' becomes 'tokyo'."},
+        {"line": 4, "explanation": "Load RoBERTa-base (~500MB). It's cased by default and uses a different mask token: <mask> instead of [MASK]."},
+        {"line": 6, "explanation": "BERT fill-mask uses [MASK]. Using the wrong mask token is a common bug — the model will silently return poor predictions instead of erroring."},
+        {"line": 7, "explanation": "RoBERTa uses <mask>. Both models predict from bidirectional context, but RoBERTa's 160GB training gives it stronger world knowledge."},
+        {"line": 9, "explanation": "BERT predicts 'tokyo' (lowercased, ~90% confidence). Its WordPiece tokenizer with 30K vocabulary handles proper nouns less gracefully."},
+        {"line": 10, "explanation": "RoBERTa predicts 'Tokyo' (properly cased, ~95%+ confidence). The 50K BPE vocabulary and cased training make proper nouns natural."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import AutoTokenizer, AutoModel\nimport torch\nfrom torch.nn.functional import cosine_similarity\n\ndef get_cls_embedding(model_name, text):\n    tokenizer = AutoTokenizer.from_pretrained(model_name)\n    model = AutoModel.from_pretrained(model_name)\n    inputs = tokenizer(text, return_tensors=\"pt\")\n    with torch.no_grad():\n        outputs = model(**inputs)\n    return outputs.last_hidden_state[:, 0, :]\n\nsim_r = cosine_similarity(\n    get_cls_embedding(\"FacebookAI/roberta-base\", \"The movie was great\"),\n    get_cls_embedding(\"FacebookAI/roberta-base\", \"I loved the film\")\n)\nprint(f\"RoBERTa similarity: {sim_r.item():.4f}\")",
+      "steps": [
+        {"line": 1, "explanation": "AutoTokenizer and AutoModel auto-detect the correct class (BERT or RoBERTa) from the model name — no need to import specific classes."},
+        {"line": 3, "explanation": "cosine_similarity measures how closely aligned two embedding vectors are. Values near 1.0 mean semantically similar, near 0 means unrelated."},
+        {"line": 5, "explanation": "Define a reusable function that extracts the CLS token embedding — the sentence-level representation at position 0 of the output."},
+        {"line": 8, "explanation": "Tokenize with return_tensors='pt' for PyTorch. BERT adds [CLS]/[SEP], RoBERTa adds <s>/</s> — AutoTokenizer handles the difference."},
+        {"line": 9, "explanation": "torch.no_grad() disables gradient tracking — essential for inference to save ~50% memory and improve speed."},
+        {"line": 11, "explanation": "Extract position 0 from last_hidden_state — the CLS/<s> token that serves as the sentence representation for downstream tasks."},
+        {"line": 13, "explanation": "Compare RoBERTa embeddings of two semantically similar sentences. Higher cosine similarity indicates the model captures meaning better."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "BERT-base-uncased",
+      "right_label": "RoBERTa-base",
+      "items": [
+        {"left": "Static masking — same masks every epoch", "right": "Dynamic masking — fresh masks each epoch"},
+        {"left": "NSP + MLM dual objectives", "right": "MLM only — NSP removed (it hurt performance)"},
+        {"left": "16GB training data", "right": "160GB training data (10x more)"},
+        {"left": "WordPiece tokenizer, 30K vocab, uncased", "right": "Byte-level BPE, 50K vocab, cased"},
+        {"left": "Batch size 256", "right": "Batch size 8,000 — better gradients"},
+        {"left": "[MASK] token, outputs lowercase", "right": "<mask> token, preserves original casing"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've proven it with code — RoBERTa's training improvements deliver measurably better fill-mask, embeddings, and downstream classification over BERT!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ModelComparator` class that simulates running two models head-to-head on evaluation tasks. Initialize with two model names and their simulated scores. Implement `add_benchmark(name, model_a_score, model_b_score)` to record benchmark results, `get_winner(benchmark_name)` that returns the model name with the higher score (or 'tie'), `summary()` that returns a dict with 'model_a_wins', 'model_b_wins', 'ties', and 'avg_gap' (mean absolute score difference), and `dominates()` that returns True only if one model wins ALL benchmarks."
+      },
+      "starter_code": "class ModelComparator:\n    def __init__(self, model_a: str, model_b: str):\n        self.model_a = model_a\n        self.model_b = model_b\n        self.benchmarks = {}\n\n    def add_benchmark(self, name: str, model_a_score: float,\n                      model_b_score: float):\n        # Store the benchmark name and both scores\n        pass\n\n    def get_winner(self, benchmark_name: str) -> str:\n        # Return model name with higher score, or 'tie'\n        pass\n\n    def summary(self) -> dict:\n        # Return dict with model_a_wins, model_b_wins, ties, avg_gap\n        # avg_gap = mean of absolute differences across benchmarks\n        pass\n\n    def dominates(self) -> bool:\n        # True if one model wins every benchmark (no ties, no losses)\n        pass\n\n# Test it:\ncomp = ModelComparator(\"bert-base\", \"roberta-base\")\ncomp.add_benchmark(\"SST-2\", 92.7, 94.8)\ncomp.add_benchmark(\"MNLI\", 84.6, 87.6)\ncomp.add_benchmark(\"QNLI\", 90.5, 92.8)\ncomp.add_benchmark(\"QQP\", 89.2, 89.2)\n\nprint(comp.get_winner(\"SST-2\"))\nprint(comp.get_winner(\"QQP\"))\n\ns = comp.summary()\nprint(s[\"model_a_wins\"])\nprint(s[\"model_b_wins\"])\nprint(s[\"ties\"])\nprint(f\"{s['avg_gap']:.2f}\")\nprint(comp.dominates())",
+      "expected_output": "roberta-base\ntie\n0\n3\n1\n2.35\nFalse",
+      "hints": {
+        "en": [
+          "Store benchmarks as a dict mapping name to (model_a_score, model_b_score) tuples",
+          "In get_winner(), compare the two scores — return self.model_a, self.model_b, or 'tie' based on which is greater or if they're equal",
+          "For avg_gap, compute sum(abs(a - b) for a, b in benchmarks.values()) / len(benchmarks)"
+        ]
+      },
+      "test_code": "c = ModelComparator(\"A\", \"B\")\nc.add_benchmark(\"t1\", 90.0, 95.0)\nc.add_benchmark(\"t2\", 88.0, 92.0)\nassert c.get_winner(\"t1\") == \"B\"\nassert c.get_winner(\"t2\") == \"B\"\ns = c.summary()\nassert s[\"model_a_wins\"] == 0\nassert s[\"model_b_wins\"] == 2\nassert s[\"ties\"] == 0\nassert abs(s[\"avg_gap\"] - 4.5) < 0.01\nassert c.dominates() == True\nc.add_benchmark(\"t3\", 95.0, 95.0)\nassert c.dominates() == False\nassert c.get_winner(\"t3\") == \"tie\"\ns2 = c.summary()\nassert s2[\"ties\"] == 1"
+    },
+    {
+      "instruction": {
+        "en": "Build a `TokenizerAnalyzer` class that compares how two different tokenizers handle text. Initialize with two tokenizer configs (each a dict with 'name', 'vocab_size', and 'cased' boolean). Implement `tokenize(text, tokenizer_name)` that simulates tokenization by splitting on whitespace, lowercasing if uncased, and splitting tokens longer than 6 characters into subwords (first 4 chars + '##' + rest). Implement `compare(text)` that returns a dict with each tokenizer's token count, whether either produced an unknown token, and which has fewer tokens. Implement `batch_compare(texts)` that returns average token counts for each tokenizer."
+      },
+      "starter_code": "class TokenizerAnalyzer:\n    def __init__(self, tokenizer_a: dict, tokenizer_b: dict):\n        # Each config: {'name': str, 'vocab_size': int, 'cased': bool}\n        self.tokenizer_a = tokenizer_a\n        self.tokenizer_b = tokenizer_b\n\n    def tokenize(self, text: str, tokenizer_name: str) -> list[str]:\n        # 1. Split text on whitespace\n        # 2. If tokenizer is uncased (cased=False), lowercase each token\n        # 3. If a token has more than 6 characters, split into:\n        #    first 4 chars and '##' + remaining chars\n        # Return list of tokens/subwords\n        pass\n\n    def compare(self, text: str) -> dict:\n        # Return {\n        #   'a_tokens': int, 'b_tokens': int,\n        #   'fewer_tokens': tokenizer name with fewer (or 'tie'),\n        # }\n        pass\n\n    def batch_compare(self, texts: list[str]) -> dict:\n        # Return {'a_avg': float, 'b_avg': float}\n        # Average token count across all texts for each tokenizer\n        pass\n\n# Test it:\nbert_config = {'name': 'bert', 'vocab_size': 30000, 'cased': False}\nroberta_config = {'name': 'roberta', 'vocab_size': 50000, 'cased': True}\n\nanalyzer = TokenizerAnalyzer(bert_config, roberta_config)\n\nprint(analyzer.tokenize(\"ChatGPT is amazing\", \"bert\"))\nprint(analyzer.tokenize(\"ChatGPT is amazing\", \"roberta\"))\n\nresult = analyzer.compare(\"Hello World\")\nprint(result[\"fewer_tokens\"])\n\nbatch = analyzer.batch_compare([\"Hi there\", \"Hello World\"])\nprint(f\"{batch['a_avg']:.1f}\")\nprint(f\"{batch['b_avg']:.1f}\")",
+      "expected_output": "['chat', '##gpt', 'is', 'amaz', '##ing']\n['Chat', '##GPT', 'is', 'amaz', '##ing']\ntie\n2.5\n2.5",
+      "hints": {
+        "en": [
+          "Look up the tokenizer config by matching tokenizer_name against self.tokenizer_a['name'] or self.tokenizer_b['name']",
+          "For subword splitting: if len(token) > 6, yield token[:4] and '##' + token[4:] as two separate tokens in the result list",
+          "For batch_compare, call compare() on each text and average the a_tokens and b_tokens counts"
+        ]
+      },
+      "test_code": "bc = {'name': 'bert', 'vocab_size': 30000, 'cased': False}\nrc = {'name': 'roberta', 'vocab_size': 50000, 'cased': True}\na = TokenizerAnalyzer(bc, rc)\nt1 = a.tokenize(\"Transformer\", \"bert\")\nassert t1 == ['tran', '##sformer']\nt2 = a.tokenize(\"Transformer\", \"roberta\")\nassert t2 == ['Tran', '##sformer']\nt3 = a.tokenize(\"Hi there\", \"bert\")\nassert t3 == ['hi', 'there']\nt4 = a.tokenize(\"Hi there\", \"roberta\")\nassert t4 == ['Hi', 'there']\nr = a.compare(\"understanding language\")\nassert r['a_tokens'] == 4\nassert r['b_tokens'] == 4\nassert r['fewer_tokens'] == 'tie'\nb = a.batch_compare(['Hi', 'understanding'])\nassert abs(b['a_avg'] - 1.5) < 0.01\nassert abs(b['b_avg'] - 1.5) < 0.01"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["RoBERTa vs BERT comparison", "dynamic masking", "fill-mask pipeline", "CLS embeddings", "cosine similarity", "fine-tuning transformers", "BPE vs WordPiece tokenization", "downstream task evaluation"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "string manipulation", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

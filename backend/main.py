@@ -618,6 +618,13 @@ def init_db():
                 [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", 0]
             )
 
+        # Commit schema + migrations BEFORE seeding. The seed routines open their
+        # own connections; if the outer write transaction is still open they hit
+        # "database is locked" (notably under Litestream/WAL in production) and the
+        # seed is silently skipped — which kept new learning paths / graph concepts
+        # from ever reaching the prod DB.
+        conn.commit()
+
         # Seed knowledge graph concepts
         try:
             from graph.concepts import seed_concepts
@@ -631,8 +638,6 @@ def init_db():
             seed_paths(DB_PATH)
         except Exception as e:
             print(f"Paths seed: {e}")
-
-        conn.commit()
 
     except Exception as e:
         print(f"DB Init Error: {e}")
@@ -690,6 +695,7 @@ class UserRegister(BaseModel):
     username: str
     password: str
     name: Optional[str] = "Learner"
+    email: Optional[str] = ""
     account_type: Optional[str] = "individual"
 
 class UserLogin(BaseModel):
@@ -741,21 +747,26 @@ def register(user: UserRegister):
         # Initialize with module_1 unlocked
         default_unlocks = json.dumps(["module_1"])
         account_type = user.account_type if user.account_type in ("individual", "organization") else "individual"
+        email = (user.email or "").strip()
 
-        # Super admins skip the learner onboarding and land straight in the console.
+        # Super admins are granted via a username/email allowlist (break-glass).
+        # Since email is unverified, refuse to register a reserved super-admin
+        # email/username — otherwise anyone could claim founder-level access.
         try:
             from routes.admin import SUPER_ADMINS
-            is_super = (user.username or "").strip().lower() in SUPER_ADMINS
         except Exception:
-            is_super = False
+            SUPER_ADMINS = set()
+        if email.lower() in SUPER_ADMINS:
+            raise HTTPException(status_code=400, detail="This email address is reserved.")
+        is_super = (user.username or "").strip().lower() in SUPER_ADMINS
         onboarding_flag = 1 if is_super else 0
 
         cursor.execute(
-            "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed, account_type) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', ?, ?)",
-            [user_id, user.username, hashed, user.name, default_unlocks, onboarding_flag, account_type]
+            "INSERT INTO users (id, username, password_hash, name, email, created_at, points, unlocked_modules, preferred_language, onboarding_completed, account_type) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', ?, ?)",
+            [user_id, user.username, hashed, user.name, email, default_unlocks, onboarding_flag, account_type]
         )
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type, "token": create_access_token(user_id, user.username, 0)}
+        return {"id": user_id, "username": user.username, "name": user.name, "email": email, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type, "token": create_access_token(user_id, user.username, 0)}
     finally:
         conn.close()
 

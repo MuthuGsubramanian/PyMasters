@@ -1,0 +1,137 @@
+{
+  "id": "clip_vit_large_patch14_local_image_intelligence_pipeline",
+  "topic": "clip_vit_large_patch14_local_image_intelligence_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "CLIP ViT-L/14: Build a Local Image Intelligence Pipeline for Homie",
+    "ta": ""
+  },
+  "description": {
+    "en": "Build a complete local image intelligence pipeline using openai/clip-vit-large-patch14 — zero-shot classification, semantic photo search, and auto-tagging. Wire it into Homie as a privacy-first image plugin that never sends photos to the cloud.",
+    "ta": ""
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Your Photos Stay Home: Build a Privacy-First Image Intelligence Pipeline\n\nVaathiyaar here! Most image search tools ship your photos to the cloud — Google Photos, Apple Photos, they all phone home. But what if Homie could classify, tag, and search your entire photo library **locally**, using nothing but plain English queries? That's exactly what we'll build today with `openai/clip-vit-large-patch14`.\n\nCLIP (Contrastive Language-Image Pre-training) maps images and text into the same 768-dimensional embedding space. This means \"find me photos of sunset at the beach\" becomes a vector math problem — no cloud API, no subscription, no privacy compromise.\n\n### Multi-Framework Availability\n\nCLIP ViT-L/14 ships in every major format — pick what fits your stack:\n\n| Framework | Format | Load Method | Best For |\n|---|---|---|---|\n| PyTorch | `.bin` / `.safetensors` | `CLIPModel.from_pretrained()` | Research, prototyping |\n| TensorFlow | `tf_model.h5` | `TFCLIPModel.from_pretrained()` | TF Serving deployment |\n| JAX/Flax | `flax_model.msgpack` | `FlaxCLIPModel.from_pretrained()` | TPU workloads |\n| ONNX | `.onnx` via optimum | `ORTModel` | Edge/CPU inference |\n| safetensors | `.safetensors` | Same API, auto-detected | Secure, fast loading |\n\n### Step 1: Zero-Shot Classification\n\n```python\nfrom transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-large-patch14\"\n)\n\nimage = Image.open(\"mystery.jpg\")\ncategories = [\n    \"a photo of food on a plate\",\n    \"a photo of a person hiking\",\n    \"a photo of a pet animal\",\n    \"a screenshot of a computer screen\"\n]\n\nresults = classifier(image, candidate_labels=categories)\nfor r in results:\n    print(f\"{r['score']:.1%}  {r['label']}\")\n```\n\n### Step 2: Batch Embed and Index a Photo Library\n\n```python\nfrom transformers import CLIPModel, CLIPProcessor\nimport torch, numpy as np\nfrom pathlib import Path\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\ndef index_photos(photo_dir, batch_size=16):\n    paths = sorted(Path(photo_dir).glob(\"*.jpg\"))\n    all_embeds = []\n    for i in range(0, len(paths), batch_size):\n        batch = [Image.open(p) for p in paths[i:i+batch_size]]\n        inputs = processor(images=batch, return_tensors=\"pt\", padding=True)\n        with torch.no_grad():\n            emb = model.get_image_features(**inputs)\n            emb = emb / emb.norm(dim=-1, keepdim=True)\n        all_embeds.append(emb.cpu().numpy())\n    matrix = np.vstack(all_embeds)\n    np.save(\"photo_embeddings.npy\", matrix)\n    return paths, matrix\n```\n\n### Step 3: Natural Language Photo Search\n\n```python\ndef search_photos(query, paths, embeddings, top_k=5):\n    inputs = processor(text=[query], return_tensors=\"pt\")\n    with torch.no_grad():\n        q_emb = model.get_text_features(**inputs)\n        q_emb = q_emb / q_emb.norm(dim=-1, keepdim=True)\n    scores = (q_emb.numpy() @ embeddings.T)[0]\n    top_idx = np.argsort(scores)[::-1][:top_k]\n    return [(str(paths[i]), float(scores[i])) for i in top_idx]\n\n# \"Show me sunset photos\" — just works\nresults = search_photos(\"sunset over the ocean\", paths, matrix)\n```\n\n### Step 4: Auto-Tagging for Homie\n\n```python\ndef auto_tag(image_path, tag_pool, threshold=0.15):\n    image = Image.open(image_path)\n    prompts = [f\"a photo of {tag}\" for tag in tag_pool]\n    inputs = processor(text=prompts, images=image,\n                       return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        logits = model(**inputs).logits_per_image\n        scores = logits.softmax(dim=1)[0]\n    return [\n        {\"tag\": tag, \"score\": round(float(s), 3)}\n        for tag, s in zip(tag_pool, scores) if float(s) >= threshold\n    ]\n\nhomie_tags = [\"food\", \"pet\", \"landscape\", \"selfie\", \"document\",\n              \"sunset\", \"beach\", \"city\", \"nature\", \"indoor\"]\nmatched = auto_tag(\"vacation.jpg\", homie_tags)\n```\n\n### Performance & Deployment Tips\n\n| Optimization | Impact | How |\n|---|---|---|\n| Cache embeddings as `.npy` | Skip re-encoding on restart | `np.save` / `np.load` |\n| Batch processing | 4-8x throughput | Process 16-32 images at once |\n| safetensors format | 2x faster model load | Auto-used by default |\n| ONNX via optimum | 2-3x faster CPU inference | `optimum-cli export onnx` |\n| Half precision (fp16) | 50% memory reduction | `model.half()` on GPU |\n\n> **Key Insight:** CLIP turns your local machine into a private image search engine. Encode your photo library once, save the embeddings, and Homie can answer \"find photos of my dog at the park\" in milliseconds — no cloud API, no data leaving your device, and categories that change with a single text edit.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "openai/clip-vit-large-patch14 maps images and text into a shared 768-dimensional embedding space. Available in PyTorch, TensorFlow, JAX, and safetensors — classify images into categories described in plain English, search photos with natural language, and auto-tag an entire library. All locally, all private.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-large-patch14\"\n)\n\nimage = Image.open(\"mystery.jpg\")\n\ncategories = [\n    \"a photo of food on a plate\",\n    \"a photo of a person hiking\",\n    \"a photo of a pet animal\",\n    \"a screenshot of a computer screen\"\n]\n\nresults = classifier(image, candidate_labels=categories)\n\nfor r in results:\n    print(f\"{r['score']:.1%}  {r['label']}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import the Hugging Face pipeline — a high-level API that wraps model loading, tokenization, image preprocessing, and inference into one callable."},
+        {"line": 2, "explanation": "PIL (Pillow) loads images in a format CLIP can process. CLIP's internal processor handles resizing to 224×224 pixels automatically."},
+        {"line": 4, "explanation": "Create a zero-shot-image-classification pipeline. This downloads and loads CLIP's ViT-L/14 vision encoder and text encoder together — about 900MB total."},
+        {"line": 6, "explanation": "Specify the model by Hugging Face Hub ID. 'vit-large-patch14' is a large vision transformer (428M params) that splits images into 14×14 pixel patches for processing."},
+        {"line": 9, "explanation": "Load any image — JPEG, PNG, or WebP. The pipeline accepts PIL Images, file paths, or URLs. No manual resizing needed."},
+        {"line": 11, "explanation": "Define candidate labels as natural language descriptions. Using 'a photo of ...' boosts accuracy 3-5% over bare keywords since CLIP was trained on full captions."},
+        {"line": 18, "explanation": "The pipeline encodes the image and all text labels into the shared 768-dim space, computes cosine similarities, and applies softmax. Results are sorted by score descending."},
+        {"line": 20, "explanation": "Each result has 'label' (string) and 'score' (float 0-1). All scores sum to 1.0. Top result is the predicted class — change categories anytime without retraining."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import CLIPModel, CLIPProcessor\nimport torch, numpy as np\nfrom pathlib import Path\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-large-patch14\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-large-patch14\")\n\ndef index_photos(photo_dir, batch_size=16):\n    paths = sorted(Path(photo_dir).glob(\"*.jpg\"))\n    all_embeds = []\n    for i in range(0, len(paths), batch_size):\n        batch = [Image.open(p) for p in paths[i:i+batch_size]]\n        inputs = processor(images=batch, return_tensors=\"pt\", padding=True)\n        with torch.no_grad():\n            emb = model.get_image_features(**inputs)\n            emb = emb / emb.norm(dim=-1, keepdim=True)\n        all_embeds.append(emb.cpu().numpy())\n    matrix = np.vstack(all_embeds)\n    np.save(\"photo_embeddings.npy\", matrix)\n    return paths, matrix",
+      "steps": [
+        {"line": 1, "explanation": "Import CLIPModel and CLIPProcessor for lower-level control — needed for building custom indexing pipelines beyond the simple pipeline API."},
+        {"line": 6, "explanation": "Load the pre-trained CLIP model. First call downloads ~900MB from Hugging Face Hub; subsequent calls use cached weights in ~/.cache/huggingface/."},
+        {"line": 9, "explanation": "index_photos processes an entire photo directory in batches. Batching is critical — processing 16 images at once is 4-8x faster than one at a time."},
+        {"line": 12, "explanation": "Loop through images in batches of 16. Each batch is encoded in a single forward pass, maximizing GPU/CPU utilization."},
+        {"line": 15, "explanation": "torch.no_grad() disables gradient tracking during inference — halves memory usage and speeds up computation since we're not training."},
+        {"line": 16, "explanation": "get_image_features extracts only the 768-dim image embedding, skipping cross-modal computation. Faster than a full forward pass."},
+        {"line": 17, "explanation": "L2-normalize embeddings so dot product equals cosine similarity. This lets us do search with a simple matrix multiply later."},
+        {"line": 20, "explanation": "Save embeddings to disk as .npy. On next startup, np.load gives instant access — no need to re-encode thousands of photos."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import numpy as np\n\ndef search_photos(query, paths, embeddings, top_k=5):\n    inputs = processor(text=[query], return_tensors=\"pt\")\n    with torch.no_grad():\n        q_emb = model.get_text_features(**inputs)\n        q_emb = q_emb / q_emb.norm(dim=-1, keepdim=True)\n    scores = (q_emb.numpy() @ embeddings.T)[0]\n    top_idx = np.argsort(scores)[::-1][:top_k]\n    return [(str(paths[i]), float(scores[i])) for i in top_idx]\n\ndef auto_tag(image_path, tag_pool, threshold=0.15):\n    image = Image.open(image_path)\n    prompts = [f\"a photo of {tag}\" for tag in tag_pool]\n    inputs = processor(text=prompts, images=image,\n                       return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        logits = model(**inputs).logits_per_image\n        scores = logits.softmax(dim=1)[0]\n    return [\n        {\"tag\": tag, \"score\": round(float(s), 3)}\n        for tag, s in zip(tag_pool, scores)\n        if float(s) >= threshold\n    ]",
+      "steps": [
+        {"line": 3, "explanation": "search_photos encodes a natural language query and ranks all indexed images by cosine similarity — the core of Homie's photo search."},
+        {"line": 6, "explanation": "get_text_features encodes the query into the same 768-dim space as images. Text and images become directly comparable vectors."},
+        {"line": 8, "explanation": "Matrix multiply: (1, 768) @ (N, 768).T gives N similarity scores in one operation. Scales to tens of thousands of images in milliseconds."},
+        {"line": 9, "explanation": "np.argsort with [::-1] sorts descending. Take top_k indices — return paths and scores ready for a Homie plugin response."},
+        {"line": 12, "explanation": "auto_tag assigns labels from a candidate pool to a single image. The 'a photo of' prefix exploits CLIP's training distribution for accuracy gains."},
+        {"line": 18, "explanation": "logits_per_image contains raw similarity scores. softmax normalizes to probabilities summing to 1.0 across all candidate tags."},
+        {"line": 20, "explanation": "Filter by threshold: 0.15 for broad tagging (more tags, some noise), 0.25 for precise tagging (fewer but confident tags). Return tag-score pairs."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud Image APIs",
+      "right_label": "Local CLIP Pipeline",
+      "items": [
+        {"left": "Photos uploaded to third-party servers", "right": "All processing stays on your device"},
+        {"left": "Per-request API costs", "right": "Free after one-time model download"},
+        {"left": "Requires internet connection", "right": "Works fully offline"},
+        {"left": "Fixed category taxonomy", "right": "Custom categories via plain text"},
+        {"left": "Rate limits and quotas", "right": "Unlimited local inference"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a complete local image intelligence pipeline — classify, search, and auto-tag photos using plain English. Wire it into Homie for a fully private photo assistant!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `PhotoEmbeddingIndex` class that simulates CLIP's embed-and-search workflow. Since we can't load the real 900MB model, simulate embeddings as sparse vectors using word frequencies. Implement `embed_text(text)` that splits text into lowercased words and returns a dict mapping each word to its count, `cosine_similarity(vec_a, vec_b)` that computes cosine similarity between two sparse vectors (return 0.0 if either is empty), `index_photos(photos)` that stores a list of photo dicts (each with 'path' and 'description'), `search(query, top_k)` that finds the top_k photos whose descriptions are most similar to the query, and `classify(image_description, candidate_labels)` that returns labels scored and sorted descending with scores normalized to sum to 1.0."
+      },
+      "starter_code": "import math\n\nclass PhotoEmbeddingIndex:\n    def __init__(self):\n        self.photos = []\n\n    def embed_text(self, text: str) -> dict:\n        # Split into words, lowercase, count occurrences\n        # Return {word: count} — e.g., \"big big dog\" -> {\"big\": 2, \"dog\": 1}\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # dot = sum(a[k] * b[k] for shared keys)\n        # norm = sqrt(sum of squared values)\n        # Return 0.0 if either vector is empty\n        pass\n\n    def index_photos(self, photos: list[dict]):\n        # Store photos. Each: {\"path\": str, \"description\": str}\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # 1. Embed the query\n        # 2. Embed each photo's description\n        # 3. Compute cosine similarity\n        # 4. Return top_k [{\"path\": str, \"score\": float}] sorted desc\n        pass\n\n    def classify(self, image_description: str, candidate_labels: list[str]) -> list[dict]:\n        # 1. Embed the image description\n        # 2. Embed each label, compute cosine similarity\n        # 3. Normalize scores to sum to 1.0 (if total is 0, use 1/N)\n        # 4. Return [{\"label\": str, \"score\": float}] sorted desc\n        pass\n\n# Test:\nidx = PhotoEmbeddingIndex()\n\n# Test embedding\nvec = idx.embed_text(\"big big dog\")\nprint(vec[\"big\"])\n\n# Test search\nidx.index_photos([\n    {\"path\": \"beach.jpg\", \"description\": \"sunset over the ocean beach\"},\n    {\"path\": \"city.jpg\", \"description\": \"city skyline at night lights\"},\n    {\"path\": \"dog.jpg\", \"description\": \"dog playing fetch in park\"},\n])\nresults = idx.search(\"ocean sunset\", top_k=1)\nprint(results[0][\"path\"])\n\n# Test classify\nresults = idx.classify(\"dog park grass\", [\"pet outdoors\", \"beach sunset\", \"city night\"])\nprint(results[0][\"label\"])\nprint(f\"{sum(r['score'] for r in results):.1f}\")",
+      "expected_output": "2\nbeach.jpg\npet outdoors\n1.0",
+      "hints": {
+        "en": [
+          "embed_text: split on whitespace, lowercase each word, use a dict to count occurrences. words = text.lower().split(); for w in words: vec[w] = vec.get(w, 0) + 1",
+          "cosine_similarity: shared keys = set(a) & set(b), dot = sum(a[k]*b[k]), norm_a = sqrt(sum(v**2 for v in a.values())). Return 0.0 if either norm is zero.",
+          "classify: compute similarity for each label, sum all scores. If sum is 0, assign 1/len(labels) to each. Otherwise divide each score by the sum."
+        ]
+      },
+      "test_code": "import math\np = PhotoEmbeddingIndex()\nassert p.embed_text(\"hello hello world\") == {\"hello\": 2, \"world\": 1}\nassert p.embed_text(\"\") == {}\nsim = p.cosine_similarity({\"a\": 1, \"b\": 1}, {\"b\": 1, \"c\": 1})\nassert abs(sim - 0.5) < 0.01\nassert p.cosine_similarity({}, {\"a\": 1}) == 0.0\nassert p.cosine_similarity({}, {}) == 0.0\np.index_photos([{\"path\": \"x.jpg\", \"description\": \"red car fast\"}, {\"path\": \"y.jpg\", \"description\": \"blue sky cloud\"}])\nr = p.search(\"red car\", top_k=1)\nassert r[0][\"path\"] == \"x.jpg\"\nassert r[0][\"score\"] > 0\nc = p.classify(\"red car\", [\"vehicle\", \"nature sky\"])\nassert c[0][\"label\"] == \"vehicle\"\nassert abs(sum(x[\"score\"] for x in c) - 1.0) < 0.001\neq = p.classify(\"xyz\", [\"aaa\", \"bbb\"])\nassert abs(eq[0][\"score\"] - 0.5) < 0.001"
+    },
+    {
+      "instruction": {
+        "en": "Build a `HomiePhotoPlugin` class that simulates Homie's local image assistant. Implement `add_photos(photos)` to store photos (each with 'path' and 'tags' list), `search(query, top_k)` to find photos matching a natural language query using cosine similarity on sparse word vectors, `auto_tag(photo_tags, tag_pool, threshold)` to assign relevant tags from a pool above the confidence threshold, and `batch_index(tag_pool, threshold)` that auto-tags all stored photos and returns a dict mapping each path to its matched tags. Use cosine similarity with sparse vectors (each word maps to 1)."
+      },
+      "starter_code": "import math\n\nclass HomiePhotoPlugin:\n    def __init__(self):\n        self.photos = []\n\n    def _vec(self, words: list[str]) -> dict:\n        # Sparse vector: {word.lower(): 1 for each word}\n        pass\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        # Cosine similarity between sparse vectors\n        # Return 0.0 if either is empty\n        pass\n\n    def add_photos(self, photos: list[dict]):\n        # Store photos. Each: {\"path\": str, \"tags\": list[str]}\n        pass\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        # Split query into words, build vector\n        # Compare against each photo's tags vector\n        # Return top_k [{\"path\": str, \"score\": float}] sorted desc\n        pass\n\n    def auto_tag(self, photo_tags: list[str], tag_pool: list[str],\n                 threshold: float = 0.2) -> list[str]:\n        # For each candidate tag, split into words, compute cosine\n        # similarity against photo_tags vector.\n        # Return tags with score >= threshold, sorted by score desc.\n        pass\n\n    def batch_index(self, tag_pool: list[str],\n                    threshold: float = 0.2) -> dict:\n        # Run auto_tag on all stored photos\n        # Return {path: [matched_tags]}\n        pass\n\n# Test:\nplugin = HomiePhotoPlugin()\nplugin.add_photos([\n    {\"path\": \"trip/beach.jpg\", \"tags\": [\"beach\", \"sunset\", \"ocean\", \"waves\"]},\n    {\"path\": \"pets/luna.jpg\", \"tags\": [\"cat\", \"sleeping\", \"couch\", \"indoor\"]},\n    {\"path\": \"work/desk.jpg\", \"tags\": [\"laptop\", \"desk\", \"office\", \"coffee\"]},\n])\n\nresults = plugin.search(\"beach ocean\", top_k=1)\nprint(results[0][\"path\"])\n\ntags = plugin.auto_tag(\n    [\"cat\", \"nap\", \"couch\"],\n    [\"cat sleeping\", \"beach trip\", \"office work\"],\n    threshold=0.2\n)\nprint(tags[0])\n\nbatch = plugin.batch_index([\"beach trip\", \"cat sleeping\", \"office work\"], threshold=0.2)\nprint(\"trip/beach.jpg\" in batch)",
+      "expected_output": "trip/beach.jpg\ncat sleeping\nTrue",
+      "hints": {
+        "en": [
+          "_vec: return {w.lower(): 1 for w in words}. _cosine: shared = set(a) & set(b), dot = len(shared), norms = sqrt(len(a)) * sqrt(len(b)).",
+          "In search, build query_vec from query.lower().split(), compare against _vec(photo['tags']) for each photo, sort by score descending, slice top_k.",
+          "In batch_index, iterate self.photos and call self.auto_tag(photo['tags'], tag_pool, threshold) for each. Return a dict keyed by path."
+        ]
+      },
+      "test_code": "import math\nh = HomiePhotoPlugin()\nassert h._vec([\"Hello\", \"World\"]) == {\"hello\": 1, \"world\": 1}\nassert h._vec([]) == {}\nassert abs(h._cosine({\"a\": 1, \"b\": 1}, {\"b\": 1, \"c\": 1}) - 0.5) < 0.01\nassert h._cosine({}, {}) == 0.0\nassert h._cosine({\"a\": 1}, {}) == 0.0\nh.add_photos([{\"path\": \"a.jpg\", \"tags\": [\"dog\", \"park\"]}, {\"path\": \"b.jpg\", \"tags\": [\"car\", \"road\"]}])\nr = h.search(\"dog park\", top_k=1)\nassert r[0][\"path\"] == \"a.jpg\"\nassert r[0][\"score\"] > 0\nr2 = h.search(\"car\", top_k=2)\nassert r2[0][\"path\"] == \"b.jpg\"\nt = h.auto_tag([\"dog\", \"walk\"], [\"dog walking\", \"car racing\"], threshold=0.2)\nassert \"dog walking\" in t\nassert \"car racing\" not in t\nb = h.batch_index([\"dog walking\", \"car racing\"], threshold=0.2)\nassert \"a.jpg\" in b\nassert \"dog walking\" in b[\"a.jpg\"]\nassert \"b.jpg\" in b\nassert \"car racing\" in b[\"b.jpg\"]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["zero-shot image classification", "CLIP ViT-L/14", "vision-language embeddings", "local image search", "auto-tagging pipeline", "batch embedding indexing", "cosine similarity search", "multi-framework model loading", "safetensors", "privacy-first AI"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "pip install", "basic file I/O", "numpy basics"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

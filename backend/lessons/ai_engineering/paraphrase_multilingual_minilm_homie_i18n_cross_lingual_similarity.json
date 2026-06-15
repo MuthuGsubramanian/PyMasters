@@ -1,0 +1,134 @@
+{
+  "id": "paraphrase_multilingual_minilm_homie_i18n_cross_lingual_similarity",
+  "topic": "paraphrase_multilingual_minilm_homie_i18n_cross_lingual_similarity",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Homie i18n RAG & Cross-Lingual Similarity with paraphrase-multilingual-MiniLM-L12-v2"
+  },
+  "description": {
+    "en": "Build a multilingual RAG backbone for Homie using paraphrase-multilingual-MiniLM-L12-v2 — encode knowledge in English once, then retrieve it via queries in any of 50+ languages, with cross-lingual similarity scoring to measure alignment quality and a fallback strategy for low-confidence matches."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Homie Speaks Every Language: i18n RAG with Cross-Lingual Similarity\n\nVaathiyaar here! Picture this: Homie, your AI assistant, has a knowledge base packed with Python tutorials, API docs, and troubleshooting guides — all in English. Then a learner in Tokyo types their question in Japanese. Another in São Paulo asks in Portuguese. A third in Istanbul writes in Turkish. Without multilingual embeddings, Homie is deaf to every language except English. With `paraphrase-multilingual-MiniLM-L12-v2`, Homie understands them all — no translation API, no per-language index, no extra cost.\n\n### How Cross-Lingual Embeddings Work\n\nThe model maps sentences from 50+ languages into a **shared 384-dimensional vector space**. During training, it learned from millions of parallel sentence pairs that translations should land at nearly the same point in this space. The result: cosine similarity between a Japanese query and its English answer is just as high as between two English sentences with the same meaning.\n\n### Architecture: Homie's i18n RAG Pipeline\n\n| Stage | Component | Language Handling |\n|---|---|---|\n| Knowledge Base | English documents chunked into passages | English only |\n| Embedding | paraphrase-multilingual-MiniLM-L12-v2 | Language-agnostic |\n| Index | NumPy / FAISS vector store | Language-agnostic |\n| Query | User input in any supported language | Any of 50+ languages |\n| Retrieval | Cosine similarity top-k | Cross-lingual matching |\n| Confidence Gate | Score threshold check | Fallback on low confidence |\n\nThe key design decision: embed the knowledge base **once in English**, then let the model handle cross-lingual matching at query time.\n\n### Building Homie's Multilingual Retriever\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\n# Homie's English knowledge base\nknowledge_base = [\n    \"Use list comprehensions for concise loops in Python.\",\n    \"Django REST Framework serializers validate incoming data.\",\n    \"pytest fixtures share setup logic across test functions.\",\n    \"Virtual environments isolate project dependencies.\",\n    \"Type hints improve code readability and IDE support.\",\n]\n\nkb_embeddings = model.encode(knowledge_base, normalize_embeddings=True)\n\ndef homie_retrieve(query: str, top_k: int = 2, threshold: float = 0.35):\n    q_emb = model.encode([query], normalize_embeddings=True)\n    scores = np.dot(kb_embeddings, q_emb.T).flatten()\n    ranked = np.argsort(scores)[::-1][:top_k]\n    results = [\n        {\"doc\": knowledge_base[i], \"score\": float(scores[i])}\n        for i in ranked if scores[i] >= threshold\n    ]\n    if not results:\n        return [{\"doc\": \"Sorry, I couldn't find a confident match.\", \"score\": 0.0}]\n    return results\n\n# Same question in three languages — same retrieval\nfor q in [\n    \"Pythonでリスト内包表記をどう使う？\",          # Japanese\n    \"Como usar list comprehensions em Python?\",     # Portuguese\n    \"Python'da liste üreteçlerini nasıl kullanırım?\", # Turkish\n]:\n    result = homie_retrieve(q, top_k=1)\n    print(f\"{result[0]['score']:.3f} | {q[:40]}... → {result[0]['doc'][:50]}\")\n```\n\nAll three queries hit the list comprehension document — zero translation needed.\n\n### Measuring Cross-Lingual Alignment Quality\n\n```python\ndef alignment_report(pairs: list[tuple[str, str]]):\n    \"\"\"Score translation pairs to audit embedding quality per language.\"\"\"\n    for en, other in pairs:\n        embs = model.encode([en, other], normalize_embeddings=True)\n        score = util.cos_sim(embs[0], embs[1]).item()\n        status = \"STRONG\" if score > 0.80 else \"WEAK\" if score > 0.60 else \"POOR\"\n        print(f\"{score:.3f} [{status}] | {en} ↔ {other}\")\n\nalignment_report([\n    (\"How do I run tests?\", \"テストの実行方法は？\"),       # Japanese\n    (\"Install dependencies first\", \"Instale as dependências primeiro\"),  # Portuguese\n    (\"Fix the bug in line 42\", \"Satır 42'deki hatayı düzelt\"),           # Turkish\n    (\"What is a virtual environment?\", \"Qu'est-ce qu'un environnement virtuel ?\"),  # French\n])\n```\n\nScores above 0.80 mean reliable cross-lingual retrieval. Scores below 0.60 signal that a specific language pair may need a larger model like `bge-m3` or a translation fallback.\n\n### Confidence-Gated Fallback Strategy\n\nNot every query will produce a high-confidence match. Homie needs a **confidence gate** — if the best retrieval score is below a threshold, fall back to a generic response or escalate to translation.\n\n```python\ndef homie_answer(query: str) -> str:\n    results = homie_retrieve(query, top_k=1, threshold=0.35)\n    if results[0][\"score\"] == 0.0:\n        return f\"I'm not confident I found the right answer. Try rephrasing or ask in English.\"\n    return f\"Based on our docs: {results[0]['doc']} (confidence: {results[0]['score']:.2f})\"\n\nprint(homie_answer(\"Como usar pytest?\"))                  # Portuguese — confident match\nprint(homie_answer(\"ajsdkfhasjkdfhaskjdf\"))               # Gibberish — fallback\n```\n\n### Performance: PyTorch vs ONNX\n\n| Backend | 500 sentences | Best for |\n|---|---|---|\n| PyTorch | ~3.2s | GPU, fine-tuning |\n| ONNX (CPU) | ~1.1s | Production CPU serving |\n| ONNX (CUDA) | ~0.4s | Production GPU serving |\n\nFor Homie's deployment, ONNX with `CPUExecutionProvider` is the sweet spot — fast enough for real-time queries without GPU cost.\n\n> **Key Insight:** paraphrase-multilingual-MiniLM-L12-v2 turns Homie from an English-only assistant into a polyglot — one embedding model, one vector index, 50+ languages. The cross-lingual alignment is strong enough for retrieval but not perfect: always pair it with a confidence gate so Homie can gracefully fall back when a query's language or phrasing pushes the embeddings beyond their comfort zone."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Homie's knowledge base is in English, but learners ask questions in Japanese, Portuguese, Turkish, and more. paraphrase-multilingual-MiniLM-L12-v2 maps all 50+ languages into one shared 384-dimensional vector space — encode once in English, retrieve in any language. No translation API needed.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\nknowledge_base = [\n    \"Use list comprehensions for concise loops in Python.\",\n    \"Django REST Framework serializers validate incoming data.\",\n    \"pytest fixtures share setup logic across test functions.\",\n    \"Virtual environments isolate project dependencies.\",\n]\n\nkb_embeddings = model.encode(knowledge_base, normalize_embeddings=True)\n\ndef homie_retrieve(query, top_k=2, threshold=0.35):\n    q_emb = model.encode([query], normalize_embeddings=True)\n    scores = np.dot(kb_embeddings, q_emb.T).flatten()\n    ranked = np.argsort(scores)[::-1][:top_k]\n    results = [\n        {\"doc\": knowledge_base[i], \"score\": float(scores[i])}\n        for i in ranked if scores[i] >= threshold\n    ]\n    if not results:\n        return [{\"doc\": \"No confident match found.\", \"score\": 0.0}]\n    return results\n\nprint(homie_retrieve(\"Pythonでリスト内包表記をどう使う？\", top_k=1))",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer for loading the multilingual model. NumPy handles fast dot-product similarity."},
+        {"line": 4, "explanation": "Load paraphrase-multilingual-MiniLM-L12-v2 — 118M parameters, 384-dim embeddings, trained on parallel sentence pairs across 50+ languages."},
+        {"line": 6, "explanation": "Homie's knowledge base: English-only documents about Python concepts. This is the content Homie will retrieve from."},
+        {"line": 13, "explanation": "Encode the knowledge base once with normalization. Normalized embeddings let us use dot product instead of cosine similarity — mathematically equivalent but faster."},
+        {"line": 15, "explanation": "The retriever function: takes a query in any language, finds the top-k most similar documents above a confidence threshold."},
+        {"line": 16, "explanation": "Encode the query. Even though it might be Japanese or Portuguese, the model maps it into the same 384-dim space as the English knowledge base."},
+        {"line": 17, "explanation": "Dot product between the query and all knowledge base embeddings — gives a similarity score for each document in one vectorized operation."},
+        {"line": 18, "explanation": "Sort by score descending and take the top-k. np.argsort returns indices that would sort the array."},
+        {"line": 20, "explanation": "Confidence gate: only include results above the threshold. If no document scores high enough, Homie admits uncertainty instead of giving a wrong answer."},
+        {"line": 27, "explanation": "Japanese query about list comprehensions. The model maps it near the English list comprehension document — cross-lingual retrieval in action."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\ndef alignment_report(pairs):\n    for en, other in pairs:\n        embs = model.encode([en, other], normalize_embeddings=True)\n        score = util.cos_sim(embs[0], embs[1]).item()\n        status = \"STRONG\" if score > 0.80 else \"WEAK\" if score > 0.60 else \"POOR\"\n        print(f\"{score:.3f} [{status}] | {en} ↔ {other}\")\n\nalignment_report([\n    (\"How do I run tests?\", \"テストの実行方法は？\"),\n    (\"Install dependencies first\", \"Instale as dependências primeiro\"),\n    (\"Fix the bug in line 42\", \"Satır 42'deki hatayı düzelt\"),\n    (\"What is a virtual environment?\", \"Qu'est-ce qu'un environnement virtuel ?\"),\n])",
+      "steps": [
+        {"line": 5, "explanation": "alignment_report takes translation pairs and scores how well the model aligns them — an audit tool for deciding if a language is production-ready."},
+        {"line": 7, "explanation": "Encode both sentences together. The model processes them identically regardless of language — no language detection needed."},
+        {"line": 8, "explanation": "cos_sim returns a similarity score between -1 and 1. For normalized embeddings, this equals the dot product. .item() extracts the scalar from the tensor."},
+        {"line": 9, "explanation": "Three confidence tiers: STRONG (>0.80) means reliable cross-lingual retrieval, WEAK (0.60-0.80) means use with caution, POOR (<0.60) means consider a fallback."},
+        {"line": 12, "explanation": "Test four language pairs: Japanese, Portuguese, Turkish, and French. European languages typically score higher due to more training data."},
+        {"line": 16, "explanation": "Turkish alignment may score slightly lower than French — this is expected for languages with less parallel corpus coverage. The report helps you decide where to add translation fallbacks."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\n\nmodel = SentenceTransformer(\n    \"paraphrase-multilingual-MiniLM-L12-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\ndef homie_answer(query, kb, kb_embs, threshold=0.35):\n    q_emb = model.encode([query], normalize_embeddings=True)\n    scores = np.dot(kb_embs, q_emb.T).flatten()\n    best_idx = int(np.argmax(scores))\n    if scores[best_idx] < threshold:\n        return \"I'm not confident I found the right answer. Try rephrasing.\"\n    return f\"{kb[best_idx]} (confidence: {scores[best_idx]:.2f})\"\n\nkb = [\"Use pytest for testing.\", \"pip install manages packages.\"]\nkb_embs = model.encode(kb, normalize_embeddings=True)\n\nprint(homie_answer(\"Como usar pytest?\", kb, kb_embs))\nprint(homie_answer(\"ajsdkfhasjkdfh\", kb, kb_embs))",
+      "steps": [
+        {"line": 4, "explanation": "Load with ONNX backend for production CPU inference. This is 2-3x faster than PyTorch on CPU — critical for real-time Homie queries."},
+        {"line": 7, "explanation": "CPUExecutionProvider tells ONNX Runtime to optimize for CPU. Swap to CUDAExecutionProvider for GPU serving without changing any other code."},
+        {"line": 10, "explanation": "homie_answer wraps retrieval with a confidence gate. If the best match scores below the threshold, Homie admits uncertainty."},
+        {"line": 14, "explanation": "The confidence gate: scores below 0.35 trigger a fallback message. This prevents Homie from confidently returning irrelevant documents."},
+        {"line": 21, "explanation": "Portuguese query about pytest — maps to the testing document. Cross-lingual retrieval with ONNX speed."},
+        {"line": 22, "explanation": "Gibberish query — the confidence gate catches this and returns a graceful fallback instead of a misleading answer."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "English-Only RAG",
+      "right_label": "i18n RAG with Multilingual Embeddings",
+      "items": [
+        {"left": "Only understands English queries", "right": "Handles 50+ languages natively"},
+        {"left": "Requires translation API for non-English users", "right": "No translation overhead — direct embedding match"},
+        {"left": "Per-language index or pipeline", "right": "Single index serves all languages"},
+        {"left": "Translation errors degrade retrieval quality", "right": "End-to-end learned cross-lingual alignment"},
+        {"left": "Additional latency from translation step", "right": "Same latency regardless of query language"},
+        {"left": "Translation API costs scale with traffic", "right": "Fixed model cost — no per-query API fee"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Homie now speaks 50+ languages! You built a multilingual RAG pipeline with cross-lingual similarity scoring and a confidence gate — one model, one index, every language. No translation API needed!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MultilingualRetriever` class that simulates Homie's i18n RAG pipeline using word overlap as a stand-in for semantic similarity. Implement `encode(text)` that returns a set of lowercased words, `similarity(set_a, set_b)` that computes Jaccard similarity (intersection/union, 0.0 if both empty), and `retrieve(query, top_k, threshold)` that returns the top-k documents above the threshold as a list of dicts with 'doc', 'score', and 'rank' keys (1-indexed rank). If no documents meet the threshold, return a single-element list: [{'doc': 'No confident match.', 'score': 0.0, 'rank': 0}]."
+      },
+      "starter_code": "class MultilingualRetriever:\n    def __init__(self, documents: list):\n        self.documents = documents\n        self.doc_tokens = [self.encode(doc) for doc in documents]\n\n    def encode(self, text: str) -> set:\n        # Return a set of lowercased words\n        pass\n\n    def similarity(self, set_a: set, set_b: set) -> float:\n        # Jaccard similarity: |intersection| / |union|\n        # Return 0.0 if both sets are empty\n        pass\n\n    def retrieve(self, query: str, top_k: int = 2, threshold: float = 0.1) -> list:\n        # 1. Encode the query\n        # 2. Score against all documents\n        # 3. Sort by score descending\n        # 4. Return top-k above threshold with 'doc', 'score', 'rank' keys\n        # 5. If none above threshold, return fallback\n        pass\n\n# Test it:\nretriever = MultilingualRetriever([\n    \"use list comprehensions for loops\",\n    \"pytest fixtures share setup logic\",\n    \"virtual environments isolate dependencies\",\n])\n\nprint(retriever.encode(\"Hello World\"))\nprint(f\"{retriever.similarity({'a', 'b', 'c'}, {'a', 'b', 'd'}):.3f}\")\n\nresults = retriever.retrieve(\"list loops\", top_k=1)\nprint(results[0][\"doc\"])\nprint(results[0][\"rank\"])\n\nfallback = retriever.retrieve(\"xyzzy qqq\", top_k=1, threshold=0.9)\nprint(fallback[0][\"doc\"])",
+      "expected_output": "{'hello', 'world'}\n0.500\nuse list comprehensions for loops\n1\nNo confident match.",
+      "hints": {
+        "en": [
+          "encode: use text.lower().split() wrapped in set() to get unique lowercased words",
+          "similarity: use set operators & for intersection and | for union, then len(intersection)/len(union)",
+          "retrieve: score each document, sort by score descending, filter by threshold, add 1-indexed rank — if no results pass threshold, return the fallback dict"
+        ]
+      },
+      "test_code": "r = MultilingualRetriever([\"a b c\", \"d e f\", \"a b d\"])\nassert r.encode(\"Hello World\") == {\"hello\", \"world\"}\nassert r.similarity(set(), set()) == 0.0\nassert r.similarity({\"a\"}, {\"a\"}) == 1.0\nassert abs(r.similarity({\"a\", \"b\"}, {\"a\", \"c\"}) - 1/3) < 0.01\nres = r.retrieve(\"a b\", top_k=2)\nassert len(res) <= 2\nassert res[0][\"score\"] >= res[-1][\"score\"]\nassert res[0][\"rank\"] == 1\nassert all(\"doc\" in x and \"score\" in x and \"rank\" in x for x in res)\nfb = r.retrieve(\"zzz qqq\", threshold=0.9)\nassert len(fb) == 1\nassert fb[0][\"score\"] == 0.0\nassert fb[0][\"rank\"] == 0\nassert fb[0][\"doc\"] == \"No confident match.\""
+    },
+    {
+      "instruction": {
+        "en": "Build an `AlignmentAuditor` class that extends `MultilingualRetriever` (provided) to measure cross-lingual alignment quality. Implement `audit_pair(text_a, text_b)` that returns a dict with 'text_a', 'text_b', 'score' (Jaccard similarity of encoded texts), and 'status' ('STRONG' if score > 0.5, 'WEAK' if > 0.25, else 'POOR'). Also implement `audit_batch(pairs)` that returns a list of audit results sorted by score descending, and `languages_above(pairs, min_score)` that returns the count of pairs scoring at or above min_score."
+      },
+      "starter_code": "class MultilingualRetriever:\n    def __init__(self, documents=None):\n        self.documents = documents or []\n        self.doc_tokens = [self.encode(doc) for doc in self.documents]\n\n    def encode(self, text):\n        return set(text.lower().split())\n\n    def similarity(self, set_a, set_b):\n        if not set_a and not set_b:\n            return 0.0\n        union = set_a | set_b\n        if not union:\n            return 0.0\n        return len(set_a & set_b) / len(union)\n\nclass AlignmentAuditor(MultilingualRetriever):\n    def audit_pair(self, text_a: str, text_b: str) -> dict:\n        # Return: {'text_a': str, 'text_b': str, 'score': float, 'status': str}\n        # status: 'STRONG' if score > 0.5, 'WEAK' if score > 0.25, else 'POOR'\n        pass\n\n    def audit_batch(self, pairs: list) -> list:\n        # Audit each (text_a, text_b) pair\n        # Return list of audit dicts sorted by score descending\n        pass\n\n    def languages_above(self, pairs: list, min_score: float) -> int:\n        # Count how many pairs score >= min_score\n        pass\n\n# Test it:\nauditor = AlignmentAuditor()\n\nresult = auditor.audit_pair(\"the cat sat\", \"the cat slept\")\nprint(f\"{result['score']:.3f}\")\nprint(result[\"status\"])\n\nbatch = auditor.audit_batch([\n    (\"a b c\", \"a b d\"),\n    (\"x y\", \"x y z\"),\n    (\"hello\", \"goodbye\"),\n])\nprint(batch[0][\"score\"] >= batch[-1][\"score\"])\nprint(auditor.languages_above([\n    (\"a b\", \"a b c\"),\n    (\"x\", \"y\"),\n], min_score=0.5))",
+      "expected_output": "0.500\nWEAK\nTrue\n1",
+      "hints": {
+        "en": [
+          "audit_pair: encode both texts, compute similarity, then assign status based on score thresholds (> 0.5 = STRONG, > 0.25 = WEAK, else POOR)",
+          "audit_batch: call audit_pair for each tuple in the list, then sort the results by score descending using sorted() with a key function",
+          "languages_above: call audit_pair for each pair and count how many have score >= min_score — a simple sum of a generator expression"
+        ]
+      },
+      "test_code": "a = AlignmentAuditor()\nr = a.audit_pair(\"a b c\", \"a b c\")\nassert r[\"score\"] == 1.0\nassert r[\"status\"] == \"STRONG\"\nassert r[\"text_a\"] == \"a b c\"\nr2 = a.audit_pair(\"a\", \"b\")\nassert r2[\"score\"] == 0.0\nassert r2[\"status\"] == \"POOR\"\nr3 = a.audit_pair(\"a b c\", \"a d e f\")\nassert r3[\"status\"] == \"WEAK\" or r3[\"status\"] == \"POOR\"\nbatch = a.audit_batch([(\"a\", \"b\"), (\"a b\", \"a b\")])\nassert len(batch) == 2\nassert batch[0][\"score\"] >= batch[1][\"score\"]\nassert a.languages_above([(\"a b\", \"a b\"), (\"x\", \"y\")], 0.5) == 1\nassert a.languages_above([(\"x\", \"y\"), (\"p\", \"q\")], 0.5) == 0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["cross-lingual embeddings", "i18n RAG pipeline", "multilingual retrieval", "cross-lingual alignment auditing", "confidence-gated retrieval", "Jaccard similarity", "ONNX deployment", "fallback strategies", "embedding normalization"],
+    "concepts_required": ["python classes", "sets", "dictionaries", "numpy basics", "sentence embeddings basics", "cosine similarity"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,119 @@
+{
+  "id": "roberta_base_multitask_finetuning",
+  "topic": "roberta_base_multitask_finetuning",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Multi-Task Fine-Tuning RoBERTa for Classification, NER, and Sentiment"
+  },
+  "description": {
+    "en": "Learn to fine-tune FacebookAI/roberta-base across three core NLP tasks — text classification, named entity recognition, and sentiment analysis — using task-specific heads and Hugging Face's Trainer API."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Model, Three Tasks: Fine-Tuning RoBERTa for Real-World NLP\n\nVaathiyaar here! The magic of `FacebookAI/roberta-base` isn't just that it understands language — it's that the *same* 125M-parameter backbone can be adapted to completely different NLP tasks by swapping a single output head. Text classification? Add a linear layer. Named entity recognition? Add a token classifier. Sentiment analysis? Same architecture, different labels. This lesson walks you through all three, so you can fine-tune RoBERTa for any downstream task you encounter.\n\n### The Shared Backbone, Different Heads Pattern\n\n| Task | Head Class | Output Shape | What It Predicts |\n|---|---|---|---|\n| Text Classification | `RobertaForSequenceClassification` | (batch, num_labels) | One label per document |\n| Named Entity Recognition | `RobertaForTokenClassification` | (batch, seq_len, num_tags) | One tag per token |\n| Sentiment Analysis | `RobertaForSequenceClassification` | (batch, 3) | Negative / Neutral / Positive |\n\nAll three share the same 12-layer transformer encoder. Only the final classification head changes — that's the power of transfer learning.\n\n### Task 1: Text Classification\n\n```python\nfrom transformers import RobertaForSequenceClassification, RobertaTokenizer\nimport torch\n\ntokenizer = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-base\")\nmodel = RobertaForSequenceClassification.from_pretrained(\n    \"FacebookAI/roberta-base\", num_labels=4\n)\n\ntext = \"Breaking: Major earthquake hits the coast\"\ninputs = tokenizer(text, return_tensors=\"pt\", truncation=True)\n\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\npredicted_class = logits.argmax(dim=-1).item()\nlabel_map = {0: \"World\", 1: \"Sports\", 2: \"Business\", 3: \"Sci/Tech\"}\nprint(f\"Predicted: {label_map[predicted_class]}\")\n```\n\nBefore fine-tuning, predictions are random — the classification head is initialized with random weights. After training on labeled data, this same code produces accurate predictions.\n\n### Task 2: Named Entity Recognition (NER)\n\n```python\nfrom transformers import RobertaForTokenClassification\n\nner_tags = [\"O\", \"B-PER\", \"I-PER\", \"B-ORG\", \"I-ORG\", \"B-LOC\", \"I-LOC\"]\n\nmodel = RobertaForTokenClassification.from_pretrained(\n    \"FacebookAI/roberta-base\", num_labels=len(ner_tags)\n)\n\ntext = \"Elon Musk founded SpaceX in California\"\ninputs = tokenizer(text, return_tensors=\"pt\", truncation=True)\n\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\npredictions = logits.argmax(dim=-1)[0].tolist()\ntokens = tokenizer.convert_ids_to_tokens(inputs[\"input_ids\"][0])\n\nfor token, pred in zip(tokens[1:-1], predictions[1:-1]):\n    if ner_tags[pred] != \"O\":\n        print(f\"{token}: {ner_tags[pred]}\")\n```\n\nToken classification assigns a label to *every* token, not just the sentence. The BIO tagging scheme marks entity boundaries: B-PER begins a person name, I-PER continues it.\n\n### Task 3: Sentiment with Custom Training Loop\n\n```python\nfrom transformers import TrainingArguments, Trainer\nfrom datasets import load_dataset\n\ndataset = load_dataset(\"sst2\")\n\ndef tokenize_fn(examples):\n    return tokenizer(examples[\"sentence\"], truncation=True,\n                     padding=\"max_length\", max_length=128)\n\ntokenized = dataset.map(tokenize_fn, batched=True)\n\nmodel = RobertaForSequenceClassification.from_pretrained(\n    \"FacebookAI/roberta-base\", num_labels=2\n)\n\ntraining_args = TrainingArguments(\n    output_dir=\"./roberta-sst2\",\n    num_train_epochs=3,\n    per_device_train_batch_size=16,\n    learning_rate=2e-5,\n    weight_decay=0.01,\n    eval_strategy=\"epoch\",\n    save_strategy=\"epoch\",\n    load_best_model_at_end=True,\n)\n\ntrainer = Trainer(\n    model=model, args=training_args,\n    train_dataset=tokenized[\"train\"],\n    eval_dataset=tokenized[\"validation\"],\n)\ntrainer.train()\n```\n\n### Fine-Tuning Hyperparameter Guide\n\n| Hyperparameter | Classification | NER | Sentiment |\n|---|---|---|---|\n| Learning rate | 2e-5 | 3e-5 | 2e-5 |\n| Batch size | 16–32 | 16 | 16–32 |\n| Epochs | 3–5 | 5–10 | 3 |\n| Weight decay | 0.01 | 0.01 | 0.01 |\n| Warmup ratio | 0.06 | 0.1 | 0.06 |\n| Max seq length | 128–512 | 128 | 128 |\n\nNER needs more epochs because token-level supervision is sparser than sentence-level. Classification and sentiment use nearly identical settings since both are sequence classification under the hood.\n\n> **Key Insight:** RoBERTa's encoder is task-agnostic — it learns rich language representations that transfer to any downstream NLP task. The only thing that changes between classification, NER, and sentiment is the output head: one linear layer for sequence labels, one for per-token labels. Master this pattern and you can fine-tune RoBERTa for any NLP problem in under 50 lines of code."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "One backbone, three tasks. RoBERTa-base's 12-layer transformer encoder produces rich token representations that can be routed through different classification heads — sequence classification for topics and sentiment, token classification for NER. Fine-tuning adapts the entire model to your specific task with minimal code.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import RobertaForSequenceClassification, RobertaTokenizer\nimport torch\n\ntokenizer = RobertaTokenizer.from_pretrained(\"FacebookAI/roberta-base\")\nmodel = RobertaForSequenceClassification.from_pretrained(\n    \"FacebookAI/roberta-base\", num_labels=4\n)\n\ntext = \"Breaking: Major earthquake hits the coast\"\ninputs = tokenizer(text, return_tensors=\"pt\", truncation=True)\n\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\npredicted_class = logits.argmax(dim=-1).item()\nprint(predicted_class)",
+      "steps": [
+        {"line": 1, "explanation": "Import RobertaForSequenceClassification — a RoBERTa encoder with a linear classification head on top of the <s> (CLS) token."},
+        {"line": 4, "explanation": "Load the BPE tokenizer with 50K vocabulary. RoBERTa uses byte-level BPE from GPT-2, handling any text without [UNK] tokens."},
+        {"line": 5, "explanation": "Load RoBERTa with a 4-class classification head. num_labels=4 creates a Linear(768, 4) layer on top of the pooled output."},
+        {"line": 9, "explanation": "Define input text. The tokenizer will convert this to subword token IDs with <s> and </s> special tokens."},
+        {"line": 10, "explanation": "Tokenize with truncation=True to cap at 512 tokens (RoBERTa's max). return_tensors='pt' gives PyTorch tensors."},
+        {"line": 12, "explanation": "Disable gradients for inference — no backpropagation needed, saves memory and speeds up the forward pass."},
+        {"line": 13, "explanation": "Forward pass returns logits of shape (1, 4). Before fine-tuning, these are random since the classification head is untrained."},
+        {"line": 15, "explanation": "argmax picks the highest-scoring class. After fine-tuning on labeled data, this correctly classifies the topic."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import RobertaForTokenClassification\n\nner_tags = [\"O\", \"B-PER\", \"I-PER\", \"B-ORG\", \"I-ORG\", \"B-LOC\", \"I-LOC\"]\n\nmodel = RobertaForTokenClassification.from_pretrained(\n    \"FacebookAI/roberta-base\", num_labels=len(ner_tags)\n)\n\ntext = \"Elon Musk founded SpaceX in California\"\ninputs = tokenizer(text, return_tensors=\"pt\", truncation=True)\n\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\npredictions = logits.argmax(dim=-1)[0].tolist()\ntokens = tokenizer.convert_ids_to_tokens(inputs[\"input_ids\"][0])\nfor token, pred in zip(tokens[1:-1], predictions[1:-1]):\n    print(f\"{token}: {ner_tags[pred]}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import RobertaForTokenClassification — instead of one label per sentence, this assigns a label to every single token in the sequence."},
+        {"line": 3, "explanation": "Define BIO NER tags: O (outside), B- (begin entity), I- (inside entity) for Person, Organization, and Location."},
+        {"line": 5, "explanation": "Load with num_labels=7 (one per tag). The head is Linear(768, 7), applied independently to each token's hidden state."},
+        {"line": 9, "explanation": "Input contains named entities: 'Elon Musk' (PER), 'SpaceX' (ORG), 'California' (LOC). BPE may split these into subword tokens."},
+        {"line": 10, "explanation": "Tokenize the text. 'SpaceX' might become ['Space', 'X'] — NER models must handle subword alignment carefully."},
+        {"line": 15, "explanation": "Get the predicted tag index for each token. Shape is (1, seq_len) — one prediction per token position."},
+        {"line": 16, "explanation": "Convert token IDs back to readable subword strings for alignment with predictions."},
+        {"line": 17, "explanation": "Skip <s> and </s> special tokens at positions 0 and -1, then print each token with its predicted NER tag."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Sequence Classification",
+      "right_label": "Token Classification (NER)",
+      "items": [
+        {"left": "One label per sentence/document", "right": "One label per token in the sequence"},
+        {"left": "Uses pooled <s> (CLS) embedding", "right": "Uses all token hidden states"},
+        {"left": "Head: Linear(768, num_labels)", "right": "Head: Linear(768, num_tags) per token"},
+        {"left": "Use cases: sentiment, topic, intent", "right": "Use cases: NER, POS tagging, chunking"},
+        {"left": "Loss: CrossEntropy on single output", "right": "Loss: CrossEntropy summed over tokens"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now fine-tune RoBERTa for classification, NER, and sentiment — three tasks, one backbone, unlimited possibilities!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MultiTaskHead` class that simulates how the same RoBERTa backbone feeds into different classification heads. The class accepts a `hidden_size` and creates two task heads: a sequence classifier (maps one vector to `num_classes` scores) and a token classifier (maps each token vector to `num_tags` scores). Implement `classify_sequence(cls_vector)` that returns class scores from a weight matrix, `classify_tokens(token_vectors)` that returns per-token tag scores, and `predict(cls_vector, token_vectors)` that runs both heads and returns a dict with 'sequence_label' and 'token_labels'. Use simple dot-product scoring with the stored weight matrices (no bias)."
+      },
+      "starter_code": "import random\n\nclass MultiTaskHead:\n    def __init__(self, hidden_size: int, num_classes: int,\n                 num_tags: int, seed: int = 42):\n        # Initialize weight matrices for both heads\n        # seq_weights: num_classes x hidden_size\n        # tok_weights: num_tags x hidden_size\n        # Use random.Random(seed) to generate weights in [-0.1, 0.1]\n        pass\n\n    def _dot(self, vector: list[float],\n             weights: list[list[float]]) -> list[float]:\n        # Compute dot product of vector with each row of weights\n        # Return list of scores (one per row)\n        pass\n\n    def _argmax(self, scores: list[float]) -> int:\n        # Return index of highest score\n        pass\n\n    def classify_sequence(self, cls_vector: list[float]) -> list[float]:\n        # Return class scores using seq_weights\n        pass\n\n    def classify_tokens(self,\n            token_vectors: list[list[float]]) -> list[list[float]]:\n        # Return tag scores for each token using tok_weights\n        pass\n\n    def predict(self, cls_vector: list[float],\n                token_vectors: list[list[float]]) -> dict:\n        # Run both heads, return:\n        # {'sequence_label': int, 'token_labels': list[int]}\n        pass\n\n# Test it:\nhead = MultiTaskHead(hidden_size=4, num_classes=3, num_tags=5, seed=7)\n\ncls_vec = [0.5, -0.3, 0.8, 0.1]\ntok_vecs = [\n    [0.1, 0.2, 0.3, 0.4],\n    [0.9, -0.1, 0.0, 0.5],\n    [-0.2, 0.6, 0.4, -0.3]\n]\n\nseq_scores = head.classify_sequence(cls_vec)\nprint(len(seq_scores))\n\ntok_scores = head.classify_tokens(tok_vecs)\nprint(len(tok_scores))\nprint(len(tok_scores[0]))\n\nresult = head.predict(cls_vec, tok_vecs)\nprint(type(result['sequence_label']) == int)\nprint(len(result['token_labels']) == 3)",
+      "expected_output": "3\n3\n5\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In __init__, create seq_weights as [[rng.uniform(-0.1, 0.1) for _ in range(hidden_size)] for _ in range(num_classes)], and similarly for tok_weights",
+          "In _dot, compute sum(v * w for v, w in zip(vector, row)) for each row in the weight matrix",
+          "In predict, call classify_sequence to get scores then _argmax for the label, and classify_tokens then _argmax on each token's scores for token_labels"
+        ]
+      },
+      "test_code": "h = MultiTaskHead(hidden_size=3, num_classes=2, num_tags=4, seed=0)\nassert len(h.seq_weights) == 2\nassert len(h.seq_weights[0]) == 3\nassert len(h.tok_weights) == 4\nassert len(h.tok_weights[0]) == 3\nsc = h.classify_sequence([1.0, 0.0, 0.0])\nassert len(sc) == 2\nassert isinstance(sc[0], float)\ntc = h.classify_tokens([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])\nassert len(tc) == 2\nassert len(tc[0]) == 4\nr = h.predict([1.0, 0.0, 0.0], [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])\nassert isinstance(r['sequence_label'], int)\nassert 0 <= r['sequence_label'] < 2\nassert len(r['token_labels']) == 2\nassert all(0 <= t < 4 for t in r['token_labels'])"
+    },
+    {
+      "instruction": {
+        "en": "Build a `BIOTagger` class that handles BIO (Begin-Inside-Outside) tagging used in NER with RoBERTa. Implement `tag_entities(words, tags)` that groups consecutive B-/I- tagged words into named entities, returning a list of `{'entity': text, 'type': entity_type, 'start': index, 'end': index}` dicts. Also implement `validate_tags(tags)` that checks whether a BIO tag sequence is valid — I-TYPE must follow B-TYPE or I-TYPE of the same type, and never appear at the start or after O without a preceding B-."
+      },
+      "starter_code": "class BIOTagger:\n    def __init__(self):\n        pass\n\n    def tag_entities(self, words: list[str],\n                     tags: list[str]) -> list[dict]:\n        # Parse BIO tags into entity spans\n        # B-PER starts a person entity, I-PER continues it\n        # Return list of {'entity': str, 'type': str,\n        #                  'start': int, 'end': int}\n        # 'entity' is space-joined words, 'end' is inclusive\n        pass\n\n    def validate_tags(self, tags: list[str]) -> bool:\n        # Check if BIO sequence is valid:\n        # - I-X can only follow B-X or I-X (same type X)\n        # - I-X after O, B-Y, or I-Y (different type) is invalid\n        # - B-X and O are always valid\n        pass\n\n# Test it:\ntagger = BIOTagger()\n\nwords = [\"Elon\", \"Musk\", \"founded\", \"SpaceX\", \"in\", \"California\"]\ntags = [\"B-PER\", \"I-PER\", \"O\", \"B-ORG\", \"O\", \"B-LOC\"]\n\nentities = tagger.tag_entities(words, tags)\nfor e in entities:\n    print(f\"{e['entity']} ({e['type']})\")\n\nprint(tagger.validate_tags([\"B-PER\", \"I-PER\", \"O\"]))\nprint(tagger.validate_tags([\"I-PER\", \"O\"]))\nprint(tagger.validate_tags([\"B-PER\", \"I-ORG\"]))",
+      "expected_output": "Elon Musk (PER)\nSpaceX (ORG)\nCalifornia (LOC)\nTrue\nFalse\nFalse",
+      "hints": {
+        "en": [
+          "In tag_entities(), iterate through tags: when you see B-X, save any current entity and start a new one; when you see I-X with matching type, extend the current entity; on O or type change, flush the current entity",
+          "For validate_tags(), parse each tag into prefix (B/I/O) and type. When prefix is 'I', check that the previous tag was B or I with the same type",
+          "Remember that 'end' is inclusive — if an entity spans indices 0-1, start=0 and end=1"
+        ]
+      },
+      "test_code": "t = BIOTagger()\ne = t.tag_entities([\"a\", \"b\", \"c\"], [\"O\", \"O\", \"O\"])\nassert e == []\ne = t.tag_entities([\"John\"], [\"B-PER\"])\nassert len(e) == 1\nassert e[0]['entity'] == 'John'\nassert e[0]['type'] == 'PER'\nassert e[0]['start'] == 0\nassert e[0]['end'] == 0\ne = t.tag_entities([\"New\", \"York\", \"City\"], [\"B-LOC\", \"I-LOC\", \"I-LOC\"])\nassert len(e) == 1\nassert e[0]['entity'] == 'New York City'\nassert e[0]['start'] == 0\nassert e[0]['end'] == 2\nassert t.validate_tags([\"O\", \"O\", \"O\"]) == True\nassert t.validate_tags([\"B-PER\", \"I-PER\"]) == True\nassert t.validate_tags([\"O\", \"I-PER\"]) == False\nassert t.validate_tags([\"B-PER\", \"I-ORG\"]) == False\nassert t.validate_tags([\"B-LOC\", \"B-PER\", \"I-PER\"]) == True"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multi-task fine-tuning", "sequence classification", "token classification", "NER with BIO tagging", "sentiment analysis", "RoBERTa task heads", "Trainer API", "hyperparameter tuning", "transfer learning patterns"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "string manipulation", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 40,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

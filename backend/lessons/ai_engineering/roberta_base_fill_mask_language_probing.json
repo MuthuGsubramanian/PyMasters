@@ -1,0 +1,118 @@
+{
+  "id": "roberta_base_fill_mask_language_probing",
+  "topic": "roberta_base_fill_mask_language_probing",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "RoBERTa Fill-Mask: Language Probing, Data Augmentation & Multi-Framework Inference"
+  },
+  "description": {
+    "en": "Explore FacebookAI/roberta-base's fill-mask capabilities across PyTorch, TensorFlow, JAX, and ONNX — use masked language modeling for knowledge probing, lexical substitution, and training-data augmentation in production pipelines."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Beyond Gap-Filling: What RoBERTa's Mask Predictions Reveal\n\nVaathiyaar here! Most tutorials show `<mask>` predictions as a party trick — \"guess the capital.\" But masked language modeling (MLM) is far more powerful than that. Researchers use it to **probe** what a model knows about syntax, facts, and bias. Engineers use it for **data augmentation** — generating realistic paraphrases from a single sentence. And because `FacebookAI/roberta-base` ships with PyTorch, TensorFlow, JAX, and ONNX support, you can run fill-mask inference on any stack.\n\n### Multi-Framework Fill-Mask\n\nRoBERTa-base is one of the few models with first-class support across all major frameworks:\n\n| Framework | Class | Install |\n|---|---|---|\n| PyTorch | `RobertaForMaskedLM` | `transformers[torch]` |\n| TensorFlow | `TFRobertaForMaskedLM` | `transformers[tf-cpu]` |\n| JAX/Flax | `FlaxRobertaForMaskedLM` | `transformers[flax]` |\n| ONNX Runtime | Exported via `optimum` | `optimum[onnxruntime]` |\n\n```python\nfrom transformers import pipeline\n\n# PyTorch (default)\nunmasker_pt = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\",\n                       framework=\"pt\")\n\n# TensorFlow\nunmasker_tf = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\",\n                       framework=\"tf\")\n\nresult = unmasker_pt(\"Python is a <mask> language.\")\nprint(result[0][\"token_str\"])  # programming\n```\n\nBoth frameworks produce identical results — the weights are the same, only the compute backend differs.\n\n### Knowledge Probing with Masks\n\nProbing tests what factual or linguistic knowledge RoBERTa absorbed during pre-training on 160GB of text:\n\n```python\nfrom transformers import pipeline\n\nprobe = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\n# Factual knowledge\nfacts = probe(\"The CEO of Tesla is <mask>.\")\nprint(facts[0][\"token_str\"])  # Elon\n\n# Syntactic knowledge\nsyntax = probe(\"She <mask> to the store yesterday.\")\nprint(syntax[0][\"token_str\"])  # went\n\n# Relational knowledge\nrelation = probe(\"Paris is to France as Tokyo is to <mask>.\")\nprint(relation[0][\"token_str\"])  # Japan\n```\n\nThe model encodes world knowledge, grammar rules, and analogical reasoning — all from unsupervised training on raw text.\n\n### Data Augmentation via Lexical Substitution\n\n```python\nfrom transformers import pipeline\n\ndef augment_sentence(text, n_augments=3, top_k=5):\n    unmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n    words = text.split()\n    augmented = []\n    for i, word in enumerate(words):\n        if word.lower() in {\"the\", \"a\", \"is\", \"to\", \"of\"}:\n            continue\n        masked = words[:i] + [\"<mask>\"] + words[i+1:]\n        preds = unmasker(\" \".join(masked))\n        for p in preds[1:n_augments+1]:\n            new = words[:i] + [p[\"token_str\"].strip()] + words[i+1:]\n            augmented.append(\" \".join(new))\n    return augmented[:n_augments]\n\noriginal = \"The model predicts accurate results\"\nprint(augment_sentence(original, n_augments=3))\n```\n\nThis technique generates semantically similar sentences by replacing content words with RoBERTa's top predictions — far better than random synonym replacement.\n\n### Confidence Calibration and Bias Detection\n\n| Probe Template | Top Prediction | Score | Reveals |\n|---|---|---|---|\n| \"The nurse said <mask> was tired.\" | she | 0.62 | Gender bias in training data |\n| \"The engineer said <mask> was tired.\" | he | 0.58 | Occupational gender stereotypes |\n| \"<mask> is the best programming language.\" | Python | 0.14 | Low confidence = subjective topic |\n| \"Water boils at <mask> degrees.\" | 100 | 0.41 | Factual but moderate confidence |\n\nHigh-confidence predictions on factual queries and low confidence on subjective ones shows the model has calibrated uncertainty — but bias probing reveals stereotypes from training data.\n\n### ONNX Export for Production Speed\n\n```python\nfrom optimum.onnxruntime import ORTModelForMaskedLM\nfrom transformers import AutoTokenizer\n\nmodel = ORTModelForMaskedLM.from_pretrained(\n    \"FacebookAI/roberta-base\", export=True\n)\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-base\")\n\ninputs = tokenizer(\"RoBERTa is <mask> fast.\", return_tensors=\"np\")\noutputs = model(**inputs)\nprint(outputs.logits.shape)  # (1, 8, 50265)\n```\n\nONNX Runtime gives 2-3x inference speedup over PyTorch on CPU — critical for production fill-mask APIs.\n\n> **Key Insight:** Fill-mask isn't just a pre-training objective — it's a Swiss Army knife for NLP engineers. Use it to probe what your model knows, augment scarce training data with contextually appropriate substitutions, detect bias in language representations, and run multi-framework inference in production. RoBERTa's superior training makes it the strongest base model for all of these tasks."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RoBERTa's fill-mask capability goes far beyond word guessing. It's a tool for probing factual knowledge, augmenting training data, detecting bias, and running inference across PyTorch, TensorFlow, JAX, and ONNX. Let's unlock the full power of masked language modeling.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nprobe = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n\nfacts = probe(\"The CEO of Tesla is <mask>.\")\nprint(facts[0][\"token_str\"])  # Elon\n\nsyntax = probe(\"She <mask> to the store yesterday.\")\nprint(syntax[0][\"token_str\"])  # went\n\nrelation = probe(\"Paris is to France as Tokyo is to <mask>.\")\nprint(relation[0][\"token_str\"])  # Japan",
+      "steps": [
+        {"line": 1, "explanation": "Import the pipeline abstraction — the simplest way to run any Hugging Face model with a single function call."},
+        {"line": 3, "explanation": "Create a fill-mask pipeline loading roberta-base. The model (~500MB) downloads once and caches locally."},
+        {"line": 5, "explanation": "Factual probing: the model predicts 'Elon' from knowledge absorbed during pre-training on 160GB of text, not from any explicit knowledge base."},
+        {"line": 6, "explanation": "The top prediction's token_str is the raw string. RoBERTa preserves casing, so proper nouns appear correctly capitalized."},
+        {"line": 8, "explanation": "Syntactic probing: RoBERTa must infer past tense from 'yesterday' — testing grammatical knowledge. It predicts 'went' (irregular past tense)."},
+        {"line": 11, "explanation": "Analogical probing: the model understands 'capital-of' relationships and generalizes across country pairs — emergent reasoning from pattern learning."},
+        {"line": 12, "explanation": "Predicting 'Japan' shows the model encodes relational knowledge — not just word co-occurrence but structured factual associations."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import pipeline\n\ndef augment_sentence(text, n_augments=3, top_k=5):\n    unmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\n    words = text.split()\n    augmented = []\n    for i, word in enumerate(words):\n        if word.lower() in {\"the\", \"a\", \"is\", \"to\", \"of\"}:\n            continue\n        masked = words[:i] + [\"<mask>\"] + words[i+1:]\n        preds = unmasker(\" \".join(masked))\n        for p in preds[1:n_augments+1]:\n            new_sent = words[:i] + [p[\"token_str\"].strip()] + words[i+1:]\n            augmented.append(\" \".join(new_sent))\n    return augmented[:n_augments]\n\nprint(augment_sentence(\"The model predicts accurate results\"))",
+      "steps": [
+        {"line": 3, "explanation": "Define a function that takes a sentence and generates n_augments variations by replacing content words with RoBERTa's predictions."},
+        {"line": 5, "explanation": "Split the sentence into words. Each content word will be masked one at a time to find contextual substitutes."},
+        {"line": 8, "explanation": "Skip function words (the, a, is, to, of) — replacing these rarely produces meaningful augmentations."},
+        {"line": 10, "explanation": "Replace the current word with <mask>. RoBERTa uses <mask>, not [MASK] like BERT — a common source of bugs."},
+        {"line": 11, "explanation": "Get top-k predictions for the masked position. Each prediction is a contextually appropriate replacement word."},
+        {"line": 12, "explanation": "Skip index 0 (the original word is often the top prediction) and take the next n_augments alternatives."},
+        {"line": 13, "explanation": "Strip whitespace from token_str (RoBERTa's BPE tokens sometimes include leading spaces) and rebuild the sentence."},
+        {"line": 15, "explanation": "Return at most n_augments unique sentence variants — each is a realistic paraphrase generated by contextual substitution."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Random Synonym Replacement",
+      "right_label": "RoBERTa Mask Augmentation",
+      "items": [
+        {"left": "Uses static synonym lists (WordNet)", "right": "Uses contextual predictions from 160GB training"},
+        {"left": "Ignores surrounding context", "right": "Predictions are conditioned on full sentence context"},
+        {"left": "Often produces ungrammatical output", "right": "Preserves grammar and fluency"},
+        {"left": "Fast — no model inference needed", "right": "Requires GPU/CPU inference per substitution"},
+        {"left": "Free — no dependencies", "right": "Needs transformers + ~500MB model download"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've mastered RoBERTa fill-mask beyond the basics — probing, augmentation, bias detection, and multi-framework deployment!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `KnowledgeProber` class that uses fill-mask logic to test what a language model 'knows.' The class stores a list of `(template, expected_answer)` probe pairs where each template contains exactly one `<mask>` token. Implement `probe(template)` that returns the top-k token predictions as a list of `(token, score)` tuples, `evaluate_probes()` that checks whether the expected answer appears in the top-k predictions for each stored probe and returns a dict with 'total', 'correct', and 'accuracy', and `find_bias(template_pair)` that takes two templates differing only in context (e.g., gendered profession probes) and returns the top prediction for each. Use a simulated vocabulary for predictions — no real model needed."
+      },
+      "starter_code": "class KnowledgeProber:\n    def __init__(self, vocab_scores: dict, top_k: int = 5):\n        # vocab_scores: dict mapping token -> base_score (float)\n        # These simulate a model's vocabulary predictions\n        self.vocab_scores = vocab_scores\n        self.top_k = top_k\n        self.probes = []\n\n    def add_probe(self, template: str, expected: str):\n        # Store a (template, expected_answer) pair\n        # Template must contain exactly one '<mask>'\n        pass\n\n    def probe(self, template: str) -> list[tuple]:\n        # Simulate fill-mask: extract context words from template,\n        # boost scores for vocab words that appear in the context.\n        # For each vocab word, final_score = base_score + 0.1 * overlap_count\n        # where overlap_count = number of context words matching the token.\n        # Return top-k as [(token, round(score, 4)), ...] sorted by score desc.\n        pass\n\n    def evaluate_probes(self) -> dict:\n        # Run probe() on each stored template\n        # Check if expected answer is in top-k predictions\n        # Return {'total': int, 'correct': int, 'accuracy': float}\n        pass\n\n    def find_bias(self, template_a: str, template_b: str) -> dict:\n        # Run probe() on both templates\n        # Return {'template_a_top': (token, score),\n        #         'template_b_top': (token, score),\n        #         'same_prediction': bool}\n        pass\n\n# Test it:\nvocab = {\n    \"Paris\": 0.8, \"London\": 0.7, \"Berlin\": 0.6,\n    \"France\": 0.75, \"Germany\": 0.65, \"Japan\": 0.6,\n    \"she\": 0.5, \"he\": 0.55, \"they\": 0.45,\n    \"went\": 0.7, \"goes\": 0.6, \"running\": 0.4\n}\n\nprober = KnowledgeProber(vocab, top_k=3)\n\nprober.add_probe(\"The capital of France is <mask>.\", \"Paris\")\nprober.add_probe(\"She <mask> to the store.\", \"went\")\n\nresults = prober.probe(\"The capital of France is <mask>.\")\nprint(results[0][0])\n\neval_result = prober.evaluate_probes()\nprint(eval_result[\"accuracy\"])\n\nbias = prober.find_bias(\n    \"The nurse said <mask> was tired.\",\n    \"The engineer said <mask> was tired.\"\n)\nprint(bias[\"same_prediction\"])",
+      "expected_output": "Paris\n1.0\nTrue",
+      "hints": {
+        "en": [
+          "In probe(), split the template on spaces, remove '<mask>' and punctuation to get context words. For each vocab token, compute final_score = base_score + 0.1 * (1 if token.lower() in context_words_lower or any context word matches). Then sort by score descending and take top_k.",
+          "In evaluate_probes(), call self.probe(template) for each stored probe, extract just the token strings from the result tuples, and check if expected is in that list.",
+          "In find_bias(), call self.probe() on both templates and compare the first element — same_prediction is True if both top tokens match."
+        ]
+      },
+      "test_code": "v = {\"Paris\": 0.8, \"London\": 0.7, \"Berlin\": 0.6, \"France\": 0.75, \"Germany\": 0.65, \"Japan\": 0.6, \"she\": 0.5, \"he\": 0.55, \"they\": 0.45, \"went\": 0.7, \"goes\": 0.6, \"running\": 0.4}\np = KnowledgeProber(v, top_k=3)\np.add_probe(\"The capital of France is <mask>.\", \"Paris\")\np.add_probe(\"She <mask> to the store.\", \"went\")\nr = p.probe(\"The capital of France is <mask>.\")\nassert len(r) == 3\nassert r[0][0] == \"Paris\"\nassert isinstance(r[0][1], float)\ne = p.evaluate_probes()\nassert e[\"total\"] == 2\nassert e[\"correct\"] == 2\nassert e[\"accuracy\"] == 1.0\nb = p.find_bias(\"The nurse said <mask> was tired.\", \"The engineer said <mask> was tired.\")\nassert \"template_a_top\" in b\nassert \"template_b_top\" in b\nassert isinstance(b[\"same_prediction\"], bool)"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MaskAugmenter` class that generates training-data augmentations by replacing content words with contextual substitutes (simulating RoBERTa fill-mask). The class takes a set of stop_words to skip and a substitution_map (dict mapping words to ranked lists of replacements). Implement `augment(sentence, n)` that produces n augmented versions by cycling through content words and replacing each with its next-best substitute from the map. Track total augmentations generated."
+      },
+      "starter_code": "class MaskAugmenter:\n    def __init__(self, stop_words: set, substitution_map: dict):\n        # stop_words: words to skip during augmentation\n        # substitution_map: word -> [substitute1, substitute2, ...]\n        self.stop_words = stop_words\n        self.substitution_map = substitution_map\n        self.total_generated = 0\n\n    def get_content_words(self, sentence: str) -> list[tuple]:\n        # Return [(index, word), ...] for words NOT in stop_words\n        # Words are compared case-insensitively against stop_words\n        pass\n\n    def augment(self, sentence: str, n: int = 3) -> list[str]:\n        # Generate n augmented sentences:\n        # 1. Get content words\n        # 2. For each augmentation i, pick content_words[i % len(content_words)]\n        # 3. Replace that word with substitution_map[word][i // len(content_words)]\n        #    (if word not in map or index out of range, skip and try next content word)\n        # 4. Increment total_generated for each successful augmentation\n        # Return list of augmented sentences (may be < n if substitutes exhausted)\n        pass\n\n# Test it:\nstops = {\"the\", \"a\", \"is\", \"to\", \"of\", \"was\"}\nsubs = {\n    \"model\": [\"system\", \"network\", \"algorithm\"],\n    \"predicts\": [\"estimates\", \"forecasts\"],\n    \"accurate\": [\"precise\", \"reliable\", \"correct\"],\n    \"results\": [\"outcomes\", \"outputs\"]\n}\n\naug = MaskAugmenter(stops, subs)\n\ncontent = aug.get_content_words(\"The model predicts accurate results\")\nprint(len(content))\n\naugmented = aug.augment(\"The model predicts accurate results\", n=4)\nfor s in augmented:\n    print(s)\nprint(aug.total_generated)",
+      "expected_output": "4\nThe system predicts accurate results\nThe model estimates accurate results\nThe model predicts precise results\nThe model predicts accurate outcomes\n4",
+      "hints": {
+        "en": [
+          "In get_content_words(), enumerate the split words and include (index, word) pairs where word.lower() is not in stop_words.",
+          "In augment(), for augmentation i: target_idx = i % len(content_words) gives which content word to replace, and sub_idx = i // len(content_words) gives which substitute to use from the map.",
+          "If the target word isn't in substitution_map or sub_idx is out of range, skip to the next i without adding to results — but still count towards the loop limit to avoid infinite loops."
+        ]
+      },
+      "test_code": "stops = {\"the\", \"a\", \"is\", \"to\", \"of\", \"was\"}\nsubs = {\"model\": [\"system\", \"network\"], \"predicts\": [\"estimates\", \"forecasts\"], \"accurate\": [\"precise\", \"reliable\"], \"results\": [\"outcomes\", \"outputs\"]}\na = MaskAugmenter(stops, subs)\nc = a.get_content_words(\"The model predicts accurate results\")\nassert len(c) == 4\nassert c[0] == (1, \"model\")\nr = a.augment(\"The model predicts accurate results\", n=4)\nassert len(r) == 4\nassert r[0] == \"The system predicts accurate results\"\nassert r[1] == \"The model estimates accurate results\"\nassert a.total_generated == 4\na2 = MaskAugmenter({\"is\"}, {\"sky\": [\"heaven\"], \"blue\": [\"red\", \"green\"]})\nr2 = a2.get_content_words(\"The sky is blue\")\nassert len(r2) == 3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["fill-mask pipeline", "knowledge probing", "data augmentation via MLM", "multi-framework inference", "bias detection", "ONNX export", "lexical substitution", "RoBERTa tokenization"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "string manipulation", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

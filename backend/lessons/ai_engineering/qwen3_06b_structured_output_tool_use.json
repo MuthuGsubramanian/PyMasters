@@ -1,0 +1,119 @@
+{
+  "id": "qwen3_06b_structured_output_tool_use",
+  "topic": "qwen3_06b_structured_output_tool_use",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Structured Output & Tool-Use Patterns for Tiny LLMs"
+  },
+  "description": {
+    "en": "Teach Qwen3-0.6B to produce valid JSON, follow output schemas, and act as a lightweight function-calling agent — all running locally on modest hardware with zero API costs."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Making a Tiny LLM Follow Instructions Precisely\n\nVaathiyaar here! Getting a large cloud LLM to return JSON is easy — they were trained for it. But can a *0.6-billion-parameter* model running on your laptop produce structured, parseable output? The answer is yes — with the right prompting strategies. Today we'll teach Qwen3-0.6B to generate valid JSON, follow schemas, and even simulate tool-calling patterns used by production AI agents.\n\nThis is the bridge between \"cool chatbot demo\" and \"useful software component.\" If your local LLM can reliably produce structured output, you can plug it into real applications — routers, classifiers, extractors — without paying a cent for API calls.\n\n### Why Structured Output Matters\n\n| Use Case | Free-Form Text | Structured JSON |\n|---|---|---|\n| Sentiment analysis | \"It seems positive\" | `{\"sentiment\": \"positive\", \"score\": 0.87}` |\n| Entity extraction | \"The person is John\" | `{\"entities\": [{\"name\": \"John\", \"type\": \"PERSON\"}]}` |\n| Intent routing | \"They want to check order\" | `{\"intent\": \"order_status\", \"confidence\": 0.92}` |\n| Tool calling | \"I should search for...\" | `{\"tool\": \"search\", \"args\": {\"query\": \"...\"}}` |\n\nStructured output turns a chatbot into a programmable component.\n\n### Prompting for JSON Output\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nimport json\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": (\n        \"You are a JSON-only assistant. Always respond with valid JSON. \"\n        \"Never include text outside the JSON object.\"\n    )},\n    {\"role\": \"user\", \"content\": (\n        'Classify the sentiment of: \"I love this product!\". '\n        'Respond as: {\"sentiment\": \"positive|negative|neutral\", \"confidence\": 0.0-1.0}'\n    )}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\noutput = model.generate(**inputs, max_new_tokens=100, temperature=0.1)\nraw = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\nprint(raw)\n```\n\nThe key trick: **low temperature** (0.1) and an explicit schema in the prompt. Small models need more guidance than large ones.\n\n### Robust JSON Parsing\n\nSmall models sometimes wrap JSON in extra text. Extract it safely:\n\n```python\nimport re\n\ndef extract_json(text: str) -> dict:\n    \"\"\"Extract the first JSON object from LLM output.\"\"\"\n    match = re.search(r'\\{[^{}]*\\}', text)\n    if match:\n        return json.loads(match.group())\n    raise ValueError(f\"No JSON found in: {text}\")\n\nresult = extract_json(raw)\nprint(result)\n```\n\n### Building a Tool-Use Agent\n\nProduction AI agents use function-calling to invoke tools. We can simulate this pattern:\n\n```python\nTOOLS = {\n    \"calculator\": \"Perform math calculations. Args: expression (str)\",\n    \"weather\": \"Get current weather. Args: city (str)\",\n    \"search\": \"Search the web. Args: query (str)\",\n}\n\ntool_prompt = (\n    \"You have these tools:\\n\"\n    + \"\\n\".join(f\"- {k}: {v}\" for k, v in TOOLS.items())\n    + \"\\n\\nTo use a tool, respond ONLY with JSON: \"\n    '{\"tool\": \"<name>\", \"args\": {\"<key>\": \"<value>\"}}'\n    \"\\nIf no tool is needed, respond: {\\\"tool\\\": \\\"none\\\", \\\"args\\\": {}}\\n\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": tool_prompt},\n    {\"role\": \"user\", \"content\": \"What is 42 * 17?\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\noutput = model.generate(**inputs, max_new_tokens=80, temperature=0.1)\nraw = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\ncall = extract_json(raw)\nprint(call)  # {\"tool\": \"calculator\", \"args\": {\"expression\": \"42 * 17\"}}\n```\n\n### Schema Validation\n\nAlways validate that the model's output matches your expected schema:\n\n```python\ndef validate_tool_call(data: dict, valid_tools: dict) -> bool:\n    if \"tool\" not in data or \"args\" not in data:\n        return False\n    if data[\"tool\"] != \"none\" and data[\"tool\"] not in valid_tools:\n        return False\n    return isinstance(data[\"args\"], dict)\n\nassert validate_tool_call(call, TOOLS)\n```\n\n### Tips for Reliable Structured Output from Small LLMs\n\n| Strategy | Why It Works |\n|---|---|\n| Low temperature (0.1-0.3) | Reduces randomness, keeps output on-schema |\n| Explicit schema in prompt | Small models need exact format shown |\n| Regex-based JSON extraction | Gracefully handles extra text around JSON |\n| Validation after parsing | Catch malformed outputs before they hit your app |\n| Retry with rephrased prompt | If validation fails, try once more |\n\n> **Key Insight:** A 0.6B parameter model can reliably produce structured JSON and simulate tool-calling — the same patterns used by GPT-4 and Claude in production. The secret is explicit schema prompting, low temperature, and defensive parsing. This turns a tiny local LLM from a chatbot toy into a programmable building block for real applications."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Chat output is nice, but structured output is powerful. What if your tiny local LLM could return valid JSON, follow schemas, and call tools — just like GPT-4? With Qwen3-0.6B and the right prompting, it can. Let's turn a 0.6B chatbot into a programmable component.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import AutoModelForCausalLM, AutoTokenizer\nimport json, re\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": (\n        \"You are a JSON-only assistant. Always respond with valid JSON. \"\n        \"Never include text outside the JSON object.\"\n    )},\n    {\"role\": \"user\", \"content\": (\n        'Classify the sentiment: \"I love this product!\". '\n        'Respond as: {\"sentiment\": \"positive|negative|neutral\", \"confidence\": 0.0-1.0}'\n    )}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n\noutput = model.generate(**inputs, max_new_tokens=100, temperature=0.1)\nraw = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\n\ndef extract_json(text):\n    match = re.search(r'\\{[^{}]*\\}', text)\n    if match:\n        return json.loads(match.group())\n    raise ValueError(f\"No JSON found in: {text}\")\n\nresult = extract_json(raw)\nprint(result)",
+      "steps": [
+        {"line": 1, "explanation": "Import Transformers for model loading, json for parsing structured output, and re for regex-based JSON extraction from raw model text."},
+        {"line": 4, "explanation": "Qwen3-0.6B: a 0.6 billion parameter model — small enough for CPU, yet capable of following structured output instructions."},
+        {"line": 6, "explanation": "Load with torch_dtype='auto' and device_map='auto' — uses GPU if available, gracefully falls back to CPU. Under 1.5GB of RAM."},
+        {"line": 11, "explanation": "The system prompt is critical: tell the model it is a 'JSON-only assistant' and must never include text outside the JSON object."},
+        {"line": 15, "explanation": "Show the exact schema in the user prompt. Small models need the format spelled out explicitly — don't assume they'll infer it."},
+        {"line": 26, "explanation": "temperature=0.1 is key for structured output. Low temperature makes the model deterministic, reducing the chance of off-schema creativity."},
+        {"line": 27, "explanation": "Decode only the new tokens (slice off the prompt). The raw output may contain the JSON plus some extra text."},
+        {"line": 31, "explanation": "extract_json uses regex to find the first {...} block in the output — a defensive pattern that handles extra text around the JSON."},
+        {"line": 36, "explanation": "The parsed result is a native Python dict — ready to use in your application logic, just like a response from a cloud API."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "TOOLS = {\n    \"calculator\": \"Perform math. Args: expression (str)\",\n    \"weather\": \"Get weather. Args: city (str)\",\n    \"search\": \"Web search. Args: query (str)\",\n}\n\ntool_prompt = (\n    \"You have these tools:\\n\"\n    + \"\\n\".join(f\"- {k}: {v}\" for k, v in TOOLS.items())\n    + '\\n\\nRespond ONLY with JSON: {\"tool\": \"<name>\", \"args\": {\"<key>\": \"<value>\"}}'\n)\n\nmessages = [\n    {\"role\": \"system\", \"content\": tool_prompt},\n    {\"role\": \"user\", \"content\": \"What is 42 * 17?\"}\n]\n\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False, add_generation_prompt=True\n)\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\noutput = model.generate(**inputs, max_new_tokens=80, temperature=0.1)\nraw = tokenizer.decode(\n    output[0][inputs[\"input_ids\"].shape[-1]:], skip_special_tokens=True\n)\ncall = extract_json(raw)\nprint(call)\n\ndef validate_tool_call(data, valid_tools):\n    if \"tool\" not in data or \"args\" not in data:\n        return False\n    return data[\"tool\"] in valid_tools and isinstance(data[\"args\"], dict)\n\nprint(validate_tool_call(call, TOOLS))",
+      "steps": [
+        {"line": 1, "explanation": "Define a tool registry — a dict mapping tool names to descriptions. This is the same pattern production AI agents like LangChain use."},
+        {"line": 7, "explanation": "Build the system prompt dynamically from the registry. Each tool is listed with its name, description, and expected arguments."},
+        {"line": 10, "explanation": "The crucial instruction: tell the model to respond ONLY with the JSON tool-call format. Be explicit about the schema."},
+        {"line": 15, "explanation": "A math question that should trigger the 'calculator' tool. The model must decide which tool to call and extract the arguments."},
+        {"line": 22, "explanation": "Low temperature again — we want the model to deterministically pick the right tool, not get creative with the format."},
+        {"line": 26, "explanation": "extract_json handles any text the model wraps around the JSON. The result should be a tool call like {\"tool\": \"calculator\", \"args\": {\"expression\": \"42 * 17\"}}."},
+        {"line": 29, "explanation": "Always validate tool calls before executing them. Check that 'tool' and 'args' keys exist and the tool name is in your registry."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Free-Form Text Output",
+      "right_label": "Structured JSON Output",
+      "items": [
+        {"left": "Requires NLP to parse meaning", "right": "Directly parseable as data"},
+        {"left": "Inconsistent format across calls", "right": "Consistent, schema-validated"},
+        {"left": "Hard to integrate into pipelines", "right": "Plug into any application"},
+        {"left": "Good for human reading", "right": "Good for machine consumption"},
+        {"left": "No retry strategy needed", "right": "Validate + retry on failure"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Your tiny local LLM now speaks JSON and calls tools — you've built the foundation of a local AI agent!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `JsonExtractor` class that simulates extracting and validating structured JSON from raw LLM output. Implement `extract(raw_text)` that finds the first JSON object `{...}` in a string using regex and returns it as a Python dict (raise ValueError if no JSON found), and `validate(data, required_keys)` that checks if all keys in the `required_keys` list exist in the dict and returns True/False. Also implement `extract_and_validate(raw_text, required_keys)` that combines both — returns the dict if valid, raises ValueError if JSON is missing or validation fails."
+      },
+      "starter_code": "import json\nimport re\n\nclass JsonExtractor:\n    def extract(self, raw_text: str) -> dict:\n        # Find the first JSON object {...} in raw_text using regex\n        # Parse it with json.loads and return as dict\n        # Raise ValueError if no JSON object found\n        pass\n\n    def validate(self, data: dict, required_keys: list) -> bool:\n        # Return True if ALL required_keys are present in data\n        # Return False otherwise\n        pass\n\n    def extract_and_validate(self, raw_text: str, required_keys: list) -> dict:\n        # Extract JSON, then validate it has required_keys\n        # Return the dict if valid\n        # Raise ValueError if JSON not found or validation fails\n        pass\n\n# Test it:\nextractor = JsonExtractor()\n\nraw1 = 'Sure! Here is the result: {\"sentiment\": \"positive\", \"confidence\": 0.95} Hope that helps!'\nresult1 = extractor.extract(raw1)\nprint(result1[\"sentiment\"])\nprint(extractor.validate(result1, [\"sentiment\", \"confidence\"]))\n\nraw2 = 'No json here at all'\ntry:\n    extractor.extract(raw2)\nexcept ValueError:\n    print(\"No JSON found\")\n\nraw3 = '{\"tool\": \"search\", \"args\": {\"query\": \"weather\"}}'\nresult3 = extractor.extract_and_validate(raw3, [\"tool\", \"args\"])\nprint(result3[\"tool\"])",
+      "expected_output": "positive\nTrue\nNo JSON found\nsearch",
+      "hints": {
+        "en": [
+          "Use re.search(r'\\{.*\\}', text) to find the first JSON-like substring, then parse with json.loads(match.group())",
+          "For validate(), use all(key in data for key in required_keys) to check that every required key is present",
+          "In extract_and_validate(), call self.extract() first, then check self.validate() — raise ValueError with a descriptive message if validation returns False"
+        ]
+      },
+      "test_code": "extractor = JsonExtractor()\nr = extractor.extract('{\"a\": 1}')\nassert r == {\"a\": 1}\nr2 = extractor.extract('blah {\"key\": \"val\"} blah')\nassert r2 == {\"key\": \"val\"}\nassert extractor.validate({\"a\": 1, \"b\": 2}, [\"a\", \"b\"]) == True\nassert extractor.validate({\"a\": 1}, [\"a\", \"b\"]) == False\nassert extractor.validate({}, []) == True\nr3 = extractor.extract_and_validate('{\"tool\": \"calc\", \"args\": {}}', [\"tool\", \"args\"])\nassert r3 == {\"tool\": \"calc\", \"args\": {}}\ntry:\n    extractor.extract('no json')\n    assert False\nexcept ValueError:\n    pass\ntry:\n    extractor.extract_and_validate('{\"tool\": \"calc\"}', [\"tool\", \"args\"])\n    assert False\nexcept ValueError:\n    pass"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ToolRouter` class that maps user intents to tool calls. Initialize it with a dict of tool definitions (name -> description string). Implement `route(user_message)` that checks if any tool name keyword appears in the user message (case-insensitive) and returns a dict `{\"tool\": \"<name>\", \"args\": {\"input\": \"<user_message>\"}}`. If multiple tools match, pick the first one found (by dict insertion order). If no tool matches, return `{\"tool\": \"none\", \"args\": {}}`. Also implement `is_valid_call(call)` that returns True if the call dict has 'tool' and 'args' keys and 'args' is a dict."
+      },
+      "starter_code": "class ToolRouter:\n    def __init__(self, tools: dict):\n        # Store tools: {name: description}\n        pass\n\n    def route(self, user_message: str) -> dict:\n        # Check if any tool name appears in user_message (case-insensitive)\n        # Return {\"tool\": matched_name, \"args\": {\"input\": user_message}}\n        # If no match: {\"tool\": \"none\", \"args\": {}}\n        pass\n\n    def is_valid_call(self, call: dict) -> bool:\n        # True if call has 'tool' and 'args' keys, and 'args' is a dict\n        pass\n\n# Test it:\nrouter = ToolRouter({\n    \"calculator\": \"Do math\",\n    \"search\": \"Search the web\",\n    \"weather\": \"Get weather info\"\n})\n\nc1 = router.route(\"Can you use the calculator for 5+3?\")\nprint(c1[\"tool\"])\n\nc2 = router.route(\"Hello there!\")\nprint(c2[\"tool\"])\n\nprint(router.is_valid_call(c1))\nprint(router.is_valid_call({\"missing\": \"keys\"}))",
+      "expected_output": "calculator\nnone\nTrue\nFalse",
+      "hints": {
+        "en": [
+          "Store self.tools = tools in __init__. In route(), loop through self.tools.keys() and check if the key is in user_message.lower()",
+          "When a match is found, return immediately with {\"tool\": name, \"args\": {\"input\": user_message}} — the first match wins",
+          "For is_valid_call(), check 'tool' in call and 'args' in call and isinstance(call['args'], dict)"
+        ]
+      },
+      "test_code": "router = ToolRouter({\"calc\": \"math\", \"search\": \"find\"})\nc = router.route(\"Use calc please\")\nassert c == {\"tool\": \"calc\", \"args\": {\"input\": \"Use calc please\"}}\nc2 = router.route(\"hello\")\nassert c2 == {\"tool\": \"none\", \"args\": {}}\nc3 = router.route(\"SEARCH for cats\")\nassert c3[\"tool\"] == \"search\"\nassert router.is_valid_call({\"tool\": \"x\", \"args\": {}}) == True\nassert router.is_valid_call({\"tool\": \"x\"}) == False\nassert router.is_valid_call({\"args\": {}}) == False\nassert router.is_valid_call({\"tool\": \"x\", \"args\": \"not a dict\"}) == False\nassert router.is_valid_call({}) == False"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["structured LLM output", "JSON extraction from LLMs", "tool-use patterns", "function-calling simulation", "schema validation", "Qwen3-0.6B", "prompt engineering for small models", "local AI agents"],
+    "concepts_required": ["python classes", "dictionaries", "json module", "regex basics", "basic ML concepts"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

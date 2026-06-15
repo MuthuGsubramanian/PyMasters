@@ -1,0 +1,175 @@
+{
+  "id": "building_a_data_pipeline",
+  "topic": "building_a_data_pipeline",
+  "track": "working_with_data",
+  "module": "formats",
+  "order": 3,
+  "title": {
+    "en": "Building a Data Pipeline: Read → Transform → Write (Capstone)"
+  },
+  "description": {
+    "en": "The capstone of the Working with Data track. Real data work is never one magic function — it's a pipeline. You INGEST raw files (CSV, JSON), CLEAN and TRANSFORM them (skip bad rows, convert types, derive new fields), AGGREGATE (group and summarize), and OUTPUT a result (JSON, CSV, a report). Learn the ETL shape, why each stage should be a small composable function, why you validate-and-skip instead of crash, and why you stream large data instead of loading it all at once. Then watch the whole track snap together: files → JSON → CSV → dates → pipeline."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Data Work Is a Pipeline, Not a Spell\n\nWhen you're new, you imagine real data work as one clever function: feed in a messy file, get a clean answer. It never works that way. Production data flows through a **pipeline** — a sequence of small stages, each doing one job, each handing its output to the next. The classic name for this shape is **ETL**: *Extract, Transform, Load.* We'll use plainer words: **ingest, clean/transform, aggregate, output.**\n\nThe whole point is that the data gets reshaped step by step. Raw text enters on the left. A clean, summarized result leaves on the right. Nothing in the middle tries to do everything at once.\n\n## The Four Stages\n\n| Stage | What it does | Typical tools |\n|---|---|---|\n| **Ingest** | Read raw bytes/text into Python rows or dicts | `open`, `csv.DictReader`, `json.load` |\n| **Clean / Transform** | Skip bad rows, convert types, derive new fields | `int()`, `float()`, `try/except`, a `for` loop |\n| **Aggregate** | Group and summarize (sum, count, average per key) | a `dict`, `collections.defaultdict`, `Counter` |\n| **Output** | Write the result somewhere usable | `json.dump`, `csv.writer`, `print` a report |\n\nRead that table top to bottom and you can see the shape of almost every data script you'll ever write. The names of the files change; the four stages don't.\n\n## Rule 1: Validate and Skip, Don't Crash\n\nReal files are dirty. There will be a row with a blank amount, a price that says `\"N/A\"`, a date typed by a human at 2am. The beginner instinct is to call `int(value)` and let the program explode on row 4,812. The professional instinct is the opposite: **wrap the risky conversion, and skip the row you can't trust.**\n\n```python\nfor row in reader:\n    try:\n        amount = int(row[\"amount\"])\n    except (ValueError, KeyError):\n        continue          # bad row -> skip, keep going\n    if amount <= 0:\n        continue          # business rule -> ignore\n    # ... only clean rows reach here\n```\n\nThat `continue` is doing heavy lifting. One malformed cell out of a million shouldn't take down the whole run. You filter the garbage out *early*, so every later stage only ever sees good data.\n\n## Rule 2: Each Stage Is a Small Function\n\nThis is where the Functional Python track pays off. Don't write one 200-line `do_the_whole_thing()`. Write `ingest()`, `clean()`, `aggregate()`, `output()` — each tiny, each testable on its own, each **composable**. The pipeline is just those functions wired in order:\n\n```python\nrows   = ingest(raw_text)\nclean  = transform(rows)\ntotals = aggregate(clean)\noutput(totals)\n```\n\nIf the numbers come out wrong, the bug lives in *one* small stage, not smeared across everything. You debug one gear, not the whole machine — exactly the payoff of composition.\n\n## Rule 3: Stream Large Data, Don't Slurp It\n\n`json.load(open(f))` reads the entire file into memory. Fine for a 2KB config; fatal for a 40GB log. `csv.DictReader` is a **lazy iterator** — it yields one row at a time, so you can process a file far bigger than your RAM. The habit: **iterate, transform, and write as you go**, holding only the running totals — not the whole dataset — in memory.\n\n```python\nfor row in reader:        # one row at a time\n    ...                   # transform + accumulate\n# memory holds the summary, never the full file\n```\n\nWhen the dataset fits comfortably in memory, slurping is fine and simpler. The skill is knowing it's a *choice*, and reaching for streaming the moment data gets big.\n\n## The Whole Track, In One Picture\n\nEverything in this track was a piece of this pipeline:\n\n| You learned | It becomes the pipeline's... |\n|---|---|\n| Reading & writing **files** | the ingest + output ends |\n| **JSON** parsing | structured ingest / structured output |\n| **CSV** with `DictReader` | tabular, row-by-row ingest |\n| **Dates** (`strptime`, `date`) | a transform step — strings into real dates |\n| **Pipelines (here)** | the glue that wires all four stages |\n\n## Why This Matters\n\nA data pipeline you can read is a data pipeline you can trust. Small stages mean small bugs. Validate-and-skip means a single bad row never wins. Streaming means the same code that handled a thousand rows handles a billion. Master this shape and you can point it at *any* messy file — sales logs, sensor dumps, exported spreadsheets — and reliably turn raw mess into a clean answer.\n\n> **Key idea:** Real data work is a **pipeline**: ingest raw files → clean/transform (skip bad rows, convert types, derive fields) → aggregate (group & summarize) → output a result. Keep each stage a small composable function, *validate and skip* bad rows instead of crashing, and *stream* large data instead of loading it all at once. Files → JSON → CSV → dates → pipeline: that's the whole track."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pipeline",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "etl_stages",
+      "nodes": [
+        {
+          "label": "The Data Pipeline (ETL)",
+          "children": [
+            "Ingest: read CSV / JSON into rows",
+            "Clean / Transform: skip bad rows, convert types, derive fields",
+            "Aggregate: group & summarize (sum/count per key)",
+            "Output: write JSON / CSV / report",
+            "Track recap: files -> JSON -> CSV -> dates -> pipeline"
+          ]
+        }
+      ],
+      "duration_ms": 4200
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "crash_vs_skip",
+      "left": {
+        "label": "int(row['amount']) on every row: one bad cell at row 4,812 crashes the whole run",
+        "result": false
+      },
+      "right": {
+        "label": "try/except + continue: skip the bad row, keep going, only clean data reaches later stages",
+        "result": true
+      },
+      "description": {
+        "en": "Real files are dirty. Validate-and-skip beats crash-on-first-bad-row every time."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "pipeline_demo",
+      "code": "import csv, io\n\ncsv_text = 'category,amount\\nfood,10\\nfood,5\\ntoys,8\\nfood,bad\\ntoys,-3\\n'\nreader = csv.DictReader(io.StringIO(csv_text))\n\ntotals = {}\nfor row in reader:\n    try:\n        amount = int(row['amount'])\n    except ValueError:\n        continue\n    if amount <= 0:\n        continue\n    totals[row['category']] = totals.get(row['category'], 0) + amount\n\nprint(totals)",
+      "executionSteps": [
+        { "line": 9, "variables": { "row": "{category: food, amount: 10}", "amount": "10" }, "output": "totals -> {food: 10}", "description": "Ingest + transform: 'food',10 parses cleanly. Aggregate into the dict." },
+        { "line": 9, "variables": { "row": "{category: food, amount: 5}", "amount": "5" }, "output": "totals -> {food: 15}", "description": "Another food row. 10 + 5 = 15 under 'food'." },
+        { "line": 9, "variables": { "row": "{category: toys, amount: 8}", "amount": "8" }, "output": "totals -> {food: 15, toys: 8}", "description": "New category 'toys' appears with 8." },
+        { "line": 11, "variables": { "row": "{category: food, amount: bad}" }, "output": "skipped", "description": "int('bad') raises ValueError -> except -> continue. The malformed row is skipped, not crashing the run." },
+        { "line": 13, "variables": { "row": "{category: toys, amount: -3}", "amount": "-3" }, "output": "skipped", "description": "Parses fine but -3 <= 0 fails the business rule -> continue. Skipped." },
+        { "line": 16, "variables": { "totals": "{food: 15, toys: 8}" }, "output": "{'food': 15, 'toys': 8}", "description": "Output stage: the aggregated result. Two bad rows skipped, clean answer produced." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Data work is a pipeline: ingest -> transform -> aggregate -> output.",
+        "Validate and SKIP bad rows; never let one dirty cell crash the run.",
+        "Small composable stages + streaming = code that scales from 1K rows to 1B.",
+        "files -> JSON -> CSV -> dates -> pipeline. That's the whole track."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2200
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Capstone: build a mini end-to-end data pipeline. You're given CSV text of expense records (columns: category, amount) as a string. SPEC: write summarize_expenses(csv_text) that (1) INGESTS the text with csv.DictReader over an io.StringIO, (2) CLEANS/TRANSFORMS each row — convert amount to int, and SKIP any row whose amount is not a valid integer OR is <= 0, (3) AGGREGATES the surviving rows by summing amount per category into a dict, and (4) returns that dict. The given csv_text contains a malformed amount ('oops') and a zero row that MUST both be skipped. The stub prints summarize_expenses(CSV). Expected output: {'food': 18, 'travel': 50}"
+      },
+      "starter_code": "import csv, io\n\nCSV = (\n    \"category,amount\\n\"\n    \"food,10\\n\"\n    \"travel,50\\n\"\n    \"food,8\\n\"\n    \"food,oops\\n\"\n    \"travel,0\\n\"\n)\n\ndef summarize_expenses(csv_text):\n    # SPEC: read -> transform/filter -> aggregate -> return dict\n    #   1. reader = csv.DictReader(io.StringIO(csv_text))\n    #   2. for each row: try int(row['amount']); skip on ValueError; skip if <= 0\n    #   3. sum the amount per row['category'] into a totals dict\n    #   4. return totals\n    pass  # implement to the spec\n\nprint(summarize_expenses(CSV))",
+      "expected_output": "{'food': 18, 'travel': 50}",
+      "hints": {
+        "en": [
+          "INGEST: wrap the text in io.StringIO and feed it to csv.DictReader — iterating it yields one dict per row, like {'category': 'food', 'amount': '10'}.",
+          "TRANSFORM + FILTER: try `amount = int(row['amount'])` inside try/except ValueError, then `continue`. Also `continue` when amount <= 0 — that skips both the 'oops' row and the 0 row.",
+          "AGGREGATE: keep a totals dict; for each good row do totals[cat] = totals.get(cat, 0) + amount so new categories start at 0.",
+          "Build totals incrementally as you stream rows — you never need to hold the whole file, only the running sums. Return totals at the end."
+        ]
+      },
+      "test_code": "import csv, io\nassert summarize_expenses(CSV) == {'food': 18, 'travel': 50}\nassert summarize_expenses('category,amount\\n') == {}\nassert summarize_expenses('category,amount\\na,5\\na,5\\nb,2\\n') == {'a': 10, 'b': 2}\nassert summarize_expenses('category,amount\\nx,bad\\nx,-1\\nx,0\\n') == {}\nassert summarize_expenses('category,amount\\nx,3\\nx,bad\\nx,4\\n') == {'x': 7}\nassert summarize_expenses('category,amount\\nsolo,99\\n') == {'solo': 99}"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What are the four stages of a typical data pipeline (ETL shape)?"
+      },
+      "options": {
+        "en": [
+          "Compile, link, run, deploy",
+          "Ingest (read), clean/transform, aggregate (summarize), output (write)",
+          "Import, export, delete, refresh",
+          "Open, sort, print, close"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A CSV has one row with a blank amount. What is the professional way to handle it?"
+      },
+      "options": {
+        "en": [
+          "Let int() crash so the whole run stops on that row",
+          "Wrap the conversion in try/except and `continue` to skip the bad row, keeping the run alive",
+          "Replace every amount in the file with zero",
+          "Delete the entire file and start over"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why split a pipeline into small functions like ingest(), transform(), aggregate(), output()?"
+      },
+      "options": {
+        "en": [
+          "It makes the program run on more CPUs automatically",
+          "Each stage is small, testable, and composable — so a bug lives in one stage, not smeared across everything",
+          "Python requires exactly four functions per file",
+          "Small functions are the only way to read a CSV"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why prefer streaming (csv.DictReader, row-by-row) over loading a whole file into memory for large data?"
+      },
+      "options": {
+        "en": [
+          "Streaming changes the data into JSON automatically",
+          "It lets you process files far bigger than RAM by holding only the running summary, not the whole dataset",
+          "Loading the whole file is impossible in Python",
+          "Streaming sorts the rows for you"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["data_pipeline", "etl", "ingest_transform_aggregate_output", "validate_and_skip", "streaming_data", "csv_dictreader"],
+    "concepts_required": ["working_with_dates"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "data",
+    "path_memberships": []
+  },
+  "generated": false
+}

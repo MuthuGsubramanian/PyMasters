@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ErrorState } from '../components/StateViews';
 import {
   Search, BookOpen, ChevronRight, ArrowLeft, Code2,
   Cpu, Brain, Zap, Star, Copy, Check, Sparkles,
@@ -236,19 +237,22 @@ export default function Reference() {
   const [topicData, setTopicData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Fetch topics
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await getQuickReferenceTopics();
-        setTopics(Array.isArray(res.data) ? res.data : res.data?.topics || []);
-      } catch {
-        setError('Unable to load reference topics.');
-      } finally {
-        setLoading(false);
-      }
+  // Fetch topics (extracted so the error state can retry)
+  const loadTopics = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getQuickReferenceTopics();
+      setTopics(Array.isArray(res.data) ? res.data : res.data?.topics || []);
+    } catch {
+      setError('Unable to load reference topics.');
+    } finally {
+      setLoading(false);
     }
-    load();
+  }, []);
+
+  useEffect(() => {
+    loadTopics();
   }, []);
 
   // Fetch detail when topic selected
@@ -365,9 +369,11 @@ export default function Reference() {
               </motion.div>
 
               {error && (
-                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-                  {error}
-                </div>
+                <ErrorState
+                  title="Couldn’t load references"
+                  message={error}
+                  onRetry={loadTopics}
+                />
               )}
 
               {/* Topics grid */}

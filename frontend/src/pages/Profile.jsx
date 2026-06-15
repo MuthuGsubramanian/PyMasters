@@ -126,7 +126,7 @@ function GlassCard({ children, className = '', index = 0, ...rest }) {
             initial="hidden"
             animate="visible"
             className={clsx(
-                'bg-white/80 backdrop-blur-xl rounded-2xl border border-black/[0.05] shadow-sm p-6',
+                'bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default shadow-sm p-6',
                 className,
             )}
             {...rest}
@@ -143,8 +143,8 @@ function SectionHeading({ icon: Icon, title, subtitle }) {
                 <Icon size={18} />
             </div>
             <div>
-                <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-                {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+                <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+                {subtitle && <p className="text-xs text-text-muted">{subtitle}</p>}
             </div>
         </div>
     );
@@ -153,10 +153,10 @@ function SectionHeading({ icon: Icon, title, subtitle }) {
 function InputField({ label, value, onChange, type = 'text', placeholder, icon: Icon, disabled }) {
     return (
         <label className="block">
-            <span className="text-sm font-medium text-slate-600 mb-1.5 block">{label}</span>
+            <span className="text-sm font-medium text-text-secondary mb-1.5 block">{label}</span>
             <div className="relative">
                 {Icon && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
                         <Icon size={16} />
                     </div>
                 )}
@@ -167,8 +167,8 @@ function InputField({ label, value, onChange, type = 'text', placeholder, icon: 
                     placeholder={placeholder}
                     disabled={disabled}
                     className={clsx(
-                        'w-full rounded-xl border border-slate-200 bg-white/60 px-4 py-2.5 text-sm text-slate-700',
-                        'placeholder:text-slate-400 transition-all duration-200',
+                        'w-full rounded-xl border border-border-default bg-bg-inset px-4 py-2.5 text-sm text-text-secondary',
+                        'placeholder:text-text-muted transition-all duration-200',
                         'focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                         Icon && 'pl-10',
@@ -182,10 +182,10 @@ function InputField({ label, value, onChange, type = 'text', placeholder, icon: 
 function SelectField({ label, value, onChange, options, icon: Icon }) {
     return (
         <label className="block">
-            <span className="text-sm font-medium text-slate-600 mb-1.5 block">{label}</span>
+            <span className="text-sm font-medium text-text-secondary mb-1.5 block">{label}</span>
             <div className="relative">
                 {Icon && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
                         <Icon size={16} />
                     </div>
                 )}
@@ -193,7 +193,7 @@ function SelectField({ label, value, onChange, options, icon: Icon }) {
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     className={clsx(
-                        'w-full rounded-xl border border-slate-200 bg-white/60 px-4 py-2.5 text-sm text-slate-700',
+                        'w-full rounded-xl border border-border-default bg-bg-inset px-4 py-2.5 text-sm text-text-secondary',
                         'appearance-none transition-all duration-200',
                         'focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400',
                         Icon && 'pl-10',
@@ -203,7 +203,7 @@ function SelectField({ label, value, onChange, options, icon: Icon }) {
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                 </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             </div>
         </label>
     );
@@ -213,8 +213,8 @@ function ToggleSwitch({ label, checked, onChange, description }) {
     return (
         <div className="flex items-center justify-between gap-4">
             <div>
-                <p className="text-sm font-medium text-slate-700">{label}</p>
-                {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+                <p className="text-sm font-medium text-text-primary">{label}</p>
+                {description && <p className="text-xs text-text-muted mt-0.5">{description}</p>}
             </div>
             <button
                 type="button"
@@ -223,7 +223,7 @@ function ToggleSwitch({ label, checked, onChange, description }) {
                 onClick={() => onChange(!checked)}
                 className={clsx(
                     'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200',
-                    checked ? 'bg-gradient-to-r from-cyan-500 to-blue-600' : 'bg-slate-200',
+                    checked ? 'bg-gradient-to-r from-cyan-500 to-blue-600' : 'bg-bg-elevated',
                 )}
             >
                 <span
@@ -240,7 +240,7 @@ function ToggleSwitch({ label, checked, onChange, description }) {
 function Skeleton({ className }) {
     return (
         <div
-            className={clsx('animate-pulse bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 rounded-lg', className)}
+            className={clsx('animate-pulse bg-gradient-to-r from-bg-elevated via-bg-inset to-bg-elevated rounded-lg', className)}
             style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }}
         />
     );
@@ -567,20 +567,20 @@ export default function Profile() {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full"
+                            className="bg-bg-surface rounded-2xl shadow-2xl p-6 max-w-sm w-full"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100">
                                     <AlertTriangle size={20} className="text-red-600" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800">{confirmAction.title}</h3>
+                                <h3 className="text-lg font-semibold text-text-primary">{confirmAction.title}</h3>
                             </div>
-                            <p className="text-sm text-slate-600 mb-6">{confirmAction.message}</p>
+                            <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
                             <div className="flex gap-3 justify-end">
                                 <button
                                     onClick={() => setConfirmAction(null)}
-                                    className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                                    className="px-4 py-2 text-sm font-medium text-text-secondary bg-bg-elevated rounded-xl hover:bg-bg-inset transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -605,7 +605,7 @@ export default function Profile() {
                 >
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                        className="flex items-center gap-2 text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
                     >
                         <ArrowLeft size={18} />
                         Back
@@ -644,7 +644,7 @@ export default function Profile() {
                         {/* Avatar with gradient ring */}
                         <div className="relative">
                             <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-500 shadow-lg">
-                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                                <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center">
                                     <span className="text-2xl font-bold bg-gradient-to-br from-cyan-600 to-blue-600 bg-clip-text text-transparent">
                                         {getInitials(displayName || user?.username)}
                                     </span>
@@ -661,20 +661,20 @@ export default function Profile() {
 
                         {/* User info */}
                         <div className="text-center sm:text-left flex-1 pb-1">
-                            <h1 className="text-xl font-bold text-slate-800">
+                            <h1 className="text-xl font-bold text-text-primary">
                                 {displayName || user?.username || 'Learner'}
                             </h1>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-text-muted">
                                 @{user?.username} &middot; Member since {formatDate(profileData?.created_at || user?.created_at)}
                             </p>
 
                             {/* XP Progress Bar */}
                             <div className="mt-3 max-w-xs mx-auto sm:mx-0">
-                                <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                                <div className="flex items-center justify-between text-xs text-text-muted mb-1">
                                     <span>{stats.totalXp.toLocaleString()} XP</span>
                                     {rankInfo.next && <span>{rankInfo.next.toLocaleString()} XP</span>}
                                 </div>
-                                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-2.5 bg-bg-inset rounded-full overflow-hidden">
                                     <motion.div
                                         className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
                                         initial={{ width: 0 }}
@@ -719,9 +719,9 @@ export default function Profile() {
                                 icon={Phone}
                             />
                             <label className="block">
-                                <span className="text-sm font-medium text-slate-600 mb-1.5 block">Bio / About Me</span>
+                                <span className="text-sm font-medium text-text-secondary mb-1.5 block">Bio / About Me</span>
                                 <div className="relative">
-                                    <div className="absolute left-3 top-3 text-slate-400"><FileText size={16} /></div>
+                                    <div className="absolute left-3 top-3 text-text-muted"><FileText size={16} /></div>
                                     <textarea
                                         value={bio}
                                         onChange={(e) => { setBio(e.target.value); setIsDirty(true); }}
@@ -729,12 +729,12 @@ export default function Profile() {
                                         maxLength={280}
                                         placeholder="Tell us about yourself..."
                                         className={clsx(
-                                            'w-full rounded-xl border border-slate-200 bg-white/60 pl-10 pr-4 py-2.5 text-sm text-slate-700',
-                                            'placeholder:text-slate-400 resize-none transition-all duration-200',
+                                            'w-full rounded-xl border border-border-default bg-bg-inset pl-10 pr-4 py-2.5 text-sm text-text-secondary',
+                                            'placeholder:text-text-muted resize-none transition-all duration-200',
                                             'focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400',
                                         )}
                                     />
-                                    <span className="absolute bottom-2 right-3 text-xs text-slate-400">
+                                    <span className="absolute bottom-2 right-3 text-xs text-text-muted">
                                         {bio.length}/280
                                     </span>
                                 </div>
@@ -756,7 +756,7 @@ export default function Profile() {
 
                             {/* Learning Style - visual selector */}
                             <div>
-                                <span className="text-sm font-medium text-slate-600 mb-2 block">Learning Style</span>
+                                <span className="text-sm font-medium text-text-secondary mb-2 block">Learning Style</span>
                                 <div className="grid grid-cols-2 gap-2">
                                     {LEARNING_STYLES.map(({ value, label, icon: StyleIcon }) => (
                                         <button
@@ -767,7 +767,7 @@ export default function Profile() {
                                                 'flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200',
                                                 learningStyle === value
                                                     ? 'border-cyan-400 bg-cyan-50 text-cyan-700 shadow-sm'
-                                                    : 'border-slate-200 bg-white/60 text-slate-600 hover:border-slate-300',
+                                                    : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong',
                                             )}
                                         >
                                             <StyleIcon size={16} />
@@ -787,7 +787,7 @@ export default function Profile() {
 
                             {/* Difficulty - pill selector */}
                             <div>
-                                <span className="text-sm font-medium text-slate-600 mb-2 block">Difficulty Preference</span>
+                                <span className="text-sm font-medium text-text-secondary mb-2 block">Difficulty Preference</span>
                                 <div className="flex gap-2">
                                     {DIFFICULTY_LEVELS.map(({ value, label }) => (
                                         <button
@@ -798,7 +798,7 @@ export default function Profile() {
                                                 'flex-1 py-2 rounded-xl border text-sm font-medium transition-all duration-200',
                                                 difficulty === value
                                                     ? 'border-cyan-400 bg-cyan-50 text-cyan-700 shadow-sm'
-                                                    : 'border-slate-200 bg-white/60 text-slate-600 hover:border-slate-300',
+                                                    : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong',
                                             )}
                                         >
                                             {label}
@@ -894,7 +894,7 @@ export default function Profile() {
                             {/* Voice Speed Slider */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-slate-600">Voice Speed</span>
+                                    <span className="text-sm font-medium text-text-secondary">Voice Speed</span>
                                     <span className="text-sm font-semibold text-cyan-600">{voiceSpeed.toFixed(1)}x</span>
                                 </div>
                                 <input
@@ -904,13 +904,13 @@ export default function Profile() {
                                     step="0.1"
                                     value={voiceSpeed}
                                     onChange={(e) => { setVoiceSpeed(parseFloat(e.target.value)); setIsDirty(true); }}
-                                    className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-cyan-500
+                                    className="w-full h-2 bg-bg-inset rounded-full appearance-none cursor-pointer accent-cyan-500
                                         [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
                                         [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-br
                                         [&::-webkit-slider-thumb]:from-cyan-500 [&::-webkit-slider-thumb]:to-blue-600
                                         [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer"
                                 />
-                                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <div className="flex justify-between text-xs text-text-muted mt-1">
                                     <span>0.5x</span>
                                     <span>1.0x</span>
                                     <span>1.5x</span>
@@ -921,7 +921,7 @@ export default function Profile() {
                             {/* Hint Level */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-slate-600">Hint Level</span>
+                                    <span className="text-sm font-medium text-text-secondary">Hint Level</span>
                                     <span className="text-sm font-semibold text-cyan-600">Level {hintLevel}</span>
                                 </div>
                                 <div className="flex gap-2">
@@ -934,15 +934,15 @@ export default function Profile() {
                                                 'flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 flex flex-col items-center gap-0.5',
                                                 hintLevel === level
                                                     ? 'border-cyan-400 bg-cyan-50 text-cyan-700 shadow-sm'
-                                                    : 'border-slate-200 bg-white/60 text-slate-500 hover:border-slate-300',
+                                                    : 'border-border-default bg-bg-elevated text-text-muted hover:border-border-strong',
                                             )}
                                         >
-                                            <Lightbulb size={14} className={hintLevel === level ? 'text-cyan-500' : 'text-slate-400'} />
+                                            <Lightbulb size={14} className={hintLevel === level ? 'text-cyan-500' : 'text-text-muted'} />
                                             <span>{level}</span>
                                         </button>
                                     ))}
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1.5">
+                                <p className="text-xs text-text-muted mt-1.5">
                                     {hintLevel === 1 && 'Minimal hints -- figure it out yourself'}
                                     {hintLevel === 2 && 'Gentle nudges in the right direction'}
                                     {hintLevel === 3 && 'Detailed hints with examples'}
@@ -995,7 +995,7 @@ export default function Profile() {
                                 initial="rest"
                                 whileHover="hover"
                                 className={clsx(
-                                    'relative rounded-xl border border-black/[0.05] p-4 overflow-hidden',
+                                    'relative rounded-xl border border-border-default p-4 overflow-hidden',
                                     stat.bg,
                                 )}
                             >
@@ -1006,8 +1006,8 @@ export default function Profile() {
                                 )}>
                                     <stat.icon size={16} />
                                 </div>
-                                <p className="text-2xl font-bold text-slate-800 mt-1">{stat.value}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
+                                <p className="text-2xl font-bold text-text-primary mt-1">{stat.value}</p>
+                                <p className="text-xs text-text-muted mt-0.5">{stat.label}</p>
                             </motion.div>
                         ))}
                     </div>
@@ -1033,26 +1033,26 @@ export default function Profile() {
                                     className={clsx(
                                         'relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-300',
                                         isUnlocked
-                                            ? 'border-black/[0.05] bg-white/60'
-                                            : 'border-dashed border-slate-200 bg-slate-50/50',
+                                            ? 'border-border-default bg-bg-surface'
+                                            : 'border-dashed border-border-default bg-bg-elevated',
                                     )}
                                 >
                                     <div className={clsx(
                                         'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300',
                                         isUnlocked
                                             ? `bg-gradient-to-br ${badge.color} text-white shadow-lg`
-                                            : 'bg-slate-200 text-slate-400',
+                                            : 'bg-bg-inset text-text-muted',
                                     )}>
                                         <BadgeIcon size={22} />
                                     </div>
                                     <span className={clsx(
                                         'text-xs font-medium text-center leading-tight',
-                                        isUnlocked ? 'text-slate-700' : 'text-slate-400',
+                                        isUnlocked ? 'text-text-secondary' : 'text-text-muted',
                                     )}>
                                         {badge.label}
                                     </span>
                                     {!isUnlocked && (
-                                        <Lock size={12} className="absolute top-2 right-2 text-slate-300" />
+                                        <Lock size={12} className="absolute top-2 right-2 text-text-muted" />
                                     )}
                                 </motion.div>
                             );
@@ -1067,11 +1067,11 @@ export default function Profile() {
                     <SectionHeading icon={Lock} title="Change Password" subtitle="Update your account password" />
                     <div className="space-y-3 max-w-md">
                         <input type="password" value={curPw} onChange={(e) => setCurPw(e.target.value)} placeholder="Current password" autoComplete="current-password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
+                            className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
                         <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6 characters)" autoComplete="new-password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
+                            className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
                         <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Confirm new password" autoComplete="new-password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
+                            className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
                         <button onClick={handleChangePassword} disabled={pwSaving}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold hover:shadow-md hover:shadow-cyan-500/25 transition-all disabled:opacity-50">
                             <Lock size={15} /> {pwSaving ? 'Updating…' : 'Update Password'}
@@ -1087,7 +1087,7 @@ export default function Profile() {
                     <div className="flex flex-wrap gap-3">
                         <button
                             onClick={handleExportData}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white/60 text-sm font-medium text-slate-600 hover:border-slate-300 hover:bg-white transition-all duration-200"
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border-default bg-bg-elevated text-sm font-medium text-text-secondary hover:border-border-strong hover:bg-bg-inset transition-all duration-200"
                         >
                             <Download size={16} />
                             Export My Data

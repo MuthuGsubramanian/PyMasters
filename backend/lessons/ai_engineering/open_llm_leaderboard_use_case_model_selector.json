@@ -1,0 +1,99 @@
+{
+  "id": "open_llm_leaderboard_use_case_model_selector",
+  "topic": "open_llm_leaderboard_use_case_model_selector",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Open LLM Leaderboard: Use-Case-Driven Model Selection with Live Data"
+  },
+  "description": {
+    "en": "Learn to pull live benchmark data from the Open LLM Leaderboard using the Hugging Face Datasets API, interpret what each benchmark measures, and build Homie a smart model selector that picks the best local LLM for any given use case — reasoning, coding, math, or general chat."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Open LLM Leaderboard: Your AI Model Shopping Guide\n\nVaathiyaar here! With thousands of open-source LLMs on Hugging Face, how do you pick the right one? The **Open LLM Leaderboard** benchmarks models on standardized tasks and publishes the results as a public dataset. Instead of guessing, you can pull this data programmatically and let the benchmarks guide your decision. Today we'll build a system that takes your use case and returns the best model — no manual browsing required.\n\n### What the Benchmarks Actually Measure\n\n| Benchmark | What It Tests | Best For |\n|---|---|---|\n| IFEval | Instruction following accuracy | Chat assistants, agents |\n| BBH (Big-Bench Hard) | Multi-step reasoning | Complex reasoning tasks |\n| MATH (Lvl 5) | Advanced mathematical problem-solving | Math tutoring, calculations |\n| GPQA | Graduate-level science QA | Research, technical QA |\n| MUSR | Multi-step soft reasoning | Nuanced understanding |\n| MMLU-PRO | Massive multitask language understanding | General knowledge |\n\nEach benchmark produces a normalized score. The leaderboard's **Average** is the mean across all six — but your use case may weight them differently.\n\n### Pulling Leaderboard Data with the Datasets API\n\n```python\nfrom datasets import load_dataset\n\nds = load_dataset(\n    \"open-llm-leaderboard/contents\",\n    split=\"train\"\n)\n\ndf = ds.to_pandas()\nprint(f\"Models tracked: {len(df)}\")\nprint(df.columns.tolist()[:10])\n# ['eval_name', 'Precision', 'Type', 'Weight type',\n#  'Architecture', 'Average', 'IFEval', 'BBH', ...]\n```\n\nThe leaderboard publishes its full results table as a Hugging Face dataset. One API call gives you every model's scores across all benchmarks — no scraping needed.\n\n### Building a Use-Case-Driven Selector\n\n```python\nimport pandas as pd\n\nUSE_CASE_WEIGHTS = {\n    \"reasoning\": {\"BBH\": 0.35, \"MUSR\": 0.25, \"GPQA\": 0.20,\n                  \"MMLU-PRO\": 0.10, \"IFEval\": 0.05, \"MATH Lvl 5\": 0.05},\n    \"math\":      {\"MATH Lvl 5\": 0.40, \"BBH\": 0.20, \"GPQA\": 0.15,\n                  \"MMLU-PRO\": 0.10, \"MUSR\": 0.10, \"IFEval\": 0.05},\n    \"chat\":      {\"IFEval\": 0.35, \"MMLU-PRO\": 0.25, \"BBH\": 0.15,\n                  \"MUSR\": 0.10, \"GPQA\": 0.10, \"MATH Lvl 5\": 0.05},\n    \"general\":   {\"Average\": 1.0}\n}\n\ndef select_best_model(df, use_case=\"general\", max_params_b=8):\n    \"\"\"Select best model for a use case under a parameter budget.\"\"\"\n    filtered = df[df[\"#Params (B)\"] <= max_params_b].copy()\n    weights = USE_CASE_WEIGHTS[use_case]\n\n    if \"Average\" in weights:\n        filtered[\"weighted_score\"] = filtered[\"Average\"]\n    else:\n        filtered[\"weighted_score\"] = sum(\n            filtered[bench] * w for bench, w in weights.items()\n        )\n\n    top = filtered.nlargest(5, \"weighted_score\")\n    return top[[\"eval_name\", \"weighted_score\", \"#Params (B)\", \"Average\"]]\n\nprint(select_best_model(df, use_case=\"reasoning\", max_params_b=8))\n```\n\nBy assigning weights per use case, the same leaderboard data produces different rankings. A coding assistant wants strong reasoning (BBH, GPQA); a chat bot needs instruction following (IFEval).\n\n### Homie's Auto-Select Pipeline\n\n```python\ndef homie_pick_model(use_case, ram_gb=16):\n    \"\"\"Homie auto-selects the best local LLM for the task.\"\"\"\n    max_params = ram_gb // 2  # rough: 2GB per billion params (Q4)\n\n    ds = load_dataset(\"open-llm-leaderboard/contents\", split=\"train\")\n    df = ds.to_pandas()\n\n    # Filter to models that can run locally\n    local_df = df[df[\"#Params (B)\"] <= max_params].copy()\n    local_df = local_df[local_df[\"#Params (B)\"] > 0]\n\n    result = select_best_model(local_df, use_case, max_params)\n    best = result.iloc[0]\n    return {\n        \"model\": best[\"eval_name\"],\n        \"score\": round(best[\"weighted_score\"], 2),\n        \"params_b\": best[\"#Params (B)\"],\n        \"use_case\": use_case\n    }\n\npick = homie_pick_model(\"chat\", ram_gb=16)\nprint(f\"Homie recommends: {pick['model']}\")\nprint(f\"Weighted score: {pick['score']}\")\n```\n\nHomie estimates the parameter budget from available RAM (rough rule: 2GB per billion parameters at 4-bit quantization), then selects the highest-scoring model for your use case that actually fits on your machine.\n\n### Comparing Models Side-by-Side\n\n```python\ndef compare_models(df, model_names):\n    benchmarks = [\"IFEval\", \"BBH\", \"MATH Lvl 5\", \"GPQA\", \"MUSR\", \"MMLU-PRO\"]\n    subset = df[df[\"eval_name\"].isin(model_names)]\n    return subset[[\"eval_name\"] + benchmarks + [\"Average\"]].set_index(\"eval_name\")\n\nprint(compare_models(df, [\"meta-llama/Meta-Llama-3-8B\",\n                          \"mistralai/Mistral-7B-v0.3\"]))\n```\n\n> **Key Insight:** The Open LLM Leaderboard isn't just a ranking — it's a structured dataset you can query programmatically. By mapping benchmark columns to use-case weights, you transform a static scoreboard into a dynamic model recommendation engine. Combined with hardware constraints, Homie can auto-select the best local LLM without you ever opening a browser."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "The Open LLM Leaderboard benchmarks thousands of open-source models on six standardized tasks — IFEval, BBH, MATH, GPQA, MUSR, and MMLU-PRO. Its full results are published as a Hugging Face dataset, so you can pull live data and build automated model selection pipelines.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from datasets import load_dataset\n\nds = load_dataset(\n    \"open-llm-leaderboard/contents\",\n    split=\"train\"\n)\n\ndf = ds.to_pandas()\nprint(f\"Models tracked: {len(df)}\")\nprint(df[[\"eval_name\", \"Average\"]].nlargest(5, \"Average\"))",
+      "steps": [
+        {"line": 1, "explanation": "Import load_dataset from the Hugging Face datasets library — the same API used for any HF dataset."},
+        {"line": 3, "explanation": "Load the leaderboard contents dataset. This is maintained by the Open LLM Leaderboard team and updated as new models are evaluated."},
+        {"line": 5, "explanation": "The dataset has a single 'train' split containing all evaluated models with their benchmark scores."},
+        {"line": 8, "explanation": "Convert to a pandas DataFrame for easy filtering, sorting, and analysis. Each row is one model."},
+        {"line": 9, "explanation": "Print how many models are tracked — typically thousands, showing the scale of the open-source LLM ecosystem."},
+        {"line": 10, "explanation": "Show the top 5 models by Average score. Each model has scores for IFEval, BBH, MATH Lvl 5, GPQA, MUSR, and MMLU-PRO."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "USE_CASE_WEIGHTS = {\n    \"reasoning\": {\"BBH\": 0.35, \"MUSR\": 0.25, \"GPQA\": 0.20,\n                  \"MMLU-PRO\": 0.10, \"IFEval\": 0.05, \"MATH Lvl 5\": 0.05},\n    \"chat\":      {\"IFEval\": 0.35, \"MMLU-PRO\": 0.25, \"BBH\": 0.15,\n                  \"MUSR\": 0.10, \"GPQA\": 0.10, \"MATH Lvl 5\": 0.05},\n}\n\ndef select_best_model(df, use_case, max_params_b=8):\n    filtered = df[df[\"#Params (B)\"] <= max_params_b].copy()\n    weights = USE_CASE_WEIGHTS[use_case]\n    filtered[\"weighted_score\"] = sum(\n        filtered[b] * w for b, w in weights.items()\n    )\n    return filtered.nlargest(5, \"weighted_score\")\n\nprint(select_best_model(df, \"reasoning\", max_params_b=8))",
+      "steps": [
+        {"line": 1, "explanation": "Define benchmark weight profiles per use case. Reasoning tasks weight BBH and MUSR heavily; chat tasks prioritize IFEval."},
+        {"line": 4, "explanation": "Chat profile: IFEval (instruction following) gets 35% weight — critical for assistants that must follow user instructions precisely."},
+        {"line": 8, "explanation": "The selector function takes a DataFrame, use case name, and parameter budget. This is Homie's core decision engine."},
+        {"line": 9, "explanation": "Filter by parameter count — only models that fit your hardware. At Q4 quantization, roughly 2GB RAM per billion parameters."},
+        {"line": 11, "explanation": "Compute weighted score: multiply each benchmark column by its weight and sum. This is vectorized across all rows at once."},
+        {"line": 14, "explanation": "Return the top 5 models by weighted score. Different use cases will surface different models from the same leaderboard data."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Manual Model Selection",
+      "right_label": "Leaderboard-Driven Selection",
+      "items": [
+        {"left": "Browse leaderboard website manually", "right": "Pull structured data via API in one call"},
+        {"left": "Sort by single average score", "right": "Weight benchmarks by your actual use case"},
+        {"left": "Guess if model fits your hardware", "right": "Filter by parameter count and RAM budget"},
+        {"left": "Static point-in-time decision", "right": "Re-run pipeline as new models are evaluated"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now pull live leaderboard data and auto-select the best open-source LLM for any use case and hardware budget!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ModelSelector` class that selects the best model from a leaderboard dataset based on use-case-specific benchmark weights and a parameter budget. The constructor takes a list of model records (dicts with 'name', 'params_b', and benchmark scores). Implement `weighted_rank(use_case)` that applies weight profiles to compute a weighted score per model, and `select(use_case, max_params_b)` that filters by parameter budget and returns the top model's name."
+      },
+      "starter_code": "class ModelSelector:\n    WEIGHT_PROFILES = {\n        \"reasoning\": {\"bbh\": 0.4, \"musr\": 0.3, \"mmlu\": 0.2, \"ifeval\": 0.1},\n        \"chat\":      {\"ifeval\": 0.4, \"mmlu\": 0.3, \"bbh\": 0.2, \"musr\": 0.1},\n        \"math\":      {\"math\": 0.5, \"bbh\": 0.3, \"mmlu\": 0.1, \"ifeval\": 0.1}\n    }\n\n    def __init__(self, models: list[dict]):\n        # models: [{\"name\": str, \"params_b\": float,\n        #           \"bbh\": float, \"musr\": float, \"mmlu\": float,\n        #           \"ifeval\": float, \"math\": float}, ...]\n        self.models = models\n\n    def weighted_rank(self, use_case: str) -> list[dict]:\n        # Return [{\"name\": str, \"weighted_score\": float}, ...]\n        # sorted by weighted_score descending\n        # Use WEIGHT_PROFILES[use_case] to compute scores\n        # For missing benchmarks in a profile, treat weight as 0\n        pass\n\n    def select(self, use_case: str, max_params_b: float) -> str:\n        # Filter models to those with params_b <= max_params_b\n        # Return the name of the highest weighted_score model\n        # If no models fit, return \"no_model_found\"\n        pass\n\n# Test it:\nmodels = [\n    {\"name\": \"llama-8b\", \"params_b\": 8.0,\n     \"bbh\": 72.0, \"musr\": 45.0, \"mmlu\": 68.0, \"ifeval\": 80.0, \"math\": 35.0},\n    {\"name\": \"mistral-7b\", \"params_b\": 7.0,\n     \"bbh\": 68.0, \"musr\": 42.0, \"mmlu\": 65.0, \"ifeval\": 76.0, \"math\": 30.0},\n    {\"name\": \"phi-3-mini\", \"params_b\": 3.8,\n     \"bbh\": 70.0, \"musr\": 40.0, \"mmlu\": 69.0, \"ifeval\": 82.0, \"math\": 40.0},\n    {\"name\": \"qwen-72b\", \"params_b\": 72.0,\n     \"bbh\": 88.0, \"musr\": 60.0, \"mmlu\": 82.0, \"ifeval\": 90.0, \"math\": 55.0}\n]\n\nselector = ModelSelector(models)\n\nranked = selector.weighted_rank(\"reasoning\")\nprint(ranked[0][\"name\"])\n\nbest_chat = selector.select(\"chat\", max_params_b=8.0)\nprint(best_chat)\n\nno_fit = selector.select(\"math\", max_params_b=1.0)\nprint(no_fit)",
+      "expected_output": "qwen-72b\nphi-3-mini\nno_model_found",
+      "hints": {
+        "en": [
+          "In weighted_rank(), for each model compute the sum of model[bench] * weight for each (bench, weight) in the profile, using model.get(bench, 0) for safety",
+          "Sort the results by weighted_score descending and return a list of {\"name\": ..., \"weighted_score\": ...} dicts",
+          "In select(), first filter self.models by params_b, then call weighted_rank on the filtered subset — or rank all then filter"
+        ]
+      },
+      "test_code": "m = [{\"name\": \"a\", \"params_b\": 3, \"bbh\": 90, \"musr\": 80, \"mmlu\": 70, \"ifeval\": 60, \"math\": 50}, {\"name\": \"b\", \"params_b\": 7, \"bbh\": 50, \"musr\": 50, \"mmlu\": 50, \"ifeval\": 95, \"math\": 30}]\ns = ModelSelector(m)\nr = s.weighted_rank(\"reasoning\")\nassert r[0][\"name\"] == \"a\"\nassert r[0][\"weighted_score\"] > r[1][\"weighted_score\"]\nr2 = s.weighted_rank(\"chat\")\nassert r2[0][\"name\"] == \"b\"\nassert s.select(\"chat\", max_params_b=7) == \"b\"\nassert s.select(\"reasoning\", max_params_b=5) == \"a\"\nassert s.select(\"math\", max_params_b=1) == \"no_model_found\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["Open LLM Leaderboard", "benchmark interpretation", "weighted model selection", "Hugging Face Datasets API", "parameter budgeting", "use-case-driven evaluation", "automated model discovery"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "sorting", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,169 @@
+{
+  "id": "tight_feedback_loops",
+  "topic": "tight_feedback_loops",
+  "track": "vibe_coding",
+  "module": "practices",
+  "order": 4,
+  "title": {
+    "en": "Tight Feedback Loops: Small Diffs, Fast Checks, Safe Checkpoints"
+  },
+  "description": {
+    "en": "The speed of vibe coding doesn't come from giant AI leaps — it comes from a loop so tight that mistakes can't hide. Change one small thing, run it, commit when it's green. Learn why a 5-line diff you understand beats a 200-line diff you don't."
+  },
+  "xp_reward": 85,
+  "next_unlock": "the_hallucinated_api",
+  "story_variants": {
+    "en": "## Speed Comes From the Loop, Not the Leap\n\nBeginners think vibe coding is fast because the AI writes a lot of code at once. It isn't. The code firehose is the *slow* part — it just feels fast for thirty seconds, right up until something breaks and you have no idea which of the 200 new lines did it.\n\nReal speed comes from the **loop**: the round-trip between making a change and finding out whether it worked. The tighter that loop, the faster you actually ship. Vibe coding is fast when the loop is small, and dangerous when it's big.\n\n### The Big-Bang Loop\n\nHere's the trap. You prompt: *\"rewrite the whole file to add caching, retries, and logging.\"* The AI cheerfully returns 200 lines. You skim it — it looks reasonable — you run it, and:\n\n```\nTypeError: 'NoneType' object is not subscriptable\n```\n\nNow what? The bug is somewhere in 200 lines you didn't write and didn't read. You can't tell which change caused it, because you made *all* the changes at once. You're not coding anymore — you're excavating. You read the whole dump line by line, the exact work you were trying to skip, except now it's tangled with three other features. The 200-line diff didn't save time. It hid the bug in a haystack and handed you the haystack.\n\n### The Tight Loop\n\nThe fix is almost boringly simple. Make the loop small:\n\n1. **Change ONE small thing.** Add caching. Just caching. A diff small enough that you can read and understand every line of it.\n2. **Run it.** Immediately. On a real input. Before you touch anything else.\n3. **Commit when it's green.** The moment it works, `git commit`. That green state is now a checkpoint you can always return to.\n4. **Repeat** for retries, then for logging — each as its own small, run, commit cycle.\n\nWhen step 3 explodes, you already know the culprit: it's in the *five* lines you just changed, not two hundred. Debugging a 5-line diff is trivial. Debugging a 200-line diff is a career.\n\n| | Big-bang loop | Tight loop |\n|---|---|---|\n| Diff size | 200 lines at once | 5 lines at a time |\n| When it breaks | *Somewhere* in there | The line you just touched |\n| Did you read it? | Skimmed it | Understood it |\n| Rollback | Untangle by hand | `git reset` to last green |\n| Feels | Fast, then awful | Steady, then done |\n\n### Commits Are Checkpoints, Not Paperwork\n\nThe most underrated tool in vibe coding is `git commit`. Every time the code is green — works, runs, does the thing — commit it. You're not documenting for some future historian; you're dropping a save point in a video game. When the next change goes wrong (and one will), you don't debug the tangle. You `git reset --hard` to the last green commit and try a smaller step. Rolling back to working code is almost always cheaper than debugging your way out of a mess.\n\nThis is why \"commit often\" isn't a discipline chore — it's what *lets* you move fast. A tight loop without checkpoints is a tightrope without a net. With checkpoints, every experiment is safe: worst case, you lose five lines of work, not an afternoon.\n\n### Why Huge AI Dumps Are Dangerous\n\nIt bears repeating, because the AI makes it so easy: asking for a giant rewrite feels efficient and is the opposite. A change you didn't read is a change you can't trust, and a 200-line change is one you *won't* read. The bug isn't gone — it's just hidden in code you've never looked at. Small diffs aren't a limitation you tolerate. They're the whole technique.\n\n> **Key idea:** Vibe coding is fast because the feedback loop is tight, not because the leaps are big. Change one small thing, run it immediately, and commit every green state. A 5-line diff you understand and can roll back beats a 200-line diff you skimmed and can't — every single time."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "feedback_loop",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "bigbang_vs_tight",
+      "left": {
+        "label": "Big-bang loop: 200-line dump, bug hidden in a haystack you didn't read",
+        "result": false
+      },
+      "right": {
+        "label": "Tight loop: 5-line diff, run it, commit green, roll back anytime",
+        "result": true
+      },
+      "description": {
+        "en": "Speed comes from the size of the loop, not the size of the leap. Small diff, fast run, safe checkpoint."
+      }
+    },
+    {
+      "type": "ConceptMap",
+      "id": "tight_loop_cycle",
+      "nodes": [
+        {
+          "label": "The Tight Loop",
+          "children": [
+            "1. Change ONE small thing",
+            "2. Run it immediately",
+            "3. git commit when green",
+            "4. Repeat for the next step"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "isolate_the_diff",
+      "code": "total = 0\nfor n in [10, 20, 30, 40]:\n    total = n      # buggy step: '=' not '+='\nprint(total)",
+      "executionSteps": [
+        { "line": 3, "variables": { "n": "40", "total": "40" }, "output": "", "description": "Each pass OVERWRITES total instead of adding to it." },
+        { "line": 4, "variables": { "total": "40" }, "output": "40", "description": "Wrong: we wanted 100. One small step is broken — and it's easy to spot because it's the only change." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Speed comes from the loop, not the leap.",
+        "Change one small thing. Run it. Commit when green.",
+        "A 5-line diff you understand beats a 200-line diff you don't."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "A small 3-step pipeline turns \"10,20,30,40\" into its final running total, which should be 100. But the output is wrong. Don't rewrite the whole pipeline — that's the big-bang trap. Be the tight-loop coder: check each step in isolation, find the ONE broken step, and fix just that step. step1_parse and step3_take_last are correct; the bug is a single wrong operator in step2_running_sum. With the given input the pipeline must print 100. Expected output: 100"
+      },
+      "starter_code": "# A 3-step pipeline. ONE step has a single-character bug.\n# Don't rewrite everything — isolate the broken step and fix only it.\n\ndef step1_parse(raw):\n    # Correct: split \"10,20,30,40\" into [10, 20, 30, 40].\n    return [int(x) for x in raw.split(\",\")]\n\ndef step2_running_sum(nums):\n    # Should return the cumulative running total:\n    # [10, 20, 30, 40] -> [10, 30, 60, 100]\n    out = []\n    total = 0\n    for n in nums:\n        total = n      # BUG: this overwrites total instead of adding to it\n        out.append(total)\n    return out\n\ndef step3_take_last(running):\n    # Correct: the final running total is the last element.\n    return running[-1]\n\ndef pipeline(raw):\n    parsed = step1_parse(raw)\n    running = step2_running_sum(parsed)\n    return step3_take_last(running)\n\nprint(pipeline(\"10,20,30,40\"))",
+      "expected_output": "100",
+      "hints": {
+        "en": [
+          "Isolate each step. Run step1_parse(\"10,20,30,40\") — it correctly gives [10, 20, 30, 40]. So step 1 is fine.",
+          "Run step3_take_last([10, 30, 60, 100]) — it correctly gives 100. So step 3 is fine. The bug must be in step2.",
+          "Look at step2_running_sum: 'total = n' replaces total each pass, so you only ever get the last number. A running sum must ADD.",
+          "Change 'total = n' to 'total += n'. Don't touch the working steps — small diff, then re-run."
+        ]
+      },
+      "test_code": "assert step1_parse(\"10,20,30,40\") == [10, 20, 30, 40]\nassert step2_running_sum([10, 20, 30, 40]) == [10, 30, 60, 100]\nassert step3_take_last([10, 30, 60, 100]) == 100\nassert pipeline(\"10,20,30,40\") == 100\nassert pipeline(\"5\") == 5"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Where does the real speed of vibe coding come from?"
+      },
+      "options": {
+        "en": [
+          "Asking the AI for as much code as possible at once",
+          "A tight feedback loop: small change, fast run, frequent commit",
+          "Never running the code until the feature is fully done",
+          "Writing 200-line diffs so you make fewer requests"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is a 200-line AI dump more dangerous than five small diffs?"
+      },
+      "options": {
+        "en": [
+          "It uses more tokens",
+          "When it breaks, the bug is hidden somewhere in code you didn't read and can't isolate",
+          "Big diffs are always syntactically invalid",
+          "The AI charges more for longer outputs"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why commit at every green (working) state?"
+      },
+      "options": {
+        "en": [
+          "To satisfy a manager's paperwork rules",
+          "It creates a checkpoint you can roll back to instead of debugging a tangle",
+          "Commits make the code run faster",
+          "So the AI can read your git history"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Your tight-loop change just broke the build. Where is the bug almost certainly hiding?"
+      },
+      "options": {
+        "en": [
+          "Randomly anywhere in the whole codebase",
+          "In the small diff you just made and ran — that's why you run after each change",
+          "In a file you haven't opened in weeks",
+          "It is impossible to tell"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["feedback_loops", "incremental_change", "git_checkpoints", "small_diffs"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 16,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}
