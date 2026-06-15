@@ -123,15 +123,28 @@ builds green, NOT yet deployed — gcloud re-auth still pending):
   accent pairs, not leaks (leave it); StateViews rollout is low marginal value
   (Paths/Challenges already have skeleton/error states).
 
+### Update — real challenge grading SHIPPED (2026-06-15, branch only)
+Implemented per `docs/superpowers/{specs,plans}/2026-06-15-real-challenge-grading*`:
+- `check_challenge_safety` (relaxed-but-bounded sandbox gate — allows os/tempfile/
+  asyncio/etc., blocks socket/subprocess/ctypes/introspection-escape).
+- `grade_submission` runs the code + each test case in the sandbox (expression
+  compare *or* assertion harness), tolerant comparison, per-test results.
+- `/api/challenges/submit` now **authenticated** (`get_current_user_id`, ignores
+  body user_id) + **rate-limited** (20/min); persists per-test counts; XP only on
+  first pass.
+- Normalised the un-gradable test cases (ch-03 matrix in-place, ch-04 LRU — incl.
+  a latent wrong assertion, ch-06 decorators, ch-07 async, ch-12 context-mgrs);
+  **verified all 12 challenges pass with a correct reference solution** and fail
+  with no-ops (subagent-checked).
+- Frontend: per-test results panel (pass/fail/blocked, N/total, +XP, expected-vs-got).
+- Live-verified all 8 spec flows (401 unauth · correct→passed+XP · re-submit→
+  already_completed · wrong→N/total · junk→0XP · `import socket`→rejected ·
+  infinite-loop→timed out · >20/min→throttled) + UI panel in light/dark.
+  Commits `ee35003`,`db3f418`,`d22001a`,`1ee2214`,`2a012a2`,`164b5c6`.
+- Still open from the spec: the XP-cutover decision (don't claw back stub-era XP)
+  — left for product; not auto-applied.
+
 ### Needs your decision / can't do autonomously
-- **Real challenge grading.** The proper fix runs submissions against `test_cases`
-  in the hardened sandbox, but `/api/challenges/submit` is currently
-  UNauthenticated (trusts a body `user_id`) and the safety gate blocks modules
-  some challenges need (`os`/`tempfile`); a few challenges (e.g. the
-  context-manager one) also have *prose* test_cases, not executable assertions.
-  Real grading therefore needs: auth + rate-limit on submit (like
-  `/api/playground/execute`), a challenge-appropriate safety policy, and
-  normalised executable test_cases. Worth a small spec.
 - **Dual content systems.** `/dashboard/learn` (legacy in-memory `CONTENT_MAP`,
   4 generic modules, not in nav) vs `/dashboard/classroom` (420-lesson
   catalogue). The Dashboard's "Start Learning" / module-progression CTAs (6
