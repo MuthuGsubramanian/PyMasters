@@ -321,9 +321,12 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "[[1,2],[3,4]] -> [[3,1],[4,2]]",
         "test_cases": [
-            {"input": "[[1,2],[3,4]]", "expected_output": "[[3,1],[4,2]]"},
-            {"input": "[[1,2,3],[4,5,6],[7,8,9]]", "expected_output": "[[7,4,1],[8,5,2],[9,6,3]]"},
-            {"input": "[[1]]", "expected_output": "[[1]]"},
+            # rotate_90 mutates in place and returns None, so tests must call it
+            # on a variable then assert the variable — a bare literal `input` never
+            # invoked the function and so was unpassable by a correct solution.
+            {"name": "2x2 rotates clockwise", "harness": "m=[[1,2],[3,4]]\nrotate_90(m)\nassert m==[[3,1],[4,2]], m"},
+            {"name": "3x3 rotates clockwise", "harness": "m=[[1,2,3],[4,5,6],[7,8,9]]\nrotate_90(m)\nassert m==[[7,4,1],[8,5,2],[9,6,3]], m"},
+            {"name": "1x1 unchanged", "harness": "m=[[1]]\nrotate_90(m)\nassert m==[[1]], m"},
         ],
         "xp_reward": 20,
         "hints": [
@@ -477,9 +480,15 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "dict mapping URL -> response text or error string",
         "test_cases": [
-            {"input": "fetch_all(['http://example.com'])", "expected_output": "{'http://example.com': '<html>...'}"},
-            {"input": "fetch_all(['http://bad-url'], timeout=1)", "expected_output": "{'http://bad-url': 'Error: ...'}"},
-            {"input": "fetch_all([], max_concurrent=5)", "expected_output": "{}"},
+            # fetch_all is async, so a bare `fetch_all(...)` input only yielded a
+            # coroutine object; and the prose expected_outputs ('<html>...',
+            # 'Error: ...') could never equal a real result. Tests now await the
+            # coroutine and assert the described contract: a dict keyed by every
+            # URL, with failures captured (never raised) so one bad URL can't
+            # abort the batch, and empty input -> empty dict.
+            {"name": "maps every URL to a result", "harness": "import asyncio\nr=asyncio.run(fetch_all(['http://example.com']))\nassert set(r.keys())=={'http://example.com'} and isinstance(r['http://example.com'], str)"},
+            {"name": "captures errors, never raises", "harness": "import asyncio\nr=asyncio.run(fetch_all(['http://bad-url'], timeout=1))\nassert 'http://bad-url' in r and isinstance(r['http://bad-url'], str)"},
+            {"name": "empty input -> empty dict", "harness": "import asyncio\nassert asyncio.run(fetch_all([], max_concurrent=5))=={}"},
         ],
         "xp_reward": 30,
         "hints": [
