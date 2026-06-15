@@ -152,8 +152,12 @@ Implemented per `docs/superpowers/{specs,plans}/2026-06-15-real-challenge-gradin
   onboarding funnel — a product decision, not a clear bug. Recommendation:
   decide whether the dashboard on-ramp should be the curated 4-module path or
   the catalogue, then redirect/rebuild accordingly.
-- **Deploy** the 2026-06-13 + 2026-06-15 fixes once gcloud is re-authed
-  (`gcloud auth login`, then image-only swap per the recipe above).
+- ~~Deploy the 2026-06-13 + 2026-06-15 fixes~~ **DONE 2026-06-15** — built
+  `autoweek-714432a`, image-only deployed as revision **`pymasters-00056-4mh`**
+  (rollback target `pymasters-00055-zr5`). Smoke-tested green (run.app + apex +
+  `/api/*`); confirmed new code live (submit→401 unauth, reference descriptions,
+  brand glyph on the live landing). Future deploys: `./scripts/deploy.sh`
+  (records rollback, builds, image-only deploy, smoke-test, auto-rollback).
 - Finish i18n for the English-only tracks (needs local Ollama installed).
 - Rotate the Ollama key historically committed in `cloudbuild.yaml` (needs the
   Ollama account).
