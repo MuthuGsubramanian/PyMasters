@@ -1,10 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- PyMasters "reactor triangle" brand mark, refined for large/feature use
-       (hero, final CTA). White strokes — reads on the brand gradient box or on
-       dark. Keeps the identity: outer triangle, an inner concentric triangle,
-       and a glowing reactor core. -->
-  <path d="M50 15 L85 77 L15 77 Z" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
-  <path d="M50 35 L71 69 L29 69 Z" fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.5" stroke-linejoin="round"/>
-  <circle cx="50" cy="59" r="8" fill="none" stroke="#ffffff" stroke-width="3"/>
-  <circle cx="50" cy="59" r="2.6" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- PyMasters "reactor triangle" brand mark for large/feature use (hero, CTA).
+       Transparent — no container shape. Gradient strokes + a glowing reactor
+       core read as a real logo on the dark hero. Ambient glow is applied in CSS. -->
+  <defs>
+    <linearGradient id="pmHeroStroke" x1="12" y1="12" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="pmHeroCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.45" stop-color="#c4b5fd" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- outer triangle -->
+  <path d="M60 18 L102 90 L18 90 Z" fill="none" stroke="url(#pmHeroStroke)" stroke-width="6" stroke-linejoin="round"/>
+  <!-- inner concentric triangle -->
+  <path d="M60 41 L85 84 L35 84 Z" fill="none" stroke="url(#pmHeroStroke)" stroke-width="3" stroke-opacity="0.45" stroke-linejoin="round"/>
+  <!-- glowing reactor core -->
+  <circle cx="60" cy="73" r="15" fill="url(#pmHeroCore)"/>
+  <circle cx="60" cy="73" r="8.5" fill="none" stroke="url(#pmHeroStroke)" stroke-width="3"/>
+  <circle cx="60" cy="73" r="3" fill="#ffffff"/>
 </svg>
