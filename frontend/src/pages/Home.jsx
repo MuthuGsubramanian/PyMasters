@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
+import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
 // Headline totals across the full catalogue (15 tracks). The cards below are a
@@ -100,11 +101,11 @@ function BrandMark({ reduced }) {
                 className="relative flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-purple-600 to-cyan-500 border border-white/15 shadow-[0_0_60px_rgba(124,58,237,0.45)]"
             >
                 <img
-                    src={PymastersGlyph}
+                    src={PymastersHero}
                     alt="PyMasters logo"
                     width="64"
                     height="64"
-                    className="w-12 h-12 sm:w-14 sm:h-14"
+                    className="w-14 h-14 sm:w-16 sm:h-16"
                     style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.25))' }}
                 />
             </motion.div>
@@ -600,9 +601,9 @@ export default function Home() {
             <section className="relative py-24 px-4 sm:px-6 text-center">
                 <div className="relative max-w-3xl mx-auto">
                     <img
-                        src={PymastersGlyph}
+                        src={PymastersHero}
                         alt=""
-                        className="w-14 h-14 mx-auto mb-6"
+                        className="w-16 h-16 mx-auto mb-6"
                         style={{ filter: 'drop-shadow(0 0 16px rgba(168,85,247,0.7))' }}
                     />
                     <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
