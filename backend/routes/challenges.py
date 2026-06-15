@@ -9,11 +9,12 @@ solution submission, and a leaderboard of top completions.
 
 import os
 import ast
+import json
 import sqlite3
 import datetime
 from typing import List, Optional, Tuple
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/challenges", tags=["challenges"])
@@ -67,6 +68,101 @@ def _validate_submission(challenge: dict, code: str) -> Tuple[bool, str]:
                 return (False, f"`{node.name}` is still unimplemented.")
 
     return (True, "Submission accepted.")
+
+
+_GRADE_SENTINEL = "__PMGRADE__"
+
+# Harness comparison + driver, embedded into the sandboxed program. Compares an
+# expression result to the expected literal (tolerant), or runs an assertion
+# snippet (Form B). Prints one sentinel line of JSON: a list of per-test dicts.
+_HARNESS_TMPL = '''
+import json as __json, math as __math
+
+def __cmp(got, raw, unordered=False):
+    try:
+        exp = eval(raw)
+    except Exception:
+        return (str(got) == str(raw)) or (repr(got) == raw)
+    if unordered:
+        try:
+            return sorted(got) == sorted(exp)
+        except Exception:
+            try:
+                return set(got) == set(exp)
+            except Exception:
+                pass
+    if isinstance(got, float) or isinstance(exp, float):
+        try:
+            return __math.isclose(got, exp, rel_tol=1e-9, abs_tol=1e-12)
+        except Exception:
+            pass
+    return (got == exp) or (str(got) == str(exp)) or (repr(got) == raw)
+
+__tests = __json.loads(%(tests)s)
+__results = []
+for __t in __tests:
+    __name = __t.get("name") or __t.get("input") or "test"
+    try:
+        if "harness" in __t and __t["harness"] is not None:
+            exec(__t["harness"], globals())
+            __results.append({"name": __name, "passed": True})
+        else:
+            __got = eval(__t["input"])
+            __raw = __t.get("expected_output", __t.get("expected"))
+            __ok = __cmp(__got, __raw, bool(__t.get("unordered")))
+            __r = {"name": __name, "passed": bool(__ok)}
+            if not __ok:
+                __r["got"] = repr(__got)[:120]
+                __r["expected"] = str(__raw)[:120]
+            __results.append(__r)
+    except Exception as __e:
+        __results.append({"name": __name, "passed": False, "error": str(__e)[:160]})
+print("%(sentinel)s" + __json.dumps(__results))
+'''
+
+
+def grade_submission(challenge: dict, code: str) -> dict:
+    """Run the submission against the challenge's test cases in the sandbox.
+    Returns {passed, passed_count, total, results, message, rejected?}."""
+    from vaathiyaar.execution import run_code_subprocess, check_challenge_safety
+
+    reason = check_challenge_safety(code)
+    if reason:
+        return {"passed": False, "passed_count": 0, "total": 0, "results": [],
+                "message": f"Code rejected: {reason}.", "rejected": True}
+
+    tests = challenge.get("test_cases") or []
+    if not tests:
+        res = run_code_subprocess(code)
+        ok = res.get("exit_code", 1) == 0 and not (res.get("error") or "").strip()
+        return {"passed": ok, "passed_count": 1 if ok else 0, "total": 1, "results": [],
+                "message": "Ran successfully." if ok else "Your code raised an error."}
+
+    program = code + "\n" + (_HARNESS_TMPL % {
+        "tests": repr(json.dumps(tests)),
+        "sentinel": _GRADE_SENTINEL,
+    })
+    res = run_code_subprocess(program, timeout=10)
+    out = res.get("output", "") or ""
+    idx = out.rfind(_GRADE_SENTINEL)
+    total = len(tests)
+    if idx == -1:
+        err = (res.get("error") or "").strip()
+        tail = err.splitlines()[-1][:160] if err else ""
+        msg = ("Your code timed out." if "timed out" in err.lower()
+               else ("Your code errored before tests ran. " + tail) if err
+               else "No output from your solution.")
+        return {"passed": False, "passed_count": 0, "total": total, "results": [], "message": msg.strip()}
+    try:
+        results = json.loads(out[idx + len(_GRADE_SENTINEL):].splitlines()[0])
+    except Exception:
+        return {"passed": False, "passed_count": 0, "total": total, "results": [],
+                "message": "Could not evaluate your solution."}
+    passed_count = sum(1 for r in results if r.get("passed"))
+    all_pass = passed_count == total and total > 0
+    msg = f"All {total} tests passed!" if all_pass else f"{passed_count} of {total} tests passed."
+    return {"passed": all_pass, "passed_count": passed_count, "total": total,
+            "results": results, "message": msg}
 
 
 # ---------------------------------------------------------------------------
