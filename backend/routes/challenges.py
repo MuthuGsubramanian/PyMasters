@@ -8,14 +8,65 @@ solution submission, and a leaderboard of top completions.
 """
 
 import os
+import ast
 import sqlite3
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/challenges", tags=["challenges"])
+
+
+def _validate_submission(challenge: dict, code: str) -> Tuple[bool, str]:
+    """Lightweight STATIC validation (no code execution): the submission must be
+    valid Python, differ from the starter template, define every top-level
+    function/class the starter declares, and not leave those bodies as a bare
+    `pass`. This rejects empty/placeholder junk that the old stub accepted.
+
+    NOTE: this is a safe interim gate, not full correctness grading. Real
+    grading means running the code against `test_cases` in the sandbox, which
+    requires first authenticating + rate-limiting this endpoint (it currently
+    trusts a body user_id) and normalising the prose test_cases on a few
+    challenges (e.g. ch-12) into executable assertions. Tracked as a follow-up.
+    """
+    norm = (code or "").strip()
+    if not norm:
+        return (False, "Write a solution before submitting.")
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return (False, f"Syntax error: {e.msg} (line {e.lineno}).")
+
+    starter = challenge.get("starter_code") or ""
+    if norm == starter.strip():
+        return (False, "This is the starter template — write your solution first.")
+
+    try:
+        required = {
+            n.name for n in ast.parse(starter).body
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        }
+    except SyntaxError:
+        required = set()
+    defined = {
+        n.name for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+    }
+    missing = required - defined
+    if missing:
+        return (False, f"Your solution must define: {', '.join(sorted(missing))}.")
+
+    # Reject required functions left as just `pass` / a docstring (unimplemented).
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in required:
+            body = [s for s in node.body
+                    if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+            if not body or all(isinstance(s, ast.Pass) for s in body):
+                return (False, f"`{node.name}` is still unimplemented.")
+
+    return (True, "Submission accepted.")
 
 
 # ---------------------------------------------------------------------------
@@ -579,9 +630,10 @@ def submit_solution(req: SubmitSolutionRequest):
                 "xp_awarded": 0,
             }
 
-        # For now, mark as passed (actual code execution/validation
-        # would be handled by a sandboxed runner in production).
-        passed = 1
+        # Static validation gate (no execution) — rejects empty/placeholder/
+        # unchanged submissions that the old stub wrongly marked as passed.
+        valid, validate_msg = _validate_submission(challenge, req.code)
+        passed = 1 if valid else 0
         xp = challenge["xp_reward"] if passed else 0
 
         if existing:
@@ -608,7 +660,7 @@ def submit_solution(req: SubmitSolutionRequest):
 
         return {
             "status": "passed" if passed else "failed",
-            "message": "Challenge completed! XP awarded." if passed else "Some test cases failed.",
+            "message": (f"Challenge accepted! +{xp} XP." if passed else validate_msg),
             "xp_awarded": xp,
             "challenge_id": req.challenge_id,
         }
