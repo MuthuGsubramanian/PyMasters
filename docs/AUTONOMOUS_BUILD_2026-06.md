@@ -108,16 +108,42 @@ expired; needs re-auth before the deploy recipe can run):
 - Verified Admin Console (org invite-prompt + delete-org) and Super Admin render
   correctly in dark mode; no responsive/horizontal-overflow issues on mobile.
 
-## Remaining opportunities (not blockers)
-- **Deploy the 2026-06-13 UI fixes** once gcloud is re-authed (image-only swap
-  per the recipe above). Branch is ready.
+## Update — backlog pass (2026-06-15)
+Continued the safe, high-value backlog (still on `feat/autonomous-week-2026-06`,
+builds green, NOT yet deployed — gcloud re-auth still pending):
+- **Reference cards** now show a real per-topic description (was every card
+  repeating "Quick reference for this topic"); **Profile** shows "Member since
+  <date>" (was N/A — `get_profile` now returns `created_at`); `StateViews`
+  error box made dark-friendly. Commit `3603e8f`.
+- **Challenges grader was a stub** (`passed = 1` for ANY code → `print(1)` and the
+  unchanged starter earned XP and topped the leaderboard). Added a static,
+  no-execution validation gate (valid Python, differs from starter, defines the
+  required functions/classes, not left as bare `pass`). Commit `8418821`.
+- Decided NOT to touch: `Trending.jsx` `dark:` usage is legitimate per-category
+  accent pairs, not leaks (leave it); StateViews rollout is low marginal value
+  (Paths/Challenges already have skeleton/error states).
+
+### Needs your decision / can't do autonomously
+- **Real challenge grading.** The proper fix runs submissions against `test_cases`
+  in the hardened sandbox, but `/api/challenges/submit` is currently
+  UNauthenticated (trusts a body `user_id`) and the safety gate blocks modules
+  some challenges need (`os`/`tempfile`); a few challenges (e.g. the
+  context-manager one) also have *prose* test_cases, not executable assertions.
+  Real grading therefore needs: auth + rate-limit on submit (like
+  `/api/playground/execute`), a challenge-appropriate safety policy, and
+  normalised executable test_cases. Worth a small spec.
+- **Dual content systems.** `/dashboard/learn` (legacy in-memory `CONTENT_MAP`,
+  4 generic modules, not in nav) vs `/dashboard/classroom` (420-lesson
+  catalogue). The Dashboard's "Start Learning" / module-progression CTAs (6
+  call sites) point at the legacy pages. Consolidating changes the intended
+  onboarding funnel — a product decision, not a clear bug. Recommendation:
+  decide whether the dashboard on-ramp should be the curated 4-module path or
+  the catalogue, then redirect/rebuild accordingly.
+- **Deploy** the 2026-06-13 + 2026-06-15 fixes once gcloud is re-authed
+  (`gcloud auth login`, then image-only swap per the recipe above).
+- Finish i18n for the English-only tracks (needs local Ollama installed).
+- Rotate the Ollama key historically committed in `cloudbuild.yaml` (needs the
+  Ollama account).
+
+### Backlog still open (safe, lower priority)
 - Decompose the 1300-line `Classroom.jsx` / `OrgDashboard.jsx` / `Profile.jsx`.
-- Roll `StateViews` out to more data pages (Trending, Paths, Challenges).
-- Dual content systems: `/dashboard/learn` uses a legacy in-memory `CONTENT_MAP`
-  while `/dashboard/classroom` serves the 420-lesson catalogue — consolidate
-  (the legacy Learn map isn't in the nav and only shows 4 generic modules).
-- `Trending.jsx` still uses old `dark:` variants (works) — migrate to tokens for
-  consistency. Reference cards repeat generic "Quick reference for this topic"
-  copy; Profile shows "Member since N/A".
-- Finish i18n for the new English-only tracks via `backend/i18n/translate_lessons.py`.
-- Rotate the Ollama key that was historically committed in `cloudbuild.yaml`.
