@@ -1,0 +1,165 @@
+{
+  "id": "the_debugging_mindset",
+  "topic": "the_debugging_mindset",
+  "track": "debugging_mastery",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "The Debugging Mindset: Bugs Are Just Gaps Between Expected and Actual"
+  },
+  "description": {
+    "en": "Debugging isn't luck and it isn't magic — it's applied science. A bug is simply the gap between what you EXPECTED to happen and what ACTUALLY happened. Learn the five-step scientific method for bugs, kill the panic-and-flail reflex, and become calm, methodical, and fast."
+  },
+  "xp_reward": 90,
+  "next_unlock": "reading_tracebacks",
+  "story_variants": {
+    "en": "## A Bug Is Not a Mystery\n\nSomething broke. The page is blank, the number is wrong, the script crashes on line 42. Your heart rate ticks up, and a voice whispers: *start changing things until it works.* You flip a flag, reorder two lines, add a `try/except`, refresh — still broken — and now you don't even know which change did what. That panic-and-flail spiral is the single most common reason debugging takes hours instead of minutes.\n\nHere is the reframe that fixes it: **a bug is just a gap between what you EXPECTED and what ACTUALLY happened.** Nothing more. The program did exactly what you told it to — it always does. The gap isn't supernatural; it's information. Debugging is the disciplined process of measuring that gap and closing it.\n\n> **Key idea:** Debugging is applied science, not luck. A bug is the gap between EXPECTED and ACTUAL behavior. You close it with a hypothesis you can test — not with random changes you hope will work.\n\n## Debugging Is the Scientific Method\n\nScientists don't fix the universe by poking it at random. They observe, hypothesize, and run the smallest experiment that could prove them wrong. Debugging is exactly that loop, applied to code. Five steps, in order, every time.\n\n| Step | What you do | The question it answers |\n|------|-------------|-------------------------|\n| 1. Reproduce | Make the bug happen reliably, on demand | \"Can I trigger it whenever I want?\" |\n| 2. Observe | Look at the ACTUAL behavior precisely | \"What exactly happened — value, type, line?\" |\n| 3. Hypothesize | Form one specific guess about the cause | \"What single thing would explain this gap?\" |\n| 4. Test | Run the smallest experiment that checks it | \"Does the evidence confirm or kill my guess?\" |\n| 5. Fix & verify | Change one thing, then prove it's closed | \"Is EXPECTED now equal to ACTUAL?\" |\n\n### 1. Reproduce it reliably\n\nA bug you can't reproduce is a bug you can't fix — you can only get lucky. Pin down the exact inputs, the exact steps, the exact environment that makes it appear *every single time*. \"It sometimes breaks\" is not a starting point; \"it breaks whenever the list is empty\" is.\n\n### 2. Observe the actual behavior precisely\n\nDon't guess what the code is doing — look. Print the value. Print its **type**. Read the traceback's bottom line. The difference between \"the total is wrong\" and \"the total is `12` but I expected `15`, and `count` is `4` when I expected `5`\" is the difference between flailing and solving. Precision here is most of the battle.\n\n### 3. Form a hypothesis\n\nNow, and only now, you guess — but a *specific, falsifiable* guess: \"I think the average is wrong because I'm dividing by `len(nums) - 1` instead of `len(nums)`.\" A good hypothesis predicts exactly what you'll see if it's true. A vague feeling (\"something's off with the math\") can't be tested, so it isn't a hypothesis — it's an excuse to flail.\n\n### 4. Test with the smallest possible experiment\n\nCheck your one guess with the cheapest experiment that could disprove it. Print `len(nums)` right before the division. Call the function with `[10, 20]` where you know the answer is `15`. **Change one thing at a time** — if you alter three lines and it works, you've learned nothing about *why*, and you've probably planted a new bug.\n\n### 5. Fix and verify\n\nMake the change your evidence points to — and then *prove* the gap is closed. Re-run the reproduction from step 1. EXPECTED must now equal ACTUAL, and the edge cases must hold too. A fix you didn't verify is just a new hypothesis wearing a confident face.\n\n## Three Rules That Keep You Calm\n\n- **Don't assume — verify.** \"It can't be that\" is where bugs hide. Print the value and *know*, don't believe.\n- **Change one thing at a time.** One variable per experiment, or you can't read the result.\n- **The bug is almost always in YOUR code.** Not in Python, not in the library, not in the compiler. When you catch yourself blaming the language, that's the exact moment to re-read your own assumptions. Those tools are used by millions of people every day; your three-hour-old function is the new variable.\n\nThe panic-and-flail coder treats the computer as a hostile, unpredictable opponent. The methodical debugger knows the computer is relentlessly logical — it did precisely what the code said. So they don't fight it. They ask it questions, one at a time, until the gap between expected and actual disappears. Calm, deliberate, and almost boringly effective."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifying_glass",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "scientific_method_for_bugs",
+      "nodes": [
+        {
+          "label": "Debug = Scientific Method",
+          "children": [
+            "1. Reproduce reliably",
+            "2. Observe ACTUAL precisely",
+            "3. Form one hypothesis",
+            "4. Test smallest experiment",
+            "5. Fix & verify the gap is closed"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "flail_vs_method",
+      "left": {
+        "label": "Panic & flail: change random things, hope it works, never know why",
+        "result": false
+      },
+      "right": {
+        "label": "Methodical: reproduce, observe, hypothesize, test ONE thing, verify",
+        "result": true
+      },
+      "description": {
+        "en": "A bug is the gap between EXPECTED and ACTUAL. You close it with a testable hypothesis, not with luck."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "expected_vs_actual_demo",
+      "code": "def average(nums):\n    return sum(nums) / (len(nums) - 1)  # bug\n\nprint(average([10, 20, 30]))  # expected 20.0",
+      "executionSteps": [
+        { "line": 2, "variables": { "sum(nums)": "60", "len(nums)": "3", "divisor": "2" }, "output": "30.0", "description": "ACTUAL is 30.0 but EXPECTED is 20.0 — there's the gap." },
+        { "line": 2, "variables": { "hypothesis": "dividing by len-1 not len", "divisor_should_be": "3" }, "output": "20.0", "description": "Hypothesis confirmed: divide by len(nums). Gap closed." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "A bug = the gap between EXPECTED and ACTUAL.",
+        "Reproduce -> Observe -> Hypothesize -> Test ONE thing -> Verify.",
+        "Don't assume — verify. Change one thing at a time.",
+        "The bug is almost always in YOUR code, not the language."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Be the scientist. This average() function has a classic off-by-one bug: it divides by len(nums) - 1 instead of len(nums), so EXPECTED never equals ACTUAL. State what you expected, observe the actual result, form a hypothesis about the divisor, then fix it. For [10, 20, 30] the true average is 20.0. Expected output: 20.0"
+      },
+      "starter_code": "def average(nums):\n    # Buggy divisor below makes ACTUAL != EXPECTED.\n    # EXPECTED average([10, 20, 30]) == 20.0\n    # ACTUAL   average([10, 20, 30]) == 30.0\n    # Hypothesis: we divide by (len(nums) - 1) instead of len(nums). Fix it:\n    return sum(nums) / (len(nums) - 1)\n\nprint(average([10, 20, 30]))",
+      "expected_output": "20.0",
+      "hints": {
+        "en": [
+          "State the EXPECTED first: the average of [10, 20, 30] is (10+20+30)/3 = 20.0.",
+          "Observe the ACTUAL: the code prints 30.0, because 60 / 2 = 30.0. So the divisor is 2, not 3.",
+          "Form a hypothesis: the divisor is wrong — it's len(nums) - 1 (which is 2) instead of len(nums) (which is 3).",
+          "Test and fix: change the divisor to len(nums). Now 60 / 3 == 20.0 and EXPECTED equals ACTUAL."
+        ]
+      },
+      "test_code": "assert average([10, 20, 30]) == 20.0\nassert average([10, 20]) == 15.0\nassert average([5]) == 5.0\nassert average([2, 4, 6, 8]) == 5.0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In the debugging mindset, what exactly IS a bug?"
+      },
+      "options": {
+        "en": [
+          "A random failure caused by the language or library",
+          "The gap between what you EXPECTED and what ACTUALLY happened",
+          "A sign you should rewrite the whole file from scratch",
+          "Something only luck or experience can find"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the correct FIRST step of the scientific debugging loop?"
+      },
+      "options": {
+        "en": [
+          "Start changing lines until the symptom disappears",
+          "Reproduce the bug reliably, so you can trigger it on demand",
+          "Rewrite the function with a try/except around it",
+          "Assume the library is broken and look for a workaround"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is 'change one thing at a time' a core debugging rule?"
+      },
+      "options": {
+        "en": [
+          "Because editors only let you change one line at a time",
+          "Because if you change several things and it works, you can't tell which fixed it (and may add new bugs)",
+          "Because it makes the code run faster",
+          "Because the GIL only allows one change per run"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Your function gives the wrong total and you think 'this can't be my code — Python's math must be broken.' What does the debugging mindset say?"
+      },
+      "options": {
+        "en": [
+          "You're probably right; file a bug against Python",
+          "The bug is almost always in YOUR code or assumptions — verify your own values before blaming the language",
+          "Switch to another language to avoid the math bug",
+          "Add more threads so the calculation runs in parallel"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["debugging_mindset", "scientific_method", "expected_vs_actual", "hypothesis_testing", "reproduce_the_bug"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 16,
+    "category": "debugging",
+    "path_memberships": []
+  },
+  "generated": false
+}

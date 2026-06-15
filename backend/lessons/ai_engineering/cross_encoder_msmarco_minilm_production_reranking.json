@@ -1,0 +1,133 @@
+{
+  "id": "cross_encoder_msmarco_minilm_production_reranking",
+  "topic": "cross_encoder_msmarco_minilm_production_reranking",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Production Cross-Encoder Reranking: ms-marco-MiniLM-L6-v2 Across Frameworks"
+  },
+  "description": {
+    "en": "Deploy cross-encoder/ms-marco-MiniLM-L6-v2 for production reranking across PyTorch, ONNX, and JAX backends. Build a latency-aware reranking stage for Homie's RAG pipeline with batched scoring, score calibration, and framework-specific optimizations."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Production Reranking: Deploying ms-marco-MiniLM-L6-v2 at Scale\n\nVaathiyaar here! You've built a retrieve-then-rerank pipeline — great. But your cross-encoder runs in PyTorch on a CPU container and adds 400ms of latency per query. In production, that's the difference between a snappy chatbot and one that feels broken. This lesson takes your reranking from prototype to production: ONNX for 2-3x CPU speedup, batched scoring for throughput, score calibration so you can set meaningful thresholds, and a latency budget system that adapts reranking depth to real-time constraints.\n\n`cross-encoder/ms-marco-MiniLM-L6-v2` ships as SafeTensors weights compatible with PyTorch, ONNX Runtime, and JAX — same model, different inference engines. The trick is knowing which runtime to deploy where.\n\n### Runtime Selection Guide\n\n| Runtime | Latency (20 pairs) | Best For | Trade-off |\n|---|---|---|---|\n| PyTorch (GPU) | ~8ms | Training, fine-tuning | Needs GPU, heavy runtime |\n| PyTorch (CPU) | ~45ms | Development, debugging | Slow for production |\n| ONNX Runtime (CPU) | ~18ms | API servers, containers | No training support |\n| ONNX Runtime (GPU) | ~5ms | High-throughput serving | Needs CUDA + onnxruntime-gpu |\n| JAX (TPU) | ~3ms | Google Cloud TPU inference | GCP-only, JAX ecosystem |\n\n### ONNX-Accelerated Reranking\n\n```python\nfrom sentence_transformers import CrossEncoder\nimport time\n\n# PyTorch baseline\nmodel_pt = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\n# ONNX — same API, faster inference\nmodel_onnx = CrossEncoder(\n    \"cross-encoder/ms-marco-MiniLM-L6-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\nquery = \"how to handle database connection timeouts\"\ncandidates = [\n    \"Configure connection pool timeout settings in your ORM\",\n    \"Database indexing strategies for read-heavy workloads\",\n    \"Retry logic with exponential backoff for transient failures\",\n    \"Connection pooling best practices for PostgreSQL\",\n    \"How to set statement_timeout in psycopg2\",\n] * 4  # 20 pairs\n\npairs = [[query, doc] for doc in candidates]\n\nstart = time.time()\nscores_pt = model_pt.predict(pairs, batch_size=32)\npt_ms = (time.time() - start) * 1000\n\nstart = time.time()\nscores_onnx = model_onnx.predict(pairs, batch_size=32)\nonnx_ms = (time.time() - start) * 1000\n\nprint(f\"PyTorch: {pt_ms:.1f}ms | ONNX: {onnx_ms:.1f}ms | Speedup: {pt_ms/onnx_ms:.1f}x\")\n```\n\nONNX Runtime fuses operations, eliminates Python overhead, and applies hardware-specific optimizations — all transparently behind the same `predict()` API.\n\n### Score Calibration with Sigmoid\n\nCross-encoder outputs are raw logits — unbounded numbers where only relative order matters. For production, you often need a probability-like score to set thresholds (\"only include documents with >70% relevance\"):\n\n```python\nimport numpy as np\n\ndef calibrate_scores(scores, temperature=1.0):\n    \"\"\"Convert raw logits to 0-1 probabilities via sigmoid.\"\"\"\n    return 1 / (1 + np.exp(-scores / temperature))\n\nraw_scores = model_onnx.predict(pairs[:5])\ncalibrated = calibrate_scores(raw_scores, temperature=1.5)\n\nfor doc, raw, cal in zip(candidates[:5], raw_scores, calibrated):\n    print(f\"  raw={raw:+.2f}  cal={cal:.3f} | {doc[:50]}\")\n```\n\nThe `temperature` parameter controls spread: lower values push scores toward 0 or 1 (more decisive), higher values keep them near 0.5 (more conservative).\n\n### Latency-Budget Adaptive Reranking\n\nIn production, you don't always have time to rerank all candidates. A latency budget system adjusts reranking depth dynamically:\n\n```python\nfrom sentence_transformers import SentenceTransformer, CrossEncoder, util\nimport time\nimport numpy as np\n\nclass AdaptiveReranker:\n    def __init__(self, budget_ms=50):\n        self.bi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n        self.cross_encoder = CrossEncoder(\n            \"cross-encoder/ms-marco-MiniLM-L6-v2\",\n            backend=\"onnx\",\n            model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n        )\n        self.budget_ms = budget_ms\n        self.ms_per_pair = 1.0  # calibrated at startup\n\n    def retrieve_and_rerank(self, query, corpus, top_k=5):\n        # Stage 1: Bi-encoder retrieval\n        q_emb = self.bi_encoder.encode(query, convert_to_tensor=True)\n        c_emb = self.bi_encoder.encode(corpus, convert_to_tensor=True)\n        hits = util.semantic_search(q_emb, c_emb, top_k=50)[0]\n\n        # Adaptive depth: how many can we rerank in budget?\n        max_rerank = min(len(hits), int(self.budget_ms / self.ms_per_pair))\n        candidates = [corpus[h[\"corpus_id\"]] for h in hits[:max_rerank]]\n\n        # Stage 2: Cross-encoder reranking\n        pairs = [[query, doc] for doc in candidates]\n        start = time.time()\n        scores = self.cross_encoder.predict(pairs, batch_size=32)\n        elapsed_ms = (time.time() - start) * 1000\n\n        # Update timing estimate with exponential moving average\n        if len(pairs) > 0:\n            self.ms_per_pair = 0.9 * self.ms_per_pair + 0.1 * (elapsed_ms / len(pairs))\n\n        ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)\n        return [{\"text\": doc, \"score\": float(s)} for doc, s in ranked[:top_k]]\n```\n\n### SafeTensors: Secure Weight Loading\n\nThe model ships in SafeTensors format — a memory-safe alternative to pickle-based `.bin` files. SafeTensors prevents arbitrary code execution during model loading, which matters in production where models may be pulled from registries:\n\n```python\n# SafeTensors is the default format — no code changes needed\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n# Internally loads model.safetensors instead of pytorch_model.bin\n# Zero deserialization vulnerabilities — weights only, no executable code\n```\n\n### Integrating into Homie's RAG Pipeline\n\n```python\ndef homie_answer(query, knowledge_base, reranker, llm_fn):\n    results = reranker.retrieve_and_rerank(query, knowledge_base, top_k=3)\n    context = \"\\n\".join(f\"- {r['text']}\" for r in results)\n    prompt = f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer concisely:\"\n    return llm_fn(prompt)\n```\n\nWith ONNX acceleration and adaptive depth, the reranking stage adds 15-30ms instead of 400ms — invisible to the user, transformative for answer quality.\n\n> **Key Insight:** Production reranking isn't just about model quality — it's about latency budgets, runtime selection, and score calibration. Deploy ms-marco-MiniLM-L6-v2 with ONNX for 2-3x CPU speedup, calibrate raw logits with sigmoid for threshold-based filtering, and use adaptive depth to stay within latency constraints. This is how Homie's reranking stage should run in production."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Your cross-encoder reranker works — but it's too slow for production. ms-marco-MiniLM-L6-v2 ships as SafeTensors weights compatible with PyTorch, ONNX, and JAX. By switching to ONNX Runtime, calibrating scores, and adapting reranking depth to a latency budget, you'll turn a 400ms bottleneck into a 20ms precision boost for Homie's RAG pipeline.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\nimport time\n\nmodel_pt = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\nmodel_onnx = CrossEncoder(\n    \"cross-encoder/ms-marco-MiniLM-L6-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\n\nquery = \"how to handle database connection timeouts\"\ncandidates = [\n    \"Configure connection pool timeout settings in your ORM\",\n    \"Database indexing strategies for read-heavy workloads\",\n    \"Retry logic with exponential backoff for transient failures\",\n]\n\npairs = [[query, doc] for doc in candidates]\n\nstart = time.time()\nscores_pt = model_pt.predict(pairs)\npt_ms = (time.time() - start) * 1000\n\nstart = time.time()\nscores_onnx = model_onnx.predict(pairs)\nonnx_ms = (time.time() - start) * 1000\n\nprint(f\"PyTorch: {pt_ms:.1f}ms | ONNX: {onnx_ms:.1f}ms\")",
+      "steps": [
+        {"line": 1, "explanation": "Import CrossEncoder from sentence-transformers. The same class handles PyTorch, ONNX, and other backends — the API is identical regardless of runtime."},
+        {"line": 4, "explanation": "Load the PyTorch backend — the default. Good for development and GPU inference, but carries Python runtime overhead on CPU deployments."},
+        {"line": 6, "explanation": "Load the same model with ONNX Runtime. The backend parameter switches the inference engine without changing any scoring code."},
+        {"line": 9, "explanation": "CPUExecutionProvider runs the optimized ONNX graph on CPU. For GPU, swap to CUDAExecutionProvider. Same weights, different hardware targets."},
+        {"line": 12, "explanation": "A real-world query about database timeouts. The cross-encoder must understand that 'connection pool timeout' is more relevant than 'indexing strategies'."},
+        {"line": 19, "explanation": "Create [query, document] pairs. Cross-encoders process both texts jointly through transformer attention — unlike bi-encoders which encode independently."},
+        {"line": 21, "explanation": "Benchmark PyTorch inference. On CPU, expect ~2ms per pair. On GPU, ~0.4ms per pair — but GPU has fixed overhead for small batches."},
+        {"line": 25, "explanation": "Benchmark ONNX inference. Expect 2-3x speedup over PyTorch on CPU thanks to operation fusion and eliminated Python dispatch overhead."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import CrossEncoder\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\nquery = \"python exception handling best practices\"\ndocs = [\n    \"Use try/except blocks to catch specific exceptions\",\n    \"Python supports multiple inheritance via MRO\",\n    \"Always log exceptions before re-raising them\",\n    \"List comprehensions are faster than loops\",\n]\n\nraw_scores = model.predict([[query, d] for d in docs])\n\n# Calibrate with sigmoid\ndef calibrate(scores, temperature=1.5):\n    return 1 / (1 + np.exp(-scores / temperature))\n\ncalibrated = calibrate(raw_scores)\n\nfor doc, raw, cal in sorted(\n    zip(docs, raw_scores, calibrated),\n    key=lambda x: x[1], reverse=True\n):\n    print(f\"raw={raw:+.2f} prob={cal:.3f} | {doc[:50]}\")\n\n# Set a relevance threshold\nrelevant = [(d, c) for d, c in zip(docs, calibrated) if c > 0.5]\nprint(f\"\\n{len(relevant)} documents above 0.5 threshold\")",
+      "steps": [
+        {"line": 1, "explanation": "NumPy for vectorized sigmoid computation. Calibrating scores in batch is faster than looping over individual values."},
+        {"line": 6, "explanation": "A query about exception handling. Two documents are relevant (try/except, logging exceptions), two are distractors (inheritance, list comprehensions)."},
+        {"line": 14, "explanation": "model.predict() returns raw logits — unbounded real numbers. Positive means likely relevant, negative means likely irrelevant, but scale varies per query."},
+        {"line": 17, "explanation": "Sigmoid with temperature converts logits to 0-1 probabilities. Temperature=1.5 gives a moderate spread — lower values are more decisive, higher more conservative."},
+        {"line": 22, "explanation": "Sort by raw score and display both raw and calibrated values. Notice how sigmoid maps the relative ordering into interpretable probabilities."},
+        {"line": 28, "explanation": "Threshold filtering: only keep documents with >50% calibrated relevance. This prevents low-quality context from polluting the RAG prompt."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import time\nimport numpy as np\n\nclass AdaptiveReranker:\n    def __init__(self, budget_ms=50.0):\n        self.budget_ms = budget_ms\n        self.ms_per_pair = 2.0  # initial estimate\n\n    def max_candidates(self):\n        return max(1, int(self.budget_ms / self.ms_per_pair))\n\n    def rerank(self, query, candidates, score_fn):\n        n = min(len(candidates), self.max_candidates())\n        subset = candidates[:n]\n\n        start = time.time()\n        pairs = [[query, doc] for doc in subset]\n        scores = score_fn(pairs)\n        elapsed = (time.time() - start) * 1000\n\n        # Update timing with exponential moving average\n        if n > 0:\n            observed = elapsed / n\n            self.ms_per_pair = 0.8 * self.ms_per_pair + 0.2 * observed\n\n        ranked = sorted(zip(subset, scores), key=lambda x: x[1], reverse=True)\n        return [{\"text\": d, \"score\": float(s)} for d, s in ranked]\n\nreranker = AdaptiveReranker(budget_ms=30)\nprint(f\"Max candidates at 30ms budget: {reranker.max_candidates()}\")\n\nreranker.ms_per_pair = 1.0  # faster hardware\nprint(f\"Max candidates at 30ms budget: {reranker.max_candidates()}\")",
+      "steps": [
+        {"line": 4, "explanation": "AdaptiveReranker adjusts how many candidates it reranks based on a millisecond budget. In production, this prevents the reranker from blowing your latency SLO."},
+        {"line": 6, "explanation": "The latency budget in milliseconds. Set this based on your end-to-end latency target minus retrieval and LLM generation time."},
+        {"line": 7, "explanation": "Initial estimate of time per pair. This self-calibrates after the first few queries via exponential moving average."},
+        {"line": 9, "explanation": "Calculate how many pairs we can afford to score. With 50ms budget and 2ms/pair, we can rerank 25 candidates."},
+        {"line": 12, "explanation": "Take only the top-N candidates from the bi-encoder stage. The rest are skipped — bi-encoder ordering is good enough for tail results."},
+        {"line": 20, "explanation": "Exponential moving average smooths out timing variance from system load. Weight of 0.2 on new observations means gradual adaptation, not jitter."},
+        {"line": 25, "explanation": "Return documents sorted by cross-encoder score. The adaptive depth ensures this always completes within the latency budget."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "PyTorch Runtime",
+      "right_label": "ONNX Runtime",
+      "items": [
+        {"left": "Default backend, widest compatibility", "right": "2-3x faster CPU inference via operation fusion"},
+        {"left": "Required for training and fine-tuning", "right": "Inference only — no backward pass support"},
+        {"left": "Dynamic graph, easy debugging", "right": "Static optimized graph, harder to debug"},
+        {"left": "Loads .bin or .safetensors weights", "right": "Loads exported ONNX graph + weights"},
+        {"left": "GPU-optimized with CUDA kernels", "right": "CPU-optimized with MLAS + vectorization"},
+        {"left": "Best for dev and experimentation", "right": "Best for production API serving"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Your reranker is production-ready! ONNX for speed, sigmoid for calibrated scores, adaptive depth for latency budgets. Homie's RAG pipeline just went from research prototype to production-grade — answers are more accurate AND faster."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ScoreCalibrator` class that converts raw cross-encoder logits into calibrated probabilities. Implement `calibrate(scores, temperature)` using the sigmoid function, and `filter_relevant(scores, threshold, temperature)` that returns indices of scores above the threshold after calibration. This simulates the score calibration step needed before setting relevance thresholds in production reranking."
+      },
+      "starter_code": "import math\n\nclass ScoreCalibrator:\n    def sigmoid(self, x: float) -> float:\n        # Compute sigmoid: 1 / (1 + e^(-x))\n        # Handle large negative values to avoid overflow\n        pass\n\n    def calibrate(self, scores: list[float], temperature: float = 1.0) -> list[float]:\n        # Apply sigmoid(score / temperature) to each score\n        # temperature controls spread: lower = more decisive, higher = more conservative\n        # Return list of calibrated scores (0 to 1)\n        pass\n\n    def filter_relevant(self, scores: list[float], threshold: float = 0.5,\n                        temperature: float = 1.0) -> list[int]:\n        # Calibrate scores, then return indices where calibrated score >= threshold\n        # Return indices in original order\n        pass\n\n# Test it:\ncal = ScoreCalibrator()\n\n# Sigmoid basics\nprint(f\"{cal.sigmoid(0):.1f}\")\nprint(cal.sigmoid(10) > 0.99)\nprint(cal.sigmoid(-10) < 0.01)\n\n# Calibration with temperature\nraw = [3.0, 0.5, -2.0, 1.0]\ncalibrated = cal.calibrate(raw, temperature=1.0)\nprint(calibrated[0] > calibrated[1] > calibrated[3] > calibrated[2])\n\n# Filter relevant\nidx = cal.filter_relevant([2.0, -1.0, 0.5, -3.0], threshold=0.5)\nprint(idx)",
+      "expected_output": "0.5\nTrue\nTrue\nTrue\n[0, 2]",
+      "hints": {
+        "en": [
+          "For sigmoid, use math.exp(-x) but clamp x to avoid overflow: if x < -500 return 0.0, if x > 500 return 1.0",
+          "In calibrate(), divide each score by temperature before applying sigmoid: sigmoid(score / temperature)",
+          "In filter_relevant(), call self.calibrate() first, then use a list comprehension with enumerate to get indices where calibrated[i] >= threshold"
+        ]
+      },
+      "test_code": "cal = ScoreCalibrator()\nassert abs(cal.sigmoid(0) - 0.5) < 0.001\nassert cal.sigmoid(100) > 0.999\nassert cal.sigmoid(-100) < 0.001\nassert abs(cal.sigmoid(1) - 0.7310585) < 0.001\nc = cal.calibrate([0.0, 1.0, -1.0], temperature=1.0)\nassert abs(c[0] - 0.5) < 0.001\nassert c[1] > c[0] > c[2]\nc2 = cal.calibrate([2.0], temperature=2.0)\nc1 = cal.calibrate([2.0], temperature=1.0)\nassert abs(c2[0] - cal.sigmoid(1.0)) < 0.001\nidx = cal.filter_relevant([2.0, -1.0, 0.5, -3.0], threshold=0.5)\nassert idx == [0, 2]\nidx2 = cal.filter_relevant([-1.0, -2.0], threshold=0.5)\nassert idx2 == []"
+    },
+    {
+      "instruction": {
+        "en": "Build an `AdaptiveReranker` class that dynamically adjusts how many candidates to rerank based on a latency budget. The reranker tracks time-per-pair using an exponential moving average and limits reranking depth to stay within budget. Implement `max_candidates()` to calculate capacity, `update_timing(elapsed_ms, n_pairs)` to update the EMA, and `rerank(query, candidates, score_fn)` that scores only as many pairs as the budget allows and returns them sorted by score descending."
+      },
+      "starter_code": "class AdaptiveReranker:\n    def __init__(self, budget_ms: float = 50.0, initial_ms_per_pair: float = 2.0):\n        self.budget_ms = budget_ms\n        self.ms_per_pair = initial_ms_per_pair\n\n    def max_candidates(self) -> int:\n        # Return max number of candidates we can rerank within budget\n        # Always at least 1\n        pass\n\n    def update_timing(self, elapsed_ms: float, n_pairs: int):\n        # Update ms_per_pair using exponential moving average\n        # EMA weight: 0.8 on old value, 0.2 on new observation\n        # Only update if n_pairs > 0\n        pass\n\n    def rerank(self, query: str, candidates: list[str], score_fn) -> list[dict]:\n        # 1. Determine how many candidates we can afford: min(len(candidates), max_candidates())\n        # 2. Take that many candidates from the front of the list\n        # 3. Create [query, candidate] pairs and call score_fn(pairs) to get scores\n        # 4. Update timing (assume 1ms per pair for simulation)\n        # 5. Return list of {\"text\": str, \"score\": float} sorted by score descending\n        pass\n\n# Test it:\nar = AdaptiveReranker(budget_ms=10, initial_ms_per_pair=2.0)\nprint(ar.max_candidates())\n\nar.update_timing(elapsed_ms=15, n_pairs=5)\nprint(f\"{ar.ms_per_pair:.1f}\")\nprint(ar.max_candidates())\n\n# Mock score function: returns position-based scores\ndef mock_scorer(pairs):\n    return [1.0 / (i + 1) for i in range(len(pairs))]\n\nresults = ar.rerank(\"test query\", [\"doc_a\", \"doc_b\", \"doc_c\", \"doc_d\", \"doc_e\"], mock_scorer)\nprint(len(results) <= ar.max_candidates() + 1)  # True (may have updated timing)\nprint(results[0][\"score\"] >= results[-1][\"score\"])",
+      "expected_output": "5\n2.2\n4\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "max_candidates: use max(1, int(self.budget_ms / self.ms_per_pair)) to ensure at least 1 candidate",
+          "update_timing: compute observed = elapsed_ms / n_pairs, then self.ms_per_pair = 0.8 * self.ms_per_pair + 0.2 * observed",
+          "In rerank(), after getting scores from score_fn, call self.update_timing(n * self.ms_per_pair, n) to simulate timing, then sort zip(candidates_subset, scores) by score descending"
+        ]
+      },
+      "test_code": "ar = AdaptiveReranker(budget_ms=10, initial_ms_per_pair=2.0)\nassert ar.max_candidates() == 5\nassert ar.max_candidates() >= 1\nar2 = AdaptiveReranker(budget_ms=1, initial_ms_per_pair=5.0)\nassert ar2.max_candidates() == 1\nar.update_timing(15, 5)\nassert abs(ar.ms_per_pair - 2.2) < 0.01\nassert ar.max_candidates() == 4\nar.update_timing(0, 0)\nassert abs(ar.ms_per_pair - 2.2) < 0.01\ndef mock_scorer(pairs):\n    return [len(p[1]) for p in pairs]\nresults = ar.rerank(\"q\", [\"short\", \"a longer doc\", \"xx\"], mock_scorer)\nassert len(results) <= 4\nassert all(\"text\" in r and \"score\" in r for r in results)\nassert results[0][\"score\"] >= results[-1][\"score\"]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["cross-encoder production deployment", "ONNX runtime optimization", "score calibration", "sigmoid temperature", "adaptive reranking depth", "latency budgets", "SafeTensors security", "exponential moving average", "multi-framework inference", "retrieve-then-rerank at scale"],
+    "concepts_required": ["python classes", "cross-encoders", "bi-encoder vs cross-encoder", "RAG pipelines", "sentence embeddings", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

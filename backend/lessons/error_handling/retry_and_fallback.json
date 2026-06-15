@@ -1,0 +1,172 @@
+{
+  "id": "retry_and_fallback",
+  "topic": "retry_and_fallback",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 2,
+  "title": {
+    "en": "Retries, Fallbacks & Graceful Degradation (Capstone)"
+  },
+  "description": {
+    "en": "The capstone of the resilience track: real systems don't avoid failure, they expect it and recover. Learn when to retry transient errors (with backoff, only for idempotent ops), when to serve a fallback or degrade gracefully, why timeouts and circuit breakers stop you hammering a dead dependency, and the wisdom to fail LOUD when degrading silently would be worse than crashing."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Systems That Expect to Fail\n\nEverything in this track so far taught you to handle failure *cleanly*: catch specific exceptions, raise meaningful errors, guarantee cleanup with `finally` and context managers. That's how you survive one bad call. This capstone is about the next level up — building systems that *expect* failure as a normal event and **recover** from it, so a single hiccup in a network, a database, or a third-party API doesn't take the whole thing down.\n\nThe naive program assumes the world is reliable. The resilient one assumes the opposite: the network *will* blip, the dependency *will* be slow, the disk *will* be full sometimes — and it has a plan for each.\n\n> **Key idea:** Resilient systems expect failure and recover. Retry transient errors (idempotent only), with backoff. Serve a fallback or degrade gracefully so one failure doesn't break everything. Bound your waits with timeouts. Stop hammering a dead dependency with a circuit breaker. And know when to fail LOUD instead — silent degradation of something critical is worse than a clean crash.\n\n## Retry — but Only the Right Things\n\nSome failures are **transient**: a momentary network blip, a brief timeout, a database that was busy for 50ms. The cure is simply to *try again*. Retrying a few times turns a flaky call into a reliable one.\n\nBut retrying is a sharp tool, and two rules keep it from cutting you:\n\n1. **Only retry transient errors.** A `ConnectionError` or read timeout might fix itself on the next attempt. A `400 Bad Request`, a `ValueError`, or a `404` will *never* fix itself — retrying it just wastes time and hammers the server. Retrying a logic error forever is a bug, not resilience.\n2. **Only retry idempotent operations.** An operation is idempotent if doing it twice has the same effect as doing it once — reading a record, fetching a page, setting a value. Retrying *those* is safe. Blindly retrying \"charge the customer\" or \"send the email\" can double-charge or double-send. If the first attempt *might* have succeeded before failing, a naive retry is dangerous.\n\nAnd when you do retry, don't retry instantly in a tight loop — use **exponential backoff**: wait a little, then more, then more (0.1s, 0.2s, 0.4s...). This gives a struggling dependency room to recover instead of being pounded the instant it stumbles.\n\n## Fallbacks & Graceful Degradation\n\nRetrying buys time, but what if the dependency stays down? You don't have to choose between \"perfect\" and \"crashed.\" The middle path is a **fallback**: when the primary source fails, serve a cached, default, or approximate result so the user still gets *something* useful.\n\n- Recommendation service down? Show a generic \"popular items\" list instead of a 500 error.\n- Live price feed unreachable? Serve the last cached price with a \"may be delayed\" note.\n- Avatar image fails to load? Show initials.\n\nThis is **graceful degradation**: the system loses a feature, not its life. One failure dims a light instead of blowing the fuse box.\n\n## Timeouts & the Circuit Breaker\n\nTwo more pieces complete the picture:\n\n**Timeouts.** Never wait forever. A call with no timeout can hang indefinitely, and worse, pile up other waiting requests until the whole system freezes. Always bound the wait — a slow dependency should fail *fast* so your fallback can kick in.\n\n**Circuit breakers.** If a dependency has failed 20 times in a row, the 21st attempt almost certainly fails too — and each attempt costs you a timeout. A circuit breaker notices the streak and \"trips\": for a cooldown window it stops calling the broken dependency entirely and goes straight to the fallback. After the cooldown it lets one trial call through to check if things recovered. This protects both you (no wasted waiting) and the struggling dependency (no pile-on).\n\n## When to Fail LOUD Instead\n\nResilience has a dark twin: **silently degrading something that should never degrade.** A payment must not \"fall back\" to pretending it succeeded. A security check must not \"degrade\" to letting everyone in. For critical, money- or safety-touching operations, the right move is the opposite of this lesson — fail fast, fail loud, and stop. Graceful degradation is for features. Some things must be all-or-nothing.\n\n| Failure type | Right strategy |\n|---|---|\n| Transient network blip (idempotent read) | Retry with exponential backoff |\n| Dependency down but feature non-critical | Fallback value / degraded mode |\n| Dependency failing repeatedly | Circuit breaker: stop calling, use fallback |\n| Call that may hang forever | Timeout, then fail fast to fallback |\n| Non-idempotent op (charge, send) | Do NOT blindly retry — risk double effect |\n| Logic error (400, ValueError) | Don't retry — it will never self-heal |\n| Critical op (payment, auth, safety) | Fail LOUD — never degrade silently |\n\n## The Whole Track, In One Line\n\nYou now have the full arc of resilience. **Handle specifically** — catch the exact exception, never a bare `except`. **Raise meaningful errors** — say what broke and why, so the next person isn't guessing. **Guarantee cleanup** — `finally` and context managers release resources no matter what. And now, **recover** — retry the transient, fall back when you can, time-box every wait, and fail loud when degrading would be a lie. The first three skills let you survive a failure cleanly. This last one lets the whole system keep its feet."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "resilience",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "track_recap",
+      "nodes": [
+        {
+          "label": "The Resilience Arc",
+          "children": [
+            "Handle specifically: catch the exact exception",
+            "Meaningful errors: say what broke & why",
+            "Guaranteed cleanup: finally & context managers",
+            "Recover: retry, fallback, timeout, circuit-break",
+            "Know when to fail LOUD instead"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "retry_vs_no_retry",
+      "left": {
+        "label": "No retry: one transient network blip fails the whole request",
+        "result": false
+      },
+      "right": {
+        "label": "Retry with backoff: the blip self-heals on attempt 2, request succeeds",
+        "result": true
+      },
+      "description": {
+        "en": "Same transient failure hits both. Without retry, a 50ms hiccup becomes a user-facing 500. With a bounded retry and backoff, the second attempt succeeds and the user never knows. But this only works for IDEMPOTENT, transient errors — never blindly retry a charge or a 400."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "retry_fallback_demo",
+      "code": "def retry(func, attempts, fallback):\n    for i in range(attempts):\n        try:\n            return func()\n        except Exception:\n            continue\n    return fallback\n\ncalls = {\"n\": 0}\ndef flaky():\n    calls[\"n\"] += 1\n    if calls[\"n\"] < 3:\n        raise ConnectionError(\"blip\")\n    return \"ok\"\n\nprint(retry(flaky, 5, \"cached\"))",
+      "executionSteps": [
+        { "line": 13, "variables": { "calls[\"n\"]": "1", "i": "0" }, "output": "", "description": "Attempt 1: flaky() raises ConnectionError (transient). We catch it and continue." },
+        { "line": 13, "variables": { "calls[\"n\"]": "2", "i": "1" }, "output": "", "description": "Attempt 2: still failing (counter is 2). Catch, continue — backoff would wait here." },
+        { "line": 16, "variables": { "calls[\"n\"]": "3", "i": "2" }, "output": "ok", "description": "Attempt 3: counter reached 3, flaky() returns 'ok'. Retry succeeded — fallback never needed." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Expect failure. Recover from it.",
+        "Retry the transient (idempotent only), fall back when you can,",
+        "time-box every wait, circuit-break the dead dependency,",
+        "and fail LOUD when degrading would be a lie."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build the core resilience helper. Implement retry(func, attempts, fallback): call func() and return its result; if it raises, try again, up to a total of `attempts` calls; if every attempt fails, return the fallback instead of crashing. We make it DETERMINISTIC (no real network, no real sleeping): make_flaky(n) returns a function that raises ConnectionError its first n calls, then returns 'success' forever, using a mutable counter. With a function that fails twice then succeeds and attempts=5, retry returns 'success'. Expected output: success"
+      },
+      "starter_code": "def make_flaky(fail_times):\n    # Returns a function that raises ConnectionError its first `fail_times`\n    # calls, then returns 'success' on every call after that. The mutable\n    # counter makes the outcome fully deterministic (no real network).\n    state = {\"calls\": 0}\n    def flaky():\n        state[\"calls\"] += 1\n        if state[\"calls\"] <= fail_times:\n            raise ConnectionError(f\"transient blip #{state['calls']}\")\n        return \"success\"\n    return flaky\n\ndef retry(func, attempts, fallback):\n    # TODO: call func() up to `attempts` times total.\n    # Return func()'s result the first time it succeeds.\n    # If all `attempts` calls raise, return `fallback` (don't crash).\n    # Deterministic: no real time.sleep with real durations.\n    return func()  # BUG: only tries once, and crashes if it raises\n\n# Fails twice, then succeeds. With 5 attempts that's plenty.\nresult = retry(make_flaky(2), attempts=5, fallback=\"cached_default\")\nprint(result)",
+      "expected_output": "success",
+      "hints": {
+        "en": [
+          "Loop `for _ in range(attempts):` so you make at most `attempts` total calls to func().",
+          "Inside the loop, wrap the call in try/except: `try: return func()` returns immediately on the first success.",
+          "In the `except Exception:` branch, just keep looping (use `continue`). A real version would back off here with an increasing wait — keep it 0/omit it so the test is deterministic.",
+          "After the loop ends (every attempt raised), fall through to `return fallback` so the caller gets a safe default instead of an exception."
+        ]
+      },
+      "test_code": "import builtins\n\n# Succeeds after the right number of retries (fails twice, succeeds on 3rd call).\nassert retry(make_flaky(2), attempts=5, fallback=\"cached_default\") == \"success\"\n\n# Succeeds on the very first attempt when nothing fails.\nassert retry(make_flaky(0), attempts=3, fallback=\"cached_default\") == \"success\"\n\n# Succeeds exactly on the last allowed attempt (fails 2x, 3rd attempt works, attempts=3).\nassert retry(make_flaky(2), attempts=3, fallback=\"cached_default\") == \"success\"\n\n# Exhausts all attempts (never enough) -> returns the fallback, does NOT raise.\nassert retry(make_flaky(99), attempts=3, fallback=\"cached_default\") == \"cached_default\"\n\n# Fallback can be any value, including None.\nassert retry(make_flaky(99), attempts=1, fallback=None) is None\n\n# It must actually retry: with attempts=2 and 1 failure, it still succeeds.\nassert retry(make_flaky(1), attempts=2, fallback=\"cached_default\") == \"success\"\n\n# With attempts=1 and 1 failure, one call isn't enough -> fallback.\nassert retry(make_flaky(1), attempts=1, fallback=\"cached_default\") == \"cached_default\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "When is it appropriate to RETRY a failed operation?"
+      },
+      "options": {
+        "en": [
+          "Always — retrying any failure eventually makes it work",
+          "Only for transient errors (like a network blip) on idempotent operations, ideally with backoff",
+          "Only for logic errors like 400 Bad Request and ValueError",
+          "Never — retrying is always a bug"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why should you NOT blindly retry a non-idempotent operation like 'charge the customer'?"
+      },
+      "options": {
+        "en": [
+          "Non-idempotent operations are always faster the second time",
+          "The first attempt may have already succeeded before failing, so retrying risks doing it twice (double-charge)",
+          "Retrying a charge is illegal",
+          "Non-idempotent operations can never fail"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is graceful degradation via a fallback?"
+      },
+      "options": {
+        "en": [
+          "Crashing immediately so the user sees the real error",
+          "Serving a cached/default/approximate result when the primary source fails, so one failure dims a feature instead of breaking everything",
+          "Retrying the same call forever until it works",
+          "Disabling all error handling to run faster"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When is failing LOUD the RIGHT choice instead of degrading gracefully?"
+      },
+      "options": {
+        "en": [
+          "For non-critical features like avatar images or recommendation lists",
+          "For critical, money- or safety-touching operations (payments, auth) where silently degrading would be a dangerous lie",
+          "Never — graceful degradation is always better",
+          "Only when there is no fallback value available"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["retry", "exponential_backoff", "fallback", "graceful_degradation", "timeouts", "circuit_breaker", "idempotency", "fail_loud", "resilience"],
+    "concepts_required": ["context_managers_and_cleanup"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "category": "error_handling",
+    "estimated_minutes": 22,
+    "path_memberships": []
+  },
+  "generated": false
+}

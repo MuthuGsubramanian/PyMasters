@@ -1,0 +1,172 @@
+{
+  "id": "csv_processing",
+  "topic": "csv_processing",
+  "track": "working_with_data",
+  "module": "formats",
+  "order": 1,
+  "title": {
+    "en": "CSV: Tabular Data Without the Pain"
+  },
+  "description": {
+    "en": "CSV is the lingua franca of tabular data — spreadsheets, exports, datasets all speak it. But the obvious move, line.split(','), is a trap: it shatters the moment a field contains a comma, a quote, or a newline. Meet Python's csv module, and especially csv.DictReader, which turns every row into a clean, header-keyed dict."
+  },
+  "xp_reward": 90,
+  "next_unlock": "working_with_dates",
+  "story_variants": {
+    "en": "## The Comma That Isn't a Separator\n\nCSV — *comma-separated values* — looks like the simplest format in the world. Lines of text, fields split by commas. So when you need to read one, the obvious move is:\n\n```python\nfor line in text.splitlines():\n    fields = line.split(\",\")\n```\n\nThis works on toy data and then betrays you on real data. Because the comma is doing **two jobs**: sometimes it separates fields, and sometimes it lives *inside* a field. Consider one row from a real export:\n\n```\nBob, Jr.,Hardware,80\n```\n\nIs that a person named *Bob* with department *Jr.*? No — the name is `\"Bob, Jr.\"`, quoted precisely so the comma inside it is **not** a separator. Run `split(\",\")` on it and every column after the name shifts left by one. Your `int(sales)` now tries to parse `\"80\"`... or `\"Jr.\"`. Silent corruption, or a crash three columns away from the real bug.\n\n## The csv Module Knows the Rules\n\nCSV is not \"text with commas.\" It is a small format with real rules: fields may be wrapped in double quotes; a quoted field may contain commas, newlines, and escaped quotes (`\"\"`). Python's built-in **`csv` module** implements all of that for you.\n\n```python\nimport csv, io\n\nreader = csv.reader(io.StringIO(text))\nfor row in reader:\n    print(row)   # row is a LIST of fields, quoting already handled\n```\n\n`csv.reader` hands you each row as a **list** of strings, with all the quoting, escaping, and embedded commas resolved. You never write a parser. You never get bitten by the comma-inside-a-field problem again.\n\n## DictReader: The Readable Choice\n\nLists are fine, but `row[2]` is a mystery — *what was column 2 again?* **`csv.DictReader`** reads the first line as a header and gives you each row as a **dict keyed by column name**:\n\n```python\nreader = csv.DictReader(io.StringIO(text))\nfor row in reader:\n    print(row[\"name\"], int(row[\"sales\"]))\n```\n\nNow your code reads like the data: `row[\"sales\"]`, not `row[2]`. If someone reorders the columns in the export, your code still works, because it addresses fields by name, not position. For almost all reading, **DictReader is the right default.**\n\n## Reader vs DictReader vs the Naive Split\n\n| Approach | You get back | Handles quotes/commas/newlines in fields? | Best for |\n|---|---|---|---|\n| `line.split(\",\")` | list of substrings | **No** — breaks on any embedded comma | nothing real; avoid |\n| `csv.reader` | each row as a **list** | **Yes** | quick positional access, no header |\n| `csv.DictReader` | each row as a **dict** keyed by header | **Yes** | readable, header-based access (default) |\n\n## Writing Is Symmetric\n\nGoing the other way, `csv.writer` takes lists and `csv.DictWriter` takes dicts — and they **add the quotes back automatically** when a field contains a comma or newline:\n\n```python\nimport csv, io\n\nbuf = io.StringIO()\nw = csv.DictWriter(buf, fieldnames=[\"name\", \"dept\"])\nw.writeheader()\nw.writerow({\"name\": \"Bob, Jr.\", \"dept\": \"Hardware\"})\nprint(buf.getvalue())\n# name,dept\\n\"Bob, Jr.\",Hardware\\n  <- the comma-bearing field got quoted for you\n```\n\n## Files, Strings, Any Iterable of Lines\n\nThe `csv` reader doesn't need a file — it accepts **any iterable of lines**. That's why `io.StringIO(text)` works: it wraps an in-memory string so it behaves like an open file, perfect for tests and data you already hold in memory.\n\nWhen you *do* open a real file on disk, there is one rule worth memorizing: open it with **`newline=''`**.\n\n```python\nwith open(\"data.csv\", newline=\"\") as f:\n    reader = csv.DictReader(f)\n    ...\n```\n\nThe `csv` module does its own newline handling so it can correctly read quoted fields that contain line breaks. If you let Python's default newline translation interfere, multi-line quoted fields can come apart. `newline=''` hands raw lines to the module and everything stays intact.\n\n> **Key idea:** CSV looks like \"split on commas\" but isn't — quoting lets fields contain commas, newlines, and quotes. Use the `csv` module: `csv.reader` for rows-as-lists, `csv.DictReader` for readable rows-as-dicts keyed by header (the default choice), and `csv.writer`/`DictWriter` to write quoting back correctly. It reads any iterable of lines (use `io.StringIO` for in-memory text); when opening real files, pass `newline=''`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "spreadsheet_grid",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "csv_module_map",
+      "nodes": [
+        {
+          "label": "Python csv module",
+          "children": [
+            "csv.reader -> rows as lists",
+            "csv.DictReader -> rows as dicts keyed by header",
+            "csv.writer / DictWriter -> writes quoting back",
+            "Handles embedded commas, quotes, newlines",
+            "Reads any iterable of lines (io.StringIO in-memory)",
+            "Open real files with newline=''"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "split_vs_csv",
+      "left": {
+        "label": "line.split(',') on \"Bob, Jr.\",Hardware,80 -> shatters into 4 fields, columns shift, int() breaks",
+        "result": false
+      },
+      "right": {
+        "label": "csv.DictReader -> {'name': 'Bob, Jr.', 'department': 'Hardware', 'sales': '80'} — comma inside quotes respected",
+        "result": true
+      },
+      "description": {
+        "en": "The comma does two jobs: separator AND literal character inside quoted fields. Only the csv module knows which is which."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "dictreader_demo",
+      "code": "import csv, io\ntext = 'name,department,sales\\n\"Bob, Jr.\",Hardware,80\\n'\nfor row in csv.DictReader(io.StringIO(text)):\n    print(row[\"name\"], int(row[\"sales\"]))",
+      "executionSteps": [
+        { "line": 2, "variables": { "text": "header + one quoted row" }, "output": "", "description": "io.StringIO wraps the string so it acts like an open file." },
+        { "line": 3, "variables": { "header": "['name', 'department', 'sales']" }, "output": "", "description": "DictReader reads line 1 as the header keys." },
+        { "line": 4, "variables": { "row": "{'name': 'Bob, Jr.', 'department': 'Hardware', 'sales': '80'}" }, "output": "Bob, Jr. 80", "description": "The comma inside the quotes stayed in the name. int('80') works because columns never shifted." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Never line.split(',') a CSV — quoted fields hide commas.",
+        "csv.reader -> lists. csv.DictReader -> dicts keyed by header (the readable default).",
+        "io.StringIO for in-memory text; newline='' when opening real files."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Aggregate a CSV in memory. The CSV_TEXT below has a header (name,department,sales) and one row whose name is the quoted field \"Bob, Jr.\" — its comma lives INSIDE the field, which is exactly why csv.split-by-comma would break and the csv module won't. Finish total_sales_for(csv_text, department): use csv.DictReader over io.StringIO(csv_text), and for every row whose row['department'] matches, add int(row['sales']) to a running total. With the given data, the total for 'Hardware' is 120 + 80 + 30. Expected output: 230"
+      },
+      "starter_code": "import csv\nimport io\n\n# A quoted field with a comma inside it: \"Bob, Jr.\".\n# A naive csv_text.split(',') would shatter that row and shift every column.\nCSV_TEXT = '''name,department,sales\nAlice,Hardware,120\n\"Bob, Jr.\",Hardware,80\nCarol,Software,200\nDave,Software,50\nEve,Hardware,30\n'''\n\ndef total_sales_for(csv_text, department):\n    total = 0\n    # TODO: wrap csv_text in io.StringIO and read it with csv.DictReader.\n    # For each row where row[\"department\"] == department,\n    # add int(row[\"sales\"]) to total. (int() because CSV fields are strings.)\n    return total\n\nprint(total_sales_for(CSV_TEXT, \"Hardware\"))",
+      "expected_output": "230",
+      "hints": {
+        "en": [
+          "io.StringIO(csv_text) turns the in-memory string into something csv can read like a file: reader = csv.DictReader(io.StringIO(csv_text)).",
+          "DictReader uses the first line as the header, so each row is a dict — access fields by name: row[\"department\"] and row[\"sales\"].",
+          "CSV fields are always strings, so convert before adding: total += int(row[\"sales\"]).",
+          "Only add when row[\"department\"] == department. Because csv parsed the quoted \"Bob, Jr.\" as one field, its sales value lines up correctly and int() succeeds."
+        ]
+      },
+      "test_code": "assert total_sales_for(CSV_TEXT, \"Hardware\") == 230\nassert total_sales_for(CSV_TEXT, \"Software\") == 250\nassert total_sales_for(CSV_TEXT, \"Marketing\") == 0\n_rows = list(csv.DictReader(io.StringIO(CSV_TEXT)))\nassert _rows[1][\"name\"] == \"Bob, Jr.\"\nassert _rows[1][\"sales\"] == \"80\"\nassert len(_rows) == 5"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is line.split(',') a bad way to parse CSV?"
+      },
+      "options": {
+        "en": [
+          "It is too slow for large files",
+          "A field can contain a comma inside quotes, which split treats as a separator and corrupts the columns",
+          "It only works on tab-separated files",
+          "split() is not available in Python 3"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does csv.DictReader give you for each row?"
+      },
+      "options": {
+        "en": [
+          "A single comma-joined string",
+          "A list of fields indexed by position",
+          "A dict keyed by the column names from the header row",
+          "The raw line with quotes still attached"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why wrap an in-memory CSV string in io.StringIO before passing it to csv.reader?"
+      },
+      "options": {
+        "en": [
+          "Because csv.reader only accepts bytes",
+          "Because the csv reader works on an iterable of lines, and StringIO makes a string behave like an open file",
+          "Because StringIO compresses the data",
+          "It is not needed — csv.reader takes a plain string directly"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When opening a real CSV file on disk for the csv module, what should you pass to open()?"
+      },
+      "options": {
+        "en": [
+          "mode='rb' to read raw bytes",
+          "encoding='csv'",
+          "newline='' so the csv module handles newlines itself and quoted multi-line fields stay intact",
+          "buffering=0 to disable buffering"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["csv_module", "csv_dictreader", "csv_writer", "quoting_and_escaping", "stringio"],
+    "concepts_required": ["json_handling"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 16,
+    "category": "data",
+    "path_memberships": []
+  },
+  "generated": false
+}

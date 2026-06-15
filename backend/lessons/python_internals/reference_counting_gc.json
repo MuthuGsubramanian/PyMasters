@@ -1,0 +1,166 @@
+{
+  "id": "reference_counting_gc",
+  "topic": "reference_counting_gc",
+  "track": "python_internals",
+  "module": "memory_model",
+  "order": 2,
+  "title": {
+    "en": "Reference Counting & the Cyclic Garbage Collector"
+  },
+  "description": {
+    "en": "How CPython actually frees memory: every object counts the references pointing at it, and the instant that count hits zero the object is destroyed. Learn what raises and lowers a refcount, why sys.getrefcount reads 'one too high', why reference cycles leak, and how the generational gc and weakref clean them up."
+  },
+  "xp_reward": 95,
+  "next_unlock": "mutability_and_aliasing",
+  "story_variants": {
+    "en": "## Memory That Frees Itself\n\nIn C you call `free()`. In Java a background collector eventually sweeps. CPython does something more immediate and more elegant: **reference counting.** Every object on the heap carries a small integer — its *refcount* — recording how many references currently point at it. The moment that number drops to **zero**, nothing can ever reach the object again, so CPython destroys it *right there*, synchronously. That is why `__del__` so often fires the instant a variable goes out of scope: deallocation isn't deferred, it's deterministic.\n\n### What Moves the Counter\n\nA reference is created whenever a new *name* or *container slot* starts pointing at the object, and destroyed when one stops. You don't manage this by hand — the interpreter does it for you on ordinary operations.\n\n| Operation | Effect on refcount | Why |\n|-----------|--------------------|-----|\n| `b = a` (aliasing) | **+1** | a second name now references the same object |\n| `lst.append(a)` | **+1** | the list slot holds a reference |\n| `func(a)` (call) | **+1** (temporary) | the parameter is a new reference while the call runs |\n| `d['k'] = a` | **+1** | the dict value slot references it |\n| `del b` | **−1** | a name stops referencing it |\n| `b = something_else` | **−1** | the old binding is dropped (other object gets +1) |\n| function returns / scope exit | **−1** each | local names are released |\n| `lst.pop()` / `lst.clear()` | **−1** | the container slot is freed |\n\nWhen the running total reaches zero, the object is freed immediately and *its* references are decremented in turn — a small cascade that can free a whole structure at once.\n\n### Why `sys.getrefcount` Reads One Too High\n\nYou can watch the counter with `sys.getrefcount(obj)`. Beginners are puzzled that a brand-new object reports `2`, not `1`. The reason is simple and worth remembering: **to pass `obj` into `getrefcount`, Python binds it to the function's parameter — that argument is itself a reference.** So the count you read always includes the temporary `+1` for the call. The fix in practice: never trust the *absolute* number; measure the **delta** before and after an operation. A delta is stable across Python versions and runs even when the absolute value isn't.\n\n### The One Thing Refcounting Can't Do: Cycles\n\nRefcounting has a fatal blind spot. Consider two objects that point at each other:\n\n```python\na = {}\nb = {}\na['peer'] = b   # b's refcount: 2\nb['peer'] = a   # a's refcount: 2\ndel a\ndel b           # both names gone...\n```\n\nAfter `del a` and `del b`, *you* can't reach either dict — but each still holds a reference to the other, so **neither refcount ever reaches zero.** Pure refcounting would leak them forever. This is a **reference cycle.**\n\n### Enter the Cyclic Garbage Collector\n\nTo plug exactly this hole, CPython adds a second mechanism: the **generational cyclic garbage collector** in the `gc` module. Periodically it finds groups of objects that reference *each other* but are unreachable from your program, and reclaims them. It's *generational* because most objects die young, so freshly created objects are scanned far more often than long-lived survivors — a cheap optimization. The takeaway: refcounting does the bulk of the work instantly; the cyclic gc is the safety net for the cases refcounting provably cannot handle.\n\n### Referencing Without Owning: `weakref`\n\nSometimes you want to point at an object *without* keeping it alive — a cache, a parent back-pointer, an observer list. A **weak reference** does exactly that: it lets you reach an object but does **not** increment its refcount. When every *strong* reference is gone, the object is freed and the weakref goes dead (returns `None`). Using `weakref` to break the back-edge of a would-be cycle lets plain refcounting clean up immediately, no gc pass required.\n\n> **Key idea:** CPython frees memory the instant an object's reference count hits zero — deterministic and immediate. The one case refcounting cannot solve is a reference *cycle*, where objects keep each other alive; the generational `gc` exists solely to collect those, and `weakref` lets you reference an object without owning it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "memory_blocks",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "memory_model_map",
+      "nodes": [
+        {
+          "label": "CPython Memory Management",
+          "children": [
+            "Reference counting (primary, immediate)",
+            "Refcount hits 0 -> freed now",
+            "Cycles -> refcount never hits 0",
+            "Generational gc (catches cycles)",
+            "weakref (reference without owning)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "refcount_delta_demo",
+      "code": "import sys\nobj = object()\nbase = sys.getrefcount(obj)\nalias = obj\nafter = sys.getrefcount(obj)\nprint(after - base)\ndel alias\nprint(sys.getrefcount(obj) - after)",
+      "executionSteps": [
+        { "line": 3, "variables": { "obj": "<object>", "base": "2 (includes getrefcount's own arg)" }, "output": "", "description": "Absolute count is 'one too high' because the argument is itself a reference." },
+        { "line": 4, "variables": { "alias": "<same object>" }, "output": "", "description": "Aliasing binds a second name to the SAME object: +1 reference." },
+        { "line": 6, "variables": { "after": "3" }, "output": "1", "description": "Delta = +1. We compare deltas, not absolutes, so it's deterministic." },
+        { "line": 8, "variables": {}, "output": "-1", "description": "del removes a name: -1. The counter falls back." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "refcount_vs_cycle",
+      "left": {
+        "label": "Normal object: del drops refcount to 0 -> freed instantly",
+        "result": true
+      },
+      "right": {
+        "label": "Cycle a<->b: del both names, refcounts stay at 1 -> leaks without gc",
+        "result": false
+      },
+      "description": {
+        "en": "Refcounting frees the left case immediately. The right case (a references b, b references a) keeps both alive even when unreachable — that is exactly what the cyclic gc and weakref are for."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Refcount hits zero -> object freed, right now.",
+        "Cycles never hit zero -> the generational gc collects them.",
+        "weakref: point at an object without keeping it alive."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Make reference counting observable. Complete refcount_deltas() so it reports how an object's refcount CHANGES (the delta) for three operations on the same object: (1) binding a second name (alias), (2) appending it to a list, (3) deleting the alias name. Because absolute refcounts vary by Python build, you must report DELTAS, not absolute counts. Binding a new name adds exactly one reference, appending to a container adds one, and del removes one. With the given code the expected output is exactly: alias:1 append:1 del:-1"
+      },
+      "starter_code": "import sys\n\ndef refcount_deltas():\n    obj = object()\n    base = sys.getrefcount(obj)\n\n    # 1) Bind a SECOND name to the same object (aliasing):\n    alias = obj\n    after_alias = sys.getrefcount(obj)\n\n    # 2) Append the SAME object to a list:\n    bucket = []\n    bucket.append(obj)\n    after_append = sys.getrefcount(obj)\n\n    # 3) Delete the alias name:\n    del alias\n    after_del = sys.getrefcount(obj)\n\n    # Return the DELTA for each step (after - before for that step):\n    return {\n        \"alias\": after_alias - base,        # how much did binding 'alias' change it?\n        \"append\": after_append - after_alias, # how much did the append change it?\n        \"del\": after_del - after_append,     # how much did 'del alias' change it?\n    }\n\nr = refcount_deltas()\nprint(f\"alias:{r['alias']} append:{r['append']} del:{r['del']}\")",
+      "expected_output": "alias:1 append:1 del:-1",
+      "hints": {
+        "en": [
+          "A refcount delta is just (count_after - count_before) for one operation. Comparing deltas (not absolute counts) is what makes the result deterministic across runs and Python versions.",
+          "Binding a new name (alias = obj) makes one more reference point at the SAME object, so its refcount goes UP by 1.",
+          "list.append(obj) stores a reference in a container slot: +1. del alias removes a name: -1.",
+          "Don't worry that sys.getrefcount reads 'one too high' — the extra +1 from passing obj as an argument cancels out when you subtract two readings."
+        ]
+      },
+      "test_code": "r = refcount_deltas()\nassert r['alias'] == 1, f\"aliasing should add exactly 1 reference, got {r['alias']}\"\nassert r['append'] == 1, f\"append should add exactly 1 reference, got {r['append']}\"\nassert r['del'] == -1, f\"del should remove exactly 1 reference, got {r['del']}\"\nassert f\"alias:{r['alias']} append:{r['append']} del:{r['del']}\" == 'alias:1 append:1 del:-1'"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In CPython, when is an object's memory primarily reclaimed?"
+      },
+      "options": {
+        "en": [
+          "Once per second on a fixed timer",
+          "The instant its reference count drops to zero",
+          "Only when the program exits",
+          "When you manually call free() on it"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You create a fresh object and call sys.getrefcount(obj), expecting 1 but getting 2. Why?"
+      },
+      "options": {
+        "en": [
+          "Python always pre-allocates two copies of every object",
+          "Passing obj as the argument to getrefcount is itself a temporary reference, adding 1",
+          "The garbage collector is holding a reference",
+          "It is a bug in sys.getrefcount"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why can pure reference counting leak a reference cycle (a points to b, b points to a)?"
+      },
+      "options": {
+        "en": [
+          "Cycles are illegal in Python and crash the interpreter",
+          "Even after all external names are deleted, each object still references the other, so neither refcount ever reaches zero",
+          "Reference counting only works on lists",
+          "The objects are too large to count"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does a weakref let you do?"
+      },
+      "options": {
+        "en": [
+          "Reference an object WITHOUT incrementing its refcount, so it can still be freed",
+          "Make an object impossible to delete",
+          "Double an object's reference count for safety",
+          "Force the garbage collector to run immediately"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["reference_counting", "cyclic_garbage_collection", "weakref"],
+    "concepts_required": ["how_python_objects_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}

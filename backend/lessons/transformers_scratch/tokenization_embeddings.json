@@ -1,0 +1,172 @@
+{
+  "id": "tokenization_embeddings",
+  "topic": "tokenization_embeddings",
+  "track": "transformers_scratch",
+  "module": "architecture",
+  "order": 3,
+  "title": {
+    "en": "Tokens & Embeddings: How Text Becomes Vectors"
+  },
+  "description": {
+    "en": "A transformer never sees the letters you type — it only ever sees numbers. This lesson walks the full pipeline that bridges the gap: text is split into TOKENS (whole words, or subword pieces via BPE/WordPiece), each token is mapped to an integer ID by a vocabulary lookup, and each ID indexes a row of a learned EMBEDDING matrix to become a dense vector. Understand why subword tokenization eliminates out-of-vocabulary words, why the embedding matrix is (vocab_size x d_model) and learned, and how a static token embedding differs from the contextual vector attention later produces."
+  },
+  "xp_reward": 90,
+  "next_unlock": "how_transformers_learn",
+  "story_variants": {
+    "en": "## Models See Numbers, Not Text\n\nHere is the uncomfortable truth at the bottom of every language model: it cannot read. A transformer has no notion of letters, words, or sentences. It is a giant pile of matrix multiplications, and matrices eat **numbers**. So before a single layer of attention runs, the text you typed must be turned into numbers — and that conversion happens in three precise, mechanical steps: **text -> tokens -> token IDs -> embeddings.**\n\n> **Key idea:** A model never sees your text. It sees a sequence of vectors. Tokenization + embedding lookup is the bridge that turns human language into the numeric input a transformer can actually process.\n\n## Step 1: Text -> Tokens\n\nFirst the raw string is chopped into **tokens** — the atomic units the model will work with. The naive choice is *one token per word*. It is easy to picture, but it breaks badly: a word-level vocabulary can never be big enough. New words, typos, names, code, and other languages all produce words the model has never seen — **out-of-vocabulary (OOV)** words it has no number for.\n\nModern transformers solve this with **subword tokenization** (BPE, used by GPT, and WordPiece, used by BERT). The idea: keep common words whole, but split rare words into smaller known pieces. The word `tokenization` might become `token` + `ization`; an unknown name might split down to single characters. Because the alphabet itself is always in the vocabulary, **any** string can be represented — there is no OOV. Subword tokenization is the sweet spot between two extremes: a character-level vocab is tiny but makes sequences painfully long, while a pure word-level vocab keeps sequences short but explodes in size and still misses words. Subwords balance **vocabulary size against sequence length.**\n\n## Step 2: Tokens -> Token IDs\n\nThe tokenizer carries a fixed **vocabulary**: a lookup table mapping every known token to a unique integer. So once text is split, each token is replaced by its integer **ID**. `\"cats\"` might be token id `5290`. The sentence is now just a list of integers — still not vectors, but no longer text. This vocabulary is built once, during training, and frozen; the IDs are arbitrary labels with no numeric meaning of their own (id `5290` is not \"bigger\" than id `12`).\n\n## Step 3: Token IDs -> Embeddings\n\nIntegers alone carry no meaning, so the final step gives each ID a rich representation. The model holds an **embedding matrix** of shape `(vocab_size x d_model)`: one row per vocabulary entry, each row a dense vector of `d_model` numbers (say 768). To embed a token, you simply **use its ID as a row index** and read out that row. Token id `5290` -> grab row `5290` -> a 768-number vector. That is the whole operation: an embedding lookup is just indexing into a matrix.\n\nCrucially, the embedding matrix is **learned**. It starts as random numbers and is trained by gradient descent along with the rest of the network, so that tokens used in similar ways drift to similar vectors. The geometry of this space is where \"king - man + woman ~ queen\" lives — meaning encoded as direction and distance.\n\n## The Whole Pipeline at a Glance\n\n| Stage | Example value | Type | Shape |\n|-------|---------------|------|-------|\n| Text | `\"cats\"` | string | — |\n| Token | `cat`, `##s` | subword pieces | — |\n| Token IDs | `[4937, 2015]` | integers | `(seq_len,)` |\n| Embeddings | `[[0.21, -0.04, ...], [...]]` | dense vectors | `(seq_len, d_model)` |\n\n## Token Embedding vs Contextual Vector\n\nOne distinction trips up almost everyone. The embedding you just looked up is **static**: the row for `bank` is the *same* vector whether the sentence is about a river or a loan. It is context-free — purely a function of the token ID.\n\nThat is only the model's **input**. The job of the attention layers stacked on top is to mix information across positions, so that the vector for `bank` becomes **contextual** — bent toward \"river\" or \"finance\" depending on its neighbors. So: the **token embedding** is the starting point (one fixed vector per ID); the **contextual vector** attention produces is the destination (a different vector for the same token in different sentences). Tokens and embeddings are how text *enters* the transformer; attention is what happens to those vectors next.\n\nGet this pipeline right and the rest of the architecture has something numeric to chew on. Everything a transformer knows, it knows as positions in this learned vector space."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "text_to_vectors",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "tokenization_pipeline",
+      "nodes": [
+        {
+          "label": "Text -> Vectors Pipeline",
+          "children": [
+            "text -> split into tokens (subwords via BPE/WordPiece)",
+            "tokens -> integer IDs via vocabulary lookup",
+            "IDs -> index rows of embedding matrix (vocab_size x d_model)",
+            "embeddings -> learned dense vectors, the model's real input"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "static_vs_contextual",
+      "left": {
+        "label": "Token embedding -> STATIC: 'bank' is one fixed vector for its ID",
+        "result": false
+      },
+      "right": {
+        "label": "Contextual vector -> attention bends 'bank' toward river OR loan",
+        "result": true
+      },
+      "description": {
+        "en": "The embedding lookup gives every token ID one context-free vector. Attention layers then mix in neighbors, so the same token becomes a different contextual vector in different sentences. Embedding is the input; the contextual vector is the output."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "tokenize_demo",
+      "code": "corpus = [\"the cat sat\", \"the dog ran\"]\nwords = sorted(set(w for s in corpus for w in s.split()))\nvocab = {w: i for i, w in enumerate(words)}\nids = [vocab[w] for w in \"the dog sat\".split()]\nprint(vocab)\nprint(ids)",
+      "executionSteps": [
+        { "line": 2, "variables": { "words": "['cat', 'dog', 'ran', 'sat', 'the']" }, "output": "", "description": "Collect every unique word, then SORT so ids are deterministic" },
+        { "line": 3, "variables": { "vocab": "{'cat':0,'dog':1,'ran':2,'sat':3,'the':4}" }, "output": "", "description": "Assign each sorted word a stable integer id starting at 0" },
+        { "line": 4, "variables": { "ids": "[4, 1, 3]" }, "output": "", "description": "Encode 'the dog sat' by looking up each word's id" },
+        { "line": 6, "variables": {}, "output": "[4, 1, 3]", "description": "Text is now a list of integers — ready to index the embedding matrix" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Models see numbers, never text.",
+        "text -> TOKENS -> integer IDs -> learned EMBEDDINGS.",
+        "Subwords kill out-of-vocab: any word splits into known pieces.",
+        "Embedding = index a (vocab_size x d_model) matrix. Attention adds context."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a tiny word-level tokenizer in PURE Python (no numpy — it is not available in the sandbox). Implement build_vocab(sentences): collect every unique word across all sentences, SORT them (so ids are deterministic), and map each word to an integer id starting at 0. Then implement encode(sentence, vocab): return the list of ids for the sentence's words, using -1 for any word not in the vocab (an unknown token). Demo: build a vocab from a tiny corpus and encode a sentence that contains one unseen word. The sorted vocab is {'cat':0,'dog':1,'ran':2,'sat':3,'the':4}, and encoding 'the fox sat' (fox is unseen) gives [4, -1, 3]. Expected output: [4, -1, 3]"
+      },
+      "starter_code": "def build_vocab(sentences):\n    # TODO: 1) gather every unique word across all sentences\n    #       2) sort the words so ids are deterministic\n    #       3) map word -> integer id starting at 0\n    return {}\n\ndef encode(sentence, vocab):\n    # TODO: return the id for each word, or -1 if the word is unknown\n    return []\n\n# --- demo (do not change) ---\ncorpus = [\"the cat sat\", \"the dog ran\"]\nvocab = build_vocab(corpus)\nprint(encode(\"the fox sat\", vocab))",
+      "expected_output": "[4, -1, 3]",
+      "hints": {
+        "en": [
+          "Gather unique words with a set comprehension over every word in every sentence: words = set(w for s in sentences for w in s.split()). A set removes duplicates automatically.",
+          "Determinism comes from sorting: for w in sorted(words). Without the sort, dict/set ordering could shuffle the ids between runs.",
+          "Build the mapping with enumerate over the sorted words: {w: i for i, w in enumerate(sorted(words))} gives ids 0, 1, 2, ... in alphabetical order.",
+          "For encode, look each word up with a default for unknown words: vocab.get(w, -1) returns -1 when the word is not in the vocabulary — that is your <unk> handling."
+        ]
+      },
+      "test_code": "vocab = build_vocab([\"the cat sat\", \"the dog ran\"])\n# vocab maps each unique word to a stable, sorted id\nassert vocab == {'cat': 0, 'dog': 1, 'ran': 2, 'sat': 3, 'the': 4}\n# building twice is deterministic\nassert build_vocab([\"the cat sat\", \"the dog ran\"]) == vocab\n# encode returns correct ids for known words\nassert encode(\"the cat ran\", vocab) == [4, 0, 2]\n# unknown words map to the default -1\nassert encode(\"the fox sat\", vocab) == [4, -1, 3]\nassert encode(\"fox\", vocab) == [-1]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a transformer actually receive as input?"
+      },
+      "options": {
+        "en": [
+          "The raw text string, character by character",
+          "A sequence of dense numeric vectors (embeddings)",
+          "An English-grammar parse tree of the sentence",
+          "The words, kept as words throughout the network"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do modern transformers use subword tokenization (BPE/WordPiece) instead of one token per word?"
+      },
+      "options": {
+        "en": [
+          "Subwords make the vocabulary larger, which always helps accuracy",
+          "It eliminates out-of-vocabulary words — any word can be split into known pieces — and balances vocab size against sequence length",
+          "Subwords let the model skip the embedding step entirely",
+          "It removes the need for a vocabulary lookup"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the shape of the embedding matrix, and how is a token turned into a vector?"
+      },
+      "options": {
+        "en": [
+          "(d_model x d_model); the token is multiplied by the matrix",
+          "(seq_len x d_model); the token is hashed into a slot",
+          "(vocab_size x d_model); the token's integer ID indexes (looks up) a row",
+          "(vocab_size x vocab_size); the token selects a column and a row"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "How does a static token embedding differ from the contextual vector attention produces?"
+      },
+      "options": {
+        "en": [
+          "They are identical; attention does not change the vectors",
+          "The token embedding is the same vector for an ID regardless of sentence, while the contextual vector differs by surrounding context",
+          "The contextual vector is fixed and the token embedding changes each run",
+          "Token embeddings are integers and contextual vectors are strings"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["tokenization", "subword_tokenization", "vocabulary", "token_ids", "embeddings", "embedding_matrix"],
+    "concepts_required": ["multi_head_attention"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

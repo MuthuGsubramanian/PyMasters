@@ -56,8 +56,11 @@
     background-attachment: fixed;
   }
 
+  /* Headings inherit color from their parent so dark/light page contexts both work.
+     Pages that need an explicit color set it via Tailwind utilities (e.g. text-white). */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-text-primary tracking-tight;
+    @apply tracking-tight;
+    color: inherit;
     font-family: var(--font-display);
   }
 

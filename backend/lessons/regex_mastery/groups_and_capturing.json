@@ -1,0 +1,173 @@
+{
+  "id": "groups_and_capturing",
+  "topic": "groups_and_capturing",
+  "track": "regex_mastery",
+  "module": "patterns",
+  "order": 1,
+  "title": {
+    "en": "Groups & Capturing: Extracting Structured Data"
+  },
+  "description": {
+    "en": "Matching tells you *whether* a pattern is present. Parentheses tell you *which parts* — they turn a regex from a yes/no detector into a data extractor. Master capturing groups, named groups, non-capturing groups, and backreferences, and a regex stops being a filter and becomes a tiny parser."
+  },
+  "xp_reward": 95,
+  "next_unlock": "anchors_and_lookarounds",
+  "story_variants": {
+    "en": "## From Matching to Extracting\n\nUp to now a regex has been a yes/no question: *does this string contain a date?* That is useful, but most real work needs the next step — *give me the year, the month, and the day.* The single feature that turns matching into **extracting** is the humble pair of parentheses.\n\nWrap part of a pattern in `(...)` and the engine doesn't just match it — it **remembers** the exact text that matched, in a numbered slot called a **capturing group**. After a successful match you pull those slots out by number.\n\n```python\nimport re\nm = re.match(r\"(\\d{4})-(\\d{2})-(\\d{2})\", \"2026-06-09\")\nm.group(0)   # '2026-06-09'  -> the WHOLE match\nm.group(1)   # '2026'        -> first (...)\nm.group(2)   # '06'\nm.group(3)   # '09'\nm.groups()   # ('2026', '06', '09')  -> every group as a tuple\n```\n\nGroup `0` is always the entire match; groups `1, 2, 3, ...` are numbered left-to-right by their **opening** parenthesis.\n\n> **Key idea:** Parentheses turn matching into extracting. `(...)` captures the matched text into a numbered slot you read back with `.group(n)` or `.groups()`.\n\n## Named Groups: Stop Counting Parentheses\n\nNumbering is fragile — insert one group and every later number shifts. **Named groups** fix this. Write `(?P<name>...)` and read the slot back by name:\n\n```python\np = re.compile(r\"(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})\")\nm = p.match(\"2026-06-09\")\nm.group(\"year\")    # '2026'\nm.group(\"month\")   # '06'\nm.groupdict()      # {'year': '2026', 'month': '06', 'day': '09'}\n```\n\n`.groupdict()` hands you a ready-made dictionary — the cleanest way to parse one structured string into labelled fields. The names also document the pattern: a stranger reading `(?P<year>\\d{4})` knows your intent instantly.\n\n## Non-Capturing Groups: Grouping Without Capturing\n\nSometimes you need parentheses only to **group** — to apply a quantifier or an alternation — but you don't want that text cluttering your captured slots. Use `(?:...)`. It groups but captures nothing.\n\n```python\n# Match an optional 'Mr ' or 'Ms ' prefix, capture only the name\nm = re.match(r\"(?:Mr|Ms) (?P<name>\\w+)\", \"Ms Khan\")\nm.group(\"name\")    # 'Khan'\nm.groups()         # ('Khan',)  -> the (?:...) did NOT add a slot\n```\n\nThe `(?:Mr|Ms)` does its job — it groups the alternation `Mr|Ms` so the `|` only chooses between those two words — yet it never becomes group 1.\n\n## Alternation, and Groups Inside `findall`\n\nThe `|` operator means **\"or\"**: `a|b` matches `a` or `b`. It is almost always wrapped in a group to bound its reach — `gr(a|e)y` matches `gray` or `grey`, while `(?:cat|dog)s` matches `cats` or `dogs`.\n\nGroups also change what `re.findall` returns. With **no** group it returns whole matches; with **one** group it returns that group's text; with **two or more** groups it returns a **tuple per match**:\n\n```python\nre.findall(r\"\\d+\", \"a1b22\")                 # ['1', '22']        (no group)\nre.findall(r\"(\\w+)=(\\d+)\", \"x=1 y=22\")      # [('x','1'), ('y','22')]  (tuples!)\n```\n\nThat tuple behavior surprises people constantly — remember it whenever a pattern has more than one `(...)`.\n\n## Backreferences in `re.sub`\n\nCaptured groups aren't only for reading — you can **reuse** them when rewriting text. Inside `re.sub`'s replacement string, `\\1` means \"whatever group 1 captured\" and `\\g<name>` means a named group. This makes reformatting trivial:\n\n```python\n# Reformat 2026-06-09 -> 09/06/2026 using named backreferences\nre.sub(\n    r\"(?P<y>\\d{4})-(?P<m>\\d{2})-(?P<d>\\d{2})\",\n    r\"\\g<d>/\\g<m>/\\g<y>\",\n    \"2026-06-09\",\n)                                            # '09/06/2026'\n```\n\n| Syntax | What it does | How you use the result |\n|--------|--------------|------------------------|\n| `(...)` | Capturing group | `.group(1)`, `.groups()`, `\\1` in `sub` |\n| `(?P<name>...)` | Named capturing group | `.group('name')`, `.groupdict()`, `\\g<name>` |\n| `(?:...)` | Non-capturing group | Groups for quantifiers/`\\|`; no slot created |\n| `a\\|b` | Alternation | Match `a` or `b`; wrap in a group to bound it |\n\nOnce parentheses click, a regex becomes a one-line parser: name the parts you want, read them with `.groupdict()`, and rewrite them with backreferences. That is the leap from *detecting* structure to *extracting* it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "object_graph",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "group_kinds",
+      "nodes": [
+        {
+          "label": "Parentheses Turn Matching Into Extracting",
+          "children": [
+            "(...)          -> capturing slot, read by .group(n)",
+            "(?P<name>...)  -> named slot, read by .group('name') / .groupdict()",
+            "(?:...)        -> group only, captures nothing",
+            "a|b            -> alternation: match a OR b",
+            "\\1 / \\g<name>  -> backreference in re.sub"
+          ]
+        }
+      ],
+      "duration_ms": 3800
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "capturing_vs_noncapturing",
+      "left": {
+        "label": "(?:Mr|Ms) (\\w+)  ->  .groups() == ('Khan',)",
+        "result": true
+      },
+      "right": {
+        "label": "(Mr|Ms) (\\w+)   ->  .groups() == ('Khan',) ?",
+        "result": false
+      },
+      "description": {
+        "en": "(?:...) groups without capturing, so only the name lands in a slot. (Mr|Ms) WOULD add group 1, giving ('Ms', 'Khan') instead."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "parse_date_demo",
+      "code": "import re\np = re.compile(r\"(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})\")\nm = p.match(\"2026-06-09\")\nprint(m.group(\"year\"))\nprint(m.groupdict())",
+      "executionSteps": [
+        { "line": 2, "variables": { "p": "compiled pattern with 3 named groups" }, "output": "", "description": "Three (?P<name>\\d{...}) slots: year, month, day" },
+        { "line": 3, "variables": { "m": "Match object" }, "output": "", "description": "match() succeeds; each named group captured its digits" },
+        { "line": 4, "variables": { "m.group('year')": "'2026'" }, "output": "2026", "description": "Read one named slot by name — no counting parentheses" },
+        { "line": 5, "variables": { "m.groupdict()": "{'year':'2026','month':'06','day':'09'}" }, "output": "{'year': '2026', 'month': '06', 'day': '09'}", "description": ".groupdict() returns every named group as a dict — instant structured data" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "(...) captures.  (?P<name>...) names.  (?:...) groups without capturing.",
+        ".group(n) / .groupdict() read it back; \\1 / \\g<name> reuse it in re.sub.",
+        "findall returns a TUPLE per match when there are 2+ groups.",
+        "Parentheses turn matching into EXTRACTING."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use named capturing groups to turn an ISO date string into structured data. Implement parse_date(s): match s against a pattern with named groups (?P<year>...), (?P<month>...), (?P<day>...) for the YYYY-MM-DD shape, and return m.groupdict() — a dict with string keys 'year', 'month', 'day' and string values. If the string does not match the date shape, return None. The demo parses \"2026-06-09\". Expected output: {'year': '2026', 'month': '06', 'day': '09'}"
+      },
+      "starter_code": "import re\n\nDATE_RE = re.compile(r\"\")  # TODO: add named groups year, month, day for YYYY-MM-DD\n\ndef parse_date(s):\n    m = DATE_RE.fullmatch(s)\n    if m is None:\n        return None\n    # TODO: return the named groups as a dict\n    return None\n\nprint(parse_date(\"2026-06-09\"))",
+      "expected_output": "{'year': '2026', 'month': '06', 'day': '09'}",
+      "hints": {
+        "en": [
+          "A named group is written (?P<name>...). Use (?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2}) so each part is captured by name.",
+          "Match the whole string with DATE_RE.fullmatch(s) so trailing junk like '2026-06-09xx' is rejected and returns None.",
+          ".groupdict() collects every named group into a dict {'year': ..., 'month': ..., 'day': ...} — just return m.groupdict().",
+          "The values stay as strings (e.g. '06'), so do not call int() — the expected dict has string values."
+        ]
+      },
+      "test_code": "assert parse_date(\"2026-06-09\") == {'year': '2026', 'month': '06', 'day': '09'}\nassert parse_date(\"1999-12-31\") == {'year': '1999', 'month': '12', 'day': '31'}\nassert parse_date(\"2026-06-09\")['month'] == '06'\nassert parse_date(\"not-a-date\") is None\nassert parse_date(\"2026-06-09xx\") is None\nassert parse_date(\"26-6-9\") is None"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "After m = re.match(r\"(\\d{4})-(\\d{2})-(\\d{2})\", \"2026-06-09\"), what does m.group(1) return?"
+      },
+      "options": {
+        "en": [
+          "'2026-06-09' — the whole match",
+          "'2026' — the text captured by the first (...) group",
+          "'06' — the second group",
+          "('2026', '06', '09') — all groups as a tuple"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the purpose of a non-capturing group (?:...)?"
+      },
+      "options": {
+        "en": [
+          "It captures text but hides it from .group(0)",
+          "It groups part of a pattern (e.g. to apply a quantifier or alternation) WITHOUT creating a numbered capture slot",
+          "It makes the match case-insensitive",
+          "It is required around every alternation or the regex fails"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you read the named group in (?P<month>\\d{2}) after a successful match m?"
+      },
+      "options": {
+        "en": [
+          "m.group(2) only",
+          "m.month",
+          "m.group('month'), or m.groupdict()['month']",
+          "m.named('month')"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does re.findall(r\"(\\w+)=(\\d+)\", \"x=1 y=22\") return?"
+      },
+      "options": {
+        "en": [
+          "['x=1', 'y=22'] — the whole matches",
+          "['x', 'y'] — only the first group",
+          "[('x', '1'), ('y', '22')] — a tuple per match because there are 2+ groups",
+          "{'x': '1', 'y': '22'} — a dict"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["capturing_groups", "named_groups", "non_capturing_groups", "backreferences", "alternation", "findall_tuples"],
+    "concepts_required": ["character_classes_and_quantifiers"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "regex",
+    "path_memberships": []
+  },
+  "generated": false
+}

@@ -1,0 +1,104 @@
+{
+  "id": "mteb_leaderboard_practical_model_selection_for_rag",
+  "topic": "mteb_leaderboard_practical_model_selection_for_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "MTEB Leaderboard: Picking the Right Embedding Model for RAG"
+  },
+  "description": {
+    "en": "Learn to navigate the MTEB (Massive Text Embedding Benchmark) leaderboard to systematically select the best embedding model for your RAG pipeline — balancing retrieval quality, latency, and resource constraints."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Embedding Model Selection Problem\n\nVaathiyaar here! You're building a RAG pipeline and need embeddings — but there are *hundreds* of embedding models on Hugging Face. How do you choose? Vibes? Star count? That's how you end up with a 7GB model on a 4GB GPU. The **MTEB Leaderboard** (Massive Text Embedding Benchmark) is your systematic answer — it evaluates embedding models across 8 task categories and 58+ datasets, giving you hard numbers instead of guesswork.\n\n### What MTEB Measures\n\n| Task Category | What It Tests | RAG Relevance |\n|---|---|---|\n| Retrieval | Finding relevant docs from a corpus | **Critical** — core of RAG |\n| STS (Semantic Similarity) | Scoring sentence pair similarity | High — reranking, dedup |\n| Classification | Using embeddings for labeling | Medium — intent routing |\n| Clustering | Grouping similar documents | Medium — topic modeling |\n| Pair Classification | NLI, paraphrase detection | Low for RAG |\n| Reranking | Reordering candidate results | High — second-stage RAG |\n| Summarization | Embedding-based summarization | Low for RAG |\n| BitextMining | Cross-lingual alignment | High if multilingual |\n\nFor RAG, focus on the **Retrieval** and **STS** columns. A model that tops Classification but ranks 50th on Retrieval is the wrong choice for your search pipeline.\n\n### Accessing MTEB Programmatically\n\n```python\nimport requests\nimport json\n\n# The MTEB results are available via Hugging Face datasets\n# Each model card on HF shows its MTEB scores\n# You can also use the mteb library directly:\n\n# pip install mteb\nfrom mteb import MTEB\n\n# List all available benchmark tasks\nbenchmark = MTEB(tasks=[\"NFCorpus\", \"SciFact\", \"MSMARCO\"])\nprint(f\"Loaded {len(benchmark.tasks)} retrieval tasks\")\n\n# These are the exact tasks used to score Retrieval on the leaderboard\n# NFCorpus: biomedical, SciFact: scientific claims, MSMARCO: web search\n```\n\nThe MTEB library lets you run the exact benchmarks yourself — useful when you fine-tune a model and want to measure whether you improved or regressed.\n\n### The Selection Decision Matrix\n\n```python\ndef select_embedding_model(constraints: dict) -> str:\n    \"\"\"Decision logic for RAG embedding model selection.\"\"\"\n    \n    max_memory_gb = constraints.get(\"max_memory_gb\", 4)\n    need_multilingual = constraints.get(\"multilingual\", False)\n    latency_ms_target = constraints.get(\"latency_ms\", 50)\n    \n    # Tier 1: Resource-constrained (< 1GB, < 20ms)\n    if max_memory_gb < 1:\n        return \"BAAI/bge-small-en-v1.5\"      # 130MB, MTEB Retrieval: 51.7\n    \n    # Tier 2: Balanced (1-2GB, < 50ms)\n    if max_memory_gb < 2 and not need_multilingual:\n        return \"sentence-transformers/all-MiniLM-L6-v2\"  # 90MB, fast\n    \n    # Tier 3: Quality-first (2-4GB)\n    if need_multilingual:\n        return \"BAAI/bge-m3\"                  # Multi-vector, multilingual\n    \n    if latency_ms_target > 50:\n        return \"sentence-transformers/all-mpnet-base-v2\"  # 420MB, strong\n    \n    # Tier 4: Maximum quality, resources available\n    return \"BAAI/bge-large-en-v1.5\"           # 1.3GB, MTEB Retrieval: 54.3\n\n# Example: Homie running on a modest server\nmodel = select_embedding_model({\n    \"max_memory_gb\": 2,\n    \"multilingual\": False,\n    \"latency_ms\": 30\n})\nprint(f\"Recommended: {model}\")\n# Recommended: sentence-transformers/all-MiniLM-L6-v2\n```\n\n### Comparing Models Head-to-Head\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\nimport time\n\ndef benchmark_model(model_name: str, sentences: list[str]) -> dict:\n    model = SentenceTransformer(model_name)\n    \n    start = time.time()\n    embeddings = model.encode(sentences, normalize_embeddings=True)\n    elapsed = (time.time() - start) * 1000\n    \n    # Check embedding quality via self-similarity spread\n    sim_matrix = np.dot(embeddings, embeddings.T)\n    avg_off_diag = (sim_matrix.sum() - np.trace(sim_matrix)) / (\n        len(sentences) * (len(sentences) - 1)\n    )\n    \n    return {\n        \"model\": model_name,\n        \"dim\": embeddings.shape[1],\n        \"latency_ms\": round(elapsed, 1),\n        \"avg_similarity\": round(float(avg_off_diag), 4)\n    }\n\ntest_sentences = [\n    \"How to deploy a FastAPI application\",\n    \"Python web server deployment guide\",\n    \"Best Italian pasta recipes\",\n    \"Machine learning model training\"\n]\n\nresults = benchmark_model(\"all-MiniLM-L6-v2\", test_sentences)\nprint(results)\n# {'model': 'all-MiniLM-L6-v2', 'dim': 384, 'latency_ms': 45.2, 'avg_similarity': 0.2531}\n```\n\nLower `avg_similarity` between unrelated sentences means better discriminative power — exactly what RAG retrieval needs. A model where every pair scores 0.9 can't distinguish relevant from irrelevant documents.\n\n### MTEB Leaderboard Reading Cheat Sheet\n\n| Leaderboard Column | What to Check | Good Sign |\n|---|---|---|\n| Retrieval (Avg) | Primary RAG metric | > 50 (nDCG@10) |\n| Model Size | Memory footprint | Fits your GPU/RAM |\n| Embedding Dimensions | Vector DB storage cost | 384-1024 sweet spot |\n| Max Tokens | Context window for chunks | >= your chunk size |\n| Sequence Length | Input length handling | Match your doc lengths |\n\n> **Key Insight:** The MTEB leaderboard is not a single ranking — it's a multi-dimensional evaluation. The \"best\" embedding model depends on YOUR constraints: retrieval quality, memory budget, latency requirements, and language coverage. For most RAG pipelines, a model in the top 20 on Retrieval that fits your hardware beats the #1 model that doesn't. Use MTEB scores as the starting filter, then benchmark the finalists on YOUR data."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "With hundreds of embedding models available, the MTEB Leaderboard gives you hard benchmark numbers across 8 task categories and 58+ datasets. For RAG, the Retrieval and STS scores matter most — learn to read the leaderboard, filter by your constraints, and pick the right model systematically.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "def select_embedding_model(constraints: dict) -> str:\n    max_memory_gb = constraints.get(\"max_memory_gb\", 4)\n    need_multilingual = constraints.get(\"multilingual\", False)\n    latency_ms_target = constraints.get(\"latency_ms\", 50)\n\n    if max_memory_gb < 1:\n        return \"BAAI/bge-small-en-v1.5\"\n\n    if max_memory_gb < 2 and not need_multilingual:\n        return \"sentence-transformers/all-MiniLM-L6-v2\"\n\n    if need_multilingual:\n        return \"BAAI/bge-m3\"\n\n    if latency_ms_target > 50:\n        return \"sentence-transformers/all-mpnet-base-v2\"\n\n    return \"BAAI/bge-large-en-v1.5\"\n\nmodel = select_embedding_model({\"max_memory_gb\": 2, \"multilingual\": False, \"latency_ms\": 30})\nprint(f\"Recommended: {model}\")",
+      "steps": [
+        {"line": 1, "explanation": "Define a model selection function that takes hardware and feature constraints as a dictionary — systematizing what's usually a gut decision."},
+        {"line": 2, "explanation": "Extract max_memory_gb — this is your hardest constraint. No point picking a 4GB model for a 2GB machine."},
+        {"line": 3, "explanation": "Check multilingual needs — multilingual models (like bge-m3) trade some English-only quality for cross-language support."},
+        {"line": 4, "explanation": "Latency target in milliseconds — determines whether you can afford larger, slower models with better retrieval scores."},
+        {"line": 6, "explanation": "Tier 1: Under 1GB RAM? bge-small-en-v1.5 at 130MB is your best bet — still scores 51.7 on MTEB Retrieval."},
+        {"line": 9, "explanation": "Tier 2: Under 2GB and English-only? all-MiniLM-L6-v2 at 90MB is the community workhorse — fast and reliable."},
+        {"line": 12, "explanation": "Tier 3: Need multilingual? bge-m3 supports 100+ languages with dense + sparse + ColBERT multi-vector retrieval."},
+        {"line": 15, "explanation": "Tier 3b: English-only with relaxed latency? all-mpnet-base-v2 has stronger embeddings than MiniLM at 420MB."},
+        {"line": 18, "explanation": "Tier 4: Maximum quality with resources available — bge-large-en-v1.5 at 1.3GB scores 54.3 on MTEB Retrieval."},
+        {"line": 20, "explanation": "Test with Homie's constraints: 2GB budget, English-only, 30ms target. The function selects MiniLM — the right balance."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\nimport time\n\ndef benchmark_model(model_name, sentences):\n    model = SentenceTransformer(model_name)\n    start = time.time()\n    embeddings = model.encode(sentences, normalize_embeddings=True)\n    elapsed = (time.time() - start) * 1000\n\n    sim_matrix = np.dot(embeddings, embeddings.T)\n    avg_off_diag = (sim_matrix.sum() - np.trace(sim_matrix)) / (\n        len(sentences) * (len(sentences) - 1)\n    )\n    return {\"model\": model_name, \"dim\": embeddings.shape[1],\n            \"latency_ms\": round(elapsed, 1),\n            \"avg_similarity\": round(float(avg_off_diag), 4)}",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the standard library for loading embedding models from Hugging Face."},
+        {"line": 5, "explanation": "Define a benchmark function that measures both speed and embedding quality for any model."},
+        {"line": 6, "explanation": "Load the model — first call downloads weights from Hugging Face Hub; subsequent calls use cache."},
+        {"line": 8, "explanation": "Encode sentences with normalize_embeddings=True — normalized vectors let you use dot product as cosine similarity."},
+        {"line": 11, "explanation": "Compute the full similarity matrix via dot product. For normalized vectors, this equals cosine similarity."},
+        {"line": 12, "explanation": "Calculate average off-diagonal similarity — measures how much the model spreads unrelated sentences apart."},
+        {"line": 15, "explanation": "Return a results dict with dimension count, latency, and discriminative power. Lower avg_similarity = better for RAG retrieval."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Small & Fast Models",
+      "right_label": "Large & Accurate Models",
+      "items": [
+        {"left": "all-MiniLM-L6-v2: 90MB, 384 dims", "right": "bge-large-en-v1.5: 1.3GB, 1024 dims"},
+        {"left": "~20ms per batch encode", "right": "~80ms per batch encode"},
+        {"left": "MTEB Retrieval ~49", "right": "MTEB Retrieval ~54"},
+        {"left": "Best for: edge, low-latency RAG", "right": "Best for: quality-critical search"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now navigate the MTEB leaderboard and systematically pick the right embedding model for any RAG pipeline!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EmbeddingModelSelector` class that helps choose the best embedding model from a registry based on hardware and task constraints. The registry maps model names to their specs (memory_mb, retrieval_score, latency_ms, multilingual). Implement `filter_models(constraints)` to return models that fit within all constraints, and `rank_models(candidates, priority)` to sort filtered models by a given priority metric (descending). Finally, `recommend(constraints, priority)` should return the top model name, or 'no_model_found' if nothing fits."
+      },
+      "starter_code": "class EmbeddingModelSelector:\n    def __init__(self, registry: dict[str, dict]):\n        # registry maps model_name -> specs dict\n        # specs: {\"memory_mb\": int, \"retrieval_score\": float,\n        #         \"latency_ms\": float, \"multilingual\": bool}\n        self.registry = registry\n\n    def filter_models(self, constraints: dict) -> list[str]:\n        # constraints can include:\n        #   max_memory_mb, max_latency_ms, multilingual (bool)\n        # Return list of model names that meet ALL constraints\n        pass\n\n    def rank_models(self, candidates: list[str], priority: str) -> list[str]:\n        # Sort candidates by the given priority metric descending\n        # priority is a key in the model spec (e.g., \"retrieval_score\")\n        # Return sorted list of model names\n        pass\n\n    def recommend(self, constraints: dict, priority: str = \"retrieval_score\") -> str:\n        # Filter then rank, return top model name\n        # If no models pass filter, return \"no_model_found\"\n        pass\n\n# Test it:\nregistry = {\n    \"bge-small-en-v1.5\": {\n        \"memory_mb\": 130, \"retrieval_score\": 51.7,\n        \"latency_ms\": 15, \"multilingual\": False\n    },\n    \"all-MiniLM-L6-v2\": {\n        \"memory_mb\": 90, \"retrieval_score\": 49.0,\n        \"latency_ms\": 12, \"multilingual\": False\n    },\n    \"bge-m3\": {\n        \"memory_mb\": 2200, \"retrieval_score\": 55.4,\n        \"latency_ms\": 65, \"multilingual\": True\n    },\n    \"bge-large-en-v1.5\": {\n        \"memory_mb\": 1300, \"retrieval_score\": 54.3,\n        \"latency_ms\": 45, \"multilingual\": False\n    }\n}\n\nselector = EmbeddingModelSelector(registry)\n\n# Recommend best model under 500MB\nresult = selector.recommend({\"max_memory_mb\": 500}, \"retrieval_score\")\nprint(result)\n\n# Filter for multilingual models\nmulti = selector.filter_models({\"multilingual\": True})\nprint(multi)\n\n# No model fits extreme constraints\nfallback = selector.recommend({\"max_memory_mb\": 50})\nprint(fallback)",
+      "expected_output": "bge-small-en-v1.5\n['bge-m3']\nno_model_found",
+      "hints": {
+        "en": [
+          "In filter_models(), iterate over registry items and check each constraint: if 'max_memory_mb' is in constraints, the model's memory_mb must be <= that value. Same pattern for max_latency_ms. For 'multilingual', the model's value must match exactly.",
+          "In rank_models(), use sorted() with a key function that looks up the priority metric from self.registry for each candidate name, and set reverse=True for descending order.",
+          "In recommend(), call filter_models() then rank_models(), return the first element or 'no_model_found' if the filtered list is empty."
+        ]
+      },
+      "test_code": "r = {\"a\": {\"memory_mb\": 100, \"retrieval_score\": 50.0, \"latency_ms\": 10, \"multilingual\": False}, \"b\": {\"memory_mb\": 200, \"retrieval_score\": 55.0, \"latency_ms\": 20, \"multilingual\": True}, \"c\": {\"memory_mb\": 300, \"retrieval_score\": 60.0, \"latency_ms\": 30, \"multilingual\": False}}\ns = EmbeddingModelSelector(r)\nassert set(s.filter_models({\"max_memory_mb\": 250})) == {\"a\", \"b\"}\nassert s.filter_models({\"multilingual\": True}) == [\"b\"]\nassert s.rank_models([\"a\", \"b\", \"c\"], \"retrieval_score\") == [\"c\", \"b\", \"a\"]\nassert s.recommend({\"max_memory_mb\": 250}, \"retrieval_score\") == \"b\"\nassert s.recommend({\"max_memory_mb\": 50}) == \"no_model_found\"\nassert s.recommend({\"max_latency_ms\": 15}, \"retrieval_score\") == \"a\"\nassert s.rank_models([\"a\", \"c\"], \"latency_ms\") == [\"c\", \"a\"]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["MTEB leaderboard navigation", "embedding model selection", "retrieval benchmarking", "RAG model constraints", "cosine similarity evaluation", "model size vs quality tradeoffs", "sentence-transformers benchmarking"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "sorting", "string manipulation"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

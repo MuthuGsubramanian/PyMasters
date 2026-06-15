@@ -1,0 +1,186 @@
+{
+  "id": "choosing_data_structures",
+  "topic": "choosing_data_structures",
+  "track": "performance_optimization",
+  "module": "practice",
+  "order": 1,
+  "title": {
+    "en": "Pick the Right Data Structure"
+  },
+  "description": {
+    "en": "The data structure IS the algorithm. The same task can be slow and tangled or fast and obvious depending on one decision: did you reach for a list, a set, a dict, a tuple, or a deque? Learn a practical decision guide so the right choice becomes automatic."
+  },
+  "xp_reward": 90,
+  "next_unlock": "avoid_repeated_work",
+  "story_variants": {
+    "en": "## The Decision That Beats the Algorithm\n\nMost people think performance is about clever code. It usually isn't. The biggest speedups in everyday Python come from one humble decision made before you write a single loop: **which data structure holds your data.** Get it right and your code is both faster *and* shorter. Get it wrong and you write more code to run slower. Fred Brooks said it best:\n\n> Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won't usually need your flowcharts; they'll be obvious.\n\nThe data structure *is* the algorithm. So let's build the decision guide.\n\n## The Big Four (plus one)\n\n**`list` — ordered, indexable, append-friendly.** Use it when order matters and you access items by position. `nums[0]`, `nums[-1]`, and `nums.append(x)` are all fast (O(1)). But a list has two traps. Checking `x in my_list` scans every element — that's **O(n)**. And `my_list.pop(0)` (removing from the front) has to shift every remaining element, also **O(n)**.\n\n**`set` — membership and dedup, no order.** A set answers `x in my_set` in roughly **O(1)** by hashing, no matter how big it gets. It also stores each value only once, so it's the natural tool for *removing duplicates*. The cost: it's unordered and holds no duplicates by design. If you find yourself writing `if x not in result_list`, you almost certainly want a set.\n\n**`dict` — keyed lookup, the workhorse.** A dict maps keys to values with **O(1)** lookup, insert, and update. It's the single most useful structure in Python: counting, grouping, caching, indexing — all dicts. Since Python 3.7 it also preserves insertion order, so you rarely give anything up by using one.\n\n**`tuple` — immutable and hashable.** A tuple is a frozen list. Because it can't change, it's **hashable**, which means a tuple can be a **dict key** or a **set element** — something a list can never do. Reach for tuples for fixed records like `(x, y)` coordinates, or composite keys like `counts[(user, day)]`.\n\n**`deque` — a fast queue.** `collections.deque` gives you **O(1)** append *and* pop at **both** ends. That front pop a list does in O(n)? A deque does it in O(1). Whenever you need a queue (first-in-first-out) or a sliding window, a deque is the answer, not a list.\n\n## The Decision Table\n\n| You need to... | Use | Why |\n|---|---|---|\n| Keep order, access by index | `list` | O(1) index, O(1) append |\n| Test membership fast / dedup | `set` | O(1) `in`, stores each value once |\n| Look up a value by a key | `dict` | O(1) keyed get/set — the workhorse |\n| Count or group items | `dict` / `Counter` / `defaultdict` | O(1) per item, one pass |\n| A fixed record or a composite key | `tuple` | immutable, hashable -> usable as a key |\n| A queue / pops from the front | `deque` | O(1) at both ends (list's `pop(0)` is O(n)) |\n\n## The Three Wins You'll Use Constantly\n\n**1. Membership and dedup -> `set`.** Turning `if x not in result_list` (O(n) each check, O(n^2) overall) into a set lookup (O(1)) is the classic 100x speedup. To dedup *and* keep first-seen order, pair a `set` for \"have I seen it?\" with a `list` for the output.\n\n**2. Counting and grouping -> `dict`.** Instead of scanning a list to tally each item, walk the data **once** and accumulate in a dict: `counts[w] = counts.get(w, 0) + 1`. The standard library makes it even cleaner — `collections.Counter(words)` does the whole tally in one call, and `collections.defaultdict(list)` groups items without checking whether the key exists yet.\n\n**3. Queues -> `deque`.** Building a worklist or processing items in arrival order? `deque` with `append` and `popleft` stays O(1) forever, while a list-based queue silently degrades as it grows.\n\n## The Smell Test\n\nA few patterns should make you stop and switch structures:\n\n- Writing `if x not in some_list` inside a loop -> you want a **set**.\n- Scanning a list to find \"the entry where key == k\" -> you want a **dict** keyed by `k`.\n- Calling `.pop(0)` or `.insert(0, x)` on a list in a loop -> you want a **deque**.\n- Trying to use a list as a dict key and getting `unhashable type` -> you want a **tuple**.\n\n> **Key idea:** Choose the data structure first. A `set` makes membership and dedup O(1), a `dict` (or `Counter`/`defaultdict`) makes counting and grouping a single pass, a `tuple` gives you a hashable key, and a `deque` makes a real O(1) queue. Picking right doesn't just speed the code up — it makes the code shorter and the bug surface smaller."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "toolbox",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "structure_picker_map",
+      "nodes": [
+        {
+          "label": "Pick the structure first",
+          "children": [
+            "list -> ordered, O(1) index, but O(n) membership & pop(0)",
+            "set -> O(1) membership & dedup, unordered",
+            "dict -> O(1) keyed lookup, the workhorse (count/group)",
+            "tuple -> immutable & hashable -> can be a dict key",
+            "deque -> O(1) append/pop at BOTH ends (real queue)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "list_vs_set_membership",
+      "left": {
+        "label": "if x not in result_list  ->  O(n) per check, O(n^2) overall",
+        "result": false
+      },
+      "right": {
+        "label": "if x in seen_set  ->  O(1) per check, O(n) overall",
+        "result": true
+      },
+      "description": {
+        "en": "Membership on a list scans every element. A set hashes straight to the answer. This single swap is the classic 100x win for dedup and lookups."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "id": "counting_the_right_way",
+      "steps": [
+        {
+          "code": "# WRONG: scan the whole list to count each word (O(n^2))\ncounts = {}\nfor w in words:\n    counts[w] = words.count(w)  # re-scans words every time!",
+          "explanation": {
+            "en": "list.count(w) walks the entire list for every word — O(n) inside an O(n) loop, so O(n^2) total."
+          }
+        },
+        {
+          "code": "# RIGHT: one pass, accumulate in a dict (O(n))\ncounts = {}\nfor w in words:\n    counts[w] = counts.get(w, 0) + 1",
+          "explanation": {
+            "en": "Walk the data ONCE and tally in a dict. Each lookup/update is O(1), so the whole thing is O(n)."
+          }
+        },
+        {
+          "code": "# EVEN BETTER: let the standard library do it\nfrom collections import Counter\ncounts = Counter(words)",
+          "explanation": {
+            "en": "Counter is a dict built exactly for this. Same result, one line, clearly intent-revealing."
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Membership / dedup?  -> set  (O(1) in)",
+        "Count / group / look up by key?  -> dict / Counter / defaultdict",
+        "Queue / pop from the front?  -> deque (list.pop(0) is O(n))",
+        "Need a hashable key?  -> tuple"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This code counts how often each word appears, but it uses the WRONG structure: for every word it calls words.count(w), which re-scans the entire list — that's O(n^2) and gets painfully slow on real text. Rewrite word_counts(words) to make a SINGLE pass and tally into a dict, returning a dict mapping each word to its count (you may use collections.Counter or a plain dict). The output must be identical — just fast. With the given sample text, the demo prints the count for 'the'. Expected output: 3"
+      },
+      "starter_code": "# Slow version: words.count(w) re-scans the whole list for EVERY word -> O(n^2)\n# def word_counts(words):\n#     counts = {}\n#     for w in words:\n#         counts[w] = words.count(w)\n#     return counts\n\ndef word_counts(words):\n    # TODO: make ONE pass and tally into a dict (or use collections.Counter).\n    # Return a dict mapping each word -> how many times it appears.\n    counts = {}\n    return counts\n\nsample = \"the cat sat on the mat the mat was flat\".split()\nresult = word_counts(sample)\nprint(result[\"the\"])",
+      "expected_output": "3",
+      "hints": {
+        "en": [
+          "Don't call words.count() inside the loop — that re-scans the list every time. Walk the list ONCE.",
+          "For each word w, do counts[w] = counts.get(w, 0) + 1 — get returns 0 the first time you see w.",
+          "Or skip the loop entirely: from collections import Counter; return dict(Counter(words)).",
+          "The result must be a plain dict equal to {'the': 3, 'mat': 2, 'cat': 1, ...} for the sample."
+        ]
+      },
+      "test_code": "from collections import Counter\n\nsample = \"the cat sat on the mat the mat was flat\".split()\nassert word_counts(sample) == dict(Counter(sample))\nassert word_counts(sample)[\"the\"] == 3\nassert word_counts(sample)[\"mat\"] == 2\nassert word_counts(sample)[\"cat\"] == 1\nassert word_counts([]) == {}\nassert word_counts([\"a\"]) == {\"a\": 1}\nassert word_counts([\"x\", \"x\", \"x\"]) == {\"x\": 3}\nfor case in ([], [\"a\"], [\"a\", \"b\", \"a\"], sample, list(\"abracadabra\")):\n    assert word_counts(case) == dict(Counter(case))"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "You repeatedly check 'if x in data' on a large collection. Which structure makes each check roughly O(1)?"
+      },
+      "options": {
+        "en": [
+          "A list, because 'in' is always fast",
+          "A set, because membership is answered by hashing",
+          "A tuple, because it is immutable",
+          "It doesn't matter; 'in' is O(1) everywhere"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is counting word frequencies with words.count(w) inside a loop slow?"
+      },
+      "options": {
+        "en": [
+          "count() is O(1) but the loop runs twice",
+          "count() re-scans the entire list for every word, making it O(n^2)",
+          "Lists can't be counted, so it raises an error",
+          "It is actually the fastest possible approach"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You need a first-in-first-out queue and keep removing items from the front. What should you use instead of a list?"
+      },
+      "options": {
+        "en": [
+          "A set, because it is unordered",
+          "A tuple, because it is immutable",
+          "A collections.deque, because pop from the front is O(1) (a list's pop(0) is O(n))",
+          "Nothing; list.pop(0) is already O(1)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "You try to use a list as a dictionary key and get 'unhashable type: list'. What fixes it?"
+      },
+      "options": {
+        "en": [
+          "Use a tuple instead — it is immutable and therefore hashable",
+          "Use a longer list",
+          "Lists can be keys; the error is a bug in Python",
+          "Convert the key to a set"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["data_structure_selection", "set_membership", "dict_counting", "deque_queue", "hashable_keys"],
+    "concepts_required": ["complexity_that_matters"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 16,
+    "category": "performance",
+    "path_memberships": []
+  },
+  "generated": false
+}

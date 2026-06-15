@@ -1,0 +1,117 @@
+{
+  "id": "roberta_large_multiframework_fill_mask",
+  "topic": "roberta_large_multiframework_fill_mask",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Multi-Framework Fill-Mask with RoBERTa-Large"
+  },
+  "description": {
+    "en": "Deploy FacebookAI/roberta-large for fill-mask inference across PyTorch, TensorFlow, JAX, and ONNX — compare latency, memory, and prediction quality while mastering the training improvements that made RoBERTa outperform BERT on every benchmark."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## RoBERTa-Large Across Every Framework\n\nVaathiyaar here! `FacebookAI/roberta-large` is a rare breed — a 355M-parameter encoder model that ships with first-class support for **PyTorch, TensorFlow, JAX, and ONNX**. That means you can train on GPU with PyTorch, deploy to TPU with JAX, serve via TF Serving, or optimize for CPU with ONNX — all from the same checkpoint. Today we'll run fill-mask inference across all four frameworks and understand what makes RoBERTa's masked predictions superior to BERT's.\n\n### Why RoBERTa Predicts Better Than BERT\n\n| Training Decision | BERT | RoBERTa | Impact on Fill-Mask |\n|---|---|---|---|\n| Masking | Static (same masks) | Dynamic (new masks each epoch) | Richer prediction diversity |\n| Training data | 16 GB | 160 GB | Broader world knowledge |\n| Tokenizer | WordPiece 30K | BPE 50K | Fewer `<unk>` tokens, finer predictions |\n| NSP objective | Yes | Removed | Cleaner single-sentence representations |\n| Mask token | `[MASK]` | `<mask>` | Different syntax, same concept |\n\n### PyTorch: The Default Path\n\n```python\nfrom transformers import pipeline\n\nunmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-large\")\nresults = unmasker(\"Deep learning has <mask> the field of AI.\")\n\nfor r in results[:3]:\n    print(f\"{r['score']:.4f} => {r['token_str']}\")\n# 0.3812 =>  transformed\n# 0.1547 =>  revolutionized\n# 0.0923 =>  changed\n```\n\nPyTorch is the default backend. The model (~1.4GB) downloads once and caches. RoBERTa's 24 transformer layers and 1024 hidden dimensions produce nuanced, semantically rich predictions.\n\n### TensorFlow: For TF Serving Deployments\n\n```python\nfrom transformers import TFAutoModelForMaskedLM, AutoTokenizer\nimport tensorflow as tf\n\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = TFAutoModelForMaskedLM.from_pretrained(\"FacebookAI/roberta-large\")\n\ntext = \"The best way to learn programming is by <mask>.\"\ninputs = tokenizer(text, return_tensors=\"tf\")\noutputs = model(**inputs)\n\nmask_idx = tf.where(inputs[\"input_ids\"] == tokenizer.mask_token_id)[0][1]\nlogits = outputs.logits[0, mask_idx]\ntop_5 = tf.math.top_k(logits, k=5)\n\nfor score, idx in zip(top_5.values.numpy(), top_5.indices.numpy()):\n    print(f\"{score:.2f} => {tokenizer.decode([idx]).strip()}\")\n```\n\nSame weights, same predictions — just TensorFlow tensors instead of PyTorch. Ideal when your production stack uses TF Serving or TFLite.\n\n### JAX/Flax: For TPU Training\n\n```python\nfrom transformers import FlaxAutoModelForMaskedLM, AutoTokenizer\nimport jax.numpy as jnp\n\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = FlaxAutoModelForMaskedLM.from_pretrained(\"FacebookAI/roberta-large\")\n\ntext = \"Scientists recently <mask> a new species.\"\ninputs = tokenizer(text, return_tensors=\"jax\")\noutputs = model(**inputs)\n\nmask_idx = jnp.where(inputs[\"input_ids\"] == tokenizer.mask_token_id)[1][0]\ntop_5_idx = jnp.argsort(outputs.logits[0, mask_idx])[-5:][::-1]\n\nfor idx in top_5_idx:\n    print(tokenizer.decode([int(idx)]).strip())\n```\n\nJAX's XLA compilation makes RoBERTa fly on TPUs. Flax models use the same pre-trained weights, so you can train on TPU and export back to PyTorch for deployment.\n\n### ONNX: Fastest CPU Inference\n\n```python\nfrom optimum.onnxruntime import ORTModelForMaskedLM\nfrom transformers import AutoTokenizer\n\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = ORTModelForMaskedLM.from_pretrained(\n    \"FacebookAI/roberta-large\", export=True\n)\n\nresults = model(**tokenizer(\"AI will <mask> every industry.\",\n                            return_tensors=\"pt\"))\n# ONNX: 2-3x faster on CPU than PyTorch\n```\n\nONNX Runtime with graph optimizations and optional INT8 quantization delivers the fastest CPU inference — critical for edge deployment and cost-sensitive production.\n\n### Framework Selection Guide\n\n| Framework | Best For | Latency (relative) | Memory |\n|---|---|---|---|\n| PyTorch | Training, research, GPU serving | 1.0x (baseline) | ~1.4 GB |\n| TensorFlow | TF Serving, TFLite mobile | ~1.1x | ~1.5 GB |\n| JAX/Flax | TPU training, XLA compilation | ~0.8x (TPU) | ~1.4 GB |\n| ONNX | CPU production, edge, quantized | ~0.4x (CPU) | ~0.7 GB (INT8) |\n\n> **Key Insight:** RoBERTa-large's multi-framework support means your model choice and your deployment choice are independent decisions. Train in PyTorch for ecosystem richness, fine-tune on TPU via JAX for speed, serve via TF Serving for scale, or export to ONNX for cost-efficient CPU inference. The 355M parameters and 50K BPE vocabulary produce identical high-quality fill-mask predictions across all four frameworks — choose based on your infrastructure, not your model."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RoBERTa-large (355M params) ships with first-class support for PyTorch, TensorFlow, JAX, and ONNX. Train on GPU, fine-tune on TPU, serve via TF Serving, or deploy to CPU with ONNX — all from the same checkpoint. Its dynamic masking and 160GB training data produce superior fill-mask predictions across every framework.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\n\nunmasker = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-large\")\n\nresults = unmasker(\"Deep learning has <mask> the field of AI.\")\n\nfor r in results[:3]:\n    print(f\"{r['score']:.4f} => {r['token_str']}\")\n# 0.3812 =>  transformed\n# 0.1547 =>  revolutionized",
+      "steps": [
+        {"line": 1, "explanation": "Import the pipeline abstraction — the simplest way to run any Hugging Face model for inference without managing tokenizers or models separately."},
+        {"line": 3, "explanation": "Create a fill-mask pipeline loading FacebookAI/roberta-large. The 355M parameter model (~1.4GB) downloads once and caches in ~/.cache/huggingface."},
+        {"line": 5, "explanation": "Pass a sentence with <mask> — RoBERTa's mask token. Unlike BERT which uses [MASK], RoBERTa follows GPT-2 style angle-bracket special tokens."},
+        {"line": 7, "explanation": "Slice to top 3 predictions. Each result dict contains 'score' (probability), 'token_str' (predicted word), 'token' (vocab ID), and 'sequence' (filled sentence)."},
+        {"line": 8, "explanation": "RoBERTa predicts 'transformed' with 38% confidence — trained on 160GB of text, it has rich contextual understanding of how AI relates to field transformation."},
+        {"line": 9, "explanation": "'revolutionized' as the second prediction shows semantic diversity. RoBERTa's 50K BPE vocabulary covers more words than BERT's 30K WordPiece."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import TFAutoModelForMaskedLM, AutoTokenizer\nimport tensorflow as tf\n\ntokenizer = AutoTokenizer.from_pretrained(\"FacebookAI/roberta-large\")\nmodel = TFAutoModelForMaskedLM.from_pretrained(\"FacebookAI/roberta-large\")\n\ntext = \"The best way to learn programming is by <mask>.\"\ninputs = tokenizer(text, return_tensors=\"tf\")\noutputs = model(**inputs)\n\nmask_idx = tf.where(inputs[\"input_ids\"] == tokenizer.mask_token_id)[0][1]\nlogits = outputs.logits[0, mask_idx]\ntop_5 = tf.math.top_k(logits, k=5)\n\nfor score, idx in zip(top_5.values.numpy(), top_5.indices.numpy()):\n    print(f\"{score:.2f} => {tokenizer.decode([idx]).strip()}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import TFAutoModelForMaskedLM — the TensorFlow version of the masked language model class. AutoTokenizer works across all frameworks."},
+        {"line": 4, "explanation": "Load the tokenizer — framework-agnostic. The same BPE tokenizer with 50,265 tokens works for PyTorch, TensorFlow, JAX, and ONNX."},
+        {"line": 5, "explanation": "Load the TensorFlow model. Hugging Face auto-converts the PyTorch weights to TF format on first load, then caches the TF checkpoint."},
+        {"line": 8, "explanation": "Tokenize with return_tensors='tf' to get TensorFlow tensors. The tokenizer adds <s> (start) and </s> (end) tokens automatically."},
+        {"line": 9, "explanation": "Forward pass through 24 TF layers. outputs.logits has shape (batch, seq_len, 50265) — one score per vocabulary token per position."},
+        {"line": 11, "explanation": "Find the <mask> position by searching for the mask_token_id in input_ids. tf.where returns the coordinates of matching elements."},
+        {"line": 12, "explanation": "Extract logits at the mask position — a 50,265-dim vector of raw scores. Higher scores mean higher predicted probability."},
+        {"line": 13, "explanation": "tf.math.top_k efficiently finds the 5 highest-scoring tokens without sorting the full 50K vocabulary."},
+        {"line": 15, "explanation": "Decode token IDs back to strings. The predictions are identical to PyTorch — same weights produce same results regardless of framework."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "PyTorch (Default)",
+      "right_label": "ONNX (Production)",
+      "items": [
+        {"left": "~1.4 GB model in fp32", "right": "~0.7 GB with INT8 quantization"},
+        {"left": "Best for training and GPU inference", "right": "Best for CPU production and edge deployment"},
+        {"left": "Dynamic computation graph", "right": "Static optimized graph with operator fusion"},
+        {"left": "Full Hugging Face ecosystem support", "right": "2-3x faster CPU inference via ONNX Runtime"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now deploy RoBERTa-large fill-mask across PyTorch, TensorFlow, JAX, and ONNX — choose the right framework for your infrastructure!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `MultiFrameworkFillMask` class that simulates running fill-mask inference across different frameworks. It takes a vocabulary with word-to-context mappings and a set of framework configurations (each framework has a speed_factor and a precision affecting score rounding). Implement `predict(sentence, framework)` that finds the `<mask>` position, scores vocabulary words by context overlap, adjusts scores by the framework's speed_factor, and rounds to the framework's precision. Then implement `compare_frameworks(sentence)` that returns predictions from all frameworks sorted by framework name."
+      },
+      "starter_code": "class MultiFrameworkFillMask:\n    def __init__(self, vocab_context: dict[str, list[str]],\n                 frameworks: dict[str, dict]):\n        # vocab_context: {\"word\": [\"context1\", \"context2\", ...], ...}\n        # frameworks: {\"pytorch\": {\"speed_factor\": 1.0, \"precision\": 4},\n        #              \"onnx\": {\"speed_factor\": 2.5, \"precision\": 2}, ...}\n        self.vocab_context = vocab_context\n        self.frameworks = frameworks\n\n    def predict(self, sentence: str, framework: str) -> list[dict]:\n        # 1. Split sentence, find <mask> position\n        # 2. Score each vocab word: count context words in sentence\n        # 3. Multiply score by framework's speed_factor\n        # 4. Round to framework's precision decimal places\n        # 5. Return [{\"token\": word, \"score\": adjusted_score}]\n        #    sorted by score descending, exclude zero scores\n        pass\n\n    def compare_frameworks(self, sentence: str) -> dict:\n        # Run predict() for each framework\n        # Return {framework_name: predictions_list}\n        # sorted by framework name alphabetically\n        pass\n\n# Test it:\nvocab = {\n    \"transformed\": [\"deep\", \"learning\", \"field\", \"ai\"],\n    \"revolutionized\": [\"deep\", \"learning\", \"field\"],\n    \"changed\": [\"field\", \"world\"],\n    \"improved\": [\"learning\", \"model\"]\n}\n\nframeworks = {\n    \"pytorch\": {\"speed_factor\": 1.0, \"precision\": 4},\n    \"onnx\": {\"speed_factor\": 2.5, \"precision\": 2},\n    \"tensorflow\": {\"speed_factor\": 1.1, \"precision\": 3}\n}\n\nfm = MultiFrameworkFillMask(vocab, frameworks)\n\npt_results = fm.predict(\n    \"deep learning has <mask> the field of ai\", \"pytorch\"\n)\nprint(pt_results[0][\"token\"])\nprint(pt_results[0][\"score\"])\n\ncomparison = fm.compare_frameworks(\n    \"deep learning has <mask> the field of ai\"\n)\nprint(sorted(comparison.keys()) == [\"onnx\", \"pytorch\", \"tensorflow\"])",
+      "expected_output": "transformed\n4.0\nTrue",
+      "hints": {
+        "en": [
+          "In predict(), split the sentence into words, find '<mask>', then for each vocab word count how many of its context words appear in the sentence words (excluding '<mask>')",
+          "Multiply the raw count by the framework's speed_factor and round using round(score, precision)",
+          "In compare_frameworks(), call predict() for each framework key and return a dict sorted by framework name"
+        ]
+      },
+      "test_code": "v = {\"cat\": [\"pet\", \"fur\"], \"dog\": [\"pet\", \"bark\"], \"fish\": [\"water\"]}\nf = {\"fast\": {\"speed_factor\": 2.0, \"precision\": 1}, \"slow\": {\"speed_factor\": 0.5, \"precision\": 3}}\nm = MultiFrameworkFillMask(v, f)\np_fast = m.predict(\"my pet has <mask> and fur\", \"fast\")\nassert p_fast[0][\"token\"] == \"cat\"\nassert p_fast[0][\"score\"] == 4.0\np_slow = m.predict(\"my pet has <mask> and fur\", \"slow\")\nassert p_slow[0][\"token\"] == \"cat\"\nassert p_slow[0][\"score\"] == 1.0\nc = m.compare_frameworks(\"my pet has <mask> and fur\")\nassert \"fast\" in c and \"slow\" in c\nassert len(c) == 2\nassert c[\"fast\"][0][\"score\"] > c[\"slow\"][0][\"score\"]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `BPETokenizer` class that simulates RoBERTa's Byte-Pair Encoding tokenization. Given a list of merge rules (pairs of strings to combine), implement `tokenize(text)` that starts by splitting each word into individual characters, then iteratively applies merges in priority order. Prefix subword pieces after the first in each word with 'G' (representing RoBERTa's byte-level continuation). Wrap output with `<s>` and `</s>` tokens."
+      },
+      "starter_code": "class BPETokenizer:\n    def __init__(self, merges: list[tuple[str, str]]):\n        # merges: ordered list of (left, right) merge rules\n        # e.g., [(\"l\", \"e\"), (\"le\", \"a\"), (\"lea\", \"rn\"), ...]\n        self.merges = merges\n\n    def _apply_merges(self, tokens: list[str]) -> list[str]:\n        # Apply each merge rule in order:\n        # Scan tokens for adjacent (left, right) pair,\n        # merge them into one token, repeat for each rule\n        pass\n\n    def tokenize(self, text: str) -> list[str]:\n        # 1. Lowercase and split into words\n        # 2. Split each word into individual characters\n        # 3. Apply all merge rules via _apply_merges\n        # 4. First token of each word stays as-is,\n        #    subsequent tokens get 'G' prefix\n        # 5. Wrap with <s> and </s>\n        pass\n\n# Test it:\nmerges = [\n    (\"l\", \"e\"),    # l + e -> le\n    (\"a\", \"r\"),    # a + r -> ar\n    (\"le\", \"ar\"),   # le + ar -> lear\n    (\"n\", \"i\"),    # n + i -> ni\n    (\"ni\", \"n\"),   # ni + n -> nin\n    (\"lear\", \"nin\"),# lear + nin -> learnin\n    (\"learnin\", \"g\"),# learnin + g -> learning\n    (\"i\", \"s\"),    # i + s -> is\n    (\"f\", \"u\"),    # f + u -> fu\n    (\"fu\", \"n\"),   # fu + n -> fun\n]\n\ntokenizer = BPETokenizer(merges)\ntokens = tokenizer.tokenize(\"learning is fun\")\nprint(tokens)\nprint(len(tokens))",
+      "expected_output": "['<s>', 'learning', 'is', 'fun', '</s>']\n5",
+      "hints": {
+        "en": [
+          "In _apply_merges(), for each merge rule (left, right), scan the token list for adjacent pairs matching left and right, combine them into left+right, and produce a new shorter list",
+          "In tokenize(), split each word into list(word) first, then call _apply_merges on each word's character list independently",
+          "After merging, the first resulting token of each word keeps its value; any remaining tokens in the same word get prefixed with 'G'"
+        ]
+      },
+      "test_code": "m = [(\"a\", \"b\"), (\"ab\", \"c\")]\nt = BPETokenizer(m)\ntokens = t.tokenize(\"abc\")\nassert tokens[0] == \"<s>\"\nassert tokens[-1] == \"</s>\"\nassert \"abc\" in tokens\nm2 = [(\"h\", \"i\")]\nt2 = BPETokenizer(m2)\ntokens2 = t2.tokenize(\"hi hey\")\nassert tokens2[0] == \"<s>\"\nassert tokens2[-1] == \"</s>\"\nassert \"hi\" in tokens2\n# 'hey' splits to ['h','e','y'], merge h+? no 'i' so stays ['h','e','y'] -> 'h', 'Ge', 'Gy'\nassert \"Ge\" in tokens2 or \"Gy\" in tokens2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["RoBERTa fill-mask", "multi-framework deployment", "PyTorch inference", "TensorFlow inference", "JAX/Flax models", "ONNX Runtime", "BPE tokenization", "dynamic masking", "cross-framework model serving"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "string manipulation", "pip install"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

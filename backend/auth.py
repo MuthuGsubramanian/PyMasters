@@ -19,6 +19,35 @@ JWT_TTL_SECONDS = 60 * 60 * 24 * 30  # 30 days
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
+_INSECURE_DEFAULT = "dev-insecure-secret-change-me"
+_MIN_SECRET_LEN = 16
+
+
+def is_production() -> bool:
+    """True when running on Cloud Run (which injects K_SERVICE), false locally."""
+    return bool(os.getenv("K_SERVICE"))
+
+
+def assert_secret_is_safe(secret: str, is_production: bool) -> None:
+    """
+    Fail closed in production: a blank, default, or too-short signing secret lets
+    anyone forge tokens (including super-admin). Locally we stay permissive so
+    `git clone && run` just works.
+    """
+    if not is_production:
+        return
+    if not secret or secret == _INSECURE_DEFAULT or len(secret) < _MIN_SECRET_LEN:
+        raise RuntimeError(
+            "JWT_SECRET is missing, default, or too short. Set a strong JWT_SECRET "
+            "(e.g. `python -c \"import secrets; print(secrets.token_urlsafe(48))\"`) "
+            "before deploying. Refusing to start with a forgeable signing key."
+        )
+
+
+# Enforce at import time so a misconfigured deploy fails fast instead of silently
+# issuing forgeable tokens.
+assert_secret_is_safe(JWT_SECRET, is_production())
+
 
 def _current_token_version(user_id: str):
     """Returns the user's current token_version, or None if the user row is missing."""

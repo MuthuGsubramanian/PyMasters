@@ -1,0 +1,169 @@
+{
+  "id": "staying_the_architect",
+  "topic": "staying_the_architect",
+  "track": "vibe_coding",
+  "module": "mastery",
+  "order": 4,
+  "title": {
+    "en": "Staying the Architect: You Own the Design, the AI Owns the Typing"
+  },
+  "description": {
+    "en": "The capstone. In the AI era the durable skill isn't syntax recall — it's architecture and judgment. You decide the design, the data model, the boundaries, the trade-offs; the AI executes inside them. Learn to delegate implementation without delegating decisions, and to stay an engineer who could do the work, only faster."
+  },
+  "xp_reward": 100,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The One Skill That Doesn't Depreciate\n\nEvery few years a tool arrives that makes part of programming free. Compilers killed hand-written assembly. Garbage collectors killed manual memory bookkeeping. Stack Overflow killed memorizing API signatures. Each time, the same fear: *if the machine does the hard part, what's left for me?* And each time the answer was the same: the thinking moved **up a level**, and the engineers who moved with it thrived.\n\nAI is that shift again, only bigger. The AI can now do the *typing* — the syntax, the boilerplate, the lookups, the first draft. What it cannot do is decide what should exist, how the pieces fit, and what \"good\" means for your problem. That decision is **architecture**, and architecture is the skill that doesn't depreciate.\n\nThis is the throughline of the whole track. You learned what vibe coding really is and where its sweet spot lives. You learned to *verify, don't trust* — to out-run the model instead of out-reading it. You learned the danger zones where you slow down and own every line. This last lesson ties it together into one stance: **you are the architect; the AI is the builder.**\n\n### Decisions vs. Implementation\n\nThe core discipline is a clean split between two kinds of work:\n\n| You own (decisions) | AI owns (implementation) |\n|---------------------|--------------------------|\n| What the system does and why | How a function is written |\n| The data model and its invariants | Boilerplate and glue code |\n| Boundaries between modules | Filling in a known algorithm |\n| Trade-offs: speed vs. clarity vs. cost | Syntax, imports, formatting |\n| What \"correct\" and \"done\" mean | The first draft to react to |\n\nDelegate the right column freely. Delegate the left column to no one. The moment you let the AI choose your data model or your boundaries, you've stopped being the architect — you're now a passenger reading code you didn't design, hoping it adds up. It usually doesn't.\n\n### Keep the Model in Your Head\n\nAn architect can sketch the whole building from memory: where the load-bearing walls are, where the plumbing runs, what happens if you move a wall. You need the same for your software. Before you prompt, you should be able to say, in plain words: *here are the parts, here's how data flows between them, here's the one rule that must never break.* If you can't, no prompt will save you — you're asking the AI to design a building you can't picture, and you won't notice when it puts the kitchen in the elevator shaft.\n\nThe AI fills in rooms. You hold the blueprint.\n\n### Guard Against Skill Atrophy\n\nHere's the trap that catches good engineers. Delegating the typing is leverage. Delegating the *understanding* is decay. If you let the AI write code you could no longer write yourself — and could no longer evaluate — your judgment quietly rots while your output looks fine. Then one day the AI is confidently wrong about something subtle, and you've lost the ability to tell.\n\nThe rule that keeps you sharp:\n\n> **Use AI to go faster on things you *could* do yourself — never to do things you can't evaluate.**\n\nThat single sentence is the line between leverage and dependence. The engineers who thrive aren't the ones who delegate the most. They're the ones who still understand the fundamentals they're delegating, so they can catch the AI when it drifts. Keep practicing the hard parts occasionally by hand. Keep reading the generated code for *intent*, not just shape. Stay fluent in the thing you're handing off.\n\n### The Architect's Loop\n\nPut it all together and the daily loop is simple:\n\n1. **Design first** — decide the shape, the data, the boundaries, the trade-offs. This stays in your head and your spec.\n2. **Delegate the typing** — let the AI draft the implementation inside your design.\n3. **Verify ruthlessly** — run it, edge-case it, assert it. Never ship a line you couldn't defend.\n4. **Own what ships** — your name is on it. The AI is a tool; the responsibility is yours.\n\nThat's the whole track in four lines. Stay in the driver's seat. Verify everything. Know the danger zones. Own what you ship.\n\nThe future doesn't belong to people who can type code fastest — the machine already won that race. It belongs to people who know what should be built and can tell when it isn't. Be the architect. Let the AI do the typing.\n\n> **Key idea:** Syntax recall is the part the machine took. Architecture and judgment are the part it can't. Delegate implementation, never decisions — and never hand off anything you couldn't do or evaluate yourself. You own the design; the AI owns the keyboard."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "blueprint",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "architect_loop",
+      "nodes": [
+        {
+          "label": "The Architect's Loop",
+          "children": [
+            "1. Design first (you)",
+            "2. Delegate the typing (AI)",
+            "3. Verify ruthlessly (you)",
+            "4. Own what ships (you)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "decisions_vs_implementation",
+      "left": {
+        "label": "You own: design, data model, boundaries, trade-offs",
+        "result": true
+      },
+      "right": {
+        "label": "AI owns: syntax, boilerplate, first-draft typing",
+        "result": true
+      },
+      "description": {
+        "en": "Delegate implementation freely. Delegate decisions to no one. That split is what keeps you the architect."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "summary_demo",
+      "code": "def summarize_orders(orders):\n    total = sum(o[\"amount\"] for o in orders)\n    count = len(orders)\n    average = total / count if count else 0.0\n    return {\"total\": total, \"count\": count, \"average\": average}\n\nprint(summarize_orders([{\"amount\": 10.0}, {\"amount\": 20.0}]))\nprint(summarize_orders([]))",
+      "executionSteps": [
+        { "line": 6, "variables": { "count": "2", "total": "30.0" }, "output": "{'total': 30.0, 'count': 2, 'average': 15.0}", "description": "Your design: total, count, average — clean and explicit." },
+        { "line": 9, "variables": { "count": "0", "total": "0" }, "output": "{'total': 0, 'count': 0, 'average': 0.0}", "description": "You owned the empty-list trade-off, so no crash. The architect decided; the AI typed." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Syntax recall is the part the machine took.",
+        "Architecture and judgment are the part it can't.",
+        "Delegate the typing. Own the design. Own what ships."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2200
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Capstone challenge. Be the architect: implement to the spec, don't improvise. SPEC: write summarize_orders(orders) where orders is a list of dicts each with an 'amount' (a number). Return a dict with exactly three keys: 'total' (sum of all amounts), 'count' (number of orders), and 'average' (total / count). Edge case you own: for an empty list, return total 0, count 0, and average 0.0 — never divide by zero. The stub below prints the summary for two sample orders. Expected output: {'total': 30.0, 'count': 2, 'average': 15.0}"
+      },
+      "starter_code": "def summarize_orders(orders):\n    # SPEC:\n    #   total   = sum of every order's 'amount'\n    #   count   = number of orders\n    #   average = total / count, but 0.0 when there are no orders\n    # Return a dict with keys: 'total', 'count', 'average'\n    pass  # implement to the spec\n\nprint(summarize_orders([{\"amount\": 10.0}, {\"amount\": 20.0}]))",
+      "expected_output": "{'total': 30.0, 'count': 2, 'average': 15.0}",
+      "hints": {
+        "en": [
+          "Pull each amount with a generator: sum(o['amount'] for o in orders).",
+          "count is just len(orders); compute it before you divide.",
+          "Guard the division: average = total / count if count else 0.0 — this is the trade-off YOU own, not the AI.",
+          "Return a single dict literal with the three keys spelled exactly: 'total', 'count', 'average'."
+        ]
+      },
+      "test_code": "r = summarize_orders([{'amount': 10.0}, {'amount': 20.0}])\nassert r == {'total': 30.0, 'count': 2, 'average': 15.0}\nempty = summarize_orders([])\nassert empty == {'total': 0, 'count': 0, 'average': 0.0}\nassert summarize_orders([{'amount': 5.0}])['average'] == 5.0\nassert set(summarize_orders([{'amount': 1.0}]).keys()) == {'total', 'count', 'average'}"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the capstone's core split between you and the AI?"
+      },
+      "options": {
+        "en": [
+          "You write tests, the AI writes everything else",
+          "You own the decisions (design, data model, boundaries, trade-offs); the AI owns the implementation",
+          "The AI owns the architecture so you can focus on syntax",
+          "You alternate every other line of code with the AI"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "According to the lesson, the durable skill in the AI era is:"
+      },
+      "options": {
+        "en": [
+          "Memorizing the most API signatures",
+          "Typing code as fast as possible",
+          "Architecture and judgment — deciding what to build and telling when it's wrong",
+          "Knowing the most programming languages"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the rule that separates leverage from dependence?"
+      },
+      "options": {
+        "en": [
+          "Use AI for everything you possibly can to maximize speed",
+          "Use AI only for code you've already written before",
+          "Use AI to go faster on things you could do yourself — never to do things you can't evaluate",
+          "Never let AI write more than ten lines at a time"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does the lesson warn about skill atrophy?"
+      },
+      "options": {
+        "en": [
+          "Because AI code always runs slower over time",
+          "If you delegate understanding (not just typing), your judgment decays and you can't catch the AI when it's confidently wrong",
+          "Because reading generated code is illegal",
+          "Because architecture is less important than syntax"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["software_architecture", "engineering_judgment", "delegation_vs_decisions", "skill_atrophy"],
+    "concepts_required": ["verify_dont_trust", "when_not_to_vibe_code"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

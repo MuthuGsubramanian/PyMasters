@@ -162,12 +162,25 @@ def get_profile(user_id: str):
     db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
     profile = get_student_profile(db_path, user_id)
 
+    # created_at lives on the users row; surface it so the UI can show
+    # "Member since …" instead of N/A.
+    created_at = None
+    try:
+        conn = sqlite3.connect(db_path)
+        row = conn.execute("SELECT created_at FROM users WHERE id = ?", [user_id]).fetchone()
+        conn.close()
+        if row:
+            created_at = row[0]
+    except Exception:
+        pass
+
     if profile is None:
-        return {"profile": None, "onboarding_completed": False}
+        return {"profile": None, "onboarding_completed": False, "created_at": created_at}
 
     return {
         "profile": profile,
         "onboarding_completed": profile.get("onboarding_completed", False),
+        "created_at": created_at,
     }
 
 

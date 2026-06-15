@@ -8,14 +8,167 @@ solution submission, and a leaderboard of top completions.
 """
 
 import os
+import ast
+import json
 import sqlite3
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from auth import get_current_user_id
+from ratelimit import SlidingWindowRateLimiter
+
 router = APIRouter(prefix="/api/challenges", tags=["challenges"])
+
+# Grading runs code in a subprocess — cap submissions per user.
+_submit_limiter = SlidingWindowRateLimiter(max_calls=20, window_seconds=60)
+
+
+def _validate_submission(challenge: dict, code: str) -> Tuple[bool, str]:
+    """Lightweight STATIC validation (no code execution): the submission must be
+    valid Python, differ from the starter template, define every top-level
+    function/class the starter declares, and not leave those bodies as a bare
+    `pass`. This rejects empty/placeholder junk that the old stub accepted.
+
+    NOTE: this is a safe interim gate, not full correctness grading. Real
+    grading means running the code against `test_cases` in the sandbox, which
+    requires first authenticating + rate-limiting this endpoint (it currently
+    trusts a body user_id) and normalising the prose test_cases on a few
+    challenges (e.g. ch-12) into executable assertions. Tracked as a follow-up.
+    """
+    norm = (code or "").strip()
+    if not norm:
+        return (False, "Write a solution before submitting.")
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return (False, f"Syntax error: {e.msg} (line {e.lineno}).")
+
+    starter = challenge.get("starter_code") or ""
+    if norm == starter.strip():
+        return (False, "This is the starter template — write your solution first.")
+
+    try:
+        required = {
+            n.name for n in ast.parse(starter).body
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        }
+    except SyntaxError:
+        required = set()
+    defined = {
+        n.name for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+    }
+    missing = required - defined
+    if missing:
+        return (False, f"Your solution must define: {', '.join(sorted(missing))}.")
+
+    # Reject required functions left as just `pass` / a docstring (unimplemented).
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in required:
+            body = [s for s in node.body
+                    if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+            if not body or all(isinstance(s, ast.Pass) for s in body):
+                return (False, f"`{node.name}` is still unimplemented.")
+
+    return (True, "Submission accepted.")
+
+
+_GRADE_SENTINEL = "__PMGRADE__"
+
+# Harness comparison + driver, embedded into the sandboxed program. Compares an
+# expression result to the expected literal (tolerant), or runs an assertion
+# snippet (Form B). Prints one sentinel line of JSON: a list of per-test dicts.
+_HARNESS_TMPL = '''
+import json as __json, math as __math
+
+def __cmp(got, raw, unordered=False):
+    try:
+        exp = eval(raw)
+    except Exception:
+        return (str(got) == str(raw)) or (repr(got) == raw)
+    if unordered:
+        try:
+            return sorted(got) == sorted(exp)
+        except Exception:
+            try:
+                return set(got) == set(exp)
+            except Exception:
+                pass
+    if isinstance(got, float) or isinstance(exp, float):
+        try:
+            return __math.isclose(got, exp, rel_tol=1e-9, abs_tol=1e-12)
+        except Exception:
+            pass
+    return (got == exp) or (str(got) == str(exp)) or (repr(got) == raw)
+
+__tests = __json.loads(%(tests)s)
+__results = []
+for __t in __tests:
+    __name = __t.get("name") or __t.get("input") or "test"
+    try:
+        if "harness" in __t and __t["harness"] is not None:
+            exec(__t["harness"], globals())
+            __results.append({"name": __name, "passed": True})
+        else:
+            __got = eval(__t["input"])
+            __raw = __t.get("expected_output", __t.get("expected"))
+            __ok = __cmp(__got, __raw, bool(__t.get("unordered")))
+            __r = {"name": __name, "passed": bool(__ok)}
+            if not __ok:
+                __r["got"] = repr(__got)[:120]
+                __r["expected"] = str(__raw)[:120]
+            __results.append(__r)
+    except Exception as __e:
+        __results.append({"name": __name, "passed": False, "error": str(__e)[:160]})
+print("%(sentinel)s" + __json.dumps(__results))
+'''
+
+
+def grade_submission(challenge: dict, code: str) -> dict:
+    """Run the submission against the challenge's test cases in the sandbox.
+    Returns {passed, passed_count, total, results, message, rejected?}."""
+    from vaathiyaar.execution import run_code_subprocess, check_challenge_safety
+
+    reason = check_challenge_safety(code)
+    if reason:
+        return {"passed": False, "passed_count": 0, "total": 0, "results": [],
+                "message": f"Code rejected: {reason}.", "rejected": True}
+
+    tests = challenge.get("test_cases") or []
+    if not tests:
+        res = run_code_subprocess(code)
+        ok = res.get("exit_code", 1) == 0 and not (res.get("error") or "").strip()
+        return {"passed": ok, "passed_count": 1 if ok else 0, "total": 1, "results": [],
+                "message": "Ran successfully." if ok else "Your code raised an error."}
+
+    program = code + "\n" + (_HARNESS_TMPL % {
+        "tests": repr(json.dumps(tests)),
+        "sentinel": _GRADE_SENTINEL,
+    })
+    res = run_code_subprocess(program, timeout=10)
+    out = res.get("output", "") or ""
+    idx = out.rfind(_GRADE_SENTINEL)
+    total = len(tests)
+    if idx == -1:
+        err = (res.get("error") or "").strip()
+        tail = err.splitlines()[-1][:160] if err else ""
+        msg = ("Your code timed out." if "timed out" in err.lower()
+               else ("Your code errored before tests ran. " + tail) if err
+               else "No output from your solution.")
+        return {"passed": False, "passed_count": 0, "total": total, "results": [], "message": msg.strip()}
+    try:
+        results = json.loads(out[idx + len(_GRADE_SENTINEL):].splitlines()[0])
+    except Exception:
+        return {"passed": False, "passed_count": 0, "total": total, "results": [],
+                "message": "Could not evaluate your solution."}
+    passed_count = sum(1 for r in results if r.get("passed"))
+    all_pass = passed_count == total and total > 0
+    msg = f"All {total} tests passed!" if all_pass else f"{passed_count} of {total} tests passed."
+    return {"passed": all_pass, "passed_count": passed_count, "total": total,
+            "results": results, "message": msg}
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +223,12 @@ def _ensure_challenges_table(db_path: str):
                 UNIQUE(user_id, challenge_id)
             )
         """)
+        # Additive migration: per-attempt test counts for richer history/UX.
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(challenge_submissions)").fetchall()}
+        if "passed_count" not in cols:
+            conn.execute("ALTER TABLE challenge_submissions ADD COLUMN passed_count INTEGER DEFAULT 0")
+        if "total_count" not in cols:
+            conn.execute("ALTER TABLE challenge_submissions ADD COLUMN total_count INTEGER DEFAULT 0")
         conn.commit()
     finally:
         conn.close()
@@ -162,9 +321,12 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "[[1,2],[3,4]] -> [[3,1],[4,2]]",
         "test_cases": [
-            {"input": "[[1,2],[3,4]]", "expected_output": "[[3,1],[4,2]]"},
-            {"input": "[[1,2,3],[4,5,6],[7,8,9]]", "expected_output": "[[7,4,1],[8,5,2],[9,6,3]]"},
-            {"input": "[[1]]", "expected_output": "[[1]]"},
+            # rotate_90 mutates in place and returns None, so tests must call it
+            # on a variable then assert the variable — a bare literal `input` never
+            # invoked the function and so was unpassable by a correct solution.
+            {"name": "2x2 rotates clockwise", "harness": "m=[[1,2],[3,4]]\nrotate_90(m)\nassert m==[[3,1],[4,2]], m"},
+            {"name": "3x3 rotates clockwise", "harness": "m=[[1,2,3],[4,5,6],[7,8,9]]\nrotate_90(m)\nassert m==[[7,4,1],[8,5,2],[9,6,3]], m"},
+            {"name": "1x1 unchanged", "harness": "m=[[1]]\nrotate_90(m)\nassert m==[[1]], m"},
         ],
         "xp_reward": 20,
         "hints": [
@@ -198,9 +360,11 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "cache.get(1) == 1 after cache.put(1, 1)",
         "test_cases": [
-            {"input": "cache = LRUCache(2); cache.put(1,1); cache.put(2,2); cache.get(1)", "expected_output": "1"},
-            {"input": "cache = LRUCache(2); cache.put(1,1); cache.put(2,2); cache.put(3,3); cache.get(2)", "expected_output": "-1"},
-            {"input": "cache = LRUCache(1); cache.put(1,1); cache.put(2,2); cache.get(1)", "expected_output": "-1"},
+            {"name": "get returns stored value", "harness": "c=LRUCache(2)\nc.put(1,1)\nc.put(2,2)\nassert c.get(1)==1"},
+            {"name": "evicts least-recently-used", "harness": "c=LRUCache(2)\nc.put(1,1)\nc.put(2,2)\nc.put(3,3)\nassert c.get(1)==-1 and c.get(3)==3"},
+            {"name": "capacity 1 evicts previous", "harness": "c=LRUCache(1)\nc.put(1,1)\nc.put(2,2)\nassert c.get(1)==-1"},
+            {"name": "get refreshes recency", "harness": "c=LRUCache(2)\nc.put(1,1)\nc.put(2,2)\nc.get(1)\nc.put(3,3)\nassert c.get(2)==-1 and c.get(1)==1"},
+            {"name": "missing key returns -1", "harness": "c=LRUCache(2)\nassert c.get(99)==-1"},
         ],
         "xp_reward": 30,
         "hints": [
@@ -273,9 +437,11 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "@timer decorated functions print elapsed time",
         "test_cases": [
-            {"input": "@timer\\ndef slow(): time.sleep(0.1); return 42\\nslow()", "expected_output": "42"},
-            {"input": "@retry(max_attempts=3)\\ndef flaky(): raise ValueError\\nflaky()", "expected_output": "raises ValueError after 3 attempts"},
-            {"input": "@validate_types\\ndef add(a: int, b: int) -> int: return a+b\\nadd(1,2)", "expected_output": "3"},
+            {"name": "timer preserves return value", "harness": "@timer\ndef slow():\n    return 42\nassert slow()==42"},
+            {"name": "retry re-raises after max attempts", "harness": "n={'c':0}\n@retry(max_attempts=3)\ndef flaky():\n    n['c']+=1\n    raise ValueError('x')\ntry:\n    flaky()\n    assert False, 'should have raised'\nexcept ValueError:\n    assert n['c']==3"},
+            {"name": "retry succeeds before max", "harness": "n={'c':0}\n@retry(max_attempts=3)\ndef eventually():\n    n['c']+=1\n    if n['c']<2:\n        raise ValueError\n    return 'ok'\nassert eventually()=='ok'"},
+            {"name": "validate_types accepts valid args", "harness": "@validate_types\ndef add(a: int, b: int) -> int:\n    return a+b\nassert add(1,2)==3"},
+            {"name": "validate_types rejects wrong types", "harness": "@validate_types\ndef add(a: int, b: int) -> int:\n    return a+b\nraised=False\ntry:\n    add('x',2)\nexcept TypeError:\n    raised=True\nassert raised"},
         ],
         "xp_reward": 20,
         "hints": [
@@ -314,9 +480,15 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "dict mapping URL -> response text or error string",
         "test_cases": [
-            {"input": "fetch_all(['http://example.com'])", "expected_output": "{'http://example.com': '<html>...'}"},
-            {"input": "fetch_all(['http://bad-url'], timeout=1)", "expected_output": "{'http://bad-url': 'Error: ...'}"},
-            {"input": "fetch_all([], max_concurrent=5)", "expected_output": "{}"},
+            # fetch_all is async, so a bare `fetch_all(...)` input only yielded a
+            # coroutine object; and the prose expected_outputs ('<html>...',
+            # 'Error: ...') could never equal a real result. Tests now await the
+            # coroutine and assert the described contract: a dict keyed by every
+            # URL, with failures captured (never raised) so one bad URL can't
+            # abort the batch, and empty input -> empty dict.
+            {"name": "maps every URL to a result", "harness": "import asyncio\nr=asyncio.run(fetch_all(['http://example.com']))\nassert set(r.keys())=={'http://example.com'} and isinstance(r['http://example.com'], str)"},
+            {"name": "captures errors, never raises", "harness": "import asyncio\nr=asyncio.run(fetch_all(['http://bad-url'], timeout=1))\nassert 'http://bad-url' in r and isinstance(r['http://bad-url'], str)"},
+            {"name": "empty input -> empty dict", "harness": "import asyncio\nassert asyncio.run(fetch_all([], max_concurrent=5))=={}"},
         ],
         "xp_reward": 30,
         "hints": [
@@ -517,9 +689,11 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "with Timer() as t: ... prints elapsed time",
         "test_cases": [
-            {"input": "with Timer(): time.sleep(0.1)", "expected_output": "prints elapsed ~ 0.1s"},
-            {"input": "with temp_directory() as d: os.path.isdir(d)", "expected_output": "True (dir exists inside, cleaned up after)"},
-            {"input": "with suppress(ValueError): raise ValueError", "expected_output": "no exception raised"},
+            {"name": "Timer runs a block without error", "harness": "import time\nwith Timer():\n    time.sleep(0.01)"},
+            {"name": "temp_directory yields an existing dir", "harness": "import os\nwith temp_directory() as d:\n    assert os.path.isdir(d)"},
+            {"name": "temp_directory cleans up after", "harness": "import os\nwith temp_directory() as d:\n    saved=d\nassert not os.path.isdir(saved)"},
+            {"name": "suppress swallows listed exception", "harness": "with suppress(ValueError):\n    raise ValueError('x')"},
+            {"name": "suppress lets other exceptions through", "harness": "raised=False\ntry:\n    with suppress(ValueError):\n        raise KeyError('k')\nexcept KeyError:\n    raised=True\nassert raised"},
         ],
         "xp_reward": 20,
         "hints": [
@@ -551,9 +725,16 @@ def get_weekly_challenge():
 
 
 @router.post("/submit")
-def submit_solution(req: SubmitSolutionRequest):
-    """Submit a solution for a challenge. Records the attempt in the database."""
-    # Validate challenge exists
+def submit_solution(req: SubmitSolutionRequest, caller: str = Depends(get_current_user_id)):
+    """Submit a solution. Authenticated (user from JWT) + rate-limited. Graded
+    against the challenge's test cases in the hardened sandbox."""
+    if not _submit_limiter.allow(caller):
+        wait = _submit_limiter.retry_after(caller)
+        return {"status": "error", "message": f"Rate limit reached. Try again in {wait}s.",
+                "xp_awarded": 0, "challenge_id": req.challenge_id}
+
+    user_id = caller  # trust the token, not any body user_id
+
     challenge = next((c for c in CHALLENGES if c["id"] == req.challenge_id), None)
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
@@ -564,52 +745,65 @@ def submit_solution(req: SubmitSolutionRequest):
     conn = sqlite3.connect(db_path)
     try:
         cursor = conn.cursor()
-
-        # Check if user already completed this challenge
         cursor.execute(
             "SELECT id, passed FROM challenge_submissions WHERE user_id = ? AND challenge_id = ?",
-            [req.user_id, req.challenge_id],
+            [user_id, req.challenge_id],
         )
         existing = cursor.fetchone()
+        already_passed = bool(existing and existing[1] == 1)
 
-        if existing and existing[1] == 1:
-            return {
-                "status": "already_completed",
-                "message": "You have already completed this challenge.",
-                "xp_awarded": 0,
-            }
+        # Pre-filter junk without spawning a subprocess, then grade for real.
+        valid, validate_msg = _validate_submission(challenge, req.code)
+        if not valid:
+            grade = {"passed": False, "passed_count": 0, "total": len(challenge.get("test_cases") or []),
+                     "results": [], "message": validate_msg}
+        else:
+            grade = grade_submission(challenge, req.code)
 
-        # For now, mark as passed (actual code execution/validation
-        # would be handled by a sandboxed runner in production).
-        passed = 1
-        xp = challenge["xp_reward"] if passed else 0
+        passed = 1 if grade["passed"] else 0
+        # Award XP only on the first successful pass.
+        xp = challenge["xp_reward"] if (passed and not already_passed) else 0
 
         if existing:
             cursor.execute(
-                "UPDATE challenge_submissions SET code = ?, passed = ?, xp_awarded = ?, submitted_at = datetime('now') "
-                "WHERE user_id = ? AND challenge_id = ?",
-                [req.code, passed, xp, req.user_id, req.challenge_id],
+                "UPDATE challenge_submissions SET code=?, passed=?, xp_awarded=COALESCE(xp_awarded,0)+?, "
+                "passed_count=?, total_count=?, submitted_at=datetime('now') "
+                "WHERE user_id=? AND challenge_id=?",
+                [req.code, max(passed, existing[1] or 0), xp, grade["passed_count"],
+                 grade["total"], user_id, req.challenge_id],
             )
         else:
             cursor.execute(
-                "INSERT INTO challenge_submissions (user_id, challenge_id, code, passed, xp_awarded) "
-                "VALUES (?, ?, ?, ?, ?)",
-                [req.user_id, req.challenge_id, req.code, passed, xp],
+                "INSERT INTO challenge_submissions (user_id, challenge_id, code, passed, xp_awarded, passed_count, total_count) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [user_id, req.challenge_id, req.code, passed, xp, grade["passed_count"], grade["total"]],
             )
 
-        # Award XP to the user
-        if passed and xp > 0:
+        if xp > 0:
             cursor.execute(
                 "UPDATE users SET points = COALESCE(points, 0) + ? WHERE id = ?",
-                [xp, req.user_id],
+                [xp, user_id],
             )
 
         conn.commit()
 
+        status = ("already_completed" if (already_passed and passed)
+                  else "rejected" if grade.get("rejected")
+                  else "passed" if passed else "failed")
+        if status == "already_completed":
+            message = "You already completed this challenge."
+        elif passed and xp:
+            message = f"{grade['message']} +{xp} XP."
+        else:
+            message = grade["message"]
+
         return {
-            "status": "passed" if passed else "failed",
-            "message": "Challenge completed! XP awarded." if passed else "Some test cases failed.",
+            "status": status,
+            "message": message,
             "xp_awarded": xp,
+            "passed_tests": grade["passed_count"],
+            "total_tests": grade["total"],
+            "results": grade["results"],
             "challenge_id": req.challenge_id,
         }
     finally:

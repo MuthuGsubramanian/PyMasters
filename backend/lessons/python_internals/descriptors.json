@@ -1,0 +1,171 @@
+{
+  "id": "descriptors",
+  "topic": "descriptors",
+  "track": "python_internals",
+  "module": "object_model",
+  "order": 1,
+  "title": {
+    "en": "Descriptors: The Magic Behind @property, Methods, and Slots"
+  },
+  "description": {
+    "en": "A descriptor is any object that defines __get__, __set__, or __delete__ and lives as a CLASS attribute — it lets that class hook into attribute access. This single protocol secretly powers @property, bound methods, classmethod, staticmethod, and __slots__. Learn data vs non-data descriptors, their precedence against the instance __dict__, and how attribute lookup actually resolves."
+  },
+  "xp_reward": 100,
+  "next_unlock": "metaclasses",
+  "story_variants": {
+    "en": "## The Protocol Hiding in Plain Sight\n\nYou have used descriptors a hundred times without naming them. Every time you wrote `@property`, called a method, used `@classmethod`, or added `__slots__`, the descriptor protocol did the work. It is the single most important — and most invisible — mechanism in Python's object model.\n\nThe definition is almost insultingly small. **A descriptor is any object that defines at least one of `__get__`, `__set__`, or `__delete__`, and is stored as a *class* attribute.** That's it. When you then access that attribute *through an instance*, Python doesn't hand you the descriptor object — it calls the descriptor's methods and hands you whatever they return.\n\n```python\nclass Descriptor:\n    def __get__(self, obj, objtype=None):\n        return \"intercepted!\"\n\nclass Thing:\n    x = Descriptor()      # stored on the CLASS\n\nprint(Thing().x)          # 'intercepted!' — __get__ ran\n```\n\n> **Key idea:** A descriptor customizes what `obj.attr` *does*. Storing it as a class attribute turns ordinary attribute access into a method call you control.\n\n## Two Flavors: Data vs Non-Data\n\nThe protocol splits into two kinds, and the distinction governs everything about precedence.\n\n| | Data descriptor | Non-data descriptor |\n|---|---|---|\n| Defines | `__set__` and/or `__delete__` (usually with `__get__`) | only `__get__` |\n| Examples | `property`, `__slots__` members | functions (methods), `classmethod`, `staticmethod` |\n| Beats instance `__dict__`? | **Yes** — wins over per-instance data | **No** — instance `__dict__` wins |\n| Typical use | validated/typed fields, computed-and-settable values | binding `self`, lazy/cached values |\n\nThe presence of `__set__` (or `__delete__`) is the *only* thing that makes a descriptor a \"data\" descriptor. That one method flips its priority during lookup.\n\n## How Attribute Lookup *Actually* Works\n\nWhen you evaluate `obj.attr`, CPython's `type(obj).__getattribute__` runs a precise algorithm. Walk it once and you can predict any result:\n\n1. Search `type(obj).__mro__` for `attr`. If found and it's a **data descriptor**, call its `__get__` and **return immediately**. (Data descriptors win first.)\n2. Otherwise, look in the instance's own `obj.__dict__`. If `attr` is there, return that value.\n3. Otherwise, fall back to the class attribute found in step 1. If it's a **non-data descriptor**, call its `__get__`; if it's a plain value, return it as-is.\n4. If nothing matched, raise `AttributeError` (after trying `__getattr__`).\n\nThe order is the whole story: **data descriptor → instance dict → non-data descriptor → AttributeError.** This is why a `@property` (data descriptor) can't be shadowed by setting `obj.name = ...`, but a method (non-data descriptor) *can* be overridden by an instance attribute of the same name.\n\n## Why Methods Work At All\n\nA plain function is a non-data descriptor: it defines `__get__`. When you write `obj.method`, the function's `__get__(obj, type)` runs and returns a **bound method** — a small wrapper that remembers `obj` and forwards it as `self`. That is literally how `self` gets passed. `staticmethod.__get__` returns the underlying function unchanged (no binding); `classmethod.__get__` binds the *class* instead of the instance. Three lines of behavior, one protocol.\n\nAnd `__slots__`? Each slot name becomes a data descriptor on the class that reads and writes a fixed memory offset instead of a per-instance `__dict__`. That's why slotted instances have no `__dict__` and reject unknown attributes — the descriptors are the *only* storage.\n\n## A Real Use: Validated, Typed Attributes\n\nThe canonical real-world use is enforcing invariants on a field. Instead of repeating the same `if value < 0: raise` check in every setter, you write the rule once as a descriptor and reuse it:\n\n```python\nclass Positive:\n    def __set_name__(self, owner, name):\n        self.private = \"_\" + name          # unique per-attribute key\n    def __get__(self, obj, objtype=None):\n        if obj is None:\n            return self\n        return obj.__dict__[self.private]\n    def __set__(self, obj, value):         # __set__ => DATA descriptor\n        if value <= 0:\n            raise ValueError(\"must be positive\")\n        obj.__dict__[self.private] = value\n\nclass Order:\n    price = Positive()\n    qty   = Positive()\n```\n\n`__set_name__` is called automatically at class-creation time, telling the descriptor the attribute name it was assigned to — so one `Positive` class can guard `price`, `qty`, or anything else, each storing into a distinct slot of the instance's `__dict__`. Because it defines `__set__`, it's a data descriptor: it intercepts *every* assignment to `order.price`, validates, and only then stores. There is no way around it from the instance — exactly the guarantee you want.\n\nOnce you see the protocol, the rest of Python clicks: properties, methods, slots, and ORMs are all the same four lines wearing different hats."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "object_graph",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "descriptor_protocol_map",
+      "nodes": [
+        {
+          "label": "The Descriptor Protocol",
+          "children": [
+            "__get__  -> customize reading obj.attr",
+            "__set__  -> customize writing obj.attr (=> DATA descriptor)",
+            "__delete__ -> customize del obj.attr (=> DATA descriptor)",
+            "Powers: @property, methods, classmethod, staticmethod, __slots__"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "data_vs_nondata",
+      "left": {
+        "label": "Data descriptor (defines __set__): WINS over instance __dict__",
+        "result": true
+      },
+      "right": {
+        "label": "Non-data descriptor (only __get__): instance __dict__ WINS over it",
+        "result": false
+      },
+      "description": {
+        "en": "Lookup order is data descriptor -> instance __dict__ -> non-data descriptor -> AttributeError. That is why a @property can't be shadowed by an instance attribute, but a method can."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "positive_descriptor_demo",
+      "code": "class Order:\n    price = Positive()\n\no = Order()\no.price = 19\nprint(o.price)\no.price = -5",
+      "executionSteps": [
+        { "line": 1, "variables": { "Order.price": "Positive() (a DATA descriptor on the class)" }, "output": "", "description": "price lives on the CLASS, not the instance. __set_name__ recorded name='price'." },
+        { "line": 5, "variables": { "o.price = 19": "calls Positive.__set__(o, 19)" }, "output": "", "description": "Assignment is intercepted by __set__: 19 > 0 passes, stored in o.__dict__['_price']." },
+        { "line": 6, "variables": { "o.price": "calls Positive.__get__(o)" }, "output": "19", "description": "Reading runs __get__, returning the stored value." },
+        { "line": 7, "variables": { "o.price = -5": "__set__ rejects" }, "output": "ValueError: must be positive", "description": "A data descriptor intercepts EVERY write — invalid values never reach storage." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Descriptor = object with __get__/__set__/__delete__, stored on a CLASS.",
+        "__set__ present => DATA descriptor => beats the instance __dict__.",
+        "@property, methods, classmethod, staticmethod, __slots__ are ALL descriptors."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a descriptor. `Positive` is a DATA descriptor (it defines __set__) that guards a numeric attribute: writing a non-positive value (<= 0) must raise ValueError, and a valid value must be stored per-instance. __set_name__ already records a unique private key for you. Complete __get__ (return the stored value from obj.__dict__[self.private]; return self when obj is None) and __set__ (raise ValueError if value <= 0, else store into obj.__dict__[self.private]). The demo creates a Product with a valid price and prints it. Expected output: price=19"
+      },
+      "starter_code": "class Positive:\n    \"\"\"A DATA descriptor: defines __set__, so it beats the instance __dict__\n    and intercepts EVERY assignment to the attribute it guards.\"\"\"\n\n    def __set_name__(self, owner, name):\n        # Called automatically at class creation. Pick a unique private key\n        # so each guarded attribute stores in its own slot of obj.__dict__.\n        self.name = name\n        self.private = \"_pos_\" + name\n\n    def __get__(self, obj, objtype=None):\n        # Accessing via the CLASS (obj is None) should return the descriptor.\n        if obj is None:\n            return self\n        # TODO: return the value stored for this instance.\n        return None\n\n    def __set__(self, obj, value):\n        # TODO: reject non-positive values with ValueError(...),\n        # otherwise store value under self.private in obj.__dict__.\n        pass\n\n\nclass Product:\n    price = Positive()          # a class attribute => the descriptor is active\n\n    def __init__(self, price):\n        self.price = price       # goes through Positive.__set__\n\n\n# --- demo (do not change) ---\np = Product(19)\nprint(f\"price={p.price}\")",
+      "expected_output": "price=19",
+      "hints": {
+        "en": [
+          "A descriptor only works when stored as a CLASS attribute (Product.price = Positive()). Accessing p.price then triggers __get__/__set__ instead of returning the descriptor object.",
+          "__get__ should read the per-instance value: return obj.__dict__[self.private]. Keep the `if obj is None: return self` line so class-level access still works.",
+          "__set__ must validate first: if value <= 0: raise ValueError(f\"{self.name} must be positive\"). Only when it passes do you store: obj.__dict__[self.private] = value.",
+          "Because __set__ is defined, Positive is a DATA descriptor — it intercepts every assignment, so an invalid price never gets stored. The valid Product(19) prints price=19."
+        ]
+      },
+      "test_code": "ok = Product(50)\nassert ok.price == 50, f\"valid set should store 50, got {ok.price}\"\nassert Product(19).price == 19\nraised_neg = False\ntry:\n    Product(-5)\nexcept ValueError:\n    raised_neg = True\nassert raised_neg, \"a negative price must raise ValueError\"\nraised_zero = False\ntry:\n    Product(0)\nexcept ValueError:\n    raised_zero = True\nassert raised_zero, \"zero must raise ValueError (non-positive)\"\nassert isinstance(type(Product).__mro__, tuple)\nassert isinstance(Product.__dict__['price'], Positive), \"price must be a class-level descriptor\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What makes an object a descriptor in Python?"
+      },
+      "options": {
+        "en": [
+          "It must be created inside a function",
+          "It defines at least one of __get__, __set__, or __delete__ and is stored as a class attribute",
+          "It inherits from a special Descriptor base class",
+          "It has a __dict__ attribute"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What distinguishes a DATA descriptor from a NON-DATA descriptor, and why does it matter?"
+      },
+      "options": {
+        "en": [
+          "Data descriptors are faster; it doesn't affect lookup",
+          "A data descriptor defines __set__ and/or __delete__, so it takes precedence OVER the instance __dict__; a non-data descriptor only defines __get__ and is overridden BY the instance __dict__",
+          "Data descriptors can only hold numbers",
+          "Non-data descriptors cannot be used on classes"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When you evaluate obj.attr, in what order does CPython resolve it?"
+      },
+      "options": {
+        "en": [
+          "instance __dict__ -> class -> AttributeError, ignoring descriptors",
+          "data descriptor on type(obj).__mro__ -> instance __dict__ -> non-data descriptor -> AttributeError",
+          "Always the instance __dict__ first, descriptors never run",
+          "Randomly, depending on memory layout"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which Python features are built on the descriptor protocol?"
+      },
+      "options": {
+        "en": [
+          "Only @property",
+          "Only __slots__",
+          "@property, bound methods, classmethod, staticmethod, and __slots__ are all descriptors",
+          "None of them — descriptors are unrelated to those features"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["descriptors", "data_vs_nondata_descriptor", "attribute_lookup", "property_protocol", "bound_methods", "slots"],
+    "concepts_required": ["how_python_objects_work"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}

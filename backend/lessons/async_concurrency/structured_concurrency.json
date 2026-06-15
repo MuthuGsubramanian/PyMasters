@@ -1,0 +1,202 @@
+{
+  "id": "structured_concurrency",
+  "topic": "structured_concurrency",
+  "track": "async_concurrency",
+  "module": "practice",
+  "order": 2,
+  "title": {
+    "en": "Structured Concurrency: TaskGroups, Timeouts & Cancellation"
+  },
+  "description": {
+    "en": "Raw asyncio.create_task lets you scatter background tasks everywhere — and forget them, leak them, and swallow their errors. Python 3.11+ fixes this with structured concurrency: asyncio.TaskGroup scopes tasks to an `async with` block, asyncio.timeout puts a deadline on a whole region of code, and cooperative cancellation cleans up safely. This capstone ties the whole track together: concurrency that is safe, scoped, and impossible to leak."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Problem with Loose Tasks\n\nAcross this track you learned that `await` pauses and yields, that `asyncio.gather` runs coroutines concurrently, and that fire-and-forget `create_task` calls quietly leak. That last pitfall is the one structured concurrency was invented to kill.\n\nWhen you write `asyncio.create_task(work())` and walk away, you have created an **orphan**: a task with no clear owner, no clear lifetime, and no one watching for its failure. If it raises, the exception is swallowed. If your function returns, the task keeps running — or gets garbage-collected mid-flight and simply vanishes. Tasks scattered like this are the async equivalent of unfreed memory.\n\nStructured concurrency (Python **3.11+**) fixes this with one rule: **every task lives inside a scope, and the scope does not exit until every task it owns has finished.** No orphans. No leaks. Clear ownership.\n\n## asyncio.TaskGroup: a Scope for Tasks\n\nThe core tool is `asyncio.TaskGroup`, used as an `async with` block:\n\n```python\nasync with asyncio.TaskGroup() as tg:\n    t1 = tg.create_task(fetch(a))\n    t2 = tg.create_task(fetch(b))\n    t3 = tg.create_task(fetch(c))\n# <- the block does NOT exit until t1, t2, t3 all finish\nprint(t1.result(), t2.result(), t3.result())\n```\n\nYou create tasks with `tg.create_task(...)` instead of the loose `asyncio.create_task(...)`. Three guarantees follow:\n\n1. **The block waits for all of them.** Control does not pass the closing of the `async with` until every child task is done. There is nowhere for a task to leak to.\n2. **Errors propagate.** If a task raises, the `TaskGroup` re-raises it when the block exits (as part of an `ExceptionGroup`). You can't accidentally swallow it.\n3. **One failure cancels the siblings.** If `fetch(b)` blows up, the group **cancels** `fetch(a)` and `fetch(c)` automatically, then surfaces the error. You never end up with half your work silently still running.\n\nAfter the block exits cleanly, each task is finished, so you read its value with `.result()`.\n\n## TaskGroup vs raw create_task\n\n| | Raw `asyncio.create_task` | `asyncio.TaskGroup` |\n|---|---|---|\n| Lifetime | Undefined — outlives the function | Scoped to the `async with` block |\n| Forgotten tasks | Easy to leak / GC mid-flight | Impossible; block waits for all |\n| If a task raises | Swallowed unless you await it | Propagated when the block exits |\n| Sibling on failure | Keeps running unaware | Automatically cancelled |\n| Reading results | You track each handle yourself | `.result()` after the block |\n\n## asyncio.timeout: Deadlines for a Region\n\nThe second tool puts a clock on a *block of code*, not a single call:\n\n```python\nasync with asyncio.timeout(5):\n    await slow_operation()        # all of this must finish in 5s\n    await another_step()\n```\n\nIf the body doesn't finish within the deadline, `asyncio.timeout` **cancels** the work inside and raises `TimeoutError` at the block. It composes perfectly with `TaskGroup`: wrap a group in a timeout and you get \"run all of these concurrently, but give up on the whole batch after N seconds.\"\n\n## Cooperative Cancellation\n\nCancellation in asyncio is **cooperative**. When a task is cancelled — by a failing sibling, by a timeout, or by `task.cancel()` — asyncio raises `asyncio.CancelledError` *inside* it at its next `await`. The task isn't killed from the outside; it's asked to stop, and it gets a chance to clean up:\n\n```python\nasync def worker():\n    conn = await open_connection()\n    try:\n        await use(conn)\n    finally:\n        await conn.close()   # runs even on cancellation\n```\n\nPut cleanup in `try/finally` and it runs whether the task finishes, fails, or is cancelled. The one rule: don't *swallow* `CancelledError` — let it propagate so the cancellation actually takes effect (re-raise it if you catch it).\n\n## The Whole Track, Tied Together\n\nThis is the payoff of everything you learned. The **event loop** runs coroutines on one thread; **`await`** pauses a coroutine and yields so others run; **`gather`** schedules many at once for I/O-bound concurrency; the **pitfalls** lesson warned that loose `create_task` leaks and that blocking calls freeze the loop. Structured concurrency is the mature answer: tasks that are **scoped** (a `TaskGroup` owns them), **bounded** (an `asyncio.timeout` deadlines them), and **safe to stop** (cooperative `CancelledError` with `try/finally` cleanup). Reach for `TaskGroup` by default, and keep raw `create_task` for the rare genuinely-detached background job you deliberately manage.\n\n> **Key idea:** Structured concurrency scopes tasks to a block. `asyncio.TaskGroup` waits for all its tasks, propagates any error, and cancels the siblings if one fails — so nothing leaks. `asyncio.timeout(seconds)` deadlines a whole region and cancels it on expiry. Cancellation is cooperative: `CancelledError` is raised at the next `await`, you clean up in `try/finally`, and you never swallow it. Prefer `TaskGroup` over loose `create_task`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "scoped_block",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "structured_model",
+      "nodes": [
+        {
+          "label": "Structured Concurrency (3.11+)",
+          "children": [
+            "TaskGroup: async with block that owns its tasks",
+            "Block does NOT exit until every task finishes",
+            "One task fails -> siblings CANCELLED, error propagates",
+            "asyncio.timeout(s): deadline a region -> TimeoutError",
+            "Cancellation is cooperative: CancelledError at next await",
+            "Clean up in try/finally; never swallow CancelledError"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "create_task_vs_taskgroup",
+      "left": {
+        "label": "Raw create_task: undefined lifetime, can leak/GC, errors swallowed, siblings run on unaware",
+        "result": false
+      },
+      "right": {
+        "label": "asyncio.TaskGroup: scoped to the block, waits for all, propagates errors, cancels siblings on failure",
+        "result": true
+      },
+      "description": {
+        "en": "TaskGroup gives tasks a clear owner and lifetime. No orphans, no swallowed exceptions, no half-finished work left running."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "taskgroup_demo",
+      "code": "import asyncio\n\nasync def square(n):\n    return n * n\n\nasync def main():\n    async with asyncio.TaskGroup() as tg:\n        tasks = [tg.create_task(square(n)) for n in (2, 3, 4)]\n    return sorted(t.result() for t in tasks)\n\nprint(asyncio.run(main()))",
+      "executionSteps": [
+        {
+          "line": 8,
+          "variables": {
+            "tasks": "square(2), square(3), square(4)"
+          },
+          "output": "three tasks scheduled in the group",
+          "description": "tg.create_task schedules each coroutine, owned by the TaskGroup."
+        },
+        {
+          "line": 7,
+          "variables": {
+            "block": "exiting"
+          },
+          "output": "all tasks finished",
+          "description": "The async with block does not exit until every task in the group is done."
+        },
+        {
+          "line": 9,
+          "variables": {
+            "results": "[4, 9, 16]"
+          },
+          "output": "[4, 9, 16]",
+          "description": "After the block, read each .result() — sorted to [4, 9, 16]."
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "TaskGroup = an async with block that OWNS its tasks.",
+        "Block waits for all; one failure cancels the siblings and propagates.",
+        "asyncio.timeout(s) deadlines a region; cancellation is cooperative.",
+        "Clean up in try/finally, never swallow CancelledError. Track complete!"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2200
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Use structured concurrency to run coroutines concurrently and collect their results. Given async def square(n): return n * n, finish main() so it opens an `async with asyncio.TaskGroup() as tg:` block, schedules square(2), square(3), and square(4) with tg.create_task(...), and after the block returns the results SORTED. The TaskGroup block doesn't exit until all three tasks finish, so you can read each task's .result() safely afterwards. Expected output: [4, 9, 16]"
+      },
+      "starter_code": "import asyncio\n\nasync def square(n):\n    return n * n\n\nasync def main():\n    # TODO: open an `async with asyncio.TaskGroup() as tg:` block and\n    # schedule square(2), square(3), square(4) with tg.create_task(...).\n    # After the block (all tasks done), return their results SORTED.\n    tasks = []  # collect the Task objects here\n    return sorted(t.result() for t in tasks)\n\nprint(asyncio.run(main()))",
+      "expected_output": "[4, 9, 16]",
+      "hints": {
+        "en": [
+          "Open the scope with `async with asyncio.TaskGroup() as tg:` and create tasks INSIDE it.",
+          "Schedule each coroutine with tg.create_task(square(n)) and keep the returned Task objects in your list.",
+          "The async with block does not exit until every task finishes, so it is safe to read results AFTER the block.",
+          "Read each task's value with t.result(), then sort: sorted(t.result() for t in tasks) -> [4, 9, 16]."
+        ]
+      },
+      "test_code": "import asyncio\nresult = asyncio.run(main())\nassert result == [4, 9, 16], f\"expected [4, 9, 16], got {result!r}\"\nassert isinstance(result, list), f\"expected a list, got {type(result).__name__}\"\n# Order-independence: even if scheduled out of order, results sort the same.\nasync def _run(ns):\n    async with asyncio.TaskGroup() as tg:\n        ts = [tg.create_task(square(n)) for n in ns]\n    return sorted(t.result() for t in ts)\nassert asyncio.run(_run((4, 2, 3))) == [4, 9, 16]\nassert asyncio.run(_run((5, 1))) == [1, 25]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "When does an `async with asyncio.TaskGroup() as tg:` block exit?"
+      },
+      "options": {
+        "en": [
+          "Immediately after the last tg.create_task call, while tasks still run",
+          "Only after every task created in the group has finished",
+          "After the first task finishes, cancelling the rest",
+          "Never — you must cancel the group manually"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Inside a TaskGroup, one task raises an exception. What happens to its sibling tasks?"
+      },
+      "options": {
+        "en": [
+          "They keep running unaware, and the error is swallowed",
+          "They are automatically cancelled, and the error propagates out of the block",
+          "They each retry the failed task",
+          "Nothing changes until you call tg.result()"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `async with asyncio.timeout(5):` do if the body takes longer than 5 seconds?"
+      },
+      "options": {
+        "en": [
+          "It silently returns None and continues",
+          "It cancels the work inside the block and raises TimeoutError",
+          "It pauses the body and resumes it later",
+          "It runs the body on a separate thread to beat the clock"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How should a coroutine handle being cancelled (CancelledError)?"
+      },
+      "options": {
+        "en": [
+          "Catch CancelledError and ignore it so the task keeps running",
+          "Run cleanup in try/finally and let CancelledError propagate (don't swallow it)",
+          "Call asyncio.run() again to restart the loop",
+          "Block the loop with time.sleep until it is safe"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "structured_concurrency",
+      "asyncio_taskgroup",
+      "asyncio_timeout",
+      "cooperative_cancellation",
+      "cancellederror_cleanup"
+    ],
+    "concepts_required": [
+      "common_async_pitfalls"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}

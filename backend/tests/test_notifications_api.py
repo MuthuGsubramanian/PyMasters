@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 def client(tmp_path):
     os.environ["DB_PATH"] = str(tmp_path / "test.db")
     import importlib
-    import backend.main as main_mod
+    import main as main_mod
     importlib.reload(main_mod)
     main_mod.init_db()
     # Seed a test user
@@ -54,7 +54,7 @@ def test_get_preferences(client):
 
 def test_update_preferences(client):
     resp = client.put("/api/notifications/preferences", json={
-        "user_id": 1,
+        "user_id": "1",
         "channel": "email",
         "type": "module_ready",
         "enabled": False

@@ -1,0 +1,133 @@
+{
+  "id": "minilm_sentence_similarity_pipelines",
+  "topic": "minilm_sentence_similarity_pipelines",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Sentence Similarity Pipelines with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Master sentence similarity pipelines using sentence-transformers/all-MiniLM-L6-v2 — build pairwise scoring, threshold-based matching, deduplication, and Homie's default embedding backbone for intelligent text comparison."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Sentence Similarity: The Engine Behind Intelligent Text Matching\n\nVaathiyaar here! Every smart feature you admire — duplicate detection in support tickets, FAQ matching, intent routing in chatbots — runs on one primitive: **sentence similarity**. Give it two texts, get a score between 0 and 1 telling you how close they are in meaning. And the model powering most of these pipelines? `all-MiniLM-L6-v2` — 80MB, 384 dimensions, runs on a Raspberry Pi, and it's Homie's default embedding backbone.\n\nThis lesson builds four real-world similarity pipelines: pairwise scoring, threshold matching, batch deduplication, and a configurable similarity router.\n\n### Why Sentence Similarity Matters for RAG\n\nBefore you retrieve documents, you need to **score** how well each candidate matches the query. Before you cluster knowledge chunks, you need pairwise distances. Sentence similarity is the atomic operation underneath all of it.\n\n| Pipeline | Input | Output | Use Case |\n|---|---|---|---|\n| Pairwise Scoring | Two sentences | Float score 0→1 | Plagiarism check, paraphrase detection |\n| Threshold Matching | Query + corpus | Filtered matches | FAQ routing, intent matching |\n| Batch Deduplication | Document list | Deduplicated list | Knowledge base cleanup |\n| Similarity Router | Query + categories | Best category | Support ticket triage |\n\n### Pipeline 1: Pairwise Similarity Scoring\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\npairs = [\n    (\"How do I reset my password?\", \"I forgot my login credentials\"),\n    (\"How do I reset my password?\", \"What's the weather today?\"),\n    (\"The server is down\", \"Our systems are experiencing an outage\"),\n]\n\nfor sent_a, sent_b in pairs:\n    emb_a = model.encode(sent_a, normalize_embeddings=True)\n    emb_b = model.encode(sent_b, normalize_embeddings=True)\n    score = float(util.cos_sim(emb_a, emb_b)[0][0])\n    print(f\"{score:.3f} | '{sent_a}' ↔ '{sent_b}'\")\n# 0.654 | password ↔ credentials (semantically linked)\n# 0.049 | password ↔ weather (unrelated)\n# 0.621 | server down ↔ outage (paraphrase detected)\n```\n\nThe model maps synonyms (\"password\" ↔ \"credentials\", \"down\" ↔ \"outage\") into nearby vectors without any fine-tuning.\n\n### Pipeline 2: Threshold-Based FAQ Matching\n\n```python\ndef faq_matcher(query, faqs, model, threshold=0.5):\n    faq_texts = [f[\"question\"] for f in faqs]\n    faq_embs = model.encode(faq_texts, normalize_embeddings=True)\n    query_emb = model.encode(query, normalize_embeddings=True)\n    scores = util.cos_sim(query_emb, faq_embs)[0]\n    matches = [\n        {\"question\": faqs[i][\"question\"], \"answer\": faqs[i][\"answer\"], \"score\": float(scores[i])}\n        for i in range(len(faqs)) if float(scores[i]) >= threshold\n    ]\n    return sorted(matches, key=lambda x: x[\"score\"], reverse=True)\n\nfaqs = [\n    {\"question\": \"How do I cancel my subscription?\", \"answer\": \"Go to Settings > Billing > Cancel.\"},\n    {\"question\": \"Where can I update my email?\", \"answer\": \"Visit Profile > Account Details.\"},\n    {\"question\": \"What payment methods do you accept?\", \"answer\": \"Visa, Mastercard, and PayPal.\"},\n]\n\nresults = faq_matcher(\"I want to stop my plan\", faqs, model, threshold=0.4)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['answer']}\")\n```\n\nThe threshold acts as a confidence gate — below it, the system says \"I don't know\" instead of guessing.\n\n### Pipeline 3: Batch Deduplication\n\n```python\ndef deduplicate(documents, model, threshold=0.85):\n    embeddings = model.encode(documents, normalize_embeddings=True)\n    sim_matrix = util.cos_sim(embeddings, embeddings)\n    keep = []\n    removed = set()\n    for i in range(len(documents)):\n        if i in removed:\n            continue\n        keep.append(documents[i])\n        for j in range(i + 1, len(documents)):\n            if float(sim_matrix[i][j]) >= threshold:\n                removed.add(j)\n    return keep, len(removed)\n\ndocs = [\n    \"Install Python from python.org\",\n    \"Download Python from the official website python.org\",\n    \"Machine learning requires large datasets\",\n    \"ML needs lots of training data\",\n    \"The sun is a star\",\n]\nunique, n_removed = deduplicate(docs, model, threshold=0.85)\nprint(f\"Kept {len(unique)}, removed {n_removed} near-duplicates\")\n```\n\n### Pipeline 4: Homie's Similarity Router\n\nHomie uses MiniLM as its default embedding backbone to route user queries to the right handler:\n\n```python\nclass SimilarityRouter:\n    def __init__(self, routes: dict[str, list[str]], model_name=\"all-MiniLM-L6-v2\"):\n        self.model = SentenceTransformer(model_name)\n        self.routes = {}\n        for name, examples in routes.items():\n            self.routes[name] = self.model.encode(examples, normalize_embeddings=True)\n\n    def route(self, query: str) -> dict:\n        q_emb = self.model.encode(query, normalize_embeddings=True)\n        best_route, best_score = None, -1\n        for name, embs in self.routes.items():\n            scores = util.cos_sim(q_emb, embs)[0]\n            max_score = float(scores.max())\n            if max_score > best_score:\n                best_route, best_score = name, max_score\n        return {\"route\": best_route, \"confidence\": best_score}\n\nrouter = SimilarityRouter({\n    \"billing\": [\"payment issue\", \"charge on my card\", \"refund request\"],\n    \"technical\": [\"app crashes\", \"error message\", \"bug report\"],\n    \"account\": [\"change password\", \"update email\", \"delete my account\"],\n})\nprint(router.route(\"I keep getting a 500 error\"))\n# {'route': 'technical', 'confidence': 0.58}\n```\n\n> **Key Insight:** Sentence similarity is not just a metric — it's a building block. Pairwise scoring detects paraphrases, thresholds gate confidence, batch comparison deduplicates, and routing dispatches queries. all-MiniLM-L6-v2 handles all four at 14K sentences/sec with 80MB of disk. That's why Homie chose it as the default embedding backbone — one model, four pipelines, zero API costs."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Duplicate detection, FAQ matching, intent routing, knowledge deduplication — they all run on one primitive: sentence similarity. all-MiniLM-L6-v2 scores text pairs by meaning at 14K sentences/sec. Let's build four production pipelines with it.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\npairs = [\n    (\"How do I reset my password?\", \"I forgot my login credentials\"),\n    (\"How do I reset my password?\", \"What's the weather today?\"),\n    (\"The server is down\", \"Our systems are experiencing an outage\"),\n]\n\nfor sent_a, sent_b in pairs:\n    emb_a = model.encode(sent_a, normalize_embeddings=True)\n    emb_b = model.encode(sent_b, normalize_embeddings=True)\n    score = float(util.cos_sim(emb_a, emb_b)[0][0])\n    print(f\"{score:.3f} | '{sent_a}' <-> '{sent_b}'\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer and util — the model class and the similarity computation toolkit."},
+        {"line": 3, "explanation": "Load all-MiniLM-L6-v2: 80MB, 384 dimensions, optimized for sentence similarity tasks. Downloads once, runs locally."},
+        {"line": 5, "explanation": "Define sentence pairs to compare. Each tuple contains two texts — we want a similarity score for each pair."},
+        {"line": 11, "explanation": "Loop through pairs. We encode each sentence independently, then compute cosine similarity between their vectors."},
+        {"line": 12, "explanation": "Encode with normalize_embeddings=True — unit-length vectors make cosine similarity equal to dot product (faster math)."},
+        {"line": 14, "explanation": "util.cos_sim returns a 2D tensor. [0][0] extracts the scalar similarity score between the two single vectors."},
+        {"line": 15, "explanation": "Scores range 0 to 1 for normalized vectors. Semantically similar pairs score high (0.6+), unrelated pairs score near 0."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef faq_matcher(query, faqs, model, threshold=0.5):\n    faq_texts = [f[\"question\"] for f in faqs]\n    faq_embs = model.encode(faq_texts, normalize_embeddings=True)\n    query_emb = model.encode(query, normalize_embeddings=True)\n    scores = util.cos_sim(query_emb, faq_embs)[0]\n    matches = [\n        {\"question\": faqs[i][\"question\"], \"answer\": faqs[i][\"answer\"], \"score\": float(scores[i])}\n        for i in range(len(faqs)) if float(scores[i]) >= threshold\n    ]\n    return sorted(matches, key=lambda x: x[\"score\"], reverse=True)\n\nfaqs = [\n    {\"question\": \"How do I cancel my subscription?\", \"answer\": \"Go to Settings > Billing.\"},\n    {\"question\": \"Where can I update my email?\", \"answer\": \"Visit Profile > Account.\"},\n]\nresults = faq_matcher(\"I want to stop my plan\", faqs, model, threshold=0.4)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['answer']}\")",
+      "steps": [
+        {"line": 5, "explanation": "Define faq_matcher — takes a user query, a list of FAQ dicts, the model, and a confidence threshold."},
+        {"line": 6, "explanation": "Extract just the question strings from FAQ entries. These get encoded into the FAQ embedding matrix."},
+        {"line": 7, "explanation": "Batch-encode all FAQ questions at once — much faster than encoding one at a time due to internal batching."},
+        {"line": 8, "explanation": "Encode the user's query separately. It becomes a single 384-dim vector to compare against all FAQ vectors."},
+        {"line": 9, "explanation": "Compute cosine similarity between the query and every FAQ in one vectorized operation. Returns a score array."},
+        {"line": 10, "explanation": "Filter to only FAQs scoring above the threshold. This prevents low-confidence matches from reaching the user."},
+        {"line": 14, "explanation": "Sort surviving matches by score descending. The highest-confidence FAQ answer is returned first."},
+        {"line": 20, "explanation": "'I want to stop my plan' matches 'cancel subscription' semantically — the threshold gate lets it through."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef deduplicate(documents, model, threshold=0.85):\n    embeddings = model.encode(documents, normalize_embeddings=True)\n    sim_matrix = util.cos_sim(embeddings, embeddings)\n    keep, removed = [], set()\n    for i in range(len(documents)):\n        if i in removed:\n            continue\n        keep.append(documents[i])\n        for j in range(i + 1, len(documents)):\n            if float(sim_matrix[i][j]) >= threshold:\n                removed.add(j)\n    return keep, len(removed)\n\ndocs = [\n    \"Install Python from python.org\",\n    \"Download Python from the official website python.org\",\n    \"Machine learning requires large datasets\",\n]\nunique, n_removed = deduplicate(docs, model)\nprint(f\"Kept {len(unique)}, removed {n_removed}\")",
+      "steps": [
+        {"line": 5, "explanation": "deduplicate takes a document list, the model, and a similarity threshold. Documents scoring above the threshold are considered duplicates."},
+        {"line": 6, "explanation": "Encode all documents at once into a matrix of shape (N, 384). Batch encoding maximizes throughput."},
+        {"line": 7, "explanation": "Compute the full N×N similarity matrix. Each cell [i][j] is the cosine similarity between documents i and j."},
+        {"line": 9, "explanation": "Iterate through documents. If a document was already marked as a duplicate of an earlier one, skip it."},
+        {"line": 12, "explanation": "Keep the first occurrence of each unique document. This becomes the canonical version in the deduplicated set."},
+        {"line": 13, "explanation": "For each kept document, scan all later documents. If any scores above the threshold, mark it as a duplicate to remove."},
+        {"line": 14, "explanation": "Threshold 0.85 is a good default — catches near-duplicates while preserving documents that are merely related."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Exact String Matching",
+      "right_label": "Sentence Similarity (MiniLM)",
+      "items": [
+        {"left": "\"cancel\" misses \"stop my plan\"", "right": "\"cancel\" matches \"stop my plan\" (0.65)"},
+        {"left": "No confidence score", "right": "Continuous 0 to 1 confidence score"},
+        {"left": "Misses paraphrases entirely", "right": "Bridges synonyms and paraphrases"},
+        {"left": "Zero compute cost", "right": "~0.07ms per sentence on CPU"},
+        {"left": "Requires exact keyword lists", "right": "Learns meaning from pre-training"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built four sentence similarity pipelines — pairwise scoring, FAQ matching, deduplication, and routing. MiniLM is now your default embedding backbone!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `SimilarityScorer` class that simulates sentence similarity using word overlap. Implement `tokenize(text)` that returns a set of lowercase words, `jaccard_similarity(set_a, set_b)` that computes the Jaccard index (intersection/union), and `score_pairs(pairs)` that takes a list of (text_a, text_b) tuples and returns a list of dicts with keys 'pair' and 'score'. This demonstrates the concept behind real embedding similarity — but with interpretable word overlap."
+      },
+      "starter_code": "class SimilarityScorer:\n    def tokenize(self, text: str) -> set:\n        # Return a set of lowercase words from the text\n        pass\n\n    def jaccard_similarity(self, set_a: set, set_b: set) -> float:\n        # Jaccard index = |intersection| / |union|\n        # Return 0.0 if union is empty\n        pass\n\n    def score_pairs(self, pairs: list[tuple]) -> list[dict]:\n        # For each (text_a, text_b) pair, compute similarity\n        # Return list of {\"pair\": (text_a, text_b), \"score\": float}\n        # Sort by score descending\n        pass\n\n# Test it:\nscorer = SimilarityScorer()\n\npairs = [\n    (\"python machine learning\", \"machine learning python\"),\n    (\"python programming language\", \"java programming language\"),\n    (\"the cat sat on mat\", \"dogs play in the park\"),\n]\n\nresults = scorer.score_pairs(pairs)\nprint(len(results))\nprint(results[0][\"score\"])\nprint(results[0][\"score\"] > results[1][\"score\"] > results[2][\"score\"])",
+      "expected_output": "3\n1.0\nTrue",
+      "hints": {
+        "en": [
+          "tokenize() is just: return set(text.lower().split())",
+          "For jaccard_similarity, use set operations: len(set_a & set_b) / len(set_a | set_b), guarding against empty union",
+          "In score_pairs(), tokenize both texts, compute Jaccard similarity, collect into dicts, and sort by score descending"
+        ]
+      },
+      "test_code": "s = SimilarityScorer()\nassert s.tokenize(\"Hello World\") == {\"hello\", \"world\"}\nassert s.tokenize(\"\") == set()\nassert s.jaccard_similarity({\"a\", \"b\"}, {\"a\", \"b\"}) == 1.0\nassert s.jaccard_similarity({\"a\"}, {\"b\"}) == 0.0\nassert abs(s.jaccard_similarity({\"a\", \"b\", \"c\"}, {\"a\", \"b\", \"d\"}) - 0.5) < 0.01\nassert s.jaccard_similarity(set(), set()) == 0.0\nresults = s.score_pairs([(\"a b\", \"a b\"), (\"a\", \"b\")])\nassert len(results) == 2\nassert results[0][\"score\"] == 1.0\nassert results[1][\"score\"] == 0.0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ThresholdMatcher` class that matches a query against a corpus using word-overlap similarity with a configurable threshold. Implement `__init__(self, corpus, threshold)` that stores the corpus and threshold, `similarity(text_a, text_b)` using Jaccard index on word sets, `match(query)` that returns all corpus items scoring at or above the threshold (sorted by score descending, each as {'text': str, 'score': float}), and `deduplicate()` that removes near-duplicate entries from the corpus using the same threshold."
+      },
+      "starter_code": "class ThresholdMatcher:\n    def __init__(self, corpus: list[str], threshold: float = 0.5):\n        self.corpus = list(corpus)\n        self.threshold = threshold\n\n    def similarity(self, text_a: str, text_b: str) -> float:\n        # Jaccard similarity between word sets of text_a and text_b\n        # Return 0.0 if both texts are empty\n        pass\n\n    def match(self, query: str) -> list[dict]:\n        # Return corpus items with similarity >= threshold\n        # Each result: {\"text\": str, \"score\": float}\n        # Sorted by score descending\n        pass\n\n    def deduplicate(self) -> list[str]:\n        # Remove near-duplicates from self.corpus using threshold\n        # Keep first occurrence, remove later items that are too similar\n        # Return the deduplicated list\n        pass\n\n# Test it:\nmatcher = ThresholdMatcher([\n    \"python for machine learning\",\n    \"java for web development\",\n    \"machine learning with python\",\n    \"cooking Italian pasta\",\n], threshold=0.5)\n\nmatches = matcher.match(\"python learning\")\nprint(len(matches))\nprint(matches[0][\"score\"] >= 0.5)\n\ndeduped = matcher.deduplicate()\nprint(len(deduped))",
+      "expected_output": "2\nTrue\n3",
+      "hints": {
+        "en": [
+          "similarity() tokenizes both texts with set(text.lower().split()), then computes len(intersection) / len(union)",
+          "match() computes similarity between query and each corpus item, filters by threshold, sorts descending",
+          "deduplicate() iterates through corpus — for each item, check if it's too similar to any already-kept item; if so, skip it"
+        ]
+      },
+      "test_code": "m = ThresholdMatcher([\"a b c\", \"a b d\", \"x y z\"], threshold=0.5)\nassert abs(m.similarity(\"a b c\", \"a b c\") - 1.0) < 0.01\nassert abs(m.similarity(\"a b c\", \"a b d\") - 0.5) < 0.01\nassert m.similarity(\"a\", \"z\") == 0.0\nassert m.similarity(\"\", \"\") == 0.0\nmatches = m.match(\"a b\")\nassert len(matches) == 2\nassert matches[0][\"score\"] >= matches[1][\"score\"]\nassert all(r[\"score\"] >= 0.5 for r in matches)\ndeduped = m.deduplicate()\nassert len(deduped) == 2\nassert \"x y z\" in deduped\nm2 = ThresholdMatcher([\"hello\", \"hello\"], threshold=0.5)\nassert len(m2.deduplicate()) == 1"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["sentence similarity", "pairwise scoring", "threshold matching", "text deduplication", "similarity routing", "all-MiniLM-L6-v2", "embedding backbone", "cosine similarity pipelines"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "sets", "sorting"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

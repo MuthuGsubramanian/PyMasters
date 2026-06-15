@@ -1,0 +1,172 @@
+{
+  "id": "composing_functions",
+  "topic": "composing_functions",
+  "track": "functional_python",
+  "module": "tools",
+  "order": 3,
+  "title": {
+    "en": "Composing Functions: Higher-Order Functions & Pipelines (Capstone)"
+  },
+  "description": {
+    "en": "The capstone of the Functional Python track. In Python, functions are first-class objects — you can pass them as arguments, return them, and store them. Learn higher-order functions, function composition, decorators as composition, and how to build your own pipe/compose helper. Then watch the whole track click into place: pure functions, map/filter/reduce, functools, itertools, and finally composition."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Functions Are Just Values\n\nHere is the idea the whole track has been building toward: in Python, a function is an **object** like any other. You can hand it to another function, return it from a function, drop it in a list, or store it in a variable. Nothing special happens — `len` is just a name pointing at a function object, the same way `x` might point at the number `3`.\n\nOnce you believe that, a new kind of program opens up. Instead of one big function that does everything, you write a handful of **small, pure functions** — each does one tiny transformation — and then you *wire them together*. The data flows through the chain, getting reshaped at each step. That wiring is **composition**, and the functions that do the wiring are **higher-order functions**.\n\n## Higher-Order Functions\n\nA higher-order function is simply a function that **takes a function as an argument, or returns one** (or both). You already met three of them earlier in this track: `map`, `filter`, and `reduce` all take a function as their first argument. That is the entire trick.\n\nYou can write your own just as easily:\n\n```python\ndef apply_twice(f, x):\n    return f(f(x))\n\napply_twice(lambda n: n + 1, 10)   # -> 12\n```\n\n`apply_twice` doesn't know or care what `f` does. It only knows it can *call* it. That indifference is the source of all the power: the same wiring works for any function you pass in.\n\n## Composition: Data Flowing Through a Pipe\n\nMath defines composition as `(g ∘ f)(x) = g(f(x))` — do `f`, then feed the result to `g`. In code, a **pipeline** is the same thing made readable: a value enters on the left and flows rightward through one transformation after another.\n\n```python\ndef double(n):    return n * 2\ndef increment(n): return n + 1\ndef square(n):    return n * n\n\n# pipe(3, double, increment, square)\n# 3 -> double -> 6 -> increment -> 7 -> square -> 49\n```\n\nThe beauty is that each function stays small and **pure** — same input, same output, no surprises — so you can read, test, and reuse each one in isolation, then snap them together like Lego. One giant `do_everything()` function can't be tested in pieces; a pipeline can.\n\n## Decorators Are Composition Too\n\nA Python **decorator** is just a higher-order function that takes a function and returns a new function that *wraps* it. When you write `@log_calls` above a function, you are composing your function with `log_calls` — adding behavior around it without touching its body.\n\n```python\ndef log_calls(f):\n    def wrapper(*args):\n        print(f\"calling {f.__name__}\")\n        return f(*args)\n    return wrapper\n```\n\nSame principle as `pipe`: functions in, a new function out. Decorators just spell it with `@`.\n\n## The Whole Track, In One Picture\n\nEverything you learned was preparing you for this moment of wiring small pieces together:\n\n| Stage | What it gave you | The composable idea |\n|---|---|---|\n| **Pure functions** | Predictable, side-effect-free building blocks | Safe to chain — no hidden state |\n| **map / filter / reduce** | Transform & combine without loops | Functions passed *as data* |\n| **functools** | `partial`, `reduce`, `lru_cache` | Make & adapt functions on the fly |\n| **itertools** | Lazy streams of data | Pipe data through without materializing it |\n| **Composition (here)** | `pipe` / `compose` / decorators | Snap the small pieces into one flow |\n\nRead that table top to bottom and you'll see the throughline: *small pure functions are the atoms, and composition is the chemistry.* The functional style isn't about avoiding loops or looking clever — it's about building software out of tiny parts you can each trust, then combining them in ways you can read at a glance.\n\n## Why Bother?\n\nBecause small composable functions are the easiest code in the world to reason about. Each one fits in your head. Each one can be tested alone. When requirements change, you swap or insert a step instead of surgically editing a 200-line monster. A bug lives in *one* tiny function, not smeared across everything. You stop debugging the whole machine and start debugging one gear.\n\nThat is the payoff of this entire track. You now have the building blocks (pure functions), the power tools (`map`/`filter`/`reduce`, `functools`, `itertools`), and finally the glue (composition). Go build pipelines.\n\n> **Key idea:** Functions in Python are first-class values, so a **higher-order function** can take or return them. **Composition** wires small, pure functions into a pipeline where data flows left-to-right through each transformation — and a **decorator** is just composition spelled with `@`. Prefer many small composable functions over one big one: each is easy to read, test, reuse, and fix."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pipeline",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "track_recap",
+      "nodes": [
+        {
+          "label": "The Functional Python Track",
+          "children": [
+            "Pure functions (the atoms)",
+            "map / filter / reduce (functions as data)",
+            "functools (partial, reduce, lru_cache)",
+            "itertools (lazy data streams)",
+            "Composition: pipe / compose / decorators (the glue)"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "one_big_vs_pipeline",
+      "left": {
+        "label": "One big do_everything() function: hard to test, one bug smears across all of it",
+        "result": false
+      },
+      "right": {
+        "label": "Small pure functions wired with pipe(): each is testable, reusable, and easy to fix",
+        "result": true
+      },
+      "description": {
+        "en": "Composition lets you snap tiny, trustworthy functions together instead of maintaining one monster."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "pipe_demo",
+      "code": "def double(n):    return n * 2\ndef increment(n): return n + 1\ndef square(n):    return n * n\n\ndef pipe(value, *funcs):\n    for f in funcs:\n        value = f(value)\n    return value\n\nprint(pipe(3, double, increment, square))",
+      "executionSteps": [
+        { "line": 7, "variables": { "value": "3", "f": "double" }, "output": "value -> 6", "description": "3 enters the pipe. First function: double. 3 * 2 = 6." },
+        { "line": 7, "variables": { "value": "6", "f": "increment" }, "output": "value -> 7", "description": "6 flows to increment. 6 + 1 = 7." },
+        { "line": 7, "variables": { "value": "7", "f": "square" }, "output": "value -> 49", "description": "7 flows to square. 7 * 7 = 49." },
+        { "line": 10, "variables": { "value": "49" }, "output": "49", "description": "Data flowed left-to-right through three small pure functions. That's composition." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Functions are first-class values: pass them, return them, store them.",
+        "Composition threads data through small pure functions, left to right.",
+        "pure -> map/filter/reduce -> functools -> itertools -> compose. That's the track."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2200
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Capstone challenge. Build the glue that wires small functions together. SPEC: write pipe(value, *funcs) that threads `value` through every function in `funcs`, LEFT TO RIGHT, returning the final result. So pipe(3, double, increment, square) computes square(increment(double(3))) = 49. Key edge case: with NO functions, pipe(value) must return `value` unchanged (the identity case). The three building-block functions are given. The stub prints pipe(3, double, increment, square). Expected output: 49"
+      },
+      "starter_code": "def double(n):    return n * 2\ndef increment(n): return n + 1\ndef square(n):    return n * n\n\ndef pipe(value, *funcs):\n    # SPEC: thread `value` through each function in `funcs`, left to right.\n    #   - start from `value`\n    #   - for each f in funcs: value = f(value)\n    #   - with no funcs, return value unchanged (identity)\n    # Remember: each f is a FUNCTION VALUE you can call.\n    pass  # implement to the spec\n\nprint(pipe(3, double, increment, square))",
+      "expected_output": "49",
+      "hints": {
+        "en": [
+          "funcs is a tuple of FUNCTION VALUES — each one is something you can call like f(value).",
+          "Start with the incoming value, then loop: for f in funcs: value = f(value).",
+          "Order matters: looping over funcs left-to-right applies double first, then increment, then square.",
+          "The identity case is automatic — if funcs is empty the loop never runs, so you just return the original value."
+        ]
+      },
+      "test_code": "def double(n):    return n * 2\ndef increment(n): return n + 1\ndef square(n):    return n * n\nassert pipe(3, double, increment, square) == 49\nassert pipe(5) == 5\nassert pipe(5, double) == 10\nassert pipe(2, square, increment) == 5\nassert pipe(2, increment, square) == 9\nassert pipe('hi', str.upper) == 'HI'\nassert pipe(10, increment, double, square) == 484"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does it mean that functions are 'first-class objects' in Python?"
+      },
+      "options": {
+        "en": [
+          "Functions always run before any other code",
+          "You can pass functions as arguments, return them, and store them like any other value",
+          "Only built-in functions can be reused",
+          "Functions must be defined at the top of the file"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is a higher-order function?"
+      },
+      "options": {
+        "en": [
+          "A function with more than ten lines of code",
+          "A function that runs faster than normal functions",
+          "A function that takes a function as an argument and/or returns a function",
+          "A function defined inside a class"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In pipe(3, double, increment, square), the functions are applied left-to-right. What is the result?"
+      },
+      "options": {
+        "en": [
+          "13 — they are added together",
+          "49 — square(increment(double(3))) = square(increment(6)) = square(7) = 49",
+          "36 — square(double(3)) ignoring increment",
+          "3 — the value is returned unchanged"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is a Python decorator described as a form of composition?"
+      },
+      "options": {
+        "en": [
+          "Because it makes functions run in parallel",
+          "Because it deletes the original function and replaces it",
+          "Because it is a higher-order function that takes a function and returns a new function wrapping it",
+          "Because decorators can only be used on classes"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["higher_order_functions", "function_composition", "first_class_functions", "decorators_as_composition", "pipelines"],
+    "concepts_required": ["itertools_powerhouse"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "functional",
+    "path_memberships": []
+  },
+  "generated": false
+}

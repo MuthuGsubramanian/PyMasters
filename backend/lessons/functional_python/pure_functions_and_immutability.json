@@ -1,0 +1,173 @@
+{
+  "id": "pure_functions_and_immutability",
+  "topic": "pure_functions_and_immutability",
+  "track": "functional_python",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "Pure Functions & Immutability: Predictable Code"
+  },
+  "description": {
+    "en": "A pure function returns the same output for the same input and has zero side effects. Learn why purity makes code easy to test, cache, and parallelize, how side effects like mutating a caller's list cause silent bugs, and how returning new values plus immutability keep your code predictable."
+  },
+  "xp_reward": 85,
+  "next_unlock": "map_filter_reduce",
+  "story_variants": {
+    "en": "## What Makes a Function *Pure*\n\nA function is **pure** when it obeys two rules:\n\n1. **Same input, same output, every time.** Call it with `3` and you get `9`. Call it a million times — still `9`. It depends on *nothing* but its arguments: no clock, no random, no global counter, no file on disk.\n2. **No side effects.** It changes nothing outside itself. It doesn't mutate the arguments you handed it, doesn't poke a global variable, doesn't print, write a file, or hit the network. It just computes a value and returns it.\n\n```python\ndef square(x):\n    return x * x      # pure: only reads x, only returns a value\n```\n\nThat's it. A pure function is a tiny, trustworthy machine: feed it the same thing and it gives you back the same thing, leaving the rest of the world untouched.\n\n## Why Purity Is Worth Caring About\n\nPurity isn't academic — it buys you concrete superpowers:\n\n- **Easy to test.** No setup, no mocks. `assert square(4) == 16`. Done. The output depends only on the input, so one line pins the behavior.\n- **Easy to reason about.** You can understand the function by reading *only* the function. There's no spooky action where calling it changes something three files away.\n- **Cacheable.** Same input always gives the same output, so you can memoize it. `functools.lru_cache` works *only* on pure functions.\n- **Parallelizable.** Pure functions share no mutable state, so you can run them across threads or processes without locks or race conditions.\n\n## Side Effects: The Silent Bug Factory\n\nThe most common impurity in real Python is **mutating an argument** the caller still owns. Watch this innocent-looking sorter:\n\n```python\ndef sort_scores(scores):\n    scores.sort()        # sorts IN PLACE — mutates the caller's list\n    return scores\n\nmy_scores = [5, 2, 9, 1]\nranked = sort_scores(my_scores)\nprint(ranked)            # [1, 2, 5, 9]  -- looks fine\nprint(my_scores)         # [1, 2, 5, 9]  -- WAIT, the original changed too!\n```\n\nThe caller still had a reference to `my_scores` and expected it to stay in original order. The function reached into that shared list and reordered it. This is a **side effect**, and it's the kind of bug that hides for weeks: everything works until some *other* code relied on the original ordering.\n\n## The Pure Alternative: Return a New Value\n\nThe fix is to never mutate what you were given. Build and return a **new** object instead:\n\n```python\ndef sort_scores(scores):\n    return sorted(scores)   # sorted() returns a NEW list; input untouched\n\nmy_scores = [5, 2, 9, 1]\nranked = sort_scores(my_scores)\nprint(ranked)            # [1, 2, 5, 9]\nprint(my_scores)         # [5, 2, 9, 1]  -- original preserved!\n```\n\n`list.sort()` mutates and returns `None`; `sorted()` leaves its input alone and hands back a fresh list. That one-word change turns an impure function into a pure one. The same pattern applies everywhere: `[*xs, new]` instead of `xs.append(new)`, `{**d, k: v}` instead of `d[k] = v`.\n\n## Pure vs Impure at a Glance\n\n| Aspect | Pure function | Impure function |\n|--------|---------------|------------------|\n| Output for same input | Always identical | Can vary (clock, random, state) |\n| Touches arguments | Reads only, never mutates | May mutate caller's data |\n| Touches globals / I/O | Never | May read/write globals, files, network |\n| Testable | One assertion, no setup | Needs mocks, fixtures, teardown |\n| Cacheable / parallel-safe | Yes | No (shared mutable state) |\n| Example | `sorted(xs)` | `xs.sort()` |\n\n## Immutability: Enforcing Predictability\n\nThe deepest way to guarantee you never accidentally mutate shared state is to use data that *can't* be mutated. Reach for **immutable** types:\n\n- `tuple` instead of `list` for fixed collections\n- `frozenset` instead of `set`\n- plain `str`, `int`, `float` — already immutable\n\nIf a value is a `tuple`, there is no `.append` to corrupt it; any \"change\" must build a new tuple. Immutability makes side effects *impossible by construction*, which is why functional programming leans on it so heavily. You stop *hoping* nobody mutates the shared list and start *guaranteeing* it.\n\n> **Key idea:** A pure function is a promise — same input, same output, and the rest of the world left exactly as it found it. Return new values instead of mutating, prefer immutable data, and your code becomes something you can test in one line, cache for free, and run in parallel without fear.\n\nMaster this and the rest of functional Python — `map`, `filter`, `reduce`, composition — becomes natural, because every one of those tools assumes the functions you feed it are pure."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "clean_machine",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "purity_map",
+      "nodes": [
+        {
+          "label": "Pure Functions",
+          "children": [
+            "Same input -> same output, always",
+            "No side effects (no mutation, no I/O)",
+            "Easy to test: one assertion",
+            "Cacheable with lru_cache",
+            "Parallel-safe: no shared mutable state",
+            "Immutability enforces it (tuple/frozenset)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "pure_vs_impure",
+      "left": {
+        "label": "Pure: return sorted(scores) -> new list, original [5,2,9,1] untouched",
+        "result": true
+      },
+      "right": {
+        "label": "Impure: scores.sort() -> mutates caller's list in place, original is destroyed",
+        "result": false
+      },
+      "description": {
+        "en": "list.sort() mutates in place and returns None — a side effect the caller didn't ask for. sorted() builds a new list and leaves the input alone. Same idea, one is pure, one is a silent bug."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "side_effect_demo",
+      "code": "def sort_scores(scores):\n    scores.sort()\n    return scores\n\nmy_scores = [5, 2, 9, 1]\nranked = sort_scores(my_scores)\nprint(ranked)\nprint(my_scores)",
+      "executionSteps": [
+        { "line": 6, "variables": { "my_scores": "[5, 2, 9, 1]" }, "output": "", "description": "Caller hands its list to the function, still expecting original order later." },
+        { "line": 2, "variables": { "scores": "[1, 2, 5, 9]" }, "output": "", "description": "scores.sort() reorders the list IN PLACE — same object the caller holds." },
+        { "line": 7, "variables": { "ranked": "[1, 2, 5, 9]" }, "output": "[1, 2, 5, 9]", "description": "Looks fine — ranked is sorted." },
+        { "line": 8, "variables": { "my_scores": "[1, 2, 5, 9]" }, "output": "[1, 2, 5, 9]", "description": "But my_scores changed too! The side effect leaked. A pure version (sorted) would leave it [5, 2, 9, 1]." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Pure = same input, same output, no side effects.",
+        "Return a NEW value (sorted) instead of mutating in place (.sort).",
+        "Immutable data (tuple/frozenset) makes side effects impossible."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This sort_scores function is IMPURE: it calls scores.sort(), which sorts the list IN PLACE and mutates the caller's data. Run the starter and you'll see the bug — after the call, the ORIGINAL list my_scores is also reordered, even though the caller never wanted that. Rewrite the function to be PURE: return a NEW sorted list and leave the input completely unchanged. The simplest fix is to return sorted(scores) instead of mutating. With the demo below, the expected output is:\n[1, 2, 5, 9]\n[5, 2, 9, 1]\nThe first line is the new sorted list; the second line proves the original input is untouched."
+      },
+      "starter_code": "# BUG: .sort() mutates the caller's list in place (a side effect).\ndef sort_scores(scores):\n    scores.sort()\n    return scores\n\n# Rewrite sort_scores above to be PURE:\n#   - return a NEW sorted list\n#   - leave the input list unchanged\n\nmy_scores = [5, 2, 9, 1]\nranked = sort_scores(my_scores)\nprint(ranked)       # the sorted result\nprint(my_scores)    # must still be the ORIGINAL order",
+      "expected_output": "[1, 2, 5, 9]\n[5, 2, 9, 1]",
+      "hints": {
+        "en": [
+          "list.sort() mutates the list in place and returns None — that in-place change is the side effect you must remove.",
+          "sorted(scores) returns a brand-new sorted list and never touches the original — use it instead.",
+          "A pure function must not mutate its argument; build and return a new value rather than changing what you were given.",
+          "Replace the whole body with a single line: return sorted(scores)"
+        ]
+      },
+      "test_code": "data = [5, 2, 9, 1]\nresult = sort_scores(data)\nassert result == [1, 2, 5, 9], f\"should return a new sorted list, got {result}\"\nassert data == [5, 2, 9, 1], f\"input must be unchanged (pure), got {data}\"\nassert result is not data, \"must return a NEW list, not the same object\"\nempty = []\nassert sort_scores(empty) == [] and empty == [], \"empty input handled and left unchanged\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which two properties together make a function pure?"
+      },
+      "options": {
+        "en": [
+          "It is short and it has type hints",
+          "Same input always gives the same output, and it has no side effects",
+          "It uses recursion and avoids loops",
+          "It is fast and it prints its result"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the bug in def sort_scores(scores): scores.sort(); return scores?"
+      },
+      "options": {
+        "en": [
+          "sort() does not exist on lists",
+          "It mutates the caller's list in place — a side effect that corrupts the original data",
+          "It returns the wrong type",
+          "It is too slow for large lists"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How do you make sort_scores pure while still sorting?"
+      },
+      "options": {
+        "en": [
+          "Return sorted(scores), which builds a new list and leaves the input untouched",
+          "Add a print statement before sorting",
+          "Use scores.sort(reverse=True)",
+          "Make scores a global variable"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does using immutable types like tuple and frozenset help enforce predictability?"
+      },
+      "options": {
+        "en": [
+          "They are faster than lists in every case",
+          "They cannot be mutated in place, so accidental side effects on shared data become impossible",
+          "They automatically cache function results",
+          "They convert impure functions into pure ones at runtime"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["pure_functions", "side_effects", "immutability", "returning_new_values", "referential_transparency"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "functional",
+    "path_memberships": []
+  },
+  "generated": false
+}

@@ -1,0 +1,170 @@
+{
+  "id": "measure_dont_guess",
+  "topic": "measure_dont_guess",
+  "track": "performance_optimization",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "Measure, Don't Guess: Profiling Before Optimizing"
+  },
+  "description": {
+    "en": "The #1 rule of optimization: measure first. Humans are terrible at guessing where time goes — the bottleneck is almost never where you think. Learn timeit for micro-benchmarks, cProfile for finding the real hot spot, the 80/20 rule, and the profile -> fix -> re-measure loop that turns 'looks slow' into evidence."
+  },
+  "xp_reward": 90,
+  "next_unlock": "complexity_that_matters",
+  "story_variants": {
+    "en": "## The Most Expensive Guess in Programming\n\nYour program is slow. You *know* exactly why — it's that nested loop, or maybe the database call, or that regex you never liked. So you spend an afternoon rewriting it, ship the change, and... it's just as slow. The real bottleneck was a logging call you wrote in thirty seconds and never thought about again.\n\nThis happens to *everyone*, including experts. Human intuition about performance is famously, hilariously wrong. The code that *feels* slow and the code that *is* slow are rarely the same code. That's why the first rule of optimization isn't a clever trick — it's a discipline:\n\n> **Measure first. Always. Before you change a single line.**\n\n\"Looks slow\" is a feeling, not evidence. Optimizing on a hunch is how you spend hours speeding up code that was never the problem.\n\n## The Two Tools You Need\n\nPython ships with everything you need to replace guessing with data.\n\n**`timeit`** answers: *how long does this tiny thing take?* It runs a small snippet thousands of times and reports a stable average, smoothing out noise. Use it to compare two ways of doing the same small operation.\n\n```python\nimport timeit\ntimeit.timeit(\"'-'.join(str(n) for n in range(100))\", number=10000)\n```\n\n**`cProfile`** answers the bigger question: *across my whole program, where does the time actually go?* It runs your code and reports, function by function, how many times each was called and how long each took.\n\n```python\nimport cProfile\ncProfile.run(\"main()\")\n```\n\nThe output column that matters most is **cumulative time** — total time spent inside a function and everything it calls. Sort by it and the real bottleneck floats to the top, often to your surprise.\n\n| Tool | What it measures | Use it when |\n|---|---|---|\n| `timeit` | Wall-clock time of a *small snippet*, averaged over many runs | Comparing two implementations of one operation |\n| `cProfile` | Per-function call counts and time across a *whole program* | Finding *which* function is the bottleneck |\n| `time.perf_counter()` | Wall-clock time of a custom block you wrap | Ad-hoc timing of a specific region |\n\n## Wall-Clock vs CPU Time\n\nNot all \"time\" is the same. **Wall-clock time** is the stopwatch on the wall — total elapsed real time, including time spent *waiting* (on the network, disk, or a sleeping thread). **CPU time** is only the time the processor was actively working on your code.\n\nThe gap between them is diagnostic. If wall-clock time is huge but CPU time is tiny, your program is **waiting**, not computing — the fix is concurrency or fewer round-trips, not a faster algorithm. If they're roughly equal, you're genuinely **CPU-bound** and a better algorithm will help. Measuring tells you *which kind* of slow you have.\n\n## The 80/20 Rule\n\nHere's the liberating part. In almost every program, the vast majority of the runtime is spent in a tiny fraction of the code — often a single hot loop or one heavily-called function. The other 95% of your code is already fast enough and *not worth touching*.\n\nThis is why profiling is so powerful: it points a spotlight at the 5% that matters. Optimizing anything else is wasted effort — and worse, it adds complexity and bugs to code that was never slow. Find the hot spot, fix *that*, and ignore the rest.\n\n## The Workflow\n\nThe whole discipline fits in a loop:\n\n1. **Measure** — run `cProfile` on a realistic workload.\n2. **Find the hot spot** — sort by cumulative time; the bottleneck is usually one or two functions.\n3. **Optimize that one thing** — better algorithm, fewer calls, less work in the loop.\n4. **Re-measure** — prove the change actually helped, and check the new bottleneck.\n\nThen repeat — because once you fix the biggest cost, something *else* becomes the new top of the list. You stop when it's fast enough, not when you run out of ideas.\n\n> **Key idea:** Programmers are terrible at guessing where time goes, so never optimize on a hunch. Profile first with `cProfile` to find the real hot spot, remember the 80/20 rule (most time lives in a tiny slice of code), distinguish wall-clock from CPU time, then optimize *only* the bottleneck and re-measure to prove it helped. 'Looks slow' is not evidence — a profile is."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "stopwatch",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "optimize_loop",
+      "nodes": [
+        {
+          "label": "Profile -> Fix -> Re-measure",
+          "children": [
+            "Measure first (cProfile on real workload)",
+            "Find the hot spot (sort by cumulative time)",
+            "Optimize ONLY that one thing",
+            "Re-measure to prove it helped",
+            "80/20: most time lives in a tiny slice"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "guess_vs_measure",
+      "left": {
+        "label": "Guessing: rewrite the code that 'looks slow' — usually the wrong code",
+        "result": false
+      },
+      "right": {
+        "label": "Measuring: profile, find the real hot spot, fix THAT, re-measure",
+        "result": true
+      },
+      "description": {
+        "en": "Human intuition about bottlenecks is reliably wrong. A profile turns 'looks slow' into evidence about where time actually goes."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "profile_demo",
+      "code": "import cProfile\n# A profile reveals where time REALLY goes\ncProfile.run(\"main()\")\n# Sort by cumulative time -> bottleneck on top\nmain()",
+      "executionSteps": [
+        { "line": 3, "variables": { "suspected_bottleneck": "nested_loop", "evidence": "none" }, "output": "running profiler...", "description": "You SUSPECT the nested loop. But you have no evidence yet." },
+        { "line": 5, "variables": { "real_hot_spot": "parse_row()", "share_of_time": "92%" }, "output": "parse_row: 92% cumtime", "description": "The profile shows the real cost is parse_row, not the loop you guessed. Now optimize THAT." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "'Looks slow' is a feeling, not evidence.",
+        "Profile first: most time lives in ~5% of the code.",
+        "Fix the hot spot, then RE-MEASURE to prove it."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This count_repeats(items) function is O(n^2): for every element it re-scans the WHOLE list to count matches. If you profiled it, the hot spot would be that inner loop. Rewrite it to an equivalent O(n) version using a single pass and a dict counter. The OUTPUT must be identical: a dict mapping each value that appears more than once to its count, in first-appearance order. This is about correctness, not timing — your function must return the same dict as the slow one for every input. With the given data, the demo prints the sorted items. Expected output: [('a', 3), ('b', 2)]"
+      },
+      "starter_code": "# SLOW: O(n^2). For each x it scans the entire list again to count it.\n# A profile would point straight at the inner `for y in items` loop.\ndef count_repeats(items):\n    result = {}\n    for x in items:\n        c = 0\n        for y in items:        # <-- the hot loop: re-scans everything\n            if x == y:\n                c += 1\n        if c > 1:\n            result[x] = c\n    return result\n\n# TODO: rewrite count_repeats above as a single-pass O(n) version.\n# It must return the SAME dict: each value seen more than once -> its count,\n# in first-appearance order (a dict built by one left-to-right pass does this).\n\ndata = ['a', 'b', 'a', 'c', 'b', 'a', 'd']\nprint(sorted(count_repeats(data).items()))",
+      "expected_output": "[('a', 3), ('b', 2)]",
+      "hints": {
+        "en": [
+          "Profiling this would scream that the inner `for y in items` loop is the hot spot — it runs n times for every one of the n elements (n^2 work).",
+          "You only need ONE pass: walk the list once and keep a running count per value in a dict, e.g. counts[x] = counts.get(x, 0) + 1.",
+          "After counting, keep only the values whose count is greater than 1: {k: v for k, v in counts.items() if v > 1}.",
+          "Iterating the list left-to-right and inserting into a dict preserves first-appearance order, so the output matches the slow version exactly."
+        ]
+      },
+      "test_code": "def _slow(items):\n    result = {}\n    for x in items:\n        c = 0\n        for y in items:\n            if x == y:\n                c += 1\n        if c > 1:\n            result[x] = c\n    return result\nfor _case in [['a','b','a','c','b','a','d'], [], [1], [1,1], [1,2,3], [5,5,5,5], ['x','y','x','y','z'], [0,0,1,1,1,2]]:\n    assert count_repeats(_case) == _slow(_case), _case\nassert count_repeats(['a','b','a','c','b','a','d']) == {'a': 3, 'b': 2}\nassert count_repeats([]) == {}\nassert count_repeats([1]) == {}"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the #1 rule of optimization?"
+      },
+      "options": {
+        "en": [
+          "Rewrite the code that looks slowest to you",
+          "Measure first — profile to find where time actually goes before changing anything",
+          "Always use C extensions",
+          "Add more threads"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You want to find which function in your whole program is the bottleneck. Which tool fits best?"
+      },
+      "options": {
+        "en": [
+          "timeit, because it averages many runs of one snippet",
+          "cProfile, because it reports per-function time across the whole program",
+          "A debugger breakpoint on every line",
+          "Reading the code until it looks slow"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Your program's wall-clock time is 10 seconds but its CPU time is only 0.2 seconds. What does that tell you?"
+      },
+      "options": {
+        "en": [
+          "The program is CPU-bound; a faster algorithm will help most",
+          "The program is mostly waiting (I/O, network, sleep); a faster algorithm won't help much",
+          "The measurement is wrong; the two must be equal",
+          "The GIL is the bottleneck"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the practical takeaway of the 80/20 rule for optimization?"
+      },
+      "options": {
+        "en": [
+          "You should optimize every function equally",
+          "Most runtime lives in a tiny fraction of the code, so find and optimize only that hot spot",
+          "80% of code is always buggy",
+          "You should rewrite 80% of the program"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["profiling", "cprofile", "timeit", "80_20_rule", "wall_clock_vs_cpu_time", "measure_before_optimizing"],
+    "concepts_required": [],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "performance",
+    "path_memberships": []
+  },
+  "generated": false
+}

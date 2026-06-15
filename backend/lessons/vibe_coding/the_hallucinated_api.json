@@ -1,0 +1,163 @@
+{
+  "id": "the_hallucinated_api",
+  "topic": "the_hallucinated_api",
+  "track": "vibe_coding",
+  "module": "antipatterns",
+  "order": 1,
+  "title": {
+    "en": "The Hallucinated API: When the AI Invents Code That Doesn't Exist"
+  },
+  "description": {
+    "en": "LLMs don't look code up — they predict what plausible code looks like. So they confidently invent methods, parameters, and even whole libraries that never existed. Learn why it happens, the tell-tale signs, how to catch it in seconds, and the malware twist called slopsquatting."
+  },
+  "xp_reward": 85,
+  "next_unlock": "silent_security_holes",
+  "story_variants": {
+    "en": "## The Method That Was Too Convenient\n\nYou ask the AI to fetch some JSON from an API. It hands you this:\n\n```python\nimport requests\ndata = requests.get_json(\"https://api.example.com/users\")\n```\n\nOne line. Clean. Exactly the method you *wished* existed. And it doesn't. `requests` has no `get_json()`. The real code is `requests.get(url).json()` — two calls, not one. The AI didn't read the `requests` docs and make a mistake. It never read anything. It generated the most *statistically plausible* continuation of your prompt, and \"a library that fetches JSON has a `get_json` method\" is an extremely plausible-sounding sentence. So it wrote one into existence.\n\nThis is **API hallucination**, and it is the signature failure of AI-assisted coding.\n\n## Why It Happens: Prediction, Not Lookup\n\nA language model is not a search engine with a copy of the docs. It is a **pattern-completion engine**. When it writes `df.`, it is asking \"what token usually comes after `df.` in code like this?\" — not \"what methods does this DataFrame object actually have?\" Most of the time the likely token *is* a real method, because real code dominates its training. But when your situation is unusual, or the convenient method *should* exist by analogy, the model happily fills the gap with a confident invention.\n\nThe danger is that hallucinated code is **optimized to look correct.** It follows every naming convention. `df.filter_rows(age > 30)` reads better than the real, clunkier `df[df.age > 30]`. `os.path.is_file()` looks more natural than the real `os.path.isfile()` (no underscore — Python's standard library is gloriously inconsistent, and the model smooths that inconsistency away). The invention is *more* plausible than the truth.\n\n## The Tell-Tale Signs\n\nYou can learn to feel the hallucination before you even run the code:\n\n| Signal | What it sounds like | Example |\n|--------|--------------------|---------|\n| **Too convenient** | A one-liner for something you know is fiddly | `requests.get_json(url)` |\n| **Suspiciously regular name** | The API \"fixed\" a real inconsistency | `os.path.is_file()` vs real `isfile()` |\n| **Unusual parameter** | A keyword arg that's a little too helpful | `json.dumps(data, pretty=True)` |\n| **Library you've never heard of** | An import that solves your exact problem | `import easyauth` |\n| **Confident but uncitable** | The AI can't point to a doc page | \"It's in the standard library\" (it isn't) |\n\nNone of these *prove* a hallucination. They raise your suspicion enough to check.\n\n## How to Catch It Fast\n\nThe verification ladder from your last lesson applies directly, and the top rung is almost free:\n\n1. **Run it.** A hallucinated method dies instantly with `AttributeError: module 'requests' has no attribute 'get_json'`. A hallucinated import dies with `ModuleNotFoundError`. The interpreter is the cheapest fact-checker you will ever own.\n2. **Check the official docs.** Not a blog, not another AI — the actual project documentation. Thirty seconds confirms whether `pretty=True` is a real `json.dumps` parameter (it isn't; it's `indent=2`).\n3. **Ask the AI to cite the exact doc.** \"Show me where `filter_rows` appears in the pandas documentation.\" A real API has a real URL. A hallucination produces hand-waving, a confident-but-wrong link, or a quiet correction.\n\n## The Special Danger: Slopsquatting\n\nHere is where a harmless typo becomes a security incident. When an AI hallucinates a *package name* — say `import requestz` or `import pandas_helper` — and you obediently run `pip install requestz`, you're trusting that name to PyPI. Attackers have noticed. They watch which fake package names LLMs commonly invent, then **register those exact names on PyPI and fill them with malware.** This is called **slopsquatting** (slop = AI-generated filler, like typosquatting but for hallucinations).\n\nThe attack is brutal because the victim does everything \"right\": the AI suggested the package, the install succeeded, the import worked. Nothing errored — because the malicious package was built to import cleanly and steal your credentials in the background. The lesson: **never `pip install` a package name you first learned from an AI without confirming it on the official PyPI page and checking it's the real, maintained project.**\n\n> **Key idea:** The AI isn't lying — it has no concept of truth. It predicts plausible text, and a non-existent API is often the *most* plausible text. Treat every unfamiliar method, parameter, and package as guilty until the interpreter or the official docs prove it innocent. The cure costs ten seconds; the disease costs a 3am incident."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "ghost_code",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "why_it_happens",
+      "nodes": [
+        {
+          "label": "Why APIs Get Hallucinated",
+          "children": [
+            "LLM = pattern completion, not lookup",
+            "Picks the most PLAUSIBLE next token",
+            "Invents the method that SHOULD exist",
+            "Output is optimized to look correct"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "hallucination_dies",
+      "code": "import requests\n\n# AI's hallucinated one-liner\ndata = requests.get_json(\"https://api.example.com\")",
+      "executionSteps": [
+        { "line": 4, "variables": { "method": "requests.get_json" }, "output": "AttributeError: module 'requests' has no attribute 'get_json'", "description": "The interpreter fact-checks instantly. get_json never existed." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "fake_vs_real",
+      "left": {
+        "label": "Hallucinated: requests.get_json(url)  /  os.path.is_file()",
+        "result": false
+      },
+      "right": {
+        "label": "Real: requests.get(url).json()  /  os.path.isfile()",
+        "result": true
+      },
+      "description": {
+        "en": "The invention is MORE plausible than the truth — that's exactly why it fools you."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "slopsquat_warning",
+      "output": [
+        "Hallucinated method  -> AttributeError (loud, harmless).",
+        "Hallucinated package -> attacker registers it on PyPI.",
+        "pip install <name-from-AI> can install MALWARE.",
+        "Confirm the package on PyPI before you ever install it."
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An AI wrote this function to count how many names in a list start with a given letter. It used a hallucinated string method, str.starts_with(), which does NOT exist in Python (the real method is str.startswith(), no underscore). Be the verifier: fix the hallucinated method call so the code runs and returns the correct count. With the given data, 3 names start with 'A'. Expected output: 3"
+      },
+      "starter_code": "def count_starting_with(names, letter):\n    count = 0\n    for name in names:\n        # AI hallucinated this method -- it does not exist:\n        if name.starts_with(letter):\n            count += 1\n    return count\n\nnames = [\"Ada\", \"Alan\", \"Grace\", \"Annie\", \"Linus\"]\nprint(count_starting_with(names, \"A\"))",
+      "expected_output": "3",
+      "hints": {
+        "en": [
+          "Run the starter code: it dies with AttributeError: 'str' object has no attribute 'starts_with'. That's the interpreter catching the hallucination.",
+          "Python's real method has no underscore. It is str.startswith(), not str.starts_with().",
+          "Change name.starts_with(letter) to name.startswith(letter).",
+          "When unsure a method exists, check the official docs or just run it — a hallucinated method fails instantly."
+        ]
+      },
+      "test_code": "assert count_starting_with([\"Ada\", \"Alan\", \"Grace\", \"Annie\", \"Linus\"], \"A\") == 3\nassert count_starting_with([\"bob\", \"Bea\"], \"B\") == 1\nassert count_starting_with([], \"A\") == 0\nassert count_starting_with([\"xyz\"], \"A\") == 0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why do LLMs invent methods and libraries that don't exist?"
+      },
+      "options": {
+        "en": [
+          "They have outdated copies of the documentation",
+          "They predict plausible-looking text rather than looking the real API up",
+          "They deliberately lie to test you",
+          "They only happen when the prompt has a typo"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which of these is the FASTEST way to catch a hallucinated method like requests.get_json()?"
+      },
+      "options": {
+        "en": [
+          "Run the code and watch it raise AttributeError",
+          "Ask a different AI if it looks right",
+          "Re-read the code carefully three times",
+          "Ship it and wait for a bug report"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "An AI tells you to 'pip install requestz' for HTTP requests. What is the real danger?"
+      },
+      "options": {
+        "en": [
+          "It will be slower than the real requests library",
+          "Attackers may have registered that hallucinated name on PyPI with malware (slopsquatting)",
+          "pip will refuse to install it",
+          "There is no danger — pip only allows safe packages"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which is a tell-tale sign that a method might be hallucinated?"
+      },
+      "options": {
+        "en": [
+          "It uses a variable name you chose",
+          "It's a suspiciously convenient one-liner that 'fixes' a real API inconsistency",
+          "It includes a comment",
+          "It is longer than five lines"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["api_hallucination", "slopsquatting", "verification", "ai_assisted_development"],
+    "concepts_required": ["verify_dont_trust"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

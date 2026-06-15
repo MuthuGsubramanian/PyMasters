@@ -1,0 +1,134 @@
+{
+  "id": "paraphrase_multilingual_minilm_production_multilingual_rag",
+  "topic": "paraphrase_multilingual_minilm_production_multilingual_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Production Multilingual RAG with paraphrase-multilingual-MiniLM-L12-v2"
+  },
+  "description": {
+    "en": "Build a production-grade multilingual RAG pipeline using paraphrase-multilingual-MiniLM-L12-v2 — handle chunking for the 128-token limit, batch embed mixed-language corpora, deploy with ONNX/SafeTensors backends, and evaluate cross-lingual retrieval quality with precision@k metrics."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Demo to Production: Multilingual RAG That Actually Ships\n\nVaathiyaar here! You've seen how `paraphrase-multilingual-MiniLM-L12-v2` maps 50+ languages into a shared 384-dimensional vector space. Cool demo. But demos don't handle 100k documents, don't respect the 128-token limit, don't benchmark ONNX vs SafeTensors, and don't measure whether your Tamil query *actually* retrieves the right English paragraph. This lesson closes the gap between \"it works in a notebook\" and \"it works in production.\"\n\n### The 128-Token Ceiling\n\nThis model silently truncates at 128 tokens — shorter than most models. A 300-word paragraph loses its second half. The fix: **overlap chunking**.\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\ndef chunk_text(text: str, max_words: int = 80, overlap: int = 20) -> list[str]:\n    words = text.split()\n    chunks = []\n    start = 0\n    while start < len(words):\n        end = min(start + max_words, len(words))\n        chunks.append(\" \".join(words[start:end]))\n        start += max_words - overlap\n    return chunks\n\nlong_doc = \"Neural networks learn through backpropagation. \" * 50\nchunks = chunk_text(long_doc)\nprint(f\"{len(long_doc.split())} words → {len(chunks)} chunks\")\n\nembeddings = model.encode(chunks, normalize_embeddings=True, batch_size=32)\nprint(f\"Embedded: {embeddings.shape}\")\n```\n\n80 words per chunk with 20-word overlap stays safely under 128 tokens while preserving context across boundaries.\n\n### Backend Showdown: PyTorch vs ONNX vs SafeTensors\n\nAll four backends — PyTorch, TensorFlow, ONNX, SafeTensors — produce the **same vectors**. The difference is inference speed and deployment footprint.\n\n| Backend | CPU Speed | GPU Speed | Install Size | Best For |\n|---|---|---|---|---|\n| PyTorch | Baseline | Fast | ~2 GB | Development, GPU serving |\n| ONNX | **2-3x faster** | Comparable | ~500 MB | CPU production |\n| SafeTensors | ~1x (same as PT) | ~1x | ~471 MB | Safe loading, no code exec |\n| TensorFlow | ~0.8x | Comparable | ~2 GB | TF ecosystem integration |\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport time\n\ndef benchmark_backend(backend, sentences, **kwargs):\n    model = SentenceTransformer(\n        \"paraphrase-multilingual-MiniLM-L12-v2\",\n        backend=backend, model_kwargs=kwargs\n    )\n    # Warmup\n    model.encode([\"warmup\"])\n    start = time.time()\n    model.encode(sentences, batch_size=64)\n    return time.time() - start\n\ntest_data = [\"Benchmark sentence in English.\"] * 500\npt_time = benchmark_backend(\"torch\", test_data)\nonnx_time = benchmark_backend(\"onnx\", test_data, provider=\"CPUExecutionProvider\")\nprint(f\"PyTorch: {pt_time:.2f}s | ONNX: {onnx_time:.2f}s | Speedup: {pt_time/onnx_time:.1f}x\")\n```\n\n### Evaluating Cross-Lingual Retrieval Quality\n\nA RAG pipeline that *seems* to work isn't good enough. You need **precision@k** — does the correct document appear in the top-k results?\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\n# Ground truth: each query should retrieve its paired document\neval_pairs = [\n    (\"நியூரல் நெட்வொர்க் எப்படி கற்கிறது?\", 0),       # Tamil → doc 0\n    (\"Comment fonctionne le gradient descent?\", 3),     # French → doc 3\n    (\"Was ist Backpropagation?\", 0),                     # German → doc 0\n    (\"¿Qué es el aprendizaje profundo?\", 1),             # Spanish → doc 1\n]\n\ndocuments = [\n    \"Neural networks learn by adjusting weights through backpropagation\",\n    \"Deep learning uses multiple layers to extract hierarchical features\",\n    \"Python supports object-oriented and functional programming\",\n    \"Gradient descent optimizes parameters by following the loss gradient\",\n]\n\ndoc_embs = model.encode(documents, normalize_embeddings=True, convert_to_tensor=True)\n\ndef precision_at_k(eval_pairs, doc_embs, k=1):\n    hits = 0\n    for query, expected_idx in eval_pairs:\n        q_emb = model.encode(query, normalize_embeddings=True, convert_to_tensor=True)\n        scores = util.dot_score(q_emb, doc_embs)[0]\n        top_k_idx = scores.argsort(descending=True)[:k].tolist()\n        if expected_idx in top_k_idx:\n            hits += 1\n    return hits / len(eval_pairs)\n\nfor k in [1, 2, 3]:\n    p = precision_at_k(eval_pairs, doc_embs, k=k)\n    print(f\"Precision@{k}: {p:.2f}\")\n```\n\nIf precision@1 drops below 0.75 for your language pairs, consider upgrading to `multilingual-e5-large` or adding a cross-encoder reranker.\n\n### Production Retriever with All Pieces\n\n```python\nclass ProductionMultilingualRAG:\n    def __init__(self, documents, backend=\"onnx\", chunk_words=80, overlap=20):\n        kwargs = {\"provider\": \"CPUExecutionProvider\"} if backend == \"onnx\" else {}\n        self.model = SentenceTransformer(\n            \"paraphrase-multilingual-MiniLM-L12-v2\",\n            backend=backend, model_kwargs=kwargs\n        )\n        self.chunks, self.chunk_sources = [], []\n        for i, doc in enumerate(documents):\n            doc_chunks = chunk_text(doc, chunk_words, overlap)\n            self.chunks.extend(doc_chunks)\n            self.chunk_sources.extend([i] * len(doc_chunks))\n        self.embeddings = self.model.encode(\n            self.chunks, normalize_embeddings=True,\n            convert_to_tensor=True, batch_size=64\n        )\n\n    def retrieve(self, query, top_k=3, deduplicate_sources=True):\n        q_emb = self.model.encode(query, normalize_embeddings=True, convert_to_tensor=True)\n        scores = util.dot_score(q_emb, self.embeddings)[0]\n        ranked_idx = scores.argsort(descending=True).tolist()\n        results, seen_sources = [], set()\n        for idx in ranked_idx:\n            src = self.chunk_sources[idx]\n            if deduplicate_sources and src in seen_sources:\n                continue\n            seen_sources.add(src)\n            results.append({\"chunk\": self.chunks[idx], \"source_doc\": src, \"score\": float(scores[idx])})\n            if len(results) >= top_k:\n                break\n        return results\n```\n\nThis retriever chunks documents to respect the 128-token limit, deduplicates by source document, and runs on ONNX for 2-3x CPU speedup — ready for production.\n\n> **Key Insight:** The gap between a multilingual embedding demo and a production RAG system is three things: **chunking** (respect the 128-token limit), **backend selection** (ONNX for CPU, PyTorch for GPU), and **evaluation** (precision@k on real cross-lingual query pairs). paraphrase-multilingual-MiniLM-L12-v2 handles the multilingual magic — you handle the engineering."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "You've seen the multilingual embedding demo — Tamil queries match English documents. But production needs chunking for the 128-token limit, ONNX for 2-3x CPU speedup, and precision@k to prove your retrieval actually works. This lesson bridges the gap between notebook demo and shipping multilingual RAG.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\ndef chunk_text(text, max_words=80, overlap=20):\n    words = text.split()\n    chunks = []\n    start = 0\n    while start < len(words):\n        end = min(start + max_words, len(words))\n        chunks.append(\" \".join(words[start:end]))\n        start += max_words - overlap\n    return chunks\n\nlong_doc = \"Neural networks learn through backpropagation. \" * 50\nchunks = chunk_text(long_doc)\nprint(f\"{len(long_doc.split())} words -> {len(chunks)} chunks\")\n\nembs = model.encode(chunks, normalize_embeddings=True, batch_size=32)\nprint(f\"Shape: {embs.shape}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the same interface whether you use PyTorch, ONNX, or SafeTensors backends behind the scenes."},
+        {"line": 3, "explanation": "Load paraphrase-multilingual-MiniLM-L12-v2 with default PyTorch backend. In production, you'll switch to ONNX for CPU speed."},
+        {"line": 5, "explanation": "chunk_text splits long documents into overlapping windows. The 128-token limit means ~80 English words max per chunk to stay safe."},
+        {"line": 9, "explanation": "Sliding window: advance by (max_words - overlap) each step. The overlap ensures no sentence gets split without context on both sides."},
+        {"line": 11, "explanation": "Join the word slice back into a string. Each chunk is a self-contained passage the model can fully encode without truncation."},
+        {"line": 15, "explanation": "300 words of repeated text — simulates a real document that would be silently truncated without chunking."},
+        {"line": 16, "explanation": "chunk_text breaks it into manageable pieces. Each chunk preserves local context while staying under the token limit."},
+        {"line": 19, "explanation": "Batch encode all chunks with normalization. batch_size=32 balances memory usage and throughput for the 471MB model."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\nimport numpy as np\n\nmodel = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\ndocuments = [\n    \"Neural networks learn by adjusting weights\",\n    \"Deep learning extracts hierarchical features\",\n    \"Python supports multiple paradigms\",\n    \"Gradient descent follows the loss gradient\",\n]\n\neval_pairs = [\n    (\"நியூரல் நெட்வொர்க் எப்படி கற்கிறது?\", 0),\n    (\"Comment fonctionne le gradient descent?\", 3),\n    (\"Was ist Deep Learning?\", 1),\n    (\"¿Qué es Python?\", 2),\n]\n\ndoc_embs = model.encode(documents, normalize_embeddings=True)\n\ndef precision_at_k(pairs, doc_embs, k=1):\n    hits = 0\n    for query, expected_idx in pairs:\n        q_emb = model.encode(query, normalize_embeddings=True)\n        scores = util.cos_sim(q_emb, doc_embs)[0].numpy()\n        top_k = np.argsort(scores)[::-1][:k]\n        if expected_idx in top_k:\n            hits += 1\n    return hits / len(pairs)\n\nfor k in [1, 2, 3]:\n    print(f\"Precision@{k}: {precision_at_k(eval_pairs, doc_embs, k):.2f}\")",
+      "steps": [
+        {"line": 6, "explanation": "Four English documents forming the knowledge base. Each covers a distinct AI/programming topic for clean evaluation."},
+        {"line": 13, "explanation": "Evaluation pairs: each query in a different language mapped to its expected document index. This is your ground truth for retrieval quality."},
+        {"line": 14, "explanation": "Tamil query about neural networks should retrieve document 0. If it doesn't, your pipeline has a cross-lingual retrieval gap."},
+        {"line": 20, "explanation": "Encode documents once upfront. In production, persist these embeddings to avoid recomputing on every restart."},
+        {"line": 22, "explanation": "precision_at_k: for each query, check if the correct document appears in the top-k results. This is the standard IR evaluation metric."},
+        {"line": 26, "explanation": "argsort descending gives indices ranked by score. Check if the expected index appears in the top-k slice."},
+        {"line": 32, "explanation": "Print precision at k=1, 2, 3. If P@1 < 0.75, consider a cross-encoder reranker or a larger model like multilingual-e5-large."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\ndef chunk_text(text, max_words=80, overlap=20):\n    words = text.split()\n    chunks, start = [], 0\n    while start < len(words):\n        end = min(start + max_words, len(words))\n        chunks.append(\" \".join(words[start:end]))\n        start += max_words - overlap\n    return chunks\n\nclass ProductionRAG:\n    def __init__(self, documents, backend=\"onnx\"):\n        kwargs = {\"provider\": \"CPUExecutionProvider\"} if backend == \"onnx\" else {}\n        self.model = SentenceTransformer(\n            \"paraphrase-multilingual-MiniLM-L12-v2\",\n            backend=backend, model_kwargs=kwargs\n        )\n        self.chunks, self.sources = [], []\n        for i, doc in enumerate(documents):\n            doc_chunks = chunk_text(doc)\n            self.chunks.extend(doc_chunks)\n            self.sources.extend([i] * len(doc_chunks))\n        self.embs = self.model.encode(\n            self.chunks, normalize_embeddings=True, batch_size=64\n        )\n\n    def retrieve(self, query, top_k=3):\n        q = self.model.encode(query, normalize_embeddings=True)\n        scores = util.cos_sim(q, self.embs)[0]\n        ranked = scores.argsort(descending=True).tolist()\n        results, seen = [], set()\n        for idx in ranked:\n            src = self.sources[idx]\n            if src in seen:\n                continue\n            seen.add(src)\n            results.append({\"chunk\": self.chunks[idx], \"source\": src, \"score\": float(scores[idx])})\n            if len(results) >= top_k:\n                break\n        return results",
+      "steps": [
+        {"line": 12, "explanation": "ProductionRAG wraps chunking, embedding, and retrieval into a single class. Backend defaults to ONNX for CPU-optimized inference."},
+        {"line": 14, "explanation": "Conditionally set ONNX provider. This pattern lets you switch backends with a single constructor argument — no code changes needed."},
+        {"line": 19, "explanation": "Track chunk-to-source mapping. When multiple chunks from the same document match, you can deduplicate to show diverse results."},
+        {"line": 24, "explanation": "Batch encode all chunks at init time. batch_size=64 maximizes throughput for the initial indexing pass."},
+        {"line": 28, "explanation": "retrieve() encodes the query and scores against all chunk embeddings. Works with any language — the model handles cross-lingual matching."},
+        {"line": 32, "explanation": "Source deduplication: skip chunks from already-seen documents. This ensures top_k results come from top_k distinct source documents."},
+        {"line": 38, "explanation": "Return chunk text, source document index, and similarity score. The caller can join back to full documents or build RAG prompts from chunks."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Demo Multilingual RAG",
+      "right_label": "Production Multilingual RAG",
+      "items": [
+        {"left": "Encode full documents (truncated at 128 tokens)", "right": "Chunk with overlap, encode each chunk"},
+        {"left": "PyTorch default backend", "right": "ONNX for 2-3x CPU speedup"},
+        {"left": "No evaluation — \"it looks right\"", "right": "Precision@k on cross-lingual eval pairs"},
+        {"left": "Duplicate chunks from same document", "right": "Source deduplication in retrieval"},
+        {"left": "Re-encode documents on every restart", "right": "Persist embeddings to disk"},
+        {"left": "Single query language tested", "right": "Eval pairs across Tamil, French, German, Spanish"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "Your multilingual RAG pipeline is production-ready — chunked for the 128-token limit, accelerated with ONNX, evaluated with precision@k, and deduplicated by source. Ship it!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `ChunkedRetriever` class that simulates how production RAG systems chunk documents before embedding. Implement `chunk_text(text, max_words, overlap)` as a static method that splits text into overlapping windows of `max_words` with `overlap` words shared between consecutive chunks. Implement `index(documents)` that chunks all documents and tracks which source document each chunk came from. Implement `retrieve(query, top_k)` that uses word-overlap (Jaccard similarity) to find the best matching chunks and returns results deduplicated by source document."
+      },
+      "starter_code": "class ChunkedRetriever:\n    def __init__(self):\n        self.chunks = []\n        self.sources = []\n\n    @staticmethod\n    def chunk_text(text: str, max_words: int = 5, overlap: int = 2) -> list:\n        # Split text into overlapping windows\n        # Each chunk has at most max_words words\n        # Consecutive chunks share `overlap` words\n        # Return list of chunk strings\n        # Return [text] if text has <= max_words words\n        pass\n\n    def index(self, documents: list) -> None:\n        # Chunk each document and store chunks + source indices\n        # self.chunks = list of all chunk strings\n        # self.sources = list of source document indices (same length as chunks)\n        pass\n\n    def _jaccard(self, text_a: str, text_b: str) -> float:\n        # Jaccard similarity on lowercased word sets\n        set_a = set(text_a.lower().split())\n        set_b = set(text_b.lower().split())\n        if not set_a and not set_b:\n            return 0.0\n        union = set_a | set_b\n        return len(set_a & set_b) / len(union) if union else 0.0\n\n    def retrieve(self, query: str, top_k: int = 2) -> list:\n        # Score query against all chunks using _jaccard\n        # Return top_k results deduplicated by source document:\n        # [{\"chunk\": str, \"source\": int, \"score\": float}, ...]\n        # Sorted by score descending\n        pass\n\n# Test it:\nretriever = ChunkedRetriever()\n\nchunks = ChunkedRetriever.chunk_text(\"a b c d e f g h\", max_words=4, overlap=1)\nprint(chunks)\n\nretriever.index([\n    \"neural networks learn through backpropagation algorithms\",\n    \"python programming supports multiple paradigms\",\n])\nprint(len(retriever.chunks))\nprint(len(retriever.sources))\n\nresults = retriever.retrieve(\"neural networks\", top_k=2)\nprint(results[0][\"score\"] > 0)\nprint(len(results) <= 2)",
+      "expected_output": "['a b c d', 'd e f g', 'g h']\n4\n4\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "In chunk_text, use a while loop: start at 0, take words[start:start+max_words], advance start by (max_words - overlap). Handle the case where remaining words are fewer than max_words.",
+          "In index, loop over documents with enumerate, call chunk_text on each, extend self.chunks and self.sources accordingly.",
+          "In retrieve, score all chunks, sort descending, then iterate and skip chunks whose source index you've already seen — this deduplicates by source document."
+        ]
+      },
+      "test_code": "r = ChunkedRetriever()\nassert ChunkedRetriever.chunk_text(\"a b c\", max_words=5, overlap=1) == [\"a b c\"]\nassert ChunkedRetriever.chunk_text(\"a b c d e f\", max_words=3, overlap=1) == [\"a b c\", \"c d e\", \"e f\"]\nassert ChunkedRetriever.chunk_text(\"a b c d\", max_words=2, overlap=1) == [\"a b\", \"b c\", \"c d\"]\nr.index([\"hello world foo\", \"bar baz qux\"])\nassert len(r.chunks) >= 2\nassert len(r.sources) == len(r.chunks)\nassert all(s in [0, 1] for s in r.sources)\nresults = r.retrieve(\"hello world\", top_k=1)\nassert len(results) == 1\nassert results[0][\"source\"] == 0\nassert results[0][\"score\"] > 0\nassert \"chunk\" in results[0] and \"source\" in results[0] and \"score\" in results[0]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `RetrievalEvaluator` class that measures precision@k for a retrieval system. It takes a retriever (any object with a `retrieve(query, top_k)` method returning dicts with 'source' keys) and a list of evaluation pairs `(query, expected_source_index)`. Implement `precision_at_k(k)` that runs each query through the retriever and checks if the expected source index appears in the top-k results. Implement `evaluate_all(k_values)` that returns a dict mapping each k to its precision score."
+      },
+      "starter_code": "class SimpleRetriever:\n    \"\"\"Provided retriever using Jaccard similarity.\"\"\"\n    def __init__(self, documents):\n        self.documents = documents\n\n    def retrieve(self, query, top_k=3):\n        def jaccard(a, b):\n            sa, sb = set(a.lower().split()), set(b.lower().split())\n            return len(sa & sb) / len(sa | sb) if sa | sb else 0.0\n        scored = [{\"chunk\": d, \"source\": i, \"score\": jaccard(query, d)}\n                  for i, d in enumerate(self.documents)]\n        scored.sort(key=lambda x: x[\"score\"], reverse=True)\n        return scored[:top_k]\n\nclass RetrievalEvaluator:\n    def __init__(self, retriever, eval_pairs: list):\n        # retriever: object with retrieve(query, top_k) method\n        # eval_pairs: list of (query_string, expected_source_index)\n        self.retriever = retriever\n        self.eval_pairs = eval_pairs\n\n    def precision_at_k(self, k: int = 1) -> float:\n        # For each (query, expected_idx) in eval_pairs:\n        #   1. Call self.retriever.retrieve(query, top_k=k)\n        #   2. Check if expected_idx appears in the 'source' field of any result\n        # Return: fraction of queries where expected doc was in top-k\n        # Return 0.0 if eval_pairs is empty\n        pass\n\n    def evaluate_all(self, k_values: list) -> dict:\n        # Run precision_at_k for each k in k_values\n        # Return {k: precision_score, ...}\n        pass\n\n# Test it:\nretriever = SimpleRetriever([\n    \"neural networks and backpropagation\",\n    \"python programming language\",\n    \"cooking italian pasta recipes\",\n    \"gradient descent optimization\",\n])\n\nevaluator = RetrievalEvaluator(retriever, [\n    (\"neural network learning\", 0),\n    (\"python code\", 1),\n    (\"pasta dinner\", 2),\n    (\"gradient optimization\", 3),\n])\n\nprint(f\"{evaluator.precision_at_k(1):.2f}\")\nprint(f\"{evaluator.precision_at_k(3):.2f}\")\n\nresult = evaluator.evaluate_all([1, 2, 3])\nprint(len(result))\nprint(all(0 <= v <= 1 for v in result.values()))",
+      "expected_output": "1.00\n1.00\n3\nTrue",
+      "hints": {
+        "en": [
+          "In precision_at_k, for each eval pair call retriever.retrieve(query, top_k=k), then check if expected_idx is in [r['source'] for r in results].",
+          "Count hits and divide by total pairs. Handle empty eval_pairs by returning 0.0.",
+          "evaluate_all is a one-liner dict comprehension: {k: self.precision_at_k(k) for k in k_values}"
+        ]
+      },
+      "test_code": "r = SimpleRetriever([\"hello world\", \"goodbye moon\", \"foo bar\"])\ne = RetrievalEvaluator(r, [(\"hello\", 0), (\"goodbye\", 1)])\nassert e.precision_at_k(1) == 1.0\nassert e.precision_at_k(3) == 1.0\ne2 = RetrievalEvaluator(r, [(\"hello\", 2)])\nassert e2.precision_at_k(1) == 0.0\nassert e2.precision_at_k(3) == 1.0\ne3 = RetrievalEvaluator(r, [])\nassert e3.precision_at_k(1) == 0.0\nresult = e.evaluate_all([1, 2])\nassert isinstance(result, dict)\nassert len(result) == 2\nassert 1 in result and 2 in result\nassert all(0 <= v <= 1 for v in result.values())"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["overlap chunking", "128-token limit handling", "ONNX backend deployment", "SafeTensors loading", "precision@k evaluation", "source deduplication", "batch embedding", "cross-lingual retrieval evaluation", "production RAG architecture", "backend benchmarking"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "sentence embeddings basics", "cosine similarity", "multilingual embeddings", "pip install"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

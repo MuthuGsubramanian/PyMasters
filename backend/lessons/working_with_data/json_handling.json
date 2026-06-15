@@ -1,0 +1,170 @@
+{
+  "id": "json_handling",
+  "topic": "json_handling",
+  "track": "working_with_data",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "JSON: The Universal Data Exchange Format"
+  },
+  "description": {
+    "en": "JSON is how systems talk to each other — APIs, config files, message queues. Learn to parse JSON text into Python dicts and lists with json.loads, serialize Python back to JSON with json.dumps (indent, sort_keys, ensure_ascii), read and write JSON files with load/dump, and navigate nested data safely with .get(). Plus the pitfalls that trip everyone: trailing commas, comments, and non-serializable types."
+  },
+  "xp_reward": 90,
+  "next_unlock": "csv_processing",
+  "story_variants": {
+    "en": "## The Language Systems Use to Talk\n\nWhen your phone fetches the weather, when a website saves your settings, when one microservice calls another — they almost always exchange **JSON**. JSON (JavaScript Object Notation) is a plain-text format for structured data. It is human-readable, language-neutral, and tiny to parse. Master it and you can speak to nearly every API and config file on the planet.\n\nThe magic is that JSON maps almost perfectly onto Python's own data structures. A JSON *object* `{...}` becomes a Python `dict`. A JSON *array* `[...]` becomes a Python `list`. Once it's a dict or list, you already know how to work with it.\n\n> **Key idea:** JSON is just text. Parsing turns that text into ordinary Python dicts and lists; serializing turns dicts and lists back into text. Everything else is detail.\n\n## Parsing: Text In, Python Out\n\nThe standard-library `json` module does the heavy lifting. Use `json.loads` (\"load string\") to turn a JSON string into Python:\n\n```python\nimport json\n\ntext = '{\"name\": \"Ada\", \"age\": 36, \"admin\": true, \"tags\": [\"x\", \"y\"]}'\ndata = json.loads(text)\n\nprint(type(data))      # <class 'dict'>\nprint(data[\"name\"])    # Ada\nprint(data[\"admin\"])   # True   <- JSON true became Python True\n```\n\nNotice `true` (JSON) became `True` (Python). The whole type system maps across:\n\n| JSON | Python |\n|------|--------|\n| object `{...}` | `dict` |\n| array `[...]` | `list` |\n| string `\"hi\"` | `str` |\n| number `36` | `int` |\n| number `3.14` | `float` |\n| `true` / `false` | `True` / `False` |\n| `null` | `None` |\n\nOne rule catches people: **JSON object keys are always strings.** Even if you write `{\"1\": \"a\"}`, the key comes back as the string `\"1\"`, never the integer `1`.\n\n## Serializing: Python In, Text Out\n\nThe reverse is `json.dumps` (\"dump string\"). It turns a Python dict or list into a JSON string:\n\n```python\npayload = {\"name\": \"Ada\", \"score\": 9.5, \"active\": False, \"notes\": None}\nprint(json.dumps(payload))\n# {\"name\": \"Ada\", \"score\": 9.5, \"active\": false, \"notes\": null}\n```\n\n`False` became `false`, `None` became `null`. A few options make the output friendly:\n\n- `indent=2` pretty-prints with newlines and indentation (great for config files and debugging).\n- `sort_keys=True` orders keys alphabetically, so output is stable and diff-friendly.\n- `ensure_ascii=False` keeps Unicode readable (`\"café\"`) instead of escaping it to `\"caf\\u00e9\"`.\n\n```python\nprint(json.dumps({\"city\": \"São Paulo\", \"a\": 1}, indent=2, sort_keys=True, ensure_ascii=False))\n```\n\n## Files: load and dump (no 's')\n\nThe `s`-less twins work directly with open file objects. `json.load(f)` reads JSON from a file; `json.dump(obj, f)` writes it:\n\n```python\nwith open(\"config.json\", \"r\", encoding=\"utf-8\") as f:\n    config = json.load(f)\n\nwith open(\"out.json\", \"w\", encoding=\"utf-8\") as f:\n    json.dump(config, f, indent=2)\n```\n\nMnemonic: the `s` versions deal in **s**trings; the plain versions deal in files.\n\n## Navigating Nested Data Safely\n\nReal JSON is nested. Reach in with chained keys and indexes — but guard against missing fields. `data[\"x\"]` raises `KeyError` if `x` is absent; `data.get(\"x\", default)` returns the default instead:\n\n```python\nresp = json.loads('{\"user\": {\"name\": \"Ada\", \"prefs\": {\"theme\": \"dark\"}}}')\nprint(resp[\"user\"][\"prefs\"][\"theme\"])              # dark\nprint(resp[\"user\"].get(\"phone\", \"unknown\"))        # unknown  (no crash)\nprint(resp.get(\"admin\", {}).get(\"level\", 0))        # 0        (safe two-level)\n```\n\n## The Pitfalls Everyone Hits\n\nJSON is stricter than Python source code:\n\n- **No trailing commas.** `[1, 2, 3,]` is valid Python but *invalid* JSON.\n- **No comments.** `// like this` or `# this` break a JSON parser.\n- **Strings need double quotes.** `'single'` is not valid JSON.\n- **Not everything serializes.** `set`, `datetime`, and custom objects raise `TypeError` from `json.dumps`. Convert them first (a `set` to a `list`, a `datetime` to an ISO string with `.isoformat()`).\n\n```python\njson.dumps({1, 2, 3})        # TypeError: set is not JSON serializable\njson.dumps(list({1, 2, 3}))  # works -> \"[1, 2, 3]\"\n```\n\nKeep these straight and JSON stops being a mystery: it's just text on the wire, and dicts and lists in your hands."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "data_exchange",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "two_directions",
+      "nodes": [
+        {
+          "label": "json module",
+          "children": [
+            "loads: JSON string -> Python (dict/list)",
+            "dumps: Python -> JSON string (indent, sort_keys, ensure_ascii)",
+            "load: read JSON from a file object",
+            "dump: write Python to a file object"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "json_vs_python",
+      "left": {
+        "label": "JSON:  {\"admin\": true, \"phone\": null}",
+        "result": true
+      },
+      "right": {
+        "label": "Python: {\"admin\": True, \"phone\": None}",
+        "result": true
+      },
+      "description": {
+        "en": "json.loads maps true->True, false->False, null->None, object->dict, array->list. Keys always come back as strings."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "parse_and_navigate",
+      "code": "import json\ntext = '{\"user\": {\"name\": \"Ada\", \"prefs\": {\"theme\": \"dark\"}}}'\ndata = json.loads(text)\nprint(data[\"user\"][\"name\"])\nprint(data[\"user\"].get(\"phone\", \"unknown\"))",
+      "executionSteps": [
+        { "line": 3, "variables": { "text": "'{...}' (str)", "data": "dict" }, "output": "", "description": "json.loads turns the JSON string into a Python dict" },
+        { "line": 4, "variables": { "data": "{'user': {...}}" }, "output": "Ada", "description": "Chain keys to reach nested values" },
+        { "line": 5, "variables": { "data": "{'user': {...}}" }, "output": "unknown", "description": ".get returns a default instead of KeyError when a field is missing" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "JSON is just text: loads parses it, dumps serializes it.",
+        "object<->dict, array<->list, true/false/null<->True/False/None.",
+        "No trailing commas, no comments. Keys are always strings."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "You receive an API response as a JSON STRING describing a customer's orders. Parse it with json.loads, then implement total_paid(raw) to return the sum of the 'amount' field of every order whose 'status' is 'paid' (ignore orders with any other status). The JSON has shape {\"customer\": \"...\", \"orders\": [{\"id\": ..., \"amount\": ..., \"status\": \"...\"}, ...]}. With the demo data the paid orders are 120.50 + 30.00 + 49.50 = 200.0. Print the result exactly. Expected output: 200.0"
+      },
+      "starter_code": "import json\n\nraw = '''\n{\n  \"customer\": \"Ada\",\n  \"orders\": [\n    {\"id\": 1, \"amount\": 120.50, \"status\": \"paid\"},\n    {\"id\": 2, \"amount\": 75.00,  \"status\": \"refunded\"},\n    {\"id\": 3, \"amount\": 30.00,  \"status\": \"paid\"},\n    {\"id\": 4, \"amount\": 10.00,  \"status\": \"pending\"},\n    {\"id\": 5, \"amount\": 49.50,  \"status\": \"paid\"}\n  ]\n}\n'''\n\ndef total_paid(raw):\n    # TODO: json.loads(raw) -> dict, then sum amount of orders with status == 'paid'\n    return None\n\nprint(total_paid(raw))",
+      "expected_output": "200.0",
+      "hints": {
+        "en": [
+          "Start by turning the string into Python: data = json.loads(raw). Now data is a dict.",
+          "data['orders'] is a list of dicts. Loop over it with: for order in data['orders']:",
+          "Add order['amount'] to a running total only when order['status'] == 'paid'.",
+          "Use order.get('status') if you want to be safe against a missing 'status' key, then return the total."
+        ]
+      },
+      "test_code": "assert total_paid(raw) == 200.0\nassert total_paid('{\"customer\": \"X\", \"orders\": []}') == 0\nassert total_paid('{\"customer\": \"Y\", \"orders\": [{\"id\": 9, \"amount\": 5.0, \"status\": \"paid\"}]}') == 5.0\nassert total_paid('{\"customer\": \"Z\", \"orders\": [{\"id\": 1, \"amount\": 5.0, \"status\": \"pending\"}, {\"id\": 2, \"amount\": 7.0, \"status\": \"paid\"}]}') == 7.0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does json.loads do?"
+      },
+      "options": {
+        "en": [
+          "Writes a Python object to a file as JSON",
+          "Parses a JSON string into Python objects (dict, list, etc.)",
+          "Loads a Python module named json",
+          "Validates that a file is valid JSON without returning anything"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "After json.loads('{\"ok\": true, \"data\": null, \"items\": [1, 2]}'), what are the Python values?"
+      },
+      "options": {
+        "en": [
+          "ok=True, data=None, items=[1, 2]",
+          "ok='true', data='null', items='[1, 2]'",
+          "ok=1, data=0, items=(1, 2)",
+          "ok=True, data=None, items={1, 2}"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which json.dumps option pretty-prints output with indentation, and which keeps Unicode characters readable?"
+      },
+      "options": {
+        "en": [
+          "indent= for pretty-printing; ensure_ascii=False to keep Unicode readable",
+          "sort_keys= for pretty-printing; indent= to keep Unicode readable",
+          "pretty=True for pretty-printing; unicode=True to keep Unicode readable",
+          "ensure_ascii=True for pretty-printing; indent= to keep Unicode readable"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does json.dumps({1, 2, 3}) raise TypeError, and what fixes it?"
+      },
+      "options": {
+        "en": [
+          "Sets are too large; use a smaller set",
+          "A set is not JSON-serializable; convert it to a list first, e.g. json.dumps(list({1, 2, 3}))",
+          "Integers can't be serialized; convert them to strings",
+          "json.dumps only accepts strings; wrap it in quotes"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["json_parsing", "json_serialization", "json_python_type_mapping", "nested_data_access", "json_file_io"],
+    "concepts_required": ["reading_and_writing_files"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "data",
+    "path_memberships": []
+  },
+  "generated": false
+}

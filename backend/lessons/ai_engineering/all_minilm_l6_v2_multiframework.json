@@ -1,0 +1,132 @@
+{
+  "id": "all_minilm_l6_v2_multiframework",
+  "topic": "all_minilm_l6_v2_multiframework",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: Multi-Framework Embeddings for Production RAG"
+  },
+  "description": {
+    "en": "Deploy sentence-transformers/all-MiniLM-L6-v2 across PyTorch, TensorFlow, ONNX, and Rust — build a production embedding service with batching, caching, and framework-agnostic retrieval for Homie's RAG pipeline."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Model, Four Runtimes: Production Embeddings with all-MiniLM-L6-v2\n\nVaathiyaar here! Your RAG pipeline encodes 50K documents on ingestion and serves 200 queries per second. PyTorch handles training beautifully, but at inference time you're paying for overhead you don't need. What if the same 80MB model could run natively in PyTorch, TensorFlow, ONNX Runtime, and even Rust — same weights, same vectors, different speed profiles? That's `all-MiniLM-L6-v2`: the most deployed embedding model in the sentence-transformers ecosystem, and the backbone of Homie's retrieval layer.\n\nThis lesson goes beyond basic encoding. You'll build a **framework-agnostic embedding service** that selects the optimal runtime per deployment target — GPU training with PyTorch, CPU serving with ONNX, edge inference with Rust — all producing identical 384-dimensional vectors.\n\n### Model Architecture at a Glance\n\n| Property | Value |\n|---|---|\n| Base model | Microsoft MiniLM-L6-H384 (6 layers, 384 hidden) |\n| Parameters | 22.7M |\n| Output dimensions | 384 |\n| Max sequence length | 256 tokens |\n| Pooling | Mean pooling over token embeddings |\n| Training data | 1B+ sentence pairs (NLI, paraphrase, QA) |\n| STS Benchmark | 0.789 (Spearman correlation) |\n| Throughput | ~14,000 sentences/sec on V100 GPU |\n\nThe \"all\" prefix means it was trained on a diverse mixture of datasets — not specialized for any single domain, making it a strong general-purpose default.\n\n### Framework Comparison: Same Model, Different Runtimes\n\n```python\nfrom sentence_transformers import SentenceTransformer\nimport numpy as np\nimport time\n\ndef benchmark(model, texts, label):\n    start = time.time()\n    emb = model.encode(texts, normalize_embeddings=True)\n    elapsed = time.time() - start\n    print(f\"{label}: {len(texts)} texts in {elapsed:.2f}s ({len(texts)/elapsed:.0f} texts/sec)\")\n    return emb\n\ntexts = [\"Semantic embeddings power modern search.\"] * 5000\n\n# PyTorch — default, GPU-optimized\nmodel_pt = SentenceTransformer(\"all-MiniLM-L6-v2\")\nemb_pt = benchmark(model_pt, texts, \"PyTorch\")\n\n# ONNX — 2-3x faster on CPU\nmodel_onnx = SentenceTransformer(\n    \"all-MiniLM-L6-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\nemb_onnx = benchmark(model_onnx, texts, \"ONNX\")\n\n# Verify identical output\nprint(f\"Max diff: {np.max(np.abs(emb_pt - emb_onnx)):.8f}\")\n```\n\nONNX Runtime eliminates Python-level graph execution overhead. For CPU-only deployments (containers, serverless, edge), it's the fastest option without custom C++ code.\n\n### Building a Caching Embedding Service\n\nRe-encoding the same text wastes compute. A production service caches embeddings keyed by content hash:\n\n```python\nimport hashlib\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass EmbeddingService:\n    def __init__(self, model_name=\"all-MiniLM-L6-v2\", backend=\"onnx\"):\n        kwargs = {\"provider\": \"CPUExecutionProvider\"} if backend == \"onnx\" else {}\n        self.model = SentenceTransformer(\n            model_name, backend=backend, model_kwargs=kwargs\n        )\n        self.cache = {}\n\n    def _hash(self, text: str) -> str:\n        return hashlib.sha256(text.encode()).hexdigest()[:16]\n\n    def encode(self, texts: list[str]) -> np.ndarray:\n        results = np.zeros((len(texts), 384), dtype=np.float32)\n        uncached_idx, uncached_texts = [], []\n        for i, t in enumerate(texts):\n            h = self._hash(t)\n            if h in self.cache:\n                results[i] = self.cache[h]\n            else:\n                uncached_idx.append(i)\n                uncached_texts.append(t)\n        if uncached_texts:\n            embs = self.model.encode(uncached_texts, normalize_embeddings=True)\n            for idx, emb, t in zip(uncached_idx, embs, uncached_texts):\n                self.cache[self._hash(t)] = emb\n                results[idx] = emb\n        return results\n\n    def cache_stats(self) -> dict:\n        return {\"cached_entries\": len(self.cache)}\n```\n\n### Homie RAG Integration Pattern\n\nHomie's retrieval pipeline uses MiniLM at two stages: **indexing** (encode all knowledge base chunks once) and **querying** (encode user questions in real-time):\n\n```python\nclass HomieRetriever:\n    def __init__(self):\n        self.service = EmbeddingService()\n        self.chunks = []\n        self.index = None\n\n    def ingest(self, chunks: list[str]):\n        self.chunks = chunks\n        self.index = self.service.encode(chunks)\n\n    def retrieve(self, query: str, top_k: int = 5) -> list[dict]:\n        q_emb = self.service.encode([query])\n        scores = np.dot(self.index, q_emb.T).squeeze()\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [{\"chunk\": self.chunks[i], \"score\": float(scores[i])} for i in top_idx]\n```\n\nSince embeddings are normalized, `np.dot` equals cosine similarity — no extra computation needed.\n\n### TensorFlow Serving & Rust Edge Deployment\n\nFor TensorFlow Serving, export the model as a SavedModel and serve via gRPC. For Rust, HuggingFace's `candle` crate loads the same SafeTensors weights into a compiled binary — ideal for WebAssembly or microservice deployments where Python isn't available.\n\n| Deployment | Runtime | Best For |\n|---|---|---|\n| Development / fine-tuning | PyTorch | GPU training, experimentation |\n| CPU API server | ONNX Runtime | Low-latency, containerized serving |\n| Existing TF infrastructure | TensorFlow | TF Serving, TFX pipelines |\n| Edge / WebAssembly | Rust (candle) | Sub-ms latency, no Python dependency |\n\n> **Key Insight:** all-MiniLM-L6-v2 isn't just a model — it's a deployment strategy. Train and prototype with PyTorch, serve with ONNX for 2-3x CPU speedup, cache aggressively to avoid recomputation, and normalize embeddings so dot product replaces cosine similarity. These four principles turn a research model into a production embedding service capable of handling thousands of queries per second."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "all-MiniLM-L6-v2 ships as a single set of weights that runs natively across PyTorch, TensorFlow, ONNX Runtime, and Rust. Same 384-dimensional vectors, different speed profiles. This lesson builds a production embedding service with caching and framework selection for Homie's RAG pipeline.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer\nimport numpy as np\nimport time\n\ndef benchmark(model, texts, label):\n    start = time.time()\n    emb = model.encode(texts, normalize_embeddings=True)\n    elapsed = time.time() - start\n    print(f\"{label}: {len(texts)} texts in {elapsed:.2f}s\")\n    return emb\n\ntexts = [\"Semantic embeddings power modern search.\"] * 5000\n\nmodel_pt = SentenceTransformer(\"all-MiniLM-L6-v2\")\nemb_pt = benchmark(model_pt, texts, \"PyTorch\")\n\nmodel_onnx = SentenceTransformer(\n    \"all-MiniLM-L6-v2\",\n    backend=\"onnx\",\n    model_kwargs={\"provider\": \"CPUExecutionProvider\"},\n)\nemb_onnx = benchmark(model_onnx, texts, \"ONNX\")\n\nprint(f\"Max diff: {np.max(np.abs(emb_pt - emb_onnx)):.8f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import SentenceTransformer — the unified API for loading embedding models across multiple backends including PyTorch, ONNX, and TensorFlow."},
+        {"line": 5, "explanation": "A benchmark function that encodes a batch of texts and reports throughput. normalize_embeddings=True makes dot product equal cosine similarity."},
+        {"line": 12, "explanation": "5000 identical sentences for benchmarking. In production, this simulates a batch ingestion workload — the realistic test for embedding throughput."},
+        {"line": 14, "explanation": "Load the PyTorch backend — the default. Best for GPU training and prototyping, but carries Python runtime overhead on CPU."},
+        {"line": 17, "explanation": "Load the same model with ONNX Runtime. The backend parameter switches the execution engine without changing the API."},
+        {"line": 20, "explanation": "CPUExecutionProvider runs the optimized ONNX graph on CPU. For GPU, swap to CUDAExecutionProvider. Same model weights, different hardware targets."},
+        {"line": 24, "explanation": "Verify the outputs match — max difference should be < 1e-5. Both backends produce identical 384-dim vectors from the same weights."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import hashlib\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass EmbeddingService:\n    def __init__(self, model_name=\"all-MiniLM-L6-v2\"):\n        self.model = SentenceTransformer(model_name)\n        self.cache = {}\n\n    def _hash(self, text: str) -> str:\n        return hashlib.sha256(text.encode()).hexdigest()[:16]\n\n    def encode(self, texts: list[str]) -> np.ndarray:\n        results = np.zeros((len(texts), 384), dtype=np.float32)\n        uncached_idx, uncached_texts = [], []\n        for i, t in enumerate(texts):\n            h = self._hash(t)\n            if h in self.cache:\n                results[i] = self.cache[h]\n            else:\n                uncached_idx.append(i)\n                uncached_texts.append(t)\n        if uncached_texts:\n            embs = self.model.encode(uncached_texts, normalize_embeddings=True)\n            for idx, emb, t in zip(uncached_idx, embs, uncached_texts):\n                self.cache[self._hash(t)] = emb\n                results[idx] = emb\n        return results",
+      "steps": [
+        {"line": 1, "explanation": "hashlib provides SHA-256 for content-based cache keys. Same text always produces the same hash — no stale cache issues."},
+        {"line": 5, "explanation": "EmbeddingService wraps the model with a caching layer. In production, replace the dict cache with Redis or a memory-mapped file."},
+        {"line": 10, "explanation": "Truncate the SHA-256 hash to 16 hex chars — 64 bits of collision resistance, more than enough for embedding caches."},
+        {"line": 14, "explanation": "Pre-allocate the output array. This avoids repeated concatenation and ensures consistent shape regardless of cache hits."},
+        {"line": 15, "explanation": "Partition texts into cached (instant lookup) and uncached (need model inference). Only uncached texts hit the model."},
+        {"line": 23, "explanation": "Batch-encode only the uncached texts — this is the key optimization. If 80% of queries repeat, you skip 80% of inference."},
+        {"line": 25, "explanation": "Store new embeddings in the cache and fill the results array. Next call with the same text gets a free cache hit."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "import numpy as np\n\nclass HomieRetriever:\n    def __init__(self, service):\n        self.service = service\n        self.chunks = []\n        self.index = None\n\n    def ingest(self, chunks: list[str]):\n        self.chunks = chunks\n        self.index = self.service.encode(chunks)\n        print(f\"Indexed {len(chunks)} chunks, shape: {self.index.shape}\")\n\n    def retrieve(self, query: str, top_k: int = 5) -> list[dict]:\n        q_emb = self.service.encode([query])\n        scores = np.dot(self.index, q_emb.T).squeeze()\n        top_idx = np.argsort(scores)[::-1][:top_k]\n        return [\n            {\"chunk\": self.chunks[i], \"score\": float(scores[i])}\n            for i in top_idx\n        ]\n\n    def build_rag_context(self, query: str, top_k: int = 3) -> str:\n        results = self.retrieve(query, top_k)\n        context = \"\\n\".join(f\"- {r['chunk']}\" for r in results)\n        return f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"",
+      "steps": [
+        {"line": 3, "explanation": "HomieRetriever is Homie's RAG backbone. It takes an EmbeddingService (cached, framework-agnostic) and builds a searchable index."},
+        {"line": 9, "explanation": "ingest() encodes all knowledge base chunks in one batch call. The embedding service caches these — re-ingesting unchanged docs is free."},
+        {"line": 11, "explanation": "self.index is an (N, 384) matrix — one row per chunk. This is the entire vector store, held in memory for fast dot-product search."},
+        {"line": 15, "explanation": "Encode the query through the same service. Since embeddings are normalized, np.dot computes cosine similarity directly."},
+        {"line": 16, "explanation": "Matrix-vector multiplication: (N, 384) × (384, 1) = (N,) scores. One dot product per chunk, fully vectorized by NumPy."},
+        {"line": 17, "explanation": "argsort descending gives indices of the highest-scoring chunks. Slice to top_k for the most relevant context."},
+        {"line": 23, "explanation": "Format retrieved chunks into a RAG prompt. The LLM receives relevant context before the question — grounding its answer in your data."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Single-Framework Deployment",
+      "right_label": "Multi-Framework Strategy",
+      "items": [
+        {"left": "PyTorch everywhere — heavy runtime", "right": "Right runtime per target (ONNX for CPU, PT for GPU)"},
+        {"left": "Same latency for repeated queries", "right": "Content-hash caching skips repeated inference"},
+        {"left": "Re-encode on every restart", "right": "Persist cached embeddings to disk"},
+        {"left": "Python required at every endpoint", "right": "Rust/WASM for edge, Python for API"},
+        {"left": "One speed profile fits all", "right": "2-3x CPU speedup with ONNX, sub-ms with Rust"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a production embedding service with caching, multi-framework support, and RAG retrieval — all powered by all-MiniLM-L6-v2!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EmbeddingCache` class that wraps a simple word-frequency encoder with content-hash caching. Implement `_hash(text)` that returns the first 8 characters of the text's SHA-256 hex digest, `encode_single(text)` that returns a word frequency dict (lowercase), and `encode_batch(texts)` that encodes a list of texts using the cache — only computing embeddings for texts not already cached. Track `cache_hits` and `cache_misses` as integer counters."
+      },
+      "starter_code": "import hashlib\n\nclass EmbeddingCache:\n    def __init__(self):\n        self.cache = {}\n        self.cache_hits = 0\n        self.cache_misses = 0\n\n    def _hash(self, text: str) -> str:\n        # Return first 8 chars of SHA-256 hex digest of text\n        pass\n\n    def encode_single(self, text: str) -> dict:\n        # Return word frequency dict, lowercase\n        pass\n\n    def encode_batch(self, texts: list[str]) -> list[dict]:\n        # For each text: check cache by hash\n        #   - Cache hit: use cached embedding, increment cache_hits\n        #   - Cache miss: compute via encode_single, store in cache, increment cache_misses\n        # Return list of embeddings in original order\n        pass\n\n# Test it:\nec = EmbeddingCache()\n\ntexts = [\"hello world\", \"foo bar\", \"hello world\", \"baz qux\", \"foo bar\"]\nresults = ec.encode_batch(texts)\nprint(len(results))\nprint(ec.cache_hits)\nprint(ec.cache_misses)\nprint(results[0] == results[2])\nprint(results[1] == results[4])\n\n# Second batch — all cached now\nresults2 = ec.encode_batch([\"hello world\", \"foo bar\"])\nprint(ec.cache_hits)\nprint(ec.cache_misses)",
+      "expected_output": "5\n2\n3\nTrue\nTrue\n4\n3",
+      "hints": {
+        "en": [
+          "_hash(): use hashlib.sha256(text.encode()).hexdigest()[:8]",
+          "encode_single(): split text.lower() into words and count each with a dict",
+          "encode_batch(): loop through texts, check if _hash(text) is in self.cache — if yes, increment cache_hits and use cached value; if no, call encode_single, store result in self.cache[hash], and increment cache_misses"
+        ]
+      },
+      "test_code": "ec = EmbeddingCache()\nassert len(ec._hash(\"test\")) == 8\nassert ec._hash(\"test\") == ec._hash(\"test\")\nassert ec._hash(\"test\") != ec._hash(\"other\")\nassert ec.encode_single(\"Hello World\") == {\"hello\": 1, \"world\": 1}\nassert ec.encode_single(\"go go go\") == {\"go\": 3}\nresults = ec.encode_batch([\"a b\", \"a b\", \"c d\"])\nassert len(results) == 3\nassert results[0] == {\"a\": 1, \"b\": 1}\nassert results[0] == results[1]\nassert ec.cache_hits == 1\nassert ec.cache_misses == 2\nec.encode_batch([\"a b\"])\nassert ec.cache_hits == 2\nassert ec.cache_misses == 2"
+    },
+    {
+      "instruction": {
+        "en": "Build a `VectorRetriever` class that simulates Homie's RAG retrieval layer. It takes documents, encodes them using word-frequency vectors, and supports `retrieve(query, top_k)` that returns the most similar documents using cosine similarity, and `build_rag_prompt(query, top_k)` that formats retrieved docs into a prompt string: 'Context:\\n- doc1\\n- doc2\\n\\nQuestion: {query}\\nAnswer:'. Also implement `ingest(documents)` to allow re-indexing with new documents."
+      },
+      "starter_code": "import math\n\nclass VectorRetriever:\n    def __init__(self):\n        self.documents = []\n        self.vectors = []\n\n    def encode(self, text: str) -> dict:\n        # Word frequency vector, lowercase\n        pass\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        # Cosine similarity between two word-frequency dicts\n        # Return 0.0 if either has zero magnitude\n        pass\n\n    def ingest(self, documents: list[str]):\n        # Store documents and pre-compute their vectors\n        pass\n\n    def retrieve(self, query: str, top_k: int = 3) -> list[dict]:\n        # Encode query, score against all docs, return top-k\n        # Each result: {\"document\": str, \"score\": float}\n        # Sort by score descending\n        pass\n\n    def build_rag_prompt(self, query: str, top_k: int = 3) -> str:\n        # Retrieve top-k docs and format as:\n        # Context:\\n- doc1\\n- doc2\\n\\nQuestion: {query}\\nAnswer:\n        pass\n\n# Test it:\nretriever = VectorRetriever()\nretriever.ingest([\n    \"python programming basics\",\n    \"machine learning with python\",\n    \"cooking italian food\",\n    \"python data science libraries\",\n])\n\nresults = retriever.retrieve(\"python libraries\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])\n\nprompt = retriever.build_rag_prompt(\"python\", top_k=2)\nprint(\"Context:\" in prompt)\nprint(\"Answer:\" in prompt)\n\n# Re-ingest with new docs\nretriever.ingest([\"rust programming language\", \"rust systems programming\"])\nresults2 = retriever.retrieve(\"rust\", top_k=1)\nprint(results2[0][\"document\"])",
+      "expected_output": "2\npython data science libraries\nTrue\nTrue\nTrue\nrust programming language",
+      "hints": {
+        "en": [
+          "encode(): use text.lower().split() and count each word in a dict",
+          "cosine_similarity(): dot product = sum of a[w]*b[w] for shared words; magnitude = sqrt(sum of v**2); return dot/(mag_a*mag_b) or 0.0",
+          "retrieve(): encode query, compute cosine_similarity against each stored vector, sort by score descending, return top_k results as dicts"
+        ]
+      },
+      "test_code": "r = VectorRetriever()\nassert r.encode(\"Hello World\") == {\"hello\": 1, \"world\": 1}\nassert abs(r.cosine_similarity({\"a\": 1}, {\"a\": 1}) - 1.0) < 0.001\nassert r.cosine_similarity({\"a\": 1}, {\"b\": 1}) == 0.0\nr.ingest([\"a b c\", \"d e f\", \"a b d\"])\nresults = r.retrieve(\"a b\", top_k=2)\nassert len(results) == 2\nassert results[0][\"document\"] == \"a b c\"\nassert results[0][\"score\"] > results[1][\"score\"]\nprompt = r.build_rag_prompt(\"a\", top_k=1)\nassert prompt.startswith(\"Context:\")\nassert \"Question: a\" in prompt\nassert prompt.strip().endswith(\"Answer:\")\nr.ingest([\"x y z\"])\nassert len(r.documents) == 1\nresults2 = r.retrieve(\"x\", top_k=1)\nassert results2[0][\"document\"] == \"x y z\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["multi-framework deployment", "embedding caching", "content hashing", "production embedding service", "RAG retrieval pipeline", "all-MiniLM-L6-v2", "ONNX acceleration", "batch encoding", "vector indexing", "Homie RAG integration"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "pip install", "cosine similarity"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,169 @@
+{
+  "id": "readable_then_fast",
+  "topic": "readable_then_fast",
+  "track": "performance_optimization",
+  "module": "practice",
+  "order": 3,
+  "title": {
+    "en": "Readable First, Fast Where It Counts (Capstone)"
+  },
+  "description": {
+    "en": "The track finale. You now know how to measure, reason about complexity, pick the right data structure, and stop doing repeated work. The senior skill is knowing when NOT to. 'Premature optimization is the root of all evil.' Write code that is clear and correct first; spend your cleverness only on the one measured hot path that actually pays for it."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Most Misquoted Line in Computing\n\nDonald Knuth wrote it in 1974, and engineers have been hiding behind half of it ever since:\n\n> Premature optimization is the root of all evil.\n\nPeople stop there. The full sentence is the lesson of this entire track: *\"We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil. Yet we should not pass up our opportunities in that critical 3%.\"*\n\nThat 3% is the whole game. Almost all of your code runs once, runs rarely, or runs on inputs so small that nothing you do to it matters. A tiny slice — the measured hot path — is where speed actually changes how the program feels. Mastery is telling the two apart, and refusing to pay the price of optimization where there is no reward.\n\n## What Optimization Actually Costs\n\nFast code is rarely free. Every clever trick you add charges you in a currency that doesn't show up in a benchmark:\n\n- **Complexity** — the bit-twiddling, the cache, the manual loop unrolling. More moving parts, more to hold in your head.\n- **Bugs** — every line you write to be \"fast\" is a line that can be wrong. The tangled version in this challenge has an off-by-one waiting to happen.\n- **Lost readability** — the next person (often future-you) has to reverse-engineer *what* the code does before they can fix *how* it does it.\n\nA clear function that runs in 50ms and a cryptic one that runs in 48ms are not a tie. The clear one wins, because you bought 2ms with a permanent maintenance tax you'll pay forever — on code nobody even noticed was slow.\n\n## When to Optimize, and When to Walk Away\n\n| Optimize when... | Don't bother when... |\n|---|---|\n| A **profiler** points at this exact line | You're *guessing* it's slow |\n| It's on the **hot path** (runs in a tight loop) | It runs **once** at startup |\n| Inputs are **large** and will grow | Inputs are tiny and fixed |\n| Users **feel** the slowness | The 'slow' part is 0.1% of runtime |\n| The speedup is **measured and real** | The speedup is theoretical |\n\nNotice the left column is the same idea from lesson one wearing a hat: **measure, don't guess.** You don't earn the right to optimize until a measurement hands you the receipt.\n\n## The Whole Track in One Breath\n\nYou've now walked the full path, and it has an order for a reason:\n\n1. **Measure, don't guess** — find the real hot path with a profiler, not a hunch.\n2. **Complexity that matters** — fix the O(n^2) that will bury you at scale; ignore the constant factor that won't.\n3. **Choose the right data structure** — a `set` for membership, a `dict` for lookup. The right structure deletes whole categories of slowness for free.\n4. **Avoid repeated work** — cache, hoist invariants out of loops, don't recompute what you already know.\n5. **...but only where it counts** — and that's today. All four tools above are aimed at the measured 3%, never sprayed across the 97%.\n\nThe punchline is almost an anticlimax: most of the time, the **clear algorithm with the right data structure** *is* the fast one. `Counter` is both more readable *and* faster than a hand-rolled tally loop. You rarely have to choose between elegant and quick — clean code is fast code far more often than beginners expect.\n\n## The Capstone Move\n\nIn the challenge you'll be handed a function that someone 'optimized' into a tangled `while`-loop with manual index bookkeeping and a defensive `if key in dict` dance. It works. It's also miserable to read and quietly fragile. Your job is the most senior thing a performance engineer ever does: **rewrite it as obvious, idiomatic Python with byte-for-byte identical output** — proving that readable was never the enemy of correct or fast.\n\n> **Key idea:** Write clear, correct code first; optimize only the hot path a profiler actually points at, and only when the measured win justifies the cost in complexity, bugs, and lost readability. Reach for the right algorithm and data structure before clever tricks. Readable code that's fast enough beats fast code nobody can maintain — and most of the time, clean *is* fast."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "capstone_clarity",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "track_recap_map",
+      "nodes": [
+        {
+          "label": "The Performance Path (in order)",
+          "children": [
+            "1. Measure, don't guess (find the hot path)",
+            "2. Fix the complexity that matters",
+            "3. Choose the right data structure",
+            "4. Avoid repeated work",
+            "5. ...but ONLY where it counts (the measured 3%)"
+          ]
+        }
+      ],
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "optimize_or_not",
+      "left": {
+        "label": "Optimize: profiler points here, hot path, large inputs, measured real win",
+        "result": true
+      },
+      "right": {
+        "label": "Don't: you're guessing, runs once, tiny inputs, theoretical win",
+        "result": false
+      },
+      "description": {
+        "en": "Optimization isn't free: it costs complexity, bugs, and readability. Only the measured 3% is worth that price."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "id": "tangled_to_clean",
+      "steps": [
+        {
+          "code": "def clicks_per_user(ev):\n    r = {}; i = 0; n = len(ev)\n    while i < n:\n        e = ev[i]\n        if e[1] == 'click':\n            k = e[0]; f = 0\n            if k in r: f = r[k]\n            r[k] = f + 1\n        i += 1\n    return r",
+          "description": {
+            "en": "The 'clever' original: manual index, manual key check, manual tally. It works — and it's miserable to read and easy to break."
+          }
+        },
+        {
+          "code": "from collections import Counter\n\ndef clicks_per_user(events):\n    return dict(Counter(\n        user for user, action in events\n        if action == 'click'\n    ))",
+          "description": {
+            "en": "The clean rewrite: one idiomatic comprehension into Counter. Identical output, fewer bugs, and actually faster."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Capstone synthesis. Someone 'optimized' clicks_per_user into a tangled while-loop with manual index bookkeeping (i, n), a defensive 'if k in r' dance, and a hand-rolled tally. It works, but it's fragile and miserable to read. Do the senior move: rewrite it as CLEAN, idiomatic Python with BYTE-FOR-BYTE identical output. Count how many 'click' events each user made and return a dict mapping user -> click count (users with zero clicks must NOT appear). The right tool, collections.Counter over a comprehension, is both clearer AND faster. With the given events, the demo prints the click tally. Expected output: {'alice': 3, 'bob': 2, 'carol': 1}"
+      },
+      "starter_code": "from collections import Counter\n\nevents = [\n    (\"alice\", \"click\"),\n    (\"bob\", \"click\"),\n    (\"alice\", \"view\"),\n    (\"alice\", \"click\"),\n    (\"carol\", \"view\"),\n    (\"bob\", \"view\"),\n    (\"alice\", \"view\"),\n    (\"bob\", \"click\"),\n    (\"carol\", \"click\"),\n    (\"alice\", \"click\"),\n]\n\ndef clicks_per_user(ev):\n    # The 'cleverly optimized' tangle. Correct, but fragile and unreadable.\n    # Your job: rewrite this body as CLEAN, idiomatic Python with the\n    # EXACT same output. (Hint: a comprehension into Counter.)\n    r = {}\n    i = 0\n    n = len(ev)\n    while i < n:\n        e = ev[i]\n        if e[1] == \"click\":\n            k = e[0]\n            f = 0\n            if k in r:\n                f = r[k]\n            r[k] = f + 1\n        i += 1\n    return r\n\nprint(clicks_per_user(events))",
+      "expected_output": "{'alice': 3, 'bob': 2, 'carol': 1}",
+      "hints": {
+        "en": [
+          "You don't need the index variables i and n, or the while loop. Iterate the events directly: for user, action in ev.",
+          "collections.Counter tallies for you. Feed it just the click users: Counter(user for user, action in ev if action == 'click').",
+          "Counter is a dict subclass; wrap it in dict(...) so the output matches the expected plain-dict repr exactly.",
+          "Whole body in one line: return dict(Counter(user for user, action in ev if action == 'click')). Same output, far clearer, and faster than the manual tally."
+        ]
+      },
+      "test_code": "from collections import Counter\nassert clicks_per_user(events) == {\"alice\": 3, \"bob\": 2, \"carol\": 1}\nassert clicks_per_user([]) == {}\nassert clicks_per_user([(\"x\", \"view\"), (\"x\", \"view\")]) == {}\nassert clicks_per_user([(\"z\", \"click\")]) == {\"z\": 1}\n# users with zero clicks must not appear\nassert \"carol\" not in clicks_per_user([(\"carol\", \"view\"), (\"dan\", \"click\")])\n# identical output to the original tangle across varied inputs\ndef _original(ev):\n    r = {}\n    for u, a in ev:\n        if a == \"click\":\n            r[u] = r.get(u, 0) + 1\n    return r\nfor sample in [events, [], [(\"p\", \"click\"), (\"q\", \"click\"), (\"p\", \"click\"), (\"q\", \"view\")], [(\"a\", \"view\")]]:\n    assert clicks_per_user(sample) == _original(sample)"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Knuth said 'premature optimization is the root of all evil.' What does the FULL quote add that people usually drop?"
+      },
+      "options": {
+        "en": [
+          "That optimization should never be done at all",
+          "That we should forget small efficiencies ~97% of the time, but not pass up the critical 3%",
+          "That only compilers should optimize code",
+          "That readable code is always slower than optimized code"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the real cost of optimizing code that doesn't need it?"
+      },
+      "options": {
+        "en": [
+          "There is no cost; faster is always strictly better",
+          "Added complexity, more places for bugs, and lost readability — paid forever on code nobody noticed was slow",
+          "Only a small increase in memory usage",
+          "It voids the language's warranty"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When have you earned the right to optimize a particular line of code?"
+      },
+      "options": {
+        "en": [
+          "When it looks slow and you have a hunch about it",
+          "When a profiler measures it as a real hot path and the win justifies the cost",
+          "Whenever you can think of a cleverer way to write it",
+          "After the code is already in production and users complain on social media"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this capstone say is true surprisingly often about clear, idiomatic code (like Counter over a hand-rolled tally)?"
+      },
+      "options": {
+        "en": [
+          "It is always slower, so you must choose between clean and fast",
+          "It is both more readable AND faster — the right data structure is usually the fast one",
+          "It only matters for very large programs",
+          "It uses more memory than a manual loop in every case"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["premature_optimization", "readability_vs_speed", "measure_then_optimize", "right_data_structure", "engineering_judgment"],
+    "concepts_required": ["avoid_repeated_work"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "performance",
+    "estimated_minutes": 18,
+    "path_memberships": []
+  },
+  "generated": false
+}

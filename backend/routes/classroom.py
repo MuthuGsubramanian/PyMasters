@@ -81,6 +81,7 @@ class EvaluateRequest(BaseModel):
     expected_output: Optional[str] = ""
     lesson_id: Optional[str] = None
     topic: Optional[str] = None
+    attempt_count: Optional[int] = 0
 
 
 class DiagnosticRequest(BaseModel):
@@ -397,14 +398,14 @@ async def list_lessons(user_id: str = None):
                     # Build prioritized track list based on profile
                     if is_hobby:
                         # Fun/automation users see fun_automation first, then fundamentals
-                        primary_tracks = ["fun_automation", "python_fundamentals", "python_modern"]
+                        primary_tracks = ["fun_automation", "python_fundamentals", "vibe_coding", "python_modern"]
                         secondary_tracks = ["python_intermediate", "ai_ml_foundations", "deep_learning",
                                             "web_development", "dsa", "ai_fundamentals",
                                             "machine_learning", "deep_learning_complete", "testing_devops",
                                             "ai_agents", "ai_engineering"]
                     elif is_ai_ml:
                         # AI/ML users see fundamentals → AI Agents → AI Engineering → Deep Learning
-                        primary_tracks = ["python_fundamentals", "ai_agents", "ai_engineering",
+                        primary_tracks = ["python_fundamentals", "vibe_coding", "ai_agents", "ai_engineering",
                                           "ai_ml_foundations", "ai_fundamentals",
                                           "machine_learning", "deep_learning", "deep_learning_complete"]
                         secondary_tracks = ["python_intermediate", "python_modern", "fun_automation",
@@ -412,14 +413,14 @@ async def list_lessons(user_id: str = None):
                     elif is_career:
                         # Career-focused: solid fundamentals first, then modern Python + AI
                         primary_tracks = ["python_fundamentals", "python_intermediate",
-                                          "python_modern", "web_development"]
+                                          "vibe_coding", "python_modern", "web_development"]
                         secondary_tracks = ["ai_agents", "ai_engineering", "fun_automation",
                                             "ai_ml_foundations", "deep_learning",
                                             "dsa", "ai_fundamentals", "machine_learning",
                                             "deep_learning_complete", "testing_devops"]
                     else:
                         # Student / unknown: balanced view — fundamentals first, new tracks visible
-                        primary_tracks = ["python_fundamentals", "python_intermediate",
+                        primary_tracks = ["python_fundamentals", "vibe_coding", "python_intermediate",
                                           "python_modern", "fun_automation"]
                         secondary_tracks = ["ai_agents", "ai_engineering", "ai_ml_foundations",
                                             "deep_learning", "web_development",
@@ -429,14 +430,17 @@ async def list_lessons(user_id: str = None):
                     # ── Apply skill level visibility filter ──
 
                     skill_visible = {
-                        "beginner": {"python_fundamentals", "fun_automation"},
+                        "beginner": {"python_fundamentals", "fun_automation", "vibe_coding"},
                         "intermediate": {"python_fundamentals", "fun_automation", "python_intermediate",
                                          "ai_ml_foundations", "web_development", "dsa", "testing_devops",
-                                         "python_modern"},
+                                         "python_modern", "vibe_coding", "python_internals", "async_concurrency",
+                                         "performance_optimization", "debugging_mastery", "regex_mastery", "error_handling", "functional_python", "working_with_data"},
                         "advanced": {"python_fundamentals", "fun_automation", "python_intermediate",
                                      "ai_ml_foundations", "deep_learning", "web_development", "dsa",
                                      "ai_fundamentals", "machine_learning", "deep_learning_complete",
-                                     "testing_devops", "ai_agents", "python_modern", "ai_engineering"},
+                                     "testing_devops", "ai_agents", "python_modern", "ai_engineering",
+                                     "vibe_coding", "python_internals", "transformers_scratch", "async_concurrency",
+                                     "performance_optimization", "debugging_mastery", "regex_mastery", "error_handling", "functional_python", "working_with_data"},
                     }
                     visible_tracks = skill_visible.get(skill_level, {"python_fundamentals", "fun_automation"})
 
@@ -625,6 +629,7 @@ def evaluate(request: EvaluateRequest):
         expected_output=request.expected_output,
         student_profile=profile,
         lesson_context=lesson_context,
+        attempt_count=request.attempt_count or 0,
     )
 
     # Record the evaluation as a learning signal

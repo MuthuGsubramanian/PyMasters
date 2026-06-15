@@ -732,12 +732,15 @@ function PracticePhase({
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: feedback — evaluation result with celebration
 // ──────────────────────────────────────────────────────────────────────────────
-function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
+function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0 }) {
     const success = evalResult?.passed ?? evalResult?.success ?? false;
+    // Backend flags `struggling` after repeated failures; fall back to a local
+    // count so the supportive UI still appears even without the signal.
+    const struggling = !success && (evalResult?.struggling || attemptCount >= 3);
     const feedbackMsg =
         evalResult?.feedback?.message ||
         resolveText(evalResult?.feedback, language) ||
-        (success ? 'Great job!' : 'Keep trying — you can do it!');
+        (success ? 'Great job!' : struggling ? 'Let me walk you through this, step by step.' : 'Keep trying — you can do it!');
 
     const rawAnimation = evalResult?.feedback?.animation;
     const animationSeq = Array.isArray(rawAnimation) ? rawAnimation : null;
@@ -760,13 +763,17 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
                 className={`rounded-2xl overflow-hidden border ${
                     success
                         ? 'border-green-200 shadow-lg shadow-green-100/30'
+                        : struggling
+                        ? 'border-purple-200 shadow-lg shadow-purple-100/30'
                         : 'border-red-200 shadow-lg shadow-red-100/30'
                 }`}
             >
-                {/* Success/failure header */}
+                {/* Header: success / supportive struggle help / retry */}
                 <div className={`px-6 py-4 flex items-center gap-3 ${
                     success
                         ? 'bg-gradient-to-r from-green-50 to-emerald-50'
+                        : struggling
+                        ? 'bg-gradient-to-r from-purple-50 to-indigo-50'
                         : 'bg-gradient-to-r from-red-50 to-orange-50'
                 }`}>
                     {success ? (
@@ -789,6 +796,21 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry }) {
                                         <Star size={18} className="text-amber-400 fill-amber-400" />
                                     </motion.div>
                                 ))}
+                            </div>
+                        </>
+                    ) : struggling ? (
+                        <>
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30">
+                                <Brain size={20} />
+                            </div>
+                            <div>
+                                <p className="font-bold text-purple-700 font-display">Vaathiyaar is Here to Help</p>
+                                <p className="text-xs text-purple-600/70">Great effort — let's work through this together</p>
+                            </div>
+                            <div className="ml-auto">
+                                <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}>
+                                    <Sparkles size={18} className="text-purple-400" />
+                                </motion.div>
                             </div>
                         </>
                     ) : (
@@ -888,6 +910,7 @@ export default function Classroom() {
     const [running, setRunning] = useState(false);
     const [hintIndex, setHintIndex] = useState(0);
     const [evalResult, setEvalResult] = useState(null);
+    const [attemptCount, setAttemptCount] = useState(0);
     const [completedLessons, setCompletedLessons] = useState(new Set());
     const [podcastManifest, setPodcastManifest] = useState({});
     const [podcastOpen, setPodcastOpen] = useState(false);
@@ -948,6 +971,7 @@ export default function Classroom() {
             setOutput('');
             setHintIndex(0);
             setEvalResult(null);
+            setAttemptCount(0);
         } catch (err) {
             console.error('Failed to load lesson:', err);
         }
@@ -977,10 +1001,13 @@ export default function Classroom() {
                 topic: currentLesson?.topic ?? currentLesson?.id ?? '',
                 user_id: user?.id,
                 language,
+                attempt_count: attemptCount + 1,
             });
             const elapsed = Math.round(performance.now() - startTime);
             setExecutionTime(elapsed);
             const result = res.data?.result ?? res.data;
+            const passed = result?.passed ?? result?.success ?? false;
+            setAttemptCount((prev) => (passed ? 0 : prev + 1));
             setEvalResult(result);
             // Show output in the terminal
             const out = result?.output || '';
@@ -1250,6 +1277,7 @@ export default function Classroom() {
                             <ErrorBoundary><FeedbackPhase
                                 evalResult={evalResult}
                                 language={language}
+                                attemptCount={attemptCount}
                                 onContinue={handleContinue}
                                 onRetry={handleRetry}
                             /></ErrorBoundary>

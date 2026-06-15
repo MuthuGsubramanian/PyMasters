@@ -11,7 +11,7 @@ def db_path(tmp_path):
     path = str(tmp_path / "test.db")
     os.environ["DB_PATH"] = path
     import importlib
-    import backend.main as main_mod
+    import main as main_mod
     importlib.reload(main_mod)
     main_mod.init_db()
     conn = sqlite3.connect(path)
@@ -22,7 +22,7 @@ def db_path(tmp_path):
 
 
 def test_create_notification(db_path):
-    from backend.notifications.dispatcher import create_notification
+    from notifications.dispatcher import create_notification
     notif_id = create_notification(
         user_id=1,
         notif_type="module_ready",
@@ -38,7 +38,7 @@ def test_create_notification(db_path):
 
 
 def test_create_notification_queues_deliveries(db_path):
-    from backend.notifications.dispatcher import create_notification
+    from notifications.dispatcher import create_notification
     notif_id = create_notification(
         user_id=1,
         notif_type="module_ready",

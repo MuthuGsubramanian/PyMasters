@@ -1,0 +1,173 @@
+{
+  "id": "exceptions_done_right",
+  "topic": "exceptions_done_right",
+  "track": "error_handling",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "Exceptions Done Right: try / except / else / finally"
+  },
+  "description": {
+    "en": "A blanket try/except around everything is not error handling — it's a blindfold. Learn the real mechanics: catch SPECIFIC exception types, use multiple except clauses, put the no-error path in else and cleanup in finally, choose EAFP over LBYL, and never swallow an exception in silence."
+  },
+  "xp_reward": 90,
+  "next_unlock": "custom_exceptions_and_chaining",
+  "story_variants": {
+    "en": "## The Blindfold\n\nSomething in your code might fail, so you wrap it in a `try` and slap on a bare `except:` that does `pass`. The program stops crashing. You ship it. You feel clever.\n\nYou just put on a blindfold.\n\nA bare `except:` catches **everything** — not just the error you were worried about, but also the typo three lines down, the `KeyboardInterrupt` when you hit Ctrl-C, the `MemoryError` when the machine is dying, the `SystemExit` that's trying to shut you down cleanly. It catches them all and throws them away. Now a loud, informative crash has become a quiet wrong answer that surfaces somewhere unrelated, hours later, with no traceback to follow.\n\nGood error handling is the opposite of a blindfold. It is **deliberate**: you decide exactly which failures are expected, you catch *only* those, and you handle each one meaningfully.\n\n> **Key idea:** Error handling is a scalpel, not a blanket. Catch the SPECIFIC exception types you actually expect, never a bare `except:` that swallows everything (including Ctrl-C). Use `else` for the no-error path, `finally` for cleanup that must always run, prefer EAFP (try it and handle failure) over LBYL, and never swallow an exception silently — at minimum, log it.\n\n## Catch Specific Types\n\nEvery exception has a type: `ValueError`, `KeyError`, `FileNotFoundError`, `ZeroDivisionError`. Name the one you expect, and only that one will be caught — anything else keeps propagating, the way a real bug should.\n\n```python\ntry:\n    age = int(user_input)\nexcept ValueError:\n    age = 0          # only un-parseable text lands here\n```\n\nIf `user_input` is somehow `None`, that raises `TypeError`, *not* `ValueError` — and it sails right past this handler to surface the genuine bug. That's a feature. A bare `except:` would have hidden it.\n\nYou can handle several distinct failures with several clauses, each tuned to its case:\n\n```python\ntry:\n    data = json.loads(text)\n    record = data[\"id\"]\nexcept json.JSONDecodeError:\n    record = None          # bad JSON\nexcept KeyError:\n    record = None          # valid JSON, missing key\n```\n\nIf you want to treat several types the same way, group them in a tuple: `except (ValueError, TypeError):`.\n\n## else and finally\n\nThe `try` statement has two clauses people forget. They make intent explicit.\n\nThe **`else`** clause runs **only if the `try` block raised nothing**. Why bother? It keeps the `try` block as small as possible — only the line that can actually fail goes in `try`; the code that should run on success goes in `else`. That way `except` can't accidentally catch an error from the success path.\n\nThe **`finally`** clause runs **no matter what** — success, handled exception, unhandled exception, even a `return`. It's for cleanup that must always happen: closing a file, releasing a lock, restoring state.\n\n```python\ntry:\n    f = open(path)\n    contents = f.read()      # the risky part\nexcept FileNotFoundError:\n    contents = \"\"            # expected failure, handled\nelse:\n    log(\"read ok\")           # runs ONLY if no exception\nfinally:\n    f.close()                # runs ALWAYS — cleanup\n```\n\n| Clause | When it runs |\n|---|---|\n| `try` | Always — it's the protected block you're attempting |\n| `except` | Only if a matching exception was raised |\n| `else` | Only if the `try` block raised **no** exception |\n| `finally` | **Always** — success or failure, even on `return` or re-raise |\n\n## EAFP vs LBYL\n\nTwo philosophies for dealing with things that might not work.\n\n**LBYL — Look Before You Leap.** Check first, then act:\n\n```python\nif \"id\" in data and data[\"id\"] is not None:\n    record = data[\"id\"]\nelse:\n    record = None\n```\n\n**EAFP — Easier to Ask Forgiveness than Permission.** Just try it, and handle the failure:\n\n```python\ntry:\n    record = data[\"id\"]\nexcept KeyError:\n    record = None\n```\n\nEAFP is often more Pythonic — and not just for style. LBYL has a **race condition**: between your `if \"id\" in data` check and the `data[\"id\"]` access, another thread (or the filesystem, for an `os.path.exists` then `open`) could change reality, so the check passes but the action still fails. EAFP has no gap — you attempt the real operation and catch the real failure. It's also often faster on the happy path, since you don't pay for a check every time.\n\n## Never Swallow Silently\n\nThe cardinal sin is catching an exception and doing nothing with it:\n\n```python\ntry:\n    risky()\nexcept Exception:\n    pass            # where did the error go? nobody knows\n```\n\nIf you catch it, *do something*: handle it meaningfully, or log it, or re-raise it. At the absolute minimum, leave a trace — `logging.exception(\"risky() failed\")` records the full traceback so the next person (probably you, at 3am) has a thread to pull. A swallowed exception isn't error handling. It's a debugging session you scheduled for your future self."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "shield",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "try_statement_map",
+      "nodes": [
+        {
+          "label": "The try statement",
+          "children": [
+            "try: the protected block (keep it minimal)",
+            "except SpecificError: handle ONE expected failure",
+            "multiple except clauses for distinct failures",
+            "else: runs ONLY if no exception was raised",
+            "finally: ALWAYS runs — cleanup"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "bare_vs_specific",
+      "left": {
+        "label": "bare except: catches EVERYTHING — typos, Ctrl-C, real bugs — and hides them all",
+        "result": false
+      },
+      "right": {
+        "label": "except ValueError: catches only the expected failure; real bugs keep propagating",
+        "result": true
+      },
+      "description": {
+        "en": "Both wrap the same risky call. The bare except is a blindfold: it swallows KeyboardInterrupt and genuine bugs into silence. The specific except is a scalpel: it handles exactly the failure you expect and lets everything else crash loudly, where you can see it."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "id": "else_finally_stepper",
+      "code": "try:\n    f = open(path)\n    contents = f.read()   # risky part\nexcept FileNotFoundError:\n    contents = \"\"         # expected failure handled\nelse:\n    log(\"read ok\")        # only if NO exception\nfinally:\n    f.close()             # ALWAYS runs",
+      "steps": [
+        { "line": 2, "description": "try holds only the risky lines — open and read." },
+        { "line": 4, "description": "If the file is missing, FileNotFoundError is caught here and contents becomes empty." },
+        { "line": 6, "description": "else runs ONLY when the try block raised nothing — the success-only path stays out of try." },
+        { "line": 8, "description": "finally runs no matter what happened — success, handled error, or even a return. Cleanup always happens." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Catch SPECIFIC exception types — never a bare except:.",
+        "else = no-error path. finally = always-runs cleanup.",
+        "Prefer EAFP (try + handle) over LBYL (check first) — race-free.",
+        "Never swallow silently: handle it, re-raise it, or at least log it."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This safe_int(s, default) is supposed to return int(s), or the default when s can't be parsed as an integer. But it uses a bare except: that swallows EVERYTHING — even a TypeError from passing None, which is a real bug you'd want to see, not hide. Be deliberate: rewrite it to catch ONLY ValueError (the exception int() raises for un-parseable text like 'abc'), so genuine bugs still propagate. With the given data, safe_int(\"42\", -1) must return 42. Expected output: 42"
+      },
+      "starter_code": "def safe_int(s, default=0):\n    # BUG: a bare except swallows EVERYTHING, including the\n    # TypeError from safe_int(None) and any other real bug.\n    # Rewrite it to catch ONLY ValueError, so int('abc') falls\n    # back to default but int(None) still raises loudly.\n    try:\n        return int(s)\n    except:\n        return default\n\nprint(safe_int(\"42\", -1))",
+      "expected_output": "42",
+      "hints": {
+        "en": [
+          "A bare 'except:' catches everything — typos, KeyboardInterrupt, the TypeError from int(None). Name the ONE exception you actually expect instead.",
+          "int('abc') and int('3.14') raise ValueError — that is the only failure safe_int should turn into the default.",
+          "Change 'except:' to 'except ValueError:'. Now un-parseable text returns the default, but int(None) raises TypeError and propagates as it should.",
+          "Keep the happy path identical: 'return int(s)' inside try; 'return default' only in the except ValueError clause."
+        ]
+      },
+      "test_code": "assert safe_int(\"42\", -1) == 42, \"valid integer string must parse\"\nassert safe_int(\"  7  \", -1) == 7, \"int() strips surrounding whitespace\"\nassert safe_int(\"0\", 99) == 0, \"zero is a real value, not a failure\"\nassert safe_int(\"-13\", 0) == -13, \"negative integers must parse\"\nassert safe_int(\"abc\", -1) == -1, \"un-parseable text must return the default\"\nassert safe_int(\"3.14\", -1) == -1, \"int('3.14') raises ValueError -> default\"\nassert safe_int(\"\", 0) == 0, \"empty string is a ValueError -> default\"\nassert safe_int(\"42\", default=0) == 42, \"default keyword must still work\"\nassert safe_int(\"nope\", default=7) == 7, \"keyword default on failure\"\ntry:\n    safe_int(None, -1)\n    raise AssertionError(\"None must raise TypeError, not be swallowed into the default\")\nexcept TypeError:\n    pass"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is a bare 'except:' (catching everything) a bad default for error handling?"
+      },
+      "options": {
+        "en": [
+          "It is a syntax error in modern Python",
+          "It catches everything — including KeyboardInterrupt and real bugs — and hides them, turning a loud crash into a silent wrong answer",
+          "It can only be used once per function",
+          "It makes the program run slower than catching a specific type"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When does the 'else' clause of a try statement run?"
+      },
+      "options": {
+        "en": [
+          "Only when an exception was raised and caught",
+          "Always, no matter what happened in the try block",
+          "Only when the try block completed without raising any exception",
+          "Only when 'finally' is absent"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is guaranteed about the 'finally' clause?"
+      },
+      "options": {
+        "en": [
+          "It runs always — on success, on a handled exception, on an unhandled exception, even on a return",
+          "It runs only if no exception occurred",
+          "It runs only if an exception was caught by an except clause",
+          "It runs only when the program exits"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why is EAFP (try the operation, handle the failure) often preferred over LBYL (check first, then act)?"
+      },
+      "options": {
+        "en": [
+          "EAFP never raises exceptions",
+          "LBYL is illegal in Python",
+          "LBYL has a race condition — reality can change between the check and the action — while EAFP attempts the real operation with no gap",
+          "EAFP automatically logs every error for you"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["exception_handling", "try_except_else_finally", "specific_exception_types", "eafp_vs_lbyl", "never_swallow_exceptions"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "category": "error_handling",
+    "estimated_minutes": 18,
+    "path_memberships": []
+  },
+  "generated": false
+}

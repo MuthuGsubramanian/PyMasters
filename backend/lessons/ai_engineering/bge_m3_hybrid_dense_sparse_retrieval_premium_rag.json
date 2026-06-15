@@ -1,0 +1,135 @@
+{
+  "id": "bge_m3_hybrid_dense_sparse_retrieval_premium_rag",
+  "topic": "bge_m3_hybrid_dense_sparse_retrieval_premium_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BGE-M3 Hybrid Dense+Sparse Retrieval: Building a Premium RAG Backbone",
+    "ta": ""
+  },
+  "description": {
+    "en": "Master BAAI/bge-m3's multi-vector architecture — combine dense, sparse, and ColBERT embeddings for hybrid retrieval pipelines and build a production-grade Homie premium RAG backbone with score fusion and multilingual support.",
+    "ta": ""
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Hybrid Retrieval with BGE-M3: Dense + Sparse + ColBERT in One Model\n\nVaathiyaar here! Most embedding models give you one vector per sentence. BGE-M3 gives you **three** — dense embeddings for semantic understanding, sparse lexical vectors for exact keyword matching, and ColBERT token-level representations for fine-grained late interaction. This is the only open-source model that produces all three retrieval signals in a single forward pass, making it the ideal backbone for a **premium RAG pipeline**.\n\n### Why Hybrid Retrieval Matters\n\nDense-only retrieval misses exact matches. Sparse-only retrieval misses semantic meaning. Hybrid retrieval fuses both — and BGE-M3 does it natively.\n\n| Retrieval Type | Strength | Weakness | BGE-M3 Output |\n|---|---|---|---|\n| Dense (semantic) | Understands meaning & paraphrases | Misses rare terms, acronyms | 1024-d float vector |\n| Sparse (lexical) | Exact keyword matching, rare terms | No semantic understanding | Term-weight dict |\n| ColBERT (late interaction) | Token-level precision ranking | Expensive storage | Per-token embeddings |\n| **Hybrid (all three)** | **Best of all worlds** | **Needs score fusion** | **All from one model** |\n\n### Loading BGE-M3 with FlagEmbedding\n\n```python\nfrom FlagEmbedding import BGEM3FlagModel\n\n# Load with all three retrieval modes\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\ncorpus = [\n    \"Python is a versatile programming language\",\n    \"The python snake is found in tropical regions\",\n    \"Django is a Python web framework for rapid development\",\n    \"Machine learning models require large datasets\",\n]\n\n# Encode with all three output types\ncorpus_out = model.encode(\n    corpus,\n    return_dense=True,\n    return_sparse=True,\n    return_colbert_vecs=True,\n)\n\nprint(f\"Dense shape: {corpus_out['dense_vecs'].shape}\")      # (4, 1024)\nprint(f\"Sparse entries: {len(corpus_out['lexical_weights'][0])}\")\nprint(f\"ColBERT shape: {corpus_out['colbert_vecs'][0].shape}\")  # (seq_len, 1024)\n```\n\n### Hybrid Score Fusion for RAG\n\nThe magic is in combining retrieval scores with weighted fusion:\n\n```python\nimport numpy as np\n\ndef hybrid_search(query, corpus, model, weights=(0.4, 0.3, 0.3), top_k=3):\n    w_dense, w_sparse, w_colbert = weights\n\n    q_out = model.encode(\n        [query], return_dense=True,\n        return_sparse=True, return_colbert_vecs=True,\n    )\n    c_out = model.encode(\n        corpus, return_dense=True,\n        return_sparse=True, return_colbert_vecs=True,\n    )\n\n    # Dense scores: cosine similarity\n    dense_scores = q_out['dense_vecs'] @ c_out['dense_vecs'].T\n    dense_scores = dense_scores[0]\n\n    # Sparse scores: dot product of shared terms\n    sparse_scores = []\n    q_sparse = q_out['lexical_weights'][0]\n    for c_sparse in c_out['lexical_weights']:\n        shared = set(q_sparse.keys()) & set(c_sparse.keys())\n        score = sum(q_sparse[k] * c_sparse[k] for k in shared)\n        sparse_scores.append(score)\n    sparse_scores = np.array(sparse_scores)\n\n    # Normalize each score type to [0, 1]\n    def norm(s):\n        return (s - s.min()) / (s.max() - s.min() + 1e-8)\n\n    fused = w_dense * norm(dense_scores) + w_sparse * norm(sparse_scores)\n    ranked = np.argsort(-fused)[:top_k]\n\n    return [(corpus[i], float(fused[i])) for i in ranked]\n\nresults = hybrid_search(\"Python web development\", corpus, model)\nfor doc, score in results:\n    print(f\"{score:.3f} | {doc}\")\n```\n\n### Building the Homie Premium RAG Backbone\n\nFor a production RAG system, wrap hybrid retrieval with context packing and confidence gating:\n\n```python\nclass HomiePremiumRAG:\n    def __init__(self, model, corpus, weights=(0.4, 0.3, 0.3)):\n        self.model = model\n        self.corpus = corpus\n        self.weights = weights\n        self.corpus_out = model.encode(\n            corpus, return_dense=True,\n            return_sparse=True, return_colbert_vecs=True,\n        )\n\n    def retrieve(self, query, top_k=3, min_score=0.3):\n        results = hybrid_search(query, self.corpus, self.model,\n                                self.weights, top_k=top_k)\n        # Confidence gating: filter low-confidence results\n        return [(doc, s) for doc, s in results if s >= min_score]\n\n    def build_context(self, query, max_tokens=512):\n        results = self.retrieve(query)\n        context_parts = []\n        token_count = 0\n        for doc, score in results:\n            est_tokens = len(doc.split()) * 1.3\n            if token_count + est_tokens > max_tokens:\n                break\n            context_parts.append(doc)\n            token_count += est_tokens\n        return \"\\n---\\n\".join(context_parts)\n\nrag = HomiePremiumRAG(model, corpus)\ncontext = rag.build_context(\"How do I build a web app with Python?\")\nprint(context)\n```\n\n### Multilingual Hybrid Retrieval\n\nBGE-M3 handles 100+ languages natively — queries and documents can be in different languages:\n\n```python\nmultilingual_corpus = [\n    \"Python est un langage de programmation polyvalent\",\n    \"パイソンは汎用プログラミング言語です\",\n    \"Python is great for data science\",\n]\n\nresults = hybrid_search(\"programming language features\",\n                        multilingual_corpus, model)\nfor doc, score in results:\n    print(f\"{score:.3f} | {doc}\")\n# All three match — BGE-M3 bridges the language barrier\n```\n\n> **Key Insight:** BGE-M3's triple-vector architecture — dense for meaning, sparse for keywords, ColBERT for precision — makes it the only open-source model that can serve as a complete hybrid retrieval backbone. By fusing scores with tunable weights, you get retrieval quality that rivals commercial solutions. For Homie's premium RAG pipeline, this means one model replaces three separate systems, with multilingual support built in.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "BGE-M3 produces three embedding types in one forward pass: dense semantic vectors, sparse lexical weights, and ColBERT token-level representations. By fusing these scores, you build a hybrid retrieval pipeline that catches both meaning and exact keywords — the ideal backbone for a premium RAG system with multilingual support across 100+ languages.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from FlagEmbedding import BGEM3FlagModel\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\n\ncorpus = [\n    \"Python is a versatile programming language\",\n    \"The python snake is found in tropical regions\",\n    \"Django is a Python web framework\",\n    \"Machine learning requires large datasets\",\n]\n\ncorpus_out = model.encode(\n    corpus,\n    return_dense=True,\n    return_sparse=True,\n    return_colbert_vecs=True,\n)\n\nprint(f\"Dense: {corpus_out['dense_vecs'].shape}\")\nprint(f\"Sparse keys: {len(corpus_out['lexical_weights'][0])}\")\nprint(f\"ColBERT: {corpus_out['colbert_vecs'][0].shape}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import BGEM3FlagModel from the FlagEmbedding library — this is the official API for accessing all three of BGE-M3's retrieval vectors. Unlike sentence-transformers, this exposes dense, sparse, AND ColBERT outputs."},
+        {"line": 3, "explanation": "Load the model with fp16 precision. The use_fp16=True flag halves memory usage from ~4.4GB to ~2.2GB with negligible quality loss — essential for GPU-constrained environments."},
+        {"line": 5, "explanation": "A small corpus with intentional ambiguity: 'Python' appears as both a programming language and a snake. Hybrid retrieval needs to handle this kind of polysemy correctly."},
+        {"line": 12, "explanation": "Encode the full corpus with all three return flags enabled. This runs one forward pass but produces three distinct output types — the key advantage of BGE-M3 over running separate models."},
+        {"line": 14, "explanation": "return_dense=True gives 1024-d float vectors — cosine similarity captures semantic meaning. This is what sentence-transformers would give you alone."},
+        {"line": 15, "explanation": "return_sparse=True produces lexical weight dictionaries — token ID to importance weight mappings that mimic BM25-style retrieval but learned end-to-end."},
+        {"line": 16, "explanation": "return_colbert_vecs=True outputs per-token embeddings for late interaction scoring — MaxSim between query and document tokens for fine-grained matching."},
+        {"line": 19, "explanation": "Dense shape is (4, 1024) — one 1024-d vector per document. Sparse has variable keys per document. ColBERT has (seq_len, 1024) — one vector per token."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\nfrom FlagEmbedding import BGEM3FlagModel\n\nmodel = BGEM3FlagModel(\"BAAI/bge-m3\", use_fp16=True)\ncorpus = [\"Python web framework\", \"python snake habitat\", \"ML datasets\"]\n\ndef hybrid_search(query, corpus, model, weights=(0.4, 0.3, 0.3)):\n    w_d, w_s, w_c = weights\n    q = model.encode([query], return_dense=True, return_sparse=True)\n    c = model.encode(corpus, return_dense=True, return_sparse=True)\n\n    dense = (q['dense_vecs'] @ c['dense_vecs'].T)[0]\n\n    sparse = []\n    q_sp = q['lexical_weights'][0]\n    for c_sp in c['lexical_weights']:\n        shared = set(q_sp) & set(c_sp)\n        sparse.append(sum(q_sp[k] * c_sp[k] for k in shared))\n    sparse = np.array(sparse)\n\n    norm = lambda s: (s - s.min()) / (s.max() - s.min() + 1e-8)\n    fused = w_d * norm(dense) + w_s * norm(sparse)\n    ranked = np.argsort(-fused)\n    return [(corpus[i], float(fused[i])) for i in ranked]\n\nfor doc, score in hybrid_search(\"Python web development\", corpus, model):\n    print(f\"{score:.3f} | {doc}\")",
+      "steps": [
+        {"line": 7, "explanation": "The hybrid_search function accepts tunable weights for dense and sparse scores. Default 0.4/0.3/0.3 balances semantic understanding with keyword precision — tune these per domain."},
+        {"line": 9, "explanation": "Encode the query with both dense and sparse outputs. A single query encodes in ~10ms on GPU — the bottleneck is corpus encoding, which you do once and cache."},
+        {"line": 12, "explanation": "Dense score: matrix multiplication between query and corpus dense vectors. This captures semantic similarity — 'web development' matches 'web framework' even without exact word overlap."},
+        {"line": 14, "explanation": "Sparse score: dot product of shared lexical weights. Token IDs that appear in both query and document contribute — this catches exact term matches that dense embeddings might miss."},
+        {"line": 21, "explanation": "Min-max normalize each score type to [0, 1] before fusion. Without normalization, dense scores (cosine, range [-1,1]) would dominate sparse scores (unbounded positive)."},
+        {"line": 22, "explanation": "Weighted fusion combines normalized scores. The result ranks 'Python web framework' highest — dense catches the semantic match, sparse catches the exact 'Python' keyword."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "class HomiePremiumRAG:\n    def __init__(self, model, corpus, weights=(0.4, 0.3, 0.3)):\n        self.model = model\n        self.corpus = corpus\n        self.weights = weights\n        self.index = model.encode(\n            corpus, return_dense=True, return_sparse=True,\n        )\n\n    def retrieve(self, query, top_k=3, min_score=0.3):\n        q = self.model.encode(\n            [query], return_dense=True, return_sparse=True,\n        )\n        dense = (q['dense_vecs'] @ self.index['dense_vecs'].T)[0]\n        sparse = []\n        for c_sp in self.index['lexical_weights']:\n            shared = set(q['lexical_weights'][0]) & set(c_sp)\n            sparse.append(sum(q['lexical_weights'][0][k] * c_sp[k] for k in shared))\n        import numpy as np\n        sparse = np.array(sparse)\n        norm = lambda s: (s - s.min()) / (s.max() - s.min() + 1e-8)\n        w_d, w_s, _ = self.weights\n        fused = w_d * norm(dense) + w_s * norm(sparse)\n        ranked = np.argsort(-fused)[:top_k]\n        return [(self.corpus[i], float(fused[i])) for i in ranked if fused[i] >= min_score]\n\n    def build_context(self, query, max_tokens=512):\n        results = self.retrieve(query)\n        parts, tokens = [], 0\n        for doc, _ in results:\n            est = len(doc.split()) * 1.3\n            if tokens + est > max_tokens:\n                break\n            parts.append(doc)\n            tokens += est\n        return \"\\n---\\n\".join(parts)\n\nrag = HomiePremiumRAG(model, corpus)\ncontext = rag.build_context(\"Python web development\")\nprint(context)",
+      "steps": [
+        {"line": 1, "explanation": "HomiePremiumRAG wraps the hybrid search into a production-ready class. The corpus is encoded once at init time — subsequent queries only encode the query string."},
+        {"line": 6, "explanation": "Pre-encode the entire corpus at construction. This is the expensive step — for 10K documents, expect 2-5 minutes on GPU. Store the index dict for reuse across queries."},
+        {"line": 10, "explanation": "retrieve() performs hybrid search with confidence gating. min_score filters out low-relevance results — better to return nothing than hallucination-inducing noise."},
+        {"line": 14, "explanation": "Dense retrieval via matrix multiplication is O(n) in corpus size. For >100K documents, pre-build a FAISS index over dense_vecs for sub-linear search."},
+        {"line": 25, "explanation": "Confidence gating: only return results above min_score. This prevents the LLM from receiving irrelevant context that would cause hallucination — a critical RAG quality lever."},
+        {"line": 27, "explanation": "build_context() packs retrieved documents into a token-budgeted string. The 1.3x multiplier converts words to approximate tokens — tune this for your tokenizer."},
+        {"line": 36, "explanation": "The separator '---' between documents helps the downstream LLM distinguish sources. Some models work better with numbered sections or XML tags."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Dense-Only RAG",
+      "right_label": "BGE-M3 Hybrid RAG",
+      "items": [
+        {"left": "One embedding per document", "right": "Dense + sparse + ColBERT per document"},
+        {"left": "Misses exact keyword matches", "right": "Sparse vectors catch exact terms"},
+        {"left": "Single similarity score", "right": "Fused score from multiple signals"},
+        {"left": "Struggles with rare terms / acronyms", "right": "Lexical weights handle rare tokens"},
+        {"left": "One model, one retrieval mode", "right": "One model, three retrieval modes"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've built a premium hybrid RAG backbone with BGE-M3 — dense+sparse score fusion, confidence gating, token-budgeted context packing, and multilingual support in one model!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `HybridScoreFusion` class that simulates BGE-M3's hybrid dense+sparse retrieval. Implement `dense_encode(text)` that returns character trigram frequency vectors (like simplified dense embeddings), `sparse_encode(text)` that returns word-level frequency vectors (like lexical weights), `normalize(scores)` that min-max normalizes a list to [0,1], `hybrid_score(query, document, weights)` that fuses dense and sparse cosine similarities with given weights, and `hybrid_search(query, corpus, top_k)` that ranks corpus documents by fused hybrid score."
+      },
+      "starter_code": "import math\n\nclass HybridScoreFusion:\n    def __init__(self, dense_weight=0.6, sparse_weight=0.4):\n        self.dense_weight = dense_weight\n        self.sparse_weight = sparse_weight\n\n    def dense_encode(self, text: str) -> dict:\n        # Character trigram frequency vector (lowercased)\n        # e.g., \"hello\" -> {\"hel\": 1, \"ell\": 1, \"llo\": 1}\n        pass\n\n    def sparse_encode(self, text: str) -> dict:\n        # Word frequency vector (lowercased, split on spaces)\n        # e.g., \"the cat the\" -> {\"the\": 2, \"cat\": 1}\n        pass\n\n    def cosine_sim(self, vec_a: dict, vec_b: dict) -> float:\n        shared = set(vec_a) & set(vec_b)\n        dot = sum(vec_a[k] * vec_b[k] for k in shared)\n        ma = math.sqrt(sum(v**2 for v in vec_a.values()))\n        mb = math.sqrt(sum(v**2 for v in vec_b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def normalize(self, scores: list) -> list:\n        # Min-max normalize to [0, 1]\n        # Handle edge case where all scores are equal (return all 0.0)\n        pass\n\n    def hybrid_score(self, query: str, document: str) -> float:\n        # Compute weighted fusion of dense and sparse cosine similarities\n        # fused = dense_weight * dense_sim + sparse_weight * sparse_sim\n        pass\n\n    def hybrid_search(self, query: str, corpus: list, top_k: int = 3) -> list:\n        # Return top_k (document, fused_score) tuples sorted by normalized fused score\n        # 1. Compute raw hybrid_score for each document\n        # 2. Normalize the scores\n        # 3. Sort descending and return top_k\n        pass\n\n# Test it:\nfusion = HybridScoreFusion(dense_weight=0.6, sparse_weight=0.4)\n\n# Dense encode test\nd = fusion.dense_encode(\"hello\")\nprint(len(d))\n\n# Sparse encode test\ns = fusion.sparse_encode(\"the cat sat the\")\nprint(s[\"the\"])\n\n# Normalize test\nprint(fusion.normalize([1.0, 3.0, 5.0]))\n\n# Hybrid search test\ncorpus = [\n    \"python web framework django\",\n    \"python snake tropical forest\",\n    \"javascript react frontend web\",\n    \"machine learning deep neural\",\n]\nresults = fusion.hybrid_search(\"python web development\", corpus, top_k=2)\nprint(results[0][0])\nprint(len(results))",
+      "expected_output": "3\n2\n[0.0, 0.5, 1.0]\npython web framework django\n2",
+      "hints": {
+        "en": [
+          "dense_encode(): iterate range(len(text)-2), extract text[i:i+3] trigrams and count in a dict — same as character n-gram encoding",
+          "normalize(): find min and max, return [(s - min) / (max - min)] for each score. If max == min, return [0.0] * len(scores)",
+          "hybrid_search(): compute hybrid_score for each doc, normalize the list of scores, pair with docs, sort by score descending, slice [:top_k]"
+        ]
+      },
+      "test_code": "f = HybridScoreFusion()\nd = f.dense_encode(\"hello\")\nassert d == {\"hel\": 1, \"ell\": 1, \"llo\": 1}\ns = f.sparse_encode(\"a b a\")\nassert s == {\"a\": 2, \"b\": 1}\nassert f.normalize([2.0, 4.0, 6.0]) == [0.0, 0.5, 1.0]\nassert f.normalize([3.0, 3.0]) == [0.0, 0.0]\nhs = f.hybrid_score(\"abc\", \"abc\")\nassert abs(hs - 1.0) < 0.01\nresults = f.hybrid_search(\"abc\", [\"abc\", \"xyz\", \"abc def\"], top_k=2)\nassert len(results) == 2\nassert results[0][1] >= results[1][1]\nassert \"abc\" in results[0][0]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `PremiumRAGBackbone` class that wraps `HybridScoreFusion` with confidence gating and context packing — two critical production features. Implement `retrieve(query, top_k, min_score)` that returns only results above the confidence threshold, `build_context(query, max_words)` that packs retrieved documents into a word-budgeted context string separated by '---', and `is_answerable(query)` that returns True only if at least one result passes the confidence gate."
+      },
+      "starter_code": "import math\n\nclass HybridScoreFusion:\n    def __init__(self, dense_weight=0.6, sparse_weight=0.4):\n        self.dense_weight = dense_weight\n        self.sparse_weight = sparse_weight\n\n    def dense_encode(self, text):\n        text = text.lower()\n        vec = {}\n        for i in range(len(text) - 2):\n            g = text[i:i+3]\n            vec[g] = vec.get(g, 0) + 1\n        return vec\n\n    def sparse_encode(self, text):\n        vec = {}\n        for w in text.lower().split():\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def cosine_sim(self, a, b):\n        shared = set(a) & set(b)\n        dot = sum(a[k] * b[k] for k in shared)\n        ma = math.sqrt(sum(v**2 for v in a.values()))\n        mb = math.sqrt(sum(v**2 for v in b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def normalize(self, scores):\n        mn, mx = min(scores), max(scores)\n        if mx == mn:\n            return [0.0] * len(scores)\n        return [(s - mn) / (mx - mn) for s in scores]\n\n    def hybrid_search(self, query, corpus, top_k=3):\n        raw = []\n        for doc in corpus:\n            d_sim = self.cosine_sim(self.dense_encode(query), self.dense_encode(doc))\n            s_sim = self.cosine_sim(self.sparse_encode(query), self.sparse_encode(doc))\n            raw.append(self.dense_weight * d_sim + self.sparse_weight * s_sim)\n        normed = self.normalize(raw)\n        paired = sorted(zip(corpus, normed), key=lambda x: -x[1])\n        return paired[:top_k]\n\nclass PremiumRAGBackbone:\n    def __init__(self, corpus: list, dense_weight=0.6, sparse_weight=0.4):\n        self.corpus = corpus\n        self.fusion = HybridScoreFusion(dense_weight, sparse_weight)\n\n    def retrieve(self, query: str, top_k: int = 3, min_score: float = 0.3) -> list:\n        # Get hybrid search results and filter by min_score\n        # Return list of (document, score) tuples\n        pass\n\n    def build_context(self, query: str, max_words: int = 50) -> str:\n        # Pack retrieved docs into context string separated by '---'\n        # Stop adding docs when word count would exceed max_words\n        # Use doc.split() to count words\n        pass\n\n    def is_answerable(self, query: str) -> bool:\n        # Return True if retrieve() returns at least one result\n        pass\n\n# Test it:\ncorpus = [\n    \"python flask web application development\",\n    \"python data science pandas numpy\",\n    \"javascript react frontend components\",\n    \"cooking pasta italian recipes\",\n]\n\nrag = PremiumRAGBackbone(corpus)\n\n# Retrieve test\nresults = rag.retrieve(\"python web app\", top_k=2)\nprint(results[0][0])\nprint(len(results))\n\n# Context test\ncontext = rag.build_context(\"python programming\", max_words=10)\nword_count = len(context.split())\nprint(word_count <= 10)\n\n# Answerable test\nprint(rag.is_answerable(\"python development\"))\nprint(rag.is_answerable(\"quantum physics theories\"))",
+      "expected_output": "python flask web application development\n2\nTrue\nTrue\nFalse",
+      "hints": {
+        "en": [
+          "retrieve(): call self.fusion.hybrid_search() then filter with a list comprehension: [(doc, s) for doc, s in results if s >= min_score]",
+          "build_context(): iterate retrieve() results, track cumulative word count with len(doc.split()), append to list until budget exceeded, then join with '---'",
+          "is_answerable(): simply return len(self.retrieve(query)) > 0 — if nothing passes the confidence gate, the query can't be reliably answered"
+        ]
+      },
+      "test_code": "c = [\"aaa bbb ccc\", \"xxx yyy zzz\", \"aaa bbb ddd\"]\nrag = PremiumRAGBackbone(c)\nr = rag.retrieve(\"aaa bbb\", top_k=2)\nassert len(r) <= 2\nassert all(isinstance(t, tuple) and len(t) == 2 for t in r)\nassert r[0][1] >= r[-1][1]\nr2 = rag.retrieve(\"aaa bbb\", min_score=999.0)\nassert len(r2) == 0\nctx = rag.build_context(\"aaa bbb\", max_words=5)\nassert len(ctx.split()) <= 8  # 5 words + separator words\nassert rag.is_answerable(\"aaa bbb\") == True\nassert rag.is_answerable(\"qqq www eee rrr ttt\") == False"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["hybrid retrieval", "dense+sparse fusion", "BGE-M3 multi-vector", "ColBERT late interaction", "score normalization", "confidence gating", "context packing", "FlagEmbedding API", "RAG backbone architecture", "multilingual retrieval"],
+    "concepts_required": ["python classes", "lists", "dictionaries", "numpy basics", "cosine similarity", "pip install"],
+    "difficulty": "advanced",
+    "engagement_type": "project",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

@@ -1,0 +1,174 @@
+{
+  "id": "copy_paste_debt",
+  "topic": "copy_paste_debt",
+  "track": "vibe_coding",
+  "module": "antipatterns",
+  "order": 3,
+  "title": {
+    "en": "Copy-Paste Debt: The Code You Shipped But Never Understood"
+  },
+  "description": {
+    "en": "Every AI snippet you accept without reading is a loan against your future. Learn how comprehension debt compounds into a doom loop, how long sessions rot into duplicated logic, and the five habits that keep you the owner of your own codebase."
+  },
+  "xp_reward": 85,
+  "next_unlock": "when_not_to_vibe_code",
+  "story_variants": {
+    "en": "## The Code You Shipped But Never Read\n\nVibe coding has a quiet, seductive failure mode. It doesn't crash on day one. It *works*. You ask, the AI answers, you hit accept, the feature lights up green. You do it again. And again. Forty times in an afternoon.\n\nSomewhere in those forty accepts, a shift happened that you didn't notice: you stopped writing software and started *collecting* it. The codebase grew faster than your understanding of it. Every snippet you didn't actually read is a small loan — and you just took out forty of them.\n\nThat is **comprehension debt**: the gap between the code you've shipped and the code you could explain. Like financial debt, a little is fine and even smart. Like financial debt, it compounds.\n\n### How the debt compounds into a doom loop\n\nHere is the trap, step by step. It feels great right up until the moment it doesn't.\n\n1. The AI writes a function. It looks plausible. You accept it without reading.\n2. Two weeks later it breaks on some input you never tested.\n3. You open the file — and realize **you have no idea how this code works.** You never read it.\n4. So you do the only thing you can: you paste the error back to the AI and say \"fix it.\"\n5. The AI patches it — adding *more* code you don't read, on top of code you didn't understand.\n6. The patch introduces a second bug. Go to step 2.\n\nThis is the **doom loop**. Each turn you understand a smaller fraction of a larger system. You're not the author anymore; you're a middleman forwarding errors between the bug and the bot. The code owns you.\n\n> **Key idea:** If you can't explain it, you don't own it — you're just renting it from a model that has already forgotten it exists.\n\n### Context rot: how long sessions duplicate themselves\n\nThere's a second engine driving the debt: **context rot.** In a long AI session, the model's grip on what it already wrote slowly slips. It forgets you already have a `format_date` helper, so it writes a second one inline. It validated emails one way in `signup` and a slightly different way in `checkout`. Patterns drift. The same idea gets re-implemented three times, each version subtly different.\n\nNow you have *duplication* — and duplication is where bugs go to hide. Fix the discount calculation in one place and the other two copies keep paying out the old, wrong amount. The bug isn't \"in the code.\" It's in the *third copy of the code you forgot existed.*\n\n| Symptom | What it really is | Why it's dangerous |\n|---------|-------------------|--------------------|\n| \"It works, I'll read it later\" | Comprehension debt | You can't fix what you never understood |\n| Same logic in 3 places | Context rot / duplication | Fix one, the others stay broken |\n| \"Just ask the AI to patch it\" | The doom loop | Each patch adds more unread code |\n| Two helpers that do the same thing | Drift | Callers silently disagree |\n\n### Paying the debt down\n\nYou don't beat this with willpower; you beat it with cheap, repeatable habits:\n\n- **Read before you accept.** Not for style — for *intent*. Can you say, in one sentence, what this code does and what it does on bad input? If not, don't accept it yet.\n- **Make the AI explain itself.** \"Walk me through this line by line. Why this approach? What breaks it?\" If the explanation reveals the AI is guessing, you just dodged a landmine — for free.\n- **Keep functions small enough to hold in your head.** A function you can read in one breath is a function you can own. Twenty lines that do one thing beats two hundred that do six.\n- **Refactor duplication the moment you see it.** The second copy is a warning. The third is a bug waiting to be born. Pull repeated logic into one named function — *now*, while you still remember why.\n- **Own it or delete it.** Before you ship, every block passes one test: can you explain it? If no, you read it until yes, or you cut it. There is no third option that ends well.\n\nThe goal of vibe coding was never to understand *less*. It was to spend your understanding where it matters instead of on boilerplate. Debt that you take on deliberately and pay down fast is leverage. Debt you don't even know you have is the thing that eventually owns you."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "growing_pile",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "doom_loop_map",
+      "nodes": [
+        {
+          "label": "The Doom Loop",
+          "children": [
+            "Accept code you didn't read",
+            "It breaks later",
+            "You can't fix what you never understood",
+            "Ask AI to patch -> more unread code",
+            "New bug -> repeat"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "duplicated_vs_dry",
+      "left": {
+        "label": "Same logic copy-pasted in 3 places (fix one, two stay broken)",
+        "result": false
+      },
+      "right": {
+        "label": "One named function, called 3 times (fix once, fixed everywhere)",
+        "result": true
+      },
+      "description": {
+        "en": "Context rot makes the AI re-implement the same idea. Duplication is where bugs hide. DRY is how you prove you understood it."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "hidden_bug_demo",
+      "code": "# AI copy-pasted the discount math 3x; one copy has a typo\nfull   = 100 * (1 - 0.10)   # 10% off -> 90\nstudent= 100 * (1 - 0.20)   # 20% off -> 80\nbulk   = 100 * (1 - 0.015)  # meant 0.15, typo'd 0.015\nprint(full, student, bulk)",
+      "executionSteps": [
+        { "line": 2, "variables": { "full": "90.0" }, "output": "", "description": "Copy 1: correct." },
+        { "line": 3, "variables": { "student": "80.0" }, "output": "", "description": "Copy 2: correct." },
+        { "line": 4, "variables": { "bulk": "98.5" }, "output": "", "description": "Copy 3: typo hides in the duplication — 0.015 not 0.15." },
+        { "line": 5, "variables": {}, "output": "90.0 80.0 98.5", "description": "Looks plausible. The bug is in the copy you forgot to check." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Every unread accept is comprehension debt.",
+        "Duplication is where bugs hide.",
+        "If you can't explain it, you don't own it."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An AI generated this pricing code in a long session and copy-pasted the same 'apply discount, then add 8% tax' calculation three times — with slightly different discounts. That's copy-paste debt: if the tax rate changes, you must fix it in three places, and one copy could already be wrong. Prove you understand it by refactoring: write a single function price(base, discount) that applies the discount and then 8% tax, and use it for all three tiers. Fill in regular_price, member_price, and vip_price by calling your function. Expected output: 64.8 48.6 32.4",
+        "ta": ""
+      },
+      "starter_code": "TAX = 0.08\n\n# AI's copy-pasted version (comprehension debt + duplication):\n# regular = 60 * (1 - 0.0)\n# regular = regular + regular * 0.08\n# member  = 60 * (1 - 0.16)\n# member  = member + member * 0.08\n# vip     = 60 * (1 - 0.33)\n# vip     = vip + vip * 0.08\n\n# Refactor: ONE function that applies the discount, then 8% tax.\ndef price(base, discount):\n    # TODO: apply the discount to base, then add TAX, and return the result\n    pass\n\n# Now call it for all three tiers (base price is 60):\nregular_price = None  # 0% discount\nmember_price  = None  # 25% discount\nvip_price     = None  # 50% discount\n\nprint(round(regular_price, 2), round(member_price, 2), round(vip_price, 2))",
+      "expected_output": "64.8 48.6 32.4",
+      "hints": {
+        "en": [
+          "After the discount, the subtotal is base * (1 - discount).",
+          "Adding 8% tax means multiplying the subtotal by (1 + TAX).",
+          "So the whole function body is one line: return base * (1 - discount) * (1 + TAX).",
+          "Call it three times: price(60, 0.0), price(60, 0.25), price(60, 0.5)."
+        ],
+        "ta": []
+      },
+      "test_code": "assert round(price(60, 0.0), 2) == 64.8\nassert round(price(60, 0.25), 2) == 48.6\nassert round(price(60, 0.5), 2) == 32.4\nassert round(price(100, 0.0), 2) == 108.0\nassert round(price(0, 0.5), 2) == 0.0\nassert round(regular_price, 2) == 64.8 and round(member_price, 2) == 48.6 and round(vip_price, 2) == 32.4"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is 'comprehension debt' in the context of vibe coding?"
+      },
+      "options": {
+        "en": [
+          "The time it takes an AI to generate code",
+          "The gap between the code you've shipped and the code you could actually explain",
+          "The cost of buying a more powerful AI model",
+          "Code that has too many comments"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does the 'doom loop' make things worse over time?"
+      },
+      "options": {
+        "en": [
+          "Each AI patch adds more code you didn't read on top of code you never understood",
+          "AI models get slower the longer you use them",
+          "It deletes your tests automatically",
+          "It only happens in compiled languages"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What is 'context rot' and why is the duplication it causes dangerous?"
+      },
+      "options": {
+        "en": [
+          "When the AI forgets earlier code and re-implements the same logic multiple times, so fixing one copy leaves the others broken",
+          "When code comments become outdated",
+          "When the screen flickers during long sessions",
+          "When the AI runs out of training data"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "The lesson's core rule for owning your codebase is:"
+      },
+      "options": {
+        "en": [
+          "Always use the longest possible functions",
+          "Never read AI code, just trust the tests",
+          "If you can't explain it, you don't own it — read it until you can, or cut it",
+          "Copy-paste is fine as long as it works once"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["copy_paste_debt", "comprehension_debt", "context_rot", "dry_principle", "refactoring"],
+    "concepts_required": ["what_is_vibe_coding"],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

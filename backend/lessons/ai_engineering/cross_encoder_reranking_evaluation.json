@@ -1,0 +1,133 @@
+{
+  "id": "cross_encoder_reranking_evaluation",
+  "topic": "cross_encoder_reranking_evaluation",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Evaluating Cross-Encoder Reranking: Measuring RAG Retrieval Quality"
+  },
+  "description": {
+    "en": "Quantify how ms-marco-MiniLM-L6-v2 cross-encoder reranking improves RAG retrieval using metrics like MRR, Precision@K, and NDCG. Build evaluation harnesses that compare bi-encoder-only vs retrieve-then-rerank pipelines with ground-truth relevance judgments."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Measuring What Matters: Evaluating Cross-Encoder Reranking\n\nVaathiyaar here! You've wired `cross-encoder/ms-marco-MiniLM-L6-v2` into your retrieve-then-rerank pipeline — but *how much better is it, really?* \"It feels better\" won't survive a design review. You need numbers: Mean Reciprocal Rank, Precision@K, and NDCG — the same metrics used in the MS MARCO leaderboard that trained this model. This lesson builds an evaluation harness that proves (or disproves) the value of your reranking stage with hard evidence.\n\n### Retrieval Quality Metrics\n\n| Metric | What It Measures | Formula (simplified) | When to Use |\n|---|---|---|---|\n| **MRR** | Rank of the first relevant result | 1 / rank_of_first_relevant | Single correct answer |\n| **Precision@K** | Fraction of top-K that are relevant | relevant_in_top_k / K | Multiple relevant docs |\n| **NDCG@K** | Graded relevance with position discount | DCG@K / ideal_DCG@K | Graded relevance labels |\n| **Recall@K** | Fraction of all relevant docs in top-K | relevant_in_top_k / total_relevant | Coverage-critical RAG |\n\n### Building the Evaluation Dataset\n\nEvery retrieval evaluation needs three things: queries, a corpus, and **relevance judgments** — ground-truth labels saying which documents are relevant to which queries.\n\n```python\n# Evaluation dataset: queries with known relevant document indices\neval_set = [\n    {\n        \"query\": \"How do I reset my password?\",\n        \"relevant_ids\": [0, 3],  # indices into corpus\n    },\n    {\n        \"query\": \"What are the system requirements?\",\n        \"relevant_ids\": [2],\n    },\n]\n\ncorpus = [\n    \"Steps to reset a forgotten password via email\",\n    \"Password complexity requirements and policies\",\n    \"Minimum system requirements: 8GB RAM, 2GHz CPU\",\n    \"Click Forgot Password on the login screen to reset\",\n    \"Our company was founded in 2015 in San Francisco\",\n]\n```\n\n### Computing MRR and Precision@K\n\n```python\ndef mean_reciprocal_rank(ranked_ids, relevant_ids):\n    \"\"\"MRR: 1/rank of the first relevant document.\"\"\"\n    for rank, doc_id in enumerate(ranked_ids, start=1):\n        if doc_id in relevant_ids:\n            return 1.0 / rank\n    return 0.0\n\ndef precision_at_k(ranked_ids, relevant_ids, k):\n    \"\"\"Precision@K: fraction of top-K results that are relevant.\"\"\"\n    top_k = ranked_ids[:k]\n    relevant_in_top_k = sum(1 for did in top_k if did in relevant_ids)\n    return relevant_in_top_k / k\n\ndef recall_at_k(ranked_ids, relevant_ids, k):\n    \"\"\"Recall@K: fraction of all relevant docs found in top-K.\"\"\"\n    top_k = set(ranked_ids[:k])\n    found = sum(1 for did in relevant_ids if did in top_k)\n    return found / len(relevant_ids) if relevant_ids else 0.0\n```\n\n### NDCG: Position-Weighted Relevance\n\nNDCG accounts for *where* relevant documents appear — a relevant doc at position 1 is worth far more than one at position 5:\n\n```python\nimport math\n\ndef dcg_at_k(ranked_ids, relevance_map, k):\n    \"\"\"DCG@K with logarithmic discount.\"\"\"\n    score = 0.0\n    for i, doc_id in enumerate(ranked_ids[:k]):\n        rel = relevance_map.get(doc_id, 0)\n        score += rel / math.log2(i + 2)  # +2 because rank starts at 1\n    return score\n\ndef ndcg_at_k(ranked_ids, relevance_map, k):\n    \"\"\"NDCG@K: normalized by ideal ranking.\"\"\"\n    dcg = dcg_at_k(ranked_ids, relevance_map, k)\n    # Ideal: sort by relevance descending\n    ideal_order = sorted(relevance_map.keys(),\n                         key=lambda x: relevance_map[x], reverse=True)\n    ideal_dcg = dcg_at_k(ideal_order, relevance_map, k)\n    return dcg / ideal_dcg if ideal_dcg > 0 else 0.0\n```\n\n### Comparing Bi-Encoder vs Retrieve-Then-Rerank\n\n```python\nfrom sentence_transformers import SentenceTransformer, CrossEncoder, util\n\ndef evaluate_pipeline(eval_set, corpus, use_reranker=False):\n    bi_enc = SentenceTransformer(\"all-MiniLM-L6-v2\")\n    cross_enc = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\") if use_reranker else None\n    c_emb = bi_enc.encode(corpus, convert_to_tensor=True)\n\n    mrr_scores, p5_scores = [], []\n    for item in eval_set:\n        q_emb = bi_enc.encode(item[\"query\"], convert_to_tensor=True)\n        hits = util.semantic_search(q_emb, c_emb, top_k=20)[0]\n        ranked_ids = [h[\"corpus_id\"] for h in hits]\n\n        if cross_enc:\n            candidates = [(cid, corpus[cid]) for cid in ranked_ids]\n            pairs = [[item[\"query\"], doc] for _, doc in candidates]\n            scores = cross_enc.predict(pairs)\n            reranked = sorted(zip(ranked_ids, scores), key=lambda x: x[1], reverse=True)\n            ranked_ids = [cid for cid, _ in reranked]\n\n        mrr_scores.append(mean_reciprocal_rank(ranked_ids, set(item[\"relevant_ids\"])))\n        p5_scores.append(precision_at_k(ranked_ids, set(item[\"relevant_ids\"]), k=5))\n\n    print(f\"{'Reranked' if use_reranker else 'Bi-encoder only'}:\")\n    print(f\"  MRR:          {sum(mrr_scores)/len(mrr_scores):.4f}\")\n    print(f\"  Precision@5:  {sum(p5_scores)/len(p5_scores):.4f}\")\n```\n\nRun both pipelines on the same eval set to get a direct comparison. In typical RAG workloads, adding ms-marco-MiniLM-L6-v2 reranking boosts MRR by 10-25% — the first relevant document moves from position 3-4 to position 1-2.\n\n### When Reranking Doesn't Help\n\nReranking isn't magic. It won't help when:\n- The bi-encoder already missed the relevant document in its top-K retrieval\n- The query is ambiguous and multiple interpretations are valid\n- The corpus has near-duplicate documents that all rank similarly\n\nAlways measure before committing to the added latency.\n\n> **Key Insight:** Never deploy a reranking stage without measuring its impact. MRR tells you if the *first* relevant result improves, Precision@K tells you if the *top results overall* improve, and NDCG tells you if relevance is properly position-weighted. Build an evaluation harness first, measure bi-encoder baseline, then prove the cross-encoder earns its latency cost with numbers — not intuition."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Adding a cross-encoder reranker 'feels' better — but how much better, exactly? Retrieval evaluation metrics like MRR, Precision@K, and NDCG give you hard numbers. This lesson builds an evaluation harness that quantifies the improvement from ms-marco-MiniLM-L6-v2 reranking, so you can prove its value before paying the latency cost.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "def mean_reciprocal_rank(ranked_ids, relevant_ids):\n    for rank, doc_id in enumerate(ranked_ids, start=1):\n        if doc_id in relevant_ids:\n            return 1.0 / rank\n    return 0.0\n\ndef precision_at_k(ranked_ids, relevant_ids, k):\n    top_k = ranked_ids[:k]\n    relevant_in_top_k = sum(1 for did in top_k if did in relevant_ids)\n    return relevant_in_top_k / k\n\n# Example: query about password reset\nranked_bi = [1, 4, 0, 3, 2]   # bi-encoder ranking (relevant=0,3)\nranked_ce = [0, 3, 1, 4, 2]   # after cross-encoder reranking\nrelevant = {0, 3}\n\nprint(f\"Bi-encoder  MRR: {mean_reciprocal_rank(ranked_bi, relevant):.4f}\")\nprint(f\"Reranked    MRR: {mean_reciprocal_rank(ranked_ce, relevant):.4f}\")\nprint(f\"Bi-encoder  P@3: {precision_at_k(ranked_bi, relevant, 3):.4f}\")\nprint(f\"Reranked    P@3: {precision_at_k(ranked_ce, relevant, 3):.4f}\")",
+      "steps": [
+        {"line": 1, "explanation": "Mean Reciprocal Rank (MRR): measures how quickly you find the first relevant document. MRR=1.0 means the first result is relevant; MRR=0.5 means it's at position 2."},
+        {"line": 2, "explanation": "Enumerate from 1 so rank matches human intuition — position 1 is the first result. We check each document in ranked order until we find a relevant one."},
+        {"line": 4, "explanation": "Return 1/rank of the first relevant document found. If relevant doc is at rank 3, MRR = 0.333. If no relevant doc found, return 0.0."},
+        {"line": 7, "explanation": "Precision@K: what fraction of the top-K results are actually relevant? P@3 = 0.67 means 2 out of 3 top results are relevant."},
+        {"line": 9, "explanation": "Count how many of the top-K document IDs appear in the relevant set. This is a simple set intersection count."},
+        {"line": 13, "explanation": "Bi-encoder ranking: relevant docs (0, 3) are at positions 3 and 4. The first result (id=1) is a distractor — MRR will be low."},
+        {"line": 14, "explanation": "After cross-encoder reranking: relevant docs moved to positions 1 and 2. The reranker understood which documents actually answer the query."},
+        {"line": 17, "explanation": "Compare MRR: bi-encoder finds first relevant doc at rank 3 (MRR=0.333), reranker moves it to rank 1 (MRR=1.0) — a 3x improvement."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import math\n\ndef dcg_at_k(ranked_ids, relevance_map, k):\n    score = 0.0\n    for i, doc_id in enumerate(ranked_ids[:k]):\n        rel = relevance_map.get(doc_id, 0)\n        score += rel / math.log2(i + 2)\n    return score\n\ndef ndcg_at_k(ranked_ids, relevance_map, k):\n    dcg = dcg_at_k(ranked_ids, relevance_map, k)\n    ideal_order = sorted(relevance_map.keys(),\n                         key=lambda x: relevance_map[x], reverse=True)\n    ideal_dcg = dcg_at_k(ideal_order, relevance_map, k)\n    return dcg / ideal_dcg if ideal_dcg > 0 else 0.0\n\n# Graded relevance: 3=perfect, 2=good, 1=marginal, 0=irrelevant\nrelevance = {0: 3, 1: 1, 2: 0, 3: 2, 4: 0}\n\nranked_bi = [1, 4, 0, 3, 2]\nranked_ce = [0, 3, 1, 4, 2]\n\nprint(f\"Bi-encoder  NDCG@3: {ndcg_at_k(ranked_bi, relevance, 3):.4f}\")\nprint(f\"Reranked    NDCG@3: {ndcg_at_k(ranked_ce, relevance, 3):.4f}\")",
+      "steps": [
+        {"line": 3, "explanation": "DCG (Discounted Cumulative Gain) sums relevance scores with logarithmic position discounting. Position 1 gets full weight; later positions are discounted."},
+        {"line": 7, "explanation": "The discount factor: log2(i+2) where i is 0-indexed. Position 1 → log2(2) = 1.0 (full weight), position 2 → log2(3) ≈ 1.585 (discounted)."},
+        {"line": 10, "explanation": "NDCG normalizes DCG by the ideal DCG — what you'd get if documents were perfectly sorted by relevance. NDCG=1.0 means perfect ranking."},
+        {"line": 12, "explanation": "Compute the ideal order by sorting documents by their relevance labels descending. This gives the best possible DCG for normalization."},
+        {"line": 18, "explanation": "Graded relevance allows finer distinctions: doc 0 is a perfect match (3), doc 3 is good (2), doc 1 is marginal (1). Binary metrics miss these gradations."},
+        {"line": 23, "explanation": "NDCG captures that the reranker not only finds relevant docs but puts the MOST relevant one first — doc 0 (score=3) at rank 1, doc 3 (score=2) at rank 2."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "class RetrievalEvaluator:\n    def __init__(self, corpus, eval_set):\n        self.corpus = corpus\n        self.eval_set = eval_set\n\n    def evaluate(self, ranking_fn, k=5):\n        mrr_total, pk_total, ndcg_total = 0.0, 0.0, 0.0\n        n = len(self.eval_set)\n\n        for item in self.eval_set:\n            ranked = ranking_fn(item[\"query\"], self.corpus)\n            rel_set = set(item[\"relevant_ids\"])\n            rel_map = {did: 1 for did in item[\"relevant_ids\"]}\n\n            mrr_total += mean_reciprocal_rank(ranked, rel_set)\n            pk_total += precision_at_k(ranked, rel_set, k)\n            ndcg_total += ndcg_at_k(ranked, rel_map, k)\n\n        return {\n            \"MRR\": round(mrr_total / n, 4),\n            f\"P@{k}\": round(pk_total / n, 4),\n            f\"NDCG@{k}\": round(ndcg_total / n, 4),\n        }\n\n# Usage with bi-encoder vs reranked pipeline\ndef bi_encoder_rank(query, corpus):\n    # Simulated: returns corpus indices in some order\n    return list(range(len(corpus)))\n\ndef reranked_rank(query, corpus):\n    # Simulated: reranker pushes relevant docs to top\n    return [0, 3, 1, 2, 4]\n\nevaluator = RetrievalEvaluator(\n    corpus=[\"doc0\", \"doc1\", \"doc2\", \"doc3\", \"doc4\"],\n    eval_set=[{\"query\": \"test\", \"relevant_ids\": [0, 3]}]\n)\n\nprint(\"Bi-encoder:\", evaluator.evaluate(bi_encoder_rank, k=3))\nprint(\"Reranked:  \", evaluator.evaluate(reranked_rank, k=3))",
+      "steps": [
+        {"line": 1, "explanation": "RetrievalEvaluator wraps the entire evaluation workflow — give it a corpus and eval set, then compare any ranking function against ground truth."},
+        {"line": 6, "explanation": "Evaluate a ranking function across all queries in the eval set. Computes MRR, Precision@K, and NDCG@K averaged over all queries."},
+        {"line": 10, "explanation": "For each query, call the ranking function to get a ranked list of document IDs, then compute all metrics against the ground-truth relevance judgments."},
+        {"line": 13, "explanation": "Convert relevant_ids to a relevance map for NDCG computation. Binary relevance (1 for relevant, 0 for not) is the simplest starting point."},
+        {"line": 19, "explanation": "Return a clean metrics dictionary. This becomes your A/B comparison: run evaluate() with bi-encoder ranking, then with reranked ranking, and compare."},
+        {"line": 26, "explanation": "Each ranking function takes a query and corpus, returns ranked document IDs. Swap in your real bi-encoder and cross-encoder pipelines here."},
+        {"line": 38, "explanation": "Side-by-side comparison. The reranked pipeline should show higher MRR (first relevant doc closer to top) and higher Precision@K (more relevant docs in top-K)."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Bi-Encoder Only (Baseline)",
+      "right_label": "With Cross-Encoder Reranking",
+      "items": [
+        {"left": "MRR: 0.33-0.50 typical", "right": "MRR: 0.70-0.95 typical — first relevant result moves to top"},
+        {"left": "P@5: depends on embedding quality", "right": "P@5: +10-25% improvement over baseline"},
+        {"left": "NDCG: position-agnostic encoding", "right": "NDCG: best documents consistently ranked first"},
+        {"left": "No added latency", "right": "+15-50ms latency for top-K reranking"},
+        {"left": "Measure this as your baseline", "right": "Justify the latency cost with metric gains"},
+        {"left": "Sufficient when MRR > 0.8", "right": "Essential when baseline MRR < 0.6"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now measure retrieval quality with MRR, Precision@K, and NDCG — and prove whether cross-encoder reranking earns its latency cost. Data-driven retrieval engineering, not vibes!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `RetrievalMetrics` class that computes MRR, Precision@K, and Recall@K for ranked search results. `mrr(ranked_ids, relevant_ids)` returns the reciprocal of the rank of the first relevant document (or 0.0 if none found). `precision_at_k(ranked_ids, relevant_ids, k)` returns the fraction of top-K results that are relevant. `recall_at_k(ranked_ids, relevant_ids, k)` returns the fraction of all relevant documents found in the top-K. `evaluate(ranked_ids, relevant_ids, k)` returns a dictionary with all three metrics."
+      },
+      "starter_code": "class RetrievalMetrics:\n    def mrr(self, ranked_ids: list[int], relevant_ids: set[int]) -> float:\n        # Return 1.0 / rank of the first relevant document\n        # rank starts at 1 (first position)\n        # Return 0.0 if no relevant document is found\n        pass\n\n    def precision_at_k(self, ranked_ids: list[int], relevant_ids: set[int], k: int) -> float:\n        # Return fraction of top-K results that are in relevant_ids\n        pass\n\n    def recall_at_k(self, ranked_ids: list[int], relevant_ids: set[int], k: int) -> float:\n        # Return fraction of all relevant docs found in top-K\n        # Return 0.0 if relevant_ids is empty\n        pass\n\n    def evaluate(self, ranked_ids: list[int], relevant_ids: set[int], k: int) -> dict:\n        # Return {\"mrr\": float, \"precision_at_k\": float, \"recall_at_k\": float}\n        pass\n\n# Test it:\nmetrics = RetrievalMetrics()\n\n# Perfect ranking: relevant docs at positions 1 and 2\nprint(metrics.mrr([0, 3, 1, 2, 4], {0, 3}))\n\n# Relevant doc at position 3\nprint(f\"{metrics.mrr([4, 2, 0, 3, 1], {0, 3}):.4f}\")\n\n# Precision@3 with 2 relevant in top 3\nprint(f\"{metrics.precision_at_k([0, 3, 1, 2, 4], {0, 3}, 3):.4f}\")\n\n# Recall@2 with 1 of 2 relevant docs found\nprint(f\"{metrics.recall_at_k([0, 4, 3, 2, 1], {0, 3}, 2):.4f}\")\n\n# Full evaluation\nresult = metrics.evaluate([0, 3, 1, 2, 4], {0, 3}, k=3)\nprint(result[\"mrr\"])\nprint(result[\"precision_at_k\"] > 0.5)",
+      "expected_output": "1.0\n0.3333\n0.6667\n0.5000\n1.0\nTrue",
+      "hints": {
+        "en": [
+          "For mrr(), use enumerate(ranked_ids, start=1) to iterate with 1-based rank, and return 1.0/rank for the first match found in relevant_ids",
+          "For precision_at_k(), slice ranked_ids[:k], count how many are in relevant_ids using sum() with a generator, then divide by k",
+          "For recall_at_k(), convert ranked_ids[:k] to a set, count how many relevant_ids are in that set, then divide by len(relevant_ids)"
+        ]
+      },
+      "test_code": "m = RetrievalMetrics()\nassert m.mrr([0, 1, 2], {0}) == 1.0\nassert m.mrr([1, 0, 2], {0}) == 0.5\nassert abs(m.mrr([1, 2, 0], {0}) - 1/3) < 0.001\nassert m.mrr([1, 2, 3], {0}) == 0.0\nassert m.precision_at_k([0, 1, 2, 3, 4], {0, 2}, 3) == 2/3\nassert m.precision_at_k([3, 4, 1], {0, 2}, 3) == 0.0\nassert m.precision_at_k([0, 2], {0, 2}, 2) == 1.0\nassert m.recall_at_k([0, 1, 2], {0, 2, 4}, 2) == 1/3\nassert m.recall_at_k([0, 2, 4], {0, 2, 4}, 3) == 1.0\nassert m.recall_at_k([1, 3], set(), 2) == 0.0\nresult = m.evaluate([0, 3, 1, 2], {0, 3}, k=2)\nassert result[\"mrr\"] == 1.0\nassert result[\"precision_at_k\"] == 1.0\nassert result[\"recall_at_k\"] == 1.0"
+    },
+    {
+      "instruction": {
+        "en": "Build an `NDCGCalculator` class that computes NDCG@K (Normalized Discounted Cumulative Gain) for graded relevance judgments. Unlike binary metrics, NDCG handles relevance scores like 3=perfect, 2=good, 1=marginal, 0=irrelevant. Implement `dcg_at_k(ranked_ids, relevance_map, k)` using logarithmic discounting (log base 2), and `ndcg_at_k(ranked_ids, relevance_map, k)` that normalizes DCG by the ideal (perfect) ranking's DCG."
+      },
+      "starter_code": "import math\n\nclass NDCGCalculator:\n    def dcg_at_k(self, ranked_ids: list[int], relevance_map: dict, k: int) -> float:\n        # Sum of relevance[doc] / log2(rank + 1) for top-K documents\n        # rank is 1-based: position 1 -> log2(2) = 1.0\n        # If doc_id not in relevance_map, relevance = 0\n        pass\n\n    def ideal_dcg_at_k(self, relevance_map: dict, k: int) -> float:\n        # DCG of the ideal ranking: sort all relevance values descending\n        # and compute DCG as if documents were in that perfect order\n        pass\n\n    def ndcg_at_k(self, ranked_ids: list[int], relevance_map: dict, k: int) -> float:\n        # NDCG = DCG / ideal_DCG\n        # Return 0.0 if ideal_DCG is 0\n        pass\n\n# Test it:\ncalc = NDCGCalculator()\n\n# Perfect ranking: most relevant first\nrel = {0: 3, 1: 2, 2: 1, 3: 0}\nprint(f\"{calc.ndcg_at_k([0, 1, 2, 3], rel, 3):.4f}\")\n\n# Worst ranking: least relevant first\nprint(f\"{calc.ndcg_at_k([3, 2, 1, 0], rel, 3):.4f}\")\n\n# DCG of perfect ranking at k=2\nprint(f\"{calc.dcg_at_k([0, 1], rel, 2):.4f}\")\n\n# Ideal DCG at k=2\nprint(f\"{calc.ideal_dcg_at_k(rel, 2):.4f}\")\n\n# Edge case: no relevant docs\nprint(calc.ndcg_at_k([0, 1], {}, 2))",
+      "expected_output": "1.0000\n0.3466\n4.2618\n4.2618\n0.0",
+      "hints": {
+        "en": [
+          "In dcg_at_k(), iterate over ranked_ids[:k] with enumerate starting at 0, use math.log2(i + 2) as the discount since position 1 maps to log2(2)",
+          "In ideal_dcg_at_k(), extract all values from relevance_map, sort descending, then compute DCG as if they were at positions 1, 2, 3...",
+          "In ndcg_at_k(), compute dcg_at_k() and ideal_dcg_at_k(), then divide — but return 0.0 if ideal_dcg is 0 to avoid division by zero"
+        ]
+      },
+      "test_code": "c = NDCGCalculator()\nrel = {0: 3, 1: 2, 2: 1, 3: 0}\nassert abs(c.ndcg_at_k([0, 1, 2, 3], rel, 3) - 1.0) < 0.001\nassert c.ndcg_at_k([3, 2, 1, 0], rel, 3) < 0.5\nassert abs(c.dcg_at_k([0, 1], rel, 2) - (3/math.log2(2) + 2/math.log2(3))) < 0.001\nassert abs(c.ideal_dcg_at_k(rel, 2) - (3/math.log2(2) + 2/math.log2(3))) < 0.001\nassert c.ndcg_at_k([0], {}, 1) == 0.0\nassert abs(c.ndcg_at_k([1, 0], {0: 1, 1: 1}, 2) - 1.0) < 0.001\nassert abs(c.dcg_at_k([0], {0: 5}, 1) - 5.0) < 0.001\nrel2 = {0: 3, 1: 1}\nassert c.ndcg_at_k([0, 1], rel2, 2) > c.ndcg_at_k([1, 0], rel2, 2)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["retrieval evaluation metrics", "mean reciprocal rank", "precision at k", "recall at k", "NDCG", "DCG", "graded relevance", "evaluation harness", "retrieval quality measurement", "bi-encoder vs cross-encoder comparison"],
+    "concepts_required": ["python classes", "lists", "sets", "dictionaries", "cross-encoders", "bi-encoder vs cross-encoder", "RAG pipelines", "sentence embeddings"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

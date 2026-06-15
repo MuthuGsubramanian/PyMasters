@@ -1,0 +1,133 @@
+{
+  "id": "msmarco_minilm_cross_encoder_query_routing",
+  "topic": "msmarco_minilm_cross_encoder_query_routing",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Query Routing and Domain Detection with cross-encoder/ms-marco-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Use cross-encoder/ms-marco-MiniLM-L6-v2 as a query router that directs questions to the right knowledge domain by scoring query-domain descriptor pairs. Build an intent-aware routing system that detects out-of-scope queries and dispatches to specialized retrievers."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Smart Query Routing: Cross-Encoders as Intent Detectors\n\nVaathiyaar here! Your RAG pipeline has grown — Homie now handles billing questions, technical docs, HR policies, and product FAQs. But every query still hits the same monolithic vector index. A question about \"refund policy\" searches through code documentation, wasting retrieval budget and polluting context. The fix? Use `cross-encoder/ms-marco-MiniLM-L6-v2` as a **query router** — score the query against domain descriptors and route to the best-matching specialized retriever.\n\nThis isn't the typical reranking use case. Instead of scoring query-document pairs post-retrieval, you score query-domain pairs *pre-retrieval* to decide WHERE to search. The cross-encoder's pairwise relevance judgment is perfect for this — it understands that \"how do I get my money back\" matches \"refund and billing policies\" even without keyword overlap.\n\n### Why Route Queries?\n\n| Approach | Pros | Cons |\n|---|---|---|\n| Single index (no routing) | Simple architecture | Noisy retrieval, diluted relevance |\n| Keyword-based routing | Fast, no model needed | Brittle, misses paraphrases |\n| Embedding similarity routing | Handles semantics | Bi-encoder misses nuance |\n| Cross-encoder routing | Best semantic matching | Slightly slower (but only N domains) |\n\nSince you're only scoring against 5-10 domain descriptors (not thousands of documents), the cross-encoder's latency is negligible — under 5ms for 10 pairs.\n\n### Building a Cross-Encoder Query Router\n\n```python\nfrom sentence_transformers import CrossEncoder\nimport numpy as np\n\nclass QueryRouter:\n    def __init__(self, domains: dict[str, str], threshold: float = -1.0):\n        self.model = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n        self.domains = domains  # {domain_name: description}\n        self.threshold = threshold\n\n    def route(self, query: str) -> dict:\n        descriptions = list(self.domains.values())\n        names = list(self.domains.keys())\n        pairs = [[query, desc] for desc in descriptions]\n        scores = self.model.predict(pairs)\n\n        best_idx = int(np.argmax(scores))\n        best_score = float(scores[best_idx])\n\n        if best_score < self.threshold:\n            return {\"domain\": \"out_of_scope\", \"score\": best_score, \"all_scores\": dict(zip(names, scores.tolist()))}\n\n        return {\"domain\": names[best_idx], \"score\": best_score, \"all_scores\": dict(zip(names, scores.tolist()))}\n\ndomains = {\n    \"billing\": \"Payment methods, invoices, refunds, subscription plans, and pricing\",\n    \"technical\": \"API documentation, code examples, SDK setup, and error troubleshooting\",\n    \"hr\": \"Leave policies, benefits, onboarding, performance reviews, and org structure\",\n    \"product\": \"Feature guides, release notes, product roadmap, and getting started tutorials\",\n}\n\nrouter = QueryRouter(domains, threshold=-1.0)\nresult = router.route(\"how do I get a refund for my last payment?\")\nprint(f\"Routed to: {result['domain']} (score: {result['score']:.2f})\")\n```\n\n### Multi-Domain Retrieval with Confidence Routing\n\nSometimes a query spans multiple domains. Use score gaps to detect ambiguity:\n\n```python\ndef route_with_fallback(router, query, gap_threshold=2.0):\n    result = router.route(query)\n    scores = result[\"all_scores\"]\n    sorted_domains = sorted(scores.items(), key=lambda x: x[1], reverse=True)\n\n    top_score = sorted_domains[0][1]\n    second_score = sorted_domains[1][1] if len(sorted_domains) > 1 else float('-inf')\n\n    if top_score - second_score < gap_threshold:\n        # Ambiguous — query both domains\n        return {\n            \"strategy\": \"multi_domain\",\n            \"domains\": [sorted_domains[0][0], sorted_domains[1][0]],\n            \"scores\": dict(sorted_domains[:2]),\n        }\n    return {\n        \"strategy\": \"single_domain\",\n        \"domains\": [sorted_domains[0][0]],\n        \"scores\": {sorted_domains[0][0]: top_score},\n    }\n```\n\n### Out-of-Scope Detection\n\nWhen all domain scores are below threshold, the query doesn't belong to any domain:\n\n```python\ndef handle_query(router, query, retrievers, llm_fn):\n    result = router.route(query)\n\n    if result[\"domain\"] == \"out_of_scope\":\n        return llm_fn(\n            f\"User asked: {query}\\n\"\n            \"This question is outside my knowledge domains. \"\n            \"Politely explain what topics I can help with.\"\n        )\n\n    # Route to domain-specific retriever\n    retriever = retrievers[result[\"domain\"]]\n    docs = retriever.search(query, top_k=5)\n    context = \"\\n\".join(f\"- {d}\" for d in docs)\n    return llm_fn(f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\")\n```\n\n### Domain Descriptor Engineering\n\nThe quality of routing depends on your domain descriptions. Good descriptions are:\n\n```python\n# Bad: too short, ambiguous keywords\ndomains_bad = {\n    \"billing\": \"payments\",\n    \"tech\": \"code\",\n}\n\n# Good: specific, multi-aspect, paraphrase-rich\ndomains_good = {\n    \"billing\": \"Payment processing, invoices, refunds, cancellations, \"\n               \"subscription management, pricing tiers, and billing disputes\",\n    \"technical\": \"API endpoints, SDK integration, code examples, error codes, \"\n                 \"debugging, authentication setup, and webhook configuration\",\n}\n```\n\nThe cross-encoder uses full attention over query + description — longer, more specific descriptions give it more signal to match against.\n\n### Performance: Routing is Cheap\n\nWith 5 domains, routing takes ~3ms on CPU (5 pairs through a 22M-parameter model). Compare to retrieval (50-200ms) and LLM generation (500-2000ms) — routing cost is invisible. This makes it practical to route EVERY query without caching.\n\n> **Key Insight:** Cross-encoders aren't just for post-retrieval reranking — they're excellent pre-retrieval query routers. Score your query against domain descriptors (not documents) to route to the right retriever, detect out-of-scope queries before they cause hallucinations, and handle ambiguous multi-domain questions by checking the score gap. For Homie, this means every question goes to the right knowledge base from the start."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Cross-encoders aren't just for reranking — they make excellent query routers. By scoring a query against domain descriptors, ms-marco-MiniLM-L6-v2 can route questions to the right knowledge base, detect out-of-scope queries, and handle ambiguous multi-domain questions. With only 5-10 domain pairs to score, routing adds under 5ms — invisible latency for massive retrieval quality gains.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\nimport numpy as np\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ndomains = {\n    \"billing\": \"Payment methods, invoices, refunds, subscription plans, pricing\",\n    \"technical\": \"API docs, code examples, SDK setup, error troubleshooting\",\n    \"hr\": \"Leave policies, benefits, onboarding, performance reviews\",\n    \"product\": \"Feature guides, release notes, getting started tutorials\",\n}\n\nquery = \"how do I get a refund for last month?\"\npairs = [[query, desc] for desc in domains.values()]\nscores = model.predict(pairs)\n\nfor name, score in sorted(zip(domains.keys(), scores), key=lambda x: x[1], reverse=True):\n    print(f\"{score:+.2f} | {name}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import CrossEncoder — we'll use it for query-domain scoring, not the typical query-document reranking. Same model, creative application."},
+        {"line": 4, "explanation": "Load ms-marco-MiniLM-L6-v2. It was trained on query-passage pairs, but domain descriptors work as short 'passages' that describe what each domain covers."},
+        {"line": 6, "explanation": "Define domains with rich descriptions. Each description is a mini-passage listing the topics that domain covers — the cross-encoder matches query intent against these."},
+        {"line": 13, "explanation": "A billing query: 'refund for last month.' The cross-encoder must understand this matches billing (refunds, payments) not technical or HR domains."},
+        {"line": 14, "explanation": "Create [query, domain_description] pairs. With only 4 domains, we score 4 pairs — negligible latency compared to actual document retrieval."},
+        {"line": 15, "explanation": "model.predict() scores all pairs. The billing domain should score highest because 'refund' directly matches its description about refunds and payments."},
+        {"line": 17, "explanation": "Sort by score descending. The clear winner becomes the routing target. Large score gaps indicate high routing confidence."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "import numpy as np\n\nclass QueryRouter:\n    def __init__(self, domains, model, threshold=-1.0):\n        self.domains = domains\n        self.model = model\n        self.threshold = threshold\n\n    def route(self, query):\n        names = list(self.domains.keys())\n        descs = list(self.domains.values())\n        scores = self.model.predict([[query, d] for d in descs])\n        best_idx = int(np.argmax(scores))\n        best_score = float(scores[best_idx])\n\n        if best_score < self.threshold:\n            return {\"domain\": \"out_of_scope\", \"score\": best_score}\n        return {\"domain\": names[best_idx], \"score\": best_score}\n\n    def route_multi(self, query, gap_threshold=2.0):\n        names = list(self.domains.keys())\n        descs = list(self.domains.values())\n        scores = self.model.predict([[query, d] for d in descs])\n        order = np.argsort(scores)[::-1]\n\n        top = float(scores[order[0]])\n        second = float(scores[order[1]]) if len(order) > 1 else float('-inf')\n\n        if top - second < gap_threshold:\n            return {\"domains\": [names[order[0]], names[order[1]]], \"ambiguous\": True}\n        return {\"domains\": [names[order[0]]], \"ambiguous\": False}\n\nrouter = QueryRouter(domains, model, threshold=-1.0)\nprint(router.route(\"how do I reset my API key?\"))\nprint(router.route_multi(\"onboarding guide for new developers\"))",
+      "steps": [
+        {"line": 3, "explanation": "QueryRouter encapsulates the routing logic. It takes domain definitions, a cross-encoder model, and a threshold for out-of-scope detection."},
+        {"line": 9, "explanation": "route() scores the query against all domain descriptions and picks the highest-scoring domain. If below threshold, it returns 'out_of_scope'."},
+        {"line": 12, "explanation": "Score all query-domain pairs in one batch call. Even with 10 domains, this is ~5ms on CPU — negligible versus retrieval latency."},
+        {"line": 16, "explanation": "Out-of-scope detection: if the best domain score is still below threshold, no domain is a good match. This prevents searching irrelevant indices."},
+        {"line": 20, "explanation": "route_multi() handles ambiguous queries that span domains. It checks the gap between the top two scores to decide if multiple domains should be searched."},
+        {"line": 28, "explanation": "If the gap is small (top and second scores are close), the query is ambiguous — route to both domains for comprehensive retrieval."},
+        {"line": 33, "explanation": "Test: 'reset API key' should route to technical. 'onboarding for developers' might be ambiguous between HR (onboarding) and technical (developers)."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "class RoutedRAGPipeline:\n    def __init__(self, router, retrievers):\n        self.router = router\n        self.retrievers = retrievers\n\n    def answer(self, query, llm_fn, top_k=3):\n        route = self.router.route(query)\n\n        if route[\"domain\"] == \"out_of_scope\":\n            return {\"answer\": \"I can't help with that topic.\",\n                    \"domain\": \"out_of_scope\", \"confidence\": route[\"score\"]}\n\n        retriever = self.retrievers[route[\"domain\"]]\n        docs = retriever.search(query, top_k=top_k)\n        context = \"\\n\".join(f\"- {d}\" for d in docs)\n\n        prompt = f\"Context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"\n        answer = llm_fn(prompt)\n\n        return {\"answer\": answer, \"domain\": route[\"domain\"],\n                \"confidence\": route[\"score\"], \"sources\": docs}\n\n# Integration pattern for Homie\ndef build_homie_pipeline(cross_encoder, domain_config, retrievers):\n    router = QueryRouter(domain_config, cross_encoder, threshold=-1.0)\n    return RoutedRAGPipeline(router, retrievers)",
+      "steps": [
+        {"line": 1, "explanation": "RoutedRAGPipeline combines the router with domain-specific retrievers. Each domain has its own optimized index — billing docs, tech docs, etc."},
+        {"line": 6, "explanation": "The answer() method orchestrates the full flow: route the query, retrieve from the right domain, build context, and call the LLM."},
+        {"line": 9, "explanation": "Out-of-scope queries get a graceful fallback response. No retrieval happens — no risk of feeding irrelevant context to the LLM."},
+        {"line": 13, "explanation": "Route to the domain-specific retriever. Each retriever is optimized for its domain — different embeddings, chunk sizes, or indexing strategies."},
+        {"line": 17, "explanation": "Build the RAG prompt from domain-specific context. Since routing filtered irrelevant domains, the context is focused and high-quality."},
+        {"line": 20, "explanation": "Return the answer with metadata: which domain handled it, confidence score, and source documents. This enables debugging and audit trails."},
+        {"line": 24, "explanation": "Factory function for Homie: configure domains, wire up retrievers, and the pipeline handles routing automatically for every query."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "No Routing (Single Index)",
+      "right_label": "Cross-Encoder Query Routing",
+      "items": [
+        {"left": "All queries hit one massive index", "right": "Queries routed to domain-specific indexes"},
+        {"left": "Retrieval mixes relevant + irrelevant domains", "right": "Only relevant domain searched"},
+        {"left": "No out-of-scope detection", "right": "Detects and handles unknown queries gracefully"},
+        {"left": "Simple architecture, easy to start", "right": "~5ms routing overhead for 10 domains"},
+        {"left": "Context polluted with off-topic results", "right": "Focused, high-quality context for LLM"},
+        {"left": "LLM may hallucinate from noise", "right": "LLM sees only domain-relevant passages"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You've unlocked cross-encoder query routing — every question now finds its way to the right knowledge base automatically. Homie's RAG pipeline just got an intelligent dispatcher at the front door!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `DomainRouter` class that routes queries to the best-matching domain using simulated cross-encoder scoring. Instead of a neural model, use word overlap scoring: count how many query words appear in the domain description, divided by total query words. Implement `score_domain(query, description)` for pairwise scoring, `route(query)` to find the best domain, and `is_in_scope(query)` that returns False if the best score is below a threshold."
+      },
+      "starter_code": "class DomainRouter:\n    def __init__(self, domains: dict, threshold: float = 0.3):\n        # domains: {\"domain_name\": \"description of what this domain covers\"}\n        self.domains = domains\n        self.threshold = threshold\n\n    def score_domain(self, query: str, description: str) -> float:\n        # Count query words found in description / total query words\n        # Use .lower().split() for tokenization\n        # Return 0.0 if query has no words\n        pass\n\n    def route(self, query: str) -> dict:\n        # Score query against all domains\n        # Return {\"domain\": best_domain_name, \"score\": best_score}\n        # If no domains, return {\"domain\": \"unknown\", \"score\": 0.0}\n        pass\n\n    def is_in_scope(self, query: str) -> bool:\n        # Return True if best domain score >= threshold\n        pass\n\n# Test it:\ndomains = {\n    \"billing\": \"payments invoices refunds subscriptions pricing charges\",\n    \"technical\": \"api code sdk errors debugging integration endpoints\",\n    \"hr\": \"leave vacation benefits onboarding salary reviews\",\n}\n\nrouter = DomainRouter(domains, threshold=0.3)\n\n# Billing query\nresult = router.route(\"how do I get a refund\")\nprint(result[\"domain\"])\n\n# Technical query\nresult = router.route(\"api integration errors\")\nprint(result[\"domain\"])\n\n# Out of scope\nprint(router.is_in_scope(\"what is the weather today\"))\n\n# Score check\nprint(router.score_domain(\"refund payment\", \"payments invoices refunds\"))",
+      "expected_output": "billing\ntechnical\nFalse\n1.0",
+      "hints": {
+        "en": [
+          "In score_domain(), split both query and description into word sets with .lower().split(), then count query words that appear in the description word set",
+          "In route(), iterate over self.domains, call score_domain for each, and track the domain with the highest score",
+          "In is_in_scope(), call self.route(query) and check if the returned score is >= self.threshold"
+        ]
+      },
+      "test_code": "d = {\"billing\": \"payments refunds invoices\", \"tech\": \"api code errors\"}\nr = DomainRouter(d, threshold=0.3)\nassert r.score_domain(\"refund payment\", \"payments refunds invoices\") == 1.0\nassert r.score_domain(\"hello world\", \"payments refunds\") == 0.0\nassert r.score_domain(\"api errors\", \"api code errors\") == 1.0\nassert abs(r.score_domain(\"api weather\", \"api code errors\") - 0.5) < 0.01\nresult = r.route(\"refund my payment\")\nassert result[\"domain\"] == \"billing\"\nassert result[\"score\"] > 0\nresult = r.route(\"api errors\")\nassert result[\"domain\"] == \"tech\"\nassert r.is_in_scope(\"refund payment\") == True\nassert r.is_in_scope(\"quantum physics lecture\") == False\nassert r.score_domain(\"\", \"anything\") == 0.0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `MultiDomainRouter` that extends routing to handle ambiguous queries spanning multiple domains. Implement `route_multi(query, gap_threshold)` that returns multiple domains when the score gap between the top two is smaller than the gap_threshold. Also implement `classify_confidence(query)` that returns 'high' if the gap is large (>= 0.3), 'ambiguous' if the gap is small (< 0.3 but best score >= threshold), or 'out_of_scope' if best score is below the threshold."
+      },
+      "starter_code": "class MultiDomainRouter:\n    def __init__(self, domains: dict, threshold: float = 0.3):\n        self.domains = domains\n        self.threshold = threshold\n\n    def score_domain(self, query: str, description: str) -> float:\n        q_words = set(query.lower().split())\n        d_words = set(description.lower().split())\n        if not q_words:\n            return 0.0\n        return len(q_words & d_words) / len(q_words)\n\n    def score_all(self, query: str) -> list[tuple]:\n        # Return list of (domain_name, score) sorted by score descending\n        pass\n\n    def route_multi(self, query: str, gap_threshold: float = 0.3) -> dict:\n        # Score all domains, sort descending\n        # If gap between top and second < gap_threshold: return both\n        # Return {\"domains\": [list of domain names], \"scores\": {name: score}}\n        pass\n\n    def classify_confidence(self, query: str) -> str:\n        # 'high': best score >= threshold AND gap to second >= 0.3\n        # 'ambiguous': best score >= threshold AND gap to second < 0.3\n        # 'out_of_scope': best score < threshold\n        pass\n\n# Test it:\ndomains = {\n    \"billing\": \"payments invoices refunds subscriptions pricing\",\n    \"technical\": \"api code sdk errors debugging integration\",\n    \"hr\": \"leave vacation benefits onboarding salary\",\n}\n\nrouter = MultiDomainRouter(domains, threshold=0.3)\n\n# Clear single domain\nresult = router.route_multi(\"refund my payment\", gap_threshold=0.3)\nprint(len(result[\"domains\"]))\nprint(result[\"domains\"][0])\n\n# Ambiguous: overlaps billing and technical\nresult = router.route_multi(\"integration pricing api\", gap_threshold=0.4)\nprint(len(result[\"domains\"]))\n\n# Confidence classification\nprint(router.classify_confidence(\"refund my payment\"))\nprint(router.classify_confidence(\"quantum physics\"))",
+      "expected_output": "1\nbilling\n2\nhigh\nout_of_scope",
+      "hints": {
+        "en": [
+          "In score_all(), use a list comprehension calling score_domain for each domain, then sort by score descending with sorted()",
+          "In route_multi(), get score_all results, check if top_score - second_score < gap_threshold — if so, return both top domains",
+          "In classify_confidence(), get score_all results, check threshold first for out_of_scope, then check the gap for high vs ambiguous"
+        ]
+      },
+      "test_code": "d = {\"a\": \"hello world foo\", \"b\": \"hello bar baz\", \"c\": \"xyz nothing\"}\nr = MultiDomainRouter(d, threshold=0.3)\nscored = r.score_all(\"hello world\")\nassert scored[0][0] == \"a\"\nassert scored[0][1] > scored[1][1]\nresult = r.route_multi(\"hello world\", gap_threshold=0.1)\nassert \"a\" in result[\"domains\"]\nassert \"scores\" in result\nresult = r.route_multi(\"hello foo bar\", gap_threshold=0.5)\nassert len(result[\"domains\"]) == 2\nassert r.classify_confidence(\"hello world\") == \"high\"\nassert r.classify_confidence(\"completely unknown stuff\") == \"out_of_scope\"\nr2 = MultiDomainRouter({\"a\": \"hello world\", \"b\": \"hello earth\"}, threshold=0.3)\nassert r2.classify_confidence(\"hello there\") == \"ambiguous\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["query routing", "domain detection", "cross-encoder as router", "out-of-scope detection", "multi-domain retrieval", "score gap analysis", "confidence classification", "intent routing", "pre-retrieval filtering", "RAG pipeline architecture"],
+    "concepts_required": ["python classes", "dictionaries", "lists", "sets", "cross-encoders", "RAG pipelines", "sentence embeddings"],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": ["ai_engineering"]
+  },
+  "generated": true
+}

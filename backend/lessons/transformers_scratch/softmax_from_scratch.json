@@ -1,0 +1,173 @@
+{
+  "id": "softmax_from_scratch",
+  "topic": "softmax_from_scratch",
+  "track": "transformers_scratch",
+  "module": "attention",
+  "order": 1,
+  "title": {
+    "en": "Softmax from Scratch: Turning Scores into Attention Weights"
+  },
+  "description": {
+    "en": "Attention starts by scoring how much each token should matter — but raw scores can be negative, huge, or tiny, and they don't add up to anything meaningful. Softmax is the function that turns those raw SCORES into attention WEIGHTS: a clean probability distribution that is positive and sums to 1. Master softmax — its formula, the exponentiation, the numerical-stability trick, and the temperature knob — and you've built the heart of attention."
+  },
+  "xp_reward": 90,
+  "next_unlock": "dot_product_attention",
+  "story_variants": {
+    "en": "## From Scores to Weights\n\nEvery attention mechanism begins the same way: it produces a list of **scores**, one per token, saying \"how much should this token influence the answer?\" But raw scores are messy. They can be negative. They can be enormous or microscopic. And there's no rule that they sum to anything useful. You can't use them directly as **weights** for a weighted average — for that you need numbers that are all positive and that add up to exactly 1.\n\nThat conversion — raw scores in, a clean probability distribution out — is exactly what **softmax** does. It is the single function that turns attention *scores* into attention *weights*.\n\n> **Key idea:** Softmax takes any vector of real numbers and returns a probability distribution: every output is positive, and they sum to 1. It is the bridge from raw attention scores to usable attention weights.\n\n## The Formula\n\nFor an input vector `x` with entries `x_1, x_2, ..., x_n`, softmax is defined element-by-element:\n\n```\nsoftmax(x_i) = exp(x_i) / sum_j exp(x_j)\n```\n\nIn words: exponentiate every entry, then divide each exponential by the total of all the exponentials. Because every `exp(...)` is strictly positive, every output is positive. And because each output is its share of the total, they sum to 1 by construction.\n\n## Why Exponentiate?\n\nWhy `exp` and not, say, just dividing each score by the sum of scores? Two reasons:\n\n1. **Positivity.** `exp(x)` is positive for *any* real `x`, including negatives. Raw scores like `-3.0` would poison a plain divide-by-sum (you could get negative or undefined weights). Exponentiation launders every score into a positive number first.\n2. **Amplifying differences.** `exp` grows fast, so it stretches gaps between scores. A score that is only a little higher than its neighbors ends up with a *much* larger share of the weight. This is what lets attention focus sharply on the most relevant tokens instead of smearing weight evenly.\n\n## A Worked Example\n\nTake the scores `[2.0, 1.0, 0.0]`. Compute each exponential, sum them, then divide:\n\n| Score `x_i` | `exp(x_i)` | weight = `exp(x_i) / sum` |\n|-------------|-----------|---------------------------|\n| 2.0         | 7.389     | 7.389 / 11.107 = **0.6652** |\n| 1.0         | 2.718     | 2.718 / 11.107 = **0.2447** |\n| 0.0         | 1.000     | 1.000 / 11.107 = **0.0900** |\n| **sum**     | **11.107**| **1.0000**                |\n\nNotice the highest score (2.0) didn't just win — it took **two-thirds** of all the weight, even though it was only 1 and 2 points above the others. That is the amplification of `exp` at work.\n\n## The Numerical-Stability Trick\n\nThere's a hidden landmine. `exp` overflows fast: `exp(1000)` is `inf` in floating point, and `inf / inf` is `nan`. Real attention scores can get large, so a naive implementation blows up.\n\nThe fix is a beautiful piece of algebra. Subtract the maximum score from *every* entry before exponentiating:\n\n```\nsoftmax(x_i) = exp(x_i - max(x)) / sum_j exp(x_j - max(x))\n```\n\nThis gives **exactly the same result** — the `exp(-max(x))` factor cancels top and bottom — but now the largest exponent is `exp(0) = 1`, so nothing overflows. Every serious softmax does this. It costs one `max` and a subtraction and buys you bulletproof numerics.\n\n## The Temperature Knob\n\nSoftmax has one famous tuning parameter: **temperature** `T`. You divide every score by `T` before applying softmax:\n\n```\nsoftmax(x_i / T)\n```\n\n- **Low T (e.g. 0.5)** makes the scores *bigger* in magnitude, so the gaps grow and softmax becomes **sharper** — almost all weight goes to the top token. The distribution approaches a hard \"pick the max.\"\n- **High T (e.g. 2.0)** shrinks the gaps, so softmax becomes **flatter** — weight spreads out more evenly toward a uniform distribution.\n\nTemperature is how you dial attention (or sampling in text generation) between \"focus hard\" and \"stay open.\" `T = 1` is plain softmax.\n\n## Why This Is the Building Block of Attention\n\nIn the next lessons you'll compute attention scores with dot products. The moment you have those scores, **softmax is what makes them usable**: it converts them into weights you can multiply by value vectors and sum. No softmax, no attention. Get this one function right — formula, exponentiation, stability trick, temperature — and the rest of attention is just plumbing around it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "probability_distribution",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "softmax_pipeline",
+      "nodes": [
+        {
+          "label": "Softmax Pipeline",
+          "children": [
+            "raw scores -> can be negative, huge, tiny",
+            "exp(x_i)   -> makes every term positive, amplifies gaps",
+            "divide by sum -> share of the total",
+            "weights -> all positive, sum to 1.0"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "temperature_effect",
+      "left": {
+        "label": "Low T = 0.5 -> SHARP (top token dominates)",
+        "result": true
+      },
+      "right": {
+        "label": "High T = 2.0 -> FLAT (weight spreads out)",
+        "result": false
+      },
+      "description": {
+        "en": "Temperature divides scores before softmax. Low T sharpens toward 'pick the max'; high T flattens toward uniform. T = 1 is plain softmax."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "softmax_demo",
+      "code": "import math\nscores = [2.0, 1.0, 0.0]\nm = max(scores)\nexps = [math.exp(s - m) for s in scores]\ntotal = sum(exps)\nweights = [e / total for e in exps]\nprint([round(p, 4) for p in weights])",
+      "executionSteps": [
+        { "line": 3, "variables": { "scores": "[2.0, 1.0, 0.0]", "m": "2.0" }, "output": "", "description": "Subtract max(scores)=2.0 from every score for numerical stability" },
+        { "line": 4, "variables": { "exps": "[1.0, 0.3679, 0.1353]" }, "output": "", "description": "exp of the shifted scores — largest is exp(0)=1, so no overflow" },
+        { "line": 5, "variables": { "total": "1.5032" }, "output": "", "description": "Sum of the exponentials becomes the denominator" },
+        { "line": 6, "variables": { "weights": "[0.6652, 0.2447, 0.0900]" }, "output": "", "description": "Each exp divided by the total — positive and summing to 1" },
+        { "line": 7, "variables": {}, "output": "[0.6652, 0.2447, 0.09]", "description": "The highest score took ~2/3 of the weight: exp amplifies the gap" }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Softmax turns SCORES into WEIGHTS: positive, summing to 1.",
+        "exp amplifies gaps; subtract max(x) first to avoid overflow.",
+        "Temperature sharpens (low T) or flattens (high T) the focus.",
+        "This is the heart of attention."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement softmax from scratch in PURE Python (math only, no numpy — it is not available in the sandbox). Given a list of raw attention scores, return a list of probabilities that are all positive and sum to 1. Use the numerical-stability trick: subtract max(scores) from every score before calling math.exp, so large scores never overflow. The demo prints the result rounded to 4 decimals to avoid float noise. For scores [2.0, 1.0, 0.0] the highest score should take about two-thirds of the weight. Expected output: [0.6652, 0.2447, 0.09]"
+      },
+      "starter_code": "import math\n\ndef softmax(scores):\n    # TODO: 1) find m = max(scores) for stability\n    #       2) exps = exp(s - m) for each score s\n    #       3) total = sum(exps)\n    #       4) return [e / total for e in exps]\n    return None\n\n# --- demo (do not change) ---\nprint([round(p, 4) for p in softmax([2.0, 1.0, 0.0])])",
+      "expected_output": "[0.6652, 0.2447, 0.09]",
+      "hints": {
+        "en": [
+          "Numerical stability: m = max(scores), then exponentiate the shifted score with math.exp(s - m). The result is identical but never overflows.",
+          "Build the exponentials first: exps = [math.exp(s - m) for s in scores]. Every entry is positive because exp is always positive.",
+          "The denominator is the sum of all the exponentials: total = sum(exps). Then each weight is e / total.",
+          "Return [e / total for e in exps]. The weights are positive and sum to 1 by construction — that is what makes them usable as attention weights."
+        ]
+      },
+      "test_code": "result = softmax([2.0, 1.0, 0.0])\nassert abs(sum(result) - 1.0) < 1e-9, 'weights must sum to 1'\nassert all(p > 0 for p in result), 'all weights must be positive'\nassert [round(p, 4) for p in result] == [0.6652, 0.2447, 0.09]\n# stability: huge scores must not overflow to nan/inf\nbig = softmax([1000.0, 1000.0])\nassert abs(sum(big) - 1.0) < 1e-9 and big == [0.5, 0.5]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does softmax produce from a vector of raw scores?"
+      },
+      "options": {
+        "en": [
+          "A single largest score (the maximum)",
+          "A probability distribution: all values positive and summing to 1",
+          "The scores sorted in descending order",
+          "The scores with their signs flipped"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does softmax exponentiate each score instead of just dividing each score by the sum of scores?"
+      },
+      "options": {
+        "en": [
+          "Because exp is faster to compute than division",
+          "Because exp(x) is positive for any real x (even negatives) and amplifies the gaps between scores",
+          "Because exponentiation makes the numbers smaller and easier to read",
+          "Because the scores are always already positive"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why subtract max(x) from every entry before applying exp?"
+      },
+      "options": {
+        "en": [
+          "It changes the result to favor the largest score more strongly",
+          "It is required to make the outputs sum to 1",
+          "It prevents floating-point overflow (exp of a large number is inf) while giving the exact same result",
+          "It converts the scores to integers"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What happens to the softmax distribution as you LOWER the temperature T (dividing scores by a small T)?"
+      },
+      "options": {
+        "en": [
+          "It becomes sharper — almost all weight goes to the top score",
+          "It becomes flatter — weight spreads evenly toward uniform",
+          "It has no effect; temperature only matters above 1",
+          "It makes some weights negative"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["softmax", "probability_distribution", "numerical_stability", "temperature_scaling", "attention_weights"],
+    "concepts_required": [],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

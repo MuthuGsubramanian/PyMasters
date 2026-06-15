@@ -1,0 +1,158 @@
+{
+  "id": "what_is_vibe_coding",
+  "topic": "what_is_vibe_coding",
+  "track": "vibe_coding",
+  "module": "foundations",
+  "order": 1,
+  "title": {
+    "en": "What Vibe Coding Really Is (and Isn't)"
+  },
+  "description": {
+    "en": "Vibe coding — building software by prompting an AI and steering on instinct — is a superpower when you stay in control and a trap when you don't. Learn the spectrum, the sweet spot, and the failure mode before you write a single prompt."
+  },
+  "xp_reward": 80,
+  "next_unlock": "mental_model_ai_pair",
+  "story_variants": {
+    "en": "## Vibe Coding: Driving, Not Being Driven\n\n\"Vibe coding\" is the name that stuck in 2025 for a way of building software that already felt inevitable: you describe what you want in plain language, an AI writes the code, you run it, react to the result, and steer — on feel, on *vibes* — toward something that works. No memorizing syntax. No typing every character. Just intent in, software out.\n\nUsed well, it is the biggest leverage a programmer has ever had. Used badly, it produces a pile of code nobody — including you — actually understands, that breaks in ways you can't fix.\n\nThe difference is not the tool. It's **who is in the driver's seat.**\n\n### The Spectrum of AI Assistance\n\nVibe coding isn't one thing. It's a dial:\n\n| Level | What you do | What the AI does | Risk |\n|-------|-------------|------------------|------|\n| **Autocomplete** | Write code, accept suggestions | Finishes your line/function | Low |\n| **Prompt-a-function** | Describe one function | Writes that function | Low–medium |\n| **Prompt-a-feature** | Describe a feature | Writes files, wires them up | Medium |\n| **Agentic** | Describe a goal | Plans, edits many files, runs commands | High |\n\nAs you move down the table, you move faster — and you understand less of what you're shipping. Every level is legitimate. The skill is knowing **which level a task deserves**, and never letting the AI operate a level higher than you can verify.\n\n### The Sweet Spot\n\nVibe coding shines when **the cost of being wrong is low and the cost of checking is also low**:\n\n- Prototypes and throwaway scripts\n- Boilerplate you've written a hundred times\n- Glue code, data wrangling, format conversions\n- Exploring an unfamiliar library's surface\n- A first draft you will read and rewrite\n\nIn all of these, a wrong answer is cheap and obvious. You run it, it's wrong, you re-prompt. The loop is tight.\n\n### The Trap\n\nIt bites when **being wrong is expensive and checking is hard**:\n\n- Authentication, payments, anything touching money or secrets\n- Database migrations and data deletion\n- Concurrency, cryptography, numerical precision\n- Code you'll have to maintain for years but never read closely\n\nHere the AI's output *looks* right — confident, well-formatted, plausibly named — and is subtly, dangerously wrong. The vibe is great. The code is a landmine.\n\n> **Key idea:** Vibe coding doesn't remove the need to understand software. It *relocates* it — from writing code to **reading, judging, and verifying** it. The programmers who win with AI aren't the ones who type the best prompts. They're the ones who never ship a line they couldn't defend. This whole track is about becoming that programmer."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "steering_wheel",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "spectrum_map",
+      "nodes": [
+        {
+          "label": "AI Assistance",
+          "children": [
+            "Autocomplete (you drive)",
+            "Prompt-a-function",
+            "Prompt-a-feature",
+            "Agentic (AI drives)"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "sweet_spot_vs_trap",
+      "left": {
+        "label": "Sweet spot: prototype / glue / boilerplate",
+        "result": true
+      },
+      "right": {
+        "label": "Trap: auth / payments / migrations",
+        "result": false
+      },
+      "description": {
+        "en": "Same tool. The difference is the cost of being wrong and the cost of checking."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Vibe coding moves the work from WRITING code",
+        "to READING and VERIFYING it.",
+        "Never ship a line you couldn't defend."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Judgment drill. A teammate wants to 'vibe code' four tasks. Classify each as sweet-spot (safe to vibe code fast) or trap (slow down, verify hard). We've given you a dict of tasks; set each value to the string 'sweet_spot' or 'trap' based on the lesson, then print the result for the payment task. Expected output: trap"
+      },
+      "starter_code": "tasks = {\n    \"convert a CSV to JSON\": None,        # quick glue code\n    \"process a customer refund\": None,     # touches money\n    \"scaffold a throwaway prototype\": None,\n    \"write a database migration\": None,    # can destroy data\n}\n\n# Replace each None with 'sweet_spot' or 'trap'\n\nprint(tasks[\"process a customer refund\"])",
+      "expected_output": "trap",
+      "hints": {
+        "en": [
+          "Sweet spot = being wrong is cheap AND easy to check (CSV->JSON, prototype).",
+          "Trap = being wrong is expensive or hard to verify (money, data loss).",
+          "A refund moves real money, so it's a 'trap' — verify every line."
+        ]
+      },
+      "test_code": "assert tasks['convert a CSV to JSON'] == 'sweet_spot'\nassert tasks['process a customer refund'] == 'trap'\nassert tasks['scaffold a throwaway prototype'] == 'sweet_spot'\nassert tasks['write a database migration'] == 'trap'"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "According to the lesson, what actually separates good vibe coding from bad?"
+      },
+      "options": {
+        "en": [
+          "Using a more expensive AI model",
+          "Who is in control and whether you can verify the output",
+          "Writing longer, more detailed prompts",
+          "Never using autocomplete"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which task is in the 'sweet spot' for fast vibe coding?"
+      },
+      "options": {
+        "en": [
+          "Implementing password hashing for login",
+          "A throwaway script to rename 500 files",
+          "A migration that drops a production table",
+          "Code that calculates loan interest"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "The lesson says vibe coding doesn't remove the need to understand software. What does it do?"
+      },
+      "options": {
+        "en": [
+          "It relocates the work from writing code to reading and verifying it",
+          "It removes the need for tests",
+          "It makes understanding optional",
+          "It guarantees correct code"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why is the 'agentic' level (AI edits many files and runs commands) marked high-risk?"
+      },
+      "options": {
+        "en": [
+          "It is always slower",
+          "You move fastest but understand the least of what ships",
+          "It cannot use external libraries",
+          "It only works for prototypes"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["vibe_coding", "ai_assisted_development", "engineering_judgment"],
+    "concepts_required": [],
+    "difficulty": "beginner",
+    "engagement_type": "conceptual",
+    "estimated_minutes": 15,
+    "category": "ai_assisted_dev",
+    "path_memberships": []
+  },
+  "generated": false
+}

@@ -1,0 +1,173 @@
+{
+  "id": "dunder_protocols",
+  "topic": "dunder_protocols",
+  "track": "python_internals",
+  "module": "object_model",
+  "order": 3,
+  "title": {
+    "en": "The Data Model: Dunder Methods That Make Objects Pythonic"
+  },
+  "description": {
+    "en": "Python is protocol-oriented: the interpreter calls 'dunder' (double-underscore) methods on your objects to make them behave like built-ins. Learn the data model — construction and display, equality and hashing, containers and iteration, operator overloading, context managers, and callables — and why duck typing via dunders, not inheritance, is the heart of Pythonic design."
+  },
+  "xp_reward": 100,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Interpreter Is Calling Your Methods\n\nWhen you write `len(x)`, `x + y`, `x == z`, `for item in x`, or `with x:`, you are not using fixed, built-in machinery that only works on built-in types. You are triggering a **protocol** — and Python responds by calling a specially named method *on your object*. `len(x)` calls `x.__len__()`. `x + y` calls `x.__add__(y)`. `for` calls `x.__iter__()`. These specially named methods — wrapped in double underscores — are called **dunder** methods, and together they form Python's **data model**.\n\nThis is the single most important idea in the language's design: Python is **protocol-oriented**, not inheritance-oriented. To make your object iterable you do not inherit from some `Iterable` base class — you implement `__iter__`. To make it addable, you implement `__add__`. The interpreter never asks \"what type is this?\" It asks \"does this object support the protocol I need?\" That is **duck typing**: if it implements the right dunders, it walks and quacks like the built-in.\n\n> **Key idea:** A dunder method is a hook. You don't call it directly — you implement it, and the interpreter calls it for you when the matching syntax or built-in is used. Your objects become Pythonic by *speaking the protocols*, not by inheriting them.\n\n## Construction and Display\n\nThree dunders cover an object's birth and how it shows itself:\n\n- `__init__(self, ...)` runs *after* the object is created, to initialize its attributes. (The object is actually allocated by `__new__`, which you rarely touch.)\n- `__repr__(self)` returns the **unambiguous, developer-facing** string — ideally something you could paste back into Python. This is what the REPL and `repr()` show, and the fallback for everything.\n- `__str__(self)` returns the **readable, user-facing** string for `print()` and `str()`. If you omit it, Python falls back to `__repr__`.\n\nA good rule: always write `__repr__`; add `__str__` only when end-users need something prettier.\n\n## Equality and Hashing — The Linked Pair\n\n`__eq__(self, other)` defines what `==` means for your object. But equality has a partner you must not forget: `__hash__`. An object's hash decides which bucket it lands in inside a `set` or as a `dict` key. The contract is strict: **equal objects must have equal hashes.**\n\nHere is the trap that surprises everyone. The moment you define `__eq__`, Python **sets `__hash__` to `None`**, making your object *unhashable* — you can no longer put it in a set or use it as a dict key. This is a safety feature: Python refuses to guess a hash that stays consistent with your new equality. If your object is immutable and you want it hashable, you must define `__hash__` yourself, typically `return hash((self.x, self.y))` over the same fields you compare.\n\n## Containers and Iteration\n\n| Protocol | Dunder(s) | Triggered by |\n|----------|-----------|--------------|\n| Length | `__len__` | `len(x)` |\n| Indexing / slicing | `__getitem__` | `x[i]`, `x[a:b]` |\n| Membership | `__contains__` | `item in x` |\n| Iteration | `__iter__` (+ `__next__`) | `for v in x` |\n| Equality | `__eq__` | `x == y` |\n| Hashing | `__hash__` | `set`, `dict` keys |\n| Addition | `__add__` | `x + y` |\n| Context manager | `__enter__`, `__exit__` | `with x:` |\n| Callable | `__call__` | `x(...)` |\n\nImplement `__len__` and `__getitem__` and your object already behaves like a sequence — `for` will even iterate it (by calling `__getitem__` with `0, 1, 2, ...`) if there is no `__iter__`. Add `__iter__` for proper, explicit iteration.\n\n## Operator Overloading\n\n`__add__`, `__sub__`, `__mul__`, `__lt__`, `__gt__`, and friends let your type respond to `+`, `-`, `*`, `<`, `>`. The convention that keeps you sane: arithmetic dunders should **return a new object**, never mutate `self`. `Vector(1, 2) + Vector(3, 4)` should hand back a fresh `Vector(4, 6)`, leaving both operands untouched — exactly how `int` and `str` behave.\n\n## Context Managers and Callables\n\n`__enter__` and `__exit__` power the `with` statement: `__enter__` runs on entry (its return value is bound by `as`), and `__exit__` runs on the way out — *guaranteed*, even if an exception is raised — which is why `with open(...)` always closes the file.\n\n`__call__` makes an *instance* callable like a function. After you define it, `obj()` runs `obj.__call__()`. This is how objects can carry state yet be invoked like plain functions — the backbone of decorators, stateful callbacks, and partial-application objects.\n\nLearn the data model and a quiet truth emerges: there is very little \"magic\" in Python. `len`, `+`, `in`, `for`, `with`, `()` — all of it is just the interpreter politely calling dunder methods it hopes your object implements. Implement them, and your class stops being a second-class citizen and becomes indistinguishable from a built-in."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "object_graph",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "data_model_map",
+      "nodes": [
+        {
+          "label": "The Data Model (Dunders)",
+          "children": [
+            "Construction & display -> __init__ / __repr__ / __str__",
+            "Equality & hashing -> __eq__ + __hash__ (linked pair!)",
+            "Containers & iteration -> __len__ / __getitem__ / __iter__",
+            "Operators -> __add__ and friends (return NEW object)",
+            "Context manager -> __enter__ / __exit__",
+            "Callable -> __call__"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "eq_hash_trap",
+      "left": {
+        "label": "Define __eq__ only -> __hash__ becomes None -> object UNHASHABLE",
+        "result": false
+      },
+      "right": {
+        "label": "Define __eq__ AND __hash__ -> usable in sets & dict keys",
+        "result": true
+      },
+      "description": {
+        "en": "Defining __eq__ silently sets __hash__ to None as a safety feature. To use the object in a set or as a dict key, define __hash__ over the same fields you compare. Contract: equal objects MUST hash equal."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "id": "vector_dunders",
+      "code": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n    def __eq__(self, other):\n        return (self.x, self.y) == (other.x, other.y)\n    def __repr__(self):\n        return f\"Vector({self.x}, {self.y})\"\n\nprint(Vector(1, 2) + Vector(3, 4))",
+      "steps": [
+        { "line": 5, "description": "__add__ is the hook for '+'. It builds and returns a NEW Vector — it never mutates self." },
+        { "line": 7, "description": "__eq__ defines '==' by comparing the (x, y) tuples field-by-field." },
+        { "line": 9, "description": "__repr__ returns 'Vector(x, y)' — the unambiguous, paste-back-able form." },
+        { "line": 12, "description": "'Vector(1,2) + Vector(3,4)' calls __add__, and print() uses __repr__ -> 'Vector(4, 6)'." }
+      ]
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "len(x), x+y, x==y, for v in x, with x:, x() -> all call DUNDERS.",
+        "Python is protocol-oriented: duck typing via dunders, not inheritance.",
+        "Defining __eq__ kills __hash__ -> add __hash__ to stay set/dict-usable.",
+        "Vector(1,2) + Vector(3,4) -> Vector(4, 6)"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2200
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Make YOUR class behave like a built-in by implementing the data-model protocols. Complete the Vector class so it speaks Python's dunders:\n\n- __init__(self, x, y): store x and y as attributes.\n- __add__(self, other): return a NEW Vector whose components are the sums — never mutate self.\n- __eq__(self, other): return True when both x and y match (compare the (x, y) tuples).\n- __repr__(self): return the string 'Vector(x, y)', e.g. 'Vector(4, 6)'.\n\nThe demo adds two vectors and prints the result. Because __add__ returns a new Vector and print() uses __repr__, the expected output is exactly:\nVector(4, 6)"
+      },
+      "starter_code": "class Vector:\n    def __init__(self, x, y):\n        # TODO: store x and y as attributes on self\n        pass\n\n    def __add__(self, other):\n        # TODO: return a NEW Vector with summed components (do not mutate self)\n        pass\n\n    def __eq__(self, other):\n        # TODO: return True only when both x and y match\n        pass\n\n    def __repr__(self):\n        # TODO: return the string 'Vector(x, y)', e.g. 'Vector(4, 6)'\n        pass\n\n\n# --- demo (do not change) ---\nresult = Vector(1, 2) + Vector(3, 4)\nprint(result)",
+      "expected_output": "Vector(4, 6)",
+      "hints": {
+        "en": [
+          "In __init__, bind the arguments to the object: self.x = x and self.y = y.",
+          "In __add__, build and hand back a fresh object: return Vector(self.x + other.x, self.y + other.y). Returning a new object (not mutating self) is how '+' behaves for int and str.",
+          "In __eq__, compare the whole pair at once: return (self.x, self.y) == (other.x, other.y).",
+          "In __repr__, use an f-string: return f\"Vector({self.x}, {self.y})\". print() falls back to __repr__ when there is no __str__, so this is what gets shown."
+        ]
+      },
+      "test_code": "v = Vector(1, 2) + Vector(3, 4)\nassert isinstance(v, Vector), \"__add__ must return a Vector\"\nassert (v.x, v.y) == (4, 6), f\"addition wrong, got ({v.x}, {v.y})\"\nassert repr(Vector(4, 6)) == \"Vector(4, 6)\", f\"__repr__ wrong, got {repr(Vector(4, 6))}\"\nassert Vector(1, 2) + Vector(3, 4) == Vector(4, 6), \"__eq__ should make summed vector equal Vector(4, 6)\"\nassert Vector(1, 2) == Vector(1, 2), \"equal components must compare equal\"\nassert not (Vector(1, 2) == Vector(2, 1)), \"different components must not be equal\"\na = Vector(1, 2)\nb = a + Vector(0, 0)\nassert a is not b, \"__add__ must return a NEW object, not mutate/return self\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What happens when you write `for item in x`, where `x` is your own class instance?"
+      },
+      "options": {
+        "en": [
+          "Python checks that x inherits from a special Iterable base class",
+          "The interpreter calls x.__iter__() (or falls back to indexing via x.__getitem__) — a protocol, not inheritance",
+          "Nothing — only built-in types like list can be iterated",
+          "Python copies x into a list first"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You define `__eq__` on a class but not `__hash__`, then try to put an instance in a set. What happens?"
+      },
+      "options": {
+        "en": [
+          "It works fine — Python keeps the default __hash__",
+          "Defining __eq__ sets __hash__ to None, so the object is unhashable and raises TypeError in a set",
+          "The set silently stores it but comparisons break",
+          "Python auto-generates a correct __hash__ from __eq__"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the recommended behavior of an arithmetic dunder like `__add__`?"
+      },
+      "options": {
+        "en": [
+          "Mutate self in place and return None",
+          "Return a NEW object holding the result, leaving both operands unchanged",
+          "Modify the other operand and return it",
+          "Raise an error unless the operands are identical objects"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does implementing `__call__` on a class let you do?"
+      },
+      "options": {
+        "en": [
+          "Call the class without parentheses",
+          "Make an instance invocable like a function, so obj(...) runs obj.__call__(...)",
+          "Automatically print the object",
+          "Use the object as a dictionary key"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["data_model", "dunder_methods", "operator_overloading", "eq_and_hash", "iteration_protocol", "context_managers", "callable_objects", "duck_typing"],
+    "concepts_required": ["how_python_objects_work"],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_internals",
+    "path_memberships": []
+  },
+  "generated": false
+}

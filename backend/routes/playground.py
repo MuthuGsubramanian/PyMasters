@@ -10,15 +10,23 @@ import sqlite3
 import uuid
 from typing import Optional, List
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from auth import get_current_user_id
+from ratelimit import SlidingWindowRateLimiter
 from vaathiyaar.engine import call_vaathiyaar, get_ollama_client, OLLAMA_MODEL
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile
 
 router = APIRouter(prefix="/api/playground", tags=["playground"])
+
+# Per-user throttles. Single Cloud Run instance → in-memory state is fine.
+# Code execution is cheap but abusable as free compute; package installs mutate
+# the shared interpreter, so they're far more tightly bounded.
+_execute_limiter = SlidingWindowRateLimiter(max_calls=30, window_seconds=60)
+_install_limiter = SlidingWindowRateLimiter(max_calls=5, window_seconds=300)
 
 
 # ---------------------------------------------------------------------------
@@ -350,13 +358,17 @@ def playground_chat_stream(request: PlaygroundChatRequest):
 
 
 @router.post("/execute")
-def execute_code(request: dict = Body(...)):
+def execute_code(request: dict = Body(...), user_id: str = Depends(get_current_user_id)):
     """
-    Execute Python code in a subprocess with real Python 3.12.
+    Execute Python code in a hardened subprocess. Authenticated + rate-limited.
     Used by the Playground live terminal.
     More permissive than classroom evaluate — allows imports, file ops, etc.
     """
     from vaathiyaar.execution import run_code_subprocess
+
+    if not _execute_limiter.allow(user_id):
+        wait = _execute_limiter.retry_after(user_id)
+        return {"output": "", "error": f"Rate limit reached. Try again in {wait}s.", "exit_code": 1}
 
     code = request.get("code", "")
     if not code.strip():
@@ -380,15 +392,19 @@ def execute_code(request: dict = Body(...)):
 
 
 @router.post("/install-package")
-def install_package(request: dict = Body(...)):
+def install_package(request: dict = Body(...), user_id: str = Depends(get_current_user_id)):
     """
-    Install a Python package via pip for the playground.
+    Install an allowlisted Python package via pip. Authenticated + tightly
+    rate-limited (installs mutate the shared interpreter).
     """
     import subprocess
     import os
 
+    if not _install_limiter.allow(user_id):
+        wait = _install_limiter.retry_after(user_id)
+        return {"success": False, "error": f"Install rate limit reached. Try again in {wait}s."}
+
     package = request.get("package", "").strip()
-    user_id = request.get("user_id", "")
 
     if not package:
         return {"success": False, "error": "No package name provided"}

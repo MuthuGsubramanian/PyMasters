@@ -63,7 +63,7 @@ function ProgressRing({ progress, size = 80, strokeWidth = 6, color = '#06b6d4' 
         <svg width={size} height={size} className="transform -rotate-90">
             <circle cx={size/2} cy={size/2} r={radius} fill="none"
                 stroke="currentColor" strokeWidth={strokeWidth}
-                className="text-slate-100" />
+                className="text-bg-inset" />
             <motion.circle
                 cx={size/2} cy={size/2} r={radius} fill="none"
                 stroke={color} strokeWidth={strokeWidth}
@@ -81,7 +81,7 @@ function ProgressRing({ progress, size = 80, strokeWidth = 6, color = '#06b6d4' 
 // ─── Skeleton Loader ───────────────────────────────────────────────────────
 function Skeleton({ className }) {
     return (
-        <div className={`animate-pulse bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 rounded-lg ${className}`}
+        <div className={`animate-pulse bg-gradient-to-r from-bg-inset via-bg-elevated to-bg-inset rounded-lg ${className}`}
             style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }}
         />
     );
@@ -152,7 +152,7 @@ function StatCard({ label, value, suffix, icon, gradient, iconBg, border, delay,
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-white/40 to-transparent" />
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">{label}</span>
                     <div className={clsx(
                         'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
                         iconBg,
@@ -160,11 +160,11 @@ function StatCard({ label, value, suffix, icon, gradient, iconBg, border, delay,
                         {icon}
                     </div>
                 </div>
-                <div className="text-2xl font-display font-bold text-slate-900">
+                <div className="text-2xl font-display font-bold text-text-primary">
                     {children || (
                         <>
                             <AnimatedNumber value={value} />
-                            {suffix && <span className="text-slate-500 text-lg ml-0.5">{suffix}</span>}
+                            {suffix && <span className="text-text-muted text-lg ml-0.5">{suffix}</span>}
                         </>
                     )}
                 </div>
@@ -225,12 +225,16 @@ export function Overview() {
                 }
             }
 
-            // Fetch trends (graceful fallback)
+            // Fetch trends (graceful fallback). Endpoint is /trending and returns
+            // { topics: [...] }; topics use `summary`, the UI expects `desc`.
             try {
-                const res = await axios.get(`${API_URL}/trends`, {
+                const res = await axios.get(`${API_URL}/trending`, {
                     headers: { Authorization: `Bearer ${user?.token}` },
                 });
-                if (Array.isArray(res.data) && res.data.length > 0) setTrends(res.data);
+                const topics = res.data?.topics;
+                if (Array.isArray(topics) && topics.length > 0) {
+                    setTrends(topics.map((t) => ({ ...t, desc: t.desc ?? t.summary ?? '' })));
+                }
             } catch {}
 
             setLoading(false);
@@ -263,7 +267,7 @@ export function Overview() {
             {/* ─── Welcome Banner ────────────────────────────────────────── */}
             <motion.div
                 variants={itemVariants}
-                className="relative rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm"
+                className="relative rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm"
             >
                 {/* Top gradient bar */}
                 <div className="h-1.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
@@ -274,15 +278,15 @@ export function Overview() {
 
                 <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
+                        <div className="flex items-center gap-2 text-xs text-text-secondary mb-2">
                             <Calendar size={12} />
                             <span>{formatDate()}</span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 mb-2">
+                        <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
                             {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">{user.username}</span>!
                         </h1>
-                        <p className="text-sm text-slate-700 italic max-w-lg">
-                            &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-slate-600">&mdash; {dailyQuote.author}</span>
+                        <p className="text-sm text-text-secondary italic max-w-lg">
+                            &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
                         </p>
                     </div>
 
@@ -335,7 +339,7 @@ export function Overview() {
                     <div className="flex items-center gap-3">
                         <span>
                             <AnimatedNumber value={modulesUnlocked} />
-                            <span className="text-slate-500 text-lg ml-0.5">/ {totalModules}</span>
+                            <span className="text-text-muted text-lg ml-0.5">/ {totalModules}</span>
                         </span>
                         <div className="w-16">
                             <ProgressRing progress={progressPct} size={36} strokeWidth={3} />
@@ -352,7 +356,7 @@ export function Overview() {
                 >
                     <div className="flex items-center gap-2">
                         <AnimatedNumber value={streak} />
-                        <span className="text-slate-500 text-lg">days</span>
+                        <span className="text-text-muted text-lg">days</span>
                         {streak > 0 && (
                             <motion.span
                                 animate={{ y: [0, -3, 0] }}
@@ -372,7 +376,7 @@ export function Overview() {
                     border="border-purple-100"
                     delay={0.25}
                 >
-                    <span className="text-2xl font-display font-bold text-slate-900">
+                    <span className="text-2xl font-display font-bold text-text-primary">
                         {loading ? <Skeleton className="h-7 w-16 inline-block" /> : formatLearningTime(learningMinutes)}
                     </span>
                 </StatCard>
@@ -385,7 +389,7 @@ export function Overview() {
                     {/* ─── Daily Recommendation Card ─────────────────────── */}
                     <motion.div
                         variants={itemVariants}
-                        className="relative rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm group hover:shadow-xl transition-all duration-500"
+                        className="relative rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm group hover:shadow-xl transition-all duration-500"
                     >
                         <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
                         <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-bl from-cyan-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -395,8 +399,8 @@ export function Overview() {
                                     <Lightbulb size={20} className="text-cyan-600" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 font-display">Today&apos;s Recommended Lesson</h3>
-                                    <p className="text-xs text-slate-500">Personalized for your learning path</p>
+                                    <h3 className="text-lg font-bold text-text-primary font-display">Today&apos;s Recommended Lesson</h3>
+                                    <p className="text-xs text-text-muted">Personalized for your learning path</p>
                                 </div>
                                 {(recommendation?.trending) && (
                                     <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 text-[10px] font-bold text-rose-600 uppercase tracking-wider">
@@ -414,10 +418,10 @@ export function Overview() {
                                 </div>
                             ) : (
                                 <>
-                                    <h4 className="text-xl font-bold text-slate-800 font-display mb-2">
+                                    <h4 className="text-xl font-bold text-text-primary font-display mb-2">
                                         {recommendation?.title || (modulesUnlocked >= totalModules ? 'Explore AI Topics' : `Module ${modulesUnlocked + 1}`)}
                                     </h4>
-                                    <p className="text-sm text-slate-700 mb-3 leading-relaxed">
+                                    <p className="text-sm text-text-secondary mb-3 leading-relaxed">
                                         {recommendation?.description || (
                                             modulesUnlocked >= totalModules
                                                 ? 'You have completed all core modules. Explore trending AI and Python topics in the classroom!'
@@ -448,10 +452,10 @@ export function Overview() {
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={16} className="text-cyan-500" />
-                                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Trending in AI & Python</h3>
+                                <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Trending in AI & Python</h3>
                             </div>
                         </div>
-                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent -mx-1 px-1">
+                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border-default scrollbar-track-transparent -mx-1 px-1">
                             {(loading ? Array(5).fill(null) : trends).map((trend, idx) => (
                                 <motion.div
                                     key={trend?.id || idx}
@@ -460,7 +464,7 @@ export function Overview() {
                                     transition={{ delay: 0.3 + idx * 0.05 }}
                                     onClick={() => !loading && navigate('/dashboard/classroom')}
                                     className={clsx(
-                                        'flex-shrink-0 w-60 rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl p-5 cursor-pointer',
+                                        'flex-shrink-0 w-60 rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl p-5 cursor-pointer',
                                         'hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group',
                                     )}
                                 >
@@ -490,10 +494,10 @@ export function Overview() {
                                                     {trend.difficulty}
                                                 </span>
                                             </div>
-                                            <h4 className="text-sm font-bold text-slate-800 mb-1.5 group-hover:text-cyan-600 transition-colors font-display line-clamp-2">
+                                            <h4 className="text-sm font-bold text-text-primary mb-1.5 group-hover:text-cyan-600 transition-colors font-display line-clamp-2">
                                                 {trend.title}
                                             </h4>
-                                            <p className="text-xs text-slate-600 line-clamp-2">{trend.desc}</p>
+                                            <p className="text-xs text-text-secondary line-clamp-2">{trend.desc}</p>
                                         </>
                                     )}
                                 </motion.div>
@@ -507,10 +511,10 @@ export function Overview() {
                     {/* ─── Learning Progress ─────────────────────────────── */}
                     <motion.div
                         variants={itemVariants}
-                        className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm overflow-hidden"
+                        className="rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm overflow-hidden"
                     >
-                        <div className="px-5 py-3.5 border-b border-black/[0.04]">
-                            <h3 className="font-bold text-xs text-slate-600 uppercase tracking-widest">Learning Progress</h3>
+                        <div className="px-5 py-3.5 border-b border-border-default">
+                            <h3 className="font-bold text-xs text-text-secondary uppercase tracking-widest">Learning Progress</h3>
                         </div>
                         <div className="p-5">
                             {/* Progress Ring */}
@@ -518,8 +522,8 @@ export function Overview() {
                                 <div className="relative">
                                     <ProgressRing progress={progressPct} size={100} strokeWidth={8} color="#06b6d4" />
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-2xl font-bold text-slate-800 font-display">{progressPct}%</span>
-                                        <span className="text-[10px] text-slate-600 uppercase tracking-wider">Complete</span>
+                                        <span className="text-2xl font-bold text-text-primary font-display">{progressPct}%</span>
+                                        <span className="text-[10px] text-text-secondary uppercase tracking-wider">Complete</span>
                                     </div>
                                 </div>
                             </div>
@@ -530,8 +534,8 @@ export function Overview() {
                                     <Rocket size={12} className="text-cyan-500" />
                                     <span className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest">Next Milestone</span>
                                 </div>
-                                <p className="text-sm font-bold text-slate-700 font-display">{nextMilestone.label}</p>
-                                <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <p className="text-sm font-bold text-text-secondary font-display">{nextMilestone.label}</p>
+                                <div className="mt-2 h-1.5 bg-bg-inset rounded-full overflow-hidden">
                                     <motion.div
                                         initial={{ width: 0 }}
                                         animate={{ width: `${Math.min(nextMilestone.progress, 100)}%` }}
@@ -543,7 +547,7 @@ export function Overview() {
 
                             {/* Recent Activity */}
                             <div>
-                                <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">Recent Activity</h4>
+                                <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Recent Activity</h4>
                                 {recentActivity.length > 0 ? (
                                     <div className="space-y-3">
                                         {recentActivity.slice(0, 5).map((act, i) => (
@@ -555,14 +559,14 @@ export function Overview() {
                                                 className="flex items-center gap-2.5 text-xs"
                                             >
                                                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
-                                                <span className="text-slate-600 truncate">{act.label || act}</span>
-                                                {act.time && <span className="text-slate-500 ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
+                                                <span className="text-text-secondary truncate">{act.label || act}</span>
+                                                {act.time && <span className="text-text-muted ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
                                             </motion.div>
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="text-center py-4">
-                                        <p className="text-xs text-slate-500">Start learning to see your activity here</p>
+                                        <p className="text-xs text-text-muted">Start learning to see your activity here</p>
                                     </div>
                                 )}
                             </div>
@@ -572,10 +576,10 @@ export function Overview() {
                     {/* ─── Quick Actions ──────────────────────────────────── */}
                     <motion.div
                         variants={itemVariants}
-                        className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-xl shadow-sm overflow-hidden"
+                        className="rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm overflow-hidden"
                     >
-                        <div className="px-5 py-3.5 border-b border-black/[0.04]">
-                            <h3 className="font-bold text-xs text-slate-600 uppercase tracking-widest">Quick Actions</h3>
+                        <div className="px-5 py-3.5 border-b border-border-default">
+                            <h3 className="font-bold text-xs text-text-secondary uppercase tracking-widest">Quick Actions</h3>
                         </div>
                         <div className="p-4 grid grid-cols-2 gap-3">
                             {[
@@ -621,7 +625,7 @@ export function Overview() {
                                     className={clsx(
                                         'flex flex-col items-center gap-2 p-4 rounded-xl border border-transparent transition-all duration-200',
                                         action.bg, action.text,
-                                        'hover:border-black/[0.04] hover:shadow-sm',
+                                        'hover:border-border-default hover:shadow-sm',
                                     )}
                                 >
                                     <div className={clsx(
@@ -681,21 +685,21 @@ export function LearningMap() {
 
     return (
         <div className="animate-fade-in pb-20 max-w-5xl mx-auto">
-            <header className="mb-10 flex justify-between items-end border-b border-black/[0.04] pb-6">
+            <header className="mb-10 flex justify-between items-end border-b border-border-default pb-6">
                 <div>
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-600 text-xs font-bold tracking-wider uppercase mb-3">
                         <TrendingUp size={12} />
                         Learning Path
                     </div>
                     <h2 className="text-3xl font-bold mb-2 font-display">Module Progression</h2>
-                    <p className="text-slate-600">Complete each module sequentially to unlock the next.</p>
+                    <p className="text-text-secondary">Complete each module sequentially to unlock the next.</p>
                 </div>
                 <div className="text-right hidden sm:block">
-                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-1">Progress</div>
+                    <div className="text-xs text-text-secondary font-bold uppercase tracking-widest mb-1">Progress</div>
                     <div className="text-3xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
                         {progressPct}%
                     </div>
-                    <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2">
+                    <div className="w-32 h-1.5 bg-bg-inset rounded-full overflow-hidden mt-2">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPct}%` }}
@@ -728,15 +732,15 @@ export function LearningMap() {
                                 className={clsx(
                                     "group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 flex items-center justify-between",
                                     unlocked
-                                        ? "bg-white/80 backdrop-blur-sm border-black/[0.04] hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                                        ? "bg-bg-surface backdrop-blur-sm border-border-default hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
                                         : isNext
-                                        ? "bg-white/60 border-dashed border-cyan-200 opacity-70 cursor-not-allowed"
-                                        : "bg-slate-50/50 border-transparent opacity-40 cursor-not-allowed"
+                                        ? "bg-bg-surface/60 border-dashed border-cyan-200 opacity-70 cursor-not-allowed"
+                                        : "bg-bg-elevated/50 border-transparent opacity-40 cursor-not-allowed"
                                 )}
                             >
                                 {/* Connection line to next module */}
                                 {idx < modules.length - 1 && (
-                                    <div className="absolute left-[2.15rem] top-full w-[2px] h-3 bg-slate-200 -translate-x-1/2 z-0" />
+                                    <div className="absolute left-[2.15rem] top-full w-[2px] h-3 bg-bg-inset -translate-x-1/2 z-0" />
                                 )}
 
                                 <div className="flex items-center gap-5 relative z-10">
@@ -746,16 +750,16 @@ export function LearningMap() {
                                             ? "bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 text-cyan-600 group-hover:shadow-md group-hover:scale-105"
                                             : isNext
                                             ? "bg-cyan-50/50 border-cyan-200 text-cyan-400"
-                                            : "bg-slate-100 border-slate-200 text-slate-400"
+                                            : "bg-bg-elevated border-border-default text-text-muted"
                                     )}>
                                         {isCompleted(mod.id) ? <CheckCircle2 size={18} className="text-green-500" /> : unlocked ? <span className="text-sm">{idx + 1}</span> : idx + 1}
                                     </div>
                                     <div>
                                         <h3 className={clsx(
                                             "text-lg font-bold mb-0.5 transition-colors font-display",
-                                            unlocked ? "text-slate-800 group-hover:text-cyan-600" : "text-slate-500"
+                                            unlocked ? "text-text-primary group-hover:text-cyan-600" : "text-text-muted"
                                         )}>{mod.title}</h3>
-                                        <p className="text-sm text-slate-600 max-w-xl line-clamp-1">{mod.desc}</p>
+                                        <p className="text-sm text-text-secondary max-w-xl line-clamp-1">{mod.desc}</p>
                                     </div>
                                 </div>
 
@@ -765,7 +769,7 @@ export function LearningMap() {
                                             "text-[10px] font-bold rounded-full px-2.5 py-1 border",
                                             unlocked
                                                 ? "text-amber-600 bg-amber-50 border-amber-200"
-                                                : "text-slate-400 bg-slate-50 border-slate-200"
+                                                : "text-text-muted bg-bg-elevated border-border-default"
                                         )}>
                                             +{mod.xp_reward} XP
                                         </span>
@@ -776,11 +780,11 @@ export function LearningMap() {
                                         </span>
                                     )}
                                     {unlocked ? (
-                                        <ChevronRight size={18} className="text-slate-300 group-hover:text-cyan-500 group-hover:translate-x-0.5 transition-all" />
+                                        <ChevronRight size={18} className="text-text-muted group-hover:text-cyan-500 group-hover:translate-x-0.5 transition-all" />
                                     ) : isNext ? (
                                         <Lock size={16} className="text-cyan-300" />
                                     ) : (
-                                        <Lock size={16} className="text-slate-300" />
+                                        <Lock size={16} className="text-text-muted" />
                                     )}
                                 </div>
 
@@ -828,7 +832,7 @@ export function ModuleViewer() {
     if (!module) return (
         <div className="flex flex-col items-center justify-center h-64 gap-3">
             <div className="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-500">Loading module...</p>
+            <p className="text-sm text-text-muted">Loading module...</p>
         </div>
     );
 
@@ -883,18 +887,18 @@ export function ModuleViewer() {
         <div className="max-w-4xl mx-auto pb-20 animate-fade-in relative">
             <button
                 onClick={() => navigate('/dashboard/learn')}
-                className="mb-6 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors group"
+                className="mb-6 flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors group"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Learning Path
             </button>
 
-            <div className="rounded-2xl overflow-hidden border border-black/[0.04] bg-white/80 backdrop-blur-sm shadow-sm">
+            <div className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm">
                 {/* Header */}
-                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-black/[0.04] p-8 flex items-end overflow-hidden">
+                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-border-default p-8 flex items-end overflow-hidden">
                     <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                     <div className="relative z-10">
-                        <h1 className="text-3xl font-bold text-slate-900 font-display">{module.title}</h1>
+                        <h1 className="text-3xl font-bold text-text-primary font-display">{module.title}</h1>
                         <div className="flex items-center gap-3 mt-2">
                             <span className="text-xs font-mono text-cyan-700 bg-cyan-100 rounded-full px-2.5 py-0.5 border border-cyan-200">
                                 {module.id.toUpperCase()}
@@ -925,9 +929,9 @@ export function ModuleViewer() {
                                         ) : (
                                             <code className="bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
                                         ),
-                                        h1: ({ children }) => <h1 className="text-2xl font-bold text-slate-900 mb-6 font-display">{children}</h1>,
+                                        h1: ({ children }) => <h1 className="text-2xl font-bold text-text-primary mb-6 font-display">{children}</h1>,
                                         h2: ({ children }) => (
-                                            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3 mt-10 mb-4 font-display">
+                                            <h2 className="text-xl font-bold text-text-primary flex items-center gap-3 mt-10 mb-4 font-display">
                                                 <span className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-full" />
                                                 {children}
                                             </h2>
@@ -936,7 +940,7 @@ export function ModuleViewer() {
                                 >
                                     {module.content}
                                 </ReactMarkdown>
-                                <div className="mt-16 pt-8 border-t border-black/[0.04] flex justify-end">
+                                <div className="mt-16 pt-8 border-t border-border-default flex justify-end">
                                     {isModuleCompleted ? (
                                         <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-green-50 border border-green-200">
                                             <CheckCircle2 size={20} className="text-green-500" />
@@ -971,17 +975,17 @@ export function ModuleViewer() {
                                         <Target size={12} />
                                         Knowledge Check
                                     </div>
-                                    <h3 className="text-2xl font-bold text-slate-900 font-display mb-2">Quiz Time</h3>
-                                    <p className="text-slate-500 text-sm">Answer all questions correctly to complete this module.</p>
+                                    <h3 className="text-2xl font-bold text-text-primary font-display mb-2">Quiz Time</h3>
+                                    <p className="text-text-muted text-sm">Answer all questions correctly to complete this module.</p>
                                 </div>
 
                                 {/* Quiz progress bar */}
                                 <div className="mb-8">
-                                    <div className="flex justify-between text-[10px] text-slate-500 font-mono mb-1">
+                                    <div className="flex justify-between text-[10px] text-text-muted font-mono mb-1">
                                         <span>{Object.keys(answers).length} / {module.quiz.length} answered</span>
                                         <span>{Math.round(quizProgress)}%</span>
                                     </div>
-                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-1.5 bg-bg-inset rounded-full overflow-hidden">
                                         <motion.div
                                             className="h-full rounded-full bg-gradient-to-r from-purple-400 to-cyan-400"
                                             animate={{ width: `${quizProgress}%` }}
@@ -1052,11 +1056,11 @@ export function ModuleViewer() {
                                                 className={`space-y-3 p-5 rounded-2xl border transition-all duration-300 ${
                                                     isCorrect ? 'bg-green-50/50 border-green-200' :
                                                     isWrong ? 'bg-red-50/50 border-red-200' :
-                                                    'bg-white/50 border-black/[0.04]'
+                                                    'bg-bg-surface/50 border-border-default'
                                                 }`}
                                             >
-                                                <p className="font-bold text-base text-slate-800 font-display flex items-start gap-2">
-                                                    <span className="text-sm text-slate-500 font-mono mt-0.5">{qIdx + 1}.</span>
+                                                <p className="font-bold text-base text-text-primary font-display flex items-start gap-2">
+                                                    <span className="text-sm text-text-muted font-mono mt-0.5">{qIdx + 1}.</span>
                                                     {q.q}
                                                 </p>
                                                 <div className="space-y-2 pl-5">
@@ -1084,14 +1088,14 @@ export function ModuleViewer() {
                                                                     showCorrect ? "bg-green-50 border-green-300" :
                                                                     showWrong ? "bg-red-50 border-red-300" :
                                                                     isSelected ? "bg-cyan-50 border-cyan-300 shadow-sm" :
-                                                                    "bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-200"
+                                                                    "bg-bg-surface border-border-default hover:bg-bg-elevated hover:border-border-strong"
                                                                 )}
                                                             >
                                                                 <div className={clsx(
                                                                     "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
                                                                     showCorrect ? "border-green-500 bg-green-500" :
                                                                     showWrong ? "border-red-500 bg-red-500" :
-                                                                    isSelected ? "border-cyan-500" : "border-slate-300"
+                                                                    isSelected ? "border-cyan-500" : "border-border-default"
                                                                 )}>
                                                                     {showCorrect && <CheckCircle2 size={12} className="text-white" />}
                                                                     {showWrong && <span className="text-white text-[10px] font-bold">✕</span>}
@@ -1101,7 +1105,7 @@ export function ModuleViewer() {
                                                                     "text-sm",
                                                                     showCorrect ? "text-green-700 font-medium" :
                                                                     showWrong ? "text-red-600" :
-                                                                    isSelected ? "text-cyan-800 font-medium" : "text-slate-600"
+                                                                    isSelected ? "text-cyan-800 font-medium" : "text-text-secondary"
                                                                 )}>{opt}</span>
                                                             </motion.div>
                                                         );
@@ -1112,7 +1116,7 @@ export function ModuleViewer() {
                                     })}
                                 </div>
 
-                                <div className="mt-10 flex justify-end gap-3 border-t border-black/[0.04] pt-8">
+                                <div className="mt-10 flex justify-end gap-3 border-t border-border-default pt-8">
                                     {!result?.passed ? (
                                         <>
                                             <button onClick={() => { setQuizMode(false); setAnswers({}); setResult(null); }} className="btn-neo btn-neo-ghost">

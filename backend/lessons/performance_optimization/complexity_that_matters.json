@@ -1,0 +1,171 @@
+{
+  "id": "complexity_that_matters",
+  "topic": "complexity_that_matters",
+  "track": "performance_optimization",
+  "module": "foundations",
+  "order": 2,
+  "title": {
+    "en": "Big-O That Actually Matters: Killing Accidental O(n²)"
+  },
+  "description": {
+    "en": "Your code is slow, so you reach for a faster loop, a clever trick, a micro-optimization. None of it helps, because the problem was never the constant factor — it was the complexity class. Learn the practical Big-O you need, spot the single most common performance bug in real code (accidental O(n²)), and kill it with one line: turn a list into a set."
+  },
+  "xp_reward": 95,
+  "next_unlock": "choosing_data_structures",
+  "story_variants": {
+    "en": "## The Optimization That Did Nothing\n\nA report that took 40 seconds to generate. You profiled, you tightened the inner loop, you swapped a list comprehension for a generator, you even cached a function call. The result: 39 seconds. You shaved a rounding error off a wall.\n\nThen someone changed one line — a list became a `set` — and the report dropped to **0.3 seconds**. A 130x speedup from a single keyword.\n\nThis is the lesson the profiler couldn't teach you: **algorithmic complexity dwarfs micro-optimizations at scale.** You were polishing the constant factor of an algorithm whose *complexity class* was the real problem. No amount of polishing fixes a quadratic.\n\n## Big-O, in Plain Terms\n\nBig-O describes how the work *grows as the input grows*. It throws away constants and tells you the shape of the curve. Here is the only intuition you need day to day:\n\n| Big-O | Name | What it means in practice | Example |\n|---|---|---|---|\n| **O(1)** | constant | Same cost no matter the size | `d[key]`, `x in a_set`, `lst.append(x)` |\n| **O(log n)** | logarithmic | Cost barely grows; doubling n adds one step | Binary search in a sorted list |\n| **O(n)** | linear | Double the input, double the work | One loop over a list, `x in a_list` |\n| **O(n log n)** | linearithmic | A little worse than linear; the realistic best for sorting | `sorted(data)` |\n| **O(n²)** | quadratic | Double the input, **quadruple** the work | A loop nested inside a loop over the same data |\n\nThe gap between these classes is not a detail — it is the whole ballgame. For n = 1,000, O(n) is about a thousand operations; O(n²) is a **million**. For n = 1,000,000, O(n) is a million; O(n²) is a *trillion*. A 2x faster inner loop cannot save you from that. A better complexity class can.\n\n## The Most Common Real-World Performance Bug\n\nIt almost always looks innocent. You have two collections and you want to know what they share, or you want to filter one against the other:\n\n```python\ndef common(a, b):\n    result = []\n    for x in a:\n        if x in b:        # <-- the trap\n            result.append(x)\n    return result\n```\n\nThat `if x in b` reads like one cheap step. It is not. When `b` is a **list**, `x in b` scans the list from the front, item by item, until it finds a match or hits the end. That scan is **O(n)**. And you are doing it once for every item in `a`. One O(n) scan inside an O(n) loop is **O(n²)**.\n\nWith 100-item lists, that's 10,000 comparisons — instant, invisible, fine. With 50,000-item lists, it's 2.5 *billion* comparisons, and your \"simple filter\" hangs for minutes. The code never changed. The data grew, and the hidden quadratic woke up.\n\nThe same trap hides in any nested loop over the same data: deduplicating by scanning what you've already seen, checking membership against a growing list, joining two datasets by hand.\n\n## The One-Line Fix\n\nA Python **set** (and a **dict**) is backed by a hash table. Membership testing — `x in a_set` — doesn't scan; it jumps straight to where `x` would be. That's **O(1)**, constant time, no matter how big the set is.\n\nConvert the thing you test *against* into a set once, and every lookup collapses from O(n) to O(1):\n\n```python\ndef common(a, b):\n    b_set = set(b)            # O(n) to build, done once\n    result = []\n    for x in a:\n        if x in b_set:        # O(1) per check now\n            result.append(x)\n    return result\n```\n\nBuilding the set is a single O(n) pass. After that, each membership test is O(1), so the whole function is **O(n + m)** instead of O(n × m). You traded one quadratic for two linears. At small sizes you'd never notice. At scale, it's the difference between 0.3 seconds and 40.\n\n## Constant Factors Rarely Matter\n\nNotice what we did *not* do. We didn't rewrite the loop in C, didn't unroll anything, didn't reach for a library. We changed the **data structure**, which changed the **complexity class**, which changed everything. A clever O(n²) that's twice as fast as a naive O(n²) is still O(n²) — the curve wins eventually, and \"eventually\" arrives sooner than you think.\n\nSo when something is slow: don't ask \"how do I make this line faster?\" first. Ask **\"what's my complexity, and is there a hidden `in list` or nested loop turning this quadratic?\"** Fix the class before you ever touch the constant.\n\n> **Key idea:** At scale, complexity class beats constant factors every time. The most common real-world performance bug is accidental O(n²) — usually an `x in a_list` (an O(n) scan) sitting inside an O(n) loop, or a loop nested inside a loop over the same data. Turning the thing you test against into a `set` makes each lookup O(1), collapsing O(n²) into O(n). Fix the curve, not the constant."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "growth_curve",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "bigo_mental_model",
+      "nodes": [
+        {
+          "label": "Big-O = how work grows with input",
+          "children": [
+            "O(1) constant: d[key], x in a_set",
+            "O(log n): binary search",
+            "O(n) linear: one loop, x in a_list",
+            "O(n log n): sorted(data)",
+            "O(n²) quadratic: loop inside a loop"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "list_vs_set",
+      "left": {
+        "label": "x in a_list — scans item by item, O(n). Inside a loop → O(n²). Slow at scale.",
+        "result": false
+      },
+      "right": {
+        "label": "x in a_set — hash jump, O(1). Inside a loop → O(n). Collapses the quadratic.",
+        "result": true
+      },
+      "description": {
+        "en": "Same membership test, different data structure. The set is backed by a hash table, so lookups don't scan — they jump straight to the answer."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "quadratic_demo",
+      "code": "def common(a, b):\n    result = []\n    for x in a:        # O(n) loop\n        if x in b:     # O(n) scan when b is a list\n            result.append(x)\n    return result\n# n loop * n scan = O(n²)",
+      "executionSteps": [
+        { "line": 3, "variables": { "x": "first item of a", "b": "a LIST" }, "output": "outer loop: runs n times", "description": "The outer loop is O(n)." },
+        { "line": 4, "variables": { "x in b": "scans b front-to-back" }, "output": "inner scan: up to n steps EACH time", "description": "x in b is an O(n) scan on a list — done once per outer item." },
+        { "line": 6, "variables": { "total": "n × n" }, "output": "O(n²): 1,000 items -> ~1,000,000 ops", "description": "An O(n) scan inside an O(n) loop is quadratic. Make b a set → O(1) lookup → O(n) total." }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Complexity class beats constant factors at scale.",
+        "Accidental O(n²) hides in 'x in a_list' and nested loops.",
+        "set(b) -> O(1) lookups -> O(n²) collapses to O(n). Fix the curve, not the constant."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "This common(a, b) returns the sorted list of elements that appear in BOTH lists, but it does it the slow way: an `x in b` scan (O(n)) inside a loop over a (O(n)) — that's accidental O(n²). Rewrite it to be O(n + m) WITHOUT changing the output: build a set from b so each membership test is O(1). The result must still be sorted with no duplicates. With the given data, common([3, 1, 2, 2, 5], [2, 5, 5, 8]) returns [2, 5]. Expected output: [2, 5]"
+      },
+      "starter_code": "def common(a, b):\n    # SLOW: 'x in b' scans the list b (O(n)) for every x in a (O(n)) -> O(n*m).\n    # Rewrite using a set so each lookup is O(1), making this O(n + m).\n    # Keep the output identical: sorted, no duplicates.\n    result = []\n    for x in a:\n        if x in b and x not in result:   # O(n) scan + O(n) scan -> quadratic\n            result.append(x)\n    return sorted(result)\n\nprint(common([3, 1, 2, 2, 5], [2, 5, 5, 8]))",
+      "expected_output": "[2, 5]",
+      "hints": {
+        "en": [
+          "Membership in a list (x in b) is O(n) because it scans item by item. Membership in a set (x in b_set) is O(1) because a set is a hash table.",
+          "Build b_set = set(b) ONCE before the loop — that's a single O(n) pass — then test `if x in b_set` for O(1) lookups.",
+          "To dedupe without the O(n) `x not in result` scan, collect matches into a set too, or just take set(a) & set(b).",
+          "Cleanest: return sorted(set(a) & set(b)) — the & intersection is built on O(1) hash lookups, giving O(n + m) overall."
+        ]
+      },
+      "test_code": "assert common([3, 1, 2, 2, 5], [2, 5, 5, 8]) == [2, 5]\nassert common([1, 2, 3], [4, 5, 6]) == []\nassert common([], []) == []\nassert common([], [1, 2, 3]) == []\nassert common([1, 1, 1], [1, 1]) == [1]\nassert common([5, 3, 9, 1], [1, 9, 3, 5]) == [1, 3, 5, 9]\nassert common([7, 7, 8, 8, 8], [8, 8, 7]) == [7, 8]\nassert common([2, 4, 6], [6, 4, 2, 2]) == [2, 4, 6]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "At large input sizes, what matters most for performance?"
+      },
+      "options": {
+        "en": [
+          "The constant factor — a 2x faster inner loop always wins",
+          "The complexity class — O(n) vs O(n²) dwarfs any constant-factor tweak",
+          "The number of lines of code",
+          "Whether you used a list comprehension"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is `x in some_list` a performance trap when it sits inside a loop?"
+      },
+      "options": {
+        "en": [
+          "Lists can't be searched at all",
+          "`x in some_list` scans the list item by item (O(n)), so doing it once per loop iteration makes the whole thing O(n²)",
+          "The `in` keyword is slower than a for loop",
+          "It only fails when the list has duplicates"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the time complexity of membership testing (`x in s`) on a Python set?"
+      },
+      "options": {
+        "en": [
+          "O(n) — same as a list",
+          "O(log n) — it binary searches",
+          "O(1) — a set is a hash table, so it jumps straight to the answer",
+          "O(n²) — sets are slower than lists"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "You convert the list you test against into a set before a loop of membership checks. What happens to the complexity?"
+      },
+      "options": {
+        "en": [
+          "It stays O(n²); the set doesn't help",
+          "It collapses from O(n²) to roughly O(n), because each lookup goes from O(n) to O(1)",
+          "It becomes O(n log n) because building a set sorts it",
+          "It gets slower because building the set costs extra"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": ["big_o_notation", "accidental_quadratic", "set_vs_list_membership", "hash_table_lookup", "complexity_vs_constant_factor"],
+    "concepts_required": ["measure_dont_guess"],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "performance",
+    "path_memberships": []
+  },
+  "generated": false
+}

@@ -1,0 +1,147 @@
+{
+  "id": "msmarco_minilm_relevance_gating_rag",
+  "topic": "msmarco_minilm_relevance_gating_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Relevance Gating with cross-encoder/ms-marco-MiniLM-L6-v2 for RAG"
+  },
+  "description": {
+    "en": "Use cross-encoder/ms-marco-MiniLM-L6-v2 as a relevance gate in RAG pipelines — score passages, apply adaptive thresholds, and filter out noise before it reaches your LLM. Build a confidence-aware context builder that prevents hallucinations from irrelevant retrieval."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Stop Feeding Garbage to Your LLM: Relevance Gating\n\nVaathiyaar here! Your RAG pipeline retrieves the top-5 passages and dumps them all into the LLM prompt — but what happens when none of them actually answer the question? The LLM hallucinates, confidently synthesizing nonsense from irrelevant context. The fix isn't better embeddings — it's a **relevance gate**: a cross-encoder checkpoint that scores every retrieved passage and *blocks* the ones that don't meet a relevance threshold. `cross-encoder/ms-marco-MiniLM-L6-v2` is perfect for this — trained on real Bing queries with human relevance labels, it knows the difference between \"related\" and \"actually answers the question.\"\n\n### The Hallucination Problem in RAG\n\n| Scenario | Bi-Encoder Retrieval | Without Gate | With Relevance Gate |\n|---|---|---|---|\n| Good query match | Returns relevant docs | Correct answer | Correct answer |\n| Partial match | Returns tangential docs | Plausible but wrong answer | Answers from best docs only |\n| No match in corpus | Returns loosely similar docs | Confident hallucination | \"I don't have info on this\" |\n| Ambiguous query | Returns mixed results | Mixes relevant + irrelevant | Filters to relevant only |\n\nThe gate catches the dangerous cases — when the bi-encoder returns *something* (it always does) but nothing truly relevant.\n\n### Building a Relevance Gate\n\n```python\nfrom sentence_transformers import CrossEncoder\nimport numpy as np\n\nclass RelevanceGate:\n    def __init__(self, threshold=0.0):\n        self.model = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n        self.threshold = threshold\n\n    def filter(self, query, passages, min_results=1):\n        pairs = [[query, p] for p in passages]\n        scores = self.model.predict(pairs)\n        scored = sorted(\n            zip(passages, scores),\n            key=lambda x: x[1], reverse=True\n        )\n        passed = [(p, s) for p, s in scored if s >= self.threshold]\n        if len(passed) < min_results:\n            passed = scored[:min_results]\n        return [{\"passage\": p, \"score\": float(s)} for p, s in passed]\n```\n\nThe `min_results` parameter is your safety net — even if nothing passes the gate, you still get the best candidate rather than an empty context.\n\n### Adaptive Thresholds with Score Distribution\n\nHard-coded thresholds are fragile. Instead, use the score distribution to decide:\n\n```python\ndef adaptive_gate(query, passages, model, top_k=3):\n    scores = model.predict([[query, p] for p in passages])\n    mean_score = np.mean(scores)\n    std_score = np.std(scores)\n    # Keep passages scoring above mean + 0.5 * std\n    dynamic_threshold = mean_score + 0.5 * std_score\n    results = [\n        {\"passage\": p, \"score\": float(s)}\n        for p, s in zip(passages, scores)\n        if s >= dynamic_threshold\n    ]\n    results.sort(key=lambda x: x[\"score\"], reverse=True)\n    return results[:top_k] if results else [\n        {\"passage\": passages[int(np.argmax(scores))],\n         \"score\": float(np.max(scores))}\n    ]\n```\n\nThis adapts per query: when all passages are relevant, the threshold rises and keeps only the best; when nothing is relevant, the threshold drops and flags low confidence.\n\n### Confidence-Aware RAG Context Builder\n\n```python\ndef build_rag_prompt(query, knowledge_base, gate, llm_fn):\n    results = gate.filter(query, knowledge_base)\n    max_score = max(r[\"score\"] for r in results)\n\n    if max_score < -2.0:\n        return llm_fn(\n            f\"The user asked: {query}\\n\"\n            \"I don't have reliable information to answer this. \"\n            \"Please let the user know and suggest they check official docs.\"\n        )\n\n    context = \"\\n\".join(f\"- {r['passage']}\" for r in results)\n    confidence = \"high\" if max_score > 3.0 else \"moderate\"\n    prompt = (\n        f\"Context (confidence: {confidence}):\\n{context}\\n\\n\"\n        f\"Question: {query}\\nAnswer based only on the context above:\"\n    )\n    return llm_fn(prompt)\n```\n\nThis three-tier system — high confidence, moderate confidence, and \"I don't know\" — prevents the LLM from hallucinating when the knowledge base has no answer. The score thresholds (-2.0 and 3.0) are calibrated for ms-marco-MiniLM-L6-v2's raw logit scale.\n\n### Score Calibration Reference\n\nms-marco-MiniLM-L6-v2 outputs raw logits, not probabilities. Here's what the scores mean in practice:\n\n| Score Range | Interpretation | Action |\n|---|---|---|\n| > 5.0 | Near-perfect match | Use with high confidence |\n| 2.0 to 5.0 | Strong relevance | Include in context |\n| 0.0 to 2.0 | Moderate relevance | Include if needed |\n| -2.0 to 0.0 | Weak relevance | Exclude unless nothing better |\n| < -2.0 | Irrelevant | Never include — triggers fallback |\n\n### Putting It All Together\n\n```python\ngate = RelevanceGate(threshold=0.5)\ncorpus = [\n    \"Reset your password from Settings > Security > Change Password\",\n    \"Our company picnic is scheduled for June 15th\",\n    \"Python decorators wrap functions with additional behavior\",\n    \"For account lockout, contact support at help@example.com\",\n]\n\n# Query with a good match\ngood = gate.filter(\"how do I reset my password\", corpus)\nprint(f\"Good query top score: {good[0]['score']:.2f}\")\n\n# Query with NO match in corpus\nbad = gate.filter(\"what is the refund policy\", corpus)\nprint(f\"Bad query top score: {bad[0]['score']:.2f}\")\n# The score difference tells you whether to answer or say \"I don't know\"\n```\n\n> **Key Insight:** A cross-encoder relevance gate is your RAG pipeline's immune system — it blocks irrelevant context from reaching the LLM, turning confident hallucinations into honest \"I don't know\" responses. Use adaptive thresholds based on score distribution rather than hard-coded cutoffs, and always keep a `min_results` safety net. For Homie, this means the difference between a helpful assistant and one that makes things up when it doesn't know the answer."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "RAG pipelines always retrieve something — but what if none of it is relevant? Without a relevance gate, your LLM hallucinates from irrelevant context. cross-encoder/ms-marco-MiniLM-L6-v2 acts as a quality checkpoint: it scores every passage against the query and blocks noise before it reaches the LLM. This turns confident hallucinations into honest 'I don't know' responses.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\nimport numpy as np\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\nquery = \"how do I reset my password\"\ncorpus = [\n    \"Reset your password from Settings > Security\",\n    \"Our company picnic is June 15th\",\n    \"Python decorators wrap functions\",\n    \"Contact support for account lockout\",\n]\n\nscores = model.predict([[query, doc] for doc in corpus])\n\nfor doc, score in sorted(zip(corpus, scores), key=lambda x: x[1], reverse=True):\n    status = \"PASS\" if score > 0.5 else \"BLOCK\"\n    print(f\"[{status}] {score:+.2f} | {doc}\")",
+      "steps": [
+        {"line": 1, "explanation": "Import CrossEncoder from sentence-transformers. This is the re-ranker class — it scores query-document pairs jointly, unlike SentenceTransformer which produces embeddings."},
+        {"line": 4, "explanation": "Load ms-marco-MiniLM-L6-v2 — trained on 500K+ real Bing queries with human relevance labels. It outputs raw logit scores: positive means relevant, negative means irrelevant."},
+        {"line": 6, "explanation": "A password reset query. Some corpus documents are relevant (settings, account lockout), others are completely unrelated (picnic, decorators)."},
+        {"line": 14, "explanation": "Score all query-document pairs. The cross-encoder reads each pair through full transformer attention — it understands that 'reset password' matches 'Settings > Security' but not 'company picnic'."},
+        {"line": 17, "explanation": "Apply a relevance gate at score 0.5. Passages scoring above pass into the LLM context; those below are blocked. This prevents the LLM from seeing irrelevant noise."},
+        {"line": 18, "explanation": "The PASS/BLOCK label makes the gate's decision visible. In production, blocked passages are silently dropped — the LLM never sees them."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import CrossEncoder\nimport numpy as np\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ndef adaptive_gate(query, passages, top_k=3):\n    scores = model.predict([[query, p] for p in passages])\n    mean_s = np.mean(scores)\n    std_s = np.std(scores)\n    threshold = mean_s + 0.5 * std_s\n    passed = [\n        (p, float(s)) for p, s in zip(passages, scores)\n        if s >= threshold\n    ]\n    passed.sort(key=lambda x: x[1], reverse=True)\n    if not passed:\n        best = int(np.argmax(scores))\n        passed = [(passages[best], float(scores[best]))]\n    return passed[:top_k], float(threshold)\n\nquery = \"what is our refund policy\"\ncorpus = [\n    \"Returns accepted within 30 days\",\n    \"Our team uses Agile sprints\",\n    \"Server maintenance every Sunday\",\n    \"Full refund for defective products\",\n]\n\nresults, thresh = adaptive_gate(query, corpus)\nprint(f\"Adaptive threshold: {thresh:.2f}\")\nfor passage, score in results:\n    print(f\"  {score:+.2f} | {passage}\")",
+      "steps": [
+        {"line": 6, "explanation": "Adaptive gating: instead of a hard-coded threshold, compute one from the score distribution of each query's results. This adjusts per query automatically."},
+        {"line": 8, "explanation": "Compute mean and standard deviation of all passage scores. When all passages are relevant, mean is high; when none are, mean is low."},
+        {"line": 10, "explanation": "Threshold = mean + 0.5 * std. This keeps passages that score meaningfully above average. The 0.5 multiplier balances precision and recall."},
+        {"line": 11, "explanation": "Filter passages above the dynamic threshold. This adapts: for a well-matched query, it's selective; for a poorly-matched query, it flags low confidence."},
+        {"line": 16, "explanation": "Safety net: if nothing passes the threshold, return the single best passage. An empty context is worse than a low-confidence one — the LLM needs something to work with."},
+        {"line": 19, "explanation": "Return both the filtered results and the threshold. The calling code can use the threshold to set confidence levels in the LLM prompt."},
+        {"line": 30, "explanation": "Print the adaptive threshold alongside results. When the threshold is high, you have clear winners; when it's low, all passages are weakly related."}
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_3",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, CrossEncoder, util\nimport numpy as np\n\nbi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\ncross_encoder = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ndef gated_rag(query, corpus, top_k_retrieve=20, gate_threshold=0.5):\n    # Stage 1: Bi-encoder retrieval\n    q_emb = bi_encoder.encode(query, convert_to_tensor=True)\n    c_emb = bi_encoder.encode(corpus, convert_to_tensor=True)\n    hits = util.semantic_search(q_emb, c_emb, top_k=top_k_retrieve)[0]\n    candidates = [corpus[h[\"corpus_id\"]] for h in hits]\n\n    # Stage 2: Cross-encoder relevance gating\n    scores = cross_encoder.predict([[query, c] for c in candidates])\n    max_score = float(np.max(scores))\n\n    # Stage 3: Confidence-based context assembly\n    if max_score < -2.0:\n        return {\"context\": None, \"confidence\": \"none\", \"reason\": \"no relevant passages found\"}\n\n    gated = [\n        {\"text\": c, \"score\": float(s)}\n        for c, s in zip(candidates, scores) if s >= gate_threshold\n    ]\n    gated.sort(key=lambda x: x[\"score\"], reverse=True)\n\n    if not gated:\n        best = candidates[int(np.argmax(scores))]\n        gated = [{\"text\": best, \"score\": max_score}]\n\n    confidence = \"high\" if max_score > 3.0 else \"moderate\"\n    context = \"\\n\".join(f\"- {g['text']}\" for g in gated[:5])\n    return {\"context\": context, \"confidence\": confidence, \"top_score\": max_score}\n\n# Test with a good query\nresult = gated_rag(\"how to reset password\", [\n    \"Reset password in Settings > Security\",\n    \"Company picnic is June 15\",\n    \"Contact support for account issues\",\n])\nprint(f\"Confidence: {result['confidence']}\")\nprint(f\"Context: {result.get('context', 'NONE')}\")",
+      "steps": [
+        {"line": 4, "explanation": "Two-model setup: bi-encoder for fast retrieval over the full corpus, cross-encoder for precise relevance gating on the retrieved candidates."},
+        {"line": 7, "explanation": "The gated_rag function implements a three-stage pipeline: retrieve, gate, and assemble context with confidence metadata."},
+        {"line": 11, "explanation": "Stage 1: semantic_search retrieves top-20 candidates by embedding similarity. Fast but approximate — some irrelevant docs will sneak in."},
+        {"line": 15, "explanation": "Stage 2: cross-encoder scores every candidate against the query. This is the gate — scores below threshold get blocked from the LLM context."},
+        {"line": 19, "explanation": "If the best score is below -2.0, nothing in the corpus answers this query. Return None context — the calling code should trigger an 'I don't know' response."},
+        {"line": 22, "explanation": "Filter to passages above the gate threshold. Only these will be assembled into the LLM prompt — noise is eliminated."},
+        {"line": 28, "explanation": "Safety net: if nothing passed the gate but the best score is above -2.0, include the single best candidate. Low confidence but not zero information."},
+        {"line": 32, "explanation": "Tag the context with confidence level. The LLM prompt can use this: 'high' means answer directly, 'moderate' means hedge, 'none' means refuse to answer."}
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "RAG Without Gating",
+      "right_label": "RAG With Relevance Gate",
+      "items": [
+        {"left": "All retrieved passages go to LLM", "right": "Only passages above threshold reach LLM"},
+        {"left": "LLM hallucinates from irrelevant context", "right": "LLM says 'I don't know' when nothing is relevant"},
+        {"left": "No confidence signal for downstream", "right": "Confidence levels (high/moderate/none) guide response"},
+        {"left": "Fixed top-K context regardless of quality", "right": "Variable context size based on actual relevance"},
+        {"left": "Faster (no cross-encoder overhead)", "right": "+15-50ms latency but dramatically fewer hallucinations"}
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built a relevance-gated RAG pipeline! Your LLM now says 'I don't know' instead of hallucinating from noise."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `RelevanceGate` class that uses cross-encoder/ms-marco-MiniLM-L6-v2 to filter passages. The `filter` method should accept a query, a list of passages, and a threshold (default 0.0). It should return a list of dictionaries with 'passage' and 'score' keys, sorted by score descending, containing only passages that score above the threshold. If no passages pass, return the single highest-scoring passage."
+      },
+      "starter_code": "from sentence_transformers import CrossEncoder\n\nclass RelevanceGate:\n    def __init__(self):\n        # Load cross-encoder model\n        pass\n\n    def filter(self, query, passages, threshold=0.0):\n        # Score all passages against the query\n        # Filter by threshold\n        # Return sorted results (highest score first)\n        # If nothing passes threshold, return the best one\n        pass\n\n# Test your gate\ngate = RelevanceGate()\nresults = gate.filter(\n    \"how to install Python packages\",\n    [\n        \"Use pip install to add packages\",\n        \"The history of the Python language\",\n        \"pip and conda are Python package managers\",\n        \"Java uses Maven for dependencies\",\n    ],\n    threshold=1.0\n)\nfor r in results:\n    print(f\"{r['score']:+.2f} | {r['passage']}\")",
+      "expected_output": "Results should show only passages scoring above 1.0, sorted by score descending. 'pip install' and 'pip and conda' should pass; 'Python history' and 'Java Maven' should be blocked.",
+      "hints": {
+        "en": [
+          "Use CrossEncoder('cross-encoder/ms-marco-MiniLM-L6-v2') in __init__ and model.predict() in filter",
+          "Create pairs as [[query, p] for p in passages], then zip passages with scores and filter by threshold",
+          "Use sorted() with key=lambda x: x[1] and reverse=True, then convert to list of dicts with 'passage' and 'score' keys"
+        ]
+      },
+      "test_code": "gate = RelevanceGate()\nresults = gate.filter('install packages', ['Use pip install to add packages', 'Company picnic'], threshold=-10.0)\nassert len(results) == 2, 'Should return all passages when threshold is very low'\nassert results[0]['score'] >= results[-1]['score'], 'Results must be sorted by score descending'\nassert 'passage' in results[0] and 'score' in results[0], 'Each result needs passage and score keys'\n\n# Test fallback when nothing passes threshold\nresults2 = gate.filter('quantum physics', ['How to cook pasta', 'Dog training tips'], threshold=100.0)\nassert len(results2) >= 1, 'Must return at least one result even when nothing passes threshold'\nprint('All tests passed!')"
+    },
+    {
+      "instruction": {
+        "en": "Build an `adaptive_threshold` function that computes a dynamic relevance threshold from the score distribution. Given a query, passages, and a CrossEncoder model, it should: (1) score all passages, (2) compute threshold as mean + 0.5 * std of scores, (3) return passages above threshold sorted by score descending, along with the threshold value. If no passages pass, return the single best passage."
+      },
+      "starter_code": "from sentence_transformers import CrossEncoder\nimport numpy as np\n\nmodel = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\ndef adaptive_threshold(query, passages):\n    # Score passages\n    # Compute mean and std of scores\n    # Set threshold = mean + 0.5 * std\n    # Filter and sort\n    # Fallback to best if empty\n    # Return (results_list, threshold_value)\n    pass\n\n# Test\nresults, thresh = adaptive_threshold(\n    \"Python web frameworks\",\n    [\n        \"Flask is a lightweight Python web framework\",\n        \"Django provides full-stack web development\",\n        \"How to change your car's oil filter\",\n        \"FastAPI uses async Python for APIs\",\n    ]\n)\nprint(f\"Threshold: {thresh:.2f}\")\nfor r in results:\n    print(f\"  {r['score']:+.2f} | {r['passage']}\")",
+      "expected_output": "Threshold should be computed dynamically. Flask, Django, and FastAPI passages should pass (web framework related). 'Car oil filter' should be blocked as below the adaptive threshold.",
+      "hints": {
+        "en": [
+          "Use model.predict([[query, p] for p in passages]) to get scores, then np.mean(scores) and np.std(scores) for the distribution",
+          "Filter with a list comprehension: [(p, s) for p, s in zip(passages, scores) if s >= threshold]",
+          "For the fallback, use np.argmax(scores) to find the best passage when nothing passes the threshold"
+        ]
+      },
+      "test_code": "results, thresh = adaptive_threshold('Python web frameworks', ['Flask is a Python web framework', 'How to bake bread', 'Django for web dev', 'Cat grooming tips'])\nassert isinstance(thresh, float), 'Threshold must be a float'\nassert isinstance(results, list), 'Results must be a list'\nassert len(results) >= 1, 'Must return at least one result'\nassert all('passage' in r and 'score' in r for r in results), 'Each result needs passage and score keys'\nassert results[0]['score'] >= results[-1]['score'], 'Results must be sorted descending'\nprint('All tests passed!')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "cross-encoder reranking",
+      "relevance gating",
+      "adaptive thresholds",
+      "RAG hallucination prevention",
+      "confidence-aware retrieval",
+      "score calibration"
+    ],
+    "concepts_required": [
+      "sentence-transformers",
+      "bi-encoder embeddings",
+      "RAG pipeline basics",
+      "Python classes"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "tutorial",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineer",
+      "rag_specialist"
+    ]
+  },
+  "generated": true
+}
