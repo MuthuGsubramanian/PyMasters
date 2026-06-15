@@ -349,11 +349,6 @@ export default function Home() {
                 <div className="relative max-w-5xl mx-auto text-center">
                     <BrandMark reduced={reduced} />
 
-                    <span className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full text-[11px] font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
-                        <Sparkles size={12} aria-hidden="true" />
-                        AI-Powered Python Mastery
-                    </span>
-
                     <h1 className="text-white text-4xl sm:text-5xl lg:text-7xl font-bold font-display leading-[1.05] tracking-tight mb-6">
                         Master Python.{' '}
                         <span
