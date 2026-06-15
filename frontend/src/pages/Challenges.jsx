@@ -342,50 +342,67 @@ export default function Challenges() {
 
             {/* Submission result */}
             <AnimatePresence>
-              {result && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  exit={{ opacity: 0, y: -10, height: 0 }}
-                  className={clsx(
-                    'rounded-2xl border p-5 backdrop-blur-sm',
-                    result.success
-                      ? 'bg-green-500/10 border-green-500/20'
-                      : 'bg-red-500/10 border-red-500/20'
-                  )}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    {result.success ? (
-                      <CheckCircle2 size={20} className="text-green-400" />
-                    ) : (
-                      <AlertCircle size={20} className="text-red-400" />
-                    )}
-                    <span className={clsx('font-semibold', result.success ? 'text-green-400' : 'text-red-400')}>
-                      {result.success ? 'Challenge Passed!' : 'Not Quite'}
-                    </span>
-                    {result.xp_earned && (
-                      <span className="ml-auto flex items-center gap-1 text-amber-400 text-sm font-semibold">
-                        <Zap size={14} /> +{result.xp_earned} XP
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-text-secondary">{result.message || result.feedback}</p>
-                  {result.test_results && (
-                    <div className="mt-3 space-y-1">
-                      {result.test_results.map((t, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs">
-                          {t.passed ? (
-                            <CheckCircle2 size={12} className="text-green-400" />
-                          ) : (
-                            <AlertCircle size={12} className="text-red-400" />
-                          )}
-                          <span className="text-text-secondary">{t.name}</span>
+              {result && (() => {
+                  // Backend returns status: passed|failed|rejected|already_completed|error.
+                  // (Network-error fallback in handleSubmit sets {success:false,message}.)
+                  const isPass = result.status === 'passed' || result.status === 'already_completed' || result.success === true;
+                  const isBlocked = result.status === 'rejected' || result.status === 'error';
+                  const tone = isPass ? 'green' : isBlocked ? 'amber' : 'red';
+                  const tests = result.results || result.test_results || [];
+                  const heading = result.status === 'already_completed' ? 'Already Completed'
+                    : isPass ? 'Challenge Passed!'
+                    : result.status === 'rejected' ? 'Submission Blocked'
+                    : result.status === 'error' ? 'Hold On'
+                    : 'Not Quite';
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: 'auto' }}
+                      exit={{ opacity: 0, y: -10, height: 0 }}
+                      className={clsx('rounded-2xl border p-5 backdrop-blur-sm',
+                        tone === 'green' ? 'bg-green-500/10 border-green-500/20'
+                        : tone === 'amber' ? 'bg-amber-500/10 border-amber-500/20'
+                        : 'bg-red-500/10 border-red-500/20')}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        {isPass ? <CheckCircle2 size={20} className="text-green-400" />
+                          : <AlertCircle size={20} className={tone === 'amber' ? 'text-amber-400' : 'text-red-400'} />}
+                        <span className={clsx('font-semibold',
+                          tone === 'green' ? 'text-green-400' : tone === 'amber' ? 'text-amber-400' : 'text-red-400')}>
+                          {heading}
+                        </span>
+                        {typeof result.passed_tests === 'number' && typeof result.total_tests === 'number' && result.total_tests > 0 && (
+                          <span className="text-xs text-text-muted">{result.passed_tests}/{result.total_tests} tests</span>
+                        )}
+                        {result.xp_awarded > 0 && (
+                          <span className="ml-auto flex items-center gap-1 text-amber-400 text-sm font-semibold">
+                            <Zap size={14} /> +{result.xp_awarded} XP
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary">{result.message || result.feedback}</p>
+                      {tests.length > 0 && (
+                        <div className="mt-3 space-y-1.5">
+                          {tests.map((t, i) => (
+                            <div key={i} className="flex items-start gap-2 text-xs">
+                              {t.passed ? <CheckCircle2 size={12} className="text-green-400 mt-0.5 shrink-0" />
+                                : <AlertCircle size={12} className="text-red-400 mt-0.5 shrink-0" />}
+                              <span className="flex-1 min-w-0">
+                                <span className="text-text-secondary">{t.name}</span>
+                                {!t.passed && t.expected !== undefined && (
+                                  <span className="block text-text-muted">expected <code className="text-text-secondary">{String(t.expected)}</code>, got <code className="text-text-secondary">{String(t.got)}</code></span>
+                                )}
+                                {!t.passed && t.error && (
+                                  <span className="block text-text-muted">error: {t.error}</span>
+                                )}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              )}
+                      )}
+                    </motion.div>
+                  );
+                })()}
             </AnimatePresence>
 
             {/* Previous challenges */}
