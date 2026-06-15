@@ -17,7 +17,13 @@ from typing import List, Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from auth import get_current_user_id
+from ratelimit import SlidingWindowRateLimiter
+
 router = APIRouter(prefix="/api/challenges", tags=["challenges"])
+
+# Grading runs code in a subprocess — cap submissions per user.
+_submit_limiter = SlidingWindowRateLimiter(max_calls=20, window_seconds=60)
 
 
 def _validate_submission(challenge: dict, code: str) -> Tuple[bool, str]:
@@ -217,6 +223,12 @@ def _ensure_challenges_table(db_path: str):
                 UNIQUE(user_id, challenge_id)
             )
         """)
+        # Additive migration: per-attempt test counts for richer history/UX.
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(challenge_submissions)").fetchall()}
+        if "passed_count" not in cols:
+            conn.execute("ALTER TABLE challenge_submissions ADD COLUMN passed_count INTEGER DEFAULT 0")
+        if "total_count" not in cols:
+            conn.execute("ALTER TABLE challenge_submissions ADD COLUMN total_count INTEGER DEFAULT 0")
         conn.commit()
     finally:
         conn.close()
@@ -698,9 +710,16 @@ def get_weekly_challenge():
 
 
 @router.post("/submit")
-def submit_solution(req: SubmitSolutionRequest):
-    """Submit a solution for a challenge. Records the attempt in the database."""
-    # Validate challenge exists
+def submit_solution(req: SubmitSolutionRequest, caller: str = Depends(get_current_user_id)):
+    """Submit a solution. Authenticated (user from JWT) + rate-limited. Graded
+    against the challenge's test cases in the hardened sandbox."""
+    if not _submit_limiter.allow(caller):
+        wait = _submit_limiter.retry_after(caller)
+        return {"status": "error", "message": f"Rate limit reached. Try again in {wait}s.",
+                "xp_awarded": 0, "challenge_id": req.challenge_id}
+
+    user_id = caller  # trust the token, not any body user_id
+
     challenge = next((c for c in CHALLENGES if c["id"] == req.challenge_id), None)
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
@@ -711,53 +730,65 @@ def submit_solution(req: SubmitSolutionRequest):
     conn = sqlite3.connect(db_path)
     try:
         cursor = conn.cursor()
-
-        # Check if user already completed this challenge
         cursor.execute(
             "SELECT id, passed FROM challenge_submissions WHERE user_id = ? AND challenge_id = ?",
-            [req.user_id, req.challenge_id],
+            [user_id, req.challenge_id],
         )
         existing = cursor.fetchone()
+        already_passed = bool(existing and existing[1] == 1)
 
-        if existing and existing[1] == 1:
-            return {
-                "status": "already_completed",
-                "message": "You have already completed this challenge.",
-                "xp_awarded": 0,
-            }
-
-        # Static validation gate (no execution) — rejects empty/placeholder/
-        # unchanged submissions that the old stub wrongly marked as passed.
+        # Pre-filter junk without spawning a subprocess, then grade for real.
         valid, validate_msg = _validate_submission(challenge, req.code)
-        passed = 1 if valid else 0
-        xp = challenge["xp_reward"] if passed else 0
+        if not valid:
+            grade = {"passed": False, "passed_count": 0, "total": len(challenge.get("test_cases") or []),
+                     "results": [], "message": validate_msg}
+        else:
+            grade = grade_submission(challenge, req.code)
+
+        passed = 1 if grade["passed"] else 0
+        # Award XP only on the first successful pass.
+        xp = challenge["xp_reward"] if (passed and not already_passed) else 0
 
         if existing:
             cursor.execute(
-                "UPDATE challenge_submissions SET code = ?, passed = ?, xp_awarded = ?, submitted_at = datetime('now') "
-                "WHERE user_id = ? AND challenge_id = ?",
-                [req.code, passed, xp, req.user_id, req.challenge_id],
+                "UPDATE challenge_submissions SET code=?, passed=?, xp_awarded=COALESCE(xp_awarded,0)+?, "
+                "passed_count=?, total_count=?, submitted_at=datetime('now') "
+                "WHERE user_id=? AND challenge_id=?",
+                [req.code, max(passed, existing[1] or 0), xp, grade["passed_count"],
+                 grade["total"], user_id, req.challenge_id],
             )
         else:
             cursor.execute(
-                "INSERT INTO challenge_submissions (user_id, challenge_id, code, passed, xp_awarded) "
-                "VALUES (?, ?, ?, ?, ?)",
-                [req.user_id, req.challenge_id, req.code, passed, xp],
+                "INSERT INTO challenge_submissions (user_id, challenge_id, code, passed, xp_awarded, passed_count, total_count) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [user_id, req.challenge_id, req.code, passed, xp, grade["passed_count"], grade["total"]],
             )
 
-        # Award XP to the user
-        if passed and xp > 0:
+        if xp > 0:
             cursor.execute(
                 "UPDATE users SET points = COALESCE(points, 0) + ? WHERE id = ?",
-                [xp, req.user_id],
+                [xp, user_id],
             )
 
         conn.commit()
 
+        status = ("already_completed" if (already_passed and passed)
+                  else "rejected" if grade.get("rejected")
+                  else "passed" if passed else "failed")
+        if status == "already_completed":
+            message = "You already completed this challenge."
+        elif passed and xp:
+            message = f"{grade['message']} +{xp} XP."
+        else:
+            message = grade["message"]
+
         return {
-            "status": "passed" if passed else "failed",
-            "message": (f"Challenge accepted! +{xp} XP." if passed else validate_msg),
+            "status": status,
+            "message": message,
             "xp_awarded": xp,
+            "passed_tests": grade["passed_count"],
+            "total_tests": grade["total"],
+            "results": grade["results"],
             "challenge_id": req.challenge_id,
         }
     finally:
