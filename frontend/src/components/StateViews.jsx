@@ -30,7 +30,7 @@ export function EmptyState({ icon: Icon = Inbox, title = 'Nothing here yet', mes
 export function ErrorState({ title = 'Something went wrong', message = 'We couldn’t load this. Please try again.', onRetry, className = '' }) {
     return (
         <div className={`flex flex-col items-center justify-center text-center py-16 px-6 ${className}`} role="alert">
-            <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-7 h-7 text-red-500" aria-hidden="true" />
             </div>
             <h3 className="text-text-primary font-semibold font-display mb-1">{title}</h3>
