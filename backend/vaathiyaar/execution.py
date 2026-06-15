@@ -90,6 +90,50 @@ def check_code_safety(code: str) -> str | None:
     return None
 
 
+# Modules that stay blocked for challenge grading: network, process spawning,
+# native code, dynamic import, serialization-based escapes, persistence.
+# (Note: os/tempfile/shutil/threading/asyncio/contextlib/time/etc. are allowed —
+# challenges legitimately need them, and the subprocess is secret-free,
+# cwd-isolated, resource-limited and time-limited.)
+_CHALLENGE_BLOCKED_MODULES = {
+    "subprocess", "socket", "ctypes", "multiprocessing", "importlib",
+    "marshal", "pickle", "urllib", "http", "requests", "ftplib",
+    "smtplib", "webbrowser", "ssl", "select", "termios", "shelve", "dbm",
+    "sqlite3", "mmap", "fcntl", "pty", "sys",
+}
+
+
+def check_challenge_safety(code: str) -> str | None:
+    """Relaxed variant of check_code_safety for graded challenge submissions.
+
+    Blocks the genuinely dangerous surface (network, process, native, dynamic
+    import, introspection escape) but allows computational stdlib. Returns a
+    reason string if disallowed, else None.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None  # a real SyntaxError surfaces when the harness runs
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root = alias.name.split(".")[0]
+                if root in _CHALLENGE_BLOCKED_MODULES:
+                    return f"import of module '{root}' is not allowed in challenges"
+        elif isinstance(node, ast.ImportFrom):
+            root = (node.module or "").split(".")[0]
+            if root in _CHALLENGE_BLOCKED_MODULES:
+                return f"import of module '{root}' is not allowed in challenges"
+        elif isinstance(node, ast.Name):
+            if node.id in {"eval", "exec", "compile", "__import__", "open", "input", "breakpoint"}:
+                return f"use of '{node.id}' is not allowed in challenges"
+        elif isinstance(node, ast.Attribute):
+            if node.attr in _BLOCKED_DUNDERS:
+                return f"access to '{node.attr}' is not allowed in challenges"
+    return None
+
+
 def _minimal_env(python_cmd: str) -> dict:
     """Build a secret-free environment sufficient to start the interpreter."""
     env = {
