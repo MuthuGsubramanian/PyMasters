@@ -7,7 +7,6 @@ import {
     Play, Terminal, Building2, ShieldCheck, Mail
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import PymastersIcon from '../assets/pymasters-icon.svg';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
@@ -98,15 +97,15 @@ function BrandMark({ reduced }) {
                 initial={reduced ? false : { opacity: 0, scale: 0.85 }}
                 animate={reduced ? false : { opacity: 1, scale: 1 }}
                 transition={{ duration: 0.7, ease: 'easeOut' }}
-                className="relative flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-purple-600/20 to-cyan-500/15 border border-white/10 backdrop-blur-sm shadow-[0_0_60px_rgba(124,58,237,0.4)]"
+                className="relative flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-purple-600 to-cyan-500 border border-white/15 shadow-[0_0_60px_rgba(124,58,237,0.45)]"
             >
                 <img
-                    src={PymastersIcon}
+                    src={PymastersGlyph}
                     alt="PyMasters logo"
                     width="64"
                     height="64"
-                    className="w-14 h-14 sm:w-16 sm:h-16"
-                    style={{ filter: 'drop-shadow(0 0 12px rgba(168,85,247,0.6))' }}
+                    className="w-12 h-12 sm:w-14 sm:h-14"
+                    style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.25))' }}
                 />
             </motion.div>
         </div>
@@ -601,10 +600,10 @@ export default function Home() {
             <section className="relative py-24 px-4 sm:px-6 text-center">
                 <div className="relative max-w-3xl mx-auto">
                     <img
-                        src={PymastersIcon}
+                        src={PymastersGlyph}
                         alt=""
                         className="w-14 h-14 mx-auto mb-6"
-                        style={{ filter: 'drop-shadow(0 0 16px rgba(168,85,247,0.6))' }}
+                        style={{ filter: 'drop-shadow(0 0 16px rgba(168,85,247,0.7))' }}
                     />
                     <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
                         Ready to start your{' '}
