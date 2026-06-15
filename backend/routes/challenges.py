@@ -357,9 +357,11 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "cache.get(1) == 1 after cache.put(1, 1)",
         "test_cases": [
-            {"input": "cache = LRUCache(2); cache.put(1,1); cache.put(2,2); cache.get(1)", "expected_output": "1"},
-            {"input": "cache = LRUCache(2); cache.put(1,1); cache.put(2,2); cache.put(3,3); cache.get(2)", "expected_output": "-1"},
-            {"input": "cache = LRUCache(1); cache.put(1,1); cache.put(2,2); cache.get(1)", "expected_output": "-1"},
+            {"name": "get returns stored value", "harness": "c=LRUCache(2)\nc.put(1,1)\nc.put(2,2)\nassert c.get(1)==1"},
+            {"name": "evicts least-recently-used", "harness": "c=LRUCache(2)\nc.put(1,1)\nc.put(2,2)\nc.put(3,3)\nassert c.get(1)==-1 and c.get(3)==3"},
+            {"name": "capacity 1 evicts previous", "harness": "c=LRUCache(1)\nc.put(1,1)\nc.put(2,2)\nassert c.get(1)==-1"},
+            {"name": "get refreshes recency", "harness": "c=LRUCache(2)\nc.put(1,1)\nc.put(2,2)\nc.get(1)\nc.put(3,3)\nassert c.get(2)==-1 and c.get(1)==1"},
+            {"name": "missing key returns -1", "harness": "c=LRUCache(2)\nassert c.get(99)==-1"},
         ],
         "xp_reward": 30,
         "hints": [
@@ -432,9 +434,11 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "@timer decorated functions print elapsed time",
         "test_cases": [
-            {"input": "@timer\\ndef slow(): time.sleep(0.1); return 42\\nslow()", "expected_output": "42"},
-            {"input": "@retry(max_attempts=3)\\ndef flaky(): raise ValueError\\nflaky()", "expected_output": "raises ValueError after 3 attempts"},
-            {"input": "@validate_types\\ndef add(a: int, b: int) -> int: return a+b\\nadd(1,2)", "expected_output": "3"},
+            {"name": "timer preserves return value", "harness": "@timer\ndef slow():\n    return 42\nassert slow()==42"},
+            {"name": "retry re-raises after max attempts", "harness": "n={'c':0}\n@retry(max_attempts=3)\ndef flaky():\n    n['c']+=1\n    raise ValueError('x')\ntry:\n    flaky()\n    assert False, 'should have raised'\nexcept ValueError:\n    assert n['c']==3"},
+            {"name": "retry succeeds before max", "harness": "n={'c':0}\n@retry(max_attempts=3)\ndef eventually():\n    n['c']+=1\n    if n['c']<2:\n        raise ValueError\n    return 'ok'\nassert eventually()=='ok'"},
+            {"name": "validate_types accepts valid args", "harness": "@validate_types\ndef add(a: int, b: int) -> int:\n    return a+b\nassert add(1,2)==3"},
+            {"name": "validate_types rejects wrong types", "harness": "@validate_types\ndef add(a: int, b: int) -> int:\n    return a+b\nraised=False\ntry:\n    add('x',2)\nexcept TypeError:\n    raised=True\nassert raised"},
         ],
         "xp_reward": 20,
         "hints": [
@@ -676,9 +680,11 @@ CHALLENGES: List[dict] = [
         ),
         "expected_output": "with Timer() as t: ... prints elapsed time",
         "test_cases": [
-            {"input": "with Timer(): time.sleep(0.1)", "expected_output": "prints elapsed ~ 0.1s"},
-            {"input": "with temp_directory() as d: os.path.isdir(d)", "expected_output": "True (dir exists inside, cleaned up after)"},
-            {"input": "with suppress(ValueError): raise ValueError", "expected_output": "no exception raised"},
+            {"name": "Timer runs a block without error", "harness": "import time\nwith Timer():\n    time.sleep(0.01)"},
+            {"name": "temp_directory yields an existing dir", "harness": "import os\nwith temp_directory() as d:\n    assert os.path.isdir(d)"},
+            {"name": "temp_directory cleans up after", "harness": "import os\nwith temp_directory() as d:\n    saved=d\nassert not os.path.isdir(saved)"},
+            {"name": "suppress swallows listed exception", "harness": "with suppress(ValueError):\n    raise ValueError('x')"},
+            {"name": "suppress lets other exceptions through", "harness": "raised=False\ntry:\n    with suppress(ValueError):\n        raise KeyError('k')\nexcept KeyError:\n    raised=True\nassert raised"},
         ],
         "xp_reward": 20,
         "hints": [
