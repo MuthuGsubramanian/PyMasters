@@ -13,7 +13,7 @@ import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones
+    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -24,6 +24,7 @@ import LoopVisualizer from '../components/animations/LoopVisualizer';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
 import LearnAnything from '../components/LearnAnything';
+import VoiceTutor from '../components/VoiceTutor';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -914,6 +915,7 @@ export default function Classroom() {
     const [completedLessons, setCompletedLessons] = useState(new Set());
     const [podcastManifest, setPodcastManifest] = useState({});
     const [podcastOpen, setPodcastOpen] = useState(false);
+    const [voiceOpen, setVoiceOpen] = useState(false);
 
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
@@ -1361,6 +1363,13 @@ export default function Classroom() {
                                     />
                                 </div>
                                 <button
+                                    onClick={() => setVoiceOpen(true)}
+                                    className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 text-white hover:scale-105 transition-transform"
+                                    title="Talk to Vaathiyaar (voice tutorial)"
+                                >
+                                    <Mic size={18} />
+                                </button>
+                                <button
                                     onClick={() => tts.setEnabled(!tts.enabled)}
                                     className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
                                     title={tts.enabled ? 'Voice on' : 'Voice off'}
@@ -1372,6 +1381,15 @@ export default function Classroom() {
                     </div>
                 </>
             )}
+
+            <VoiceTutor
+                open={voiceOpen}
+                onClose={() => setVoiceOpen(false)}
+                user={user}
+                lessonContext={currentLesson ? { topic: currentLesson.topic || currentLesson.id, lesson_id: currentLesson.id } : null}
+                language={language}
+                phase={phase}
+            />
         </div>
     );
 }
