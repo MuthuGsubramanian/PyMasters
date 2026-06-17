@@ -9,7 +9,8 @@ import api, { getAuthHeaders } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import OutputPanel from '../components/OutputPanel';
-import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2 } from 'lucide-react';
+import VoiceTutor from '../components/VoiceTutor';
+import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2, Mic } from 'lucide-react';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enhanced thinking bubble with waveform
@@ -165,6 +166,7 @@ function buildMarkdownComponents(onInjectCode, hasExistingCode) {
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Playground() {
     const { user } = useAuth();
+    const [voiceOpen, setVoiceOpen] = useState(false);
     const chatEndRef = useRef(null);
     const editorRef = useRef(null);
     const streamControllerRef = useRef(null);
@@ -448,6 +450,14 @@ export default function Playground() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setVoiceOpen(true)}
+                            className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-br from-purple-600 to-cyan-500 rounded-xl px-3 py-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                            title="Talk to Vaathiyaar (voice)"
+                        >
+                            <Mic size={14} />
+                            Voice
+                        </button>
                         <button
                             onClick={startNewChat}
                             className="flex items-center gap-1.5 text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 hover:bg-purple-100 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
@@ -809,6 +819,14 @@ export default function Playground() {
                     50%, 100% { opacity: 0; }
                 }
             `}</style>
+
+            <VoiceTutor
+                open={voiceOpen}
+                onClose={() => setVoiceOpen(false)}
+                user={user}
+                lessonContext={null}
+                language={user?.preferred_language || 'en'}
+            />
         </div>
     );
 }
