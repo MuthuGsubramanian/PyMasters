@@ -73,6 +73,7 @@ class ChatRequest(BaseModel):
     language: Optional[str] = "en"
     username: Optional[str] = None
     history: Optional[list] = None
+    voice: Optional[bool] = False  # spoken conversation → reply concisely, no markdown/code
 
 
 class EvaluateRequest(BaseModel):
@@ -216,9 +217,19 @@ def chat(request: ChatRequest):
             for m in recent
         ) + "\n\n"
 
+    # Voice mode: spoken answers must be short and natural (no markdown/code/lists).
+    voice_directive = ""
+    if request.voice:
+        lesson_context["voice"] = True
+        voice_directive = (
+            "[Voice conversation: reply in a warm, spoken, conversational tone — "
+            "2 to 4 short sentences. No markdown, no code blocks, no bullet lists. "
+            "If code is essential, describe it in words and offer to show it on screen.]\n\n"
+        )
+
     try:
         response = call_vaathiyaar(
-            user_message=history_context + request.message,
+            user_message=voice_directive + history_context + request.message,
             student_profile=profile,
             lesson_context=lesson_context,
         )
