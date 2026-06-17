@@ -249,13 +249,13 @@ export default function CodeStepper({
   return (
     <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 max-w-2xl font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header bar - macOS style */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-2">
+      <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-slate-400 tracking-wide">code.py</span>
+        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide">code.py</span>
 
         {/* Cinema mode indicator */}
         <div className="ml-auto flex items-center gap-3">
@@ -269,7 +269,7 @@ export default function CodeStepper({
             </div>
           )}
           {totalSteps > 0 && (
-            <span className="text-[10px] text-slate-500 tabular-nums">
+            <span className="text-[10px] text-code-foreground/70 tabular-nums">
               {Math.max(activeStepIndex + 1, 1)}/{totalSteps}
             </span>
           )}
@@ -277,7 +277,7 @@ export default function CodeStepper({
       </div>
 
       {/* Code lines with execution visualization */}
-      <div className="bg-[#0d1117] relative">
+      <div className="surface-code relative">
         {/* Scan line effect during playback */}
         {isPlaying && activeStepIndex >= 0 && (
           <div
@@ -326,7 +326,7 @@ export default function CodeStepper({
 
                 {/* Line number */}
                 <span className={`w-7 text-right select-none mr-4 text-[11px] tabular-nums transition-all duration-300 ${
-                  isActive ? 'text-cyan-400 font-medium' : isPast ? 'text-slate-600' : 'text-slate-700'
+                  isActive ? 'text-cyan-400 font-medium' : isPast ? 'text-code-foreground/40' : 'text-code-foreground/30'
                 }`}>
                   {lineNum}
                 </span>
@@ -334,12 +334,12 @@ export default function CodeStepper({
                 {/* Code content */}
                 <span className={`flex-1 transition-all duration-300 leading-relaxed ${
                   isActive
-                    ? 'text-slate-100 brightness-110'
+                    ? 'text-code-foreground brightness-110'
                     : isPast
-                    ? 'text-slate-500'
+                    ? 'text-code-foreground/50'
                     : isFuture
-                    ? 'text-slate-500/70'
-                    : 'text-slate-400'
+                    ? 'text-code-foreground/40'
+                    : 'text-code-foreground/70'
                 }`}>
                   {colorizeWithContext(line) || '\u00A0'}
                 </span>
@@ -358,7 +358,7 @@ export default function CodeStepper({
 
       {/* Execution trace panel - "Narration Bubble" */}
       {totalSteps > 0 && (
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-t border-white/[0.06] px-5 py-4">
+        <div className="surface-code border-t border-white/10 px-5 py-4">
           {/* Animated progress bar */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1 h-1 bg-slate-700/50 rounded-full overflow-hidden">
@@ -372,7 +372,7 @@ export default function CodeStepper({
                 }}
               />
             </div>
-            <span className="text-[10px] font-mono text-slate-500 tabular-nums">
+            <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
               {activeStepIndex >= 0 ? activeStepIndex + 1 : 0}/{totalSteps}
             </span>
           </div>
@@ -388,7 +388,7 @@ export default function CodeStepper({
                   </span>
                 )}
                 <div className="space-y-1.5 flex-1">
-                  <p className="text-sm text-slate-200 font-medium leading-relaxed">
+                  <p className="text-sm text-code-foreground font-medium leading-relaxed">
                     {currentDesc.description}
                   </p>
                   {currentDesc.output && (
@@ -406,7 +406,7 @@ export default function CodeStepper({
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-                <p className="text-sm text-slate-500 italic">
+                <p className="text-sm text-code-foreground/60 italic">
                   Preparing code execution...
                 </p>
               </div>

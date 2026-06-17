@@ -158,7 +158,7 @@ export default function LoopVisualizer({
   return (
     <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 max-w-2xl font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-2">
+      <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
@@ -168,7 +168,7 @@ export default function LoopVisualizer({
           {theme.icon} {theme.label}
         </span>
         {totalSteps > 0 && (
-          <span className="ml-auto text-[10px] text-slate-500 tabular-nums">
+          <span className="ml-auto text-[10px] text-code-foreground/60 tabular-nums">
             Iteration {Math.max(activeIndex + 1, 0)}/{totalSteps}
           </span>
         )}
@@ -176,19 +176,19 @@ export default function LoopVisualizer({
 
       {/* Code display */}
       {code && (
-        <div className="bg-[#0d1117] border-b border-white/[0.06] py-2 px-4">
+        <div className="surface-code border-b border-white/10 py-2 px-4">
           {code.split('\n').map((line, idx) => (
             <div key={idx} className="flex items-center py-[3px]">
-              <span className="w-6 text-right select-none mr-3 text-[11px] text-slate-700 tabular-nums">{idx + 1}</span>
-              <span className="text-slate-300 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
+              <span className="w-6 text-right select-none mr-3 text-[11px] text-code-foreground/30 tabular-nums">{idx + 1}</span>
+              <span className="text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
             </div>
           ))}
         </div>
       )}
 
       {/* Collection items row */}
-      <div className="bg-[#0d1117] px-4 py-4">
-        <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Collection</p>
+      <div className="surface-code px-4 py-4">
+        <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-3">Collection</p>
         <div className="flex flex-wrap gap-2">
           {items.map((item, idx) => {
             const isActive = idx === activeIndex;
@@ -201,7 +201,7 @@ export default function LoopVisualizer({
                     ? 'bg-cyan-500/15 border-cyan-400/60 text-cyan-100 scale-110 shadow-[0_0_16px_rgba(56,189,248,0.3)]'
                     : isPast
                     ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                    : 'bg-slate-800/40 border-white/[0.06] text-slate-500'
+                    : 'bg-white/[0.04] border-white/10 text-code-foreground/60'
                 }`}
               >
                 {isPast && (
@@ -215,15 +215,15 @@ export default function LoopVisualizer({
       </div>
 
       {/* Variable display */}
-      <div className="bg-[#0a0e14] border-t border-white/[0.06] px-4 py-3 flex items-center gap-4">
+      <div className="surface-code border-t border-white/10 px-4 py-3 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-500 uppercase tracking-wider">Variable</span>
+          <span className="text-[10px] text-code-foreground/60 uppercase tracking-wider">Variable</span>
           <span className="text-xs text-cyan-300 font-medium">{variable}</span>
-          <span className="text-slate-600">=</span>
+          <span className="text-code-foreground/50">=</span>
           <span className={`text-xs px-2 py-1 rounded transition-all duration-300 ${
             activeIndex >= 0
               ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
-              : 'text-slate-600 bg-slate-800/40 border border-white/[0.06]'
+              : 'text-code-foreground/50 bg-white/[0.04] border border-white/10'
           }`}>
             {currentValue !== undefined
               ? (typeof currentValue === 'string' ? `"${currentValue}"` : String(currentValue))
@@ -232,14 +232,14 @@ export default function LoopVisualizer({
           </span>
         </div>
         {currentIter?.description && (
-          <span className="text-xs text-slate-400 ml-auto">{currentIter.description}</span>
+          <span className="text-xs text-code-foreground/70 ml-auto">{currentIter.description}</span>
         )}
       </div>
 
       {/* Output */}
       {outputLines.length > 0 && (
-        <div className="bg-[#0a0e14] border-t border-white/[0.06] px-4 py-3">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Output</p>
+        <div className="surface-code border-t border-white/10 px-4 py-3">
+          <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-1.5">Output</p>
           <div className="space-y-0.5 max-h-32 overflow-y-auto">
             {outputLines.map((line, idx) => (
               <div key={idx} className="text-xs text-green-400 font-mono">
@@ -252,8 +252,8 @@ export default function LoopVisualizer({
 
       {/* Progress bar */}
       {totalSteps > 0 && (
-        <div className="bg-slate-900 border-t border-white/[0.06] px-4 py-2.5 flex items-center gap-3">
-          <div className="flex-1 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+        <div className="surface-code border-t border-white/10 px-4 py-2.5 flex items-center gap-3">
+          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
@@ -264,7 +264,7 @@ export default function LoopVisualizer({
               }}
             />
           </div>
-          <span className="text-[10px] font-mono text-slate-500 tabular-nums">
+          <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
             {activeIndex >= 0 ? activeIndex + 1 : 0}/{totalSteps}
           </span>
         </div>

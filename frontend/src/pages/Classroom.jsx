@@ -26,6 +26,7 @@ import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
 import LearnAnything from '../components/LearnAnything';
 import VoiceTutor from '../components/VoiceTutor';
+import { Badge } from '../components/ui';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
@@ -71,7 +72,7 @@ const markdownComponents = {
     ul: ({children}) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
     ol: ({children}) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
     code: ({children, className}) => className
-        ? <pre className="bg-slate-800 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>
+        ? <pre className="surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>
         : <code className="bg-bg-inset text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
     table: ({children}) => (
         <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
@@ -109,7 +110,7 @@ const storyMarkdownComponents = {
     th: ({children}) => <th className="px-3 py-2 text-left text-xs font-bold text-purple-300 uppercase tracking-wider">{children}</th>,
     td: ({children}) => <td className="px-3 py-2 text-sm text-slate-200">{children}</td>,
     code: ({children, className}) => className
-        ? <pre className="bg-[#0d1117] text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2 border border-white/[0.06]"><code>{children}</code></pre>
+        ? <pre className="surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto my-2 border border-white/[0.06]"><code>{children}</code></pre>
         : <code className="bg-purple-500/15 text-purple-200 px-1.5 py-0.5 rounded text-xs font-mono border border-purple-500/20">{children}</code>,
     strong: ({children}) => <strong className="font-bold text-white">{children}</strong>,
     blockquote: ({children}) => (
@@ -372,8 +373,8 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                     {isLocked ? <Lock size={12} /> : isDone ? '✓' : idx + 1}
                                                                 </div>
                                                                 <div className="ml-auto flex items-center gap-1.5">
-                                                                    {isDone && <span className="text-[9px] font-bold text-green-600 bg-green-50 rounded-full px-2 py-0.5">Done</span>}
-                                                                    {lesson.generated && <span className="text-[9px] font-bold text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Custom</span>}
+                                                                    {isDone && <Badge variant="success">Done</Badge>}
+                                                                    {lesson.generated && <Badge variant="primary">Custom</Badge>}
                                                                     {lesson.xp_reward != null && (
                                                                         <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
                                                                             isLocked ? 'text-text-muted bg-bg-elevated' : 'text-amber-600 bg-amber-50'
@@ -502,7 +503,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             <div className="flex flex-col lg:flex-row gap-5" style={{height: 'min(60vh, 540px)', minHeight: '360px'}}>
 
                 {/* LEFT: Code Execution (bigger) */}
-                <div className="flex-1 min-w-0 rounded-2xl bg-[#0d1117] overflow-hidden shadow-lg flex flex-col">
+                <div className="flex-1 min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
                     {/* Terminal header */}
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/[0.06]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
@@ -571,7 +572,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </div>
 
                 {/* RIGHT: Execution Flow */}
-                <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl bg-[#0f172a] p-5 shadow-lg overflow-y-auto">
+                <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg overflow-y-auto">
                     <div className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                         Execution Flow
@@ -662,7 +663,7 @@ function PracticePhase({
             ))}
 
             {/* Code editor + output — same pattern as Playground */}
-            <div className="rounded-2xl overflow-hidden border border-slate-700/30 bg-[#0d1117] shadow-xl">
+            <div className="rounded-2xl overflow-hidden border border-slate-700/30 surface-code shadow-xl">
                 {/* Terminal header */}
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/50 bg-[#161b22]">
                     <div className="flex items-center gap-2">
@@ -842,7 +843,7 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
                     </div>
 
                     {evalResult?.output && (
-                        <pre className="p-3 bg-slate-800 rounded-lg font-mono text-xs text-slate-300 whitespace-pre-wrap max-h-32 overflow-auto border border-slate-700">
+                        <pre className="surface-code p-3 rounded-lg font-mono text-xs whitespace-pre-wrap max-h-32 overflow-auto border border-border-default">
                             {evalResult.output}
                         </pre>
                     )}

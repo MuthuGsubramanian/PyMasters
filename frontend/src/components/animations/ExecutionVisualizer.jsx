@@ -144,13 +144,13 @@ export default function ExecutionVisualizer({
   return (
     <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 max-w-4xl font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-2">
+      <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-slate-400 tracking-wide">Visual Debugger</span>
+        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide">Visual Debugger</span>
         <div className="ml-auto flex items-center gap-3">
           {activeStep >= 0 && activeStep < totalSteps - 1 && (
             <div className="flex items-center gap-1.5">
@@ -162,7 +162,7 @@ export default function ExecutionVisualizer({
             </div>
           )}
           {totalSteps > 0 && (
-            <span className="text-[10px] text-slate-500 tabular-nums">
+            <span className="text-[10px] text-code-foreground/70 tabular-nums">
               Step {Math.max(activeStep + 1, 0)}/{totalSteps}
             </span>
           )}
@@ -170,9 +170,9 @@ export default function ExecutionVisualizer({
       </div>
 
       {/* Main content: 2-column layout */}
-      <div className="flex bg-[#0d1117]">
+      <div className="flex surface-code">
         {/* Left: Code display */}
-        <div className="flex-1 border-r border-white/[0.06] py-1 min-h-[200px]">
+        <div className="flex-1 border-r border-white/10 py-1 min-h-[200px]">
           {lines.map((line, idx) => {
             const lineNum = idx + 1;
             const isActive = lineNum === activeLine;
@@ -192,12 +192,12 @@ export default function ExecutionVisualizer({
                   {isActive ? <span className="inline-block animate-[pulse_1s_ease-in-out_infinite]">▶</span> : ''}
                 </span>
                 <span className={`w-7 text-right select-none mr-4 text-[11px] tabular-nums transition-all duration-300 ${
-                  isActive ? 'text-cyan-400 font-medium' : 'text-slate-700'
+                  isActive ? 'text-cyan-400 font-medium' : 'text-code-foreground/30'
                 }`}>
                   {lineNum}
                 </span>
                 <span className={`flex-1 transition-all duration-300 leading-relaxed ${
-                  isActive ? 'text-slate-100 brightness-110' : 'text-slate-400'
+                  isActive ? 'text-code-foreground brightness-110' : 'text-code-foreground/70'
                 }`}>
                   {colorizeLine(line) || '\u00A0'}
                 </span>
@@ -210,15 +210,15 @@ export default function ExecutionVisualizer({
         <div className="w-64 p-4 flex flex-col gap-3">
           {/* Description */}
           {description && (
-            <div className="bg-slate-800/50 rounded-lg p-3 border border-white/[0.06]">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">What's happening</p>
-              <p className="text-xs text-slate-300 leading-relaxed">{description}</p>
+            <div className="bg-white/[0.04] rounded-lg p-3 border border-white/10">
+              <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-1">What's happening</p>
+              <p className="text-xs text-code-foreground/90 leading-relaxed">{description}</p>
             </div>
           )}
 
           {/* Variables */}
-          <div className="bg-slate-800/50 rounded-lg p-3 border border-white/[0.06]">
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Variables</p>
+          <div className="bg-white/[0.04] rounded-lg p-3 border border-white/10">
+            <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-2">Variables</p>
             {Object.keys(variables).length > 0 ? (
               <div className="space-y-1.5">
                 {Object.entries(variables).map(([name, value]) => (
@@ -231,7 +231,7 @@ export default function ExecutionVisualizer({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-600 italic">No variables yet</p>
+              <p className="text-xs text-code-foreground/40 italic">No variables yet</p>
             )}
           </div>
         </div>
@@ -239,8 +239,8 @@ export default function ExecutionVisualizer({
 
       {/* Output terminal */}
       {outputLines.length > 0 && (
-        <div className="bg-[#0a0e14] border-t border-white/[0.06] px-4 py-3">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Output</p>
+        <div className="surface-code border-t border-white/10 px-4 py-3">
+          <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-1.5">Output</p>
           <div className="space-y-0.5 max-h-32 overflow-y-auto">
             {outputLines.map((line, idx) => (
               <div key={idx} className="text-xs text-green-400 font-mono">
@@ -253,8 +253,8 @@ export default function ExecutionVisualizer({
 
       {/* Progress bar */}
       {totalSteps > 0 && (
-        <div className="bg-slate-900 border-t border-white/[0.06] px-4 py-2.5 flex items-center gap-3">
-          <div className="flex-1 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+        <div className="surface-code border-t border-white/10 px-4 py-2.5 flex items-center gap-3">
+          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
@@ -265,7 +265,7 @@ export default function ExecutionVisualizer({
               }}
             />
           </div>
-          <span className="text-[10px] font-mono text-slate-500 tabular-nums">
+          <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
             {activeStep >= 0 ? activeStep + 1 : 0}/{totalSteps}
           </span>
         </div>

@@ -31,6 +31,7 @@ import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
 import { getModules, getModule, completeModule, getCompletions, getProfile, recordSignal } from '../api';
 import ReviewQueue from '../components/ReviewQueue';
+import { Badge, Card, Button } from '../components/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import clsx from 'clsx';
@@ -137,39 +138,41 @@ function formatLearningTime(minutes) {
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api';
 
 // ─── Stat Card ────────────────────────────────────────────────────────────
-function StatCard({ label, value, suffix, icon, gradient, iconBg, border, delay, children }) {
+// `accent` is a tint class pair (e.g. 'bg-amber-500/12 text-amber-600 dark:text-amber-300')
+// applied to the icon chip; the card surface itself uses theme tokens so it works in dark mode.
+function StatCard({ label, value, suffix, icon, accent, delay, children }) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay, type: 'spring', stiffness: 260, damping: 20 }}
-            className={clsx(
-                'relative rounded-2xl p-5 border backdrop-blur-xl transition-all duration-300',
-                'hover:shadow-xl hover:-translate-y-1 group overflow-hidden',
-                gradient, border,
-            )}
         >
-            {/* Subtle glow on hover */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-white/40 to-transparent" />
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">{label}</span>
-                    <div className={clsx(
-                        'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
-                        iconBg,
-                    )}>
-                        {icon}
+            <Card
+                interactive
+                className="relative p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden"
+            >
+                {/* Subtle glow on hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-accent-primary/10 to-transparent" />
+                <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">{label}</span>
+                        <div className={clsx(
+                            'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
+                            accent || 'bg-accent-subtle text-accent-primary',
+                        )}>
+                            {icon}
+                        </div>
+                    </div>
+                    <div className="text-2xl font-display font-bold text-text-primary">
+                        {children || (
+                            <>
+                                <AnimatedNumber value={value} />
+                                {suffix && <span className="text-text-muted text-lg ml-0.5">{suffix}</span>}
+                            </>
+                        )}
                     </div>
                 </div>
-                <div className="text-2xl font-display font-bold text-text-primary">
-                    {children || (
-                        <>
-                            <AnimatedNumber value={value} />
-                            {suffix && <span className="text-text-muted text-lg ml-0.5">{suffix}</span>}
-                        </>
-                    )}
-                </div>
-            </div>
+            </Card>
         </motion.div>
     );
 }
@@ -259,12 +262,10 @@ export function Overview() {
             className="space-y-8 pb-8"
         >
             {/* ─── Welcome Banner ────────────────────────────────────────── */}
-            <motion.div
-                variants={itemVariants}
-                className="relative rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm"
-            >
+            <motion.div variants={itemVariants}>
+                <Card className="relative overflow-hidden shadow-sm">
                 {/* Top gradient bar */}
-                <div className="h-1.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
+                <div className="h-1.5 bg-gradient-primary" />
 
                 {/* Background decoration */}
                 <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-cyan-200/10 via-blue-200/10 to-purple-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -277,7 +278,7 @@ export function Overview() {
                             <span>{formatDate()}</span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
-                            {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">{user.username}</span>!
+                            {getGreeting()}, <span className="text-gradient">{user.username}</span>!
                         </h1>
                         <p className="text-sm text-text-secondary italic max-w-lg">
                             &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
@@ -289,7 +290,7 @@ export function Overview() {
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.3, type: 'spring' }}
-                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 shadow-sm self-start"
+                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-orange-500/12 border border-orange-500/25 shadow-sm self-start"
                     >
                         <div className="relative">
                             <span className="text-2xl" role="img" aria-label="fire">&#x1F525;</span>
@@ -302,11 +303,12 @@ export function Overview() {
                             )}
                         </div>
                         <div>
-                            <div className="text-xl font-bold font-display text-orange-700">{streak}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-400">day streak</div>
+                            <div className="text-xl font-bold font-display text-orange-600 dark:text-orange-300">{streak}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-500/80 dark:text-orange-400">day streak</div>
                         </div>
                     </motion.div>
                 </div>
+                </Card>
             </motion.div>
 
             {/* ─── Stats Row ─────────────────────────────────────────────── */}
@@ -315,18 +317,14 @@ export function Overview() {
                     label="Total XP"
                     value={user.points || 0}
                     icon={<Trophy size={20} />}
-                    gradient="bg-gradient-to-br from-amber-50/80 to-orange-50/80"
-                    iconBg="bg-amber-100 text-amber-600"
-                    border="border-amber-100"
+                    accent="bg-amber-500/12 text-amber-600 dark:text-amber-300"
                     delay={0.1}
                 />
                 <StatCard
                     label="Lessons Completed"
                     value={lessonsCompleted}
                     icon={<BookOpen size={20} />}
-                    gradient="bg-gradient-to-br from-cyan-50/80 to-blue-50/80"
-                    iconBg="bg-cyan-100 text-cyan-600"
-                    border="border-cyan-100"
+                    accent="bg-cyan-500/12 text-cyan-600 dark:text-cyan-300"
                     delay={0.15}
                 >
                     <AnimatedNumber value={lessonsCompleted} />
@@ -334,9 +332,7 @@ export function Overview() {
                 <StatCard
                     label="Current Streak"
                     icon={<Flame size={20} />}
-                    gradient="bg-gradient-to-br from-orange-50/80 to-red-50/80"
-                    iconBg="bg-orange-100 text-orange-600"
-                    border="border-orange-100"
+                    accent="bg-orange-500/12 text-orange-600 dark:text-orange-300"
                     delay={0.2}
                 >
                     <div className="flex items-center gap-2">
@@ -356,9 +352,7 @@ export function Overview() {
                 <StatCard
                     label="Learning Time"
                     icon={<Clock size={20} />}
-                    gradient="bg-gradient-to-br from-purple-50/80 to-violet-50/80"
-                    iconBg="bg-purple-100 text-purple-600"
-                    border="border-purple-100"
+                    accent="bg-purple-500/12 text-purple-600 dark:text-purple-300"
                     delay={0.25}
                 >
                     <span className="text-2xl font-display font-bold text-text-primary">
@@ -375,26 +369,24 @@ export function Overview() {
                     <ReviewQueue userId={user?.id} />
 
                     {/* ─── Daily Recommendation Card ─────────────────────── */}
-                    <motion.div
-                        variants={itemVariants}
-                        className="relative rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm group hover:shadow-xl transition-all duration-500"
-                    >
-                        <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500" />
+                    <motion.div variants={itemVariants}>
+                    <Card interactive className="relative overflow-hidden shadow-sm group hover:shadow-xl transition-all duration-500">
+                        <div className="h-1 bg-gradient-primary" />
                         <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-bl from-cyan-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
                         <div className="relative z-10 p-6 sm:p-8">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-                                    <Lightbulb size={20} className="text-cyan-600" />
+                                <div className="w-10 h-10 rounded-xl bg-accent-subtle flex items-center justify-center">
+                                    <Lightbulb size={20} className="text-accent-primary" />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-primary font-display">Today&apos;s Recommended Lesson</h3>
                                     <p className="text-xs text-text-muted">Personalized for your learning path</p>
                                 </div>
                                 {(recommendation?.trending) && (
-                                    <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 text-[10px] font-bold text-rose-600 uppercase tracking-wider">
+                                    <Badge variant="danger" className="ml-auto px-2.5 py-1 uppercase tracking-wider">
                                         <TrendingUp size={10} />
                                         Trending
-                                    </span>
+                                    </Badge>
                                 )}
                             </div>
 
@@ -412,30 +404,32 @@ export function Overview() {
                                     <p className="text-sm text-text-secondary mb-3 leading-relaxed">
                                         {recommendation?.description || 'Pick up where you left off — explore hands-on lessons across every track in the Classroom.'}
                                     </p>
-                                    {recommendation?.reason && (
-                                        <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-gradient-to-r from-blue-50/50 to-purple-50/50 border border-blue-100/50">
-                                            <Sparkles size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                                            <p className="text-xs text-blue-700">{recommendation.reason}</p>
+                    {recommendation?.reason && (
+                                        <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
+                                            <Sparkles size={14} className="text-accent-primary mt-0.5 flex-shrink-0" />
+                                            <p className="text-xs text-text-secondary">{recommendation.reason}</p>
                                         </div>
                                     )}
-                                    <button
+                                    <Button
+                                        variant="primary"
                                         onClick={() => navigate(recommendation?.link || '/dashboard/classroom')}
-                                        className="btn-neo btn-neo-primary py-2.5 text-sm group/btn inline-flex items-center gap-2"
+                                        className="py-2.5 text-sm group/btn"
                                     >
                                         <Play size={14} />
                                         Start Learning
                                         <ArrowRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                                    </button>
+                                    </Button>
                                 </>
                             )}
                         </div>
+                    </Card>
                     </motion.div>
 
                     {/* ─── Trending in AI/Python ──────────────────────────── */}
                     <motion.div variants={itemVariants}>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <TrendingUp size={16} className="text-cyan-500" />
+                                <TrendingUp size={16} className="text-accent-primary" />
                                 <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Trending in AI & Python</h3>
                             </div>
                         </div>
@@ -446,11 +440,12 @@ export function Overview() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.3 + idx * 0.05 }}
+                                    className="flex-shrink-0 w-60"
+                                >
+                                <Card
+                                    interactive
                                     onClick={() => !loading && navigate('/dashboard/classroom')}
-                                    className={clsx(
-                                        'flex-shrink-0 w-60 rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl p-5 cursor-pointer',
-                                        'hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group',
-                                    )}
+                                    className="p-5 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
                                 >
                                     {loading ? (
                                         <div className="space-y-3">
@@ -461,29 +456,28 @@ export function Overview() {
                                     ) : (
                                         <>
                                             <div className="flex items-center gap-2 mb-3">
-                                                <span className={clsx(
-                                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider',
-                                                    trend.category === 'AI'
-                                                        ? 'text-purple-600 bg-purple-50 border-purple-200'
-                                                        : 'text-cyan-600 bg-cyan-50 border-cyan-200',
-                                                )}>
+                                                <Badge
+                                                    variant={trend.category === 'AI' ? 'primary' : 'info'}
+                                                    className="px-2 py-0.5 uppercase tracking-wider"
+                                                >
                                                     {trend.category}
-                                                </span>
-                                                <span className={clsx(
-                                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                                    trend.difficulty === 'Beginner' ? 'text-green-600 bg-green-50 border-green-200'
-                                                        : trend.difficulty === 'Intermediate' ? 'text-amber-600 bg-amber-50 border-amber-200'
-                                                        : 'text-red-600 bg-red-50 border-red-200',
-                                                )}>
+                                                </Badge>
+                                                <Badge
+                                                    variant={trend.difficulty === 'Beginner' ? 'success'
+                                                        : trend.difficulty === 'Intermediate' ? 'warning'
+                                                        : 'danger'}
+                                                    className="px-2 py-0.5"
+                                                >
                                                     {trend.difficulty}
-                                                </span>
+                                                </Badge>
                                             </div>
-                                            <h4 className="text-sm font-bold text-text-primary mb-1.5 group-hover:text-cyan-600 transition-colors font-display line-clamp-2">
+                                            <h4 className="text-sm font-bold text-text-primary mb-1.5 group-hover:text-accent-primary transition-colors font-display line-clamp-2">
                                                 {trend.title}
                                             </h4>
                                             <p className="text-xs text-text-secondary line-clamp-2">{trend.desc}</p>
                                         </>
                                     )}
+                                </Card>
                                 </motion.div>
                             ))}
                         </div>
@@ -493,10 +487,8 @@ export function Overview() {
                 {/* Right Column (1/3) */}
                 <div className="space-y-6">
                     {/* ─── Learning Progress ─────────────────────────────── */}
-                    <motion.div
-                        variants={itemVariants}
-                        className="rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm overflow-hidden"
-                    >
+                    <motion.div variants={itemVariants}>
+                    <Card className="shadow-sm overflow-hidden">
                         <div className="px-5 py-3.5 border-b border-border-default">
                             <h3 className="font-bold text-xs text-text-secondary uppercase tracking-widest">Learning Progress</h3>
                         </div>
@@ -513,10 +505,10 @@ export function Overview() {
                             </div>
 
                             {/* Next Milestone */}
-                            <div className="mb-5 p-3 rounded-xl bg-gradient-to-r from-cyan-50/50 to-blue-50/50 border border-cyan-100/50">
+                            <div className="mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Rocket size={12} className="text-cyan-500" />
-                                    <span className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest">Next Milestone</span>
+                                    <Rocket size={12} className="text-accent-primary" />
+                                    <span className="text-[10px] font-bold text-accent-primary uppercase tracking-widest">Next Milestone</span>
                                 </div>
                                 <p className="text-sm font-bold text-text-secondary font-display">{nextMilestone.label}</p>
                                 <div className="mt-2 h-1.5 bg-bg-inset rounded-full overflow-hidden">
@@ -524,7 +516,7 @@ export function Overview() {
                                         initial={{ width: 0 }}
                                         animate={{ width: `${Math.min(nextMilestone.progress, 100)}%` }}
                                         transition={{ duration: 1.2, ease: 'easeOut', delay: 0.5 }}
-                                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                                        className="h-full rounded-full bg-gradient-primary"
                                     />
                                 </div>
                             </div>
@@ -542,7 +534,7 @@ export function Overview() {
                                                 transition={{ delay: 0.6 + i * 0.08 }}
                                                 className="flex items-center gap-2.5 text-xs"
                                             >
-                                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-accent-primary flex-shrink-0" />
                                                 <span className="text-text-secondary truncate">{act.label || act}</span>
                                                 {act.time && <span className="text-text-muted ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
                                             </motion.div>
@@ -555,13 +547,12 @@ export function Overview() {
                                 )}
                             </div>
                         </div>
+                    </Card>
                     </motion.div>
 
                     {/* ─── Quick Actions ──────────────────────────────────── */}
-                    <motion.div
-                        variants={itemVariants}
-                        className="rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl shadow-sm overflow-hidden"
-                    >
+                    <motion.div variants={itemVariants}>
+                    <Card className="shadow-sm overflow-hidden">
                         <div className="px-5 py-3.5 border-b border-border-default">
                             <h3 className="font-bold text-xs text-text-secondary uppercase tracking-widest">Quick Actions</h3>
                         </div>
@@ -572,32 +563,32 @@ export function Overview() {
                                     icon: <Play size={18} />,
                                     to: '/dashboard/classroom',
                                     colors: 'from-cyan-500 to-blue-500',
-                                    bg: 'bg-cyan-50 hover:bg-cyan-100',
-                                    text: 'text-cyan-700',
+                                    bg: 'bg-cyan-500/10 hover:bg-cyan-500/20',
+                                    text: 'text-cyan-600 dark:text-cyan-300',
                                 },
                                 {
                                     label: 'Practice Mode',
                                     icon: <Code2 size={18} />,
                                     to: '/dashboard/classroom',
                                     colors: 'from-purple-500 to-violet-500',
-                                    bg: 'bg-purple-50 hover:bg-purple-100',
-                                    text: 'text-purple-700',
+                                    bg: 'bg-purple-500/10 hover:bg-purple-500/20',
+                                    text: 'text-purple-600 dark:text-purple-300',
                                 },
                                 {
                                     label: 'Ask Vaathiyaar',
                                     icon: <MessageCircle size={18} />,
                                     to: '/dashboard/classroom',
                                     colors: 'from-amber-500 to-orange-500',
-                                    bg: 'bg-amber-50 hover:bg-amber-100',
-                                    text: 'text-amber-700',
+                                    bg: 'bg-amber-500/10 hover:bg-amber-500/20',
+                                    text: 'text-amber-600 dark:text-amber-300',
                                 },
                                 {
                                     label: 'View Profile',
                                     icon: <User size={18} />,
                                     to: '/dashboard/profile',
                                     colors: 'from-emerald-500 to-green-500',
-                                    bg: 'bg-emerald-50 hover:bg-emerald-100',
-                                    text: 'text-emerald-700',
+                                    bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
+                                    text: 'text-emerald-600 dark:text-emerald-300',
                                 },
                             ].map((action, idx) => (
                                 <motion.button
@@ -618,10 +609,11 @@ export function Overview() {
                                     )}>
                                         {action.icon}
                                     </div>
-                                    <span className="text-[11px] font-bold leading-tight text-center">{action.label}</span>
+                    <span className="text-[11px] font-bold leading-tight text-center">{action.label}</span>
                                 </motion.button>
                             ))}
                         </div>
+                    </Card>
                     </motion.div>
                 </div>
             </div>
@@ -633,8 +625,8 @@ export function Overview() {
                 }
                 .scrollbar-thin::-webkit-scrollbar { height: 4px; }
                 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-                .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-                .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+                .scrollbar-thin::-webkit-scrollbar-thumb { background: rgb(148 163 184 / 0.4); border-radius: 4px; }
+                .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgb(148 163 184 / 0.6); }
             `}</style>
         </motion.div>
     );
@@ -671,16 +663,16 @@ export function LearningMap() {
         <div className="animate-fade-in pb-20 max-w-5xl mx-auto">
             <header className="mb-10 flex justify-between items-end border-b border-border-default pb-6">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-600 text-xs font-bold tracking-wider uppercase mb-3">
+                    <Badge variant="info" className="px-3 py-1 tracking-wider uppercase mb-3 text-xs">
                         <TrendingUp size={12} />
                         Learning Path
-                    </div>
+                    </Badge>
                     <h2 className="text-3xl font-bold mb-2 font-display">Module Progression</h2>
                     <p className="text-text-secondary">Complete each module sequentially to unlock the next.</p>
                 </div>
                 <div className="text-right hidden sm:block">
                     <div className="text-xs text-text-secondary font-bold uppercase tracking-widest mb-1">Progress</div>
-                    <div className="text-3xl font-bold font-display text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
+                    <div className="text-3xl font-bold font-display text-gradient">
                         {progressPct}%
                     </div>
                     <div className="w-32 h-1.5 bg-bg-inset rounded-full overflow-hidden mt-2">
@@ -688,7 +680,7 @@ export function LearningMap() {
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPct}%` }}
                             transition={{ duration: 1, ease: 'easeOut' }}
-                            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                            className="h-full rounded-full bg-gradient-primary"
                         />
                     </div>
                 </div>
@@ -716,9 +708,9 @@ export function LearningMap() {
                                 className={clsx(
                                     "group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 flex items-center justify-between",
                                     unlocked
-                                        ? "bg-bg-surface backdrop-blur-sm border-border-default hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                                        ? "bg-bg-surface backdrop-blur-sm border-border-default hover:border-accent-primary/40 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
                                         : isNext
-                                        ? "bg-bg-surface/60 border-dashed border-cyan-200 opacity-70 cursor-not-allowed"
+                                        ? "bg-bg-surface/60 border-dashed border-accent-primary/40 opacity-70 cursor-not-allowed"
                                         : "bg-bg-elevated/50 border-transparent opacity-40 cursor-not-allowed"
                                 )}
                             >
@@ -731,9 +723,9 @@ export function LearningMap() {
                                     <div className={clsx(
                                         "flex items-center justify-center w-11 h-11 rounded-xl font-mono font-bold text-base border transition-all duration-300",
                                         unlocked
-                                            ? "bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 text-cyan-600 group-hover:shadow-md group-hover:scale-105"
+                                            ? "bg-accent-subtle border-accent-primary/30 text-accent-primary group-hover:shadow-md group-hover:scale-105"
                                             : isNext
-                                            ? "bg-cyan-50/50 border-cyan-200 text-cyan-400"
+                                            ? "bg-accent-subtle/50 border-accent-primary/30 text-accent-primary/70"
                                             : "bg-bg-elevated border-border-default text-text-muted"
                                     )}>
                                         {isCompleted(mod.id) ? <CheckCircle2 size={18} className="text-green-500" /> : unlocked ? <span className="text-sm">{idx + 1}</span> : idx + 1}
@@ -741,7 +733,7 @@ export function LearningMap() {
                                     <div>
                                         <h3 className={clsx(
                                             "text-lg font-bold mb-0.5 transition-colors font-display",
-                                            unlocked ? "text-text-primary group-hover:text-cyan-600" : "text-text-muted"
+                                            unlocked ? "text-text-primary group-hover:text-accent-primary" : "text-text-muted"
                                         )}>{mod.title}</h3>
                                         <p className="text-sm text-text-secondary max-w-xl line-clamp-1">{mod.desc}</p>
                                     </div>
@@ -749,24 +741,19 @@ export function LearningMap() {
 
                                 <div className="flex items-center gap-3 relative z-10">
                                     {mod.xp_reward && (
-                                        <span className={clsx(
-                                            "text-[10px] font-bold rounded-full px-2.5 py-1 border",
-                                            unlocked
-                                                ? "text-amber-600 bg-amber-50 border-amber-200"
-                                                : "text-text-muted bg-bg-elevated border-border-default"
-                                        )}>
-                                            +{mod.xp_reward} XP
-                                        </span>
+                                        unlocked ? (
+                                            <Badge variant="warning" className="px-2.5 py-1">+{mod.xp_reward} XP</Badge>
+                                        ) : (
+                                            <Badge variant="neutral" className="px-2.5 py-1">+{mod.xp_reward} XP</Badge>
+                                        )
                                     )}
                                     {isCompleted(mod.id) && (
-                                        <span className="text-[10px] font-bold rounded-full px-2.5 py-1 border text-green-600 bg-green-50 border-green-200">
-                                            Completed
-                                        </span>
+                                        <Badge variant="success" className="px-2.5 py-1">Completed</Badge>
                                     )}
                                     {unlocked ? (
-                                        <ChevronRight size={18} className="text-text-muted group-hover:text-cyan-500 group-hover:translate-x-0.5 transition-all" />
+                                        <ChevronRight size={18} className="text-text-muted group-hover:text-accent-primary group-hover:translate-x-0.5 transition-all" />
                                     ) : isNext ? (
-                                        <Lock size={16} className="text-cyan-300" />
+                                        <Lock size={16} className="text-accent-primary/60" />
                                     ) : (
                                         <Lock size={16} className="text-text-muted" />
                                     )}
@@ -774,7 +761,7 @@ export function LearningMap() {
 
                                 {/* Hover glow */}
                                 {unlocked && (
-                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-cyan-500/[0.02] to-blue-500/[0.02]" />
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-accent-primary/[0.04] to-transparent" />
                                 )}
                             </motion.div>
                         );
@@ -815,7 +802,7 @@ export function ModuleViewer() {
 
     if (!module) return (
         <div className="flex flex-col items-center justify-center h-64 gap-3">
-            <div className="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-10 h-10 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-text-muted">Loading module...</p>
         </div>
     );
@@ -877,19 +864,19 @@ export function ModuleViewer() {
                 Back to Learning Path
             </button>
 
-            <div className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm">
+            <Card className="overflow-hidden shadow-sm">
                 {/* Header */}
-                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-border-default p-8 flex items-end overflow-hidden">
+                <div className="relative h-36 bg-accent-subtle border-b border-border-default p-8 flex items-end overflow-hidden">
                     <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                     <div className="relative z-10">
                         <h1 className="text-3xl font-bold text-text-primary font-display">{module.title}</h1>
                         <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs font-mono text-cyan-700 bg-cyan-100 rounded-full px-2.5 py-0.5 border border-cyan-200">
+                            <Badge variant="primary" className="font-mono px-2.5 py-0.5 text-xs">
                                 {module.id.toUpperCase()}
-                            </span>
-                            <span className="text-xs font-bold text-amber-600 bg-amber-50 rounded-full px-2.5 py-0.5 border border-amber-200">
+                            </Badge>
+                            <Badge variant="warning" className="px-2.5 py-0.5 text-xs">
                                 +{module.xp_reward} XP
-                            </span>
+                            </Badge>
                         </div>
                     </div>
                 </div>
@@ -907,16 +894,16 @@ export function ModuleViewer() {
                                 <ReactMarkdown
                                     components={{
                                         code: ({ children, className }) => className ? (
-                                            <div className="not-prose bg-[#0d1117] p-5 rounded-2xl border border-slate-700/50 font-mono text-sm text-slate-300 overflow-x-auto my-5 shadow-lg">
+                                            <div className="not-prose surface-code p-5 rounded-2xl font-mono text-sm overflow-x-auto my-5 shadow-lg">
                                                 {children}
                                             </div>
                                         ) : (
-                                            <code className="bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+                                            <code className="bg-accent-subtle text-accent-primary px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
                                         ),
                                         h1: ({ children }) => <h1 className="text-2xl font-bold text-text-primary mb-6 font-display">{children}</h1>,
                                         h2: ({ children }) => (
                                             <h2 className="text-xl font-bold text-text-primary flex items-center gap-3 mt-10 mb-4 font-display">
-                                                <span className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-full" />
+                                                <span className="w-1 h-6 bg-gradient-primary rounded-full" />
                                                 {children}
                                             </h2>
                                         ),
@@ -926,23 +913,23 @@ export function ModuleViewer() {
                                 </ReactMarkdown>
                                 <div className="mt-16 pt-8 border-t border-border-default flex justify-end">
                                     {isModuleCompleted ? (
-                                        <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-green-50 border border-green-200">
+                                        <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-green-500/12 border border-green-500/25">
                                             <CheckCircle2 size={20} className="text-green-500" />
                                             <div>
-                                                <p className="text-sm font-bold text-green-700">Module Completed</p>
-                                                <p className="text-xs text-green-600">
+                                                <p className="text-sm font-bold text-green-600 dark:text-green-300">Module Completed</p>
+                                                <p className="text-xs text-green-600/80 dark:text-green-400">
                                                     Earned {completionInfo?.xp_awarded || 0} XP on {completionInfo?.completed_at ? new Date(completionInfo.completed_at).toLocaleDateString() : 'earlier'}
                                                 </p>
                                             </div>
                                         </div>
                                     ) : (
-                                        <button onClick={() => {
+                                        <Button variant="primary" onClick={() => {
                                             recordSignal({ user_id: user.id, signal_type: 'quiz_started', topic: module.id, value: { module_id: module.id } }).catch(() => {});
                                             setQuizMode(true);
-                                        }} className="btn-neo btn-neo-primary gap-2">
+                                        }}>
                                             Start Quiz
                                             <ChevronRight size={18} />
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             </motion.div>
@@ -955,10 +942,10 @@ export function ModuleViewer() {
                                 className="max-w-2xl mx-auto"
                             >
                                 <div className="text-center mb-8">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-200 bg-purple-50 text-purple-600 text-xs font-bold tracking-wider uppercase mb-3">
+                                    <Badge variant="primary" className="px-3 py-1 tracking-wider uppercase mb-3 text-xs">
                                         <Target size={12} />
                                         Knowledge Check
-                                    </div>
+                                    </Badge>
                                     <h3 className="text-2xl font-bold text-text-primary font-display mb-2">Quiz Time</h3>
                                     <p className="text-text-muted text-sm">Answer all questions correctly to complete this module.</p>
                                 </div>
@@ -971,7 +958,7 @@ export function ModuleViewer() {
                                     </div>
                                     <div className="h-1.5 bg-bg-inset rounded-full overflow-hidden">
                                         <motion.div
-                                            className="h-full rounded-full bg-gradient-to-r from-purple-400 to-cyan-400"
+                                            className="h-full rounded-full bg-gradient-primary"
                                             animate={{ width: `${quizProgress}%` }}
                                             transition={{ duration: 0.3 }}
                                         />
@@ -987,8 +974,8 @@ export function ModuleViewer() {
                                             exit={{ opacity: 0, scale: 0.95 }}
                                             className={`rounded-2xl p-5 mb-8 border ${
                                                 result.passed
-                                                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-                                                    : 'bg-gradient-to-r from-red-50 to-orange-50 border-red-200'
+                                                    ? 'bg-green-500/10 border-green-500/25'
+                                                    : 'bg-red-500/10 border-red-500/25'
                                             }`}
                                         >
                                             <div className="flex items-start gap-3">
@@ -998,10 +985,10 @@ export function ModuleViewer() {
                                                     {result.passed ? <Trophy size={20} /> : <RotateCcw size={20} />}
                                                 </div>
                                                 <div>
-                                                    <div className={`text-base font-bold mb-1 ${result.passed ? 'text-green-700' : 'text-red-600'}`}>
+                                                    <div className={`text-base font-bold mb-1 ${result.passed ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'}`}>
                                                         {result.passed ? 'Module Complete!' : 'Not quite there yet'}
                                                     </div>
-                                                    <div className={`text-sm whitespace-pre-line ${result.passed ? 'text-green-600/80' : 'text-red-500/80'}`}>
+                                                    <div className={`text-sm whitespace-pre-line ${result.passed ? 'text-green-600/80 dark:text-green-400' : 'text-red-500/80 dark:text-red-400'}`}>
                                                         {result.msg}
                                                     </div>
                                                     {result.passed && (
@@ -1038,8 +1025,8 @@ export function ModuleViewer() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: qIdx * 0.05 }}
                                                 className={`space-y-3 p-5 rounded-2xl border transition-all duration-300 ${
-                                                    isCorrect ? 'bg-green-50/50 border-green-200' :
-                                                    isWrong ? 'bg-red-50/50 border-red-200' :
+                                                    isCorrect ? 'bg-green-500/10 border-green-500/25' :
+                                                    isWrong ? 'bg-red-500/10 border-red-500/25' :
                                                     'bg-bg-surface/50 border-border-default'
                                                 }`}
                                             >
@@ -1069,9 +1056,9 @@ export function ModuleViewer() {
                                                                 }}
                                                                 className={clsx(
                                                                     "flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-all duration-200 border",
-                                                                    showCorrect ? "bg-green-50 border-green-300" :
-                                                                    showWrong ? "bg-red-50 border-red-300" :
-                                                                    isSelected ? "bg-cyan-50 border-cyan-300 shadow-sm" :
+                                                                    showCorrect ? "bg-green-500/12 border-green-500/40" :
+                                                                    showWrong ? "bg-red-500/12 border-red-500/40" :
+                                                                    isSelected ? "bg-accent-subtle border-accent-primary/50 shadow-sm" :
                                                                     "bg-bg-surface border-border-default hover:bg-bg-elevated hover:border-border-strong"
                                                                 )}
                                                             >
@@ -1079,17 +1066,17 @@ export function ModuleViewer() {
                                                                     "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
                                                                     showCorrect ? "border-green-500 bg-green-500" :
                                                                     showWrong ? "border-red-500 bg-red-500" :
-                                                                    isSelected ? "border-cyan-500" : "border-border-default"
+                                                                    isSelected ? "border-accent-primary" : "border-border-default"
                                                                 )}>
                                                                     {showCorrect && <CheckCircle2 size={12} className="text-white" />}
                                                                     {showWrong && <span className="text-white text-[10px] font-bold">✕</span>}
-                                                                    {isSelected && !result && <div className="w-2.5 h-2.5 bg-cyan-500 rounded-full" />}
+                                                                    {isSelected && !result && <div className="w-2.5 h-2.5 bg-accent-primary rounded-full" />}
                                                                 </div>
                                                                 <span className={clsx(
                                                                     "text-sm",
-                                                                    showCorrect ? "text-green-700 font-medium" :
-                                                                    showWrong ? "text-red-600" :
-                                                                    isSelected ? "text-cyan-800 font-medium" : "text-text-secondary"
+                                                                    showCorrect ? "text-green-600 dark:text-green-300 font-medium" :
+                                                                    showWrong ? "text-red-600 dark:text-red-300" :
+                                                                    isSelected ? "text-accent-primary font-medium" : "text-text-secondary"
                                                                 )}>{opt}</span>
                                                             </motion.div>
                                                         );
@@ -1103,29 +1090,29 @@ export function ModuleViewer() {
                                 <div className="mt-10 flex justify-end gap-3 border-t border-border-default pt-8">
                                     {!result?.passed ? (
                                         <>
-                                            <button onClick={() => { setQuizMode(false); setAnswers({}); setResult(null); }} className="btn-neo btn-neo-ghost">
+                                            <Button variant="ghost" onClick={() => { setQuizMode(false); setAnswers({}); setResult(null); }}>
                                                 <ArrowLeft size={14} className="mr-1" /> Back to Content
-                                            </button>
-                                            <button
+                                            </Button>
+                                            <Button
+                                                variant="primary"
                                                 onClick={handleQuizSubmit}
                                                 disabled={Object.keys(answers).length < module.quiz.length}
-                                                className="btn-neo btn-neo-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 Submit Answers
-                                            </button>
+                                            </Button>
                                         </>
                                     ) : (
-                                        <button onClick={() => navigate('/dashboard/learn')} className="btn-neo btn-neo-primary w-full gap-2">
+                                        <Button variant="primary" onClick={() => navigate('/dashboard/learn')} className="w-full">
                                             <Trophy size={16} />
                                             Return to Learning Path
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }

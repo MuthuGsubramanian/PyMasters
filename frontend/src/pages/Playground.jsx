@@ -11,6 +11,7 @@ import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import OutputPanel from '../components/OutputPanel';
 import VoiceTutor from '../components/VoiceTutor';
 import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2, Mic } from 'lucide-react';
+import { Button, Badge } from '../components/ui';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Enhanced thinking bubble with waveform
@@ -18,16 +19,16 @@ import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Pl
 function ThinkingBubble() {
     return (
         <div className="flex items-start gap-3 max-w-[85%]">
-            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-sm select-none mt-1 shadow-md shadow-purple-300/20">
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center text-sm select-none mt-1 shadow-glow">
                 {'🧑‍🏫'}
             </div>
-            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-purple-500/40">
+            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-accent-primary/40">
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                         {[0, 1, 2, 3, 4].map(i => (
                             <div
                                 key={i}
-                                className="w-1 bg-purple-400 rounded-full"
+                                className="w-1 bg-accent-primary rounded-full"
                                 style={{
                                     height: `${8 + Math.sin(i * 1.2) * 6}px`,
                                     animation: `waveform 1.2s ease-in-out ${i * 0.1}s infinite alternate`,
@@ -35,7 +36,7 @@ function ThinkingBubble() {
                             />
                         ))}
                     </div>
-                    <span className="text-xs text-purple-400 ml-1">Vaathiyaar is thinking...</span>
+                    <span className="text-xs text-accent-primary ml-1">Vaathiyaar is thinking...</span>
                 </div>
             </div>
         </div>
@@ -56,7 +57,7 @@ function CopyButton({ text }) {
     return (
         <button
             onClick={handleCopy}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-400 hover:text-slate-200 transition-all duration-200"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-code-foreground/70 hover:text-code-foreground transition-all duration-200"
             title="Copy code"
         >
             {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
@@ -124,7 +125,7 @@ function buildMarkdownComponents(onInjectCode, hasExistingCode) {
                 const codeText = String(children).replace(/\n$/, '');
                 return (
                     <div className="relative group my-3">
-                        <pre className="bg-[#0d1117] text-slate-300 p-4 rounded-xl text-xs font-mono overflow-x-auto border border-slate-700/50 shadow-lg">
+                        <pre className="surface-code p-4 rounded-xl text-xs font-mono overflow-x-auto border border-border-default shadow-lg">
                             <code>{children}</code>
                         </pre>
                         <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -141,18 +142,18 @@ function buildMarkdownComponents(onInjectCode, hasExistingCode) {
                     </div>
                 );
             }
-            return <code className="bg-bg-inset text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
+            return <code className="bg-accent-subtle text-accent-primary px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
         },
         table: ({children}) => (
             <div className="overflow-x-auto my-3 rounded-xl border border-border-default shadow-sm">
                 <table className="text-sm w-full">{children}</table>
             </div>
         ),
-        thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
+        thead: ({children}) => <thead className="bg-accent-subtle">{children}</thead>,
         tbody: ({children}) => <tbody className="divide-y divide-border-default">{children}</tbody>,
         tr: ({children}) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
         th: ({children}) => (
-            <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
+            <th className="px-3 py-2 text-left text-xs font-bold text-accent-primary uppercase tracking-wider">{children}</th>
         ),
         td: ({children}) => (
             <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>
@@ -450,28 +451,31 @@ export default function Playground() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                            variant="primary"
+                            size="sm"
                             onClick={() => setVoiceOpen(true)}
-                            className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-br from-purple-600 to-cyan-500 rounded-xl px-3 py-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                             title="Talk to Vaathiyaar (voice)"
                         >
                             <Mic size={14} />
                             Voice
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={startNewChat}
-                            className="flex items-center gap-1.5 text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 hover:bg-purple-100 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                         >
                             <Plus size={14} />
                             New Chat
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setShowSidebar(!showSidebar)}
-                            className="flex items-center gap-1.5 text-xs font-bold text-text-secondary bg-bg-elevated border border-border-default rounded-xl px-3 py-2 hover:bg-bg-inset transition-all duration-300"
                         >
                             <MessageSquare size={14} />
                             History
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
@@ -491,10 +495,10 @@ export default function Playground() {
                             />
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 flex items-center gap-1">
+                            <Badge variant="warning" className="text-xs px-2.5 py-1">
                                 <Zap size={12} />
                                 {credits.xp} XP
-                            </span>
+                            </Badge>
                             <span className="text-xs font-mono text-text-muted">
                                 {remaining}/{total} prompts
                             </span>
@@ -518,9 +522,9 @@ export default function Playground() {
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: -20, opacity: 0 }}
                             transition={{ duration: 0.25 }}
-                            className="w-80 bg-white/95 backdrop-blur-xl shadow-2xl border-r border-black/[0.04] flex flex-col h-full"
+                            className="w-80 bg-bg-surface/95 backdrop-blur-xl shadow-2xl border-r border-border-default flex flex-col h-full"
                         >
-                            <div className="flex items-center justify-between p-4 border-b border-black/[0.04]">
+                            <div className="flex items-center justify-between p-4 border-b border-border-default">
                                 <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
                                     <Clock size={14} className="text-text-muted" />
                                     Chat History
@@ -549,7 +553,7 @@ export default function Playground() {
                                             onClick={() => loadConversation(conv.id)}
                                             className={`w-full text-left px-3 py-3 rounded-xl text-sm transition-all duration-200 ${
                                                 conversationId === conv.id
-                                                    ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                                                    ? 'bg-accent-subtle text-accent-primary border border-accent-primary/30 shadow-sm'
                                                     : 'text-text-secondary hover:bg-bg-elevated border border-transparent'
                                             }`}
                                         >
@@ -573,13 +577,13 @@ export default function Playground() {
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mx-6 rounded-2xl p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 mb-2 flex items-start gap-4 flex-shrink-0"
+                    className="mx-6 rounded-2xl p-4 bg-amber-500/10 border border-amber-500/30 mb-2 flex items-start gap-4 flex-shrink-0"
                 >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-lg select-none">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-lg select-none">
                         {'🔒'}
                     </div>
                     <div>
-                        <p className="font-bold text-amber-700 text-sm">No prompts remaining</p>
+                        <p className="font-bold text-amber-600 dark:text-amber-300 text-sm">No prompts remaining</p>
                         <p className="text-text-secondary text-sm mt-1 leading-relaxed">
                             You've used all your prompts! Complete more lessons to earn XP and unlock more.
                             Each 100 XP gives you more prompts.
@@ -613,7 +617,7 @@ export default function Playground() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-center py-12"
                             >
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-cyan-100 border border-purple-200/50 flex items-center justify-center text-3xl mx-auto mb-4 select-none shadow-lg shadow-purple-100/50">
+                                <div className="w-16 h-16 rounded-2xl bg-accent-subtle border border-accent-primary/20 flex items-center justify-center text-3xl mx-auto mb-4 select-none shadow-glow">
                                     {'🧑‍🏫'}
                                 </div>
                                 <h2 className="text-lg font-bold text-text-primary mb-2 font-display">
@@ -635,7 +639,7 @@ export default function Playground() {
                                         <button
                                             key={suggestion}
                                             onClick={() => handleSend(suggestion)}
-                                            className="text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 hover:bg-purple-100 transition-all duration-200 hover:scale-[1.02]"
+                                            className="text-xs font-medium text-accent-primary bg-accent-subtle border border-accent-primary/30 rounded-full px-3 py-1.5 hover:bg-accent-subtle/70 transition-all duration-200 hover:scale-[1.02]"
                                         >
                                             {suggestion}
                                         </button>
@@ -655,22 +659,22 @@ export default function Playground() {
                                 >
                                     {msg.role === 'assistant' ? (
                                         <div className="flex items-start gap-2.5 max-w-[90%]">
-                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-xs select-none mt-1 shadow-md shadow-purple-300/20">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center text-xs select-none mt-1 shadow-glow">
                                                 {'🧑‍🏫'}
                                             </div>
-                                            <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-purple-500/40 text-text-primary text-sm leading-relaxed min-w-0">
+                                            <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-accent-primary/40 text-text-primary text-sm leading-relaxed min-w-0">
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                                                     {msg.content}
                                                 </ReactMarkdown>
                                                 {msg._isStreaming && (
-                                                    <span className="inline-block w-[2px] h-4 bg-purple-400 ml-0.5 align-middle"
+                                                    <span className="inline-block w-[2px] h-4 bg-accent-primary ml-0.5 align-middle"
                                                         style={{ animation: 'blink 0.8s steps(2) infinite' }}
                                                     />
                                                 )}
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="max-w-[80%] bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-2xl rounded-br-none px-4 py-2.5 text-sm leading-relaxed shadow-lg shadow-cyan-500/20">
+                                        <div className="max-w-[80%] bg-gradient-primary text-white rounded-2xl rounded-br-none px-4 py-2.5 text-sm leading-relaxed shadow-glow">
                                             {msg.content}
                                         </div>
                                     )}
@@ -693,22 +697,22 @@ export default function Playground() {
                 </div>
 
                 {/* ── Right Panel: Live Code Terminal ─────────────────────── */}
-                <div className="col-span-1 lg:col-span-3 flex flex-col min-h-0 rounded-2xl border border-slate-700/30 bg-[#0d1117] shadow-xl overflow-hidden">
+                <div className="col-span-1 lg:col-span-3 flex flex-col min-h-0 rounded-2xl border border-border-strong surface-code shadow-xl overflow-hidden">
                     {/* Panel header with macOS dots */}
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/50 bg-[#161b22] flex-shrink-0">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-strong surface-code flex-shrink-0">
                         <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1.5">
                                 <div className="w-3 h-3 rounded-full bg-red-400" />
                                 <div className="w-3 h-3 rounded-full bg-amber-400" />
                                 <div className="w-3 h-3 rounded-full bg-green-400" />
                             </div>
-                            <span className="text-xs font-semibold text-slate-400 ml-2 flex items-center gap-1.5">
+                            <span className="text-xs font-semibold text-code-foreground/70 ml-2 flex items-center gap-1.5">
                                 <Terminal size={12} />
                                 code.py
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-600 font-mono">Python 3</span>
+                            <span className="text-[10px] text-code-foreground/50 font-mono">Python 3</span>
                         </div>
                     </div>
 
@@ -725,7 +729,7 @@ export default function Playground() {
                         </div>
 
                         {/* Output panel */}
-                        <div className="flex-shrink-0 border-t border-slate-700/50" style={{ maxHeight: '35%' }}>
+                        <div className="flex-shrink-0 border-t border-border-strong" style={{ maxHeight: '35%' }}>
                             <OutputPanel
                                 output={output}
                                 error=""
@@ -738,7 +742,7 @@ export default function Playground() {
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-slate-700/50 bg-[#161b22] flex-shrink-0">
+                        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border-strong surface-code flex-shrink-0">
                             <button
                                 onClick={handleRunCode}
                                 disabled={running || !code.trim()}
@@ -751,10 +755,10 @@ export default function Playground() {
                                 {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                                 {running ? 'Running...' : 'Run Code'}
                             </button>
-                            <span className="text-[10px] text-slate-600 font-mono hidden sm:inline">Ctrl+Enter</span>
+                            <span className="text-[10px] text-code-foreground/50 font-mono hidden sm:inline">Ctrl+Enter</span>
                             <button
                                 onClick={handleClearTerminal}
-                                className="flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 hover:bg-slate-700 hover:text-slate-300 transition-all duration-200"
+                                className="flex items-center gap-1.5 text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
                             >
                                 <Trash2 size={13} />
                                 Clear
@@ -763,7 +767,7 @@ export default function Playground() {
                             <button
                                 onClick={handleSendToVaathiyaar}
                                 disabled={!code.trim() || loading}
-                                className="flex items-center gap-1.5 text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/30 rounded-xl px-3 py-2 hover:bg-purple-500/20 hover:text-purple-200 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2 hover:bg-accent-primary/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <Send size={13} />
                                 Send to Vaathiyaar
@@ -772,14 +776,14 @@ export default function Playground() {
 
                         {/* Package installer */}
                         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.04]">
-                            <span className="text-[10px] text-slate-500 font-mono flex-shrink-0">pip install</span>
+                            <span className="text-[10px] text-code-foreground/50 font-mono flex-shrink-0">pip install</span>
                             <input
                                 type="text"
                                 value={installPkg}
                                 onChange={(e) => setInstallPkg(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleInstallPackage()}
                                 placeholder="package-name"
-                                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-slate-300 placeholder-slate-600 font-mono focus:outline-none focus:border-green-500/40"
+                                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-code-foreground placeholder-code-foreground/40 font-mono focus:outline-none focus:border-green-500/40"
                             />
                             <button
                                 onClick={handleInstallPackage}
@@ -794,9 +798,9 @@ export default function Playground() {
             </div>
 
             {/* ── Chat Input Bar (full width) ─────────────────────────────── */}
-            <div className="flex-shrink-0 px-6 py-3 bg-gradient-to-t from-[#f0f4f8] to-transparent">
+            <div className="flex-shrink-0 px-6 py-3 bg-gradient-to-t from-bg-base to-transparent">
                 {exhausted ? (
-                    <div className="panel rounded-2xl px-5 py-3.5 border border-amber-200 bg-amber-50/50 text-center text-sm text-amber-700 font-medium">
+                    <div className="panel rounded-2xl px-5 py-3.5 border border-amber-500/30 bg-amber-500/10 text-center text-sm text-amber-600 dark:text-amber-300 font-medium">
                         No prompts remaining. Earn more XP in the Classroom!
                     </div>
                 ) : (

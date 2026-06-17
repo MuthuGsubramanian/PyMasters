@@ -82,20 +82,20 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
       className="rounded-2xl overflow-hidden opacity-0 max-w-2xl border border-white/[0.06] shadow-2xl shadow-black/20"
     >
       {/* Terminal header */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-2">
+      <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-slate-400 tracking-wide font-mono">python output</span>
+        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide font-mono">python output</span>
         <div className="ml-auto flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           <span className="text-[10px] text-green-400/80">running</span>
         </div>
       </div>
 
-      <div className="relative bg-[#0d1117] p-4 min-h-[80px] font-mono text-sm">
+      <div className="relative surface-code p-4 min-h-[80px] font-mono text-sm">
         {/* CRT scanline effect */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.02]"
