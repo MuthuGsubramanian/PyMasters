@@ -35,6 +35,11 @@ WORKDIR /app/backend
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download the Whisper STT model into the image so /api/voice/transcribe
+# never fetches from HuggingFace at runtime (avoids HF IP rate-limits + slow
+# cold starts). Must match VOICE_WHISPER_MODEL (default "tiny").
+RUN python -c "from faster_whisper import WhisperModel; WhisperModel('tiny', device='cpu', compute_type='int8')"
+
 # Backend code
 COPY backend/ .
 
