@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from pipeline.utils.claude import ask_claude
 from pipeline.utils.logger import get_logger
+from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enabled
 
 log = get_logger("actor.social_content")
 
@@ -33,6 +34,20 @@ Write a concise blog-style summary of today's AI trends and discoveries. The pos
 - Naturally mention pymasters.net and heyhomie.app where relevant
 - End with a call-to-action (visit pymasters.net, try Homie, etc.)
 - Use markdown formatting"""
+
+
+LINKEDIN_SYSTEM_PROMPT = """You are the content writer for the PyMasters (pymasters.net)
+LinkedIn company page — an AI-powered platform for learning Python & AI.
+
+Write ONE LinkedIn post for today aimed at Python developers and learners. Requirements:
+- 80-200 words, professional but warm; value-first, NOT salesy.
+- Lead with a concrete, useful insight or tip — a Python/AI idea drawn from today's
+  discoveries below — that a developer can learn from in 30 seconds.
+- Short paragraphs / line breaks for readability (LinkedIn renders plain text, NOT markdown —
+  do not use #, *, or markdown links).
+- End with a brief, natural mention of PyMasters (pymasters.net) as where to go deeper.
+- Finish with 3-5 relevant hashtags on the last line (e.g. #Python #AI #MachineLearning #LearnToCode).
+Return ONLY the post text, ready to publish."""
 
 
 def _prepare_item_summary(item: dict) -> dict:
@@ -151,6 +166,35 @@ def _fallback_blog(items: list[dict], today: str) -> str:
     return "\n".join(lines)
 
 
+def generate_linkedin_post(top_items: list[dict]) -> str:
+    """Generate one ready-to-publish LinkedIn post from the day's top discoveries."""
+    items_for_prompt = [_prepare_item_summary(item) for item in top_items[:3]]
+    today = datetime.now().strftime("%Y-%m-%d")
+    prompt = f"""Today is {today}. Write the LinkedIn post using these top discoveries:
+
+{json.dumps(items_for_prompt, indent=2)}
+"""
+    try:
+        return ask_claude(LINKEDIN_SYSTEM_PROMPT + "\n\n" + prompt).strip()
+    except Exception as e:
+        log.error(f"Claude CLI call failed for LinkedIn post: {e}")
+        return _fallback_linkedin(items_for_prompt)
+
+
+def _fallback_linkedin(items: list[dict]) -> str:
+    """A safe, decent LinkedIn post without an AI call."""
+    lead = items[0] if items else {"title": "Python & AI", "opportunity": ""}
+    body = lead.get("opportunity") or lead.get("description") or (
+        "A new idea worth exploring in the Python & AI world today.")
+    return (
+        f"Today in Python & AI: {lead.get('title', 'a discovery worth your time')}.\n\n"
+        f"{body}\n\n"
+        "We break concepts like this into hands-on, sandbox-graded lessons at PyMasters — "
+        "learn by building, with an AI tutor that adapts to you: pymasters.net\n\n"
+        "#Python #AI #MachineLearning #LearnToCode"
+    )
+
+
 def generate_social_content(scored_items: list[dict]) -> dict:
     """Main entry point: generate all social content drafts and save to disk.
 
@@ -194,8 +238,26 @@ def generate_social_content(scored_items: list[dict]) -> dict:
         log.error(f"Blog draft generation failed: {e}")
         blog_path = ""
 
+    # Generate the daily LinkedIn post, save the draft, then auto-post if enabled.
+    linkedin_path = os.path.join(day_dir, "linkedin.txt")
+    linkedin_status = "skipped"
+    try:
+        linkedin_text = generate_linkedin_post(top_items)
+        with open(linkedin_path, "w", encoding="utf-8") as f:
+            f.write(linkedin_text)
+        log.info(f"LinkedIn post saved: {linkedin_path}")
+        result = publish_linkedin(linkedin_text)  # no-op unless LINKEDIN_AUTOPOST + creds
+        linkedin_status = result.get("status", "unknown")
+        log.info(f"LinkedIn publish: {linkedin_status}")
+    except Exception as e:
+        log.error(f"LinkedIn post generation failed: {e}")
+        linkedin_path = ""
+        linkedin_status = "error"
+
     return {
         "tweets_path": tweets_path,
         "blog_path": blog_path,
+        "linkedin_path": linkedin_path,
+        "linkedin_status": linkedin_status,
         "status": "generated",
     }
