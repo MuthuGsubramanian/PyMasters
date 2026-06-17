@@ -6,6 +6,7 @@ from datetime import datetime
 from pipeline.utils.claude import ask_claude
 from pipeline.utils.logger import get_logger
 from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enabled
+from pipeline.actors.linkedin_media import generate_post_image
 
 log = get_logger("actor.social_content")
 
@@ -246,7 +247,14 @@ def generate_social_content(scored_items: list[dict]) -> dict:
         with open(linkedin_path, "w", encoding="utf-8") as f:
             f.write(linkedin_text)
         log.info(f"LinkedIn post saved: {linkedin_path}")
-        result = publish_linkedin(linkedin_text)  # no-op unless LINKEDIN_AUTOPOST + creds
+        # On-brand banner image (saved for review + attached to the post).
+        headline = (top_items[0].get("title") if top_items else None) or "Today in Python & AI"
+        image_bytes = generate_post_image(headline)
+        if image_bytes:
+            with open(os.path.join(day_dir, "linkedin.png"), "wb") as f:
+                f.write(image_bytes)
+            log.info("LinkedIn banner image generated")
+        result = publish_linkedin(linkedin_text, image_bytes=image_bytes)  # no-op unless enabled
         linkedin_status = result.get("status", "unknown")
         log.info(f"LinkedIn publish: {linkedin_status}")
     except Exception as e:
