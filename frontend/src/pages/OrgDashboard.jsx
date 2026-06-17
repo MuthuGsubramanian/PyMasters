@@ -10,6 +10,10 @@ import StudentDrawer from '../components/StudentDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
+  Badge, Card, StatCard, Button, Avatar, Tabs,
+  Table, THead, TH, TBody, TR, TD, FormField,
+} from '../components/ui';
+import {
   Building2, Users, Mail, Send, Copy, Shield, Crown,
   UserX, BarChart3, TrendingUp, Trophy, Zap, Search,
   Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
@@ -42,31 +46,31 @@ function relTime(ts) {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-/* Derive a learner status from progress fields. */
+/* Derive a learner status from progress fields. Returns a Badge variant. */
 function studentStatus(s) {
-  if ((s.struggle_count || 0) >= 3) return { label: 'At risk', color: 'bg-red-100 text-red-600 border-red-200' };
-  if ((s.signals_7d || 0) > 0) return { label: 'Active', color: 'bg-green-100 text-green-600 border-green-200' };
+  if ((s.struggle_count || 0) >= 3) return { label: 'At risk', variant: 'danger' };
+  if ((s.signals_7d || 0) > 0) return { label: 'Active', variant: 'success' };
   if (s.last_active) {
     let iso = String(s.last_active).replace(' ', 'T');
     if (!/[zZ]|[+\-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
     const then = new Date(iso).getTime();
-    if (!isNaN(then) && (Date.now() - then) < 30 * 86400000) return { label: 'Idle', color: 'bg-amber-100 text-amber-600 border-amber-200' };
+    if (!isNaN(then) && (Date.now() - then) < 30 * 86400000) return { label: 'Idle', variant: 'warning' };
   }
-  return { label: 'Inactive', color: 'bg-slate-100 text-slate-500 border-slate-200' };
+  return { label: 'Inactive', variant: 'neutral' };
 }
 
 const ROLE_BADGES = {
-  super_admin: { label: 'Super Admin', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Crown },
-  admin: { label: 'Admin', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Shield },
-  manager: { label: 'Manager', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Shield },
-  member: { label: 'Member', color: 'bg-slate-100 text-slate-600 border-slate-200', icon: Users },
+  super_admin: { label: 'Super Admin', variant: 'warning', icon: Crown },
+  admin: { label: 'Admin', variant: 'primary', icon: Shield },
+  manager: { label: 'Manager', variant: 'info', icon: Shield },
+  member: { label: 'Member', variant: 'neutral', icon: Users },
 };
 
 const TYPE_BADGES = {
-  school: 'bg-green-100 text-green-700',
-  university: 'bg-blue-100 text-blue-700',
-  enterprise: 'bg-purple-100 text-purple-700',
-  other: 'bg-slate-100 text-slate-600',
+  school: 'success',
+  university: 'info',
+  enterprise: 'primary',
+  other: 'neutral',
 };
 
 /* Helper: parse emails from uploaded file */
@@ -117,30 +121,13 @@ function getOrgType(org, activeOrg) {
 /* ------------------------------------------------------------------ */
 /*  Sub-components (pure, no hooks)                                    */
 /* ------------------------------------------------------------------ */
-function StatCard({ icon: Icon, label, value, color = 'from-cyan-500 to-blue-500', sub }) {
-  if (!Icon) return null;
-  const displayValue = (value !== null && value !== undefined) ? String(value) : '--';
-  return (
-    <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-sm`}>
-          <Icon size={18} className="text-white" />
-        </div>
-        <span className="text-sm text-text-muted font-medium">{String(label || '')}</span>
-      </div>
-      <div className="text-2xl font-bold text-text-primary">{displayValue}</div>
-      {sub && <div className="text-xs text-text-muted mt-1">{String(sub)}</div>}
-    </div>
-  );
-}
-
 function RoleBadge({ role }) {
   const cfg = ROLE_BADGES[role] || ROLE_BADGES.member;
   const BadgeIcon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.color}`}>
+    <Badge variant={cfg.variant}>
       <BadgeIcon size={10} /> {cfg.label}
-    </span>
+    </Badge>
   );
 }
 
@@ -152,8 +139,8 @@ function CopyButton({ text }) {
     setTimeout(() => setCopied(false), 1500);
   };
   return (
-    <button onClick={handleCopy} className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-cyan-600 transition-colors" title="Copy">
-      {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+    <button onClick={handleCopy} className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-accent-primary transition-colors" title="Copy">
+      {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
     </button>
   );
 }
@@ -225,11 +212,11 @@ function InvitePromptCard({ orgId, userId, onInviteSent }) {
   };
 
   return (
-    <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-border-default rounded-2xl p-4 space-y-4">
+    <Card className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-4 space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-text-primary font-bold text-base flex items-center gap-2">
-            <Rocket size={18} className="text-cyan-500" /> Get your team started
+            <Rocket size={18} className="text-accent-primary" /> Get your team started
           </h3>
           <p className="text-text-muted text-sm mt-1">Invite learners to start their Python journey with your organization.</p>
         </div>
@@ -244,20 +231,21 @@ function InvitePromptCard({ orgId, userId, onInviteSent }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email address"
+          aria-label="Email address"
           className="input-neo flex-1 py-2 text-sm"
           onKeyDown={(e) => e.key === 'Enter' && handleSingleInvite()}
         />
-        <select value={role} onChange={(e) => setRole(e.target.value)} className="input-neo w-28 py-2 text-sm">
+        <select value={role} onChange={(e) => setRole(e.target.value)} aria-label="Invite role" className="input-neo w-28 py-2 text-sm">
           <option value="member">Member</option>
           <option value="manager">Manager</option>
           <option value="admin">Admin</option>
         </select>
-        <button onClick={handleSingleInvite} disabled={sending || !email.trim()} className="btn-neo btn-neo-primary py-2 px-4 text-sm">
+        <Button onClick={handleSingleInvite} disabled={sending || !email.trim()} variant="primary" size="sm" className="py-2 px-4">
           {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-        </button>
+        </Button>
       </div>
       {result && (
-        <p className={`text-xs ${result.ok ? 'text-green-600' : 'text-red-500'}`}>{result.msg}</p>
+        <p className={`text-xs ${result.ok ? 'text-emerald-600' : 'text-red-500'}`}>{result.msg}</p>
       )}
 
       <div className="border-t border-border-default pt-3">
@@ -277,7 +265,7 @@ function InvitePromptCard({ orgId, userId, onInviteSent }) {
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm text-text-secondary font-medium">{fileEmails.length} emails found</p>
-              <select value={fileRole} onChange={(e) => setFileRole(e.target.value)} className="input-neo w-28 py-1 text-xs">
+              <select value={fileRole} onChange={(e) => setFileRole(e.target.value)} aria-label="Bulk invite role" className="input-neo w-28 py-1 text-xs">
                 <option value="member">Member</option>
                 <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
@@ -287,20 +275,20 @@ function InvitePromptCard({ orgId, userId, onInviteSent }) {
               {fileEmails.map((em, i) => <div key={i}>{em}</div>)}
             </div>
             <div className="flex gap-2">
-              <button onClick={handleBulkSend} disabled={bulkSending} className="btn-neo btn-neo-primary py-1.5 px-4 text-xs">
+              <Button onClick={handleBulkSend} disabled={bulkSending} variant="primary" size="sm" className="py-1.5 px-4">
                 {bulkSending ? 'Sending...' : `Invite all ${fileEmails.length}`}
-              </button>
-              <button onClick={() => setFileEmails([])} className="btn-neo btn-neo-ghost py-1.5 px-4 text-xs">
+              </Button>
+              <Button onClick={() => setFileEmails([])} variant="ghost" size="sm" className="py-1.5 px-4">
                 Clear
-              </button>
+              </Button>
             </div>
             {bulkResult && (
-              <p className={`text-xs ${bulkResult.ok ? 'text-green-600' : 'text-red-500'}`}>{bulkResult.msg}</p>
+              <p className={`text-xs ${bulkResult.ok ? 'text-emerald-600' : 'text-red-500'}`}>{bulkResult.msg}</p>
             )}
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -329,7 +317,7 @@ function DeleteOrgModal({ orgName, orgId, userId, onDeleted, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-bg-surface border border-border-default rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <Card className="p-6 max-w-md w-full space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
             <AlertTriangle size={20} className="text-red-500" />
@@ -344,30 +332,34 @@ function DeleteOrgModal({ orgName, orgId, userId, onDeleted, onClose }) {
           This will permanently delete <strong>{orgName}</strong>, remove all members, and cancel all pending invites. Member accounts will not be deleted.
         </p>
 
-        <div className="space-y-1.5">
-          <label className="text-xs text-text-muted font-medium">Type &quot;{orgName}&quot; to confirm</label>
-          <input
-            type="text"
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            className="input-neo py-2 text-sm"
-            placeholder={orgName}
-          />
-        </div>
+        <FormField label={`Type "${orgName}" to confirm`}>
+          {(id) => (
+            <input
+              id={id}
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="input-neo py-2 text-sm"
+              placeholder={orgName}
+            />
+          )}
+        </FormField>
 
         {error && <p className="text-xs text-red-500">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="btn-neo btn-neo-ghost py-2 px-4 text-sm">Cancel</button>
-          <button
+          <Button onClick={onClose} variant="ghost" size="sm" className="py-2 px-4">Cancel</Button>
+          <Button
             onClick={handleDelete}
             disabled={!canDelete || deleting}
-            className="btn-neo py-2 px-4 text-sm font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors"
+            variant="danger"
+            size="sm"
+            className="py-2 px-4"
           >
             {deleting ? 'Deleting...' : 'Delete Organization'}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -610,23 +602,26 @@ export default function OrgDashboard() {
   if (!activeOrg && !org) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <motion.div
+        <Card
+          as={motion.div}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 max-w-md text-center shadow-sm"
+          className="p-4 max-w-md text-center"
         >
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/10 to-cyan-500/10 flex items-center justify-center mx-auto mb-5">
-            <Building2 size={32} className="text-purple-500" />
+            <Building2 size={32} className="text-accent-primary" />
           </div>
           <h2 className="text-xl font-bold text-text-primary mb-2">No Organization Yet</h2>
           <p className="text-sm text-text-muted mb-6">Create an organization to manage your team, track progress, and collaborate.</p>
-          <button
+          <Button
             onClick={() => navigate('/dashboard/org/setup')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold text-sm shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+            variant="primary"
+            size="lg"
+            className="inline-flex"
           >
             <Plus size={16} /> Create Organization
-          </button>
-        </motion.div>
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -704,22 +699,22 @@ export default function OrgDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           {org?.logo_url ? (
-            <img src={String(org.logo_url)} alt="" className="w-12 h-12 rounded-xl object-cover border border-black/[0.05]" />
+            <img src={String(org.logo_url)} alt="" className="w-12 h-12 rounded-xl object-cover border border-border-default" />
           ) : (
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
               <Building2 size={24} className="text-white" />
             </div>
           )}
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold text-text-primary">{orgName}</h1>
-              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${TYPE_BADGES[orgType] || TYPE_BADGES.other}`}>
+              <Badge variant={TYPE_BADGES[orgType] || TYPE_BADGES.other} className="uppercase">
                 {orgType}
-              </span>
+              </Badge>
               {org?.plan && (
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                <Badge variant="warning" className="uppercase">
                   {String(org.plan)}
-                </span>
+                </Badge>
               )}
             </div>
             <p className="text-sm text-text-muted">{org?.description ? String(org.description) : `${memberCount} members`}</p>
@@ -729,34 +724,16 @@ export default function OrgDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-bg-surface backdrop-blur-xl rounded-xl p-1 border border-border-default w-fit">
-        {TABS.map((t) => {
-          if (t.key === 'analytics' && !isAdmin) return null;
-          if (t.key === 'students' && !canViewProgress) return null;
-          const isActive = tab === t.key;
-          const TabIcon = t.icon;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive ? 'text-cyan-700' : 'text-text-muted hover:text-text-secondary'
-              }`}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="org-tab-indicator"
-                  className="absolute inset-0 bg-bg-surface rounded-lg shadow-sm border border-border-default"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
-              <span className="relative flex items-center gap-2">
-                <TabIcon size={16} /> {t.label}
-              </span>
-            </button>
-          );
+      <Tabs
+        className="mb-4"
+        tabs={TABS.filter((t) => {
+          if (t.key === 'analytics' && !isAdmin) return false;
+          if (t.key === 'students' && !canViewProgress) return false;
+          return true;
         })}
-      </div>
+        active={tab}
+        onChange={setTab}
+      />
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">
@@ -780,30 +757,30 @@ export default function OrgDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard icon={Users} label="Total Members" value={memberCount} />
-                <StatCard icon={Zap} label="Avg XP" value={avgXp} color="from-purple-500 to-pink-500" />
-                <StatCard icon={TrendingUp} label="Active Learners (7d)" value={activeLearners} color="from-green-500 to-emerald-500" />
-                <StatCard icon={Trophy} label="Lessons Completed" value={lessonsCompleted} color="from-amber-500 to-orange-500" />
+                <StatCard icon={Zap} label="Avg XP" value={avgXp} />
+                <StatCard icon={TrendingUp} label="Active Learners (7d)" value={activeLearners} />
+                <StatCard icon={Trophy} label="Lessons Completed" value={lessonsCompleted} />
               </div>
 
               {groups.length > 0 && (
-                <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
+                <Card className="p-4">
                   <h3 className="text-sm font-bold text-text-secondary mb-4">{groupLabel} Distribution</h3>
                   <div className="space-y-3">
                     {groups.map((g) => (
                       <div key={g.name} className="flex items-center gap-3">
                         <span className="text-xs text-text-muted w-24 truncate">{g.name}</span>
                         <div className="flex-1 h-6 bg-bg-elevated rounded-lg overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg" style={{ width: `${(g.count / maxGroupCount) * 100}%` }} />
+                          <div className="h-full bg-gradient-primary rounded-lg" style={{ width: `${(g.count / maxGroupCount) * 100}%` }} />
                         </div>
                         <span className="text-xs font-bold text-text-secondary w-8 text-right">{g.count}</span>
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
               )}
 
               {isAdmin && (
-                <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm flex items-center gap-3 flex-wrap">
+                <Card className="p-4 flex items-center gap-3 flex-wrap">
                   <label htmlFor="org-group-label" className="text-sm font-bold text-text-secondary">Group label</label>
                   <input
                     id="org-group-label"
@@ -819,17 +796,19 @@ export default function OrgDashboard() {
                     placeholder="Group"
                   />
                   <span className="text-xs text-text-muted">What a group is called for your org (e.g. Class, Batch, Team).</span>
-                </div>
+                </Card>
               )}
 
               {activeOrg?.role === 'super_admin' && (
                 <div className="border-t border-border-default pt-4 mt-4">
-                  <button
+                  <Button
                     onClick={() => setShowDeleteOrg(true)}
-                    className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+                    variant="link"
+                    size="sm"
+                    className="text-xs text-red-500 hover:text-red-600 px-0"
                   >
                     Delete Organization
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -859,7 +838,8 @@ export default function OrgDashboard() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, username, or email..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all"
+                  aria-label="Search members"
+                  className="input-neo w-full pl-10 pr-4 py-2.5 text-sm"
                 />
               </div>
 
@@ -868,13 +848,10 @@ export default function OrgDashboard() {
                 {filteredMembers.map((m) => {
                   const memberId = m.user_id || m.id || '';
                   const displayName = String(m.name || m.username || '??');
-                  const initials = displayName.substring(0, 2).toUpperCase();
                   return (
-                    <div key={memberId || Math.random()} className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3">
+                    <Card key={memberId || Math.random()} className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                        {initials}
-                      </div>
+                      <Avatar name={displayName} size="md" />
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
@@ -888,14 +865,14 @@ export default function OrgDashboard() {
                         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {m.email && <span className="text-xs text-text-muted">{String(m.email)}</span>}
                           {m.department && <span className="text-xs text-text-muted">| {String(m.department)}</span>}
-                          <span className="text-xs text-cyan-600 font-medium">{Number(m.xp || m.points) || 0} XP</span>
+                          <span className="text-xs text-accent-primary font-medium">{Number(m.xp || m.points) || 0} XP</span>
                         </div>
                       </div>
 
                       {/* Links */}
                       <div className="flex items-center gap-2">
                         {m.linkedin_url && (
-                          <a href={String(m.linkedin_url)} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-blue-600 transition-colors">
+                          <a href={String(m.linkedin_url)} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-accent-primary transition-colors">
                             <ExternalLink size={14} />
                           </a>
                         )}
@@ -914,7 +891,8 @@ export default function OrgDashboard() {
                               value={m.role || 'member'}
                               onChange={(e) => handleRoleChange(memberId, e.target.value)}
                               disabled={actionLoading === memberId}
-                              className="text-xs pl-2 pr-6 py-1.5 rounded-lg border border-black/[0.08] bg-bg-surface text-text-secondary focus:outline-none appearance-none"
+                              aria-label={`Change role for ${displayName}`}
+                              className="text-xs pl-2 pr-6 py-1.5 rounded-lg border border-border-default bg-bg-surface text-text-secondary focus:outline-none appearance-none"
                             >
                               <option value="member">Member</option>
                               <option value="manager">Manager</option>
@@ -925,24 +903,28 @@ export default function OrgDashboard() {
                           </div>
                           {confirmRemove === memberId ? (
                             <div className="flex gap-1">
-                              <button
+                              <Button
                                 onClick={() => handleRemove(memberId)}
                                 disabled={actionLoading === memberId}
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                variant="danger"
+                                size="sm"
+                                className="px-2 py-1 text-[10px]"
                               >
                                 Confirm
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 onClick={() => setConfirmRemove(null)}
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-bg-elevated text-text-muted hover:bg-bg-elevated transition-colors"
+                                variant="ghost"
+                                size="sm"
+                                className="px-2 py-1 text-[10px]"
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           ) : (
                             <button
                               onClick={() => setConfirmRemove(memberId)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 text-text-muted hover:text-red-500 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-muted hover:text-red-500 transition-colors"
                               title="Remove member"
                             >
                               <UserX size={14} />
@@ -950,7 +932,7 @@ export default function OrgDashboard() {
                           )}
                         </div>
                       )}
-                    </div>
+                    </Card>
                   );
                 })}
 
@@ -967,9 +949,9 @@ export default function OrgDashboard() {
           {tab === 'invites' && (
             <div className="space-y-4">
               {/* Single Invite */}
-              <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
+              <Card className="p-4">
                 <h3 className="text-sm font-bold text-text-secondary mb-4 flex items-center gap-2">
-                  <Send size={14} className="text-cyan-500" /> Invite a Member
+                  <Send size={14} className="text-accent-primary" /> Invite a Member
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
@@ -978,58 +960,64 @@ export default function OrgDashboard() {
                     onChange={(e) => setInviteEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                     placeholder="member@example.com"
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all"
+                    aria-label="Member email to invite"
+                    className="input-neo flex-1 px-4 py-2.5 text-sm"
                   />
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
-                    className="px-3 py-2.5 rounded-xl border border-black/[0.08] bg-bg-surface text-sm text-text-secondary focus:outline-none"
+                    aria-label="Invite role"
+                    className="input-neo px-3 py-2.5 text-sm"
                   >
                     <option value="member">Member</option>
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
-                  <button
+                  <Button
                     onClick={handleInvite}
                     disabled={inviting || !inviteEmail.trim()}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold text-sm hover:shadow-md hover:shadow-cyan-500/25 transition-all disabled:opacity-50 flex items-center gap-2"
+                    variant="primary"
+                    className="px-5 py-2.5"
                   >
                     <Send size={14} /> Send Invite
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
 
               {/* Bulk Invite */}
-              <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
+              <Card className="p-4">
                 <h3 className="text-sm font-bold text-text-secondary mb-4 flex items-center gap-2">
-                  <Mail size={14} className="text-purple-500" /> Bulk Invite
+                  <Mail size={14} className="text-accent-primary" /> Bulk Invite
                 </h3>
                 <textarea
                   value={bulkEmails}
                   onChange={(e) => setBulkEmails(e.target.value)}
                   placeholder={"Paste emails separated by commas or newlines\nalice@example.com, bob@example.com"}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-white/60 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 text-sm text-text-primary placeholder:text-text-muted transition-all resize-none mb-3"
+                  aria-label="Bulk invite emails"
+                  className="input-neo w-full px-4 py-3 text-sm resize-none mb-3"
                 />
                 <div className="flex items-center gap-2">
                   <select
                     value={bulkRole}
                     onChange={(e) => setBulkRole(e.target.value)}
-                    className="px-3 py-2 rounded-xl border border-black/[0.08] bg-bg-surface text-sm text-text-secondary focus:outline-none"
+                    aria-label="Bulk invite role"
+                    className="input-neo px-3 py-2 text-sm"
                   >
                     <option value="member">Member</option>
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
-                  <button
+                  <Button
                     onClick={handleBulkInvite}
                     disabled={inviting || !bulkEmails.trim()}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold text-sm hover:shadow-md hover:shadow-purple-500/25 transition-all disabled:opacity-50 flex items-center gap-2"
+                    variant="primary"
+                    className="px-5 py-2"
                   >
                     <Send size={14} /> Send All
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
 
               {/* Invite Result */}
               {inviteResult && (
@@ -1051,7 +1039,7 @@ export default function OrgDashboard() {
                       : String(inviteResult.message || 'Failed')}
                   </div>
                   {inviteResult.success && inviteResult.data?.token && (
-                    <div className="mt-2 flex items-center gap-2 bg-white/60 rounded-lg px-3 py-2">
+                    <div className="mt-2 flex items-center gap-2 bg-bg-surface rounded-lg px-3 py-2">
                       <span className="text-xs text-text-secondary truncate flex-1 font-mono">{String(inviteResult.data.token)}</span>
                       <CopyButton text={inviteResult.data.token} />
                     </div>
@@ -1059,7 +1047,7 @@ export default function OrgDashboard() {
                   {inviteResult.success && Array.isArray(inviteResult.data?.invites) && (
                     <div className="mt-2 space-y-1">
                       {inviteResult.data.invites.map((inv, i) => (
-                        <div key={i} className="flex items-center gap-2 bg-white/60 rounded-lg px-3 py-2">
+                        <div key={i} className="flex items-center gap-2 bg-bg-surface rounded-lg px-3 py-2">
                           <span className="text-xs text-text-secondary flex-1">{String(inv?.email || '')}</span>
                           {inv?.token && <CopyButton text={inv.token} />}
                         </div>
@@ -1071,7 +1059,7 @@ export default function OrgDashboard() {
 
               {/* Pending Invites */}
               {invites.length > 0 && (
-                <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
+                <Card className="p-4">
                   <h3 className="text-sm font-bold text-text-secondary mb-4">Pending Invites</h3>
                   <div className="space-y-2">
                     {invites.map((inv, i) => (
@@ -1090,15 +1078,13 @@ export default function OrgDashboard() {
                             Exp: {new Date(inv.expires_at).toLocaleDateString()}
                           </span>
                         )}
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          inv?.status === 'accepted' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
-                        }`}>
+                        <Badge variant={inv?.status === 'accepted' ? 'success' : 'warning'}>
                           {String(inv?.status || 'pending')}
-                        </span>
+                        </Badge>
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
               )}
             </div>
           )}
@@ -1112,7 +1098,7 @@ export default function OrgDashboard() {
                     onClick={() => setGroupFilter(null)}
                     className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                       groupFilter === null
-                        ? 'bg-cyan-500 text-white border-cyan-500'
+                        ? 'bg-gradient-primary text-white border-transparent shadow-glow'
                         : 'bg-bg-surface text-text-secondary border-border-default hover:bg-bg-elevated'
                     }`}
                   >
@@ -1124,7 +1110,7 @@ export default function OrgDashboard() {
                       onClick={() => setGroupFilter(g.name)}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                         groupFilter === g.name
-                          ? 'bg-cyan-500 text-white border-cyan-500'
+                          ? 'bg-gradient-primary text-white border-transparent shadow-glow'
                           : 'bg-bg-surface text-text-secondary border-border-default hover:bg-bg-elevated'
                       }`}
                     >
@@ -1136,7 +1122,7 @@ export default function OrgDashboard() {
                       onClick={() => setGroupFilter('__ungrouped__')}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                         groupFilter === '__ungrouped__'
-                          ? 'bg-cyan-500 text-white border-cyan-500'
+                          ? 'bg-gradient-primary text-white border-transparent shadow-glow'
                           : 'bg-bg-surface text-text-secondary border-border-default hover:bg-bg-elevated'
                       }`}
                     >
@@ -1157,73 +1143,67 @@ export default function OrgDashboard() {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <StatCard icon={Users} label="Students" value={progress.length} />
-                    <StatCard icon={Activity} label="Active (7d)" value={progress.filter((s) => (s.signals_7d || 0) > 0).length} color="from-green-500 to-emerald-500" />
-                    <StatCard icon={Trophy} label="Lessons Done" value={progress.reduce((a, s) => a + (s.lessons_completed || 0), 0)} color="from-amber-500 to-orange-500" />
-                    <StatCard icon={AlertTriangle} label="At Risk" value={progress.filter((s) => (s.struggle_count || 0) >= 3).length} color="from-red-500 to-rose-500" />
+                    <StatCard icon={Activity} label="Active (7d)" value={progress.filter((s) => (s.signals_7d || 0) > 0).length} />
+                    <StatCard icon={Trophy} label="Lessons Done" value={progress.reduce((a, s) => a + (s.lessons_completed || 0), 0)} />
+                    <StatCard icon={AlertTriangle} label="At Risk" value={progress.filter((s) => (s.struggle_count || 0) >= 3).length} />
                   </div>
 
-                  <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <caption className="sr-only">Per-student progress</caption>
-                        <thead>
-                          <tr className="text-left text-xs text-text-muted border-b border-border-default">
-                            <th scope="col" className="px-4 py-3 font-semibold">Student</th>
-                            <th scope="col" className="px-4 py-3 font-semibold">XP</th>
-                            <th scope="col" className="px-4 py-3 font-semibold">Lessons</th>
-                            <th scope="col" className="px-4 py-3 font-semibold">Last active</th>
-                            <th scope="col" className="px-4 py-3 font-semibold">{groupLabel}s</th>
-                            <th scope="col" className="px-4 py-3 font-semibold">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border-default">
-                          {progress.map((s) => {
-                            const st = studentStatus(s);
-                            const name = String(s.name || s.username || '—');
-                            return (
-                              <tr
-                                key={s.id}
-                                onClick={() => setOpenStudentId(s.id)}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenStudentId(s.id); } }}
-                                tabIndex={0}
-                                role="button"
-                                aria-label={`Open ${name} detail`}
-                                className="hover:bg-bg-elevated/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
-                              >
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                      {name.substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <div className="font-semibold text-text-primary truncate">{name}</div>
-                                      {s.email && <div className="text-xs text-text-muted truncate">{String(s.email)}</div>}
-                                    </div>
+                  <Card className="overflow-hidden">
+                    <Table>
+                      <caption className="sr-only">Per-student progress</caption>
+                      <THead>
+                        <TH>Student</TH>
+                        <TH>XP</TH>
+                        <TH>Lessons</TH>
+                        <TH>Last active</TH>
+                        <TH>{groupLabel}s</TH>
+                        <TH>Status</TH>
+                      </THead>
+                      <TBody>
+                        {progress.map((s) => {
+                          const st = studentStatus(s);
+                          const name = String(s.name || s.username || '—');
+                          return (
+                            <TR
+                              key={s.id}
+                              onClick={() => setOpenStudentId(s.id)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenStudentId(s.id); } }}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`Open ${name} detail`}
+                              className="hover:bg-bg-elevated/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                            >
+                              <TD>
+                                <div className="flex items-center gap-2.5">
+                                  <Avatar name={name} size="sm" />
+                                  <div className="min-w-0">
+                                    <div className="font-semibold text-text-primary truncate">{name}</div>
+                                    {s.email && <div className="text-xs text-text-muted truncate">{String(s.email)}</div>}
                                   </div>
-                                </td>
-                                <td className="px-4 py-3 text-cyan-600 font-semibold">{s.xp || 0}</td>
-                                <td className="px-4 py-3 text-text-secondary">{s.lessons_completed || 0}</td>
-                                <td className="px-4 py-3 text-text-muted">{relTime(s.last_active)}</td>
-                                <td className="px-4 py-3">
-                                  <div className="flex flex-wrap gap-1">
-                                    {(s.groups || []).slice(0, 3).map((g) => (
-                                      <span key={g} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 border border-cyan-200">{g}</span>
-                                    ))}
-                                    {(s.groups || []).length > 3 && (
-                                      <span className="text-[10px] text-text-muted">+{s.groups.length - 3}</span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>{st.label}</span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                                </div>
+                              </TD>
+                              <TD className="text-accent-primary font-semibold">{s.xp || 0}</TD>
+                              <TD className="text-text-secondary">{s.lessons_completed || 0}</TD>
+                              <TD className="text-text-muted">{relTime(s.last_active)}</TD>
+                              <TD>
+                                <div className="flex flex-wrap gap-1">
+                                  {(s.groups || []).slice(0, 3).map((g) => (
+                                    <Badge key={g} variant="primary">{g}</Badge>
+                                  ))}
+                                  {(s.groups || []).length > 3 && (
+                                    <span className="text-[10px] text-text-muted">+{s.groups.length - 3}</span>
+                                  )}
+                                </div>
+                              </TD>
+                              <TD>
+                                <Badge variant={st.variant}>{st.label}</Badge>
+                              </TD>
+                            </TR>
+                          );
+                        })}
+                      </TBody>
+                    </Table>
+                  </Card>
                 </>
               )}
               {openStudentId && (
@@ -1245,33 +1225,33 @@ export default function OrgDashboard() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard icon={Users} label="Members" value={typeof analytics?.total_members === 'number' ? analytics.total_members : memberCount} />
-                <StatCard icon={Zap} label="Avg XP" value={typeof analytics?.avg_xp === 'number' ? analytics.avg_xp : avgXp} color="from-purple-500 to-pink-500" />
-                <StatCard icon={Trophy} label="Top XP" value={typeof analytics?.top_xp === 'number' ? analytics.top_xp : topXp} color="from-amber-500 to-orange-500" />
-                <StatCard icon={TrendingUp} label="Active (7d)" value={typeof analytics?.active_7d === 'number' ? analytics.active_7d : '--'} color="from-green-500 to-emerald-500" />
-                <StatCard icon={BarChart3} label="Lessons Done" value={typeof analytics?.lessons_completed === 'number' ? analytics.lessons_completed : '--'} color="from-blue-500 to-indigo-500" />
+                <StatCard icon={Zap} label="Avg XP" value={typeof analytics?.avg_xp === 'number' ? analytics.avg_xp : avgXp} />
+                <StatCard icon={Trophy} label="Top XP" value={typeof analytics?.top_xp === 'number' ? analytics.top_xp : topXp} />
+                <StatCard icon={TrendingUp} label="Active (7d)" value={typeof analytics?.active_7d === 'number' ? analytics.active_7d : '--'} />
+                <StatCard icon={BarChart3} label="Lessons Done" value={typeof analytics?.lessons_completed === 'number' ? analytics.lessons_completed : '--'} />
               </div>
 
               {/* Role Distribution */}
-              <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
+              <Card className="p-4">
                 <h3 className="text-sm font-bold text-text-secondary mb-4">Role Distribution</h3>
                 <div className="flex flex-wrap gap-3">
                   {Object.entries(roleDistribution).map(([role, count]) => {
                     const cfg = ROLE_BADGES[role] || ROLE_BADGES.member;
                     const RoleIcon = cfg.icon;
                     return (
-                      <div key={role} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${cfg.color}`}>
+                      <Badge key={role} variant={cfg.variant} className="text-sm px-3 py-2 gap-2">
                         <RoleIcon size={14} />
-                        <span className="text-sm font-semibold">{cfg.label}</span>
-                        <span className="text-xs font-bold bg-white/60 px-1.5 py-0.5 rounded-full">{count}</span>
-                      </div>
+                        <span className="font-semibold">{cfg.label}</span>
+                        <span className="text-xs font-bold bg-bg-surface px-1.5 py-0.5 rounded-full">{count}</span>
+                      </Badge>
                     );
                   })}
                 </div>
-              </div>
+              </Card>
 
               {/* Department Breakdown */}
               {Object.keys(deptDistribution).length > 0 && (
-                <div className="bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default p-4 shadow-sm">
+                <Card className="p-4">
                   <h3 className="text-sm font-bold text-text-secondary mb-4">Department Breakdown</h3>
                   <div className="space-y-3">
                     {Object.entries(deptDistribution)
@@ -1284,7 +1264,7 @@ export default function OrgDashboard() {
                               initial={{ width: 0 }}
                               animate={{ width: `${(count / maxDeptCount) * 100}%` }}
                               transition={{ duration: 0.8, ease: 'easeOut' }}
-                              className="h-full bg-gradient-to-r from-purple-400 to-cyan-400 rounded-lg flex items-center justify-end pr-2"
+                              className="h-full bg-gradient-primary rounded-lg flex items-center justify-end pr-2"
                             >
                               <span className="text-[10px] font-bold text-white">{count}</span>
                             </motion.div>
@@ -1292,7 +1272,7 @@ export default function OrgDashboard() {
                         </div>
                       ))}
                   </div>
-                </div>
+                </Card>
               )}
             </div>
           )}

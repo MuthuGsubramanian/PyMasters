@@ -5,6 +5,7 @@ import { getAdminOrgDetail, adminSetOrgPlan, adminSetOrgType, adminDeleteOrg } f
 import { safeErrorMsg } from '../utils/errorUtils';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { Button } from './ui';
 
 const PLANS = ['free', 'pro', 'enterprise'];
 const TYPES = ['school', 'university', 'enterprise', 'other'];
@@ -38,8 +39,8 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
                 <select disabled={busy==='type'} value={d.type} onChange={(e)=>act('type',()=>adminSetOrgType(adminId,orgId,e.target.value))} className="input-neo py-2 text-sm">{TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select>
                 <div className="col-span-2">
                   {confirmDel === d.name ? (
-                    <button disabled={busy==='del'} onClick={async ()=>{ if (await act('del',()=>adminDeleteOrg(adminId,orgId))) onClose(); }} className="w-full py-2 text-sm font-bold text-white bg-red-500 rounded-xl">Confirm delete org</button>
-                  ) : <input className="input-neo w-full py-2 text-sm" placeholder={`Type "${d.name}" to delete`} value={confirmDel} onChange={(e)=>setConfirmDel(e.target.value)} />}
+                    <Button variant="danger" disabled={busy==='del'} onClick={async ()=>{ if (await act('del',()=>adminDeleteOrg(adminId,orgId))) onClose(); }} className="w-full py-2 text-sm">Confirm delete org</Button>
+                  ) : <input className="input-neo w-full py-2 text-sm" aria-label={`Type the organization name "${d.name}" to confirm deletion`} placeholder={`Type "${d.name}" to delete`} value={confirmDel} onChange={(e)=>setConfirmDel(e.target.value)} />}
                 </div>
               </div>
               <div className="p-5">
