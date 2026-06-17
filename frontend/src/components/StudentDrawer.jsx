@@ -6,12 +6,13 @@ import { getStudentDetail, setMemberGroups } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { Avatar, Badge, Button } from './ui';
 
 const STATUS_PILL = {
-  at_risk:  { label: 'At risk',  color: 'bg-red-100 text-red-600 border-red-200' },
-  active:   { label: 'Active',   color: 'bg-green-100 text-green-600 border-green-200' },
-  idle:     { label: 'Idle',     color: 'bg-amber-100 text-amber-600 border-amber-200' },
-  inactive: { label: 'Inactive', color: 'bg-slate-100 text-slate-500 border-slate-200' },
+  at_risk:  { label: 'At risk',  variant: 'danger' },
+  active:   { label: 'Active',   variant: 'success' },
+  idle:     { label: 'Idle',     variant: 'warning' },
+  inactive: { label: 'Inactive', variant: 'neutral' },
 };
 
 function relTime(ts) {
@@ -59,7 +60,7 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
 
   const p = data?.profile;
   const s = data?.summary;
-  const pill = STATUS_PILL[s?.status] || STATUS_PILL.inactive;
+  const status = STATUS_PILL[s?.status] || STATUS_PILL.inactive;
   const name = String(p?.name || p?.username || '—');
 
   const persistTags = async (next) => {
@@ -114,29 +115,27 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
             <div className="p-6">
               <button onClick={onClose} className="mb-4 text-text-muted hover:text-text-secondary"><X size={18} /></button>
               <p className="text-sm text-red-500 mb-3">{String(error)}</p>
-              <button onClick={load} className="px-4 py-2 rounded-xl bg-red-100 text-red-600 text-xs font-bold">Retry</button>
+              <Button variant="danger" size="sm" onClick={load}>Retry</Button>
             </div>
           ) : (
             <div>
               {/* Header */}
               <div className="p-5 border-b border-border-default flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-white font-bold shrink-0">
-                  {name.substring(0, 2).toUpperCase()}
-                </div>
+                <Avatar name={name} size="lg" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-lg font-bold text-text-primary truncate">{name}</h2>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${pill.color}`}>{pill.label}</span>
+                    <Badge variant={status.variant}>{status.label}</Badge>
                   </div>
                   {p?.email && <p className="text-xs text-text-muted truncate">{String(p.email)}</p>}
                   <div className="flex flex-wrap items-center gap-1 mt-2">
                     {(canEdit ? tags : (p?.groups || [])).map((g) => (
-                      <span key={g} className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 border border-cyan-200">
+                      <Badge key={g} variant="primary">
                         {g}
                         {canEdit && (
                           <button onClick={() => removeTag(g)} aria-label={`Remove ${g}`} className="hover:text-red-500"><X size={10} /></button>
                         )}
-                      </span>
+                      </Badge>
                     ))}
                     {canEdit && (
                       <span className="inline-flex items-center gap-1">
