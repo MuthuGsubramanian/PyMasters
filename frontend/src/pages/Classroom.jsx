@@ -1382,6 +1382,17 @@ export default function Classroom() {
                 </>
             )}
 
+            {/* On the lesson list, offer voice tutoring as a floating action */}
+            {phase === 'select' && !voiceOpen && (
+                <button
+                    onClick={() => setVoiceOpen(true)}
+                    className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                    title="Talk to Vaathiyaar (voice)"
+                >
+                    <Mic size={18} /> <span className="text-sm font-semibold hidden sm:inline">Talk to Vaathiyaar</span>
+                </button>
+            )}
+
             <VoiceTutor
                 open={voiceOpen}
                 onClose={() => setVoiceOpen(false)}
