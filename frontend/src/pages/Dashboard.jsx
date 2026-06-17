@@ -30,6 +30,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
 import { getModules, getModule, completeModule, getCompletions, getProfile, recordSignal } from '../api';
+import ReviewQueue from '../components/ReviewQueue';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import clsx from 'clsx';
@@ -178,14 +179,13 @@ export function Overview() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const [totalModules, setTotalModules] = useState(4);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [recommendation, setRecommendation] = useState(null);
     const [trends, setTrends] = useState(FALLBACK_TRENDS);
 
-    const modulesUnlocked = (user.unlocked || []).length;
-    const progressPct = totalModules > 0 ? Math.round((modulesUnlocked / totalModules) * 100) : 0;
+    const lessonsCompleted = stats?.lessons_completed ?? 0;
+    const progressPct = Math.min(100, (user.points || 0) % 100); // % toward next 100-XP milestone
 
     const dailyQuote = useMemo(() => {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -197,12 +197,6 @@ export function Overview() {
     useEffect(() => {
         const fetchAll = async () => {
             setLoading(true);
-            try {
-                const [modsRes] = await Promise.all([
-                    getModules(),
-                ]);
-                setTotalModules(modsRes.data.length);
-            } catch {}
 
             // Fetch stats (graceful fallback)
             if (user?.id) {
@@ -327,24 +321,15 @@ export function Overview() {
                     delay={0.1}
                 />
                 <StatCard
-                    label="Modules Completed"
-                    value={modulesUnlocked}
-                    suffix={` / ${totalModules}`}
+                    label="Lessons Completed"
+                    value={lessonsCompleted}
                     icon={<BookOpen size={20} />}
                     gradient="bg-gradient-to-br from-cyan-50/80 to-blue-50/80"
                     iconBg="bg-cyan-100 text-cyan-600"
                     border="border-cyan-100"
                     delay={0.15}
                 >
-                    <div className="flex items-center gap-3">
-                        <span>
-                            <AnimatedNumber value={modulesUnlocked} />
-                            <span className="text-text-muted text-lg ml-0.5">/ {totalModules}</span>
-                        </span>
-                        <div className="w-16">
-                            <ProgressRing progress={progressPct} size={36} strokeWidth={3} />
-                        </div>
-                    </div>
+                    <AnimatedNumber value={lessonsCompleted} />
                 </StatCard>
                 <StatCard
                     label="Current Streak"
@@ -386,6 +371,9 @@ export function Overview() {
             <div className="grid lg:grid-cols-3 gap-6">
                 {/* Left Column (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* ─── Spaced-repetition review queue (renders only when due) ─ */}
+                    <ReviewQueue userId={user?.id} />
+
                     {/* ─── Daily Recommendation Card ─────────────────────── */}
                     <motion.div
                         variants={itemVariants}
@@ -419,14 +407,10 @@ export function Overview() {
                             ) : (
                                 <>
                                     <h4 className="text-xl font-bold text-text-primary font-display mb-2">
-                                        {recommendation?.title || (modulesUnlocked >= totalModules ? 'Explore AI Topics' : `Module ${modulesUnlocked + 1}`)}
+                                        {recommendation?.title || recommendation?.recommended_lesson?.title || 'Continue in the Classroom'}
                                     </h4>
                                     <p className="text-sm text-text-secondary mb-3 leading-relaxed">
-                                        {recommendation?.description || (
-                                            modulesUnlocked >= totalModules
-                                                ? 'You have completed all core modules. Explore trending AI and Python topics in the classroom!'
-                                                : `Continue your learning journey with the next module. Keep the momentum going!`
-                                        )}
+                                        {recommendation?.description || 'Pick up where you left off — explore hands-on lessons across every track in the Classroom.'}
                                     </p>
                                     {recommendation?.reason && (
                                         <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-gradient-to-r from-blue-50/50 to-purple-50/50 border border-blue-100/50">
@@ -435,7 +419,7 @@ export function Overview() {
                                         </div>
                                     )}
                                     <button
-                                        onClick={() => navigate(recommendation?.link || '/dashboard/learn')}
+                                        onClick={() => navigate(recommendation?.link || '/dashboard/classroom')}
                                         className="btn-neo btn-neo-primary py-2.5 text-sm group/btn inline-flex items-center gap-2"
                                     >
                                         <Play size={14} />
@@ -523,7 +507,7 @@ export function Overview() {
                                     <ProgressRing progress={progressPct} size={100} strokeWidth={8} color="#06b6d4" />
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                                         <span className="text-2xl font-bold text-text-primary font-display">{progressPct}%</span>
-                                        <span className="text-[10px] text-text-secondary uppercase tracking-wider">Complete</span>
+                                        <span className="text-[10px] text-text-secondary uppercase tracking-wider">to next rank</span>
                                     </div>
                                 </div>
                             </div>
@@ -586,7 +570,7 @@ export function Overview() {
                                 {
                                     label: 'Continue Learning',
                                     icon: <Play size={18} />,
-                                    to: '/dashboard/learn',
+                                    to: '/dashboard/classroom',
                                     colors: 'from-cyan-500 to-blue-500',
                                     bg: 'bg-cyan-50 hover:bg-cyan-100',
                                     text: 'text-cyan-700',
