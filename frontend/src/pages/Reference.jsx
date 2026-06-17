@@ -9,6 +9,7 @@ import {
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 import { getQuickReference, getQuickReferenceTopics } from '../api';
+import { Card, Button } from '../components/ui';
 
 // ─── Categories ─────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -49,7 +50,7 @@ function CopyButton({ text }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-400 hover:text-slate-200 transition-all duration-200"
+      className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-text-muted hover:text-text-secondary transition-all duration-200"
       title="Copy code"
     >
       {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
@@ -60,9 +61,9 @@ function CopyButton({ text }) {
 // ─── Code block with syntax highlighting (simple) ───────────────────────────
 function CodeBlock({ code, language = 'python' }) {
   return (
-    <div className="relative group rounded-xl overflow-hidden bg-[#0d0d2b] border border-white/5">
+    <div className="relative group rounded-xl overflow-hidden surface-code border border-border-default">
       <div className="flex items-center justify-between px-4 py-2 bg-white/[0.03] border-b border-white/5">
-        <span className="text-xs text-slate-500 font-mono">{language}</span>
+        <span className="text-xs text-text-muted font-mono">{language}</span>
         <CopyButton text={code} />
       </div>
       <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
@@ -95,11 +96,13 @@ function TopicCard({ topic, onClick }) {
   const Icon = getTopicIcon(topic.slug || topic.id);
 
   return (
-    <motion.button
+    <Card
+      as={motion.button}
+      interactive
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="text-left w-full rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm p-4 transition-shadow hover:shadow-lg hover:shadow-slate-200/50 group"
+      className="text-left w-full p-4 group"
     >
       <div className="flex items-start gap-3 mb-3">
         <div className={clsx('p-2 rounded-xl bg-gradient-to-br shadow-md', colors.gradient)}>
@@ -123,7 +126,7 @@ function TopicCard({ topic, onClick }) {
           {topic.items_count} section{topic.items_count !== 1 ? 's' : ''}
         </p>
       )}
-    </motion.button>
+    </Card>
   );
 }
 
@@ -163,7 +166,7 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
       </button>
 
       {/* Topic header */}
-      <div className="rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm p-4">
+      <Card className="p-4">
         <div className="flex items-center gap-3 mb-2">
           <div className={clsx('p-2.5 rounded-xl bg-gradient-to-br shadow-md', colors.gradient)}>
             {(() => { const Icon = getTopicIcon(topic.slug || topic.id); return <Icon size={20} className="text-white" />; })()}
@@ -180,17 +183,18 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
             {data?.description || topic.description}
           </p>
         )}
-      </div>
+      </Card>
 
       {/* Sections */}
       {sections.length > 0 ? (
         sections.map((section, i) => (
-          <motion.div
+          <Card
             key={section.id || i}
+            as={motion.div}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
-            className="rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm overflow-hidden"
+            className="overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-border-default">
               <h3 className="font-semibold text-text-primary flex items-center gap-2">
@@ -213,7 +217,7 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
                 </div>
               )}
             </div>
-          </motion.div>
+          </Card>
         ))
       ) : (
         <div className="text-center py-16">
@@ -288,8 +292,8 @@ export default function Reference() {
   if (loading) return <Skeleton />;
 
   return (
-    <div className="min-h-screen bg-bg-base">
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
+    <div className="min-h-screen bg-bg-base p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -351,19 +355,16 @@ export default function Reference() {
                   const Icon = cat.icon;
                   const isActive = activeCategory === cat.key;
                   return (
-                    <button
+                    <Button
                       key={cat.key}
+                      variant={isActive ? 'primary' : 'outline'}
+                      size="sm"
                       onClick={() => setActiveCategory(cat.key)}
-                      className={clsx(
-                        'flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all',
-                        isActive
-                          ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/25'
-                          : 'bg-bg-surface text-text-secondary border border-border-default hover:bg-bg-elevated'
-                      )}
+                      className="rounded-xl font-medium"
                     >
                       <Icon size={14} />
                       {cat.label}
-                    </button>
+                    </Button>
                   );
                 })}
               </motion.div>

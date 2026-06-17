@@ -6,6 +6,7 @@ import {
   Code2, BookOpen, Zap, Brain, Eye, MessageSquare, Server,
   Cpu, BarChart3, Star, TrendingUp
 } from 'lucide-react';
+import { Card, Button, Badge } from '../components/ui';
 
 const CATEGORIES = [
   'All', 'AI Agents', 'LLMs', 'Computer Vision', 'NLP',
@@ -791,10 +792,11 @@ export default function Trending() {
   const toggleCode = (id) =>
     setExpandedCode(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const catColor = (cat) => CATEGORY_COLORS[cat] || { bg: 'bg-slate-500/20', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-500/30' };
+  const catColor = (cat) => CATEGORY_COLORS[cat] || { bg: 'bg-bg-inset', text: 'text-text-muted', border: 'border-border-default' };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 space-y-8">
+    <div className="min-h-screen bg-bg-base p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -823,17 +825,17 @@ export default function Trending() {
         className="flex flex-wrap gap-2"
       >
         {CATEGORIES.map(cat => (
-          <button
+          <Button
             key={cat}
+            variant={activeCategory === cat ? 'primary' : 'outline'}
+            size="sm"
             onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-              ${activeCategory === cat
-                ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20'
-                : 'bg-bg-elevated text-text-secondary border border-border-default hover:bg-bg-inset hover:border-border-strong'
-              }`}
+            className={activeCategory === cat
+              ? 'rounded-full font-medium bg-gradient-primary text-white border-transparent shadow-lg shadow-purple-500/20'
+              : 'rounded-full font-medium'}
           >
             {cat}
-          </button>
+          </Button>
         ))}
       </motion.div>
 
@@ -868,23 +870,24 @@ export default function Trending() {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
               {filtered.map((topic, i) => (
-                <motion.div
+                <Card
                   key={topic.id}
+                  as={motion.div}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06, duration: 0.4 }}
                   whileHover={{ scale: 1.02, y: -4 }}
-                  className="group relative rounded-2xl bg-bg-surface border border-border-default backdrop-blur-md overflow-hidden hover:border-purple-500/30 hover:bg-bg-elevated transition-colors duration-300"
+                  className="group relative overflow-hidden hover:border-purple-500/30 hover:bg-bg-elevated transition-colors duration-300"
                 >
                   <div className="p-5 space-y-4">
                     {/* Category + Difficulty */}
                     <div className="flex items-center justify-between">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
+                      <Badge className={`px-3 py-1 text-xs ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
                         {topic.category}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${DIFFICULTY_STYLES[topic.difficulty]}`}>
+                      </Badge>
+                      <Badge className={`px-3 py-1 text-xs ${DIFFICULTY_STYLES[topic.difficulty]}`}>
                         {topic.difficulty}
-                      </span>
+                      </Badge>
                     </div>
 
                     {/* Title */}
@@ -942,7 +945,7 @@ export default function Trending() {
                               transition={{ duration: 0.25 }}
                               className="overflow-hidden"
                             >
-                              <pre className="mt-2 p-3 rounded-lg bg-bg-inset border border-border-default text-[11px] text-green-700 dark:text-green-300 overflow-x-auto leading-relaxed max-h-48 overflow-y-auto">
+                              <pre className="mt-2 p-3 rounded-lg surface-code border border-border-default text-[11px] text-green-300 overflow-x-auto leading-relaxed max-h-48 overflow-y-auto">
                                 <code>{topic.codeExample}</code>
                               </pre>
                             </motion.div>
@@ -952,16 +955,16 @@ export default function Trending() {
                     )}
 
                     {/* Explore Button */}
-                    <button
+                    <Button
                       onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(topic.title)}`)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600/80 to-cyan-500/80 text-white text-sm font-semibold hover:from-purple-600 hover:to-cyan-500 transition-all group/btn"
+                      className="w-full bg-gradient-primary text-white border-transparent group/btn"
                     >
                       <BookOpen className="w-4 h-4" />
                       Explore Topic
                       <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </button>
+                    </Button>
                   </div>
-                </motion.div>
+                </Card>
               ))}
             </motion.div>
           </AnimatePresence>
@@ -986,7 +989,7 @@ export default function Trending() {
           transition={{ delay: 0.35, duration: 0.5 }}
           className="lg:w-80 shrink-0"
         >
-          <div className="sticky top-8 rounded-2xl bg-bg-surface border border-border-default backdrop-blur-md p-5 space-y-5">
+          <Card className="sticky top-8 p-5 space-y-5">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-yellow-400" />
               <h2 className="text-lg font-bold text-text-primary">Daily Picks for You</h2>
@@ -995,30 +998,31 @@ export default function Trending() {
 
             <div className="space-y-4">
               {dailyPicks.map((pick, i) => (
-                <motion.div
+                <Card
                   key={pick.id}
+                  as={motion.div}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + i * 0.1, duration: 0.4 }}
                   whileHover={{ scale: 1.02 }}
                   onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(pick.title)}`)}
-                  className="p-4 rounded-xl bg-bg-surface border border-border-default hover:border-purple-500/30 hover:bg-bg-elevated cursor-pointer transition-all duration-200 group"
+                  className="p-4 rounded-xl hover:border-purple-500/30 hover:bg-bg-elevated cursor-pointer transition-all duration-200 group"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shrink-0">
                       <Star className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                     </div>
                     <div className="min-w-0">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium mb-1.5 border ${catColor(pick.category).bg} ${catColor(pick.category).text} ${catColor(pick.category).border}`}>
+                      <Badge className={`mb-1.5 ${catColor(pick.category).bg} ${catColor(pick.category).text} ${catColor(pick.category).border}`}>
                         {pick.category}
-                      </span>
+                      </Badge>
                       <h4 className="text-sm font-semibold text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-2">
                         {pick.title}
                       </h4>
                       <p className="text-xs text-text-muted mt-1 line-clamp-2">{pick.summary}</p>
                     </div>
                   </div>
-                </motion.div>
+                </Card>
               ))}
             </div>
 
@@ -1028,8 +1032,9 @@ export default function Trending() {
                 Updated daily based on community activity
               </div>
             </div>
-          </div>
+          </Card>
         </motion.div>
+      </div>
       </div>
     </div>
   );

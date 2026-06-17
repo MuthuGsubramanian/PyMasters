@@ -14,6 +14,7 @@ import { getProfile, recordSignal, changePassword } from '../api';
 import api from '../api';
 import clsx from 'clsx';
 import LanguageSelector from '../components/LanguageSelector';
+import { Card, StatCard, Button, Badge, Avatar, FormField } from '../components/ui';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -118,28 +119,27 @@ const cardHover = {
 
 // ─── Reusable Sub-components ──────────────────────────────────────────────────
 
+const MotionCard = motion(Card);
+
 function GlassCard({ children, className = '', index = 0, ...rest }) {
     return (
-        <motion.div
+        <MotionCard
             custom={index}
             variants={sectionVariant}
             initial="hidden"
             animate="visible"
-            className={clsx(
-                'bg-bg-surface backdrop-blur-xl rounded-2xl border border-border-default shadow-sm p-6',
-                className,
-            )}
+            className={clsx('shadow-sm p-6', className)}
             {...rest}
         >
             {children}
-        </motion.div>
+        </MotionCard>
     );
 }
 
 function SectionHeading({ icon: Icon, title, subtitle }) {
     return (
         <div className="flex items-center gap-3 mb-5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-primary text-white">
                 <Icon size={18} />
             </div>
             <div>
@@ -169,7 +169,7 @@ function InputField({ label, value, onChange, type = 'text', placeholder, icon: 
                     className={clsx(
                         'w-full rounded-xl border border-border-default bg-bg-inset px-4 py-2.5 text-sm text-text-secondary',
                         'placeholder:text-text-muted transition-all duration-200',
-                        'focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400',
+                        'focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                         Icon && 'pl-10',
                     )}
@@ -195,7 +195,7 @@ function SelectField({ label, value, onChange, options, icon: Icon }) {
                     className={clsx(
                         'w-full rounded-xl border border-border-default bg-bg-inset px-4 py-2.5 text-sm text-text-secondary',
                         'appearance-none transition-all duration-200',
-                        'focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400',
+                        'focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary',
                         Icon && 'pl-10',
                     )}
                 >
@@ -223,7 +223,7 @@ function ToggleSwitch({ label, checked, onChange, description }) {
                 onClick={() => onChange(!checked)}
                 className={clsx(
                     'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200',
-                    checked ? 'bg-gradient-to-r from-cyan-500 to-blue-600' : 'bg-bg-elevated',
+                    checked ? 'bg-gradient-primary' : 'bg-bg-elevated',
                 )}
             >
                 <span
@@ -524,7 +524,7 @@ export default function Profile() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-blue-50/20">
+            <div className="min-h-screen bg-gradient-hero">
                 <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
                     <Skeleton className="h-48 w-full rounded-2xl" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -541,7 +541,7 @@ export default function Profile() {
     // ─── Render ─────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-blue-50/20">
+        <div className="min-h-screen bg-gradient-hero">
             {/* Toast Notification */}
             <AnimatePresence>
                 {toast && (
@@ -571,25 +571,19 @@ export default function Profile() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100">
-                                    <AlertTriangle size={20} className="text-red-600" />
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/12">
+                                    <AlertTriangle size={20} className="text-red-600 dark:text-red-300" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-text-primary">{confirmAction.title}</h3>
                             </div>
                             <p className="text-sm text-text-secondary mb-6">{confirmAction.message}</p>
                             <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => setConfirmAction(null)}
-                                    className="px-4 py-2 text-sm font-medium text-text-secondary bg-bg-elevated rounded-xl hover:bg-bg-inset transition-colors"
-                                >
+                                <Button variant="ghost" size="md" onClick={() => setConfirmAction(null)}>
                                     Cancel
-                                </button>
-                                <button
-                                    onClick={confirmAction.onConfirm}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
-                                >
+                                </Button>
+                                <Button variant="danger" size="md" onClick={confirmAction.onConfirm}>
                                     {confirmAction.confirmLabel}
-                                </button>
+                                </Button>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -613,22 +607,17 @@ export default function Profile() {
 
                     <AnimatePresence>
                         {isDirty && (
-                            <motion.button
+                            <Button
+                                as={motion.button}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 onClick={handleSave}
                                 disabled={saving}
-                                className={clsx(
-                                    'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white',
-                                    'bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25',
-                                    'hover:shadow-xl hover:shadow-cyan-500/30 transition-all duration-200',
-                                    'disabled:opacity-60 disabled:cursor-not-allowed',
-                                )}
                             >
                                 <Save size={16} />
                                 {saving ? 'Saving...' : 'Save Changes'}
-                            </motion.button>
+                            </Button>
                         )}
                     </AnimatePresence>
                 </motion.div>
@@ -638,25 +627,21 @@ export default function Profile() {
                 {/* ═══════════════════════════════════════════════════════════ */}
                 <GlassCard index={0} className="relative overflow-hidden">
                     {/* Decorative gradient band */}
-                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 opacity-90" />
+                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-primary opacity-90" />
 
                     <div className="relative pt-10 flex flex-col sm:flex-row items-center sm:items-end gap-5">
                         {/* Avatar with gradient ring */}
                         <div className="relative">
-                            <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-500 shadow-lg">
-                                <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center">
-                                    <span className="text-2xl font-bold bg-gradient-to-br from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-                                        {getInitials(displayName || user?.username)}
-                                    </span>
-                                </div>
+                            <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-primary shadow-lg">
+                                <Avatar
+                                    name={getInitials(displayName || user?.username)}
+                                    className="w-full h-full text-2xl"
+                                />
                             </div>
                             {/* Rank badge overlay */}
-                            <div className={clsx(
-                                'absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-md',
-                                `bg-gradient-to-r ${rankInfo.color}`,
-                            )}>
+                            <Badge variant="primary" className="absolute -bottom-1 -right-1 shadow-md">
                                 {rankInfo.rank}
-                            </div>
+                            </Badge>
                         </div>
 
                         {/* User info */}
@@ -664,8 +649,9 @@ export default function Profile() {
                             <h1 className="text-xl font-bold text-text-primary">
                                 {displayName || user?.username || 'Learner'}
                             </h1>
-                            <p className="text-sm text-text-muted">
-                                @{user?.username} &middot; Member since {formatDate(profileData?.created_at || user?.created_at)}
+                            <p className="text-sm text-text-muted flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                                <span>@{user?.username}</span>
+                                <Badge variant="neutral">Member since {formatDate(profileData?.created_at || user?.created_at)}</Badge>
                             </p>
 
                             {/* XP Progress Bar */}
@@ -676,7 +662,7 @@ export default function Profile() {
                                 </div>
                                 <div className="h-2.5 bg-bg-inset rounded-full overflow-hidden">
                                     <motion.div
-                                        className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
+                                        className="h-full rounded-full bg-gradient-primary"
                                         initial={{ width: 0 }}
                                         animate={{ width: `${xpProgress}%` }}
                                         transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
@@ -731,7 +717,7 @@ export default function Profile() {
                                         className={clsx(
                                             'w-full rounded-xl border border-border-default bg-bg-inset pl-10 pr-4 py-2.5 text-sm text-text-secondary',
                                             'placeholder:text-text-muted resize-none transition-all duration-200',
-                                            'focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400',
+                                            'focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary',
                                         )}
                                     />
                                     <span className="absolute bottom-2 right-3 text-xs text-text-muted">
@@ -766,7 +752,7 @@ export default function Profile() {
                                             className={clsx(
                                                 'flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200',
                                                 learningStyle === value
-                                                    ? 'border-cyan-400 bg-cyan-50 text-cyan-700 shadow-sm'
+                                                    ? 'border-accent-primary bg-accent-subtle text-accent-primary shadow-sm'
                                                     : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong',
                                             )}
                                         >
@@ -797,7 +783,7 @@ export default function Profile() {
                                             className={clsx(
                                                 'flex-1 py-2 rounded-xl border text-sm font-medium transition-all duration-200',
                                                 difficulty === value
-                                                    ? 'border-cyan-400 bg-cyan-50 text-cyan-700 shadow-sm'
+                                                    ? 'border-accent-primary bg-accent-subtle text-accent-primary shadow-sm'
                                                     : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong',
                                             )}
                                         >
@@ -895,7 +881,7 @@ export default function Profile() {
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-text-secondary">Voice Speed</span>
-                                    <span className="text-sm font-semibold text-cyan-600">{voiceSpeed.toFixed(1)}x</span>
+                                    <span className="text-sm font-semibold text-accent-primary">{voiceSpeed.toFixed(1)}x</span>
                                 </div>
                                 <input
                                     type="range"
@@ -904,10 +890,9 @@ export default function Profile() {
                                     step="0.1"
                                     value={voiceSpeed}
                                     onChange={(e) => { setVoiceSpeed(parseFloat(e.target.value)); setIsDirty(true); }}
-                                    className="w-full h-2 bg-bg-inset rounded-full appearance-none cursor-pointer accent-cyan-500
+                                    className="w-full h-2 bg-bg-inset rounded-full appearance-none cursor-pointer accent-accent-primary
                                         [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
-                                        [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-br
-                                        [&::-webkit-slider-thumb]:from-cyan-500 [&::-webkit-slider-thumb]:to-blue-600
+                                        [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-primary
                                         [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer"
                                 />
                                 <div className="flex justify-between text-xs text-text-muted mt-1">
@@ -922,7 +907,7 @@ export default function Profile() {
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-text-secondary">Hint Level</span>
-                                    <span className="text-sm font-semibold text-cyan-600">Level {hintLevel}</span>
+                                    <span className="text-sm font-semibold text-accent-primary">Level {hintLevel}</span>
                                 </div>
                                 <div className="flex gap-2">
                                     {[1, 2, 3, 4].map((level) => (
@@ -933,11 +918,11 @@ export default function Profile() {
                                             className={clsx(
                                                 'flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 flex flex-col items-center gap-0.5',
                                                 hintLevel === level
-                                                    ? 'border-cyan-400 bg-cyan-50 text-cyan-700 shadow-sm'
+                                                    ? 'border-accent-primary bg-accent-subtle text-accent-primary shadow-sm'
                                                     : 'border-border-default bg-bg-elevated text-text-muted hover:border-border-strong',
                                             )}
                                         >
-                                            <Lightbulb size={14} className={hintLevel === level ? 'text-cyan-500' : 'text-text-muted'} />
+                                            <Lightbulb size={14} className={hintLevel === level ? 'text-accent-primary' : 'text-text-muted'} />
                                             <span>{level}</span>
                                         </button>
                                     ))}
@@ -960,54 +945,18 @@ export default function Profile() {
                     <SectionHeading icon={TrendingUp} title="Stats Dashboard" subtitle="Your learning journey at a glance" />
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            {
-                                label: 'Total XP',
-                                value: stats.totalXp.toLocaleString(),
-                                icon: Zap,
-                                gradient: 'from-cyan-500 to-blue-600',
-                                bg: 'bg-cyan-50',
-                            },
-                            {
-                                label: 'Modules Done',
-                                value: stats.modulesCompleted,
-                                icon: CheckCircle2,
-                                gradient: 'from-green-500 to-emerald-600',
-                                bg: 'bg-green-50',
-                            },
-                            {
-                                label: 'Day Streak',
-                                value: stats.currentStreak,
-                                icon: Flame,
-                                gradient: 'from-orange-500 to-red-500',
-                                bg: 'bg-orange-50',
-                            },
-                            {
-                                label: 'Time Spent',
-                                value: formatDuration(stats.timeSpent),
-                                icon: Timer,
-                                gradient: 'from-purple-500 to-violet-600',
-                                bg: 'bg-purple-50',
-                            },
+                            { label: 'Total XP', value: stats.totalXp.toLocaleString(), icon: Zap },
+                            { label: 'Modules Done', value: stats.modulesCompleted, icon: CheckCircle2 },
+                            { label: 'Day Streak', value: stats.currentStreak, icon: Flame },
+                            { label: 'Time Spent', value: formatDuration(stats.timeSpent), icon: Timer },
                         ].map((stat) => (
                             <motion.div
                                 key={stat.label}
                                 variants={cardHover}
                                 initial="rest"
                                 whileHover="hover"
-                                className={clsx(
-                                    'relative rounded-xl border border-border-default p-4 overflow-hidden',
-                                    stat.bg,
-                                )}
                             >
-                                <div className={clsx(
-                                    'absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center',
-                                    'bg-gradient-to-br text-white',
-                                    stat.gradient,
-                                )}>
-                                    <stat.icon size={16} />
-                                </div>
-                                <p className="text-2xl font-bold text-text-primary mt-1">{stat.value}</p>
-                                <p className="text-xs text-text-muted mt-0.5">{stat.label}</p>
+                                <StatCard label={stat.label} value={stat.value} icon={stat.icon} />
                             </motion.div>
                         ))}
                     </div>
@@ -1066,16 +1015,27 @@ export default function Profile() {
                 <GlassCard index={6}>
                     <SectionHeading icon={Lock} title="Change Password" subtitle="Update your account password" />
                     <div className="space-y-3 max-w-md">
-                        <input type="password" value={curPw} onChange={(e) => setCurPw(e.target.value)} placeholder="Current password" autoComplete="current-password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
-                        <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="New password (min 6 characters)" autoComplete="new-password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
-                        <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Confirm new password" autoComplete="new-password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-inset text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400" />
-                        <button onClick={handleChangePassword} disabled={pwSaving}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold hover:shadow-md hover:shadow-cyan-500/25 transition-all disabled:opacity-50">
+                        <FormField label="Current Password">
+                            {(id) => (
+                                <input id={id} type="password" value={curPw} onChange={(e) => setCurPw(e.target.value)}
+                                    placeholder="Current password" autoComplete="current-password" className="input-neo" />
+                            )}
+                        </FormField>
+                        <FormField label="New Password" hint="At least 6 characters">
+                            {(id) => (
+                                <input id={id} type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
+                                    placeholder="New password (min 6 characters)" autoComplete="new-password" className="input-neo" />
+                            )}
+                        </FormField>
+                        <FormField label="Confirm New Password">
+                            {(id) => (
+                                <input id={id} type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                                    placeholder="Confirm new password" autoComplete="new-password" className="input-neo" />
+                            )}
+                        </FormField>
+                        <Button onClick={handleChangePassword} disabled={pwSaving}>
                             <Lock size={15} /> {pwSaving ? 'Updating…' : 'Update Password'}
-                        </button>
+                        </Button>
                     </div>
                 </GlassCard>
 
@@ -1085,13 +1045,10 @@ export default function Profile() {
                 <GlassCard index={7}>
                     <SectionHeading icon={Shield} title="Account Actions" />
                     <div className="flex flex-wrap gap-3">
-                        <button
-                            onClick={handleExportData}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border-default bg-bg-elevated text-sm font-medium text-text-secondary hover:border-border-strong hover:bg-bg-inset transition-all duration-200"
-                        >
+                        <Button variant="outline" onClick={handleExportData}>
                             <Download size={16} />
                             Export My Data
-                        </button>
+                        </Button>
 
                         <button
                             onClick={() => setConfirmAction({
@@ -1100,24 +1057,24 @@ export default function Profile() {
                                 confirmLabel: 'Reset Everything',
                                 onConfirm: handleResetProgress,
                             })}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-sm font-medium text-amber-700 hover:border-amber-300 hover:bg-amber-100 transition-all duration-200"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/12 text-sm font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-500/20 transition-all duration-200"
                         >
                             <RotateCcw size={16} />
                             Reset Progress
                         </button>
 
-                        <button
+                        <Button
+                            variant="danger"
                             onClick={() => setConfirmAction({
                                 title: 'Delete Account',
                                 message: 'This will permanently delete your account and all associated data. This action cannot be undone.',
                                 confirmLabel: 'Delete Account',
                                 onConfirm: handleDeleteAccount,
                             })}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 text-sm font-medium text-red-600 hover:border-red-300 hover:bg-red-100 transition-all duration-200"
                         >
                             <Trash2 size={16} />
                             Delete Account
-                        </button>
+                        </Button>
                     </div>
                 </GlassCard>
 
@@ -1130,18 +1087,15 @@ export default function Profile() {
                             exit={{ opacity: 0, y: 20 }}
                             className="fixed bottom-6 left-1/2 -translate-x-1/2 md:hidden z-40"
                         >
-                            <button
+                            <Button
+                                size="lg"
                                 onClick={handleSave}
                                 disabled={saving}
-                                className={clsx(
-                                    'flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold text-white',
-                                    'bg-gradient-to-r from-cyan-500 to-blue-600 shadow-xl shadow-cyan-500/30',
-                                    'disabled:opacity-60',
-                                )}
+                                className="rounded-2xl shadow-xl"
                             >
                                 <Save size={16} />
                                 {saving ? 'Saving...' : 'Save Changes'}
-                            </button>
+                            </Button>
                         </motion.div>
                     )}
                 </AnimatePresence>

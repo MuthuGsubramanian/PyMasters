@@ -14,11 +14,11 @@ function NodeBox({ node, isActive, isPast }) {
   if (isDecision) shapeClasses = 'rotate-0 rounded-lg border-dashed';
   if (isStart || isEnd) shapeClasses = 'rounded-full';
 
-  let colorClasses = 'bg-slate-800/60 border-white/[0.08] text-slate-400';
+  let colorClasses = 'bg-white/[0.06] border-white/10 text-code-foreground/70';
   if (isActive) {
     colorClasses = 'bg-cyan-500/15 border-cyan-400/60 text-cyan-100 shadow-[0_0_20px_rgba(56,189,248,0.25)] scale-105';
   } else if (isPast) {
-    colorClasses = 'bg-slate-800/40 border-slate-600/40 text-slate-500';
+    colorClasses = 'bg-white/[0.04] border-white/10 text-code-foreground/50';
   }
 
   return (
@@ -43,8 +43,8 @@ function Arrow({ edge, isActive, isPast }) {
   const colorClass = isActive
     ? 'border-cyan-400/70'
     : isPast
-    ? 'border-slate-600/50'
-    : 'border-white/[0.08]';
+    ? 'border-white/20'
+    : 'border-white/10';
 
   const label = edge?.label || '';
 
@@ -52,11 +52,11 @@ function Arrow({ edge, isActive, isPast }) {
     <div className="flex flex-col items-center py-1">
       <div className={`w-0 h-5 border-l-2 transition-all duration-300 ${colorClass}`} />
       <div className={`w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent transition-all duration-300 ${
-        isActive ? 'border-t-cyan-400/70' : isPast ? 'border-t-slate-600/50' : 'border-t-white/[0.08]'
+        isActive ? 'border-t-cyan-400/70' : isPast ? 'border-t-white/20' : 'border-t-white/10'
       }`} />
       {label && (
         <span className={`text-[9px] mt-0.5 transition-all duration-300 ${
-          isActive ? 'text-cyan-300' : 'text-slate-600'
+          isActive ? 'text-cyan-300' : 'text-code-foreground/50'
         }`}>
           {label}
         </span>
@@ -171,22 +171,22 @@ export default function FlowDiagram({
   return (
     <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 max-w-2xl font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-800 to-slate-700 border-b border-white/[0.06] px-4 py-2.5 flex items-center gap-2">
+      <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-slate-400 tracking-wide">Flow Diagram</span>
+        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide">Flow Diagram</span>
         {totalSteps > 0 && (
-          <span className="ml-auto text-[10px] text-slate-500 tabular-nums">
+          <span className="ml-auto text-[10px] text-code-foreground/60 tabular-nums">
             {Math.max(activePathIndex + 1, 0)}/{totalSteps}
           </span>
         )}
       </div>
 
       {/* Main content */}
-      <div className="flex bg-[#0d1117]">
+      <div className="flex surface-code">
         {/* Flowchart nodes */}
         <div className="flex-1 flex flex-col items-center py-6 px-4 min-h-[200px]">
           {stableNodes.map((node, idx) => {
@@ -230,8 +230,8 @@ export default function FlowDiagram({
 
         {/* Variable sidebar */}
         {Object.keys(variables).length > 0 && (
-          <div className="w-48 border-l border-white/[0.06] p-4">
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Variables</p>
+          <div className="w-48 border-l border-white/10 p-4">
+            <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-2">Variables</p>
             <div className="space-y-1.5">
               {Object.entries(variables).map(([name, value]) => (
                 <div key={name} className="flex items-center justify-between gap-2">
@@ -248,8 +248,8 @@ export default function FlowDiagram({
 
       {/* Progress bar */}
       {totalSteps > 0 && (
-        <div className="bg-slate-900 border-t border-white/[0.06] px-4 py-2.5 flex items-center gap-3">
-          <div className="flex-1 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+        <div className="surface-code border-t border-white/10 px-4 py-2.5 flex items-center gap-3">
+          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
@@ -260,7 +260,7 @@ export default function FlowDiagram({
               }}
             />
           </div>
-          <span className="text-[10px] font-mono text-slate-500 tabular-nums">
+          <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
             {activePathIndex >= 0 ? activePathIndex + 1 : 0}/{totalSteps}
           </span>
         </div>

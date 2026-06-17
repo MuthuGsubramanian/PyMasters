@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 import { getWeeklyChallenge, submitChallenge, getChallengeLeaderboard } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
+import { Card, Button, Badge, Table, TBody, TD } from '../components/ui';
 
 // ─── Difficulty badge colors ────────────────────────────────────────────────
 const DIFFICULTY = {
@@ -74,31 +75,35 @@ function Skeleton() {
 function LeaderboardRow({ entry, rank }) {
   const medals = ['', 'bg-yellow-400', 'bg-slate-300', 'bg-amber-600'];
   return (
-    <motion.div
+    <motion.tr
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: rank * 0.05 }}
       className={clsx(
-        'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors',
+        'transition-colors',
         rank <= 3
           ? 'bg-gradient-to-r from-yellow-500/5 to-transparent'
           : 'hover:bg-bg-elevated'
       )}
     >
-      <div className={clsx(
-        'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
-        rank <= 3
-          ? `${medals[rank]} text-white shadow-md`
-          : 'bg-bg-elevated text-text-secondary'
-      )}>
-        {rank}
-      </div>
-      <div className="flex-1 min-w-0">
+      <TD className="w-10">
+        <div className={clsx(
+          'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold',
+          rank <= 3
+            ? `${medals[rank]} text-white shadow-md`
+            : 'bg-bg-elevated text-text-secondary'
+        )}>
+          {rank}
+        </div>
+      </TD>
+      <TD>
         <p className="text-sm font-medium text-text-primary truncate">{entry.username || entry.name}</p>
         <p className="text-xs text-text-muted">{entry.time || entry.score} pts</p>
-      </div>
-      {rank <= 3 && <Trophy size={14} className="text-yellow-400 flex-shrink-0" />}
-    </motion.div>
+      </TD>
+      <TD className="w-8 text-right">
+        {rank <= 3 && <Trophy size={14} className="text-yellow-400 inline-block" />}
+      </TD>
+    </motion.tr>
   );
 }
 
@@ -181,8 +186,8 @@ export default function Challenges() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-base">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10">
+    <div className="min-h-screen bg-bg-base p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
 
         {/* ── Header ─────────────────────────────────────────────── */}
         <motion.div
@@ -203,11 +208,12 @@ export default function Challenges() {
           </div>
 
           {/* Next challenge timer */}
-          <motion.div
+          <Card
+            as={motion.div}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-bg-surface border border-border-default backdrop-blur-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
           >
             <Clock size={16} className="text-cyan-500" />
             <span className="text-xs text-text-muted">Next challenge in</span>
@@ -223,7 +229,7 @@ export default function Challenges() {
                 </span>
               ))}
             </div>
-          </motion.div>
+          </Card>
         </motion.div>
 
         {error && (
@@ -240,23 +246,24 @@ export default function Challenges() {
           <div className="lg:col-span-2 space-y-4">
 
             {/* Hero challenge card */}
-            <motion.div
+            <Card
+              as={motion.div}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="relative overflow-hidden rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm"
+              className="relative overflow-hidden"
             >
               {/* Decorative gradient bar */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-rose-500 to-purple-500" />
 
               <div className="p-6 md:p-8">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <span className={clsx('px-3 py-1 rounded-full text-xs font-semibold border', diff.bg, diff.text, diff.border)}>
+                  <Badge className={clsx('px-3 py-1 text-xs', diff.bg, diff.text, diff.border)}>
                     {challenge?.difficulty || 'Medium'}
-                  </span>
-                  <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 text-amber-500 text-xs font-semibold border border-amber-500/20">
+                  </Badge>
+                  <Badge variant="warning" className="px-3 py-1 text-xs">
                     <Zap size={12} /> {challenge?.xp || 200} XP
-                  </span>
+                  </Badge>
                   <span className="text-xs text-text-muted ml-auto">
                     Week {challenge?.week || '#'}
                   </span>
@@ -278,14 +285,15 @@ export default function Challenges() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </Card>
 
             {/* Code editor section */}
-            <motion.div
+            <Card
+              as={motion.div}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm overflow-hidden"
+              className="overflow-hidden"
             >
               <div className="flex items-center justify-between px-5 py-3 border-b border-border-default">
                 <div className="flex items-center gap-2 text-text-secondary">
@@ -307,7 +315,7 @@ export default function Challenges() {
                   spellCheck={false}
                   className={clsx(
                     'w-full min-h-[320px] p-5 font-mono text-sm leading-relaxed resize-y',
-                    'bg-bg-elevated text-text-primary',
+                    'surface-code',
                     'focus:outline-none placeholder:text-text-muted',
                     'border-none'
                   )}
@@ -319,16 +327,16 @@ export default function Challenges() {
                 <p className="text-xs text-text-muted">
                   Python 3.11 &middot; Time limit: {challenge?.time_limit || '5s'}
                 </p>
-                <motion.button
+                <Button
+                  as={motion.button}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleSubmit}
                   disabled={submitting || !code.trim()}
                   className={clsx(
-                    'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all',
-                    'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-lg shadow-orange-500/25',
+                    'bg-gradient-to-r from-orange-500 to-rose-500 text-white border-transparent shadow-lg shadow-orange-500/25',
                     'hover:shadow-xl hover:shadow-orange-500/30',
-                    'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none'
+                    'disabled:cursor-not-allowed disabled:shadow-none'
                   )}
                 >
                   {submitting ? (
@@ -336,9 +344,9 @@ export default function Challenges() {
                   ) : (
                     <><Send size={16} /> Submit Solution</>
                   )}
-                </motion.button>
+                </Button>
               </div>
-            </motion.div>
+            </Card>
 
             {/* Submission result */}
             <AnimatePresence>
@@ -406,11 +414,12 @@ export default function Challenges() {
             </AnimatePresence>
 
             {/* Previous challenges */}
-            <motion.div
+            <Card
+              as={motion.div}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm p-4"
+              className="p-4"
             >
               <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Award size={18} className="text-purple-500" /> Previous Challenges
@@ -442,16 +451,17 @@ export default function Challenges() {
                   </motion.div>
                 ))}
               </div>
-            </motion.div>
+            </Card>
           </div>
 
           {/* Right column: leaderboard */}
           <div className="space-y-4">
-            <motion.div
+            <Card
+              as={motion.div}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="sticky top-6 rounded-2xl bg-bg-surface border border-border-default backdrop-blur-sm overflow-hidden"
+              className="sticky top-6 overflow-hidden"
             >
               <div className="px-5 py-4 border-b border-border-default bg-gradient-to-r from-amber-500/10 to-orange-500/10">
                 <h3 className="font-bold text-text-primary flex items-center gap-2">
@@ -464,11 +474,15 @@ export default function Challenges() {
                 </p>
               </div>
 
-              <div className="p-3 max-h-[520px] overflow-y-auto space-y-1 custom-scrollbar">
+              <div className="p-3 max-h-[520px] overflow-y-auto custom-scrollbar">
                 {leaderboard.length > 0 ? (
-                  leaderboard.map((entry, i) => (
-                    <LeaderboardRow key={entry.user_id || i} entry={entry} rank={i + 1} />
-                  ))
+                  <Table className="border-separate border-spacing-y-1">
+                    <TBody>
+                      {leaderboard.map((entry, i) => (
+                        <LeaderboardRow key={entry.user_id || i} entry={entry} rank={i + 1} />
+                      ))}
+                    </TBody>
+                  </Table>
                 ) : (
                   <div className="py-10 text-center">
                     <Trophy size={32} className="mx-auto text-text-muted mb-3" />
@@ -478,7 +492,7 @@ export default function Challenges() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </Card>
           </div>
         </div>
       </div>

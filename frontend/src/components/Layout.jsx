@@ -61,9 +61,9 @@ export default function Layout() {
 
     const rank = user.points > 1000 ? 'ARCHITECT' : user.points > 500 ? 'ENGINEER' : 'CADET';
     const rankColors = {
-        CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-600', border: 'border-cyan-200' },
-        ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-600', border: 'border-purple-200' },
-        ARCHITECT: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-200' },
+        CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-600 dark:text-cyan-300', border: 'border-cyan-500/30' },
+        ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-300', border: 'border-purple-500/30' },
+        ARCHITECT: { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-300', border: 'border-amber-500/30' },
     };
     const rc = rankColors[rank];
 
@@ -143,7 +143,7 @@ export default function Layout() {
                                 {isActive && (
                                     <motion.div
                                         layoutId="sidebar-active"
-                                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-to-b from-cyan-400 to-blue-500 shadow-[0_0_6px_rgba(6,182,212,0.5)]"
+                                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-primary shadow-[0_0_6px_rgba(124,58,237,0.5)]"
                                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                                     />
                                 )}
