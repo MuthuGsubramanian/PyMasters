@@ -18,11 +18,11 @@ export default function Navbar() {
             className="sticky top-0 z-50 px-6 py-4 glass border-b border-white/5 backdrop-blur-xl bg-black/40"
         >
             <div className="max-w-7xl mx-auto flex justify-between items-center">
-                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
+                <button type="button" aria-label="Go to dashboard" className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
                     <div className="relative">
-                        <div className="absolute inset-0 bg-cyan-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div className="absolute inset-0 bg-cyan-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" aria-hidden="true"></div>
                         <div className="bg-gradient-to-br from-cyan-400 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg relative z-10">
-                            <img src={PymastersGlyph} alt="PyMasters" className="w-7 h-7" />
+                            <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-7 h-7" />
                         </div>
                     </div>
                     <div>
@@ -33,7 +33,7 @@ export default function Navbar() {
                             {user.points > 1000 ? 'Architect Class' : user.points > 500 ? 'Engineer Class' : 'Cadet Class'}
                         </p>
                     </div>
-                </div>
+                </button>
 
                 <div className="flex gap-6 items-center">
                     <div className="hidden md:flex items-center gap-3 bg-slate-900/80 px-4 py-1.5 rounded-full border border-white/5 shadow-inner">

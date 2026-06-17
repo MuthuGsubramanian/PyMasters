@@ -4,6 +4,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Trophy, Zap, AlertTriangle, Activity, BookOpen, Loader2, Plus } from 'lucide-react';
 import { getStudentDetail, setMemberGroups } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const STATUS_PILL = {
   at_risk:  { label: 'At risk',  color: 'bg-red-100 text-red-600 border-red-200' },
@@ -51,20 +53,9 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
       .finally(() => setLoading(false));
   }, [orgId, studentId, userId]);
   useEffect(() => { load(); }, [load]);
-
-  // Focus the panel on open; restore focus to the trigger element on close (mount/unmount only)
-  useEffect(() => {
-    const prevFocused = typeof document !== 'undefined' ? document.activeElement : null;
-    panelRef.current?.focus();
-    return () => { try { prevFocused?.focus?.(); } catch { /* trigger no longer in DOM */ } };
-  }, []); // mount/unmount only — intentionally captures trigger element at open time
-
-  // ESC to close
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  // Focus trap + restore-on-close, and Escape-to-close (shared hooks)
+  useEscapeKey(onClose);
+  useFocusTrap(panelRef, true);
 
   const p = data?.profile;
   const s = data?.summary;

@@ -90,26 +90,26 @@ export default function Layout() {
                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-bg-elevated transition-colors mr-1" aria-label="Close menu">
                         <X size={18} className="text-text-muted" />
                     </button>
-                    <div className="relative group cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" />
+                    <button type="button" onClick={() => navigate('/')} aria-label="PyMasters home" className="relative group cursor-pointer">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" aria-hidden="true" />
                         <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
-                            <img src={PymastersGlyph} alt="PyMasters" className="w-[18px] h-[18px]" />
+                            <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-[18px] h-[18px]" />
                         </div>
-                    </div>
+                    </button>
                     <span className="font-display font-bold text-base text-text-primary tracking-tight">PYMASTERS</span>
                 </div>
 
                 {/* Compact User Row */}
                 <div className="px-4 py-3 border-b border-border-default">
                     <div className="flex items-center gap-2.5">
-                        <div className="relative cursor-pointer" onClick={() => navigate('/dashboard/profile')}>
+                        <button type="button" onClick={() => navigate('/dashboard/profile')} aria-label="Your profile" className="relative cursor-pointer">
                             <div className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
                                 <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-[10px]">
                                     {user.username.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
-                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" />
-                        </div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" aria-hidden="true" />
+                        </button>
                         <div className="flex-1 min-w-0">
                             <div className="text-text-primary font-bold text-xs truncate">{user.username}</div>
                         </div>

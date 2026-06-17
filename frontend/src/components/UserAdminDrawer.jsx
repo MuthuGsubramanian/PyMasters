@@ -6,6 +6,8 @@ import {
   adminSetUserRole, adminResetPassword, adminRevokeSessions, adminBlockUser, adminSetPlan,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const PLANS = ['free', 'pro', 'enterprise'];
 const ROLES = ['member', 'manager', 'admin', 'super_admin'];
@@ -39,17 +41,8 @@ export default function UserAdminDrawer({ adminId, targetId, onClose, onChanged,
       .finally(() => setLoading(false));
   }, [adminId, targetId]);
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    const prev = typeof document !== 'undefined' ? document.activeElement : null;
-    panelRef.current?.focus();
-    return () => { try { prev?.focus?.(); } catch { /* gone */ } };
-  }, []);
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
+  useFocusTrap(panelRef, true);
 
   const act = async (key, fn) => {
     setBusy(key); setError('');
