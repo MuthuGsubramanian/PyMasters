@@ -12,8 +12,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 const Login = lazy(() => import('./pages/Login'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Overview = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Overview })));
-const LearningMap = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.LearningMap })));
-const ModuleViewer = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.ModuleViewer })));
 const Classroom = lazy(() => import('./pages/Classroom'));
 const Playground = lazy(() => import('./pages/Playground'));
 const Paths = lazy(() => import('./pages/Paths'));
@@ -84,8 +82,9 @@ export default function App() {
               <Route path="/onboarding" element={<PrivateRoute><ErrorBoundary><Onboarding /></ErrorBoundary></PrivateRoute>} />
               <Route path="/dashboard" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
                 <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />
-                <Route path="learn" element={<ErrorBoundary><LearningMap /></ErrorBoundary>} />
-                <Route path="learn/:id" element={<ErrorBoundary><ModuleViewer /></ErrorBoundary>} />
+                {/* Legacy learn map consolidated into the Classroom catalogue */}
+                <Route path="learn" element={<Navigate to="/dashboard/classroom" replace />} />
+                <Route path="learn/:id" element={<Navigate to="/dashboard/classroom" replace />} />
                 <Route path="paths" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
                 <Route path="paths/:pathId" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
                 <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />

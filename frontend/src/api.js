@@ -119,6 +119,10 @@ export const getProfileAchievements = (userId) =>
 export const getDailyRecommendation = (userId) =>
     api.get(`/profile/${userId}/daily-recommendation`);
 
+// Spaced-repetition review queue (lessons whose estimated recall has decayed)
+export const getDueReviews = (userId) =>
+    api.get('/review/due', { params: { user_id: userId } });
+
 // Trending
 export const getTrending = (count = 10, category = '') =>
     api.get(`/trending`, { params: { count, category: category || undefined } });

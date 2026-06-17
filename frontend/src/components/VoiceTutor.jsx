@@ -4,11 +4,16 @@ import { Mic, MicOff, X, Volume2, Loader2, Radio } from 'lucide-react';
 import { classroomChat } from '../api';
 import useTTS from '../hooks/useTTS';
 import useSpeechInput, { speechSupported } from '../hooks/useSpeechInput';
+import useAudioTranscribe, { audioRecordingSupported } from '../hooks/useAudioTranscribe';
 
 /**
  * Live voice tutorial: a hands-free spoken conversation with Vaathiyaar.
- * Loop: learner speaks (STT) → Vaathiyaar answers concisely (voice mode) →
- * spoken aloud (TTS) → (continuous mode) auto-listen again.
+ * Loop: learner speaks (STT) → Vaathiyaar answers concisely → spoken aloud (TTS)
+ * → (continuous mode) auto-listen again.
+ *
+ * STT engine: the browser Web Speech API where available (Chrome/Edge/Safari);
+ * otherwise falls back to recording + server-side Whisper (/api/voice/transcribe),
+ * so it works on Firefox and others too.
  */
 export default function VoiceTutor({ open, onClose, user, lessonContext = null, language = 'en', phase }) {
     const [messages, setMessages] = useState([]);
@@ -25,20 +30,14 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
 
     const handleFinal = useCallback(async (transcript) => {
         if (!transcript) return;
-        tts.stop(); // barge-in: stop any current speech
+        tts.stop(); // barge-in
         setMessages((prev) => [...prev, { role: 'user', content: transcript }]);
         setThinking(true);
         try {
             const history = messagesRef.current.slice(-5).map((m) => ({ role: m.role, content: m.content }));
             const res = await classroomChat({
-                user_id: user?.id,
-                message: transcript,
-                lesson_context: lessonContext,
-                phase,
-                language,
-                username: user?.name || user?.username,
-                history,
-                voice: true,
+                user_id: user?.id, message: transcript, lesson_context: lessonContext,
+                phase, language, username: user?.name || user?.username, history, voice: true,
             });
             const reply = res.data?.message || "Sorry, I didn't catch that — could you say it again?";
             setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
@@ -52,44 +51,63 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
         }
     }, [user, lessonContext, phase, language, tts]);
 
-    const speech = useSpeechInput({ language, onFinal: handleFinal });
+    // Two engines; pick Web Speech when supported, else server-side Whisper.
+    const web = useSpeechInput({ language, onFinal: handleFinal });
+    const recorder = useAudioTranscribe({ language, userId: user?.id, onFinal: handleFinal });
+    const useWeb = speechSupported;
+    const listening = useWeb ? web.listening : recorder.recording;
+    const interim = useWeb ? web.interim : '';
+    const transcribing = !useWeb && recorder.transcribing;
+    const engineError = useWeb ? web.error : recorder.error;
+    const startListen = useWeb ? web.start : recorder.start;
+    const stopListen = useWeb ? web.stop : recorder.stop;
+    const inputSupported = speechSupported || audioRecordingSupported;
 
     // Continuous mode: when Vaathiyaar finishes speaking, resume listening.
     const wasSpeaking = useRef(false);
     useEffect(() => {
         if (wasSpeaking.current && !tts.isSpeaking && openRef.current
-            && continuousRef.current && !thinking && !speech.listening) {
-            const t = setTimeout(() => { if (openRef.current) speech.start(); }, 350);
+            && continuousRef.current && !thinking && !listening && !transcribing) {
+            const t = setTimeout(() => { if (openRef.current) startListen(); }, 350);
             return () => clearTimeout(t);
         }
         wasSpeaking.current = tts.isSpeaking;
-    }, [tts.isSpeaking, thinking, speech]);
+    }, [tts.isSpeaking, thinking, listening, transcribing, startListen]);
 
-    useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, speech.interim, thinking]);
+    useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, interim, thinking, transcribing]);
 
-    // Clean up when closed.
     useEffect(() => {
-        if (!open) { speech.stop(); tts.stop(); }
+        if (!open) { stopListen(); tts.stop(); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     if (!open) return null;
 
-    const status = !speechSupported ? 'unsupported'
-        : speech.listening ? 'listening'
+    const status = !inputSupported ? 'unsupported'
+        : listening ? 'listening'
+        : transcribing ? 'transcribing'
         : thinking ? 'thinking'
         : tts.isSpeaking ? 'speaking' : 'idle';
     const statusText = {
-        unsupported: 'Voice input needs Chrome or Edge',
-        listening: 'Listening…',
+        unsupported: 'Voice not supported in this browser',
+        listening: useWeb ? 'Listening…' : 'Recording… tap to send',
+        transcribing: 'Transcribing…',
         thinking: 'Vaathiyaar is thinking…',
         speaking: 'Vaathiyaar is speaking…',
         idle: 'Tap the mic and start talking',
     }[status];
 
+    const errorText = {
+        'not-allowed': 'Microphone permission denied — allow mic access to talk.',
+        'unsupported': 'Voice input is not supported in this browser.',
+        'stt-unavailable': 'Speech service is warming up — try again in a moment.',
+        'transcribe-failed': 'Could not transcribe that — please try again.',
+        'mic-error': 'Could not access the microphone.',
+    };
+
     const toggleMic = () => {
-        if (speech.listening) speech.stop();
-        else { tts.stop(); speech.start(); }
+        if (listening) stopListen();
+        else { tts.stop(); startListen(); }
     };
 
     return (
@@ -105,7 +123,6 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                     className="relative w-full max-w-lg rounded-3xl bg-bg-surface border border-border-default shadow-2xl overflow-hidden flex flex-col"
                     style={{ maxHeight: '85vh' }}
                 >
-                    {/* Header */}
                     <div className="flex items-center justify-between px-5 py-4 border-b border-border-default bg-gradient-to-r from-purple-600/10 to-cyan-500/10">
                         <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center">
@@ -121,7 +138,6 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                         </button>
                     </div>
 
-                    {/* Conversation */}
                     <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-[180px] dark-scrollbar">
                         {messages.length === 0 && (
                             <p className="text-center text-text-muted text-sm py-8">
@@ -137,29 +153,27 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                                 }`}>{m.content}</div>
                             </div>
                         ))}
-                        {speech.interim && (
+                        {interim && (
                             <div className="flex justify-end">
-                                <div className="max-w-[80%] px-3.5 py-2 rounded-2xl rounded-br-sm text-sm bg-purple-500/20 text-text-muted italic">{speech.interim}</div>
+                                <div className="max-w-[80%] px-3.5 py-2 rounded-2xl rounded-br-sm text-sm bg-purple-500/20 text-text-muted italic">{interim}</div>
                             </div>
                         )}
                         <div ref={scrollRef} />
                     </div>
 
-                    {/* Controls */}
                     <div className="px-5 py-5 border-t border-border-default flex flex-col items-center gap-3">
                         <button
                             onClick={toggleMic}
-                            disabled={!speechSupported || thinking}
+                            disabled={!inputSupported || thinking || transcribing}
                             className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all disabled:opacity-40 ${
-                                speech.listening
-                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/40'
+                                listening ? 'bg-red-500 text-white shadow-lg shadow-red-500/40'
                                     : 'bg-gradient-to-br from-purple-600 to-cyan-500 text-white hover:scale-105'
                             }`}
-                            aria-label={speech.listening ? 'Stop listening' : 'Start talking'}
+                            aria-label={listening ? 'Stop' : 'Start talking'}
                         >
-                            {speech.listening && <span className="absolute inset-0 rounded-full bg-red-500/40 animate-ping" />}
-                            {thinking ? <Loader2 size={28} className="animate-spin" />
-                                : speech.listening ? <Mic size={28} /> : <MicOff size={28} />}
+                            {listening && <span className="absolute inset-0 rounded-full bg-red-500/40 animate-ping" />}
+                            {(thinking || transcribing) ? <Loader2 size={28} className="animate-spin" />
+                                : listening ? <Mic size={28} /> : <MicOff size={28} />}
                         </button>
                         <div className="flex items-center gap-1.5 text-sm text-text-secondary">
                             {status === 'speaking' && <Radio size={14} className="text-cyan-500 animate-pulse" />}
@@ -174,12 +188,11 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                                 <button onClick={() => tts.stop()} className="text-text-muted hover:text-text-secondary font-medium">Stop speaking</button>
                             )}
                         </div>
-                        {speech.error && speech.error !== 'no-speech' && (
-                            <p className="text-[11px] text-red-500">
-                                {speech.error === 'not-allowed' ? 'Microphone permission denied — allow mic access to talk.'
-                                    : speech.error === 'unsupported' ? 'Voice input is not supported in this browser (use Chrome/Edge).'
-                                    : `Mic error: ${speech.error}`}
-                            </p>
+                        {!useWeb && inputSupported && (
+                            <p className="text-[10px] text-text-muted">Using server transcription (your browser lacks built-in speech).</p>
+                        )}
+                        {engineError && engineError !== 'no-speech' && errorText[engineError] && (
+                            <p className="text-[11px] text-red-500">{errorText[engineError]}</p>
                         )}
                     </div>
                 </motion.div>

@@ -33,6 +33,8 @@ from routes.challenges import router as challenges_router
 from routes.reference import router as reference_router
 from routes.admin import router as admin_router
 from routes.podcasts import router as podcasts_router
+from routes.review import router as review_router
+from routes.voice import router as voice_router
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -670,6 +672,8 @@ app.include_router(challenges_router)
 app.include_router(reference_router)
 app.include_router(admin_router)
 app.include_router(podcasts_router)
+app.include_router(review_router)
+app.include_router(voice_router)
 
 # --- CORS ---
 origins = [

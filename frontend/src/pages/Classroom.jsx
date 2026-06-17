@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -899,6 +900,7 @@ export default function Classroom() {
     const [lessonsLoading, setLessonsLoading] = useState(true);
     const [currentLesson, setCurrentLesson] = useState(null);
     const [phase, setPhase] = useState('select');
+    const [searchParams, setSearchParams] = useSearchParams();
     const [profileHint, setProfileHint] = useState('general');
     const [primaryTracks, setPrimaryTracks] = useState(null);
 
@@ -984,6 +986,19 @@ export default function Classroom() {
         loadLessons();
         handleSelectLesson({ id: lessonId, track: 'generated' });
     };
+
+    // Deep-link: /dashboard/classroom?lesson=<id> (e.g. from the review queue)
+    // opens that lesson directly once the catalogue has loaded.
+    useEffect(() => {
+        const want = searchParams.get('lesson');
+        if (!want || lessonsLoading || phase !== 'select' || currentLesson) return;
+        const match = lessons.find((l) => l.id === want || l.topic === want);
+        if (match) {
+            handleSelectLesson(match);
+            searchParams.delete('lesson');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [lessons, lessonsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleIntroComplete = () => {
         setPhase('practice');
