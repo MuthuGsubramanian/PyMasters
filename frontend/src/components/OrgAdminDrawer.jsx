@@ -3,6 +3,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'; // es
 import { X } from 'lucide-react';
 import { getAdminOrgDetail, adminSetOrgPlan, adminSetOrgType, adminDeleteOrg } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const PLANS = ['free', 'pro', 'enterprise'];
 const TYPES = ['school', 'university', 'enterprise', 'other'];
@@ -14,8 +16,8 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
   const panelRef = useRef(null);
   const load = useCallback(() => { setLoading(true); getAdminOrgDetail(adminId, orgId).then((r)=>setD(r.data)).catch((e)=>setError(safeErrorMsg(e,'Failed'))).finally(()=>setLoading(false)); }, [adminId, orgId]);
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { const prev = document.activeElement; panelRef.current?.focus(); return () => { try { prev?.focus?.(); } catch { /* gone */ } }; }, []);
-  useEffect(() => { const k = (e)=>{ if (e.key==='Escape') onClose(); }; document.addEventListener('keydown', k); return ()=>document.removeEventListener('keydown', k); }, [onClose]);
+  useEscapeKey(onClose);
+  useFocusTrap(panelRef, true);
   const act = async (key, fn) => { setBusy(key); setError(''); try { await fn(); onChanged?.(); load(); return true; } catch (e) { setError(safeErrorMsg(e,'Failed')); return false; } finally { setBusy(''); } };
 
   return (

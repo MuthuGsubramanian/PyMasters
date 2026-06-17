@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
     X,
     Sparkles,
@@ -117,6 +119,7 @@ const CURRENT_VERSION = RELEASE_NOTES[0].version;
 
 export default function ReleaseNotes() {
     const [visible, setVisible] = useState(false);
+    const panelRef = useRef(null);
 
     useEffect(() => {
         const seen = localStorage.getItem(STORAGE_KEY);
@@ -134,6 +137,9 @@ export default function ReleaseNotes() {
 
     const release = RELEASE_NOTES[0];
 
+    useEscapeKey(dismiss, visible);
+    useFocusTrap(panelRef, visible);
+
     return (
         <AnimatePresence>
             {visible && (
@@ -150,13 +156,14 @@ export default function ReleaseNotes() {
                     {/* Modal */}
                     <motion.div
                         key="release-modal"
+                        ref={panelRef} role="dialog" aria-modal="true" aria-label="What's new" tabIndex={-1}
                         initial={{ opacity: 0, scale: 0.92, y: 24 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.92, y: 24 }}
                         transition={{ type: 'spring', stiffness: 380, damping: 28 }}
                         onClick={(e) => e.stopPropagation()}
                         className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl
-                                   bg-bg-surface border border-border-default"
+                                   bg-bg-surface border border-border-default focus:outline-none"
                     >
                         {/* Gradient header */}
                         <div className="relative overflow-hidden rounded-t-2xl bg-gradient-to-br from-purple-600 via-cyan-600 to-blue-600 px-6 pt-6 pb-8">

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 import { X, Play, Pause, Rewind, FastForward, Download, Headphones } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../i18n/index.js';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 function parseVtt(text) {
   if (!text) return [];
@@ -53,13 +55,8 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
   const entry = byLang[language] || null;
   const enEntry = byLang.en || null;
 
-  useEffect(() => {
-    const prev = typeof document !== 'undefined' ? document.activeElement : null;
-    panelRef.current?.focus();
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('keydown', onKey); try { prev?.focus?.(); } catch { /* gone */ } };
-  }, [onClose]);
+  useEscapeKey(() => onClose?.());
+  useFocusTrap(panelRef, true);
 
   useEffect(() => {
     let cancelled = false;

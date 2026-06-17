@@ -5,6 +5,8 @@ import { classroomChat } from '../api';
 import useTTS from '../hooks/useTTS';
 import useSpeechInput, { speechSupported } from '../hooks/useSpeechInput';
 import useAudioTranscribe, { audioRecordingSupported } from '../hooks/useAudioTranscribe';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 /**
  * Live voice tutorial: a hands-free spoken conversation with Vaathiyaar.
@@ -21,6 +23,7 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
     const [continuous, setContinuous] = useState(true);
     const tts = useTTS();
     const scrollRef = useRef(null);
+    const panelRef = useRef(null);
     const continuousRef = useRef(continuous);
     const openRef = useRef(open);
     const messagesRef = useRef(messages);
@@ -81,6 +84,9 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
+    useEscapeKey(onClose, open);
+    useFocusTrap(panelRef, open);
+
     if (!open) return null;
 
     const status = !inputSupported ? 'unsupported'
@@ -118,9 +124,10 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                 onClick={onClose}
             >
                 <motion.div
+                    ref={panelRef} role="dialog" aria-modal="true" aria-label="Voice Tutor" tabIndex={-1}
                     initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="relative w-full max-w-lg rounded-3xl bg-bg-surface border border-border-default shadow-2xl overflow-hidden flex flex-col"
+                    className="relative w-full max-w-lg rounded-3xl bg-bg-surface border border-border-default shadow-2xl overflow-hidden flex flex-col focus:outline-none"
                     style={{ maxHeight: '85vh' }}
                 >
                     <div className="flex items-center justify-between px-5 py-4 border-b border-border-default bg-gradient-to-r from-purple-600/10 to-cyan-500/10">
