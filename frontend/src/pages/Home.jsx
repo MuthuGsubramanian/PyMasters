@@ -304,12 +304,12 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-100 font-sans selection:bg-purple-500/30 selection:text-white">
+        <div className="min-h-screen bg-[#0a0a14] text-slate-100 font-sans selection:bg-purple-500/30 selection:text-white">
 
             {/* ── NAV ── */}
             <nav
                 ref={navRef}
-                className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${scrolled ? 'bg-[#020617]/85 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'}`}
+                className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${scrolled ? 'bg-[#0a0a14]/85 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'}`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                     <button onClick={() => navigate('/')} className="flex items-center gap-2.5 group" aria-label="PyMasters home">
@@ -349,7 +349,7 @@ export default function Home() {
                 <div className="relative max-w-5xl mx-auto text-center">
                     <BrandMark reduced={reduced} />
 
-                    <h1 className="text-white text-4xl sm:text-5xl lg:text-7xl font-bold font-display leading-[1.05] tracking-tight mb-6">
+                    <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-[1.05] tracking-tight mb-6">
                         Master Python.{' '}
                         <span
                             className="text-transparent bg-clip-text"
@@ -622,7 +622,7 @@ export default function Home() {
             </section>
 
             {/* ── FOOTER ── */}
-            <footer className="relative border-t border-white/10 bg-[#020617]/80 py-8 px-4 sm:px-6">
+            <footer className="relative border-t border-white/10 bg-[#0a0a14]/80 py-8 px-4 sm:px-6">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                         <img src={PymastersGlyph} alt="" className="w-6 h-6 opacity-80" />
