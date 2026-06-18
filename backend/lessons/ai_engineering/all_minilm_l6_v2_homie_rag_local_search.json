@@ -1,0 +1,168 @@
+{
+  "id": "all_minilm_l6_v2_homie_rag_local_search",
+  "topic": "all_minilm_l6_v2_homie_rag_local_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: The Local Embedding Layer Behind Homie's RAG"
+  },
+  "description": {
+    "en": "Wire up sentence-transformers/all-MiniLM-L6-v2 as a fully local RAG embedding layer â€” chunk a knowledge base, embed it into 384-dim vectors, retrieve by cosine similarity, and assemble grounded context exactly like Homie does, with no GPU and no API key."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 80MB Model That Grounds an Entire RAG System\n\nVaathiyaar here! Every RAG system has one quiet workhorse at its core: the embedding model that turns text into vectors so a retriever can find *relevant* context to feed the LLM. Pick a heavy one and you pay a GPU bill and a network round-trip on every query. `sentence-transformers/all-MiniLM-L6-v2` flips that math: 6 transformer layers, 22M parameters, an 80MB download, and ~14,000 sentences/sec on a plain CPU. It maps any sentence to a 384-dimensional vector â€” and it's good enough that it's the default embedding backbone for Homie's RAG layer. No GPU, no API key, no internet.\n\nIn this lesson you'll build that retrieval layer end to end: chunk a knowledge base, embed it once, retrieve the most relevant chunks for a question, and assemble a grounded prompt.\n\n### Where Embeddings Sit in RAG\n\nRAG is four moves, and MiniLM owns the first three:\n\n1. **Chunk** â€” split documents into small passages.\n2. **Embed + Index** â€” encode every chunk into a normalized 384-dim vector, store it.\n3. **Retrieve** â€” embed the question, rank chunks by cosine similarity, take the top-k.\n4. **Generate** â€” stuff those chunks into the LLM prompt as grounded context.\n\n### Why MiniLM as the Backbone?\n\n| Criterion | all-MiniLM-L6-v2 | all-mpnet-base-v2 | OpenAI text-embedding-3-small |\n|---|---|---|---|\n| Dimensions | 384 | 768 | 1536 |\n| Model size | 80 MB | 420 MB | cloud only |\n| CPU speed | ~14K sent/sec | ~2.8K sent/sec | network-bound |\n| Runs offline | Yes | Yes | No |\n| Cost | Free forever | Free forever | Per token |\n\nFor most internal-doc and FAQ workloads MiniLM is the sweet spot: small enough to ship anywhere, fast enough to re-index on a laptop, accurate enough that upgrading rarely changes the top answer.\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nchunks = [\n    \"Refunds are processed within 5 business days.\",\n    \"Our office is open Monday to Friday.\",\n    \"You can reset your password from the login page.\",\n]\nindex = model.encode(chunks, normalize_embeddings=True)\n\nq = model.encode(\"how long until I get my money back?\", normalize_embeddings=True)\ntop = util.semantic_search(q, index, top_k=1)[0][0]\nprint(chunks[top[\"corpus_id\"]])  # -> the refund chunk\n```\n\nThe question shares almost no words with the refund chunk, yet it wins â€” because meaning, not vocabulary, drives the match.\n\n### The Homie Detail: Normalize Once, Score Cheap\n\nPass `normalize_embeddings=True` and every vector becomes unit-length, so cosine similarity collapses into a single dot product. Scoring a whole corpus is one matrix-vector multiply â€” microseconds. Persist the index with `np.save` and your retriever reloads in milliseconds with zero re-encoding.\n\n> **Key Insight:** all-MiniLM-L6-v2 is the cheapest reliable way to ground a RAG system: 80MB, 384 dims, CPU-fast, offline. Chunk once, embed once with normalized vectors, retrieve by dot-product cosine, and feed the top-k to your LLM. That single small model is the embedding layer that makes local, private, no-API RAG â€” like Homie's â€” actually practical."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Every RAG system rests on one quiet workhorse: the embedding model. all-MiniLM-L6-v2 is 80MB, maps text to 384-dim vectors, and runs ~14K sentences/sec on plain CPU â€” no GPU, no API key, no internet. It's the default embedding backbone behind Homie's RAG layer. Today you build that retrieval layer end to end.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nknowledge_base = (\n    \"Refunds are processed within 5 business days of approval. \"\n    \"Our support office is open Monday through Friday, 9am to 5pm. \"\n    \"You can reset your password from the login page link.\"\n)\n\nchunks = [s.strip() for s in knowledge_base.split(\".\") if s.strip()]\n\nindex = model.encode(chunks, normalize_embeddings=True)\nprint(f\"Indexed {index.shape[0]} chunks of {index.shape[1]} dims\")\n\nquestion = \"how long until I get my money back?\"\nq_emb = model.encode(question, normalize_embeddings=True)\n\nhits = util.semantic_search(q_emb, index, top_k=2)[0]\ncontext = \"\\n\".join(chunks[h[\"corpus_id\"]] for h in hits)\n\nprompt = f\"Context:\\n{context}\\n\\nQuestion: {question}\\nAnswer:\"\nprint(prompt)",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer (the model wrapper) and util, which provides semantic_search. Install with: pip install sentence-transformers."
+        },
+        {
+          "line": 3,
+          "explanation": "Load all-MiniLM-L6-v2 â€” an 80MB download on first run, cached locally afterward. Runs entirely on CPU; no GPU required."
+        },
+        {
+          "line": 11,
+          "explanation": "Chunk the knowledge base into passages. Here we split on periods; in production you'd chunk by paragraphs or a fixed token window with overlap."
+        },
+        {
+          "line": 13,
+          "explanation": "Embed every chunk in one batch. normalize_embeddings=True makes each vector unit-length so cosine similarity becomes a plain dot product."
+        },
+        {
+          "line": 14,
+          "explanation": "The index is a (3, 384) matrix â€” three chunks, each a 384-dim meaning vector. This is your retrievable store."
+        },
+        {
+          "line": 16,
+          "explanation": "The user's question. Notice it shares almost no words with the refund chunk â€” keyword search would miss it."
+        },
+        {
+          "line": 17,
+          "explanation": "Embed the question into the same 384-dim space with the same normalization, so it is directly comparable to the chunks."
+        },
+        {
+          "line": 19,
+          "explanation": "semantic_search ranks the question against all chunks and returns the top_k as {corpus_id, score} dicts â€” the retrieval step."
+        },
+        {
+          "line": 20,
+          "explanation": "Pull the matched chunk text and join it into a context block. This is the grounding the LLM will see."
+        },
+        {
+          "line": 22,
+          "explanation": "Assemble the final RAG prompt: retrieved context + question. Send this to any LLM and it answers grounded in your data."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Cloud Embedding API",
+      "right_label": "Local all-MiniLM-L6-v2",
+      "items": [
+        {
+          "left": "Needs API key + internet",
+          "right": "Fully offline after 80MB download"
+        },
+        {
+          "left": "Per-token cost on every query",
+          "right": "Free forever, runs on CPU"
+        },
+        {
+          "left": "Data leaves your machine",
+          "right": "Private â€” nothing leaves the box"
+        },
+        {
+          "left": "Network latency per call",
+          "right": "Microseconds via dot-product cosine"
+        },
+        {
+          "left": "1536-dim vectors to store",
+          "right": "Compact 384-dim, ~15MB per 10K chunks"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You built a local RAG retrieval layer â€” chunk, embed, retrieve, ground â€” fully offline with all-MiniLM-L6-v2, just like Homie!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `RagRetriever` class that mimics MiniLM's embedding-based retrieval using word-frequency vectors. Implement `_embed(text)` returning a lowercase word-frequency dict, `_cosine(a, b)` returning cosine similarity between two frequency dicts (0.0 if either has zero magnitude), and `retrieve(question, top_k)` returning the top-k chunks as {\"chunk\": str, \"score\": float} sorted by score descending. Embed the corpus in __init__."
+      },
+      "starter_code": "import math\n\nclass RagRetriever:\n    def __init__(self, chunks: list[str]):\n        self.chunks = chunks\n        self.vectors = [self._embed(c) for c in chunks]\n\n    def _embed(self, text: str) -> dict:\n        # Lowercase, split on whitespace, count words into a dict\n        pass\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        # Dot over shared keys / (magnitude_a * magnitude_b); 0.0 if either is zero\n        pass\n\n    def retrieve(self, question: str, top_k: int = 2) -> list[dict]:\n        # Embed question, score against every chunk vector,\n        # return top_k as {\"chunk\": str, \"score\": float} sorted descending\n        pass\n\n# Test it:\nrag = RagRetriever([\n    \"refunds are processed within five business days\",\n    \"the office is open monday through friday\",\n    \"reset your password from the login page\",\n])\n\nresults = rag.retrieve(\"how do I get my password back\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] >= results[1][\"score\"])\nprint(\"password\" in results[0][\"chunk\"])",
+      "expected_output": "2\nTrue\nTrue",
+      "hints": {
+        "en": [
+          "_embed(): words = text.lower().split(); then vec[w] = vec.get(w, 0) + 1 for each word",
+          "_cosine(): dot = sum(a[w]*b[w] for w in set(a) & set(b)); divide by product of sqrt(sum(v**2)) of each vector",
+          "retrieve(): build [{'chunk': c, 'score': self._cosine(qvec, v)} ...], then sorted(..., key=lambda r: r['score'], reverse=True)[:top_k]"
+        ]
+      },
+      "test_code": "r = RagRetriever([\"hello world\", \"goodbye world\", \"hello friend\"])\nassert r._embed(\"Hello hello WORLD\") == {\"hello\": 2, \"world\": 1}\nassert r._cosine({\"a\": 1}, {\"b\": 1}) == 0.0\nassert abs(r._cosine({\"a\": 1, \"b\": 1}, {\"a\": 1, \"b\": 1}) - 1.0) < 1e-6\nassert r._cosine({}, {\"a\": 1}) == 0.0\nout = r.retrieve(\"hello\", top_k=2)\nassert len(out) == 2\nassert out[0][\"score\"] >= out[1][\"score\"]\nassert all(\"chunk\" in x and \"score\" in x for x in out)\nassert out[0][\"score\"] > 0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `GroundedPrompt` class that turns retrieval into a RAG prompt. The cosine retrieval is provided. Implement `build_context(question, top_k)` returning the top-k chunk texts joined by '\\n' (empty string if the corpus is empty), and `build_prompt(question, top_k)` returning exactly 'Context:\\n{context}\\n\\nQuestion: {question}\\nAnswer:'."
+      },
+      "starter_code": "import math\n\nclass GroundedPrompt:\n    def __init__(self, chunks: list[str]):\n        self.chunks = chunks\n        self.vectors = [self._embed(c) for c in chunks]\n\n    def _embed(self, text: str) -> dict:\n        vec = {}\n        for w in text.lower().split():\n            vec[w] = vec.get(w, 0) + 1\n        return vec\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        shared = set(a) & set(b)\n        dot = sum(a[w] * b[w] for w in shared)\n        ma = math.sqrt(sum(v**2 for v in a.values()))\n        mb = math.sqrt(sum(v**2 for v in b.values()))\n        return dot / (ma * mb) if ma and mb else 0.0\n\n    def _ranked(self, question: str) -> list[str]:\n        q = self._embed(question)\n        scored = [(c, self._cosine(q, v)) for c, v in zip(self.chunks, self.vectors)]\n        scored.sort(key=lambda x: x[1], reverse=True)\n        return [c for c, _ in scored]\n\n    def build_context(self, question: str, top_k: int = 2) -> str:\n        # Join the top_k ranked chunk texts with '\\n' (empty string if no chunks)\n        pass\n\n    def build_prompt(self, question: str, top_k: int = 2) -> str:\n        # Return 'Context:\\n{context}\\n\\nQuestion: {question}\\nAnswer:'\n        pass\n\n# Test it:\ng = GroundedPrompt([\n    \"refunds take five business days\",\n    \"reset your password on the login page\",\n])\nprint(g.build_prompt(\"how do I reset my password\", top_k=1))",
+      "expected_output": "Context:\nreset your password on the login page\n\nQuestion: how do I reset my password\nAnswer:",
+      "hints": {
+        "en": [
+          "build_context(): top = self._ranked(question)[:top_k]; return '\\n'.join(top)",
+          "An empty corpus makes _ranked return [], and '\\n'.join([]) is already '' â€” no special case needed",
+          "build_prompt(): ctx = self.build_context(question, top_k); then return an f-string 'Context:\\n{ctx}\\n\\nQuestion: {question}\\nAnswer:'"
+        ]
+      },
+      "test_code": "g = GroundedPrompt([\"alpha beta\", \"beta gamma\", \"gamma delta\"])\nassert g.build_context(\"beta\", top_k=1) in (\"alpha beta\", \"beta gamma\")\nassert g.build_context(\"x\", top_k=2).count(\"\\n\") == 1\nassert GroundedPrompt([]).build_context(\"x\") == \"\"\np = g.build_prompt(\"beta gamma\", top_k=1)\nassert p.startswith(\"Context:\\n\")\nassert \"\\n\\nQuestion: beta gamma\\nAnswer:\" in p\nassert p.endswith(\"Answer:\")\nempty = GroundedPrompt([]).build_prompt(\"hi\", top_k=2)\nassert empty == \"Context:\\n\\n\\nQuestion: hi\\nAnswer:\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "RAG retrieval",
+      "sentence embeddings",
+      "cosine similarity",
+      "text chunking",
+      "vector indexing",
+      "offline inference",
+      "context grounding",
+      "all-MiniLM-L6-v2",
+      "local LLM pipelines"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "lists",
+      "string methods",
+      "functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 28,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
