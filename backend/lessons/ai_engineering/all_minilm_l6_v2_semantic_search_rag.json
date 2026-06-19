@@ -1,0 +1,137 @@
+{
+  "id": "all_minilm_l6_v2_semantic_search_rag",
+  "topic": "all_minilm_l6_v2_semantic_search_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Local Semantic Search with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Turn sentences into vectors with the tiny, fast all-MiniLM-L6-v2 model and build a fully local semantic search and RAG retrieval pipeline â€” no API keys required."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Vaathiyaar's Lesson: Teaching Machines to Understand Meaning\n\nVanakkam, my friend. Today I want to show you a quiet little workhorse that powers half the AI apps you admire. It is called **all-MiniLM-L6-v2** â€” only 22 million parameters, about 80 MB on disk, yet it can read a sentence and turn it into a 384-number fingerprint that captures its *meaning*. Keyword search asks \"do these exact words appear?\" Semantic search asks \"do these two thoughts mean the same thing?\" That difference is the whole game behind RAG, recommendation, and clustering.\n\n### Why this model, and why local?\n\nMost beginners reach for a paid embedding API. But for retrieval you rarely need a giant model â€” you need a *fast, consistent* one that runs on your own laptop. all-MiniLM-L6-v2 is exactly that: small enough to embed thousands of documents in seconds on CPU, good enough that you will struggle to tell its retrieval quality apart from models ten times its size.\n\n| Property | all-MiniLM-L6-v2 | Large API embeddings |\n|---|---|---|\n| Dimensions | 384 | 1536+ |\n| Runs locally | Yes (CPU/GPU) | No |\n| Cost per million tokens | Free | $$$ |\n| Speed (CPU) | ~Very fast | Network-bound |\n| Best for | Local RAG, search, clustering | Max accuracy at scale |\n\n### How embeddings find meaning\n\nEvery sentence becomes a point in 384-dimensional space. Sentences with similar meaning land close together. We measure \"closeness\" with **cosine similarity** â€” the cosine of the angle between two vectors. A score near `1.0` means \"almost identical meaning\"; near `0.0` means \"unrelated.\"\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nquery = \"How do I reset my password?\"\ndocs = [\n    \"Steps to recover your account login.\",\n    \"Our refund policy lasts 30 days.\",\n    \"Click 'Forgot password' to set a new one.\",\n]\n\nq_emb = model.encode(query, convert_to_tensor=True)\nd_emb = model.encode(docs, convert_to_tensor=True)\n\nscores = util.cos_sim(q_emb, d_emb)[0]\nbest = scores.argmax().item()\nprint(docs[best])  # The most relevant document, by meaning\n```\n\n### From search to RAG\n\nThis is the retrieval half of **Retrieval-Augmented Generation**. The recipe: embed your knowledge base once, store the vectors, embed each user question at query time, pull the top-k closest chunks, and hand them to an LLM as context. The model never \"memorizes\" your docs â€” it simply finds the right passages to ground its answer.\n\n```python\nimport numpy as np\n\ndef top_k(query, corpus, corpus_emb, k=3):\n    q = model.encode(query, convert_to_tensor=True)\n    hits = util.semantic_search(q, corpus_emb, top_k=k)[0]\n    return [(corpus[h[\"corpus_id\"]], round(h[\"score\"], 3)) for h in hits]\n```\n\nNormalize your embeddings once (`normalize_embeddings=True`) and cosine similarity becomes a plain dot product â€” perfect for fast vector databases like FAISS or Chroma later.\n\n> **Key Insight:** Embeddings convert language into geometry. Once meaning is a point in space, \"understanding\" becomes \"measuring distance\" â€” and all-MiniLM-L6-v2 gives you that superpower for free, entirely on your own machine."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "Meaning as Geometry",
+      "body": "all-MiniLM-L6-v2 turns any sentence into a 384-number fingerprint. Similar meanings land close together â€” that is the secret behind semantic search and RAG.",
+      "emoji": "ðŸ§­",
+      "duration": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "build_semantic_search",
+      "title": "Build a Local Semantic Search Engine",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer, util",
+          "explanation": "Import the library. It wraps the model, tokenizer, and pooling into one clean API."
+        },
+        {
+          "code": "model = SentenceTransformer(\"all-MiniLM-L6-v2\")",
+          "explanation": "Download (once) and load the model. ~80 MB, runs on CPU. No API key, no internet after the first load."
+        },
+        {
+          "code": "corpus = [\n    \"Python is great for data science.\",\n    \"Cats are independent pets.\",\n    \"Pandas helps analyze tabular data.\",\n]",
+          "explanation": "This is our tiny knowledge base. In real RAG these are document chunks."
+        },
+        {
+          "code": "corpus_emb = model.encode(corpus, normalize_embeddings=True)",
+          "explanation": "Embed every document into a 384-dim vector. Normalizing lets us use fast dot-product similarity."
+        },
+        {
+          "code": "query = \"Which library is good for analyzing data tables?\"",
+          "explanation": "A user question worded completely differently from the documents."
+        },
+        {
+          "code": "q_emb = model.encode(query, normalize_embeddings=True)",
+          "explanation": "Embed the query into the SAME 384-dim space so we can compare it to the corpus."
+        },
+        {
+          "code": "scores = util.cos_sim(q_emb, corpus_emb)[0]",
+          "explanation": "Cosine similarity of the query against each document. Higher = closer in meaning."
+        },
+        {
+          "code": "best = scores.argmax().item()\nprint(corpus[best])",
+          "explanation": "Pick the highest-scoring document. It returns the Pandas sentence â€” matched by meaning, not keywords."
+        },
+        {
+          "code": "# -> 'Pandas helps analyze tabular data.'",
+          "explanation": "No word 'analyze tables' appears verbatim, yet semantic search found the right answer. That is the magic."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "title": "You Built Local Semantic Search!",
+      "body": "You now have the retrieval core of any RAG system â€” fully local, free, and fast.",
+      "duration": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete the `most_similar` function. It should embed the query and the list of documents with the model, compute cosine similarity, and return the single document string that is closest in meaning to the query."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef most_similar(query, documents):\n    # 1. Encode the query and documents (use convert_to_tensor=True)\n    # 2. Compute cosine similarity between the query and each document\n    # 3. Return the document with the highest score\n    pass\n",
+      "expected_output": "Click 'Forgot password' to set a new one.",
+      "hints": {
+        "en": [
+          "Use model.encode(..., convert_to_tensor=True) for both the query and the documents.",
+          "util.cos_sim(query_emb, doc_emb)[0] gives a tensor of scores, one per document.",
+          "scores.argmax().item() gives the index of the best-matching document."
+        ]
+      },
+      "test_code": "docs = [\n    \"Our refund policy lasts 30 days.\",\n    \"Click 'Forgot password' to set a new one.\",\n    \"Free shipping on orders over $50.\",\n]\nresult = most_similar(\"How do I reset my login credentials?\", docs)\nassert result == \"Click 'Forgot password' to set a new one.\", f\"Got: {result}\"\nprint(\"PASS\")"
+    },
+    {
+      "instruction": {
+        "en": "Implement `top_k_retrieve`, the retrieval step of a RAG pipeline. Given a query and a corpus, return the top `k` most relevant documents as a list, ordered from most to least similar."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef top_k_retrieve(query, corpus, k=2):\n    # Embed query and corpus, then use util.semantic_search\n    # Return a list of the top-k document strings, best first\n    pass\n",
+      "expected_output": "['Pandas helps analyze tabular data.', 'Python is great for data science.']",
+      "hints": {
+        "en": [
+          "Encode the corpus once with convert_to_tensor=True, then encode the query the same way.",
+          "util.semantic_search(query_emb, corpus_emb, top_k=k)[0] returns a list of dicts with 'corpus_id' and 'score'.",
+          "Map each hit's 'corpus_id' back to corpus[corpus_id] to get the original text."
+        ]
+      },
+      "test_code": "corpus = [\n    \"Python is great for data science.\",\n    \"Cats are independent pets.\",\n    \"Pandas helps analyze tabular data.\",\n]\nresult = top_k_retrieve(\"tools for working with data tables\", corpus, k=2)\nassert isinstance(result, list) and len(result) == 2, f\"Expected 2 items, got: {result}\"\nassert result[0] == \"Pandas helps analyze tabular data.\", f\"Top hit wrong: {result}\"\nprint(\"PASS\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence embeddings",
+      "semantic search",
+      "cosine similarity",
+      "RAG retrieval",
+      "sentence-transformers",
+      "local AI models"
+    ],
+    "concepts_required": [
+      "python basics",
+      "lists and functions",
+      "pip install packages"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "local_llm_toolkit"
+    ]
+  },
+  "generated": true
+}
