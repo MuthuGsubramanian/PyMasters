@@ -1,0 +1,162 @@
+{
+  "id": "bge_small_en_v1_5_vs_minilm_embeddings",
+  "topic": "bge_small_en_v1_5_vs_minilm_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BGE vs MiniLM: Choosing Homie's Local RAG Embeddings"
+  },
+  "description": {
+    "en": "Compare BAAI/bge-small-en-v1.5 against all-MiniLM-L6-v2 head-to-head â€” size, retrieval quality, and the query-instruction trick â€” to pick the right 384-dim embedding backbone for a local, offline-first RAG index."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## BGE vs MiniLM: Picking Homie's Embedding Brain\n\nVaathiyaar here! Every RAG pipeline starts with one decision that quietly shapes everything downstream: *which embedding model turns your text into vectors?* For PyMasters' local assistant Homie, we need embeddings that run **offline on a laptop**, fit in a tiny footprint, and still retrieve the right passage. Two models dominate this weight class â€” both produce 384-dimensional vectors, both run on CPU â€” but they are not the same. Today we settle the **BAAI/bge-small-en-v1.5** vs **all-MiniLM-L6-v2** debate with code, not vibes.\n\n### The Contenders\n\n| Feature | bge-small-en-v1.5 | all-MiniLM-L6-v2 |\n|---|---|---|\n| Disk size | ~33 MB | ~80 MB |\n| Dimensions | 384 | 384 |\n| MTEB avg (English) | ~62 | ~56 |\n| Query instruction prefix | Yes (asymmetric) | No (symmetric) |\n| Backends | PyTorch, ONNX, SafeTensors | PyTorch, ONNX |\n| Best at | Retrieval / search | General similarity, clustering |\n\nBGE-small is **smaller AND scores higher on retrieval benchmarks** â€” that combination is why it's our default pick for Homie. MiniLM remains a fantastic generalist, especially for clustering and deduplication where there is no \"query\" vs \"document\" distinction.\n\n### The Key Difference: Asymmetric Encoding\n\nMiniLM encodes queries and documents **identically** â€” symmetric. BGE encodes documents plainly but expects queries to carry an **instruction prefix** that flips the model into \"retrieval mode\". This single trick is worth several points of recall.\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nbge = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\nminilm = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\nquery = \"how do I process data lazily?\"\n\n# MiniLM: query and docs encoded the same way\nminilm_q = minilm.encode(query, normalize_embeddings=True)\n\n# BGE: queries get the instruction prefix, documents do NOT\nBGE_PREFIX = \"Represent this sentence for searching relevant passages: \"\nbge_q = bge.encode(BGE_PREFIX + query, normalize_embeddings=True)\n```\n\nForget the prefix and BGE still works â€” but you leave retrieval accuracy on the table.\n\n### A Fair Head-to-Head Retriever\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nclass Retriever:\n    def __init__(self, model_name, query_prefix=\"\"):\n        self.model = SentenceTransformer(model_name)\n        self.query_prefix = query_prefix\n        self.docs, self.embs = [], None\n\n    def index(self, docs):\n        self.docs = docs\n        self.embs = self.model.encode(docs, normalize_embeddings=True)\n\n    def search(self, query, top_k=3):\n        q = self.model.encode(\n            self.query_prefix + query, normalize_embeddings=True\n        )\n        scores = self.embs @ q  # normalized dot product == cosine\n        order = np.argsort(scores)[::-1][:top_k]\n        return [(self.docs[i], float(scores[i])) for i in order]\n\ncorpus = [\n    \"Generators yield values lazily without loading everything\",\n    \"Lists hold all elements in memory at once\",\n    \"Boiling water is the first step for pasta\",\n]\n\nbge = Retriever(\"BAAI/bge-small-en-v1.5\",\n                \"Represent this sentence for searching relevant passages: \")\nminilm = Retriever(\"sentence-transformers/all-MiniLM-L6-v2\")\nfor r in (bge, minilm):\n    r.index(corpus)\n\nprint(bge.search(\"lazy data processing\")[0])\nprint(minilm.search(\"lazy data processing\")[0])\n```\n\nBoth correctly surface the generators passage â€” but on harder, vocabulary-mismatched queries BGE's retrieval edge shows up consistently.\n\n### Footprint Math for Homie\n\nFor a 10,000-chunk knowledge base, both models output 384-dim float32 vectors: `10000 * 384 * 4 bytes â‰ˆ 15 MB` of embeddings. The model weights are the swing factor â€” BGE's 33 MB vs MiniLM's 80 MB means BGE saves ~47 MB of what we bundle and ship inside the app. On constrained devices, that's the difference between fitting comfortably and not.\n\n> **Key Insight:** For Homie's offline-first local RAG, BGE-small-en-v1.5 wins the default slot: it is smaller (33 MB vs 80 MB) yet retrieves better thanks to its asymmetric query-instruction prefix. Keep MiniLM in your toolkit for symmetric jobs â€” clustering, dedup, and similarity scoring â€” where no query/document distinction exists. Right model, right job."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Two 384-dim embedding models fight for Homie's local RAG index: bge-small-en-v1.5 (33MB, retrieval-tuned) vs all-MiniLM-L6-v2 (80MB, generalist). BGE is smaller AND scores higher on retrieval â€” its secret is an asymmetric query-instruction prefix that MiniLM doesn't use.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nbge = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\nminilm = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ncorpus = [\n    \"Generators yield values lazily without loading everything\",\n    \"Lists hold all elements in memory at once\",\n    \"Boiling water is the first step for pasta\",\n]\n\nbge_docs = bge.encode(corpus, normalize_embeddings=True)\nminilm_docs = minilm.encode(corpus, normalize_embeddings=True)\n\nPREFIX = \"Represent this sentence for searching relevant passages: \"\nquery = \"lazy data processing\"\n\nbge_q = bge.encode(PREFIX + query, normalize_embeddings=True)\nminilm_q = minilm.encode(query, normalize_embeddings=True)\n\nprint(corpus[int(np.argmax(bge_docs @ bge_q))])\nprint(corpus[int(np.argmax(minilm_docs @ minilm_q))])",
+      "steps": [
+        {
+          "line": 4,
+          "explanation": "Load BGE-small â€” 33MB, retrieval-tuned. Downloads in seconds and runs fully on CPU."
+        },
+        {
+          "line": 5,
+          "explanation": "Load MiniLM â€” 80MB, the popular symmetric generalist. Same 384-dim output, different training objective."
+        },
+        {
+          "line": 13,
+          "explanation": "Encode the corpus with BGE. Documents are encoded PLAIN â€” no prefix is ever added to documents."
+        },
+        {
+          "line": 14,
+          "explanation": "Encode the same corpus with MiniLM. MiniLM treats queries and documents identically, so nothing special here either."
+        },
+        {
+          "line": 16,
+          "explanation": "BGE's query instruction prefix â€” the one line that flips BGE into retrieval mode. MiniLM has no equivalent."
+        },
+        {
+          "line": 19,
+          "explanation": "Encode the query WITH the prefix for BGE. This asymmetry is what lifts BGE's recall above MiniLM's."
+        },
+        {
+          "line": 20,
+          "explanation": "Encode the query WITHOUT any prefix for MiniLM â€” adding one would not help a symmetric model."
+        },
+        {
+          "line": 22,
+          "explanation": "Normalized dot product == cosine similarity. argmax picks the best match: BGE surfaces the generators passage."
+        },
+        {
+          "line": 23,
+          "explanation": "MiniLM also matches generators here â€” but on harder vocabulary-mismatch queries BGE wins more often."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "all-MiniLM-L6-v2",
+      "right_label": "bge-small-en-v1.5",
+      "items": [
+        {
+          "left": "~80 MB on disk",
+          "right": "~33 MB on disk"
+        },
+        {
+          "left": "Symmetric: query == document encoding",
+          "right": "Asymmetric: queries get an instruction prefix"
+        },
+        {
+          "left": "MTEB English avg ~56",
+          "right": "MTEB English avg ~62"
+        },
+        {
+          "left": "Great for clustering & dedup",
+          "right": "Great for search & RAG retrieval"
+        },
+        {
+          "left": "PyTorch, ONNX",
+          "right": "PyTorch, ONNX, SafeTensors"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now pick the right embedding backbone on purpose â€” BGE for retrieval, MiniLM for symmetric similarity. Homie's index just got smarter and smaller!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build an `EmbeddingBenchmark` class that compares two simulated embedding 'models'. One model is asymmetric (BGE-style): it prepends boost words to queries. The other is symmetric (MiniLM-style): it encodes queries and documents identically. Implement `encode(text)` returning a word-frequency dict, `cosine_similarity(a, b)`, and `best_match(query, asymmetric)` that returns the highest-scoring document. When `asymmetric=True`, prepend the boost words 'search find relevant' to the query before encoding; when False, encode the query as-is."
+      },
+      "starter_code": "import math\n\nclass EmbeddingBenchmark:\n    BOOST_WORDS = \"search find relevant\"\n\n    def __init__(self, documents: list[str]):\n        self.documents = documents\n        # Documents are always encoded WITHOUT boost words\n        self.doc_vectors = [self.encode(d) for d in documents]\n\n    def encode(self, text: str) -> dict:\n        # Return {word: count}, lowercased\n        pass\n\n    def cosine_similarity(self, a: dict, b: dict) -> float:\n        # Cosine similarity of two word-frequency dicts.\n        # Return 0.0 if either has zero magnitude.\n        pass\n\n    def best_match(self, query: str, asymmetric: bool = False) -> dict:\n        # If asymmetric: prepend BOOST_WORDS + ' ' to the query (BGE-style).\n        # If not: encode the query as-is (MiniLM-style).\n        # Return {\"document\": str, \"score\": float} for the top doc.\n        pass\n\n# Test it:\nbench = EmbeddingBenchmark([\n    \"search algorithms find items in data structures\",\n    \"cooking recipes for pasta dishes\",\n    \"relevant information retrieval from documents\",\n])\n\nsym = bench.best_match(\"data\", asymmetric=False)\nasym = bench.best_match(\"data\", asymmetric=True)\nprint(sym[\"document\"])\nprint(asym[\"document\"])\n# The asymmetric (BGE-style) boost should favor retrieval-flavored docs\nprint(asym[\"score\"] >= sym[\"score\"])",
+      "expected_output": "search algorithms find items in data structures\nsearch algorithms find items in data structures\nTrue",
+      "hints": {
+        "en": [
+          "In encode(), use text.lower().split() and count each word into a dict",
+          "For cosine_similarity, sum a[w]*b[w] over shared keys, then divide by the product of each vector's magnitude (sqrt of sum of squared values)",
+          "In best_match(), build the query string conditionally: (self.BOOST_WORDS + ' ' + query) if asymmetric else query, then score it against every doc vector and return the max"
+        ]
+      },
+      "test_code": "b = EmbeddingBenchmark([\"hello world\", \"search find relevant data\", \"cats dogs\"])\nassert b.encode(\"hello hello\") == {\"hello\": 2}\nassert b.encode(\"a b a\") == {\"a\": 2, \"b\": 1}\nassert abs(b.cosine_similarity({\"a\": 1}, {\"a\": 1}) - 1.0) < 0.001\nassert b.cosine_similarity({\"a\": 1}, {\"b\": 1}) == 0.0\nres = b.best_match(\"data\", asymmetric=True)\nassert res[\"document\"] == \"search find relevant data\"\nsym = b.best_match(\"data\", asymmetric=False)\nasym = b.best_match(\"data\", asymmetric=True)\nassert asym[\"score\"] >= sym[\"score\"]"
+    },
+    {
+      "instruction": {
+        "en": "Build a `FootprintEstimator` class that helps decide between embedding models for a local index. Implement `embedding_bytes(num_chunks, dims)` returning the float32 embedding store size in bytes (num_chunks * dims * 4), `total_mb(model_weights_mb, num_chunks, dims)` returning total megabytes (weights + embeddings, where 1 MB = 1_000_000 bytes), and `cheaper_model(model_a, model_b, num_chunks, dims)` returning the name of the smaller-footprint model. Each model is a dict like {'name': 'bge', 'weights_mb': 33}."
+      },
+      "starter_code": "class FootprintEstimator:\n    def embedding_bytes(self, num_chunks: int, dims: int) -> int:\n        # float32 = 4 bytes per value\n        pass\n\n    def total_mb(self, model_weights_mb: float,\n                 num_chunks: int, dims: int) -> float:\n        # weights_mb + embedding store in MB (1 MB = 1_000_000 bytes)\n        pass\n\n    def cheaper_model(self, model_a: dict, model_b: dict,\n                      num_chunks: int, dims: int) -> str:\n        # Return the 'name' of whichever model has the smaller total_mb\n        pass\n\n# Test it:\nest = FootprintEstimator()\nbge = {\"name\": \"bge-small\", \"weights_mb\": 33}\nminilm = {\"name\": \"minilm\", \"weights_mb\": 80}\n\nprint(est.embedding_bytes(10000, 384))   # 15360000\nprint(round(est.total_mb(33, 10000, 384), 2))  # 48.36\nprint(est.cheaper_model(bge, minilm, 10000, 384))  # bge-small",
+      "expected_output": "15360000\n48.36\nbge-small",
+      "hints": {
+        "en": [
+          "embedding_bytes is simply num_chunks * dims * 4",
+          "Convert embedding bytes to MB by dividing by 1_000_000, then add model_weights_mb",
+          "In cheaper_model, compute total_mb for both using each model's 'weights_mb', then return the 'name' with the lower total"
+        ]
+      },
+      "test_code": "e = FootprintEstimator()\nassert e.embedding_bytes(10000, 384) == 15360000\nassert e.embedding_bytes(0, 384) == 0\nassert abs(e.total_mb(33, 10000, 384) - 48.36) < 0.001\nassert abs(e.total_mb(0, 1000, 384) - 1.536) < 0.001\na = {\"name\": \"bge-small\", \"weights_mb\": 33}\nb = {\"name\": \"minilm\", \"weights_mb\": 80}\nassert e.cheaper_model(a, b, 10000, 384) == \"bge-small\"\nassert e.cheaper_model(b, a, 10000, 384) == \"bge-small\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "BGE vs MiniLM comparison",
+      "asymmetric vs symmetric embeddings",
+      "query instruction prefix",
+      "embedding model selection",
+      "local RAG retrieval",
+      "model footprint estimation",
+      "normalized cosine similarity"
+    ],
+    "concepts_required": [
+      "python classes",
+      "lists",
+      "dictionaries",
+      "numpy basics",
+      "cosine similarity"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
