@@ -23,6 +23,10 @@ def _run_pipeline_safe(job_id: str, user_id: int, topic: str):
         run_pipeline(job_id, user_id, topic)
     except ImportError:
         pass  # Pipeline not yet implemented; job remains queued
+    except Exception as exc:  # noqa: BLE001 - background worker must never crash
+        # run_pipeline already records the job as "failed"; just log and exit
+        # cleanly so a single failed generation can't take down the worker thread.
+        print(f"[trigger_engine] module generation job {job_id} failed: {exc}")
 
 
 def check_triggers(user_id: int, signal_type: str, topic: str, value: dict) -> dict:

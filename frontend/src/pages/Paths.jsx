@@ -137,7 +137,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <DifficultyBadge level={path.difficulty || 'beginner'} />
+                    <DifficultyBadge level={path.difficulty_start || 'beginner'} />
                     <button className="text-xs font-bold text-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
                         {started ? 'Continue' : 'Start'} <ChevronRight size={12} />
                     </button>
@@ -187,7 +187,7 @@ function PathList() {
 
     const filteredPaths = filter === 'all'
         ? paths
-        : paths.filter(p => p.difficulty === filter);
+        : paths.filter(p => p.difficulty_start === filter);
 
     return (
         <div className="animate-fade-in space-y-8">
@@ -443,7 +443,7 @@ function PathDetail() {
                         <h1 className="text-3xl font-bold text-text-primary font-display">{path.name || path.title}</h1>
                         <p className="text-sm text-text-secondary mt-1 max-w-2xl line-clamp-2">{path.description}</p>
                         <div className="flex items-center gap-3 mt-2">
-                            <DifficultyBadge level={path.difficulty || 'beginner'} />
+                            <DifficultyBadge level={path.difficulty_start || 'beginner'} />
                             <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                 <BookOpen size={12} />
                                 {lessons.length} lessons

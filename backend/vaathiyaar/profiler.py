@@ -93,6 +93,24 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
             skill_level, diagnostic_score, user_type
         ])
 
+        # Reflect the computed skill level in the Profile's difficulty preference,
+        # which lives in user_settings (the table the Profile UI reads), so the
+        # UI + recommendations match what the user told us during onboarding.
+        try:
+            cursor.execute("SELECT user_id FROM user_settings WHERE user_id = ?", [user_id])
+            if cursor.fetchone():
+                cursor.execute(
+                    "UPDATE user_settings SET difficulty_preference = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+                    [skill_level, user_id],
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO user_settings (user_id, difficulty_preference, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+                    [user_id, skill_level],
+                )
+        except Exception:
+            pass  # user_settings may not exist on older schemas
+
         cursor.execute("""
             UPDATE users
             SET preferred_language = ?,

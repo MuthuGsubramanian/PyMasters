@@ -402,7 +402,7 @@ export function Overview() {
                                         {recommendation?.title || recommendation?.recommended_lesson?.title || 'Continue in the Classroom'}
                                     </h4>
                                     <p className="text-sm text-text-secondary mb-3 leading-relaxed">
-                                        {recommendation?.description || 'Pick up where you left off — explore hands-on lessons across every track in the Classroom.'}
+                                        {recommendation?.description || 'Jump into hands-on lessons across every track in the Classroom.'}
                                     </p>
                     {recommendation?.reason && (
                                         <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
