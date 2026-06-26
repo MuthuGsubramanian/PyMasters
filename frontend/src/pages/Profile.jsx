@@ -381,7 +381,7 @@ export default function Profile() {
 
                 // Stats
                 setStats({
-                    totalXp: p.points || p.xp || 0,
+                    totalXp: p.points || p.xp || user?.points || 0,
                     modulesCompleted: p.modules_completed ?? p.completions?.length ?? 0,
                     currentStreak: p.streak || 0,
                     timeSpent: p.time_spent || 0,

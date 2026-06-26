@@ -36,13 +36,25 @@ def _get_db_path():
 
 
 def _update_job_status(job_id, status, stage_data=None, error=None):
-    conn = sqlite3.connect(_get_db_path())
-    conn.execute(
-        "UPDATE module_generation_jobs SET status = ?, current_stage_data = ?, error_message = ?, updated_at = ? WHERE id = ?",
-        [status, json.dumps(stage_data) if stage_data else None, error, datetime.utcnow().isoformat(), job_id],
-    )
-    conn.commit()
-    conn.close()
+    # Defensive: a failure to record status must never raise — otherwise the
+    # error-handling path in run_pipeline() re-enters here and crashes the worker
+    # thread with an unhandled exception (e.g. missing table on a fresh DB).
+    conn = None
+    try:
+        conn = sqlite3.connect(_get_db_path())
+        conn.execute(
+            "UPDATE module_generation_jobs SET status = ?, current_stage_data = ?, error_message = ?, updated_at = ? WHERE id = ?",
+            [status, json.dumps(stage_data) if stage_data else None, error, datetime.utcnow().isoformat(), job_id],
+        )
+        conn.commit()
+    except Exception as exc:  # pragma: no cover - best-effort status write
+        print(f"[pipeline] could not update job {job_id} status to {status}: {exc}")
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def _extract_json(raw: str) -> dict:

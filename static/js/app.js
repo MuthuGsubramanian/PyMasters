@@ -529,7 +529,7 @@ async function renderDashboard(container) {
 
 // --- Tutor ---
 let tutorMessages = [];
-let tutorSettings = { model: 'gpt-4', temperature: 0.7, max_tokens: 2048 };
+let tutorSettings = { model: 'mistralai/Mixtral-8x7B-Instruct-v0.1', temperature: 0.4, max_tokens: 512 };
 
 async function renderTutor(container) {
     container.innerHTML = `<div class="page-container" id="tutor-page"></div>`;
@@ -595,11 +595,10 @@ async function renderTutor(container) {
         setLoading(sendBtn, true);
 
         const res = await api.post('/api/tutor/chat', {
-            message: text,
+            messages: tutorMessages,
             model: tutorSettings.model,
             temperature: tutorSettings.temperature,
             max_tokens: tutorSettings.max_tokens,
-            history: tutorMessages.slice(0, -1),
         });
 
         setLoading(sendBtn, false);

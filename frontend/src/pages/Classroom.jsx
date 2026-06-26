@@ -129,6 +129,14 @@ function resolveText(obj, language = 'en') {
 // ──────────────────────────────────────────────────────────────────────────────
 // Track metadata
 // ──────────────────────────────────────────────────────────────────────────────
+const _TRACK_ACRONYMS = { ai: 'AI', ml: 'ML', dsa: 'DSA', api: 'API', ui: 'UI', ux: 'UX', devops: 'DevOps', tdd: 'TDD', oop: 'OOP', sql: 'SQL', css: 'CSS', html: 'HTML', rag: 'RAG', llm: 'LLM' };
+function humanizeTrack(id) {
+    return String(id || 'Lessons')
+        .split('_')
+        .map((w) => _TRACK_ACRONYMS[w.toLowerCase()] || (w ? w[0].toUpperCase() + w.slice(1) : w))
+        .join(' ');
+}
+
 const TRACK_META = {
     python_fundamentals: {
         name: 'Python Fundamentals',
@@ -296,7 +304,7 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
             ) : (
                 <div className="space-y-4">
                     {presentTracks.map((track) => {
-                        const meta = TRACK_META[track] || { name: track, icon: <BookOpen size={16} />, accent: '#64748b', gradient: 'from-slate-100 to-slate-50' };
+                        const meta = TRACK_META[track] || { name: humanizeTrack(track), icon: <BookOpen size={16} />, accent: '#64748b', gradient: 'from-slate-100 to-slate-50' };
                         const isExpanded = expandedTrack === track;
                         const lessonsInTrack = grouped[track];
 

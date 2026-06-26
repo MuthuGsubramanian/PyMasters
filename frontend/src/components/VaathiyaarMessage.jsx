@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Play, Plus, X } from 'lucide-react';
@@ -57,8 +58,8 @@ export default function VaathiyaarMessage() {
                     <div className="rounded-2xl overflow-hidden border border-purple-200 bg-gradient-to-r from-purple-50 via-white to-cyan-50 shadow-sm">
                         <div className="h-1 bg-gradient-to-r from-purple-400 via-cyan-400 to-blue-500" />
                         <div className="p-5 flex items-start gap-4">
-                            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg select-none shadow-md shadow-purple-300/20">
-                                {'🧑‍🏫'}
+                            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center select-none shadow-md shadow-purple-300/20">
+                                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">

@@ -725,9 +725,37 @@ class QuizSubmission(BaseModel):
 
 # --- Helper: Auth ---
 import hashlib
+import hmac
+try:
+    from passlib.hash import bcrypt as _bcrypt
+    _HAS_BCRYPT = True
+except Exception:  # pragma: no cover - bcrypt is a declared dependency
+    _HAS_BCRYPT = False
+
+
+def _legacy_sha256(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
 
 def hash_pw(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash a NEW password with bcrypt (salted, slow). Falls back to sha256 only if
+    passlib/bcrypt is unavailable (it is a declared dependency, so this is defensive)."""
+    if _HAS_BCRYPT:
+        return _bcrypt.using(rounds=12).hash(password)
+    return _legacy_sha256(password)
+
+
+def verify_pw(password: str, stored_hash: str) -> bool:
+    """Verify a password against a stored hash. Supports bcrypt and legacy unsalted sha256
+    so existing accounts keep working while we migrate them to bcrypt on next login."""
+    if not stored_hash:
+        return False
+    if str(stored_hash).startswith("$2"):  # bcrypt
+        try:
+            return _HAS_BCRYPT and _bcrypt.verify(password, stored_hash)
+        except Exception:
+            return False
+    return hmac.compare_digest(str(stored_hash), _legacy_sha256(password))
 
 # --- Routes ---
 
@@ -780,16 +808,23 @@ def login(user: UserLogin):
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
-        hashed = hash_pw(user.password)
-        # Fetch basic info + points + unlocks + onboarding status
+        # Fetch by username, then verify (supports bcrypt + legacy sha256).
         cursor.execute(
-            "SELECT id, name, points, unlocked_modules, onboarding_completed, account_type FROM users WHERE username = ? AND password_hash = ?",
-            [user.username, hashed]
+            "SELECT id, name, points, unlocked_modules, onboarding_completed, account_type, password_hash FROM users WHERE username = ?",
+            [user.username]
         )
         record = cursor.fetchone()
 
-        if not record:
+        if not record or not verify_pw(user.password, record[6]):
             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Transparent upgrade: re-hash legacy (non-bcrypt) passwords with bcrypt on login.
+        if record[6] and not str(record[6]).startswith("$2"):
+            try:
+                cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(user.password), record[0]])
+                conn.commit()
+            except Exception:
+                pass
 
         # Blocked users cannot sign in (super admin can suspend access).
         blocked_row = cursor.execute("SELECT COALESCE(is_blocked,0) FROM users WHERE id = ?", [record[0]]).fetchone()
@@ -840,7 +875,7 @@ def change_password(req: ChangePasswordRequest, caller: str = Depends(get_curren
         row = cursor.execute("SELECT password_hash FROM users WHERE id = ?", [caller]).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
-        if row[0] != hash_pw(req.current_password):
+        if not verify_pw(req.current_password, row[0]):
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
         cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), caller])
         conn.commit()
