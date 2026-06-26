@@ -190,7 +190,7 @@ export default function Playground() {
     const [showSidebar, setShowSidebar] = useState(false);
 
     // Code terminal state
-    const [code, setCode] = useState('# Write Python code here...\n\n');
+    const [code, setCode] = useState('');
     const [output, setOutput] = useState('');
     const [running, setRunning] = useState(false);
     const [executionTime, setExecutionTime] = useState(null);
@@ -383,7 +383,7 @@ export default function Playground() {
         if (code.trim() && code.trim() !== '# Write Python code here...') {
             if (!window.confirm('Clear all code? This cannot be undone.')) return;
         }
-        setCode('# Write Python code here...\n\n');
+        setCode('');
         setOutput('');
     };
 

@@ -189,9 +189,14 @@ const REACTIONS = {
         career_switcher: "What a brave step! 🔄 I'll guide you through a structured path from zero to job-ready. You've got this, and I'm here every step of the way!",
         hobbyist: "A curious mind! 🎮 The best kind of learner! We'll focus on fun projects and creative experiments — learning should be enjoyable!",
     },
+    // goal-specific (distinct from motivation reactions so AI/ML isn't repeated)
+    goal: {
+        ai_ml: "Building intelligent systems with Python — from data to deployed models. Let's go! \ud83e\udd16",
+    },
     // social_profiles
     social_profiles: {
         done: "Perfect! Those profiles will help me understand your background even better. Let's keep going! 🔗",
+        skipped: "No problem — you can add those anytime from your profile. Let's keep going! 🔗",
     },
     // motivation
     career_switch:   "Bold move! Python is the #1 language for career changers. 💪",
@@ -398,7 +403,7 @@ function LangPickerBlock({ onSelect, disabled }) {
     );
 }
 
-function ContactInputBlock({ onSelect, disabled }) {
+function ContactInputBlock({ onSelect, disabled, requireContact }) {
     const [email, setEmail] = useState('');
     const [whatsapp, setWhatsapp] = useState('');
     const [error, setError] = useState('');
@@ -406,6 +411,10 @@ function ContactInputBlock({ onSelect, disabled }) {
     const handleSubmit = () => {
         if (email && !email.includes('@')) {
             setError('Please enter a valid email address');
+            return;
+        }
+        if (requireContact && !email && !whatsapp) {
+            setError('You asked for reminders — add an email or WhatsApp number, or go back and choose "Skip for now".');
             return;
         }
         setError('');
@@ -501,12 +510,30 @@ export default function Onboarding() {
             ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?`
             : "Vanakkam! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?");
 
-    const [messages, setMessages] = useState([
+    // --- Resume support: persist progress so a refresh / drop-off doesn't restart ---
+    const storageKey = `pymasters_onboarding_${user?.id || 'guest'}_${isOrg ? 'org' : 'ind'}`;
+    const loadSaved = () => {
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (!raw) return null;
+            const sv = JSON.parse(raw);
+            if (sv && Array.isArray(sv.messages) && sv.messages.length > 0) {
+                // keep the module id counter ahead of restored ids to avoid key clashes
+                msgId = Math.max(msgId, ...sv.messages.map((m) => m.id || 0));
+                return sv;
+            }
+        } catch { /* ignore corrupt state */ }
+        return null;
+    };
+    const saved = loadSaved();
+
+    const [messages, setMessages] = useState(saved?.messages || [
         makeMsg('vaathiyaar', greeting),
         makeMsg('vaathiyaar', questions[0].text, { questionIndex: 0 }),
     ]);
-    const [currentStep, setCurrentStep] = useState(0);
-    const [answers, setAnswers] = useState({});
+    const [currentStep, setCurrentStep] = useState(saved?.currentStep ?? 0);
+    const [answers, setAnswers] = useState(saved?.answers || {});
+    const [stepHistory, setStepHistory] = useState(saved?.stepHistory || []);
     const [busy, setBusy] = useState(false);
     const [done, setDone] = useState(false);
 
@@ -516,6 +543,28 @@ export default function Onboarding() {
     }, [messages]);
 
     const addMsg = (msg) => setMessages((prev) => [...prev, msg]);
+
+    // Persist progress on every change; clear it once onboarding completes.
+    useEffect(() => {
+        try {
+            if (done) localStorage.removeItem(storageKey);
+            else localStorage.setItem(storageKey, JSON.stringify({ messages, currentStep, answers, stepHistory }));
+        } catch { /* storage unavailable */ }
+    }, [messages, currentStep, answers, stepHistory, done]);
+
+    // Go back to the previous question (lets users fix a mis-tapped answer).
+    const goBack = () => {
+        if (busy || done || stepHistory.length === 0) return;
+        const prevStep = stepHistory[stepHistory.length - 1];
+        setStepHistory((prev) => prev.slice(0, -1));
+        setMessages((prev) => {
+            const idx = prev.findIndex((m) => m.questionIndex === prevStep);
+            return idx >= 0 ? prev.slice(0, idx + 1) : prev;
+        });
+        const prevQ = questions[prevStep];
+        setAnswers((prev) => { const c = { ...prev }; if (prevQ) delete c[prevQ.key]; return c; });
+        setCurrentStep(prevStep);
+    };
 
     const handleAnswer = async (option) => {
         if (busy || done) return;
@@ -563,6 +612,7 @@ export default function Onboarding() {
             // Next question after a short pause
             await delay(800);
             addMsg(makeMsg('vaathiyaar', questions[nextStep].text, { questionIndex: nextStep }));
+            setStepHistory((prev) => [...prev, currentStep]);
             setCurrentStep(nextStep);
             setBusy(false);
         } else {
@@ -661,10 +711,18 @@ export default function Onboarding() {
                     <p className="text-xs font-bold uppercase tracking-widest text-purple-600">PyMasters</p>
                     <p className="text-[11px] text-slate-500">Onboarding with Vaathiyaar</p>
                 </div>
+                <button
+                    type="button"
+                    onClick={() => navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom')}
+                    className="ml-auto text-[11px] font-semibold text-slate-400 hover:text-purple-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
+                    title="You can finish this later from your profile"
+                >
+                    Skip setup →
+                </button>
             </header>
 
             {/* Message feed */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-4 max-w-2xl w-full mx-auto">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-4 max-w-2xl w-full mx-auto" role="log" aria-live="polite" aria-label="Onboarding conversation">
                 <AnimatePresence initial={false}>
                     {messages.map((msg) => {
                         if (msg.role === 'vaathiyaar') {
@@ -712,7 +770,7 @@ export default function Onboarding() {
                                             {questions[msg.questionIndex].type === 'language' ? (
                                                 <LangPickerBlock onSelect={handleAnswer} disabled={busy} />
                                             ) : questions[msg.questionIndex].type === 'contact' ? (
-                                                <ContactInputBlock onSelect={handleAnswer} disabled={busy} />
+                                                <ContactInputBlock onSelect={handleAnswer} disabled={busy} requireContact={answers.contact_preference === 'yes'} />
                                             ) : questions[msg.questionIndex].type === 'social' ? (
                                                 <motion.div
                                                     initial={{ opacity: 0, y: 10 }}
@@ -746,7 +804,7 @@ export default function Onboarding() {
                                                             />
                                                         </div>
                                                         <button
-                                                            onClick={() => handleAnswer({ value: 'done', label: (answers.linkedin_url || answers.github_url) ? 'Profiles added' : 'Skipped' })}
+                                                            onClick={() => { const hasProfiles = answers.linkedin_url || answers.github_url; handleAnswer({ value: hasProfiles ? 'done' : 'skipped', label: hasProfiles ? 'Profiles added' : 'Skipped' }); }}
                                                             className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm hover:scale-[1.02] transition-transform"
                                                         >
                                                             {(answers.linkedin_url || answers.github_url) ? 'Save & Continue ✓' : 'Skip for Now →'}
@@ -777,12 +835,40 @@ export default function Onboarding() {
                 <div ref={bottomRef} />
             </div>
 
-            {/* Footer — progress + dots */}
-            <footer className="flex-shrink-0 px-4 py-5 border-t border-slate-200 flex flex-col items-center gap-3">
+            {/* Footer — progress + back + dots */}
+            <footer className="flex-shrink-0 px-4 py-4 border-t border-slate-200 flex flex-col items-center gap-2.5">
+                {/* Linear progress bar */}
+                <div
+                    className="w-full max-w-2xl h-1.5 rounded-full bg-slate-200/70 overflow-hidden"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={questions.length}
+                    aria-valuenow={done ? questions.length : currentStep}
+                    aria-label="Onboarding progress"
+                >
+                    <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-500"
+                        initial={false}
+                        animate={{ width: `${((done ? questions.length : currentStep) / questions.length) * 100}%` }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+                    />
+                </div>
                 <ProgressDots total={questions.length} current={done ? questions.length : currentStep} />
-                <p className="text-[11px] text-slate-600">
-                    {done ? 'All done!' : `Question ${currentStep + 1} of ${questions.length}`}
-                </p>
+                <div className="flex items-center gap-4">
+                    {!done && stepHistory.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={goBack}
+                            disabled={busy}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-1"
+                        >
+                            ← Back
+                        </button>
+                    )}
+                    <p className="text-[11px] text-slate-600">
+                        {done ? 'All done!' : `Question ${currentStep + 1} of ${questions.length} · ~${Math.max(1, Math.ceil(questions.length / 5))} min`}
+                    </p>
+                </div>
             </footer>
         </div>
     );

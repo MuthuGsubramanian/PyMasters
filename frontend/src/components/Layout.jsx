@@ -125,7 +125,7 @@ export default function Layout() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+                <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
                     <div className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-3 mb-1.5 mt-1">Navigation</div>
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
@@ -133,8 +133,10 @@ export default function Layout() {
                             <button
                                 key={item.path}
                                 onClick={() => { navigate(item.path); setSidebarOpen(false); }}
+                                aria-current={isActive ? 'page' : undefined}
+                                title={item.desc}
                                 className={clsx(
-                                    "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 group relative",
+                                    "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
                                     isActive
                                         ? "bg-accent-subtle text-accent-primary font-semibold"
                                         : "hover:bg-bg-elevated text-text-muted hover:text-text-secondary"
@@ -160,7 +162,7 @@ export default function Layout() {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={logout}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-100"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
                         >
                             <LogOut size={13} /> Sign Out
                         </button>

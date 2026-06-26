@@ -353,6 +353,37 @@ class TestProfilerService:
         assert user_row[1] == 1
         conn.close()
 
+    def test_save_onboarding_maps_difficulty_preference(self, initialized_db):
+        """Onboarding's computed skill level should drive user_settings.difficulty_preference
+        so the Profile UI + recommendations reflect what the user told us (regression for PR1)."""
+        from vaathiyaar.profiler import save_onboarding
+        conn, db_path = initialized_db
+
+        conn.execute(
+            "INSERT INTO users (id, username, name, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+            ["user-diff", "senior", "Senior Dev"],
+        )
+        conn.commit()
+
+        # Senior developer who already knows another language -> 'advanced'
+        save_onboarding(db_path, "user-diff", {
+            "motivation": "ai_ml",
+            "prior_experience": "other_language",
+            "known_languages": "Java",
+            "learning_style": "hands_on",
+            "goal": "ai_ml",
+            "time_commitment": "30min",
+            "preferred_language": "en",
+            "user_type": "senior_developer",
+        })
+
+        row = conn.execute(
+            "SELECT difficulty_preference FROM user_settings WHERE user_id = ?",
+            ["user-diff"],
+        ).fetchone()
+        assert row is not None, "user_settings row should be created by onboarding"
+        assert row[0] == "advanced", f"expected 'advanced', got {row[0]!r}"
+
     def test_record_signal(self, tmp_path):
         """record_signal should insert exactly one row into learning_signals."""
         from vaathiyaar.profiler import record_signal
