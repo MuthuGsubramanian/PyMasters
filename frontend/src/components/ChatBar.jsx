@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import { Send, Loader2 } from 'lucide-react';
 
 export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loading = false }) {
@@ -31,16 +32,10 @@ export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loa
             }`}
         >
             {/* Vaathiyaar Avatar */}
-            <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg select-none transition-all duration-300 ${
-                focused
-                    ? 'bg-gradient-to-br from-purple-500 to-cyan-500 scale-105 shadow-md shadow-purple-300/30'
-                    : 'bg-purple-100 border border-purple-200'
+            <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center select-none transition-all duration-300 bg-gradient-to-br from-purple-500 to-cyan-500 ${
+                focused ? 'scale-105 shadow-md shadow-purple-300/30' : ''
             }`}>
-                {focused ? (
-                    <span className="text-sm">{'🧑‍🏫'}</span>
-                ) : (
-                    <span className="text-sm">{'🧑‍🏫'}</span>
-                )}
+                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[55%] h-[55%]" />
             </div>
 
             {/* Input */}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -19,8 +20,8 @@ import { Button, Badge } from '../components/ui';
 function ThinkingBubble() {
     return (
         <div className="flex items-start gap-3 max-w-[85%]">
-            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center text-sm select-none mt-1 shadow-glow">
-                {'🧑‍🏫'}
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center select-none mt-1 shadow-glow">
+                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
             </div>
             <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-accent-primary/40">
                 <div className="flex items-center gap-2">
@@ -617,8 +618,8 @@ export default function Playground() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-center py-12"
                             >
-                                <div className="w-16 h-16 rounded-2xl bg-accent-subtle border border-accent-primary/20 flex items-center justify-center text-3xl mx-auto mb-4 select-none shadow-glow">
-                                    {'🧑‍🏫'}
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4 select-none shadow-glow">
+                                    <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
                                 </div>
                                 <h2 className="text-lg font-bold text-text-primary mb-2 font-display">
                                     {user?.name || user?.username
@@ -659,8 +660,8 @@ export default function Playground() {
                                 >
                                     {msg.role === 'assistant' ? (
                                         <div className="flex items-start gap-2.5 max-w-[90%]">
-                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center text-xs select-none mt-1 shadow-glow">
-                                                {'🧑‍🏫'}
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center select-none mt-1 shadow-glow">
+                                                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
                                             </div>
                                             <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-accent-primary/40 text-text-primary text-sm leading-relaxed min-w-0">
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
