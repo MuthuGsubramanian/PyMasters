@@ -855,18 +855,22 @@ export default function OrgDashboard() {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-text-primary">{displayName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-text-primary truncate">{displayName}</span>
                           {m.username && m.name && (
-                            <span className="text-xs text-text-muted">@{String(m.username)}</span>
+                            <span className="text-xs text-text-muted shrink-0">@{String(m.username)}</span>
                           )}
-                          <RoleBadge role={m.role || 'member'} />
                         </div>
-                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                          {m.email && <span className="text-xs text-text-muted">{String(m.email)}</span>}
-                          {m.department && <span className="text-xs text-text-muted">| {String(m.department)}</span>}
-                          <span className="text-xs text-accent-primary font-medium">{Number(m.xp || m.points) || 0} XP</span>
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-text-muted min-w-0">
+                          {m.email && <span className="truncate">{String(m.email)}</span>}
+                          {m.department && <span className="text-text-disabled shrink-0">· {String(m.department)}</span>}
                         </div>
+                      </div>
+
+                      {/* Meta: role + XP (right-aligned) */}
+                      <div className="flex items-center gap-3 shrink-0 sm:ml-auto">
+                        <RoleBadge role={m.role || 'member'} />
+                        <span className="text-xs text-accent-primary font-semibold whitespace-nowrap">{Number(m.xp || m.points) || 0} XP</span>
                       </div>
 
                       {/* Links */}
