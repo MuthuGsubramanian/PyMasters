@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
+import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import LanguageSelector from '../components/LanguageSelector';
 
 // ---------------------------------------------------------------------------
@@ -271,8 +272,8 @@ function VaathiyaarBubble({ text }) {
             className="flex items-start gap-3 max-w-[85%]"
         >
             {/* Avatar */}
-            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-lg select-none mt-1">
-                🧑‍🏫
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center select-none mt-1 shadow-md shadow-purple-300/20">
+                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
             </div>
             {/* Bubble */}
             <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-slate-800 text-sm leading-relaxed">
@@ -658,7 +659,8 @@ export default function Onboarding() {
                 let recommendedPath = null;
                 try {
                     const recRes = await api.get(`/paths/recommend?user_id=${user?.id}`);
-                    recommendedPath = recRes.data;
+                    // API returns { recommended: {...} }
+                    recommendedPath = recRes.data?.recommended || null;
                 } catch (e) {
                     console.log('Path recommendation not available:', e);
                 }
@@ -669,9 +671,10 @@ export default function Onboarding() {
                         : "Based on everything you told me, I've found the perfect learning path for you! 🎯"
                     ));
                     await delay(600);
-                    const lessons = recommendedPath.lesson_sequence
-                        ? JSON.parse(recommendedPath.lesson_sequence).length
-                        : '?';
+                    const lessons = recommendedPath.lesson_count
+                        ?? (Array.isArray(recommendedPath.lesson_sequence)
+                            ? recommendedPath.lesson_sequence.length
+                            : '?');
                     addMsg(makeMsg('vaathiyaar',
                         `**${recommendedPath.name}**\n\n${recommendedPath.description || ''}\n\n` +
                         `📚 ${lessons} lessons · ⏱️ ~${recommendedPath.estimated_hours || '?'} hours · ` +

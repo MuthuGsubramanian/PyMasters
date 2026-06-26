@@ -961,13 +961,13 @@ export default function OrgDashboard() {
                     onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                     placeholder="member@example.com"
                     aria-label="Member email to invite"
-                    className="input-neo flex-1 px-4 py-2.5 text-sm"
+                    className="input-neo flex-1 min-w-0 px-4 py-2.5 text-sm"
                   />
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
                     aria-label="Invite role"
-                    className="input-neo px-3 py-2.5 text-sm"
+                    className="input-neo w-full sm:w-32 px-3 py-2.5 text-sm"
                   >
                     <option value="member">Member</option>
                     <option value="manager">Manager</option>

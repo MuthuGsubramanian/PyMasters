@@ -140,13 +140,14 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
     lessons = []
     for track_dir in sorted(base.iterdir()):
         if track_dir.is_dir() and track_dir.name != "__pycache__":
+            track_lessons = []
             for lesson_file in sorted(track_dir.glob("*.json")):
                 if lesson_file.name == "schema.json":
                     continue
                 try:
                     with open(lesson_file, "r", encoding="utf-8") as f:
                         data = json.load(f)
-                        lessons.append({
+                        track_lessons.append({
                             "id": data.get("id", lesson_file.stem),
                             "title": data.get("title", {}),
                             "description": data.get("description", {}),
@@ -154,11 +155,15 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
                             "topic": data.get("topic"),
                             "track": data.get("track"),
                             "module": data.get("module"),
-                            "order": data.get("order", 0),
+                            "order": data.get("order", 9999),
                         })
                 except Exception as e:
                     print(f"Warning: Failed to load lesson {lesson_file}: {e}")
                     continue
+            # Order lessons pedagogically by curriculum 'order' (not alphabetical filename),
+            # so e.g. "Python Fundamentals" starts with basics rather than adv_* lessons.
+            track_lessons.sort(key=lambda L: (L.get("order", 9999), L.get("id") or ""))
+            lessons.extend(track_lessons)
 
     # Generated lessons from database
     if user_id:
