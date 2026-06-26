@@ -559,7 +559,7 @@ export default function Home() {
                                 </ul>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <a
-                                        href="mailto:legal@pymasters.net?subject=PyMasters%20for%20Organizations"
+                                        href="mailto:muthu@pymasters.net?subject=PyMasters%20for%20Organizations"
                                         className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] transition-transform shadow-lg shadow-purple-900/40"
                                     >
                                         <Mail size={16} aria-hidden="true" />
