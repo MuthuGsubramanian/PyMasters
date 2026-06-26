@@ -215,4 +215,32 @@ export const getChallengeLeaderboard = () => api.get('/challenges/leaderboard');
 export const getQuickReference = (topic) => api.get(`/reference/${topic}`);
 export const getQuickReferenceTopics = () => api.get('/reference/topics');
 
+// Session
+export const getMe = () => api.get('/auth/me');
+
+// Community — global ranking + member directory + connections
+export const getGlobalLeaderboard = (scope = 'xp', limit = 25, offset = 0) =>
+    api.get('/leaderboard/global', { params: { scope, limit, offset } });
+export const getMembers = (q = '', limit = 24, offset = 0) =>
+    api.get('/members', { params: { q: q || undefined, limit, offset } });
+export const getMemberProfile = (userId) => api.get(`/members/${userId}`);
+export const followMember = (targetId) => api.post(`/connections/${targetId}`);
+export const unfollowMember = (targetId) => api.delete(`/connections/${targetId}`);
+export const getConnections = (userId, kind = 'following') =>
+    api.get(`/connections/${userId}`, { params: { kind } });
+
+// Org competitive challenges
+export const getChallengeCatalog = () => api.get('/org/challenges/catalog');
+export const getOrgChallengeSets = (orgId) => api.get(`/org/${orgId}/challenges`);
+export const createOrgChallengeSet = (orgId, data) => api.post(`/org/${orgId}/challenges`, data);
+export const archiveOrgChallengeSet = (orgId, setId) => api.delete(`/org/${orgId}/challenges/${setId}`);
+export const getChallengeSetLeaderboard = (orgId, setId) =>
+    api.get(`/org/${orgId}/challenges/${setId}/leaderboard`);
+export const getOrgLeaderboard = (orgId, group) =>
+    api.get(`/org/${orgId}/leaderboard`, { params: group ? { group } : {} });
+
+// LinkedIn OAuth
+export const getLinkedInConfig = () => api.get('/auth/linkedin/config');
+export const startLinkedIn = () => api.get('/auth/linkedin/start');
+
 export default api;

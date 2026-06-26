@@ -48,7 +48,11 @@ export default function Layout() {
             { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
             { icon: Swords, label: 'Challenges', path: '/dashboard/challenges', desc: 'Weekly coding battles' },
             { icon: BookOpen, label: 'Reference', path: '/dashboard/reference', desc: 'Quick cheat sheets' },
+            { icon: Trophy, label: 'Community', path: '/dashboard/community', desc: 'Rankings & members' },
         ];
+        if (activeOrg) {
+            items.push({ icon: Swords, label: 'Compete', path: '/dashboard/org-compete', desc: 'Org challenges & leaderboard' });
+        }
         if (activeOrg && (activeOrg.role === 'super_admin' || activeOrg.role === 'admin')) {
             items.push({ icon: Building2, label: 'Admin Console', path: '/dashboard/org', desc: 'Members, invites & analytics' });
         }

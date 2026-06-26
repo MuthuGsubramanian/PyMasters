@@ -11,6 +11,7 @@ Prefix: /api  (routes namespaced below to avoid collisions)
 """
 
 import os
+import json
 import sqlite3
 from typing import Optional
 
@@ -300,6 +301,48 @@ def unfollow(target_id: str, caller: str = Depends(get_current_user_id)):
             "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]
         ).fetchone()[0]
         return {"status": "disconnected", "following": False, "target_followers": followers}
+    finally:
+        conn.close()
+
+
+@router.get("/auth/me")
+def get_me(caller: str = Depends(get_current_user_id)):
+    """Token-based 'who am I'. Returns the same session shape as /api/auth/login
+    so OAuth (and any token-only client) can hydrate the user session."""
+    conn = _connect()
+    try:
+        u = conn.execute(
+            "SELECT id, name, username, COALESCE(points,0) AS points, unlocked_modules, "
+            "COALESCE(onboarding_completed,0) AS oc, COALESCE(account_type,'individual') AS at "
+            "FROM users WHERE id=?",
+            [caller],
+        ).fetchone()
+        if not u:
+            raise HTTPException(status_code=404, detail="User not found")
+        org = conn.execute(
+            "SELECT o.id, o.name, o.type, om.role, om.department "
+            "FROM org_members om JOIN organizations o ON o.id = om.org_id "
+            "WHERE om.user_id=? LIMIT 1",
+            [caller],
+        ).fetchone()
+        org_info = None
+        if org:
+            org_info = {
+                "id": org["id"], "org_id": org["id"],
+                "name": org["name"], "org_name": org["name"],
+                "type": org["type"], "org_type": org["type"],
+                "role": org["role"], "department": org["department"] or "",
+            }
+        try:
+            unlocked = json.loads(u["unlocked_modules"]) if u["unlocked_modules"] else ["module_1"]
+        except Exception:
+            unlocked = ["module_1"]
+        return {
+            "id": u["id"], "name": u["name"], "username": u["username"],
+            "points": u["points"], "unlocked": unlocked,
+            "onboarding_completed": bool(u["oc"]), "account_type": u["at"],
+            "org": org_info,
+        }
     finally:
         conn.close()
 
