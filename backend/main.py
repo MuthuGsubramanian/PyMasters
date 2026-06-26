@@ -35,6 +35,9 @@ from routes.admin import router as admin_router
 from routes.podcasts import router as podcasts_router
 from routes.review import router as review_router
 from routes.voice import router as voice_router
+from routes.social import router as social_router, ensure_social_tables
+from routes.org_challenges import router as org_challenges_router, ensure_org_challenge_tables
+from routes.oauth import router as oauth_router, ensure_oauth_tables
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -609,6 +612,14 @@ def init_db():
             )
         """)
 
+        # ── Community + competition + OAuth tables (Aug-launch features) ──
+        try:
+            ensure_social_tables(DB_PATH)
+            ensure_org_challenge_tables(DB_PATH)
+            ensure_oauth_tables(DB_PATH)
+        except Exception as e:
+            print(f"Community/OAuth table init: {e}")
+
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
@@ -674,6 +685,9 @@ app.include_router(admin_router)
 app.include_router(podcasts_router)
 app.include_router(review_router)
 app.include_router(voice_router)
+app.include_router(social_router)
+app.include_router(org_challenges_router)
+app.include_router(oauth_router)
 
 # --- CORS ---
 origins = [
