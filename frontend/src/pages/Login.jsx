@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser, registerUser, createOrg } from '../api';
+import { loginUser, registerUser, createOrg, getMe, getLinkedInConfig, startLinkedIn } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft } from 'lucide-react';
+import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft, Linkedin } from 'lucide-react';
 import clsx from 'clsx';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
@@ -24,8 +24,49 @@ export default function Login() {
     const [orgType, setOrgType] = useState(''); // school | university | enterprise | other
     const [orgDomain, setOrgDomain] = useState('');
     const [orgStep, setOrgStep] = useState(0); // 0=type select, 1=org details, 2=admin account
+    const [linkedinEnabled, setLinkedinEnabled] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    // Handle LinkedIn OAuth return (?li_token / ?li_error) and probe availability.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const liErr = params.get('li_error');
+        const liToken = params.get('li_token');
+        if (liErr) {
+            setError(liErr);
+            window.history.replaceState({}, '', '/login');
+        } else if (liToken) {
+            (async () => {
+                setLoading(true);
+                try {
+                    localStorage.setItem('pm_user', JSON.stringify({ token: liToken }));
+                    const me = await getMe();
+                    const data = { ...me.data, token: liToken };
+                    setSuccess(true);
+                    await new Promise((r) => setTimeout(r, 250));
+                    login(data);
+                    window.history.replaceState({}, '', '/login');
+                    navigate(data.onboarding_completed ? '/dashboard' : '/onboarding');
+                } catch {
+                    localStorage.removeItem('pm_user');
+                    setError('Could not complete LinkedIn sign-in. Please try again.');
+                    setLoading(false);
+                }
+            })();
+        }
+        getLinkedInConfig().then((r) => setLinkedinEnabled(!!r.data?.enabled)).catch(() => {});
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleLinkedIn = async () => {
+        setError('');
+        try {
+            const r = await startLinkedIn();
+            if (r.data?.authorize_url) window.location.href = r.data.authorize_url;
+        } catch {
+            setError('LinkedIn sign-in is unavailable right now.');
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -505,6 +546,23 @@ export default function Login() {
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-700" />
                                         )}
                                     </button>
+
+                                    {linkedinEnabled && (isLogin || accountType === 'individual') && (
+                                        <>
+                                            <div className="flex items-center gap-3 my-1">
+                                                <div className="h-px flex-1 bg-white/[0.08]" />
+                                                <span className="text-[11px] uppercase tracking-wider text-slate-600">or</span>
+                                                <div className="h-px flex-1 bg-white/[0.08]" />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleLinkedIn}
+                                                className="w-full py-3 rounded-xl font-bold text-sm text-white bg-[#0a66c2] hover:bg-[#004182] transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Linkedin size={18} /> Continue with LinkedIn
+                                            </button>
+                                        </>
+                                    )}
                                 </form>
                             </motion.div>
                         )}
