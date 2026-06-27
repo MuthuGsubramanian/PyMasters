@@ -38,6 +38,7 @@ from routes.voice import router as voice_router
 from routes.social import router as social_router, ensure_social_tables
 from routes.org_challenges import router as org_challenges_router, ensure_org_challenge_tables
 from routes.oauth import router as oauth_router, ensure_oauth_tables
+from routes.discovery import router as discovery_router
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -612,7 +613,7 @@ def init_db():
             )
         """)
 
-        # ── Community + competition + OAuth tables (Aug-launch features) ──
+        # Community + competition + OAuth tables (Aug-launch features)
         try:
             ensure_social_tables(DB_PATH)
             ensure_org_challenge_tables(DB_PATH)
@@ -660,9 +661,11 @@ def init_db():
 # --- App Lifecycle ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import threading
-    t = threading.Thread(target=init_db, daemon=True)
-    t.start()
+    # Block until schema migrations + seeding finish. Previously this ran in a
+    # daemon thread so cold-start was fast, but it raced with the first
+    # requests — handlers (especially /api/auth/register) hit a table that
+    # didn't have its columns yet and surfaced a generic 500.
+    init_db()
     yield
 
 app = FastAPI(title="PyMasters API", lifespan=lifespan)
@@ -688,6 +691,7 @@ app.include_router(voice_router)
 app.include_router(social_router)
 app.include_router(org_challenges_router)
 app.include_router(oauth_router)
+app.include_router(discovery_router)
 
 # --- CORS ---
 origins = [
@@ -715,6 +719,11 @@ class UserRegister(BaseModel):
     name: Optional[str] = "Learner"
     email: Optional[str] = ""
     account_type: Optional[str] = "individual"
+    # Organization signup (only used when account_type == "organization").
+    # Sent atomically so we never end up with a user row but no org.
+    organization_name: Optional[str] = None
+    organization_type: Optional[str] = None      # school | university | enterprise | other
+    organization_domain: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
@@ -740,36 +749,51 @@ class QuizSubmission(BaseModel):
 # --- Helper: Auth ---
 import hashlib
 import hmac
+# Call bcrypt directly rather than through passlib: passlib 1.7.x reads
+# `bcrypt.__about__.__version__` which bcrypt 4.x removed, and its fallback
+# rejects ANY input (including short passwords) with a 72-byte error during
+# version probing. The bcrypt library's own hashpw/checkpw are stable.
 try:
-    from passlib.hash import bcrypt as _bcrypt
+    import bcrypt as _bcrypt_lib
     _HAS_BCRYPT = True
 except Exception:  # pragma: no cover - bcrypt is a declared dependency
     _HAS_BCRYPT = False
 
 
 def _legacy_sha256(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return hashlib.sha256((password or "").encode("utf-8")).hexdigest()
+
+
+def _bcrypt_input(password: str) -> bytes:
+    # bcrypt has a hard 72-byte limit and 4.x raises instead of auto-truncating.
+    return (password or "").encode("utf-8")[:72]
 
 
 def hash_pw(password: str) -> str:
     """Hash a NEW password with bcrypt (salted, slow). Falls back to sha256 only if
-    passlib/bcrypt is unavailable (it is a declared dependency, so this is defensive)."""
+    bcrypt is unavailable (it is a declared dependency, so this is defensive)."""
     if _HAS_BCRYPT:
-        return _bcrypt.using(rounds=12).hash(password)
+        try:
+            return _bcrypt_lib.hashpw(_bcrypt_input(password), _bcrypt_lib.gensalt(rounds=12)).decode("utf-8")
+        except Exception as e:  # pragma: no cover - defensive against backend issues
+            print(f"[hash_pw] bcrypt hashing failed ({e!r}); falling back to sha256")
     return _legacy_sha256(password)
 
 
 def verify_pw(password: str, stored_hash: str) -> bool:
-    """Verify a password against a stored hash. Supports bcrypt and legacy unsalted sha256
-    so existing accounts keep working while we migrate them to bcrypt on next login."""
+    """Verify a password against a stored hash. Supports bcrypt (current) and legacy
+    unsalted sha256 so existing accounts keep working while we migrate them on next login."""
     if not stored_hash:
         return False
-    if str(stored_hash).startswith("$2"):  # bcrypt
+    s = str(stored_hash)
+    if s.startswith("$2"):  # bcrypt
+        if not _HAS_BCRYPT:
+            return False
         try:
-            return _HAS_BCRYPT and _bcrypt.verify(password, stored_hash)
+            return bool(_bcrypt_lib.checkpw(_bcrypt_input(password), s.encode("utf-8")))
         except Exception:
             return False
-    return hmac.compare_digest(str(stored_hash), _legacy_sha256(password))
+    return hmac.compare_digest(s, _legacy_sha256(password))
 
 # --- Routes ---
 
@@ -780,39 +804,113 @@ def read_root():
 @app.post("/api/auth/register")
 def register(user: UserRegister):
     print(f"Register request for: {user.username}")
+    uname = (user.username or "").strip()
+    if not uname:
+        raise HTTPException(status_code=422, detail="Username is required.")
+    if not user.password:
+        raise HTTPException(status_code=422, detail="Password is required.")
+
+    account_type = "organization" if user.account_type == "organization" else "individual"
+    email = (user.email or "").strip()
+
+    # Super-admin allowlist gate. Email is unverified, so we refuse to register
+    # reserved super-admin addresses to prevent founder-level account takeover.
+    try:
+        from routes.admin import SUPER_ADMINS
+    except Exception:
+        SUPER_ADMINS = set()
+    if email and email.lower() in SUPER_ADMINS:
+        raise HTTPException(status_code=400, detail="This email address is reserved.")
+    is_super = uname.lower() in SUPER_ADMINS
+    onboarding_flag = 1 if is_super else 0
+
+    # Organization payload. We require the name up-front so org signups can't
+    # silently degrade to individual accounts.
+    org_name = (user.organization_name or "").strip()
+    org_type = (user.organization_type or "other").strip().lower() or "other"
+    org_domain = (user.organization_domain or "").strip()
+    if account_type == "organization" and not org_name:
+        raise HTTPException(status_code=400, detail="Organization name is required for organization signup.")
+
+    # Hash before opening the DB connection so a hashing failure can't leak a
+    # half-open transaction. hash_pw never raises in normal operation, but if it
+    # ever does we surface it cleanly instead of as a generic 500.
+    try:
+        hashed = hash_pw(user.password)
+    except Exception as e:
+        print(f"[register] hash_pw raised: {e!r}")
+        raise HTTPException(status_code=500, detail="Could not hash password. Please try again.")
+
+    user_id = str(uuid.uuid4())
+    display_name = (user.name or "").strip() or uname
+    default_unlocks = json.dumps(["module_1"])
+
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT id FROM users WHERE username = ?", [user.username])
-        existing = cursor.fetchone()
-        if existing:
-            raise HTTPException(status_code=400, detail="Username already taken")
 
-        user_id = str(uuid.uuid4())
-        hashed = hash_pw(user.password)
-        # Initialize with module_1 unlocked
-        default_unlocks = json.dumps(["module_1"])
-        account_type = user.account_type if user.account_type in ("individual", "organization") else "individual"
-        email = (user.email or "").strip()
-
-        # Super admins are granted via a username/email allowlist (break-glass).
-        # Since email is unverified, refuse to register a reserved super-admin
-        # email/username — otherwise anyone could claim founder-level access.
-        try:
-            from routes.admin import SUPER_ADMINS
-        except Exception:
-            SUPER_ADMINS = set()
-        if email.lower() in SUPER_ADMINS:
-            raise HTTPException(status_code=400, detail="This email address is reserved.")
-        is_super = (user.username or "").strip().lower() in SUPER_ADMINS
-        onboarding_flag = 1 if is_super else 0
+        cursor.execute("SELECT 1 FROM users WHERE username = ?", [uname])
+        if cursor.fetchone():
+            raise HTTPException(status_code=409, detail="Username already taken")
 
         cursor.execute(
-            "INSERT INTO users (id, username, password_hash, name, email, created_at, points, unlocked_modules, preferred_language, onboarding_completed, account_type) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', ?, ?)",
-            [user_id, user.username, hashed, user.name, email, default_unlocks, onboarding_flag, account_type]
+            "INSERT INTO users (id, username, password_hash, name, email, created_at, points, "
+            "unlocked_modules, preferred_language, onboarding_completed, account_type) "
+            "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 50, ?, 'en', ?, ?)",
+            [user_id, uname, hashed, display_name, email, default_unlocks, onboarding_flag, account_type],
         )
+
+        org_info = None
+        if account_type == "organization":
+            # Lazy schema bootstrap — init_db's nested call can lose to a SQLite
+            # write lock on a fresh DB, so we re-run it on the active connection.
+            try:
+                from routes.organizations import _ensure_org_schema
+                _ensure_org_schema(conn)
+            except Exception as e:
+                print(f"[register] _ensure_org_schema failed: {e!r}")
+            org_id = str(uuid.uuid4())
+            cursor.execute(
+                "INSERT INTO organizations (id, name, type, domain) VALUES (?, ?, ?, ?)",
+                [org_id, org_name, org_type, org_domain],
+            )
+            cursor.execute(
+                "INSERT INTO org_members (org_id, user_id, role) VALUES (?, ?, 'super_admin')",
+                [org_id, user_id],
+            )
+            org_info = {
+                "id": org_id, "org_id": org_id,
+                "name": org_name, "org_name": org_name,
+                "type": org_type, "org_type": org_type,
+                "domain": org_domain,
+                "role": "super_admin",
+            }
+
         conn.commit()
-        return {"id": user_id, "username": user.username, "name": user.name, "email": email, "points": 50, "unlocked": ["module_1"], "onboarding_completed": bool(onboarding_flag), "account_type": account_type, "token": create_access_token(user_id, user.username, 0)}
+        return {
+            "id": user_id,
+            "username": uname,
+            "name": display_name,
+            "email": email,
+            "points": 50,
+            "unlocked": ["module_1"],
+            "onboarding_completed": bool(onboarding_flag),
+            "account_type": account_type,
+            "organization": org_info,
+            "org": org_info,
+            "token": create_access_token(user_id, uname, 0),
+        }
+    except HTTPException:
+        conn.rollback()
+        raise
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        print(f"[register] integrity error: {e!r}")
+        raise HTTPException(status_code=409, detail="Username already taken.")
+    except Exception as e:
+        conn.rollback()
+        print(f"[register] unexpected error: {e!r}")
+        raise HTTPException(status_code=500, detail="Registration failed; please try again.")
     finally:
         conn.close()
 

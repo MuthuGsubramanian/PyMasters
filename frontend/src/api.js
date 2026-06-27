@@ -67,8 +67,15 @@ export const changePassword = (userId, currentPassword, newPassword) =>
     api.post('/auth/change-password', { user_id: userId, current_password: currentPassword, new_password: newPassword });
 export const forgotPassword = (identifier) => api.post('/auth/forgot-password', { identifier });
 export const resetPassword = (token, newPassword) => api.post('/auth/reset-password', { token, new_password: newPassword });
-export const registerUser = (username, password, name, account_type = 'individual', email = '') =>
-    api.post('/auth/register', { username, password, name, account_type, email });
+export const registerUser = (username, password, name, account_type = 'individual', email = '', organization = null) =>
+    api.post('/auth/register', {
+        username, password, name, account_type, email,
+        ...(organization ? {
+            organization_name: organization.name,
+            organization_type: organization.type,
+            organization_domain: organization.domain || '',
+        } : {}),
+    });
 export const runCode = (code) => api.post('/run', { code });
 export const chatAI = (prompt, context = "") => api.post('/ai/chat', { prompt, context });
 export const getModules = () => api.get('/content/modules');
@@ -218,7 +225,7 @@ export const getQuickReferenceTopics = () => api.get('/reference/topics');
 // Session
 export const getMe = () => api.get('/auth/me');
 
-// Community — global ranking + member directory + connections
+// Community
 export const getGlobalLeaderboard = (scope = 'xp', limit = 25, offset = 0) =>
     api.get('/leaderboard/global', { params: { scope, limit, offset } });
 export const getMembers = (q = '', limit = 24, offset = 0) =>
@@ -238,6 +245,10 @@ export const getChallengeSetLeaderboard = (orgId, setId) =>
     api.get(`/org/${orgId}/challenges/${setId}/leaderboard`);
 export const getOrgLeaderboard = (orgId, group) =>
     api.get(`/org/${orgId}/leaderboard`, { params: group ? { group } : {} });
+
+// Topic search + on-demand generation
+export const searchTopics = (q, userId) => api.get('/classroom/search', { params: { q, user_id: userId || undefined } });
+export const generateTopic = (data) => api.post('/classroom/generate', data);
 
 // LinkedIn OAuth
 export const getLinkedInConfig = () => api.get('/auth/linkedin/config');
