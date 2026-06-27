@@ -5,7 +5,44 @@ on:
     branches: [main]
 
 jobs:
+  test:
+    name: Backend tests (pre-deploy gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: pytest
+        working-directory: backend
+        env:
+          JWT_SECRET: ci-gate-secret-long-enough-for-validation-abcdef
+        run: python -m pytest -q --tb=short
+
+      - name: live HTTP smoke (boots real uvicorn on temp DB)
+        # Catches integration-level regressions like the passlib/bcrypt
+        # /register 500 — the kind unit tests can miss because hash_pw works
+        # locally but the deployed image's dep tree differs.
+        working-directory: backend
+        env:
+          JWT_SECRET: ci-gate-secret-long-enough-for-validation-abcdef
+        run: python tests/live_smoke_community.py
+
   deploy:
+    name: Build + Deploy to Cloud Run
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
