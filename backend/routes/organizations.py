@@ -114,13 +114,40 @@ class SetGroupsRequest(BaseModel):
 
 # -- Endpoints (ORDER MATTERS: /my and /join before /{org_id}) -------------
 
+def _ensure_org_schema(conn):
+    """Defensively guarantee org tables + columns exist before writing. Long-lived
+    prod DBs (Litestream) can lag the current schema; this prevents a missing-column
+    OperationalError from 500-ing organization creation."""
+    conn.execute("""CREATE TABLE IF NOT EXISTS organizations (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, type TEXT DEFAULT 'other',
+        domain TEXT DEFAULT '', logo_url TEXT DEFAULT '', description TEXT DEFAULT '',
+        settings TEXT DEFAULT '{}', plan TEXT DEFAULT 'free',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS org_members (
+        org_id TEXT NOT NULL, user_id TEXT NOT NULL, role TEXT DEFAULT 'member',
+        department TEXT DEFAULT '', joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        invited_by TEXT DEFAULT '', PRIMARY KEY (org_id, user_id))""")
+    have = {r[1] for r in conn.execute("PRAGMA table_info(organizations)").fetchall()}
+    for col, ddl in (("type","TEXT DEFAULT 'other'"), ("domain","TEXT DEFAULT ''"),
+                     ("logo_url","TEXT DEFAULT ''"), ("description","TEXT DEFAULT ''"),
+                     ("settings","TEXT DEFAULT '{}'"), ("plan","TEXT DEFAULT 'free'"),
+                     ("created_at","TIMESTAMP"), ("updated_at","TIMESTAMP")):
+        if col not in have:
+            try: conn.execute(f"ALTER TABLE organizations ADD COLUMN {col} {ddl}")
+            except Exception: pass
+
+
 @router.post("")
 def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id)):
     """Create a new organization. Creator becomes super_admin."""
     data.user_id = caller
+    if not (data.name or "").strip():
+        raise HTTPException(status_code=400, detail="Organization name is required.")
     org_id = str(uuid.uuid4())
     conn = sqlite3.connect(DB_PATH)
     try:
+        _ensure_org_schema(conn)
         now = datetime.utcnow().isoformat()
         conn.execute(
             "INSERT INTO organizations (id, name, type, domain, logo_url, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -131,6 +158,13 @@ def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id
             [org_id, data.user_id, now]
         )
         conn.commit()
+    except HTTPException:
+        raise
+    except Exception as e:
+        try: conn.rollback()
+        except Exception: pass
+        import traceback; traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Could not create organization: {e}")
     finally:
         conn.close()
     return {

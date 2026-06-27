@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser, registerUser, createOrg, getMe, getLinkedInConfig, startLinkedIn } from '../api';
+import { loginUser, registerUser, getMe, getLinkedInConfig, startLinkedIn } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft, Linkedin } from 'lucide-react';
@@ -80,34 +80,25 @@ export default function Login() {
                 const res = await loginUser(username, password);
                 data = res.data;
             } else {
-                const res = await registerUser(username, password, username, accountType === 'organization' ? 'organization' : 'individual', email);
+                const orgPayload = accountType === 'organization' && orgName
+                    ? { name: orgName, type: orgType, domain: orgDomain }
+                    : null;
+                const res = await registerUser(
+                    username, password, username,
+                    accountType === 'organization' ? 'organization' : 'individual',
+                    email,
+                    orgPayload,
+                );
                 data = res.data;
                 if (!data.token) data.token = `mock-jwt-${data.id}`;
                 if (!data.account_type) data.account_type = accountType === 'organization' ? 'organization' : 'individual';
+                // Backend now creates the org atomically with the user and returns it as `organization`.
+                if (data.organization && !data.org) data.org = data.organization;
                 isNewUser = true;
             }
 
-            // Persist the token now so JWT-protected calls below (e.g. createOrg) are signed.
+            // Persist the token now so JWT-protected calls below are signed.
             try { localStorage.setItem('pm_user', JSON.stringify(data)); } catch {}
-
-            if (accountType === 'organization' && orgName) {
-                const orgRes = await createOrg({
-                    name: orgName,
-                    type: orgType,
-                    domain: orgDomain || '',
-                    user_id: data.id,
-                });
-                data.org = {
-                    id: orgRes.data.id,
-                    org_id: orgRes.data.id,
-                    name: orgRes.data.name,
-                    org_name: orgRes.data.name,
-                    type: orgRes.data.type,
-                    org_type: orgRes.data.type,
-                    role: 'super_admin',
-                    department: '',
-                };
-            }
 
             // Success animation before navigating
             setSuccess(true);
