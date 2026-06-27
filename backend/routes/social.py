@@ -2,12 +2,13 @@
 social.py -- Community layer for individual learners.
 
 Two capabilities the platform was missing:
-  1. A *global* ranking (leaderboard) by XP and by streak — the existing
-     /challenges/leaderboard only ranked challenge completions.
+  1. A *global* ranking (leaderboard) by XP and by streak.
   2. A member directory + follow/connect graph so learners can find and
      connect with other PyMasters members.
 
-Prefix: /api  (routes namespaced below to avoid collisions)
+Also exposes /api/auth/me (token-based session hydration) used by OAuth login.
+
+Prefix: /api
 """
 
 import os
@@ -24,16 +25,9 @@ DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 router = APIRouter(prefix="/api", tags=["community"])
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────
-
 _TIERS = (
-    (5000, "Master"),
-    (2000, "Expert"),
-    (1000, "Advanced"),
-    (500, "Intermediate"),
-    (100, "Apprentice"),
-    (0, "Novice"),
+    (5000, "Master"), (2000, "Expert"), (1000, "Advanced"),
+    (500, "Intermediate"), (100, "Apprentice"), (0, "Novice"),
 )
 
 
@@ -45,6 +39,20 @@ def tier_for(xp: int) -> str:
     return "Novice"
 
 
+def _display_name(name, username):
+    """Never expose an email address as a public display name. Prefer a real
+    name, else a non-email username, else the local-part before '@'."""
+    for cand in (name, username):
+        c = (cand or "").strip()
+        if c and "@" not in c:
+            return c
+    for cand in (name, username):
+        c = (cand or "").strip()
+        if c and "@" in c:
+            return c.split("@")[0]
+    return "Learner"
+
+
 def _connect():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -52,8 +60,6 @@ def _connect():
 
 
 def ensure_social_tables(db_path: str = None):
-    """Create the connections table if it doesn't exist. Idempotent; safe to
-    call from init_db and lazily from endpoints (tests spin up fresh DBs)."""
     conn = sqlite3.connect(db_path or DB_PATH)
     try:
         conn.execute("""
@@ -64,12 +70,8 @@ def ensure_social_tables(db_path: str = None):
                 PRIMARY KEY (follower_id, following_id)
             )
         """)
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conn_following ON user_connections(following_id)"
-        )
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conn_follower ON user_connections(follower_id)"
-        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_conn_following ON user_connections(following_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_conn_follower ON user_connections(follower_id)")
         conn.commit()
     finally:
         conn.close()
@@ -79,7 +81,7 @@ def _public_card(row, follower_count=0, following_count=0, is_following=False):
     xp = row["points"] or 0
     return {
         "user_id": row["id"],
-        "name": row["name"] or row["username"] or "Learner",
+        "name": _display_name(row["name"], row["username"]),
         "username": row["username"],
         "xp": xp,
         "tier": tier_for(xp),
@@ -90,8 +92,6 @@ def _public_card(row, follower_count=0, following_count=0, is_following=False):
     }
 
 
-# ── Global leaderboard ──────────────────────────────────────────────────────
-
 @router.get("/leaderboard/global")
 def global_leaderboard(
     scope: str = Query("xp", pattern="^(xp|streak)$"),
@@ -99,9 +99,6 @@ def global_leaderboard(
     offset: int = Query(0, ge=0),
     caller: Optional[str] = Depends(optional_user_id),
 ):
-    """Platform-wide ranking. scope=xp ranks by total points; scope=streak ranks
-    by current daily streak. Always returns the caller's own rank (if signed in),
-    even when they fall outside the visible page."""
     ensure_social_tables()
     conn = _connect()
     try:
@@ -110,8 +107,7 @@ def global_leaderboard(
                 SELECT u.id, u.username, u.name, u.avatar_url,
                        COALESCE(u.points,0) AS points,
                        COALESCE(s.current_streak,0) AS metric
-                FROM users u
-                LEFT JOIN user_streaks s ON s.user_id = u.id
+                FROM users u LEFT JOIN user_streaks s ON s.user_id = u.id
                 WHERE COALESCE(u.is_blocked,0) = 0
                 ORDER BY metric DESC, points DESC, u.created_at ASC
             """
@@ -125,58 +121,45 @@ def global_leaderboard(
                 ORDER BY metric DESC, u.created_at ASC
             """
         rows = conn.execute(base + " LIMIT ? OFFSET ?", [limit, offset]).fetchall()
-
         leaders = []
         for i, r in enumerate(rows):
             xp = r["points"] or 0
             leaders.append({
-                "rank": offset + i + 1,
-                "user_id": r["id"],
-                "name": r["name"] or r["username"] or "Learner",
-                "username": r["username"],
-                "avatar_url": r["avatar_url"] or "",
-                "xp": xp,
-                "tier": tier_for(xp),
-                "metric": r["metric"] or 0,
-                "is_me": (r["id"] == caller),
+                "rank": offset + i + 1, "user_id": r["id"],
+                "name": _display_name(r["name"], r["username"]), "username": r["username"],
+                "avatar_url": r["avatar_url"] or "", "xp": xp, "tier": tier_for(xp),
+                "metric": r["metric"] or 0, "is_me": (r["id"] == caller),
             })
-
-        total = conn.execute(
-            "SELECT COUNT(*) FROM users WHERE COALESCE(is_blocked,0)=0"
-        ).fetchone()[0]
-
+        total = conn.execute("SELECT COUNT(*) FROM users WHERE COALESCE(is_blocked,0)=0").fetchone()[0]
         me = None
         if caller:
             if scope == "streak":
                 myrow = conn.execute(
-                    "SELECT COALESCE(s.current_streak,0) FROM users u "
-                    "LEFT JOIN user_streaks s ON s.user_id=u.id WHERE u.id=?",
-                    [caller],
-                ).fetchone()
+                    "SELECT COALESCE(s.current_streak,0), COALESCE(u.points,0), u.created_at FROM users u "
+                    "LEFT JOIN user_streaks s ON s.user_id=u.id WHERE u.id=?", [caller]).fetchone()
                 my_metric = myrow[0] if myrow else 0
+                my_pts = myrow[1] if myrow else 0
+                my_created = myrow[2] if myrow else None
                 rank = conn.execute(
                     "SELECT COUNT(*)+1 FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id "
-                    "WHERE COALESCE(u.is_blocked,0)=0 AND COALESCE(s.current_streak,0) > ?",
-                    [my_metric],
-                ).fetchone()[0]
+                    "WHERE COALESCE(u.is_blocked,0)=0 AND (COALESCE(s.current_streak,0) > ? "
+                    "OR (COALESCE(s.current_streak,0) = ? AND COALESCE(u.points,0) > ?) "
+                    "OR (COALESCE(s.current_streak,0) = ? AND COALESCE(u.points,0) = ? AND u.created_at < ?))",
+                    [my_metric, my_metric, my_pts, my_metric, my_pts, my_created]).fetchone()[0]
             else:
-                myrow = conn.execute(
-                    "SELECT COALESCE(points,0) FROM users WHERE id=?", [caller]
-                ).fetchone()
+                myrow = conn.execute("SELECT COALESCE(points,0), created_at FROM users WHERE id=?", [caller]).fetchone()
                 my_metric = myrow[0] if myrow else 0
+                my_created = myrow[1] if myrow else None
                 rank = conn.execute(
-                    "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND COALESCE(points,0) > ?",
-                    [my_metric],
-                ).fetchone()[0]
+                    "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND "
+                    "(COALESCE(points,0) > ? OR (COALESCE(points,0) = ? AND created_at < ?))",
+                    [my_metric, my_metric, my_created]).fetchone()[0]
             if myrow:
                 me = {"rank": rank, "metric": my_metric, "tier": tier_for(my_metric if scope == "xp" else 0)}
-
         return {"scope": scope, "leaderboard": leaders, "total_participants": total, "me": me}
     finally:
         conn.close()
 
-
-# ── Member directory ────────────────────────────────────────────────────────
 
 @router.get("/members")
 def list_members(
@@ -185,7 +168,6 @@ def list_members(
     offset: int = Query(0, ge=0),
     caller: Optional[str] = Depends(optional_user_id),
 ):
-    """Searchable directory of learners. Returns public cards with follow state."""
     ensure_social_tables()
     conn = _connect()
     try:
@@ -197,25 +179,15 @@ def list_members(
             params += [like, like]
         rows = conn.execute(
             f"""SELECT u.id, u.username, u.name, u.avatar_url, COALESCE(u.points,0) AS points
-                FROM users u {where}
-                ORDER BY u.points DESC, u.created_at ASC
-                LIMIT ? OFFSET ?""",
-            params + [limit, offset],
-        ).fetchall()
-
+                FROM users u {where} ORDER BY u.points DESC, u.created_at ASC LIMIT ? OFFSET ?""",
+            params + [limit, offset]).fetchall()
         following = set()
         if caller:
-            following = {
-                r[0] for r in conn.execute(
-                    "SELECT following_id FROM user_connections WHERE follower_id=?", [caller]
-                ).fetchall()
-            }
-
+            following = {r[0] for r in conn.execute(
+                "SELECT following_id FROM user_connections WHERE follower_id=?", [caller]).fetchall()}
         members = []
         for r in rows:
-            fc = conn.execute(
-                "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [r["id"]]
-            ).fetchone()[0]
+            fc = conn.execute("SELECT COUNT(*) FROM user_connections WHERE following_id=?", [r["id"]]).fetchone()[0]
             members.append(_public_card(r, follower_count=fc, is_following=(r["id"] in following)))
         return {"members": members, "count": len(members), "query": q}
     finally:
@@ -224,32 +196,21 @@ def list_members(
 
 @router.get("/members/{user_id}")
 def member_profile(user_id: str, caller: Optional[str] = Depends(optional_user_id)):
-    """Public profile card for a single member, plus connection counts."""
     ensure_social_tables()
     conn = _connect()
     try:
         row = conn.execute(
             "SELECT id, username, name, avatar_url, COALESCE(points,0) AS points, "
-            "COALESCE(is_blocked,0) AS is_blocked FROM users WHERE id=?",
-            [user_id],
-        ).fetchone()
+            "COALESCE(is_blocked,0) AS is_blocked FROM users WHERE id=?", [user_id]).fetchone()
         if not row or row["is_blocked"]:
             raise HTTPException(status_code=404, detail="Member not found")
-        followers = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [user_id]
-        ).fetchone()[0]
-        following = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE follower_id=?", [user_id]
-        ).fetchone()[0]
-        streak = conn.execute(
-            "SELECT COALESCE(current_streak,0) FROM user_streaks WHERE user_id=?", [user_id]
-        ).fetchone()
+        followers = conn.execute("SELECT COUNT(*) FROM user_connections WHERE following_id=?", [user_id]).fetchone()[0]
+        following = conn.execute("SELECT COUNT(*) FROM user_connections WHERE follower_id=?", [user_id]).fetchone()[0]
+        streak = conn.execute("SELECT COALESCE(current_streak,0) FROM user_streaks WHERE user_id=?", [user_id]).fetchone()
         is_following = False
         if caller:
             is_following = conn.execute(
-                "SELECT 1 FROM user_connections WHERE follower_id=? AND following_id=?",
-                [caller, user_id],
-            ).fetchone() is not None
+                "SELECT 1 FROM user_connections WHERE follower_id=? AND following_id=?", [caller, user_id]).fetchone() is not None
         card = _public_card(row, follower_count=followers, following_count=following, is_following=is_following)
         card["streak"] = streak[0] if streak else 0
         card["is_me"] = (caller == user_id)
@@ -258,29 +219,18 @@ def member_profile(user_id: str, caller: Optional[str] = Depends(optional_user_i
         conn.close()
 
 
-# ── Connections (follow / unfollow) ─────────────────────────────────────────
-
 @router.post("/connections/{target_id}")
 def follow(target_id: str, caller: str = Depends(get_current_user_id)):
-    """Follow (connect with) another member."""
     if target_id == caller:
         raise HTTPException(status_code=400, detail="You can't connect with yourself.")
     ensure_social_tables()
     conn = _connect()
     try:
-        exists = conn.execute(
-            "SELECT 1 FROM users WHERE id=? AND COALESCE(is_blocked,0)=0", [target_id]
-        ).fetchone()
-        if not exists:
+        if not conn.execute("SELECT 1 FROM users WHERE id=? AND COALESCE(is_blocked,0)=0", [target_id]).fetchone():
             raise HTTPException(status_code=404, detail="Member not found")
-        conn.execute(
-            "INSERT OR IGNORE INTO user_connections (follower_id, following_id) VALUES (?, ?)",
-            [caller, target_id],
-        )
+        conn.execute("INSERT OR IGNORE INTO user_connections (follower_id, following_id) VALUES (?, ?)", [caller, target_id])
         conn.commit()
-        followers = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]
-        ).fetchone()[0]
+        followers = conn.execute("SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]).fetchone()[0]
         return {"status": "connected", "following": True, "target_followers": followers}
     finally:
         conn.close()
@@ -288,18 +238,12 @@ def follow(target_id: str, caller: str = Depends(get_current_user_id)):
 
 @router.delete("/connections/{target_id}")
 def unfollow(target_id: str, caller: str = Depends(get_current_user_id)):
-    """Remove a connection."""
     ensure_social_tables()
     conn = _connect()
     try:
-        conn.execute(
-            "DELETE FROM user_connections WHERE follower_id=? AND following_id=?",
-            [caller, target_id],
-        )
+        conn.execute("DELETE FROM user_connections WHERE follower_id=? AND following_id=?", [caller, target_id])
         conn.commit()
-        followers = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]
-        ).fetchone()[0]
+        followers = conn.execute("SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]).fetchone()[0]
         return {"status": "disconnected", "following": False, "target_followers": followers}
     finally:
         conn.close()
@@ -307,42 +251,28 @@ def unfollow(target_id: str, caller: str = Depends(get_current_user_id)):
 
 @router.get("/auth/me")
 def get_me(caller: str = Depends(get_current_user_id)):
-    """Token-based 'who am I'. Returns the same session shape as /api/auth/login
-    so OAuth (and any token-only client) can hydrate the user session."""
+    """Token-based 'who am I'. Mirrors /api/auth/login shape for OAuth hydration."""
     conn = _connect()
     try:
         u = conn.execute(
             "SELECT id, name, username, COALESCE(points,0) AS points, unlocked_modules, "
             "COALESCE(onboarding_completed,0) AS oc, COALESCE(account_type,'individual') AS at "
-            "FROM users WHERE id=?",
-            [caller],
-        ).fetchone()
+            "FROM users WHERE id=?", [caller]).fetchone()
         if not u:
             raise HTTPException(status_code=404, detail="User not found")
         org = conn.execute(
-            "SELECT o.id, o.name, o.type, om.role, om.department "
-            "FROM org_members om JOIN organizations o ON o.id = om.org_id "
-            "WHERE om.user_id=? LIMIT 1",
-            [caller],
-        ).fetchone()
+            "SELECT o.id, o.name, o.type, om.role, om.department FROM org_members om "
+            "JOIN organizations o ON o.id = om.org_id WHERE om.user_id=? LIMIT 1", [caller]).fetchone()
         org_info = None
         if org:
-            org_info = {
-                "id": org["id"], "org_id": org["id"],
-                "name": org["name"], "org_name": org["name"],
-                "type": org["type"], "org_type": org["type"],
-                "role": org["role"], "department": org["department"] or "",
-            }
+            org_info = {"id": org["id"], "org_id": org["id"], "name": org["name"], "org_name": org["name"],
+                        "type": org["type"], "org_type": org["type"], "role": org["role"], "department": org["department"] or ""}
         try:
             unlocked = json.loads(u["unlocked_modules"]) if u["unlocked_modules"] else ["module_1"]
         except Exception:
             unlocked = ["module_1"]
-        return {
-            "id": u["id"], "name": u["name"], "username": u["username"],
-            "points": u["points"], "unlocked": unlocked,
-            "onboarding_completed": bool(u["oc"]), "account_type": u["at"],
-            "org": org_info,
-        }
+        return {"id": u["id"], "name": u["name"], "username": u["username"], "points": u["points"],
+                "unlocked": unlocked, "onboarding_completed": bool(u["oc"]), "account_type": u["at"], "org": org_info}
     finally:
         conn.close()
 
@@ -353,8 +283,6 @@ def list_connections(
     kind: str = Query("following", pattern="^(following|followers)$"),
     caller: Optional[str] = Depends(optional_user_id),
 ):
-    """List a member's connections. kind=following -> who they follow;
-    kind=followers -> who follows them."""
     ensure_social_tables()
     conn = _connect()
     try:
@@ -369,11 +297,8 @@ def list_connections(
         rows = conn.execute(join, [user_id]).fetchall()
         my_following = set()
         if caller:
-            my_following = {
-                r[0] for r in conn.execute(
-                    "SELECT following_id FROM user_connections WHERE follower_id=?", [caller]
-                ).fetchall()
-            }
+            my_following = {r[0] for r in conn.execute(
+                "SELECT following_id FROM user_connections WHERE follower_id=?", [caller]).fetchall()}
         people = [_public_card(r, is_following=(r["id"] in my_following)) for r in rows]
         return {"kind": kind, "people": people, "count": len(people)}
     finally:

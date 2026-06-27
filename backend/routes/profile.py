@@ -120,17 +120,17 @@ def org_onboarding(data: OrgOnboardingData):
 
         org_id = org_row["org_id"]
 
-        # Upsert org_profiles
-        cursor.execute("""
-            INSERT INTO org_profiles (org_id, org_size, learner_profile, skill_level, learning_focus, structure_preference)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT (org_id) DO UPDATE SET
-                org_size = excluded.org_size,
-                learner_profile = excluded.learner_profile,
-                skill_level = excluded.skill_level,
-                learning_focus = excluded.learning_focus,
-                structure_preference = excluded.structure_preference
-        """, [org_id, data.org_size, data.learner_profile, data.skill_level, data.learning_focus, data.structure_preference])
+        # Constraint-independent upsert for org_profiles (avoids ON CONFLICT, which
+        # 500s if a long-lived prod table lacks the PK/unique constraint).
+        cursor.execute("CREATE TABLE IF NOT EXISTS org_profiles (org_id TEXT PRIMARY KEY, org_size TEXT DEFAULT '', learner_profile TEXT DEFAULT '', skill_level TEXT DEFAULT '', learning_focus TEXT DEFAULT '', structure_preference TEXT DEFAULT '', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+        if cursor.execute("SELECT 1 FROM org_profiles WHERE org_id = ?", [org_id]).fetchone():
+            cursor.execute(
+                "UPDATE org_profiles SET org_size=?, learner_profile=?, skill_level=?, learning_focus=?, structure_preference=? WHERE org_id=?",
+                [data.org_size, data.learner_profile, data.skill_level, data.learning_focus, data.structure_preference, org_id])
+        else:
+            cursor.execute(
+                "INSERT INTO org_profiles (org_id, org_size, learner_profile, skill_level, learning_focus, structure_preference) VALUES (?, ?, ?, ?, ?, ?)",
+                [org_id, data.org_size, data.learner_profile, data.skill_level, data.learning_focus, data.structure_preference])
 
         # Update user's preferred_language and mark onboarding complete
         cursor.execute(
@@ -138,17 +138,23 @@ def org_onboarding(data: OrgOnboardingData):
             [data.preferred_language, data.user_id]
         )
 
-        # Also create/update user_profiles entry to mark onboarding_completed
-        cursor.execute("""
-            INSERT INTO user_profiles (user_id, preferred_language, onboarding_completed)
-            VALUES (?, ?, 1)
-            ON CONFLICT (user_id) DO UPDATE SET
-                preferred_language = excluded.preferred_language,
-                onboarding_completed = 1
-        """, [data.user_id, data.preferred_language])
+        # Constraint-independent upsert for user_profiles
+        if cursor.execute("SELECT 1 FROM user_profiles WHERE user_id = ?", [data.user_id]).fetchone():
+            cursor.execute("UPDATE user_profiles SET preferred_language=?, onboarding_completed=1 WHERE user_id=?",
+                           [data.preferred_language, data.user_id])
+        else:
+            cursor.execute("INSERT INTO user_profiles (user_id, preferred_language, onboarding_completed) VALUES (?, ?, 1)",
+                           [data.user_id, data.preferred_language])
 
         conn.commit()
         return {"onboarding_completed": True, "user_id": data.user_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        try: conn.rollback()
+        except Exception: pass
+        import traceback; traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Could not save org onboarding: {e}")
     finally:
         conn.close()
 

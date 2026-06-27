@@ -44,6 +44,7 @@ export default function Layout() {
             { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
             { icon: Map, label: 'Evolution', path: '/dashboard/paths', desc: 'Your AI learning journey' },
             { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
+            { icon: Search, label: 'Topic Search', path: '/dashboard/search', desc: 'Find or generate a lesson' },
             { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
             { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
             { icon: Swords, label: 'Challenges', path: '/dashboard/challenges', desc: 'Weekly coding battles' },

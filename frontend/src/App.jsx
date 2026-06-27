@@ -30,6 +30,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Community = lazy(() => import('./pages/Community'));
 const OrgCompete = lazy(() => import('./pages/OrgCompete'));
+const TopicSearch = lazy(() => import('./pages/TopicSearch'));
 
 function PageLoader() {
   return (
@@ -93,6 +94,7 @@ export default function App() {
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
                 <Route path="challenges" element={<ErrorBoundary><Challenges /></ErrorBoundary>} />
+                <Route path="search" element={<ErrorBoundary><TopicSearch /></ErrorBoundary>} />
                 <Route path="community" element={<ErrorBoundary><Community /></ErrorBoundary>} />
                 <Route path="org-compete" element={<ErrorBoundary><OrgCompete /></ErrorBoundary>} />
                 <Route path="reference" element={<ErrorBoundary><Reference /></ErrorBoundary>} />

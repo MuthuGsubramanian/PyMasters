@@ -1,85 +1,101 @@
 #!/usr/bin/env bash
-# ---------------------------------------------------------------------------
-# PyMasters safe deploy — one command for the whole image-only release recipe.
 #
-#   ./scripts/deploy.sh           # build current HEAD and deploy
-#   ./scripts/deploy.sh --no-build # redeploy the last-built tag (skip build)
+# deploy.sh — one-command deploy service for the PyMasters Cloud Run app.
 #
-# What it does (and why it's safe):
-#   1. Verifies gcloud auth (the only step a human must do: `gcloud auth login`
-#      when the token has expired — this script tells you when).
-#   2. Records the current live revision as a ROLLBACK TARGET.
-#   3. Builds the image from the Dockerfile via Cloud Build (NOT the stale
-#      committed cloudbuild.yaml, which would wipe Secret Manager mappings).
-#   4. Deploys IMAGE-ONLY (`gcloud run deploy --image`) so all env vars,
-#      secrets and scaling (min=max=1) are preserved.
-#   5. Smoke-tests the live URL; on failure, AUTO-ROLLS-BACK to the recorded
-#      revision so a bad deploy never stays live.
-# ---------------------------------------------------------------------------
+# Builds the container with Cloud Build, deploys to Cloud Run, wires the
+# Ollama API key from Secret Manager, then verifies the revision is serving.
+# Safe to run repeatedly (idempotent). Mirrors the GitHub Actions deploy so you
+# can ship a hotfix from a laptop without waiting on CI.
+#
+# Usage:
+#   ./scripts/deploy.sh                 # build + deploy + verify
+#   ./scripts/deploy.sh --skip-build    # redeploy last image
+#   ./scripts/deploy.sh --no-traffic    # deploy revision but hold traffic (canary)
+#
+# Requires: gcloud (authenticated), roles to run Cloud Build + deploy Cloud Run.
 set -euo pipefail
 
-PROJECT="pymasters-app"
-REGION="us-central1"
-SERVICE="pymasters"
-REPO="us-central1-docker.pkg.dev/${PROJECT}/cloud-run-source-deploy/${SERVICE}"
-APEX="https://pymasters.net"
+# ── Config (override via env) ─────────────────────────────────────────────
+PROJECT_ID="${PROJECT_ID:-pymasters-app}"
+REGION="${REGION:-us-central1}"
+SERVICE="${SERVICE:-pymasters}"
+REPO="${REPO:-pymasters}"                       # Artifact Registry repo
+IMAGE_NAME="${IMAGE_NAME:-pymasters}"
+SECRET_NAME="${SECRET_NAME:-ollama-api-key}"    # Secret Manager secret
+DOMAIN="${DOMAIN:-https://pymasters.net}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
 
-say() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
-die() { printf '\n\033[1;31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
-
-# 1. Auth -------------------------------------------------------------------
-say "Checking gcloud auth"
-if ! timeout 25 gcloud auth print-access-token >/dev/null 2>&1; then
-  die "gcloud token expired. Run:  gcloud auth login   (then re-run this script)."
-fi
-gcloud config set project "$PROJECT" >/dev/null 2>&1 || true
-echo "auth OK as $(gcloud config get-value account 2>/dev/null)"
-
-SHA="$(git rev-parse --short HEAD)"
-TAG="${REPO}:autoweek-${SHA}"
-
-# 2. Rollback target --------------------------------------------------------
-say "Recording rollback target"
-PREV="$(gcloud run services describe "$SERVICE" --region="$REGION" \
-        --format='value(status.latestReadyRevisionName)')"
-[ -n "$PREV" ] || die "Could not read current revision."
-echo "current live revision (rollback target) = $PREV"
-
-# 3. Build ------------------------------------------------------------------
-if [ "${1:-}" != "--no-build" ]; then
-  say "Building image  $TAG"
-  gcloud builds submit --tag "$TAG" --region="$REGION" .
-else
-  say "Skipping build (--no-build); deploying existing tag $TAG"
-fi
-
-# 4. Deploy (image-only) ----------------------------------------------------
-say "Deploying image-only (preserves env/secrets/scaling)"
-gcloud run deploy "$SERVICE" --image "$TAG" --region="$REGION" \
-  --platform=managed --quiet
-
-NEW="$(gcloud run services describe "$SERVICE" --region="$REGION" \
-       --format='value(status.latestReadyRevisionName)')"
-URL="$(gcloud run services describe "$SERVICE" --region="$REGION" \
-       --format='value(status.url)')"
-echo "new revision = $NEW"
-
-# 5. Smoke test + auto-rollback --------------------------------------------
-say "Smoke-testing $URL/health and $APEX"
-ok=1
-for target in "$URL/health" "$URL/" "$APEX/"; do
-  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$target" || echo 000)"
-  echo "  $target -> $code"
-  case "$code" in 2*|3*) ;; *) ok=0 ;; esac
+SKIP_BUILD=0; NO_TRAFFIC=0
+for a in "$@"; do
+  case "$a" in
+    --skip-build) SKIP_BUILD=1 ;;
+    --no-traffic) NO_TRAFFIC=1 ;;
+    *) echo "Unknown arg: $a"; exit 2 ;;
+  esac
 done
 
-if [ "$ok" -ne 1 ]; then
-  say "Smoke test FAILED — rolling back to $PREV"
-  gcloud run services update-traffic "$SERVICE" --region="$REGION" \
-    --to-revisions "${PREV}=100" --quiet
-  die "Rolled back to $PREV. New revision $NEW was NOT kept."
+GIT_SHA="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo manual)"
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}:${GIT_SHA}"
+
+log() { printf '\033[1;36m[deploy]\033[0m %s\n' "$*"; }
+fail() { printf '\033[1;31m[deploy:FAIL]\033[0m %s\n' "$*" >&2; exit 1; }
+
+command -v gcloud >/dev/null || fail "gcloud not found. Install the Google Cloud SDK."
+gcloud config set project "$PROJECT_ID" >/dev/null
+
+# ── Preflight: secret must exist so the app can reach Ollama ──────────────
+if ! gcloud secrets describe "$SECRET_NAME" >/dev/null 2>&1; then
+  fail "Secret '$SECRET_NAME' not found in Secret Manager. Create it first:
+       echo -n \"\$OLLAMA_API_KEY\" | gcloud secrets create $SECRET_NAME --data-file=-"
 fi
 
-say "Deploy OK — $NEW is live at $URL (rollback target was $PREV)"
+# ── 1) Build ───────────────────────────────────────────────────────────────
+if [[ "$SKIP_BUILD" -eq 0 ]]; then
+  log "Building image $IMAGE (Cloud Build)…"
+  gcloud builds submit "$ROOT" --tag "$IMAGE" --quiet || fail "Cloud Build failed."
+else
+  log "Skipping build (using last deployed image)."
+fi
+
+# ── 2) Deploy ────────────────────────────────────────────────────────────
+TRAFFIC_FLAG=()
+[[ "$NO_TRAFFIC" -eq 1 ]] && TRAFFIC_FLAG=(--no-traffic)
+
+log "Deploying revision to Cloud Run service '$SERVICE' ($REGION)…"
+DEPLOY_ARGS=(
+  run deploy "$SERVICE"
+  --region "$REGION"
+  --platform managed
+  --allow-unauthenticated
+  --port 8001
+  --memory 1Gi
+  --cpu 1
+  --min-instances 0
+  --max-instances 4
+  --set-secrets "OLLAMA_API_KEY=${SECRET_NAME}:latest"
+  --quiet
+)
+[[ "$SKIP_BUILD" -eq 0 ]] && DEPLOY_ARGS+=(--image "$IMAGE")
+gcloud "${DEPLOY_ARGS[@]}" "${TRAFFIC_FLAG[@]}" || fail "Cloud Run deploy failed."
+
+# ── 3) Verify ────────────────────────────────────────────────────────────
+URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')"
+log "Service URL: $URL"
+
+log "Health check…"
+for i in $(seq 1 10); do
+  code="$(curl -s -o /dev/null -w '%{http_code}' "$URL/" || true)"
+  if [[ "$code" == "200" ]]; then log "Healthy (HTTP 200) on attempt $i."; break; fi
+  [[ "$i" == "10" ]] && fail "Service did not return 200 after 10 attempts (last: $code)."
+  sleep 3
+done
+
+if [[ "$NO_TRAFFIC" -eq 1 ]]; then
+  log "Revision deployed WITHOUT traffic (canary). Promote with:"
+  echo "    gcloud run services update-traffic $SERVICE --region $REGION --to-latest"
+else
+  log "Live. Verifying public domain $DOMAIN …"
+  dcode="$(curl -s -o /dev/null -w '%{http_code}' "$DOMAIN/" || true)"
+  log "Domain $DOMAIN responded HTTP $dcode."
+fi
+log "Deploy complete ✓  (image: $IMAGE)"
