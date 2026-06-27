@@ -661,11 +661,14 @@ def init_db():
 # --- App Lifecycle ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Block until schema migrations + seeding finish. Previously this ran in a
-    # daemon thread so cold-start was fast, but it raced with the first
-    # requests — handlers (especially /api/auth/register) hit a table that
-    # didn't have its columns yet and surfaced a generic 500.
-    init_db()
+    # Keep init_db in a daemon thread so uvicorn can bind the port quickly
+    # and Cloud Run's startup probe passes. The brief schema-migration race
+    # is much less harmful than a deploy that times out waiting on init_db.
+    # The /register hardening (clean 4xx + try/except around hash_pw and
+    # the DB writes) is what actually fixes the user-reported 500, not this.
+    import threading
+    t = threading.Thread(target=init_db, daemon=True)
+    t.start()
     yield
 
 app = FastAPI(title="PyMasters API", lifespan=lifespan)
