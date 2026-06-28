@@ -16,7 +16,10 @@ from pydantic import BaseModel
 
 from auth import get_current_user_id
 from ratelimit import SlidingWindowRateLimiter
-from vaathiyaar.engine import call_vaathiyaar, get_ollama_client, OLLAMA_MODEL
+from vaathiyaar.engine import (
+    call_vaathiyaar, get_ollama_client, OLLAMA_MODEL,
+    stream as vaathiyaar_stream, VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE,
+)
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile
 
@@ -237,8 +240,15 @@ def playground_chat(request: PlaygroundChatRequest):
             student_profile=profile,
             lesson_context=lesson_context,
         )
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Vaathiyaar AI error: {exc}")
+    except (VaathiyaarUnavailable, Exception) as exc:
+        # Degrade gracefully and DON'T charge a prompt for a failed call.
+        friendly = getattr(exc, "friendly", FRIENDLY_UNAVAILABLE)
+        print(f"[playground.chat] AI unavailable: {str(exc)[:200]}")
+        return {
+            "response": friendly,
+            "credits": _get_user_credits(db_path, request.user_id),
+            "ai_unavailable": True,
+        }
 
     # Increment prompts used
     conn = sqlite3.connect(db_path)
@@ -296,7 +306,6 @@ def playground_chat_stream(request: PlaygroundChatRequest):
     }
 
     system_prompt = build_system_prompt(profile, lesson_context)
-    client = get_ollama_client()
 
     # Build messages with conversation history
     ollama_messages = [{"role": "system", "content": system_prompt}]
@@ -305,12 +314,7 @@ def playground_chat_stream(request: PlaygroundChatRequest):
     def generate():
         full_response = ""
         try:
-            for chunk in client.chat(
-                model=OLLAMA_MODEL,
-                messages=ollama_messages,
-                stream=True,
-            ):
-                token = chunk.get("message", {}).get("content", "")
+            for token in vaathiyaar_stream(ollama_messages, {"temperature": 0.7, "num_predict": 1500}):
                 if token:
                     full_response += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
@@ -351,8 +355,12 @@ def playground_chat_stream(request: PlaygroundChatRequest):
                 conn.close()
             except Exception:
                 pass
+        except VaathiyaarUnavailable as exc:
+            print(f"[playground.chat_stream] AI unavailable: {str(exc.detail)[:200]}")
+            yield f"data: {json.dumps({'done': True, 'message': exc.friendly, 'conversation_id': conversation_id, 'ai_unavailable': True})}\n\n"
         except Exception as exc:
-            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            print(f"[playground.chat_stream] unexpected AI error: {str(exc)[:200]}")
+            yield f"data: {json.dumps({'done': True, 'message': FRIENDLY_UNAVAILABLE, 'conversation_id': conversation_id, 'ai_unavailable': True})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
