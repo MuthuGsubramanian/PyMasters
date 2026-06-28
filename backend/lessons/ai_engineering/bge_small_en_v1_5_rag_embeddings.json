@@ -1,0 +1,209 @@
+{
+  "id": "bge_small_en_v1_5_rag_embeddings",
+  "topic": "bge_small_en_v1_5_rag_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "On-Device RAG Embeddings with BAAI/bge-small-en-v1.5"
+  },
+  "description": {
+    "en": "Build a tiny, high-accuracy retrieval index using BAAI/bge-small-en-v1.5 â€” a 384-dim BERT embedding model that tops MTEB while staying under 135MB â€” and learn the one BGE-specific trick (query instruction prefixes) that makes it outperform MiniLM for on-device RAG like Homie's."
+  },
+  "xp_reward": 72,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Small Model That Punches Above Its Weight: BGE-small\n\nVaathiyaar here! Last lesson we built retrieval with `all-MiniLM-L6-v2`. It's fast and free â€” but when Homie's on-device RAG index started returning *almost* the right passage instead of *exactly* the right one, we needed more accuracy without a bigger footprint. Enter `BAAI/bge-small-en-v1.5`: a 384-dimensional BERT model from the Beijing Academy of AI that, for a long stretch, sat at the **top of the MTEB retrieval leaderboard** among small models â€” while weighing only ~133MB and running happily on CPU.\n\nSame vector size as MiniLM (384), drop-in `sentence-transformers` API, but noticeably sharper retrieval. For a product where every wrong chunk becomes a wrong answer, that accuracy-per-megabyte is exactly the trade Homie wants.\n\n### BGE vs MiniLM at a Glance\n\n| Property | all-MiniLM-L6-v2 | bge-small-en-v1.5 |\n|---|---|---|\n| Dimensions | 384 | 384 |\n| Size on disk | ~80 MB | ~133 MB |\n| MTEB retrieval | Good | Stronger (class-leading for size) |\n| Query prefix needed? | No | **Yes** â€” for short queries |\n| Frameworks | PyTorch, ONNX, TF | PyTorch, ONNX, safetensors |\n| Cost | $0 local | $0 local |\n\nBoth are 384-dim and CPU-friendly, so your vector store, cosine math, and top-k logic don't change at all. You're swapping the *quality* of the vectors, not the shape of your pipeline.\n\n### The One BGE Trick: Query Instructions\n\nThis is the part people miss. BGE was trained so that **short search queries get a prefix instruction**, while documents are embedded as-is. Skip the prefix and you leave accuracy on the table.\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\nINSTRUCTION = \"Represent this sentence for searching relevant passages: \"\n\ndocs = [\n    \"The release pipeline rolled back after the health check failed.\",\n    \"Reset your password from Settings, then choose Security.\",\n    \"Our refund window is 30 days from purchase.\",\n]\n\n# Documents: NO prefix. Embed them plainly.\ndoc_emb = model.encode(docs, normalize_embeddings=True, convert_to_tensor=True)\n```\n\n### Retrieval With the Prefixed Query\n\n```python\ndef search(query, k=2):\n    q = model.encode(\n        INSTRUCTION + query,            # prefix ONLY the query\n        normalize_embeddings=True,\n        convert_to_tensor=True,\n    )\n    scores = util.cos_sim(q, doc_emb)[0]\n    top = scores.topk(k)\n    return [(docs[i], float(s)) for s, i in zip(top.values, top.indices)]\n\nfor passage, score in search(\"why did my deploy fail?\"):\n    print(f\"{score:.3f} | {passage}\")\n```\n\nThe query says *\"deploy\"*; the top hit says *\"release pipeline rolled back.\"* Same semantic bridge as MiniLM â€” but BGE's prefix-trained encoder ranks it with more confidence and fewer near-miss confusions.\n\n### Why This Matters for On-Device\n\nBecause `normalize_embeddings=True` makes every vector unit-length, cosine similarity collapses to a fast dot product, and 384 dims keep each vector at ~1.5KB. Ten thousand chunks is ~15MB of index â€” small enough to hold in RAM on a laptop or phone alongside the 133MB model. No API key, no network, no per-token bill. That's the whole pitch for on-device RAG: ship the brain *and* the library, answer offline.\n\n> **Key Insight:** BGE-small gives you class-leading retrieval accuracy at the *same* 384-dim, CPU-friendly footprint as MiniLM â€” the pipeline is identical. The single thing you must change is the **query instruction prefix**: prepend \"Represent this sentence for searching relevant passages: \" to queries, embed documents bare. Get that one detail right and a 133MB model becomes the retrieval backbone of a fully offline RAG system."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Need sharper retrieval than MiniLM without a bigger footprint? BAAI/bge-small-en-v1.5 is a 384-dim BERT model that topped the MTEB leaderboard for its size class, yet stays ~133MB and runs CPU-only â€” perfect for on-device RAG. The pipeline is identical to MiniLM; the one trick is prefixing queries with a short instruction so BGE ranks the right passage with confidence.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\nINSTRUCTION = \"Represent this sentence for searching relevant passages: \"\n\ndocs = [\n    \"The release pipeline rolled back after the health check failed.\",\n    \"Reset your password from Settings, then choose Security.\",\n    \"Our refund window is 30 days from purchase.\",\n    \"Deployments are gated behind a smoke test that must pass first.\",\n]\n\ndoc_emb = model.encode(\n    docs, normalize_embeddings=True, convert_to_tensor=True\n)\n\ndef search(query, k=2):\n    q = model.encode(\n        INSTRUCTION + query, normalize_embeddings=True, convert_to_tensor=True\n    )\n    scores = util.cos_sim(q, doc_emb)[0]\n    top = scores.topk(k)\n    return [(docs[i], float(s)) for s, i in zip(top.values, top.indices)]\n\nfor passage, score in search(\"why did my deploy fail?\"):\n    print(f\"{score:.3f} | {passage}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import SentenceTransformer for the model and util for cosine similarity. Install with: pip install sentence-transformers."
+        },
+        {
+          "line": 3,
+          "explanation": "Load BAAI/bge-small-en-v1.5. The first run downloads ~133MB (safetensors); afterwards it loads from local cache and runs on CPU."
+        },
+        {
+          "line": 4,
+          "explanation": "The BGE-specific detail: a query instruction prefix. BGE was trained to expect short queries wrapped in this instruction â€” documents stay bare."
+        },
+        {
+          "line": 6,
+          "explanation": "Our tiny knowledge base. None contains the literal phrase 'deploy fail', so the model must match on meaning, not keywords."
+        },
+        {
+          "line": 13,
+          "explanation": "Embed the corpus ONCE with NO prefix â€” these vectors are your index. normalize_embeddings=True turns cosine similarity into a fast dot product."
+        },
+        {
+          "line": 17,
+          "explanation": "The search function. Only the query is encoded at query time; the document index is already built and reused."
+        },
+        {
+          "line": 18,
+          "explanation": "Critical: prepend INSTRUCTION to the query (and only the query). This is the difference that makes BGE outrank MiniLM on short-query retrieval."
+        },
+        {
+          "line": 21,
+          "explanation": "cos_sim compares the prefixed query vector against every doc vector in one vectorized call, returning a score per document."
+        },
+        {
+          "line": 22,
+          "explanation": "topk pulls the k highest-scoring docs â€” the 'retrieval' in retrieval-augmented generation."
+        },
+        {
+          "line": 25,
+          "explanation": "Query says 'deploy'; the matched docs say 'release pipeline' and 'deployments'. BGE bridges the vocabulary gap with high confidence."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from sentence_transformers import SentenceTransformer, util\n\nclass BGEIndex:\n    INSTRUCTION = \"Represent this sentence for searching relevant passages: \"\n\n    def __init__(self, model_name=\"BAAI/bge-small-en-v1.5\"):\n        self.model = SentenceTransformer(model_name)\n        self.chunks = []\n        self.embeddings = None\n\n    def add(self, chunks: list[str]):\n        self.chunks = chunks\n        self.embeddings = self.model.encode(\n            chunks, normalize_embeddings=True, convert_to_tensor=True\n        )\n\n    def retrieve(self, query: str, k: int = 3):\n        q = self.model.encode(\n            self.INSTRUCTION + query,\n            normalize_embeddings=True, convert_to_tensor=True\n        )\n        scores = util.cos_sim(q, self.embeddings)[0]\n        top = scores.topk(min(k, len(self.chunks)))\n        return [(self.chunks[i], float(s)) for s, i in zip(top.values, top.indices)]\n\n    def rag_prompt(self, query: str, k: int = 3) -> str:\n        context = \"\\n\".join(f\"- {c}\" for c, _ in self.retrieve(query, k))\n        return f\"Use ONLY this context:\\n{context}\\n\\nQuestion: {query}\\nAnswer:\"\n\nindex = BGEIndex()\nindex.add([\"Refunds are issued within 30 days.\", \"Deploys roll back on failed health checks.\"])\nprint(index.rag_prompt(\"can I get my money back?\", k=1))",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "A reusable BGEIndex class â€” the shape of Homie's on-device RAG store. It owns the model, the raw chunks, and their embeddings."
+        },
+        {
+          "line": 4,
+          "explanation": "The instruction prefix lives on the class so every retrieve() applies it consistently â€” forgetting it on even one query silently hurts accuracy."
+        },
+        {
+          "line": 11,
+          "explanation": "add() ingests chunks and embeds them all at once WITHOUT the prefix. Call this whenever documents change; the result is a cached index."
+        },
+        {
+          "line": 17,
+          "explanation": "retrieve() is the hot path. It prepends INSTRUCTION to the query, encodes only the query, and ranks the cached chunk vectors."
+        },
+        {
+          "line": 23,
+          "explanation": "min(k, len(chunks)) guards against requesting more results than exist â€” a common crash in naive retrievers."
+        },
+        {
+          "line": 26,
+          "explanation": "rag_prompt() glues retrieval to generation: fetch top-k chunks, format as context, wrap in an instruction for the LLM."
+        },
+        {
+          "line": 27,
+          "explanation": "'Use ONLY this context' grounds the model in your data, not its training â€” how RAG reduces hallucination."
+        },
+        {
+          "line": 30,
+          "explanation": "Index two facts, then ask a paraphrased question. 'money back' retrieves the refund chunk even with zero shared keywords â€” the BGE vectors do the work."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "all-MiniLM-L6-v2",
+      "right_label": "bge-small-en-v1.5",
+      "items": [
+        {
+          "left": "384-dim, ~80MB",
+          "right": "384-dim, ~133MB"
+        },
+        {
+          "left": "Good MTEB retrieval",
+          "right": "Class-leading MTEB for its size"
+        },
+        {
+          "left": "No query prefix",
+          "right": "Needs query instruction prefix"
+        },
+        {
+          "left": "Embed query and docs identically",
+          "right": "Prefix queries; embed docs bare"
+        },
+        {
+          "left": "Great default starter",
+          "right": "Upgrade when accuracy matters most"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now swap in BGE-small for sharper on-device retrieval â€” same 384-dim pipeline, plus the one query-prefix trick that makes it shine!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `BGEStyleIndex` that mirrors BGE's asymmetric encoding: documents are embedded plainly, but queries get an instruction prefix before scoring. Use word-overlap (Jaccard) to stand in for neural vectors. Implement `_vec(text)` returning a set of lowercase word tokens, `_score(a, b)` returning Jaccard similarity (|intersection| / |union|, or 0.0 if union is empty), and `retrieve(query, k)` which prepends the class `PREFIX` to the query before tokenizing, then returns the top-k (chunk, score) tuples sorted by score descending."
+      },
+      "starter_code": "class BGEStyleIndex:\n    PREFIX = \"represent this sentence for searching relevant passages: \"\n\n    def __init__(self):\n        self.chunks = []\n        self.vecs = []\n\n    def _vec(self, text: str) -> set:\n        # Return set of lowercase word tokens\n        pass\n\n    def add(self, chunks: list[str]):\n        self.chunks = chunks\n        self.vecs = [self._vec(c) for c in chunks]  # docs: NO prefix\n\n    def _score(self, a: set, b: set) -> float:\n        # Jaccard similarity: |intersection| / |union|; 0.0 if union empty\n        pass\n\n    def retrieve(self, query: str, k: int = 2) -> list:\n        # Prefix the query, then score against every chunk;\n        # return top-k (chunk, score) tuples sorted by score descending\n        pass\n\n# Test it:\nidx = BGEStyleIndex()\nidx.add([\n    \"the release pipeline rolled back on a failed health check\",\n    \"reset your password in the security settings\",\n    \"refunds are issued within thirty days\",\n])\n\nresults = idx.retrieve(\"reset password\", k=2)\nfor chunk, score in results:\n    print(f\"{score:.3f} | {chunk}\")\nprint(results[0][0].startswith(\"reset your password\"))",
+      "expected_output": "0.182 | reset your password in the security settings\n0.000 | the release pipeline rolled back on a failed health check\nTrue",
+      "hints": {
+        "en": [
+          "_vec() can be: return set(text.lower().split())",
+          "_score() is Jaccard: len(a & b) / len(a | b) â€” guard the empty-union case with an early return of 0.0",
+          "In retrieve(), build the query vector from self._vec(self.PREFIX + query), make (chunk, score) tuples, then sort with key=lambda t: t[1], reverse=True and slice [:k]"
+        ]
+      },
+      "test_code": "idx = BGEStyleIndex()\nassert idx._vec(\"Hello World\") == {\"hello\", \"world\"}\nassert idx._score({\"a\", \"b\"}, {\"b\", \"c\"}) == 1/3\nassert idx._score(set(), set()) == 0.0\nassert idx._score({\"a\"}, {\"a\"}) == 1.0\nidx.add([\"alpha beta gamma\", \"beta delta\", \"x y z\"])\nres = idx.retrieve(\"beta gamma\", k=3)\nassert len(res) == 3\nassert res[0][0] == \"alpha beta gamma\"\nassert res[0][1] >= res[1][1] >= res[2][1]\nassert res[-1][1] == 0.0\ntop1 = idx.retrieve(\"beta gamma\", k=1)\nassert len(top1) == 1 and top1[0][0] == \"alpha beta gamma\"\n# query prefix must be applied: prefix words should not crash or change ranking order here\nassert idx.retrieve(\"x y z\", k=1)[0][0] == \"x y z\""
+    },
+    {
+      "instruction": {
+        "en": "Build a `BGERag` class that assembles a RAG prompt while respecting BGE's query-prefix convention. Implement `retrieve(query, k)` which prefixes the query with the class `PREFIX` before scoring and returns up to k chunk strings (best first) with score greater than 0, and `build_prompt(query, k)` returning a prompt of the exact form: 'Use ONLY this context:\\n- <chunk1>\\n- <chunk2>\\n\\nQuestion: <query>\\nAnswer:'. The Question line must contain the ORIGINAL query, not the prefixed one."
+      },
+      "starter_code": "class BGERag:\n    PREFIX = \"represent this sentence for searching relevant passages: \"\n\n    def __init__(self, chunks: list[str]):\n        self.chunks = chunks\n\n    def _score(self, a: str, b: str) -> float:\n        # Word-overlap Jaccard between two lowercased strings\n        pass\n\n    def retrieve(self, query: str, k: int = 2) -> list[str]:\n        # Prefix the query, score every chunk, keep score > 0,\n        # return up to k chunk strings, best first\n        pass\n\n    def build_prompt(self, query: str, k: int = 2) -> str:\n        # 'Use ONLY this context:\\n- c1\\n- c2\\n\\nQuestion: <original query>\\nAnswer:'\n        pass\n\n# Test it:\nbot = BGERag([\n    \"deployments roll back on a failed smoke test\",\n    \"refunds are processed within thirty days\",\n    \"password resets happen in security settings\",\n])\n\nhits = bot.retrieve(\"why did my deployment roll back\", k=1)\nprint(hits[0])\n\nprompt = bot.build_prompt(\"why did my deployment roll back\", k=1)\nprint(prompt)\nprint(\"Use ONLY this context\" in prompt)\nprint(bot.retrieve(\"completely unrelated zzz\", k=2))",
+      "expected_output": "deployments roll back on a failed smoke test\nUse ONLY this context:\n- deployments roll back on a failed smoke test\n\nQuestion: why did my deployment roll back\nAnswer:\nTrue\n[]",
+      "hints": {
+        "en": [
+          "_score(): set(a.lower().split()) and set(b.lower().split()), then |intersection| / |union| with a 0.0 guard for empty union",
+          "retrieve(): score each chunk against self.PREFIX + query, keep only score > 0, sort descending, take the first k chunk strings",
+          "build_prompt(): keep the original query for the Question line; join retrieved chunks as 'Use ONLY this context:\\n- ' + '\\n- '.join(chunks) + f'\\n\\nQuestion: {query}\\nAnswer:'"
+        ]
+      },
+      "test_code": "bot = BGERag([\"alpha beta gamma\", \"beta delta\", \"x y z\"])\nassert bot._score(\"zzz\", \"alpha beta\") == 0.0\nhits = bot.retrieve(\"beta gamma\", k=2)\nassert hits[0] == \"alpha beta gamma\"\nassert \"x y z\" not in hits\nassert bot.retrieve(\"nothing matches here qqq\", k=3) == []\np = bot.build_prompt(\"beta gamma\", k=1)\nassert p == \"Use ONLY this context:\\n- alpha beta gamma\\n\\nQuestion: beta gamma\\nAnswer:\"\n# original query (not the prefix) must appear on the Question line\nassert \"Question: beta gamma\" in p\nassert \"represent this sentence\" not in p"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "text embeddings",
+      "RAG retrieval",
+      "semantic search",
+      "query instruction prefix",
+      "on-device inference",
+      "cosine similarity",
+      "top-k retrieval",
+      "BAAI/bge-small-en-v1.5",
+      "MTEB"
+    ],
+    "concepts_required": [
+      "python classes",
+      "sets",
+      "lists",
+      "string formatting",
+      "loops",
+      "sorting"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
