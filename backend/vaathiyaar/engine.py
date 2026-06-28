@@ -32,6 +32,133 @@ def get_ollama_client():
         )
     return _ollama_client
 
+
+# ---------------------------------------------------------------------------
+# Provider abstraction + graceful degradation
+#
+# Vaathiyaar talks to an ORDERED list of LLM providers (env VAATHIYAAR_PROVIDERS,
+# default "ollama"). The first provider that succeeds wins; if one fails we try
+# the next; if ALL fail we raise VaathiyaarUnavailable so callers can degrade to
+# a calm, learner-facing message instead of leaking a raw vendor 502.
+#
+# Adding a fallback provider later is config-only:
+#   1. implement `_<name>_complete(messages, options) -> str` (+ optional stream)
+#   2. register it in _PROVIDER_COMPLETE / _PROVIDER_STREAM
+#   3. set VAATHIYAAR_PROVIDERS="ollama,<name>"
+# ---------------------------------------------------------------------------
+
+FRIENDLY_UNAVAILABLE = (
+    "Vaathiyaar is taking a quick breather — a lot of learners are practising "
+    "right now. Please try again in a moment. 🙏"
+)
+
+
+class VaathiyaarUnavailable(RuntimeError):
+    """Raised when every configured provider fails. `.friendly` is safe to show
+    a learner; `.detail` is the operator-facing reason (for logs)."""
+
+    def __init__(self, detail: str = "", friendly: str = FRIENDLY_UNAVAILABLE):
+        super().__init__(detail or friendly)
+        self.detail = detail
+        self.friendly = friendly
+
+
+def _active_providers() -> list:
+    raw = os.getenv("VAATHIYAAR_PROVIDERS", "ollama")
+    return [p.strip() for p in raw.split(",") if p.strip()]
+
+
+def _ollama_complete(messages: list, options: dict) -> str:
+    """Non-streaming Ollama Cloud call → raw assistant content string."""
+    client = get_ollama_client()
+    try:
+        response = client.chat(
+            model=OLLAMA_MODEL, messages=messages, stream=False,
+            think=False, options=options,
+        )
+    except TypeError:
+        response = client.chat(
+            model=OLLAMA_MODEL, messages=messages, stream=False, options=options,
+        )
+    return response["message"]["content"]
+
+
+def _ollama_stream(messages: list, options: dict):
+    """Streaming Ollama Cloud call → yields content tokens."""
+    client = get_ollama_client()
+    try:
+        stream_iter = client.chat(
+            model=OLLAMA_MODEL, messages=messages, stream=True,
+            think=False, options=options,
+        )
+    except TypeError:
+        stream_iter = client.chat(
+            model=OLLAMA_MODEL, messages=messages, stream=True, options=options,
+        )
+    for chunk in stream_iter:
+        token = chunk.get("message", {}).get("content", "")
+        if token:
+            yield token
+
+
+# Registries: provider name → callable. Extend to add fallback providers.
+_PROVIDER_COMPLETE = {"ollama": _ollama_complete}
+_PROVIDER_STREAM = {"ollama": _ollama_stream}
+
+
+def complete(messages: list, options: Optional[dict] = None) -> str:
+    """Try each active provider in order; return the first success. Raise
+    VaathiyaarUnavailable if all fail (or none are configured)."""
+    options = options or {}
+    errors = []
+    for name in _active_providers():
+        fn = _PROVIDER_COMPLETE.get(name)
+        if fn is None:
+            continue  # unknown/unimplemented provider name → skip
+        try:
+            return fn(messages, options)
+        except Exception as exc:  # noqa: BLE001 — any provider error → fail over
+            errors.append(f"{name}: {exc}")
+            print(f"[vaathiyaar] provider '{name}' failed: {str(exc)[:200]}")
+    raise VaathiyaarUnavailable(detail="; ".join(errors) or "no providers configured")
+
+
+def stream(messages: list, options: Optional[dict] = None):
+    """Yield response tokens from the first working provider. A provider that
+    fails BEFORE yielding falls through to the next (streaming if available,
+    else its non-streaming completion yielded as one block). Raises
+    VaathiyaarUnavailable if all fail."""
+    options = options or {}
+    errors = []
+    for name in _active_providers():
+        sfn = _PROVIDER_STREAM.get(name)
+        if sfn is not None:
+            try:
+                yielded = False
+                for token in sfn(messages, options):
+                    yielded = True
+                    yield token
+                if yielded:
+                    return
+                errors.append(f"{name}: empty stream")
+                continue
+            except Exception as exc:  # noqa: BLE001
+                if yielded:
+                    raise  # already streamed partial output — cannot fail over
+                errors.append(f"{name}: {exc}")
+                print(f"[vaathiyaar] stream provider '{name}' failed: {str(exc)[:200]}")
+                continue
+        cfn = _PROVIDER_COMPLETE.get(name)
+        if cfn is not None:
+            try:
+                yield cfn(messages, options)
+                return
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{name}: {exc}")
+                continue
+    raise VaathiyaarUnavailable(detail="; ".join(errors) or "no providers configured")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -76,31 +203,20 @@ def call_vaathiyaar(
     """
     system_prompt = build_system_prompt(student_profile, lesson_context)
 
-    client = get_ollama_client()
-
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_message},
     ]
 
     # Bound the generation: cap output tokens + set temperature (previously ignored,
-    # which let the model run unbounded). Disable "thinking" to cut latency and keep
-    # the JSON clean. Fall back gracefully if the installed client lacks `think`.
+    # which let the model run unbounded). `complete()` routes through the provider
+    # fallback chain and raises VaathiyaarUnavailable if every provider fails, so
+    # callers can degrade gracefully instead of leaking a raw vendor error.
     options = {"temperature": temperature, "num_predict": max_tokens}
     _t = time.time()
-    try:
-        response = client.chat(
-            model=OLLAMA_MODEL, messages=messages, stream=False,
-            think=False, options=options,
-        )
-    except TypeError:
-        response = client.chat(
-            model=OLLAMA_MODEL, messages=messages, stream=False, options=options,
-        )
-    print(f"[vaathiyaar] chat model={OLLAMA_MODEL} took {time.time() - _t:.1f}s "
-          f"(max_tokens={max_tokens})")
+    raw_content = complete(messages, options)
+    print(f"[vaathiyaar] chat took {time.time() - _t:.1f}s (max_tokens={max_tokens})")
 
-    raw_content = response["message"]["content"]
     return parse_vaathiyaar_response(raw_content)
 
 
