@@ -6,7 +6,7 @@ import uuid
 import sqlite3
 import os
 from datetime import datetime
-from vaathiyaar.engine import call_vaathiyaar
+from vaathiyaar.engine import call_vaathiyaar, VaathiyaarUnavailable
 from vaathiyaar.profiler import get_student_profile
 from vaathiyaar.modelfile import LANG_NAMES
 from modules.templates import CONCEPT_TEMPLATES, get_template_for_topic
@@ -507,6 +507,10 @@ def run_pipeline(job_id, user_id, topic):
 
         lesson_id = stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, challenges)
         return lesson_id
+    except VaathiyaarUnavailable as e:
+        # Every AI provider is down (e.g. Ollama weekly cap) — show a calm message.
+        _update_job_status(job_id, "failed", error=e.friendly)
+        raise
     except Exception as e:
         _update_job_status(job_id, "failed", error=str(e))
         raise
