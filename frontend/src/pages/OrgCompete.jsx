@@ -8,10 +8,10 @@ import { Swords, Trophy, Crown, Medal, Plus, Loader2, X, ChevronLeft, Check } fr
 import clsx from 'clsx';
 
 function rankBadge(rank) {
-    if (rank === 1) return <Crown size={16} className="text-amber-400" />;
-    if (rank === 2) return <Medal size={16} className="text-slate-300" />;
+    if (rank === 1) return <Crown size={16} className="text-amber-500 dark:text-amber-400" />;
+    if (rank === 2) return <Medal size={16} className="text-slate-400 dark:text-slate-300" />;
     if (rank === 3) return <Medal size={16} className="text-amber-700" />;
-    return <span className="text-xs font-bold text-slate-500 w-4 text-center">{rank}</span>;
+    return <span className="text-xs font-bold text-text-muted w-4 text-center">{rank}</span>;
 }
 
 export default function OrgCompete() {
@@ -22,17 +22,17 @@ export default function OrgCompete() {
     const [tab, setTab] = useState('competitions');
 
     if (!orgId) {
-        return <div className="max-w-3xl mx-auto px-4 py-12 text-center text-slate-400">
+        return <div className="max-w-3xl mx-auto px-4 py-12 text-center text-text-muted">
             You're not part of an organization yet.</div>;
     }
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-white font-display flex items-center gap-2">
-                    <Swords className="text-cyan-400" size={24} /> {activeOrg.name || 'Organization'} — Compete
+                <h1 className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
+                    <Swords className="text-cyan-600 dark:text-cyan-400" size={24} /> {activeOrg.name || 'Organization'} — Compete
                 </h1>
-                <p className="text-slate-400 text-sm mt-1">Competitive challenges and rankings within your organization.</p>
+                <p className="text-text-muted text-sm mt-1">Competitive challenges and rankings within your organization.</p>
             </div>
 
             <div className="flex gap-2 mb-6">
@@ -40,7 +40,7 @@ export default function OrgCompete() {
                     <button key={id} onClick={() => setTab(id)}
                         className={clsx('px-4 py-2 rounded-xl text-sm font-semibold transition-colors',
                             tab === id ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white'
-                                       : 'bg-white/[0.04] text-slate-400 hover:text-white')}>
+                                       : 'bg-bg-elevated text-text-muted hover:text-text-primary')}>
                         {label}
                     </button>
                 ))}
@@ -81,28 +81,28 @@ function Competitions({ orgId, isManager, meId }) {
                 </button>
             )}
             {loading ? (
-                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-400" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-600 dark:text-cyan-400" /></div>
             ) : sets.length === 0 ? (
-                <p className="text-center text-slate-500 text-sm py-10">
+                <p className="text-center text-text-muted text-sm py-10">
                     No competitions yet.{isManager ? ' Create one to get your members competing.' : ' Check back soon.'}
                 </p>
             ) : (
                 <div className="space-y-3">
                     {sets.map((s) => (
                         <button key={s.id} onClick={() => setOpenSet(s)}
-                            className="w-full text-left rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 hover:border-cyan-500/30 transition-colors">
+                            className="w-full text-left rounded-2xl border border-border-default bg-bg-surface p-4 hover:border-cyan-500/30 transition-colors">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-bold text-white truncate">{s.title}</p>
-                                    {s.description && <p className="text-xs text-slate-400 truncate mt-0.5">{s.description}</p>}
-                                    <p className="text-xs text-slate-500 mt-1">
+                                    <p className="text-sm font-bold text-text-primary truncate">{s.title}</p>
+                                    {s.description && <p className="text-xs text-text-muted truncate mt-0.5">{s.description}</p>}
+                                    <p className="text-xs text-text-muted mt-1">
                                         {s.challenge_count} challenge{s.challenge_count === 1 ? '' : 's'}
                                         {s.group_name ? ` · ${s.group_name}` : ' · whole org'}
                                     </p>
                                 </div>
                                 <div className="text-right shrink-0">
-                                    <div className="text-lg font-extrabold text-cyan-400">{s.my_completed}/{s.challenge_count}</div>
-                                    <div className="text-[10px] text-slate-500">your progress</div>
+                                    <div className="text-lg font-extrabold text-cyan-600 dark:text-cyan-400">{s.my_completed}/{s.challenge_count}</div>
+                                    <div className="text-[10px] text-text-muted">your progress</div>
                                 </div>
                             </div>
                         </button>
@@ -147,47 +147,47 @@ function CreateForm({ orgId, onDone, onCancel }) {
 
     return (
         <div>
-            <button onClick={onCancel} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 mb-4">
+            <button onClick={onCancel} className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary mb-4">
                 <ChevronLeft size={14} /> Back
             </button>
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
-                {err && <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{err}</div>}
+            <div className="rounded-2xl border border-border-default bg-bg-surface p-5 space-y-4">
+                {err && <div className="text-xs text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{err}</div>}
                 <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Title</label>
+                    <label className="text-xs uppercase font-bold text-text-muted tracking-wider">Title</label>
                     <input value={title} onChange={(e) => setTitle(e.target.value)}
-                        className="mt-1 w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/40"
+                        className="mt-1 w-full bg-bg-elevated border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-cyan-500/40"
                         placeholder="e.g., Week 1 Sprint" />
                 </div>
                 <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Description <span className="text-slate-600">(optional)</span></label>
+                    <label className="text-xs uppercase font-bold text-text-muted tracking-wider">Description <span className="text-text-disabled">(optional)</span></label>
                     <input value={description} onChange={(e) => setDescription(e.target.value)}
-                        className="mt-1 w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/40"
+                        className="mt-1 w-full bg-bg-elevated border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-cyan-500/40"
                         placeholder="What's this competition about?" />
                 </div>
                 <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Group / cohort <span className="text-slate-600">(optional — blank = whole org)</span></label>
+                    <label className="text-xs uppercase font-bold text-text-muted tracking-wider">Group / cohort <span className="text-text-disabled">(optional — blank = whole org)</span></label>
                     <input value={group} onChange={(e) => setGroup(e.target.value)}
-                        className="mt-1 w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/40"
+                        className="mt-1 w-full bg-bg-elevated border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-cyan-500/40"
                         placeholder="e.g., Section-A" />
                 </div>
                 <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Challenges ({picked.size} selected)</label>
+                    <label className="text-xs uppercase font-bold text-text-muted tracking-wider">Challenges ({picked.size} selected)</label>
                     <div className="mt-2 max-h-72 overflow-y-auto space-y-2 pr-1">
                         {catalog.map((c) => (
                             <button key={c.id} type="button" onClick={() => togglePick(c.id)}
                                 className={clsx('w-full text-left rounded-xl border px-3 py-2.5 flex items-center gap-3 transition-colors',
-                                    picked.has(c.id) ? 'border-cyan-500/50 bg-cyan-500/10' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]')}>
+                                    picked.has(c.id) ? 'border-cyan-500/50 bg-cyan-500/10' : 'border-border-default bg-bg-surface hover:border-border-strong')}>
                                 <div className={clsx('w-5 h-5 rounded flex items-center justify-center shrink-0',
-                                    picked.has(c.id) ? 'bg-cyan-500 text-white' : 'border border-white/20')}>
+                                    picked.has(c.id) ? 'bg-cyan-500 text-white' : 'border border-border-strong')}>
                                     {picked.has(c.id) && <Check size={12} />}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm text-white truncate">{c.title}</p>
-                                    <p className="text-[11px] text-slate-500">{c.difficulty} · {c.category} · {c.xp_reward} XP</p>
+                                    <p className="text-sm text-text-primary truncate">{c.title}</p>
+                                    <p className="text-[11px] text-text-muted">{c.difficulty} · {c.category} · {c.xp_reward} XP</p>
                                 </div>
                             </button>
                         ))}
-                        {catalog.length === 0 && <p className="text-xs text-slate-500 py-4 text-center">Loading challenges…</p>}
+                        {catalog.length === 0 && <p className="text-xs text-text-muted py-4 text-center">Loading challenges…</p>}
                     </div>
                 </div>
                 <button onClick={submit} disabled={saving}
@@ -212,33 +212,33 @@ function SetLeaderboard({ orgId, set, meId, onBack }) {
 
     return (
         <div>
-            <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 mb-4">
+            <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary mb-4">
                 <ChevronLeft size={14} /> Back to competitions
             </button>
-            <h2 className="text-lg font-bold text-white mb-1">{set.title}</h2>
-            <p className="text-xs text-slate-500 mb-4">
+            <h2 className="text-lg font-bold text-text-primary mb-1">{set.title}</h2>
+            <p className="text-xs text-text-muted mb-4">
                 {set.challenge_count} challenges{set.group_name ? ` · ${set.group_name}` : ' · whole org'}
             </p>
             {loading ? (
-                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-400" /></div>
+                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-600 dark:text-cyan-400" /></div>
             ) : (
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.04]">
+                <div className="rounded-2xl border border-border-default bg-bg-surface divide-y divide-border-default">
                     {(data?.leaderboard || []).map((row) => (
-                        <div key={row.user_id} className={clsx('flex items-center gap-3 px-4 py-3', row.user_id === meId && 'bg-cyan-500/[0.06]')}>
+                        <div key={row.user_id} className={clsx('flex items-center gap-3 px-4 py-3', row.user_id === meId && 'bg-cyan-500/[0.08]')}>
                             <div className="w-6 flex justify-center">{rankBadge(row.rank)}</div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-white truncate">
-                                    {row.name}{row.user_id === meId && <span className="text-cyan-400"> (you)</span>}
+                                <p className="text-sm font-semibold text-text-primary truncate">
+                                    {row.name}{row.user_id === meId && <span className="text-cyan-600 dark:text-cyan-400"> (you)</span>}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm font-bold text-white">{row.solved}/{row.total}</p>
-                                <p className="text-[10px] text-slate-500">{row.xp} XP</p>
+                                <p className="text-sm font-bold text-text-primary">{row.solved}/{row.total}</p>
+                                <p className="text-[10px] text-text-muted">{row.xp} XP</p>
                             </div>
                         </div>
                     ))}
                     {(!data?.leaderboard || data.leaderboard.length === 0) && (
-                        <p className="text-center text-slate-500 text-sm py-10">No submissions yet — be the first to solve one.</p>
+                        <p className="text-center text-text-muted text-sm py-10">No submissions yet — be the first to solve one.</p>
                     )}
                 </div>
             )}
@@ -257,27 +257,27 @@ function OrgRanking({ orgId, meId }) {
             .finally(() => setLoading(false));
     }, [orgId]);
 
-    if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-400" /></div>;
+    if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-600 dark:text-cyan-400" /></div>;
 
     return (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.04]">
+        <div className="rounded-2xl border border-border-default bg-bg-surface divide-y divide-border-default">
             {(data?.leaderboard || []).map((row) => (
-                <div key={row.user_id} className={clsx('flex items-center gap-3 px-4 py-3', row.user_id === meId && 'bg-cyan-500/[0.06]')}>
+                <div key={row.user_id} className={clsx('flex items-center gap-3 px-4 py-3', row.user_id === meId && 'bg-cyan-500/[0.08]')}>
                     <div className="w-6 flex justify-center">{rankBadge(row.rank)}</div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white truncate">
-                            {row.name}{row.user_id === meId && <span className="text-cyan-400"> (you)</span>}
+                        <p className="text-sm font-semibold text-text-primary truncate">
+                            {row.name}{row.user_id === meId && <span className="text-cyan-600 dark:text-cyan-400"> (you)</span>}
                         </p>
-                        <p className="text-xs text-slate-500">{row.challenges} challenges · {row.streak}🔥</p>
+                        <p className="text-xs text-text-muted">{row.challenges} challenges · {row.streak}🔥</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-sm font-bold text-white">{row.xp}</p>
-                        <p className="text-[10px] text-slate-500">XP</p>
+                        <p className="text-sm font-bold text-text-primary">{row.xp}</p>
+                        <p className="text-[10px] text-text-muted">XP</p>
                     </div>
                 </div>
             ))}
             {(!data?.leaderboard || data.leaderboard.length === 0) && (
-                <p className="text-center text-slate-500 text-sm py-10">No members ranked yet.</p>
+                <p className="text-center text-text-muted text-sm py-10">No members ranked yet.</p>
             )}
         </div>
     );

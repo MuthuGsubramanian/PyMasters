@@ -276,7 +276,7 @@ function VaathiyaarBubble({ text }) {
                 <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
             </div>
             {/* Bubble */}
-            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-slate-800 text-sm leading-relaxed">
+            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-text-primary text-sm leading-relaxed">
                 {text}
             </div>
         </motion.div>
@@ -291,7 +291,7 @@ function UserBubble({ text }) {
             transition={{ duration: 0.35 }}
             className="flex justify-end"
         >
-            <div className="max-w-[75%] panel rounded-2xl rounded-tr-sm px-5 py-3 border-r-2 border-cyan-500/60 text-slate-800 text-sm leading-relaxed">
+            <div className="max-w-[75%] panel rounded-2xl rounded-tr-sm px-5 py-3 border-r-2 border-cyan-500/60 text-text-primary text-sm leading-relaxed">
                 {text}
             </div>
         </motion.div>
@@ -311,7 +311,7 @@ function OptionPills({ options, onSelect, disabled }) {
                     key={opt.value}
                     onClick={() => onSelect(opt)}
                     disabled={disabled}
-                    className="px-4 py-2 rounded-full text-sm font-medium border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-4 py-2 rounded-full text-sm font-medium border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     {opt.label}
                 </button>
@@ -356,7 +356,7 @@ function MultiOptionPills({ options, onSelect, disabled }) {
                             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
                                 isSelected
                                     ? 'bg-cyan-500 text-white border-cyan-500'
-                                    : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-700 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900'
+                                    : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900 dark:hover:text-cyan-100'
                             }`}
                         >
                             {isSelected && <span className="mr-1">✓</span>}
@@ -369,7 +369,7 @@ function MultiOptionPills({ options, onSelect, disabled }) {
                 <button
                     onClick={handleContinue}
                     disabled={disabled}
-                    className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Continue →
                 </button>
@@ -396,7 +396,7 @@ function LangPickerBlock({ onSelect, disabled }) {
             <button
                 onClick={() => onSelect({ value: selected, label: selected.toUpperCase() })}
                 disabled={disabled}
-                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 Confirm Language ✓
             </button>
@@ -434,26 +434,26 @@ function ContactInputBlock({ onSelect, disabled, requireContact }) {
             className="flex flex-col gap-3 pl-12"
         >
             <div className="flex flex-col gap-2 max-w-sm">
-                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-slate-200">
-                    <span className="text-slate-400 text-sm">@</span>
+                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-border-default">
+                    <span className="text-text-muted text-sm">@</span>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => { setEmail(e.target.value); setError(''); }}
                         placeholder="Email address"
                         disabled={disabled}
-                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50"
+                        className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none disabled:opacity-50"
                     />
                 </div>
-                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-slate-200">
-                    <span className="text-slate-400 text-sm">📱</span>
+                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-border-default">
+                    <span className="text-text-muted text-sm">📱</span>
                     <input
                         type="tel"
                         value={whatsapp}
                         onChange={(e) => setWhatsapp(e.target.value)}
                         placeholder="WhatsApp number"
                         disabled={disabled}
-                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50"
+                        className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none disabled:opacity-50"
                     />
                 </div>
                 {error && <p className="text-xs text-red-500">{error}</p>}
@@ -461,7 +461,7 @@ function ContactInputBlock({ onSelect, disabled, requireContact }) {
             <button
                 onClick={handleSubmit}
                 disabled={disabled}
-                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             >
                 Continue →
             </button>
@@ -480,7 +480,7 @@ function ProgressDots({ total, current }) {
                             ? 'w-2 h-2 bg-cyan-400'
                             : i === current
                             ? 'w-4 h-2 bg-purple-400'
-                            : 'w-2 h-2 bg-slate-200'
+                            : 'w-2 h-2 bg-bg-inset'
                     }`}
                 />
             ))}
@@ -711,13 +711,13 @@ export default function Onboarding() {
                     <img src={PymastersGlyph} alt="PyMasters" className="w-[18px] h-[18px]" />
                 </div>
                 <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-purple-600">PyMasters</p>
-                    <p className="text-[11px] text-slate-500">Onboarding with Vaathiyaar</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">PyMasters</p>
+                    <p className="text-[11px] text-text-muted">Onboarding with Vaathiyaar</p>
                 </div>
                 <button
                     type="button"
                     onClick={() => navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom')}
-                    className="ml-auto text-[11px] font-semibold text-slate-400 hover:text-purple-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
+                    className="ml-auto text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:text-purple-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
                     title="You can finish this later from your profile"
                 >
                     Skip setup →
@@ -754,13 +754,13 @@ export default function Onboarding() {
                                             </button>
                                             <button
                                                 onClick={() => navigate('/dashboard/paths')}
-                                                className="px-5 py-2.5 rounded-full text-sm font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all duration-200"
+                                                className="px-5 py-2.5 rounded-full text-sm font-bold border border-border-default bg-bg-elevated text-text-primary hover:bg-bg-inset transition-all duration-200"
                                             >
                                                 Browse All Paths
                                             </button>
                                             <button
                                                 onClick={() => navigate('/dashboard/classroom')}
-                                                className="px-5 py-2.5 rounded-full text-sm font-medium border border-transparent text-slate-500 hover:text-slate-700 transition-all duration-200"
+                                                className="px-5 py-2.5 rounded-full text-sm font-medium border border-transparent text-text-muted hover:text-text-secondary transition-all duration-200"
                                             >
                                                 Skip for now →
                                             </button>
@@ -789,19 +789,19 @@ export default function Onboarding() {
                                                             <input
                                                                 type="url"
                                                                 placeholder="LinkedIn URL (optional)"
-                                                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 border border-black/10 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-elevated border border-border-default text-sm text-text-primary placeholder-text-muted focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                                                                 value={answers.linkedin_url || ''}
                                                                 onChange={e => setAnswers(a => ({...a, linkedin_url: e.target.value}))}
                                                             />
                                                         </div>
                                                         <div className="relative">
-                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-700">
+                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                                                             </div>
                                                             <input
                                                                 type="url"
                                                                 placeholder="GitHub URL (optional)"
-                                                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 border border-black/10 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-elevated border border-border-default text-sm text-text-primary placeholder-text-muted focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                                                                 value={answers.github_url || ''}
                                                                 onChange={e => setAnswers(a => ({...a, github_url: e.target.value}))}
                                                             />
@@ -839,10 +839,10 @@ export default function Onboarding() {
             </div>
 
             {/* Footer — progress + back + dots */}
-            <footer className="flex-shrink-0 px-4 py-4 border-t border-slate-200 flex flex-col items-center gap-2.5">
+            <footer className="flex-shrink-0 px-4 py-4 border-t border-border-default flex flex-col items-center gap-2.5">
                 {/* Linear progress bar */}
                 <div
-                    className="w-full max-w-2xl h-1.5 rounded-full bg-slate-200/70 overflow-hidden"
+                    className="w-full max-w-2xl h-1.5 rounded-full bg-bg-inset overflow-hidden"
                     role="progressbar"
                     aria-valuemin={0}
                     aria-valuemax={questions.length}
@@ -863,12 +863,12 @@ export default function Onboarding() {
                             type="button"
                             onClick={goBack}
                             disabled={busy}
-                            className="text-[11px] font-semibold text-slate-500 hover:text-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-1"
+                            className="text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:text-purple-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-1"
                         >
                             ← Back
                         </button>
                     )}
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-text-muted">
                         {done ? 'All done!' : `Question ${currentStep + 1} of ${questions.length} · ~${Math.max(1, Math.ceil(questions.length / 5))} min`}
                     </p>
                 </div>

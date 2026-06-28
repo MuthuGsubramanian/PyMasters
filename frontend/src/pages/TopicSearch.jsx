@@ -37,43 +37,43 @@ export default function TopicSearch() {
     return (
         <div className="max-w-3xl mx-auto px-4 py-8">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-white font-display flex items-center gap-2">
-                    <Search className="text-cyan-400" size={24} /> Topic Search
+                <h1 className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
+                    <Search className="text-cyan-600 dark:text-cyan-400" size={24} /> Topic Search
                 </h1>
-                <p className="text-slate-400 text-sm mt-1">
+                <p className="text-text-muted text-sm mt-1">
                     Search the catalogue — and if a topic isn't covered yet, Vaathiyaar will create a session for you.
                 </p>
             </div>
 
             <div className="relative mb-6">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                     autoFocus
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="e.g., decorators, async/await, list comprehensions, gradient descent…"
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30"
+                    className="w-full bg-bg-elevated border border-border-default rounded-xl pl-12 pr-4 py-3.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30"
                 />
-                {loading && <Loader2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-cyan-400 animate-spin" />}
+                {loading && <Loader2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-cyan-600 dark:text-cyan-400 animate-spin" />}
             </div>
 
             {data && data.results?.length > 0 && (
                 <div className="space-y-2">
-                    <p className="text-xs text-slate-500 mb-2">{data.count} match{data.count === 1 ? '' : 'es'}</p>
+                    <p className="text-xs text-text-muted mb-2">{data.count} match{data.count === 1 ? '' : 'es'}</p>
                     {data.results.map((r) => (
                         <button
                             key={r.id}
                             onClick={() => navigate('/dashboard/classroom')}
-                            className="w-full text-left rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 hover:border-cyan-500/30 transition-colors flex items-center gap-3"
+                            className="w-full text-left rounded-xl border border-border-default bg-bg-surface p-4 hover:border-cyan-500/30 transition-colors flex items-center gap-3"
                         >
-                            <BookOpen size={18} className="text-cyan-400 shrink-0" />
+                            <BookOpen size={18} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-white truncate">
-                                    {r.title}{r.generated && <span className="ml-2 text-[10px] text-fuchsia-400 align-middle">Vaathiyaar-made</span>}
+                                <p className="text-sm font-semibold text-text-primary truncate">
+                                    {r.title}{r.generated && <span className="ml-2 text-[10px] text-fuchsia-600 dark:text-fuchsia-400 align-middle">Vaathiyaar-made</span>}
                                 </p>
-                                {r.description && <p className="text-xs text-slate-500 truncate">{r.description}</p>}
+                                {r.description && <p className="text-xs text-text-muted truncate">{r.description}</p>}
                             </div>
-                            <ArrowRight size={16} className="text-slate-600 shrink-0" />
+                            <ArrowRight size={16} className="text-text-muted shrink-0" />
                         </button>
                     ))}
                 </div>
@@ -84,7 +84,7 @@ export default function TopicSearch() {
             )}
 
             {!touched && (
-                <p className="text-center text-slate-600 text-sm py-12">Start typing to search across {''}all tracks.</p>
+                <p className="text-center text-text-muted text-sm py-12">Start typing to search across {''}all tracks.</p>
             )}
         </div>
     );
@@ -126,8 +126,8 @@ function GeneratePanel({ topic, userId }) {
     if (phase === 'done') {
         return (
             <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
-                <CheckCircle2 className="mx-auto text-emerald-400 mb-2" size={28} />
-                <p className="text-white font-bold">Your session on "{topic}" is ready!</p>
+                <CheckCircle2 className="mx-auto text-emerald-600 dark:text-emerald-400 mb-2" size={28} />
+                <p className="text-text-primary font-bold">Your session on "{topic}" is ready!</p>
                 <button onClick={() => navigate('/dashboard/classroom')}
                     className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] transition-transform">
                     Open in Classroom <ArrowRight size={16} />
@@ -139,11 +139,11 @@ function GeneratePanel({ topic, userId }) {
     if (phase === 'error') {
         return (
             <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 flex items-start gap-3">
-                <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={18} />
+                <AlertCircle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={18} />
                 <div>
-                    <p className="text-white font-semibold text-sm">Generation didn't finish</p>
-                    <p className="text-slate-400 text-xs mt-1">Vaathiyaar couldn't build this session right now. Please try again in a moment.</p>
-                    <button onClick={() => setPhase('idle')} className="mt-2 text-xs text-cyan-400 font-semibold">Try again</button>
+                    <p className="text-text-primary font-semibold text-sm">Generation didn't finish</p>
+                    <p className="text-text-muted text-xs mt-1">Vaathiyaar couldn't build this session right now. Please try again in a moment.</p>
+                    <button onClick={() => setPhase('idle')} className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-semibold">Try again</button>
                 </div>
             </div>
         );
@@ -153,41 +153,41 @@ function GeneratePanel({ topic, userId }) {
         return (
             <div className="mt-4 rounded-2xl border border-purple-500/30 bg-purple-500/10 p-6">
                 <div className="flex items-center gap-3 mb-3">
-                    <Wand2 className="text-fuchsia-400 animate-pulse" size={20} />
-                    <p className="text-white font-bold text-sm">Vaathiyaar is creating your session on "{topic}"…</p>
+                    <Wand2 className="text-fuchsia-600 dark:text-fuchsia-400 animate-pulse" size={20} />
+                    <p className="text-text-primary font-bold text-sm">Vaathiyaar is creating your session on "{topic}"…</p>
                 </div>
-                <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-2 rounded-full bg-bg-inset overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all duration-500" style={{ width: `${progress}%` }} />
                 </div>
-                <p className="text-xs text-slate-400 mt-2 capitalize">{stage || 'Working'}… {progress}%</p>
-                <p className="text-[11px] text-slate-600 mt-1">This can take a minute. You can keep browsing — it'll appear in your Classroom.</p>
+                <p className="text-xs text-text-muted mt-2 capitalize">{stage || 'Working'}… {progress}%</p>
+                <p className="text-[11px] text-text-muted mt-1">This can take a minute. You can keep browsing — it'll appear in your Classroom.</p>
             </div>
         );
     }
 
     return (
-        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6">
+        <div className="mt-4 rounded-2xl border border-border-default bg-bg-surface p-6">
             <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="text-fuchsia-400" size={18} />
-                <p className="text-white font-bold text-sm">No lesson on "{topic}" yet</p>
+                <Sparkles className="text-fuchsia-600 dark:text-fuchsia-400" size={18} />
+                <p className="text-text-primary font-bold text-sm">No lesson on "{topic}" yet</p>
             </div>
-            <p className="text-slate-400 text-xs mb-4">Tell Vaathiyaar a couple of details and it'll generate a tailored session for you.</p>
+            <p className="text-text-muted text-xs mb-4">Tell Vaathiyaar a couple of details and it'll generate a tailored session for you.</p>
 
-            <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Your level</label>
+            <label className="text-xs uppercase font-bold text-text-muted tracking-wider">Your level</label>
             <div className="grid grid-cols-3 gap-2 mt-1 mb-4">
                 {LEVELS.map((l) => (
                     <button key={l.id} onClick={() => setLevel(l.id)}
                         className={clsx('py-2 rounded-lg text-sm font-medium border transition-colors',
-                            level === l.id ? 'border-cyan-500/50 bg-cyan-500/10 text-white' : 'border-white/[0.08] bg-white/[0.02] text-slate-400 hover:border-white/[0.15]')}>
+                            level === l.id ? 'border-cyan-500/50 bg-cyan-500/10 text-text-primary' : 'border-border-default bg-bg-surface text-text-muted hover:border-border-strong')}>
                         {l.label}
                     </button>
                 ))}
             </div>
 
-            <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">What should it focus on? <span className="text-slate-600 normal-case font-medium">(optional)</span></label>
+            <label className="text-xs uppercase font-bold text-text-muted tracking-wider">What should it focus on? <span className="text-text-disabled normal-case font-medium">(optional)</span></label>
             <input value={focus} onChange={(e) => setFocus(e.target.value)}
                 placeholder="e.g., real-world examples, interview prep, the math behind it"
-                className="mt-1 mb-4 w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40" />
+                className="mt-1 mb-4 w-full bg-bg-elevated border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-500/40" />
 
             <button onClick={start}
                 className="w-full py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.01] transition-transform flex items-center justify-center gap-2">
