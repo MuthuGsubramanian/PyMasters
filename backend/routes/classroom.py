@@ -14,7 +14,10 @@ from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from vaathiyaar.engine import call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL
+from vaathiyaar.engine import (
+    call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL,
+    stream as vaathiyaar_stream, VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE,
+)
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
 from vaathiyaar.training_data import (
@@ -197,6 +200,24 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
 # Routes
 # ---------------------------------------------------------------------------
 
+def _ai_unavailable_payload(friendly: str = FRIENDLY_UNAVAILABLE) -> dict:
+    """A Vaathiyaar-shaped response carrying a calm, learner-facing message so the
+    UI degrades gracefully when every AI provider is down (e.g. Ollama weekly cap)."""
+    return {
+        "message": friendly,
+        "phase": "chat",
+        "animation": None,
+        "practice_challenge": None,
+        "profile_update": {
+            "topic_practiced": None,
+            "struggle_detected": False,
+            "mastery_delta": None,
+            "emotion_signal": "neutral",
+        },
+        "ai_unavailable": True,
+    }
+
+
 @router.post("/chat")
 def chat(request: ChatRequest):
     """
@@ -238,8 +259,13 @@ def chat(request: ChatRequest):
             student_profile=profile,
             lesson_context=lesson_context,
         )
+    except VaathiyaarUnavailable as exc:
+        print(f"[classroom.chat] AI unavailable: {str(exc.detail)[:200]}")
+        return _ai_unavailable_payload(exc.friendly)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Vaathiyaar AI error: {exc}")
+        # Never leak a raw vendor error to a learner — degrade gracefully.
+        print(f"[classroom.chat] unexpected AI error: {str(exc)[:200]}")
+        return _ai_unavailable_payload()
 
     # Record interaction for future fine-tuning; expose pair_id so the client
     # can attach a 👍/👎 quality signal to this exact response.
@@ -287,7 +313,6 @@ def chat_stream(request: ChatRequest):
         lesson_context["language"] = request.language
 
     system_prompt = build_system_prompt(profile, lesson_context)
-    client = get_ollama_client()
 
     def generate():
         full_response = ""
@@ -298,13 +323,9 @@ def chat_stream(request: ChatRequest):
                 {"role": "user", "content": request.message},
             ]
             opts = {"temperature": 0.7, "num_predict": 1500}
-            # Bound the chat too (no unbounded "thinking"); fall back if client lacks `think`.
-            try:
-                stream_iter = client.chat(model=OLLAMA_MODEL, messages=msgs, stream=True, think=False, options=opts)
-            except TypeError:
-                stream_iter = client.chat(model=OLLAMA_MODEL, messages=msgs, stream=True, options=opts)
-            for chunk in stream_iter:
-                token = chunk.get("message", {}).get("content", "")
+            # Route through the provider fallback chain; raises VaathiyaarUnavailable
+            # if every provider is down so we can emit a calm `done` (never `error`).
+            for token in vaathiyaar_stream(msgs, opts):
                 if token:
                     full_response += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
@@ -346,8 +367,13 @@ def chat_stream(request: ChatRequest):
                 pass
 
             yield f"data: {json.dumps({'done': True, 'message': clean_message, 'phase': parsed_response.get('phase') if parsed_response else 'chat', 'full_response': full_response, 'pair_id': pair_id})}\n\n"
+        except VaathiyaarUnavailable as exc:
+            print(f"[classroom.chat_stream] AI unavailable: {str(exc.detail)[:200]}")
+            yield f"data: {json.dumps({'done': True, 'message': exc.friendly, 'phase': 'chat', 'ai_unavailable': True})}\n\n"
         except Exception as exc:
-            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            # Degrade gracefully — emit a calm `done`, never a raw `error` to a learner.
+            print(f"[classroom.chat_stream] unexpected AI error: {str(exc)[:200]}")
+            yield f"data: {json.dumps({'done': True, 'message': FRIENDLY_UNAVAILABLE, 'phase': 'chat', 'ai_unavailable': True})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
