@@ -221,4 +221,10 @@ function Members({ meId }) {
                         </div>
                     ))}
                     {members.length === 0 && (
- 
+                        <p className="text-center text-text-muted text-sm py-10 sm:col-span-2">No members found.</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
