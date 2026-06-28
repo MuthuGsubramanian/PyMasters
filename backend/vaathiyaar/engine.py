@@ -5,6 +5,7 @@ and safe code evaluation.
 
 import json
 import os
+import re
 import time
 from typing import Optional
 
@@ -18,6 +19,12 @@ from vaathiyaar.modelfile import build_system_prompt
 
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5")
+
+# Vertex AI Gemini fallback provider. Auths via the Cloud Run runtime service
+# account (ADC) — no API key. Activated by adding "gemini" to VAATHIYAAR_PROVIDERS.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+GEMINI_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 
 # Initialize Ollama client using the official SDK
 _ollama_client = None
@@ -64,8 +71,10 @@ class VaathiyaarUnavailable(RuntimeError):
 
 
 def _active_providers() -> list:
+    # Split on ANY separator (comma/space/+/|) so the value survives gcloud
+    # --set-env-vars (which is itself comma-delimited) — prod uses "ollama+gemini".
     raw = os.getenv("VAATHIYAAR_PROVIDERS", "ollama")
-    return [p.strip() for p in raw.split(",") if p.strip()]
+    return [p for p in re.split(r"[^A-Za-z0-9_]+", raw) if p]
 
 
 def _ollama_complete(messages: list, options: dict) -> str:
@@ -101,9 +110,69 @@ def _ollama_stream(messages: list, options: dict):
             yield token
 
 
+def _split_messages_for_gemini(messages: list):
+    """Map OpenAI-style messages → Gemini's (system_instruction, contents).
+    'system' turns are concatenated into the system instruction; 'assistant' →
+    'model'; everything else → 'user'."""
+    system_parts = []
+    contents = []
+    for m in messages:
+        role = m.get("role")
+        content = m.get("content", "")
+        if role == "system":
+            system_parts.append(content)
+        else:
+            g_role = "model" if role == "assistant" else "user"
+            contents.append({"role": g_role, "parts": [{"text": content}]})
+    return "\n\n".join(system_parts), contents
+
+
+_gemini_client_obj = None
+
+
+def _gemini_client():
+    """Lazily build a Vertex AI Gemini client (ADC via the runtime SA). The SDK
+    import is deferred so the module loads fine when Gemini isn't installed/used."""
+    global _gemini_client_obj
+    if _gemini_client_obj is None:
+        from google import genai
+        _gemini_client_obj = genai.Client(
+            vertexai=True, project=GEMINI_PROJECT or None, location=GEMINI_LOCATION,
+        )
+    return _gemini_client_obj
+
+
+def _gemini_complete(messages: list, options: dict) -> str:
+    from google.genai import types
+    client = _gemini_client()
+    system, contents = _split_messages_for_gemini(messages)
+    cfg = types.GenerateContentConfig(
+        system_instruction=system or None,
+        temperature=options.get("temperature", 0.7),
+        max_output_tokens=options.get("num_predict", 1500),
+    )
+    resp = client.models.generate_content(model=GEMINI_MODEL, contents=contents, config=cfg)
+    return resp.text or ""
+
+
+def _gemini_stream(messages: list, options: dict):
+    from google.genai import types
+    client = _gemini_client()
+    system, contents = _split_messages_for_gemini(messages)
+    cfg = types.GenerateContentConfig(
+        system_instruction=system or None,
+        temperature=options.get("temperature", 0.7),
+        max_output_tokens=options.get("num_predict", 1500),
+    )
+    for chunk in client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=cfg):
+        txt = getattr(chunk, "text", None)
+        if txt:
+            yield txt
+
+
 # Registries: provider name → callable. Extend to add fallback providers.
-_PROVIDER_COMPLETE = {"ollama": _ollama_complete}
-_PROVIDER_STREAM = {"ollama": _ollama_stream}
+_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete}
+_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream}
 
 
 def complete(messages: list, options: Optional[dict] = None) -> str:

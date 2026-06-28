@@ -89,6 +89,55 @@ class TestCallVaathiyaarGraceful:
         assert len(FRIENDLY_UNAVAILABLE) > 10
 
 
+class TestGeminiProvider:
+    """The Vertex Gemini fallback provider — pure mapping + registration.
+    The live network call is verified against prod after deploy."""
+
+    def test_gemini_registered_as_a_provider(self):
+        assert "gemini" in engine._PROVIDER_COMPLETE
+        assert "gemini" in engine._PROVIDER_STREAM
+
+    def test_split_extracts_system_instruction(self):
+        system, contents = engine._split_messages_for_gemini([
+            {"role": "system", "content": "You are Vaathiyaar."},
+            {"role": "user", "content": "hi"},
+        ])
+        assert system == "You are Vaathiyaar."
+        assert contents == [{"role": "user", "parts": [{"text": "hi"}]}]
+
+    def test_split_maps_assistant_role_to_model(self):
+        system, contents = engine._split_messages_for_gemini([
+            {"role": "user", "content": "q1"},
+            {"role": "assistant", "content": "a1"},
+            {"role": "user", "content": "q2"},
+        ])
+        assert system == ""
+        assert contents == [
+            {"role": "user", "parts": [{"text": "q1"}]},
+            {"role": "model", "parts": [{"text": "a1"}]},
+            {"role": "user", "parts": [{"text": "q2"}]},
+        ]
+
+    def test_active_providers_splits_on_any_separator(self, monkeypatch):
+        # gcloud --set-env-vars is comma-delimited, so prod uses "ollama+gemini".
+        for raw, expected in [
+            ("ollama+gemini", ["ollama", "gemini"]),
+            ("ollama,gemini", ["ollama", "gemini"]),
+            ("ollama gemini", ["ollama", "gemini"]),
+            ("ollama", ["ollama"]),
+        ]:
+            monkeypatch.setenv("VAATHIYAAR_PROVIDERS", raw)
+            assert engine._active_providers() == expected
+
+    def test_multiple_system_messages_are_concatenated(self):
+        system, _ = engine._split_messages_for_gemini([
+            {"role": "system", "content": "A"},
+            {"role": "system", "content": "B"},
+            {"role": "user", "content": "hi"},
+        ])
+        assert "A" in system and "B" in system
+
+
 class TestPipelineGraceful:
     def test_job_failure_message_is_friendly_not_raw(self, monkeypatch):
         from modules import pipeline
