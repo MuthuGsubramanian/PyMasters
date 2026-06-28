@@ -45,6 +45,30 @@ def tier_for(xp: int) -> str:
     return "Novice"
 
 
+def _public_display_name(name, username) -> str:
+    """Public-safe display name. Some users' `name` column holds the email they
+    signed up with; rendering it verbatim leaked full email addresses onto the
+    public leaderboard, member directory and profile cards. Prefer any value
+    that is NOT an email; if only email-like values exist, expose just the
+    local-part (never the full @domain address), then fall back to a generic
+    label. Never returns a string containing '@'."""
+    name = (name or "").strip()
+    username = (username or "").strip()
+    # Prefer a value that is not an email address.
+    if name and "@" not in name:
+        return name
+    if username and "@" not in username:
+        return username
+    # Only email-like (or empty) values remain — strip the domain so the full
+    # contactable address is never published.
+    for v in (name, username):
+        if v and "@" in v:
+            local = v.split("@", 1)[0].strip()
+            if local:
+                return local
+    return "Learner"
+
+
 def _connect():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -79,7 +103,7 @@ def _public_card(row, follower_count=0, following_count=0, is_following=False):
     xp = row["points"] or 0
     return {
         "user_id": row["id"],
-        "name": row["name"] or row["username"] or "Learner",
+        "name": _public_display_name(row["name"], row["username"]),
         "username": row["username"],
         "xp": xp,
         "tier": tier_for(xp),
@@ -132,7 +156,7 @@ def global_leaderboard(
             leaders.append({
                 "rank": offset + i + 1,
                 "user_id": r["id"],
-                "name": r["name"] or r["username"] or "Learner",
+                "name": _public_display_name(r["name"], r["username"]),
                 "username": r["username"],
                 "avatar_url": r["avatar_url"] or "",
                 "xp": xp,
