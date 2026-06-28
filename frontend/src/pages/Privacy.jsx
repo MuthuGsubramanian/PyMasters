@@ -7,7 +7,7 @@ export default function Privacy() {
     useEffect(() => { document.title = 'Privacy Policy — PyMasters'; }, []);
 
     return (
-        <div className="min-h-screen bg-[var(--bg-deep)] text-slate-700 font-sans">
+        <div className="min-h-screen bg-[#f0f4f8] text-slate-700 font-sans">
             {/* Navigation */}
             <nav className="px-6 py-5 border-b border-black/[0.06] bg-white/60 backdrop-blur-md sticky top-0 z-50">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
