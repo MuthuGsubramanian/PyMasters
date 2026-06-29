@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
@@ -14,13 +14,15 @@ const QUESTIONS = [
     {
         key: 'preferred_language',
         type: 'language',
-        text: "First things first — which language do you want Vaathiyaar to speak with you? 🌐",
+        text: "Which language should Vaathiyaar speak with you?",
+        hint: "You can change this anytime from your profile.",
     },
     {
         key: 'motivation',
         type: 'choice',
         multi: true,
-        text: "Great! Now tell me — what brings you to Python? 🎯",
+        text: "What brings you to Python?",
+        hint: "Pick all that apply.",
         options: [
             { value: 'career_switch', label: '💼 Career Switch' },
             { value: 'student',       label: '🎓 I\'m a Student' },
@@ -32,13 +34,14 @@ const QUESTIONS = [
     },
     {
         key: 'user_type',
-        text: "Tell me about yourself — this helps me tailor everything just for you! 🎯",
+        text: "Tell me about yourself",
+        hint: "This helps me tailor everything for you.",
         type: 'choice',
         multi: false,
         options: [
-            { value: 'high_school_student', label: '🏫 High School Student', desc: 'I\'m in school learning the ropes' },
-            { value: 'college_student', label: '🎓 College / University Student', desc: 'Studying CS or related field' },
-            { value: 'junior_developer', label: '💻 Junior Developer', desc: 'Early in my dev career (0-2 years)' },
+            { value: 'high_school_student', label: '🏫 High School Student', desc: 'Learning the ropes in school' },
+            { value: 'college_student', label: '🎓 College / University Student', desc: 'Studying CS or a related field' },
+            { value: 'junior_developer', label: '💻 Junior Developer', desc: 'Early in my dev career (0-2 yrs)' },
             { value: 'senior_developer', label: '🚀 Senior Developer', desc: 'Experienced dev (3+ years)' },
             { value: 'career_switcher', label: '🔄 Career Switcher', desc: 'Transitioning into tech' },
             { value: 'hobbyist', label: '🎮 Hobbyist / Enthusiast', desc: 'Learning for fun and curiosity' },
@@ -47,7 +50,7 @@ const QUESTIONS = [
     {
         key: 'prior_experience',
         type: 'choice',
-        text: "How much coding experience do you already have? 💻",
+        text: "How much coding experience do you have?",
         options: [
             { value: 'none',            label: '🌱 Total Beginner' },
             { value: 'some',            label: '📝 A Little Bit' },
@@ -58,7 +61,7 @@ const QUESTIONS = [
     {
         key: 'learning_style',
         type: 'choice',
-        text: "How do you learn best? I'll tailor lessons just for you. ✨",
+        text: "How do you learn best?",
         options: [
             { value: 'visual',    label: '👁️ Visual — Charts & Diagrams' },
             { value: 'hands_on',  label: '🔧 Hands-On — Build Things' },
@@ -70,7 +73,8 @@ const QUESTIONS = [
         key: 'goal',
         type: 'choice',
         multi: true,
-        text: "What's the main thing you want to build or do with Python? 🏗️",
+        text: "What do you want to build with Python?",
+        hint: "Pick all that apply.",
         options: [
             { value: 'web',          label: '🌐 Web Development' },
             { value: 'data_science', label: '📊 Data Science' },
@@ -83,7 +87,7 @@ const QUESTIONS = [
     {
         key: 'time_commitment',
         type: 'choice',
-        text: "How much time can you dedicate each day? Consistency is the key! ⏱️",
+        text: "How much time can you dedicate each day?",
         options: [
             { value: '15min',    label: '⚡ 15 minutes' },
             { value: '30min',    label: '🔥 30 minutes' },
@@ -93,15 +97,14 @@ const QUESTIONS = [
     },
     {
         key: 'social_profiles',
-        text: "Want to connect your professional profiles? This is totally optional! 🔗",
+        text: "Connect your professional profiles",
+        hint: "Totally optional.",
         type: 'social',
-        multi: false,
-        options: [],
     },
     {
         key: 'contact_preference',
         type: 'choice',
-        text: "Would you like me to send you progress updates and learning reminders? 📬",
+        text: "Want progress updates & learning reminders?",
         options: [
             { value: 'yes', label: '✅ Yes, keep me updated!' },
             { value: 'no',  label: '⏭️ Skip for now' },
@@ -110,7 +113,8 @@ const QUESTIONS = [
     {
         key: 'contact_details',
         type: 'contact',
-        text: "Great! How should I reach you? (Both are optional) 📧",
+        text: "How should I reach you?",
+        hint: "Both are optional.",
         condition: 'contact_preference === yes',
     },
 ];
@@ -119,12 +123,13 @@ const ORG_QUESTIONS = [
     {
         key: 'preferred_language',
         type: 'language',
-        text: "First things first — which language should the platform use for your organization? 🌐",
+        text: "Which language should the platform use for your organization?",
+        hint: "You can change this anytime.",
     },
     {
         key: 'org_size',
         type: 'choice',
-        text: "How many learners will use PyMasters? 👥",
+        text: "How many learners will use PyMasters?",
         options: [
             { value: '1-10',   label: '👤 1-10 learners' },
             { value: '11-50',  label: '👥 11-50 learners' },
@@ -135,7 +140,7 @@ const ORG_QUESTIONS = [
     {
         key: 'learner_profile',
         type: 'choice',
-        text: "Who are your learners? 🎓",
+        text: "Who are your learners?",
         options: [
             { value: 'k12',          label: '🏫 K-12 Students' },
             { value: 'university',   label: '🎓 University Students' },
@@ -146,7 +151,7 @@ const ORG_QUESTIONS = [
     {
         key: 'skill_level',
         type: 'choice',
-        text: "What's their current Python level? 📊",
+        text: "What's their current Python level?",
         options: [
             { value: 'beginner', label: '🌱 Complete Beginners' },
             { value: 'some',     label: '📝 Some Experience' },
@@ -156,7 +161,7 @@ const ORG_QUESTIONS = [
     {
         key: 'learning_focus',
         type: 'choice',
-        text: "What should they learn? 🎯",
+        text: "What should they learn?",
         options: [
             { value: 'fundamentals',  label: '🐍 Python Fundamentals' },
             { value: 'ai_ml',         label: '🤖 AI & Machine Learning' },
@@ -168,7 +173,7 @@ const ORG_QUESTIONS = [
     {
         key: 'structure_preference',
         type: 'choice',
-        text: "How do you want to manage learning? 📋",
+        text: "How do you want to manage learning?",
         options: [
             { value: 'assigned',    label: '📋 Assign Specific Paths' },
             { value: 'free_choice', label: '🆓 Let Learners Choose' },
@@ -178,313 +183,153 @@ const ORG_QUESTIONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Vaathiyaar reaction map
+// Helpers
 // ---------------------------------------------------------------------------
-const REACTIONS = {
-    // user_type
-    user_type: {
-        high_school_student: "Wonderful! 🏫 I love working with young minds. I'll make sure everything is super clear and fun — we'll build cool stuff together!",
-        college_student: "Excellent! 🎓 A fellow academic! I'll connect everything to the CS concepts you're studying and prepare you for those exams and projects.",
-        junior_developer: "Great to meet a fellow developer! 💻 I'll focus on practical, job-ready skills and real-world patterns that'll level up your career.",
-        senior_developer: "A seasoned developer! 🚀 Respect! We'll skip the basics and dive straight into Python's advanced features and architectural patterns.",
-        career_switcher: "What a brave step! 🔄 I'll guide you through a structured path from zero to job-ready. You've got this, and I'm here every step of the way!",
-        hobbyist: "A curious mind! 🎮 The best kind of learner! We'll focus on fun projects and creative experiments — learning should be enjoyable!",
-    },
-    // goal-specific (distinct from motivation reactions so AI/ML isn't repeated)
-    goal: {
-        ai_ml: "Building intelligent systems with Python — from data to deployed models. Let's go! \ud83e\udd16",
-    },
-    // social_profiles
-    social_profiles: {
-        done: "Perfect! Those profiles will help me understand your background even better. Let's keep going! 🔗",
-        skipped: "No problem — you can add those anytime from your profile. Let's keep going! 🔗",
-    },
-    // motivation
-    career_switch:   "Bold move! Python is the #1 language for career changers. 💪",
-    student:         "Excellent! Python is the perfect companion for students — you're starting at the right time. 📚",
-    hobby:           "I love the enthusiasm! Learning for fun is the best motivation of all. 😄",
-    ai_ml:           "Ah, the world of intelligent machines! Python is the mother tongue of AI. 🤖",
-    work:            "Smart thinking! Python will make you indispensable at work. 🏢",
-    data_science:    "Data is the new oil — and Python is the refinery. You're on the right track! 📊",
-    // prior_experience
-    none:            "Welcome to your first adventure in code! I'll make sure every step is crystal-clear. 🌱",
-    some:            "A little knowledge goes a long way! We'll build on what you know. 📝",
-    other_language:  "Another language under your belt? You'll pick up Python faster than you think! 🔄",
-    python:          "Excellent! You already speak my language. We'll fast-track you to the good stuff. 🐍",
-    // learning_style
-    visual:          "A visual learner! You'll love the animations and diagrams I've prepared. 👁️",
-    hands_on:        "Now we're talking! The best way to learn is to build. Let's get our hands dirty. 🔧",
-    reading:         "A scholar at heart! I respect that. Theory plus practice — the perfect combo. 📖",
-    projects:        "Project-driven learning is the most powerful approach. We'll ship real things together. 🚀",
-    // goal
-    web:             "Web dev with Python? Flask and FastAPI await you — the internet is your canvas! 🌐",
-    automation:      "Automating the boring stuff — saving hours one script at a time. I admire that! ⚙️",
-    games:           "Games with Python? Pygame has entered the chat! 🎮",
-    unknown:         "No worries! Exploring is how the best discoveries are made. We'll find your path together. 🤷",
-    // time_commitment
-    '15min':         "15 minutes a day adds up fast! Small steps, big results. ⚡",
-    '30min':         "30 minutes is the sweet spot — enough to make real progress every single day. 🔥",
-    '1hour':         "One full hour? You're going to level up faster than you can imagine. 💪",
-    weekends:        "Weekend warrior mode activated! Focused sessions beat scattered ones every time. 📅",
-    // contact_preference
-    yes:             "Awesome! I'll make sure you never miss a milestone. 📬",
-    no:              "No worries! You can always opt in later from your profile. 👍",
-};
-
-const ORG_REACTIONS = {
-    '1-10':        "A focused group! You'll be able to give everyone personal attention. 👤",
-    '11-50':       "Nice team size! Big enough for group dynamics, small enough to track everyone. 👥",
-    '51-200':      "A proper classroom! The analytics dashboard will be your best friend. 🏫",
-    '200+':        "An enterprise operation! We'll make sure the platform scales for your needs. 🏢",
-    k12:           "Young minds! I love it. We'll keep things visual and engaging. 🏫",
-    university:    "University students — they'll appreciate the depth we go into. 🎓",
-    professional:  "Working professionals — practical, job-relevant content is the priority. 💼",
-    mixed:         "A diverse group! We'll make sure everyone finds their level. 🌍",
-    beginner:      "Starting from scratch — we'll build a strong foundation. 🌱",
-    some:          "Some experience — we can skip the absolute basics and accelerate. 📝",
-    fundamentals:  "Core Python — the foundation everything else is built on. 🐍",
-    ai_ml:         "AI & ML — the hottest field in tech right now. Great choice! 🤖",
-    web:           "Web development — Flask, FastAPI, and beyond. 🌐",
-    data_science:  "Data science — pandas, numpy, and the power of data. 📊",
-    assigned:      "Structured paths — great for consistency across your team. 📋",
-    free_choice:   "Learner autonomy — motivated learners thrive with choice. 🆓",
-    mix:           "Best of both worlds — structure where needed, freedom where possible. 🔀",
-};
-
-// ---------------------------------------------------------------------------
-// Helper: message factory
-// ---------------------------------------------------------------------------
-let msgId = 0;
-function makeMsg(role, content, meta = {}) {
-    return { id: ++msgId, role, content, ...meta };
+function isAnswered(q, answers) {
+    // Optional question types never block submission.
+    if (q.type === 'social' || q.type === 'contact' || q.type === 'language') return true;
+    const v = answers[q.key];
+    if (q.multi) return Array.isArray(v) && v.length > 0;
+    return !!v;
 }
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
-
-function VaathiyaarBubble({ text }) {
+function OptionCard({ option, selected, onClick }) {
     return (
-        <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35 }}
-            className="flex items-start gap-3 max-w-[85%]"
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={selected}
+            className={`relative text-left px-4 py-3 rounded-xl border transition-all duration-200 ${
+                selected
+                    ? 'border-cyan-500 bg-cyan-500/15 shadow-sm shadow-cyan-500/20'
+                    : 'border-border-default bg-bg-elevated hover:border-cyan-400/50 hover:bg-cyan-500/5'
+            }`}
         >
-            {/* Avatar */}
-            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center select-none mt-1 shadow-md shadow-purple-300/20">
-                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
+            <div className="flex items-start gap-2">
+                <span className={`text-sm font-semibold ${selected ? 'text-cyan-700 dark:text-cyan-200' : 'text-text-primary'}`}>
+                    {option.label}
+                </span>
+                {selected && (
+                    <span className="ml-auto flex-shrink-0 w-4 h-4 rounded-full bg-cyan-500 text-white text-[10px] flex items-center justify-center">✓</span>
+                )}
             </div>
-            {/* Bubble */}
-            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3 border-l-2 border-purple-500/60 text-text-primary text-sm leading-relaxed">
-                {text}
-            </div>
-        </motion.div>
+            {option.desc && (
+                <p className="text-xs text-text-muted mt-1 leading-snug">{option.desc}</p>
+            )}
+        </button>
     );
 }
 
-function UserBubble({ text }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35 }}
-            className="flex justify-end"
-        >
-            <div className="max-w-[75%] panel rounded-2xl rounded-tr-sm px-5 py-3 border-r-2 border-cyan-500/60 text-text-primary text-sm leading-relaxed">
-                {text}
-            </div>
-        </motion.div>
-    );
-}
-
-function OptionPills({ options, onSelect, disabled }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="flex flex-wrap gap-2 pl-12"
-        >
-            {options.map((opt) => (
-                <button
-                    key={opt.value}
-                    onClick={() => onSelect(opt)}
-                    disabled={disabled}
-                    className="px-4 py-2 rounded-full text-sm font-medium border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    {opt.label}
-                </button>
-            ))}
-        </motion.div>
-    );
-}
-
-function MultiOptionPills({ options, onSelect, disabled }) {
-    const [selected, setSelected] = useState([]);
-
-    const toggle = (opt) => {
-        setSelected((prev) =>
-            prev.find((s) => s.value === opt.value)
-                ? prev.filter((s) => s.value !== opt.value)
-                : [...prev, opt]
-        );
+function QuestionCard({ q, index, answers, setAnswers }) {
+    const select = (value) => {
+        setAnswers((prev) => {
+            if (q.multi) {
+                const cur = Array.isArray(prev[q.key]) ? prev[q.key] : [];
+                const next = cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value];
+                return { ...prev, [q.key]: next };
+            }
+            return { ...prev, [q.key]: value };
+        });
     };
 
-    const handleContinue = () => {
-        if (selected.length === 0) return;
-        const label = selected.map((s) => s.label).join(', ');
-        const value = selected.length === 1 ? selected[0].value : selected.map((s) => s.value).join(',');
-        onSelect({ value, label });
-    };
+    const answered = isAnswered(q, answers);
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="flex flex-col gap-3 pl-12"
+            transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3) }}
+            className="panel rounded-2xl border border-border-default p-5 sm:p-6"
         >
-            <div className="flex flex-wrap gap-2">
-                {options.map((opt) => {
-                    const isSelected = selected.find((s) => s.value === opt.value);
-                    return (
-                        <button
+            <div className="flex items-start gap-3 mb-4">
+                <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    answered ? 'bg-cyan-500 text-white' : 'bg-bg-inset text-text-muted'
+                }`}>
+                    {answered ? '✓' : index}
+                </div>
+                <div>
+                    <h3 className="text-base font-bold text-text-primary leading-snug">{q.text}</h3>
+                    {q.hint && <p className="text-xs text-text-muted mt-0.5">{q.hint}</p>}
+                </div>
+            </div>
+
+            {q.type === 'language' && (
+                <LanguageSelector
+                    currentLanguage={answers.preferred_language || 'en'}
+                    onSelect={(code) => setAnswers((p) => ({ ...p, preferred_language: code }))}
+                />
+            )}
+
+            {q.type === 'choice' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {q.options.map((opt) => (
+                        <OptionCard
                             key={opt.value}
-                            onClick={() => toggle(opt)}
-                            disabled={disabled}
-                            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
-                                isSelected
-                                    ? 'bg-cyan-500 text-white border-cyan-500'
-                                    : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-900 dark:hover:text-cyan-100'
-                            }`}
-                        >
-                            {isSelected && <span className="mr-1">✓</span>}
-                            {opt.label}
-                        </button>
-                    );
-                })}
-            </div>
-            {selected.length > 0 && (
-                <button
-                    onClick={handleContinue}
-                    disabled={disabled}
-                    className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    Continue →
-                </button>
+                            option={opt}
+                            selected={q.multi ? (answers[q.key] || []).includes(opt.value) : answers[q.key] === opt.value}
+                            onClick={() => select(opt.value)}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {q.type === 'social' && (
+                <div className="space-y-3">
+                    <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+                        </div>
+                        <input
+                            type="url"
+                            placeholder="LinkedIn URL (optional)"
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-elevated border border-border-default text-sm text-text-primary placeholder-text-muted focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                            value={answers.linkedin_url || ''}
+                            onChange={(e) => setAnswers((a) => ({ ...a, linkedin_url: e.target.value }))}
+                        />
+                    </div>
+                    <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        </div>
+                        <input
+                            type="url"
+                            placeholder="GitHub URL (optional)"
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-elevated border border-border-default text-sm text-text-primary placeholder-text-muted focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                            value={answers.github_url || ''}
+                            onChange={(e) => setAnswers((a) => ({ ...a, github_url: e.target.value }))}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {q.type === 'contact' && (
+                <div className="space-y-3 max-w-sm">
+                    <div className="flex items-center gap-2 bg-bg-elevated rounded-xl px-4 py-2.5 border border-border-default">
+                        <span className="text-text-muted text-sm">@</span>
+                        <input
+                            type="email"
+                            value={answers.email || ''}
+                            onChange={(e) => setAnswers((a) => ({ ...a, email: e.target.value }))}
+                            placeholder="Email address"
+                            className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 bg-bg-elevated rounded-xl px-4 py-2.5 border border-border-default">
+                        <span className="text-text-muted text-sm">📱</span>
+                        <input
+                            type="tel"
+                            value={answers.whatsapp || ''}
+                            onChange={(e) => setAnswers((a) => ({ ...a, whatsapp: e.target.value }))}
+                            placeholder="WhatsApp number"
+                            className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none"
+                        />
+                    </div>
+                </div>
             )}
         </motion.div>
-    );
-}
-
-function LangPickerBlock({ onSelect, disabled }) {
-    const [selected, setSelected] = useState('en');
-
-    const handleSelect = (code) => {
-        setSelected(code);
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="flex flex-col gap-3 pl-12"
-        >
-            <LanguageSelector currentLanguage={selected} onSelect={handleSelect} />
-            <button
-                onClick={() => onSelect({ value: selected, label: selected.toUpperCase() })}
-                disabled={disabled}
-                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-                Confirm Language ✓
-            </button>
-        </motion.div>
-    );
-}
-
-function ContactInputBlock({ onSelect, disabled, requireContact }) {
-    const [email, setEmail] = useState('');
-    const [whatsapp, setWhatsapp] = useState('');
-    const [error, setError] = useState('');
-
-    const handleSubmit = () => {
-        if (email && !email.includes('@')) {
-            setError('Please enter a valid email address');
-            return;
-        }
-        if (requireContact && !email && !whatsapp) {
-            setError('You asked for reminders — add an email or WhatsApp number, or go back and choose "Skip for now".');
-            return;
-        }
-        setError('');
-        const parts = [];
-        if (email) parts.push(email);
-        if (whatsapp) parts.push(whatsapp);
-        const label = parts.length > 0 ? parts.join(', ') : 'Skipped';
-        onSelect({ value: JSON.stringify({ email, whatsapp }), label, email, whatsapp });
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="flex flex-col gap-3 pl-12"
-        >
-            <div className="flex flex-col gap-2 max-w-sm">
-                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-border-default">
-                    <span className="text-text-muted text-sm">@</span>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                        placeholder="Email address"
-                        disabled={disabled}
-                        className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none disabled:opacity-50"
-                    />
-                </div>
-                <div className="flex items-center gap-2 panel rounded-xl px-4 py-2.5 border border-border-default">
-                    <span className="text-text-muted text-sm">📱</span>
-                    <input
-                        type="tel"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        placeholder="WhatsApp number"
-                        disabled={disabled}
-                        className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none disabled:opacity-50"
-                    />
-                </div>
-                {error && <p className="text-xs text-red-500">{error}</p>}
-            </div>
-            <button
-                onClick={handleSubmit}
-                disabled={disabled}
-                className="self-start px-5 py-2 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-400 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-                Continue →
-            </button>
-        </motion.div>
-    );
-}
-
-function ProgressDots({ total, current }) {
-    return (
-        <div className="flex items-center justify-center gap-2">
-            {Array.from({ length: total }).map((_, i) => (
-                <div
-                    key={i}
-                    className={`rounded-full transition-all duration-300 ${
-                        i < current
-                            ? 'w-2 h-2 bg-cyan-400'
-                            : i === current
-                            ? 'w-4 h-2 bg-purple-400'
-                            : 'w-2 h-2 bg-bg-inset'
-                    }`}
-                />
-            ))}
-        </div>
     );
 }
 
@@ -496,405 +341,221 @@ export default function Onboarding() {
 
     const { user, updateUser } = useAuth();
     const navigate = useNavigate();
-    const bottomRef = useRef(null);
 
     const username = user?.name || user?.username || '';
     const isOrg = user?.account_type === 'organization';
-    const questions = isOrg ? ORG_QUESTIONS : QUESTIONS;
-    const reactions = isOrg ? ORG_REACTIONS : REACTIONS;
+    const allQuestions = isOrg ? ORG_QUESTIONS : QUESTIONS;
 
-    const greeting = isOrg
-        ? (username
-            ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar. Let's set up your organization's learning environment. A few quick questions!`
-            : "Vanakkam! 🙏 I'm Vaathiyaar. Let's set up your organization's learning environment. A few quick questions!")
-        : (username
-            ? `Vanakkam, ${username}! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?`
-            : "Vanakkam! 🙏 I'm Vaathiyaar — your personal Python guide. Before we dive in, I'd love to get to know you a little. Ready?");
-
-    // --- Resume support: persist progress so a refresh / drop-off doesn't restart ---
-    const storageKey = `pymasters_onboarding_${user?.id || 'guest'}_${isOrg ? 'org' : 'ind'}`;
+    const storageKey = `pymasters_onboarding_cards_${user?.id || 'guest'}_${isOrg ? 'org' : 'ind'}`;
     const loadSaved = () => {
         try {
             const raw = localStorage.getItem(storageKey);
-            if (!raw) return null;
-            const sv = JSON.parse(raw);
-            if (sv && Array.isArray(sv.messages) && sv.messages.length > 0) {
-                // keep the module id counter ahead of restored ids to avoid key clashes
-                msgId = Math.max(msgId, ...sv.messages.map((m) => m.id || 0));
-                return sv;
-            }
-        } catch { /* ignore corrupt state */ }
-        return null;
+            return raw ? JSON.parse(raw) : {};
+        } catch { return {}; }
     };
-    const saved = loadSaved();
 
-    const [messages, setMessages] = useState(saved?.messages || [
-        makeMsg('vaathiyaar', greeting),
-        makeMsg('vaathiyaar', questions[0].text, { questionIndex: 0 }),
-    ]);
-    const [currentStep, setCurrentStep] = useState(saved?.currentStep ?? 0);
-    const [answers, setAnswers] = useState(saved?.answers || {});
-    const [stepHistory, setStepHistory] = useState(saved?.stepHistory || []);
-    const [busy, setBusy] = useState(false);
-    const [done, setDone] = useState(false);
+    const [answers, setAnswers] = useState(() => {
+        const saved = loadSaved();
+        return { preferred_language: 'en', ...saved };
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
-    // Auto-scroll to bottom whenever messages change
+    // Persist answers as the user fills the form so a refresh doesn't lose work.
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        try { localStorage.setItem(storageKey, JSON.stringify(answers)); } catch { /* ignore */ }
+    }, [answers, storageKey]);
 
-    const addMsg = (msg) => setMessages((prev) => [...prev, msg]);
+    // Questions to render (hide conditional ones whose condition isn't met).
+    const visibleQuestions = allQuestions.filter((q) => {
+        if (!q.condition) return true;
+        const [condKey, condVal] = q.condition.split('===').map((s) => s.trim());
+        return answers[condKey] === condVal;
+    });
 
-    // Persist progress on every change; clear it once onboarding completes.
-    useEffect(() => {
+    // Required = every visible 'choice' question is answered.
+    const requiredQuestions = visibleQuestions.filter((q) => q.type === 'choice');
+    const answeredCount = requiredQuestions.filter((q) => isAnswered(q, answers)).length;
+    const allRequiredAnswered = answeredCount === requiredQuestions.length;
+    const progressPct = requiredQuestions.length
+        ? Math.round((answeredCount / requiredQuestions.length) * 100)
+        : 100;
+
+    const handleSubmit = async () => {
+        if (submitting || !allRequiredAnswered) return;
+        setSubmitting(true);
+        setError('');
+
+        // Flatten multi-select arrays to comma-joined strings for the backend
+        // (matches the legacy payload shape).
+        const payload = { ...answers };
+        for (const q of allQuestions) {
+            if (q.multi && Array.isArray(payload[q.key])) {
+                payload[q.key] = payload[q.key].join(',');
+            }
+        }
+
         try {
-            if (done) localStorage.removeItem(storageKey);
-            else localStorage.setItem(storageKey, JSON.stringify({ messages, currentStep, answers, stepHistory }));
-        } catch { /* storage unavailable */ }
-    }, [messages, currentStep, answers, stepHistory, done]);
-
-    // Go back to the previous question (lets users fix a mis-tapped answer).
-    const goBack = () => {
-        if (busy || done || stepHistory.length === 0) return;
-        const prevStep = stepHistory[stepHistory.length - 1];
-        setStepHistory((prev) => prev.slice(0, -1));
-        setMessages((prev) => {
-            const idx = prev.findIndex((m) => m.questionIndex === prevStep);
-            return idx >= 0 ? prev.slice(0, idx + 1) : prev;
-        });
-        const prevQ = questions[prevStep];
-        setAnswers((prev) => { const c = { ...prev }; if (prevQ) delete c[prevQ.key]; return c; });
-        setCurrentStep(prevStep);
-    };
-
-    const handleAnswer = async (option) => {
-        if (busy || done) return;
-        setBusy(true);
-
-        const question = questions[currentStep];
-        const newAnswers = { ...answers, [question.key]: option.value };
-
-        // For contact_details, also store email/whatsapp at top level
-        if (question.key === 'contact_details') {
-            newAnswers.email = option.email || '';
-            newAnswers.whatsapp = option.whatsapp || '';
-        }
-
-        setAnswers(newAnswers);
-
-        // User message
-        addMsg(makeMsg('user', option.label));
-
-        // Reaction from Vaathiyaar (skip for contact type)
-        if (question.type !== 'contact') {
-            // Check for nested reactions first (e.g. reactions.user_type.high_school_student)
-            const nestedReaction = reactions[question.key]?.[option.value];
-            const reaction = nestedReaction || reactions[option.value] || "Noted! Let's keep going. 😊";
-            await delay(400);
-            addMsg(makeMsg('vaathiyaar', reaction));
-        }
-
-        // Determine next step, skipping conditional questions that don't apply
-        let nextStep = currentStep + 1;
-        while (nextStep < questions.length) {
-            const nextQ = questions[nextStep];
-            if (nextQ.condition) {
-                // Parse condition like 'contact_preference === yes'
-                const [condKey, condVal] = nextQ.condition.split('===').map(s => s.trim());
-                if (newAnswers[condKey] !== condVal) {
-                    nextStep++;
-                    continue;
-                }
-            }
-            break;
-        }
-
-        if (nextStep < questions.length) {
-            // Next question after a short pause
-            await delay(800);
-            addMsg(makeMsg('vaathiyaar', questions[nextStep].text, { questionIndex: nextStep }));
-            setStepHistory((prev) => [...prev, currentStep]);
-            setCurrentStep(nextStep);
-            setBusy(false);
-        } else {
-            // All answered — submit
-            await delay(800);
-            try {
-                if (isOrg) {
-                    const { saveOrgOnboarding } = await import('../api');
-                    await saveOrgOnboarding({
-                        user_id: user?.id,
-                        preferred_language: newAnswers.preferred_language || 'en',
-                        org_size: newAnswers.org_size || '',
-                        learner_profile: newAnswers.learner_profile || '',
-                        skill_level: newAnswers.skill_level || '',
-                        learning_focus: newAnswers.learning_focus || '',
-                        structure_preference: newAnswers.structure_preference || '',
-                    });
-                } else {
-                    await api.post('/profile/onboarding', {
-                        user_id: user?.id,
-                        ...newAnswers,
-                        linkedin_url: newAnswers.linkedin_url || undefined,
-                        github_url: newAnswers.github_url || undefined,
-                    });
-                }
-            } catch (err) {
-                console.error('Onboarding submit failed:', err);
-            }
-
-            updateUser({ onboarding_completed: true, preferred_language: newAnswers.preferred_language || 'en' });
-
             if (isOrg) {
-                addMsg(makeMsg('vaathiyaar', username
-                    ? `${username}, your organization is all set! Let's get your team onboard. 🚀`
-                    : "Your organization is all set! Let's get your team onboard. 🚀"
-                ));
-                setDone(true);
-                setBusy(false);
-                await delay(1500);
-                navigate('/dashboard/org');
+                const { saveOrgOnboarding } = await import('../api');
+                await saveOrgOnboarding({
+                    user_id: user?.id,
+                    preferred_language: payload.preferred_language || 'en',
+                    org_size: payload.org_size || '',
+                    learner_profile: payload.learner_profile || '',
+                    skill_level: payload.skill_level || '',
+                    learning_focus: payload.learning_focus || '',
+                    structure_preference: payload.structure_preference || '',
+                });
             } else {
-                // Existing individual flow — path recommendation
-                let recommendedPath = null;
-                try {
-                    const recRes = await api.get(`/paths/recommend?user_id=${user?.id}`);
-                    // API returns { recommended: {...} }
-                    recommendedPath = recRes.data?.recommended || null;
-                } catch (e) {
-                    console.log('Path recommendation not available:', e);
-                }
-
-                if (recommendedPath && recommendedPath.id) {
-                    addMsg(makeMsg('vaathiyaar', username
-                        ? `${username}, based on everything you told me, I've found the perfect learning path for you! 🎯`
-                        : "Based on everything you told me, I've found the perfect learning path for you! 🎯"
-                    ));
-                    await delay(600);
-                    const lessons = recommendedPath.lesson_count
-                        ?? (Array.isArray(recommendedPath.lesson_sequence)
-                            ? recommendedPath.lesson_sequence.length
-                            : '?');
-                    addMsg(makeMsg('vaathiyaar',
-                        `**${recommendedPath.name}**\n\n${recommendedPath.description || ''}\n\n` +
-                        `📚 ${lessons} lessons · ⏱️ ~${recommendedPath.estimated_hours || '?'} hours · ` +
-                        `${recommendedPath.difficulty_start} → ${recommendedPath.difficulty_end}`,
-                        { isPathRecommendation: true, pathId: recommendedPath.id }
-                    ));
-                    setDone(true);
-                    setBusy(false);
-                } else {
-                    addMsg(makeMsg('vaathiyaar', username
-                        ? `${username}, you're all set! Let's begin your Python journey! 🚀`
-                        : "You're all set! Let's begin your Python journey! 🚀"
-                    ));
-                    setDone(true);
-                    setBusy(false);
-                    await delay(1500);
-                    navigate('/dashboard/classroom');
-                }
+                await api.post('/profile/onboarding', {
+                    user_id: user?.id,
+                    ...payload,
+                    linkedin_url: payload.linkedin_url || undefined,
+                    github_url: payload.github_url || undefined,
+                });
             }
+        } catch (err) {
+            console.error('Onboarding submit failed:', err);
+            setError('Something went wrong saving your answers. Please try again.');
+            setSubmitting(false);
+            return;
         }
+
+        try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
+        updateUser({ onboarding_completed: true, preferred_language: payload.preferred_language || 'en' });
+
+        if (isOrg) {
+            navigate('/dashboard/org');
+            return;
+        }
+
+        // Individual: try to route straight into the recommended path.
+        try {
+            const recRes = await api.get(`/paths/recommend?user_id=${user?.id}`);
+            const rec = recRes.data?.recommended || null;
+            if (rec && rec.id) {
+                try { await api.post(`/paths/${rec.id}/start`, { user_id: user?.id }); } catch { /* non-fatal */ }
+                navigate(`/dashboard/paths/${rec.id}`);
+                return;
+            }
+        } catch (e) {
+            console.log('Path recommendation not available:', e);
+        }
+        navigate('/dashboard/classroom');
     };
 
-    // Skip onboarding: mark it complete so the OnboardedRoute guard — which
-    // redirects any user with !onboarding_completed back to /onboarding — lets
-    // the user into the dashboard. Previously "Skip setup" only called
-    // navigate('/dashboard/...') WITHOUT setting onboarding_completed, so the
-    // guard immediately bounced the user straight back to /onboarding, making
-    // the button appear to do nothing. updateUser persists the flag to context
-    // and localStorage so it also survives a reload on this device.
     const handleSkip = () => {
         updateUser({ onboarding_completed: true });
-        // Persist server-side too so the skip is durable across devices (best-effort;
-        // client-side updateUser already covers this device immediately).
         api.post('/profile/onboarding/skip').catch(() => {});
         navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom');
     };
 
-    // Determine which question block is currently active (last one added)
-    const activeQuestionIndex = currentStep;
-
     return (
-        <div
-            className="min-h-screen flex flex-col"
-            style={{ background: 'var(--bg-deep)' }}
-        >
+        <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-deep)' }}>
             {/* Header */}
-            <header className="flex-shrink-0 px-6 py-4 flex items-center gap-3 border-b border-border-default">
+            <header className="flex-shrink-0 px-6 py-4 flex items-center gap-3 border-b border-border-default sticky top-0 z-20 bg-bg-deep/90 backdrop-blur">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-md shadow-purple-500/20 border border-white/10">
                     <img src={PymastersGlyph} alt="PyMasters" className="w-[18px] h-[18px]" />
                 </div>
                 <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">PyMasters</p>
-                    <p className="text-[11px] text-text-muted">Onboarding with Vaathiyaar</p>
+                    <p className="text-[11px] text-text-muted">Set up with Vaathiyaar</p>
                 </div>
                 <button
                     type="button"
                     onClick={handleSkip}
-                    className="ml-auto text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:text-purple-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
+                    className="ml-auto text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:hover:text-purple-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
                     title="You can finish this later from your profile"
                 >
                     Skip setup →
                 </button>
             </header>
 
-            {/* Message feed */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-4 max-w-2xl w-full mx-auto" role="log" aria-live="polite" aria-label="Onboarding conversation">
-                <AnimatePresence initial={false}>
-                    {messages.map((msg) => {
-                        if (msg.role === 'vaathiyaar') {
-                            return (
-                                <div key={msg.id} className="space-y-3">
-                                    <VaathiyaarBubble text={msg.content} />
-
-                                    {/* Path recommendation action buttons */}
-                                    {done && msg.isPathRecommendation && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: 0.3 }}
-                                            className="flex flex-wrap gap-2 pl-12"
-                                        >
-                                            <button
-                                                onClick={async () => {
-                                                    try {
-                                                        await api.post(`/paths/${msg.pathId}/start`, { user_id: user?.id });
-                                                    } catch (e) { console.log('Path start:', e); }
-                                                    navigate(`/dashboard/paths/${msg.pathId}`);
-                                                }}
-                                                className="px-5 py-2.5 rounded-full text-sm font-bold border border-cyan-500/40 bg-cyan-500 text-white hover:bg-cyan-600 transition-all duration-200 shadow-lg shadow-cyan-500/20"
-                                            >
-                                                🚀 Start This Path
-                                            </button>
-                                            <button
-                                                onClick={() => navigate('/dashboard/paths')}
-                                                className="px-5 py-2.5 rounded-full text-sm font-bold border border-border-default bg-bg-elevated text-text-primary hover:bg-bg-inset transition-all duration-200"
-                                            >
-                                                Browse All Paths
-                                            </button>
-                                            <button
-                                                onClick={() => navigate('/dashboard/classroom')}
-                                                className="px-5 py-2.5 rounded-full text-sm font-medium border border-transparent text-text-muted hover:text-text-secondary transition-all duration-200"
-                                            >
-                                                Skip for now →
-                                            </button>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Render interactive widget only for the currently active question */}
-                                    {!done && msg.questionIndex === activeQuestionIndex && (
-                                        <>
-                                            {questions[msg.questionIndex].type === 'language' ? (
-                                                <LangPickerBlock onSelect={handleAnswer} disabled={busy} />
-                                            ) : questions[msg.questionIndex].type === 'contact' ? (
-                                                <ContactInputBlock onSelect={handleAnswer} disabled={busy} requireContact={answers.contact_preference === 'yes'} />
-                                            ) : questions[msg.questionIndex].type === 'social' ? (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ duration: 0.3, delay: 0.15 }}
-                                                    className="pl-12"
-                                                >
-                                                    <div className="space-y-3">
-                                                        <div className="relative">
-                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
-                                                            </div>
-                                                            <input
-                                                                type="url"
-                                                                placeholder="LinkedIn URL (optional)"
-                                                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-elevated border border-border-default text-sm text-text-primary placeholder-text-muted focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                                                                value={answers.linkedin_url || ''}
-                                                                onChange={e => setAnswers(a => ({...a, linkedin_url: e.target.value}))}
-                                                            />
-                                                        </div>
-                                                        <div className="relative">
-                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                                                            </div>
-                                                            <input
-                                                                type="url"
-                                                                placeholder="GitHub URL (optional)"
-                                                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-elevated border border-border-default text-sm text-text-primary placeholder-text-muted focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                                                                value={answers.github_url || ''}
-                                                                onChange={e => setAnswers(a => ({...a, github_url: e.target.value}))}
-                                                            />
-                                                        </div>
-                                                        <button
-                                                            onClick={() => { const hasProfiles = answers.linkedin_url || answers.github_url; handleAnswer({ value: hasProfiles ? 'done' : 'skipped', label: hasProfiles ? 'Profiles added' : 'Skipped' }); }}
-                                                            className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm hover:scale-[1.02] transition-transform"
-                                                        >
-                                                            {(answers.linkedin_url || answers.github_url) ? 'Save & Continue ✓' : 'Skip for Now →'}
-                                                        </button>
-                                                    </div>
-                                                </motion.div>
-                                            ) : questions[msg.questionIndex].multi ? (
-                                                <MultiOptionPills
-                                                    options={questions[msg.questionIndex].options}
-                                                    onSelect={handleAnswer}
-                                                    disabled={busy}
-                                                />
-                                            ) : (
-                                                <OptionPills
-                                                    options={questions[msg.questionIndex].options}
-                                                    onSelect={handleAnswer}
-                                                    disabled={busy}
-                                                />
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            );
-                        }
-                        return <UserBubble key={msg.id} text={msg.content} />;
-                    })}
-                </AnimatePresence>
-                <div ref={bottomRef} />
+            {/* Sticky progress bar */}
+            <div className="sticky top-[65px] z-10 px-4 sm:px-8 pt-3 pb-2 bg-bg-deep/90 backdrop-blur">
+                <div className="max-w-2xl w-full mx-auto">
+                    <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] text-text-muted">{answeredCount} of {requiredQuestions.length} answered</span>
+                        <span className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400">{progressPct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-bg-inset overflow-hidden">
+                        <motion.div
+                            className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-500"
+                            initial={false}
+                            animate={{ width: `${progressPct}%` }}
+                            transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+                        />
+                    </div>
+                </div>
             </div>
 
-            {/* Footer — progress + back + dots */}
-            <footer className="flex-shrink-0 px-4 py-4 border-t border-border-default flex flex-col items-center gap-2.5">
-                {/* Linear progress bar */}
-                <div
-                    className="w-full max-w-2xl h-1.5 rounded-full bg-bg-inset overflow-hidden"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={questions.length}
-                    aria-valuenow={done ? questions.length : currentStep}
-                    aria-label="Onboarding progress"
-                >
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
+                <div className="max-w-2xl w-full mx-auto space-y-5">
+                    {/* Vaathiyaar greeting */}
                     <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-500"
-                        initial={false}
-                        animate={{ width: `${((done ? questions.length : currentStep) / questions.length) * 100}%` }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 30 }}
-                    />
-                </div>
-                <ProgressDots total={questions.length} current={done ? questions.length : currentStep} />
-                <div className="flex items-center gap-4">
-                    {!done && stepHistory.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={goBack}
-                            disabled={busy}
-                            className="text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:text-purple-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-1"
-                        >
-                            ← Back
-                        </button>
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35 }}
+                        className="flex items-start gap-3"
+                    >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center select-none shadow-md shadow-purple-300/20">
+                            <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
+                        </div>
+                        <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-purple-500/60">
+                            <p className="text-sm text-text-primary leading-relaxed">
+                                {username ? `Vanakkam, ${username}! 🙏 ` : 'Vanakkam! 🙏 '}
+                                {isOrg
+                                    ? "I'm Vaathiyaar. Set up your organization's learning environment below — answer them all in one go, then hit Finish."
+                                    : "I'm Vaathiyaar, your personal Python guide. Fill in the cards below — pick everything in one go, then hit Finish and I'll tailor your path."}
+                            </p>
+                        </div>
+                    </motion.div>
+
+                    {/* Question cards */}
+                    {visibleQuestions.map((q, i) => (
+                        <QuestionCard
+                            key={q.key}
+                            q={q}
+                            index={q.type === 'choice'
+                                ? requiredQuestions.findIndex((rq) => rq.key === q.key) + 1
+                                : i + 1}
+                            answers={answers}
+                            setAnswers={setAnswers}
+                        />
+                    ))}
+
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3.5 rounded-xl text-sm">
+                            {error}
+                        </div>
                     )}
-                    <p className="text-[11px] text-text-muted">
-                        {done ? 'All done!' : `Question ${currentStep + 1} of ${questions.length} · ~${Math.max(1, Math.ceil(questions.length / 5))} min`}
+                </div>
+            </div>
+
+            {/* Sticky footer: submit */}
+            <footer className="flex-shrink-0 px-4 sm:px-8 py-4 border-t border-border-default bg-bg-deep/90 backdrop-blur">
+                <div className="max-w-2xl w-full mx-auto flex items-center gap-4">
+                    <p className="text-[11px] text-text-muted hidden sm:block">
+                        {allRequiredAnswered
+                            ? 'All set — finish whenever you like.'
+                            : `Answer ${requiredQuestions.length - answeredCount} more to continue.`}
                     </p>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={!allRequiredAnswered || submitting}
+                        className={`ml-auto px-7 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200 flex items-center gap-2 ${
+                            allRequiredAnswered && !submitting
+                                ? 'bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] shadow-lg shadow-purple-500/25'
+                                : 'bg-slate-500/50 cursor-not-allowed'
+                        }`}
+                    >
+                        {submitting ? 'Saving…' : (isOrg ? 'Finish Setup 🚀' : 'Finish & Start Learning 🚀')}
+                    </button>
                 </div>
             </footer>
         </div>
     );
-}
-
-// ---------------------------------------------------------------------------
-// Utility
-// ---------------------------------------------------------------------------
-function delay(ms) {
-    return new Promise((res) => setTimeout(res, ms));
 }
