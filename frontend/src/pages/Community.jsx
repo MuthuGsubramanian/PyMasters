@@ -36,7 +36,8 @@ function Avatar({ name, url, size = 36 }) {
 
 export default function Community() {
     useEffect(() => { document.title = 'Community — PyMasters'; }, []);
-    const { user } = useAuth();
+    const { user, activeOrg } = useAuth();
+    const orgId = activeOrg?.id || activeOrg?.org_id || null;
     const [tab, setTab] = useState('leaderboard');
 
     return (
@@ -62,12 +63,12 @@ export default function Community() {
                 ))}
             </div>
 
-            {tab === 'leaderboard' ? <Leaderboard meId={user?.id} /> : <Members meId={user?.id} />}
+            {tab === 'leaderboard' ? <Leaderboard meId={user?.id} orgId={orgId} /> : <Members meId={user?.id} orgId={orgId} />}
         </div>
     );
 }
 
-function Leaderboard({ meId }) {
+function Leaderboard({ meId, orgId }) {
     const [scope, setScope] = useState('xp');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -75,12 +76,12 @@ function Leaderboard({ meId }) {
     useEffect(() => {
         let active = true;
         setLoading(true);
-        getGlobalLeaderboard(scope, 50, 0)
+        getGlobalLeaderboard(scope, 50, 0, orgId)
             .then((r) => { if (active) setData(r.data); })
             .catch(() => { if (active) setData({ leaderboard: [], me: null, total_participants: 0 }); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
-    }, [scope]);
+    }, [scope, orgId]);
 
     return (
         <div>
@@ -147,7 +148,7 @@ function ScopeBtn({ active, onClick, icon, label }) {
     );
 }
 
-function Members({ meId }) {
+function Members({ meId, orgId }) {
     const [q, setQ] = useState('');
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -155,11 +156,11 @@ function Members({ meId }) {
 
     const load = useCallback((query) => {
         setLoading(true);
-        getMembers(query, 30, 0)
+        getMembers(query, 30, 0, orgId)
             .then((r) => setMembers(r.data.members || []))
             .catch(() => setMembers([]))
             .finally(() => setLoading(false));
-    }, []);
+    }, [orgId]);
 
     useEffect(() => {
         const t = setTimeout(() => load(q), 250);

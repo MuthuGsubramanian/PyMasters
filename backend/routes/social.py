@@ -114,6 +114,41 @@ def _public_card(row, follower_count=0, following_count=0, is_following=False):
     }
 
 
+def _community_scope_sql(conn, caller, col="u.id", requested_org_id=None):
+    """SQL fragment + params restricting a learners query to the caller's community.
+
+    Scope follows the caller's *active* context (``requested_org_id``):
+      • If ``requested_org_id`` is supplied AND the caller is a member of that org,
+        results are restricted to that org's members (org board).
+      • Otherwise (no active org, or the caller is not a member of the one supplied),
+        results are restricted to individual learners — those in no org at all.
+    Membership is verified server-side, so a caller cannot view an arbitrary org's
+    board by guessing its id. Returns (sql, params) to append to a WHERE clause; if
+    the org tables are absent it returns ("", []) (unscoped/global fallback).
+    """
+    try:
+        has_org = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='org_members'"
+        ).fetchone()
+    except Exception:
+        has_org = None
+    if not has_org:
+        return ("", [])
+
+    org_id = None
+    if caller and requested_org_id:
+        member = conn.execute(
+            "SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?",
+            [requested_org_id, caller],
+        ).fetchone()
+        if member:
+            org_id = requested_org_id
+
+    if org_id:
+        return (f" AND {col} IN (SELECT user_id FROM org_members WHERE org_id = ?)", [org_id])
+    return (f" AND {col} NOT IN (SELECT user_id FROM org_members)", [])
+
+
 # ── Global leaderboard ──────────────────────────────────────────────────────
 
 @router.get("/leaderboard/global")
@@ -121,6 +156,7 @@ def global_leaderboard(
     scope: str = Query("xp", pattern="^(xp|streak)$"),
     limit: int = Query(25, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    org_id: Optional[str] = Query(None),
     caller: Optional[str] = Depends(optional_user_id),
 ):
     """Platform-wide ranking. scope=xp ranks by total points; scope=streak ranks
@@ -129,26 +165,28 @@ def global_leaderboard(
     ensure_social_tables()
     conn = _connect()
     try:
+        sc_sql, sc_params = _community_scope_sql(conn, caller, "u.id", org_id)
+
         if scope == "streak":
-            base = """
+            base = f"""
                 SELECT u.id, u.username, u.name, u.avatar_url,
                        COALESCE(u.points,0) AS points,
                        COALESCE(s.current_streak,0) AS metric
                 FROM users u
                 LEFT JOIN user_streaks s ON s.user_id = u.id
-                WHERE COALESCE(u.is_blocked,0) = 0
+                WHERE COALESCE(u.is_blocked,0) = 0{sc_sql}
                 ORDER BY metric DESC, points DESC, u.created_at ASC
             """
         else:
-            base = """
+            base = f"""
                 SELECT u.id, u.username, u.name, u.avatar_url,
                        COALESCE(u.points,0) AS points,
                        COALESCE(u.points,0) AS metric
                 FROM users u
-                WHERE COALESCE(u.is_blocked,0) = 0
+                WHERE COALESCE(u.is_blocked,0) = 0{sc_sql}
                 ORDER BY metric DESC, u.created_at ASC
             """
-        rows = conn.execute(base + " LIMIT ? OFFSET ?", [limit, offset]).fetchall()
+        rows = conn.execute(base + " LIMIT ? OFFSET ?", sc_params + [limit, offset]).fetchall()
 
         leaders = []
         for i, r in enumerate(rows):
@@ -165,8 +203,9 @@ def global_leaderboard(
                 "is_me": (r["id"] == caller),
             })
 
+        tc_sql, tc_params = _community_scope_sql(conn, caller, "id", org_id)
         total = conn.execute(
-            "SELECT COUNT(*) FROM users WHERE COALESCE(is_blocked,0)=0"
+            "SELECT COUNT(*) FROM users WHERE COALESCE(is_blocked,0)=0" + tc_sql, tc_params
         ).fetchone()[0]
 
         me = None
@@ -178,19 +217,21 @@ def global_leaderboard(
                     [caller],
                 ).fetchone()
                 my_metric = myrow[0] if myrow else 0
+                rsql, rparams = _community_scope_sql(conn, caller, "u.id", org_id)
                 rank = conn.execute(
                     "SELECT COUNT(*)+1 FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id "
-                    "WHERE COALESCE(u.is_blocked,0)=0 AND COALESCE(s.current_streak,0) > ?",
-                    [my_metric],
+                    "WHERE COALESCE(u.is_blocked,0)=0 AND COALESCE(s.current_streak,0) > ?" + rsql,
+                    [my_metric] + rparams,
                 ).fetchone()[0]
             else:
                 myrow = conn.execute(
                     "SELECT COALESCE(points,0) FROM users WHERE id=?", [caller]
                 ).fetchone()
                 my_metric = myrow[0] if myrow else 0
+                rsql, rparams = _community_scope_sql(conn, caller, "id", org_id)
                 rank = conn.execute(
-                    "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND COALESCE(points,0) > ?",
-                    [my_metric],
+                    "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND COALESCE(points,0) > ?" + rsql,
+                    [my_metric] + rparams,
                 ).fetchone()[0]
             if myrow:
                 me = {"rank": rank, "metric": my_metric, "tier": tier_for(my_metric if scope == "xp" else 0)}
@@ -207,14 +248,16 @@ def list_members(
     q: str = Query("", max_length=80),
     limit: int = Query(24, ge=1, le=60),
     offset: int = Query(0, ge=0),
+    org_id: Optional[str] = Query(None),
     caller: Optional[str] = Depends(optional_user_id),
 ):
     """Searchable directory of learners. Returns public cards with follow state."""
     ensure_social_tables()
     conn = _connect()
     try:
-        params = []
-        where = "WHERE COALESCE(u.is_blocked,0) = 0"
+        sc_sql, sc_params = _community_scope_sql(conn, caller, "u.id", org_id)
+        params = list(sc_params)
+        where = "WHERE COALESCE(u.is_blocked,0) = 0" + sc_sql
         if q.strip():
             where += " AND (LOWER(u.name) LIKE ? OR LOWER(u.username) LIKE ?)"
             like = f"%{q.strip().lower()}%"

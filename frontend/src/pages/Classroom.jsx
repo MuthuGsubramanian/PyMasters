@@ -1086,6 +1086,9 @@ export default function Classroom() {
                     phase,
                     language,
                     username: user?.name || user?.username,
+                    // Part-of-day from the learner's LOCAL clock so the opening
+                    // greeting matches their real time (server runs in UTC).
+                    time_of_day: (() => { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'; })(),
                     history: chatMessages.filter(m => !m._isStreaming).slice(-5).map(m => ({ role: m.role, content: m.content })),
                 }),
                 signal: streamControllerRef.current.signal,

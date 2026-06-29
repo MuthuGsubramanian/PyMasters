@@ -188,7 +188,12 @@ export function Overview() {
     const [trends, setTrends] = useState(FALLBACK_TRENDS);
 
     const lessonsCompleted = stats?.lessons_completed ?? 0;
-    const progressPct = Math.min(100, (user.points || 0) % 100); // % toward next 100-XP milestone
+    // total_xp from the /stats endpoint (users.points) is authoritative. The
+    // auth-context user.points can be stale (it isn't refreshed after XP is
+    // earned), which made the "Total XP" card show 0/14 while the profile,
+    // community leaderboard and header all showed the real 50. Prefer stats.
+    const totalXp = stats?.total_xp ?? (user.points || 0);
+    const progressPct = Math.min(100, totalXp % 100); // % toward next 100-XP milestone
 
     const dailyQuote = useMemo(() => {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -239,10 +244,13 @@ export function Overview() {
         fetchAll();
     }, [user?.id, user?.token]);
 
-    const streak = stats?.streak ?? (user.streak || 0);
-    const learningMinutes = stats?.learning_minutes ?? 0;
+    // The /stats endpoint returns current_streak / total_time_minutes — the
+    // previous stats?.streak / stats?.learning_minutes keys never matched, so
+    // these silently fell back to the (stale) user object. Read the real keys.
+    const streak = stats?.current_streak ?? (user.streak || 0);
+    const learningMinutes = stats?.total_time_minutes ?? 0;
     const recentActivity = stats?.recent_activity ?? [];
-    const nextMilestone = stats?.next_milestone ?? { label: `${Math.ceil((user.points || 0) / 100) * 100} XP`, progress: ((user.points || 0) % 100) };
+    const nextMilestone = stats?.next_milestone ?? { label: `${Math.ceil(totalXp / 100) * 100} XP`, progress: (totalXp % 100) };
 
     // ─── Stagger animation variants ──────────────────────────────────────
     const containerVariants = {
@@ -315,7 +323,7 @@ export function Overview() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     label="Total XP"
-                    value={user.points || 0}
+                    value={totalXp}
                     icon={<Trophy size={20} />}
                     accent="bg-amber-500/12 text-amber-600 dark:text-amber-300"
                     delay={0.1}

@@ -706,6 +706,9 @@ export default function Onboarding() {
     // and localStorage so it also survives a reload on this device.
     const handleSkip = () => {
         updateUser({ onboarding_completed: true });
+        // Persist server-side too so the skip is durable across devices (best-effort;
+        // client-side updateUser already covers this device immediately).
+        api.post('/profile/onboarding/skip').catch(() => {});
         navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom');
     };
 

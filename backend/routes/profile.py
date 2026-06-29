@@ -174,6 +174,32 @@ def org_onboarding(data: OrgOnboardingData):
         conn.close()
 
 
+@router.post("/onboarding/skip")
+def skip_onboarding(caller: str = Depends(get_current_user_id)):
+    """
+    Mark the authenticated user's onboarding as complete WITHOUT the questionnaire.
+
+    Backs the "Skip setup" control on the onboarding screen so the choice is durable
+    server-side (survives a fresh login on another device), not just in localStorage.
+    Identity comes from the verified JWT (`caller`), never a client-supplied id.
+    """
+    conn = _get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET onboarding_completed = 1 WHERE id = ?", [caller]
+        )
+        cursor.execute(
+            "INSERT INTO user_profiles (user_id, onboarding_completed) VALUES (?, 1) "
+            "ON CONFLICT (user_id) DO UPDATE SET onboarding_completed = 1",
+            [caller],
+        )
+        conn.commit()
+        return {"onboarding_completed": True, "user_id": caller}
+    finally:
+        conn.close()
+
+
 @router.get("/{user_id}")
 def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
     """

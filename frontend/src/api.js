@@ -226,10 +226,10 @@ export const getQuickReferenceTopics = () => api.get('/reference/topics');
 export const getMe = () => api.get('/auth/me');
 
 // Community
-export const getGlobalLeaderboard = (scope = 'xp', limit = 25, offset = 0) =>
-    api.get('/leaderboard/global', { params: { scope, limit, offset } });
-export const getMembers = (q = '', limit = 24, offset = 0) =>
-    api.get('/members', { params: { q: q || undefined, limit, offset } });
+export const getGlobalLeaderboard = (scope = 'xp', limit = 25, offset = 0, orgId = null) =>
+    api.get('/leaderboard/global', { params: { scope, limit, offset, org_id: orgId || undefined } });
+export const getMembers = (q = '', limit = 24, offset = 0, orgId = null) =>
+    api.get('/members', { params: { q: q || undefined, limit, offset, org_id: orgId || undefined } });
 export const getMemberProfile = (userId) => api.get(`/members/${userId}`);
 export const followMember = (targetId) => api.post(`/connections/${targetId}`);
 export const unfollowMember = (targetId) => api.delete(`/connections/${targetId}`);

@@ -268,6 +268,14 @@ export default function Playground() {
                 body: JSON.stringify({
                     user_id: user?.id,
                     message,
+                    // Send the display/username so Vaathiyaar greets the learner by
+                    // name instead of the generic "the student" fallback (the
+                    // profile.name can be empty even when a username exists).
+                    username: user?.name || user?.username || '',
+                    // Part-of-day from the learner's LOCAL clock so Vaathiyaar's
+                    // greeting matches their real time (server runs in UTC and
+                    // can't infer this). Thresholds mirror the backend.
+                    time_of_day: (() => { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'; })(),
                     language: user?.preferred_language || 'en',
                     conversation_id: conversationId,
                 }),
