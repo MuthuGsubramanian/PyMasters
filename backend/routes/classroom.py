@@ -77,6 +77,10 @@ class ChatRequest(BaseModel):
     username: Optional[str] = None
     history: Optional[list] = None
     voice: Optional[bool] = False  # spoken conversation → reply concisely, no markdown/code
+    # Client-supplied part-of-day from the learner's LOCAL clock. The server runs
+    # in UTC, so it can't reliably infer this; passing it makes the opening
+    # greeting match the learner's real time of day. Optional → omitted is a no-op.
+    time_of_day: Optional[str] = None
 
 
 class EvaluateRequest(BaseModel):
@@ -312,7 +316,7 @@ def chat_stream(request: ChatRequest):
     if request.language:
         lesson_context["language"] = request.language
 
-    system_prompt = build_system_prompt(profile, lesson_context)
+    system_prompt = build_system_prompt(profile, lesson_context, time_of_day=request.time_of_day)
 
     def generate():
         full_response = ""

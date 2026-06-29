@@ -41,6 +41,16 @@ class PlaygroundChatRequest(BaseModel):
     message: str
     language: Optional[str] = "en"
     conversation_id: Optional[str] = None
+    # Optional display name/username so Vaathiyaar can address the learner by
+    # name. Mirrors the Classroom chat request; when absent the engine falls
+    # back to the profile name and ultimately to "the student".
+    username: Optional[str] = None
+    # Client-supplied part-of-day ("morning"/"afternoon"/"evening") computed from
+    # the learner's LOCAL clock. The server runs in UTC on Cloud Run, so it can't
+    # infer this reliably; without it the model guesses and may open with
+    # "Good morning" in the afternoon. Optional → when omitted, behaviour is
+    # unchanged from before.
+    time_of_day: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +315,12 @@ def playground_chat_stream(request: PlaygroundChatRequest):
         "language": request.language or "en",
     }
 
-    system_prompt = build_system_prompt(profile, lesson_context)
+    # Pass the username explicitly so the greeting/empathy tokens use the
+    # learner's name rather than the generic "the student" fallback when the
+    # stored profile.name is empty. username= takes priority in build_system_prompt.
+    system_prompt = build_system_prompt(
+        profile, lesson_context, username=request.username, time_of_day=request.time_of_day
+    )
 
     # Build messages with conversation history
     ollama_messages = [{"role": "system", "content": system_prompt}]

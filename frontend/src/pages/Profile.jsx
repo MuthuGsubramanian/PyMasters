@@ -352,6 +352,14 @@ export default function Profile() {
                 // Read the wrapped profile object (falling back to res.data for safety).
                 const p = res.data?.profile || res.data;
 
+                // The authoritative account-creation timestamp is the TOP-LEVEL
+                // res.data.created_at (users.created_at). The inner
+                // profile.created_at is the profile/settings-row timestamp, which
+                // is (re)written whenever settings are saved — using it made
+                // "Member since" jump to today after any profile save. Always
+                // prefer the wrapper's created_at when present.
+                if (p && res.data?.created_at) p.created_at = res.data.created_at;
+
                 if (cancelled) return;
                 setProfileData(p);
 
