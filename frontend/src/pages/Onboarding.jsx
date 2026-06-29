@@ -697,6 +697,18 @@ export default function Onboarding() {
         }
     };
 
+    // Skip onboarding: mark it complete so the OnboardedRoute guard — which
+    // redirects any user with !onboarding_completed back to /onboarding — lets
+    // the user into the dashboard. Previously "Skip setup" only called
+    // navigate('/dashboard/...') WITHOUT setting onboarding_completed, so the
+    // guard immediately bounced the user straight back to /onboarding, making
+    // the button appear to do nothing. updateUser persists the flag to context
+    // and localStorage so it also survives a reload on this device.
+    const handleSkip = () => {
+        updateUser({ onboarding_completed: true });
+        navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom');
+    };
+
     // Determine which question block is currently active (last one added)
     const activeQuestionIndex = currentStep;
 
@@ -716,7 +728,7 @@ export default function Onboarding() {
                 </div>
                 <button
                     type="button"
-                    onClick={() => navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom')}
+                    onClick={handleSkip}
                     className="ml-auto text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:text-purple-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
                     title="You can finish this later from your profile"
                 >

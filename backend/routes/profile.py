@@ -67,10 +67,15 @@ class OrgOnboardingData(BaseModel):
 
 
 class SignalData(BaseModel):
-    user_id: str
+    # Identity is derived from the verified JWT in post_signal (`caller`), so the
+    # body's user_id is ignored — keep it Optional rather than required so a caller
+    # that (correctly) omits it does not get a 422. topic/value are likewise made
+    # tolerant: a learning signal with no extra payload is valid, and telemetry
+    # (e.g. the fire-and-forget 'profile_updated' signal) must never 422 the call.
     signal_type: str
-    topic: str
-    value: dict
+    user_id: Optional[str] = None
+    topic: str = ""
+    value: dict = {}
     session_id: Optional[str] = None
 
 
