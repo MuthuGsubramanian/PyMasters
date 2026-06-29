@@ -10,14 +10,30 @@ import random
 from datetime import datetime, date
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from vaathiyaar.profiler import save_onboarding, get_student_profile, record_signal
+from auth import get_current_user_id
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
+
+
+def _require_self(user_id: str, caller: str) -> None:
+    """Authorization guard for the /{user_id} self-service endpoints.
+
+    Every endpoint under this prefix operates on the *caller's own* account
+    (the frontend always calls these with its own user.id). Without this guard
+    the user_id is a client-supplied path param with no verification, so any
+    party — including unauthenticated ones — could read another user's PII
+    (email, contact links), export their full account, or reset/delete it
+    (classic IDOR). Deriving the acting user from the verified JWT and refusing
+    cross-user access closes that hole. Mirrors the pattern in admin.py.
+    """
+    if caller != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
 BLOCKED_LANGUAGES = {"hi"}
 
@@ -154,11 +170,12 @@ def org_onboarding(data: OrgOnboardingData):
 
 
 @router.get("/{user_id}")
-def get_profile(user_id: str):
+def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Retrieve the student profile for a given user_id.
     Returns {profile, onboarding_completed}.
     """
+    _require_self(user_id, caller)
     db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
     profile = get_student_profile(db_path, user_id)
 
@@ -225,10 +242,11 @@ def get_profile(user_id: str):
 
 
 @router.get("/{user_id}/export")
-def export_user_data(user_id: str):
+def export_user_data(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Export all user data as JSON (GDPR-style data export).
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
@@ -270,10 +288,11 @@ def export_user_data(user_id: str):
 
 
 @router.post("/{user_id}/reset")
-def reset_progress(user_id: str):
+def reset_progress(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Reset all learning progress for a user while keeping the account.
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
@@ -316,11 +335,12 @@ def reset_progress(user_id: str):
 
 
 @router.delete("/{user_id}")
-def delete_account(user_id: str):
+def delete_account(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Permanently delete a user account and all associated data.
     This action is irreversible.
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
@@ -462,10 +482,11 @@ def _get_conn():
 # ---------------------------------------------------------------------------
 
 @router.put("/{user_id}/settings")
-def update_user_settings(user_id: str, data: UserSettingsUpdate):
+def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = Depends(get_current_user_id)):
     """
     Update user settings across users, user_profiles, and user_settings tables.
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
@@ -554,10 +575,11 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate):
 # ---------------------------------------------------------------------------
 
 @router.get("/{user_id}/stats")
-def get_user_stats(user_id: str):
+def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Return aggregated statistics for a user.
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
@@ -682,10 +704,11 @@ ACHIEVEMENT_DEFINITIONS = [
 
 
 @router.get("/{user_id}/achievements")
-def get_user_achievements(user_id: str):
+def get_user_achievements(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Return achievement list with earned status for a user.
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
@@ -795,10 +818,11 @@ TRENDING_TOPICS = [
 
 
 @router.get("/{user_id}/daily-recommendation")
-def get_daily_recommendation(user_id: str):
+def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_user_id)):
     """
     Return a personalized daily recommendation for the user.
     """
+    _require_self(user_id, caller)
     conn = _get_conn()
     try:
         cursor = conn.cursor()
