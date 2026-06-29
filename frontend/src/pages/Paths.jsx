@@ -97,6 +97,14 @@ function PathCard({ path, index, onClick, isRecommended }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
             onClick={onClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick?.(e);
+                }
+            }}
             className="group relative rounded-2xl border border-border-default bg-bg-surface backdrop-blur-sm overflow-hidden hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
         >
             <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
