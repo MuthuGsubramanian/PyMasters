@@ -210,29 +210,47 @@ def global_leaderboard(
 
         me = None
         if caller:
+            # Compute the caller's rank as their POSITION in the same ordering the
+            # visible list uses (ORDER BY metric DESC, [points DESC,] created_at ASC),
+            # i.e. count everyone who sorts strictly before them + 1. Previously this
+            # used competition ranking (COUNT(points > mine)+1), which disagreed with
+            # the positional rank shown in the list rows whenever users were tied —
+            # e.g. a whole org tied at the same XP showed every row's banner as "#1"
+            # while the list placed them 2nd, 3rd, etc. (older created_at sorts first).
             if scope == "streak":
                 myrow = conn.execute(
-                    "SELECT COALESCE(s.current_streak,0) FROM users u "
-                    "LEFT JOIN user_streaks s ON s.user_id=u.id WHERE u.id=?",
+                    "SELECT COALESCE(s.current_streak,0), COALESCE(u.points,0), u.created_at "
+                    "FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id WHERE u.id=?",
                     [caller],
                 ).fetchone()
                 my_metric = myrow[0] if myrow else 0
                 rsql, rparams = _community_scope_sql(conn, caller, "u.id", org_id)
-                rank = conn.execute(
-                    "SELECT COUNT(*)+1 FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id "
-                    "WHERE COALESCE(u.is_blocked,0)=0 AND COALESCE(s.current_streak,0) > ?" + rsql,
-                    [my_metric] + rparams,
-                ).fetchone()[0]
+                if myrow:
+                    my_points, my_created = myrow[1], myrow[2]
+                    rank = conn.execute(
+                        "SELECT COUNT(*)+1 FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id "
+                        "WHERE COALESCE(u.is_blocked,0)=0 AND ("
+                        "COALESCE(s.current_streak,0) > ? "
+                        "OR (COALESCE(s.current_streak,0) = ? AND COALESCE(u.points,0) > ?) "
+                        "OR (COALESCE(s.current_streak,0) = ? AND COALESCE(u.points,0) = ? AND u.created_at < ?)"
+                        ")" + rsql,
+                        [my_metric, my_metric, my_points, my_metric, my_points, my_created] + rparams,
+                    ).fetchone()[0]
             else:
                 myrow = conn.execute(
-                    "SELECT COALESCE(points,0) FROM users WHERE id=?", [caller]
+                    "SELECT COALESCE(points,0), created_at FROM users WHERE id=?", [caller]
                 ).fetchone()
                 my_metric = myrow[0] if myrow else 0
                 rsql, rparams = _community_scope_sql(conn, caller, "id", org_id)
-                rank = conn.execute(
-                    "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND COALESCE(points,0) > ?" + rsql,
-                    [my_metric] + rparams,
-                ).fetchone()[0]
+                if myrow:
+                    my_created = myrow[1]
+                    rank = conn.execute(
+                        "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND ("
+                        "COALESCE(points,0) > ? "
+                        "OR (COALESCE(points,0) = ? AND created_at < ?)"
+                        ")" + rsql,
+                        [my_metric, my_metric, my_created] + rparams,
+                    ).fetchone()[0]
             if myrow:
                 me = {"rank": rank, "metric": my_metric, "tier": tier_for(my_metric if scope == "xp" else 0)}
 
