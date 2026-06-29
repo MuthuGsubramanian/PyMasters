@@ -323,11 +323,17 @@ export function Overview() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     label="Total XP"
-                    value={totalXp}
                     icon={<Trophy size={20} />}
                     accent="bg-amber-500/12 text-amber-600 dark:text-amber-300"
                     delay={0.1}
-                />
+                >
+                    {/* Show a skeleton until /stats first resolves rather than
+                        briefly rendering the stale auth-context user.points. That
+                        fallback made the Total XP card flash a wrong value (e.g.
+                        35 -> 50) on first paint, since user.points isn't refreshed
+                        after XP is earned. Mirrors the Learning Time card pattern. */}
+                    {loading && !stats ? <Skeleton className="h-7 w-16 inline-block" /> : <AnimatedNumber value={totalXp} />}
+                </StatCard>
                 <StatCard
                     label="Lessons Completed"
                     value={lessonsCompleted}
