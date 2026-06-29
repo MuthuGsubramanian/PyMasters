@@ -136,7 +136,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
                 <div className="flex items-center gap-3 text-[10px] text-text-muted mb-3">
                     <span className="flex items-center gap-1">
                         <BookOpen size={10} />
-                        <AnimatedNumber value={path.lesson_count || path.lessons?.length || 0} /> lessons
+                        <AnimatedNumber value={path.lesson_count || path.lessons?.length || 0} /> {(path.lesson_count || path.lessons?.length || 0) === 1 ? 'lesson' : 'lessons'}
                     </span>
                     <span className="flex items-center gap-1">
                         <Clock size={10} />
@@ -454,7 +454,7 @@ function PathDetail() {
                             <DifficultyBadge level={path.difficulty_start || 'beginner'} />
                             <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                 <BookOpen size={12} />
-                                {lessons.length} lessons
+                                {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
                             </span>
                             {path.estimated_hours && (
                                 <span className="text-xs font-mono text-text-muted flex items-center gap-1">
