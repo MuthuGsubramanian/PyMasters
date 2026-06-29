@@ -89,6 +89,9 @@ export default function App() {
                 <Route path="learn/:id" element={<Navigate to="/dashboard/classroom" replace />} />
                 <Route path="paths" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
                 <Route path="paths/:pathId" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
+                {/* "Evolution" is the nav label for the Paths experience; alias the slug so a directly-typed /dashboard/evolution URL resolves instead of 404ing */}
+                <Route path="evolution" element={<Navigate to="/dashboard/paths" replace />} />
+                <Route path="evolution/:pathId" element={<Navigate to="/dashboard/paths" replace />} />
                 <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
