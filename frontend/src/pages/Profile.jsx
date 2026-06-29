@@ -669,7 +669,15 @@ export default function Profile() {
                             </h1>
                             <p className="text-sm text-text-muted flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                                 <span>@{user?.username}</span>
-                                <Badge variant="neutral">Member since {formatDate(profileData?.created_at || user?.created_at)}</Badge>
+                                {/* Only show the join date once the authoritative account-creation
+                                    timestamp (wrapper res.data.created_at, stored on profileData.created_at)
+                                    has loaded. The previous `|| user?.created_at` fallback used an
+                                    auth-context timestamp that resolves to "today", causing "Member since"
+                                    to briefly flash the current date on first load before settling to the
+                                    real value. Render the badge only when the real date is available. */}
+                                {profileData?.created_at && (
+                                    <Badge variant="neutral">Member since {formatDate(profileData.created_at)}</Badge>
+                                )}
                             </p>
 
                             {/* XP Progress Bar */}
