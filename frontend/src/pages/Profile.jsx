@@ -456,7 +456,7 @@ export default function Profile() {
 
             await api.put(`/profile/${user.id}/settings`, payload);
             updateUser({ name: displayName, email });
-            recordSignal({ user_id: user.id, signal: 'profile_updated' }).catch(() => {});
+            recordSignal({ user_id: user.id, signal_type: 'profile_updated', topic: 'profile', value: {} }).catch(() => {});
             setIsDirty(false);
             setToast({ message: 'Profile saved successfully', type: 'success' });
         } catch (err) {

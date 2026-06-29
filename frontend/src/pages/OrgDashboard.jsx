@@ -729,6 +729,7 @@ export default function OrgDashboard() {
         className="mb-4"
         tabs={TABS.filter((t) => {
           if (t.key === 'analytics' && !isAdmin) return false;
+          if (t.key === 'invites' && !isAdmin) return false;
           if (t.key === 'students' && !canViewProgress) return false;
           return true;
         })}
