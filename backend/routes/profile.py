@@ -177,6 +177,46 @@ def get_profile(user_id: str):
     if profile is None:
         return {"profile": None, "onboarding_completed": False, "created_at": created_at}
 
+    # Enrich with the editable account fields + preferences the Profile page needs.
+    # get_student_profile only returns onboarding fields + name, so without this the
+    # Profile page can't load email/whatsapp/bio/social links or voice/learning prefs.
+    try:
+        ec = _get_conn()
+        u = ec.execute(
+            "SELECT email, whatsapp, linkedin_url, github_url, twitter_url, website_url, points "
+            "FROM users WHERE id = ?", [user_id]
+        ).fetchone()
+        s = ec.execute(
+            "SELECT bio, voice_enabled, voice_speed, voice_name, auto_play_animations, "
+            "hint_level, daily_goal, difficulty_preference FROM user_settings WHERE user_id = ?",
+            [user_id]
+        ).fetchone()
+        ec.close()
+        if u:
+            profile["email"] = u["email"] or ""
+            profile["whatsapp"] = u["whatsapp"] or ""
+            profile["linkedin_url"] = u["linkedin_url"] or ""
+            profile["github_url"] = u["github_url"] or ""
+            profile["twitter_url"] = u["twitter_url"] or ""
+            profile["website_url"] = u["website_url"] or ""
+            profile["points"] = u["points"] or 0
+        profile["bio"] = (s["bio"] if (s and s["bio"] is not None) else "")
+        profile["preferences"] = {
+            "preferred_language": profile.get("preferred_language") or "en",
+            "learning_style": profile.get("learning_style") or "mixed",
+            "daily_goal": (s["daily_goal"] if (s and s["daily_goal"] is not None) else "30"),
+            "difficulty": (s["difficulty_preference"] if (s and s["difficulty_preference"]) else "beginner"),
+            "vaathiyaar": {
+                "voice_mode": bool(s["voice_enabled"]) if (s and s["voice_enabled"] is not None) else False,
+                "voice_speed": (s["voice_speed"] if (s and s["voice_speed"] is not None) else 1.0),
+                "voice_selection": (s["voice_name"] if (s and s["voice_name"]) else "default"),
+                "auto_play_animations": bool(s["auto_play_animations"]) if (s and s["auto_play_animations"] is not None) else True,
+                "hint_level": (s["hint_level"] if (s and s["hint_level"] is not None) else 2),
+            },
+        }
+    except Exception as e:
+        print(f"[get_profile] enrich failed: {e!r}")
+
     return {
         "profile": profile,
         "onboarding_completed": profile.get("onboarding_completed", False),
@@ -400,6 +440,11 @@ class UserSettingsUpdate(BaseModel):
     github_url: Optional[str] = ""
     twitter_url: Optional[str] = ""
     website_url: Optional[str] = ""
+    # The frontend sends preferences NESTED ({preferred_language, learning_style,
+    # daily_goal, difficulty, vaathiyaar:{voice_mode, voice_speed, voice_selection,
+    # auto_play_animations, hint_level}}). Accept that here; the handler prefers
+    # nested values and falls back to the flat fields above for backward-compat.
+    preferences: dict = {}
 
 
 # ---------------------------------------------------------------------------
@@ -430,6 +475,20 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate):
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Resolve preferences from the NESTED payload the frontend sends, falling
+        # back to the flat fields for backward-compatibility.
+        prefs = data.preferences or {}
+        v = prefs.get("vaathiyaar", {}) or {}
+        preferred_language = prefs.get("preferred_language") or data.preferred_language or "en"
+        learning_style = prefs.get("learning_style") if prefs.get("learning_style") is not None else data.learning_style
+        daily_goal = str(prefs.get("daily_goal") if prefs.get("daily_goal") is not None else data.daily_goal)
+        difficulty_preference = prefs.get("difficulty") or data.difficulty_preference or "intermediate"
+        voice_enabled = 1 if (v.get("voice_mode") if "voice_mode" in v else data.voice_enabled) else 0
+        voice_speed = float(v.get("voice_speed") if v.get("voice_speed") is not None else data.voice_speed)
+        voice_name = v.get("voice_selection") if v.get("voice_selection") is not None else data.voice_name
+        auto_play_animations = 1 if (v.get("auto_play_animations") if "auto_play_animations" in v else data.auto_play_animations) else 0
+        hint_level = int(v.get("hint_level") if v.get("hint_level") is not None else data.hint_level)
+
         # 1. Update users table (name, email, whatsapp, social links)
         cursor.execute(
             """UPDATE users SET name = ?, email = ?, whatsapp = ?,
@@ -447,13 +506,13 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate):
                 """UPDATE user_profiles
                    SET preferred_language = ?, learning_style = ?
                    WHERE user_id = ?""",
-                [data.preferred_language, data.learning_style, user_id],
+                [preferred_language, learning_style, user_id],
             )
         else:
             cursor.execute(
                 """INSERT INTO user_profiles (user_id, preferred_language, learning_style, onboarding_completed)
                    VALUES (?, ?, ?, 1)""",
-                [user_id, data.preferred_language, data.learning_style],
+                [user_id, preferred_language, learning_style],
             )
 
         # 3. Upsert user_settings table (voice/animation/misc preferences)
@@ -466,9 +525,9 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate):
                        difficulty_preference = ?, updated_at = CURRENT_TIMESTAMP
                    WHERE user_id = ?""",
                 [
-                    data.bio, int(data.voice_enabled), data.voice_speed, data.voice_name,
-                    int(data.auto_play_animations), data.hint_level, data.daily_goal,
-                    data.difficulty_preference, user_id,
+                    data.bio, voice_enabled, voice_speed, voice_name,
+                    auto_play_animations, hint_level, daily_goal,
+                    difficulty_preference, user_id,
                 ],
             )
         else:
@@ -478,9 +537,9 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate):
                     auto_play_animations, hint_level, daily_goal, difficulty_preference, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
                 [
-                    user_id, data.bio, int(data.voice_enabled), data.voice_speed,
-                    data.voice_name, int(data.auto_play_animations), data.hint_level,
-                    data.daily_goal, data.difficulty_preference,
+                    user_id, data.bio, voice_enabled, voice_speed,
+                    voice_name, auto_play_animations, hint_level,
+                    daily_goal, difficulty_preference,
                 ],
             )
 
