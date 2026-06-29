@@ -18,8 +18,13 @@ export function ProfileProvider({ children }) {
     setLoading(true);
     try {
       const res = await api.get(`/profile/${user.id}`);
-      setProfile(res.data);
-      const lang = res.data?.preferred_language;
+      // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
+      // Unwrap to the inner profile object (matching Profile.jsx); reading
+      // preferred_language off the wrapper left the app-wide language unset,
+      // so the server-side language preference never hydrated the context.
+      const data = res.data?.profile || res.data;
+      setProfile(data);
+      const lang = data?.preferred_language;
       if (lang) {
         setLanguageState(lang);
         try { localStorage.setItem('pm_language', lang); } catch { /* ignore */ }
