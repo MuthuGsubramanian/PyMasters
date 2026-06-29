@@ -57,7 +57,12 @@ function AnimatedNumber({ value, duration = 1200 }) {
         const from = fromRef.current;
         const to = value;
         const commit = () => { fromRef.current = to; setDisplay(to); };
-        if (from === to || !Number.isFinite(to)) {
+        // If we mount/update while the tab is hidden (e.g. opened in a background
+        // tab), rAF AND the setTimeout fallback below are both throttled, and
+        // visibilitychange only fires on re-show — so the count-up could paint a
+        // partial frame and stay there until focus. Skip the animation entirely
+        // when hidden and show the true value immediately.
+        if (from === to || !Number.isFinite(to) || document.hidden) {
             commit();
             return;
         }
