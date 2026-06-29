@@ -420,15 +420,24 @@ def delete_account(user_id: str, caller: str = Depends(get_current_user_id)):
 
 
 @router.post("/signal")
-def post_signal(data: SignalData):
+def post_signal(data: SignalData, caller: str = Depends(get_current_user_id)):
     """
-    Record a learning signal for a user.
+    Record a learning signal for the authenticated user.
+
+    Identity is derived from the verified JWT (`caller`), NEVER from the
+    client-supplied `data.user_id`. Previously this endpoint had no auth and
+    trusted the body's user_id, so an anonymous caller who enumerated ids from
+    the public /api/members directory could inject arbitrary learning signals
+    for any user (data-integrity / signal-poisoning). Requiring the token and
+    deriving identity from it closes both the anonymous and the cross-user
+    paths. All frontend callers (Classroom/Dashboard/Profile/Paths) send their
+    own user.id via the authenticated axios instance, so this is non-breaking.
     """
     db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
     record_signal(
         db_path,
-        user_id=data.user_id,
+        user_id=caller,
         signal_type=data.signal_type,
         topic=data.topic,
         value=data.value,
