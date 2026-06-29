@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser, registerUser, getMe, getLinkedInConfig, startLinkedIn } from '../api';
+import { loginUser, registerUser, getMe, getLinkedInConfig, startLinkedIn, getGitHubConfig, startGitHub } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft, Linkedin } from 'lucide-react';
+import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft, Linkedin, Github } from 'lucide-react';
 import clsx from 'clsx';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
@@ -25,24 +25,29 @@ export default function Login() {
     const [orgDomain, setOrgDomain] = useState('');
     const [orgStep, setOrgStep] = useState(0); // 0=type select, 1=org details, 2=admin account
     const [linkedinEnabled, setLinkedinEnabled] = useState(false);
+    const [githubEnabled, setGithubEnabled] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    // Handle LinkedIn OAuth return (?li_token / ?li_error) and probe availability.
+    // Handle social OAuth return and probe availability. Both providers bounce
+    // back to /login with a provider-prefixed token/error pair:
+    //   LinkedIn -> ?li_token / ?li_error
+    //   GitHub   -> ?gh_token / ?gh_error
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const liErr = params.get('li_error');
-        const liToken = params.get('li_token');
-        if (liErr) {
-            setError(liErr);
+        const oauthErr = params.get('li_error') || params.get('gh_error');
+        const oauthToken = params.get('li_token') || params.get('gh_token');
+        const providerLabel = params.get('gh_token') || params.get('gh_error') ? 'GitHub' : 'LinkedIn';
+        if (oauthErr) {
+            setError(oauthErr);
             window.history.replaceState({}, '', '/login');
-        } else if (liToken) {
+        } else if (oauthToken) {
             (async () => {
                 setLoading(true);
                 try {
-                    localStorage.setItem('pm_user', JSON.stringify({ token: liToken }));
+                    localStorage.setItem('pm_user', JSON.stringify({ token: oauthToken }));
                     const me = await getMe();
-                    const data = { ...me.data, token: liToken };
+                    const data = { ...me.data, token: oauthToken };
                     setSuccess(true);
                     await new Promise((r) => setTimeout(r, 250));
                     login(data);
@@ -50,12 +55,13 @@ export default function Login() {
                     navigate(data.onboarding_completed ? '/dashboard' : '/onboarding');
                 } catch {
                     localStorage.removeItem('pm_user');
-                    setError('Could not complete LinkedIn sign-in. Please try again.');
+                    setError(`Could not complete ${providerLabel} sign-in. Please try again.`);
                     setLoading(false);
                 }
             })();
         }
         getLinkedInConfig().then((r) => setLinkedinEnabled(!!r.data?.enabled)).catch(() => {});
+        getGitHubConfig().then((r) => setGithubEnabled(!!r.data?.enabled)).catch(() => {});
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleLinkedIn = async () => {
@@ -65,6 +71,16 @@ export default function Login() {
             if (r.data?.authorize_url) window.location.href = r.data.authorize_url;
         } catch {
             setError('LinkedIn sign-in is unavailable right now.');
+        }
+    };
+
+    const handleGitHub = async () => {
+        setError('');
+        try {
+            const r = await startGitHub();
+            if (r.data?.authorize_url) window.location.href = r.data.authorize_url;
+        } catch {
+            setError('GitHub sign-in is unavailable right now.');
         }
     };
 
@@ -538,20 +554,31 @@ export default function Login() {
                                         )}
                                     </button>
 
-                                    {linkedinEnabled && (isLogin || accountType === 'individual') && (
+                                    {(linkedinEnabled || githubEnabled) && (isLogin || accountType === 'individual') && (
                                         <>
                                             <div className="flex items-center gap-3 my-1">
                                                 <div className="h-px flex-1 bg-white/[0.08]" />
                                                 <span className="text-[11px] uppercase tracking-wider text-slate-600">or</span>
                                                 <div className="h-px flex-1 bg-white/[0.08]" />
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={handleLinkedIn}
-                                                className="w-full py-3 rounded-xl font-bold text-sm text-white bg-[#0a66c2] hover:bg-[#004182] transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Linkedin size={18} /> Continue with LinkedIn
-                                            </button>
+                                            {githubEnabled && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGitHub}
+                                                    className="w-full py-3 rounded-xl font-bold text-sm text-white bg-[#24292f] hover:bg-[#1b1f24] border border-white/10 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <Github size={18} /> Continue with GitHub
+                                                </button>
+                                            )}
+                                            {linkedinEnabled && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleLinkedIn}
+                                                    className="w-full py-3 rounded-xl font-bold text-sm text-white bg-[#0a66c2] hover:bg-[#004182] transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <Linkedin size={18} /> Continue with LinkedIn
+                                                </button>
+                                            )}
                                         </>
                                     )}
                                 </form>
