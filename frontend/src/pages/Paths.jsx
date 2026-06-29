@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -24,18 +24,49 @@ import api, { recordSignal } from '../api';
 import KnowledgeMap from '../components/KnowledgeMap';
 
 // ─── Animated Number Counter ────────────────────────────────────────────────
+// Mirrors the hardened AnimatedNumber in Dashboard.jsx. The previous local copy
+// here was rAF-only: if requestAnimationFrame was paused (backgrounded/throttled
+// tab) it could freeze the count on a stale partial frame (e.g. "4 lessons"
+// instead of 48), and it had no guard against a non-finite value. We now (a) track
+// a baseline so re-renders tween from the current value rather than restarting at
+// 0, (b) arm a duration-based timeout that snaps to the true target even if rAF
+// never completes, (c) snap to target when the tab becomes visible again, and
+// (d) guard against a non-finite value. Commit-on-cleanup keeps the final value.
 function AnimatedNumber({ value, duration = 1200 }) {
     const [display, setDisplay] = useState(0);
+    const fromRef = useRef(0);
+    const rafRef = useRef(null);
+    const timeoutRef = useRef(null);
     useEffect(() => {
+        const from = fromRef.current;
+        const to = value;
+        const commit = () => { fromRef.current = to; setDisplay(to); };
+        if (from === to || !Number.isFinite(to)) {
+            commit();
+            return;
+        }
         let start = null;
         const step = (ts) => {
-            if (!start) start = ts;
+            if (start === null) start = ts;
             const progress = Math.min((ts - start) / duration, 1);
             const eased = 1 - Math.pow(1 - progress, 3);
-            setDisplay(Math.floor(eased * value));
-            if (progress < 1) requestAnimationFrame(step);
+            setDisplay(Math.round(from + (to - from) * eased));
+            if (progress < 1) {
+                rafRef.current = requestAnimationFrame(step);
+            } else {
+                commit();
+            }
         };
-        requestAnimationFrame(step);
+        rafRef.current = requestAnimationFrame(step);
+        timeoutRef.current = setTimeout(commit, duration + 120);
+        const onVisible = () => { if (!document.hidden) commit(); };
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            document.removeEventListener('visibilitychange', onVisible);
+            commit();
+        };
     }, [value, duration]);
     return display;
 }
