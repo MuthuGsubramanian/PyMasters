@@ -38,6 +38,7 @@ from routes.voice import router as voice_router
 from routes.social import router as social_router, ensure_social_tables
 from routes.org_challenges import router as org_challenges_router, ensure_org_challenge_tables
 from routes.oauth import router as oauth_router, ensure_oauth_tables
+from routes.github_oauth import router as github_oauth_router
 from routes.discovery import router as discovery_router
 from auth import create_access_token, get_current_user_id, _current_token_version
 
@@ -694,6 +695,7 @@ app.include_router(voice_router)
 app.include_router(social_router)
 app.include_router(org_challenges_router)
 app.include_router(oauth_router)
+app.include_router(github_oauth_router)
 app.include_router(discovery_router)
 
 # --- CORS ---

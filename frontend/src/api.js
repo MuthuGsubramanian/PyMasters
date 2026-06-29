@@ -254,4 +254,8 @@ export const generateTopic = (data) => api.post('/classroom/generate', data);
 export const getLinkedInConfig = () => api.get('/auth/linkedin/config');
 export const startLinkedIn = () => api.get('/auth/linkedin/start');
 
+// GitHub OAuth
+export const getGitHubConfig = () => api.get('/auth/github/config');
+export const startGitHub = () => api.get('/auth/github/start');
+
 export default api;
