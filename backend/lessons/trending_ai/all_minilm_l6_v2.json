@@ -1,0 +1,236 @@
+{
+  "id": "all_minilm_l6_v2",
+  "topic": "all_minilm_l6_v2",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Semantic Search with all-MiniLM-L6-v2: Embeddings That Understand Meaning"
+  },
+  "description": {
+    "en": "Turn sentences into 384-dimensional vectors with sentence-transformers' lightweight all-MiniLM-L6-v2 model, then build semantic search and a tiny local RAG index that finds meaning, not just keywords."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Librarian Who Reads Minds\n\nVaathiyaar taps a dusty card catalog and grins. \"For decades, search meant matching *words*. Ask for 'a film about a sinking ship' and keyword search hands you nothing — unless the word 'Titanic' literally appears. **Embeddings** fix this. They turn text into numbers that capture *meaning*, so 'sinking ship movie' lands right next to 'Titanic'. Today we meet the workhorse model behind half the RAG systems on the planet: `all-MiniLM-L6-v2`.\"\n\n### What Is an Embedding?\n\nAn embedding is a list of numbers (a *vector*) that represents a piece of text's meaning. Sentences with similar meaning get vectors that point in similar directions. `all-MiniLM-L6-v2` maps any sentence or short paragraph to a **384-dimensional** vector. Compare two vectors with **cosine similarity** (a number from -1 to 1) and you have a meaning-aware similarity score.\n\n### Why all-MiniLM-L6-v2?\n\nIt is the default lightweight embedding model for a reason — fast, tiny, and good enough for most retrieval jobs.\n\n| Property | all-MiniLM-L6-v2 | A large model (e.g. mpnet-base) |\n|---|---|---|\n| Dimensions | 384 | 768 |\n| Size on disk | ~90 MB | ~420 MB |\n| Speed (CPU) | Very fast | Slower |\n| Quality | Strong | Slightly higher |\n| Best for | Local RAG, prototypes, edge | Max accuracy on a GPU |\n\nIt runs comfortably on a laptop CPU — no GPU required — which is exactly why it powers Homie's local RAG index.\n\n### Encoding Text in Three Lines\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\nvecs = model.encode([\"a cat naps\", \"the kitten sleeps\", \"stock prices fell\"])\nprint(vecs.shape)  # (3, 384)\n```\n\nThe first two sentences mean almost the same thing, so their vectors will be close. The third is about finance — far away in vector space.\n\n### Semantic Search = Encode + Compare\n\n```python\nfrom sentence_transformers import util\n\nquery = model.encode(\"a film about a sinking ship\")\ndocs = model.encode([\"Titanic plot summary\", \"How to bake bread\"])\nscores = util.cos_sim(query, docs)\nprint(scores)  # Titanic scores far higher\n```\n\nThat is the entire engine behind semantic search and RAG: **encode the corpus once, encode the query, rank by cosine similarity, return the top matches.** Persist the corpus vectors and you have a reusable index.\n\n> **Key Insight:** Embeddings move you from matching *characters* to matching *meaning*. With `all-MiniLM-L6-v2` you get 384-dim vectors fast enough for a CPU — encode your documents once, store the vectors, and every future query becomes a cheap cosine-similarity lookup. That is the beating heart of semantic search and retrieval-augmented generation."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "mind_reading_librarian",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "embeddings_overview",
+      "nodes": [
+        {
+          "label": "all-MiniLM-L6-v2",
+          "children": [
+            "Text -> 384-dim vector",
+            "Cosine similarity (meaning)",
+            "Semantic search",
+            "Local RAG index",
+            "CPU-friendly (~90 MB)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "semantic_search_demo",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer, util",
+          "highlight": "SentenceTransformer",
+          "explanation": {
+            "en": "Import the model class and the util helpers (cosine similarity, semantic search)"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "Load the model — downloads ~90 MB once, then caches locally. Runs on CPU."
+          }
+        },
+        {
+          "line": "corpus = [\n    \"The cat sleeps on the warm windowsill.\",\n    \"Python is a popular programming language.\",\n    \"A kitten naps quietly in the sun.\",\n    \"The stock market dropped sharply today.\",\n]",
+          "highlight": "corpus",
+          "explanation": {
+            "en": "Our document collection — the knowledge we want to search over"
+          }
+        },
+        {
+          "line": "corpus_emb = model.encode(corpus, convert_to_tensor=True)",
+          "highlight": "encode",
+          "explanation": {
+            "en": "Encode every document once into 384-dim vectors. This is your reusable index."
+          }
+        },
+        {
+          "line": "print(corpus_emb.shape)  # torch.Size([4, 384])",
+          "highlight": "shape",
+          "explanation": {
+            "en": "Four documents, each a 384-dimensional vector"
+          }
+        },
+        {
+          "line": "query = \"a young feline resting\"",
+          "highlight": "query",
+          "explanation": {
+            "en": "Notice: no shared keywords with 'kitten naps' — only shared meaning"
+          }
+        },
+        {
+          "line": "query_emb = model.encode(query, convert_to_tensor=True)",
+          "highlight": "query_emb",
+          "explanation": {
+            "en": "Encode the query into the same 384-dim space as the corpus"
+          }
+        },
+        {
+          "line": "hits = util.semantic_search(query_emb, corpus_emb, top_k=2)[0]",
+          "highlight": "semantic_search",
+          "explanation": {
+            "en": "Rank all documents by cosine similarity and keep the top 2 matches"
+          }
+        },
+        {
+          "line": "for hit in hits:\n    print(f\"{hit['score']:.3f}  {corpus[hit['corpus_id']]}\")",
+          "highlight": "hit['score']",
+          "explanation": {
+            "en": "The kitten and cat sentences win — meaning matched, not words"
+          }
+        },
+        {
+          "line": "# 0.611  A kitten naps quietly in the sun.\n# 0.508  The cat sleeps on the warm windowsill.",
+          "highlight": "0.611",
+          "explanation": {
+            "en": "Higher cosine score = closer meaning. Finance and Python rank far lower."
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_dimensions",
+      "variable": "embedding_dim",
+      "value": "384",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_score",
+      "variable": "top_score",
+      "value": "0.611 (cosine similarity)",
+      "data_type": "float",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ pip install sentence-transformers",
+        "Successfully installed sentence-transformers torch transformers",
+        "",
+        "$ python semantic_search.py",
+        "Loaded all-MiniLM-L6-v2 (384 dims)",
+        "corpus_emb.shape = torch.Size([4, 384])",
+        "Query: 'a young feline resting'",
+        "0.611  A kitten naps quietly in the sun.",
+        "0.508  The cat sleeps on the warm windowsill."
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_rag_flow",
+      "title": "Semantic Search / RAG Retrieval Flow",
+      "nodes": [
+        { "id": "docs", "label": "Documents", "type": "start" },
+        { "id": "encode_corpus", "label": "model.encode()\n(384-dim)", "type": "process" },
+        { "id": "index", "label": "Vector Index\n(stored once)", "type": "process" },
+        { "id": "query", "label": "User Query", "type": "start" },
+        { "id": "encode_query", "label": "model.encode()", "type": "process" },
+        { "id": "cosine", "label": "Cosine\nSimilarity", "type": "decision" },
+        { "id": "topk", "label": "Top-K Matches", "type": "end" }
+      ],
+      "edges": [
+        { "from": "docs", "to": "encode_corpus", "label": "text" },
+        { "from": "encode_corpus", "to": "index", "label": "vectors" },
+        { "from": "query", "to": "encode_query", "label": "text" },
+        { "from": "encode_query", "to": "cosine", "label": "vector" },
+        { "from": "index", "to": "cosine", "label": "vectors" },
+        { "from": "cosine", "to": "topk", "label": "rank" }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "vector_burst",
+      "message": "You can now turn meaning into math. Semantic search unlocked!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a tiny semantic search function. Given a list of documents and a query string, encode them with all-MiniLM-L6-v2 and return the single best-matching document by cosine similarity. Complete the `best_match` function so it returns the most relevant document text."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef best_match(query: str, documents: list[str]) -> str:\n    \"\"\"Return the document most semantically similar to the query.\"\"\"\n    # 1. Encode the documents into vectors (convert_to_tensor=True)\n    # 2. Encode the query into a vector\n    # 3. Compute cosine similarity between query and each document\n    # 4. Return the document with the highest score\n    pass\n\ndocs = [\n    \"Photosynthesis lets plants make food from sunlight.\",\n    \"The recipe needs two cups of flour and an egg.\",\n    \"Quarterly revenue grew by twelve percent.\",\n]\nprint(best_match(\"how plants turn light into energy\", docs))",
+      "expected_output": "Photosynthesis lets plants make food from sunlight.",
+      "hints": {
+        "en": [
+          "model.encode(documents, convert_to_tensor=True) returns a tensor of shape (len(documents), 384)",
+          "util.cos_sim(query_emb, doc_emb) returns a 1xN tensor of similarity scores",
+          "Use int(scores.argmax()) to find the index of the highest-scoring document"
+        ]
+      },
+      "test_code": "from sentence_transformers import SentenceTransformer, util\n\n_model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef best_match(query, documents):\n    doc_emb = _model.encode(documents, convert_to_tensor=True)\n    q_emb = _model.encode(query, convert_to_tensor=True)\n    scores = util.cos_sim(q_emb, doc_emb)[0]\n    return documents[int(scores.argmax())]\n\ndocs = [\n    \"Photosynthesis lets plants make food from sunlight.\",\n    \"The recipe needs two cups of flour and an egg.\",\n    \"Quarterly revenue grew by twelve percent.\",\n]\nassert best_match(\"how plants turn light into energy\", docs) == docs[0]\nassert best_match(\"baking ingredients list\", docs) == docs[1]\nassert best_match(\"company financial growth\", docs) == docs[2]\nprint(\"All semantic search tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Verify the embedding shape and that semantically similar sentences score higher than unrelated ones. Complete `similarity` to return the cosine similarity (a float) between two sentences encoded with all-MiniLM-L6-v2."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef similarity(a: str, b: str) -> float:\n    \"\"\"Return cosine similarity between two sentences as a float.\"\"\"\n    # Encode both sentences and compare with util.cos_sim\n    pass\n\nclose = similarity(\"I love programming in Python\", \"Coding in Python is my passion\")\nfar = similarity(\"I love programming in Python\", \"The weather is rainy today\")\nprint(round(close, 3), round(far, 3))",
+      "expected_output": "close > far (similar sentences score higher)",
+      "hints": {
+        "en": [
+          "Encode both sentences with model.encode(..., convert_to_tensor=True)",
+          "util.cos_sim returns a 2D tensor — read the single value with .item()",
+          "The two Python sentences should score clearly higher than the weather sentence"
+        ]
+      },
+      "test_code": "from sentence_transformers import SentenceTransformer, util\n\n_model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef similarity(a, b):\n    emb = _model.encode([a, b], convert_to_tensor=True)\n    return util.cos_sim(emb[0], emb[1]).item()\n\nvec = _model.encode(\"hello world\")\nassert vec.shape[0] == 384, \"all-MiniLM-L6-v2 must produce 384-dim vectors\"\n\nclose = similarity(\"I love programming in Python\", \"Coding in Python is my passion\")\nfar = similarity(\"I love programming in Python\", \"The weather is rainy today\")\nassert close > far, \"Similar sentences should score higher than unrelated ones\"\nprint(\"Embedding similarity tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "text_embeddings",
+      "sentence_transformers",
+      "semantic_search",
+      "cosine_similarity",
+      "rag_retrieval"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
