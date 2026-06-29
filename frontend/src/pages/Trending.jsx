@@ -881,11 +881,11 @@ export default function Trending() {
                 >
                   <div className="p-5 space-y-4">
                     {/* Category + Difficulty */}
-                    <div className="flex items-center justify-between">
-                      <Badge className={`px-3 py-1 text-xs ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge className={`px-3 py-1 text-xs whitespace-nowrap ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
                         {topic.category}
                       </Badge>
-                      <Badge className={`px-3 py-1 text-xs ${DIFFICULTY_STYLES[topic.difficulty]}`}>
+                      <Badge className={`px-3 py-1 text-xs whitespace-nowrap ${DIFFICULTY_STYLES[topic.difficulty]}`}>
                         {topic.difficulty}
                       </Badge>
                     </div>
