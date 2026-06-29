@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     BookOpen,
@@ -38,19 +38,47 @@ import clsx from 'clsx';
 
 // ─── Animated Number Counter ───────────────────────────────────────────────
 function AnimatedNumber({ value, duration = 1200 }) {
+    // `display` is what's rendered; `fromRef` tracks the baseline the current
+    // tween animates from. Previously this animated from a fresh useState(0)
+    // and relied on the rAF loop running to completion — but the dashboard
+    // re-renders several times while its data streams in (stats, then
+    // recommendation, trends, loading flag), and any tear-down of the frame
+    // loop left the card frozen on a stale partial number (e.g. 27/33 instead
+    // of the real 50). We now commit the exact target on both completion AND
+    // cleanup, so an interrupted animation can never leave a wrong value.
     const [display, setDisplay] = useState(0);
+    const fromRef = useRef(0);
+    const rafRef = useRef(null);
     useEffect(() => {
+        const from = fromRef.current;
+        const to = value;
+        if (from === to) {
+            setDisplay(to);
+            return;
+        }
         let start = null;
-        let rafId;
         const step = (ts) => {
-            if (!start) start = ts;
+            if (start === null) start = ts;
             const progress = Math.min((ts - start) / duration, 1);
             const eased = 1 - Math.pow(1 - progress, 3);
-            setDisplay(Math.floor(eased * value));
-            if (progress < 1) rafId = requestAnimationFrame(step);
+            setDisplay(Math.round(from + (to - from) * eased));
+            if (progress < 1) {
+                rafRef.current = requestAnimationFrame(step);
+            } else {
+                fromRef.current = to;
+                setDisplay(to);
+            }
         };
-        rafId = requestAnimationFrame(step);
-        return () => cancelAnimationFrame(rafId);
+        rafRef.current = requestAnimationFrame(step);
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            // Commit the target we were heading toward. This guarantees the
+            // number snaps to its true value whenever the effect re-runs
+            // (value changed) or the component unmounts, instead of staying
+            // stuck on an intermediate frame.
+            fromRef.current = to;
+            setDisplay(to);
+        };
     }, [value, duration]);
     return display;
 }
