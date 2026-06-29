@@ -347,7 +347,9 @@ export default function Profile() {
             try {
                 setLoading(true);
                 const res = await getProfile(user.id);
-                const p = res.data;
+                // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
+                // Read the wrapped profile object (falling back to res.data for safety).
+                const p = res.data?.profile || res.data;
 
                 if (cancelled) return;
                 setProfileData(p);
@@ -387,8 +389,15 @@ export default function Profile() {
                     timeSpent: p.time_spent || 0,
                 });
 
-                // Achievements
-                setUnlockedBadges(p.badges || p.achievements || []);
+                // Achievements — fetched from the dedicated endpoint; getProfile() does
+                // NOT return badges, so reading p.badges always left this empty.
+                try {
+                    const ar = await api.get(`/profile/${user.id}/achievements`);
+                    const list = ar.data?.achievements || (Array.isArray(ar.data) ? ar.data : []);
+                    setUnlockedBadges(list.filter((a) => a.earned).map((a) => a.id));
+                } catch {
+                    setUnlockedBadges([]);
+                }
 
                 setIsDirty(false);
             } catch (err) {

@@ -7,9 +7,39 @@ import {
   FileText, Layers, GitBranch, Database, Terminal, Box
 } from 'lucide-react';
 import clsx from 'clsx';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useAuth } from '../context/AuthContext';
 import { getQuickReference, getQuickReferenceTopics } from '../api';
 import { Card, Button } from '../components/ui';
+
+// ─── Markdown renderer for reference section content ────────────────────────
+// Reference `section.content` is full markdown (fenced code blocks + GFM tables).
+// Rendering it as a plain <p> collapsed newlines and showed raw ``` fences /
+// pipe-tables. These theme-token components render it correctly in light + dark.
+const referenceMarkdownComponents = {
+  h2: ({ children }) => <h2 className="text-base font-bold text-text-primary mt-3 mb-1">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-sm font-bold text-text-primary mt-2 mb-1">{children}</h3>,
+  p: ({ children }) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
+  li: ({ children }) => <li className="text-sm text-text-secondary leading-relaxed">{children}</li>,
+  code: ({ children, className }) => className
+    ? <pre className="surface-code border border-border-default p-3 rounded-lg text-xs font-mono overflow-x-auto my-2 whitespace-pre"><code>{children}</code></pre>
+    : <code className="bg-bg-inset text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
+      <table className="text-sm w-full">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-purple-500/10">{children}</thead>,
+  tbody: ({ children }) => <tbody className="divide-y divide-border-default">{children}</tbody>,
+  tr: ({ children }) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
+  th: ({ children }) => <th className="px-3 py-2 text-left text-xs font-bold text-purple-600 dark:text-purple-300 uppercase tracking-wider">{children}</th>,
+  td: ({ children }) => <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>,
+  strong: ({ children }) => <strong className="font-bold text-text-primary">{children}</strong>,
+  a: ({ children, href }) => <a href={href} className="text-cyan-500 hover:underline" target="_blank" rel="noreferrer">{children}</a>,
+};
 
 // ─── Categories ─────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -204,7 +234,11 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
             </div>
             <div className="p-6 space-y-4">
               {section.content && (
-                <p className="text-sm text-text-secondary leading-relaxed">{section.content}</p>
+                <div className="reference-md text-sm text-text-secondary leading-relaxed">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={referenceMarkdownComponents}>
+                    {section.content}
+                  </ReactMarkdown>
+                </div>
               )}
               {section.code && <CodeBlock code={section.code} language={section.language || 'python'} />}
               {section.example && <CodeBlock code={section.example} language="python" />}
