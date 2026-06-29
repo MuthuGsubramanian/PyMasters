@@ -705,6 +705,15 @@ export function LearningMap() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.05 }}
                                 onClick={() => unlocked && navigate(`/dashboard/learn/${mod.id}`)}
+                                role="button"
+                                tabIndex={unlocked ? 0 : -1}
+                                aria-disabled={!unlocked || undefined}
+                                onKeyDown={(e) => {
+                                    if (unlocked && (e.key === 'Enter' || e.key === ' ')) {
+                                        e.preventDefault();
+                                        navigate(`/dashboard/learn/${mod.id}`);
+                                    }
+                                }}
                                 className={clsx(
                                     "group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 flex items-center justify-between",
                                     unlocked

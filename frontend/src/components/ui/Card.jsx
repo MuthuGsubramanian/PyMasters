@@ -1,7 +1,32 @@
 import { cn } from '../../lib/cn';
 
-/** Surface card. Pass `interactive` for hover affordance. */
-export function Card({ as: Tag = 'div', className = '', interactive = false, children, ...props }) {
+/** Surface card. Pass `interactive` for hover affordance. When `interactive`
+ *  is combined with an `onClick` on the default <div>, the card becomes a proper
+ *  keyboard-operable control (role="button", tabIndex=0, Enter/Space activation)
+ *  so mouse-only users aren't the only ones who can trigger it (WCAG 2.1.1 / 4.1.2).
+ *  Cards rendered as a native control (e.g. as={motion.button}) or non-interactive
+ *  cards that only use onClick for stopPropagation are left untouched. */
+export function Card({
+  as: Tag = 'div',
+  className = '',
+  interactive = false,
+  children,
+  onClick,
+  onKeyDown,
+  role,
+  tabIndex,
+  ...props
+}) {
+  const isButtonCard = interactive && typeof onClick === 'function' && Tag === 'div';
+
+  const handleKeyDown = (e) => {
+    if (isButtonCard && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick(e);
+    }
+    onKeyDown?.(e);
+  };
+
   return (
     <Tag
       className={cn(
@@ -9,6 +34,10 @@ export function Card({ as: Tag = 'div', className = '', interactive = false, chi
         interactive && 'transition-all hover:border-border-strong hover:shadow-cyan',
         className,
       )}
+      onClick={onClick}
+      onKeyDown={isButtonCard || onKeyDown ? handleKeyDown : undefined}
+      role={isButtonCard ? role ?? 'button' : role}
+      tabIndex={isButtonCard ? tabIndex ?? 0 : tabIndex}
       {...props}
     >
       {children}
