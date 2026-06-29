@@ -347,7 +347,16 @@ export default function Profile() {
         async function loadProfile() {
             try {
                 setLoading(true);
-                const res = await getProfile(user.id);
+                // Fetch the profile and achievements CONCURRENTLY. They are
+                // independent reads, so awaiting achievements only after the
+                // profile resolved added its round-trip (~300ms) to the tail of
+                // the profile-page load path. Promise.all overlaps them. The
+                // achievements call is allowed to fail softly (-> null) without
+                // blocking the profile render.
+                const [res, ar] = await Promise.all([
+                    getProfile(user.id),
+                    api.get(`/profile/${user.id}/achievements`).catch(() => null),
+                ]);
                 // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
                 // Read the wrapped profile object (falling back to res.data for safety).
                 const p = res.data?.profile || res.data;
@@ -398,11 +407,12 @@ export default function Profile() {
                     timeSpent: p.time_spent || 0,
                 });
 
-                // Achievements — fetched from the dedicated endpoint; getProfile() does
-                // NOT return badges, so reading p.badges always left this empty.
+                // Achievements — fetched from the dedicated endpoint (above, in
+                // parallel with the profile). getProfile() does NOT return badges,
+                // so reading p.badges always left this empty. `ar` is null if the
+                // achievements request failed.
                 try {
-                    const ar = await api.get(`/profile/${user.id}/achievements`);
-                    const list = ar.data?.achievements || (Array.isArray(ar.data) ? ar.data : []);
+                    const list = ar?.data?.achievements || (Array.isArray(ar?.data) ? ar.data : []);
                     setUnlockedBadges(list.filter((a) => a.earned).map((a) => a.id));
                 } catch {
                     setUnlockedBadges([]);
