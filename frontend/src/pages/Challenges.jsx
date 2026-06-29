@@ -109,6 +109,7 @@ function LeaderboardRow({ entry, rank }) {
 
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function Challenges() {
+  useEffect(() => { document.title = 'Challenges — PyMasters'; }, []);
   const { user } = useAuth();
   const [challenge, setChallenge] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);

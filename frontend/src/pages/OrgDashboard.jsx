@@ -368,6 +368,7 @@ function DeleteOrgModal({ orgName, orgId, userId, onDeleted, onClose }) {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function OrgDashboard() {
+  useEffect(() => { document.title = 'Admin Console — PyMasters'; }, []);
   const { user, activeOrg, setOrg } = useAuth();
   const navigate = useNavigate();
 

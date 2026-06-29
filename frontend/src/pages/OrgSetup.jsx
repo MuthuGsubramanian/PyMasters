@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createOrg, bulkInviteToOrg } from '../api';
@@ -20,6 +20,7 @@ const stepVariants = {
 };
 
 export default function OrgSetup() {
+  useEffect(() => { document.title = 'Set Up Organization — PyMasters'; }, []);
   const { user, setOrg } = useAuth();
   const navigate = useNavigate();
 

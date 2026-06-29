@@ -265,6 +265,7 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
 
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function Reference() {
+  useEffect(() => { document.title = 'Reference — PyMasters'; }, []);
   const { user } = useAuth();
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);

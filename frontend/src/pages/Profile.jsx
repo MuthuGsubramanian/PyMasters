@@ -275,6 +275,7 @@ function Toast({ message, type = 'success', onClose }) {
 // ─── Main Profile Page ────────────────────────────────────────────────────────
 
 export default function Profile() {
+    useEffect(() => { document.title = 'Profile — PyMasters'; }, []);
     const { user, updateUser, logout } = useAuth();
     const { language, setLanguage } = useProfile();
     const navigate = useNavigate();
