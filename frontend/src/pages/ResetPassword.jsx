@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { resetPassword } from '../api';
 import { Lock, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ResetPassword() {
+    useEffect(() => { document.title = 'Reset Password — PyMasters'; }, []);
     const { token } = useParams();
     const navigate = useNavigate();
     const [pw, setPw] = useState('');

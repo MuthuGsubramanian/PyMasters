@@ -764,6 +764,8 @@ export default function Trending() {
   const [expandedCode, setExpandedCode] = useState({});
   const [topics, setTopics] = useState(TRENDING_TOPICS);
 
+  useEffect(() => { document.title = 'Trending — PyMasters'; }, []);
+
   useEffect(() => {
     fetch('/api/trending')
       .then(res => res.ok ? res.json() : Promise.reject())

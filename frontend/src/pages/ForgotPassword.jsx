@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { forgotPassword } from '../api';
 import { Mail, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPassword() {
+    useEffect(() => { document.title = 'Forgot Password — PyMasters'; }, []);
     const [identifier, setIdentifier] = useState('');
     const [busy, setBusy] = useState(false);
     const [sent, setSent] = useState(false);
