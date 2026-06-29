@@ -132,7 +132,7 @@ export default function Layout() {
                 <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
                     <div className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-3 mb-1.5 mt-1">Navigation</div>
                     {navItems.map((item) => {
-                        const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+                        const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path + '/'));
                         return (
                             <button
                                 key={item.path}
