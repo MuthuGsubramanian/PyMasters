@@ -1027,6 +1027,15 @@ export default function Classroom() {
             const res = await api.post('/classroom/evaluate', {
                 code,
                 expected_output: challenge.expected_output ?? '',
+                // Send the concrete lesson_id (NOT just topic). Without it the
+                // backend (a) defaulted xp_reward to 25 instead of the lesson's
+                // real reward, and (b) fell back to deduping completions by
+                // `topic` — which many lessons in a track SHARE — so after the
+                // first lesson under a topic every later one was treated as
+                // "already completed" and awarded 0 XP (XP froze, e.g. at 50).
+                // EvaluateRequest already accepts lesson_id; this makes XP award
+                // per-lesson and uses the lesson's true xp_reward.
+                lesson_id: currentLesson?.id ?? null,
                 topic: currentLesson?.topic ?? currentLesson?.id ?? '',
                 user_id: user?.id,
                 language,
