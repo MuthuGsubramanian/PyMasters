@@ -1080,11 +1080,11 @@ export default function OrgDashboard() {
                           </div>
                         )}
                         {inv?.expires_at && (
-                          <span className="text-[10px] text-text-muted">
+                          <span className={`text-[10px] ${(inv?.status === 'expired' || inv?.expired) ? 'text-red-500' : 'text-text-muted'}`}>
                             Exp: {new Date(inv.expires_at).toLocaleDateString()}
                           </span>
                         )}
-                        <Badge variant={inv?.status === 'accepted' ? 'success' : 'warning'}>
+                        <Badge variant={inv?.status === 'accepted' ? 'success' : (inv?.status === 'expired' || inv?.expired) ? 'danger' : 'warning'}>
                           {String(inv?.status || 'pending')}
                         </Badge>
                       </div>
