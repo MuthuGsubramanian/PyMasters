@@ -84,7 +84,20 @@ export const completeModule = (userId, moduleId, score) => api.post('/content/co
 export const getCompletions = (userId) => api.get(`/content/completions/${userId}`);
 
 // Profile
-export const getProfile = (userId) => api.get(`/profile/${userId}`);
+// In-flight coalescer for GET /profile/{id}. The global ProfileProvider and the
+// Profile page both read this endpoint on a hard load, firing two identical
+// concurrent requests (~320ms each wasted) and doubling the profile-load path.
+// Share a single in-flight promise per userId so overlapping reads reuse one
+// round-trip. The entry clears once the request settles, so any later fetch
+// (e.g. after saving settings) is fresh — this only merges concurrent reads.
+const _inFlightProfile = new Map();
+export const getProfile = (userId) => {
+  const existing = _inFlightProfile.get(userId);
+  if (existing) return existing;
+  const p = api.get(`/profile/${userId}`).finally(() => { _inFlightProfile.delete(userId); });
+  _inFlightProfile.set(userId, p);
+  return p;
+};
 export const saveOnboarding = (data) => api.post('/profile/onboarding', data);
 export const recordSignal = (data) => api.post('/profile/signal', data);
 
