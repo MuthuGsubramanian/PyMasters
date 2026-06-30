@@ -585,6 +585,17 @@ export default function Profile() {
 
     // ─── Render ─────────────────────────────────────────────────────────────
 
+    // Single source of truth for which badges are unlocked. The Achievements
+    // render lit a badge via `unlockedBadges.includes(id) || (xpReq>0 && totalXp>=xpReq)`,
+    // but the section subtitle counted only `unlockedBadges.length`. When the
+    // /achievements request fails (unlockedBadges stays []) but /stats succeeds,
+    // XP badges still rendered gold while the subtitle read "0 of N unlocked".
+    // Derive one id set with the SAME predicate and use it for both the count
+    // and the per-badge render so they can never disagree.
+    const unlockedBadgeIds = ACHIEVEMENTS
+        .filter((b) => unlockedBadges.includes(b.id) || (b.xpReq > 0 && stats.totalXp >= b.xpReq))
+        .map((b) => b.id);
+
     return (
         <div className="min-h-screen bg-gradient-hero">
             {/* Toast Notification */}
@@ -1019,11 +1030,10 @@ export default function Profile() {
                 {/* 6. Achievements                                           */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 <GlassCard index={5}>
-                    <SectionHeading icon={Trophy} title="Achievements" subtitle={`${unlockedBadges.length} of ${ACHIEVEMENTS.length} unlocked`} />
+                    <SectionHeading icon={Trophy} title="Achievements" subtitle={`${unlockedBadgeIds.length} of ${ACHIEVEMENTS.length} unlocked`} />
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {ACHIEVEMENTS.map((badge) => {
-                            const isUnlocked = unlockedBadges.includes(badge.id)
-                                || (badge.xpReq > 0 && stats.totalXp >= badge.xpReq);
+                            const isUnlocked = unlockedBadgeIds.includes(badge.id);
                             const BadgeIcon = badge.icon;
 
                             return (
