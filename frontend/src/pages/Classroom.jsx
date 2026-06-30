@@ -1004,6 +1004,15 @@ export default function Classroom() {
     }, [lessons, lessonsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleIntroComplete = () => {
+        // Load the lesson's practice scaffold into the editor when entering the
+        // practice phase (mirrors the working pattern in Challenges.jsx, which does
+        // setCode(c.starter_code || ...)). Previously this only flipped the phase, so
+        // the starter_code shipped in the lesson JSON was never loaded and the editor
+        // opened BLANK. Guarded on an empty editor (!code.trim()) so a returning
+        // learner's in-progress code is never clobbered; lessons with no starter_code
+        // are unaffected (editor stays as-is). resolveText/language already in scope.
+        const starter = currentLesson?.practice_challenges?.[0]?.starter_code;
+        if (starter && !code.trim()) setCode(resolveText(starter, language));
         setPhase('practice');
     };
 
