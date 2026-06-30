@@ -50,8 +50,11 @@ export default function Layout() {
             .catch(() => {});
     }, [user?.id, location.pathname]);
 
-    if (!user) return <Outlet />;
-
+    // NOTE: keep ALL hooks above the `if (!user)` early-return below. The
+    // navItems useMemo previously sat *after* that early-return, so when `user`
+    // flipped truthy->falsy on a still-mounted Layout (e.g. clicking Logout from
+    // any dashboard route), the hook count dropped and React threw "Rendered
+    // more hooks than during the previous render", white-screening the app.
     const navItems = useMemo(() => {
         const items = [
             { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
@@ -75,6 +78,9 @@ export default function Layout() {
         items.push({ icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' });
         return items;
     }, [activeOrg, isSuper]);
+
+    // All hooks above this line run unconditionally on every render.
+    if (!user) return <Outlet />;
 
     const points = liveXp != null ? liveXp : (user.points || 0);
     const rank = points > 1000 ? 'ARCHITECT' : points > 500 ? 'ENGINEER' : 'CADET';
