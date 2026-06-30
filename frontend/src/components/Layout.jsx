@@ -128,12 +128,12 @@ export default function Layout() {
                             <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-[18px] h-[18px]" />
                         </div>
                     </button>
-                    <span className="font-display font-bold text-base text-text-primary tracking-tight">PYMASTERS</span>
+                    <span className={clsx("font-display font-bold text-base text-text-primary tracking-tight", collapsed && "lg:hidden")}>PYMASTERS</span>
                 </div>
 
                 {/* Compact User Row */}
-                <div className="px-4 py-3 border-b border-border-default">
-                    <div className="flex items-center gap-2.5">
+                <div className={clsx("py-3 border-b border-border-default", collapsed ? "px-4 lg:px-0" : "px-4")}>
+                    <div className={clsx("flex items-center gap-2.5", collapsed && "lg:justify-center lg:gap-0")}>
                         <button type="button" onClick={() => navigate('/dashboard/profile')} aria-label="Your profile" className="relative cursor-pointer">
                             <div className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
                                 <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-[10px]">
@@ -142,14 +142,14 @@ export default function Layout() {
                             </div>
                             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" aria-hidden="true" />
                         </button>
-                        <div className="flex-1 min-w-0">
+                        <div className={clsx("flex-1 min-w-0", collapsed && "lg:hidden")}>
                             <div className="text-text-primary font-bold text-xs truncate">{user.username}</div>
                         </div>
-                        <div className={`inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full border ${rc.bg} ${rc.text} ${rc.border}`}>
+                        <div className={clsx("inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full border", rc.bg, rc.text, rc.border, collapsed && "lg:hidden")}>
                             <Zap size={7} />
                             {rank}
                         </div>
-                        <span className="text-[10px] font-mono text-text-muted flex items-center gap-0.5">
+                        <span className={clsx("text-[10px] font-mono text-text-muted flex items-center gap-0.5", collapsed && "lg:hidden")}>
                             <Trophy size={9} className="text-amber-500" />
                             {points}
                         </span>
@@ -158,7 +158,18 @@ export default function Layout() {
 
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
-                    <div className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-3 mb-1.5 mt-1">Navigation</div>
+                    <div className={clsx("flex items-center mb-1.5 mt-1", collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3")}>
+                        <span className={clsx("text-[9px] font-bold text-text-muted uppercase tracking-widest", collapsed && "lg:hidden")}>Navigation</span>
+                        <button
+                            type="button"
+                            onClick={() => setCollapsed((c) => !c)}
+                            className="hidden lg:inline-flex ml-auto p-1 rounded-md hover:bg-bg-elevated text-text-muted hover:text-text-secondary transition-colors"
+                            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        >
+                            <ChevronRight size={14} className={clsx("transition-transform", !collapsed && "rotate-180")} />
+                        </button>
+                    </div>
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path + '/'));
                         return (
@@ -168,7 +179,8 @@ export default function Layout() {
                                 aria-current={isActive ? 'page' : undefined}
                                 title={item.desc}
                                 className={clsx(
-                                    "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
+                                    "w-full flex items-center gap-2.5 py-1.5 rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
+                                    collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3",
                                     isActive
                                         ? "bg-accent-subtle text-accent-primary font-semibold"
                                         : "hover:bg-bg-elevated text-text-muted hover:text-text-secondary"
@@ -182,8 +194,8 @@ export default function Layout() {
                                     />
                                 )}
                                 <item.icon size={16} className="transition-transform duration-200 group-hover:scale-110 shrink-0" />
-                                <span className="text-sm font-medium leading-tight">{item.label}</span>
-                                {isActive && <ChevronRight size={13} className="text-accent-primary ml-auto" />}
+                                <span className={clsx("text-sm font-medium leading-tight", collapsed && "lg:hidden")}>{item.label}</span>
+                                {isActive && <ChevronRight size={13} className={clsx("text-accent-primary ml-auto", collapsed && "lg:hidden")} />}
                             </button>
                         );
                     })}
@@ -191,16 +203,17 @@ export default function Layout() {
 
                 {/* Footer */}
                 <div className="px-3 py-2.5 border-t border-border-default space-y-1.5">
-                    <div className="flex items-center gap-2">
+                    <div className={clsx("flex items-center gap-2", collapsed && "lg:flex-col")}>
                         <button
                             onClick={logout}
+                            title="Sign Out"
                             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
                         >
-                            <LogOut size={13} /> Sign Out
+                            <LogOut size={13} /> <span className={clsx(collapsed && "lg:hidden")}>Sign Out</span>
                         </button>
                         <DarkModeToggle />
                     </div>
-                    <div className="flex items-center justify-center gap-3">
+                    <div className={clsx("flex items-center justify-center gap-3", collapsed && "lg:hidden")}>
                         <Link to="/terms" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Terms</Link>
                         <span className="text-text-disabled text-[9px]">&middot;</span>
                         <Link to="/privacy" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Privacy</Link>
@@ -222,7 +235,7 @@ export default function Layout() {
                     }}
                 />
                 <div className="p-6 max-w-7xl mx-auto relative z-10 min-h-full">
-                    <Outlet />
+                    <Outlet context={{ sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed }} />
                 </div>
             </main>
 
