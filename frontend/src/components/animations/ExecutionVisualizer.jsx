@@ -142,7 +142,7 @@ export default function ExecutionVisualizer({
   const progress = totalSteps > 0 ? Math.max(((activeStep + 1) / totalSteps) * 100, 0) : 0;
 
   return (
-    <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 max-w-4xl font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
+    <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 w-full max-w-full font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header */}
       <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
         <div className="flex items-center gap-1.5">
@@ -169,10 +169,11 @@ export default function ExecutionVisualizer({
         </div>
       </div>
 
-      {/* Main content: 2-column layout */}
-      <div className="flex surface-code">
+      {/* Main content: 2-column layout (stacks on narrow widths so the
+          variables/description panel can never be pushed off-screen) */}
+      <div className="flex flex-col lg:flex-row surface-code">
         {/* Left: Code display */}
-        <div className="flex-1 border-r border-white/10 py-1 min-h-[200px]">
+        <div className="flex-1 min-w-0 overflow-x-auto border-b lg:border-b-0 lg:border-r border-white/10 py-1 min-h-[200px]">
           {lines.map((line, idx) => {
             const lineNum = idx + 1;
             const isActive = lineNum === activeLine;
@@ -207,18 +208,18 @@ export default function ExecutionVisualizer({
         </div>
 
         {/* Right: Variables + Description */}
-        <div className="w-64 p-4 flex flex-col gap-3">
+        <div className="w-full lg:w-64 lg:flex-shrink-0 p-4 flex flex-col gap-3">
           {/* Description */}
           {description && (
             <div className="bg-white/[0.04] rounded-lg p-3 border border-white/10">
-              <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-1">What's happening</p>
+              <p className="text-[10px] text-code-foreground/80 font-semibold uppercase tracking-wider mb-1">What's happening</p>
               <p className="text-xs text-code-foreground/90 leading-relaxed">{description}</p>
             </div>
           )}
 
           {/* Variables */}
           <div className="bg-white/[0.04] rounded-lg p-3 border border-white/10">
-            <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-2">Variables</p>
+            <p className="text-[10px] text-code-foreground/80 font-semibold uppercase tracking-wider mb-2">Variables</p>
             {Object.keys(variables).length > 0 ? (
               <div className="space-y-1.5">
                 {Object.entries(variables).map(([name, value]) => (
@@ -231,7 +232,7 @@ export default function ExecutionVisualizer({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-code-foreground/40 italic">No variables yet</p>
+              <p className="text-xs text-code-foreground/60 italic">No variables yet</p>
             )}
           </div>
         </div>
@@ -240,7 +241,7 @@ export default function ExecutionVisualizer({
       {/* Output terminal */}
       {outputLines.length > 0 && (
         <div className="surface-code border-t border-white/10 px-4 py-3">
-          <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-1.5">Output</p>
+          <p className="text-[10px] text-code-foreground/80 font-semibold uppercase tracking-wider mb-1.5">Output</p>
           <div className="space-y-0.5 max-h-32 overflow-y-auto">
             {outputLines.map((line, idx) => (
               <div key={idx} className="text-xs text-green-400 font-mono">
