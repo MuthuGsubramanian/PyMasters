@@ -83,12 +83,18 @@ function getInitials(name) {
 }
 
 function getRankInfo(xp) {
-    if (xp >= 5000) return { rank: 'Master', color: 'from-amber-400 to-yellow-500', next: null };
-    if (xp >= 2000) return { rank: 'Expert', color: 'from-purple-400 to-violet-500', next: 5000 };
-    if (xp >= 1000) return { rank: 'Advanced', color: 'from-blue-400 to-cyan-500', next: 2000 };
-    if (xp >= 500)  return { rank: 'Intermediate', color: 'from-green-400 to-emerald-500', next: 1000 };
-    if (xp >= 100)  return { rank: 'Apprentice', color: 'from-teal-400 to-cyan-500', next: 500 };
-    return { rank: 'Novice', color: 'from-slate-400 to-slate-500', next: 100 };
+    // `floor` is the current tier's lower XP bound. It is required to draw the
+    // XP progress bar as progress *within the current tier* (floor → next),
+    // not as an absolute fraction of `next`. Without it a user who has only just
+    // reached a rank (e.g. 1000 XP = Advanced, next 2000) would show ~50% filled
+    // instead of ~0%, overstating progress at every tier. `next` and the other
+    // fields are unchanged; `floor` is purely additive.
+    if (xp >= 5000) return { rank: 'Master', color: 'from-amber-400 to-yellow-500', floor: 5000, next: null };
+    if (xp >= 2000) return { rank: 'Expert', color: 'from-purple-400 to-violet-500', floor: 2000, next: 5000 };
+    if (xp >= 1000) return { rank: 'Advanced', color: 'from-blue-400 to-cyan-500', floor: 1000, next: 2000 };
+    if (xp >= 500)  return { rank: 'Intermediate', color: 'from-green-400 to-emerald-500', floor: 500, next: 1000 };
+    if (xp >= 100)  return { rank: 'Apprentice', color: 'from-teal-400 to-cyan-500', floor: 100, next: 500 };
+    return { rank: 'Novice', color: 'from-slate-400 to-slate-500', floor: 0, next: 100 };
 }
 
 function formatDate(dateStr) {
@@ -561,8 +567,14 @@ export default function Profile() {
     // ─── Derived values ─────────────────────────────────────────────────────
 
     const rankInfo = getRankInfo(stats.totalXp);
+    // Progress is measured within the current tier (floor → next), so the bar
+    // reads 0% just after a promotion and 100% on the cusp of the next rank.
+    // Guard the span against div-by-zero and clamp to [0,100] for safety.
     const xpProgress = rankInfo.next
-        ? Math.min(100, Math.round((stats.totalXp / rankInfo.next) * 100))
+        ? Math.max(0, Math.min(100, Math.round(
+              ((stats.totalXp - (rankInfo.floor || 0)) /
+                  Math.max(1, rankInfo.next - (rankInfo.floor || 0))) * 100
+          )))
         : 100;
 
     // ─── Loading Skeleton ───────────────────────────────────────────────────
