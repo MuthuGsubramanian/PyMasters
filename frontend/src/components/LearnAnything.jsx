@@ -78,8 +78,8 @@ export default function LearnAnything({ userId, onLessonReady }) {
                     <Wand2 size={16} />
                 </div>
                 <div>
-                    <h3 className="text-sm font-bold text-text-primary">Learn anything</h3>
-                    <p className="text-xs text-text-muted">Tell Vaathiyaar a topic and get a custom, interactive lesson built just for you.</p>
+                    <h3 className="text-sm font-bold text-slate-800">Learn anything</h3>
+                    <p className="text-xs text-slate-500">Tell Vaathiyaar a topic and get a custom, interactive lesson built just for you.</p>
                 </div>
             </div>
 
@@ -97,7 +97,7 @@ export default function LearnAnything({ userId, onLessonReady }) {
                                 transition={{ ease: 'easeOut', duration: 0.6 }}
                             />
                         </div>
-                        <p className="mt-1.5 text-[11px] text-text-muted">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
+                        <p className="mt-1.5 text-[11px] text-slate-500">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
                     </motion.div>
                 ) : (
                     <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3">
@@ -108,7 +108,7 @@ export default function LearnAnything({ userId, onLessonReady }) {
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
                                     placeholder="e.g. How do Python generators work?"
-                                    className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none"
+                                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
                                 />
                             </div>
                             <button type="submit" disabled={!topic.trim()} className="btn-neo btn-neo-primary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed">
