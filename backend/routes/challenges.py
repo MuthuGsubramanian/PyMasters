@@ -785,6 +785,18 @@ def submit_solution(req: SubmitSolutionRequest, caller: str = Depends(get_curren
                 [xp, user_id],
             )
 
+        # Passing a weekly challenge is a daily learning activity, so advance the
+        # user's streak — the same accrual the module-completion and Vaathiyaar
+        # challenge-pass paths already do. Gated on `passed` (not on `xp>0`) so a
+        # legitimate re-pass on a later day still counts as activity; touch_streak
+        # is idempotent within a calendar day, so a same-day re-pass never
+        # double-counts. It owns no transaction and swallows its own errors, so a
+        # streak-write failure can never break grading/XP award. Persisted
+        # atomically by the existing conn.commit() below.
+        if passed:
+            from streaks import touch_streak
+            touch_streak(conn, user_id)
+
         conn.commit()
 
         status = ("already_completed" if (already_passed and passed)
