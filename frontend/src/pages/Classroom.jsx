@@ -941,6 +941,10 @@ export default function Classroom() {
     const [podcastOpen, setPodcastOpen] = useState(false);
     const [voiceOpen, setVoiceOpen] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
+    // Topic carried in from a Trending "Explore Topic" deep-link when it doesn't
+    // match an existing lesson — used to pre-fill the "Learn anything" box. Default
+    // '' keeps the box empty (today's behaviour) for every non-deep-linked visit.
+    const [deepLinkTopic, setDeepLinkTopic] = useState('');
 
     // Auto-collapse the dashboard nav sidebar while a lesson is open so the
     // side-by-side teaching + execution panels get the full width. Provided by
@@ -1021,15 +1025,43 @@ export default function Classroom() {
         handleSelectLesson({ id: lessonId, track: 'generated' });
     };
 
-    // Deep-link: /dashboard/classroom?lesson=<id> (e.g. from the review queue)
-    // opens that lesson directly once the catalogue has loaded.
+    // Deep-link handling, once the catalogue has loaded and we're on the selector:
+    //   ?lesson=<id>     (review queue)            → open that exact lesson.
+    //   ?topic=<title>   (Trending "Explore Topic") → open a matching catalogue
+    //                     lesson if one exists, otherwise pre-fill the "Learn
+    //                     anything" box so the learner is one click from a custom
+    //                     lesson on that topic. No generation is auto-fired.
     useEffect(() => {
-        const want = searchParams.get('lesson');
-        if (!want || lessonsLoading || phase !== 'select' || currentLesson) return;
-        const match = lessons.find((l) => l.id === want || l.topic === want);
-        if (match) {
-            handleSelectLesson(match);
-            searchParams.delete('lesson');
+        if (lessonsLoading || phase !== 'select' || currentLesson) return;
+
+        // 1. Exact lesson deep-link — unchanged behaviour (case-sensitive id/topic).
+        const wantLesson = searchParams.get('lesson');
+        if (wantLesson) {
+            const match = lessons.find((l) => l.id === wantLesson || l.topic === wantLesson);
+            if (match) {
+                handleSelectLesson(match);
+                searchParams.delete('lesson');
+                setSearchParams(searchParams, { replace: true });
+            }
+            return; // lesson param takes priority; leave it if unmatched (catalogue may reload)
+        }
+
+        // 2. Trending topic deep-link — match a catalogue lesson by id/topic/title
+        //    (case-insensitive); fall back to seeding the "Learn anything" box.
+        const wantTopic = searchParams.get('topic');
+        if (wantTopic) {
+            const norm = wantTopic.trim().toLowerCase();
+            const match = lessons.find((l) =>
+                [l.id, l.topic, l.title].some(
+                    (v) => typeof v === 'string' && v.trim().toLowerCase() === norm
+                )
+            );
+            if (match) {
+                handleSelectLesson(match);
+            } else {
+                setDeepLinkTopic(wantTopic);
+            }
+            searchParams.delete('topic');
             setSearchParams(searchParams, { replace: true });
         }
     }, [lessons, lessonsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1268,7 +1300,7 @@ export default function Classroom() {
                         >
                             {user?.id && (
                                 <div className="max-w-5xl mx-auto mb-5">
-                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} />
+                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} initialTopic={deepLinkTopic} />
                                 </div>
                             )}
                             <LessonSelect
