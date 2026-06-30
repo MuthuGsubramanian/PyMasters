@@ -40,6 +40,15 @@ export function AuthProvider({ children }) {
     const logout = () => {
         setUser(null);
         localStorage.removeItem('pm_user');
+        // Also clear the active org. `login()` only SETS activeOrg when the new
+        // userData carries an `org`, and a plain member/individual login
+        // (loginUser returns no org) never overwrites it — so without this a
+        // stale `pm_active_org` from a prior session survives logout and the
+        // NEXT user on the same browser inherits the previous user's org
+        // context (Admin Console / Compete nav + org data fetches). Clearing it
+        // here is the user's own session ending, so it's unambiguously correct.
+        setActiveOrgState(null);
+        localStorage.removeItem('pm_active_org');
     };
 
     const updateProgress = (points, unlocked) => {
