@@ -463,12 +463,12 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             {/* ── Header ── */}
             <header>
                 <div className="flex items-center gap-2 mb-1">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-200 bg-purple-50 text-purple-600 text-[10px] font-bold tracking-wider uppercase">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-300/40 dark:border-accent-primary/30 bg-purple-50 dark:bg-accent-subtle text-purple-600 dark:text-accent-primary text-[10px] font-bold tracking-wider uppercase">
                         <Sparkles size={10} />
                         Lesson
                     </div>
                     {lesson.xp_reward && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-full px-2 py-0.5">
                             +{lesson.xp_reward} XP
                         </span>
                     )}
@@ -526,7 +526,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                             <span className="text-[10px] text-green-400/80">running</span>
                         </div>
                     </div>
-                    <div className="p-5 space-y-4 overflow-y-auto flex-1">
+                    <div className="p-5 space-y-4 overflow-y-auto flex-1 dark-scrollbar">
                         {loopViz && (
                             <div>
                                 <div className="text-[10px] text-amber-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -580,7 +580,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </div>
 
                 {/* RIGHT: Execution Flow */}
-                <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg overflow-y-auto">
+                <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg overflow-y-auto dark-scrollbar">
                     <div className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                         Execution Flow
@@ -663,7 +663,7 @@ function PracticePhase({
                     key={i}
                     initial={{ opacity: 0, y: 6, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className="panel rounded-xl p-4 border border-amber-200 bg-amber-50/80 flex items-start gap-3"
+                    className="panel rounded-xl p-4 border border-amber-200 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 flex items-start gap-3"
                 >
                     <span className="text-amber-500 text-lg">💡</span>
                     <p className="text-text-secondary text-sm leading-relaxed">{m.content}</p>

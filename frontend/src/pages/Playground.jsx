@@ -619,7 +619,7 @@ export default function Playground() {
                     </div>
 
                     {/* Chat messages area */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 dark-scrollbar">
                         {messages.length === 0 && !loading && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
