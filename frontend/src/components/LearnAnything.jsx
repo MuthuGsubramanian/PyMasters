@@ -24,14 +24,24 @@ const SUGGESTIONS = ['Web scraping with Python', 'Decorators explained', 'How re
 // ──────────────────────────────────────────────────────────────────────────
 // "Learn anything" — type a topic, Vaathiyaar generates a tailor-made lesson.
 // ──────────────────────────────────────────────────────────────────────────
-export default function LearnAnything({ userId, onLessonReady }) {
-    const [topic, setTopic] = useState('');
+export default function LearnAnything({ userId, onLessonReady, initialTopic = '' }) {
+    const [topic, setTopic] = useState(initialTopic);
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState(null);   // { status, progress_pct }
     const [err, setErr] = useState('');
     const pollRef = useRef(null);
 
     useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+    // Seed the input when a topic arrives via prop after mount — e.g. the Trending
+    // "Explore Topic" deep-link (/dashboard/classroom?topic=<title>). Optional and
+    // backward-compatible: when `initialTopic` is the default '' nothing changes,
+    // so every existing call site behaves exactly as before. Guarded on an idle,
+    // empty box so it never clobbers what the learner is typing or an in-progress
+    // generation.
+    useEffect(() => {
+        if (initialTopic && !busy) setTopic(initialTopic);
+    }, [initialTopic]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const start = async (e) => {
         e?.preventDefault();
