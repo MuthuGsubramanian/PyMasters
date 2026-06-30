@@ -35,6 +35,42 @@ def _require_self(user_id: str, caller: str) -> None:
     if caller != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
 
+
+def _relative_time(ts) -> str:
+    """Human-friendly 'time ago' for a SQLite timestamp string (stored UTC via
+    CURRENT_TIMESTAMP, format 'YYYY-MM-DD HH:MM:SS'). Returns '' on any parse
+    failure so callers can degrade gracefully — this only feeds optional,
+    display-only fields and must never raise into an endpoint response."""
+    if not ts:
+        return ""
+    try:
+        s = str(ts).replace("T", " ").split(".")[0].strip()
+        dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return ""
+    try:
+        secs = (datetime.utcnow() - dt).total_seconds()
+    except Exception:
+        return ""
+    if secs < 0:
+        secs = 0
+    if secs < 60:
+        return "just now"
+    mins = int(secs // 60)
+    if mins < 60:
+        return f"{mins}m ago"
+    hours = int(mins // 60)
+    if hours < 24:
+        return f"{hours}h ago"
+    days = int(hours // 24)
+    if days < 7:
+        return f"{days}d ago"
+    weeks = int(days // 7)
+    if weeks < 5:
+        return f"{weeks}w ago"
+    return dt.strftime("%b %d, %Y")
+
+
 BLOCKED_LANGUAGES = {"hi"}
 
 
@@ -720,6 +756,44 @@ def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
 
         total_time_minutes = round(total_time_minutes)
 
+        # Recent activity feed (most recent lesson/module completions). The
+        # Dashboard "Recent Activity" panel reads `stats.recent_activity`; this
+        # field was never returned, so the panel always fell back to its empty
+        # state ("Start learning to see your activity here") even for users with
+        # real completions. Building it from lesson_completions (which IS written
+        # on every module/challenge pass) makes the panel populate. Additive and
+        # optional: if the query yields nothing the field is [] and the UI shows
+        # the same empty state as before — zero change for existing behavior.
+        recent_activity = []
+        try:
+            cursor.execute(
+                "SELECT lesson_id, completed_at, xp_awarded FROM lesson_completions "
+                "WHERE user_id = ? ORDER BY completed_at DESC LIMIT 5",
+                [user_id],
+            )
+            comp_rows = cursor.fetchall()
+            # Resolve friendly titles for any generated lessons in one batch query;
+            # static modules fall back to a de-slugged id ('module_1' -> 'Module 1').
+            gen_titles = {}
+            if comp_rows:
+                ids = [r["lesson_id"] for r in comp_rows]
+                placeholders = ",".join("?" for _ in ids)
+                cursor.execute(
+                    f"SELECT id, topic FROM generated_lessons WHERE id IN ({placeholders})",
+                    ids,
+                )
+                gen_titles = {gr["id"]: gr["topic"] for gr in cursor.fetchall()}
+            for r in comp_rows:
+                lid = r["lesson_id"]
+                title = gen_titles.get(lid) or str(lid).replace("_", " ").title()
+                recent_activity.append({
+                    "label": f"Completed {title}",
+                    "time": _relative_time(r["completed_at"]),
+                    "xp": r["xp_awarded"] or 0,
+                })
+        except Exception:
+            recent_activity = []
+
         # Rank based on XP
         if total_xp >= 1000:
             rank = "Code Architect"
@@ -739,6 +813,7 @@ def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
             "total_time_minutes": total_time_minutes,
             "lessons_completed": lessons_completed,
             "rank": rank,
+            "recent_activity": recent_activity,
         }
     finally:
         conn.close()
