@@ -460,9 +460,9 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
     return (
-        <div className="animate-fade-in space-y-4 max-w-6xl mx-auto pb-28">
-            {/* ── Header ── */}
-            <header>
+        <div className="animate-fade-in flex flex-col gap-3 max-w-7xl mx-auto lg:h-[calc(100vh-7rem)]">
+            {/* ── Header (compact, fixed) ── */}
+            <header className="flex-shrink-0">
                 <div className="flex items-center gap-2 mb-1">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-300/40 dark:border-accent-primary/30 bg-purple-50 dark:bg-accent-subtle text-purple-600 dark:text-accent-primary text-[10px] font-bold tracking-wider uppercase">
                         <Sparkles size={10} />
@@ -474,13 +474,18 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         </span>
                     )}
                 </div>
-                <h2 className="text-2xl font-bold text-text-primary font-display">
+                <h2 className="text-xl font-bold text-text-primary font-display leading-tight">
                     {resolveText(lesson.active_title || lesson.title, language)}
                 </h2>
             </header>
 
-            {/* ── Vaathiyaar Story Card ── */}
-            <div className="rounded-2xl bg-gradient-to-r from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg">
+            {/* ── Side-by-side: Vaathiyaar explanation (left) + execution flow (right).
+                On large screens they fill the viewport height and scroll internally,
+                so the lesson fits without page scroll. ── */}
+            <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
+
+            {/* LEFT: Vaathiyaar explanation — scrolls internally */}
+            <div className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg overflow-y-auto dark-scrollbar min-h-[280px]">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
@@ -500,7 +505,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             </div>
 
             {/* ── Execution section: aligned header + code panel + optional flow ── */}
-            <section className="rounded-2xl surface-code shadow-lg overflow-hidden">
+            <section className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl surface-code shadow-lg overflow-hidden flex flex-col min-h-[320px]">
                 {/* Section header — title on the left, Run Animation aligned on the right */}
                 <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.08] bg-white/[0.02]">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -526,15 +531,10 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 {/* Body: code execution + (optional) flow diagram. Equal-height two
                     columns only when a flow diagram exists; otherwise the code panel
                     spans full width and grows to content (no empty sidebar box). */}
-                <div
-                    className="flex flex-col lg:flex-row gap-5 p-5"
-                    style={flowDiagram
-                        ? { height: 'min(60vh, 540px)', minHeight: '360px' }
-                        : { maxHeight: 'min(72vh, 640px)', minHeight: '320px' }}
-                >
+                <div className="flex-1 min-h-0 flex flex-col gap-4 p-4 overflow-y-auto dark-scrollbar">
 
-                {/* LEFT: Code Execution (bigger) */}
-                <div className="flex-1 min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
+                {/* Code Execution panel */}
+                <div className="flex-1 min-h-0 min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
                     {/* Terminal header */}
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/[0.06]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
@@ -606,7 +606,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     lessons without one show a clean full-width code panel instead of
                     an empty "No flow diagram" box. */}
                 {flowDiagram && (
-                    <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg overflow-y-auto dark-scrollbar border border-white/[0.06]">
+                    <div className="w-full flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg border border-white/[0.06]">
                         <div className="text-xs font-bold text-cyan-300 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                             Execution Flow
@@ -623,11 +623,12 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 )}
                 </div>
             </section>
+            </div>
 
             {/* ── Start Practice button ── */}
             <button
                 onClick={onComplete}
-                className="btn-neo btn-neo-primary flex items-center gap-2 w-full justify-center py-4 text-base"
+                className="btn-neo btn-neo-primary flex-shrink-0 flex items-center gap-2 w-full justify-center py-3 text-base"
             >
                 <Play size={18} fill="currentColor" />
                 Start Practice
@@ -1368,14 +1369,24 @@ export default function Classroom() {
                 />
             )}
 
-            {/* ── Docked Vaathiyaar conversation: scrollable history + input as one unit ── */}
+            {/* ── Floating Vaathiyaar chat: a docked icon that opens a chat popover, so
+                   the lesson stays full-screen and the chat never overlaps content ── */}
             {phase !== 'select' && (
                 <>
                     <TTSControls tts={tts} />
-                    <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
-                        <div className="max-w-5xl mx-auto pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_-6px_30px_rgba(0,0,0,0.12)] overflow-hidden">
+                    {chatOpen && (
+                        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[min(94vw,400px)] max-h-[70vh] flex flex-col pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.28)] overflow-hidden">
+                            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border-default flex-shrink-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-[11px] flex-shrink-0">{'\u{1F9D1}‍\u{1F3EB}'}</div>
+                                    <span className="text-sm font-bold text-text-primary truncate">Ask Vaathiyaar</span>
+                                </div>
+                                <button onClick={() => setChatOpen(false)} className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-text-secondary flex-shrink-0" aria-label="Close chat">
+                                    <X size={16} />
+                                </button>
+                            </div>
                             {chatMessages.filter((m) => !m._isHint).length > 0 && (
-                                <div className="max-h-[30vh] overflow-y-auto overscroll-contain px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
                                     {chatMessages.filter((m) => !m._isHint).map((msg, idx) => (
                                         <motion.div
                                             key={idx}
@@ -1423,7 +1434,7 @@ export default function Classroom() {
                                     <div ref={chatEndRef} />
                                 </div>
                             )}
-                            <div className={`flex items-center gap-2 p-3 ${chatMessages.filter((m) => !m._isHint).length > 0 ? 'border-t border-border-default' : ''}`}>
+                            <div className="flex items-center gap-2 p-3 border-t border-border-default flex-shrink-0">
                                 <div className="flex-1">
                                     <ChatBar
                                         onSend={handleChat}
@@ -1433,21 +1444,33 @@ export default function Classroom() {
                                 </div>
                                 <button
                                     onClick={() => setVoiceOpen(true)}
-                                    className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 text-white hover:scale-105 transition-transform"
+                                    className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 text-white hover:scale-105 transition-transform flex-shrink-0"
                                     title="Talk to Vaathiyaar (voice tutorial)"
                                 >
                                     <Mic size={18} />
                                 </button>
                                 <button
                                     onClick={() => tts.setEnabled(!tts.enabled)}
-                                    className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
+                                    className={`p-2.5 rounded-xl transition-all duration-200 flex-shrink-0 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
                                     title={tts.enabled ? 'Voice on' : 'Voice off'}
                                 >
                                     {tts.enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    )}
+                    {/* Floating toggle icon — opens/closes the chat popover above */}
+                    <button
+                        onClick={() => setChatOpen((o) => !o)}
+                        className="fixed bottom-6 right-4 sm:right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                        title="Ask Vaathiyaar"
+                        aria-label={chatOpen ? 'Close Vaathiyaar chat' : 'Open Vaathiyaar chat'}
+                    >
+                        {chatOpen ? <X size={22} /> : <MessageCircle size={22} />}
+                        {!chatOpen && chatMessages.filter((m) => !m._isHint).length > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-bg-base" />
+                        )}
+                    </button>
                 </>
             )}
 
