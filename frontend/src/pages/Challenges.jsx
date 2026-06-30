@@ -155,7 +155,11 @@ export default function Challenges() {
     load();
   }, []);
 
-  const countdown = useCountdown(challenge?.next_challenge_at);
+  // Fall back to the next Monday 00:00 UTC when the backend doesn't supply
+  // next_challenge_at (it currently doesn't), so the "Next challenge in" timer
+  // counts down instead of being stuck at 00d 00h 00m 00s. nextMondayUTC() was
+  // written for exactly this fallback but was previously never wired in.
+  const countdown = useCountdown(challenge?.next_challenge_at || nextMondayUTC());
 
   const handleSubmit = useCallback(async () => {
     if (!code.trim() || submitting) return;
