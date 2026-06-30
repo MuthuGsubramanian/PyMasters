@@ -25,7 +25,7 @@ import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
-import { getAdminCheck } from '../api';
+import { getAdminCheck, getProfileStats } from '../api';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
@@ -36,6 +36,19 @@ export default function Layout() {
     useEffect(() => {
         if (user?.id) getAdminCheck(user.id).then((r) => setIsSuper(!!r.data?.is_super_admin)).catch(() => {});
     }, [user?.id]);
+
+    // The cached `user.points` (from login/localStorage) goes stale the moment the
+    // user earns XP elsewhere in the session, so the sidebar badge + rank showed a
+    // lower value (e.g. 50 / CADET) than the authoritative /stats total_xp (95)
+    // that the Dashboard, Profile and Community all display. Fetch live total_xp on
+    // mount (and on route change, since XP-earning lands the user back in the shell)
+    // and use it for the badge/rank, falling back to user.points if the call fails.
+    const [liveXp, setLiveXp] = useState(null);
+    useEffect(() => {
+        if (user?.id) getProfileStats(user.id)
+            .then((r) => { const xp = r.data?.total_xp; if (Number.isFinite(xp)) setLiveXp(xp); })
+            .catch(() => {});
+    }, [user?.id, location.pathname]);
 
     if (!user) return <Outlet />;
 
@@ -63,7 +76,8 @@ export default function Layout() {
         return items;
     }, [activeOrg, isSuper]);
 
-    const rank = user.points > 1000 ? 'ARCHITECT' : user.points > 500 ? 'ENGINEER' : 'CADET';
+    const points = liveXp != null ? liveXp : (user.points || 0);
+    const rank = points > 1000 ? 'ARCHITECT' : points > 500 ? 'ENGINEER' : 'CADET';
     const rankColors = {
         CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-600 dark:text-cyan-300', border: 'border-cyan-500/30' },
         ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-300', border: 'border-purple-500/30' },
@@ -123,7 +137,7 @@ export default function Layout() {
                         </div>
                         <span className="text-[10px] font-mono text-text-muted flex items-center gap-0.5">
                             <Trophy size={9} className="text-amber-500" />
-                            {user.points}
+                            {points}
                         </span>
                     </div>
                 </div>
