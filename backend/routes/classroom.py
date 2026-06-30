@@ -741,6 +741,11 @@ def evaluate(request: EvaluateRequest):
             else:
                 xp_earned = 0
 
+            # Passing a challenge is daily learning activity — advance the streak
+            # (idempotent per day; counts retakes too). Never breaks XP/commit.
+            from streaks import touch_streak
+            touch_streak(conn, request.user_id)
+
             conn.commit()
             conn.close()
         except Exception:

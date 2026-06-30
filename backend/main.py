@@ -1128,6 +1128,13 @@ def complete_module(sub: QuizSubmission):
                 [json.dumps(current_unlocks), sub.user_id],
             )
 
+        # Record daily learning activity so streaks actually accrue. Completing
+        # (or retaking) a module is a learning activity, so touch the streak
+        # regardless of whether XP was awarded this time. Never disrupts the
+        # completion flow: touch_streak swallows its own errors and returns None.
+        from streaks import touch_streak
+        touch_streak(conn, sub.user_id)
+
         conn.commit()
 
         return {
