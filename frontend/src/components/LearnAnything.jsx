@@ -72,24 +72,24 @@ export default function LearnAnything({ userId, onLessonReady }) {
     const label = STAGE_LABELS[status?.status] || 'Working…';
 
     return (
-        <div className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 via-white to-cyan-50 p-5 shadow-sm">
+        <div className="rounded-2xl border border-purple-200 dark:border-border-default bg-gradient-to-br from-purple-50 via-white to-cyan-50 dark:bg-none dark:bg-bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white shadow-md">
                     <Wand2 size={16} />
                 </div>
                 <div>
-                    <h3 className="text-sm font-bold text-slate-800">Learn anything</h3>
-                    <p className="text-xs text-slate-500">Tell Vaathiyaar a topic and get a custom, interactive lesson built just for you.</p>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-text-primary">Learn anything</h3>
+                    <p className="text-xs text-slate-500 dark:text-text-muted">Tell Vaathiyaar a topic and get a custom, interactive lesson built just for you.</p>
                 </div>
             </div>
 
             <AnimatePresence mode="wait">
                 {busy ? (
                     <motion.div key="progress" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3">
-                        <div className="flex items-center gap-2 text-sm text-purple-700 font-medium">
+                        <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-accent-primary font-medium">
                             <Loader2 size={15} className="animate-spin" /> {label}
                         </div>
-                        <div className="mt-2 h-2 rounded-full bg-purple-100 overflow-hidden">
+                        <div className="mt-2 h-2 rounded-full bg-purple-100 dark:bg-bg-inset overflow-hidden">
                             <motion.div
                                 className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-500"
                                 initial={{ width: 0 }}
@@ -97,18 +97,18 @@ export default function LearnAnything({ userId, onLessonReady }) {
                                 transition={{ ease: 'easeOut', duration: 0.6 }}
                             />
                         </div>
-                        <p className="mt-1.5 text-[11px] text-slate-500">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
+                        <p className="mt-1.5 text-[11px] text-slate-500 dark:text-text-muted">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
                     </motion.div>
                 ) : (
                     <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3">
                         <form onSubmit={start} className="flex items-center gap-2">
-                            <div className="flex-1 flex items-center gap-2 rounded-xl border border-purple-200 bg-white px-3 py-2.5 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-200 transition-all">
+                            <div className="flex-1 flex items-center gap-2 rounded-xl border border-purple-200 dark:border-border-default bg-white dark:bg-bg-elevated px-3 py-2.5 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-200 dark:focus-within:ring-accent-primary/30 transition-all">
                                 <Sparkles size={16} className="text-purple-400 flex-shrink-0" />
                                 <input
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
                                     placeholder="e.g. How do Python generators work?"
-                                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
+                                    className="flex-1 bg-transparent text-sm text-slate-800 dark:text-text-primary placeholder-slate-400 dark:placeholder:text-text-muted outline-none"
                                 />
                             </div>
                             <button type="submit" disabled={!topic.trim()} className="btn-neo btn-neo-primary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed">
@@ -122,7 +122,7 @@ export default function LearnAnything({ userId, onLessonReady }) {
                         )}
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {SUGGESTIONS.map((s) => (
-                                <button key={s} onClick={() => setTopic(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors">
+                                <button key={s} onClick={() => setTopic(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white dark:bg-bg-elevated border border-purple-200 dark:border-border-default text-purple-600 dark:text-accent-primary hover:bg-purple-50 dark:hover:bg-bg-inset transition-colors">
                                     {s}
                                 </button>
                             ))}
