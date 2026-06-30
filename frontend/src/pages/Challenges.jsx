@@ -98,7 +98,9 @@ function LeaderboardRow({ entry, rank }) {
       </TD>
       <TD>
         <p className="text-sm font-medium text-text-primary truncate">{entry.username || entry.name}</p>
-        <p className="text-xs text-text-muted">{entry.time || entry.score} pts</p>
+        {/* Backend supplies `total_xp`; older fallbacks (time/score) kept for safety.
+            `?? 0` avoids rendering a blank "pts" when the points field is absent. */}
+        <p className="text-xs text-text-muted">{entry.total_xp ?? entry.time ?? entry.score ?? 0} pts</p>
       </TD>
       <TD className="w-8 text-right">
         {rank <= 3 && <Trophy size={14} className="text-yellow-400 inline-block" />}
@@ -144,7 +146,14 @@ export default function Challenges() {
           setCode(c.starter_code || '# Write your solution here\n');
         }
         if (lbRes.status === 'fulfilled') {
-          setLeaderboard(Array.isArray(lbRes.value.data) ? lbRes.value.data : lbRes.value.data?.entries || []);
+          // API shape: { leaderboard: [...], total_participants }. Earlier code only
+          // looked for `.entries`, which the backend never returns, so the board
+          // rendered empty even when real passing submissions existed. Read
+          // `.leaderboard` first, keeping array/`.entries` fallbacks for safety.
+          const lb = lbRes.value.data;
+          setLeaderboard(
+            Array.isArray(lb) ? lb : (lb?.leaderboard || lb?.entries || [])
+          );
         }
       } catch {
         setError('Unable to load challenge data. Please try again later.');
