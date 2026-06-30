@@ -359,9 +359,16 @@ export default function Profile() {
                 // the profile-page load path. Promise.all overlaps them. The
                 // achievements call is allowed to fail softly (-> null) without
                 // blocking the profile render.
-                const [res, ar] = await Promise.all([
+                const [res, ar, sr] = await Promise.all([
                     getProfile(user.id),
                     api.get(`/profile/${user.id}/achievements`).catch(() => null),
+                    // Stats (XP, modules, streak, time) live on a DEDICATED /stats
+                    // endpoint — get_profile() does NOT return modules_completed,
+                    // streak, or time_spent, so reading them off the profile object
+                    // left "Modules Done / Day Streak / Time Spent" permanently 0.
+                    // Fetch /stats in parallel and use it as the authoritative source.
+                    // Allowed to fail softly (-> null) without blocking the render.
+                    api.get(`/profile/${user.id}/stats`).catch(() => null),
                 ]);
                 // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
                 // Read the wrapped profile object (falling back to res.data for safety).
@@ -405,12 +412,16 @@ export default function Profile() {
                 setAutoPlayAnimations(vs.auto_play_animations ?? true);
                 setHintLevel(vs.hint_level ?? 2);
 
-                // Stats
+                // Stats — prefer the authoritative /stats payload (sr), which the
+                // backend computes from users.points, user_mastery, user_streaks and
+                // time_spent learning signals. Fall back to the profile object / auth
+                // context only when the stats request failed (sr === null).
+                const st = sr?.data || {};
                 setStats({
-                    totalXp: p.points || p.xp || user?.points || 0,
-                    modulesCompleted: p.modules_completed ?? p.completions?.length ?? 0,
-                    currentStreak: p.streak || 0,
-                    timeSpent: p.time_spent || 0,
+                    totalXp: st.total_xp ?? p.points ?? p.xp ?? user?.points ?? 0,
+                    modulesCompleted: st.modules_completed ?? p.modules_completed ?? p.completions?.length ?? 0,
+                    currentStreak: st.current_streak ?? p.streak ?? 0,
+                    timeSpent: st.total_time_minutes ?? p.time_spent ?? 0,
                 });
 
                 // Achievements — fetched from the dedicated endpoint (above, in
