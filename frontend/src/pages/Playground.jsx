@@ -727,7 +727,7 @@ export default function Playground() {
 
                     {/* Code editor area */}
                     <div className="flex-1 flex flex-col min-h-0">
-                        <div className="flex-1 flex min-h-0 overflow-hidden" style={{ minHeight: '40%' }}>
+                        <div className="flex-1 flex min-h-0 overflow-hidden">
                             <PythonEditor
                                 value={code}
                                 onChange={setCode}
@@ -784,7 +784,7 @@ export default function Playground() {
                         </div>
 
                         {/* Package installer */}
-                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.04]">
+                        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-white/[0.04] flex-shrink-0">
                             <span className="text-[10px] text-code-foreground/50 font-mono flex-shrink-0">pip install</span>
                             <input
                                 type="text"

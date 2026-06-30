@@ -1,0 +1,136 @@
+{
+  "id": "semantic_search_minilm_embeddings",
+  "topic": "semantic_search_minilm_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Semantic Search & RAG with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Learn to turn sentences into vectors with the lightweight all-MiniLM-L6-v2 model and build a working semantic search engine â€” the embedding backbone of every RAG system."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Day Words Became Numbers\n\nVaathiyaar leans back and smiles. \"Students, here is a riddle. The sentences *'How do I reset my password?'* and *'I forgot my login credentials'* share almost no words â€” yet they mean nearly the same thing. How does a machine know? Keyword search would fail miserably here. Today I teach you the trick that powers ChatGPT's memory, every RAG pipeline, and Homie's own brain: **embeddings**.\"\n\n### What Is an Embedding?\n\nAn embedding is a list of numbers â€” a *vector* â€” that captures the *meaning* of a piece of text. Similar meanings land close together in this high-dimensional space; unrelated ones drift far apart. The model `sentence-transformers/all-MiniLM-L6-v2` maps any sentence to a **384-dimensional vector**, and it does so fast enough to run on a laptop CPU.\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer('all-MiniLM-L6-v2')\nvec = model.encode(\"How do I reset my password?\")\nprint(vec.shape)  # (384,)\n```\n\n### Why This Model?\n\nVaathiyaar pulls up a comparison on the board.\n\n| Model | Dimensions | Size | Speed (CPU) | Best For |\n|-------|-----------|------|-------------|----------|\n| all-MiniLM-L6-v2 | 384 | ~80 MB | Very fast | Local RAG, prototypes |\n| all-mpnet-base-v2 | 768 | ~420 MB | Slower | Higher accuracy |\n| OpenAI text-embedding-3 | 1536 | API only | Network-bound | Cloud apps |\n\n\"MiniLM is the people's champion,\" he says. \"Tiny, free, offline, and *good enough* for almost everything. That is why it is Homie's default local embedding model.\"\n\n### Measuring Similarity\n\nOnce text is a vector, *meaning* becomes *geometry*. We compare two vectors with **cosine similarity** â€” the cosine of the angle between them. A score near `1.0` means \"basically identical meaning\"; near `0.0` means \"unrelated.\"\n\n```python\nfrom sentence_transformers import util\n\na = model.encode(\"How do I reset my password?\", convert_to_tensor=True)\nb = model.encode(\"I forgot my login credentials\", convert_to_tensor=True)\nprint(util.cos_sim(a, b))  # tensor([[0.71]])\n```\n\n### Building a Mini Semantic Search\n\nThis is the heart of RAG (Retrieval-Augmented Generation): embed a knowledge base once, then for every question embed the query and retrieve the closest passages.\n\n```python\ndocs = [\n    \"Reset your password from the Settings page.\",\n    \"Our office opens at 9 AM on weekdays.\",\n    \"Contact billing for refund requests.\",\n]\ndoc_emb = model.encode(docs, convert_to_tensor=True)\n\nquery = model.encode(\"I can't log in\", convert_to_tensor=True)\nhits = util.semantic_search(query, doc_emb, top_k=1)\nprint(docs[hits[0][0]['corpus_id']])\n# -> Reset your password from the Settings page.\n```\n\nNotice the magic: the query \"I can't log in\" matched the password document *despite zero shared keywords*. That is semantic retrieval.\n\n> **Key Insight:** Embeddings convert language into geometry. Once meaning lives in vector space, \"find the most relevant document\" becomes \"find the nearest neighbor\" â€” and that single idea is the engine behind semantic search, recommendation, clustering, and every RAG system you'll ever build."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "From Words to Vectors",
+      "body": "Vaathiyaar reveals the secret behind modern AI search: every sentence can become a point in a 384-dimensional space, where closeness means similar meaning. Meet all-MiniLM-L6-v2 â€” tiny, fast, and the default brain of local RAG.",
+      "character": "Vaathiyaar",
+      "mood": "curious"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "build_semantic_search",
+      "language": "python",
+      "title": "Build a Semantic Search Engine",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer, util",
+          "explanation": "Import the library. SentenceTransformer loads models; util has similarity helpers."
+        },
+        {
+          "code": "model = SentenceTransformer('all-MiniLM-L6-v2')",
+          "explanation": "Download (once) and load the lightweight 80 MB model. It runs offline on CPU."
+        },
+        {
+          "code": "docs = [\n    'Reset your password from Settings.',\n    'Our office opens at 9 AM weekdays.',\n    'Contact billing for refund requests.',\n]",
+          "explanation": "Our tiny knowledge base â€” the documents we want to make searchable."
+        },
+        {
+          "code": "doc_emb = model.encode(docs, convert_to_tensor=True)",
+          "explanation": "Embed every document into a 384-dim vector. Do this once and reuse it."
+        },
+        {
+          "code": "query = 'I cannot log into my account'",
+          "explanation": "A user's question â€” phrased with NO keywords from the password document."
+        },
+        {
+          "code": "q_emb = model.encode(query, convert_to_tensor=True)",
+          "explanation": "Embed the query into the same vector space as the documents."
+        },
+        {
+          "code": "hits = util.semantic_search(q_emb, doc_emb, top_k=1)",
+          "explanation": "Find the nearest document by cosine similarity â€” the core retrieval step of RAG."
+        },
+        {
+          "code": "best = docs[hits[0][0]['corpus_id']]",
+          "explanation": "Extract the winning document using the returned corpus index."
+        },
+        {
+          "code": "print(best)\n# -> Reset your password from Settings.",
+          "explanation": "Semantic match! Meaning beat keywords â€” exactly what powers RAG retrieval."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "vector_burst",
+      "title": "You Built Semantic Search!",
+      "body": "You just turned language into geometry and retrieved by meaning. This is the retrieval half of every RAG system. XP awarded!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete the function `most_similar(model, query, docs)` so it returns the single document from `docs` whose meaning is closest to `query`. Use the model to encode both the query and the documents, then use `util.semantic_search` (or cosine similarity) to find the top match."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\ndef most_similar(model, query, docs):\n    # 1. Encode docs into tensors\n    # 2. Encode the query into a tensor\n    # 3. Use util.semantic_search with top_k=1\n    # 4. Return the best-matching document string\n    pass\n\nif __name__ == '__main__':\n    model = SentenceTransformer('all-MiniLM-L6-v2')\n    docs = [\n        'Reset your password from the Settings page.',\n        'Our office opens at 9 AM on weekdays.',\n        'Contact billing for refund requests.',\n    ]\n    print(most_similar(model, 'I forgot my login', docs))",
+      "expected_output": "Reset your password from the Settings page.",
+      "hints": {
+        "en": [
+          "Encode documents once with model.encode(docs, convert_to_tensor=True).",
+          "util.semantic_search(query_emb, doc_emb, top_k=1) returns a list of lists of hit dicts.",
+          "The matching document index is hits[0][0]['corpus_id'] â€” use it to index into docs."
+        ]
+      },
+      "test_code": "from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer('all-MiniLM-L6-v2')\ndocs = [\n    'Reset your password from the Settings page.',\n    'Our office opens at 9 AM on weekdays.',\n    'Contact billing for refund requests.',\n]\nassert most_similar(model, 'I forgot my login', docs) == 'Reset your password from the Settings page.'\nassert most_similar(model, 'When can I visit you?', docs) == 'Our office opens at 9 AM on weekdays.'\nassert most_similar(model, 'I want my money back', docs) == 'Contact billing for refund requests.'"
+    },
+    {
+      "instruction": {
+        "en": "Write a function `similarity_score(model, text_a, text_b)` that returns the cosine similarity between two sentences as a Python float rounded to 2 decimals. Embed both sentences and use util.cos_sim."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\ndef similarity_score(model, text_a, text_b):\n    # Encode both texts (convert_to_tensor=True)\n    # Compute util.cos_sim and return a rounded float\n    pass\n\nif __name__ == '__main__':\n    model = SentenceTransformer('all-MiniLM-L6-v2')\n    print(similarity_score(model, 'How do I reset my password?', 'I forgot my login credentials'))",
+      "expected_output": "0.5",
+      "hints": {
+        "en": [
+          "util.cos_sim returns a 2D tensor; grab the scalar with .item().",
+          "Round the result with round(value, 2).",
+          "Unrelated sentences score near 0.0; near-paraphrases score above 0.4."
+        ]
+      },
+      "test_code": "from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer('all-MiniLM-L6-v2')\nhigh = similarity_score(model, 'How do I reset my password?', 'I forgot my login credentials')\nlow = similarity_score(model, 'How do I reset my password?', 'The weather is sunny today')\nassert isinstance(high, float)\nassert high > low\nassert high > 0.3\nassert low < 0.3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "text embeddings",
+      "sentence-transformers",
+      "cosine similarity",
+      "semantic search",
+      "RAG retrieval",
+      "vector representations"
+    ],
+    "concepts_required": [
+      "python functions",
+      "lists",
+      "pip install / library imports"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_along",
+    "estimated_minutes": 18,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "trending_ai",
+      "rag_fundamentals",
+      "nlp_essentials"
+    ]
+  },
+  "generated": true
+}
