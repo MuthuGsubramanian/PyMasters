@@ -550,25 +550,64 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
         auto_play_animations = 1 if (v.get("auto_play_animations") if "auto_play_animations" in v else data.auto_play_animations) else 0
         hint_level = int(v.get("hint_level") if v.get("hint_level") is not None else data.hint_level)
 
-        # 1. Update users table (name, email, whatsapp, social links)
-        cursor.execute(
-            """UPDATE users SET name = ?, email = ?, whatsapp = ?,
-               linkedin_url = ?, github_url = ?, twitter_url = ?, website_url = ?
-               WHERE id = ?""",
-            [data.name, data.email, data.whatsapp,
-             data.linkedin_url or "", data.github_url or "",
-             data.twitter_url or "", data.website_url or "", user_id],
-        )
+        # Only touch columns the caller actually sent. The Profile-page language
+        # switcher (and any other narrow caller) PUTs a PARTIAL body such as
+        # {"preferred_language": "ta"}; without this guard the unset model
+        # defaults ("") would overwrite name/email/whatsapp/bio/social links and
+        # reset every learning/voice preference — wiping the whole profile on a
+        # simple language change. We distinguish "field omitted" from "field set
+        # to ''" via Pydantic's fields-set and, for an existing row, update ONLY
+        # the provided columns. A first-time INSERT (no prior data to lose) still
+        # writes the resolved values/defaults as before.
+        fields_set = getattr(data, "model_fields_set", None)
+        if fields_set is None:
+            fields_set = getattr(data, "__fields_set__", set())
+        has_prefs = "preferences" in fields_set
 
-        # 2. Update user_profiles table (learning preferences)
+        def _given(flat_name, prefs_key=None, vaa_key=None):
+            if flat_name in fields_set:
+                return True
+            if has_prefs and prefs_key is not None and prefs_key in prefs:
+                return True
+            if has_prefs and vaa_key is not None and vaa_key in v:
+                return True
+            return False
+
+        # 1. Update users table (identity + social links) — provided columns only.
+        user_updates = [
+            ("name", data.name, "name" in fields_set),
+            ("email", data.email, "email" in fields_set),
+            ("whatsapp", data.whatsapp, "whatsapp" in fields_set),
+            ("linkedin_url", data.linkedin_url or "", "linkedin_url" in fields_set),
+            ("github_url", data.github_url or "", "github_url" in fields_set),
+            ("twitter_url", data.twitter_url or "", "twitter_url" in fields_set),
+            ("website_url", data.website_url or "", "website_url" in fields_set),
+        ]
+        u_cols = [f"{c} = ?" for c, _val, given in user_updates if given]
+        u_vals = [val for _c, val, given in user_updates if given]
+        if u_cols:
+            cursor.execute(
+                f"UPDATE users SET {', '.join(u_cols)} WHERE id = ?",
+                u_vals + [user_id],
+            )
+
+        # 2. Upsert user_profiles table (learning preferences) — provided columns only.
+        lang_given = _given("preferred_language", "preferred_language")
+        style_given = _given("learning_style", "learning_style")
         cursor.execute("SELECT user_id FROM user_profiles WHERE user_id = ?", [user_id])
         if cursor.fetchone():
-            cursor.execute(
-                """UPDATE user_profiles
-                   SET preferred_language = ?, learning_style = ?
-                   WHERE user_id = ?""",
-                [preferred_language, learning_style, user_id],
-            )
+            p_cols, p_vals = [], []
+            if lang_given:
+                p_cols.append("preferred_language = ?")
+                p_vals.append(preferred_language)
+            if style_given:
+                p_cols.append("learning_style = ?")
+                p_vals.append(learning_style)
+            if p_cols:
+                cursor.execute(
+                    f"UPDATE user_profiles SET {', '.join(p_cols)} WHERE user_id = ?",
+                    p_vals + [user_id],
+                )
         else:
             cursor.execute(
                 """INSERT INTO user_profiles (user_id, preferred_language, learning_style, onboarding_completed)
@@ -576,21 +615,27 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
                 [user_id, preferred_language, learning_style],
             )
 
-        # 3. Upsert user_settings table (voice/animation/misc preferences)
+        # 3. Upsert user_settings table (bio + voice/animation/misc) — provided columns only.
+        settings_updates = [
+            ("bio", data.bio, "bio" in fields_set),
+            ("voice_enabled", voice_enabled, _given("voice_enabled", vaa_key="voice_mode")),
+            ("voice_speed", voice_speed, _given("voice_speed", vaa_key="voice_speed")),
+            ("voice_name", voice_name, _given("voice_name", vaa_key="voice_selection")),
+            ("auto_play_animations", auto_play_animations, _given("auto_play_animations", vaa_key="auto_play_animations")),
+            ("hint_level", hint_level, _given("hint_level", vaa_key="hint_level")),
+            ("daily_goal", daily_goal, _given("daily_goal", "daily_goal")),
+            ("difficulty_preference", difficulty_preference, _given("difficulty_preference", "difficulty")),
+        ]
         cursor.execute("SELECT user_id FROM user_settings WHERE user_id = ?", [user_id])
         if cursor.fetchone():
-            cursor.execute(
-                """UPDATE user_settings
-                   SET bio = ?, voice_enabled = ?, voice_speed = ?, voice_name = ?,
-                       auto_play_animations = ?, hint_level = ?, daily_goal = ?,
-                       difficulty_preference = ?, updated_at = CURRENT_TIMESTAMP
-                   WHERE user_id = ?""",
-                [
-                    data.bio, voice_enabled, voice_speed, voice_name,
-                    auto_play_animations, hint_level, daily_goal,
-                    difficulty_preference, user_id,
-                ],
-            )
+            s_cols = [f"{c} = ?" for c, _val, given in settings_updates if given]
+            s_vals = [val for _c, val, given in settings_updates if given]
+            if s_cols:
+                s_cols.append("updated_at = CURRENT_TIMESTAMP")
+                cursor.execute(
+                    f"UPDATE user_settings SET {', '.join(s_cols)} WHERE user_id = ?",
+                    s_vals + [user_id],
+                )
         else:
             cursor.execute(
                 """INSERT INTO user_settings
