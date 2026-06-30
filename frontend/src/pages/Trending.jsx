@@ -30,6 +30,55 @@ const DIFFICULTY_STYLES = {
   Advanced:     'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/30',
 };
 
+// Maps backend `content/trends.py` category keys onto the display labels used by
+// the filter bar / colour map above, so backend-supplied topics stay filterable
+// and colour-coded. Any unmapped key falls back to a sensible default.
+const CATEGORY_KEY_TO_LABEL = {
+  ai_agents: 'AI Agents', ai_safety: 'AI Agents',
+  rag: 'LLMs', fine_tuning: 'LLMs', prompt_engineering: 'LLMs', ai_coding: 'LLMs',
+  computer_vision: 'Computer Vision', multimodal: 'Computer Vision',
+  generative_ai: 'Computer Vision', ai_healthcare: 'Computer Vision',
+  nlp: 'NLP',
+  mlops: 'MLOps', devops: 'MLOps', ml_systems: 'MLOps',
+  python_latest: 'Python', python_tools: 'Python', python_advanced: 'Python',
+  web_development: 'Python',
+  deep_learning: 'Deep Learning', model_architecture: 'Deep Learning', edge_ai: 'Deep Learning',
+  data_science: 'Data Science', data_engineering: 'Data Science', vector_db: 'Data Science',
+};
+
+const titleCaseDifficulty = (d) =>
+  (typeof d === 'string' && d)
+    ? d.charAt(0).toUpperCase() + d.slice(1).toLowerCase()
+    : 'Intermediate';
+
+// Normalise a topic from either the frontend shape (already has `concepts`) or
+// the backend `/api/trending` shape (key_concepts / code_example / why_trending /
+// category-key / lowercase difficulty) into the single shape this page renders.
+// Returns null for unusable records so callers can filter them out.
+function normalizeTopic(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  // Already in the frontend shape — pass through with safe defaults.
+  if (Array.isArray(raw.concepts)) {
+    return {
+      ...raw,
+      category: raw.category || 'AI Agents',
+      difficulty: raw.difficulty || 'Intermediate',
+    };
+  }
+  if (!raw.title) return null;
+  return {
+    id: raw.id,
+    title: raw.title,
+    category: CATEGORY_KEY_TO_LABEL[raw.category] || raw.category || 'AI Agents',
+    difficulty: titleCaseDifficulty(raw.difficulty),
+    summary: raw.summary || '',
+    whyTrending: raw.why_trending || raw.whyTrending || '',
+    concepts: Array.isArray(raw.key_concepts) ? raw.key_concepts
+            : (Array.isArray(raw.concepts) ? raw.concepts : []),
+    codeExample: raw.code_example || raw.codeExample || '',
+  };
+}
+
 const TRENDING_TOPICS = [
   {
     id: 1,
@@ -769,7 +818,17 @@ export default function Trending() {
   useEffect(() => {
     fetch('/api/trending')
       .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => { if (Array.isArray(data) && data.length) setTopics(data); })
+      .then(data => {
+        // Backend returns { date, count, topics: [...] }; also tolerate a bare array.
+        const rawList = Array.isArray(data)
+          ? data
+          : (data && Array.isArray(data.topics) ? data.topics : []);
+        const normalized = rawList.map(normalizeTopic).filter(Boolean);
+        // Non-disruptive adoption: only replace the curated fallback when the
+        // backend supplies at least as many usable topics, so users never see a
+        // smaller/poorer set than the static list if the catalogue is partial.
+        if (normalized.length >= TRENDING_TOPICS.length) setTopics(normalized);
+      })
       .catch(() => {});
   }, []);
 
@@ -777,19 +836,22 @@ export default function Trending() {
     return topics.filter(t => {
       const matchCat = activeCategory === 'All' || t.category === activeCategory;
       const q = searchQuery.toLowerCase();
+      const concepts = Array.isArray(t.concepts) ? t.concepts : [];
       const matchSearch = !q
-        || t.title.toLowerCase().includes(q)
-        || t.summary.toLowerCase().includes(q)
-        || t.concepts.some(c => c.toLowerCase().includes(q))
-        || t.category.toLowerCase().includes(q);
+        || (t.title || '').toLowerCase().includes(q)
+        || (t.summary || '').toLowerCase().includes(q)
+        || concepts.some(c => (c || '').toLowerCase().includes(q))
+        || (t.category || '').toLowerCase().includes(q);
       return matchCat && matchSearch;
     });
   }, [topics, activeCategory, searchQuery]);
 
-  const dailyPicks = useMemo(
-    () => topics.filter(t => DAILY_PICKS_IDS.includes(t.id)),
-    [topics]
-  );
+  const dailyPicks = useMemo(() => {
+    const byId = topics.filter(t => DAILY_PICKS_IDS.includes(t.id));
+    // Curated list keeps its hand-picked sidebar; backend-driven topics (string
+    // ids) fall back to the first three, which arrive in daily-rotated order.
+    return byId.length ? byId : topics.slice(0, 3);
+  }, [topics]);
 
   const toggleCode = (id) =>
     setExpandedCode(prev => ({ ...prev, [id]: !prev[id] }));
