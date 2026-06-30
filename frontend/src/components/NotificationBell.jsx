@@ -88,9 +88,9 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                        <span className="text-sm font-bold text-slate-800">Notifications</span>
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-bg-surface rounded-xl shadow-lg border border-slate-200 dark:border-border-default overflow-hidden z-50">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-border-default">
+                        <span className="text-sm font-bold text-slate-800 dark:text-text-primary">Notifications</span>
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllRead}
@@ -102,7 +102,7 @@ export default function NotificationBell() {
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-sm text-slate-400">
+                            <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-text-muted">
                                 No notifications yet
                             </div>
                         ) : (
@@ -110,8 +110,8 @@ export default function NotificationBell() {
                                 <button
                                     key={notif.id}
                                     onClick={() => handleClick(notif)}
-                                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 ${
-                                        !notif.read ? 'bg-purple-50/50' : ''
+                                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-bg-elevated transition-colors border-b border-slate-50 dark:border-border-default/60 ${
+                                        !notif.read ? 'bg-purple-50/50 dark:bg-accent-subtle' : ''
                                     }`}
                                 >
                                     <div className="flex items-start gap-3">
@@ -119,9 +119,9 @@ export default function NotificationBell() {
                                             <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5 flex-shrink-0" />
                                         )}
                                         <div className={!notif.read ? '' : 'ml-5'}>
-                                            <p className="text-sm font-medium text-slate-800">{notif.title}</p>
-                                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{notif.message}</p>
-                                            <p className="text-[10px] text-slate-400 mt-1">{(() => {
+                                            <p className="text-sm font-medium text-slate-800 dark:text-text-primary">{notif.title}</p>
+                                            <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5 line-clamp-2">{notif.message}</p>
+                                            <p className="text-[10px] text-slate-400 dark:text-text-disabled mt-1">{(() => {
     const d = new Date(notif.created_at);
     const now = new Date();
     const diff = Math.floor((now - d) / 1000);
