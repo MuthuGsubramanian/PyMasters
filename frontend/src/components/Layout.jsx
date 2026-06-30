@@ -32,6 +32,10 @@ export default function Layout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    // Desktop-only collapsed (icon-rail) state. Default false preserves the full
+    // sidebar everywhere; child pages (e.g. Classroom during a lesson) can request
+    // collapse via the Outlet context below.
+    const [collapsed, setCollapsed] = useState(false);
     const [isSuper, setIsSuper] = useState(false);
     useEffect(() => {
         if (user?.id) getAdminCheck(user.id).then((r) => setIsSuper(!!r.data?.is_super_admin)).catch(() => {});
@@ -108,9 +112,13 @@ export default function Layout() {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed lg:relative z-50 lg:z-auto w-[270px] flex flex-col border-r border-border-default bg-bg-surface backdrop-blur-xl h-full transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+            <aside className={clsx(
+                "fixed lg:relative z-50 lg:z-auto w-[270px] flex flex-col border-r border-border-default bg-bg-surface backdrop-blur-xl h-full transition-all duration-300",
+                collapsed ? "lg:w-[74px]" : "lg:w-[270px]",
+                sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+            )}>
                 {/* Brand */}
-                <div className="h-14 flex items-center gap-3 px-5 border-b border-border-default">
+                <div className={clsx("h-14 flex items-center gap-3 border-b border-border-default", collapsed ? "px-5 lg:px-0 lg:justify-center" : "px-5")}>
                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-bg-elevated transition-colors mr-1" aria-label="Close menu">
                         <X size={18} className="text-text-muted" />
                     </button>
