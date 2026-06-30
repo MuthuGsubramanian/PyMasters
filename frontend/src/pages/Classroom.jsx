@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,8 @@ import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic
+    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
+    MessageCircle, X
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -938,6 +939,18 @@ export default function Classroom() {
     const [podcastManifest, setPodcastManifest] = useState({});
     const [podcastOpen, setPodcastOpen] = useState(false);
     const [voiceOpen, setVoiceOpen] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+
+    // Auto-collapse the dashboard nav sidebar while a lesson is open so the
+    // side-by-side teaching + execution panels get the full width. Provided by
+    // Layout via <Outlet context>; guarded so the page still works if absent.
+    const outletCtx = useOutletContext() || {};
+    const setSidebarCollapsed = outletCtx.setSidebarCollapsed;
+    useEffect(() => {
+        if (typeof setSidebarCollapsed !== 'function') return;
+        setSidebarCollapsed(phase !== 'select');
+        return () => setSidebarCollapsed(false);
+    }, [phase, setSidebarCollapsed]);
 
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
