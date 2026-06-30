@@ -61,12 +61,18 @@ const VOICE_OPTIONS = [
 
 const ACHIEVEMENTS = [
     { id: 'first_login',       label: 'First Login',              icon: Star,         xpReq: 0,    color: 'from-yellow-400 to-amber-500' },
-    { id: 'first_module',      label: 'First Module Complete',     icon: CheckCircle2, xpReq: 0,    color: 'from-green-400 to-emerald-500' },
+    // Relabelled "First Module Complete" -> "First Lesson Complete": the backend earns this
+    // badge on lessons_done > 0 (profile.py get_user_achievements), while the dashboard
+    // "Modules Done" stat counts mastered modules (mastery>=0.5). The old label made a user
+    // with 1 lesson / 0 mastered modules see "Modules Done 0" yet "First Module Complete" earned.
+    { id: 'first_module',      label: 'First Lesson Complete',     icon: CheckCircle2, xpReq: 0,    color: 'from-green-400 to-emerald-500' },
     { id: 'streak_7',          label: '7-Day Streak',              icon: Flame,        xpReq: 0,    color: 'from-orange-400 to-red-500' },
     { id: 'xp_100',            label: '100 XP',                    icon: Zap,          xpReq: 100,  color: 'from-cyan-400 to-blue-500' },
     { id: 'xp_500',            label: '500 XP',                    icon: Trophy,       xpReq: 500,  color: 'from-purple-400 to-violet-500' },
     { id: 'xp_1000',           label: '1000 XP',                   icon: Award,        xpReq: 1000, color: 'from-pink-400 to-rose-500' },
-    { id: 'all_modules',       label: 'All Modules Complete',      icon: Sparkles,     xpReq: 0,    color: 'from-indigo-400 to-purple-500' },
+    // NOTE: removed the 'all_modules' ("All Modules Complete") badge — the backend
+    // ACHIEVEMENT_DEFINITIONS (profile.py) never emits it, so it was permanently locked and
+    // wrongly inflated the "X of N unlocked" denominator (showed "of 7", only 6 earnable).
 ];
 
 // ─── Utility Helpers ──────────────────────────────────────────────────────────

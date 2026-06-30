@@ -1191,7 +1191,7 @@ export default function Classroom() {
     };
 
     return (
-        <div className="min-h-screen pb-40">
+        <div className="min-h-screen pb-48">
             <div className="max-w-6xl mx-auto px-6 py-8">
                 <VaathiyaarMessage />
                 {/* Back button when in a lesson */}
@@ -1327,7 +1327,7 @@ export default function Classroom() {
                     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
                         <div className="max-w-5xl mx-auto pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_-6px_30px_rgba(0,0,0,0.12)] overflow-hidden">
                             {chatMessages.filter((m) => !m._isHint).length > 0 && (
-                                <div className="max-h-[38vh] overflow-y-auto px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
+                                <div className="max-h-[30vh] overflow-y-auto overscroll-contain px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
                                     {chatMessages.filter((m) => !m._isHint).map((msg, idx) => (
                                         <motion.div
                                             key={idx}

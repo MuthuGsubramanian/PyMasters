@@ -479,16 +479,16 @@ function PathDetail() {
                 <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-border-default p-8 flex items-end overflow-hidden">
                     <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                     <div className="relative z-10 flex-1">
-                        <h1 className="text-3xl font-bold text-text-primary font-display">{path.name || path.title}</h1>
-                        <p className="text-sm text-text-secondary mt-1 max-w-2xl line-clamp-2">{path.description}</p>
+                        <h1 className="text-3xl font-bold text-slate-900 font-display">{path.name || path.title}</h1>
+                        <p className="text-sm text-slate-600 mt-1 max-w-2xl line-clamp-2">{path.description}</p>
                         <div className="flex items-center gap-3 mt-2">
                             <DifficultyBadge level={path.difficulty_start || 'beginner'} />
-                            <span className="text-xs font-mono text-text-muted flex items-center gap-1">
+                            <span className="text-xs font-mono text-slate-500 flex items-center gap-1">
                                 <BookOpen size={12} />
                                 {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
                             </span>
                             {path.estimated_hours && (
-                                <span className="text-xs font-mono text-text-muted flex items-center gap-1">
+                                <span className="text-xs font-mono text-slate-500 flex items-center gap-1">
                                     <Clock size={12} />
                                     {path.estimated_hours}h total
                                 </span>
@@ -498,7 +498,7 @@ function PathDetail() {
                     <div className="relative hidden sm:block">
                         <ProgressRing progress={progressPct} size={90} strokeWidth={7} />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg font-bold text-text-secondary font-display">{progressPct}%</span>
+                            <span className="text-lg font-bold text-slate-700 font-display">{progressPct}%</span>
                         </div>
                     </div>
                 </div>
