@@ -1017,6 +1017,18 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
         # Check generated lessons for the user
         recommended_lesson = None
         reason = "Keep building your Python skills!"
+        # Additive presentation fields for the Dashboard "Today's Recommended
+        # Lesson" card. The card reads recommendation.title /
+        # recommended_lesson?.title / .description / .link, but the response only
+        # ever carried `recommended_lesson` as a plain string, so the headline
+        # always fell back to the generic "Continue in the Classroom" and the CTA
+        # always went to /dashboard/classroom — the actual recommendation was
+        # never surfaced. These optional fields make the existing (?.- and
+        # ||-guarded) frontend reads resolve to real values. `recommended_lesson`
+        # itself is unchanged for backward compatibility.
+        rec_title = None
+        rec_description = None
+        rec_link = "/dashboard/classroom"
 
         cursor.execute(
             "SELECT id, topic FROM generated_lessons WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
@@ -1027,20 +1039,39 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
             if gl["id"] not in completed_ids:
                 recommended_lesson = gl["topic"]
                 reason = "This lesson was crafted just for you based on your learning profile."
+                rec_title = gl["topic"]
+                rec_description = "A lesson tailored to your learning profile — pick up where you left off."
+                rec_link = "/dashboard/classroom"
                 break
 
         # Fallback to static modules
         if not recommended_lesson:
-            module_order = ["module_1", "module_2", "module_3", "module_4"]
-            for mid in module_order:
+            # Friendly titles/descriptions for the four stable seed modules
+            # (mirrors CONTENT_MAP in main.py). /dashboard/learn/<id> currently
+            # redirects to /dashboard/classroom, so we link straight to the
+            # classroom to avoid a redirect bounce.
+            module_meta = {
+                "module_1": ("Python Basics: Variables & Types", "Master the atoms of Python: strings, integers, and floats."),
+                "module_2": ("Control Flow: If & Loops", "Learn how to direct the flow of your program."),
+                "module_3": ("Data Structures: Lists & Dicts", "Store and organize data efficiently."),
+                "module_4": ("Advanced: Async & APIs", "Modern Python concurrency and networking."),
+            }
+            for mid in ["module_1", "module_2", "module_3", "module_4"]:
                 if mid not in completed_ids:
                     recommended_lesson = mid
                     reason = "Continue your learning journey with the next module."
+                    meta = module_meta.get(mid)
+                    rec_title = meta[0] if meta else mid.replace("_", " ").title()
+                    rec_description = meta[1] if meta else "Continue your learning journey."
+                    rec_link = "/dashboard/classroom"
                     break
 
         if not recommended_lesson:
             recommended_lesson = "Explore the Playground"
             reason = "You have completed all available modules! Try the Playground to practice."
+            rec_title = "Explore the Playground"
+            rec_description = "You've completed every module — flex your skills in the live Playground."
+            rec_link = "/dashboard/playground"
 
         # Seeded random for daily consistency
         today_seed = date.today().toordinal() + hash(user_id) % 10000
@@ -1055,6 +1086,11 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
             "reason": reason,
             "trending_topic": trending_topic,
             "daily_tip": daily_tip,
+            # Additive presentation fields (see note above) — optional; older
+            # clients ignore them, current Dashboard consumes them via guarded reads.
+            "title": rec_title,
+            "description": rec_description,
+            "link": rec_link,
         }
     finally:
         conn.close()
