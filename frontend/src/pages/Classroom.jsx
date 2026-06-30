@@ -884,20 +884,14 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Classroom() {
     const { user } = useAuth();
-    const { language: ctxLanguage } = useProfile();
+    // Consume the already-hydrated profile from ProfileContext instead of
+    // issuing a second GET /profile/{id} here. ProfileProvider fetches the
+    // profile once on mount app-wide; the previous local fetch duplicated that
+    // request on every Classroom load (only used for preferred_language below).
+    const { language: ctxLanguage, profile } = useProfile();
     const tts = useTTS();
 
     useEffect(() => { document.title = 'Classroom — PyMasters'; }, []);
-
-    const [profile, setProfile] = useState(null);
-    useEffect(() => {
-        if (user?.id) {
-            api
-                .get(`/profile/${user.id}`)
-                .then((r) => setProfile(r.data.profile || r.data))
-                .catch(() => {});
-        }
-    }, [user]);
 
     const language =
         ctxLanguage ||
