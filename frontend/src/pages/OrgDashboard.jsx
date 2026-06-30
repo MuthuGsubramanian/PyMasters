@@ -728,7 +728,11 @@ export default function OrgDashboard() {
       <Tabs
         className="mb-4"
         tabs={TABS.filter((t) => {
-          if (t.key === 'analytics' && !isAdmin) return false;
+          // Analytics is read-only aggregate stats; backend org_analytics requires
+          // manager+ and loadOrg() already fetches it for managers. Gate the tab on
+          // canViewProgress (manager+) so managers actually see the data they're
+          // entitled to. Invites stays admin+ (backend invite requires admin+).
+          if (t.key === 'analytics' && !canViewProgress) return false;
           if (t.key === 'invites' && !isAdmin) return false;
           if (t.key === 'students' && !canViewProgress) return false;
           return true;
@@ -1227,7 +1231,7 @@ export default function OrgDashboard() {
           )}
 
           {/* ========== ANALYTICS TAB ========== */}
-          {tab === 'analytics' && isAdmin && (
+          {tab === 'analytics' && canViewProgress && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard icon={Users} label="Members" value={typeof analytics?.total_members === 'number' ? analytics.total_members : memberCount} />
