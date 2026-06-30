@@ -181,7 +181,14 @@ export default function Challenges() {
 
   if (loading) return <Skeleton />;
 
-  const diff = DIFFICULTY[challenge?.difficulty] || DIFFICULTY.Medium;
+  // Backend sends difficulty lowercase ("easy"/"medium"/"hard"); the DIFFICULTY
+  // map is keyed by Capitalized labels ("Easy"/"Medium"/"Hard"). A raw lookup
+  // missed for easy/hard and silently fell back to Medium (yellow) — so easy
+  // challenges showed yellow instead of green and hard showed yellow instead of
+  // red. Normalize the case so the badge color matches the real difficulty.
+  const rawDiff = challenge?.difficulty || '';
+  const diffKey = rawDiff ? rawDiff.charAt(0).toUpperCase() + rawDiff.slice(1).toLowerCase() : 'Medium';
+  const diff = DIFFICULTY[diffKey] || DIFFICULTY.Medium;
 
   // Fallback previous challenges
   const previousChallenges = challenge?.previous || [
@@ -264,7 +271,7 @@ export default function Challenges() {
               <div className="p-6 md:p-8">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <Badge className={clsx('px-3 py-1 text-xs', diff.bg, diff.text, diff.border)}>
-                    {challenge?.difficulty || 'Medium'}
+                    {diff.label}
                   </Badge>
                   <Badge variant="warning" className="px-3 py-1 text-xs">
                     <Zap size={12} /> {challenge?.xp || 200} XP
