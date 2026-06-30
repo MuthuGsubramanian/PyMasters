@@ -170,10 +170,20 @@ function Members({ meId, orgId }) {
     const toggle = async (m) => {
         setBusy((b) => ({ ...b, [m.user_id]: true }));
         try {
-            if (m.is_following) await unfollowMember(m.user_id);
-            else await followMember(m.user_id);
+            const res = m.is_following ? await unfollowMember(m.user_id) : await followMember(m.user_id);
+            // Trust the server's authoritative response (follow state + exact follower
+            // count) when present; only fall back to an optimistic, clamped estimate if
+            // the fields are missing, so the displayed count can't drift or go negative.
+            const d = (res && res.data) || {};
+            const nowFollowing = typeof d.following === 'boolean' ? d.following : !m.is_following;
             setMembers((list) => list.map((x) => x.user_id === m.user_id
-                ? { ...x, is_following: !x.is_following, followers: x.followers + (x.is_following ? -1 : 1) }
+                ? {
+                    ...x,
+                    is_following: nowFollowing,
+                    followers: Number.isFinite(d.target_followers)
+                        ? d.target_followers
+                        : Math.max(0, x.followers + (nowFollowing ? 1 : -1)),
+                  }
                 : x));
         } catch { /* ignore */ }
         finally { setBusy((b) => ({ ...b, [m.user_id]: false })); }
