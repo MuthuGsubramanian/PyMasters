@@ -150,8 +150,11 @@ def list_users(caller: str = Depends(get_current_user_id), q: str = "", limit: i
     conn = _conn()
     where, params = "", []
     if q:
-        where = "WHERE (u.username LIKE ? OR u.name LIKE ? OR u.email LIKE ?)"
-        like = f"%{q}%"
+        where = "WHERE (u.username LIKE ? ESCAPE '\\' OR u.name LIKE ? ESCAPE '\\' OR u.email LIKE ? ESCAPE '\\')"
+        # Escape LIKE metacharacters so '_' and '%' in the query are matched literally
+        # (usernames/emails commonly contain '_'); otherwise they act as wildcards.
+        safe = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{safe}%"
         params = [like, like, like]
     rows = conn.execute(f"""
         SELECT u.id, u.username, u.name, u.email,
