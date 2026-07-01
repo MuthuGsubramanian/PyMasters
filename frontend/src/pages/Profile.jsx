@@ -70,17 +70,22 @@ const VOICE_OPTIONS = [
     { value: 'shimmer', label: 'Shimmer' },
 ];
 
+// Each badge carries a short `desc` used as a native hover tooltip so learners
+// can see WHAT a badge means / requires without guessing from the icon (the
+// grid otherwise shows only a label). Phrased as the goal so the same text
+// reads correctly whether the badge is earned or still locked. These mirror the
+// backend ACHIEVEMENT_DEFINITIONS descriptions (profile.py); purely presentational.
 const ACHIEVEMENTS = [
-    { id: 'first_login',       label: 'First Login',              icon: Star,         xpReq: 0,    color: 'from-yellow-400 to-amber-500' },
+    { id: 'first_login',       label: 'First Login',              icon: Star,         xpReq: 0,    color: 'from-yellow-400 to-amber-500', desc: 'Welcome to PyMasters — you took the first step.' },
     // Relabelled "First Module Complete" -> "First Lesson Complete": the backend earns this
     // badge on lessons_done > 0 (profile.py get_user_achievements), while the dashboard
     // "Modules Done" stat counts mastered modules (mastery>=0.5). The old label made a user
     // with 1 lesson / 0 mastered modules see "Modules Done 0" yet "First Module Complete" earned.
-    { id: 'first_module',      label: 'First Lesson Complete',     icon: CheckCircle2, xpReq: 0,    color: 'from-green-400 to-emerald-500' },
-    { id: 'streak_7',          label: '7-Day Streak',              icon: Flame,        xpReq: 0,    color: 'from-orange-400 to-red-500' },
-    { id: 'xp_100',            label: '100 XP',                    icon: Zap,          xpReq: 100,  color: 'from-cyan-400 to-blue-500' },
-    { id: 'xp_500',            label: '500 XP',                    icon: Trophy,       xpReq: 500,  color: 'from-purple-400 to-violet-500' },
-    { id: 'xp_1000',           label: '1000 XP',                   icon: Award,        xpReq: 1000, color: 'from-pink-400 to-rose-500' },
+    { id: 'first_module',      label: 'First Lesson Complete',     icon: CheckCircle2, xpReq: 0,    color: 'from-green-400 to-emerald-500', desc: 'Complete your first lesson.' },
+    { id: 'streak_7',          label: '7-Day Streak',              icon: Flame,        xpReq: 0,    color: 'from-orange-400 to-red-500', desc: 'Maintain a 7-day learning streak.' },
+    { id: 'xp_100',            label: '100 XP',                    icon: Zap,          xpReq: 100,  color: 'from-cyan-400 to-blue-500', desc: 'Earn 100 or more XP.' },
+    { id: 'xp_500',            label: '500 XP',                    icon: Trophy,       xpReq: 500,  color: 'from-purple-400 to-violet-500', desc: 'Earn 500 or more XP.' },
+    { id: 'xp_1000',           label: '1000 XP',                   icon: Award,        xpReq: 1000, color: 'from-pink-400 to-rose-500', desc: 'Earn 1000 or more XP — true mastery!' },
     // NOTE: removed the 'all_modules' ("All Modules Complete") badge — the backend
     // ACHIEVEMENT_DEFINITIONS (profile.py) never emits it, so it was permanently locked and
     // wrongly inflated the "X of N unlocked" denominator (showed "of 7", only 6 earnable).
@@ -1083,9 +1088,24 @@ export default function Profile() {
                             const isUnlocked = unlockedBadgeIds.includes(badge.id);
                             const BadgeIcon = badge.icon;
 
+                            // Remaining XP for a still-locked XP-threshold badge, so the
+                            // learner can see how close they are (purely derived from the
+                            // XP already on screen; no new data dependency). Non-XP badges
+                            // and unlocked badges yield null and render exactly as before.
+                            const xpToGo = (!isUnlocked && badge.xpReq > 0)
+                                ? Math.max(0, badge.xpReq - (stats.totalXp || 0))
+                                : null;
+                            // Native hover tooltip: goal description, plus the XP remaining
+                            // when applicable. Falls back to the label if `desc` is absent
+                            // (older bundle / safety), so it degrades gracefully.
+                            const tip = xpToGo != null
+                                ? `${badge.desc || badge.label} — ${xpToGo} XP to go`
+                                : (badge.desc || badge.label);
+
                             return (
                                 <motion.div
                                     key={badge.id}
+                                    title={tip}
                                     variants={cardHover}
                                     initial="rest"
                                     whileHover={isUnlocked ? 'hover' : 'rest'}
@@ -1110,6 +1130,11 @@ export default function Profile() {
                                     )}>
                                         {badge.label}
                                     </span>
+                                    {xpToGo != null && (
+                                        <span className="text-[10px] font-medium text-text-muted leading-none">
+                                            {xpToGo} XP to go
+                                        </span>
+                                    )}
                                     {!isUnlocked && (
                                         <Lock size={12} className="absolute top-2 right-2 text-text-muted" />
                                     )}
