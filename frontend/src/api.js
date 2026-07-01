@@ -260,7 +260,8 @@ export const getOrgLeaderboard = (orgId, group) =>
     api.get(`/org/${orgId}/leaderboard`, { params: group ? { group } : {} });
 
 // Topic search + on-demand generation
-export const searchTopics = (q, userId) => api.get('/classroom/search', { params: { q, user_id: userId || undefined } });
+// `lang` is optional and additive: omitted -> backend default 'en' (today's behavior).
+export const searchTopics = (q, userId, lang) => api.get('/classroom/search', { params: { q, user_id: userId || undefined, lang: lang || undefined } });
 export const generateTopic = (data) => api.post('/classroom/generate', data);
 
 // LinkedIn OAuth
