@@ -5,15 +5,30 @@ Prefix: /api/graph
 
 import os
 import sqlite3
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+
+from auth import get_current_user_id
 
 router = APIRouter(prefix="/api/graph", tags=["graph"])
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
+def _require_self(user_id: str, caller: str) -> None:
+    """IDOR guard: mastery/recommendation data is per-user private data.
+
+    The user_id path param is client-supplied; without this check any
+    authenticated (or, previously, unauthenticated) party could read another
+    user's knowledge map, mastery levels, and learning gaps. Derive the acting
+    user from the verified JWT and refuse cross-user access. Mirrors the
+    pattern in routes/profile.py.
+    """
+    if caller != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 @router.get("/concepts")
-def list_concepts():
+def list_concepts(caller: str = Depends(get_current_user_id)):
     """List all concepts with category and difficulty."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -23,7 +38,7 @@ def list_concepts():
 
 
 @router.get("/concepts/{concept_id}")
-def get_concept(concept_id: str):
+def get_concept(concept_id: str, caller: str = Depends(get_current_user_id)):
     """Get a concept with its edges and related lessons."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -43,21 +58,24 @@ def get_concept(concept_id: str):
 
 
 @router.get("/user-map/{user_id}")
-def user_knowledge_map(user_id: str):
+def user_knowledge_map(user_id: str, caller: str = Depends(get_current_user_id)):
     """Get the full knowledge map with user mastery overlay."""
+    _require_self(user_id, caller)
     from graph.queries import get_full_knowledge_map
     return get_full_knowledge_map(DB_PATH, user_id)
 
 
 @router.get("/recommendations/{user_id}")
-def recommendations(user_id: str, limit: int = 5):
+def recommendations(user_id: str, limit: int = 5, caller: str = Depends(get_current_user_id)):
     """Get top recommended concepts based on current mastery."""
+    _require_self(user_id, caller)
     from graph.queries import get_learning_frontier
     return {"recommendations": get_learning_frontier(DB_PATH, user_id, limit)}
 
 
 @router.get("/gaps/{user_id}/{target_concept}")
-def knowledge_gaps(user_id: str, target_concept: str):
+def knowledge_gaps(user_id: str, target_concept: str, caller: str = Depends(get_current_user_id)):
     """Find prerequisite gaps for a target concept."""
+    _require_self(user_id, caller)
     from graph.queries import detect_knowledge_gaps
     return {"gaps": detect_knowledge_gaps(DB_PATH, user_id, target_concept)}
