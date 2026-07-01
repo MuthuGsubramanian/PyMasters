@@ -645,14 +645,22 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
             )
 
         # 2. Upsert user_profiles table (learning preferences) — provided columns only.
-        lang_given = _given("preferred_language", "preferred_language")
+        # Defence-in-depth: never PERSIST a BLOCKED language (e.g. 'hi'), matching the
+        # block already enforced at onboarding (L143/L176) and by /api/languages. A
+        # stale/rogue client that still submits a blocked code has its language write
+        # SKIPPED (existing stored value preserved) rather than the whole profile save
+        # 400-ing — so no legitimate save is ever disrupted. The first-time INSERT path
+        # coerces a blocked code to the safe default 'en'.
+        lang_blocked = (preferred_language or "").lower() in BLOCKED_LANGUAGES
+        lang_given = _given("preferred_language", "preferred_language") and not lang_blocked
+        safe_preferred_language = "en" if lang_blocked else preferred_language
         style_given = _given("learning_style", "learning_style")
         cursor.execute("SELECT user_id FROM user_profiles WHERE user_id = ?", [user_id])
         if cursor.fetchone():
             p_cols, p_vals = [], []
             if lang_given:
                 p_cols.append("preferred_language = ?")
-                p_vals.append(preferred_language)
+                p_vals.append(safe_preferred_language)
             if style_given:
                 p_cols.append("learning_style = ?")
                 p_vals.append(learning_style)
@@ -665,7 +673,7 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
             cursor.execute(
                 """INSERT INTO user_profiles (user_id, preferred_language, learning_style, onboarding_completed)
                    VALUES (?, ?, ?, 1)""",
-                [user_id, preferred_language, learning_style],
+                [user_id, safe_preferred_language, learning_style],
             )
 
         # 3. Upsert user_settings table (bio + voice/animation/misc) — provided columns only.

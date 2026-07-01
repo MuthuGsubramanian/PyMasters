@@ -18,15 +18,26 @@ import { Card, StatCard, Button, Badge, Avatar, FormField } from '../components/
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// The "Preferred Language" dropdown MUST match the canonical supported-language
+// set (backend `routes/language.py` SUPPORTED_LANGUAGES + frontend `i18n/index.js`
+// SUPPORTED_LANGUAGES): en, ta, te, ml, fr, es, it, ko. Previously this list had
+// drifted and offered two invalid options: `hi` (Hindi) — which is EXPLICITLY
+// BLOCKED product-wide (onboarding 400s it, `/api/languages/check/hi` 400s it, and
+// the Vaathiyaar LanguageSelector on this very page shows a "not supported" block
+// message) — and `kn` (Kannada), which is not supported anywhere. Because
+// `handleSave` PUTs the chosen code to `/settings`, a user could persist a
+// blocked/unsupported language the rest of the app forbids. This list is now the
+// supported set (English labels kept for continuity with the prior UX); `it`/`ko`
+// were also missing and are now included. Keep in sync with the canonical source.
 const LANGUAGES = [
     { value: 'en', label: 'English' },
     { value: 'ta', label: 'Tamil' },
-    { value: 'hi', label: 'Hindi' },
     { value: 'te', label: 'Telugu' },
-    { value: 'kn', label: 'Kannada' },
     { value: 'ml', label: 'Malayalam' },
-    { value: 'es', label: 'Spanish' },
     { value: 'fr', label: 'French' },
+    { value: 'es', label: 'Spanish' },
+    { value: 'it', label: 'Italian' },
+    { value: 'ko', label: 'Korean' },
 ];
 
 const LEARNING_STYLES = [
