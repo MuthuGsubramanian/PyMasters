@@ -30,6 +30,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Community = lazy(() => import('./pages/Community'));
 const OrgCompete = lazy(() => import('./pages/OrgCompete'));
+const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'));
 
 function PageLoader() {
   return (
@@ -94,6 +95,7 @@ export default function App() {
                 {/* "Evolution" is the nav label for the Paths experience; alias the slug so a directly-typed /dashboard/evolution URL resolves instead of 404ing */}
                 <Route path="evolution" element={<Navigate to="/dashboard/paths" replace />} />
                 <Route path="evolution/:pathId" element={<Navigate to="/dashboard/paths" replace />} />
+                <Route path="knowledge" element={<ErrorBoundary><KnowledgeMap /></ErrorBoundary>} />
                 <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />

@@ -17,7 +17,8 @@ import {
     Building2,
     Swords,
     BookOpen,
-    Shield
+    Shield,
+    Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -63,6 +64,7 @@ export default function Layout() {
         const items = [
             { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
             { icon: Map, label: 'Evolution', path: '/dashboard/paths', desc: 'Your AI learning journey' },
+            { icon: Brain, label: 'Knowledge Map', path: '/dashboard/knowledge', desc: "What you know, mapped live" },
             { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
             { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
             { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
