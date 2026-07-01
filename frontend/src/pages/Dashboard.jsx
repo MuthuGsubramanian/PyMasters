@@ -295,7 +295,16 @@ export function Overview() {
     const streak = stats?.current_streak ?? (user.streak || 0);
     const learningMinutes = stats?.total_time_minutes ?? 0;
     const recentActivity = stats?.recent_activity ?? [];
-    const nextMilestone = stats?.next_milestone ?? { label: `${Math.ceil(totalXp / 100) * 100} XP`, progress: (totalXp % 100) };
+    // "Next Milestone" must be the next UNREACHED 100-XP mark. The old
+    // `Math.ceil(totalXp/100)*100` returned an already-achieved value at every
+    // exact multiple of 100 — most visibly "0 XP" for a brand-new user (0 XP)
+    // and "100 XP" for someone sitting exactly on 100 — with a 0% bar. Using
+    // `(floor(totalXp/100)+1)*100` always yields the next unreached mark
+    // (0->100, 100->200, 500->600) while staying byte-identical for every XP
+    // value that isn't a multiple of 100. `progress` (totalXp % 100) is
+    // unchanged and correct (0% just after crossing a mark). Still prefers a
+    // server-supplied `next_milestone` if the /stats endpoint ever adds one.
+    const nextMilestone = stats?.next_milestone ?? { label: `${(Math.floor(totalXp / 100) + 1) * 100} XP`, progress: (totalXp % 100) };
 
     // ─── Stagger animation variants ──────────────────────────────────────
     const containerVariants = {
