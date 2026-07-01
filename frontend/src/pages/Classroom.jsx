@@ -485,7 +485,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
 
             {/* LEFT: Vaathiyaar explanation — scrolls internally */}
-            <div className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg overflow-y-auto dark-scrollbar min-h-[280px]">
+            <div className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg overflow-y-auto dark-scrollbar min-h-[280px] lg:min-h-[160px]">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
@@ -505,7 +505,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             </div>
 
             {/* ── Execution section: aligned header + code panel + optional flow ── */}
-            <section className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl surface-code shadow-lg overflow-hidden flex flex-col min-h-[320px]">
+            <section className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl surface-code shadow-lg overflow-hidden flex flex-col min-h-[320px] lg:min-h-[160px]">
                 {/* Section header — title on the left, Run Animation aligned on the right */}
                 <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.08] bg-white/[0.02]">
                     <div className="flex items-center gap-2.5 min-w-0">
