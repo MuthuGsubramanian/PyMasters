@@ -277,17 +277,34 @@ def get_progress(path_id: str, user_id: str = Query(...)):
 
     ulp_dict = _row_to_dict(ulp)
 
-    # Get the effective sequence
+    # Get the effective sequence (harden parse — mirror get_active_paths so a
+    # NULL/empty/corrupt lesson_sequence or an unparsed adapted_sequence string
+    # can never crash this endpoint).
     path = conn.execute("SELECT lesson_sequence FROM learning_paths WHERE id = ?", [path_id]).fetchone()
-    original_sequence = json.loads(path["lesson_sequence"]) if path else []
+    original_sequence = path["lesson_sequence"] if path else []
+    if isinstance(original_sequence, str):
+        try:
+            original_sequence = json.loads(original_sequence)
+        except (json.JSONDecodeError, TypeError):
+            original_sequence = []
     effective_sequence = ulp_dict.get("adapted_sequence") or original_sequence
+    # adapted_sequence is normally parsed to a list by _row_to_dict, but a corrupt
+    # stored value would remain a raw string — coerce defensively before use.
+    if isinstance(effective_sequence, str):
+        try:
+            effective_sequence = json.loads(effective_sequence)
+        except (json.JSONDecodeError, TypeError):
+            effective_sequence = []
+    if not isinstance(effective_sequence, list):
+        effective_sequence = []
 
-    # Get completed lessons that are in this path
-    if effective_sequence:
-        placeholders = ",".join("?" * len(effective_sequence))
+    # Get completed lessons that are in this path (bind only string ids, like /active)
+    seq_ids = [lid for lid in effective_sequence if isinstance(lid, str)]
+    if seq_ids:
+        placeholders = ",".join("?" * len(seq_ids))
         completed_rows = conn.execute(
             f"SELECT lesson_id FROM lesson_completions WHERE user_id = ? AND lesson_id IN ({placeholders})",
-            [user_id] + effective_sequence,
+            [user_id] + seq_ids,
         ).fetchall()
         completed = [r["lesson_id"] for r in completed_rows]
     else:
