@@ -765,12 +765,28 @@ def submit_solution(req: SubmitSolutionRequest, caller: str = Depends(get_curren
         xp = challenge["xp_reward"] if (passed and not already_passed) else 0
 
         if existing:
+            # Preserve the user's BEST record: once they've already passed, a
+            # later WORSE submission must not overwrite their winning `code` or
+            # degrade the stored `passed_count`/`total_count` (both are surfaced
+            # via the profile data-export and org analytics). `keep_best` is true
+            # ONLY when the user had already passed AND this attempt does not
+            # pass; those three columns are then kept via SQL CASE (bound flag),
+            # while `passed` (=max, never regresses), accumulated `xp_awarded`,
+            # and `submitted_at` (honest last-activity, used by org analytics)
+            # still advance. For a not-yet-passed user, or any new passing
+            # attempt, keep_best is 0 and the write is byte-identical to before.
+            keep_best = 1 if (already_passed and not grade["passed"]) else 0
             cursor.execute(
-                "UPDATE challenge_submissions SET code=?, passed=?, xp_awarded=COALESCE(xp_awarded,0)+?, "
-                "passed_count=?, total_count=?, submitted_at=datetime('now') "
+                "UPDATE challenge_submissions SET "
+                "code = CASE WHEN ? THEN code ELSE ? END, "
+                "passed=?, xp_awarded=COALESCE(xp_awarded,0)+?, "
+                "passed_count = CASE WHEN ? THEN passed_count ELSE ? END, "
+                "total_count = CASE WHEN ? THEN total_count ELSE ? END, "
+                "submitted_at=datetime('now') "
                 "WHERE user_id=? AND challenge_id=?",
-                [req.code, max(passed, existing[1] or 0), xp, grade["passed_count"],
-                 grade["total"], user_id, req.challenge_id],
+                [keep_best, req.code, max(passed, existing[1] or 0), xp,
+                 keep_best, grade["passed_count"], keep_best, grade["total"],
+                 user_id, req.challenge_id],
             )
         else:
             cursor.execute(
