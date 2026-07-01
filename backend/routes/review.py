@@ -18,9 +18,10 @@ import os
 import sqlite3
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
 from routes.classroom import _load_lesson_from_dir
+from auth import get_current_user_id
 
 router = APIRouter(prefix="/api/review", tags=["review"])
 
@@ -72,8 +73,22 @@ def _title(lesson: dict | None, topic: str) -> str:
 
 
 @router.get("/due")
-def due_reviews(user_id: str, limit: int = 20):
-    """Lessons due for spaced-repetition review, most-urgent (lowest recall) first."""
+def due_reviews(user_id: str, limit: int = 20, caller: str = Depends(get_current_user_id)):
+    """Lessons due for spaced-repetition review, most-urgent (lowest recall) first.
+
+    Authorization: the review queue is per-user learning data (topics the learner
+    has reached, their mastery levels, struggle counts and last-practiced
+    timestamps). `user_id` is a client-supplied query param; without deriving the
+    acting user from the verified JWT and refusing cross-user access, ANY party —
+    including unauthenticated ones — could read another user's mastery data simply
+    by supplying their id (classic IDOR / info-leak). This mirrors `_require_self`
+    in profile.py and the identical `/profile/signal` hardening. The only caller
+    (frontend ReviewQueue via the authenticated axios instance) already sends the
+    JWT and its own user.id, so legitimate use is unchanged; anonymous callers now
+    get 401 and cross-user callers 403.
+    """
+    if caller != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
     conn = sqlite3.connect(_db_path())
     conn.row_factory = sqlite3.Row
     try:
