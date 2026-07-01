@@ -119,7 +119,8 @@ def _conn_count(conn, user_id, direction) -> int:
     return conn.execute(sql, [user_id]).fetchone()[0]
 
 
-def _public_card(row, follower_count=0, following_count=0, is_following=False):
+def _public_card(row, follower_count=0, following_count=0, is_following=False,
+                 follows_you=False):
     xp = row["points"] or 0
     return {
         "user_id": row["id"],
@@ -131,6 +132,11 @@ def _public_card(row, follower_count=0, following_count=0, is_following=False):
         "followers": follower_count,
         "following": following_count,
         "is_following": is_following,
+        # ADDITIVE (2026-07-01): does THIS member follow the caller? Lets the UI
+        # surface a "Follows you" hint (esp. useful when the caller doesn't follow
+        # back yet). Defaults False for anonymous callers or when unknown, so
+        # existing consumers that ignore the field see identical behavior.
+        "follows_you": follows_you,
     }
 
 
@@ -309,17 +315,29 @@ def list_members(
         ).fetchall()
 
         following = set()
+        followers_of_me = set()
         if caller:
             following = {
                 r[0] for r in conn.execute(
                     "SELECT following_id FROM user_connections WHERE follower_id=?", [caller]
                 ).fetchall()
             }
+            # Who follows the caller (for the additive "Follows you" hint). One query;
+            # membership test below is O(1). Empty for anonymous callers.
+            followers_of_me = {
+                r[0] for r in conn.execute(
+                    "SELECT follower_id FROM user_connections WHERE following_id=?", [caller]
+                ).fetchall()
+            }
 
         members = []
         for r in rows:
             fc = _conn_count(conn, r["id"], "followers")
-            members.append(_public_card(r, follower_count=fc, is_following=(r["id"] in following)))
+            members.append(_public_card(
+                r, follower_count=fc,
+                is_following=(r["id"] in following),
+                follows_you=(r["id"] in followers_of_me),
+            ))
         return {"members": members, "count": len(members), "query": q}
     finally:
         conn.close()
@@ -344,12 +362,18 @@ def member_profile(user_id: str, caller: Optional[str] = Depends(optional_user_i
             "SELECT COALESCE(current_streak,0) FROM user_streaks WHERE user_id=?", [user_id]
         ).fetchone()
         is_following = False
-        if caller:
+        follows_you = False
+        if caller and caller != user_id:
             is_following = conn.execute(
                 "SELECT 1 FROM user_connections WHERE follower_id=? AND following_id=?",
                 [caller, user_id],
             ).fetchone() is not None
-        card = _public_card(row, follower_count=followers, following_count=following, is_following=is_following)
+            follows_you = conn.execute(
+                "SELECT 1 FROM user_connections WHERE follower_id=? AND following_id=?",
+                [user_id, caller],
+            ).fetchone() is not None
+        card = _public_card(row, follower_count=followers, following_count=following,
+                            is_following=is_following, follows_you=follows_you)
         card["streak"] = streak[0] if streak else 0
         card["is_me"] = (caller == user_id)
         return card
