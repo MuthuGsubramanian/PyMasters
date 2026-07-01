@@ -448,7 +448,23 @@ def block_user(target_id: str, req: BlockRequest, caller: str = Depends(get_curr
     """Block (suspend) or unblock (grant) a user's access."""
     require_super_admin(caller)
     conn = _conn()
-    conn.execute("UPDATE users SET is_blocked = ? WHERE id = ?", [1 if req.blocked else 0, target_id])
+    if req.blocked:
+        # Suspending must ALSO revoke any LIVE session, not just future logins.
+        # login() gates blocked users with a 403, but an already-issued 30-day JWT
+        # keeps passing get_current_user_id (auth._extract only checks token_version
+        # and account existence — never is_blocked). So without bumping token_version
+        # a just-suspended user retained full access to every protected endpoint until
+        # their token expired. Incrementing token_version invalidates all outstanding
+        # tokens for this user immediately — the same mechanism the revoke-sessions
+        # endpoint uses — closing the gap so "suspend access" actually suspends access.
+        conn.execute(
+            "UPDATE users SET is_blocked = 1, token_version = COALESCE(token_version,0) + 1 WHERE id = ?",
+            [target_id],
+        )
+    else:
+        # Unblock path is byte-for-byte unchanged: grant access back, leave sessions as-is
+        # (the user has no live token anyway — the block bump killed it — so they log in fresh).
+        conn.execute("UPDATE users SET is_blocked = 0 WHERE id = ?", [target_id])
     _audit(conn, caller, "user.block", "user", target_id, {"blocked": bool(req.blocked)})
     conn.commit()
     conn.close()
