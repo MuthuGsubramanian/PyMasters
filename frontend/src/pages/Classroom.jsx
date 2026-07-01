@@ -1110,6 +1110,22 @@ export default function Classroom() {
             const passed = result?.passed ?? result?.success ?? false;
             setAttemptCount((prev) => (passed ? 0 : prev + 1));
             setEvalResult(result);
+            // Optimistically mark this lesson complete in the local select-screen
+            // state the moment it passes. The backend has already recorded the
+            // completion (POST /classroom/evaluate inserts into lesson_completions
+            // on success), but `completedLessons` was previously only fetched once
+            // on mount — so after finishing a lesson and returning to the select
+            // screen IN THE SAME SESSION, the just-completed lesson still rendered
+            // without its Done state (green border / ✓ / "Done" badge) until a hard
+            // reload. Mirror the server truth here so the confirmation is immediate.
+            // Additive & convergent: only ADDS the id (never removes); on the next
+            // reload getCompletions returns the same id, so no divergence. No-op on
+            // failure and when the id is already present.
+            if (passed && currentLesson?.id) {
+                setCompletedLessons((prev) =>
+                    prev.has(currentLesson.id) ? prev : new Set(prev).add(currentLesson.id)
+                );
+            }
             // Show output in the terminal
             const out = result?.output || '';
             const err = result?.error || '';
