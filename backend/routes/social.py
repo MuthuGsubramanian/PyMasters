@@ -303,8 +303,18 @@ def list_members(
         params = list(sc_params)
         where = "WHERE COALESCE(u.is_blocked,0) = 0" + sc_sql
         if q.strip():
-            where += " AND (LOWER(u.name) LIKE ? OR LOWER(u.username) LIKE ?)"
-            like = f"%{q.strip().lower()}%"
+            # Escape LIKE metacharacters so the search term matches LITERALLY.
+            # Usernames very commonly contain '_' (e.g. "data_science"), which
+            # SQLite's LIKE treats as a single-char wildcard — so a search for
+            # "data_science" previously ALSO matched "dataXscience" (and any term
+            # containing '%' matched arbitrary spans). Escape '\', '%', '_' and
+            # declare ESCAPE '\'. Search terms with no special characters produce
+            # byte-identical SQL and results to before (fully backward-compatible).
+            where += (" AND (LOWER(u.name) LIKE ? ESCAPE '\\' "
+                      "OR LOWER(u.username) LIKE ? ESCAPE '\\')")
+            term = (q.strip().lower()
+                    .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_"))
+            like = f"%{term}%"
             params += [like, like]
         rows = conn.execute(
             f"""SELECT u.id, u.username, u.name, u.avatar_url, COALESCE(u.points,0) AS points
