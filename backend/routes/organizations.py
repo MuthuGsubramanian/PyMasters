@@ -485,17 +485,26 @@ def change_role(org_id: str, member_id: str, data: RoleChangeRequest, caller: st
     if data.new_role not in ROLE_LEVELS:
         raise HTTPException(status_code=400, detail=f"Invalid role: {data.new_role}")
     conn = sqlite3.connect(DB_PATH)
+    # Target must actually be a member of THIS org. Without this check a role change
+    # for a non-member (stale/removed member, wrong id, race) ran an UPDATE that
+    # affected 0 rows yet returned {"updated": True} -- a FALSE success the console
+    # optimistically rendered as "role changed" though nothing changed. remove_member
+    # already 404s on this exact "member not found" case; this aligns change_role with
+    # its sibling. Legitimate changes (member exists) are byte-for-byte unchanged.
+    current = conn.execute(
+        "SELECT role FROM org_members WHERE org_id = ? AND user_id = ?",
+        [org_id, member_id]
+    ).fetchone()
+    if not current:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Member not found")
     # Guard: can't demote last super_admin
     if data.new_role != "super_admin":
         admins = conn.execute(
             "SELECT COUNT(*) FROM org_members WHERE org_id = ? AND role = 'super_admin'",
             [org_id]
         ).fetchone()[0]
-        current = conn.execute(
-            "SELECT role FROM org_members WHERE org_id = ? AND user_id = ?",
-            [org_id, member_id]
-        ).fetchone()
-        if current and current[0] == "super_admin" and admins <= 1:
+        if current[0] == "super_admin" and admins <= 1:
             conn.close()
             raise HTTPException(status_code=400, detail="Cannot demote the last super admin")
     conn.execute(
