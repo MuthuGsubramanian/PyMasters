@@ -585,7 +585,7 @@ function PathDetail() {
                                         ? 'bg-bg-surface border-cyan-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5'
                                         : 'bg-bg-elevated/50 border-transparent opacity-60'
                                 )}
-                                onClick={isNext ? () => navigate(`/dashboard/classroom`) : undefined}
+                                onClick={isNext ? () => navigate(`/dashboard/classroom?lesson=${encodeURIComponent(lesson.id)}`) : undefined}
                             >
                                 {/* Status icon */}
                                 <div className={clsx(
