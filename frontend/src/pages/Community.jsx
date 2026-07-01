@@ -78,10 +78,18 @@ function Leaderboard({ meId, orgId }) {
         setLoading(true);
         getGlobalLeaderboard(scope, 50, 0, orgId)
             .then((r) => { if (active) setData(r.data); })
-            .catch(() => { if (active) setData({ leaderboard: [], me: null, total_participants: 0 }); })
+            .catch(() => { if (active) setData({ scope, leaderboard: [], me: null, total_participants: 0 }); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
     }, [scope, orgId]);
+
+    // The fetched `data` may momentarily belong to the PREVIOUS scope while a
+    // scope switch is in flight (setScope re-renders before the effect refetches,
+    // and again while the request is pending). Gate scope-dependent UI on the
+    // response's own `scope` so we never render one scope's numbers under the
+    // other scope's label (e.g. an XP value tagged "day streak"). The backend
+    // already returns `scope` in the payload; the error fallback now sets it too.
+    const ready = data != null && data.scope === scope;
 
     return (
         <div>
@@ -95,7 +103,7 @@ function Leaderboard({ meId, orgId }) {
                 )}
             </div>
 
-            {data?.me && (
+            {ready && data.me && (
                 <div className="mb-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3">
                     <span className="text-sm font-bold text-cyan-700 dark:text-cyan-300">Your rank</span>
                     <span className="text-lg font-extrabold text-text-primary">#{data.me.rank}</span>
@@ -105,7 +113,7 @@ function Leaderboard({ meId, orgId }) {
                 </div>
             )}
 
-            {loading ? (
+            {(loading || !ready) ? (
                 <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-500 dark:text-cyan-400" /></div>
             ) : (
                 <div className="rounded-2xl border border-border-default bg-bg-surface divide-y divide-border-default">
