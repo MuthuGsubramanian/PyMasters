@@ -74,6 +74,45 @@ def _relative_time(ts) -> str:
 BLOCKED_LANGUAGES = {"hi"}
 
 
+# Canonical Daily-Goal option values the Profile page can actually render (its
+# frontend DAILY_GOALS list is 15/30/60/120 minutes). Legacy rows store
+# NON-canonical values — most importantly the `user_settings.daily_goal` schema
+# DEFAULT '30min' (main.py), which the onboarding INSERT in
+# vaathiyaar/profiler.save_onboarding inherits because it omits daily_goal. So
+# essentially every onboarded user has daily_goal='30min' stored, and '30min'
+# matches no <option>, leaving the Profile "Daily Goal" dropdown blank/mismatched
+# until the user manually re-picks and saves. (Onboarding's own time codes
+# '15min'/'1hour'/'weekends' are likewise non-canonical.) We normalise on READ
+# so the UI always receives a renderable value; stored data is left untouched
+# (no migration, fully reversible, and any non-UI consumer still sees the raw).
+_DAILY_GOAL_CANONICAL = {"15", "30", "60", "120"}
+
+
+def _normalize_daily_goal(raw) -> str:
+    """Map any stored daily_goal to the canonical minute set the Profile page
+    renders. Idempotent for already-canonical values; interprets hour-ish codes
+    ('1hour' -> 60) and minute/bare codes ('30min','45' -> minutes), snaps to the
+    nearest allowed option, and falls back to '30' for anything unparseable
+    (e.g. 'weekends'). Never raises — display-only field."""
+    try:
+        if raw is None:
+            return "30"
+        s = str(raw).strip().lower()
+        if s in _DAILY_GOAL_CANONICAL:
+            return s
+        import re
+        m = re.search(r"\d+", s)
+        if not m:
+            return "30"
+        num = int(m.group())
+        minutes = num * 60 if "h" in s else num  # '1hour'/'2 hr' -> hours
+        allowed = [15, 30, 60, 120]
+        best = min(allowed, key=lambda a: abs(a - minutes))
+        return str(best)
+    except Exception:
+        return "30"
+
+
 # ---------------------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------------------
@@ -319,7 +358,7 @@ def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
         profile["preferences"] = {
             "preferred_language": profile.get("preferred_language") or "en",
             "learning_style": profile.get("learning_style") or "mixed",
-            "daily_goal": (s["daily_goal"] if (s and s["daily_goal"] is not None) else "30"),
+            "daily_goal": _normalize_daily_goal(s["daily_goal"] if (s and s["daily_goal"] is not None) else "30"),
             "difficulty": (s["difficulty_preference"] if (s and s["difficulty_preference"]) else "beginner"),
             "vaathiyaar": {
                 "voice_mode": bool(s["voice_enabled"]) if (s and s["voice_enabled"] is not None) else False,
