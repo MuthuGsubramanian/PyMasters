@@ -109,6 +109,14 @@ export const evaluateCode = (data) => api.post('/classroom/evaluate', data);
 export const sendVaathiyaarFeedback = (pairId, helpful) => api.post('/classroom/feedback', { pair_id: pairId, helpful });
 export const submitDiagnostic = (data) => api.post('/classroom/diagnostic', data);
 
+// Knowledge graph (Vaathiyaar's model of what the user knows)
+export const getKnowledgeMap = (userId) => api.get(`/graph/user-map/${userId}`);
+export const getConceptRecommendations = (userId, limit = 5) =>
+    api.get(`/graph/recommendations/${userId}?limit=${limit}`);
+export const getKnowledgeGaps = (userId, targetConcept) =>
+    api.get(`/graph/gaps/${userId}/${encodeURIComponent(targetConcept)}`);
+export const getConceptDetail = (conceptId) => api.get(`/graph/concepts/${encodeURIComponent(conceptId)}`);
+
 // Language
 export const getLanguages = () => api.get('/languages');
 export const checkLanguage = (code) => api.get(`/languages/check/${code}`);
