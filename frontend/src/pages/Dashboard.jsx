@@ -222,6 +222,29 @@ function StatCard({ label, value, suffix, icon, accent, delay, children }) {
     );
 }
 
+// Progress (0–100) toward the NEXT RANK, using the canonical rank tiers from
+// the Profile page's getRankInfo: Novice 0–100, Apprentice 100–500,
+// Intermediate 500–1000, Advanced 1000–2000, Expert 2000–5000, Master 5000+.
+// The dashboard "Learning Progress" ring is labelled "to next rank" but used to
+// compute `totalXp % 100`, which only matches true rank progress below 100 XP
+// and reads a misleading 0% for e.g. an Apprentice at 300 XP (really 50% of the
+// way to 500). Returns the real percentage within the current band; Master
+// (no higher rank) is a full 100%. For xp < 100 this equals the old value, so
+// brand-new/Novice users are unchanged.
+function rankProgressPct(xp) {
+    const bands = [
+        { floor: 5000, next: null },
+        { floor: 2000, next: 5000 },
+        { floor: 1000, next: 2000 },
+        { floor: 500,  next: 1000 },
+        { floor: 100,  next: 500 },
+        { floor: 0,    next: 100 },
+    ];
+    const b = bands.find((band) => xp >= band.floor) || bands[bands.length - 1];
+    if (b.next === null) return 100;
+    return Math.min(100, Math.max(0, Math.round(((xp - b.floor) / (b.next - b.floor)) * 100)));
+}
+
 // ─── Overview ──────────────────────────────────────────────────────────────
 export function Overview() {
     const { user } = useAuth();
@@ -238,7 +261,12 @@ export function Overview() {
     // earned), which made the "Total XP" card show 0/14 while the profile,
     // community leaderboard and header all showed the real 50. Prefer stats.
     const totalXp = stats?.total_xp ?? (user.points || 0);
-    const progressPct = Math.min(100, totalXp % 100); // % toward next 100-XP milestone
+    // The "Learning Progress" ring is labelled "to next rank", so it must track
+    // real rank bands (see rankProgressPct), not `totalXp % 100`. Below 100 XP
+    // the two are identical; above it the old value was wrong (e.g. 0% for an
+    // Apprentice at 300 XP). The separate "Next Milestone" bar still uses the
+    // 100-XP mark via nextMilestone.progress, so that display is unaffected.
+    const progressPct = rankProgressPct(totalXp); // % toward the NEXT RANK
 
     const dailyQuote = useMemo(() => {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
