@@ -183,30 +183,41 @@ def org_onboarding(data: OrgOnboardingData):
     try:
         cursor = conn.cursor()
 
-        # Find the user's org
+        # The org PROFILE (size/focus/etc.) is organisation-scoped data that only
+        # an admin owns, so we only find + write it for admins. But the caller
+        # ALSO needs their OWN onboarding marked complete regardless of role.
+        #
+        # Previously this endpoint hard-raised 400 "User is not an org admin"
+        # whenever the caller wasn't a super_admin/admin. Any org member routed
+        # here by the frontend (`isOrg = account_type === 'organization'`) who is
+        # NOT an admin — e.g. an invited learner whose account_type is
+        # 'organization', or an admin later demoted to member — therefore got a
+        # 400 on submit ("Something went wrong…") and was permanently stranded on
+        # the onboarding screen, unable to proceed. Completing their onboarding
+        # (and simply skipping the admin-only org-profile write) unblocks them
+        # while leaving the admin flow byte-for-byte unchanged.
         cursor.execute(
             "SELECT org_id FROM org_members WHERE user_id = ? AND role IN ('super_admin', 'admin') LIMIT 1",
             [data.user_id]
         )
         org_row = cursor.fetchone()
-        if not org_row:
-            raise HTTPException(status_code=400, detail="User is not an org admin")
+        is_admin = org_row is not None
 
-        org_id = org_row["org_id"]
+        if is_admin:
+            org_id = org_row["org_id"]
+            # Upsert org_profiles (admin-owned org-scoped settings only)
+            cursor.execute("""
+                INSERT INTO org_profiles (org_id, org_size, learner_profile, skill_level, learning_focus, structure_preference)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT (org_id) DO UPDATE SET
+                    org_size = excluded.org_size,
+                    learner_profile = excluded.learner_profile,
+                    skill_level = excluded.skill_level,
+                    learning_focus = excluded.learning_focus,
+                    structure_preference = excluded.structure_preference
+            """, [org_id, data.org_size, data.learner_profile, data.skill_level, data.learning_focus, data.structure_preference])
 
-        # Upsert org_profiles
-        cursor.execute("""
-            INSERT INTO org_profiles (org_id, org_size, learner_profile, skill_level, learning_focus, structure_preference)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT (org_id) DO UPDATE SET
-                org_size = excluded.org_size,
-                learner_profile = excluded.learner_profile,
-                skill_level = excluded.skill_level,
-                learning_focus = excluded.learning_focus,
-                structure_preference = excluded.structure_preference
-        """, [org_id, data.org_size, data.learner_profile, data.skill_level, data.learning_focus, data.structure_preference])
-
-        # Update user's preferred_language and mark onboarding complete
+        # Always: update the caller's preferred_language and mark onboarding complete
         cursor.execute(
             "UPDATE users SET preferred_language = ?, onboarding_completed = 1 WHERE id = ?",
             [data.preferred_language, data.user_id]
@@ -222,7 +233,10 @@ def org_onboarding(data: OrgOnboardingData):
         """, [data.user_id, data.preferred_language])
 
         conn.commit()
-        return {"onboarding_completed": True, "user_id": data.user_id}
+        # `org_profile_saved` is a new OPTIONAL field (additive) — existing keys
+        # (`onboarding_completed`, `user_id`) are unchanged, so any current client
+        # that ignores it keeps working exactly as before.
+        return {"onboarding_completed": True, "user_id": data.user_id, "org_profile_saved": is_admin}
     finally:
         conn.close()
 
