@@ -82,7 +82,13 @@ class OnboardingData(BaseModel):
     user_id: str
     motivation: str
     prior_experience: str
-    known_languages: List[str]
+    # Optional with a safe default: the current onboarding UI no longer asks a
+    # dedicated "languages you already know" question, so the frontend legitimately
+    # omits this field. Keeping it required made EVERY individual onboarding submit
+    # fail Pydantic validation (422 "field required"), stranding new individual
+    # users on the onboarding screen. Defaulting to [] restores the flow while
+    # still accepting a list from any (legacy) caller that does send it.
+    known_languages: List[str] = []
     learning_style: str
     goal: str
     time_commitment: str
