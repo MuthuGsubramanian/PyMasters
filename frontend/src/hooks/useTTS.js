@@ -81,6 +81,11 @@ export default function useTTS() {
   const [volume, setVolume] = useState(saved.current?.volume ?? 1.0);
   const [lang, setLang] = useState(saved.current?.lang ?? 'en');
   const [selectedVoiceName, setSelectedVoiceName] = useState(saved.current?.voiceName ?? null);
+  // Language the explicit voice pick was made under (null for legacy saves).
+  // A pick is only honored while the app is in that language, so a stale
+  // pick (e.g. an English voice chosen before switching to Tamil) cannot
+  // override the active language.
+  const [voicePickLang, setVoicePickLang] = useState(saved.current?.voicePickLang ?? null);
 
   // ---- transient state ----
   const [voices, setVoices] = useState([]);
@@ -101,8 +106,9 @@ export default function useTTS() {
       volume,
       lang,
       voiceName: selectedVoiceName,
+      voicePickLang,
     });
-  }, [enabled, rate, pitch, volume, lang, selectedVoiceName]);
+  }, [enabled, rate, pitch, volume, lang, selectedVoiceName, voicePickLang]);
 
   // ---- load voices (may fire asynchronously) ----
   useEffect(() => {
@@ -122,10 +128,16 @@ export default function useTTS() {
   const resolvedVoice = useCallback(() => {
     if (!voices.length) return null;
 
-    // explicit selection by name
+    // explicit selection by name — honored only for the language it was
+    // picked under (legacy saves without voicePickLang: honored only while
+    // the voice itself matches the active language). Otherwise fall through
+    // to language-aware auto-detect. The saved pick is kept untouched and is
+    // honored again when the user returns to that language.
     if (selectedVoiceName) {
       const match = voices.find((v) => v.name === selectedVoiceName);
-      if (match) return match;
+      if (match && (voicePickLang ? voicePickLang === lang : match.lang.startsWith(lang))) {
+        return match;
+      }
     }
 
     // auto-detect best voice for language
@@ -143,7 +155,7 @@ export default function useTTS() {
 
     // last resort: default voice
     return voices.find((v) => v.default) || voices[0];
-  }, [voices, selectedVoiceName, lang]);
+  }, [voices, selectedVoiceName, voicePickLang, lang]);
 
   // ---- internal: speak next chunk in queue ----
   const speakNext = useCallback(() => {
@@ -216,7 +228,10 @@ export default function useTTS() {
       if (p != null) setPitch(p);
       if (v != null) setVolume(v);
       if (l != null) setLang(l);
-      if (vo != null) setSelectedVoiceName(typeof vo === 'string' ? vo : vo.name);
+      if (vo != null) {
+        setSelectedVoiceName(typeof vo === 'string' ? vo : vo.name);
+        setVoicePickLang(l ?? lang);
+      }
       if (onWord) onWordRef.current = onWord;
 
       const clean = stripMarkdown(text);
@@ -235,7 +250,7 @@ export default function useTTS() {
       queueRef.current = chunks;
       speakNext();
     },
-    [synth, enabled, isSpeaking, speakNext],
+    [synth, enabled, isSpeaking, speakNext, lang],
   );
 
   const stop = useCallback(() => {
@@ -275,8 +290,10 @@ export default function useTTS() {
     (voice) => {
       const name = typeof voice === 'string' ? voice : voice?.name ?? null;
       setSelectedVoiceName(name);
+      // record which language this pick belongs to (cleared with the pick)
+      setVoicePickLang(name ? lang : null);
     },
-    [],
+    [lang],
   );
 
   // ---- cleanup on unmount ----
