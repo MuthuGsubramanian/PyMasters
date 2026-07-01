@@ -31,6 +31,14 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
     useEffect(() => { openRef.current = open; }, [open]);
     useEffect(() => { messagesRef.current = messages; }, [messages]);
 
+    // Speak Vaathiyaar replies in the learner's language, not always English.
+    // useTTS defaults its voice/lang to 'en' and nothing else sets it, so a Tamil
+    // (or other non-English) reply — correctly generated in that language — was
+    // read aloud by an English voice. Keep the TTS lang in step with the active
+    // language. No-op for English users (lang already 'en'); an explicit user
+    // voice pick still wins (resolvedVoice prioritises selectedVoiceName).
+    useEffect(() => { if (language) tts.setLang(language); }, [language, tts.setLang]);
+
     const handleFinal = useCallback(async (transcript) => {
         if (!transcript) return;
         tts.stop(); // barge-in

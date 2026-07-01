@@ -918,6 +918,13 @@ export default function Classroom() {
         user?.preferred_language ||
         'en';
 
+    // Keep the TTS engine's voice/language in step with the learner's language so
+    // spoken Vaathiyaar feedback (tts.speak below) uses the right voice — e.g.
+    // Tamil replies are no longer read aloud by an English voice. useTTS defaults
+    // lang to 'en' and nothing else set it. No-op for English users; an explicit
+    // user voice pick still wins (resolvedVoice prioritises selectedVoiceName).
+    useEffect(() => { if (language) tts.setLang(language); }, [language, tts.setLang]);
+
     const [lessons, setLessons] = useState([]);
     const [lessonsLoading, setLessonsLoading] = useState(true);
     const [currentLesson, setCurrentLesson] = useState(null);
