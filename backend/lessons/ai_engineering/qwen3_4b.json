@@ -1,0 +1,279 @@
+{
+  "id": "qwen3_4b",
+  "topic": "qwen3_4b",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-4B: A State-of-the-Art LLM That Runs on Your Laptop"
+  },
+  "description": {
+    "en": "Load Alibaba's Qwen3-4B with Hugging Face transformers, quantize it to 4-bit so it fits in a few gigabytes of VRAM, and use its hybrid thinking mode to power a fully local, zero-cost assistant brain."
+  },
+  "xp_reward": 72,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Genius That Fits in Your Pocket\n\nVaathiyaar sets a laptop on the desk beside a humming server and grins. \"Two years ago, a model this capable needed a rack of GPUs and a cloud bill to match. Today, `Qwen3-4B` â€” just four billion parameters â€” reasons through math, writes clean code, and speaks dozens of languages while running on a GPU you'd buy for gaming. This is the model we hand to Homie for its local assistant brain: no API keys, no data leaving the machine, no per-token invoice.\"\n\n### Why Qwen3-4B?\n\nQwen3 is Alibaba's 2025 open-weight family. The 4B model hits a sweet spot: small enough to run locally, strong enough to be genuinely useful. Its headline trick is a **hybrid thinking mode** â€” the same weights can either answer instantly or first emit a private `<think>` chain of reasoning before replying. Two of the ideas behind its long context and reasoning are documented in arXiv:2309.00071 (YaRN context extension) and arXiv:2505.09388 (the Qwen3 technical report).\n\n| Property | Qwen3-4B | A 70B cloud model |\n|---|---|---|\n| Parameters | 4 billion | 70 billion |\n| VRAM (4-bit) | ~3 GB | ~40 GB |\n| Runs locally | Yes, on one consumer GPU | No |\n| Thinking mode | Toggleable | Varies |\n| Cost per token | $0 (your electricity) | Metered API |\n| Context length | 32K native (128K with YaRN) | Large |\n\n### Loading It in a Few Lines\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nname = \"Qwen/Qwen3-4B\"\ntok = AutoTokenizer.from_pretrained(name)\nmodel = AutoModelForCausalLM.from_pretrained(name, torch_dtype=\"auto\", device_map=\"auto\")\n```\n\nThe `safetensors` weights download once and cache locally. `device_map=\"auto\"` places layers on your GPU automatically.\n\n### Quantization: Shrinking the Model to Fit\n\nFull-precision weights are big. **Quantization** stores each weight in 4 bits instead of 16, cutting memory roughly 4x with barely any quality loss â€” the difference between \"won't fit\" and \"runs comfortably.\"\n\n```python\nfrom transformers import BitsAndBytesConfig\n\nq = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=\"bfloat16\")\nmodel = AutoModelForCausalLM.from_pretrained(name, quantization_config=q, device_map=\"auto\")\n```\n\n### Chatting With Thinking Mode\n\nQwen3 expects messages formatted with its chat template. Set `enable_thinking=True` and the model reasons step by step inside `<think>...</think>` before its final answer â€” great for math and code, and you can strip the tags before showing the user.\n\n```python\nmsgs = [{\"role\": \"user\", \"content\": \"What is 17 * 23?\"}]\ntext = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=True)\n```\n\n> **Key Insight:** A 4-billion-parameter open model plus 4-bit quantization means frontier-flavored reasoning that lives entirely on your own hardware. Load once, quantize to fit your GPU, format with the chat template, and toggle thinking mode when the task needs real reasoning â€” that is the recipe for a private, zero-cost assistant brain like Homie's."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pocket_genius_local_llm",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "qwen3_overview",
+      "nodes": [
+        {
+          "label": "Qwen3-4B (local LLM)",
+          "children": [
+            "transformers + safetensors",
+            "4-bit quantization (~3 GB VRAM)",
+            "Hybrid thinking mode",
+            "Chat template formatting",
+            "Runs offline, $0 per token"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "local_llm_demo",
+      "steps": [
+        {
+          "line": "from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig",
+          "highlight": "BitsAndBytesConfig",
+          "explanation": {
+            "en": "Import the model, tokenizer, and the 4-bit quantization config helper"
+          }
+        },
+        {
+          "line": "name = \"Qwen/Qwen3-4B\"",
+          "highlight": "Qwen/Qwen3-4B",
+          "explanation": {
+            "en": "The Hugging Face repo id â€” safetensors weights download once and cache locally"
+          }
+        },
+        {
+          "line": "quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=\"bfloat16\")",
+          "highlight": "load_in_4bit=True",
+          "explanation": {
+            "en": "Store each weight in 4 bits instead of 16 â€” roughly 4x less VRAM, minimal quality loss"
+          }
+        },
+        {
+          "line": "tok = AutoTokenizer.from_pretrained(name)",
+          "highlight": "AutoTokenizer",
+          "explanation": {
+            "en": "The tokenizer turns text into token ids and back, and holds Qwen3's chat template"
+          }
+        },
+        {
+          "line": "model = AutoModelForCausalLM.from_pretrained(name, quantization_config=quant, device_map=\"auto\")",
+          "highlight": "device_map=\"auto\"",
+          "explanation": {
+            "en": "Load the quantized model and place its layers on the GPU automatically"
+          }
+        },
+        {
+          "line": "messages = [{\"role\": \"user\", \"content\": \"What is 17 * 23?\"}]",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Conversations are lists of role/content dicts, just like the OpenAI-style format"
+          }
+        },
+        {
+          "line": "text = tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=True)",
+          "highlight": "enable_thinking=True",
+          "explanation": {
+            "en": "Format with Qwen3's template and turn on step-by-step reasoning inside <think> tags"
+          }
+        },
+        {
+          "line": "inputs = tok(text, return_tensors=\"pt\").to(model.device)",
+          "highlight": "return_tensors=\"pt\"",
+          "explanation": {
+            "en": "Tokenize the prompt into a PyTorch tensor on the same device as the model"
+          }
+        },
+        {
+          "line": "out = model.generate(**inputs, max_new_tokens=256)",
+          "highlight": "generate",
+          "explanation": {
+            "en": "Autoregressively generate up to 256 new tokens â€” the model thinks, then answers"
+          }
+        },
+        {
+          "line": "print(tok.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True))",
+          "highlight": "skip_special_tokens=True",
+          "explanation": {
+            "en": "Decode only the newly generated tokens back into readable text â€” '391'"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_params",
+      "variable": "parameters",
+      "value": "4,000,000,000",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_vram",
+      "variable": "vram_4bit_gb",
+      "value": "~3 (down from ~9 in bf16)",
+      "data_type": "float",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ pip install transformers accelerate bitsandbytes torch",
+        "Successfully installed transformers accelerate bitsandbytes torch",
+        "",
+        "$ python qwen_local.py",
+        "Loading Qwen/Qwen3-4B in 4-bit ...",
+        "Model loaded on cuda:0 (VRAM used: 3.1 GB)",
+        "Prompt: 'What is 17 * 23?'",
+        "<think> 17 * 23 = 17 * 20 + 17 * 3 = 340 + 51 = 391 </think>",
+        "391"
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_generation_flow",
+      "title": "Local LLM Generation Flow",
+      "nodes": [
+        {
+          "id": "msgs",
+          "label": "Messages\n(role/content)",
+          "type": "start"
+        },
+        {
+          "id": "template",
+          "label": "apply_chat_template\n(enable_thinking)",
+          "type": "process"
+        },
+        {
+          "id": "tokenize",
+          "label": "Tokenize\n(text -> ids)",
+          "type": "process"
+        },
+        {
+          "id": "model",
+          "label": "Qwen3-4B\n(4-bit, on GPU)",
+          "type": "process"
+        },
+        {
+          "id": "think",
+          "label": "Reason?\n<think>",
+          "type": "decision"
+        },
+        {
+          "id": "decode",
+          "label": "Decode\n(ids -> text)",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "msgs",
+          "to": "template",
+          "label": "chat"
+        },
+        {
+          "from": "template",
+          "to": "tokenize",
+          "label": "prompt"
+        },
+        {
+          "from": "tokenize",
+          "to": "model",
+          "label": "ids"
+        },
+        {
+          "from": "model",
+          "to": "think",
+          "label": "logits"
+        },
+        {
+          "from": "think",
+          "to": "decode",
+          "label": "tokens"
+        }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "vector_burst",
+      "message": "You now run a state-of-the-art LLM entirely on your own machine. Local AI unlocked!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build the prompt formatting step for a local Qwen3 chat. Complete `build_prompt` so it takes a user question and returns the chat-template string with the generation prompt added. Thinking mode should be toggleable via the `thinking` argument."
+      },
+      "starter_code": "from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-4B\")\n\ndef build_prompt(question: str, thinking: bool = True) -> str:\n    \"\"\"Return the formatted chat-template prompt for a single user turn.\"\"\"\n    # 1. Wrap the question in a messages list ({'role': 'user', 'content': ...})\n    # 2. Call tok.apply_chat_template with tokenize=False, add_generation_prompt=True\n    # 3. Pass enable_thinking=thinking\n    pass\n\nprint(build_prompt(\"Say hello\", thinking=False))",
+      "expected_output": "A formatted prompt string ending with the assistant generation prompt",
+      "hints": {
+        "en": [
+          "messages = [{'role': 'user', 'content': question}]",
+          "apply_chat_template returns a string when tokenize=False",
+          "Forward the thinking flag as enable_thinking=thinking"
+        ]
+      },
+      "test_code": "from transformers import AutoTokenizer\n\n_tok = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-4B\")\n\ndef build_prompt(question, thinking=True):\n    messages = [{\"role\": \"user\", \"content\": question}]\n    return _tok.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True, enable_thinking=thinking\n    )\n\np = build_prompt(\"What is 2 + 2?\", thinking=True)\nassert isinstance(p, str) and len(p) > 0\nassert \"What is 2 + 2?\" in p\n# add_generation_prompt should include the assistant turn marker\nassert \"assistant\" in p\nprint(\"Prompt formatting tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Estimate the memory savings from quantization. Complete `vram_gb` to return the approximate VRAM in gigabytes needed to hold a model's weights, given the parameter count and bits per weight. Then confirm 4-bit uses about a quarter of 16-bit."
+      },
+      "starter_code": "def vram_gb(num_params: int, bits_per_weight: int) -> float:\n    \"\"\"Approx VRAM (GB) to store weights: params * bytes_per_weight / 1e9.\"\"\"\n    # bytes_per_weight = bits_per_weight / 8\n    # 1 GB = 1e9 bytes\n    pass\n\nprint(round(vram_gb(4_000_000_000, 16), 2))  # bf16\nprint(round(vram_gb(4_000_000_000, 4), 2))   # 4-bit",
+      "expected_output": "8.0\n2.0",
+      "hints": {
+        "en": [
+          "bytes_per_weight = bits_per_weight / 8",
+          "Total bytes = num_params * bytes_per_weight",
+          "Divide by 1e9 to convert bytes to gigabytes"
+        ]
+      },
+      "test_code": "def vram_gb(num_params, bits_per_weight):\n    bytes_per_weight = bits_per_weight / 8\n    return num_params * bytes_per_weight / 1e9\n\nassert vram_gb(4_000_000_000, 16) == 8.0\nassert vram_gb(4_000_000_000, 4) == 2.0\n# 4-bit should be one quarter of 16-bit\nassert vram_gb(4_000_000_000, 4) == vram_gb(4_000_000_000, 16) / 4\nprint(\"Quantization memory tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "local_llm",
+      "qwen3",
+      "quantization_4bit",
+      "huggingface_transformers",
+      "chat_template",
+      "thinking_mode"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "dictionaries",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
