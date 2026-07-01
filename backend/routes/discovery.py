@@ -31,6 +31,16 @@ def _txt(v, lang="en"):
     return v or ""
 
 
+def _all_txt(v):
+    """All localized variants of a {en, ta, ...} text dict joined for search
+    matching, so a query typed in ANY shipped language (e.g. the Tamil title a
+    learner saw in the Classroom list) matches — not just the lang-resolved one.
+    Strings pass through unchanged; non-dict/non-str values become ''."""
+    if isinstance(v, dict):
+        return " ".join(s for s in v.values() if isinstance(s, str))
+    return v if isinstance(v, str) else ""
+
+
 @router.get("/classroom/search")
 def search_topics(q: str = Query(..., min_length=1, max_length=120),
                   user_id: Optional[str] = None, lang: str = "en"):
@@ -45,7 +55,12 @@ def search_topics(q: str = Query(..., min_length=1, max_length=120),
     for L in lessons:
         title = _txt(L.get("title"), lang)
         desc = _txt(L.get("description"), lang)
-        hay = f"{title} {desc} {L.get('id','')} {L.get('topic','')} {L.get('track','')}".lower()
+        # Match against EVERY localized variant (superset of the resolved text),
+        # so English queries keep matching exactly as before and Tamil (or any
+        # other shipped variant) now also matches instead of falsely reporting
+        # "no lesson yet" and offering duplicate generation.
+        hay = (f"{_all_txt(L.get('title'))} {_all_txt(L.get('description'))} "
+               f"{L.get('id','')} {L.get('topic','')} {L.get('track','')}").lower()
         if ql in hay:
             out.append({
                 "id": L.get("id"),

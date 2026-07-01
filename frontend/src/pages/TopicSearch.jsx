@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { searchTopics, generateTopic, getModuleStatus } from '../api';
 import { Search, Sparkles, Loader2, BookOpen, Wand2, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
@@ -14,6 +15,11 @@ const LEVELS = [
 export default function TopicSearch() {
     useEffect(() => { document.title = 'Topic Search — PyMasters'; }, []);
     const { user } = useAuth();
+    // App-wide language (module 11 i18n): thread it into search so result
+    // titles/descriptions come back in the learner's language, matching the
+    // Classroom list. Falls back to 'en' inside the context, so English users
+    // see byte-identical behavior.
+    const { language } = useProfile() || {};
     const navigate = useNavigate();
 
     const [q, setQ] = useState('');
@@ -26,13 +32,13 @@ export default function TopicSearch() {
         setTouched(true);
         setLoading(true);
         const t = setTimeout(() => {
-            searchTopics(q.trim(), user?.id)
+            searchTopics(q.trim(), user?.id, language)
                 .then((r) => setData(r.data))
                 .catch(() => setData({ results: [], can_generate: true, query: q }))
                 .finally(() => setLoading(false));
         }, 300);
         return () => clearTimeout(t);
-    }, [q, user?.id]);
+    }, [q, user?.id, language]);
 
     return (
         <div className="max-w-3xl mx-auto px-4 py-8">
