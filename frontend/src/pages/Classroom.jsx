@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,8 @@ import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
-    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic
+    Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
+    MessageCircle, X
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -94,7 +95,7 @@ const markdownComponents = {
 // Markdown components for Vaathiyaar story card (dark background)
 const storyMarkdownComponents = {
     h2: ({children}) => <h2 className="text-lg font-bold text-white mt-4 mb-2 pb-1 border-b border-purple-500/20">{children}</h2>,
-    h3: ({children}) => <h3 className="text-base font-bold text-purple-300 mt-3 mb-1.5">{children}</h3>,
+    h3: ({children}) => <h3 className="text-base font-bold text-purple-200 mt-3 mb-1.5">{children}</h3>,
     p: ({children}) => <p className="text-sm text-slate-200 mb-2 leading-relaxed">{children}</p>,
     ul: ({children}) => <ul className="list-disc list-inside text-sm text-slate-200 mb-2 space-y-1 pl-2">{children}</ul>,
     ol: ({children}) => <ol className="list-decimal list-inside text-sm text-slate-200 mb-2 space-y-1 pl-2">{children}</ol>,
@@ -108,7 +109,7 @@ const storyMarkdownComponents = {
     tbody: ({children}) => <tbody className="divide-y divide-white/[0.06]">{children}</tbody>,
     tr: ({children}) => <tr className="hover:bg-white/[0.03] transition-colors">{children}</tr>,
     th: ({children}) => <th className="px-3 py-2 text-left text-xs font-bold text-purple-300 uppercase tracking-wider">{children}</th>,
-    td: ({children}) => <td className="px-3 py-2 text-sm text-slate-200">{children}</td>,
+    td: ({children}) => <td className="px-3 py-2 text-sm text-slate-100">{children}</td>,
     code: ({children, className}) => className
         ? <pre className="surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto my-2 border border-white/[0.06]"><code>{children}</code></pre>
         : <code className="bg-purple-500/15 text-purple-200 px-1.5 py-0.5 rounded text-xs font-mono border border-purple-500/20">{children}</code>,
@@ -459,27 +460,32 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
     return (
-        <div className="animate-fade-in space-y-4 max-w-6xl mx-auto">
-            {/* ── Header ── */}
-            <header>
+        <div className="animate-fade-in flex flex-col gap-3 max-w-7xl mx-auto lg:h-[calc(100vh-7rem)]">
+            {/* ── Header (compact, fixed) ── */}
+            <header className="flex-shrink-0">
                 <div className="flex items-center gap-2 mb-1">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-200 bg-purple-50 text-purple-600 text-[10px] font-bold tracking-wider uppercase">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-300/40 dark:border-accent-primary/30 bg-purple-50 dark:bg-accent-subtle text-purple-600 dark:text-accent-primary text-[10px] font-bold tracking-wider uppercase">
                         <Sparkles size={10} />
                         Lesson
                     </div>
                     {lesson.xp_reward && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-full px-2 py-0.5">
                             +{lesson.xp_reward} XP
                         </span>
                     )}
                 </div>
-                <h2 className="text-2xl font-bold text-text-primary font-display">
+                <h2 className="text-xl font-bold text-text-primary font-display leading-tight">
                     {resolveText(lesson.active_title || lesson.title, language)}
                 </h2>
             </header>
 
-            {/* ── Vaathiyaar Story Card ── */}
-            <div className="rounded-2xl bg-gradient-to-r from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg">
+            {/* ── Side-by-side: Vaathiyaar explanation (left) + execution flow (right).
+                On large screens they fill the viewport height and scroll internally,
+                so the lesson fits without page scroll. ── */}
+            <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
+
+            {/* LEFT: Vaathiyaar explanation — scrolls internally */}
+            <div className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg overflow-y-auto dark-scrollbar min-h-[280px]">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
@@ -498,38 +504,55 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </div>
             </div>
 
-            {/* ── Run Animation Button ── */}
-            <button
-                onClick={replayAnimations}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 text-sm font-medium transition-all duration-200"
-            >
-                <RotateCcw size={14} />
-                Run Animation
-            </button>
+            {/* ── Execution section: aligned header + code panel + optional flow ── */}
+            <section className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl surface-code shadow-lg overflow-hidden flex flex-col min-h-[320px]">
+                {/* Section header — title on the left, Run Animation aligned on the right */}
+                <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.08] bg-white/[0.02]">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                        <h3 className="text-sm font-bold text-white tracking-wide">Watch It Run</h3>
+                        {(executionViz || loopViz) && (
+                            <span className="text-[11px] text-slate-400 truncate">
+                                {executionViz
+                                    ? `${(executionViz.executionSteps || []).length} execution steps`
+                                    : `${loopViz.loopType || 'for'} loop · ${(loopViz.iterations || []).length} iterations`}
+                            </span>
+                        )}
+                    </div>
+                    <button
+                        onClick={replayAnimations}
+                        className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 hover:text-cyan-200 text-xs font-semibold transition-all duration-200 flex-shrink-0"
+                    >
+                        <RotateCcw size={13} />
+                        Run Animation
+                    </button>
+                </div>
 
-            {/* ── Two columns — Code Execution + Flow ── */}
-            <div className="flex flex-col lg:flex-row gap-5" style={{height: 'min(60vh, 540px)', minHeight: '360px'}}>
+                {/* Body: code execution + (optional) flow diagram. Equal-height two
+                    columns only when a flow diagram exists; otherwise the code panel
+                    spans full width and grows to content (no empty sidebar box). */}
+                <div className="flex-1 min-h-0 flex flex-col gap-4 p-4 overflow-y-auto dark-scrollbar">
 
-                {/* LEFT: Code Execution (bigger) */}
-                <div className="flex-1 min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
+                {/* Code Execution panel */}
+                <div className="flex-1 min-h-0 min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
                     {/* Terminal header */}
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/[0.06]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                         <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                         <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                        <span className="ml-2 text-[11px] text-slate-400 font-mono">step-by-step execution</span>
+                        <span className="ml-2 text-[11px] text-slate-300 font-mono">step-by-step execution</span>
                         <div className="ml-auto flex items-center gap-1.5">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
                             </span>
-                            <span className="text-[10px] text-green-400/80">running</span>
+                            <span className="text-[10px] text-green-400">running</span>
                         </div>
                     </div>
-                    <div className="p-5 space-y-4 overflow-y-auto flex-1">
+                    <div className="p-5 space-y-4 overflow-y-auto flex-1 dark-scrollbar">
                         {loopViz && (
                             <div>
-                                <div className="text-[10px] text-amber-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-[10px] text-amber-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                                     Loop Iteration
                                 </div>
@@ -549,7 +572,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         )}
                         {executionViz && (
                             <div>
-                                <div className="text-[10px] text-purple-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-[10px] text-purple-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                     Step-by-Step Execution
                                 </div>
@@ -563,7 +586,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         )}
                         {legacyAnimPrimitives.length > 0 && (
                             <div>
-                                <div className="text-[10px] text-cyan-400/60 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-[10px] text-cyan-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                                     Code Walkthrough
                                 </div>
@@ -579,13 +602,15 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     </div>
                 </div>
 
-                {/* RIGHT: Execution Flow */}
-                <div className="lg:w-[320px] lg:flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg overflow-y-auto">
-                    <div className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                        Execution Flow
-                    </div>
-                    {flowDiagram ? (
+                {/* RIGHT: Execution Flow — rendered only when a diagram exists, so
+                    lessons without one show a clean full-width code panel instead of
+                    an empty "No flow diagram" box. */}
+                {flowDiagram && (
+                    <div className="w-full flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg border border-white/[0.06]">
+                        <div className="text-xs font-bold text-cyan-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                            Execution Flow
+                        </div>
                         <FlowDiagram
                             key={`flow-${animKey}`}
                             nodes={flowDiagram.nodes || []}
@@ -594,22 +619,16 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                             variables={flowDiagram.variables || {}}
                             speed={flowDiagram.speed || 'normal'}
                         />
-                    ) : (
-                        <p className="text-sm text-slate-400 italic">No flow diagram for this lesson</p>
-                    )}
-                    {(executionViz || loopViz) && (
-                        <div className="mt-4 pt-3 border-t border-white/[0.06] text-xs text-slate-300 space-y-1">
-                            {executionViz && <p>{(executionViz.executionSteps || []).length} execution steps</p>}
-                            {loopViz && <p>{loopViz.loopType || 'for'} loop &middot; {(loopViz.iterations || []).length} iterations</p>}
-                        </div>
-                    )}
+                    </div>
+                )}
                 </div>
+            </section>
             </div>
 
             {/* ── Start Practice button ── */}
             <button
                 onClick={onComplete}
-                className="btn-neo btn-neo-primary flex items-center gap-2 w-full justify-center py-4 text-base"
+                className="btn-neo btn-neo-primary flex-shrink-0 flex items-center gap-2 w-full justify-center py-3 text-base"
             >
                 <Play size={18} fill="currentColor" />
                 Start Practice
@@ -663,7 +682,7 @@ function PracticePhase({
                     key={i}
                     initial={{ opacity: 0, y: 6, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className="panel rounded-xl p-4 border border-amber-200 bg-amber-50/80 flex items-start gap-3"
+                    className="panel rounded-xl p-4 border border-amber-200 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 flex items-start gap-3"
                 >
                     <span className="text-amber-500 text-lg">💡</span>
                     <p className="text-text-secondary text-sm leading-relaxed">{m.content}</p>
@@ -884,20 +903,14 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Classroom() {
     const { user } = useAuth();
-    const { language: ctxLanguage } = useProfile();
+    // Consume the already-hydrated profile from ProfileContext instead of
+    // issuing a second GET /profile/{id} here. ProfileProvider fetches the
+    // profile once on mount app-wide; the previous local fetch duplicated that
+    // request on every Classroom load (only used for preferred_language below).
+    const { language: ctxLanguage, profile } = useProfile();
     const tts = useTTS();
 
     useEffect(() => { document.title = 'Classroom — PyMasters'; }, []);
-
-    const [profile, setProfile] = useState(null);
-    useEffect(() => {
-        if (user?.id) {
-            api
-                .get(`/profile/${user.id}`)
-                .then((r) => setProfile(r.data.profile || r.data))
-                .catch(() => {});
-        }
-    }, [user]);
 
     const language =
         ctxLanguage ||
@@ -927,6 +940,22 @@ export default function Classroom() {
     const [podcastManifest, setPodcastManifest] = useState({});
     const [podcastOpen, setPodcastOpen] = useState(false);
     const [voiceOpen, setVoiceOpen] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    // Topic carried in from a Trending "Explore Topic" deep-link when it doesn't
+    // match an existing lesson — used to pre-fill the "Learn anything" box. Default
+    // '' keeps the box empty (today's behaviour) for every non-deep-linked visit.
+    const [deepLinkTopic, setDeepLinkTopic] = useState('');
+
+    // Auto-collapse the dashboard nav sidebar while a lesson is open so the
+    // side-by-side teaching + execution panels get the full width. Provided by
+    // Layout via <Outlet context>; guarded so the page still works if absent.
+    const outletCtx = useOutletContext() || {};
+    const setSidebarCollapsed = outletCtx.setSidebarCollapsed;
+    useEffect(() => {
+        if (typeof setSidebarCollapsed !== 'function') return;
+        setSidebarCollapsed(phase !== 'select');
+        return () => setSidebarCollapsed(false);
+    }, [phase, setSidebarCollapsed]);
 
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
@@ -996,20 +1025,57 @@ export default function Classroom() {
         handleSelectLesson({ id: lessonId, track: 'generated' });
     };
 
-    // Deep-link: /dashboard/classroom?lesson=<id> (e.g. from the review queue)
-    // opens that lesson directly once the catalogue has loaded.
+    // Deep-link handling, once the catalogue has loaded and we're on the selector:
+    //   ?lesson=<id>     (review queue)            → open that exact lesson.
+    //   ?topic=<title>   (Trending "Explore Topic") → open a matching catalogue
+    //                     lesson if one exists, otherwise pre-fill the "Learn
+    //                     anything" box so the learner is one click from a custom
+    //                     lesson on that topic. No generation is auto-fired.
     useEffect(() => {
-        const want = searchParams.get('lesson');
-        if (!want || lessonsLoading || phase !== 'select' || currentLesson) return;
-        const match = lessons.find((l) => l.id === want || l.topic === want);
-        if (match) {
-            handleSelectLesson(match);
-            searchParams.delete('lesson');
+        if (lessonsLoading || phase !== 'select' || currentLesson) return;
+
+        // 1. Exact lesson deep-link — unchanged behaviour (case-sensitive id/topic).
+        const wantLesson = searchParams.get('lesson');
+        if (wantLesson) {
+            const match = lessons.find((l) => l.id === wantLesson || l.topic === wantLesson);
+            if (match) {
+                handleSelectLesson(match);
+                searchParams.delete('lesson');
+                setSearchParams(searchParams, { replace: true });
+            }
+            return; // lesson param takes priority; leave it if unmatched (catalogue may reload)
+        }
+
+        // 2. Trending topic deep-link — match a catalogue lesson by id/topic/title
+        //    (case-insensitive); fall back to seeding the "Learn anything" box.
+        const wantTopic = searchParams.get('topic');
+        if (wantTopic) {
+            const norm = wantTopic.trim().toLowerCase();
+            const match = lessons.find((l) =>
+                [l.id, l.topic, l.title].some(
+                    (v) => typeof v === 'string' && v.trim().toLowerCase() === norm
+                )
+            );
+            if (match) {
+                handleSelectLesson(match);
+            } else {
+                setDeepLinkTopic(wantTopic);
+            }
+            searchParams.delete('topic');
             setSearchParams(searchParams, { replace: true });
         }
     }, [lessons, lessonsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleIntroComplete = () => {
+        // Load the lesson's practice scaffold into the editor when entering the
+        // practice phase (mirrors the working pattern in Challenges.jsx, which does
+        // setCode(c.starter_code || ...)). Previously this only flipped the phase, so
+        // the starter_code shipped in the lesson JSON was never loaded and the editor
+        // opened BLANK. Guarded on an empty editor (!code.trim()) so a returning
+        // learner's in-progress code is never clobbered; lessons with no starter_code
+        // are unaffected (editor stays as-is). resolveText/language already in scope.
+        const starter = currentLesson?.practice_challenges?.[0]?.starter_code;
+        if (starter && !code.trim()) setCode(resolveText(starter, language));
         setPhase('practice');
     };
 
@@ -1024,6 +1090,15 @@ export default function Classroom() {
             const res = await api.post('/classroom/evaluate', {
                 code,
                 expected_output: challenge.expected_output ?? '',
+                // Send the concrete lesson_id (NOT just topic). Without it the
+                // backend (a) defaulted xp_reward to 25 instead of the lesson's
+                // real reward, and (b) fell back to deduping completions by
+                // `topic` — which many lessons in a track SHARE — so after the
+                // first lesson under a topic every later one was treated as
+                // "already completed" and awarded 0 XP (XP froze, e.g. at 50).
+                // EvaluateRequest already accepts lesson_id; this makes XP award
+                // per-lesson and uses the lesson's true xp_reward.
+                lesson_id: currentLesson?.id ?? null,
                 topic: currentLesson?.topic ?? currentLesson?.id ?? '',
                 user_id: user?.id,
                 language,
@@ -1197,7 +1272,7 @@ export default function Classroom() {
     };
 
     return (
-        <div className="min-h-screen pb-40">
+        <div className="min-h-screen pb-48">
             <div className="max-w-6xl mx-auto px-6 py-8">
                 <VaathiyaarMessage />
                 {/* Back button when in a lesson */}
@@ -1225,7 +1300,7 @@ export default function Classroom() {
                         >
                             {user?.id && (
                                 <div className="max-w-5xl mx-auto mb-5">
-                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} />
+                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} initialTopic={deepLinkTopic} />
                                 </div>
                             )}
                             <LessonSelect
@@ -1326,14 +1401,24 @@ export default function Classroom() {
                 />
             )}
 
-            {/* ── Docked Vaathiyaar conversation: scrollable history + input as one unit ── */}
+            {/* ── Floating Vaathiyaar chat: a docked icon that opens a chat popover, so
+                   the lesson stays full-screen and the chat never overlaps content ── */}
             {phase !== 'select' && (
                 <>
                     <TTSControls tts={tts} />
-                    <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
-                        <div className="max-w-5xl mx-auto pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_-6px_30px_rgba(0,0,0,0.12)] overflow-hidden">
+                    {chatOpen && (
+                        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[min(94vw,400px)] max-h-[70vh] flex flex-col pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.28)] overflow-hidden">
+                            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border-default flex-shrink-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-[11px] flex-shrink-0">{'\u{1F9D1}‍\u{1F3EB}'}</div>
+                                    <span className="text-sm font-bold text-text-primary truncate">Ask Vaathiyaar</span>
+                                </div>
+                                <button onClick={() => setChatOpen(false)} className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-text-secondary flex-shrink-0" aria-label="Close chat">
+                                    <X size={16} />
+                                </button>
+                            </div>
                             {chatMessages.filter((m) => !m._isHint).length > 0 && (
-                                <div className="max-h-[38vh] overflow-y-auto px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
+                                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-3 pb-1 space-y-3 dark-scrollbar">
                                     {chatMessages.filter((m) => !m._isHint).map((msg, idx) => (
                                         <motion.div
                                             key={idx}
@@ -1381,7 +1466,7 @@ export default function Classroom() {
                                     <div ref={chatEndRef} />
                                 </div>
                             )}
-                            <div className={`flex items-center gap-2 p-3 ${chatMessages.filter((m) => !m._isHint).length > 0 ? 'border-t border-border-default' : ''}`}>
+                            <div className="flex items-center gap-2 p-3 border-t border-border-default flex-shrink-0">
                                 <div className="flex-1">
                                     <ChatBar
                                         onSend={handleChat}
@@ -1391,21 +1476,33 @@ export default function Classroom() {
                                 </div>
                                 <button
                                     onClick={() => setVoiceOpen(true)}
-                                    className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 text-white hover:scale-105 transition-transform"
+                                    className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 text-white hover:scale-105 transition-transform flex-shrink-0"
                                     title="Talk to Vaathiyaar (voice tutorial)"
                                 >
                                     <Mic size={18} />
                                 </button>
                                 <button
                                     onClick={() => tts.setEnabled(!tts.enabled)}
-                                    className={`p-2.5 rounded-xl transition-all duration-200 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
+                                    className={`p-2.5 rounded-xl transition-all duration-200 flex-shrink-0 ${tts.enabled ? 'bg-purple-100 text-purple-600' : 'bg-bg-elevated text-text-muted hover:text-text-secondary'}`}
                                     title={tts.enabled ? 'Voice on' : 'Voice off'}
                                 >
                                     {tts.enabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    )}
+                    {/* Floating toggle icon — opens/closes the chat popover above */}
+                    <button
+                        onClick={() => setChatOpen((o) => !o)}
+                        className="fixed bottom-6 right-4 sm:right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                        title="Ask Vaathiyaar"
+                        aria-label={chatOpen ? 'Close Vaathiyaar chat' : 'Open Vaathiyaar chat'}
+                    >
+                        {chatOpen ? <X size={22} /> : <MessageCircle size={22} />}
+                        {!chatOpen && chatMessages.filter((m) => !m._isHint).length > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-bg-base" />
+                        )}
+                    </button>
                 </>
             )}
 

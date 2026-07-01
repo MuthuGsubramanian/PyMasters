@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api';
 import { useAuth } from './AuthContext';
-import { updateProfileSettings } from '../api';
+import { updateProfileSettings, getProfile } from '../api';
 
 const ProfileContext = createContext();
 
@@ -17,7 +16,10 @@ export function ProfileProvider({ children }) {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const res = await api.get(`/profile/${user.id}`);
+      // Route through getProfile() (not a raw api.get) so this read shares the
+      // in-flight coalescer with the Profile page's fetch — on a hard load both
+      // fire concurrently and now reuse a single round-trip instead of two.
+      const res = await getProfile(user.id);
       // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
       // Unwrap to the inner profile object (matching Profile.jsx); reading
       // preferred_language off the wrapper left the app-wide language unset,
@@ -41,6 +43,22 @@ export function ProfileProvider({ children }) {
     fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  // Keep <html lang> in sync with the app-wide language preference (module 11 —
+  // i18n). The document was hardcoded to lang="en" in index.html and never
+  // updated, so selecting Tamil (or any other language) left the page declaring
+  // English — a WCAG 3.1.1 "Language of Page" failure that misleads screen
+  // readers, browser "translate this page" prompts, and CSS :lang() font/
+  // hyphenation selection. Additive and backward-compatible: the default
+  // 'en' matches the existing static attribute (zero change for current users);
+  // wrapped in try/catch so it can never disrupt render.
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined' && language) {
+        document.documentElement.lang = language;
+      }
+    } catch { /* never block render */ }
+  }, [language]);
 
   const setLanguage = (code) => {
     if (!code) return;

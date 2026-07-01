@@ -56,6 +56,63 @@ def _row_to_dict(row):
     return d
 
 
+# Lazy index of lesson_id -> lesson JSON file path, built once per process.
+_LESSONS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lessons"
+)
+_lesson_index = None
+
+
+def _build_lesson_index():
+    """Map every lesson id -> its JSON file path (cached after first scan)."""
+    global _lesson_index
+    if _lesson_index is not None:
+        return _lesson_index
+    index = {}
+    if os.path.isdir(_LESSONS_DIR):
+        for root, _dirs, files in os.walk(_LESSONS_DIR):
+            for fn in files:
+                if fn.endswith(".json") and fn != "schema.json":
+                    index.setdefault(fn[:-5], os.path.join(root, fn))
+    _lesson_index = index
+    return index
+
+
+def _resolve_text(value, lang="en"):
+    """Lesson title/description may be a localized dict ({en, ta}); return a string."""
+    if isinstance(value, dict):
+        return value.get(lang) or value.get("en") or next(iter(value.values()), "")
+    return value or ""
+
+
+def _hydrate_lessons(sequence, lang="en"):
+    """Turn a list of lesson ids into objects with title/description/xp for the UI.
+
+    The path-detail UI renders lesson objects (title, description, xp_reward); the
+    DB only stores an ordered list of lesson ids. Without this hydration the detail
+    page showed "0 lessons" and an empty timeline.
+    """
+    index = _build_lesson_index()
+    lessons = []
+    for lid in sequence:
+        if not isinstance(lid, str):
+            continue
+        lesson = {"id": lid}
+        fp = index.get(lid)
+        if fp:
+            try:
+                with open(fp, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                lesson["title"] = _resolve_text(data.get("title"), lang) or lid
+                lesson["description"] = _resolve_text(data.get("description"), lang)
+                if data.get("xp_reward") is not None:
+                    lesson["xp_reward"] = data.get("xp_reward")
+            except (OSError, json.JSONDecodeError):
+                pass
+        lessons.append(lesson)
+    return lessons
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -120,8 +177,8 @@ def recommend(user_id: str = Query(...)):
 
 
 @router.get("/{path_id}")
-def get_path_detail(path_id: str):
-    """Get full path detail with lesson sequence."""
+def get_path_detail(path_id: str, lang: str = Query("en")):
+    """Get full path detail with the lesson sequence hydrated into lesson objects."""
     conn = _get_conn()
     row = conn.execute("SELECT * FROM learning_paths WHERE id = ?", [path_id]).fetchone()
     conn.close()
@@ -129,7 +186,17 @@ def get_path_detail(path_id: str):
     if not row:
         raise HTTPException(status_code=404, detail=f"Path '{path_id}' not found.")
 
-    return _row_to_dict(row)
+    result = _row_to_dict(row)
+    sequence = result.get("lesson_sequence") or []
+    if isinstance(sequence, str):
+        try:
+            sequence = json.loads(sequence)
+        except (json.JSONDecodeError, TypeError):
+            sequence = []
+    # UI reads path.lessons (objects with title/description/xp); DB only stores ids.
+    result["lessons"] = _hydrate_lessons(sequence, lang)
+    result["lesson_count"] = len(result["lessons"])
+    return result
 
 
 @router.post("/{path_id}/start")

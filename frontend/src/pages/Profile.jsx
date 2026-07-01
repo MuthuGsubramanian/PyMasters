@@ -61,12 +61,18 @@ const VOICE_OPTIONS = [
 
 const ACHIEVEMENTS = [
     { id: 'first_login',       label: 'First Login',              icon: Star,         xpReq: 0,    color: 'from-yellow-400 to-amber-500' },
-    { id: 'first_module',      label: 'First Module Complete',     icon: CheckCircle2, xpReq: 0,    color: 'from-green-400 to-emerald-500' },
+    // Relabelled "First Module Complete" -> "First Lesson Complete": the backend earns this
+    // badge on lessons_done > 0 (profile.py get_user_achievements), while the dashboard
+    // "Modules Done" stat counts mastered modules (mastery>=0.5). The old label made a user
+    // with 1 lesson / 0 mastered modules see "Modules Done 0" yet "First Module Complete" earned.
+    { id: 'first_module',      label: 'First Lesson Complete',     icon: CheckCircle2, xpReq: 0,    color: 'from-green-400 to-emerald-500' },
     { id: 'streak_7',          label: '7-Day Streak',              icon: Flame,        xpReq: 0,    color: 'from-orange-400 to-red-500' },
     { id: 'xp_100',            label: '100 XP',                    icon: Zap,          xpReq: 100,  color: 'from-cyan-400 to-blue-500' },
     { id: 'xp_500',            label: '500 XP',                    icon: Trophy,       xpReq: 500,  color: 'from-purple-400 to-violet-500' },
     { id: 'xp_1000',           label: '1000 XP',                   icon: Award,        xpReq: 1000, color: 'from-pink-400 to-rose-500' },
-    { id: 'all_modules',       label: 'All Modules Complete',      icon: Sparkles,     xpReq: 0,    color: 'from-indigo-400 to-purple-500' },
+    // NOTE: removed the 'all_modules' ("All Modules Complete") badge — the backend
+    // ACHIEVEMENT_DEFINITIONS (profile.py) never emits it, so it was permanently locked and
+    // wrongly inflated the "X of N unlocked" denominator (showed "of 7", only 6 earnable).
 ];
 
 // ─── Utility Helpers ──────────────────────────────────────────────────────────
@@ -77,12 +83,18 @@ function getInitials(name) {
 }
 
 function getRankInfo(xp) {
-    if (xp >= 5000) return { rank: 'Master', color: 'from-amber-400 to-yellow-500', next: null };
-    if (xp >= 2000) return { rank: 'Expert', color: 'from-purple-400 to-violet-500', next: 5000 };
-    if (xp >= 1000) return { rank: 'Advanced', color: 'from-blue-400 to-cyan-500', next: 2000 };
-    if (xp >= 500)  return { rank: 'Intermediate', color: 'from-green-400 to-emerald-500', next: 1000 };
-    if (xp >= 100)  return { rank: 'Apprentice', color: 'from-teal-400 to-cyan-500', next: 500 };
-    return { rank: 'Novice', color: 'from-slate-400 to-slate-500', next: 100 };
+    // `floor` is the current tier's lower XP bound. It is required to draw the
+    // XP progress bar as progress *within the current tier* (floor → next),
+    // not as an absolute fraction of `next`. Without it a user who has only just
+    // reached a rank (e.g. 1000 XP = Advanced, next 2000) would show ~50% filled
+    // instead of ~0%, overstating progress at every tier. `next` and the other
+    // fields are unchanged; `floor` is purely additive.
+    if (xp >= 5000) return { rank: 'Master', color: 'from-amber-400 to-yellow-500', floor: 5000, next: null };
+    if (xp >= 2000) return { rank: 'Expert', color: 'from-purple-400 to-violet-500', floor: 2000, next: 5000 };
+    if (xp >= 1000) return { rank: 'Advanced', color: 'from-blue-400 to-cyan-500', floor: 1000, next: 2000 };
+    if (xp >= 500)  return { rank: 'Intermediate', color: 'from-green-400 to-emerald-500', floor: 500, next: 1000 };
+    if (xp >= 100)  return { rank: 'Apprentice', color: 'from-teal-400 to-cyan-500', floor: 100, next: 500 };
+    return { rank: 'Novice', color: 'from-slate-400 to-slate-500', floor: 0, next: 100 };
 }
 
 function formatDate(dateStr) {
@@ -353,9 +365,16 @@ export default function Profile() {
                 // the profile-page load path. Promise.all overlaps them. The
                 // achievements call is allowed to fail softly (-> null) without
                 // blocking the profile render.
-                const [res, ar] = await Promise.all([
+                const [res, ar, sr] = await Promise.all([
                     getProfile(user.id),
                     api.get(`/profile/${user.id}/achievements`).catch(() => null),
+                    // Stats (XP, modules, streak, time) live on a DEDICATED /stats
+                    // endpoint — get_profile() does NOT return modules_completed,
+                    // streak, or time_spent, so reading them off the profile object
+                    // left "Modules Done / Day Streak / Time Spent" permanently 0.
+                    // Fetch /stats in parallel and use it as the authoritative source.
+                    // Allowed to fail softly (-> null) without blocking the render.
+                    api.get(`/profile/${user.id}/stats`).catch(() => null),
                 ]);
                 // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
                 // Read the wrapped profile object (falling back to res.data for safety).
@@ -399,12 +418,16 @@ export default function Profile() {
                 setAutoPlayAnimations(vs.auto_play_animations ?? true);
                 setHintLevel(vs.hint_level ?? 2);
 
-                // Stats
+                // Stats — prefer the authoritative /stats payload (sr), which the
+                // backend computes from users.points, user_mastery, user_streaks and
+                // time_spent learning signals. Fall back to the profile object / auth
+                // context only when the stats request failed (sr === null).
+                const st = sr?.data || {};
                 setStats({
-                    totalXp: p.points || p.xp || user?.points || 0,
-                    modulesCompleted: p.modules_completed ?? p.completions?.length ?? 0,
-                    currentStreak: p.streak || 0,
-                    timeSpent: p.time_spent || 0,
+                    totalXp: st.total_xp ?? p.points ?? p.xp ?? user?.points ?? 0,
+                    modulesCompleted: st.modules_completed ?? p.modules_completed ?? p.completions?.length ?? 0,
+                    currentStreak: st.current_streak ?? p.streak ?? 0,
+                    timeSpent: st.total_time_minutes ?? p.time_spent ?? 0,
                 });
 
                 // Achievements — fetched from the dedicated endpoint (above, in
@@ -432,6 +455,30 @@ export default function Profile() {
         loadProfile();
         return () => { cancelled = true; };
     }, [user?.id, navigate]);
+
+    // ─── Keep the "Preferred Language" dropdown in sync with the active language ─
+    // The Vaathiyaar "Language" selector (LanguageSelector -> setLanguage) writes
+    // `preferred_language` to the server IMMEDIATELY and updates the app-wide
+    // context `language`. The separate "Preferred Language" dropdown here holds
+    // its own `preferredLang` state, which previously never reacted to that
+    // change. Two bugs resulted: (1) after using the Vaathiyaar selector the two
+    // controls showed contradictory languages; (2) a subsequent "Save Changes"
+    // sent the STALE `preferredLang` in the settings payload, silently reverting
+    // the language the user had just chosen. Mirror context -> dropdown so they
+    // can never disagree and Save always carries the active language.
+    //
+    // Guarded to codes the dropdown can actually render (LANGUAGES) so it never
+    // introduces a blank/unmatched <select>; only adopts a value that differs
+    // (no redundant setState); does NOT mark the form dirty (no phantom save
+    // prompt). For users who never touch the Vaathiyaar selector, `language`
+    // equals `preferredLang` from load, so this is a no-op — zero behaviour
+    // change. Codes offered only by the Vaathiyaar selector (e.g. it/ko, absent
+    // from LANGUAGES) are left as-is, exactly as today.
+    useEffect(() => {
+        if (!language) return;
+        if (!LANGUAGES.some((l) => l.value === language)) return;
+        setPreferredLang((prev) => (prev === language ? prev : language));
+    }, [language]);
 
     // ─── Mark dirty on field changes ────────────────────────────────────────
 
@@ -544,8 +591,14 @@ export default function Profile() {
     // ─── Derived values ─────────────────────────────────────────────────────
 
     const rankInfo = getRankInfo(stats.totalXp);
+    // Progress is measured within the current tier (floor → next), so the bar
+    // reads 0% just after a promotion and 100% on the cusp of the next rank.
+    // Guard the span against div-by-zero and clamp to [0,100] for safety.
     const xpProgress = rankInfo.next
-        ? Math.min(100, Math.round((stats.totalXp / rankInfo.next) * 100))
+        ? Math.max(0, Math.min(100, Math.round(
+              ((stats.totalXp - (rankInfo.floor || 0)) /
+                  Math.max(1, rankInfo.next - (rankInfo.floor || 0))) * 100
+          )))
         : 100;
 
     // ─── Loading Skeleton ───────────────────────────────────────────────────
@@ -567,6 +620,17 @@ export default function Profile() {
     }
 
     // ─── Render ─────────────────────────────────────────────────────────────
+
+    // Single source of truth for which badges are unlocked. The Achievements
+    // render lit a badge via `unlockedBadges.includes(id) || (xpReq>0 && totalXp>=xpReq)`,
+    // but the section subtitle counted only `unlockedBadges.length`. When the
+    // /achievements request fails (unlockedBadges stays []) but /stats succeeds,
+    // XP badges still rendered gold while the subtitle read "0 of N unlocked".
+    // Derive one id set with the SAME predicate and use it for both the count
+    // and the per-badge render so they can never disagree.
+    const unlockedBadgeIds = ACHIEVEMENTS
+        .filter((b) => unlockedBadges.includes(b.id) || (b.xpReq > 0 && stats.totalXp >= b.xpReq))
+        .map((b) => b.id);
 
     return (
         <div className="min-h-screen bg-gradient-hero">
@@ -1002,11 +1066,10 @@ export default function Profile() {
                 {/* 6. Achievements                                           */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 <GlassCard index={5}>
-                    <SectionHeading icon={Trophy} title="Achievements" subtitle={`${unlockedBadges.length} of ${ACHIEVEMENTS.length} unlocked`} />
+                    <SectionHeading icon={Trophy} title="Achievements" subtitle={`${unlockedBadgeIds.length} of ${ACHIEVEMENTS.length} unlocked`} />
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {ACHIEVEMENTS.map((badge) => {
-                            const isUnlocked = unlockedBadges.includes(badge.id)
-                                || (badge.xpReq > 0 && stats.totalXp >= badge.xpReq);
+                            const isUnlocked = unlockedBadgeIds.includes(badge.id);
                             const BadgeIcon = badge.icon;
 
                             return (

@@ -728,7 +728,11 @@ export default function OrgDashboard() {
       <Tabs
         className="mb-4"
         tabs={TABS.filter((t) => {
-          if (t.key === 'analytics' && !isAdmin) return false;
+          // Analytics is read-only aggregate stats; backend org_analytics requires
+          // manager+ and loadOrg() already fetches it for managers. Gate the tab on
+          // canViewProgress (manager+) so managers actually see the data they're
+          // entitled to. Invites stays admin+ (backend invite requires admin+).
+          if (t.key === 'analytics' && !canViewProgress) return false;
           if (t.key === 'invites' && !isAdmin) return false;
           if (t.key === 'students' && !canViewProgress) return false;
           return true;
@@ -1080,11 +1084,11 @@ export default function OrgDashboard() {
                           </div>
                         )}
                         {inv?.expires_at && (
-                          <span className="text-[10px] text-text-muted">
+                          <span className={`text-[10px] ${(inv?.status === 'expired' || inv?.expired) ? 'text-red-500' : 'text-text-muted'}`}>
                             Exp: {new Date(inv.expires_at).toLocaleDateString()}
                           </span>
                         )}
-                        <Badge variant={inv?.status === 'accepted' ? 'success' : 'warning'}>
+                        <Badge variant={inv?.status === 'accepted' ? 'success' : (inv?.status === 'expired' || inv?.expired) ? 'danger' : 'warning'}>
                           {String(inv?.status || 'pending')}
                         </Badge>
                       </div>
@@ -1227,7 +1231,7 @@ export default function OrgDashboard() {
           )}
 
           {/* ========== ANALYTICS TAB ========== */}
-          {tab === 'analytics' && isAdmin && (
+          {tab === 'analytics' && canViewProgress && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard icon={Users} label="Members" value={typeof analytics?.total_members === 'number' ? analytics.total_members : memberCount} />

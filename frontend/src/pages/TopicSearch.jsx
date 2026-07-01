@@ -106,17 +106,25 @@ function GeneratePanel({ topic, userId }) {
         try {
             const res = await generateTopic({ topic, level, focus, user_id: userId });
             const jobId = res.data.job_id;
+            // Bound the poll so a stuck/never-resolving job (or a persistently failing
+            // status call) surfaces an error instead of polling forever. ~6 min ceiling
+            // at 2.5s/tick (144 tries), matching the LearnAnything generator's cap.
+            let tries = 0;
             pollRef.current = setInterval(async () => {
+                tries += 1;
                 try {
                     const s = await getModuleStatus(jobId);
                     setProgress(s.data.progress_pct || 0);
                     setStage((s.data.current_stage || s.data.status || '').replace(/_/g, ' '));
                     if (s.data.status === 'completed') {
                         clearInterval(pollRef.current); setPhase('done');
-                    } else if (s.data.status === 'failed') {
+                    } else if (s.data.status === 'failed' || tries > 144) {
                         clearInterval(pollRef.current); setPhase('error');
                     }
-                } catch { /* keep polling */ }
+                } catch {
+                    // transient status errors are tolerated, but still bounded by the cap
+                    if (tries > 144) { clearInterval(pollRef.current); setPhase('error'); }
+                }
             }, 2500);
         } catch {
             setPhase('error');

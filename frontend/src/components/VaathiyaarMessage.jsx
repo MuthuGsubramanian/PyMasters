@@ -55,7 +55,7 @@ export default function VaathiyaarMessage() {
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                     className="mb-6"
                 >
-                    <div className="rounded-2xl overflow-hidden border border-purple-200 bg-gradient-to-r from-purple-50 via-white to-cyan-50 shadow-sm">
+                    <div className="rounded-2xl overflow-hidden border border-purple-200 dark:border-border-default bg-gradient-to-r from-purple-50 via-white to-cyan-50 dark:bg-none dark:bg-bg-surface shadow-sm">
                         <div className="h-1 bg-gradient-to-r from-purple-400 via-cyan-400 to-blue-500" />
                         <div className="p-5 flex items-start gap-4">
                             <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center select-none shadow-md shadow-purple-300/20">
@@ -63,10 +63,10 @@ export default function VaathiyaarMessage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-sm font-bold text-slate-800">Vaathiyaar</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-text-primary">Vaathiyaar</span>
                                     <Sparkles size={12} className="text-purple-400" />
                                 </div>
-                                <p className="text-sm text-slate-600 leading-relaxed">
+                                <p className="text-sm text-slate-600 dark:text-text-secondary leading-relaxed">
                                     {message.text || message.message || message.content}
                                 </p>
                                 <div className="flex items-center gap-2 mt-3">

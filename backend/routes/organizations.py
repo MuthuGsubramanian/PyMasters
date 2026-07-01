@@ -290,10 +290,23 @@ def get_org(org_id: str, user_id: str = Query(None), caller: str = Depends(get_c
             "SELECT id, email, role, token, created_at, expires_at FROM org_invites WHERE org_id = ? AND used = 0 ORDER BY created_at DESC",
             [org_id]
         ).fetchall()
-        pending_invites = [
-            {"id": r[0], "email": r[1], "role": r[2], "token": r[3], "created_at": r[4], "expires_at": r[5]}
-            for r in inv_rows
-        ]
+        _now = datetime.utcnow()
+        for r in inv_rows:
+            # Compute live vs expired so the console doesn't present a dead
+            # (un-redeemable) invite as still "pending". join_org already rejects
+            # expired tokens; this surfaces that truth to admins. Additive fields.
+            _expired = False
+            if r[5]:
+                try:
+                    _expired = datetime.fromisoformat(str(r[5]).replace(" ", "T")) < _now
+                except Exception:
+                    _expired = False
+            pending_invites.append({
+                "id": r[0], "email": r[1], "role": r[2], "token": r[3],
+                "created_at": r[4], "expires_at": r[5],
+                "expired": _expired,
+                "status": "expired" if _expired else "pending",
+            })
 
     conn.close()
     if not org:

@@ -35,6 +35,42 @@ def _require_self(user_id: str, caller: str) -> None:
     if caller != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
 
+
+def _relative_time(ts) -> str:
+    """Human-friendly 'time ago' for a SQLite timestamp string (stored UTC via
+    CURRENT_TIMESTAMP, format 'YYYY-MM-DD HH:MM:SS'). Returns '' on any parse
+    failure so callers can degrade gracefully — this only feeds optional,
+    display-only fields and must never raise into an endpoint response."""
+    if not ts:
+        return ""
+    try:
+        s = str(ts).replace("T", " ").split(".")[0].strip()
+        dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return ""
+    try:
+        secs = (datetime.utcnow() - dt).total_seconds()
+    except Exception:
+        return ""
+    if secs < 0:
+        secs = 0
+    if secs < 60:
+        return "just now"
+    mins = int(secs // 60)
+    if mins < 60:
+        return f"{mins}m ago"
+    hours = int(mins // 60)
+    if hours < 24:
+        return f"{hours}h ago"
+    days = int(hours // 24)
+    if days < 7:
+        return f"{days}d ago"
+    weeks = int(days // 7)
+    if weeks < 5:
+        return f"{weeks}w ago"
+    return dt.strftime("%b %d, %Y")
+
+
 BLOCKED_LANGUAGES = {"hi"}
 
 
@@ -46,7 +82,13 @@ class OnboardingData(BaseModel):
     user_id: str
     motivation: str
     prior_experience: str
-    known_languages: List[str]
+    # Optional with a safe default: the current onboarding UI no longer asks a
+    # dedicated "languages you already know" question, so the frontend legitimately
+    # omits this field. Keeping it required made EVERY individual onboarding submit
+    # fail Pydantic validation (422 "field required"), stranding new individual
+    # users on the onboarding screen. Defaulting to [] restores the flow while
+    # still accepting a list from any (legacy) caller that does send it.
+    known_languages: List[str] = []
     learning_style: str
     goal: str
     time_commitment: str
@@ -54,6 +96,15 @@ class OnboardingData(BaseModel):
     user_type: Optional[str] = ""
     email: Optional[str] = ""
     whatsapp: Optional[str] = ""
+    # Optional social-profile URLs collected by the onboarding "Connect your
+    # professional profiles" step. Previously these were NOT declared on the
+    # model, so Pydantic silently dropped the frontend's `linkedin_url`/
+    # `github_url` and they never reached the DB — even though the users table
+    # has the columns and the Profile page + Org member views display them.
+    # Declaring them (optional, default "") captures the values without
+    # changing behavior for any caller that omits them.
+    linkedin_url: Optional[str] = ""
+    github_url: Optional[str] = ""
 
 
 class OrgOnboardingData(BaseModel):
@@ -108,6 +159,8 @@ def onboarding(data: OnboardingData):
         "user_type": data.user_type or "",
         "email": data.email or "",
         "whatsapp": data.whatsapp or "",
+        "linkedin_url": data.linkedin_url or "",
+        "github_url": data.github_url or "",
     }
 
     result = save_onboarding(db_path, data.user_id, payload)
@@ -550,25 +603,64 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
         auto_play_animations = 1 if (v.get("auto_play_animations") if "auto_play_animations" in v else data.auto_play_animations) else 0
         hint_level = int(v.get("hint_level") if v.get("hint_level") is not None else data.hint_level)
 
-        # 1. Update users table (name, email, whatsapp, social links)
-        cursor.execute(
-            """UPDATE users SET name = ?, email = ?, whatsapp = ?,
-               linkedin_url = ?, github_url = ?, twitter_url = ?, website_url = ?
-               WHERE id = ?""",
-            [data.name, data.email, data.whatsapp,
-             data.linkedin_url or "", data.github_url or "",
-             data.twitter_url or "", data.website_url or "", user_id],
-        )
+        # Only touch columns the caller actually sent. The Profile-page language
+        # switcher (and any other narrow caller) PUTs a PARTIAL body such as
+        # {"preferred_language": "ta"}; without this guard the unset model
+        # defaults ("") would overwrite name/email/whatsapp/bio/social links and
+        # reset every learning/voice preference — wiping the whole profile on a
+        # simple language change. We distinguish "field omitted" from "field set
+        # to ''" via Pydantic's fields-set and, for an existing row, update ONLY
+        # the provided columns. A first-time INSERT (no prior data to lose) still
+        # writes the resolved values/defaults as before.
+        fields_set = getattr(data, "model_fields_set", None)
+        if fields_set is None:
+            fields_set = getattr(data, "__fields_set__", set())
+        has_prefs = "preferences" in fields_set
 
-        # 2. Update user_profiles table (learning preferences)
+        def _given(flat_name, prefs_key=None, vaa_key=None):
+            if flat_name in fields_set:
+                return True
+            if has_prefs and prefs_key is not None and prefs_key in prefs:
+                return True
+            if has_prefs and vaa_key is not None and vaa_key in v:
+                return True
+            return False
+
+        # 1. Update users table (identity + social links) — provided columns only.
+        user_updates = [
+            ("name", data.name, "name" in fields_set),
+            ("email", data.email, "email" in fields_set),
+            ("whatsapp", data.whatsapp, "whatsapp" in fields_set),
+            ("linkedin_url", data.linkedin_url or "", "linkedin_url" in fields_set),
+            ("github_url", data.github_url or "", "github_url" in fields_set),
+            ("twitter_url", data.twitter_url or "", "twitter_url" in fields_set),
+            ("website_url", data.website_url or "", "website_url" in fields_set),
+        ]
+        u_cols = [f"{c} = ?" for c, _val, given in user_updates if given]
+        u_vals = [val for _c, val, given in user_updates if given]
+        if u_cols:
+            cursor.execute(
+                f"UPDATE users SET {', '.join(u_cols)} WHERE id = ?",
+                u_vals + [user_id],
+            )
+
+        # 2. Upsert user_profiles table (learning preferences) — provided columns only.
+        lang_given = _given("preferred_language", "preferred_language")
+        style_given = _given("learning_style", "learning_style")
         cursor.execute("SELECT user_id FROM user_profiles WHERE user_id = ?", [user_id])
         if cursor.fetchone():
-            cursor.execute(
-                """UPDATE user_profiles
-                   SET preferred_language = ?, learning_style = ?
-                   WHERE user_id = ?""",
-                [preferred_language, learning_style, user_id],
-            )
+            p_cols, p_vals = [], []
+            if lang_given:
+                p_cols.append("preferred_language = ?")
+                p_vals.append(preferred_language)
+            if style_given:
+                p_cols.append("learning_style = ?")
+                p_vals.append(learning_style)
+            if p_cols:
+                cursor.execute(
+                    f"UPDATE user_profiles SET {', '.join(p_cols)} WHERE user_id = ?",
+                    p_vals + [user_id],
+                )
         else:
             cursor.execute(
                 """INSERT INTO user_profiles (user_id, preferred_language, learning_style, onboarding_completed)
@@ -576,21 +668,27 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
                 [user_id, preferred_language, learning_style],
             )
 
-        # 3. Upsert user_settings table (voice/animation/misc preferences)
+        # 3. Upsert user_settings table (bio + voice/animation/misc) — provided columns only.
+        settings_updates = [
+            ("bio", data.bio, "bio" in fields_set),
+            ("voice_enabled", voice_enabled, _given("voice_enabled", vaa_key="voice_mode")),
+            ("voice_speed", voice_speed, _given("voice_speed", vaa_key="voice_speed")),
+            ("voice_name", voice_name, _given("voice_name", vaa_key="voice_selection")),
+            ("auto_play_animations", auto_play_animations, _given("auto_play_animations", vaa_key="auto_play_animations")),
+            ("hint_level", hint_level, _given("hint_level", vaa_key="hint_level")),
+            ("daily_goal", daily_goal, _given("daily_goal", "daily_goal")),
+            ("difficulty_preference", difficulty_preference, _given("difficulty_preference", "difficulty")),
+        ]
         cursor.execute("SELECT user_id FROM user_settings WHERE user_id = ?", [user_id])
         if cursor.fetchone():
-            cursor.execute(
-                """UPDATE user_settings
-                   SET bio = ?, voice_enabled = ?, voice_speed = ?, voice_name = ?,
-                       auto_play_animations = ?, hint_level = ?, daily_goal = ?,
-                       difficulty_preference = ?, updated_at = CURRENT_TIMESTAMP
-                   WHERE user_id = ?""",
-                [
-                    data.bio, voice_enabled, voice_speed, voice_name,
-                    auto_play_animations, hint_level, daily_goal,
-                    difficulty_preference, user_id,
-                ],
-            )
+            s_cols = [f"{c} = ?" for c, _val, given in settings_updates if given]
+            s_vals = [val for _c, val, given in settings_updates if given]
+            if s_cols:
+                s_cols.append("updated_at = CURRENT_TIMESTAMP")
+                cursor.execute(
+                    f"UPDATE user_settings SET {', '.join(s_cols)} WHERE user_id = ?",
+                    s_vals + [user_id],
+                )
         else:
             cursor.execute(
                 """INSERT INTO user_settings
@@ -675,6 +773,44 @@ def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
 
         total_time_minutes = round(total_time_minutes)
 
+        # Recent activity feed (most recent lesson/module completions). The
+        # Dashboard "Recent Activity" panel reads `stats.recent_activity`; this
+        # field was never returned, so the panel always fell back to its empty
+        # state ("Start learning to see your activity here") even for users with
+        # real completions. Building it from lesson_completions (which IS written
+        # on every module/challenge pass) makes the panel populate. Additive and
+        # optional: if the query yields nothing the field is [] and the UI shows
+        # the same empty state as before — zero change for existing behavior.
+        recent_activity = []
+        try:
+            cursor.execute(
+                "SELECT lesson_id, completed_at, xp_awarded FROM lesson_completions "
+                "WHERE user_id = ? ORDER BY completed_at DESC LIMIT 5",
+                [user_id],
+            )
+            comp_rows = cursor.fetchall()
+            # Resolve friendly titles for any generated lessons in one batch query;
+            # static modules fall back to a de-slugged id ('module_1' -> 'Module 1').
+            gen_titles = {}
+            if comp_rows:
+                ids = [r["lesson_id"] for r in comp_rows]
+                placeholders = ",".join("?" for _ in ids)
+                cursor.execute(
+                    f"SELECT id, topic FROM generated_lessons WHERE id IN ({placeholders})",
+                    ids,
+                )
+                gen_titles = {gr["id"]: gr["topic"] for gr in cursor.fetchall()}
+            for r in comp_rows:
+                lid = r["lesson_id"]
+                title = gen_titles.get(lid) or str(lid).replace("_", " ").title()
+                recent_activity.append({
+                    "label": f"Completed {title}",
+                    "time": _relative_time(r["completed_at"]),
+                    "xp": r["xp_awarded"] or 0,
+                })
+        except Exception:
+            recent_activity = []
+
         # Rank based on XP
         if total_xp >= 1000:
             rank = "Code Architect"
@@ -694,6 +830,7 @@ def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
             "total_time_minutes": total_time_minutes,
             "lessons_completed": lessons_completed,
             "rank": rank,
+            "recent_activity": recent_activity,
         }
     finally:
         conn.close()
@@ -897,6 +1034,18 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
         # Check generated lessons for the user
         recommended_lesson = None
         reason = "Keep building your Python skills!"
+        # Additive presentation fields for the Dashboard "Today's Recommended
+        # Lesson" card. The card reads recommendation.title /
+        # recommended_lesson?.title / .description / .link, but the response only
+        # ever carried `recommended_lesson` as a plain string, so the headline
+        # always fell back to the generic "Continue in the Classroom" and the CTA
+        # always went to /dashboard/classroom — the actual recommendation was
+        # never surfaced. These optional fields make the existing (?.- and
+        # ||-guarded) frontend reads resolve to real values. `recommended_lesson`
+        # itself is unchanged for backward compatibility.
+        rec_title = None
+        rec_description = None
+        rec_link = "/dashboard/classroom"
 
         cursor.execute(
             "SELECT id, topic FROM generated_lessons WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
@@ -907,20 +1056,39 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
             if gl["id"] not in completed_ids:
                 recommended_lesson = gl["topic"]
                 reason = "This lesson was crafted just for you based on your learning profile."
+                rec_title = gl["topic"]
+                rec_description = "A lesson tailored to your learning profile — pick up where you left off."
+                rec_link = "/dashboard/classroom"
                 break
 
         # Fallback to static modules
         if not recommended_lesson:
-            module_order = ["module_1", "module_2", "module_3", "module_4"]
-            for mid in module_order:
+            # Friendly titles/descriptions for the four stable seed modules
+            # (mirrors CONTENT_MAP in main.py). /dashboard/learn/<id> currently
+            # redirects to /dashboard/classroom, so we link straight to the
+            # classroom to avoid a redirect bounce.
+            module_meta = {
+                "module_1": ("Python Basics: Variables & Types", "Master the atoms of Python: strings, integers, and floats."),
+                "module_2": ("Control Flow: If & Loops", "Learn how to direct the flow of your program."),
+                "module_3": ("Data Structures: Lists & Dicts", "Store and organize data efficiently."),
+                "module_4": ("Advanced: Async & APIs", "Modern Python concurrency and networking."),
+            }
+            for mid in ["module_1", "module_2", "module_3", "module_4"]:
                 if mid not in completed_ids:
                     recommended_lesson = mid
                     reason = "Continue your learning journey with the next module."
+                    meta = module_meta.get(mid)
+                    rec_title = meta[0] if meta else mid.replace("_", " ").title()
+                    rec_description = meta[1] if meta else "Continue your learning journey."
+                    rec_link = "/dashboard/classroom"
                     break
 
         if not recommended_lesson:
             recommended_lesson = "Explore the Playground"
             reason = "You have completed all available modules! Try the Playground to practice."
+            rec_title = "Explore the Playground"
+            rec_description = "You've completed every module — flex your skills in the live Playground."
+            rec_link = "/dashboard/playground"
 
         # Seeded random for daily consistency
         today_seed = date.today().toordinal() + hash(user_id) % 10000
@@ -935,6 +1103,11 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
             "reason": reason,
             "trending_topic": trending_topic,
             "daily_tip": daily_tip,
+            # Additive presentation fields (see note above) — optional; older
+            # clients ignore them, current Dashboard consumes them via guarded reads.
+            "title": rec_title,
+            "description": rec_description,
+            "link": rec_link,
         }
     finally:
         conn.close()

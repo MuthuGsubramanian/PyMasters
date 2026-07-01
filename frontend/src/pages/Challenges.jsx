@@ -98,7 +98,9 @@ function LeaderboardRow({ entry, rank }) {
       </TD>
       <TD>
         <p className="text-sm font-medium text-text-primary truncate">{entry.username || entry.name}</p>
-        <p className="text-xs text-text-muted">{entry.time || entry.score} pts</p>
+        {/* Backend supplies `total_xp`; older fallbacks (time/score) kept for safety.
+            `?? 0` avoids rendering a blank "pts" when the points field is absent. */}
+        <p className="text-xs text-text-muted">{entry.total_xp ?? entry.time ?? entry.score ?? 0} pts</p>
       </TD>
       <TD className="w-8 text-right">
         {rank <= 3 && <Trophy size={14} className="text-yellow-400 inline-block" />}
@@ -144,7 +146,14 @@ export default function Challenges() {
           setCode(c.starter_code || '# Write your solution here\n');
         }
         if (lbRes.status === 'fulfilled') {
-          setLeaderboard(Array.isArray(lbRes.value.data) ? lbRes.value.data : lbRes.value.data?.entries || []);
+          // API shape: { leaderboard: [...], total_participants }. Earlier code only
+          // looked for `.entries`, which the backend never returns, so the board
+          // rendered empty even when real passing submissions existed. Read
+          // `.leaderboard` first, keeping array/`.entries` fallbacks for safety.
+          const lb = lbRes.value.data;
+          setLeaderboard(
+            Array.isArray(lb) ? lb : (lb?.leaderboard || lb?.entries || [])
+          );
         }
       } catch {
         setError('Unable to load challenge data. Please try again later.');
@@ -155,7 +164,11 @@ export default function Challenges() {
     load();
   }, []);
 
-  const countdown = useCountdown(challenge?.next_challenge_at);
+  // Fall back to the next Monday 00:00 UTC when the backend doesn't supply
+  // next_challenge_at (it currently doesn't), so the "Next challenge in" timer
+  // counts down instead of being stuck at 00d 00h 00m 00s. nextMondayUTC() was
+  // written for exactly this fallback but was previously never wired in.
+  const countdown = useCountdown(challenge?.next_challenge_at || nextMondayUTC());
 
   const handleSubmit = useCallback(async () => {
     if (!code.trim() || submitting) return;
@@ -177,7 +190,14 @@ export default function Challenges() {
 
   if (loading) return <Skeleton />;
 
-  const diff = DIFFICULTY[challenge?.difficulty] || DIFFICULTY.Medium;
+  // Backend sends difficulty lowercase ("easy"/"medium"/"hard"); the DIFFICULTY
+  // map is keyed by Capitalized labels ("Easy"/"Medium"/"Hard"). A raw lookup
+  // missed for easy/hard and silently fell back to Medium (yellow) — so easy
+  // challenges showed yellow instead of green and hard showed yellow instead of
+  // red. Normalize the case so the badge color matches the real difficulty.
+  const rawDiff = challenge?.difficulty || '';
+  const diffKey = rawDiff ? rawDiff.charAt(0).toUpperCase() + rawDiff.slice(1).toLowerCase() : 'Medium';
+  const diff = DIFFICULTY[diffKey] || DIFFICULTY.Medium;
 
   // Fallback previous challenges
   const previousChallenges = challenge?.previous || [
@@ -260,7 +280,7 @@ export default function Challenges() {
               <div className="p-6 md:p-8">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <Badge className={clsx('px-3 py-1 text-xs', diff.bg, diff.text, diff.border)}>
-                    {challenge?.difficulty || 'Medium'}
+                    {diff.label}
                   </Badge>
                   <Badge variant="warning" className="px-3 py-1 text-xs">
                     <Zap size={12} /> {challenge?.xp || 200} XP
