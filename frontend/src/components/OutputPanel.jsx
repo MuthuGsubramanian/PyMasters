@@ -3,7 +3,11 @@ import { Trash2, Sparkles, Loader2 } from 'lucide-react';
 
 function isErrorOutput(text) {
     if (!text) return false;
-    return /^(Traceback|.*Error:|.*Exception:|Execution error|Security Error)/m.test(text);
+    // Match Python tracebacks/exceptions AND the backend's own execution
+    // sentinels. Timeouts ("Execution timed out…"), subprocess failures
+    // ("Execution failed…") and rate-limit notices were previously rendered
+    // as green "success" with no help affordance — treat them as errors too.
+    return /^(Traceback|.*Error:|.*Exception:|Execution error|Execution failed|Execution timed out|Security Error|Rate limit reached)/m.test(text);
 }
 
 export default function OutputPanel({
