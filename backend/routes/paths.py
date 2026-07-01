@@ -146,16 +146,36 @@ def get_active_paths(user_id: str = Query(...)):
            ORDER BY ulp.last_activity DESC""",
         [user_id],
     ).fetchall()
-    conn.close()
 
     active = []
     for row in rows:
         d = _row_to_dict(row)
         sequence = d.get("adapted_sequence") or d.get("lesson_sequence", [])
         if isinstance(sequence, str):
-            sequence = json.loads(sequence)
+            try:
+                sequence = json.loads(sequence)
+            except (json.JSONDecodeError, TypeError):
+                sequence = []
+        if not isinstance(sequence, list):
+            sequence = []
         d["total_lessons"] = len(sequence)
+        # Additive progress enrichment (NEW optional fields; existing fields untouched).
+        # Mirrors GET /{path_id}/progress so the Paths list page's Active-Path banner can
+        # render a real completed count / percentage without a second round-trip.
+        seq_ids = [lid for lid in sequence if isinstance(lid, str)]
+        completed_count = 0
+        if seq_ids:
+            placeholders = ",".join("?" * len(seq_ids))
+            completed_count = len(
+                conn.execute(
+                    f"SELECT lesson_id FROM lesson_completions WHERE user_id = ? AND lesson_id IN ({placeholders})",
+                    [user_id] + seq_ids,
+                ).fetchall()
+            )
+        d["completed_count"] = completed_count
+        d["progress_pct"] = round(completed_count / len(seq_ids) * 100, 1) if seq_ids else 0
         active.append(d)
+    conn.close()
     return {"active_paths": active}
 
 

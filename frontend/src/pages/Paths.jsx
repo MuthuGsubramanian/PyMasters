@@ -218,9 +218,19 @@ function PathList() {
         ]).then(([pathsRes, activeRes, recRes]) => {
             const pathData = pathsRes.data?.paths || pathsRes.data || [];
             setPaths(Array.isArray(pathData) ? pathData : []);
-            setActivePath(activeRes.data?.path || activeRes.data || null);
-            const recData = recRes.data?.paths || recRes.data || [];
-            setRecommended(Array.isArray(recData) ? recData : []);
+            // /paths/active returns { active_paths: [...] } (most-recent first). Pick the
+            // first active path, guarding the empty-array case so the banner does not render
+            // a blank/undefined path. (Previously read activeRes.data?.path — a shape the
+            // endpoint never returns — so the whole response object was treated as a path,
+            // forcing a blank banner whose "Continue" navigated to /dashboard/paths/undefined.)
+            const activeList = activeRes.data?.active_paths;
+            setActivePath(Array.isArray(activeList) && activeList.length > 0 ? activeList[0] : null);
+            // /paths/recommend returns { recommended: <path|null> } (a single object, per
+            // Onboarding.jsx). Wrap it into the array this section expects. (Previously read
+            // recRes.data?.paths and required an array, so the section never rendered.)
+            const rec = recRes.data?.recommended;
+            const recData = Array.isArray(rec) ? rec : (rec ? [rec] : []);
+            setRecommended(recData);
         }).finally(() => setLoading(false));
     }, [user]);
 
@@ -267,10 +277,10 @@ function PathList() {
                                     {activePath.name || activePath.title}
                                 </h3>
                                 <p className="text-sm text-text-secondary mb-4">
-                                    {activePath.completed_lessons || 0} of {activePath.total_lessons || activePath.lesson_count || 0} lessons completed
+                                    {activePath.completed_count ?? activePath.completed_lessons ?? 0} of {activePath.total_lessons || activePath.lesson_count || 0} lessons completed
                                 </p>
                                 <button
-                                    onClick={() => navigate(`/dashboard/paths/${activePath.id}`)}
+                                    onClick={() => navigate(`/dashboard/paths/${activePath.path_id || activePath.id}`)}
                                     className="btn-neo btn-neo-primary py-2.5 text-sm group/btn"
                                 >
                                     Continue Path
