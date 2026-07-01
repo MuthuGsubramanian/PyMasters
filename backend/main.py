@@ -647,6 +647,18 @@ def init_db():
         except Exception as e:
             print(f"Graph seed: {e}")
 
+        # Seed lesson→concept links (idempotent, INSERT OR IGNORE). Without
+        # these rows the mastery overlay / frontier / gap detection all compute
+        # on an empty join — the adaptive layer silently reported 0.0 mastery
+        # for every user (found 2026-07-02: lesson_concepts had 0 rows).
+        try:
+            from graph.lesson_tagger import seed_lesson_concepts
+            added = seed_lesson_concepts(DB_PATH)
+            if added:
+                print(f"Lesson-concept seed: +{added} links")
+        except Exception as e:
+            print(f"Lesson-concept seed: {e}")
+
         # Seed learning paths
         try:
             from paths.definitions import seed_paths
