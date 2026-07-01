@@ -157,6 +157,37 @@ const FALLBACK_TRENDS = [
     { id: 't5', title: 'LangChain Agents', category: 'AI', difficulty: 'Advanced', desc: 'Build autonomous AI agents with LangChain and tool calling.' },
 ];
 
+// The backend `/trending` endpoint (content/trends.py) returns each topic with a
+// category *key* (e.g. `ai_agents`, `python_latest`) and a *lowercase* difficulty
+// (e.g. `intermediate`). The Trending-rail render (and its difficulty-badge colour,
+// which compares against Title-case `Beginner`/`Intermediate`/`Advanced`) expects
+// display-ready values. Without normalisation adopted topics render raw keys
+// ("AI_AGENTS" after the badge's uppercase CSS) and lowercase difficulties whose
+// badge always falls through to the red/`danger` colour. These helpers map a
+// backend record onto the rail's expected shape; any already-display-ready value
+// (the FALLBACK_TRENDS 'AI'/'Python' + Title-case difficulty, or an unknown key)
+// passes through unchanged, so the transform is a safe idempotent no-op there.
+const TREND_CATEGORY_LABEL = {
+    ai_agents: 'AI Agents', ai_safety: 'AI Agents',
+    rag: 'LLMs', fine_tuning: 'LLMs', prompt_engineering: 'LLMs', ai_coding: 'LLMs',
+    computer_vision: 'Computer Vision', multimodal: 'Computer Vision',
+    generative_ai: 'Computer Vision', ai_healthcare: 'Computer Vision',
+    nlp: 'NLP',
+    mlops: 'MLOps', devops: 'MLOps', ml_systems: 'MLOps',
+    python_latest: 'Python', python_tools: 'Python', python_advanced: 'Python',
+    web_development: 'Python',
+    deep_learning: 'Deep Learning', model_architecture: 'Deep Learning', edge_ai: 'Deep Learning',
+    data_science: 'Data Science', data_engineering: 'Data Science', vector_db: 'Data Science',
+};
+
+const normalizeTrendCategory = (c) =>
+    (typeof c === 'string' && TREND_CATEGORY_LABEL[c]) ? TREND_CATEGORY_LABEL[c] : (c || 'AI');
+
+const titleCaseTrendDifficulty = (d) =>
+    (typeof d === 'string' && d)
+        ? d.charAt(0).toUpperCase() + d.slice(1).toLowerCase()
+        : 'Intermediate';
+
 // ─── Helpers ──────────────────────────────────────────────────────────────
 function getGreeting() {
     const h = new Date().getHours();
@@ -308,7 +339,12 @@ export function Overview() {
                 });
                 const topics = res.data?.topics;
                 if (Array.isArray(topics) && topics.length > 0) {
-                    setTrends(topics.map((t) => ({ ...t, desc: t.desc ?? t.summary ?? '' })));
+                    setTrends(topics.map((t) => ({
+                        ...t,
+                        category: normalizeTrendCategory(t.category),
+                        difficulty: titleCaseTrendDifficulty(t.difficulty),
+                        desc: t.desc ?? t.summary ?? '',
+                    })));
                 }
             } catch {}
 
