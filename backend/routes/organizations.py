@@ -509,8 +509,9 @@ def change_role(org_id: str, member_id: str, data: RoleChangeRequest, caller: st
 
 @router.delete("/{org_id}/members/{member_id}")
 def remove_member(org_id: str, member_id: str, caller: str = Depends(get_current_user_id)):
-    """Remove a member. Requires admin+. Cannot remove last super_admin."""
-    require_org_role(DB_PATH, org_id, caller, "admin")
+    """Remove a member. Requires admin+. Cannot remove last super_admin, and
+    cannot remove a member who outranks the caller."""
+    member = require_org_role(DB_PATH, org_id, caller, "admin")
     conn = sqlite3.connect(DB_PATH)
     current = conn.execute(
         "SELECT role FROM org_members WHERE org_id = ? AND user_id = ?",
@@ -519,6 +520,17 @@ def remove_member(org_id: str, member_id: str, caller: str = Depends(get_current
     if not current:
         conn.close()
         raise HTTPException(status_code=404, detail="Member not found")
+    # Privilege boundary: an admin must not be able to remove a member who
+    # OUTRANKS them (e.g. an admin deleting a super_admin's membership). This
+    # mirrors the invite role-ceiling (_cap_invite_role) on the removal path:
+    # you may only act on peers or below. A super_admin removing another
+    # super_admin is peer-level and stays allowed (still subject to the
+    # last-super_admin guard below); self-removal is equal-level and unaffected.
+    # Legitimate removals (admin -> member/manager, super_admin -> anyone) are
+    # byte-for-byte unchanged; only the escalation case now returns 403.
+    if ROLE_LEVELS.get(current[0], 0) > ROLE_LEVELS.get(member["role"], 0):
+        conn.close()
+        raise HTTPException(status_code=403, detail="Cannot remove a member with a higher role than your own")
     if current[0] == "super_admin":
         admins = conn.execute(
             "SELECT COUNT(*) FROM org_members WHERE org_id = ? AND role = 'super_admin'",
