@@ -82,6 +82,8 @@ export default function App() {
               <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
               <Route path="/security" element={<ErrorBoundary><Security /></ErrorBoundary>} />
               <Route path="/onboarding" element={<PrivateRoute><ErrorBoundary><Onboarding /></ErrorBoundary></PrivateRoute>} />
+              {/* Legacy/shared-link alias: the Playground lives inside the dashboard shell */}
+              <Route path="/playground" element={<Navigate to="/dashboard/playground" replace />} />
               <Route path="/dashboard" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
                 <Route index element={<ErrorBoundary><Overview /></ErrorBoundary>} />
                 {/* Legacy learn map consolidated into the Classroom catalogue */}
