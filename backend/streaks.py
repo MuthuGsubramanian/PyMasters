@@ -35,6 +35,55 @@ Production-safety
 from datetime import date, timedelta
 
 
+def effective_current_streak(stored, last_active_date, today=None):
+    """Return the *display-accurate* current streak for a read path.
+
+    Why this exists
+    ---------------
+    ``touch_streak`` only runs when a user does a learning activity, so the
+    stored ``current_streak`` is correct on the day it was written but then
+    *decays silently*: a user who built a 7-day streak and then skips two days
+    still has ``current_streak = 7`` in the row until their NEXT activity (which
+    resets it to 1). Every read path that trusts the raw value therefore
+    OVER-REPORTS a lapsed streak as if it were still live (e.g. the Dashboard
+    "day streak" badge showing 7 for someone who broke it days ago). This helper
+    applies the same lapse rule ``touch_streak`` uses on write — a streak is only
+    "live" while the last active date is today or yesterday; once there is a gap
+    of 2+ days the streak is broken and the effective value is 0 — WITHOUT
+    mutating stored data (purely a read-time correction, fully reversible).
+
+    Args:
+        stored: the raw ``current_streak`` value read from ``user_streaks``.
+        last_active_date: the row's ``last_active_date`` (ISO ``YYYY-MM-DD``) or
+            ``None``.
+        today: optional ISO date string to treat as "today"; defaults to the
+            server's local date, matching ``touch_streak``.
+
+    Returns:
+        ``stored`` (coerced to int, floored at 0) when the streak is still live,
+        otherwise ``0``. Never raises — on any unexpected input it falls back to
+        the stored value so a read path is never broken by this helper.
+    """
+    try:
+        s = int(stored or 0)
+        if s <= 0:
+            return 0
+        if not last_active_date:
+            return 0
+        today = today or date.today().isoformat()
+        last = str(last_active_date).strip().split(" ")[0].split("T")[0]
+        yesterday = (date.fromisoformat(today) - timedelta(days=1)).isoformat()
+        if last == today or last == yesterday:
+            return s
+        return 0
+    except Exception:
+        # Defensive: never let a display-only correction break the endpoint.
+        try:
+            return max(0, int(stored or 0))
+        except Exception:
+            return 0
+
+
 def touch_streak(conn, user_id, today=None):
     """Record daily learning activity for ``user_id`` and advance their streak.
 

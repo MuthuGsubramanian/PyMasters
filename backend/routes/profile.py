@@ -845,15 +845,27 @@ def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
         )
         lessons_completed = cursor.fetchone()[0] or 0
 
-        # Current streak from user_streaks table
+        # Current streak from user_streaks table.
+        # The stored current_streak is only rewritten by touch_streak when the
+        # user does an activity, so it decays silently: a lapsed streak stays at
+        # its old value (e.g. 7) in the row until the next activity resets it to
+        # 1. Reading it raw makes the Dashboard "day streak" badge OVER-REPORT a
+        # broken streak. Correct at read time via effective_current_streak, which
+        # applies the same today/yesterday lapse rule touch_streak uses on write
+        # (0 once there's a 2+-day gap) WITHOUT mutating stored data. For a live
+        # streak (last activity today/yesterday) the value is byte-identical to
+        # before, so active users are unaffected.
         current_streak = 0
         cursor.execute(
-            "SELECT current_streak FROM user_streaks WHERE user_id = ?",
+            "SELECT current_streak, last_active_date FROM user_streaks WHERE user_id = ?",
             [user_id],
         )
         streak_row = cursor.fetchone()
         if streak_row:
-            current_streak = streak_row["current_streak"] or 0
+            from streaks import effective_current_streak
+            current_streak = effective_current_streak(
+                streak_row["current_streak"], streak_row["last_active_date"]
+            )
 
         # Total time from learning_signals (sum of time_spent signals)
         total_time_minutes = 0
