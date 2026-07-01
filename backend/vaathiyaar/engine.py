@@ -449,6 +449,7 @@ def evaluate_code(
     student_profile: Optional[dict] = None,
     lesson_context: Optional[dict] = None,
     attempt_count: int = 0,
+    test_code: Optional[str] = None,
 ) -> dict:
     """
     Safely execute student-submitted code, compare output with expected, then
@@ -515,14 +516,33 @@ def evaluate_code(
             "animation": feedback.get("animation"),
         }
 
-    # Execute code via subprocess
-    result = run_code_subprocess(student_code)
-    actual_output = result["output"]
-    stderr_output = result["error"]
-    exec_error = stderr_output if result["exit_code"] != 0 else ""
-    error_msg = exec_error or stderr_output
+    # Execute code via subprocess. Two grading modes:
+    #  • test_code present (server-authored, trusted assertion harness) → run the
+    #    student's code followed by the harness in ONE program; success == a clean
+    #    exit (no AssertionError/exception). This mirrors the proven Challenges
+    #    grader and is how "test_code" lessons (e.g. numpy/pandas/sklearn, whose
+    #    correctness is a property of the student's VARIABLES, not stdout) are meant
+    #    to be graded. Callers pass test_code only when there is no usable
+    #    expected_output, so the default path below is never altered for the
+    #    stdout-graded lessons.
+    #  • else (default, unchanged) → exact stdout match against expected_output.
+    harness = test_code if (isinstance(test_code, str) and test_code.strip()) else None
+    if harness:
+        result = run_code_subprocess(student_code + "\n\n" + harness)
+        actual_output = result["output"]
+        stderr_output = result["error"]
+        success = result["exit_code"] == 0
+        # On failure, surface the assertion/exception (its message names the exact
+        # unmet requirement, e.g. "matrix must be 3x3") so Vaathiyaar can coach.
+        error_msg = "" if success else stderr_output
+    else:
+        result = run_code_subprocess(student_code)
+        actual_output = result["output"]
+        stderr_output = result["error"]
+        exec_error = stderr_output if result["exit_code"] != 0 else ""
+        error_msg = exec_error or stderr_output
 
-    success = actual_output.strip() == expected_output.strip()
+        success = actual_output.strip() == expected_output.strip()
     struggling = is_struggling(success, attempt_count)
 
     # Build a feedback message for Vaathiyaar, escalating help if the student is stuck.

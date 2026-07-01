@@ -670,12 +670,28 @@ def evaluate(request: EvaluateRequest):
 
     lesson_context = {"lesson_id": request.lesson_id, "topic": request.topic}
 
+    # Load the lesson once (reused below for xp_reward). Some lessons — e.g. the
+    # numpy/pandas/sklearn set in ai_ml_foundations — carry NO usable
+    # expected_output and instead ship a `test_code` assertion harness that grades
+    # by inspecting the student's variables. For those the server passes the
+    # (trusted, server-authoritative) harness to the grader; we deliberately load
+    # it from the lesson JSON and NEVER trust a client-supplied harness. Gated on
+    # an EMPTY expected_output so the 397 stdout-graded lessons are unaffected.
+    lesson_obj = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
+    test_code = None
+    if lesson_obj and not (request.expected_output or "").strip():
+        _pc = (lesson_obj.get("practice_challenges") or [{}])[0]
+        _tc = _pc.get("test_code")
+        if isinstance(_tc, str) and _tc.strip():
+            test_code = _tc
+
     result = evaluate_code(
         student_code=request.code,
         expected_output=request.expected_output,
         student_profile=profile,
         lesson_context=lesson_context,
         attempt_count=request.attempt_count or 0,
+        test_code=test_code,
     )
 
     # Record the evaluation as a learning signal
@@ -716,7 +732,7 @@ def evaluate(request: EvaluateRequest):
 
     # Award XP when student completes a challenge successfully
     if result["success"] and request.topic:
-        lesson = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
+        lesson = lesson_obj  # already loaded above (avoids a second disk read)
         xp_reward = lesson.get("xp_reward", 25) if lesson else 25
 
         # Use lesson_id for deduplication; fall back to topic when no lesson_id
