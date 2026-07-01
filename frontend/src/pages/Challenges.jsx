@@ -53,6 +53,14 @@ function useCountdown(targetDate) {
   return timeLeft;
 }
 
+// ─── Leaderboard response normalizer ────────────────────────────────────────
+// Backend shape is { leaderboard: [...], total_participants }; older/alt shapes
+// (a bare array, or { entries: [...] }) are tolerated for safety. Shared by the
+// initial mount load AND the post-submit refresh so the two can never drift.
+function pickLeaderboardArray(data) {
+  return Array.isArray(data) ? data : (data?.leaderboard || data?.entries || []);
+}
+
 // ─── Loading skeleton ───────────────────────────────────────────────────────
 function Skeleton() {
   return (
@@ -150,10 +158,7 @@ export default function Challenges() {
           // looked for `.entries`, which the backend never returns, so the board
           // rendered empty even when real passing submissions existed. Read
           // `.leaderboard` first, keeping array/`.entries` fallbacks for safety.
-          const lb = lbRes.value.data;
-          setLeaderboard(
-            Array.isArray(lb) ? lb : (lb?.leaderboard || lb?.entries || [])
-          );
+          setLeaderboard(pickLeaderboardArray(lbRes.value.data));
         }
       } catch {
         setError('Unable to load challenge data. Please try again later.');
@@ -170,6 +175,22 @@ export default function Challenges() {
   // written for exactly this fallback but was previously never wired in.
   const countdown = useCountdown(challenge?.next_challenge_at || nextMondayUTC());
 
+  // After a user PASSES a challenge they earn a leaderboard slot (and XP), but
+  // the right-column board + "N competitors" count were only ever fetched on
+  // mount — so a just-passed user saw a stale board (even the "No submissions
+  // yet. Be the first!" empty state) until a manual reload, directly
+  // contradicting the pass that just happened. Re-fetch on a successful pass.
+  // Guarded: on any failure we keep the current board, so this can never
+  // regress the existing view. Additive; only fires on a pass.
+  const refreshLeaderboard = useCallback(async () => {
+    try {
+      const res = await getChallengeLeaderboard();
+      setLeaderboard(pickLeaderboardArray(res.data));
+    } catch {
+      /* keep the existing board on failure — no regression */
+    }
+  }, []);
+
   const handleSubmit = useCallback(async () => {
     if (!code.trim() || submitting) return;
     setSubmitting(true);
@@ -181,12 +202,19 @@ export default function Challenges() {
         code,
       });
       setResult(res.data);
+      // Only a pass changes this user's leaderboard standing; refresh so their
+      // new position + the competitor count reflect immediately. Other statuses
+      // (failed/rejected/error) leave the board unchanged, as before.
+      const status = res.data?.status;
+      if (status === 'passed' || status === 'already_completed') {
+        refreshLeaderboard();
+      }
     } catch (err) {
       setResult({ success: false, message: safeErrorMsg(err, 'Submission failed. Try again.') });
     } finally {
       setSubmitting(false);
     }
-  }, [code, challenge, user, submitting]);
+  }, [code, challenge, user, submitting, refreshLeaderboard]);
 
   if (loading) return <Skeleton />;
 
