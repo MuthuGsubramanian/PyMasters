@@ -113,6 +113,46 @@ def _normalize_daily_goal(raw) -> str:
         return "30"
 
 
+# The Profile page's learning-style control renders exactly this set (frontend
+# Profile.jsx LEARNING_STYLES: visual/reading/hands_on/mixed). Onboarding, however,
+# stores from a DIFFERENT option set (Onboarding.jsx: visual/hands_on/reading/
+# 'projects'), so a user who picked "Project-Driven" has learning_style='projects'
+# — a value the Profile control cannot render, leaving NO style button highlighted.
+_LEARNING_STYLE_CANONICAL = {"visual", "reading", "hands_on", "mixed"}
+_LEARNING_STYLE_ALIASES = {
+    "projects": "hands_on",      # "Project-Driven" == build things == hands-on
+    "project": "hands_on",
+    "project_driven": "hands_on",
+    "project-driven": "hands_on",
+    "kinesthetic": "hands_on",   # defensive: legacy/synonym codes
+    "hands-on": "hands_on",
+    "handson": "hands_on",
+    "balanced": "mixed",
+    "mix": "mixed",
+    "read": "reading",
+    "reading_theory": "reading",
+    "visual_diagrams": "visual",
+}
+
+
+def _normalize_learning_style(raw) -> str:
+    """Map any stored learning_style to the renderable set the Profile page shows.
+    Idempotent for already-canonical values; aliases onboarding-only codes (notably
+    'projects' -> 'hands_on'); falls back to 'mixed' (today's null default) for
+    anything unrecognised. Never raises — display-only field."""
+    try:
+        if raw is None:
+            return "mixed"
+        s = str(raw).strip().lower()
+        if not s:
+            return "mixed"
+        if s in _LEARNING_STYLE_CANONICAL:
+            return s
+        return _LEARNING_STYLE_ALIASES.get(s, "mixed")
+    except Exception:
+        return "mixed"
+
+
 # ---------------------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------------------
@@ -357,7 +397,7 @@ def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
         profile["bio"] = (s["bio"] if (s and s["bio"] is not None) else "")
         profile["preferences"] = {
             "preferred_language": profile.get("preferred_language") or "en",
-            "learning_style": profile.get("learning_style") or "mixed",
+            "learning_style": _normalize_learning_style(profile.get("learning_style")),
             "daily_goal": _normalize_daily_goal(s["daily_goal"] if (s and s["daily_goal"] is not None) else "30"),
             "difficulty": (s["difficulty_preference"] if (s and s["difficulty_preference"]) else "beginner"),
             "vaathiyaar": {
