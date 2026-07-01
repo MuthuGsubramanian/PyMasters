@@ -372,7 +372,11 @@ export default function Playground() {
             const result = res.data;
             let out = '';
             if (result.output) out += result.output;
-            if (result.error) out += (out ? '\n' : '') + result.error;
+            // Backend already folds stderr into `output`; only append `error`
+            // if it isn't already present, so tracebacks aren't shown twice.
+            if (result.error && !out.includes(result.error.trim())) {
+                out += (out ? '\n' : '') + result.error;
+            }
             if (!out) out = '(no output)';
             setOutput(out);
         } catch (err) {
