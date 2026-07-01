@@ -730,7 +730,9 @@ def get_weekly_challenge():
             "title": CHALLENGES[(index - k) % n]["title"],
             "xp": CHALLENGES[(index - k) % n]["xp_reward"],
             "difficulty": CHALLENGES[(index - k) % n]["difficulty"],
-            "week_number": week_number - k,
+            # Omit a non-positive label at the ISO week-1 wrap (0, -1…) — the
+            # frontend hides week_number when null rather than showing "Week -1".
+            "week_number": (week_number - k) if (week_number - k) >= 1 else None,
         }
         for k in range(1, min(4, n))
     ]
