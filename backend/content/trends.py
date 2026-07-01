@@ -1537,11 +1537,33 @@ def get_topics_by_category(category: str) -> list[dict]:
 
 
 def search_trends(query: str) -> list[dict]:
-    """Simple case-insensitive text search across titles and summaries."""
-    q = query.lower()
+    """Case-insensitive text search across titles, summaries, key concepts,
+    and category (both the internal key and its display label).
+
+    Broadened from the original title/summary-only match so that searching a
+    concept the catalogue demonstrably teaches (e.g. "QLoRA", "BM25", "DPO",
+    "Optuna", "HNSW") returns the relevant topic instead of an empty result.
+    The match set is a strict SUPERSET of the previous title/summary match, so
+    any non-empty query that returned results before returns at least those same
+    results now (in the same catalogue order, no duplicates). This also aligns
+    the ``/api/trending/search`` endpoint with the Trending page's own
+    client-side filter, which already searches concepts + category.
+    """
+    q = query.strip().lower()
+    if not q:
+        return []
     results: list[dict] = []
     for topic in TRENDING_TOPICS:
-        if q in topic["title"].lower() or q in topic["summary"].lower():
+        haystack = [
+            topic.get("title", ""),
+            topic.get("summary", ""),
+            topic.get("category", ""),
+        ]
+        cat_meta = CATEGORIES.get(topic.get("category", ""))
+        if cat_meta:
+            haystack.append(cat_meta.get("label", ""))
+        haystack.extend(topic.get("key_concepts", []))
+        if any(q in (field or "").lower() for field in haystack):
             results.append(topic)
     return results
 
