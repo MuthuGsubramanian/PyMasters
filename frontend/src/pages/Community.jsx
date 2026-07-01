@@ -209,7 +209,14 @@ function Members({ meId, orgId }) {
                         <div key={m.user_id} className="rounded-2xl border border-border-default bg-bg-surface p-4 flex items-center gap-3">
                             <Avatar name={m.name} url={m.avatar_url} size={42} />
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-text-primary truncate">{m.name}</p>
+                                <p className="text-sm font-semibold text-text-primary truncate flex items-center gap-1.5">
+                                    <span className="truncate">{m.name}</span>
+                                    {m.follows_you && (
+                                        <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-bg-inset text-text-secondary">
+                                            Follows you
+                                        </span>
+                                    )}
+                                </p>
                                 <p className="text-xs text-text-muted truncate">
                                     <span className={TIER_COLORS[m.tier] || 'text-text-muted'}>{m.tier}</span>
                                     {' · '}{m.xp} XP · {m.followers} follower{m.followers === 1 ? '' : 's'}
