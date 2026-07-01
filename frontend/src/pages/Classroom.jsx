@@ -815,7 +815,18 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
                                 <p className="font-bold text-green-700 font-display">Excellent Work!</p>
                                 <p className="text-xs text-green-600/70">You nailed this challenge</p>
                             </div>
-                            <div className="ml-auto flex items-center gap-1">
+                            {/* XP reward pill — the backend awards xp_earned on the FIRST
+                                successful completion of a lesson and returns it on /evaluate.
+                                Surface it here so the learner sees the reward in-context.
+                                Guarded on > 0 so re-takes (xp_earned === 0) and any response
+                                without the field show nothing (no layout/behavior change). */}
+                            {evalResult?.xp_earned > 0 && (
+                                <div className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300">
+                                    <Zap size={12} className="text-amber-500 fill-amber-400" />
+                                    <span className="text-xs font-bold text-amber-700">+{evalResult.xp_earned} XP</span>
+                                </div>
+                            )}
+                            <div className={`flex items-center gap-1 ${evalResult?.xp_earned > 0 ? '' : 'ml-auto'}`}>
                                 {[...Array(3)].map((_, i) => (
                                     <motion.div
                                         key={i}
