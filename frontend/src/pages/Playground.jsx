@@ -301,43 +301,56 @@ export default function Playground() {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let rawText = '';
+            let buffer = '';
+
+            // Process one complete SSE line (a `data: {...}` frame).
+            const processLine = (line) => {
+                const data = parseSSELine(line);
+                if (!data) return;
+
+                if (data.token) {
+                    rawText += data.token;
+                    const display = extractMessageFromJSON(rawText) || '';
+                    if (display) {
+                        setMessages((prev) =>
+                            prev.map((m) => m._isStreaming ? { ...m, content: display } : m)
+                        );
+                    }
+                }
+                if (data.done) {
+                    const finalMsg = data.message || extractMessageFromJSON(rawText) || rawText;
+                    setMessages((prev) =>
+                        prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
+                    );
+                    if (data.conversation_id) {
+                        setConversationId(data.conversation_id);
+                        refreshConversations();
+                    }
+                }
+                if (data.error) {
+                    setMessages((prev) =>
+                        prev.map((m) => m._isStreaming ? { role: 'assistant', content: `Error: ${data.error}` } : m)
+                    );
+                }
+            };
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value, { stream: true });
-
-                for (const line of chunk.split('\n')) {
-                    const data = parseSSELine(line);
-                    if (!data) continue;
-
-                    if (data.token) {
-                        rawText += data.token;
-                        const display = extractMessageFromJSON(rawText) || '';
-                        if (display) {
-                            setMessages((prev) =>
-                                prev.map((m) => m._isStreaming ? { ...m, content: display } : m)
-                            );
-                        }
-                    }
-                    if (data.done) {
-                        const finalMsg = data.message || extractMessageFromJSON(rawText) || rawText;
-                        setMessages((prev) =>
-                            prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
-                        );
-                        if (data.conversation_id) {
-                            setConversationId(data.conversation_id);
-                            refreshConversations();
-                        }
-                    }
-                    if (data.error) {
-                        setMessages((prev) =>
-                            prev.map((m) => m._isStreaming ? { role: 'assistant', content: `Error: ${data.error}` } : m)
-                        );
-                    }
+                // Buffer across reads: an SSE frame can be split across chunk
+                // boundaries (especially the large final `done` frame). Only
+                // lines terminated by '\n' are complete; keep the trailing
+                // partial line for the next read so no frame is dropped.
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();  // last element is an incomplete line (or '')
+                for (const line of lines) {
+                    processLine(line);
                 }
             }
+            // Flush any complete frame left in the buffer at stream end.
+            if (buffer) processLine(buffer);
 
             if (user?.id) {
                 api.get(`/playground/credits/${user.id}`)
