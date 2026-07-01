@@ -816,7 +816,14 @@ export default function Trending() {
   useEffect(() => { document.title = 'Trending — PyMasters'; }, []);
 
   useEffect(() => {
-    fetch('/api/trending')
+    // Request the full catalogue (endpoint caps at 50). The adoption guard below
+    // only swaps in the backend set when it has at least as many usable topics as
+    // the static fallback (TRENDING_TOPICS.length). The endpoint's own default is
+    // 10, which is below that threshold — so without an explicit count the backend
+    // list was silently discarded on every load and the daily-rotated catalogue
+    // never reached users. Asking for the full set lets the intended freshness
+    // feature activate while keeping the same "never show a smaller set" guard.
+    fetch('/api/trending?count=50')
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
         // Backend returns { date, count, topics: [...] }; also tolerate a bare array.
