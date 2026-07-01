@@ -868,10 +868,21 @@ def get_leaderboard(limit: int = 20):
     conn = sqlite3.connect(db_path)
     try:
         cursor = conn.cursor()
+        # Fetch name + username SEPARATELY (do NOT COALESCE them in SQL) so the
+        # public-safe display-name sanitizer can see both inputs. Some users'
+        # `users.name` column holds the email they signed up with; emitting it
+        # verbatim leaked full email addresses onto this UNAUTHENTICATED public
+        # leaderboard (rendered by Challenges.jsx). `_public_display_name`
+        # prefers a non-email value, else exposes only the local-part and never
+        # the full @domain address — the same protection already applied to the
+        # global / member-directory / profile-card / org leaderboards. u.name and
+        # u.username are functionally dependent on cs.user_id (join on u.id), so
+        # the bare columns are valid under GROUP BY cs.user_id in SQLite.
         cursor.execute("""
             SELECT
                 cs.user_id,
-                COALESCE(u.name, u.username, cs.user_id) AS name,
+                u.name AS uname,
+                u.username AS uusername,
                 COUNT(*) AS challenges_completed,
                 SUM(cs.xp_awarded) AS total_xp
             FROM challenge_submissions cs
@@ -883,13 +894,32 @@ def get_leaderboard(limit: int = 20):
         """, [limit])
 
         rows = cursor.fetchall()
+
+        # Import the sanitizer lazily (matches this file's local-import pattern:
+        # touch_streak, run_code_subprocess). If it is ever unavailable, degrade
+        # to the PRIOR coalesced value so the leaderboard can never break on an
+        # import problem. routes.social imports only stdlib + fastapi + auth, so
+        # there is no import cycle.
+        try:
+            from routes.social import _public_display_name
+        except Exception:
+            _public_display_name = None
+
+        def _display(name, username, uid):
+            if _public_display_name is not None:
+                try:
+                    return _public_display_name(name, username)
+                except Exception:
+                    pass
+            return name or username or uid  # byte-identical to the old COALESCE
+
         leaderboard = [
             {
                 "rank": i + 1,
                 "user_id": row[0],
-                "name": row[1],
-                "challenges_completed": row[2],
-                "total_xp": row[3],
+                "name": _display(row[1], row[2], row[0]),
+                "challenges_completed": row[3],
+                "total_xp": row[4],
             }
             for i, row in enumerate(rows)
         ]
