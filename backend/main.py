@@ -1051,7 +1051,16 @@ def reset_password(req: ResetPasswordRequest):
             raise HTTPException(status_code=400, detail="This reset link is invalid or has already been used.")
         if row[1] and datetime.fromisoformat(row[1]) < datetime.utcnow():
             raise HTTPException(status_code=400, detail="This reset link has expired. Please request a new one.")
-        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), row[0]])
+        # Revoke all outstanding sessions on password reset: a reset is a security-recovery
+        # action (lost/compromised account), so any previously-issued JWT (including a stolen
+        # one) must stop validating. Bumping token_version reuses the same revocation primitive
+        # as admin revoke_sessions/block_user. Safe here because reset is UNAUTHENTICATED: the
+        # user re-authenticates via /login afterward (ResetPassword.jsx redirects to /login and
+        # login() re-reads token_version), so no legitimate in-flight session is disrupted.
+        cursor.execute(
+            "UPDATE users SET password_hash = ?, token_version = COALESCE(token_version,0) + 1 WHERE id = ?",
+            [hash_pw(req.new_password), row[0]],
+        )
         cursor.execute("UPDATE password_resets SET used = 1 WHERE token = ?", [req.token])
         conn.commit()
         return {"ok": True}
