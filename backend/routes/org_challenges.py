@@ -26,6 +26,28 @@ from auth import get_current_user_id
 from routes.organizations import require_org_role
 from routes.challenges import CHALLENGES
 
+# Email-safe display name for leaderboard rows. Some users' `name` column holds
+# the email they signed up with; rendering `COALESCE(u.name,u.username)` verbatim
+# leaked full email addresses onto the org leaderboards (visible to every org
+# member). Reuse the single source of truth from routes.social; fall back to an
+# inline copy so the leaderboard never breaks if that import is ever unavailable.
+try:  # pragma: no cover - exercised via routes.social in normal operation
+    from routes.social import _public_display_name as _safe_name
+except Exception:  # pragma: no cover - defensive; keep leaderboard resilient
+    def _safe_name(name, username):
+        name = (name or "").strip()
+        username = (username or "").strip()
+        if name and "@" not in name:
+            return name
+        if username and "@" not in username:
+            return username
+        for v in (name, username):
+            if v and "@" in v:
+                local = v.split("@", 1)[0].strip()
+                if local:
+                    return local
+        return "Learner"
+
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 router = APIRouter(prefix="/api/org", tags=["org-challenges"])
@@ -233,7 +255,7 @@ def challenge_set_leaderboard(org_id: str, set_id: str, caller: str = Depends(ge
         cph = ",".join("?" * len(cids))
         uph = ",".join("?" * len(scope_ids))
         rows = conn.execute(
-            f"""SELECT u.id, COALESCE(u.name,u.username) AS name, u.avatar_url,
+            f"""SELECT u.id, u.name AS name, u.username AS username, u.avatar_url,
                        COUNT(*) AS solved,
                        COALESCE(SUM(cs.xp_awarded),0) AS xp,
                        MAX(cs.submitted_at) AS last_at
@@ -250,7 +272,7 @@ def challenge_set_leaderboard(org_id: str, set_id: str, caller: str = Depends(ge
             leaderboard.append({
                 "rank": i + 1,
                 "user_id": r["id"],
-                "name": r["name"] or "Learner",
+                "name": _safe_name(r["name"], r["username"]),
                 "avatar_url": r["avatar_url"] or "",
                 "solved": r["solved"],
                 "total": len(cids),
@@ -278,7 +300,7 @@ def org_leaderboard(org_id: str, group: Optional[str] = None, caller: str = Depe
     try:
         params = [org_id]
         q = """
-            SELECT u.id, COALESCE(u.name,u.username) AS name, u.avatar_url,
+            SELECT u.id, u.name AS name, u.username AS username, u.avatar_url,
                    COALESCE(u.points,0) AS xp,
                    (SELECT COUNT(*) FROM challenge_submissions cs WHERE cs.user_id=u.id AND cs.passed=1) AS challenges,
                    (SELECT COALESCE(current_streak,0) FROM user_streaks st WHERE st.user_id=u.id) AS streak
@@ -299,7 +321,7 @@ def org_leaderboard(org_id: str, group: Optional[str] = None, caller: str = Depe
             leaderboard.append({
                 "rank": i + 1,
                 "user_id": r["id"],
-                "name": r["name"] or "Learner",
+                "name": _safe_name(r["name"], r["username"]),
                 "avatar_url": r["avatar_url"] or "",
                 "xp": r["xp"],
                 "challenges": r["challenges"],
