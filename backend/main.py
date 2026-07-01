@@ -652,7 +652,7 @@ def init_db():
         # on an empty join — the adaptive layer silently reported 0.0 mastery
         # for every user (found 2026-07-02: lesson_concepts had 0 rows).
         try:
-            from graph.lesson_tagger import seed_lesson_concepts
+            from graph.seed_links import seed_lesson_concepts
             added = seed_lesson_concepts(DB_PATH)
             if added:
                 print(f"Lesson-concept seed: +{added} links")

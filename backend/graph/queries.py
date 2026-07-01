@@ -16,7 +16,9 @@ def get_user_mastery_map(db_path: str, user_id: str) -> dict[str, float]:
         """
         SELECT lc.concept_id, MAX(um.mastery_level) as mastery
         FROM lesson_concepts lc
-        LEFT JOIN user_mastery um ON um.topic = lc.concept_id AND um.user_id = ?
+        LEFT JOIN user_mastery um
+            ON (um.topic = lc.concept_id OR um.topic = lc.lesson_id)
+            AND um.user_id = ?
         WHERE lc.role = 'teaches'
         GROUP BY lc.concept_id
         """,
