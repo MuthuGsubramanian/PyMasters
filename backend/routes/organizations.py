@@ -56,6 +56,21 @@ def _org_name(conn, org_id: str) -> str:
 # -- Role hierarchy -------------------------------------------------------
 ROLE_LEVELS = {"super_admin": 4, "admin": 3, "manager": 2, "member": 1}
 
+def _cap_invite_role(requested: str, inviter_role: str) -> str:
+    """Clamp an invited role so an inviter can never grant a role ABOVE their own.
+
+    Privilege boundary: promoting an existing member to admin/super_admin is gated
+    to super_admin via change_role(). The invite path (admin+) must not be a
+    backdoor around that gate — otherwise a mere admin could invite an email they
+    control as 'super_admin', redeem it, and self-escalate. Legitimate
+    equal-or-lower invites (the normal case) are returned unchanged; unknown roles
+    fall back to 'member'. Additive/defensive: does not alter response shape."""
+    if requested not in ROLE_LEVELS:
+        return "member"
+    if ROLE_LEVELS.get(requested, 0) > ROLE_LEVELS.get(inviter_role, 0):
+        return inviter_role
+    return requested
+
 def require_org_role(db_path, org_id, user_id, min_role="member"):
     """Check user has at least min_role in org. Returns member row or raises 403."""
     conn = sqlite3.connect(db_path)
@@ -396,9 +411,11 @@ def list_members(org_id: str, role: Optional[str] = None, department: Optional[s
 @router.post("/{org_id}/invite")
 def invite_member(org_id: str, data: InviteRequest, caller: str = Depends(get_current_user_id)):
     """Create a single invite. Requires admin+."""
-    require_org_role(DB_PATH, org_id, caller, "admin")
+    member = require_org_role(DB_PATH, org_id, caller, "admin")
     if data.role not in ROLE_LEVELS:
         raise HTTPException(status_code=400, detail=f"Invalid role: {data.role}")
+    # An inviter may never grant a role higher than their own (see _cap_invite_role).
+    data.role = _cap_invite_role(data.role, member["role"])
     invite_id = str(uuid.uuid4())
     token = secrets.token_urlsafe(32)
     expires = (datetime.utcnow() + timedelta(days=7)).isoformat()
@@ -421,20 +438,21 @@ def bulk_invite(org_id: str, data: BulkInviteRequest, caller: str = Depends(get_
     Accepts either {"emails": [...], "role": "member"} or
     {"invites": [{"email": ..., "role": ...}, ...]}.
     """
-    require_org_role(DB_PATH, org_id, caller, "admin")
+    member = require_org_role(DB_PATH, org_id, caller, "admin")
+    inviter_role = member["role"]
 
-    # Normalize both request shapes into (email, role) pairs.
+    # Normalize both request shapes into (email, role) pairs. Every role is passed
+    # through _cap_invite_role so a bulk invite can't escalate past the inviter's
+    # own level (same privilege boundary enforced on the single-invite path).
     pairs = []
     if data.invites:
         for inv in data.invites:
             em = (inv.get("email") or "").strip()
-            rl = inv.get("role") or data.role
-            if rl not in ROLE_LEVELS:
-                rl = "member"
+            rl = _cap_invite_role(inv.get("role") or data.role, inviter_role)
             if em and '@' in em:
                 pairs.append((em, rl))
     elif data.emails:
-        rl = data.role if data.role in ROLE_LEVELS else "member"
+        rl = _cap_invite_role(data.role, inviter_role)
         for em in data.emails:
             em = (em or "").strip()
             if em and '@' in em:
