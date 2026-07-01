@@ -456,6 +456,30 @@ export default function Profile() {
         return () => { cancelled = true; };
     }, [user?.id, navigate]);
 
+    // ─── Keep the "Preferred Language" dropdown in sync with the active language ─
+    // The Vaathiyaar "Language" selector (LanguageSelector -> setLanguage) writes
+    // `preferred_language` to the server IMMEDIATELY and updates the app-wide
+    // context `language`. The separate "Preferred Language" dropdown here holds
+    // its own `preferredLang` state, which previously never reacted to that
+    // change. Two bugs resulted: (1) after using the Vaathiyaar selector the two
+    // controls showed contradictory languages; (2) a subsequent "Save Changes"
+    // sent the STALE `preferredLang` in the settings payload, silently reverting
+    // the language the user had just chosen. Mirror context -> dropdown so they
+    // can never disagree and Save always carries the active language.
+    //
+    // Guarded to codes the dropdown can actually render (LANGUAGES) so it never
+    // introduces a blank/unmatched <select>; only adopts a value that differs
+    // (no redundant setState); does NOT mark the form dirty (no phantom save
+    // prompt). For users who never touch the Vaathiyaar selector, `language`
+    // equals `preferredLang` from load, so this is a no-op — zero behaviour
+    // change. Codes offered only by the Vaathiyaar selector (e.g. it/ko, absent
+    // from LANGUAGES) are left as-is, exactly as today.
+    useEffect(() => {
+        if (!language) return;
+        if (!LANGUAGES.some((l) => l.value === language)) return;
+        setPreferredLang((prev) => (prev === language ? prev : language));
+    }, [language]);
+
     // ─── Mark dirty on field changes ────────────────────────────────────────
 
     const markDirty = useCallback((setter) => {
