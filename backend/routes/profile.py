@@ -1015,15 +1015,20 @@ def get_user_achievements(user_id: str, caller: str = Depends(get_current_user_i
         first_completion_row = cursor.fetchone()
         first_completion_at = first_completion_row[0] if first_completion_row else None
 
-        # Current streak
+        # Current streak (live value) plus the monotonic best-ever streak.
+        # longest_streak never decreases (touch_streak keeps it as a running max),
+        # so it is the correct basis for a PERMANENT streak achievement; current_streak
+        # resets to 1 after a missed day and would revoke an already-earned badge.
         current_streak = 0
+        longest_streak = 0
         cursor.execute(
-            "SELECT current_streak FROM user_streaks WHERE user_id = ?",
+            "SELECT current_streak, longest_streak FROM user_streaks WHERE user_id = ?",
             [user_id],
         )
         streak_row = cursor.fetchone()
         if streak_row:
             current_streak = streak_row["current_streak"] or 0
+            longest_streak = streak_row["longest_streak"] or 0
 
         # Build achievements
         results = []
@@ -1041,7 +1046,11 @@ def get_user_achievements(user_id: str, caller: str = Depends(get_current_user_i
                     earned_at = first_completion_at
 
             elif defn["id"] == "streak_7":
-                if current_streak >= 7:
+                # Earned once the user has EVER reached a 7-day streak. Gate on the
+                # monotonic best-ever streak (falling back to the live value
+                # defensively) so a single missed day — which resets current_streak
+                # to 1 — no longer silently REVOKES an already-earned badge.
+                if max(longest_streak, current_streak) >= 7:
                     earned = True
                     earned_at = None  # no exact timestamp available
 
