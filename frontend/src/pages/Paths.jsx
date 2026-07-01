@@ -467,7 +467,20 @@ function PathDetail() {
     const remainingHours = path.estimated_hours
         ? Math.max(0, path.estimated_hours - (path.estimated_hours * progressPct / 100)).toFixed(1)
         : null;
-    const isStarted = completedIds.size > 0 || progress?.started;
+    // A path counts as "started" when the user has an active/paused enrollment OR has
+    // completed ≥1 lesson. GET /{id}/progress returns a `status` field ('active'|'paused'),
+    // NOT a `started` boolean — so the previous `progress?.started` check was always
+    // undefined. That misclassified a freshly-started path (status 'active', 0 completions)
+    // as not-started: the header kept showing "Start Path", and clicking it after starting
+    // looked like a no-op (POST /{id}/start is idempotent and returns "Path already active").
+    // Deriving from status makes the button correctly hide once the path is active, matching
+    // the already-correct behavior for paths with ≥1 completion. `progress?.started` is kept
+    // as a forward-compatible fallback in case the backend later adds that flag.
+    const isStarted =
+        completedIds.size > 0 ||
+        progress?.status === 'active' ||
+        progress?.status === 'paused' ||
+        progress?.started;
 
     return (
         <div className="animate-fade-in pb-20 max-w-4xl mx-auto">
