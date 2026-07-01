@@ -303,7 +303,12 @@ def org_leaderboard(org_id: str, group: Optional[str] = None, caller: str = Depe
             SELECT u.id, u.name AS name, u.username AS username, u.avatar_url,
                    COALESCE(u.points,0) AS xp,
                    (SELECT COUNT(*) FROM challenge_submissions cs WHERE cs.user_id=u.id AND cs.passed=1) AS challenges,
-                   (SELECT COALESCE(current_streak,0) FROM user_streaks st WHERE st.user_id=u.id) AS streak
+                   -- Outer COALESCE so members with NO user_streaks row read 0, not
+                   -- SQL NULL. The inner COALESCE only fires within a matched row, so
+                   -- a missing row previously yielded NULL -> JSON null -> the frontend
+                   -- rendered a bare "🔥" with no number. Outer COALESCE normalizes the
+                   -- no-row case to 0 at the source.
+                   COALESCE((SELECT current_streak FROM user_streaks st WHERE st.user_id=u.id), 0) AS streak
             FROM org_members om JOIN users u ON u.id = om.user_id
             WHERE om.org_id = ?
         """
@@ -325,7 +330,9 @@ def org_leaderboard(org_id: str, group: Optional[str] = None, caller: str = Depe
                 "avatar_url": r["avatar_url"] or "",
                 "xp": r["xp"],
                 "challenges": r["challenges"],
-                "streak": r["streak"],
+                # Belt-and-suspenders: keep the response integer-typed even if the
+                # subquery ever yields NULL, so the UI never renders a bare "🔥".
+                "streak": r["streak"] or 0,
                 "is_me": (r["id"] == caller),
             })
         return {"leaderboard": leaderboard, "count": len(leaderboard), "group": group or ""}
