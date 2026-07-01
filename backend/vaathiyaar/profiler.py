@@ -127,6 +127,32 @@ def save_onboarding(db_path: str, user_id: str, data: dict) -> dict:
                 [email, whatsapp, user_id]
             )
 
+        # Save social-profile URLs (LinkedIn / GitHub) collected during
+        # onboarding. Written column-by-column and ONLY when a value is present,
+        # so a re-run that omits a field never clobbers an existing value (the
+        # same non-clobbering principle the profile-settings PUT fix relies on).
+        # Wrapped defensively: on an older schema without these columns the
+        # onboarding save still succeeds.
+        try:
+            social_updates = []
+            social_params = []
+            linkedin_url = data.get("linkedin_url", "")
+            github_url = data.get("github_url", "")
+            if linkedin_url:
+                social_updates.append("linkedin_url = ?")
+                social_params.append(linkedin_url)
+            if github_url:
+                social_updates.append("github_url = ?")
+                social_params.append(github_url)
+            if social_updates:
+                social_params.append(user_id)
+                cursor.execute(
+                    f"UPDATE users SET {', '.join(social_updates)} WHERE id = ?",
+                    social_params,
+                )
+        except Exception:
+            pass  # older schema may lack linkedin_url/github_url columns
+
         conn.commit()
 
     finally:

@@ -96,6 +96,15 @@ class OnboardingData(BaseModel):
     user_type: Optional[str] = ""
     email: Optional[str] = ""
     whatsapp: Optional[str] = ""
+    # Optional social-profile URLs collected by the onboarding "Connect your
+    # professional profiles" step. Previously these were NOT declared on the
+    # model, so Pydantic silently dropped the frontend's `linkedin_url`/
+    # `github_url` and they never reached the DB — even though the users table
+    # has the columns and the Profile page + Org member views display them.
+    # Declaring them (optional, default "") captures the values without
+    # changing behavior for any caller that omits them.
+    linkedin_url: Optional[str] = ""
+    github_url: Optional[str] = ""
 
 
 class OrgOnboardingData(BaseModel):
@@ -150,6 +159,8 @@ def onboarding(data: OnboardingData):
         "user_type": data.user_type or "",
         "email": data.email or "",
         "whatsapp": data.whatsapp or "",
+        "linkedin_url": data.linkedin_url or "",
+        "github_url": data.github_url or "",
     }
 
     result = save_onboarding(db_path, data.user_id, payload)
