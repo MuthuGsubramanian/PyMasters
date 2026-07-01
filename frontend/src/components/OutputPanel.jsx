@@ -7,7 +7,10 @@ function isErrorOutput(text) {
     // sentinels. Timeouts ("Execution timed out…"), subprocess failures
     // ("Execution failed…") and rate-limit notices were previously rendered
     // as green "success" with no help affordance — treat them as errors too.
-    return /^(Traceback|.*Error:|.*Exception:|Execution error|Execution failed|Execution timed out|Security Error|Rate limit reached)/m.test(text);
+    // The Playground pip-install row emits "Failed to install …" (allowlist
+    // rejection, pip stderr, or wrapped install rate-limit) and "Install
+    // error: …" (network/exception); these were likewise mis-rendered green.
+    return /^(Traceback|.*Error:|.*Exception:|Execution error|Execution failed|Execution timed out|Security Error|Rate limit reached|Failed to install|Install error)/m.test(text);
 }
 
 export default function OutputPanel({
