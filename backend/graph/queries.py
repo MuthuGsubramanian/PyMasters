@@ -29,6 +29,23 @@ def get_user_mastery_map(db_path: str, user_id: str) -> dict[str, float]:
         if row["mastery"] is not None:
             mastery_map[row["concept_id"]] = row["mastery"]
 
+    # Resilience overlay: user_mastery.topic values written by the classroom
+    # evaluate flow are often concept ids themselves. Credit those directly so
+    # a user's real progress shows even for lessons that lack a
+    # lesson_concepts link (the join above returned nothing for ALL users
+    # while lesson_concepts was unpopulated — found 2026-07-02).
+    conn2 = sqlite3.connect(db_path)
+    conn2.row_factory = sqlite3.Row
+    direct_rows = conn2.execute(
+        "SELECT topic, MAX(mastery_level) as mastery FROM user_mastery WHERE user_id = ? GROUP BY topic",
+        [user_id],
+    ).fetchall()
+    conn2.close()
+    for row in direct_rows:
+        topic = row["topic"]
+        if topic in mastery_map and row["mastery"] is not None:
+            mastery_map[topic] = max(mastery_map[topic], row["mastery"])
+
     return mastery_map
 
 
