@@ -99,6 +99,26 @@ def ensure_social_tables(db_path: str = None):
         conn.close()
 
 
+def _conn_count(conn, user_id, direction) -> int:
+    """Count a member's connections applying the SAME visibility filter the
+    connection *lists* use (JOIN users + exclude blocked accounts), so a card's
+    follower/following COUNT can never disagree with the people the list would
+    actually show. Previously the counts were bare `COUNT(*)` over
+    user_connections and silently included blocked/moderated accounts, so a card
+    could read e.g. "3 followers" while list_connections returned only 2.
+
+      direction="followers" -> members who follow user_id (exclude blocked followers)
+      direction="following" -> members user_id follows   (exclude blocked followees)
+    """
+    if direction == "followers":
+        sql = ("SELECT COUNT(*) FROM user_connections c JOIN users u ON u.id = c.follower_id "
+               "WHERE c.following_id=? AND COALESCE(u.is_blocked,0)=0")
+    else:
+        sql = ("SELECT COUNT(*) FROM user_connections c JOIN users u ON u.id = c.following_id "
+               "WHERE c.follower_id=? AND COALESCE(u.is_blocked,0)=0")
+    return conn.execute(sql, [user_id]).fetchone()[0]
+
+
 def _public_card(row, follower_count=0, following_count=0, is_following=False):
     xp = row["points"] or 0
     return {
@@ -298,9 +318,7 @@ def list_members(
 
         members = []
         for r in rows:
-            fc = conn.execute(
-                "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [r["id"]]
-            ).fetchone()[0]
+            fc = _conn_count(conn, r["id"], "followers")
             members.append(_public_card(r, follower_count=fc, is_following=(r["id"] in following)))
         return {"members": members, "count": len(members), "query": q}
     finally:
@@ -320,12 +338,8 @@ def member_profile(user_id: str, caller: Optional[str] = Depends(optional_user_i
         ).fetchone()
         if not row or row["is_blocked"]:
             raise HTTPException(status_code=404, detail="Member not found")
-        followers = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [user_id]
-        ).fetchone()[0]
-        following = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE follower_id=?", [user_id]
-        ).fetchone()[0]
+        followers = _conn_count(conn, user_id, "followers")
+        following = _conn_count(conn, user_id, "following")
         streak = conn.execute(
             "SELECT COALESCE(current_streak,0) FROM user_streaks WHERE user_id=?", [user_id]
         ).fetchone()
@@ -363,9 +377,7 @@ def follow(target_id: str, caller: str = Depends(get_current_user_id)):
             [caller, target_id],
         )
         conn.commit()
-        followers = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]
-        ).fetchone()[0]
+        followers = _conn_count(conn, target_id, "followers")
         return {"status": "connected", "following": True, "target_followers": followers}
     finally:
         conn.close()
@@ -382,9 +394,7 @@ def unfollow(target_id: str, caller: str = Depends(get_current_user_id)):
             [caller, target_id],
         )
         conn.commit()
-        followers = conn.execute(
-            "SELECT COUNT(*) FROM user_connections WHERE following_id=?", [target_id]
-        ).fetchone()[0]
+        followers = _conn_count(conn, target_id, "followers")
         return {"status": "disconnected", "following": False, "target_followers": followers}
     finally:
         conn.close()
