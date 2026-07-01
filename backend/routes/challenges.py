@@ -716,11 +716,30 @@ def get_weekly_challenge():
     week_number = today.isocalendar()[1]  # ISO week 1-53
     index = (week_number - 1) % len(CHALLENGES)
     challenge = CHALLENGES[index]
+    # Additive `previous`: the real challenges from the weeks immediately before
+    # this one in the rotation (newest first, up to 3). Purely informational —
+    # this endpoint is unauthenticated and therefore does NOT and MUST NOT claim
+    # per-user completion status; the frontend renders these neutrally. Before
+    # this field existed the UI showed a hardcoded placeholder list with
+    # fabricated titles and "completed" flags for every visitor. New optional
+    # response key; existing consumers ignore it (backward-compatible).
+    n = len(CHALLENGES)
+    previous = [
+        {
+            "id": CHALLENGES[(index - k) % n]["id"],
+            "title": CHALLENGES[(index - k) % n]["title"],
+            "xp": CHALLENGES[(index - k) % n]["xp_reward"],
+            "difficulty": CHALLENGES[(index - k) % n]["difficulty"],
+            "week_number": week_number - k,
+        }
+        for k in range(1, min(4, n))
+    ]
     return {
         "week_number": week_number,
         "year": today.year,
         "challenge": challenge,
         "total_challenges": len(CHALLENGES),
+        "previous": previous,
     }
 
 

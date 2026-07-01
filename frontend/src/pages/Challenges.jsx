@@ -199,12 +199,13 @@ export default function Challenges() {
   const diffKey = rawDiff ? rawDiff.charAt(0).toUpperCase() + rawDiff.slice(1).toLowerCase() : 'Medium';
   const diff = DIFFICULTY[diffKey] || DIFFICULTY.Medium;
 
-  // Fallback previous challenges
-  const previousChallenges = challenge?.previous || [
-    { id: 'p1', title: 'Binary Search Variants', status: 'completed', xp: 150 },
-    { id: 'p2', title: 'Graph Traversal', status: 'completed', xp: 200 },
-    { id: 'p3', title: 'Dynamic Programming I', status: 'locked', xp: 250 },
-  ];
+  // Real previous challenges from the backend (`/weekly` now returns `previous`:
+  // the actual past-week challenges, newest first). We deliberately do NOT
+  // fabricate a placeholder list here anymore — the old hardcoded fallback
+  // ("Binary Search Variants" etc.) invented titles that aren't in the bank and
+  // falsely marked them "completed" for every visitor. When the field is absent
+  // (older backend) or empty, we render an honest empty state instead.
+  const previousChallenges = Array.isArray(challenge?.previous) ? challenge.previous : [];
 
   return (
     <div className="min-h-screen bg-bg-base p-4 md:p-8">
@@ -446,7 +447,18 @@ export default function Challenges() {
                 <Award size={18} className="text-purple-500" /> Previous Challenges
               </h3>
               <div className="space-y-2">
-                {previousChallenges.map((pc, i) => (
+                {previousChallenges.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-sm text-text-muted">
+                    Past weekly challenges will appear here.
+                  </p>
+                ) : previousChallenges.map((pc, i) => {
+                  // Three honest states. Real past-week entries from the backend
+                  // carry no `status` (the endpoint can't know per-user
+                  // completion) → render neutrally, NOT as fake "completed" or
+                  // "locked". A future per-user feed may set status explicitly.
+                  const isCompleted = pc.status === 'completed';
+                  const isLocked = pc.status === 'locked';
+                  return (
                   <motion.div
                     key={pc.id}
                     initial={{ opacity: 0, x: -10 }}
@@ -454,23 +466,33 @@ export default function Challenges() {
                     transition={{ delay: 0.35 + i * 0.05 }}
                     className={clsx(
                       'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
-                      pc.status === 'completed'
+                      isCompleted
                         ? 'bg-green-500/5 hover:bg-green-500/10 border border-green-500/10'
-                        : 'bg-bg-elevated border border-border-default opacity-60'
+                        : isLocked
+                          ? 'bg-bg-elevated border border-border-default opacity-60'
+                          : 'bg-bg-elevated border border-border-default hover:bg-bg-elevated/70'
                     )}
                   >
-                    {pc.status === 'completed' ? (
+                    {isCompleted ? (
                       <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />
-                    ) : (
+                    ) : isLocked ? (
                       <Lock size={16} className="text-text-muted flex-shrink-0" />
+                    ) : (
+                      <Flame size={16} className="text-orange-400 flex-shrink-0" />
                     )}
-                    <span className="flex-1 text-sm text-text-secondary">{pc.title}</span>
+                    <span className="flex-1 text-sm text-text-secondary">
+                      {pc.title}
+                      {pc.week_number != null && (
+                        <span className="ml-2 text-xs text-text-muted">Week {pc.week_number}</span>
+                      )}
+                    </span>
                     <span className="text-xs text-amber-500 font-semibold flex items-center gap-1">
                       <Zap size={10} /> {pc.xp} XP
                     </span>
                     <ChevronRight size={14} className="text-text-muted" />
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>
