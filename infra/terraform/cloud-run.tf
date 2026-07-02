@@ -4,6 +4,28 @@ resource "google_artifact_registry_repository" "pymasters" {
   repository_id = "cloud-run-source-deploy"
   format        = "DOCKER"
   description   = "Docker images for PyMasters products"
+
+  # Cost control: every deploy pushes a ~1GB SHA-tagged image; the automation
+  # loops deploy many times a day, so untrimmed storage becomes the largest
+  # silent cost line. Keep the 5 newest for rollback, delete everything else.
+  # (CI also prunes post-deploy; this policy is the backstop.)
+  cleanup_policy_dry_run = false
+
+  cleanup_policies {
+    id     = "keep-newest-5"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 5
+    }
+  }
+
+  cleanup_policies {
+    id     = "delete-older-than-30d"
+    action = "DELETE"
+    condition {
+      older_than = "2592000s" # 30 days
+    }
+  }
 }
 
 # Cloud Run service for pymasters.net
@@ -15,8 +37,13 @@ resource "google_cloud_run_v2_service" "pymasters" {
     service_account = google_service_account.pymasters_runtime.email
 
     scaling {
-      min_instance_count = 0
-      max_instance_count = 3
+      # MUST match .github/workflows/deploy.yml (min=1, max=1).
+      # max=1 is a data-integrity requirement, not a cost choice: SQLite lives
+      # inside the instance, so a second instance would fork the database
+      # (split-brain). min=1 + no CPU throttling keeps Litestream's background
+      # GCS replication alive. Do not change without moving off SQLite.
+      min_instance_count = 1
+      max_instance_count = 1
     }
 
     containers {
