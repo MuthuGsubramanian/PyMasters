@@ -1,15 +1,28 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
 import os
 import json
 
+from auth import get_current_user_id
+
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 
 def _get_db_path():
     return os.environ.get("DB_PATH", "pymasters.db")
+
+
+def _require_self(user_id, caller) -> None:
+    """IDOR guard (2026-07-02, same pattern as routes/graph.py + routes/paths.py):
+    notifications and notification preferences are per-user private state, and
+    read-all / preference-update are WRITES. The user_id param is client-supplied;
+    derive the acting user from the verified JWT and refuse cross-user access.
+    str() on both sides because users.id is INTEGER for legacy accounts while the
+    JWT sub is always a string."""
+    if str(caller) != str(user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
 
 class PreferenceUpdate(BaseModel):
