@@ -470,7 +470,8 @@ def get_me(caller: str = Depends(get_current_user_id)):
     try:
         u = conn.execute(
             "SELECT id, name, username, COALESCE(points,0) AS points, unlocked_modules, "
-            "COALESCE(onboarding_completed,0) AS oc, COALESCE(account_type,'individual') AS at "
+            "COALESCE(onboarding_completed,0) AS oc, COALESCE(account_type,'individual') AS at, "
+            "COALESCE(email,'') AS email "
             "FROM users WHERE id=?",
             [caller],
         ).fetchone()
@@ -496,6 +497,10 @@ def get_me(caller: str = Depends(get_current_user_id)):
             unlocked = ["module_1"]
         return {
             "id": u["id"], "name": u["name"], "username": u["username"],
+            # Additive: mirror the /api/auth/login session shape (email was
+            # missing from both, leaving pm_user.email empty after login —
+            # broke the Razorpay checkout prefill on /dashboard/upgrade).
+            "email": u["email"],
             "points": u["points"], "unlocked": unlocked,
             "onboarding_completed": bool(u["oc"]), "account_type": u["at"],
             "org": org_info,

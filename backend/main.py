@@ -968,7 +968,7 @@ def login(user: UserLogin, request: Request = None):
         cursor = conn.cursor()
         # Fetch by username, then verify (supports bcrypt + legacy sha256).
         cursor.execute(
-            "SELECT id, name, points, unlocked_modules, onboarding_completed, account_type, password_hash FROM users WHERE username = ?",
+            "SELECT id, name, points, unlocked_modules, onboarding_completed, account_type, password_hash, email FROM users WHERE username = ?",
             [user.username]
         )
         record = cursor.fetchone()
@@ -1016,6 +1016,11 @@ def login(user: UserLogin, request: Request = None):
             "id": record[0],
             "name": record[1],
             "username": user.username,
+            # `email` was returned by /api/auth/register but omitted here, so the
+            # stored session (pm_user) had no usable email after a normal login —
+            # e.g. the Razorpay checkout prefill on /dashboard/upgrade came up
+            # empty. Additive optional field; register already returns it.
+            "email": record[7] or "",
             "points": record[2] or 0,
             "unlocked": unlocks,
             "onboarding_completed": bool(record[4]),
