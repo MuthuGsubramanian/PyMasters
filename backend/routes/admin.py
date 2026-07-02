@@ -164,8 +164,94 @@ def overview(caller: str = Depends(get_current_user_id)):
         "generation_jobs": one("SELECT COUNT(*) FROM module_generation_jobs"),
         "training_pairs": one("SELECT COUNT(*) FROM training_data"),
     }
+
+    # Telemetry (tables created by routes.telemetry.ensure_telemetry_tables;
+    # guarded so a missing migration can never break the whole overview).
+    try:
+        data["online_now"] = one(
+            "SELECT COUNT(*) FROM users WHERE last_seen_at > datetime('now','-5 minutes')"
+        )
+        data["visits_today"] = one(
+            "SELECT COUNT(*) FROM site_visits WHERE created_at > date('now')"
+        )
+        data["visits_total"] = one("SELECT COUNT(*) FROM site_visits")
+        data["unique_visitors_today"] = one(
+            "SELECT COUNT(DISTINCT COALESCE(user_id,'anon')) FROM site_visits WHERE created_at > date('now')"
+        )
+        data["ops_activity_today"] = one(
+            "SELECT COUNT(*) FROM ops_activity WHERE created_at > date('now')"
+        )
+    except Exception as exc:
+        print(f"[admin.overview] telemetry unavailable: {exc!r}")
+
     conn.close()
     return data
+
+
+class OpsActivityRequest(BaseModel):
+    source: str            # linkedin | youtube | daily-analysis | pilot-loop | ...
+    title: str
+    url: Optional[str] = None
+    status: str = "done"   # done | failed | skipped
+    detail: Optional[str] = None
+
+
+@router.get("/ops-activity")
+def ops_activity(caller: str = Depends(get_current_user_id), days: int = 7, limit: int = 100):
+    """Ops feed for the Overview tab: what the automation did (LinkedIn post,
+    YouTube upload, daily analysis, QA sweep...) and when."""
+    require_super_admin(caller)
+    days = max(1, min(days, 90))
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT id, source, title, url, status, detail, created_at FROM ops_activity "
+            "WHERE created_at > datetime('now', ?) ORDER BY created_at DESC LIMIT ?",
+            [f"-{days} days", max(1, min(limit, 500))],
+        ).fetchall()
+        return {"activity": [dict(r) for r in rows]}
+    except Exception as exc:
+        print(f"[admin.ops_activity] {exc!r}")
+        return {"activity": []}
+    finally:
+        conn.close()
+
+
+@router.post("/ops-activity")
+def report_ops_activity(req: OpsActivityRequest, caller: str = Depends(get_current_user_id)):
+    """Reported by the automation loops (signed in as the claude-qa service
+    account) right after they publish/post/run something."""
+    require_super_admin(caller)
+    conn = _conn()
+    try:
+        conn.execute(
+            "INSERT INTO ops_activity (id, source, title, url, status, detail) VALUES (?, ?, ?, ?, ?, ?)",
+            [str(uuid.uuid4()), req.source[:50], req.title[:300], req.url, req.status[:20], (req.detail or "")[:1000]],
+        )
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+@router.get("/logins")
+def recent_logins(caller: str = Depends(get_current_user_id), limit: int = 100):
+    """Recent login events with coarse location (country/region/city)."""
+    require_super_admin(caller)
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT le.user_id, u.username, u.email, le.ip, le.country, le.region, le.city, le.created_at "
+            "FROM login_events le LEFT JOIN users u ON u.id = le.user_id "
+            "ORDER BY le.created_at DESC LIMIT ?",
+            [max(1, min(limit, 500))],
+        ).fetchall()
+        return {"logins": [dict(r) for r in rows]}
+    except Exception as exc:
+        print(f"[admin.logins] {exc!r}")
+        return {"logins": []}
+    finally:
+        conn.close()
 
 
 @router.get("/users")
