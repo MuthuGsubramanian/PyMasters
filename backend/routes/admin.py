@@ -273,7 +273,11 @@ def list_users(caller: str = Depends(get_current_user_id), q: str = "", limit: i
                COALESCE(u.is_blocked,0) is_blocked, COALESCE(NULLIF(u.plan,''),'free') plan,
                COALESCE(u.is_super_admin,0) is_super_admin,
                (SELECT o.name FROM org_members om JOIN organizations o ON o.id=om.org_id WHERE om.user_id=u.id LIMIT 1) org_name,
-               (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id=u.id) last_active
+               (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id=u.id) last_active,
+               u.last_seen_at,
+               (SELECT COALESCE(NULLIF(le.city || ', ' || le.country, ', '), le.ip)
+                FROM login_events le WHERE le.user_id=u.id AND (le.country IS NOT NULL OR le.ip IS NOT NULL)
+                ORDER BY le.created_at DESC LIMIT 1) last_login_from
         FROM users u {where}
         ORDER BY u.created_at DESC LIMIT ? OFFSET ?
     """, params + [min(limit, 200), offset]).fetchall()
