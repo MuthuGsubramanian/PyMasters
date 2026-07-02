@@ -74,6 +74,10 @@ class BlockRequest(BaseModel):
 
 class PlanRequest(BaseModel):
     plan: str  # e.g. free | pro | enterprise
+    # Optional validity period (ISO 8601 date or datetime). None = no expiry.
+    # Lets the super admin manually grant a package "for the given period"
+    # until self-serve billing exists.
+    expires_at: Optional[str] = None
 
 
 class EditUserRequest(BaseModel):
@@ -91,6 +95,7 @@ class UserRoleRequest(BaseModel):
 
 class OrgPlanRequest(BaseModel):
     plan: str
+    expires_at: Optional[str] = None  # ISO 8601; None = no expiry
 
 class OrgTypeRequest(BaseModel):
     type: str
@@ -394,11 +399,14 @@ def org_detail(org_id: str, caller: str = Depends(get_current_user_id)):
 @router.post("/orgs/{org_id}/plan")
 def set_org_plan(org_id: str, req: OrgPlanRequest, caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
+    _validate_expiry(req.expires_at)
     conn = _conn()
-    conn.execute("UPDATE organizations SET plan = ? WHERE id = ?", [req.plan, org_id])
-    _audit(conn, caller, "org.plan", "org", org_id, {"plan": req.plan})
+    conn.execute(
+        "UPDATE organizations SET plan = ?, plan_assigned_at = datetime('now'), plan_expires_at = ? WHERE id = ?",
+        [req.plan, req.expires_at, org_id])
+    _audit(conn, caller, "org.plan", "org", org_id, {"plan": req.plan, "expires_at": req.expires_at})
     conn.commit(); conn.close()
-    return {"ok": True, "plan": req.plan}
+    return {"ok": True, "plan": req.plan, "expires_at": req.expires_at}
 
 
 @router.post("/orgs/{org_id}/type")
