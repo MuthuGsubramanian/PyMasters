@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, ArrowRight, GraduationCap, Building2, Sparkles, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getPaymentConfig } from '../api';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
 /**
@@ -8,9 +10,15 @@ import PymastersGlyph from '../assets/pymasters-glyph.svg';
  *
  * Tiers set by MSG 2026-07-02: Free = 7-day full-access trial,
  * Beginner = ₹299/mo, Pro = ₹999/mo, Organizations = custom quote.
- * Online payments are not wired yet, so paid CTAs go to email and the note
- * below the grid explains that the team enables packages manually for now
- * (super-admin plan assignment with validity period).
+ *
+ * Payment-aware (2026-07-02): the page probes the public
+ * GET /api/payments/config once on mount. While Razorpay is NOT configured
+ * (today's live state, or if the probe fails) everything renders exactly as
+ * before — paid CTAs go to email and the note explains that the team enables
+ * packages manually. The moment payments are enabled server-side, the
+ * Beginner/Pro CTAs route into the real checkout (/dashboard/upgrade, via
+ * /login for visitors) and the "launching soon" copy switches to match, so
+ * this marketing page can never contradict the Upgrade page.
  */
 
 const TIERS = [
@@ -45,6 +53,7 @@ const TIERS = [
       'Challenges, XP & community leaderboard',
       'Progress tracking & streaks',
     ],
+    planKey: 'beginner',
     cta: { label: 'Get Beginner', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Beginner%20plan' },
   },
   {
@@ -61,6 +70,7 @@ const TIERS = [
       'Completion certificates',
       'Early access to new tracks',
     ],
+    planKey: 'pro',
     cta: { label: 'Get Pro', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Pro%20plan' },
   },
   {
@@ -86,6 +96,18 @@ export default function Pricing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const ctaTarget = user ? '/dashboard' : '/login';
+
+  // Whether online checkout is live (server-side Razorpay config). Defaults to
+  // false and stays false on any error, so the page renders exactly its
+  // pre-existing "email us" state unless the backend positively says enabled.
+  const [payEnabled, setPayEnabled] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    getPaymentConfig()
+      .then((r) => { if (!cancelled) setPayEnabled(!!r.data?.enabled); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a14] text-slate-100 font-sans selection:bg-purple-500/30 selection:text-white">
@@ -128,7 +150,7 @@ export default function Pricing() {
       {/* Tiers */}
       <section className="px-4 sm:px-6 pb-10">
         <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {TIERS.map(({ name, tag, price, period, icon: Icon, blurb, features, cta, note }) => (
+          {TIERS.map(({ name, tag, price, period, icon: Icon, blurb, features, cta, note, planKey }) => (
             <div key={name} className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:border-white/20 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <span className="inline-flex items-center gap-2 text-white font-display font-semibold text-lg">
@@ -153,7 +175,17 @@ export default function Pricing() {
               </ul>
               <div className="mt-auto">
                 {note && <p className="text-xs text-slate-500 mb-3">{note}</p>}
-                {cta.mailto ? (
+                {payEnabled && planKey ? (
+                  /* Checkout is live: route into the real Razorpay flow on the
+                     Upgrade page (visitors sign in first). Same ghost styling
+                     and label as the mailto CTA it replaces. */
+                  <button
+                    onClick={() => navigate(user ? '/dashboard/upgrade' : '/login')}
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-slate-200 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/25 transition-colors"
+                  >
+                    {cta.label} <ArrowRight size={14} aria-hidden="true" />
+                  </button>
+                ) : cta.mailto ? (
                   <a
                     href={cta.mailto}
                     className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-slate-200 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/25 transition-colors"
@@ -173,8 +205,10 @@ export default function Pricing() {
           ))}
         </div>
         <p className="max-w-7xl mx-auto mt-6 text-center text-xs text-slate-500">
-          Online payments are launching soon — until then, plans are enabled on your account by the
-          PyMasters team within a day of your request. Partner schools and pilot cohorts:{' '}
+          {payEnabled
+            ? 'Secure online payments powered by Razorpay — your plan activates instantly after checkout.'
+            : 'Online payments are launching soon — until then, plans are enabled on your account by the PyMasters team within a day of your request.'}{' '}
+          Partner schools and pilot cohorts:{' '}
           <a href="mailto:muthu@pymasters.net?subject=PyMasters%20Partner%20Package" className="text-cyan-400 hover:text-cyan-300 transition-colors">get in touch</a>.
         </p>
       </section>
@@ -185,7 +219,9 @@ export default function Pricing() {
           <h2 className="text-white font-display font-bold text-xl text-center mb-6">Common questions</h2>
           {[
             ['How does the 7-day trial work?', 'Sign up and you get full access to everything — curriculum, Vaathiyaar, playground, challenges — for 7 days. No credit card required.'],
-            ['How do I pay for Beginner or Pro?', 'Online payments are launching soon. Until then, email us and we enable your plan manually — usually within a day.'],
+            ['How do I pay for Beginner or Pro?', payEnabled
+              ? 'Pay online with Razorpay — UPI, cards and netbanking. Your plan activates instantly after payment.'
+              : 'Online payments are launching soon. Until then, email us and we enable your plan manually — usually within a day.'],
             ['Can I switch or cancel anytime?', 'Yes. Plans are monthly; you can move between Beginner and Pro or stop at the end of any month.'],
             ['How does organization pricing work?', 'It depends on seats and the program you run. Talk to us — pilots for schools and universities are available.'],
           ].map(([q, a]) => (
