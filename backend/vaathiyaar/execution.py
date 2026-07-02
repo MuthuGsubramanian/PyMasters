@@ -52,7 +52,49 @@ _BLOCKED_DUNDERS = {
 }
 
 
-def check_code_safety(code: str) -> str | None:
+# SAFE-OPEN WHITELIST (2026-07-02): keyword args open() may carry when a lesson
+# whitelists literal file access (file-I/O lessons). Values must be constants.
+_SAFE_OPEN_KWARGS = {"mode", "encoding", "errors", "newline", "buffering"}
+
+
+def _approved_open_funcs(tree: ast.AST, allowed_open_files) -> set:
+    """
+    Return the exact ``ast.Name`` nodes that are the *func* of a statically-safe
+    ``open()`` call: first argument is a string literal contained in
+    ``allowed_open_files`` (plain basenames seeded into the throwaway sandbox
+    cwd), any mode is a literal read/write/append/create mode, at most two
+    positional args, and only constant-valued kwargs from _SAFE_OPEN_KWARGS.
+    Every other appearance of the name ``open`` (aliasing, variable paths,
+    computed modes, opener=/file= kwargs) stays blocked exactly as before.
+    """
+    approved: set = set()
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id == "open"):
+            continue
+        if not node.args or len(node.args) > 2:
+            continue
+        first = node.args[0]
+        if not (isinstance(first, ast.Constant) and isinstance(first.value, str)
+                and first.value in allowed_open_files):
+            continue
+        mode_nodes = list(node.args[1:2]) + [
+            kw.value for kw in node.keywords if kw.arg == "mode"
+        ]
+        ok = True
+        for m in mode_nodes:
+            if not (isinstance(m, ast.Constant) and isinstance(m.value, str)
+                    and m.value.replace("b", "").replace("t", "") in {"r", "w", "a", "x"}):
+                ok = False
+        for kw in node.keywords:
+            if kw.arg not in _SAFE_OPEN_KWARGS or not isinstance(kw.value, ast.Constant):
+                ok = False
+        if ok:
+            approved.add(node.func)
+    return approved
+
+
+def check_code_safety(code: str, allowed_open_files=None) -> str | None:
     """
     Statically analyse code via its AST. Returns a human-readable reason if the
     code is disallowed, or None if it is safe to run in the strict (classroom)
@@ -62,6 +104,12 @@ def check_code_safety(code: str) -> str | None:
     innocent identifiers (a user function named ``reopen``) nor is fooled by
     obfuscation that a keyword blocklist would miss.
 
+    ``allowed_open_files`` (2026-07-02, optional — default preserves the exact
+    previous behaviour): a collection of plain filenames a file-I/O lesson has
+    seeded into the sandbox cwd. When given, ``open('<one of them>')`` with a
+    literal read/write mode is permitted; all other uses of ``open`` remain
+    blocked. Callers that don't pass it are byte-for-byte unaffected.
+
     Syntax errors pass through (return None): the same interpreter runs the code,
     so unparseable input fails harmlessly with a real SyntaxError downstream.
     """
@@ -69,6 +117,10 @@ def check_code_safety(code: str) -> str | None:
         tree = ast.parse(code)
     except SyntaxError:
         return None
+
+    approved_open = (
+        _approved_open_funcs(tree, allowed_open_files) if allowed_open_files else ()
+    )
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -82,6 +134,8 @@ def check_code_safety(code: str) -> str | None:
                 return f"import of module '{root}' is not allowed here"
         elif isinstance(node, ast.Name):
             if node.id in _BLOCKED_NAMES:
+                if node.id == "open" and node in approved_open:
+                    continue
                 return f"use of '{node.id}' is not allowed here"
         elif isinstance(node, ast.Attribute):
             if node.attr in _BLOCKED_DUNDERS:
@@ -171,9 +225,15 @@ def _posix_limits(timeout: int):
     return _apply
 
 
-def run_code_subprocess(code: str, timeout: int = 10) -> dict:
+def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = None) -> dict:
     """
     Execute Python code in a hardened, isolated subprocess.
+
+    ``seed_files`` (2026-07-02, optional — default preserves the exact previous
+    behaviour): mapping of plain filename → text content written into the
+    throwaway working directory before the run, so file-I/O lessons can grade
+    real ``open()`` code against a known fixture. Names containing path
+    separators, or clashing with the script itself, are silently refused.
 
     Returns: { "output": str, "error": str, "exit_code": int }
     """
@@ -184,6 +244,14 @@ def run_code_subprocess(code: str, timeout: int = 10) -> dict:
     try:
         with open(script_path, "w", encoding="utf-8") as f:
             f.write(code)
+
+        if seed_files:
+            for _name, _content in seed_files.items():
+                if (not isinstance(_name, str) or not isinstance(_content, str)
+                        or os.path.basename(_name) != _name or _name == "main.py"):
+                    continue  # refuse path tricks / clobbering the script
+                with open(os.path.join(work_dir, _name), "w", encoding="utf-8") as sf:
+                    sf.write(_content)
 
         popen_kwargs = dict(
             cwd=work_dir,
