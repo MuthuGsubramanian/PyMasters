@@ -26,6 +26,14 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 GEMINI_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 
+# Qubrid fallback provider (OpenAI-compatible chat-completions API, added
+# 2026-07-02 at MSG's direction). Last-resort fallback after ollama+gemini.
+# Activated by adding "qubrid" to VAATHIYAAR_PROVIDERS; auths via QUBRID_API_KEY
+# (Secret Manager → env, like OLLAMA_API_KEY — never hard-code the key).
+QUBRID_API_KEY = os.getenv("QUBRID_API_KEY", "")
+QUBRID_BASE_URL = os.getenv("QUBRID_BASE_URL", "https://platform.qubrid.com/v1")
+QUBRID_MODEL = os.getenv("QUBRID_MODEL", "zai-org/GLM-4.7-Flash")
+
 # Initialize Ollama client using the official SDK
 _ollama_client = None
 
@@ -170,9 +178,87 @@ def _gemini_stream(messages: list, options: dict):
             yield txt
 
 
+_THINK_BLOCK = re.compile(r"^\s*<think>.*?</think>\s*", re.DOTALL)
+
+
+def _strip_thinking(text: str) -> str:
+    """GLM-style models may prepend a <think>…</think> reasoning block to the
+    assistant content. Vaathiyaar replies must parse as JSON, so drop it."""
+    return _THINK_BLOCK.sub("", text or "", count=1)
+
+
+def _qubrid_payload(messages: list, options: dict, stream: bool) -> dict:
+    return {
+        "model": QUBRID_MODEL,
+        "messages": messages,
+        "max_tokens": options.get("num_predict", 1500),
+        "temperature": options.get("temperature", 0.7),
+        "top_p": 1,
+        "stream": stream,
+        "enable_thinking": True,
+    }
+
+
+def _qubrid_headers() -> dict:
+    if not QUBRID_API_KEY:
+        raise RuntimeError("QUBRID_API_KEY not set")
+    return {
+        "Authorization": f"Bearer {QUBRID_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+
+def _qubrid_complete(messages: list, options: dict) -> str:
+    """Non-streaming Qubrid (OpenAI-compatible) call → assistant content string."""
+    import requests
+
+    resp = requests.post(
+        f"{QUBRID_BASE_URL}/chat/completions",
+        headers=_qubrid_headers(),
+        json=_qubrid_payload(messages, options, stream=False),
+        timeout=90,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    content = (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+    content = _strip_thinking(content)
+    if not content:
+        raise ValueError("qubrid: empty completion content")
+    return content
+
+
+def _qubrid_stream(messages: list, options: dict):
+    """Streaming Qubrid call → yields assistant content tokens (SSE deltas).
+    Reasoning deltas (`reasoning_content`) are skipped so learners only see the
+    final answer tokens."""
+    import requests
+
+    resp = requests.post(
+        f"{QUBRID_BASE_URL}/chat/completions",
+        headers=_qubrid_headers(),
+        json=_qubrid_payload(messages, options, stream=True),
+        timeout=90,
+        stream=True,
+    )
+    resp.raise_for_status()
+    for line in resp.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data:"):
+            continue
+        chunk = line[5:].strip()
+        if not chunk or chunk == "[DONE]":
+            continue
+        try:
+            delta = (json.loads(chunk).get("choices") or [{}])[0].get("delta", {})
+        except (ValueError, AttributeError):
+            continue
+        token = delta.get("content") or ""
+        if token:
+            yield token
+
+
 # Registries: provider name → callable. Extend to add fallback providers.
-_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete}
-_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream}
+_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete, "qubrid": _qubrid_complete}
+_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream, "qubrid": _qubrid_stream}
 
 
 def complete(messages: list, options: Optional[dict] = None) -> str:
