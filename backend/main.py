@@ -834,7 +834,10 @@ def read_root():
     return {"status": "online", "message": "PyMasters Backend is running"}
 
 @app.post("/api/auth/register")
-def register(user: UserRegister, request: Request):
+def register(user: UserRegister, request: Request = None):
+    # NB: `request` defaults to None so direct unit-test calls
+    # (tests/test_register.py) keep working; FastAPI always injects a real
+    # Request on HTTP calls, so telemetry is unaffected in production.
     print(f"Register request for: {user.username}")
     uname = (user.username or "").strip()
     if not uname:
@@ -951,7 +954,8 @@ def register(user: UserRegister, request: Request):
         conn.close()
 
 @app.post("/api/auth/login")
-def login(user: UserLogin, request: Request):
+def login(user: UserLogin, request: Request = None):
+    # `request` optional for direct unit-test calls; FastAPI injects it on HTTP.
     print(f"Login request for: {user.username}")
     conn = sqlite3.connect(DB_PATH)
     try:
