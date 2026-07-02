@@ -506,8 +506,30 @@ function IntroPhase({ lesson, language, onComplete, username }) {
     const flowDiagram = visualFlowItems.find(i => i.type === 'FlowDiagram' || i.type === 'flow_diagram');
     const loopViz = visualFlowItems.find(i => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
 
+    // Popup state: code execution + flow live in a modal so the main layout
+    // stays clean (explanation only). Opening re-keys the animations so they
+    // always play from the start.
+    const [showFlow, setShowFlow] = useState(false);
+    const hasCodePanel = Boolean(loopViz || executionViz || legacyAnimPrimitives.length > 0);
+    const hasVisuals = hasCodePanel || Boolean(flowDiagram);
+    const openFlow = () => { setAnimKey(k => k + 1); setShowFlow(true); };
+
+    // Close the popup on Escape
+    useEffect(() => {
+        if (!showFlow) return;
+        const onKey = (e) => { if (e.key === 'Escape') setShowFlow(false); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [showFlow]);
+
+    const flowSubtitle = executionViz
+        ? `${(executionViz.executionSteps || []).length} execution steps`
+        : loopViz
+            ? `${loopViz.loopType || 'for'} loop · ${(loopViz.iterations || []).length} iterations`
+            : 'Animated walkthrough';
+
     return (
-        <div className="animate-fade-in flex flex-col gap-3 max-w-7xl mx-auto lg:h-[calc(100vh-7rem)]">
+        <div className="animate-fade-in flex flex-col gap-4 max-w-4xl mx-auto">
             {/* ── Header (compact, fixed) ── */}
             <header className="flex-shrink-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -526,13 +548,9 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </h2>
             </header>
 
-            {/* ── Side-by-side: Vaathiyaar explanation (left) + execution flow (right).
-                On large screens they fill the viewport height and scroll internally,
-                so the lesson fits without page scroll. ── */}
-            <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
-
-            {/* LEFT: Vaathiyaar explanation — scrolls internally */}
-            <div className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-5 py-4 shadow-lg overflow-y-auto dark-scrollbar min-h-[280px] lg:min-h-[160px]">
+            {/* ── Main layout: explanation only. Code execution + flow open in a
+                popup from the launcher card below, keeping the lesson clean. ── */}
+            <div className="rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-6 py-5 shadow-lg">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
@@ -551,37 +569,81 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </div>
             </div>
 
-            {/* ── Execution section: aligned header + code panel + optional flow ── */}
-            <section className="lg:flex-1 lg:w-1/2 min-w-0 rounded-2xl surface-code shadow-lg overflow-hidden flex flex-col min-h-[320px] lg:min-h-[160px]">
-                {/* Section header — title on the left, Run Animation aligned on the right */}
-                <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.08] bg-white/[0.02]">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
-                        <h3 className="text-sm font-bold text-white tracking-wide">Watch It Run</h3>
-                        {(executionViz || loopViz) && (
-                            <span className="text-[11px] text-slate-400 truncate">
-                                {executionViz
-                                    ? `${(executionViz.executionSteps || []).length} execution steps`
-                                    : `${loopViz.loopType || 'for'} loop · ${(loopViz.iterations || []).length} iterations`}
-                            </span>
-                        )}
+            {/* ── Launcher card: opens the code execution + flow popup ── */}
+            {hasVisuals && (
+                <button
+                    onClick={openFlow}
+                    className="group w-full text-left rounded-2xl surface-code shadow-lg border border-white/[0.08] hover:border-cyan-400/40 transition-all duration-200"
+                >
+                    <div className="flex items-center gap-4 px-5 py-4">
+                        <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center flex-shrink-0 group-hover:bg-cyan-500/25 transition-colors">
+                            <Code2 size={20} className="text-cyan-300" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-bold text-white tracking-wide">Code Execution &amp; Flow</h3>
+                            <p className="text-xs text-slate-400 mt-0.5 truncate">
+                                {flowSubtitle}{flowDiagram ? ' · flow diagram' : ''} — see the code come alive step by step
+                            </p>
+                        </div>
+                        <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 group-hover:bg-cyan-500/25 group-hover:text-cyan-200 text-xs font-semibold transition-all duration-200 flex-shrink-0">
+                            <Play size={13} fill="currentColor" />
+                            Watch It Run
+                        </span>
                     </div>
-                    <button
-                        onClick={replayAnimations}
-                        className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 hover:text-cyan-200 text-xs font-semibold transition-all duration-200 flex-shrink-0"
+                </button>
+            )}
+
+            {/* ── Popup: code execution + flow diagram ── */}
+            <AnimatePresence>
+                {showFlow && (
+                    <motion.div
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowFlow(false)}
                     >
-                        <RotateCcw size={13} />
-                        Run Animation
-                    </button>
-                </div>
+                        <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="Code execution and flow"
+                            onClick={(e) => e.stopPropagation()}
+                            initial={{ scale: 0.96, opacity: 0, y: 12 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.96, opacity: 0, y: 12 }}
+                            className="w-full max-w-5xl max-h-[88vh] rounded-2xl surface-code shadow-2xl border border-white/[0.08] overflow-hidden flex flex-col"
+                        >
+                            {/* Popup header */}
+                            <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.08] bg-white/[0.02] flex-shrink-0">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                                    <h3 className="text-sm font-bold text-white tracking-wide">Watch It Run</h3>
+                                    <span className="text-[11px] text-slate-400 truncate">{flowSubtitle}</span>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <button
+                                        onClick={replayAnimations}
+                                        className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 hover:text-cyan-200 text-xs font-semibold transition-all duration-200"
+                                    >
+                                        <RotateCcw size={13} />
+                                        Run Animation
+                                    </button>
+                                    <button
+                                        onClick={() => setShowFlow(false)}
+                                        aria-label="Close"
+                                        className="p-1.5 rounded-lg text-slate-400 hover:bg-white/[0.08] hover:text-white transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </div>
 
-                {/* Body: code execution + (optional) flow diagram. Equal-height two
-                    columns only when a flow diagram exists; otherwise the code panel
-                    spans full width and grows to content (no empty sidebar box). */}
-                <div className="flex-1 min-h-0 flex flex-col gap-4 p-4 overflow-y-auto dark-scrollbar">
+                            {/* Popup body: code execution + (optional) flow diagram */}
+                            <div className="flex-1 min-h-0 flex flex-col gap-4 p-4 overflow-y-auto dark-scrollbar">
 
-                {/* Code Execution panel */}
-                <div className="flex-1 min-h-0 min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
+                            {/* Code Execution panel */}
+                            {hasCodePanel && (
+                            <div className="min-w-0 rounded-2xl surface-code overflow-hidden shadow-lg flex flex-col">
                     {/* Terminal header */}
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/[0.06]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
@@ -648,29 +710,30 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                         )}
                     </div>
                 </div>
+                            )}
 
-                {/* RIGHT: Execution Flow — rendered only when a diagram exists, so
-                    lessons without one show a clean full-width code panel instead of
-                    an empty "No flow diagram" box. */}
-                {flowDiagram && (
-                    <div className="w-full flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg border border-white/[0.06]">
-                        <div className="text-xs font-bold text-cyan-300 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                            Execution Flow
-                        </div>
-                        <FlowDiagram
-                            key={`flow-${animKey}`}
-                            nodes={flowDiagram.nodes || []}
-                            edges={flowDiagram.edges || []}
-                            executionPath={flowDiagram.executionPath || []}
-                            variables={flowDiagram.variables || {}}
-                            speed={flowDiagram.speed || 'normal'}
-                        />
-                    </div>
+                            {/* Execution Flow diagram — rendered only when one exists */}
+                            {flowDiagram && (
+                                <div className="w-full flex-shrink-0 rounded-2xl surface-code p-5 shadow-lg border border-white/[0.06]">
+                                    <div className="text-xs font-bold text-cyan-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                                        Execution Flow
+                                    </div>
+                                    <FlowDiagram
+                                        key={`flow-${animKey}`}
+                                        nodes={flowDiagram.nodes || []}
+                                        edges={flowDiagram.edges || []}
+                                        executionPath={flowDiagram.executionPath || []}
+                                        variables={flowDiagram.variables || {}}
+                                        speed={flowDiagram.speed || 'normal'}
+                                    />
+                                </div>
+                            )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
-                </div>
-            </section>
-            </div>
+            </AnimatePresence>
 
             {/* ── Start Practice button ── */}
             <button
