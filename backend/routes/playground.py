@@ -171,6 +171,24 @@ def _normalize_ws(s: str) -> str:
     return " ".join(s.split())
 
 
+def _is_json_only_tail(s: str) -> bool:
+    """
+    True when `s` (the text after a captured "message" value) contains only
+    JSON syntax — closing quote, other envelope keys/values, braces, fences —
+    and no free prose. Distinguishes a leaked response envelope at the END of
+    the output from a `{"message": …}` code EXAMPLE the model is showing
+    mid-answer (which has prose after it and must not be touched).
+    """
+    if s and s[0] == '"':
+        s = s[1:]                                   # closing quote of the message value
+    s = re.sub(r'"(?:[^"\\]|\\.)*"', ' ', s)        # complete quoted strings
+    s = re.sub(r'"(?:[^"\\]|\\.)*\\?$', ' ', s)     # trailing unclosed quoted fragment
+    s = re.sub(r'\b(?:null|true|false)\b', ' ', s)  # bare JSON literals
+    s = re.sub(r'-?\d+(?:\.\d+)?', ' ', s)          # numbers
+    s = s.replace('```', ' ')
+    return not set(s) - set('{}[],:\n\r\t "\\ ')
+
+
 def _extract_clean_message(full_response: str) -> str:
     """
     Extract the human-readable message from a raw Vaathiyaar response.
@@ -236,8 +254,7 @@ def _extract_clean_message(full_response: str) -> str:
         pm = _PARTIAL_MSG_RE.search(tail)
         if pm:
             remainder = tail[pm.end(1):]
-            is_end_envelope = len(remainder) <= 10 and not set(remainder) - set('"}\n\r\t` ,')
-            if not is_end_envelope:
+            if not _is_json_only_tail(remainder):
                 return clean_message  # mid-prose JSON example — leave as-is
             raw = pm.group(1)
             try:
