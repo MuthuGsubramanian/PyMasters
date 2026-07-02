@@ -5,6 +5,7 @@ Prefix: /api/profile
 """
 
 import os
+import json
 import sqlite3
 import random
 from datetime import datetime, date
