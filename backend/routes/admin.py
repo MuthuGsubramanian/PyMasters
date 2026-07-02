@@ -23,7 +23,12 @@ DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 SUPER_ADMINS = {
     e.strip().lower()
-    for e in os.getenv("SUPER_ADMIN_EMAILS", "muthu@pymasters.net,muthu.g.subramanian@gmail.com").split(",")
+    # claude-qa@pymasters.net is the functional/service account MSG requested
+    # (2026-07-02) so the autonomous QA/ops loops can exercise admin surfaces.
+    for e in os.getenv(
+        "SUPER_ADMIN_EMAILS",
+        "muthu@pymasters.net,muthu.g.subramanian@gmail.com,claude-qa@pymasters.net",
+    ).split(",")
     if e.strip()
 }
 
