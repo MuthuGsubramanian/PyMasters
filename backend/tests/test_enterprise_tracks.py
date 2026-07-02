@@ -34,6 +34,24 @@ def db(tmp_path):
     return path
 
 
+@pytest.fixture()
+def db_full(tmp_path):
+    """Like `db` but with username/email columns (real prod schema subset)."""
+    path = str(tmp_path / "b.db")
+    conn = sqlite3.connect(path)
+    conn.execute("""
+        CREATE TABLE users (
+            id TEXT PRIMARY KEY, created_at TIMESTAMP, plan TEXT DEFAULT 'free',
+            plan_expires_at TEXT, account_type TEXT DEFAULT 'individual',
+            is_super_admin INTEGER DEFAULT 0, username TEXT, email TEXT
+        )
+    """)
+    conn.execute("CREATE TABLE org_members (org_id TEXT, user_id TEXT, role TEXT)")
+    conn.commit()
+    conn.close()
+    return path
+
+
 def _add_user(db, uid, plan="free", plan_expires_at=None,
               account_type="individual", is_super_admin=0):
     conn = sqlite3.connect(db)
@@ -114,3 +132,22 @@ def test_lookup_error_fails_closed(tmp_path):
 
 def test_unknown_user_denied(db):
     assert has_enterprise_access(db, "ghost") is False
+
+
+def test_break_glass_email_is_super_admin_even_without_db_flag(db_full):
+    # require_super_admin() honors SUPER_ADMIN_EMAILS with is_super_admin=0;
+    # get_access_status must agree — the owner must never see a trial chip
+    # or lose enterprise-track access (found live 2026-07-02).
+    from access import get_access_status
+    conn = sqlite3.connect(db_full)
+    conn.execute(
+        "INSERT INTO users (id, created_at, is_super_admin, username, email) "
+        "VALUES ('bg1', ?, 0, 'muthu', 'muthu@pymasters.net')",
+        [datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")],
+    )
+    conn.commit()
+    conn.close()
+    s = get_access_status(db_full, "bg1")
+    assert s["status"] == "active"
+    assert s["reason"] == "super_admin"
+    assert has_enterprise_access(db_full, "bg1") is True

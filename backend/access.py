@@ -55,6 +55,26 @@ def has_enterprise_access(db_path: str, user_id: str | None) -> bool:
     return reason == "assigned_plan" and status.get("plan") == "enterprise"
 
 
+def _break_glass_idents() -> set:
+    """The same env-driven super-admin allowlist the admin API honors.
+
+    Why: require_super_admin() (routes/admin.py) grants full console access to
+    break-glass emails even when users.is_super_admin=0, but this module only
+    checked the DB flag — so the OWNER had every admin power yet still saw a
+    trial-countdown chip and could in principle hit trial gates (found by MSG
+    2026-07-02). Lazy import avoids any import-order coupling.
+    """
+    try:
+        from routes.admin import SUPER_ADMINS
+        return SUPER_ADMINS
+    except Exception:
+        return {
+            e.strip().lower()
+            for e in os.getenv("SUPER_ADMIN_EMAILS", "").split(",")
+            if e.strip()
+        }
+
+
 def _parse_dt(value):
     if not value:
         return None
@@ -87,13 +107,27 @@ def get_access_status(db_path: str, user_id: str) -> dict:
         is_org_member = conn.execute(
             "SELECT 1 FROM org_members WHERE user_id = ? LIMIT 1", [user_id]
         ).fetchone() is not None
+
+        # Break-glass identity (nested try: some test fixtures create a users
+        # table without username/email — behave exactly as before for them).
+        idents = set()
+        try:
+            r = conn.execute(
+                "SELECT username, email FROM users WHERE id = ?", [user_id]
+            ).fetchone()
+            if r:
+                idents = {(r[0] or "").lower(), (r[1] or "").lower()}
+        except Exception:
+            pass
         conn.close()
     except Exception:
         return {"status": "active", "plan": "free", "reason": "lookup_error"}
 
     now = datetime.utcnow()
 
-    if int(u["is_super_admin"] or 0) == 1:
+    # DB flag OR env break-glass allowlist — consistent with the admin API's
+    # require_super_admin(); an owner-level account must never look "on trial".
+    if int(u["is_super_admin"] or 0) == 1 or (idents & _break_glass_idents()):
         return {"status": "active", "plan": u["plan"], "reason": "super_admin"}
 
     if is_org_member or u["account_type"] != "individual":
