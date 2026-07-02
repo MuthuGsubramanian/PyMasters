@@ -124,12 +124,13 @@ def _geo_lookup_and_store(login_id: str, ip: str, db_path: str):
         pass
 
 
-def record_login(user_id: str, request: Request, db_path: str = None):
+def record_login(user_id: str, request: Optional[Request], db_path: str = None):
     """Called from the login/signup endpoints. Never raises; never blocks on
-    the network — geo resolution happens in a daemon thread."""
+    the network — geo resolution happens in a daemon thread. `request` may be
+    None (direct unit-test calls) — the event is then recorded without an IP."""
     db = db_path or DB_PATH
     try:
-        ip = client_ip(request)
+        ip = client_ip(request) if request is not None else None
         login_id = str(uuid.uuid4())
         conn = sqlite3.connect(db)
         conn.execute(
