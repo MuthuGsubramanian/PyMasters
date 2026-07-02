@@ -943,25 +943,28 @@ export default function Trending() {
                 <Card
                   key={topic.id}
                   as={motion.div}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06, duration: 0.4 }}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  className="group relative overflow-hidden hover:border-purple-500/30 hover:bg-bg-elevated transition-colors duration-300"
+                  transition={{ delay: Math.min(i * 0.05, 0.4), duration: 0.35 }}
+                  whileHover={{ y: -3 }}
+                  className="group relative overflow-hidden h-full flex flex-col hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300"
                 >
-                  <div className="p-5 space-y-4">
+                  {/* Category accent strip */}
+                  <div className={`h-1 w-full flex-shrink-0 ${catColor(topic.category).bg}`} />
+
+                  <div className="p-5 flex flex-col flex-1 gap-3">
                     {/* Category + Difficulty */}
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge className={`px-3 py-1 text-xs whitespace-nowrap ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge className={`px-2.5 py-0.5 text-[11px] whitespace-nowrap ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
                         {topic.category}
                       </Badge>
-                      <Badge className={`px-3 py-1 text-xs whitespace-nowrap ${DIFFICULTY_STYLES[topic.difficulty]}`}>
+                      <Badge className={`px-2.5 py-0.5 text-[11px] whitespace-nowrap ${DIFFICULTY_STYLES[topic.difficulty]}`}>
                         {topic.difficulty}
                       </Badge>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-bold text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-2">
+                    <h3 className="text-base font-bold leading-snug text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-2">
                       {topic.title}
                     </h3>
 
@@ -970,69 +973,54 @@ export default function Trending() {
                       {topic.summary}
                     </p>
 
-                    {/* Why Trending */}
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
-                        <span className="text-xs font-semibold text-orange-600 dark:text-orange-300">Why Trending</span>
+                    {/* Why Trending — subtle accent, not a heavy box */}
+                    {topic.whyTrending && (
+                      <div className="flex items-start gap-2 border-l-2 border-orange-400/70 pl-2.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-orange-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-text-muted leading-relaxed line-clamp-2">
+                          {topic.whyTrending}
+                        </p>
                       </div>
-                      <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
-                        {topic.whyTrending}
-                      </p>
-                    </div>
+                    )}
 
                     {/* Concepts Tags */}
                     <div className="flex flex-wrap gap-1.5">
-                      {topic.concepts.slice(0, 4).map(c => (
-                        <span key={c} className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border-default text-xs text-text-secondary">
+                      {topic.concepts.slice(0, 3).map(c => (
+                        <span key={c} className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border-default text-[11px] text-text-secondary">
                           {c}
                         </span>
                       ))}
-                      {topic.concepts.length > 4 && (
-                        <span className="px-2 py-0.5 rounded-md bg-bg-elevated text-xs text-text-muted">
-                          +{topic.concepts.length - 4}
+                      {topic.concepts.length > 3 && (
+                        <span className="px-2 py-0.5 rounded-md bg-bg-elevated text-[11px] text-text-muted">
+                          +{topic.concepts.length - 3}
                         </span>
                       )}
                     </div>
 
-                    {/* Code Example Toggle */}
-                    {topic.codeExample && (
-                      <div>
-                        <button
-                          onClick={() => toggleCode(topic.id)}
-                          className="flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors"
+                    {/* Footer — pinned to the bottom so every card lines up */}
+                    <div className="mt-auto pt-3 flex items-center gap-2">
+                      {topic.codeExample && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCodeTopic(topic)}
+                          className="flex-shrink-0"
+                          aria-label={`View code example for ${topic.title}`}
                         >
-                          <Code2 className="w-3.5 h-3.5" />
-                          {expandedCode[topic.id] ? 'Hide' : 'Show'} Code Preview
-                          {expandedCode[topic.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                        </button>
-                        <AnimatePresence>
-                          {expandedCode[topic.id] && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.25 }}
-                              className="overflow-hidden"
-                            >
-                              <pre className="mt-2 p-3 rounded-lg surface-code border border-border-default text-[11px] text-green-300 overflow-x-auto leading-relaxed max-h-48 overflow-y-auto">
-                                <code>{topic.codeExample}</code>
-                              </pre>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )}
-
-                    {/* Explore Button */}
-                    <Button
-                      onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(topic.title)}`)}
-                      className="w-full bg-gradient-primary text-white border-transparent group/btn"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      Explore Topic
-                      <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </Button>
+                          <Code2 className="w-4 h-4" />
+                          Code
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(topic.title)}`)}
+                        className="flex-1 bg-gradient-primary text-white border-transparent group/btn"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        Explore Topic
+                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -1106,6 +1094,38 @@ export default function Trending() {
         </motion.div>
       </div>
       </div>
+
+      {/* Code preview popup — keeps the cards compact and uniform */}
+      <AnimatePresence>
+        {codeTopic && (
+          <Modal
+            open
+            onClose={() => setCodeTopic(null)}
+            title={codeTopic.title}
+            className="max-w-2xl"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Badge className={`px-2.5 py-0.5 text-[11px] ${catColor(codeTopic.category).bg} ${catColor(codeTopic.category).text} ${catColor(codeTopic.category).border}`}>
+                {codeTopic.category}
+              </Badge>
+              <Badge className={`px-2.5 py-0.5 text-[11px] ${DIFFICULTY_STYLES[codeTopic.difficulty]}`}>
+                {codeTopic.difficulty}
+              </Badge>
+            </div>
+            <pre className="p-4 rounded-xl surface-code border border-border-default text-xs text-green-300 overflow-x-auto leading-relaxed max-h-[60vh] overflow-y-auto">
+              <code>{codeTopic.codeExample}</code>
+            </pre>
+            <Button
+              onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(codeTopic.title)}`)}
+              className="w-full mt-4 bg-gradient-primary text-white border-transparent"
+            >
+              <BookOpen className="w-4 h-4" />
+              Explore This Topic
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Modal>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
