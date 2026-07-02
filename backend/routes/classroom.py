@@ -176,6 +176,9 @@ _MODULE_ORDER = {
     "cross_cloud_architecture": [
         "strategy", "architecture", "operations", "security_compliance", "ai_workloads",
     ],
+    "frontier_ai_platforms": [
+        "landscape", "claude", "openai_chatgpt", "gemini", "enterprise_adoption",
+    ],
 }
 
 _FIRST_MODULES = ("foundations", "basics")

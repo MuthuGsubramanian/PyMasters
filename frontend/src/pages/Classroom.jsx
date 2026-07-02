@@ -248,6 +248,13 @@ const TRACK_META = {
         gradient: 'from-slate-500/10 to-zinc-500/5',
         enterprise: true,
     },
+    frontier_ai_platforms: {
+        name: 'Frontier AI: Claude, GPT & Gemini',
+        icon: <Sparkles size={16} />,
+        accent: '#d97706',
+        gradient: 'from-amber-500/10 to-yellow-500/5',
+        enterprise: true,
+    },
 };
 
 const DEFAULT_TRACK_ORDER = [
@@ -257,7 +264,7 @@ const DEFAULT_TRACK_ORDER = [
     'deep_learning', 'deep_learning_complete',
     'testing_devops',
     'azure_enterprise', 'azure_ai_foundry', 'aws_enterprise',
-    'gcp_vertex_ai', 'cross_cloud_architecture',
+    'gcp_vertex_ai', 'cross_cloud_architecture', 'frontier_ai_platforms',
     'generated'
 ];
 
