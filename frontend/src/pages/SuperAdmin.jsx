@@ -17,7 +17,9 @@ import {
     Search, Ban, CheckCircle2, Loader2, School, Briefcase, BookOpen, Lock,
 } from 'lucide-react';
 
-const PLANS = ['free', 'pro', 'enterprise'];
+// Matches the public pricing tiers (2026-07-02): Free 7-day trial,
+// Beginner ₹299/mo, Pro ₹999/mo, enterprise = custom org deals.
+const PLANS = ['free', 'beginner', 'pro', 'enterprise'];
 
 function relTimeSA(ts) {
   if (!ts) return '—';

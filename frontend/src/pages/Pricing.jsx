@@ -6,18 +6,21 @@ import PymastersGlyph from '../assets/pymasters-glyph.svg';
 /**
  * Pricing — public marketing page (dark-always, matches the landing style).
  *
- * Deliberately contains NO invented price points: individual learning is free
- * today, Pro pricing is being finalized, and organizations are custom-quoted.
- * Packages can also be granted manually by the PyMasters team for a fixed
- * period (super-admin plan assignment) — reflected in the note below the grid.
+ * Tiers set by MSG 2026-07-02: Free = 7-day full-access trial,
+ * Beginner = ₹299/mo, Pro = ₹999/mo, Organizations = custom quote.
+ * Online payments are not wired yet, so paid CTAs go to email and the note
+ * below the grid explains that the team enables packages manually for now
+ * (super-admin plan assignment with validity period).
  */
 
 const TIERS = [
   {
-    name: 'Learner',
-    tag: 'Free',
+    name: 'Free Trial',
+    tag: '7 days',
+    price: '₹0',
+    period: 'full access for 7 days',
     icon: GraduationCap,
-    blurb: 'Everything you need to go from first line to job-ready.',
+    blurb: 'Try everything PyMasters offers — no card required.',
     features: [
       'Full curriculum — 15 tracks, 380+ lessons',
       'Vaathiyaar, your AI tutor (chat + voice)',
@@ -26,26 +29,45 @@ const TIERS = [
       'Weekly challenges, XP, streaks & leaderboard',
       'English + Tamil',
     ],
-    cta: { label: 'Start Free', kind: 'primary' },
+    cta: { label: 'Start Free Trial', kind: 'primary' },
+  },
+  {
+    name: 'Beginner',
+    tag: 'Most popular',
+    price: '₹299',
+    period: 'per month',
+    icon: GraduationCap,
+    blurb: 'Keep learning after your trial, at student-friendly pricing.',
+    features: [
+      'Everything in the trial, ongoing',
+      'Full lesson library & learning paths',
+      'Vaathiyaar chat tutor',
+      'Challenges, XP & community leaderboard',
+      'Progress tracking & streaks',
+    ],
+    cta: { label: 'Get Beginner', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Beginner%20plan' },
   },
   {
     name: 'Pro',
-    tag: 'Coming soon',
+    tag: 'Power learners',
+    price: '₹999',
+    period: 'per month',
     icon: Sparkles,
     blurb: 'For learners who want to go deeper, faster.',
     features: [
-      'Everything in Learner',
-      'Priority Vaathiyaar responses',
-      'Advanced progress analytics',
+      'Everything in Beginner',
+      'Priority Vaathiyaar responses (chat + voice)',
+      'Advanced progress analytics & Knowledge Map insights',
       'Completion certificates',
       'Early access to new tracks',
     ],
-    cta: { label: 'Get notified', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Pro%20waitlist' },
-    note: 'Pricing is being finalized — join the waitlist and we’ll tell you first.',
+    cta: { label: 'Get Pro', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Pro%20plan' },
   },
   {
     name: 'Organizations',
     tag: 'Custom',
+    price: 'Custom',
+    period: 'schools · universities · enterprise',
     icon: Building2,
     blurb: 'For schools, universities and enterprises.',
     features: [
@@ -98,15 +120,15 @@ export default function Pricing() {
           </span>
         </h1>
         <p className="text-slate-300/90 text-base sm:text-lg max-w-2xl mx-auto">
-          Learning Python with your own AI teacher is free. Bigger plans for power
-          learners and organizations are on the way.
+          Start with a full-access 7-day trial, then pick the plan that fits —
+          from ₹299/month.
         </p>
       </section>
 
       {/* Tiers */}
       <section className="px-4 sm:px-6 pb-10">
-        <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-3">
-          {TIERS.map(({ name, tag, icon: Icon, blurb, features, cta, note }) => (
+        <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {TIERS.map(({ name, tag, price, period, icon: Icon, blurb, features, cta, note }) => (
             <div key={name} className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:border-white/20 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <span className="inline-flex items-center gap-2 text-white font-display font-semibold text-lg">
@@ -115,6 +137,10 @@ export default function Pricing() {
                 <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15 text-slate-300">
                   {tag}
                 </span>
+              </div>
+              <div className="mb-3">
+                <span className="text-3xl font-bold font-display text-white">{price}</span>
+                <span className="block text-xs text-slate-500 mt-0.5">{period}</span>
               </div>
               <p className="text-sm text-slate-400 mb-5">{blurb}</p>
               <ul className="space-y-2.5 mb-6">
@@ -146,9 +172,10 @@ export default function Pricing() {
             </div>
           ))}
         </div>
-        <p className="max-w-6xl mx-auto mt-6 text-center text-xs text-slate-500">
-          Partner schools and pilot cohorts: packages can be enabled on your account by the
-          PyMasters team for an agreed period — <a href="mailto:muthu@pymasters.net?subject=PyMasters%20Partner%20Package" className="text-cyan-400 hover:text-cyan-300 transition-colors">get in touch</a>.
+        <p className="max-w-7xl mx-auto mt-6 text-center text-xs text-slate-500">
+          Online payments are launching soon — until then, plans are enabled on your account by the
+          PyMasters team within a day of your request. Partner schools and pilot cohorts:{' '}
+          <a href="mailto:muthu@pymasters.net?subject=PyMasters%20Partner%20Package" className="text-cyan-400 hover:text-cyan-300 transition-colors">get in touch</a>.
         </p>
       </section>
 
@@ -157,8 +184,9 @@ export default function Pricing() {
         <div className="max-w-3xl mx-auto space-y-4">
           <h2 className="text-white font-display font-bold text-xl text-center mb-6">Common questions</h2>
           {[
-            ['Is the free tier really free?', 'Yes — the full curriculum, Vaathiyaar, the playground and challenges are free for individual learners today. No credit card.'],
-            ['What happens when Pro launches?', 'Nothing changes for free learners. Pro adds extras on top; we’ll announce pricing before anything ships.'],
+            ['How does the 7-day trial work?', 'Sign up and you get full access to everything — curriculum, Vaathiyaar, playground, challenges — for 7 days. No credit card required.'],
+            ['How do I pay for Beginner or Pro?', 'Online payments are launching soon. Until then, email us and we enable your plan manually — usually within a day.'],
+            ['Can I switch or cancel anytime?', 'Yes. Plans are monthly; you can move between Beginner and Pro or stop at the end of any month.'],
             ['How does organization pricing work?', 'It depends on seats and the program you run. Talk to us — pilots for schools and universities are available.'],
           ].map(([q, a]) => (
             <div key={q} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
