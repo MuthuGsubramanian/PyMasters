@@ -56,7 +56,7 @@ def get_learning_frontier(db_path: str, user_id: str, limit: int = 5) -> list[di
     Find the next concepts a user should learn — concepts where:
     1. All prerequisites have mastery >= 0.5 (or no prerequisites)
     2. The concept itself has mastery < 0.5
-    Sorted by: number of dependents (most impactful first)
+    Sorted easiest-first, then by number of dependents (most impactful first).
     """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
