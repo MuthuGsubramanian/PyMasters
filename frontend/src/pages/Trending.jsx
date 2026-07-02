@@ -866,7 +866,7 @@ export default function Trending() {
 
   return (
     <div className="min-h-screen bg-bg-base p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -937,7 +937,7 @@ export default function Trending() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
               {filtered.map((topic, i) => (
                 <Card
@@ -954,7 +954,7 @@ export default function Trending() {
 
                   <div className="p-5 flex flex-col flex-1 gap-3">
                     {/* Category + Difficulty */}
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <Badge className={`px-2.5 py-0.5 text-[11px] whitespace-nowrap ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
                         {topic.category}
                       </Badge>
@@ -1014,7 +1014,7 @@ export default function Trending() {
                       <Button
                         size="sm"
                         onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(topic.title)}`)}
-                        className="flex-1 bg-gradient-primary text-white border-transparent group/btn"
+                        className="flex-1 whitespace-nowrap bg-gradient-primary text-white border-transparent group/btn"
                       >
                         <BookOpen className="w-4 h-4" />
                         Explore Topic
