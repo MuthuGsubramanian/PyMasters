@@ -96,8 +96,20 @@ def get_learning_frontier(db_path: str, user_id: str, limit: int = 5) -> list[di
 
     conn.close()
 
-    difficulty_order = {"beginner": 0, "intermediate": 1, "advanced": 2}
-    frontier.sort(key=lambda c: (-c["dependent_count"], difficulty_order.get(c["difficulty"], 1)))
+    def _difficulty_rank(d):
+        """Concept difficulty is numeric in production (1/2/3) and a string in
+        some seeds ('beginner'/'intermediate'/'advanced') — support both. The
+        old string-only map silently ranked every numeric difficulty equal,
+        which is why a brand-new user was recommended Docker before Variables
+        (live-QA finding, 2026-07-02)."""
+        try:
+            return float(d)
+        except (TypeError, ValueError):
+            return {"beginner": 0.0, "intermediate": 1.0, "advanced": 2.0}.get(str(d).lower(), 1.0)
+
+    # Easiest ready concepts first; impact (dependents unlocked) breaks ties.
+    # A beginner's frontier should start at Variables, not Docker.
+    frontier.sort(key=lambda c: (_difficulty_rank(c["difficulty"]), -c["dependent_count"]))
 
     return frontier[:limit]
 

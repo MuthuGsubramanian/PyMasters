@@ -673,6 +673,17 @@ function PracticePhase({
                         <Zap size={12} className="text-amber-400" />
                     </div>
                     <p className="text-text-secondary leading-relaxed">{instruction}</p>
+                    {/* The grader compares stdout exactly — show the target so a
+                        semantically-correct solution isn't failed for printing
+                        different text (live-QA finding, 2026-07-02). */}
+                    {challenge?.expected_output && (
+                        <div className="mt-2">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-1">
+                                Expected output (must match exactly)
+                            </p>
+                            <pre className="text-xs rounded-lg bg-bg-inset border border-border-default px-3 py-2 overflow-x-auto text-text-secondary whitespace-pre-wrap">{challenge.expected_output}</pre>
+                        </div>
+                    )}
                 </div>
             </div>
 

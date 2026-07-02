@@ -679,10 +679,14 @@ def evaluate(request: EvaluateRequest):
     # an EMPTY expected_output so the 397 stdout-graded lessons are unaffected.
     lesson_obj = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
     test_code = None
-    if lesson_obj and not (request.expected_output or "").strip():
+    if lesson_obj:
         _pc = (lesson_obj.get("practice_challenges") or [{}])[0]
         _tc = _pc.get("test_code")
         if isinstance(_tc, str) and _tc.strip():
+            # Always forward the server-authored harness. When expected_output
+            # is empty it is the primary grader (unchanged); when expected_output
+            # exists the engine uses it only as a RESCUE on a clean-run stdout
+            # mismatch (2026-07-02), so exact-match passes are unaffected.
             test_code = _tc
 
     result = evaluate_code(

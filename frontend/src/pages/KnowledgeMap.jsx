@@ -19,6 +19,28 @@ import { getKnowledgeMap, getConceptRecommendations, getKnowledgeGaps } from '..
 
 const MASTERED = 0.5; // matches backend frontier threshold
 
+// Concept difficulty arrives numeric (1/2/3) from production data and as a
+// string from some seeds — render a human label either way (live-QA finding:
+// cards showed "python_core · 3").
+function difficultyLabel(d) {
+  const byNumber = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
+  if (byNumber[d]) return byNumber[d];
+  const s = String(d ?? '').toLowerCase();
+  if (['beginner', 'intermediate', 'advanced'].includes(s)) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  return null;
+}
+
+// "python_core" → "Python Core", "ai_ml" → "AI ML"
+const ACRONYMS = new Set(['ai', 'ml', 'dl', 'nlp', 'sql', 'api', 'dsa', 'llm', 'oop', 'ci', 'cd']);
+function prettyCategory(c) {
+  return String(c || 'General')
+    .split('_')
+    .map((w) => (ACRONYMS.has(w.toLowerCase()) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
 function masteryTone(m) {
   if (m >= MASTERED) return { ring: 'text-accent-primary', label: 'Mastered' };
   if (m > 0) return { ring: 'text-secondary', label: 'In progress' };
@@ -76,6 +98,10 @@ export default function KnowledgeMap() {
   const [gaps, setGaps] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    document.title = 'Knowledge Map — PyMasters';
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
