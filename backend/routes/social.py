@@ -13,12 +13,14 @@ Prefix: /api  (routes namespaced below to avoid collisions)
 import os
 import json
 import sqlite3
+from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 
 from auth import get_current_user_id, optional_user_id
+from streaks import effective_current_streak
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
@@ -193,16 +195,31 @@ def global_leaderboard(
     try:
         sc_sql, sc_params = _community_scope_sql(conn, caller, "u.id", org_id)
 
+        # Read-time streak-lapse correction (2026-07-02, adopts the shared rule from
+        # streaks.effective_current_streak / touch_streak): a streak is only "live"
+        # while last_active_date is today or yesterday; after a 2+ day gap it has
+        # lapsed and must display/rank as 0. touch_streak only runs on the user's
+        # NEXT activity, so the stored value silently over-reports lapsed streaks —
+        # previously an inactive user could sit atop the streak board indefinitely.
+        # Dates are computed in Python (server-local, the same clock touch_streak
+        # writes with — NOT SQLite's UTC 'now') and bound as parameters; substr()
+        # defensively tolerates any time suffix on last_active_date.
+        _today = date.today().isoformat()
+        _yday = (date.today() - timedelta(days=1)).isoformat()
+        _eff_streak = ("CASE WHEN substr(s.last_active_date,1,10) IN (?, ?) "
+                       "THEN COALESCE(s.current_streak,0) ELSE 0 END")
+
         if scope == "streak":
             base = f"""
                 SELECT u.id, u.username, u.name, u.avatar_url,
                        COALESCE(u.points,0) AS points,
-                       COALESCE(s.current_streak,0) AS metric
+                       {_eff_streak} AS metric
                 FROM users u
                 LEFT JOIN user_streaks s ON s.user_id = u.id
                 WHERE COALESCE(u.is_blocked,0) = 0{sc_sql}
                 ORDER BY metric DESC, points DESC, u.created_at ASC
             """
+            pre_params = [_today, _yday]
         else:
             base = f"""
                 SELECT u.id, u.username, u.name, u.avatar_url,
@@ -212,7 +229,10 @@ def global_leaderboard(
                 WHERE COALESCE(u.is_blocked,0) = 0{sc_sql}
                 ORDER BY metric DESC, u.created_at ASC
             """
-        rows = conn.execute(base + " LIMIT ? OFFSET ?", sc_params + [limit, offset]).fetchall()
+            pre_params = []
+        rows = conn.execute(
+            base + " LIMIT ? OFFSET ?", pre_params + sc_params + [limit, offset]
+        ).fetchall()
 
         leaders = []
         for i, r in enumerate(rows):
@@ -245,22 +265,27 @@ def global_leaderboard(
             # while the list placed them 2nd, 3rd, etc. (older created_at sorts first).
             if scope == "streak":
                 myrow = conn.execute(
-                    "SELECT COALESCE(s.current_streak,0), COALESCE(u.points,0), u.created_at "
+                    "SELECT COALESCE(s.current_streak,0), COALESCE(u.points,0), u.created_at, "
+                    "s.last_active_date "
                     "FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id WHERE u.id=?",
                     [caller],
                 ).fetchone()
-                my_metric = myrow[0] if myrow else 0
+                # Same lapse correction as the visible list, so the caller's banner
+                # metric/rank can never disagree with the rows on screen.
+                my_metric = effective_current_streak(myrow[0], myrow[3], _today) if myrow else 0
                 rsql, rparams = _community_scope_sql(conn, caller, "u.id", org_id)
                 if myrow:
                     my_points, my_created = myrow[1], myrow[2]
                     rank = conn.execute(
                         "SELECT COUNT(*)+1 FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id "
                         "WHERE COALESCE(u.is_blocked,0)=0 AND ("
-                        "COALESCE(s.current_streak,0) > ? "
-                        "OR (COALESCE(s.current_streak,0) = ? AND COALESCE(u.points,0) > ?) "
-                        "OR (COALESCE(s.current_streak,0) = ? AND COALESCE(u.points,0) = ? AND u.created_at < ?)"
+                        f"{_eff_streak} > ? "
+                        f"OR ({_eff_streak} = ? AND COALESCE(u.points,0) > ?) "
+                        f"OR ({_eff_streak} = ? AND COALESCE(u.points,0) = ? AND u.created_at < ?)"
                         ")" + rsql,
-                        [my_metric, my_metric, my_points, my_metric, my_points, my_created] + rparams,
+                        [_today, _yday, my_metric,
+                         _today, _yday, my_metric, my_points,
+                         _today, _yday, my_metric, my_points, my_created] + rparams,
                     ).fetchone()[0]
             else:
                 myrow = conn.execute(
@@ -369,7 +394,8 @@ def member_profile(user_id: str, caller: Optional[str] = Depends(optional_user_i
         followers = _conn_count(conn, user_id, "followers")
         following = _conn_count(conn, user_id, "following")
         streak = conn.execute(
-            "SELECT COALESCE(current_streak,0) FROM user_streaks WHERE user_id=?", [user_id]
+            "SELECT COALESCE(current_streak,0), last_active_date "
+            "FROM user_streaks WHERE user_id=?", [user_id]
         ).fetchone()
         is_following = False
         follows_you = False
@@ -384,7 +410,9 @@ def member_profile(user_id: str, caller: Optional[str] = Depends(optional_user_i
             ).fetchone() is not None
         card = _public_card(row, follower_count=followers, following_count=following,
                             is_following=is_following, follows_you=follows_you)
-        card["streak"] = streak[0] if streak else 0
+        # Read-time lapse correction (2026-07-02): mirror the Dashboard/profile fix —
+        # a lapsed streak (last activity 2+ days ago) shows as 0, not its stale value.
+        card["streak"] = effective_current_streak(streak[0], streak[1]) if streak else 0
         card["is_me"] = (caller == user_id)
         return card
     finally:
