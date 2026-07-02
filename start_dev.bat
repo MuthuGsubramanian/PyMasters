@@ -1,7 +1,7 @@
 @echo off
 echo Starting PyMasters Development Environment...
 
-start "PyMasters Backend" cmd /k "cd backend && set DB_PATH=..\data\pymasters.duckdb && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001"
+start "PyMasters Backend" cmd /k "cd backend && set DB_PATH=pymasters.db && set JWT_SECRET=local-dev-secret-not-for-prod && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001"
 timeout /t 3
 start "PyMasters Frontend" cmd /k "cd frontend && npm run dev"
 
