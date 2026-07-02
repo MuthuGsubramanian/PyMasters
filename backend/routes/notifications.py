@@ -40,7 +40,9 @@ async def get_notifications(
     unread_only: bool = Query(False),
     limit: int = Query(20),
     offset: int = Query(0),
+    caller: str = Depends(get_current_user_id),
 ):
+    _require_self(user_id, caller)
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
 
@@ -78,7 +80,9 @@ async def get_notifications(
 
 
 @router.put("/{notification_id}/read")
-async def mark_read(notification_id: str, user_id: str = Query(...)):
+async def mark_read(notification_id: str, user_id: str = Query(...),
+                    caller: str = Depends(get_current_user_id)):
+    _require_self(user_id, caller)
     conn = sqlite3.connect(_get_db_path())
     cursor = conn.execute(
         "UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?",
@@ -93,7 +97,9 @@ async def mark_read(notification_id: str, user_id: str = Query(...)):
 
 
 @router.patch("/read-all")
-async def mark_all_read(user_id: str = Query(...)):
+async def mark_all_read(user_id: str = Query(...),
+                        caller: str = Depends(get_current_user_id)):
+    _require_self(user_id, caller)
     conn = sqlite3.connect(_get_db_path())
     conn.execute(
         "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0",
@@ -105,7 +111,9 @@ async def mark_all_read(user_id: str = Query(...)):
 
 
 @router.get("/preferences")
-async def get_preferences(user_id: str = Query(...)):
+async def get_preferences(user_id: str = Query(...),
+                          caller: str = Depends(get_current_user_id)):
+    _require_self(user_id, caller)
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
@@ -118,7 +126,9 @@ async def get_preferences(user_id: str = Query(...)):
 
 
 @router.put("/preferences")
-async def update_preferences(data: PreferenceUpdate):
+async def update_preferences(data: PreferenceUpdate,
+                             caller: str = Depends(get_current_user_id)):
+    _require_self(data.user_id, caller)
     conn = sqlite3.connect(_get_db_path())
     conn.execute(
         """INSERT INTO notification_preferences (user_id, channel, type, enabled, quiet_hours_start, quiet_hours_end)
