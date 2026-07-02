@@ -456,6 +456,7 @@ def evaluate_code(
     lesson_context: Optional[dict] = None,
     attempt_count: int = 0,
     test_code: Optional[str] = None,
+    sandbox_files: Optional[dict] = None,
 ) -> dict:
     """
     Safely execute student-submitted code, compare output with expected, then
@@ -486,7 +487,14 @@ def evaluate_code(
     """
     from vaathiyaar.execution import run_code_subprocess, check_code_safety
 
-    blocked = check_code_safety(student_code)
+    # sandbox_files (2026-07-02): server-authored fixture files a file-I/O lesson
+    # seeds into the sandbox cwd. Their names double as the whitelist of literal
+    # filenames the student may open(); absent (all other lessons) → behaviour
+    # is byte-identical to before.
+    blocked = check_code_safety(
+        student_code,
+        allowed_open_files=set(sandbox_files) if sandbox_files else None,
+    )
     if blocked:
         feedback_context = {
             "code_evaluation": {
@@ -534,7 +542,7 @@ def evaluate_code(
     #  • else (default, unchanged) → exact stdout match against expected_output.
     harness = test_code if (isinstance(test_code, str) and test_code.strip()) else None
     if harness:
-        result = run_code_subprocess(student_code + "\n\n" + harness)
+        result = run_code_subprocess(student_code + "\n\n" + harness, seed_files=sandbox_files)
         actual_output = result["output"]
         stderr_output = result["error"]
         success = result["exit_code"] == 0
@@ -542,7 +550,7 @@ def evaluate_code(
         # unmet requirement, e.g. "matrix must be 3x3") so Vaathiyaar can coach.
         error_msg = "" if success else stderr_output
     else:
-        result = run_code_subprocess(student_code)
+        result = run_code_subprocess(student_code, seed_files=sandbox_files)
         actual_output = result["output"]
         stderr_output = result["error"]
         exec_error = stderr_output if result["exit_code"] != 0 else ""
@@ -559,7 +567,7 @@ def evaluate_code(
         # correct. This can only rescue false negatives — passing solutions and
         # error cases are untouched.
         if not success and test_code and not exec_error:
-            rescue = run_code_subprocess(student_code + "\n\n" + test_code)
+            rescue = run_code_subprocess(student_code + "\n\n" + test_code, seed_files=sandbox_files)
             if rescue["exit_code"] == 0:
                 success = True
                 error_msg = ""

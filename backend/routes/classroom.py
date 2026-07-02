@@ -730,6 +730,7 @@ def evaluate(request: EvaluateRequest):
     # an EMPTY expected_output so the 397 stdout-graded lessons are unaffected.
     lesson_obj = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
     test_code = None
+    sandbox_files = None
     if lesson_obj:
         _pc = (lesson_obj.get("practice_challenges") or [{}])[0]
         _tc = _pc.get("test_code")
@@ -739,6 +740,19 @@ def evaluate(request: EvaluateRequest):
             # exists the engine uses it only as a RESCUE on a clean-run stdout
             # mismatch (2026-07-02), so exact-match passes are unaffected.
             test_code = _tc
+        # sandbox_files (2026-07-02): optional, server-authored fixture files a
+        # file-I/O lesson seeds into the sandbox cwd; their names double as the
+        # whitelist of literal filenames the student may open(). Loaded ONLY from
+        # the lesson JSON on disk — never from the client. Absent (all other
+        # lessons) → grading behaviour is byte-identical to before.
+        _sf = lesson_obj.get("sandbox_files")
+        if isinstance(_sf, dict):
+            _clean = {
+                k: v for k, v in _sf.items()
+                if isinstance(k, str) and isinstance(v, str)
+                and os.path.basename(k) == k and k != "main.py" and len(v) <= 65536
+            }
+            sandbox_files = _clean or None
 
     result = evaluate_code(
         student_code=request.code,
@@ -747,6 +761,7 @@ def evaluate(request: EvaluateRequest):
         lesson_context=lesson_context,
         attempt_count=request.attempt_count or 0,
         test_code=test_code,
+        sandbox_files=sandbox_files,
     )
 
     # Record the evaluation as a learning signal
