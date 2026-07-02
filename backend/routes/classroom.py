@@ -424,6 +424,22 @@ def chat_stream(request: ChatRequest):
                 # If not valid JSON, use the raw text as the message
                 clean_message = full_response
 
+            # Envelope-leak guard (same class as the playground.py fix,
+            # 2026-07-02): when the response is NOT a single clean JSON
+            # envelope (parse above failed), the model may have emitted
+            # prose followed by a re-emitted/truncated {"message": ...}
+            # envelope — previously that raw JSON leaked into the chat
+            # bubble and history. Reuse the shared extractor from
+            # playground.py; it returns shape-1/2 inputs unchanged, so
+            # every previously-working path is identical. Guarded so any
+            # import/runtime failure falls back to today's behavior.
+            if parsed_response is None:
+                try:
+                    from routes.playground import _extract_clean_message
+                    clean_message = _extract_clean_message(full_response)
+                except Exception:
+                    pass
+
             # Record training data (best effort) BEFORE the done event so the
             # client gets a pair_id to attach 👍/👎 feedback to this response.
             pair_id = None
