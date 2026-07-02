@@ -59,7 +59,7 @@ def test_track_set_is_stable():
     # The five org-gated tracks; renaming one silently un-gates its lessons.
     assert ENTERPRISE_TRACKS == {
         "azure_enterprise", "azure_ai_foundry", "aws_enterprise",
-        "gcp_vertex_ai", "cross_cloud_architecture",
+        "gcp_vertex_ai", "cross_cloud_architecture", "frontier_ai_platforms",
     }
 
 

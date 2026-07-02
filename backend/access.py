@@ -35,6 +35,7 @@ ENTERPRISE_TRACKS = frozenset({
     "aws_enterprise",
     "gcp_vertex_ai",
     "cross_cloud_architecture",
+    "frontier_ai_platforms",
 })
 
 

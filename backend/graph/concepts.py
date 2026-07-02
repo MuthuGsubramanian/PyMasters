@@ -306,6 +306,10 @@ CONCEPTS = [
     ("llmops", "LLMOps", "enterprise_ai", 5, "Operating LLM apps: versioning, tracing, cost and quality loops"),
     ("ai_platform_selection", "AI Platform Selection", "enterprise_ai", 4, "Choosing between Foundry, Bedrock and Vertex for a workload"),
     ("ai_governance", "Enterprise AI Governance", "enterprise_ai", 4, "Model risk, access control, audit and responsible-AI programs"),
+    ("frontier_model_landscape", "Frontier Model Landscape", "enterprise_ai", 3, "Claude, GPT and Gemini families: capabilities, context, pricing models"),
+    ("claude_platform", "Claude & the Anthropic Platform", "enterprise_ai", 3, "Claude models, tool use, MCP and enterprise deployment options"),
+    ("openai_platform", "OpenAI & ChatGPT Platform", "enterprise_ai", 3, "GPT/o-series models, API patterns and ChatGPT Enterprise"),
+    ("gemini_platform", "Google Gemini Platform", "enterprise_ai", 3, "Gemini models, long context, multimodality and Workspace integration"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -687,6 +691,16 @@ CONCEPT_EDGES = [
     ("ai_platform_selection", "ai_governance", "recommends", 0.7),
     ("ai_content_safety", "ai_governance", "requires", 1.0),
     ("cloud_compliance", "ai_governance", "related_to", 0.3),
+    ("llm_concepts", "frontier_model_landscape", "requires", 1.0),
+    ("frontier_model_landscape", "claude_platform", "requires", 1.0),
+    ("frontier_model_landscape", "openai_platform", "requires", 1.0),
+    ("frontier_model_landscape", "gemini_platform", "requires", 1.0),
+    ("anthropic_api", "claude_platform", "related_to", 0.3),
+    ("openai_api", "openai_platform", "related_to", 0.3),
+    ("vertex_ai_platform", "gemini_platform", "related_to", 0.3),
+    ("claude_platform", "ai_platform_selection", "recommends", 0.7),
+    ("openai_platform", "ai_platform_selection", "recommends", 0.7),
+    ("gemini_platform", "ai_platform_selection", "recommends", 0.7),
 ]
 
 
