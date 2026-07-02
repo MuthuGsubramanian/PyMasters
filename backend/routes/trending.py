@@ -5,7 +5,7 @@ Prefix: /api/trending
 
 import os
 from datetime import date, datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 
 # Import the trends engine
@@ -19,10 +19,25 @@ from content.daily_content import (
     generate_daily_tip, generate_daily_challenge, generate_daily_quiz, get_greeting
 )
 from vaathiyaar.profiler import get_student_profile
+from auth import get_current_user_id
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 router = APIRouter(prefix="/api/trending", tags=["trending"])
+
+
+def _require_self(user_id: str, caller: str) -> None:
+    """IDOR guard: the personalized/daily endpoints return profile-derived
+    data (real name/username via the greeting, skill level, mastery-weighted
+    topic ranking, recent-activity signals). The user_id path param is
+    client-supplied; without this check any caller could read another user's
+    personalized bundle. Derive the acting user from the verified JWT and
+    refuse cross-user access. Mirrors routes/paths.py / routes/graph.py.
+    str() both sides: users.id is INTEGER for legacy accounts while the JWT
+    sub is a string.
+    """
+    if str(caller) != str(user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
 
 def _today() -> str:
@@ -70,8 +85,9 @@ def trending_today(
 
 # ── 2. Personalized trending for a user ───────────────────────────────────────
 @router.get("/personalized/{user_id}")
-def trending_personalized(user_id: str):
+def trending_personalized(user_id: str, caller: str = Depends(get_current_user_id)):
     """Return trending topics matched to the user's profile."""
+    _require_self(user_id, caller)
     profile = get_student_profile(DB_PATH, user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="User profile not found")
@@ -117,11 +133,13 @@ def daily_content_bundle(
             "preserving the original behaviour."
         ),
     ),
+    caller: str = Depends(get_current_user_id),
 ):
     """
     One-stop endpoint: greeting, tip-of-the-day, challenge,
     quiz question, and personalised trending topics.
     """
+    _require_self(user_id, caller)
     profile = get_student_profile(DB_PATH, user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="User profile not found")
