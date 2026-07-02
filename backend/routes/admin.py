@@ -421,6 +421,19 @@ def delete_user(target_id: str, caller: str = Depends(get_current_user_id)):
     if is_break_glass(row["username"], row["email"]):
         conn.close()
         raise HTTPException(status_code=400, detail="Cannot delete a break-glass (env) super admin")
+    # Delete playground messages FIRST (child rows keyed by conversation_id,
+    # not user_id): the subquery resolves the target's conversation ids from
+    # playground_conversations, so it must run BEFORE that parent table is
+    # cleared below — otherwise the IN () matches nothing and the messages
+    # are orphaned forever (FKs are unenforced: no PRAGMA foreign_keys=ON).
+    # Same delete-order bug/fix as profile.py::delete_account (2026-07-02).
+    try:
+        conn.execute(
+            "DELETE FROM playground_messages WHERE conversation_id IN "
+            "(SELECT id FROM playground_conversations WHERE user_id = ?)",
+            [target_id])
+    except Exception:
+        pass
     for tbl in ["org_members", "lesson_completions", "learning_signals", "user_mastery",
                 "generated_lessons", "module_generation_jobs", "notifications"]:
         try:
