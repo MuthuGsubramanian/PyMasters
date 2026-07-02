@@ -199,7 +199,8 @@ export const getAdminUsers = (userId, q = '', limit = 50, offset = 0) => api.get
 export const getAdminOrgs = (userId) => api.get('/admin/orgs', { params: { user_id: userId } });
 export const getAdminUsage = (userId, days = 30) => api.get('/admin/usage', { params: { user_id: userId, days } });
 export const adminBlockUser = (targetId, userId, blocked) => api.post(`/admin/users/${targetId}/block`, { user_id: userId, blocked });
-export const adminSetPlan = (targetId, userId, plan) => api.post(`/admin/users/${targetId}/plan`, { user_id: userId, plan });
+export const adminSetPlan = (targetId, userId, plan, expiresAt = null) =>
+    api.post(`/admin/users/${targetId}/plan`, { user_id: userId, plan, expires_at: expiresAt });
 export const getAdminUserDetail = (userId, targetId) => api.get(`/admin/users/${targetId}`, { params: { user_id: userId } });
 export const getAdminUserViewAs = (userId, targetId) => api.get(`/admin/users/${targetId}/view-as`, { params: { user_id: userId } });
 export const adminUpdateUser = (userId, targetId, data) => api.patch(`/admin/users/${targetId}`, { user_id: userId, ...data });
@@ -209,7 +210,8 @@ export const adminSetUserRole = (userId, targetId, org_id, role) => api.post(`/a
 export const adminResetPassword = (userId, targetId) => api.post(`/admin/users/${targetId}/reset-password`, { user_id: userId });
 export const adminRevokeSessions = (userId, targetId) => api.post(`/admin/users/${targetId}/revoke-sessions`, { user_id: userId });
 export const getAdminOrgDetail = (userId, orgId) => api.get(`/admin/orgs/${orgId}`, { params: { user_id: userId } });
-export const adminSetOrgPlan = (userId, orgId, plan) => api.post(`/admin/orgs/${orgId}/plan`, { user_id: userId, plan });
+export const adminSetOrgPlan = (userId, orgId, plan, expiresAt = null) =>
+    api.post(`/admin/orgs/${orgId}/plan`, { user_id: userId, plan, expires_at: expiresAt });
 export const adminSetOrgType = (userId, orgId, type) => api.post(`/admin/orgs/${orgId}/type`, { user_id: userId, type });
 export const adminDeleteOrg = (userId, orgId) => api.delete(`/admin/orgs/${orgId}`, { params: { user_id: userId } });
 export const getAdminAudit = (userId, params = {}) => api.get('/admin/audit', { params: { user_id: userId, ...params } });
