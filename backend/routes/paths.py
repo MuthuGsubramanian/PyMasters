@@ -10,9 +10,10 @@ import sqlite3
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
+from auth import get_current_user_id
 from paths.recommender import recommend_path
 
 router = APIRouter(prefix="/api/paths", tags=["paths"])
@@ -40,6 +41,19 @@ def _get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _require_self(user_id: str, caller: str) -> None:
+    """IDOR guard: per-user path state (progress, recommendations, active paths)
+    is private, and start/switch MUTATE a user's learning state.
+
+    The user_id param is client-supplied; without this check any caller could
+    read another user's progress or pause/switch their active paths. Derive the
+    acting user from the verified JWT and refuse cross-user access. Mirrors the
+    pattern in routes/graph.py and routes/profile.py.
+    """
+    if caller != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
 
 def _row_to_dict(row):
@@ -135,8 +149,9 @@ def list_paths():
 
 
 @router.get("/active")
-def get_active_paths(user_id: str = Query(...)):
+def get_active_paths(user_id: str = Query(...), caller: str = Depends(get_current_user_id)):
     """Get user's active path(s)."""
+    _require_self(user_id, caller)
     conn = _get_conn()
     rows = conn.execute(
         """SELECT ulp.*, lp.name, lp.description, lp.icon, lp.lesson_sequence, lp.estimated_hours
@@ -180,8 +195,9 @@ def get_active_paths(user_id: str = Query(...)):
 
 
 @router.get("/recommend")
-def recommend(user_id: str = Query(...)):
+def recommend(user_id: str = Query(...), caller: str = Depends(get_current_user_id)):
     """Get recommended path for user based on onboarding profile."""
+    _require_self(user_id, caller)
     result = recommend_path(user_id)
     if not result:
         return {"recommended": None, "message": "No profile found. Complete onboarding first."}
@@ -220,8 +236,9 @@ def get_path_detail(path_id: str, lang: str = Query("en")):
 
 
 @router.post("/{path_id}/start")
-def start_path(path_id: str, body: StartPathRequest):
+def start_path(path_id: str, body: StartPathRequest, caller: str = Depends(get_current_user_id)):
     """Start a learning path for a user. Creates a user_learning_paths row."""
+    _require_self(body.user_id, caller)
     conn = _get_conn()
 
     # Verify path exists
@@ -262,8 +279,9 @@ def start_path(path_id: str, body: StartPathRequest):
 
 
 @router.get("/{path_id}/progress")
-def get_progress(path_id: str, user_id: str = Query(...)):
+def get_progress(path_id: str, user_id: str = Query(...), caller: str = Depends(get_current_user_id)):
     """Get user's progress on a path — position, adapted sequence, completed lessons."""
+    _require_self(user_id, caller)
     conn = _get_conn()
 
     ulp = conn.execute(
@@ -327,8 +345,9 @@ def get_progress(path_id: str, user_id: str = Query(...)):
 
 
 @router.post("/{path_id}/switch")
-def switch_path(path_id: str, body: SwitchPathRequest):
+def switch_path(path_id: str, body: SwitchPathRequest, caller: str = Depends(get_current_user_id)):
     """Switch to a new path — pauses current active path, starts the new one."""
+    _require_self(body.user_id, caller)
     conn = _get_conn()
 
     # Verify new path exists
