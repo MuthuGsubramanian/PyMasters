@@ -626,14 +626,17 @@ def init_db():
         """)
 
         # Community + competition + OAuth tables (Aug-launch features)
-        try:
-            ensure_social_tables(DB_PATH)
-            ensure_org_challenge_tables(DB_PATH)
-            ensure_oauth_tables(DB_PATH)
-            ensure_payments_table(DB_PATH)
-            ensure_telemetry_tables(DB_PATH)
-        except Exception as e:
-            print(f"Community/OAuth table init: {e}")
+        # Each ensure_* is independent: one transient failure (e.g. "database
+        # is locked" while Litestream restores) must not skip the rest — that
+        # exact failure silently blocked ensure_telemetry_tables in prod on
+        # 2026-07-02 because these used to share one try-block.
+        for _ensure in (ensure_social_tables, ensure_org_challenge_tables,
+                        ensure_oauth_tables, ensure_payments_table,
+                        ensure_telemetry_tables):
+            try:
+                _ensure(DB_PATH)
+            except Exception as e:
+                print(f"Table init {getattr(_ensure, '__name__', _ensure)}: {e}")
 
         # Create a test user if empty
         cursor.execute("SELECT count(*) FROM users")
