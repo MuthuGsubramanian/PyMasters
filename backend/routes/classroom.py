@@ -160,6 +160,22 @@ _MODULE_ORDER = {
         "web_foundations", "frontend_foundations", "flask_framework",
         "fastapi_framework", "django_framework", "advanced_web", "devops_foundations",
     ],
+    # Enterprise cloud curriculum (org/enterprise-gated; see access.ENTERPRISE_TRACKS)
+    "azure_enterprise": [
+        "foundations", "compute_storage", "networking_security", "data_ai", "enterprise_patterns",
+    ],
+    "azure_ai_foundry": [
+        "foundations", "development", "evaluation_safety", "integration", "production",
+    ],
+    "aws_enterprise": [
+        "foundations", "serverless_containers", "networking_security", "data_ai", "enterprise_patterns",
+    ],
+    "gcp_vertex_ai": [
+        "foundations", "serverless_data", "vertex_ai", "mlops", "enterprise_patterns",
+    ],
+    "cross_cloud_architecture": [
+        "strategy", "architecture", "operations", "security_compliance", "ai_workloads",
+    ],
 }
 
 _FIRST_MODULES = ("foundations", "basics")
@@ -453,6 +469,13 @@ async def list_lessons(user_id: str = None):
     try:
         lessons = _list_all_lessons(user_id=user_id)
 
+        # Enterprise-only tracks (Azure/AWS/GCP/Foundry/cross-cloud) are hidden
+        # from individual accounts — org members, org accounts, enterprise-plan
+        # users and super admins see them. Fails closed for anonymous callers.
+        from access import ENTERPRISE_TRACKS, has_enterprise_access
+        if not has_enterprise_access(_get_db_path(), user_id):
+            lessons = [l for l in lessons if l.get("track") not in ENTERPRISE_TRACKS]
+
         if user_id:
             try:
                 conn = sqlite3.connect(_get_db_path())
@@ -659,6 +682,15 @@ def get_lesson(
     lesson = _load_lesson_from_dir(lesson_id)
     if lesson is None:
         raise HTTPException(status_code=404, detail=f"Lesson '{lesson_id}' not found.")
+
+    # Enterprise-only tracks: same gate as the catalog listing. 403 (not 404)
+    # so org admins debugging a member's access see an explicit signal.
+    from access import ENTERPRISE_TRACKS, has_enterprise_access
+    if lesson.get("track") in ENTERPRISE_TRACKS and not has_enterprise_access(_get_db_path(), user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="This lesson is part of the enterprise curriculum, available on organization plans.",
+        )
 
     if not user_id:
         return lesson
