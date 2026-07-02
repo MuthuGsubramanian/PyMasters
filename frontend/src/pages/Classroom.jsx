@@ -1136,6 +1136,16 @@ export default function Classroom() {
                 handleSelectLesson(match);
             } else {
                 setDeepLinkTopic(wantTopic);
+                // Make the seeded "Learn anything" box visible. SPA navigation
+                // preserves the previous page's scroll offset, so without this a
+                // learner arriving from a Trending "Explore Topic" click lands
+                // mid-catalogue with no visible response to their click — the
+                // pre-filled panel sits unseen above the fold. Guarded to this
+                // unmatched-deep-link branch only; no-op if the panel is absent.
+                setTimeout(() => {
+                    document.getElementById('learn-anything-panel')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 150);
             }
             searchParams.delete('topic');
             setSearchParams(searchParams, { replace: true });
@@ -1391,7 +1401,7 @@ export default function Classroom() {
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
                             {user?.id && (
-                                <div className="max-w-5xl mx-auto mb-5">
+                                <div id="learn-anything-panel" className="max-w-5xl mx-auto mb-5">
                                     <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} initialTopic={deepLinkTopic} />
                                 </div>
                             )}
