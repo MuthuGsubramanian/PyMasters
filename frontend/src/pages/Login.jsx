@@ -35,6 +35,12 @@ export default function Login() {
     //   GitHub   -> ?gh_token / ?gh_error
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+        // Deep-link into signup mode: /login?mode=signup (target of the /signup
+        // and /register redirect routes). Param absent = exactly today's behavior.
+        if (params.get('mode') === 'signup') {
+            setIsLogin(false);
+            window.history.replaceState({}, '', '/login');
+        }
         const oauthErr = params.get('li_error') || params.get('gh_error');
         const oauthToken = params.get('li_token') || params.get('gh_token');
         const providerLabel = params.get('gh_token') || params.get('gh_error') ? 'GitHub' : 'LinkedIn';
