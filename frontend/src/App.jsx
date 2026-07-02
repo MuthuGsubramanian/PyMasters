@@ -10,30 +10,63 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Code-split everything except the landing page + app shell so the initial
 // JS payload stays small. Each page (and its heavy deps — CodeMirror, animations,
 // xlsx, charts) loads only when its route is visited.
-const Login = lazy(() => import('./pages/Login'));
-const Onboarding = lazy(() => import('./pages/Onboarding'));
-const Overview = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Overview })));
-const Classroom = lazy(() => import('./pages/Classroom'));
-const Playground = lazy(() => import('./pages/Playground'));
-const Paths = lazy(() => import('./pages/Paths'));
-const Terms = lazy(() => import('./pages/Terms'));
-const Privacy = lazy(() => import('./pages/Privacy'));
-const Security = lazy(() => import('./pages/Security'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Trending = lazy(() => import('./pages/Trending'));
-const OrgSetup = lazy(() => import('./pages/OrgSetup'));
-const OrgDashboard = lazy(() => import('./pages/OrgDashboard'));
-const JoinOrg = lazy(() => import('./pages/JoinOrg'));
-const Challenges = lazy(() => import('./pages/Challenges'));
-const Reference = lazy(() => import('./pages/Reference'));
-const SuperAdmin = lazy(() => import('./pages/SuperAdmin'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const Community = lazy(() => import('./pages/Community'));
-const OrgCompete = lazy(() => import('./pages/OrgCompete'));
-const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'));
-const Pricing = lazy(() => import('./pages/Pricing'));
-const Upgrade = lazy(() => import('./pages/Upgrade'));
+//
+// lazyRetry: every deploy renames the hashed chunk files, so a tab opened
+// BEFORE a deploy 404s when it lazily imports a page AFTER the deploy
+// ("Failed to fetch dynamically imported module: .../SuperAdmin-<hash>.js" —
+// MSG hit this navigating Classroom → Super Admin, 2026-07-02). With deploys
+// landing many times a day via the automation loops, any long-lived tab goes
+// stale quickly. Recovery: reload ONCE so the fresh index.html points at the
+// new chunk names; a per-chunk sessionStorage guard prevents reload loops if
+// a chunk is genuinely broken (then the error surfaces to the ErrorBoundary
+// as before). On a successful load the guard is cleared again.
+function lazyRetry(factory, name) {
+  return lazy(() =>
+    factory().then(
+      (module) => {
+        try { sessionStorage.removeItem(`pm_chunk_reload:${name}`); } catch { /* private mode */ }
+        return module;
+      },
+      (error) => {
+        let alreadyReloaded = false;
+        try {
+          alreadyReloaded = sessionStorage.getItem(`pm_chunk_reload:${name}`) === '1';
+          if (!alreadyReloaded) sessionStorage.setItem(`pm_chunk_reload:${name}`, '1');
+        } catch { /* private mode: fall through to a single throw */ alreadyReloaded = true; }
+        if (!alreadyReloaded) {
+          window.location.reload();
+          return new Promise(() => {}); // page is reloading — never settle
+        }
+        throw error;
+      }
+    )
+  );
+}
+
+const Login = lazyRetry(() => import('./pages/Login'), 'Login');
+const Onboarding = lazyRetry(() => import('./pages/Onboarding'), 'Onboarding');
+const Overview = lazyRetry(() => import('./pages/Dashboard').then((m) => ({ default: m.Overview })), 'Overview');
+const Classroom = lazyRetry(() => import('./pages/Classroom'), 'Classroom');
+const Playground = lazyRetry(() => import('./pages/Playground'), 'Playground');
+const Paths = lazyRetry(() => import('./pages/Paths'), 'Paths');
+const Terms = lazyRetry(() => import('./pages/Terms'), 'Terms');
+const Privacy = lazyRetry(() => import('./pages/Privacy'), 'Privacy');
+const Security = lazyRetry(() => import('./pages/Security'), 'Security');
+const Profile = lazyRetry(() => import('./pages/Profile'), 'Profile');
+const Trending = lazyRetry(() => import('./pages/Trending'), 'Trending');
+const OrgSetup = lazyRetry(() => import('./pages/OrgSetup'), 'OrgSetup');
+const OrgDashboard = lazyRetry(() => import('./pages/OrgDashboard'), 'OrgDashboard');
+const JoinOrg = lazyRetry(() => import('./pages/JoinOrg'), 'JoinOrg');
+const Challenges = lazyRetry(() => import('./pages/Challenges'), 'Challenges');
+const Reference = lazyRetry(() => import('./pages/Reference'), 'Reference');
+const SuperAdmin = lazyRetry(() => import('./pages/SuperAdmin'), 'SuperAdmin');
+const ForgotPassword = lazyRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
+const ResetPassword = lazyRetry(() => import('./pages/ResetPassword'), 'ResetPassword');
+const Community = lazyRetry(() => import('./pages/Community'), 'Community');
+const OrgCompete = lazyRetry(() => import('./pages/OrgCompete'), 'OrgCompete');
+const KnowledgeMap = lazyRetry(() => import('./pages/KnowledgeMap'), 'KnowledgeMap');
+const Pricing = lazyRetry(() => import('./pages/Pricing'), 'Pricing');
+const Upgrade = lazyRetry(() => import('./pages/Upgrade'), 'Upgrade');
 
 function PageLoader() {
   return (
