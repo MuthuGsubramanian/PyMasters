@@ -33,6 +33,22 @@ DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 router = APIRouter(prefix="/api/track", tags=["telemetry"])
 
+# Self-heal: boot-time table creation can lose a race with Litestream's DB
+# lock (seen in prod 2026-07-02). Every write path calls _ensure_once() so the
+# schema materializes on first use even when the boot migration was skipped.
+_ensured = False
+
+
+def _ensure_once():
+    global _ensured
+    if _ensured:
+        return
+    try:
+        ensure_telemetry_tables(DB_PATH)
+        _ensured = True
+    except Exception as exc:  # keep trying on later calls
+        print(f"[telemetry.ensure_once] deferred: {exc!r}")
+
 
 def ensure_telemetry_tables(db_path: str = None):
     conn = sqlite3.connect(db_path or DB_PATH)
@@ -129,6 +145,8 @@ def record_login(user_id: str, request: Optional[Request], db_path: str = None):
     the network — geo resolution happens in a daemon thread. `request` may be
     None (direct unit-test calls) — the event is then recorded without an IP."""
     db = db_path or DB_PATH
+    if db_path is None:
+        _ensure_once()
     try:
         ip = client_ip(request) if request is not None else None
         login_id = str(uuid.uuid4())
@@ -158,6 +176,7 @@ class VisitPing(BaseModel):
 @router.post("/visit")
 def track_visit(ping: VisitPing):
     """One row per real page load (Layout mount). Anonymous visits count too."""
+    _ensure_once()
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.execute(
@@ -180,6 +199,7 @@ def track_visit(ping: VisitPing):
 def track_ping(ping: VisitPing):
     """Heartbeat (every ~3 min while the app is open). Updates presence only —
     no visit row, so the visits log reflects real page loads."""
+    _ensure_once()
     try:
         if ping.user_id:
             conn = sqlite3.connect(DB_PATH)

@@ -222,6 +222,13 @@ def report_ops_activity(req: OpsActivityRequest, caller: str = Depends(get_curre
     """Reported by the automation loops (signed in as the claude-qa service
     account) right after they publish/post/run something."""
     require_super_admin(caller)
+    # Boot migration can lose a race with the Litestream DB lock — self-heal
+    # the schema on first use instead of 500ing (bit us in prod 2026-07-02).
+    from routes.telemetry import ensure_telemetry_tables
+    try:
+        ensure_telemetry_tables(DB_PATH)
+    except Exception as exc:
+        print(f"[admin.report_ops_activity] ensure failed: {exc!r}")
     conn = _conn()
     try:
         conn.execute(
@@ -230,6 +237,8 @@ def report_ops_activity(req: OpsActivityRequest, caller: str = Depends(get_curre
         )
         conn.commit()
         return {"ok": True}
+    except sqlite3.OperationalError as exc:
+        raise HTTPException(status_code=503, detail=f"Telemetry store unavailable: {exc}")
     finally:
         conn.close()
 
