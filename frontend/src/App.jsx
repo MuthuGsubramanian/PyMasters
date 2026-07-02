@@ -32,6 +32,7 @@ const Community = lazy(() => import('./pages/Community'));
 const OrgCompete = lazy(() => import('./pages/OrgCompete'));
 const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'));
 const Pricing = lazy(() => import('./pages/Pricing'));
+const Upgrade = lazy(() => import('./pages/Upgrade'));
 
 function PageLoader() {
   return (
@@ -98,6 +99,7 @@ export default function App() {
                 <Route path="evolution" element={<Navigate to="/dashboard/paths" replace />} />
                 <Route path="evolution/:pathId" element={<Navigate to="/dashboard/paths" replace />} />
                 <Route path="knowledge" element={<ErrorBoundary><KnowledgeMap /></ErrorBoundary>} />
+                <Route path="upgrade" element={<ErrorBoundary><Upgrade /></ErrorBoundary>} />
                 <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />

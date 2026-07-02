@@ -815,6 +815,20 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
 
 
 # ---------------------------------------------------------------------------
+# GET /api/profile/{user_id}/access — trial/plan access status (2026-07-02).
+# Individual users get a 7-day trial from signup; org members, super admins
+# and admin-assigned plans are exempt. See backend/access.py for the policy.
+# ---------------------------------------------------------------------------
+
+@router.get("/{user_id}/access")
+def get_access(user_id: str, caller: str = Depends(get_current_user_id)):
+    _require_self(user_id, caller)
+    from access import get_access_status
+    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+    return get_access_status(db_path, user_id)
+
+
+# ---------------------------------------------------------------------------
 # GET /api/profile/{user_id}/stats
 # ---------------------------------------------------------------------------
 
