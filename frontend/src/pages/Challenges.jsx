@@ -149,6 +149,13 @@ export default function Challenges() {
             xp: c.xp_reward ?? c.xp,
             hints: Array.isArray(c.hints) ? c.hints[0] : c.hints,
             next_challenge_at: env.next_challenge_at || c.next_challenge_at || nextMondayUTC(),
+            // `previous` lives on the ENVELOPE (backend /weekly returns
+            // { week_number, challenge, previous, … }), not on the inner
+            // challenge object — spreading `...c` alone dropped it, so the
+            // Previous Challenges panel always rendered its empty state even
+            // though the API ships real past-week entries. Copy it across;
+            // absent/malformed still falls through to the honest empty state.
+            previous: Array.isArray(env.previous) ? env.previous : c.previous,
           };
           setChallenge(ch);
           setCode(c.starter_code || '# Write your solution here\n');
