@@ -275,21 +275,48 @@ def list_users(caller: str = Depends(get_current_user_id), q: str = "", limit: i
         safe = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         like = f"%{safe}%"
         params = [like, like, like]
-    rows = conn.execute(f"""
-        SELECT u.id, u.username, u.name, u.email,
-               COALESCE(NULLIF(u.account_type,''),'individual') account_type,
-               u.points, u.created_at, COALESCE(u.onboarding_completed,0) onboarding_completed,
-               COALESCE(u.is_blocked,0) is_blocked, COALESCE(NULLIF(u.plan,''),'free') plan,
-               COALESCE(u.is_super_admin,0) is_super_admin,
-               (SELECT o.name FROM org_members om JOIN organizations o ON o.id=om.org_id WHERE om.user_id=u.id LIMIT 1) org_name,
-               (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id=u.id) last_active,
-               u.last_seen_at,
-               (SELECT COALESCE(NULLIF(le.city || ', ' || le.country, ', '), le.ip)
+    def _query(with_telemetry: bool):
+        # The telemetry columns (users.last_seen_at, login_events) are created
+        # by routes.telemetry.ensure_telemetry_tables; the boot migration can
+        # lose a race with the Litestream DB lock (seen in prod 2026-07-02),
+        # leaving this SELECT to fail with "no such column/table" and 500 the
+        # super-admin Users AND Admins tabs. The legacy variant keeps the
+        # response shape identical — the telemetry fields are just NULL.
+        last_seen = "u.last_seen_at" if with_telemetry else "NULL AS last_seen_at"
+        last_from = (
+            """(SELECT COALESCE(NULLIF(le.city || ', ' || le.country, ', '), le.ip)
                 FROM login_events le WHERE le.user_id=u.id AND (le.country IS NOT NULL OR le.ip IS NOT NULL)
-                ORDER BY le.created_at DESC LIMIT 1) last_login_from
-        FROM users u {where}
-        ORDER BY u.created_at DESC LIMIT ? OFFSET ?
-    """, params + [min(limit, 200), offset]).fetchall()
+                ORDER BY le.created_at DESC LIMIT 1) last_login_from"""
+            if with_telemetry else "NULL AS last_login_from"
+        )
+        return conn.execute(f"""
+            SELECT u.id, u.username, u.name, u.email,
+                   COALESCE(NULLIF(u.account_type,''),'individual') account_type,
+                   u.points, u.created_at, COALESCE(u.onboarding_completed,0) onboarding_completed,
+                   COALESCE(u.is_blocked,0) is_blocked, COALESCE(NULLIF(u.plan,''),'free') plan,
+                   COALESCE(u.is_super_admin,0) is_super_admin,
+                   (SELECT o.name FROM org_members om JOIN organizations o ON o.id=om.org_id WHERE om.user_id=u.id LIMIT 1) org_name,
+                   (SELECT MAX(created_at) FROM learning_signals ls WHERE ls.user_id=u.id) last_active,
+                   {last_seen},
+                   {last_from}
+            FROM users u {where}
+            ORDER BY u.created_at DESC LIMIT ? OFFSET ?
+        """, params + [min(limit, 200), offset]).fetchall()
+
+    try:
+        rows = _query(with_telemetry=True)
+    except sqlite3.OperationalError as exc:
+        # Self-heal the telemetry schema once and retry; if it still fails,
+        # degrade gracefully — the admin console must never 500 over the
+        # optional telemetry extras (same guard overview/logins already have).
+        print(f"[admin.users] telemetry schema missing ({exc!r}); self-healing")
+        try:
+            from routes.telemetry import ensure_telemetry_tables
+            ensure_telemetry_tables(DB_PATH)
+            rows = _query(with_telemetry=True)
+        except Exception as exc2:
+            print(f"[admin.users] falling back to legacy columns: {exc2!r}")
+            rows = _query(with_telemetry=False)
     total = conn.execute(f"SELECT COUNT(*) FROM users u {where}", params).fetchone()[0]
     conn.close()
     return {"users": [dict(r) for r in rows], "total": total}
