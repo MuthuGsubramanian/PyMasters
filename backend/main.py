@@ -626,10 +626,13 @@ def init_db():
         """)
 
         # Community + competition + OAuth tables (Aug-launch features)
-        # Each ensure_* is independent: one transient failure (e.g. "database
-        # is locked" while Litestream restores) must not skip the rest — that
-        # exact failure silently blocked ensure_telemetry_tables in prod on
-        # 2026-07-02 because these used to share one try-block.
+        # ROOT CAUSE of the historical "Community/OAuth table init: database is
+        # locked" failures: init_db's own connection holds an open write
+        # transaction here, so each ensure_*'s fresh connection blocked ~5s and
+        # then failed. Commit FIRST to release the lock, then run each ensure_*
+        # independently (one failure must not skip the rest — that silently
+        # blocked ensure_telemetry_tables in prod on 2026-07-02).
+        conn.commit()
         for _ensure in (ensure_social_tables, ensure_org_challenge_tables,
                         ensure_oauth_tables, ensure_payments_table,
                         ensure_telemetry_tables):
