@@ -58,6 +58,20 @@ class PlaygroundChatRequest(BaseModel):
 # Helper
 # ---------------------------------------------------------------------------
 
+def _require_self(user_id: str, caller: str) -> None:
+    """IDOR guard: playground credits, conversation lists, and chat history are
+    private per-user data, and /chat + /chat/stream MUTATE state (burn the
+    user's prompt credits, insert rows into their conversation history).
+
+    The user_id (path param or request body) is client-supplied; without this
+    check any caller could read another learner's Vaathiyaar chat transcripts
+    or spend their credits. Derive the acting user from the verified JWT and
+    refuse cross-user access. Mirrors routes/graph.py and routes/paths.py.
+    """
+    if caller != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 def _get_db_path() -> str:
     return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
@@ -286,15 +300,17 @@ def _extract_clean_message(full_response: str) -> str:
 # ---------------------------------------------------------------------------
 
 @router.get("/credits/{user_id}")
-def get_credits(user_id: str):
+def get_credits(user_id: str, caller: str = Depends(get_current_user_id)):
     """Return the user's XP-based prompt credit balance."""
+    _require_self(user_id, caller)
     db_path = _get_db_path()
     return _get_user_credits(db_path, user_id)
 
 
 @router.get("/conversations/{user_id}")
-def get_conversations(user_id: str):
+def get_conversations(user_id: str, caller: str = Depends(get_current_user_id)):
     """Return the user's playground conversation list."""
+    _require_self(user_id, caller)
     db_path = _get_db_path()
     conn = sqlite3.connect(db_path)
     try:
@@ -313,8 +329,9 @@ def get_conversations(user_id: str):
 
 
 @router.get("/conversations/{user_id}/{conversation_id}")
-def get_conversation_messages(user_id: str, conversation_id: str):
+def get_conversation_messages(user_id: str, conversation_id: str, caller: str = Depends(get_current_user_id)):
     """Return all messages for a conversation."""
+    _require_self(user_id, caller)
     db_path = _get_db_path()
     conn = sqlite3.connect(db_path)
     try:
@@ -338,12 +355,13 @@ def get_conversation_messages(user_id: str, conversation_id: str):
 
 
 @router.post("/chat")
-def playground_chat(request: PlaygroundChatRequest):
+def playground_chat(request: PlaygroundChatRequest, caller: str = Depends(get_current_user_id)):
     """
     Send a free-form message to Vaathiyaar in the Playground.
     Checks XP-based prompt allowance before responding.
     Each prompt costs 1 credit (1 XP = 100 credits).
     """
+    _require_self(request.user_id, caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -408,8 +426,9 @@ def playground_chat(request: PlaygroundChatRequest):
 
 
 @router.post("/chat/stream")
-def playground_chat_stream(request: PlaygroundChatRequest):
+def playground_chat_stream(request: PlaygroundChatRequest, caller: str = Depends(get_current_user_id)):
     """Stream a free-form Vaathiyaar response token by token using SSE."""
+    _require_self(request.user_id, caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
