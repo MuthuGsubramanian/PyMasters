@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (module 11 fix, 2026-07-02): Tailwind v4's default `dark:`
+   variant follows the OS `prefers-color-scheme` media query, but this app toggles
+   theme via the `.dark` class on <html> (useDarkMode.js + the index.html pre-paint
+   bootstrap). Without this override, every `dark:` utility tracked the OS setting
+   while the semantic tokens tracked the in-app toggle — producing mixed-theme UI
+   whenever they disagreed. This binds `dark:` to the same `.dark` class the tokens
+   use. First-load behaviour is unchanged for users with no saved preference: the
+   bootstrap adds `.dark` iff the OS prefers dark, so class == media query there. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', sans-serif;
