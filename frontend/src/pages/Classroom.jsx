@@ -15,7 +15,7 @@ import {
     BookOpen, ChevronRight, Play, RotateCcw, Lock,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
-    MessageCircle, X
+    MessageCircle, X, Cloud, Building2, Network
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -211,6 +211,43 @@ const TRACK_META = {
         accent: '#10b981',
         gradient: 'from-emerald-500/10 to-green-500/5',
     },
+    // Enterprise cloud curriculum — only served to org/enterprise users
+    // (backend-gated; these entries are inert for everyone else).
+    azure_enterprise: {
+        name: 'Azure for Enterprise',
+        icon: <Cloud size={16} />,
+        accent: '#0078d4',
+        gradient: 'from-sky-500/10 to-blue-500/5',
+        enterprise: true,
+    },
+    azure_ai_foundry: {
+        name: 'Azure AI Foundry',
+        icon: <Bot size={16} />,
+        accent: '#8661c5',
+        gradient: 'from-violet-500/10 to-indigo-500/5',
+        enterprise: true,
+    },
+    aws_enterprise: {
+        name: 'AWS for Enterprise',
+        icon: <Cloud size={16} />,
+        accent: '#ff9900',
+        gradient: 'from-amber-500/10 to-orange-500/5',
+        enterprise: true,
+    },
+    gcp_vertex_ai: {
+        name: 'GCP & Vertex AI',
+        icon: <Cloud size={16} />,
+        accent: '#34a853',
+        gradient: 'from-emerald-500/10 to-teal-500/5',
+        enterprise: true,
+    },
+    cross_cloud_architecture: {
+        name: 'Cross-Cloud Architecture',
+        icon: <Network size={16} />,
+        accent: '#64748b',
+        gradient: 'from-slate-500/10 to-zinc-500/5',
+        enterprise: true,
+    },
 };
 
 const DEFAULT_TRACK_ORDER = [
@@ -218,7 +255,10 @@ const DEFAULT_TRACK_ORDER = [
     'web_development', 'dsa',
     'ai_fundamentals', 'ai_ml_foundations', 'machine_learning',
     'deep_learning', 'deep_learning_complete',
-    'testing_devops', 'generated'
+    'testing_devops',
+    'azure_enterprise', 'azure_ai_foundry', 'aws_enterprise',
+    'gcp_vertex_ai', 'cross_cloud_architecture',
+    'generated'
 ];
 
 const PROFILE_WELCOME = {
