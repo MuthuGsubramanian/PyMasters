@@ -290,4 +290,9 @@ export const startLinkedIn = () => api.get('/auth/linkedin/start');
 export const getGitHubConfig = () => api.get('/auth/github/config');
 export const startGitHub = () => api.get('/auth/github/start');
 
+// Payments (Razorpay Standard Checkout)
+export const getPaymentConfig = () => api.get('/payments/config');
+export const createPaymentOrder = (plan) => api.post('/payments/create-order', { plan });
+export const verifyPayment = (payload) => api.post('/payments/verify', payload);
+
 export default api;
