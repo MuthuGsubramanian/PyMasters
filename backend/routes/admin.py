@@ -41,6 +41,20 @@ def is_break_glass(username: str, email: str) -> bool:
     return bool(idents & SUPER_ADMINS)
 
 
+def _validate_expiry(expires_at):
+    """Accept None or an ISO 8601 date/datetime string; reject past dates."""
+    if expires_at is None:
+        return
+    from datetime import datetime, timezone
+    try:
+        parsed = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(status_code=422, detail="expires_at must be an ISO 8601 date, e.g. 2026-12-31")
+    now = datetime.now(timezone.utc) if parsed.tzinfo else datetime.now()
+    if parsed < now:
+        raise HTTPException(status_code=422, detail="expires_at is in the past")
+
+
 def require_super_admin(user_id: str):
     conn = _conn()
     row = conn.execute(
@@ -484,14 +498,17 @@ def block_user(target_id: str, req: BlockRequest, caller: str = Depends(get_curr
 
 @router.post("/users/{target_id}/plan")
 def set_user_plan(target_id: str, req: PlanRequest, caller: str = Depends(get_current_user_id)):
-    """Set a user's subscription/access tier."""
+    """Set a user's subscription/access tier, optionally for a fixed period."""
     require_super_admin(caller)
+    _validate_expiry(req.expires_at)
     conn = _conn()
-    conn.execute("UPDATE users SET plan = ? WHERE id = ?", [req.plan, target_id])
-    _audit(conn, caller, "user.plan", "user", target_id, {"plan": req.plan})
+    conn.execute(
+        "UPDATE users SET plan = ?, plan_assigned_at = datetime('now'), plan_expires_at = ? WHERE id = ?",
+        [req.plan, req.expires_at, target_id])
+    _audit(conn, caller, "user.plan", "user", target_id, {"plan": req.plan, "expires_at": req.expires_at})
     conn.commit()
     conn.close()
-    return {"ok": True, "plan": req.plan}
+    return {"ok": True, "plan": req.plan, "expires_at": req.expires_at}
 
 
 @router.get("/usage")

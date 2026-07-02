@@ -320,6 +320,7 @@ export default function Home() {
                         <a href="#curriculum" className="text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
                         <a href="#features" className="text-sm text-slate-300 hover:text-white transition-colors">Features</a>
                         <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For Schools</a>
+                        <button onClick={() => navigate('/pricing')} className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</button>
                         {user ? (
                             <button onClick={() => navigate('/dashboard')} className="text-sm text-slate-300 hover:text-white transition-colors">Dashboard</button>
                         ) : (
@@ -631,6 +632,7 @@ export default function Home() {
                         </p>
                     </div>
                     <nav className="flex items-center gap-5 text-xs text-slate-400" aria-label="Footer">
+                        <Link to="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>
                         <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
                         <Link to="/security" className="hover:text-cyan-400 transition-colors">Security</Link>

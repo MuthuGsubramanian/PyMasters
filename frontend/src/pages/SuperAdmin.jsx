@@ -187,10 +187,25 @@ export default function SuperAdmin() {
     };
 
     const changePlan = async (u, plan) => {
+        // Paid/elevated plans can be granted for a fixed period (manual
+        // assignment until self-serve billing exists). Empty = no expiry.
+        let expiresAt = null;
+        if (plan !== 'free') {
+            const raw = window.prompt(`Assign "${plan}" until (YYYY-MM-DD, leave empty for no expiry):`, '');
+            if (raw === null) return; // admin cancelled
+            const trimmed = raw.trim();
+            if (trimmed) {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+                    window.alert('Please use YYYY-MM-DD (e.g. 2026-12-31).');
+                    return;
+                }
+                expiresAt = trimmed;
+            }
+        }
         setBusyId(u.id);
         try {
-            await adminSetPlan(u.id, user.id, plan);
-            setUsers((prev) => ({ ...prev, users: prev.users.map((x) => x.id === u.id ? { ...x, plan } : x) }));
+            await adminSetPlan(u.id, user.id, plan, expiresAt);
+            setUsers((prev) => ({ ...prev, users: prev.users.map((x) => x.id === u.id ? { ...x, plan, plan_expires_at: expiresAt } : x) }));
         } catch { /* ignore */ } finally { setBusyId(null); }
     };
 

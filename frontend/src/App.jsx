@@ -31,6 +31,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Community = lazy(() => import('./pages/Community'));
 const OrgCompete = lazy(() => import('./pages/OrgCompete'));
 const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'));
+const Pricing = lazy(() => import('./pages/Pricing'));
 
 function PageLoader() {
   return (
@@ -79,6 +80,7 @@ export default function App() {
               <Route path="/join/:token" element={<ErrorBoundary><JoinOrg /></ErrorBoundary>} />
             <Route path="/forgot-password" element={<ErrorBoundary><ForgotPassword /></ErrorBoundary>} />
             <Route path="/reset-password/:token" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
+              <Route path="/pricing" element={<ErrorBoundary><Pricing /></ErrorBoundary>} />
               <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
               <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
               <Route path="/security" element={<ErrorBoundary><Security /></ErrorBoundary>} />
