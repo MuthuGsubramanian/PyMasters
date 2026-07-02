@@ -52,6 +52,14 @@ def search_topics(q: str = Query(..., min_length=1, max_length=120),
         lessons = _list_all_lessons(user_id=user_id)
     except Exception:
         lessons = []
+    # Enterprise-only tracks (see access.ENTERPRISE_TRACKS) are hidden from
+    # individual accounts in the catalog (/api/classroom/lessons) and 403-gated
+    # on lesson open — apply the SAME fail-closed gate here so search cannot
+    # leak gated B2B lesson metadata (ids/titles/descriptions/track names) to
+    # individuals or anonymous callers. has_enterprise_access fails CLOSED.
+    from access import ENTERPRISE_TRACKS, has_enterprise_access
+    if not has_enterprise_access(DB_PATH, user_id):
+        lessons = [L for L in lessons if L.get("track") not in ENTERPRISE_TRACKS]
     for L in lessons:
         title = _txt(L.get("title"), lang)
         desc = _txt(L.get("description"), lang)
