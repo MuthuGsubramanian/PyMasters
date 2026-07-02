@@ -14,6 +14,8 @@ from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from auth import get_current_user_id
+
 from vaathiyaar.engine import (
     call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL,
     stream as vaathiyaar_stream, VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE,
@@ -760,11 +762,21 @@ def get_lesson(
 
 
 @router.post("/evaluate")
-def evaluate(request: EvaluateRequest):
+def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id)):
     """
     Evaluate student code against expected output.
     Records a learning signal and updates mastery.
     """
+    # IDOR/write guard (2026-07-02, same class as the routes/paths.py fix): this
+    # endpoint AWARDS XP, advances the daily streak, and writes mastery/signals
+    # for the body-supplied user_id. Without auth, an anonymous caller could
+    # forge {"user_id": "<victim>"} to inflate any user's XP and fabricate
+    # streaks — directly corrupting the leaderboard. Derive the acting user from
+    # the verified JWT and refuse cross-user writes. The real client (api.js
+    # axios interceptor / Classroom.jsx handleRun) always sends the session
+    # user's own id with a Bearer token, so legitimate traffic is unaffected.
+    if request.user_id != caller:
+        raise HTTPException(status_code=403, detail="Forbidden")
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
