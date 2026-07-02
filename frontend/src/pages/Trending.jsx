@@ -2,11 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Flame, Search, Sparkles, ArrowRight, ChevronDown, ChevronUp,
+  Flame, Search, Sparkles, ArrowRight,
   Code2, BookOpen, Zap, Brain, Eye, MessageSquare, Server,
   Cpu, BarChart3, Star, TrendingUp
 } from 'lucide-react';
-import { Card, Button, Badge } from '../components/ui';
+import { Card, Button, Badge, Modal } from '../components/ui';
 
 const CATEGORIES = [
   'All', 'AI Agents', 'LLMs', 'Computer Vision', 'NLP',
@@ -810,7 +810,9 @@ export default function Trending() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCode, setExpandedCode] = useState({});
+  // Code previews open in a popup (instead of expanding inline) so card
+  // heights stay uniform and the grid stays tidy.
+  const [codeTopic, setCodeTopic] = useState(null);
   const [topics, setTopics] = useState(TRENDING_TOPICS);
 
   useEffect(() => { document.title = 'Trending — PyMasters'; }, []);
@@ -859,9 +861,6 @@ export default function Trending() {
     // ids) fall back to the first three, which arrive in daily-rotated order.
     return byId.length ? byId : topics.slice(0, 3);
   }, [topics]);
-
-  const toggleCode = (id) =>
-    setExpandedCode(prev => ({ ...prev, [id]: !prev[id] }));
 
   const catColor = (cat) => CATEGORY_COLORS[cat] || { bg: 'bg-bg-inset', text: 'text-text-muted', border: 'border-border-default' };
 
