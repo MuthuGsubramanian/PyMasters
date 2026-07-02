@@ -348,7 +348,15 @@ def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_cu
     try:
         updates = []
         values = []
-        for field in ["name", "type", "domain", "logo_url", "description", "plan"]:
+        # NOTE (2026-07-03): 'plan' is intentionally NOT org-admin-updatable here.
+        # Org plans are assigned ONLY by the site super admin via
+        # POST /api/admin/orgs/{org_id}/plan (audited, sets plan_assigned_at /
+        # plan_expires_at — MSG pricing policy 2026-07-02: plans are manually
+        # assigned). Honoring body.plan on this route let any ORG admin — a role
+        # anyone obtains by self-creating an org — mark their org 'enterprise'
+        # unaudited, bypassing that gate. UpdateOrgRequest keeps the optional
+        # `plan` field for request-shape compatibility; it is ignored here.
+        for field in ["name", "type", "domain", "logo_url", "description"]:
             val = getattr(data, field, None)
             if val is not None:
                 updates.append(f"{field} = ?")
