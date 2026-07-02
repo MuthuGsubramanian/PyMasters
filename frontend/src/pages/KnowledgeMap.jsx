@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Sparkles, Target, ChevronRight, X, GraduationCap, Lock } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
-import { getKnowledgeMap, getConceptRecommendations, getKnowledgeGaps } from '../api';
+import { getKnowledgeMap, getConceptRecommendations, getKnowledgeGaps, getConceptDetail } from '../api';
 
 /**
  * KnowledgeMap — Vaathiyaar's live model of what the user knows.
@@ -98,6 +98,32 @@ export default function KnowledgeMap() {
   const [gaps, setGaps] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [linking, setLinking] = useState(false);
+
+  // "Learn this in the Classroom" — deep-link to the lesson that TEACHES the
+  // selected concept (live-QA finding 2026-07-02: the CTA dropped learners on
+  // the generic Classroom selector). Uses the existing /graph/concepts/{id}
+  // endpoint ("lessons": [{lesson_id, role, depth}]) and Classroom's proven
+  // ?lesson=<id> deep-link. role='requires' rows are lessons that CONSUME the
+  // concept, so only role='teaches' qualifies; anything else (no mapping,
+  // fetch error) falls back to today's behavior — the plain Classroom route.
+  const openInClassroom = async () => {
+    if (!selected || linking) return;
+    setLinking(true);
+    let target = '/dashboard/classroom';
+    try {
+      const d = await getConceptDetail(selected.id);
+      const lessons = Array.isArray(d.data?.lessons) ? d.data.lessons : [];
+      const teach = lessons.find(
+        (l) => l && l.role === 'teaches' && typeof l.lesson_id === 'string' && l.lesson_id
+      );
+      if (teach) target = `/dashboard/classroom?lesson=${encodeURIComponent(teach.lesson_id)}`;
+    } catch {
+      /* graceful fallback — keep the generic route */
+    }
+    setLinking(false);
+    navigate(target);
+  };
 
   useEffect(() => {
     document.title = 'Knowledge Map — PyMasters';
@@ -293,9 +319,10 @@ export default function KnowledgeMap() {
                   )}
                 </div>
 
-                <button type="button" onClick={() => navigate('/dashboard/classroom')}
-                  className="btn-neo btn-neo-primary mt-5 w-full">
-                  <GraduationCap className="mr-1.5 h-4 w-4" aria-hidden="true" /> Learn this in the Classroom
+                <button type="button" onClick={openInClassroom} disabled={linking}
+                  className="btn-neo btn-neo-primary mt-5 w-full disabled:opacity-60">
+                  <GraduationCap className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                  {linking ? 'Opening…' : 'Learn this in the Classroom'}
                 </button>
               </motion.div>
             ) : (
