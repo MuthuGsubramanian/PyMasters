@@ -110,3 +110,22 @@ def test_unknown_topics_do_not_pollute_map(seeded_db):
     mastery = get_user_mastery_map(seeded_db, "u2")
     assert "totally_made_up_topic" not in mastery
     assert all(v == 0.0 for v in mastery.values())
+
+
+def test_frontier_is_beginner_first_for_new_user(seeded_db):
+    """Live-QA regression (2026-07-02): a brand-new user was recommended
+    Docker/Git before Variables because the frontier sort only understood
+    string difficulties while production stores numeric (1/2/3). The frontier
+    must be sorted easiest-first."""
+    seed_lesson_concepts(seeded_db)
+    frontier = get_learning_frontier(seeded_db, "brand-new-user", 10)
+    assert frontier, "frontier must not be empty for a new user"
+
+    def rank(d):
+        try:
+            return float(d)
+        except (TypeError, ValueError):
+            return {"beginner": 0.0, "intermediate": 1.0, "advanced": 2.0}.get(str(d).lower(), 1.0)
+
+    ranks = [rank(c["difficulty"]) for c in frontier]
+    assert ranks == sorted(ranks), f"frontier not easiest-first: {[(c['id'], c['difficulty']) for c in frontier]}"

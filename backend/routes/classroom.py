@@ -141,6 +141,47 @@ def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | Non
     return None
 
 
+# Canonical module sequence per track. Lesson `order` is only unique WITHIN a
+# module, so sorting by order alone interleaved modules — live QA (2026-07-02)
+# found "Decorators" (advanced, order 1) shown as lesson #1 of Python
+# Fundamentals. Tracks not listed fall back to the foundations-first heuristic.
+_MODULE_ORDER = {
+    "python_fundamentals": [
+        "variables_and_types", "control_flow", "data_structures", "functions",
+        "oop", "file_io", "error_handling", "testing", "packaging", "advanced",
+    ],
+    "ai_agents": ["foundations", "frameworks", "protocols", "orchestration", "advanced"],
+    "deep_learning": ["nn_basics", "backpropagation", "pytorch", "cnn", "rnn", "transformers"],
+    "machine_learning": [
+        "ml_foundations", "data_preparation", "supervised_learning",
+        "unsupervised_learning", "evaluation", "neural_networks", "production",
+    ],
+    "web_development": [
+        "web_foundations", "frontend_foundations", "flask_framework",
+        "fastapi_framework", "django_framework", "advanced_web", "devops_foundations",
+    ],
+}
+
+_FIRST_MODULES = ("foundations", "basics")
+_LAST_MODULES = ("advanced", "mastery", "production", "deployment", "practice")
+
+
+def _module_rank(track: str, module: str) -> tuple:
+    """Sortable rank for a module inside its track."""
+    module = module or ""
+    explicit = _MODULE_ORDER.get(track or "")
+    if explicit and module in explicit:
+        return (0, explicit.index(module), "")
+    # Heuristic: foundations-style modules first, advanced-style last,
+    # everything else alphabetical in between.
+    low = module.lower()
+    if any(k in low for k in _FIRST_MODULES):
+        return (1, 0, low)
+    if any(k in low for k in _LAST_MODULES):
+        return (3, 0, low)
+    return (2, 0, low)
+
+
 def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict]:
     """List all lessons across all track subdirectories."""
     base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
@@ -167,9 +208,13 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
                 except Exception as e:
                     print(f"Warning: Failed to load lesson {lesson_file}: {e}")
                     continue
-            # Order lessons pedagogically by curriculum 'order' (not alphabetical filename),
-            # so e.g. "Python Fundamentals" starts with basics rather than adv_* lessons.
-            track_lessons.sort(key=lambda L: (L.get("order", 9999), L.get("id") or ""))
+            # Order lessons pedagogically: module sequence first (order is only
+            # unique within a module), then curriculum 'order', then id.
+            track_lessons.sort(key=lambda L: (
+                _module_rank(L.get("track") or track_dir.name, L.get("module") or ""),
+                L.get("order", 9999),
+                L.get("id") or "",
+            ))
             lessons.extend(track_lessons)
 
     # Generated lessons from database

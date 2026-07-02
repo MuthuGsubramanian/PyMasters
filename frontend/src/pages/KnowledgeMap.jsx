@@ -216,7 +216,8 @@ export default function KnowledgeMap() {
                     <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
                   </span>
                   <span className="mt-1 block text-xs text-text-muted">
-                    {r.category} · {r.difficulty}
+                    {prettyCategory(r.category)}
+                    {difficultyLabel(r.difficulty) && ` · ${difficultyLabel(r.difficulty)}`}
                     {r.dependent_count > 0 && ` · unlocks ${r.dependent_count} concept${r.dependent_count === 1 ? '' : 's'}`}
                   </span>
                 </button>
@@ -230,8 +231,8 @@ export default function KnowledgeMap() {
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,340px)]">
         <div className="space-y-5">
           {byCategory.map(({ category, nodes }) => (
-            <section key={category} aria-label={category} className="panel rounded-2xl p-5">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-secondary">{category}</h2>
+            <section key={category} aria-label={prettyCategory(category)} className="panel rounded-2xl p-5">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-secondary">{prettyCategory(category)}</h2>
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {nodes.map((n) => (
                   <ConceptChip key={n.id} concept={n} selected={selected?.id === n.id} onSelect={setSelected} />
@@ -255,7 +256,10 @@ export default function KnowledgeMap() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="font-display text-lg font-semibold text-text-primary">{selected.name}</h2>
-                    <p className="text-xs text-text-muted">{selected.category} · {selected.difficulty}</p>
+                    <p className="text-xs text-text-muted">
+                      {prettyCategory(selected.category)}
+                      {difficultyLabel(selected.difficulty) && ` · ${difficultyLabel(selected.difficulty)}`}
+                    </p>
                   </div>
                   <button type="button" onClick={() => setSelected(null)} aria-label="Close concept details"
                     className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-bg-elevated">
