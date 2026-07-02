@@ -133,6 +133,10 @@ export default function App() {
             <Routes>
               <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
               <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+              {/* Guessed/legacy signup URLs must never 404 — funnel them into the
+                  Login page pre-flipped to signup mode (additive; /login unchanged). */}
+              <Route path="/signup" element={<Navigate to="/login?mode=signup" replace />} />
+              <Route path="/register" element={<Navigate to="/login?mode=signup" replace />} />
               <Route path="/join/:token" element={<ErrorBoundary><JoinOrg /></ErrorBoundary>} />
             <Route path="/forgot-password" element={<ErrorBoundary><ForgotPassword /></ErrorBoundary>} />
             <Route path="/reset-password/:token" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
