@@ -6,6 +6,7 @@ Prefix: /api/playground
 
 import json
 import os
+import re
 import sqlite3
 import uuid
 from typing import Optional, List
@@ -160,6 +161,107 @@ def _get_conversation_history(db_path: str, conversation_id: str, limit: int = 2
         return [{"role": r[0], "content": r[1]} for r in reversed(rows)]
     finally:
         conn.close()
+
+
+_ENVELOPE_RE = re.compile(r'\{\s*"message"\s*:\s*"')
+_PARTIAL_MSG_RE = re.compile(r'"message"\s*:\s*"((?:[^"\\]|\\.)*)', re.DOTALL)
+
+
+def _normalize_ws(s: str) -> str:
+    return " ".join(s.split())
+
+
+def _extract_clean_message(full_response: str) -> str:
+    """
+    Extract the human-readable message from a raw Vaathiyaar response.
+
+    The system prompt asks the model to answer as a JSON envelope
+    {"message": ...}. Three shapes actually occur in the wild:
+      1. The whole response is that JSON object (optionally in a ``` fence).
+      2. Plain prose with no envelope at all.
+      3. Prose followed by a re-emitted envelope (often cut off mid-string by
+         the num_predict token cap) — observed live 2026-07-02: the raw,
+         truncated JSON rendered as a code block in the chat and was saved
+         to conversation history.
+
+    This helper handles all three without changing behavior for 1 and 2.
+    """
+    clean_message = full_response
+
+    # --- Shape 1: entire response is the JSON envelope (existing behavior) ---
+    try:
+        cleaned = full_response.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+        parsed = json.loads(cleaned)
+        if isinstance(parsed, dict) and "message" in parsed:
+            return str(parsed["message"])
+    except (json.JSONDecodeError, KeyError, TypeError):
+        pass
+
+    # --- Shape 3: prose followed by a leaked (possibly truncated) envelope ---
+    m = None
+    for m in _ENVELOPE_RE.finditer(full_response):
+        pass  # keep the LAST envelope start
+    if m is None:
+        return clean_message  # Shape 2: plain prose — unchanged
+
+    prose = full_response[: m.start()]
+    tail = full_response[m.start():]
+
+    # Drop a code-fence opener the model put right before the envelope
+    # (e.g. "```json\n" / "```\n") so it doesn't dangle in the prose.
+    prose = re.sub(r'```(?:json)?\s*$', '', prose).rstrip()
+
+    # Recover the envelope's message text: full parse first, else the
+    # partial string value (truncated envelopes never close their quotes).
+    envelope_msg = None
+    try:
+        t = tail.strip()
+        if t.endswith("```"):
+            t = t[:-3].strip()
+        parsed = json.loads(t)
+        if isinstance(parsed, dict) and "message" in parsed:
+            envelope_msg = str(parsed["message"])
+    except (json.JSONDecodeError, TypeError):
+        # Truncated-envelope recovery. Only applies when the envelope runs to
+        # the END of the response (num_predict cut it off) — a `{"message": …}`
+        # that appears mid-text with prose AFTER it is a code example the
+        # model is showing the learner, not a leak, and must stay untouched.
+        pm = _PARTIAL_MSG_RE.search(tail)
+        if pm:
+            remainder = tail[pm.end(1):]
+            is_end_envelope = len(remainder) <= 10 and not set(remainder) - set('"}\n\r\t` ,')
+            if not is_end_envelope:
+                return clean_message  # mid-prose JSON example — leave as-is
+            raw = pm.group(1)
+            try:
+                envelope_msg = json.loads('"' + raw + '"')
+            except json.JSONDecodeError:
+                envelope_msg = raw.replace('\\n', '\n').replace('\\"', '"')
+
+    if envelope_msg is None:
+        # Envelope start with no recoverable message text: keep the prose,
+        # drop the unreadable JSON fragment (never show raw JSON to a learner).
+        return prose if _normalize_ws(prose) else clean_message
+
+    if not _normalize_ws(prose):
+        # Model answered only inside the envelope (possibly truncated).
+        return envelope_msg
+
+    # Duplicate re-emission: the envelope restates the prose → keep the prose,
+    # which is complete, and drop the duplicate.
+    probe = _normalize_ws(envelope_msg)[:60]
+    if probe and probe in _normalize_ws(prose):
+        return prose
+
+    # Distinct content: keep both, but as readable text, never raw JSON.
+    return prose + "\n\n" + envelope_msg
 
 
 # ---------------------------------------------------------------------------
@@ -338,22 +440,10 @@ def playground_chat_stream(request: PlaygroundChatRequest):
                     full_response += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
 
-            # Parse response and extract clean message
-            clean_message = full_response
-            try:
-                cleaned = full_response.strip()
-                if cleaned.startswith("```json"):
-                    cleaned = cleaned[7:]
-                elif cleaned.startswith("```"):
-                    cleaned = cleaned[3:]
-                if cleaned.endswith("```"):
-                    cleaned = cleaned[:-3]
-                cleaned = cleaned.strip()
-                parsed = json.loads(cleaned)
-                if isinstance(parsed, dict) and "message" in parsed:
-                    clean_message = parsed["message"]
-            except (json.JSONDecodeError, KeyError):
-                pass
+            # Parse response and extract clean message. Handles whole-JSON
+            # envelopes (previous behavior), plain prose, and the observed
+            # prose + leaked/truncated envelope re-emission (2026-07-02).
+            clean_message = _extract_clean_message(full_response)
 
             # Save assistant response to conversation
             try:
