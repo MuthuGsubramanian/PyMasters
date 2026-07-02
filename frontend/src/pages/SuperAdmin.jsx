@@ -103,7 +103,12 @@ function UsageChart({ series }) {
             </div>
             <div className="flex items-end gap-[3px] h-32">
                 {series.map((d) => (
-                    <div key={d.date} className="flex-1 flex flex-col justify-end items-center gap-[2px] group relative" title={`${d.date}\nSignups: ${d.signups}\nActive: ${d.active}`}>
+                    // h-full is REQUIRED (fixed 2026-07-02): the bars use percentage
+                    // heights, which only resolve against a DEFINITE parent height.
+                    // Without it each column sizes to content (auto) and every bar
+                    // computes to 0px — the chart rendered blank even with real data
+                    // (confirmed live: inline 33.33% -> computed 0px).
+                    <div key={d.date} className="flex-1 h-full flex flex-col justify-end items-center gap-[2px] group relative" title={`${d.date}\nSignups: ${d.signups}\nActive: ${d.active}`}>
                         <div className="w-full bg-purple-400/70 rounded-sm" style={{ height: `${(d.active / max) * 100}%` }} />
                         <div className="w-full bg-accent-primary rounded-sm" style={{ height: `${(d.signups / max) * 100}%` }} />
                     </div>
