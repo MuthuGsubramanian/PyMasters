@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
@@ -41,6 +41,7 @@ from routes.oauth import router as oauth_router, ensure_oauth_tables
 from routes.github_oauth import router as github_oauth_router
 from routes.discovery import router as discovery_router
 from routes.payments import router as payments_router, ensure_payments_table
+from routes.telemetry import router as telemetry_router, ensure_telemetry_tables, record_login
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -630,6 +631,7 @@ def init_db():
             ensure_org_challenge_tables(DB_PATH)
             ensure_oauth_tables(DB_PATH)
             ensure_payments_table(DB_PATH)
+            ensure_telemetry_tables(DB_PATH)
         except Exception as e:
             print(f"Community/OAuth table init: {e}")
 
@@ -717,6 +719,7 @@ app.include_router(review_router)
 app.include_router(voice_router)
 app.include_router(social_router)
 app.include_router(org_challenges_router)
+app.include_router(telemetry_router)
 app.include_router(oauth_router)
 app.include_router(github_oauth_router)
 app.include_router(discovery_router)
@@ -831,7 +834,7 @@ def read_root():
     return {"status": "online", "message": "PyMasters Backend is running"}
 
 @app.post("/api/auth/register")
-def register(user: UserRegister):
+def register(user: UserRegister, request: Request):
     print(f"Register request for: {user.username}")
     uname = (user.username or "").strip()
     if not uname:
@@ -916,6 +919,10 @@ def register(user: UserRegister):
             }
 
         conn.commit()
+
+        # Telemetry: first login = signup (background geo, fail-silent).
+        record_login(user_id, request)
+
         return {
             "id": user_id,
             "username": uname,
@@ -944,7 +951,7 @@ def register(user: UserRegister):
         conn.close()
 
 @app.post("/api/auth/login")
-def login(user: UserLogin):
+def login(user: UserLogin, request: Request):
     print(f"Login request for: {user.username}")
     conn = sqlite3.connect(DB_PATH)
     try:
@@ -991,6 +998,10 @@ def login(user: UserLogin):
             }
 
         unlocks = json.loads(record[3]) if record[3] else ["module_1"]
+
+        # Telemetry: login event + coarse geo (background thread, fail-silent).
+        record_login(record[0], request)
+
         return {
             "id": record[0],
             "name": record[1],
