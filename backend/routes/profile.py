@@ -548,7 +548,22 @@ def delete_account(user_id: str, caller: str = Depends(get_current_user_id)):
                     detail=f"You are the only super admin of '{org['name']}'. Transfer ownership or delete the organization first."
                 )
 
-        # Delete from all related tables (order doesn't matter with no FK constraints)
+        # Delete playground messages FIRST (child rows keyed by conversation_id,
+        # not user_id). This must run BEFORE the related_tables loop below
+        # deletes playground_conversations, because the subquery resolves the
+        # user's conversation ids from that table — deleting parents first
+        # left the messages orphaned forever (FKs are not enforced: _get_conn
+        # never sets PRAGMA foreign_keys=ON).
+        try:
+            cursor.execute(
+                "DELETE FROM playground_messages WHERE conversation_id IN "
+                "(SELECT id FROM playground_conversations WHERE user_id = ?)",
+                [user_id]
+            )
+        except Exception:
+            pass
+
+        # Delete from all related tables (all keyed directly by a user-id column)
         related_tables = [
             ("user_profiles", "user_id"),
             ("user_settings", "user_id"),
@@ -576,16 +591,6 @@ def delete_account(user_id: str, caller: str = Depends(get_current_user_id)):
                 cursor.execute(f"DELETE FROM {table} WHERE {column} = ?", [user_id])
             except Exception:
                 pass  # Table may not exist in all environments
-
-        # Delete playground messages (linked via conversation)
-        try:
-            cursor.execute(
-                "DELETE FROM playground_messages WHERE conversation_id IN "
-                "(SELECT id FROM playground_conversations WHERE user_id = ?)",
-                [user_id]
-            )
-        except Exception:
-            pass
 
         # Finally delete the user record
         cursor.execute("DELETE FROM users WHERE id = ?", [user_id])
