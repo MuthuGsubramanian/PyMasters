@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -49,10 +49,24 @@ export default function Layout() {
     // mount (and on route change, since XP-earning lands the user back in the shell)
     // and use it for the badge/rank, falling back to user.points if the call fails.
     const [liveXp, setLiveXp] = useState(null);
+    // Only XP-earning surfaces can change total_xp, so refetch on mount and when
+    // LEAVING one of those routes — not on every navigation (live-QA 2026-07-02
+    // saw /stats + /admin/check re-fire 3-4x per click). Cuts the sidebar's
+    // per-navigation calls to ~zero on read-only routes while keeping the badge
+    // fresh right after a lesson/challenge/playground session.
+    const XP_ROUTES = '/dashboard/classroom|/dashboard/challenges|/dashboard/playground';
+    const prevPathRef = useRef(location.pathname);
     useEffect(() => {
-        if (user?.id) getProfileStats(user.id)
-            .then((r) => { const xp = r.data?.total_xp; if (Number.isFinite(xp)) setLiveXp(xp); })
-            .catch(() => {});
+        if (!user?.id) return;
+        const prev = prevPathRef.current;
+        const cameFromXpRoute = new RegExp(XP_ROUTES).test(prev);
+        const firstLoad = prev === location.pathname;
+        prevPathRef.current = location.pathname;
+        if (firstLoad || cameFromXpRoute) {
+            getProfileStats(user.id)
+                .then((r) => { const xp = r.data?.total_xp; if (Number.isFinite(xp)) setLiveXp(xp); })
+                .catch(() => {});
+        }
     }, [user?.id, location.pathname]);
 
     // Trial/plan access (2026-07-02): individual users get a 7-day trial from
@@ -61,10 +75,12 @@ export default function Layout() {
     // Org members / super admins / assigned plans come back "active" — no chip.
     const [access, setAccess] = useState(null);
     useEffect(() => {
+        // Once per session (per user) — trial state changes at day granularity,
+        // so per-route refetching would only add network chatter.
         if (user?.id) getAccessStatus(user.id)
             .then((r) => setAccess(r.data))
             .catch(() => {});
-    }, [user?.id, location.pathname]);
+    }, [user?.id]);
     useEffect(() => {
         if (access?.status === 'expired' && location.pathname !== '/dashboard/upgrade') {
             navigate('/dashboard/upgrade', { replace: true });
