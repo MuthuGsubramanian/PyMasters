@@ -165,6 +165,15 @@ def init_db():
             print("Migrating DB: Adding plan column")
             cursor.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
 
+        # Manual plan assignment by super admin (2026-07-02): who assigned,
+        # when, and until when the plan is valid. NULL expiry = no expiry.
+        if 'plan_assigned_at' not in col_names:
+            print("Migrating DB: Adding plan_assigned_at column")
+            cursor.execute("ALTER TABLE users ADD COLUMN plan_assigned_at TEXT")
+        if 'plan_expires_at' not in col_names:
+            print("Migrating DB: Adding plan_expires_at column")
+            cursor.execute("ALTER TABLE users ADD COLUMN plan_expires_at TEXT")
+
         if 'is_super_admin' not in col_names:
             print("Migrating DB: Adding is_super_admin column")
             cursor.execute("ALTER TABLE users ADD COLUMN is_super_admin INTEGER DEFAULT 0")

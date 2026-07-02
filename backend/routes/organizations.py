@@ -147,6 +147,7 @@ def _ensure_org_schema(conn):
     for col, ddl in (("type","TEXT DEFAULT 'other'"), ("domain","TEXT DEFAULT ''"),
                      ("logo_url","TEXT DEFAULT ''"), ("description","TEXT DEFAULT ''"),
                      ("settings","TEXT DEFAULT '{}'"), ("plan","TEXT DEFAULT 'free'"),
+                     ("plan_assigned_at","TEXT"), ("plan_expires_at","TEXT"),
                      ("created_at","TIMESTAMP"), ("updated_at","TIMESTAMP")):
         if col not in have:
             try: conn.execute(f"ALTER TABLE organizations ADD COLUMN {col} {ddl}")
