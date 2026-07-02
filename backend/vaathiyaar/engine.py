@@ -428,6 +428,12 @@ def build_feedback_prompt(
         f"Expected output: {expected_output!r}\n"
         f"Actual output:   {actual_output!r}\n"
         f"Error (if any):  {error_msg!r}\n"
+        "IMPORTANT: the automated check marked this attempt as NOT PASSED, and the "
+        "student sees a red 'Not Quite Right' banner. Never tell them their solution "
+        "is perfect, correct, or passed. If their logic looks right but the output "
+        "text differs from the expected output, say exactly that: the grader compares "
+        "output character-for-character, so they must match the expected output "
+        "precisely (same function names, same printed text).\n"
     )
     if struggling:
         return base + (
@@ -543,6 +549,20 @@ def evaluate_code(
         error_msg = exec_error or stderr_output
 
         success = actual_output.strip() == expected_output.strip()
+
+        # HARNESS RESCUE (2026-07-02): exact stdout matching fails semantically
+        # correct solutions (live QA: a correct decorator printing "Hello,
+        # PyMasters!" instead of the sample's "Hello!" was marked wrong while
+        # Vaathiyaar praised it — contradictory verdicts). When the lesson ships
+        # a server-authored test_code harness, use it as a second chance on a
+        # CLEAN-RUN stdout mismatch: if the assertions pass, the solution is
+        # correct. This can only rescue false negatives — passing solutions and
+        # error cases are untouched.
+        if not success and test_code and not exec_error:
+            rescue = run_code_subprocess(student_code + "\n\n" + test_code)
+            if rescue["exit_code"] == 0:
+                success = True
+                error_msg = ""
     struggling = is_struggling(success, attempt_count)
 
     # Build a feedback message for Vaathiyaar, escalating help if the student is stuck.
