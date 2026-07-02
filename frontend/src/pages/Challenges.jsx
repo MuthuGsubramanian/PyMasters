@@ -152,6 +152,13 @@ export default function Challenges() {
           };
           setChallenge(ch);
           setCode(c.starter_code || '# Write your solution here\n');
+        } else {
+          // Promise.allSettled NEVER rejects, so the catch below can't fire for
+          // an HTTP failure — previously a failed /challenges/weekly fetch left
+          // this page stuck on "Loading challenge description..." with an empty
+          // editor and NO error surfaced (the error banner was dead code).
+          // Surface the failure honestly; the placeholder UI still renders.
+          setError('Unable to load this week\'s challenge. Please refresh to try again.');
         }
         if (lbRes.status === 'fulfilled') {
           // API shape: { leaderboard: [...], total_participants }. Earlier code only
