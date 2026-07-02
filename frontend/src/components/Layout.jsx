@@ -26,7 +26,7 @@ import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
-import { getAdminCheck, getProfileStats } from '../api';
+import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
@@ -54,6 +54,22 @@ export default function Layout() {
             .then((r) => { const xp = r.data?.total_xp; if (Number.isFinite(xp)) setLiveXp(xp); })
             .catch(() => {});
     }, [user?.id, location.pathname]);
+
+    // Trial/plan access (2026-07-02): individual users get a 7-day trial from
+    // signup. During the trial show a countdown chip; once expired, route to
+    // the upgrade page (backend also enforces via 402 on learning endpoints).
+    // Org members / super admins / assigned plans come back "active" — no chip.
+    const [access, setAccess] = useState(null);
+    useEffect(() => {
+        if (user?.id) getAccessStatus(user.id)
+            .then((r) => setAccess(r.data))
+            .catch(() => {});
+    }, [user?.id, location.pathname]);
+    useEffect(() => {
+        if (access?.status === 'expired' && location.pathname !== '/dashboard/upgrade') {
+            navigate('/dashboard/upgrade', { replace: true });
+        }
+    }, [access?.status, location.pathname, navigate]);
 
     // NOTE: keep ALL hooks above the `if (!user)` early-return below. The
     // navItems useMemo previously sat *after* that early-return, so when `user`
@@ -156,6 +172,21 @@ export default function Layout() {
                             {points}
                         </span>
                     </div>
+                    {/* 7-day trial countdown (individual users only; hidden for
+                        org/admin/assigned-plan users whose status is "active") */}
+                    {access?.status === 'trial' && (
+                        <button
+                            type="button"
+                            onClick={() => navigate('/dashboard/upgrade')}
+                            className={clsx(
+                                "mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-500 hover:bg-amber-400/20 transition-colors",
+                                collapsed && "lg:hidden"
+                            )}
+                        >
+                            <Zap size={9} aria-hidden="true" />
+                            Trial · {access.trial_days_left} day{access.trial_days_left === 1 ? '' : 's'} left
+                        </button>
+                    )}
                 </div>
 
                 {/* Navigation */}

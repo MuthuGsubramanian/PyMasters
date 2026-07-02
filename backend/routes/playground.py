@@ -226,6 +226,8 @@ def playground_chat(request: PlaygroundChatRequest):
     Each prompt costs 1 credit (1 XP = 100 credits).
     """
     db_path = _get_db_path()
+    from access import assert_learning_access
+    assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
 
     # Check credits
     credits = _get_user_credits(db_path, request.user_id)
@@ -290,6 +292,8 @@ def playground_chat(request: PlaygroundChatRequest):
 def playground_chat_stream(request: PlaygroundChatRequest):
     """Stream a free-form Vaathiyaar response token by token using SSE."""
     db_path = _get_db_path()
+    from access import assert_learning_access
+    assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
 
     # Check credits
     credits = _get_user_credits(db_path, request.user_id)
@@ -388,6 +392,8 @@ def execute_code(request: dict = Body(...), user_id: str = Depends(get_current_u
     More permissive than classroom evaluate — allows imports, file ops, etc.
     """
     from vaathiyaar.execution import run_code_subprocess
+    from access import assert_learning_access
+    assert_learning_access(_get_db_path(), user_id)  # 402 when trial lapsed
 
     if not _execute_limiter.allow(user_id):
         wait = _execute_limiter.retry_after(user_id)

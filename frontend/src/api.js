@@ -30,6 +30,12 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+    // 402 = individual trial lapsed (backend access.py). Route to the upgrade
+    // page instead of surfacing a raw error; the page itself makes no gated
+    // calls, so this cannot loop.
+    if (error.response?.status === 402 && window.location.pathname !== '/dashboard/upgrade') {
+      window.location.href = '/dashboard/upgrade';
+    }
     console.log('[PyMasters API] Error interceptor caught:', error?.response?.status, typeof error?.response?.data?.detail, error?.response?.data?.detail);
     // CRITICAL SAFETY: Normalize ALL non-string error data
     // Pydantic 422 returns detail as [{type, loc, msg, input}] which crashes React
@@ -99,6 +105,8 @@ export const getProfile = (userId) => {
   return p;
 };
 export const saveOnboarding = (data) => api.post('/profile/onboarding', data);
+// Trial/plan access status (7-day individual trial; org/admin/assigned plans exempt)
+export const getAccessStatus = (userId) => api.get(`/profile/${userId}/access`);
 export const recordSignal = (data) => api.post('/profile/signal', data);
 
 // Classroom
