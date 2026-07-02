@@ -1135,6 +1135,24 @@ TRENDING_TOPICS = [
 ]
 
 
+def _humanize_lesson_title(lesson_data, topic_slug):
+    """Resolve a human-readable lesson title from generated_lessons.lesson_data
+    (a JSON blob whose `title` may be a string or a {lang: str} dict). Falls
+    back to a prettified topic slug so a raw id like 'adv_decorators' or 't' is
+    never shown as a headline."""
+    try:
+        data = json.loads(lesson_data) if isinstance(lesson_data, str) else (lesson_data or {})
+        title = data.get("title")
+        if isinstance(title, dict):
+            title = title.get("en") or next((v for v in title.values() if v), None)
+        if isinstance(title, str) and title.strip():
+            return title.strip()
+    except Exception:
+        pass
+    slug = (topic_slug or "").replace("_", " ").strip()
+    return slug.title() if slug else "Your next lesson"
+
+
 @router.get("/{user_id}/daily-recommendation")
 def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_user_id)):
     """
@@ -1189,7 +1207,7 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
         rec_link = "/dashboard/classroom"
 
         cursor.execute(
-            "SELECT id, topic FROM generated_lessons WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
+            "SELECT id, topic, lesson_data FROM generated_lessons WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
             [user_id],
         )
         gen_lessons = cursor.fetchall()
@@ -1197,7 +1215,11 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
             if gl["id"] not in completed_ids:
                 recommended_lesson = gl["topic"]
                 reason = "This lesson was crafted just for you based on your learning profile."
-                rec_title = gl["topic"]
+                # Show the lesson's HUMAN title from lesson_data, never the raw
+                # topic slug — live QA (2026-07-02) saw "adv_decorators" / "t"
+                # rendered as the card headline. title may be a plain string or
+                # a {en, ta, ...} dict; fall back to a prettified slug.
+                rec_title = _humanize_lesson_title(gl["lesson_data"], gl["topic"])
                 rec_description = "A lesson tailored to your learning profile — pick up where you left off."
                 rec_link = "/dashboard/classroom"
                 break
