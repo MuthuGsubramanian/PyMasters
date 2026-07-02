@@ -274,6 +274,8 @@ def chat(request: ChatRequest):
     Auto-records profile_update signal if the AI response includes one.
     """
     db_path = _get_db_path()
+    from access import assert_learning_access
+    assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
     profile = get_student_profile(db_path, request.user_id)
     if request.username and profile is not None:
         profile["username"] = request.username
@@ -351,6 +353,8 @@ def chat(request: ChatRequest):
 def chat_stream(request: ChatRequest):
     """Stream Vaathiyaar's response token by token using SSE."""
     db_path = _get_db_path()
+    from access import assert_learning_access
+    assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
     profile = get_student_profile(db_path, request.user_id)
     if request.username and profile is not None:
         profile["username"] = request.username
@@ -711,6 +715,8 @@ def evaluate(request: EvaluateRequest):
     Records a learning signal and updates mastery.
     """
     db_path = _get_db_path()
+    from access import assert_learning_access
+    assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
     profile = get_student_profile(db_path, request.user_id)
 
     lesson_context = {"lesson_id": request.lesson_id, "topic": request.topic}
