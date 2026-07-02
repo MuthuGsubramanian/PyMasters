@@ -165,6 +165,15 @@ def init_db():
             print("Migrating DB: Adding plan column")
             cursor.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
 
+        # Manual plan assignment by super admin (2026-07-02): who assigned,
+        # when, and until when the plan is valid. NULL expiry = no expiry.
+        if 'plan_assigned_at' not in col_names:
+            print("Migrating DB: Adding plan_assigned_at column")
+            cursor.execute("ALTER TABLE users ADD COLUMN plan_assigned_at TEXT")
+        if 'plan_expires_at' not in col_names:
+            print("Migrating DB: Adding plan_expires_at column")
+            cursor.execute("ALTER TABLE users ADD COLUMN plan_expires_at TEXT")
+
         if 'is_super_admin' not in col_names:
             print("Migrating DB: Adding is_super_admin column")
             cursor.execute("ALTER TABLE users ADD COLUMN is_super_admin INTEGER DEFAULT 0")
@@ -647,6 +656,18 @@ def init_db():
         except Exception as e:
             print(f"Graph seed: {e}")
 
+        # Seed lesson→concept links (idempotent, INSERT OR IGNORE). Without
+        # these rows the mastery overlay / frontier / gap detection all compute
+        # on an empty join — the adaptive layer silently reported 0.0 mastery
+        # for every user (found 2026-07-02: lesson_concepts had 0 rows).
+        try:
+            from graph.seed_links import seed_lesson_concepts
+            added = seed_lesson_concepts(DB_PATH)
+            if added:
+                print(f"Lesson-concept seed: +{added} links")
+        except Exception as e:
+            print(f"Lesson-concept seed: {e}")
+
         # Seed learning paths
         try:
             from paths.definitions import seed_paths
@@ -989,14 +1010,28 @@ def change_password(req: ChangePasswordRequest, caller: str = Depends(get_curren
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
-        row = cursor.execute("SELECT password_hash FROM users WHERE id = ?", [caller]).fetchone()
+        row = cursor.execute("SELECT password_hash, username FROM users WHERE id = ?", [caller]).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="User not found")
         if not verify_pw(req.current_password, row[0]):
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
-        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash_pw(req.new_password), caller])
+        # Revoke all outstanding sessions on password change: like reset-password
+        # (see below), changing the password must stop any previously-issued JWT
+        # (including a stolen one) from validating. Bump token_version — the same
+        # revocation primitive admin revoke_sessions/block_user/reset_password use.
+        # Unlike reset, the caller IS authenticated here, so we mint and return a
+        # fresh token (additive optional response field) that the frontend stores;
+        # the caller's own session continues seamlessly while every other session
+        # of this account is signed out on its next request.
+        cursor.execute(
+            "UPDATE users SET password_hash = ?, token_version = COALESCE(token_version,0)+1 WHERE id = ?",
+            [hash_pw(req.new_password), caller],
+        )
         conn.commit()
-        return {"ok": True}
+        new_tv = cursor.execute(
+            "SELECT COALESCE(token_version,0) FROM users WHERE id = ?", [caller]
+        ).fetchone()[0]
+        return {"ok": True, "token": create_access_token(caller, row[1], new_tv)}
     finally:
         conn.close()
 

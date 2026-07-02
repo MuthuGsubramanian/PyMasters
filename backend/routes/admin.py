@@ -23,7 +23,12 @@ DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 SUPER_ADMINS = {
     e.strip().lower()
-    for e in os.getenv("SUPER_ADMIN_EMAILS", "muthu@pymasters.net,muthu.g.subramanian@gmail.com").split(",")
+    # claude-qa@pymasters.net is the functional/service account MSG requested
+    # (2026-07-02) so the autonomous QA/ops loops can exercise admin surfaces.
+    for e in os.getenv(
+        "SUPER_ADMIN_EMAILS",
+        "muthu@pymasters.net,muthu.g.subramanian@gmail.com,claude-qa@pymasters.net",
+    ).split(",")
     if e.strip()
 }
 
@@ -39,6 +44,20 @@ def _conn():
 def is_break_glass(username: str, email: str) -> bool:
     idents = {(username or "").lower(), (email or "").lower()}
     return bool(idents & SUPER_ADMINS)
+
+
+def _validate_expiry(expires_at):
+    """Accept None or an ISO 8601 date/datetime string; reject past dates."""
+    if expires_at is None:
+        return
+    from datetime import datetime, timezone
+    try:
+        parsed = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(status_code=422, detail="expires_at must be an ISO 8601 date, e.g. 2026-12-31")
+    now = datetime.now(timezone.utc) if parsed.tzinfo else datetime.now()
+    if parsed < now:
+        raise HTTPException(status_code=422, detail="expires_at is in the past")
 
 
 def require_super_admin(user_id: str):
@@ -74,6 +93,10 @@ class BlockRequest(BaseModel):
 
 class PlanRequest(BaseModel):
     plan: str  # e.g. free | pro | enterprise
+    # Optional validity period (ISO 8601 date or datetime). None = no expiry.
+    # Lets the super admin manually grant a package "for the given period"
+    # until self-serve billing exists.
+    expires_at: Optional[str] = None
 
 
 class EditUserRequest(BaseModel):
@@ -91,6 +114,7 @@ class UserRoleRequest(BaseModel):
 
 class OrgPlanRequest(BaseModel):
     plan: str
+    expires_at: Optional[str] = None  # ISO 8601; None = no expiry
 
 class OrgTypeRequest(BaseModel):
     type: str
@@ -394,11 +418,14 @@ def org_detail(org_id: str, caller: str = Depends(get_current_user_id)):
 @router.post("/orgs/{org_id}/plan")
 def set_org_plan(org_id: str, req: OrgPlanRequest, caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
+    _validate_expiry(req.expires_at)
     conn = _conn()
-    conn.execute("UPDATE organizations SET plan = ? WHERE id = ?", [req.plan, org_id])
-    _audit(conn, caller, "org.plan", "org", org_id, {"plan": req.plan})
+    conn.execute(
+        "UPDATE organizations SET plan = ?, plan_assigned_at = datetime('now'), plan_expires_at = ? WHERE id = ?",
+        [req.plan, req.expires_at, org_id])
+    _audit(conn, caller, "org.plan", "org", org_id, {"plan": req.plan, "expires_at": req.expires_at})
     conn.commit(); conn.close()
-    return {"ok": True, "plan": req.plan}
+    return {"ok": True, "plan": req.plan, "expires_at": req.expires_at}
 
 
 @router.post("/orgs/{org_id}/type")
@@ -476,14 +503,17 @@ def block_user(target_id: str, req: BlockRequest, caller: str = Depends(get_curr
 
 @router.post("/users/{target_id}/plan")
 def set_user_plan(target_id: str, req: PlanRequest, caller: str = Depends(get_current_user_id)):
-    """Set a user's subscription/access tier."""
+    """Set a user's subscription/access tier, optionally for a fixed period."""
     require_super_admin(caller)
+    _validate_expiry(req.expires_at)
     conn = _conn()
-    conn.execute("UPDATE users SET plan = ? WHERE id = ?", [req.plan, target_id])
-    _audit(conn, caller, "user.plan", "user", target_id, {"plan": req.plan})
+    conn.execute(
+        "UPDATE users SET plan = ?, plan_assigned_at = datetime('now'), plan_expires_at = ? WHERE id = ?",
+        [req.plan, req.expires_at, target_id])
+    _audit(conn, caller, "user.plan", "user", target_id, {"plan": req.plan, "expires_at": req.expires_at})
     conn.commit()
     conn.close()
-    return {"ok": True, "plan": req.plan}
+    return {"ok": True, "plan": req.plan, "expires_at": req.expires_at}
 
 
 @router.get("/usage")
