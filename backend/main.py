@@ -40,6 +40,7 @@ from routes.org_challenges import router as org_challenges_router, ensure_org_ch
 from routes.oauth import router as oauth_router, ensure_oauth_tables
 from routes.github_oauth import router as github_oauth_router
 from routes.discovery import router as discovery_router
+from routes.payments import router as payments_router, ensure_payments_table
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -628,6 +629,7 @@ def init_db():
             ensure_social_tables(DB_PATH)
             ensure_org_challenge_tables(DB_PATH)
             ensure_oauth_tables(DB_PATH)
+            ensure_payments_table(DB_PATH)
         except Exception as e:
             print(f"Community/OAuth table init: {e}")
 
@@ -718,6 +720,7 @@ app.include_router(org_challenges_router)
 app.include_router(oauth_router)
 app.include_router(github_oauth_router)
 app.include_router(discovery_router)
+app.include_router(payments_router)
 
 # --- CORS ---
 origins = [
