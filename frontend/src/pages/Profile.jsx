@@ -594,7 +594,12 @@ export default function Profile() {
         if (newPw !== confirmPw) { setToast({ message: 'New passwords do not match', type: 'error' }); return; }
         setPwSaving(true);
         try {
-            await changePassword(user.id, curPw, newPw);
+            const res = await changePassword(user.id, curPw, newPw);
+            // Backend now revokes all sessions on password change (token_version bump)
+            // and returns a fresh token for THIS session. Store it so the axios
+            // interceptor (which reads pm_user.token) keeps this session alive;
+            // older backends return no token — then this is a no-op.
+            if (res?.data?.token) updateUser({ token: res.data.token });
             setToast({ message: 'Password updated successfully', type: 'success' });
             setCurPw(''); setNewPw(''); setConfirmPw('');
         } catch (e) {
