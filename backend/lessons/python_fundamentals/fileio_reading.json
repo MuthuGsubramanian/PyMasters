@@ -76,9 +76,12 @@
           "en": "lines will be a list of strings, each ending with \\n"
         }
       ],
-      "test_code": "import tempfile, os\nwith tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp:\n    tmp.write('line1\\nline2\\nline3\\n')\n    tmp_name = tmp.name\nwith open(tmp_name, 'r') as f:\n    lines = f.readlines()\nassert len(lines) == 3\nassert lines[0].strip() == 'line1'\nos.unlink(tmp_name)"
+      "test_code": "assert isinstance(lines, list), 'Expected a list called lines — read the file with readlines()'\nassert len(lines) == 3, f'Expected 3 lines from sample.txt, got {len(lines)}'\nassert lines[0].strip() == 'line1', 'The first item should be the first line of sample.txt'\nassert lines[2].strip() == 'line3', 'The last item should be the last line of sample.txt'"
     }
   ],
+  "sandbox_files": {
+    "sample.txt": "line1\nline2\nline3\n"
+  },
   "generated": false,
   "speed_multiplier": 1.0,
   "tags": {
