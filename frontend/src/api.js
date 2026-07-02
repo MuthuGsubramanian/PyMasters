@@ -295,4 +295,16 @@ export const getPaymentConfig = () => api.get('/payments/config');
 export const createPaymentOrder = (plan) => api.post('/payments/create-order', { plan });
 export const verifyPayment = (payload) => api.post('/payments/verify', payload);
 
+// Telemetry (Super Admin analytics: presence, visits, ops activity, logins)
+export const trackVisit = (userId, path) =>
+    api.post('/track/visit', { user_id: userId || null, path: path || '' }).catch(() => {});
+export const trackPing = (userId) =>
+    api.post('/track/ping', { user_id: userId }).catch(() => {});
+export const getAdminOpsActivity = (userId, days = 7) =>
+    api.get('/admin/ops-activity', { params: { user_id: userId, days } });
+export const postAdminOpsActivity = (userId, data) =>
+    api.post('/admin/ops-activity', { user_id: userId, ...data });
+export const getAdminLogins = (userId, limit = 100) =>
+    api.get('/admin/logins', { params: { user_id: userId, limit } });
+
 export default api;

@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { trackVisit, trackPing } from './api';
 import { ProfileProvider } from './context/ProfileContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -69,10 +70,31 @@ function NotFound() {
   );
 }
 
+// Telemetry beacon (Super Admin analytics): one visit row per real page load
+// (anonymous or signed-in), then a presence heartbeat every 3 minutes so the
+// console can show "online now". Fire-and-forget; failures are swallowed in
+// the api helpers and can never affect the app.
+function TelemetryBeacon() {
+  const { user } = useAuth();
+  useEffect(() => {
+    trackVisit(user?.id, window.location.pathname);
+    // One visit per SPA load is intentional — route changes are not "visits".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!user?.id) return;
+    trackPing(user.id);
+    const t = setInterval(() => trackPing(user.id), 3 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [user?.id]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <TelemetryBeacon />
         <ProfileProvider>
           <Suspense fallback={<PageLoader />}>
             <Routes>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     getAdminOverview, getAdminUsers, getAdminOrgs, getAdminUsage,
     adminBlockUser, adminSetPlan, getAdminUserViewAs, adminSetSuperAdmin, getAdminAudit,
+    getAdminOpsActivity,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
@@ -15,6 +16,7 @@ import {
 import {
     Shield, Users, Building2, GraduationCap, Activity, Sparkles, TrendingUp,
     Search, Ban, CheckCircle2, Loader2, School, Briefcase, BookOpen, Lock,
+    Radio, Globe2, Rocket, MapPin,
 } from 'lucide-react';
 
 // Matches the public pricing tiers (2026-07-02): Free 7-day trial,
@@ -29,6 +31,61 @@ function relTimeSA(ts) {
   if (isNaN(t)) return '—';
   const d = Math.floor((Date.now() - t) / 86400000);
   return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d < 30 ? `${d}d ago` : `${Math.floor(d/30)}mo ago`;
+}
+
+// Finer-grained variant for presence ("2m ago" beats "today" for Online-now).
+function relMinutes(ts) {
+  if (!ts) return '—';
+  let iso = String(ts).replace(' ', 'T');
+  if (!/[zZ]|[+-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return '—';
+  const m = Math.floor((Date.now() - t) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m ago`;
+  if (m < 1440) return `${Math.floor(m / 60)}h ago`;
+  return relTimeSA(ts);
+}
+
+const OPS_SOURCE_STYLE = {
+  linkedin: 'bg-sky-500/10 text-sky-600 border-sky-500/30',
+  youtube: 'bg-red-500/10 text-red-600 border-red-500/30',
+  'daily-analysis': 'bg-purple-500/10 text-purple-600 border-purple-500/30',
+  'pilot-loop': 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+};
+
+// What the automation did (LinkedIn post, YouTube upload, QA sweep…) — the
+// loops report each action via POST /api/admin/ops-activity.
+function OpsActivityPanel({ adminId }) {
+  const [rows, setRows] = useState(null);
+  useEffect(() => {
+    getAdminOpsActivity(adminId, 7).then((r) => setRows(r.data.activity || [])).catch(() => setRows([]));
+  }, [adminId]);
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-bold text-text-secondary flex items-center gap-1.5"><Rocket size={14} /> Ops activity — last 7 days</h3>
+        <span className="text-[11px] text-text-muted">LinkedIn · YouTube · analysis & QA loops</span>
+      </div>
+      {rows === null ? <div className="h-12 rounded-lg bg-bg-elevated animate-pulse" /> :
+       rows.length === 0 ? (
+        <p className="text-xs text-text-muted">Nothing reported yet. The automation loops report each post/run here as they happen.</p>
+      ) : (
+        <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+          {rows.map((a) => (
+            <li key={a.id} className="flex items-center gap-2 text-xs">
+              <span className={`shrink-0 px-1.5 py-0.5 rounded-md border font-bold uppercase tracking-wide text-[9px] ${OPS_SOURCE_STYLE[a.source] || 'bg-bg-elevated text-text-muted border-border-default'}`}>{a.source}</span>
+              {a.url
+                ? <a href={a.url} target="_blank" rel="noreferrer" className="truncate text-text-secondary hover:text-accent-primary">{a.title}</a>
+                : <span className="truncate text-text-secondary">{a.title}</span>}
+              {a.status !== 'done' && <Badge variant={a.status === 'failed' ? 'danger' : 'neutral'}>{a.status}</Badge>}
+              <span className="ml-auto shrink-0 text-text-muted">{relMinutes(a.created_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
 }
 
 // Dependency-free daily usage bars.
@@ -262,6 +319,13 @@ export default function SuperAdmin() {
                             <StatCard icon={Activity} label="Generation Jobs" value={overview.generation_jobs ?? '--'} />
                             <StatCard icon={GraduationCap} label="Training Pairs" value={overview.training_pairs ?? '--'} hint="for fine-tuning" />
                         </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <StatCard icon={Radio} label="Online Now" value={overview.online_now ?? '--'} hint="seen in last 5 min" />
+                            <StatCard icon={Globe2} label="Visits Today" value={overview.visits_today ?? '--'} hint={`${overview.unique_visitors_today ?? 0} unique`} />
+                            <StatCard icon={TrendingUp} label="Total Visits" value={overview.visits_total ?? '--'} hint="since 2026-07-02" />
+                            <StatCard icon={Rocket} label="Ops Actions Today" value={overview.ops_activity_today ?? '--'} hint="posts, runs & sweeps" />
+                        </div>
+                        <OpsActivityPanel adminId={user.id} />
                         <UsageChart series={usage} />
                     </div>
                 )
@@ -280,7 +344,7 @@ export default function SuperAdmin() {
                             <div className="px-4 py-2 text-xs text-text-muted border-b border-border-default">{users.total} users</div>
                             <Table>
                                 <THead>
-                                    <TH>User</TH><TH>Type</TH><TH>Org</TH><TH>XP</TH><TH>Plan</TH><TH>Status</TH><TH>Access</TH>
+                                    <TH>User</TH><TH>Type</TH><TH>Org</TH><TH>XP</TH><TH>Plan</TH><TH>Last Seen</TH><TH>Status</TH><TH>Access</TH>
                                 </THead>
                                 <TBody>
                                     {users.users.map((u) => (
@@ -297,6 +361,14 @@ export default function SuperAdmin() {
                                                     className="text-xs rounded-lg border border-border-default bg-bg-surface px-2 py-1 text-text-secondary">
                                                     {PLANS.map((p) => <option key={p} value={p}>{p}</option>)}
                                                 </select>
+                                            </TD>
+                                            <TD>
+                                                <div className="text-xs text-text-secondary whitespace-nowrap">{relMinutes(u.last_seen_at)}</div>
+                                                {u.last_login_from && (
+                                                    <div className="text-[10px] text-text-muted flex items-center gap-0.5 whitespace-nowrap">
+                                                        <MapPin size={9} aria-hidden="true" />{u.last_login_from}
+                                                    </div>
+                                                )}
                                             </TD>
                                             <TD>
                                                 {u.is_blocked
