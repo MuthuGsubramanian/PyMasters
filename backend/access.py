@@ -25,6 +25,34 @@ FEATURE_EPOCH = datetime(2026, 7, 2)
 
 PAID_PLANS = {"beginner", "pro", "enterprise"}
 
+# Tracks reserved for organization/enterprise users (MSG, 2026-07-02):
+# cloud + enterprise-AI curriculum is a B2B differentiator, hidden from
+# individual accounts. Entitled: org members, organization accounts,
+# super admins, and users on an (unexpired) enterprise plan.
+ENTERPRISE_TRACKS = frozenset({
+    "azure_enterprise",
+    "azure_ai_foundry",
+    "aws_enterprise",
+    "gcp_vertex_ai",
+    "cross_cloud_architecture",
+})
+
+
+def has_enterprise_access(db_path: str, user_id: str | None) -> bool:
+    """True when the user may see/open enterprise-only tracks.
+
+    Unlike general learning access (fail-open), this fails CLOSED: on lookup
+    errors or anonymous requests the enterprise catalog stays hidden — wrongly
+    hiding a track is recoverable; leaking paid B2B content is not.
+    """
+    if not user_id:
+        return False
+    status = get_access_status(db_path, user_id)
+    reason = status.get("reason", "")
+    if reason in ("super_admin", "organization"):
+        return True
+    return reason == "assigned_plan" and status.get("plan") == "enterprise"
+
 
 def _parse_dt(value):
     if not value:
