@@ -14,16 +14,23 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import routes.classroom as classroom
+from auth import get_current_user_id
 from vaathiyaar.engine import VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE
 
 app = FastAPI()
 app.include_router(classroom.router)
+# /chat and /chat/stream now require an authenticated caller matching the body
+# user_id (IDOR / paywall-bypass guard added 2026-07-03). Override the auth
+# dependency so these graceful-degradation tests exercise the AI-unavailable
+# path as an authenticated "u1" without minting a real JWT.
+app.dependency_overrides[get_current_user_id] = lambda: "u1"
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
 def no_db(monkeypatch):
-    # Isolate from the DB: no profile lookups, no training-pair writes.
+    # Isolate from the DB: no profile lookups, no training-pair writes, and no
+    # real paywall/DB access (the guarded handlers call assert_learning_access).
     monkeypatch.setattr(classroom, "get_student_profile", lambda *a, **k: None)
     monkeypatch.setattr(classroom, "record_training_pair", lambda *a, **k: None)
 
