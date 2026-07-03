@@ -890,7 +890,25 @@ def get_leaderboard(limit: int = 20):
         # global / member-directory / profile-card / org leaderboards. u.name and
         # u.username are functionally dependent on cs.user_id (join on u.id), so
         # the bare columns are valid under GROUP BY cs.user_id in SQLite.
-        cursor.execute("""
+        #
+        # Moderation parity (2026-07-03): admin-blocked accounts (users.is_blocked,
+        # set by /api/admin block_user) are already excluded from every social.py
+        # surface — global leaderboard, member directory, profile cards, follow
+        # lists — but remained publicly ranked HERE, on the unauthenticated
+        # challenges leaderboard. Apply the same COALESCE(is_blocked,0)=0 filter.
+        # Guarded on column presence (PRAGMA) so any DB that predates the
+        # is_blocked migration keeps the exact prior query instead of erroring;
+        # orphan submissions (LEFT JOIN, u.id NULL) coalesce to 0 and remain
+        # listed exactly as before — only is_blocked=1 rows are newly excluded.
+        blocked_filter = ""
+        try:
+            _ucols = {r[1] for r in cursor.execute("PRAGMA table_info(users)").fetchall()}
+            if "is_blocked" in _ucols:
+                blocked_filter = " AND COALESCE(u.is_blocked, 0) = 0"
+        except Exception:
+            blocked_filter = ""
+
+        cursor.execute(f"""
             SELECT
                 cs.user_id,
                 u.name AS uname,
@@ -899,7 +917,7 @@ def get_leaderboard(limit: int = 20):
                 SUM(cs.xp_awarded) AS total_xp
             FROM challenge_submissions cs
             LEFT JOIN users u ON u.id = cs.user_id
-            WHERE cs.passed = 1
+            WHERE cs.passed = 1{blocked_filter}
             GROUP BY cs.user_id
             ORDER BY challenges_completed DESC, total_xp DESC
             LIMIT ?
