@@ -1152,8 +1152,17 @@ def get_module_detail(module_id: str):
     return CONTENT_MAP[module_id]
 
 @app.post("/api/content/complete")
-def complete_module(sub: QuizSubmission):
-    """Update user points and unlock next module. XP awarded only once per module."""
+def complete_module(sub: QuizSubmission, caller: str = Depends(get_current_user_id)):
+    """Update user points and unlock next module. XP awarded only once per module.
+
+    IDOR guard: this endpoint WRITES XP, module unlocks and streaks for the
+    body-supplied user_id, so the acting user must be derived from the verified
+    JWT (auth.py convention) — otherwise any anonymous caller could inflate any
+    user's XP / fabricate streaks. Mirrors routes/classroom.py::evaluate.
+    str-normalized compare: users.id is INTEGER for legacy accounts.
+    """
+    if str(sub.user_id) != str(caller):
+        raise HTTPException(status_code=403, detail="Forbidden")
     if sub.module_id not in CONTENT_MAP:
         raise HTTPException(status_code=404, detail="Module not found")
 
@@ -1222,8 +1231,14 @@ def complete_module(sub: QuizSubmission):
         conn.close()
 
 @app.get("/api/content/completions/{user_id}")
-def get_completions(user_id: str):
-    """Return all completed lesson/module IDs for a user."""
+def get_completions(user_id: str, caller: str = Depends(get_current_user_id)):
+    """Return all completed lesson/module IDs for a user.
+
+    IDOR guard: completion history is private per-user learning data; derive
+    the acting user from the verified JWT and refuse cross-user reads (403).
+    """
+    if str(user_id) != str(caller):
+        raise HTTPException(status_code=403, detail="Forbidden")
     conn = sqlite3.connect(DB_PATH)
     try:
         rows = conn.execute(
