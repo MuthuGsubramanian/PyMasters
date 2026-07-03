@@ -294,7 +294,13 @@ CHALLENGES: List[dict] = [
             {"input": "is_anagram('listen', 'silent')", "expected_output": "True"},
             {"input": "is_anagram('hello', 'world')", "expected_output": "False"},
             {"input": "is_anagram('Astronomer', 'Moon starer')", "expected_output": "True"},
-            {"input": "group_anagrams(['eat','tea','tan','ate','nat','bat'])", "expected_output": "[['eat','tea','ate'],['tan','nat'],['bat']]"},
+            # The description doesn't (and shouldn't) prescribe group or
+            # within-group ordering, but the old expected_output compared a
+            # nested list order-sensitively — a CORRECT solution that grouped
+            # via sorted keys (or any non-insertion order) failed this test.
+            # The harness form canonicalizes both levels before comparing, so
+            # any correct grouping passes and any wrong grouping still fails.
+            {"name": "groups anagrams correctly (any order)", "harness": "r=group_anagrams(['eat','tea','tan','ate','nat','bat'])\nassert sorted(sorted(g) for g in r)==[['ate','eat','tea'],['bat'],['nat','tan']], r"},
         ],
         "xp_reward": 10,
         "hints": [
@@ -565,7 +571,13 @@ CHALLENGES: List[dict] = [
         "expected_output": "bfs({'A':['B','C'],'B':['D'],'C':[],'D':[]}, 'A') == ['A','B','C','D']",
         "test_cases": [
             {"input": "bfs({'A':['B','C'],'B':['D'],'C':[],'D':[]}, 'A')", "expected_output": "['A','B','C','D']"},
-            {"input": "dfs({'A':['B','C'],'B':['D'],'C':[],'D':[]}, 'A')", "expected_output": "['A','B','D','C']"},
+            # This challenge's own hint says "DFS uses a stack or recursion",
+            # but the old expected_output only accepted the RECURSION order
+            # (A,B,D,C) — the classic explicit-stack implementation visits
+            # A,C,B,D (neighbors pop in reverse), which is an equally valid
+            # DFS and was wrongly failed. These are the only two complete DFS
+            # orders from 'A' on this graph; accept either, reject the rest.
+            {"name": "dfs visits in a valid depth-first order", "harness": "r=dfs({'A':['B','C'],'B':['D'],'C':[],'D':[]}, 'A')\nassert r in (['A','B','D','C'],['A','C','B','D']), r"},
             {"input": "shortest_path({'A':['B'],'B':['C'],'C':[]}, 'A', 'C')", "expected_output": "['A','B','C']"},
             {"input": "has_cycle({'A':['B'],'B':['A']})", "expected_output": "True"},
             {"input": "has_cycle({'A':['B'],'B':['C'],'C':[]})", "expected_output": "False"},
