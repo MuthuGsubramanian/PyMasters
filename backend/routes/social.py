@@ -365,9 +365,32 @@ def list_members(
                 ).fetchall()
             }
 
+        # Batched follower counts (2026-07-03): previously each card issued its own
+        # _conn_count query — an N+1 of up to 60 SELECTs per directory page. One
+        # GROUP BY over the page's ids returns identical numbers because it applies
+        # the SAME visibility filter _conn_count uses (JOIN users + exclude blocked
+        # followers). Keys are str-normalized on both sides because users.id is
+        # INTEGER for legacy accounts while user_connections stores TEXT (same
+        # affinity guard as the messages.py ownership check). Members absent from
+        # the map simply have 0 followers — same as _conn_count returning 0.
+        fcounts = {}
+        ids = [r["id"] for r in rows]
+        if ids:
+            ph = ",".join("?" * len(ids))
+            fcounts = {
+                str(row[0]): row[1]
+                for row in conn.execute(
+                    "SELECT c.following_id, COUNT(*) FROM user_connections c "
+                    "JOIN users u ON u.id = c.follower_id "
+                    f"WHERE c.following_id IN ({ph}) AND COALESCE(u.is_blocked,0)=0 "
+                    "GROUP BY c.following_id",
+                    ids,
+                ).fetchall()
+            }
+
         members = []
         for r in rows:
-            fc = _conn_count(conn, r["id"], "followers")
+            fc = fcounts.get(str(r["id"]), 0)
             members.append(_public_card(
                 r, follower_count=fc,
                 is_following=(r["id"] in following),
