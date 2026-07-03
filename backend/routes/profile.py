@@ -929,10 +929,20 @@ def get_user_stats(user_id: str, caller: str = Depends(get_current_user_id)):
                 ids = [r["lesson_id"] for r in comp_rows]
                 placeholders = ",".join("?" for _ in ids)
                 cursor.execute(
-                    f"SELECT id, topic FROM generated_lessons WHERE id IN ({placeholders})",
+                    f"SELECT id, topic, lesson_data FROM generated_lessons WHERE id IN ({placeholders})",
                     ids,
                 )
-                gen_titles = {gr["id"]: gr["topic"] for gr in cursor.fetchall()}
+                # Resolve the HUMAN title via the same helper the daily-recommendation
+                # card uses, so a generated lesson shows e.g. "Advanced Decorators"
+                # and never its raw topic slug ("adv_decorators", "t") that live QA
+                # observed. The helper always returns a non-empty string (falling back
+                # to the de-slugged topic), so the .get()-truthy path below is preserved
+                # for generated lessons and the de-slug fallback still handles any
+                # non-generated id (static modules, challenges).
+                gen_titles = {
+                    gr["id"]: _humanize_lesson_title(gr["lesson_data"], gr["topic"])
+                    for gr in cursor.fetchall()
+                }
             for r in comp_rows:
                 lid = r["lesson_id"]
                 title = gen_titles.get(lid) or str(lid).replace("_", " ").title()
