@@ -1334,6 +1334,19 @@ export default function Classroom() {
                 signal: streamControllerRef.current.signal,
             });
 
+            if (response.status === 402) {
+                // Trial lapsed mid-session (backend access.py gates the stream
+                // with 402). This raw fetch bypasses the axios interceptor's
+                // global 402 → upgrade redirect (api.js), so without this the
+                // learner saw a misleading generic "try again in a moment"
+                // error. Mirror the interceptor exactly, incl. its loop guard.
+                setChatMessages((prev) => prev.filter((m) => !m._isStreaming));
+                if (window.location.pathname !== '/dashboard/upgrade') {
+                    window.location.href = '/dashboard/upgrade';
+                }
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
