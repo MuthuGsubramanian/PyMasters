@@ -520,6 +520,23 @@ export default function OrgDashboard() {
   }, [activeOrg, userId, setOrg]);
 
   /* ---- Event handlers (all with null guards) ---- */
+
+  // Silently re-fetch org details (which carry pending_invites) after a
+  // successful invite so the "Pending Invites" card updates immediately.
+  // Deliberately does NOT touch the global `loading` flag: loadOrg() would
+  // flip the whole page to the spinner early-return and unmount the
+  // just-rendered success banner/token. Failures are ignored (stale list is
+  // no worse than the previous behavior).
+  const refreshOrgSilently = async () => {
+    const orgId = getOrgId(activeOrg);
+    const uid = user?.id || userId;
+    if (!orgId || !uid) return;
+    try {
+      const res = await getOrg(orgId, uid);
+      if (res?.data) setOrgData(res.data);
+    } catch { /* keep prior org data */ }
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail.trim() || !userId || !activeOrg) return;
     const orgId = getOrgId(activeOrg);
@@ -530,6 +547,7 @@ export default function OrgDashboard() {
       const res = await inviteToOrg(orgId, { email: inviteEmail.trim(), role: inviteRole, user_id: userId });
       setInviteResult({ success: true, data: res?.data });
       setInviteEmail('');
+      refreshOrgSilently();
     } catch (err) {
       setInviteResult({ success: false, message: safeErrorMsg(err, 'Failed to send invite') });
     } finally {
@@ -548,6 +566,7 @@ export default function OrgDashboard() {
       const res = await bulkInviteToOrg(orgId, { emails, role: bulkRole, user_id: userId });
       setInviteResult({ success: true, data: res?.data, bulk: true });
       setBulkEmails('');
+      refreshOrgSilently();
     } catch (err) {
       setInviteResult({ success: false, message: safeErrorMsg(err, 'Failed to send invites') });
     } finally {
