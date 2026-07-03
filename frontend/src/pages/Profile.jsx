@@ -536,6 +536,19 @@ export default function Profile() {
             };
 
             await api.put(`/profile/${user.id}/settings`, payload);
+            // Propagate a changed "Preferred Language" to the app-wide context.
+            // The context->dropdown mirror (effect above) covers the Vaathiyaar
+            // selector writing first; this is the REVERSE direction: saving the
+            // dropdown persisted `preferred_language` to the server but left the
+            // context `language` (and pm_language / <html lang>) stale, so the
+            // Vaathiyaar selector on this same card contradicted the dropdown
+            // and lessons stayed in the old language until a hard reload.
+            // Guarded to supported codes; no-op when unchanged (the common case).
+            // setLanguage's own best-effort PUT re-sends the identical value —
+            // idempotent against the partial-update backend.
+            if (preferredLang && preferredLang !== language && LANGUAGES.some((l) => l.value === preferredLang)) {
+                setLanguage(preferredLang);
+            }
             updateUser({ name: displayName, email });
             recordSignal({ user_id: user.id, signal_type: 'profile_updated', topic: 'profile', value: {} }).catch(() => {});
             setIsDirty(false);
