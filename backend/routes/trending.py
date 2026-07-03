@@ -145,7 +145,14 @@ def daily_content_bundle(
         raise HTTPException(status_code=404, detail="User profile not found")
 
     today = _today()
-    username = profile.get("username", profile.get("name", "Learner"))
+    # Falsy-safe fallback chain. dict.get(key, default) only applies the
+    # default when the key is ABSENT — get_student_profile always sets
+    # "username"/"name" (possibly to None: users.username is nullable and the
+    # profiler LEFT JOINs users, so an orphaned profile yields None for both).
+    # The old expression passed that None straight into get_greeting, which
+    # iterated it (sum(ord(c) for c in username)) → TypeError → 500 for the
+    # whole daily bundle. `or` falls through on None/"" as intended.
+    username = profile.get("username") or profile.get("name") or "Learner"
     # Prefer a valid client-supplied bucket (the client knows the user's real
     # local time; the server only knows UTC). Fall back to the server guess
     # when the param is absent or not one of the recognised buckets — so the

@@ -1299,9 +1299,15 @@ def get_greeting(username: str, time_of_day: str | None = None) -> str:
     if period not in _GREETINGS:
         period = "morning"
     templates = _GREETINGS[period]
+    # Defensive root guard: a None username (nullable users.username reaching a
+    # caller that forwards it verbatim) crashed the ord() sum with a TypeError,
+    # and "" produced the malformed "Good morning, !". Fall back to a friendly
+    # default in both cases; every truthy username takes the exact same path
+    # (same index, same template, same formatting) as before.
+    name = username if username else "Learner"
     # Simple deterministic pick based on username
-    idx = sum(ord(c) for c in username) % len(templates)
-    return templates[idx].format(name=username)
+    idx = sum(ord(c) for c in name) % len(templates)
+    return templates[idx].format(name=name)
 
 
 def get_all_tips(level: str | None = None) -> list[dict]:
