@@ -257,8 +257,14 @@ def start_path(path_id: str, body: StartPathRequest, caller: str = Depends(get_c
         if existing["status"] == "active":
             conn.close()
             return {"message": "Path already active.", "path_id": path_id, "status": "active"}
-        elif existing["status"] == "paused":
-            # Resume
+        else:
+            # Resume/reactivate ANY existing enrollment ('paused', 'completed', or a
+            # legacy/unknown status). user_learning_paths has PRIMARY KEY (user_id,
+            # path_id), so falling through to the INSERT below for a non-paused row
+            # (e.g. a path the adapter marked 'completed') raised an unhandled
+            # sqlite3.IntegrityError -> HTTP 500, permanently blocking restarts of
+            # finished paths. Reactivating preserves history (completed_at and
+            # lesson_completions untouched) and keeps the response shape identical.
             conn.execute(
                 "UPDATE user_learning_paths SET status = 'active', last_activity = CURRENT_TIMESTAMP WHERE user_id = ? AND path_id = ?",
                 [body.user_id, path_id],
