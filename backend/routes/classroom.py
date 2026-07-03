@@ -113,6 +113,17 @@ def _get_db_path() -> str:
     return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
+def _require_self(user_id: str, caller: str) -> None:
+    """Refuse cross-user access: the acting user is derived from the verified JWT
+    (`caller`), never from the client-supplied body `user_id`. Mirrors the guard
+    already applied to routes/classroom.py::evaluate and every routes/playground.py
+    chat handler. str-normalized compare because legacy `users.id` rows are INTEGER
+    while the JWT `sub` is a string. 403 on mismatch (401 for absent/invalid token
+    comes from the get_current_user_id dependency)."""
+    if str(user_id) != str(caller):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | None:
     """Load a lesson by ID, searching across all track subdirectories."""
     base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
@@ -289,11 +300,22 @@ def _ai_unavailable_payload(friendly: str = FRIENDLY_UNAVAILABLE) -> dict:
 
 
 @router.post("/chat")
-def chat(request: ChatRequest):
+def chat(request: ChatRequest, caller: str = Depends(get_current_user_id)):
     """
     Send a message to Vaathiyaar within a lesson context.
     Auto-records profile_update signal if the AI response includes one.
     """
+    # IDOR / paywall-bypass guard (2026-07-03, same class as evaluate above and
+    # every playground.py chat handler): this endpoint checks the paywall
+    # (assert_learning_access) AND writes learning signals / training pairs for
+    # the body-supplied user_id. Unauthenticated, an attacker could forge an
+    # entitled user's id to (a) get free Vaathiyaar AI chat by bypassing their
+    # own paywall and (b) pollute the victim's mastery signals / training data.
+    # Derive the acting user from the verified JWT and refuse cross-user calls.
+    # The real client (Classroom.jsx handleChat via /chat/stream, VoiceTutor.jsx
+    # via classroomChat) always sends the session user's own id with a Bearer
+    # token, so legitimate traffic is unaffected.
+    _require_self(request.user_id, caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -371,8 +393,11 @@ def chat(request: ChatRequest):
 
 
 @router.post("/chat/stream")
-def chat_stream(request: ChatRequest):
+def chat_stream(request: ChatRequest, caller: str = Depends(get_current_user_id)):
     """Stream Vaathiyaar's response token by token using SSE."""
+    # Same IDOR / paywall-bypass guard as /chat (this is the primary UI chat
+    # path). Fail closed before the paywall check or any per-user write.
+    _require_self(request.user_id, caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -987,11 +1012,15 @@ def training_export(min_quality: float = Query(0.7, ge=0.0, le=1.0), _auth=Depen
 
 
 @router.post("/diagnostic")
-def diagnostic(request: DiagnosticRequest):
+def diagnostic(request: DiagnosticRequest, caller: str = Depends(get_current_user_id)):
     """
     Run a pre-built diagnostic challenge.
     Evaluates code and records the result as a learning signal.
     """
+    # Same IDOR guard: /diagnostic writes a learning signal keyed on the
+    # body-supplied user_id. Derive the acting user from the JWT and refuse
+    # cross-user writes (no anonymous signal forgery).
+    _require_self(request.user_id, caller)
     challenge = DIAGNOSTIC_CHALLENGES.get(request.challenge_id)
     if not challenge:
         raise HTTPException(
