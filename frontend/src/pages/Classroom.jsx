@@ -1185,16 +1185,49 @@ export default function Classroom() {
             return; // lesson param takes priority; leave it if unmatched (catalogue may reload)
         }
 
-        // 2. Trending topic deep-link — match a catalogue lesson by id/topic/title
-        //    (case-insensitive); fall back to seeding the "Learn anything" box.
+        // 2. Trending topic deep-link — resolve the trending TITLE to the most
+        //    relevant catalogue lesson, then fall back to seeding "Learn anything".
+        //    Trending titles are human phrases ("RAG Systems: Retrieval-Augmented
+        //    Generation") while lessons are keyed by slug id/topic ("agentic_rag")
+        //    and carry a LOCALIZED title OBJECT ({en, ta}). The old matcher compared
+        //    only `typeof v === 'string'` fields for exact equality, so (a) l.title
+        //    being an object was skipped entirely and (b) no human phrase ever
+        //    equalled a slug — meaning EVERY trending "Explore Topic" click silently
+        //    fell through to the Learn-anything box instead of opening the topic.
+        //    Now: normalize all fields (incl. the localized title), try an exact
+        //    match, then a token-overlap / slug-containment score so a trending topic
+        //    reliably lands on its lesson.
         const wantTopic = searchParams.get('topic');
         if (wantTopic) {
-            const norm = wantTopic.trim().toLowerCase();
-            const match = lessons.find((l) =>
-                [l.id, l.topic, l.title].some(
-                    (v) => typeof v === 'string' && v.trim().toLowerCase() === norm
-                )
-            );
+            const STOP = new Set(['the','a','an','and','or','for','with','to','of','in','on','your','you','from','how','using','build','building','learn','intro','introduction','guide','system','systems','python']);
+            const clean = (v) => {
+                const s = typeof v === 'string'
+                    ? v
+                    : (v && (v.en || v.EN || Object.values(v).find((x) => typeof x === 'string'))) || '';
+                return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+            };
+            const toks = (s) => new Set(s.split(' ').filter((w) => w.length > 2 && !STOP.has(w)));
+            const wt = clean(wantTopic);
+            const wantToks = toks(wt);
+            let best = null, bestScore = 0;
+            for (const l of lessons) {
+                const fields = [clean(l.id), clean(l.topic), clean(l.title)].filter(Boolean);
+                if (fields.some((f) => f === wt)) { best = l; bestScore = 999; break; } // exact
+                const fieldToks = toks(fields.join(' '));
+                let overlap = 0;
+                wantToks.forEach((t) => { if (fieldToks.has(t)) overlap++; });
+                // Strong signal: the lesson's slug words are fully contained in the
+                // trending title (e.g. slug "agentic rag" ⊆ "agentic rag autonomous …").
+                const slugWords = clean(l.id).split(' ').filter(Boolean);
+                const topicWords = clean(l.topic).split(' ').filter(Boolean);
+                const slugHit = (slugWords.length && slugWords.every((w) => wantToks.has(w)))
+                             || (topicWords.length && topicWords.every((w) => wantToks.has(w)));
+                const score = overlap + (slugHit ? 3 : 0);
+                if (score > bestScore) { bestScore = score; best = l; }
+            }
+            // Require a meaningful match (>=2 overlapping tokens or a slug hit); weaker
+            // signals fall back to the seeded Learn-anything box below.
+            const match = bestScore >= 2 ? best : null;
             if (match) {
                 handleSelectLesson(match);
             } else {
