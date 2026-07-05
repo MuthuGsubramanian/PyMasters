@@ -839,6 +839,48 @@ def verify_pw(password: str, stored_hash: str) -> bool:
 def read_root():
     return {"status": "online", "message": "PyMasters Backend is running"}
 
+
+def _health_payload() -> dict:
+    """Shared health body. Reports process liveness (always) plus a fast,
+    best-effort DB reachability probe. The DB probe NEVER changes the HTTP
+    status: a transient SQLite write-lock must not turn a healthy process into
+    a failing liveness check (that would trigger needless container restarts).
+    The external uptime watchdog reads `db` to distinguish "process up but DB
+    wedged" from a full outage."""
+    db_state = "unknown"
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=2.0)
+        try:
+            conn.execute("SELECT 1")
+            db_state = "ok"
+        finally:
+            conn.close()
+    except Exception as e:
+        db_state = f"error: {type(e).__name__}"
+    return {
+        "status": "ok",
+        "service": "pymasters",
+        "db": db_state,
+        "time": int(time.time()),
+    }
+
+
+@app.get("/health")
+@app.get("/healthz")
+@app.get("/api/health")
+def health():
+    """Liveness/uptime probe. Always 200 while the process can serve requests;
+    body carries a best-effort DB signal for the watchdog. Reachable in prod
+    via nginx (/health is proxied to the backend, /api/* is proxied too)."""
+    return _health_payload()
+
+
+@app.head("/health")
+@app.head("/api/health")
+def health_head():
+    # HEAD support so lightweight uptime monitors can ping without a body.
+    return {}
+
 @app.post("/api/auth/register")
 def register(user: UserRegister, request: Request = None):
     # NB: `request` defaults to None so direct unit-test calls
