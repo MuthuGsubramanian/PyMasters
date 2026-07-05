@@ -1084,6 +1084,10 @@ export default function Classroom() {
     // match an existing lesson — used to pre-fill the "Learn anything" box. Default
     // '' keeps the box empty (today's behaviour) for every non-deep-linked visit.
     const [deepLinkTopic, setDeepLinkTopic] = useState('');
+    // When a Trending topic has no matching catalogue lesson, auto-fire the
+    // "Learn anything" generation (instead of only pre-filling it) so every
+    // trending click opens something. Set only on that unmatched deep-link branch.
+    const [autoLearnTopic, setAutoLearnTopic] = useState(false);
 
     // Auto-collapse the dashboard nav sidebar while a lesson is open so the
     // side-by-side teaching + execution panels get the full width. Provided by
@@ -1232,6 +1236,9 @@ export default function Classroom() {
                 handleSelectLesson(match);
             } else {
                 setDeepLinkTopic(wantTopic);
+                // No catalogue lesson for this trending topic → have Vaathiyaar
+                // build one automatically, so the click still opens something.
+                setAutoLearnTopic(true);
                 // Make the seeded "Learn anything" box visible. SPA navigation
                 // preserves the previous page's scroll offset, so without this a
                 // learner arriving from a Trending "Explore Topic" click lands
@@ -1511,7 +1518,7 @@ export default function Classroom() {
                         >
                             {user?.id && (
                                 <div id="learn-anything-panel" className="max-w-5xl mx-auto mb-5">
-                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} initialTopic={deepLinkTopic} />
+                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} initialTopic={deepLinkTopic} autoStart={autoLearnTopic} />
                                 </div>
                             )}
                             <LessonSelect

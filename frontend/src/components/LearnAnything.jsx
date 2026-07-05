@@ -24,12 +24,13 @@ const SUGGESTIONS = ['Web scraping with Python', 'Decorators explained', 'How re
 // ──────────────────────────────────────────────────────────────────────────
 // "Learn anything" — type a topic, Vaathiyaar generates a tailor-made lesson.
 // ──────────────────────────────────────────────────────────────────────────
-export default function LearnAnything({ userId, onLessonReady, initialTopic = '' }) {
+export default function LearnAnything({ userId, onLessonReady, initialTopic = '', autoStart = false }) {
     const [topic, setTopic] = useState(initialTopic);
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState(null);   // { status, progress_pct }
     const [err, setErr] = useState('');
     const pollRef = useRef(null);
+    const autoStartedRef = useRef('');
 
     useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
@@ -43,9 +44,9 @@ export default function LearnAnything({ userId, onLessonReady, initialTopic = ''
         if (initialTopic && !busy) setTopic(initialTopic);
     }, [initialTopic]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const start = async (e) => {
+    const start = async (e, forcedTopic) => {
         e?.preventDefault();
-        const t = topic.trim();
+        const t = (forcedTopic ?? topic).trim();
         if (!t || busy || !userId) return;
         setBusy(true); setErr(''); setStatus({ status: 'queued', progress_pct: 5 });
         try {
@@ -77,6 +78,19 @@ export default function LearnAnything({ userId, onLessonReady, initialTopic = ''
             setErr(safeErrorMsg(e1, 'Could not start generation. Please try again.'));
         }
     };
+
+    // Auto-start generation when the caller asks for it (autoStart) — used by the
+    // Trending "Explore Topic" deep-link for topics with NO catalogue lesson, so a
+    // click always *opens something* (a freshly generated lesson) rather than just
+    // pre-filling the box. Fires once per distinct topic (ref-guarded) and only when
+    // idle; requestModule is the exact same call the manual Generate button makes.
+    useEffect(() => {
+        if (autoStart && initialTopic && userId && !busy && autoStartedRef.current !== initialTopic) {
+            autoStartedRef.current = initialTopic;
+            setTopic(initialTopic);
+            start(null, initialTopic);
+        }
+    }, [autoStart, initialTopic, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const pct = status?.progress_pct ?? 0;
     const label = STAGE_LABELS[status?.status] || 'Working…';
