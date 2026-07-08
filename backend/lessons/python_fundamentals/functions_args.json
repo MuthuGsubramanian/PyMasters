@@ -5,7 +5,8 @@
   "module": "functions",
   "order": 3,
   "title": {
-    "en": "Args & Kwargs: The Swiss Army Function"
+    "en": "Args & Kwargs: The Swiss Army Function",
+    "ta": "மாற்றங்கள் மற்றும் கார்க்ஸ்: ஸ்விஸ் ஆர்மி செயல்பாடு"
   },
   "description": {
     "en": "Master *args, **kwargs, and default parameters to write flexible functions that handle any number of inputs."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "functions_lambda",
   "story_variants": {
-    "en": "## The Swiss Army Function\n\nA Swiss Army knife doesn't know how many tools you'll need — it just carries them all. Python's `*args` and `**kwargs` give your functions the same flexibility.\n\n### Default Parameters\n```python\ndef greet(name, greeting='Hello'):\n    ...\n```\nIf `greeting` isn't provided, it defaults to `'Hello'`.\n\n### *args — Variable Positional Arguments\n\n| What | How |\n|------|-----|\n| Capture extras | `def f(*args):` |\n| Type inside | `tuple` |\n| Access | `args[0]`, or `for a in args:` |\n\n### **kwargs — Variable Keyword Arguments\n\n| What | How |\n|------|-----|\n| Capture extras | `def f(**kwargs):` |\n| Type inside | `dict` |\n| Access | `kwargs['key']`, or `for k, v in kwargs.items():` |\n\n> **Order rule:** Parameters must go in this order: `positional`, `*args`, `keyword-only`, `**kwargs`.\n\n### Real-world uses\n- `print(*items)` — unpack a list into separate print args\n- Decorators use `*args, **kwargs` to pass through any call\n- Config functions accept arbitrary keyword options"
+    "en": "## The Swiss Army Function\n\nA Swiss Army knife doesn't know how many tools you'll need — it just carries them all. Python's `*args` and `**kwargs` give your functions the same flexibility.\n\n### Default Parameters\n```python\ndef greet(name, greeting='Hello'):\n    ...\n```\nIf `greeting` isn't provided, it defaults to `'Hello'`.\n\n### *args — Variable Positional Arguments\n\n| What | How |\n|------|-----|\n| Capture extras | `def f(*args):` |\n| Type inside | `tuple` |\n| Access | `args[0]`, or `for a in args:` |\n\n### **kwargs — Variable Keyword Arguments\n\n| What | How |\n|------|-----|\n| Capture extras | `def f(**kwargs):` |\n| Type inside | `dict` |\n| Access | `kwargs['key']`, or `for k, v in kwargs.items():` |\n\n> **Order rule:** Parameters must go in this order: `positional`, `*args`, `keyword-only`, `**kwargs`.\n\n### Real-world uses\n- `print(*items)` — unpack a list into separate print args\n- Decorators use `*args, **kwargs` to pass through any call\n- Config functions accept arbitrary keyword options",
+    "ta": "## சுவிஸ் ஆர்மி சாதனம்\n\nஒரு சுவிஸ் ஆர்மி சாதனத்திற்கு எத்தனை கருவிகள் தேவைப்படும் என்று தெரியவில்லை — அது அனைத்தையும் கொண்டு செல்லும். Python-ன் `*args` மற்றும் `**kwargs` உங்கள் செயல்பாடுகளுக்கு அதே வசதியை அளிக்கின்றன.\n\n### இயல்புநிலை அளவுருக்கள்\n```python\ndef greet(name, greeting='Hello'):\n    ...\n```\n`greeting` கொடுக்கப்படவில்லையெனில், அது `'Hello'`-க்கு இயல்புநிலையாக அமைகிறது.\n\n### *args — மாறும் நிலை அளவுருக்கள்\n\n| What | How |\n|------|-----|\n| மேலும் உறுப்புகளைப் பிடிக்க | `def f(*args):` |\n| உள்ளே வகை | `tuple` |\n| அணுகுதல் | `args[0]`, அல்லது `for a in args:` |\n\n### **kwargs — மாறும் விசை-அளவுருக்கள்\n\n| What | How |\n|------|-----|\n| மேலும் உறுப்புகளைப் பிடிக்க | `def f(**kwargs):` |\n| உள்ளே வகை | `dict` |\n| அணுகுதல் | `kwargs['key']`, அல்லது `for k, v in kwargs.items():` |\n\n> **வரிசை விதி:** அளவுருக்கள் இந்த வரிசையில் வர வேண்டும்: `positional`, `*args`, `keyword-only`, `**kwargs`.\n\n### உண்மையான பயன்பாடுகள்\n- `print(*items)` — ஒரு பட்டியலைத் தனி அளவுருக்களாகப் பிரித்து `print`-க்கு அனுப்புதல்\n- டெக்கரேட்டர்கள் எந்தப் பயன்பாட்டையும் கடந்து செல்ல `*args, **kwargs`-ஐப் பயன்படுத்துதல்\n- கட்டமைப்பு செயல்பாடுகள் ஏதேனும் விசை விருப்பங்களை ஏற்றுதல்"
   },
   "animation_sequence": [
     {
@@ -49,34 +51,128 @@
       "type": "ExecutionVisualizer",
       "code": "def greet(name, greeting='Hello'):\n    return f'{greeting}, {name}!'\nprint(greet('Alice'))\nprint(greet('Bob', 'Hi'))\ndef total(*args):\n    return sum(args)\nprint(total(1, 2, 3))\ndef profile(**kwargs):\n    for k, v in kwargs.items():\n        print(f'{k}: {v}')\nprofile(name='Alice', age=30)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define greet with default parameter greeting='Hello'" },
-        { "line": 3, "variables": { "name": "Alice", "greeting": "Hello" }, "output": "Hello, Alice!", "description": "Call with 1 arg -- default greeting used" },
-        { "line": 4, "variables": { "name": "Bob", "greeting": "Hi" }, "output": "Hello, Alice!\nHi, Bob!", "description": "Call with 2 args -- default overridden to 'Hi'" },
-        { "line": 5, "variables": {}, "output": "Hello, Alice!\nHi, Bob!", "description": "Define total with *args to accept any number of positional args" },
-        { "line": 7, "variables": { "args": "(1, 2, 3)" }, "output": "Hello, Alice!\nHi, Bob!\n6", "description": "*args captures (1,2,3) as tuple, sum returns 6" },
-        { "line": 8, "variables": {}, "output": "Hello, Alice!\nHi, Bob!\n6", "description": "Define profile with **kwargs for keyword arguments" },
-        { "line": 11, "variables": { "kwargs": {"name": "Alice", "age": 30} }, "output": "Hello, Alice!\nHi, Bob!\n6\nname: Alice\nage: 30", "description": "**kwargs captures keyword args as dict, loop prints each" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define greet with default parameter greeting='Hello'"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "name": "Alice",
+            "greeting": "Hello"
+          },
+          "output": "Hello, Alice!",
+          "description": "Call with 1 arg -- default greeting used"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "name": "Bob",
+            "greeting": "Hi"
+          },
+          "output": "Hello, Alice!\nHi, Bob!",
+          "description": "Call with 2 args -- default overridden to 'Hi'"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "Hello, Alice!\nHi, Bob!",
+          "description": "Define total with *args to accept any number of positional args"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "args": "(1, 2, 3)"
+          },
+          "output": "Hello, Alice!\nHi, Bob!\n6",
+          "description": "*args captures (1,2,3) as tuple, sum returns 6"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "Hello, Alice!\nHi, Bob!\n6",
+          "description": "Define profile with **kwargs for keyword arguments"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "kwargs": {
+              "name": "Alice",
+              "age": 30
+            }
+          },
+          "output": "Hello, Alice!\nHi, Bob!\n6\nname: Alice\nage: 30",
+          "description": "**kwargs captures keyword args as dict, loop prints each"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "Function call", "type": "start" },
-        { "id": "positional", "label": "Match positional args", "type": "process" },
-        { "id": "defaults", "label": "Fill defaults for missing params", "type": "process" },
-        { "id": "args", "label": "Collect extras in *args", "type": "process" },
-        { "id": "kwargs", "label": "Collect keywords in **kwargs", "type": "process" },
-        { "id": "execute", "label": "Execute function body", "type": "end" }
+        {
+          "id": "start",
+          "label": "Function call",
+          "type": "start"
+        },
+        {
+          "id": "positional",
+          "label": "Match positional args",
+          "type": "process"
+        },
+        {
+          "id": "defaults",
+          "label": "Fill defaults for missing params",
+          "type": "process"
+        },
+        {
+          "id": "args",
+          "label": "Collect extras in *args",
+          "type": "process"
+        },
+        {
+          "id": "kwargs",
+          "label": "Collect keywords in **kwargs",
+          "type": "process"
+        },
+        {
+          "id": "execute",
+          "label": "Execute function body",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "positional" },
-        { "from": "positional", "to": "defaults" },
-        { "from": "defaults", "to": "args" },
-        { "from": "args", "to": "kwargs" },
-        { "from": "kwargs", "to": "execute" }
+        {
+          "from": "start",
+          "to": "positional"
+        },
+        {
+          "from": "positional",
+          "to": "defaults"
+        },
+        {
+          "from": "defaults",
+          "to": "args"
+        },
+        {
+          "from": "args",
+          "to": "kwargs"
+        },
+        {
+          "from": "kwargs",
+          "to": "execute"
+        }
       ],
-      "executionPath": ["start", "positional", "defaults", "args", "kwargs", "execute"],
+      "executionPath": [
+        "start",
+        "positional",
+        "defaults",
+        "args",
+        "kwargs",
+        "execute"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -90,7 +186,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a function 'multiply_all' using *args that multiplies all its arguments together."
+        "en": "Write a function 'multiply_all' using *args that multiplies all its arguments together.",
+        "ta": "*args பயன்படுத்தி அதன் அனைத்து வாதங்களையும் பெருக்கி வெளியிடும் 'multiply_all' செயல்பாட்டை உருவாக்கவும்."
       },
       "expected_output": "24",
       "hints": [

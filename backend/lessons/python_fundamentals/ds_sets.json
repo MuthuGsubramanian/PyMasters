@@ -5,7 +5,8 @@
   "module": "data_structures",
   "order": 3,
   "title": {
-    "en": "Sets: The Guest List Bouncer"
+    "en": "Sets: The Guest List Bouncer",
+    "ta": "அமைப்புகள்: அதிர்ஷ்ட பட்டியல் பாதுகாப்பாளர்"
   },
   "description": {
     "en": "Learn sets — unordered collections of unique items — and their powerful operations: union, intersection, and difference."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "ds_tuples",
   "story_variants": {
-    "en": "## The Guest List Bouncer\n\nA nightclub bouncer has a **guest list**. No duplicates — each name is either on it or not. If you're already on the list, adding your name again changes nothing.\n\nPython **sets** behave exactly like that guest list.\n\n### Creating Sets\n```python\nguests = {'Alice', 'Bob', 'Carol'}\nempty_set = set()   # NOT {} — that's a dict!\n```\n\n### Set Operations\n\n| Operation | Symbol | Meaning |\n|-----------|--------|---------|\n| Union | `\\|` | all items from both |\n| Intersection | `&` | only items in both |\n| Difference | `-` | in A but not B |\n| Symmetric diff | `^` | in one but not both |\n\n> **Key property:** Sets have **O(1)** membership testing — `x in my_set` is instant regardless of size. Lists are O(n).\n\n### When to Use Sets\n- Removing duplicates: `unique = list(set(items))`\n- Fast membership checks\n- Finding common or unique items between collections\n- Mathematical set operations"
+    "en": "## The Guest List Bouncer\n\nA nightclub bouncer has a **guest list**. No duplicates — each name is either on it or not. If you're already on the list, adding your name again changes nothing.\n\nPython **sets** behave exactly like that guest list.\n\n### Creating Sets\n```python\nguests = {'Alice', 'Bob', 'Carol'}\nempty_set = set()   # NOT {} — that's a dict!\n```\n\n### Set Operations\n\n| Operation | Symbol | Meaning |\n|-----------|--------|---------|\n| Union | `\\|` | all items from both |\n| Intersection | `&` | only items in both |\n| Difference | `-` | in A but not B |\n| Symmetric diff | `^` | in one but not both |\n\n> **Key property:** Sets have **O(1)** membership testing — `x in my_set` is instant regardless of size. Lists are O(n).\n\n### When to Use Sets\n- Removing duplicates: `unique = list(set(items))`\n- Fast membership checks\n- Finding common or unique items between collections\n- Mathematical set operations",
+    "ta": "## விருந்தினர் பட்டியல் காவலர்\n\nஒரு நைட்கிளப் காவலருக்கு ஒரு **விருந்தினர் பட்டியல்** உள்ளது. நகல்கள் இல்லை — ஒவ்வொரு பெயரும் அதில் இருக்கிறது அல்லது இல்லை. நீங்கள் ஏற்கனவே பட்டியலில் இருந்தால், உங்கள் பெயரை மீண்டும் சேர்ப்பது எதையும் மாற்றாது.\n\nPython **sets** (தொகுப்புகள்) அதே போல் நடக்கின்றன.\n\n### தொகுப்புகளை உருவாக்குதல்\n```python\nguests = {'Alice', 'Bob', 'Carol'}\nempty_set = set()   # {} அல்ல — அது ஒரு dict!\n```\n\n### தொகுப்பு செயல்கள்\n\n| செயல் | குறியீடு | பொருள் |\n|-----------|--------|---------|\n| Union | `\\|` | இரண்டிலிருந்தும் உள்ள அனைத்து உருப்படிகளும் |\n| Intersection | `&` | இரண்டிலும் இருக்கும் உருப்படிகள் மட்டும் |\n| Difference | `-` | A-இல் உள்ளது ஆனால் B-இல் இல்லாதவை |\n| Symmetric diff | `^` | ஒன்றில் உள்ளது ஆனால் இரண்டிலும் இல்லாதவை |\n\n> **முக்கிய பண்பு:** தொகுப்புகளுக்கு **O(1)** உறுப்பினர் சோதனை உள்ளது — `x in my_set` என்பது அளவின் பொறுப்பில்லாமல் உடனடியாக நடக்கிறது. Lists (பட்டியல்கள்) O(n).\n\n### தொகுப்புகளை எப்போது பயன்படுத்துவது\n- நகல்களை அகற்றுதல்: `unique = list(set(items))`\n- விரைவான உறுப்பினர் சோதனைகள்\n- தொகுப்புகளுக்கு இடையே பொதுவான அல்லது தனித்துவமான உருப்படிகளைக் கண்டுபிடிதல்\n- கணிதத் தொகுப்பு செயல்கள்"
   },
   "animation_sequence": [
     {
@@ -46,14 +48,77 @@
       "type": "ExecutionVisualizer",
       "code": "fruits = {'apple', 'banana', 'cherry'}\nfruits.add('mango')\nfruits.add('apple')\nprint(len(fruits))\na = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\nprint(a & b)\nprint(a - b)",
       "executionSteps": [
-        { "line": 1, "variables": { "fruits": "{apple, banana, cherry}" }, "output": "", "description": "Create a set with 3 fruits" },
-        { "line": 2, "variables": { "fruits": "{apple, banana, cherry, mango}" }, "output": "", "description": "Add 'mango' to the set" },
-        { "line": 3, "variables": { "fruits": "{apple, banana, cherry, mango}" }, "output": "", "description": "Try to add 'apple' again -- ignored, already in set" },
-        { "line": 4, "variables": { "fruits": "{apple, banana, cherry, mango}" }, "output": "4", "description": "len() returns 4 -- duplicates are not counted" },
-        { "line": 5, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}" }, "output": "4", "description": "Create set a with 1-4" },
-        { "line": 6, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}", "b": "{3, 4, 5, 6}" }, "output": "4", "description": "Create set b with 3-6" },
-        { "line": 7, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}", "b": "{3, 4, 5, 6}" }, "output": "4\n{3, 4}", "description": "Intersection: items in both a and b" },
-        { "line": 8, "variables": { "fruits": "{apple, banana, cherry, mango}", "a": "{1, 2, 3, 4}", "b": "{3, 4, 5, 6}" }, "output": "4\n{3, 4}\n{1, 2}", "description": "Difference: items in a but not in b" }
+        {
+          "line": 1,
+          "variables": {
+            "fruits": "{apple, banana, cherry}"
+          },
+          "output": "",
+          "description": "Create a set with 3 fruits"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}"
+          },
+          "output": "",
+          "description": "Add 'mango' to the set"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}"
+          },
+          "output": "",
+          "description": "Try to add 'apple' again -- ignored, already in set"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}"
+          },
+          "output": "4",
+          "description": "len() returns 4 -- duplicates are not counted"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}",
+            "a": "{1, 2, 3, 4}"
+          },
+          "output": "4",
+          "description": "Create set a with 1-4"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}",
+            "a": "{1, 2, 3, 4}",
+            "b": "{3, 4, 5, 6}"
+          },
+          "output": "4",
+          "description": "Create set b with 3-6"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}",
+            "a": "{1, 2, 3, 4}",
+            "b": "{3, 4, 5, 6}"
+          },
+          "output": "4\n{3, 4}",
+          "description": "Intersection: items in both a and b"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "fruits": "{apple, banana, cherry, mango}",
+            "a": "{1, 2, 3, 4}",
+            "b": "{3, 4, 5, 6}"
+          },
+          "output": "4\n{3, 4}\n{1, 2}",
+          "description": "Difference: items in a but not in b"
+        }
       ],
       "speed": "normal"
     },
@@ -67,7 +132,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Remove duplicates from this list using a set: [1, 2, 2, 3, 3, 3, 4]"
+        "en": "Remove duplicates from this list using a set: [1, 2, 2, 3, 3, 3, 4]",
+        "ta": "இந்த பட்டியலிலிருந்து ஒரு தொகுப்பைப் பயன்படுத்தி நகலை அகற்றவும்: [1, 2, 2, 3, 3, 3, 4]"
       },
       "expected_output": "{1, 2, 3, 4}",
       "hints": [
