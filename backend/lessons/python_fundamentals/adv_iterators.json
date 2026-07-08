@@ -5,7 +5,8 @@
   "module": "advanced",
   "order": 3,
   "title": {
-    "en": "Iterators: The Conveyor Belt Control System"
+    "en": "Iterators: The Conveyor Belt Control System",
+    "ta": "இடைமுகங்கள்: கன்வேயர் பெல்ட் கட்டுப்பாட்டு முறையம்"
   },
   "description": {
     "en": "Understand __iter__ and __next__, build custom iterators, and master itertools for powerful sequence manipulation."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "adv_async",
   "story_variants": {
-    "en": "## The Conveyor Belt Control System\n\nA factory **conveyor belt** has a control panel: press NEXT to advance one item, and a STOP light when everything has been processed.\n\nPython's iterator protocol is that control panel: `__next__()` advances the belt; `StopIteration` is the stop light.\n\n### The Iterator Protocol\n\n| Method | Role |\n|--------|------|\n| `__iter__(self)` | return the iterator (usually `self`) |\n| `__next__(self)` | return next value or raise `StopIteration` |\n\n### Iterable vs Iterator\n- **Iterable:** has `__iter__`, can be looped (list, string, dict)\n- **Iterator:** has `__next__`, remembers its position\n- An iterator is always an iterable, but not vice-versa\n\n### itertools highlights\n\n| Function | Does |\n|----------|------|\n| `chain(a, b)` | combine iterables |\n| `cycle(iterable)` | repeat forever |\n| `islice(it, n)` | take first n items |\n| `zip_longest(a, b)` | zip with fill value |\n| `combinations(it, r)` | all r-length combos |\n\n> **For loops** call `iter()` then `next()` repeatedly — understanding this demystifies all Python iteration."
+    "en": "## The Conveyor Belt Control System\n\nA factory **conveyor belt** has a control panel: press NEXT to advance one item, and a STOP light when everything has been processed.\n\nPython's iterator protocol is that control panel: `__next__()` advances the belt; `StopIteration` is the stop light.\n\n### The Iterator Protocol\n\n| Method | Role |\n|--------|------|\n| `__iter__(self)` | return the iterator (usually `self`) |\n| `__next__(self)` | return next value or raise `StopIteration` |\n\n### Iterable vs Iterator\n- **Iterable:** has `__iter__`, can be looped (list, string, dict)\n- **Iterator:** has `__next__`, remembers its position\n- An iterator is always an iterable, but not vice-versa\n\n### itertools highlights\n\n| Function | Does |\n|----------|------|\n| `chain(a, b)` | combine iterables |\n| `cycle(iterable)` | repeat forever |\n| `islice(it, n)` | take first n items |\n| `zip_longest(a, b)` | zip with fill value |\n| `combinations(it, r)` | all r-length combos |\n\n> **For loops** call `iter()` then `next()` repeatedly — understanding this demystifies all Python iteration.",
+    "ta": "## கான்வேயர் பேல்ட் கட்டுப்பாட்டு அமைப்பு\n\nஒரு தொழிற்சாலை **கான்வேயர் பேல்ட்** கட்டுப்பாட்டு தளத்தைக் கொண்டுள்ளது: `NEXT` ஐ அழுத்தி ஒரு பொருளை முன்னேற்றவும், மற்றும் அனைத்து பொருட்களும் செயலாக்கப்பட்டவுடன் ஒரு `STOP` விளக்கைக் கொண்டுள்ளது.\n\nPython-ன் இடராட்டி சூத்திரம் அதே கட்டுப்பாட்டு தளம்: `__next__()` பேல்ட்டை முன்னேற்றுகிறது; `StopIteration` என்பது `STOP` விளக்கு.\n\n### இடராட்டி சூத்திரம்\n\n| முறை | பங்கு |\n|--------|------|\n| `__iter__(self)` | இடராட்டியைத் திரும்பவும் (பொதுவாக `self`) |\n| `__next__(self)` | அடுத்த மதிப்பைத் திரும்பவும் அல்லது `StopIteration`-ஐ ஏற்றவும் |\n\n### இடராட்டிக்கும் இடராட்டிக்கும் இடையே\n- **இடராட்டிக்குரியது:** `__iter__`-ஐக் கொண்டுள்ளது, சுழற்சியாகலாம் (பட்டியல், சரம், அட்டவணை)\n- **இடராட்டி:** `__next__`-ஐக் கொண்டுள்ளது, அதன் நிலையை நினைவில் கொண்டுள்ளது\n- ஒரு இடராட்டி எப்போதும் ஒரு இடராட்டிக்குரியதாக இருக்கும், ஆனால் அதற்கு நேர்மாறாக இல்லை\n\n### itertools முக்கியத்துவங்கள்\n\n| செயல்பாடு | செய்கிறது |\n|----------|------|\n| `chain(a, b)` | இடராட்டிகளை இணைக்கிறது |\n| `cycle(iterable)` | எப்போதும் மீண்டும் மீண்டும் செய்கிறது |\n| `islice(it, n)` | முதல் `n` உருப்படிகளை எடுக்கிறது |\n| `zip_longest(a, b)` | நிரப்பு மதிப்புடன் zip-செய்கிறது |\n| `combinations(it, r)` | அனைத்து `r`-நீள `combinations`-கள் |\n\n> **For சுழற்சிகள்** `iter()`-ஐ அழைத்து, பின்னர் மீண்டும் `next()`-ஐ அழைக்கின்றன — இதைப் புரிந்துகொள்வது அனைத்து Python சுழற்சிகளையும் விளக்குகிறது."
   },
   "animation_sequence": [
     {
@@ -42,43 +44,161 @@
       "type": "ExecutionVisualizer",
       "code": "class Counter:\n    def __init__(self, low, high):\n        self.current = low\n        self.high = high\n    def __iter__(self):\n        return self\n    def __next__(self):\n        if self.current > self.high:\n            raise StopIteration\n        val = self.current\n        self.current += 1\n        return val\nfor n in Counter(1, 4):\n    print(n)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define Counter class with __iter__ and __next__" },
-        { "line": 13, "variables": { "current": 1, "high": 4 }, "output": "", "description": "for loop calls Counter(1,4).__iter__() to get iterator" },
-        { "line": 7, "variables": { "current": 2, "high": 4, "n": 1 }, "output": "1", "description": "__next__ returns 1, increments current to 2" },
-        { "line": 7, "variables": { "current": 3, "high": 4, "n": 2 }, "output": "1\n2", "description": "__next__ returns 2, increments current to 3" },
-        { "line": 7, "variables": { "current": 4, "high": 4, "n": 3 }, "output": "1\n2\n3", "description": "__next__ returns 3, increments current to 4" },
-        { "line": 7, "variables": { "current": 5, "high": 4, "n": 4 }, "output": "1\n2\n3\n4", "description": "__next__ returns 4, increments current to 5" },
-        { "line": 8, "variables": { "current": 5, "high": 4 }, "output": "1\n2\n3\n4", "description": "current > high: raise StopIteration, loop ends" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Counter class with __iter__ and __next__"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "current": 1,
+            "high": 4
+          },
+          "output": "",
+          "description": "for loop calls Counter(1,4).__iter__() to get iterator"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "current": 2,
+            "high": 4,
+            "n": 1
+          },
+          "output": "1",
+          "description": "__next__ returns 1, increments current to 2"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "current": 3,
+            "high": 4,
+            "n": 2
+          },
+          "output": "1\n2",
+          "description": "__next__ returns 2, increments current to 3"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "current": 4,
+            "high": 4,
+            "n": 3
+          },
+          "output": "1\n2\n3",
+          "description": "__next__ returns 3, increments current to 4"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "current": 5,
+            "high": 4,
+            "n": 4
+          },
+          "output": "1\n2\n3\n4",
+          "description": "__next__ returns 4, increments current to 5"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "current": 5,
+            "high": 4
+          },
+          "output": "1\n2\n3\n4",
+          "description": "current > high: raise StopIteration, loop ends"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "LoopVisualizer",
-      "iterable": [1, 2, 3, 4],
+      "iterable": [
+        1,
+        2,
+        3,
+        4
+      ],
       "expression": "__next__() returns current, increments",
-      "result": [1, 2, 3, 4],
+      "result": [
+        1,
+        2,
+        3,
+        4
+      ],
       "label": "Counter(1, 4) iterator protocol",
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "for n in Counter(1,4)", "type": "start" },
-        { "id": "iter", "label": "__iter__() returns self", "type": "process" },
-        { "id": "next", "label": "__next__() called", "type": "process" },
-        { "id": "check", "label": "current > high?", "type": "decision" },
-        { "id": "yield", "label": "Return value, increment", "type": "process" },
-        { "id": "stop", "label": "StopIteration raised", "type": "end" }
+        {
+          "id": "start",
+          "label": "for n in Counter(1,4)",
+          "type": "start"
+        },
+        {
+          "id": "iter",
+          "label": "__iter__() returns self",
+          "type": "process"
+        },
+        {
+          "id": "next",
+          "label": "__next__() called",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "current > high?",
+          "type": "decision"
+        },
+        {
+          "id": "yield",
+          "label": "Return value, increment",
+          "type": "process"
+        },
+        {
+          "id": "stop",
+          "label": "StopIteration raised",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "iter" },
-        { "from": "iter", "to": "next" },
-        { "from": "next", "to": "check" },
-        { "from": "check", "to": "yield" },
-        { "from": "check", "to": "stop" },
-        { "from": "yield", "to": "next" }
+        {
+          "from": "start",
+          "to": "iter"
+        },
+        {
+          "from": "iter",
+          "to": "next"
+        },
+        {
+          "from": "next",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "yield"
+        },
+        {
+          "from": "check",
+          "to": "stop"
+        },
+        {
+          "from": "yield",
+          "to": "next"
+        }
       ],
-      "executionPath": ["start", "iter", "next", "check", "yield", "next", "check", "stop"],
+      "executionPath": [
+        "start",
+        "iter",
+        "next",
+        "check",
+        "yield",
+        "next",
+        "check",
+        "stop"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -92,7 +212,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create an iterator class 'FibIterator' that yields the first n Fibonacci numbers."
+        "en": "Create an iterator class 'FibIterator' that yields the first n Fibonacci numbers.",
+        "ta": "'FibIterator' என்ற ஒரு இடைமுகம் (iterator) வகுப்பை உருவாக்கவும், அது முதல் n பைபனாச்சி எண்களை வழங்குகிறது."
       },
       "expected_output": "[0, 1, 1, 2, 3, 5, 8]",
       "hints": [

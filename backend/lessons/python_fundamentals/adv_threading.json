@@ -5,7 +5,8 @@
   "module": "advanced",
   "order": 5,
   "title": {
-    "en": "Threading & Multiprocessing: The Parallel Kitchen"
+    "en": "Threading & Multiprocessing: The Parallel Kitchen",
+    "ta": "த்ரெடிங் மற்றும் மல்டிப்ரோசெஸிங்: பல்நோக்கு சமையலறை"
   },
   "description": {
     "en": "Learn Python threading and multiprocessing basics — when to use each, the GIL, and how to parallelize work safely."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "testing_pytest",
   "story_variants": {
-    "en": "## The Parallel Kitchen\n\nA restaurant kitchen has **multiple chefs** working simultaneously. Some share one stove (threads share memory); others have their own kitchen entirely (processes have separate memory).\n\n### Threading vs Multiprocessing vs Async\n\n| Approach | Best For | Memory | GIL affected? |\n|----------|----------|--------|---------------|\n| `threading` | I/O-bound | shared | Yes |\n| `multiprocessing` | CPU-bound | separate | No |\n| `asyncio` | I/O-bound | shared | Yes |\n\n### The GIL\n> The **Global Interpreter Lock** (GIL) allows only one thread to execute Python bytecode at a time. Threads can still be useful for I/O — while one thread waits for network, another runs.\n\n### Key Classes\n- `threading.Thread(target=func)` — create a thread\n- `thread.start()` — launch it\n- `thread.join()` — wait for it to finish\n- `multiprocessing.Process` — same API, separate process\n- `concurrent.futures.ThreadPoolExecutor` — high-level pool\n\n> **Rule of thumb:** Use `threading` for I/O-bound (web scraping, file ops). Use `multiprocessing` for CPU-bound (number crunching, image processing)."
+    "en": "## The Parallel Kitchen\n\nA restaurant kitchen has **multiple chefs** working simultaneously. Some share one stove (threads share memory); others have their own kitchen entirely (processes have separate memory).\n\n### Threading vs Multiprocessing vs Async\n\n| Approach | Best For | Memory | GIL affected? |\n|----------|----------|--------|---------------|\n| `threading` | I/O-bound | shared | Yes |\n| `multiprocessing` | CPU-bound | separate | No |\n| `asyncio` | I/O-bound | shared | Yes |\n\n### The GIL\n> The **Global Interpreter Lock** (GIL) allows only one thread to execute Python bytecode at a time. Threads can still be useful for I/O — while one thread waits for network, another runs.\n\n### Key Classes\n- `threading.Thread(target=func)` — create a thread\n- `thread.start()` — launch it\n- `thread.join()` — wait for it to finish\n- `multiprocessing.Process` — same API, separate process\n- `concurrent.futures.ThreadPoolExecutor` — high-level pool\n\n> **Rule of thumb:** Use `threading` for I/O-bound (web scraping, file ops). Use `multiprocessing` for CPU-bound (number crunching, image processing).",
+    "ta": "## பாரலல் சமையலறை\n\nஒரு உணவகச் சமையலறையில் **பல சமையல்காரர்கள்** ஒரே நேரத்தில் வேலை செய்கிறார்கள். சிலர் ஒரே தீப்பொறி (threads share memory) பகிர்ந்து கொள்கிறார்கள்; மற்றவர்களுக்கு தனித்த சமையலறை இருக்கிறது (processes have separate memory).\n\n### Threading vs Multiprocessing vs Async\n\n| அணுகுமுறை | சிறந்தது | நினைவகம் | GIL பாதிக்கப்படுமா? |\n|----------|----------|--------|---------------|\n| `threading` | I/O-bound | shared | Yes |\n| `multiprocessing` | CPU-bound | separate | No |\n| `asyncio` | I/O-bound | shared | Yes |\n\n### The GIL\n> The **Global Interpreter Lock** (GIL) allows only one thread to execute Python bytecode at a time. Threads can still be useful for I/O — while one thread waits for network, another runs.\n\n### முக்கிய வகுப்புகள்\n- `threading.Thread(target=func)` — ஒரு தரம் (thread) உருவாக்க\n- `thread.start()` — தொடங்க\n- `thread.join()` — முடியும் வரை காத்திரு\n- `multiprocessing.Process` — ஒரே API, தனி செயல்முறை\n- `concurrent.futures.ThreadPoolExecutor` — உயர் நிலை கூட்டம்\n\n> **Rule of thumb:** Use `threading` for I/O-bound (web scraping, file ops). Use `multiprocessing` for CPU-bound (number crunching, image processing)."
   },
   "animation_sequence": [
     {
@@ -45,16 +47,103 @@
       "type": "ExecutionVisualizer",
       "code": "import threading\nresults = []\ndef worker(name):\n    results.append(name)\nt1 = threading.Thread(target=worker, args=('A',))\nt2 = threading.Thread(target=worker, args=('B',))\nt1.start()\nt2.start()\nt1.join()\nt2.join()\nprint(results)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Import threading module" },
-        { "line": 2, "variables": { "results": [] }, "output": "", "description": "Create shared list for results" },
-        { "line": 3, "variables": { "results": [] }, "output": "", "description": "Define worker function that appends name" },
-        { "line": 5, "variables": { "results": [], "t1": "Thread(worker, 'A')" }, "output": "", "description": "Create thread t1 targeting worker('A')" },
-        { "line": 6, "variables": { "results": [], "t1": "Thread(worker, 'A')", "t2": "Thread(worker, 'B')" }, "output": "", "description": "Create thread t2 targeting worker('B')" },
-        { "line": 7, "variables": { "results": ["A"], "t1": "running" }, "output": "", "description": "Start t1 -- it runs worker('A') concurrently" },
-        { "line": 8, "variables": { "results": ["A", "B"], "t2": "running" }, "output": "", "description": "Start t2 -- it runs worker('B') concurrently" },
-        { "line": 9, "variables": { "results": ["A", "B"] }, "output": "", "description": "join() waits for t1 to finish" },
-        { "line": 10, "variables": { "results": ["A", "B"] }, "output": "", "description": "join() waits for t2 to finish" },
-        { "line": 11, "variables": { "results": ["A", "B"] }, "output": "['A', 'B']", "description": "Both threads done -- print shared results" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import threading module"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "results": []
+          },
+          "output": "",
+          "description": "Create shared list for results"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "results": []
+          },
+          "output": "",
+          "description": "Define worker function that appends name"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "results": [],
+            "t1": "Thread(worker, 'A')"
+          },
+          "output": "",
+          "description": "Create thread t1 targeting worker('A')"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "results": [],
+            "t1": "Thread(worker, 'A')",
+            "t2": "Thread(worker, 'B')"
+          },
+          "output": "",
+          "description": "Create thread t2 targeting worker('B')"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "results": [
+              "A"
+            ],
+            "t1": "running"
+          },
+          "output": "",
+          "description": "Start t1 -- it runs worker('A') concurrently"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "results": [
+              "A",
+              "B"
+            ],
+            "t2": "running"
+          },
+          "output": "",
+          "description": "Start t2 -- it runs worker('B') concurrently"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "results": [
+              "A",
+              "B"
+            ]
+          },
+          "output": "",
+          "description": "join() waits for t1 to finish"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "results": [
+              "A",
+              "B"
+            ]
+          },
+          "output": "",
+          "description": "join() waits for t2 to finish"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "results": [
+              "A",
+              "B"
+            ]
+          },
+          "output": "['A', 'B']",
+          "description": "Both threads done -- print shared results"
+        }
       ],
       "speed": "normal"
     },
@@ -68,7 +157,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create two threads that each append their name to a shared list, then verify both names are in the list after joining."
+        "en": "Create two threads that each append their name to a shared list, then verify both names are in the list after joining.",
+        "ta": "இரண்டு திரைகளை உருவாக்கி, ஒவ்வொரு திரையும் தனது பெயரை பகிர்ந்த பட்டியலில் சேர்க்க, பிறகு சேர்க்கப்பட்ட பெயர்கள் இரண்டும் பட்டியலில் உள்ளதா என சரிபார்க்க, பின்னர் இணைக்கவும்."
       },
       "expected_output": "['thread-1', 'thread-2'] (order may vary)",
       "hints": [

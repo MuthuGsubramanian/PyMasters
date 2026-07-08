@@ -5,7 +5,8 @@
   "module": "data_structures",
   "order": 2,
   "title": {
-    "en": "Dictionaries: The Address Book"
+    "en": "Dictionaries: The Address Book",
+    "ta": "அட்டவணைகள்: முகவரி புத்தகம்"
   },
   "description": {
     "en": "Master Python dictionaries — key-value pairs that let you look up any value instantly, like finding a phone number in an address book."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "ds_sets",
   "story_variants": {
-    "en": "## The Address Book\n\nAn **address book** stores names and phone numbers. You don't search through every entry — you just look up the name and instantly get the number.\n\nPython **dictionaries** work the same way: keys map to values.\n\n### Dictionary Operations\n\n| Operation | Syntax | Notes |\n|-----------|--------|-------|\n| Create | `d = {'key': val}` | or `dict()` |\n| Read | `d['key']` | KeyError if missing |\n| Safe read | `d.get('key', default)` | no error |\n| Add/update | `d['key'] = val` | |\n| Delete | `del d['key']` | |\n| Check key | `'key' in d` | True/False |\n\n### Iterating\n- `d.keys()` — all keys\n- `d.values()` — all values\n- `d.items()` — `(key, value)` pairs\n\n> **Key fact:** Dictionary keys must be **immutable** (strings, numbers, tuples). Values can be anything — even other dictionaries.\n\n### When to Use a Dict\n- Named attributes (like a mini object)\n- Counting/grouping: `counts[word] += 1`\n- Caching computed results\n- Config and settings"
+    "en": "## The Address Book\n\nAn **address book** stores names and phone numbers. You don't search through every entry — you just look up the name and instantly get the number.\n\nPython **dictionaries** work the same way: keys map to values.\n\n### Dictionary Operations\n\n| Operation | Syntax | Notes |\n|-----------|--------|-------|\n| Create | `d = {'key': val}` | or `dict()` |\n| Read | `d['key']` | KeyError if missing |\n| Safe read | `d.get('key', default)` | no error |\n| Add/update | `d['key'] = val` | |\n| Delete | `del d['key']` | |\n| Check key | `'key' in d` | True/False |\n\n### Iterating\n- `d.keys()` — all keys\n- `d.values()` — all values\n- `d.items()` — `(key, value)` pairs\n\n> **Key fact:** Dictionary keys must be **immutable** (strings, numbers, tuples). Values can be anything — even other dictionaries.\n\n### When to Use a Dict\n- Named attributes (like a mini object)\n- Counting/grouping: `counts[word] += 1`\n- Caching computed results\n- Config and settings",
+    "ta": "## முகவரி புத்தகம்\n\nஒரு **முகவரி புத்தகம்** பெயர்கள் மற்றும் தொலைபேசி எண்களைச் சேமிக்கிறது. நீங்கள் ஒவ்வொரு பதிவையும் தேடுவதில்லை — நீங்கள் பெயரைத் தேடி, உடனடியாக எண்ணைப் பெறுவீர்கள்.\n\nPython **அகராதிகள் (dictionaries)** அதே வழியில் செயல்படுகின்றன: விசைகள் மதிப்புகளுக்கு வரைபடமாக உள்ளன.\n\n### அகராதி செயல்கள்\n\n| செயல் | தொடரியல் (Syntax) | குறிப்புகள் |\n|-----------|--------|-------|\n| உருவாக்கு | `d = {'key': val}` | அல்லது `dict()` |\n| படிப்பு | `d['key']` | காணவில்லையெனில் KeyError |\n| பாதுகாப்பான படிப்பு | `d.get('key', default)` | பிழை இல்லை |\n| சேர்ப்பு/புதுப்பிப்பு | `d['key'] = val` | |\n| நீக்கு | `del d['key']` | |\n| விசையை சரிபார் | `'key' in d` | True/False |\n\n### மீண்டும் மீண்டும் செய்தல் (Iterating)\n- `d.keys()` — அனைத்து விசைகளும்\n- `d.values()` — அனைத்து மதிப்புகளும்\n- `d.items()` — `(key, value)` ஜோடிகள்\n\n> **முக்கிய உண்மை:** அகராதி விசைகள் **மாற்றமுடியாதவை** (immutable) ஆக இருக்க வேண்டும் (strings, numbers, tuples). மதிப்புகள் எதையும் இருக்கலாம் — மற்ற அகராதிகள் கூட.\n\n### அகராதியை எப்போது பயன்படுத்துவது\n- பெயரிடப்பட்ட பண்புகள் (ஒரு சிறிய பொருள் போல)\n- எண்ணிக்கை/குழுப்படுத்துதல்: `counts[word] += 1`\n- கணக்கிடப்பட்ட முடிவுகளை சேமித்து வைத்தல் (Caching)\n- கட்டமைப்பு மற்றும் அமைப்புகள்"
   },
   "animation_sequence": [
     {
@@ -50,11 +52,64 @@
       "type": "ExecutionVisualizer",
       "code": "contact = {'name': 'Alice', 'phone': '555-1234'}\nprint(contact['name'])\ncontact['email'] = 'alice@ex.com'\nprint(contact.get('age', 'N/A'))\nprint(len(contact))",
       "executionSteps": [
-        { "line": 1, "variables": { "contact": {"name": "Alice", "phone": "555-1234"} }, "output": "", "description": "Create a dict with name and phone keys" },
-        { "line": 2, "variables": { "contact": {"name": "Alice", "phone": "555-1234"} }, "output": "Alice", "description": "Access value for key 'name'" },
-        { "line": 3, "variables": { "contact": {"name": "Alice", "phone": "555-1234", "email": "alice@ex.com"} }, "output": "Alice", "description": "Add new key 'email' to the dict" },
-        { "line": 4, "variables": { "contact": {"name": "Alice", "phone": "555-1234", "email": "alice@ex.com"} }, "output": "Alice\nN/A", "description": ".get() returns default 'N/A' since 'age' key is missing" },
-        { "line": 5, "variables": { "contact": {"name": "Alice", "phone": "555-1234", "email": "alice@ex.com"} }, "output": "Alice\nN/A\n3", "description": "len() returns 3 -- the dict has 3 key-value pairs" }
+        {
+          "line": 1,
+          "variables": {
+            "contact": {
+              "name": "Alice",
+              "phone": "555-1234"
+            }
+          },
+          "output": "",
+          "description": "Create a dict with name and phone keys"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "contact": {
+              "name": "Alice",
+              "phone": "555-1234"
+            }
+          },
+          "output": "Alice",
+          "description": "Access value for key 'name'"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "contact": {
+              "name": "Alice",
+              "phone": "555-1234",
+              "email": "alice@ex.com"
+            }
+          },
+          "output": "Alice",
+          "description": "Add new key 'email' to the dict"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "contact": {
+              "name": "Alice",
+              "phone": "555-1234",
+              "email": "alice@ex.com"
+            }
+          },
+          "output": "Alice\nN/A",
+          "description": ".get() returns default 'N/A' since 'age' key is missing"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "contact": {
+              "name": "Alice",
+              "phone": "555-1234",
+              "email": "alice@ex.com"
+            }
+          },
+          "output": "Alice\nN/A\n3",
+          "description": "len() returns 3 -- the dict has 3 key-value pairs"
+        }
       ],
       "speed": "normal"
     },
@@ -68,7 +123,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a dictionary for a student with keys 'name', 'grade', 'score' and values 'Maya', 'A', 95. Then print the score."
+        "en": "Create a dictionary for a student with keys 'name', 'grade', 'score' and values 'Maya', 'A', 95. Then print the score.",
+        "ta": "ஒரு மாணவருக்கான அட்டவணையை 'name', 'grade', 'score' ஆகிய விசைகளுடன் 'Maya', 'A', 95 ஆகிய மதிப்புகளுடன் உருவாக்கவும். பின்னர் மதிப்பைப் பிரித்தெழுதவும்."
       },
       "expected_output": "95",
       "hints": [
