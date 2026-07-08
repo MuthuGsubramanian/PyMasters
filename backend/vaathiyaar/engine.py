@@ -538,6 +538,29 @@ def build_feedback_prompt(
     )
 
 
+_OUTPUT_PLACEHOLDER = re.compile(r"<[a-z_]+>")
+
+
+def _output_matches(actual: str, expected: str) -> bool:
+    """True when the student's stdout satisfies the lesson's expected output.
+
+    Exact (stripped) match is the fast path. Some lessons' sample output uses
+    <placeholder> fill-in tokens — e.g. Lesson 1: "Name: <your_name>, Age:
+    <your_age>, Favourite Number: <your_number>". Those can NEVER match a real
+    answer literally, so treat each <token> as a non-empty wildcard: the literal
+    surrounding text must still match exactly (regression 2026-07-08, found by
+    live E2E — every new user was blocked on their first lesson)."""
+    a = (actual or "").strip()
+    e = (expected or "").strip()
+    if a == e:
+        return True
+    if not _OUTPUT_PLACEHOLDER.search(e):
+        return False
+    parts = _OUTPUT_PLACEHOLDER.split(e)
+    pattern = ".+?".join(re.escape(p) for p in parts)
+    return re.fullmatch(pattern, a, re.DOTALL) is not None
+
+
 def evaluate_code(
     student_code: str,
     expected_output: str,
@@ -645,7 +668,7 @@ def evaluate_code(
         exec_error = stderr_output if result["exit_code"] != 0 else ""
         error_msg = exec_error or stderr_output
 
-        success = actual_output.strip() == expected_output.strip()
+        success = _output_matches(actual_output, expected_output)
 
         # HARNESS RESCUE (2026-07-02): exact stdout matching fails semantically
         # correct solutions (live QA: a correct decorator printing "Hello,
