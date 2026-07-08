@@ -22,9 +22,36 @@ from vaathiyaar.engine import (
     stream as vaathiyaar_stream, VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE,
 )
 from vaathiyaar.modelfile import build_system_prompt
-from vaathiyaar.profiler import get_student_profile
+from vaathiyaar.profiler import get_student_profile, record_signal
 
 router = APIRouter(prefix="/api/playground", tags=["playground"])
+
+
+def _maybe_record_playground_signal(db_path: str, user_id: str, response) -> None:
+    """Capture what a learner explores in the free-form Playground.
+
+    The Playground is a rich, previously-discarded pattern source: a curious
+    or stuck learner's questions reveal their interests and gaps. When
+    Vaathiyaar identifies the topic (profile_update.topic_practiced), record a
+    'playground_question' learning signal so the knowledge model and
+    recommendations benefit — same mechanism as classroom chat. Best-effort:
+    never fail the chat request over analytics (2026-07-08)."""
+    try:
+        if not isinstance(response, dict):
+            return
+        profile_update = response.get("profile_update") or {}
+        topic = profile_update.get("topic_practiced")
+        if not topic:
+            return
+        record_signal(
+            db_path,
+            user_id=user_id,
+            signal_type="playground_question",
+            topic=topic,
+            value=profile_update,
+        )
+    except Exception:
+        pass  # analytics is best-effort; the chat reply must still return
 
 # Per-user throttles. Single Cloud Run instance → in-memory state is fine.
 # Code execution is cheap but abusable as free compute; package installs mutate
@@ -418,6 +445,9 @@ def playground_chat(request: PlaygroundChatRequest, caller: str = Depends(get_cu
         reply = response.get("response", response.get("message", str(response)))
     else:
         reply = str(response)
+
+    # Capture the learner's exploration pattern (best-effort, never blocks).
+    _maybe_record_playground_signal(db_path, request.user_id, response)
 
     return {
         "response": reply,
