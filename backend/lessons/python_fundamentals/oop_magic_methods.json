@@ -5,7 +5,8 @@
   "module": "oop",
   "order": 4,
   "title": {
-    "en": "Magic Methods: The Hidden Operators"
+    "en": "Magic Methods: The Hidden Operators",
+    "ta": "மாஜிக் மெத்தட்ஸ்: மறைந்துள்ள ஆபரேட்டர்கள்"
   },
   "description": {
     "en": "Unlock __str__, __repr__, __len__, __eq__ and more — the dunder methods that make your objects behave like built-in Python types."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "oop_composition",
   "story_variants": {
-    "en": "## The Hidden Operators\n\nWhen you write `len([1, 2, 3])`, Python secretly calls `list.__len__([1, 2, 3])`. Every operator and built-in function has a **magic method** (dunder = double-underscore) behind it.\n\nDefine these on your own class to make it behave like a native Python type.\n\n### Key Magic Methods\n\n| Method | Triggered by | Use |\n|--------|-------------|-----|\n| `__init__` | `MyClass()` | constructor |\n| `__str__` | `str(obj)`, `print()` | user-friendly string |\n| `__repr__` | `repr(obj)`, REPL | developer string |\n| `__len__` | `len(obj)` | length |\n| `__eq__` | `obj1 == obj2` | equality |\n| `__lt__` | `obj1 < obj2` | less-than |\n| `__add__` | `obj1 + obj2` | addition |\n| `__contains__` | `x in obj` | membership |\n\n> **Rule of thumb:** Always define `__repr__` — it helps debugging. Define `__str__` for user-facing display. They can differ.\n\n### Operator Overloading\nBy defining `__add__`, `__mul__` etc., you can make `Vector(1,2) + Vector(3,4)` return `Vector(4,6)`."
+    "en": "## The Hidden Operators\n\nWhen you write `len([1, 2, 3])`, Python secretly calls `list.__len__([1, 2, 3])`. Every operator and built-in function has a **magic method** (dunder = double-underscore) behind it.\n\nDefine these on your own class to make it behave like a native Python type.\n\n### Key Magic Methods\n\n| Method | Triggered by | Use |\n|--------|-------------|-----|\n| `__init__` | `MyClass()` | constructor |\n| `__str__` | `str(obj)`, `print()` | user-friendly string |\n| `__repr__` | `repr(obj)`, REPL | developer string |\n| `__len__` | `len(obj)` | length |\n| `__eq__` | `obj1 == obj2` | equality |\n| `__lt__` | `obj1 < obj2` | less-than |\n| `__add__` | `obj1 + obj2` | addition |\n| `__contains__` | `x in obj` | membership |\n\n> **Rule of thumb:** Always define `__repr__` — it helps debugging. Define `__str__` for user-facing display. They can differ.\n\n### Operator Overloading\nBy defining `__add__`, `__mul__` etc., you can make `Vector(1,2) + Vector(3,4)` return `Vector(4,6)`.",
+    "ta": "## மறைக்கப்பட்ட ஓப்பரேட்டர்கள்\n\n`len([1, 2, 3])` என்பதை நீங்கள் எழுதும்போது, Python மறைமுகமாக `list.__len__([1, 2, 3])` ஐ அழைக்கிறது. ஒவ்வொரு ஓப்பரேட்டர் மற்றும் உள்ளமைக்கப்பட்ட செயல்பாடுகளுக்கும் அதன் பின்னால் ஒரு **மாஜிக் மெத்தட்** (dunder = double-underscore) உள்ளது.\n\nஉங்கள் சொந்த வகுப்பில் இவற்றை வரையறுக்கவும், அது ஒரு இயற்கையான Python வகைப்பாடு போல் நடக்க வைக்கவும்.\n\n### முக்கிய மாஜிக் மெத்தட்டுகள்\n\n| மெத்தட் | தூண்டப்படும் | பயன் |\n|--------|-------------|-----|\n| `__init__` | `MyClass()` | கட்டமைப்பாளர் |\n| `__str__` | `str(obj)`, `print()` | பயனருக்கு நட்பான சரம் |\n| `__repr__` | `repr(obj)`, REPL | டெவலப்பருக்கான சரம் |\n| `__len__` | `len(obj)` | நீளம் |\n| `__eq__` | `obj1 == obj2` | சமத்துவம் |\n| `__lt__` | `obj1 < obj2` | குறைவானது |\n| `__add__` | `obj1 + obj2` | கூட்டல் |\n| `__contains__` | `x in obj` | உறுப்பினர் |\n\n> **வழிகாட்டுத் தத்துவம்:** எப்போதும் `__repr__` ஐ வரையறுக்கவும் — அது பிழைத்திருத்தத்திற்கு உதவுகிறது. பயனருக்கு தெரியும் காட்சிக்காக `__str__` ஐ வரையறுக்கவும். அவை வேறுபடலாம்.\n\n### ஓப்பரேட்டர் மீளமைப்பு\n`__add__`, `__mul__` போன்றவற்றை வரையறுப்பதன் மூலம், `Vector(1,2) + Vector(3,4)` ஐ `Vector(4,6)` என வழங்க நீங்கள் செய்யலாம்."
   },
   "animation_sequence": [
     {
@@ -45,30 +47,111 @@
       "type": "ExecutionVisualizer",
       "code": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def __str__(self):\n        return f'Vector({self.x}, {self.y})'\n    def __add__(self, other):\n        return Vector(self.x+other.x, self.y+other.y)\n    def __eq__(self, other):\n        return self.x==other.x and self.y==other.y\nv1 = Vector(1, 2)\nv2 = Vector(3, 4)\nv3 = v1 + v2\nprint(v3)\nprint(v1 == v2)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define Vector class with magic methods" },
-        { "line": 11, "variables": { "v1": "Vector(1, 2)" }, "output": "", "description": "Create v1 -- __init__ sets x=1, y=2" },
-        { "line": 12, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)" }, "output": "", "description": "Create v2 -- __init__ sets x=3, y=4" },
-        { "line": 13, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)", "v3": "Vector(4, 6)" }, "output": "", "description": "v1 + v2 calls __add__: Vector(1+3, 2+4) = Vector(4,6)" },
-        { "line": 14, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)", "v3": "Vector(4, 6)" }, "output": "Vector(4, 6)", "description": "print(v3) calls __str__ to get readable string" },
-        { "line": 15, "variables": { "v1": "Vector(1, 2)", "v2": "Vector(3, 4)", "v3": "Vector(4, 6)" }, "output": "Vector(4, 6)\nFalse", "description": "v1 == v2 calls __eq__: (1!=3) so False" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Vector class with magic methods"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "v1": "Vector(1, 2)"
+          },
+          "output": "",
+          "description": "Create v1 -- __init__ sets x=1, y=2"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "v1": "Vector(1, 2)",
+            "v2": "Vector(3, 4)"
+          },
+          "output": "",
+          "description": "Create v2 -- __init__ sets x=3, y=4"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "v1": "Vector(1, 2)",
+            "v2": "Vector(3, 4)",
+            "v3": "Vector(4, 6)"
+          },
+          "output": "",
+          "description": "v1 + v2 calls __add__: Vector(1+3, 2+4) = Vector(4,6)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "v1": "Vector(1, 2)",
+            "v2": "Vector(3, 4)",
+            "v3": "Vector(4, 6)"
+          },
+          "output": "Vector(4, 6)",
+          "description": "print(v3) calls __str__ to get readable string"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "v1": "Vector(1, 2)",
+            "v2": "Vector(3, 4)",
+            "v3": "Vector(4, 6)"
+          },
+          "output": "Vector(4, 6)\nFalse",
+          "description": "v1 == v2 calls __eq__: (1!=3) so False"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "v1 + v2", "type": "start" },
-        { "id": "call", "label": "Python calls v1.__add__(v2)", "type": "process" },
-        { "id": "compute", "label": "x=1+3=4, y=2+4=6", "type": "process" },
-        { "id": "return", "label": "Returns Vector(4, 6)", "type": "end" }
+        {
+          "id": "start",
+          "label": "v1 + v2",
+          "type": "start"
+        },
+        {
+          "id": "call",
+          "label": "Python calls v1.__add__(v2)",
+          "type": "process"
+        },
+        {
+          "id": "compute",
+          "label": "x=1+3=4, y=2+4=6",
+          "type": "process"
+        },
+        {
+          "id": "return",
+          "label": "Returns Vector(4, 6)",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "call" },
-        { "from": "call", "to": "compute" },
-        { "from": "compute", "to": "return" }
+        {
+          "from": "start",
+          "to": "call"
+        },
+        {
+          "from": "call",
+          "to": "compute"
+        },
+        {
+          "from": "compute",
+          "to": "return"
+        }
       ],
-      "executionPath": ["start", "call", "compute", "return"],
-      "variables": { "self.x": 1, "other.x": 3, "result.x": 4 },
+      "executionPath": [
+        "start",
+        "call",
+        "compute",
+        "return"
+      ],
+      "variables": {
+        "self.x": 1,
+        "other.x": 3,
+        "result.x": 4
+      },
       "speed": "normal"
     },
     {
@@ -81,7 +164,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a class 'Book' with title and pages. Add __str__ returning 'Title (N pages)' and __lt__ comparing by page count."
+        "en": "Create a class 'Book' with title and pages. Add __str__ returning 'Title (N pages)' and __lt__ comparing by page count.",
+        "ta": "'Book' என்ற வகுப்பை உருவாக்கவும், அதில் title மற்றும் pages உள்ளன. __str__ ஐ சேர்க்கவும், இது 'Title (N pages)' ஐ வழங்குகிறது, மற்றும் __lt__ ஐ சேர்க்கவும், இது பக்கங்களின் எண்ணிக்கையை ஒப்பிடுகிறது."
       },
       "expected_output": "Python 101 (300 pages)",
       "hints": [

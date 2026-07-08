@@ -5,7 +5,8 @@
   "module": "functions",
   "order": 4,
   "title": {
-    "en": "Lambda & Functional Tools: The Inline Stamp"
+    "en": "Lambda & Functional Tools: The Inline Stamp",
+    "ta": "லாம்ப்டா & சாதனங்கள்: இன்லைன் ஸ்டாம்ப்"
   },
   "description": {
     "en": "Write anonymous one-liner functions with lambda, and use map/filter for elegant data transformations."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "ds_dicts",
   "story_variants": {
-    "en": "## The Inline Stamp\n\nSometimes you need a **rubber stamp** — a tiny tool used once or twice, not worth naming and storing. Python's `lambda` is exactly that: a tiny, anonymous function.\n\n### Lambda Syntax\n```python\nlambda parameters: expression\n```\n\n### Lambda vs def\n\n| Feature | `def` | `lambda` |\n|---------|-------|----------|\n| Name | has one | anonymous |\n| Lines | many | one |\n| Return | explicit | implicit |\n| Use | general | callbacks, sorting |\n\n### map and filter\n\n- `map(func, iterable)` — apply `func` to every item\n- `filter(func, iterable)` — keep items where `func` returns `True`\n\n> **Best practice:** Use lambda when the function is short and used in-place. For anything complex, write a named `def` — readability wins.\n\n### Common Patterns\n- `sorted(items, key=lambda x: x[1])` — sort by second element\n- `list(map(lambda x: x*2, nums))` — double every number\n- `list(filter(lambda x: x > 0, nums))` — keep positives only"
+    "en": "## The Inline Stamp\n\nSometimes you need a **rubber stamp** — a tiny tool used once or twice, not worth naming and storing. Python's `lambda` is exactly that: a tiny, anonymous function.\n\n### Lambda Syntax\n```python\nlambda parameters: expression\n```\n\n### Lambda vs def\n\n| Feature | `def` | `lambda` |\n|---------|-------|----------|\n| Name | has one | anonymous |\n| Lines | many | one |\n| Return | explicit | implicit |\n| Use | general | callbacks, sorting |\n\n### map and filter\n\n- `map(func, iterable)` — apply `func` to every item\n- `filter(func, iterable)` — keep items where `func` returns `True`\n\n> **Best practice:** Use lambda when the function is short and used in-place. For anything complex, write a named `def` — readability wins.\n\n### Common Patterns\n- `sorted(items, key=lambda x: x[1])` — sort by second element\n- `list(map(lambda x: x*2, nums))` — double every number\n- `list(filter(lambda x: x > 0, nums))` — keep positives only",
+    "ta": "## இன்லைன் ஸ்டாம்ப்\n\nசில நேரங்களில் நீங்கள் ஒரு **ரப்பர் ஸ்டாம்ப்** தேவைப்படும் — ஒரு சிறிய கருவி, ஒருமுறை அல்லது இரண்டு முறை மட்டுமே பயன்படுத்தப்படும், அதற்கு பெயரிடுவதும் சேமிப்பதும் பயனற்றது. Python-ன் `lambda` என்பது கேவலமாக அதுதான்: ஒரு சிறிய, பெயரிடப்படாத செயல்பாடு.\n\n### Lambda சின்டாக்ஸ்\n```python\nlambda parameters: expression\n```\n\n### lambda vs def\n\n| Feature | `def` | `lambda` |\n|---------|-------|----------|\n| Name | has one | anonymous |\n| Lines | many | one |\n| Return | explicit | implicit |\n| Use | general | callbacks, sorting |\n\n### map and filter\n\n- `map(func, iterable)` — apply `func` to every item\n- `filter(func, iterable)` — keep items where `func` returns `True`\n\n> **Best practice:** Use lambda when the function is short and used in-place. For anything complex, write a named `def` — readability wins.\n\n### Common Patterns\n- `sorted(items, key=lambda x: x[1])` — sort by second element\n- `list(map(lambda x: x*2, nums))` — double every number\n- `list(filter(lambda x: x > 0, nums))` — keep positives only"
   },
   "animation_sequence": [
     {
@@ -45,32 +47,179 @@
       "type": "ExecutionVisualizer",
       "code": "double = lambda x: x * 2\nprint(double(5))\nnums = [1, 2, 3, 4]\nsquared = list(map(lambda x: x**2, nums))\nprint(squared)\nevens = list(filter(lambda x: x % 2 == 0, nums))\nprint(evens)",
       "executionSteps": [
-        { "line": 1, "variables": { "double": "lambda x: x * 2" }, "output": "", "description": "Create a lambda function that doubles its input" },
-        { "line": 2, "variables": { "double": "lambda x: x * 2" }, "output": "10", "description": "Call double(5) = 10" },
-        { "line": 3, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4] }, "output": "10", "description": "Create a list of numbers" },
-        { "line": 4, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16] }, "output": "10", "description": "map applies lambda x: x**2 to each item" },
-        { "line": 5, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16] }, "output": "10\n[1, 4, 9, 16]", "description": "Print the squared list" },
-        { "line": 6, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16], "evens": [2, 4] }, "output": "10\n[1, 4, 9, 16]", "description": "filter keeps items where x % 2 == 0" },
-        { "line": 7, "variables": { "double": "lambda x: x * 2", "nums": [1, 2, 3, 4], "squared": [1, 4, 9, 16], "evens": [2, 4] }, "output": "10\n[1, 4, 9, 16]\n[2, 4]", "description": "Print the filtered even numbers" }
+        {
+          "line": 1,
+          "variables": {
+            "double": "lambda x: x * 2"
+          },
+          "output": "",
+          "description": "Create a lambda function that doubles its input"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "double": "lambda x: x * 2"
+          },
+          "output": "10",
+          "description": "Call double(5) = 10"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "double": "lambda x: x * 2",
+            "nums": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "output": "10",
+          "description": "Create a list of numbers"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "double": "lambda x: x * 2",
+            "nums": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "squared": [
+              1,
+              4,
+              9,
+              16
+            ]
+          },
+          "output": "10",
+          "description": "map applies lambda x: x**2 to each item"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "double": "lambda x: x * 2",
+            "nums": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "squared": [
+              1,
+              4,
+              9,
+              16
+            ]
+          },
+          "output": "10\n[1, 4, 9, 16]",
+          "description": "Print the squared list"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "double": "lambda x: x * 2",
+            "nums": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "squared": [
+              1,
+              4,
+              9,
+              16
+            ],
+            "evens": [
+              2,
+              4
+            ]
+          },
+          "output": "10\n[1, 4, 9, 16]",
+          "description": "filter keeps items where x % 2 == 0"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "double": "lambda x: x * 2",
+            "nums": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "squared": [
+              1,
+              4,
+              9,
+              16
+            ],
+            "evens": [
+              2,
+              4
+            ]
+          },
+          "output": "10\n[1, 4, 9, 16]\n[2, 4]",
+          "description": "Print the filtered even numbers"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "Input list [1,2,3,4]", "type": "start" },
-        { "id": "map", "label": "map(lambda x: x**2, nums)", "type": "process" },
-        { "id": "result_map", "label": "[1, 4, 9, 16]", "type": "process" },
-        { "id": "filter", "label": "filter(lambda x: x%2==0, nums)", "type": "process" },
-        { "id": "result_filter", "label": "[2, 4]", "type": "end" }
+        {
+          "id": "start",
+          "label": "Input list [1,2,3,4]",
+          "type": "start"
+        },
+        {
+          "id": "map",
+          "label": "map(lambda x: x**2, nums)",
+          "type": "process"
+        },
+        {
+          "id": "result_map",
+          "label": "[1, 4, 9, 16]",
+          "type": "process"
+        },
+        {
+          "id": "filter",
+          "label": "filter(lambda x: x%2==0, nums)",
+          "type": "process"
+        },
+        {
+          "id": "result_filter",
+          "label": "[2, 4]",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "map" },
-        { "from": "map", "to": "result_map" },
-        { "from": "start", "to": "filter" },
-        { "from": "filter", "to": "result_filter" }
+        {
+          "from": "start",
+          "to": "map"
+        },
+        {
+          "from": "map",
+          "to": "result_map"
+        },
+        {
+          "from": "start",
+          "to": "filter"
+        },
+        {
+          "from": "filter",
+          "to": "result_filter"
+        }
       ],
-      "executionPath": ["start", "map", "result_map"],
+      "executionPath": [
+        "start",
+        "map",
+        "result_map"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -84,7 +233,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Use map and a lambda to convert a list of temperatures in Celsius [0, 20, 37, 100] to Fahrenheit (F = C*9/5 + 32)."
+        "en": "Use map and a lambda to convert a list of temperatures in Celsius [0, 20, 37, 100] to Fahrenheit (F = C*9/5 + 32).",
+        "ta": "வெப்பநிலைகளின் பட்டியலை பாரமீட்டரில் மாற்ற, map மற்றும் ஒரு lambda செயல்பாட்டைப் பயன்படுத்தவும்: [0, 20, 37, 100]"
       },
       "expected_output": "[32.0, 68.0, 98.6, 212.0]",
       "hints": [
