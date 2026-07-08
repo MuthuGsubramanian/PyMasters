@@ -738,4 +738,7 @@ def build_system_prompt(
         + RESPONSE_FORMAT
     )
 
-    return full_prompt
+    # VAATHIYAAR_IDENTITY's example phrases address the student as a literal
+    # {name} token; without this substitution the model echoes it verbatim
+    # ("Good morning, {name}!" — seen live 2026-07-08).
+    return full_prompt.replace("{name}", display_name)
