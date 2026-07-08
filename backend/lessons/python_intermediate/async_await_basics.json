@@ -410,7 +410,8 @@
         "en": "Create 3 async functions that simulate downloading files (1s, 2s, 3s delays). Use asyncio.gather to run them concurrently. Verify total time is ~3s not 6s.",
         "ta": "3 async functions உருவாக்குங்கள் — files download simulate (1s, 2s, 3s delays). asyncio.gather பயன்படுத்தி ஒரே நேரத்தில் இயக்குங்கள். மொத்த நேரம் ~3s என சரிபார்க்கவும்.",
         "te": "మూడు async ఫంక్షన్లను సృష్టించండి వాటిని ఫైల్స్‌ను డౌన్‌లోడ్ చేయడాన్ని సిమ్యులేట్ చేయడానికి (1s, 2s, 3s విరామాలు). asyncio.gather ను ఉపయోగించి వాటిని కాంకరెంట్‌గా రన్ చేయండి. మొత్తం సమయం ~3s అని నిర్ధారించండి, 6s కాదు.",
-        "ml": "ഫയലുകൾ ഡൌൺലോഡ് ചെയ്യുന്നതിനുള്ള സിമുലേഷൻ നടത്തുന്ന 3 അസൈൻസി ഫംഗ്ഷനുകൾ സൃഷ്ടിക്കുക (1s, 2s, 3s കാലതാമസം). അവയെ ഒരേസമയം പ്രവർത്തിപ്പിക്കുന്നതിന് asyncio.gather ഉപയോഗിക്കുക. ആകെ സമയം ~3s അല്ല 6s എന്ന് പരിശോധിക്കുക."
+        "ml": "ഫയലുകൾ ഡൌൺലോഡ് ചെയ്യുന്നതിനുള്ള സിമുലേഷൻ നടത്തുന്ന 3 അസൈൻസി ഫംഗ്ഷനുകൾ സൃഷ്ടിക്കുക (1s, 2s, 3s കാലതാമസം). അവയെ ഒരേസമയം പ്രവർത്തിപ്പിക്കുന്നതിന് asyncio.gather ഉപയോഗിക്കുക. ആകെ സമയം ~3s അല്ല 6s എന്ന് പരിശോധിക്കുക.",
+        "fr": "Créer 3 fonctions async qui simulent le téléchargement de fichiers (1s, 2s, 3s retard). Utilisez asyncio.gather pour les exécuter simultanément. Vérifiez que le temps total est ~3s pas 6s."
       },
       "starter_code": "import asyncio\nimport time\n\nasync def download(name, seconds):\n    print(f'Downloading {name}...')\n    await asyncio.sleep(seconds)\n    print(f'{name} done!')\n    return name\n\nasync def main():\n    start = time.time()\n    results = await asyncio.gather(\n        download('file1.txt', 1),\n        download('file2.txt', 2),\n        download('file3.txt', 3)\n    )\n    print(f'All done in {time.time()-start:.1f}s: {results}')\n\nasyncio.run(main())",
       "expected_output": "Downloading file1.txt...\nDownloading file2.txt...\nDownloading file3.txt...\nfile1.txt done!\nfile2.txt done!\nfile3.txt done!\nAll done in 3.0s: ['file1.txt', 'file2.txt', 'file3.txt']",
