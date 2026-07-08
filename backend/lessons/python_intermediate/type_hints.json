@@ -253,7 +253,8 @@
         "ml": "രണ്ട് ഡിക്റ്റ്[str, int] പാരാമീറ്ററുകൾ എടുക്കുകയും അവയുടെ മൂല്യങ്ങൾ സംയോജിപ്പിക്കുന്ന ഒരു ലയിപ്പിച്ച ഡിക്റ്റ്[str, int] തിരികെ നൽകുകയും ചെയ്യുന്ന ഒരു ഫംഗ്ഷൻ merge_dicts എഴുതുക. എല്ലാം ടൈപ്പ് സൂചനകൾ ചേർക്കുക.",
         "fr": "Écrivez une fonction merge_dicts qui prend deux paramètres dict[str, int] et renvoie un dict[str, int] fusionné où les touches qui se chevauchent résument leurs valeurs.",
         "es": "Escriba una función merge_dicts que toma dos parámetros dict[str, int] y devuelve un dict[str, int] fusionado donde las claves superpuestas suman sus valores. Agregue sugerencias de tipo a todo.",
-        "it": "Scrivere una funzione merge_dicts che prende due parametri dict[str, int] e restituisce un dict[str, int] fuso dove le chiavi sovrapposte sommano i loro valori. Aggiungere suggerimenti di tipo a tutto."
+        "it": "Scrivere una funzione merge_dicts che prende due parametri dict[str, int] e restituisce un dict[str, int] fuso dove le chiavi sovrapposte sommano i loro valori. Aggiungere suggerimenti di tipo a tutto.",
+        "ko": "두 개의 dict[str, int] 매개 변수를 취하고, 겹치는 키가 값을 합하는 융합된 dict[str, int]을 반환하는 merge_dicts 함수를 작성하십시오. 모든 것에 타입 지시를 추가하십시오."
       },
       "starter_code": "def merge_dicts(a: dict[str, int], b: dict[str, int]) -> dict[str, int]:\n    result = a.copy()\n    for key, value in b.items():\n        result[key] = result.get(key, 0) + value\n    return result\n\nx: dict[str, int] = {'a': 1, 'b': 2}\ny: dict[str, int] = {'b': 3, 'c': 4}\nprint(merge_dicts(x, y))",
       "expected_output": "{'a': 1, 'b': 5, 'c': 4}",

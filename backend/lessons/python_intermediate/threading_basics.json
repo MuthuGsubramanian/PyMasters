@@ -398,7 +398,8 @@
         "ml": "ഒരു ലോക്ക് ഉപയോഗിച്ച് ഓരോ പങ്കിട്ട കൌണ്ടറിനും 100000 തവണ വർദ്ധിപ്പിക്കുന്ന 3 ത്രെഡുകൾ സൃഷ്ടിക്കുക. അവസാന കണക്ക് കൃത്യമായി 300000 ആണെന്ന് പരിശോധിക്കുക (റസ് അവസ്ഥയില്ല).",
         "fr": "Créer 3 fils qui augmentent chaque compteur partagé 100000 fois en utilisant un verrouillage. Vérifiez que le compte final est exactement 300000 (pas de condition de course).",
         "es": "Crear 3 hilos que cada incremento un contador compartido 100000 veces usando un bloqueo. Verificar el conteo final es exactamente 300000 (sin condición de carrera).",
-        "it": "Crea 3 fili che ogni incremento un contatore condiviso 100000 volte utilizzando un Lock. Verifica il conteggio finale è esattamente 300000 (nessuna condizione di gara)."
+        "it": "Crea 3 fili che ogni incremento un contatore condiviso 100000 volte utilizzando un Lock. Verifica il conteggio finale è esattamente 300000 (nessuna condizione di gara).",
+        "ko": "로크를 사용하여 공유 카운터를 100000 번씩 증가시키는 3 개의 스레드를 생성하십시오. 최종 카운트가 정확히 300000 (경기 조건이 없습니다) 인 확인합니다."
       },
       "starter_code": "import threading\n\ncounter = 0\nlock = threading.Lock()\n\ndef increment(n):\n    global counter\n    for _ in range(n):\n        with lock:\n            counter += 1\n\nthreads = [threading.Thread(target=increment, args=(100000,)) for _ in range(3)]\nfor t in threads:\n    t.start()\nfor t in threads:\n    t.join()\n\nprint(f'Final counter: {counter}')",
       "expected_output": "Final counter: 300000",

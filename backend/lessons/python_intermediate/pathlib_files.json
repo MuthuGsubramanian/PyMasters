@@ -274,7 +274,8 @@
         "ml": "ഒരു ഡയറക്ടറി 'നോട്ടുകൾ' സൃഷ്ടിക്കുക, അതിൽ 3 ടെക്സ്റ്റ് ഫയലുകൾ എഴുതുക ('note1.txt', 'note2.txt', 'note3.txt'), തുടർന്ന് എല്ലാ .txt ഫയലുകളും കണ്ടെത്താനും അവയുടെ ഉള്ളടക്കം അച്ചടിക്കാനും glob ഉപയോഗിക്കുക.",
         "fr": "Créer un répertoire de \"notes\", y écrire 3 fichiers texte (\"note1.txt\", \"note2.txt\", \"note3.txt\"), puis utiliser glob pour trouver tous les fichiers .txt et imprimer leur contenu.",
         "es": "Crea un directorio de notas, escribe 3 archivos de texto en él (\"note1.txt\", \"note2.txt\", \"note3.txt\"), luego utiliza glob para encontrar todos los archivos .txt e imprimir su contenido.",
-        "it": "Crea una directory di \"noti\", scrivi 3 file di testo in essa (\"note1.txt\", \"note2.txt\", \"note3.txt\"), quindi usa glob per trovare tutti i file .txt e stamparne il contenuto."
+        "it": "Crea una directory di \"noti\", scrivi 3 file di testo in essa (\"note1.txt\", \"note2.txt\", \"note3.txt\"), quindi usa glob per trovare tutti i file .txt e stamparne il contenuto.",
+        "ko": "'노트' 디렉토리를 만들고, 3개의 텍스트 파일을 입력 (\"note1.txt\", 'note2.txt', 'note3.txt'), 그리고 모든 .txt 파일을 찾아서 그 내용을 인쇄하기 위해 glob을 사용하십시오."
       },
       "starter_code": "from pathlib import Path\n\nnotes_dir = Path('notes')\nnotes_dir.mkdir(exist_ok=True)\n\nfor i in range(1, 4):\n    (notes_dir / f'note{i}.txt').write_text(f'This is note {i}')\n\nfor f in notes_dir.glob('*.txt'):\n    print(f'{f.name}: {f.read_text()}')",
       "expected_output": "note1.txt: This is note 1\nnote2.txt: This is note 2\nnote3.txt: This is note 3",
