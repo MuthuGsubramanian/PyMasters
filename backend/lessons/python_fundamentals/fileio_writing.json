@@ -5,7 +5,8 @@
   "module": "file_io",
   "order": 2,
   "title": {
-    "en": "Writing Files: The Printing Press"
+    "en": "Writing Files: The Printing Press",
+    "ta": "கோப்புகளை எழுதுதல்: அச்சகம்"
   },
   "description": {
     "en": "Master writing, appending, and working with CSV and JSON files — persisting data beyond your program's lifetime."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "errors_handling",
   "story_variants": {
-    "en": "## The Printing Press\n\nA printing press stamps words onto paper — permanently. Once printed, the page persists long after the press stops running.\n\nWriting to a file works the same way: data **persists** after your program ends.\n\n### Write Modes\n\n| Mode | Behaviour |\n|------|----------|\n| `'w'` | write (overwrites if exists) |\n| `'a'` | append (adds to end) |\n| `'x'` | exclusive create (fails if exists) |\n| `'wb'` | write binary |\n\n### Writing Methods\n- `f.write('text')` — write a string (no automatic newline!)\n- `f.writelines(list)` — write list of strings\n\n### CSV and JSON\n```python\nimport csv\nimport json\n```\n\n> **Warning:** `'w'` mode **destroys** existing file content. Use `'a'` to add to a file without erasing it.\n\n### CSV Writing Pattern\n```python\nwith open('data.csv', 'w', newline='') as f:\n    writer = csv.writer(f)\n    writer.writerow(['name', 'age'])\n    writer.writerows(data)\n```"
+    "en": "## The Printing Press\n\nA printing press stamps words onto paper — permanently. Once printed, the page persists long after the press stops running.\n\nWriting to a file works the same way: data **persists** after your program ends.\n\n### Write Modes\n\n| Mode | Behaviour |\n|------|----------|\n| `'w'` | write (overwrites if exists) |\n| `'a'` | append (adds to end) |\n| `'x'` | exclusive create (fails if exists) |\n| `'wb'` | write binary |\n\n### Writing Methods\n- `f.write('text')` — write a string (no automatic newline!)\n- `f.writelines(list)` — write list of strings\n\n### CSV and JSON\n```python\nimport csv\nimport json\n```\n\n> **Warning:** `'w'` mode **destroys** existing file content. Use `'a'` to add to a file without erasing it.\n\n### CSV Writing Pattern\n```python\nwith open('data.csv', 'w', newline='') as f:\n    writer = csv.writer(f)\n    writer.writerow(['name', 'age'])\n    writer.writerows(data)\n```",
+    "ta": "## அச்சுப்பொறி\n\nஒரு அச்சுப்பொறி எழுத்துக்களை ஓலையில் அச்சிடுகிறது — நிரந்தரமாக. அச்சிட்ட பிறகு, அச்சுப்பொறி இயங்குவதை நிறுத்திய பிறகும் பக்கம் நீண்ட நேரம் நிலைத்திருக்கும்.\n\nகோப்பில் எழுதுவது அதே விதமாக உள்ளது: உங்கள் நிரல் முடிந்த பிறகு தரவு **நிலைத்திருக்கும்**.\n\n### எழுதும் முறைகள்\n\n| Mode | Behaviour |\n|------|----------|\n| `'w'` | write (overwrites if exists) |\n| `'a'` | append (adds to end) |\n| `'x'` | exclusive create (fails if exists) |\n| `'wb'` | write binary |\n\n### எழுதும் முறைகள்\n- `f.write('text')` — write a string (no automatic newline!)\n- `f.writelines(list)` — write list of strings\n\n### CSV and JSON\n```python\nimport csv\nimport json\n```\n\n> **Warning:** `'w'` mode **destroys** existing file content. Use `'a'` to add to a file without erasing it.\n\n### CSV Writing Pattern\n```python\nwith open('data.csv', 'w', newline='') as f:\n    writer = csv.writer(f)\n    writer.writerow(['name', 'age'])\n    writer.writerows(data)\n```"
   },
   "animation_sequence": [
     {
@@ -40,14 +42,74 @@
       "type": "ExecutionVisualizer",
       "code": "with open('output.txt', 'w') as f:\n    f.write('Hello!\\n')\n    f.write('World!\\n')\nimport json\ndata = {'name': 'Alice', 'score': 95}\nwith open('data.json', 'w') as f:\n    json.dump(data, f)\nprint('Files written!')",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Open output.txt in write mode (creates or overwrites)" },
-        { "line": 2, "variables": {}, "output": "", "description": "Write 'Hello!' followed by a newline to the file" },
-        { "line": 3, "variables": {}, "output": "", "description": "Write 'World!' followed by a newline to the file" },
-        { "line": 4, "variables": {}, "output": "", "description": "Import the json module for JSON file handling" },
-        { "line": 5, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "", "description": "Create a dict to serialize" },
-        { "line": 6, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "", "description": "Open data.json in write mode" },
-        { "line": 7, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "", "description": "json.dump() writes the dict as JSON to the file" },
-        { "line": 8, "variables": { "data": {"name": "Alice", "score": 95} }, "output": "Files written!", "description": "Confirm both files were written successfully" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Open output.txt in write mode (creates or overwrites)"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "description": "Write 'Hello!' followed by a newline to the file"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Write 'World!' followed by a newline to the file"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "",
+          "description": "Import the json module for JSON file handling"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "data": {
+              "name": "Alice",
+              "score": 95
+            }
+          },
+          "output": "",
+          "description": "Create a dict to serialize"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "data": {
+              "name": "Alice",
+              "score": 95
+            }
+          },
+          "output": "",
+          "description": "Open data.json in write mode"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "data": {
+              "name": "Alice",
+              "score": 95
+            }
+          },
+          "output": "",
+          "description": "json.dump() writes the dict as JSON to the file"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "data": {
+              "name": "Alice",
+              "score": 95
+            }
+          },
+          "output": "Files written!",
+          "description": "Confirm both files were written successfully"
+        }
       ],
       "speed": "normal"
     },
@@ -61,7 +123,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a list of 3 fruits to a file 'fruits.txt', one per line, then read it back and verify."
+        "en": "Write a list of 3 fruits to a file 'fruits.txt', one per line, then read it back and verify.",
+        "ta": "ஒரு கோப்பில் 'fruits.txt' என்ற பெயரில் 3 பழங்களை பட்டியலிட்டு எழுதவும், ஒரு வரிக்கு ஒரு பழம், பின்னர் அதை மீண்டும் படிக்கவும் மற்றும் சரிபார்க்கவும்."
       },
       "expected_output": "['apple\\n', 'banana\\n', 'cherry\\n']",
       "hints": [

@@ -7,6 +7,7 @@ Prefix: /api/classroom
 import json
 import os
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -113,17 +114,48 @@ def _get_db_path() -> str:
     return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
+_translation_inflight = set()
+_translation_lock = threading.Lock()
+
+
+def _warm_translation(db_path: str, lesson_id: str, lang: str, field: str,
+                      en_text: str, key) -> None:
+    """Background worker: translate + cache one lesson field, then clear the
+    in-flight marker. Runs off the request path so lesson loads never block on
+    the (slow) translation provider."""
+    try:
+        from vaathiyaar.translator import translate_and_cache
+        translate_and_cache(db_path, lesson_id, lang, field, en_text)
+    except Exception:
+        pass
+    finally:
+        with _translation_lock:
+            _translation_inflight.discard(key)
+
+
 def _ondemand_translate(db_path: str, lesson_id: str, lang: str, field: str, en_text: str):
-    """Cache-first on-demand translation of a lesson field. Returns the
-    translated text or None (caller falls back to English). Guarded by
-    LESSON_TRANSLATION_ONDEMAND (default on) so the whole feature can be killed
-    via env without a deploy if provider latency/cost becomes a problem. Never
-    raises — lesson loading must not depend on the translation provider."""
+    """Serve a cached translation if present; otherwise return None (caller falls
+    back to English) and warm the cache in the BACKGROUND so the next view of
+    this (lesson, lang, field) is translated. Lesson loads therefore never wait
+    on the LLM. Guarded by LESSON_TRANSLATION_ONDEMAND (default on) so the whole
+    feature can be killed via env without a deploy. Never raises."""
     if os.getenv("LESSON_TRANSLATION_ONDEMAND", "1") != "1":
         return None
     try:
-        from vaathiyaar.translator import translate_and_cache
-        return translate_and_cache(db_path, lesson_id, lang, field, en_text)
+        from vaathiyaar.translator import get_cached_translation
+        cached = get_cached_translation(db_path, lesson_id, lang, field, en_text)
+        if cached is not None:
+            return cached
+        key = (lesson_id, lang, field)
+        with _translation_lock:
+            if key not in _translation_inflight:
+                _translation_inflight.add(key)
+                threading.Thread(
+                    target=_warm_translation,
+                    args=(db_path, lesson_id, lang, field, en_text, key),
+                    daemon=True,
+                ).start()
+        return None
     except Exception:
         return None
 

@@ -5,7 +5,8 @@
   "module": "functions",
   "order": 1,
   "title": {
-    "en": "Functions: The Recipe Card"
+    "en": "Functions: The Recipe Card",
+    "ta": "செயல்பாடுகள்: வகைப்படுத்தும் அட்டை"
   },
   "description": {
     "en": "Learn to define and call functions — reusable blocks of code that take inputs and return outputs, like a recipe card in a kitchen."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "functions_scope",
   "story_variants": {
-    "en": "## The Recipe Card\n\nA great chef doesn't re-read instructions every time they make a dish — they write a **recipe card** once and follow it whenever needed.\n\nIn Python, a **function** is your recipe card: write it once, call it many times.\n\n### Anatomy of a Function\n\n| Part | Role | Example |\n|------|------|---------|\n| `def` | declare function | `def greet():` |\n| name | identifier | `greet` |\n| parameters | inputs | `(name, age)` |\n| body | instructions | indented block |\n| `return` | output | `return result` |\n\n> **Key rule:** Everything inside the function is indented. The function runs only when you *call* it — `greet('Alice')`.\n\n### Return vs Print\n- `return` sends a value **back** to the caller — you can store it\n- `print` just displays — the value disappears after\n\n### Benefits of Functions\n- **DRY** — Don't Repeat Yourself\n- Easier to test individual pieces\n- Names make code self-documenting\n- Swap out implementations without changing callers"
+    "en": "## The Recipe Card\n\nA great chef doesn't re-read instructions every time they make a dish — they write a **recipe card** once and follow it whenever needed.\n\nIn Python, a **function** is your recipe card: write it once, call it many times.\n\n### Anatomy of a Function\n\n| Part | Role | Example |\n|------|------|---------|\n| `def` | declare function | `def greet():` |\n| name | identifier | `greet` |\n| parameters | inputs | `(name, age)` |\n| body | instructions | indented block |\n| `return` | output | `return result` |\n\n> **Key rule:** Everything inside the function is indented. The function runs only when you *call* it — `greet('Alice')`.\n\n### Return vs Print\n- `return` sends a value **back** to the caller — you can store it\n- `print` just displays — the value disappears after\n\n### Benefits of Functions\n- **DRY** — Don't Repeat Yourself\n- Easier to test individual pieces\n- Names make code self-documenting\n- Swap out implementations without changing callers",
+    "ta": "## ரெசிபி கார்டு\n\nஒரு சிறந்த சமையல்காரர் ஒரு உணவைத் தயாரிக்கும்போது ஒவ்வொரு முறையும் வழிமுறைகளை மீண்டும் படிக்க வேண்டாம் — அவர்கள் ஒரு முறை **ரெசிபி கார்டை** எழுதி, அதை எப்போது வேண்டுமானாலும் பின்பற்றுகிறார்கள்.\n\nPython-ல், ஒரு **செயல்பாடு (function)** உங்கள் ரெசிபி கார்டு: அதை ஒருமுறை எழுதுங்கள், பல முறை அழைக்கலாம்.\n\n### செயல்பாட்டின் உடற்கூறுகள்\n\n| பகுதி | பங்கு | எடுத்துக்காட்டு |\n|------|------|---------|\n| `def` | செயல்பாட்டை அறிவிக்க | `def greet():` |\n| name | அடையாளங்காட்டி | `greet` |\n| parameters | உள்ளீடுகள் | `(name, age)` |\n| body | வழிமுறைகள் | இடைவெளி தொகுதி |\n| `return` | வெளியீடு | `return result` |\n\n> **முக்கிய விதி:** செயல்பாட்டிற்குள் உள்ள எல்லாமே இடைவெளி கொண்டிருக்க வேண்டும். செயல்பாடு நீங்கள் அதை *அழைக்கும்போது மட்டுமே இயங்கும்* — `greet('Alice')`.\n\n### Return vs Print\n- `return` ஒரு மதிப்பை **பின்னர்** அழைப்பவருக்கு அனுப்புகிறது — அதை சேமிக்கலாம்\n- `print` வெறும் காட்டுகிறது — மதிப்பு பிறகு மறைந்துவிடும்\n\n### செயல்பாடுகளின் நன்மைகள்\n- **DRY** — Don't Repeat Yourself (தன்னை மீண்டும் செய்ய வேண்டாம்)\n- தனிப்பட்ட பகுதிகளை சோதிக்க எளிதாக உள்ளது\n- பெயர்கள் குறியீட்டை தானாக ஆவணப்படுத்துகின்றன\n- அழைப்பவர்களை மாற்றாமல் செயல்பாடுகளை மாற்றலாம்"
   },
   "animation_sequence": [
     {
@@ -33,44 +35,193 @@
       "type": "ExecutionVisualizer",
       "code": "def greet(name):\n    message = f'Hello, {name}!'\n    return message\n\nresult = greet('Alice')\nprint(result)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define function 'greet' — stored in memory, not executed yet" },
-        { "line": 5, "variables": {}, "output": "", "description": "Call greet('Alice') — jump into the function" },
-        { "line": 1, "variables": { "name": "Alice" }, "output": "", "description": "Enter function: parameter name = 'Alice'" },
-        { "line": 2, "variables": { "name": "Alice", "message": "Hello, Alice!" }, "output": "", "description": "Create message using f-string: 'Hello, Alice!'" },
-        { "line": 3, "variables": { "name": "Alice", "message": "Hello, Alice!" }, "output": "", "description": "Return 'Hello, Alice!' back to the caller" },
-        { "line": 5, "variables": { "result": "Hello, Alice!" }, "output": "", "description": "Store returned value in result" },
-        { "line": 6, "variables": { "result": "Hello, Alice!" }, "output": "Hello, Alice!", "description": "Print result: Hello, Alice!" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define function 'greet' — stored in memory, not executed yet"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "description": "Call greet('Alice') — jump into the function"
+        },
+        {
+          "line": 1,
+          "variables": {
+            "name": "Alice"
+          },
+          "output": "",
+          "description": "Enter function: parameter name = 'Alice'"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "name": "Alice",
+            "message": "Hello, Alice!"
+          },
+          "output": "",
+          "description": "Create message using f-string: 'Hello, Alice!'"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "name": "Alice",
+            "message": "Hello, Alice!"
+          },
+          "output": "",
+          "description": "Return 'Hello, Alice!' back to the caller"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "result": "Hello, Alice!"
+          },
+          "output": "",
+          "description": "Store returned value in result"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "result": "Hello, Alice!"
+          },
+          "output": "Hello, Alice!",
+          "description": "Print result: Hello, Alice!"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "Start", "type": "start" },
-        { "id": "define", "label": "def greet(name)", "type": "process" },
-        { "id": "call", "label": "greet('Alice')", "type": "process" },
-        { "id": "enter", "label": "Enter function", "type": "process" },
-        { "id": "body", "label": "message = f'Hello, {name}!'", "type": "process" },
-        { "id": "return", "label": "return message", "type": "process" },
-        { "id": "resume", "label": "result = 'Hello, Alice!'", "type": "process" },
-        { "id": "print", "label": "print(result)", "type": "io" },
-        { "id": "end", "label": "End", "type": "end" }
+        {
+          "id": "start",
+          "label": "Start",
+          "type": "start"
+        },
+        {
+          "id": "define",
+          "label": "def greet(name)",
+          "type": "process"
+        },
+        {
+          "id": "call",
+          "label": "greet('Alice')",
+          "type": "process"
+        },
+        {
+          "id": "enter",
+          "label": "Enter function",
+          "type": "process"
+        },
+        {
+          "id": "body",
+          "label": "message = f'Hello, {name}!'",
+          "type": "process"
+        },
+        {
+          "id": "return",
+          "label": "return message",
+          "type": "process"
+        },
+        {
+          "id": "resume",
+          "label": "result = 'Hello, Alice!'",
+          "type": "process"
+        },
+        {
+          "id": "print",
+          "label": "print(result)",
+          "type": "io"
+        },
+        {
+          "id": "end",
+          "label": "End",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "define" },
-        { "from": "define", "to": "call" },
-        { "from": "call", "to": "enter", "label": "jump in" },
-        { "from": "enter", "to": "body" },
-        { "from": "body", "to": "return" },
-        { "from": "return", "to": "resume", "label": "return value" },
-        { "from": "resume", "to": "print" },
-        { "from": "print", "to": "end" }
+        {
+          "from": "start",
+          "to": "define"
+        },
+        {
+          "from": "define",
+          "to": "call"
+        },
+        {
+          "from": "call",
+          "to": "enter",
+          "label": "jump in"
+        },
+        {
+          "from": "enter",
+          "to": "body"
+        },
+        {
+          "from": "body",
+          "to": "return"
+        },
+        {
+          "from": "return",
+          "to": "resume",
+          "label": "return value"
+        },
+        {
+          "from": "resume",
+          "to": "print"
+        },
+        {
+          "from": "print",
+          "to": "end"
+        }
       ],
-      "executionPath": ["start", "define", "call", "enter", "body", "return", "resume", "print", "end"],
+      "executionPath": [
+        "start",
+        "define",
+        "call",
+        "enter",
+        "body",
+        "return",
+        "resume",
+        "print",
+        "end"
+      ],
       "variables": {
-        "name": [null, null, null, "Alice", "Alice", "Alice", null, null, null],
-        "message": [null, null, null, null, "Hello, Alice!", "Hello, Alice!", null, null, null],
-        "result": [null, null, null, null, null, null, "Hello, Alice!", "Hello, Alice!", "Hello, Alice!"]
+        "name": [
+          null,
+          null,
+          null,
+          "Alice",
+          "Alice",
+          "Alice",
+          null,
+          null,
+          null
+        ],
+        "message": [
+          null,
+          null,
+          null,
+          null,
+          "Hello, Alice!",
+          "Hello, Alice!",
+          null,
+          null,
+          null
+        ],
+        "result": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "Hello, Alice!",
+          "Hello, Alice!",
+          "Hello, Alice!"
+        ]
       },
       "speed": "normal"
     },
@@ -112,7 +263,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a function called 'square' that takes a number and returns its square."
+        "en": "Write a function called 'square' that takes a number and returns its square.",
+        "ta": "'சதுர' என்ற செயல்பாட்டை எழுதுங்கள், இது ஒரு எண்ணை எடுத்து, அதன் சதுரத்தைத் திரும்பப் பெறுகிறது."
       },
       "expected_output": "25",
       "hints": [

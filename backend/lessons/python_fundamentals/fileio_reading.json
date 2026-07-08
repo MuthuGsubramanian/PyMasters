@@ -5,7 +5,8 @@
   "module": "file_io",
   "order": 1,
   "title": {
-    "en": "Reading Files: The Library Archive"
+    "en": "Reading Files: The Library Archive",
+    "ta": "கோப்புகளை வாசிப்பது: நூலகக் காப்பகம்"
   },
   "description": {
     "en": "Learn to open and read files in Python using open(), read modes, and the safe 'with' statement."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "fileio_writing",
   "story_variants": {
-    "en": "## The Library Archive\n\nA librarian opens a book, reads what they need, then **closes** the book and puts it back. Leaving books open everywhere causes chaos.\n\nPython file I/O follows the same discipline — always close what you open. The `with` statement does this automatically.\n\n### Opening Files\n```python\nf = open('filename.txt', 'r')   # old way — must close manually\nf.close()\n\nwith open('filename.txt', 'r') as f:  # better — auto-close\n    content = f.read()\n```\n\n### Read Modes\n\n| Mode | Meaning |\n|------|---------|\n| `'r'` | read (default) |\n| `'rb'` | read binary |\n| `'r+'` | read + write |\n\n### Reading Methods\n\n| Method | Returns |\n|--------|---------|\n| `f.read()` | entire file as string |\n| `f.readline()` | one line |\n| `f.readlines()` | list of all lines |\n| `for line in f:` | iterate line by line |\n\n> **Best practice:** Always use `with open(...)` — it guarantees the file is closed even if an exception occurs."
+    "en": "## The Library Archive\n\nA librarian opens a book, reads what they need, then **closes** the book and puts it back. Leaving books open everywhere causes chaos.\n\nPython file I/O follows the same discipline — always close what you open. The `with` statement does this automatically.\n\n### Opening Files\n```python\nf = open('filename.txt', 'r')   # old way — must close manually\nf.close()\n\nwith open('filename.txt', 'r') as f:  # better — auto-close\n    content = f.read()\n```\n\n### Read Modes\n\n| Mode | Meaning |\n|------|---------|\n| `'r'` | read (default) |\n| `'rb'` | read binary |\n| `'r+'` | read + write |\n\n### Reading Methods\n\n| Method | Returns |\n|--------|---------|\n| `f.read()` | entire file as string |\n| `f.readline()` | one line |\n| `f.readlines()` | list of all lines |\n| `for line in f:` | iterate line by line |\n\n> **Best practice:** Always use `with open(...)` — it guarantees the file is closed even if an exception occurs.",
+    "ta": "## நூலகக் காப்பகம்\n\nஒரு நூலகர் ஒரு புத்தகத்தைத் திறக்கிறார், அவர் தேவையானதைப் படிக்கிறார், பின்னர் புத்தகத்தை **மூடுகிறார்** மற்றும் அதை வைக்கிறார். புத்தகங்களை எங்கும் திறந்த நிலையில் விடுவது கசட்டை ஏற்படுத்துகிறது.\n\nPython கோப்பு I/O அதே விதியைப் பின்பற்றுகிறது — எப்போதும் திறந்தவற்றை மூட வேண்டும். `with` அறிகுறி இதைத் தானியக்கமாகச் செய்கிறது.\n\n### கோப்புகளைத் திறக்குதல்\n```python\nf = open('filename.txt', 'r')   # பழைய வழி — கைமுறையாக மூட வேண்டும்\nf.close()\n\nwith open('filename.txt', 'r') as f:  # நல்லது — தானாக மூடுதல்\n    content = f.read()\n```\n\n### படிப்பு முறைகள்\n\n| முறை | பொருள் |\n|------|---------|\n| `'r'` | படிப்பு (இயல்புநிலை) |\n| `'rb'` | இரும படிப்பு |\n| `'r+'` | படிப்பு + எழுதுதல் |\n\n### படிப்பு முறைகள்\n\n| முறை | திரும்பும் மதிப்பு |\n|--------|---------|\n| `f.read()` | முழுக் கோப்பும் சரமாக |\n| `f.readline()` | ஒரு வரியும் |\n| `f.readlines()` | அனைத்து வரிகளின் பட்டியலும் |\n| `for line in f:` | வரிவரி முறையில் சுழற்று |\n\n> **நல்ல நடைமுறை:** எப்போதும் `with open(...)` ஐப் பயன்படுத்துங்கள் — இது ஒரு விதிவிலக்கு நிகழ்ந்தாலும் கோப்பு மூடப்பட்டிருப்பதை உறுதி செய்கிறது."
   },
   "animation_sequence": [
     {
@@ -42,13 +44,72 @@
       "type": "ExecutionVisualizer",
       "code": "with open('notes.txt', 'r') as f:\n    content = f.read()\nprint(len(content))\nwith open('notes.txt', 'r') as f:\n    lines = f.readlines()\nprint(len(lines))\nprint(lines[0].strip())",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Open 'notes.txt' in read mode using with statement" },
-        { "line": 2, "variables": { "content": "Hello\\nWorld\\n" }, "output": "", "description": "Read entire file contents into a string" },
-        { "line": 3, "variables": { "content": "Hello\\nWorld\\n" }, "output": "12", "description": "Print the length of the file contents" },
-        { "line": 4, "variables": { "content": "Hello\\nWorld\\n" }, "output": "12", "description": "Open the file again for line-by-line reading" },
-        { "line": 5, "variables": { "content": "Hello\\nWorld\\n", "lines": ["Hello\\n", "World\\n"] }, "output": "12", "description": "readlines() returns a list of lines" },
-        { "line": 6, "variables": { "content": "Hello\\nWorld\\n", "lines": ["Hello\\n", "World\\n"] }, "output": "12\n2", "description": "Print number of lines in the file" },
-        { "line": 7, "variables": { "content": "Hello\\nWorld\\n", "lines": ["Hello\\n", "World\\n"] }, "output": "12\n2\nHello", "description": "strip() removes trailing newline from first line" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Open 'notes.txt' in read mode using with statement"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "content": "Hello\\nWorld\\n"
+          },
+          "output": "",
+          "description": "Read entire file contents into a string"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "content": "Hello\\nWorld\\n"
+          },
+          "output": "12",
+          "description": "Print the length of the file contents"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "content": "Hello\\nWorld\\n"
+          },
+          "output": "12",
+          "description": "Open the file again for line-by-line reading"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "content": "Hello\\nWorld\\n",
+            "lines": [
+              "Hello\\n",
+              "World\\n"
+            ]
+          },
+          "output": "12",
+          "description": "readlines() returns a list of lines"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "content": "Hello\\nWorld\\n",
+            "lines": [
+              "Hello\\n",
+              "World\\n"
+            ]
+          },
+          "output": "12\n2",
+          "description": "Print number of lines in the file"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "content": "Hello\\nWorld\\n",
+            "lines": [
+              "Hello\\n",
+              "World\\n"
+            ]
+          },
+          "output": "12\n2\nHello",
+          "description": "strip() removes trailing newline from first line"
+        }
       ],
       "speed": "normal"
     },
@@ -62,7 +123,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Using a 'with' block, write code to open 'sample.txt' and read all its lines into a list called 'lines'."
+        "en": "Using a 'with' block, write code to open 'sample.txt' and read all its lines into a list called 'lines'.",
+        "ta": "'with' ப்ளாக்கைப் பயன்படுத்தி, 'sample.txt' ஐத் திறக்கும் வகையில் குறியீட்டை எழுதவும், அதன் அனைத்து வரிகளையும் 'lines' என்ற பட்டியலில் சேர்க்கவும்."
       },
       "expected_output": "list of lines",
       "hints": [

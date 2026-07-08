@@ -5,7 +5,8 @@
   "module": "data_structures",
   "order": 4,
   "title": {
-    "en": "Tuples: The Sealed Envelope"
+    "en": "Tuples: The Sealed Envelope",
+    "ta": "டிப்புல்ஸ்: மூடப்பட்ட சீட்டு"
   },
   "description": {
     "en": "Learn tuples — immutable sequences perfect for fixed data — and how to unpack them elegantly."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "ds_nested",
   "story_variants": {
-    "en": "## The Sealed Envelope\n\nWhen you send a **sealed envelope**, the contents are fixed. You can read the letter inside, but you can't change it without opening a new envelope.\n\nPython **tuples** are sealed envelopes — sequences you can read but never modify.\n\n### List vs Tuple\n\n| Feature | List `[]` | Tuple `()` |\n|---------|-----------|------------|\n| Mutable | Yes | No |\n| Syntax | `[1, 2, 3]` | `(1, 2, 3)` |\n| Use case | changing data | fixed records |\n| As dict key | No | Yes |\n| Speed | slower | faster |\n\n### Tuple Unpacking\n```python\ncoords = (10, 20)\nx, y = coords   # x=10, y=20\n```\n\n> **Power move:** Return multiple values from a function using a tuple, then unpack at the call site.\n\n### Named Tuples\nUse `collections.namedtuple` when you want tuple speed but dict-like readability: `point.x` instead of `point[0]`.\n\n### When to Use Tuples\n- Coordinates, RGB colors, fixed pairs\n- Function return values (multiple outputs)\n- Dictionary keys that are compound\n- When you want to signal data shouldn't change"
+    "en": "## The Sealed Envelope\n\nWhen you send a **sealed envelope**, the contents are fixed. You can read the letter inside, but you can't change it without opening a new envelope.\n\nPython **tuples** are sealed envelopes — sequences you can read but never modify.\n\n### List vs Tuple\n\n| Feature | List `[]` | Tuple `()` |\n|---------|-----------|------------|\n| Mutable | Yes | No |\n| Syntax | `[1, 2, 3]` | `(1, 2, 3)` |\n| Use case | changing data | fixed records |\n| As dict key | No | Yes |\n| Speed | slower | faster |\n\n### Tuple Unpacking\n```python\ncoords = (10, 20)\nx, y = coords   # x=10, y=20\n```\n\n> **Power move:** Return multiple values from a function using a tuple, then unpack at the call site.\n\n### Named Tuples\nUse `collections.namedtuple` when you want tuple speed but dict-like readability: `point.x` instead of `point[0]`.\n\n### When to Use Tuples\n- Coordinates, RGB colors, fixed pairs\n- Function return values (multiple outputs)\n- Dictionary keys that are compound\n- When you want to signal data shouldn't change",
+    "ta": "## மூடப்பட்ட சுவடித்தது\n\nநீங்கள் ஒரு **மூடப்பட்ட சுவடித்ததை** (sealed envelope) அனுப்பும்போது, உள்ளடக்கம் நிலையானது. நீங்கள் அதில் உள்ள கடிதத்தைப் படிக்கலாம், ஆனால் புதிய சுவடித்ததைத் திறந்தால் அதை மாற்ற முடியாது.\n\nPython **tuples** என்பவை மூடப்பட்ட சுவடித்ததுகள் — நீங்கள் படிக்கக்கூடிய ஆனால் எப்போதும் மாற்ற முடியாத வரிசைகள்.\n\n### List vs Tuple\n\n| Feature | List `[]` | Tuple `()` |\n|---------|-----------|------------|\n| Mutable | Yes | No |\n| Syntax | `[1, 2, 3]` | `(1, 2, 3)` |\n| Use case | changing data | fixed records |\n| As dict key | No | Yes |\n| Speed | slower | faster |\n\n### Tuple Unpacking\n```python\ncoords = (10, 20)\nx, y = coords   # x=10, y=20\n```\n\n> **Power move:** Return multiple values from a function using a tuple, then unpack at the call site.\n\n### Named Tuples\nUse `collections.namedtuple` when you want tuple speed but dict-like readability: `point.x` instead of `point[0]`.\n\n### When to Use Tuples\n- Coordinates, RGB colors, fixed pairs\n- Function return values (multiple outputs)\n- Dictionary keys that are compound\n- When you want to signal data shouldn't change"
   },
   "animation_sequence": [
     {
@@ -43,13 +45,76 @@
       "type": "ExecutionVisualizer",
       "code": "point = (3, 7)\nprint(point[0])\nx, y = point\nprint(f'x={x}, y={y}')\ndef min_max(nums):\n    return min(nums), max(nums)\nlo, hi = min_max([5, 1, 8, 3])\nprint(lo, hi)",
       "executionSteps": [
-        { "line": 1, "variables": { "point": "(3, 7)" }, "output": "", "description": "Create a tuple with two values" },
-        { "line": 2, "variables": { "point": "(3, 7)" }, "output": "3", "description": "Access first element at index 0" },
-        { "line": 3, "variables": { "point": "(3, 7)", "x": 3, "y": 7 }, "output": "3", "description": "Unpack tuple into x and y" },
-        { "line": 4, "variables": { "point": "(3, 7)", "x": 3, "y": 7 }, "output": "3\nx=3, y=7", "description": "Print unpacked values using f-string" },
-        { "line": 5, "variables": { "point": "(3, 7)", "x": 3, "y": 7 }, "output": "3\nx=3, y=7", "description": "Define function that returns a tuple" },
-        { "line": 7, "variables": { "point": "(3, 7)", "x": 3, "y": 7, "lo": 1, "hi": 8 }, "output": "3\nx=3, y=7", "description": "Call min_max and unpack tuple result into lo and hi" },
-        { "line": 8, "variables": { "point": "(3, 7)", "x": 3, "y": 7, "lo": 1, "hi": 8 }, "output": "3\nx=3, y=7\n1 8", "description": "Print lo=1 and hi=8" }
+        {
+          "line": 1,
+          "variables": {
+            "point": "(3, 7)"
+          },
+          "output": "",
+          "description": "Create a tuple with two values"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "point": "(3, 7)"
+          },
+          "output": "3",
+          "description": "Access first element at index 0"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "point": "(3, 7)",
+            "x": 3,
+            "y": 7
+          },
+          "output": "3",
+          "description": "Unpack tuple into x and y"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "point": "(3, 7)",
+            "x": 3,
+            "y": 7
+          },
+          "output": "3\nx=3, y=7",
+          "description": "Print unpacked values using f-string"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "point": "(3, 7)",
+            "x": 3,
+            "y": 7
+          },
+          "output": "3\nx=3, y=7",
+          "description": "Define function that returns a tuple"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "point": "(3, 7)",
+            "x": 3,
+            "y": 7,
+            "lo": 1,
+            "hi": 8
+          },
+          "output": "3\nx=3, y=7",
+          "description": "Call min_max and unpack tuple result into lo and hi"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "point": "(3, 7)",
+            "x": 3,
+            "y": 7,
+            "lo": 1,
+            "hi": 8
+          },
+          "output": "3\nx=3, y=7\n1 8",
+          "description": "Print lo=1 and hi=8"
+        }
       ],
       "speed": "normal"
     },
@@ -63,7 +128,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a tuple 'dimensions' with width=800, height=600, depth=32 and unpack them into three variables."
+        "en": "Create a tuple 'dimensions' with width=800, height=600, depth=32 and unpack them into three variables.",
+        "ta": "'dimensions' என்ற டபிள் உருவாக்கவும் width=800, height=600, depth=32 மற்றும் அவற்றை மூன்று மாறிகளுக்கு திறக்கவும்."
       },
       "expected_output": "800 600 32",
       "hints": [

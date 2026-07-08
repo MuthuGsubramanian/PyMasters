@@ -5,7 +5,8 @@
   "module": "file_io",
   "order": 3,
   "title": {
-    "en": "Error Handling: The Safety Net"
+    "en": "Error Handling: The Safety Net",
+    "ta": "பிழை கையாளுதல்: பாதுகாப்பு வலை"
   },
   "description": {
     "en": "Learn try/except/finally and custom exceptions — the safety net that keeps your program running gracefully when things go wrong."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "errors_context_managers",
   "story_variants": {
-    "en": "## The Safety Net\n\nA **tightrope walker** performs death-defying stunts — but there's always a **safety net** below. If something goes wrong, they bounce back rather than crash to the ground.\n\nPython's `try/except` is your safety net.\n\n### The Try/Except Structure\n\n```python\ntry:\n    risky_code()\nexcept SomeError as e:\n    handle_it(e)\nelse:\n    ran_without_error()\nfinally:\n    always_runs()\n```\n\n### Common Exceptions\n\n| Exception | When |\n|-----------|------|\n| `ValueError` | wrong value type/format |\n| `TypeError` | wrong type |\n| `KeyError` | missing dict key |\n| `IndexError` | list index out of range |\n| `FileNotFoundError` | file doesn't exist |\n| `ZeroDivisionError` | dividing by zero |\n\n> **Golden rule:** Catch **specific** exceptions, not bare `except:`. Catching everything hides bugs.\n\n### Custom Exceptions\n```python\nclass InsufficientFundsError(Exception):\n    pass\n```\nInherit from `Exception` to create domain-specific errors."
+    "en": "## The Safety Net\n\nA **tightrope walker** performs death-defying stunts — but there's always a **safety net** below. If something goes wrong, they bounce back rather than crash to the ground.\n\nPython's `try/except` is your safety net.\n\n### The Try/Except Structure\n\n```python\ntry:\n    risky_code()\nexcept SomeError as e:\n    handle_it(e)\nelse:\n    ran_without_error()\nfinally:\n    always_runs()\n```\n\n### Common Exceptions\n\n| Exception | When |\n|-----------|------|\n| `ValueError` | wrong value type/format |\n| `TypeError` | wrong type |\n| `KeyError` | missing dict key |\n| `IndexError` | list index out of range |\n| `FileNotFoundError` | file doesn't exist |\n| `ZeroDivisionError` | dividing by zero |\n\n> **Golden rule:** Catch **specific** exceptions, not bare `except:`. Catching everything hides bugs.\n\n### Custom Exceptions\n```python\nclass InsufficientFundsError(Exception):\n    pass\n```\nInherit from `Exception` to create domain-specific errors.",
+    "ta": "## பாதுகாப்பு வலை\n\nஒரு **தாண்டுபவர்** மரணத்தை எதிர்ப்பதற்கான கலைகளை நிகழ்த்துகிறார் — ஆனால் அவருக்கு எப்போதும் அதற்கு கீழே ஒரு **பாதுகாப்பு வலை** இருக்கும். ஏதேனும் தவறாக நடந்தால், அவர் நிலத்தில் விழாமல் மீண்டும் எழுகிறார்.\n\nPython-ன் `try/except` உங்களுக்கு அந்த பாதுகாப்பு வலையாகும்.\n\n### Try/Except கட்டமைப்பு\n\n```python\ntry:\n    risky_code()\nexcept SomeError as e:\n    handle_it(e)\nelse:\n    ran_without_error()\nfinally:\n    always_runs()\n```\n\n### பொதுவான விதிவிலக்குகள்\n\n| விதிவிலக்கு | எப்போது |\n|-----------|------|\n| `ValueError` | தவறான மதிப்பு வகை/வடிவம் |\n| `TypeError` | தவறான வகை |\n| `KeyError` | விடுபட்ட dict விசை |\n| `IndexError` | list விசை வரம்புக்கு வெளியே |\n| `FileNotFoundError` | கோப்பு இல்லை |\n| `ZeroDivisionError` | பூஜ்யத்தால் வகுப்பது |\n\n> **தங்க விதி:** **குறிப்பிட்ட** விதிவிலக்குகளைப் பிடிக்கவும், வெறும் `except:` ஐப் பிடிக்க வேண்டாம். அனைத்தையும் பிடித்தால் பிழைகள் மறைக்கப்படும்.\n\n### தனிப்பயன் விதிவிலக்குகள்\n```python\nclass InsufficientFundsError(Exception):\n    pass\n```\n`Exception`-லிருந்து இரண்டு வகை விதிவிலக்குகளை உருவாக்க வேண்டும்."
   },
   "animation_sequence": [
     {
@@ -42,38 +44,157 @@
       "type": "ExecutionVisualizer",
       "code": "def safe_divide(a, b):\n    try:\n        result = a / b\n    except ZeroDivisionError:\n        print('Cannot divide by zero!')\n        return None\n    return result\nprint(safe_divide(10, 2))\nprint(safe_divide(10, 0))",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define safe_divide function with try/except" },
-        { "line": 8, "variables": { "a": 10, "b": 2 }, "output": "", "description": "Call safe_divide(10, 2)" },
-        { "line": 3, "variables": { "a": 10, "b": 2, "result": 5.0 }, "output": "", "description": "Division succeeds: 10 / 2 = 5.0" },
-        { "line": 7, "variables": { "a": 10, "b": 2, "result": 5.0 }, "output": "5.0", "description": "Return 5.0, print it" },
-        { "line": 9, "variables": { "a": 10, "b": 0 }, "output": "5.0", "description": "Call safe_divide(10, 0)" },
-        { "line": 3, "variables": { "a": 10, "b": 0 }, "output": "5.0", "description": "Division raises ZeroDivisionError!" },
-        { "line": 4, "variables": { "a": 10, "b": 0 }, "output": "5.0\nCannot divide by zero!", "description": "except catches ZeroDivisionError, prints message" },
-        { "line": 6, "variables": { "a": 10, "b": 0 }, "output": "5.0\nCannot divide by zero!\nNone", "description": "Return None, print it" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define safe_divide function with try/except"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "a": 10,
+            "b": 2
+          },
+          "output": "",
+          "description": "Call safe_divide(10, 2)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "a": 10,
+            "b": 2,
+            "result": 5.0
+          },
+          "output": "",
+          "description": "Division succeeds: 10 / 2 = 5.0"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "a": 10,
+            "b": 2,
+            "result": 5.0
+          },
+          "output": "5.0",
+          "description": "Return 5.0, print it"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "a": 10,
+            "b": 0
+          },
+          "output": "5.0",
+          "description": "Call safe_divide(10, 0)"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "a": 10,
+            "b": 0
+          },
+          "output": "5.0",
+          "description": "Division raises ZeroDivisionError!"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 10,
+            "b": 0
+          },
+          "output": "5.0\nCannot divide by zero!",
+          "description": "except catches ZeroDivisionError, prints message"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "a": 10,
+            "b": 0
+          },
+          "output": "5.0\nCannot divide by zero!\nNone",
+          "description": "Return None, print it"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "try block", "type": "start" },
-        { "id": "risky", "label": "Execute risky code", "type": "process" },
-        { "id": "check", "label": "Exception raised?", "type": "decision" },
-        { "id": "except", "label": "except: handle error", "type": "process" },
-        { "id": "else", "label": "else: no error path", "type": "process" },
-        { "id": "finally", "label": "finally: always runs", "type": "process" },
-        { "id": "end", "label": "Continue program", "type": "end" }
+        {
+          "id": "start",
+          "label": "try block",
+          "type": "start"
+        },
+        {
+          "id": "risky",
+          "label": "Execute risky code",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "Exception raised?",
+          "type": "decision"
+        },
+        {
+          "id": "except",
+          "label": "except: handle error",
+          "type": "process"
+        },
+        {
+          "id": "else",
+          "label": "else: no error path",
+          "type": "process"
+        },
+        {
+          "id": "finally",
+          "label": "finally: always runs",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Continue program",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "risky" },
-        { "from": "risky", "to": "check" },
-        { "from": "check", "to": "except" },
-        { "from": "check", "to": "else" },
-        { "from": "except", "to": "finally" },
-        { "from": "else", "to": "finally" },
-        { "from": "finally", "to": "end" }
+        {
+          "from": "start",
+          "to": "risky"
+        },
+        {
+          "from": "risky",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "except"
+        },
+        {
+          "from": "check",
+          "to": "else"
+        },
+        {
+          "from": "except",
+          "to": "finally"
+        },
+        {
+          "from": "else",
+          "to": "finally"
+        },
+        {
+          "from": "finally",
+          "to": "end"
+        }
       ],
-      "executionPath": ["start", "risky", "check", "except", "finally", "end"],
+      "executionPath": [
+        "start",
+        "risky",
+        "check",
+        "except",
+        "finally",
+        "end"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -87,7 +208,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a function 'safe_divide(a, b)' that returns a/b, but returns None if b is zero instead of crashing."
+        "en": "Write a function 'safe_divide(a, b)' that returns a/b, but returns None if b is zero instead of crashing.",
+        "ta": "'பாதுகாப்பான வகுத்தல்' (safe_divide) என்ற செயல்பாட்டை எழுதுங்கள், இது a/b ஐ வழங்குகிறது, ஆனால் b பூஜ்யமாக இருந்தால், விபத்து நிகழாமல் அது பதிலளிக்க 'None' ஐ வழங்குகிறது."
       },
       "expected_output": "2.5 None",
       "hints": [

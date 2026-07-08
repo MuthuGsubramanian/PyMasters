@@ -5,7 +5,8 @@
   "module": "file_io",
   "order": 4,
   "title": {
-    "en": "Context Managers: The Automatic Door"
+    "en": "Context Managers: The Automatic Door",
+    "ta": "சூழல் மேலாளர்கள்: தானியக்க வாயில்"
   },
   "description": {
     "en": "Learn context managers and the with statement — how __enter__ and __exit__ guarantee setup and teardown, like an automatic door."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "adv_decorators",
   "story_variants": {
-    "en": "## The Automatic Door\n\nAn **automatic door** opens as you approach and closes behind you — no matter what. You can't leave it open accidentally.\n\nPython **context managers** work the same way: guaranteed setup (`__enter__`) and guaranteed cleanup (`__exit__`), even if an exception occurs.\n\n### The with Statement\n```python\nwith expression as variable:\n    body\n```\nPython calls `expression.__enter__()` before the body and `expression.__exit__()` after — success or exception.\n\n### Building a Context Manager\n\n| Method | Called when | Purpose |\n|--------|------------|----------|\n| `__enter__` | entering `with` block | setup, return resource |\n| `__exit__` | leaving `with` block | cleanup, handle exceptions |\n\n### Simpler: @contextmanager\n```python\nfrom contextlib import contextmanager\n\n@contextmanager\ndef timer():\n    start = time.time()\n    yield\n    print(f'Elapsed: {time.time() - start:.2f}s')\n```\n\n> **Use cases:** file handles, database connections, timers, locks, temporary directories — anything that needs guaranteed cleanup."
+    "en": "## The Automatic Door\n\nAn **automatic door** opens as you approach and closes behind you — no matter what. You can't leave it open accidentally.\n\nPython **context managers** work the same way: guaranteed setup (`__enter__`) and guaranteed cleanup (`__exit__`), even if an exception occurs.\n\n### The with Statement\n```python\nwith expression as variable:\n    body\n```\nPython calls `expression.__enter__()` before the body and `expression.__exit__()` after — success or exception.\n\n### Building a Context Manager\n\n| Method | Called when | Purpose |\n|--------|------------|----------|\n| `__enter__` | entering `with` block | setup, return resource |\n| `__exit__` | leaving `with` block | cleanup, handle exceptions |\n\n### Simpler: @contextmanager\n```python\nfrom contextlib import contextmanager\n\n@contextmanager\ndef timer():\n    start = time.time()\n    yield\n    print(f'Elapsed: {time.time() - start:.2f}s')\n```\n\n> **Use cases:** file handles, database connections, timers, locks, temporary directories — anything that needs guaranteed cleanup.",
+    "ta": "## ஆட்டோமேட்டிக் வாயில்\n\nநீங்கள் நெருக்கமாகச் செல்லும்போது ஒரு **ஆட்டோமேட்டிக் வாயில்** திறக்கப்படுகிறது மற்றும் உங்களைப் பின்தொடர்ந்து மூடப்படுகிறது — எதுவும் நடக்காது. அதை தவறாகத் திறந்து விடுவதை நீங்கள் தவறவிட முடியாது.\n\nPython **சூழல் மேலாளர்கள் (context managers)** அதே போலவே செயல்படுகின்றன: உறுதியான அமைப்பு (`__enter__`) மற்றும் உறுதியான சுத்தம் (`__exit__`), ஒரு விதிவிலக்கு நிகழ்ந்தாலும்.\n\n### with வாக்கியம்\n```python\nwith expression as variable:\n    body\n```\nPython உடலின் முன் `expression.__enter__()` ஐ அழைக்கிறது மற்றும் வெற்றி அல்லது விதிவிலக்குக்குப் பிறகு `expression.__exit__()` ஐ அழைக்கிறது.\n\n### ஒரு சூழல் மேலாளரை உருவாக்குதல்\n\n| முறை | எப்போது அழைக்கப்படுகிறது | நோக்கம் |\n|--------|------------|----------|\n| `__enter__` | `with` தொகுதியில் நுழையும்போது | அமைப்பு, வளத்தைத் திரும்பப் பெறுதல் |\n| `__exit__` | `with` தொகுதியிலிருந்து வெளியேறும்போது | சுத்தம் செய்தல், விதிவிலக்குகளைக் கையாளுதல் |\n\n### எளிமைப்படுத்துதல்: @contextmanager\n```python\nfrom contextlib import contextmanager\n\n@contextmanager\ndef timer():\n    start = time.time()\n    yield\n    print(f'Elapsed: {time.time() - start:.2f}s')\n```\n\n> **பயன்பாடுகள்:** கோப்பு கையாள்கள், தரவுத்தள இணைப்புகள், டைமர்கள், லாக்குகள், தற்காலிக அடைவுகள் — எந்த ஒரு விஷயத்தையும் உறுதியான சுத்தம் தேவைப்படுகிறதோ அது."
   },
   "animation_sequence": [
     {
@@ -42,35 +44,122 @@
       "type": "ExecutionVisualizer",
       "code": "class ManagedResource:\n    def __enter__(self):\n        print('Opening')\n        return self\n    def __exit__(self, *args):\n        print('Closing')\n        return False\n    def use(self):\n        print('Using')\nwith ManagedResource() as r:\n    r.use()",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define ManagedResource with __enter__ and __exit__" },
-        { "line": 10, "variables": {}, "output": "Opening", "description": "with statement calls __enter__() -- prints 'Opening'" },
-        { "line": 10, "variables": { "r": "ManagedResource()" }, "output": "Opening", "description": "__enter__ returns self, bound to 'r'" },
-        { "line": 11, "variables": { "r": "ManagedResource()" }, "output": "Opening\nUsing", "description": "Call r.use() inside the with block" },
-        { "line": 5, "variables": { "r": "ManagedResource()" }, "output": "Opening\nUsing\nClosing", "description": "Leaving with block -- __exit__() called automatically" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define ManagedResource with __enter__ and __exit__"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "Opening",
+          "description": "with statement calls __enter__() -- prints 'Opening'"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "r": "ManagedResource()"
+          },
+          "output": "Opening",
+          "description": "__enter__ returns self, bound to 'r'"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "r": "ManagedResource()"
+          },
+          "output": "Opening\nUsing",
+          "description": "Call r.use() inside the with block"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "r": "ManagedResource()"
+          },
+          "output": "Opening\nUsing\nClosing",
+          "description": "Leaving with block -- __exit__() called automatically"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "with statement", "type": "start" },
-        { "id": "enter", "label": "__enter__() called", "type": "process" },
-        { "id": "body", "label": "Execute body", "type": "process" },
-        { "id": "check", "label": "Exception in body?", "type": "decision" },
-        { "id": "exit_ok", "label": "__exit__() cleanup (no error)", "type": "process" },
-        { "id": "exit_err", "label": "__exit__() cleanup (with error)", "type": "process" },
-        { "id": "end", "label": "Resource guaranteed closed", "type": "end" }
+        {
+          "id": "start",
+          "label": "with statement",
+          "type": "start"
+        },
+        {
+          "id": "enter",
+          "label": "__enter__() called",
+          "type": "process"
+        },
+        {
+          "id": "body",
+          "label": "Execute body",
+          "type": "process"
+        },
+        {
+          "id": "check",
+          "label": "Exception in body?",
+          "type": "decision"
+        },
+        {
+          "id": "exit_ok",
+          "label": "__exit__() cleanup (no error)",
+          "type": "process"
+        },
+        {
+          "id": "exit_err",
+          "label": "__exit__() cleanup (with error)",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Resource guaranteed closed",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "enter" },
-        { "from": "enter", "to": "body" },
-        { "from": "body", "to": "check" },
-        { "from": "check", "to": "exit_ok" },
-        { "from": "check", "to": "exit_err" },
-        { "from": "exit_ok", "to": "end" },
-        { "from": "exit_err", "to": "end" }
+        {
+          "from": "start",
+          "to": "enter"
+        },
+        {
+          "from": "enter",
+          "to": "body"
+        },
+        {
+          "from": "body",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "exit_ok"
+        },
+        {
+          "from": "check",
+          "to": "exit_err"
+        },
+        {
+          "from": "exit_ok",
+          "to": "end"
+        },
+        {
+          "from": "exit_err",
+          "to": "end"
+        }
       ],
-      "executionPath": ["start", "enter", "body", "check", "exit_ok", "end"],
+      "executionPath": [
+        "start",
+        "enter",
+        "body",
+        "check",
+        "exit_ok",
+        "end"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -84,7 +173,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a context manager class 'Timer' that records start/end time and prints elapsed seconds on exit."
+        "en": "Create a context manager class 'Timer' that records start/end time and prints elapsed seconds on exit.",
+        "ta": "'டைமர்' என்ற சூழல் மேலாளர் வகுப்பை உருவாக்கவும், இது தொடக்க நேரத்தையும் முடிவு நேரத்தையும் பதிவு செய்து, வெளியேறும் போது கழிந்த நொடிகளை அச்சிடும்."
       },
       "expected_output": "Elapsed: ~0.0s",
       "hints": [
