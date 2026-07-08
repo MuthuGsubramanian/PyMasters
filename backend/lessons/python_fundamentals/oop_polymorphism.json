@@ -5,7 +5,8 @@
   "module": "oop",
   "order": 3,
   "title": {
-    "en": "Polymorphism: The Universal Remote"
+    "en": "Polymorphism: The Universal Remote",
+    "ta": "பலவடிவமாற்றம்: உலகளாவிய தொலைநிலைக்கானக் கட்டுப்பாட்டு அமைப்பு"
   },
   "description": {
     "en": "Learn polymorphism and duck typing — how Python lets different objects respond to the same interface, regardless of their class."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "oop_magic_methods",
   "story_variants": {
-    "en": "## The Universal Remote\n\nA **universal remote** has a single PLAY button. Press it on your TV and it plays a show. Press it on your music player and it plays a song. Same button, different behaviour.\n\nThis is **polymorphism**: one interface, many implementations.\n\n### Two Faces of Polymorphism\n\n| Type | How |\n|------|-----|\n| Subtype | child class overrides parent method |\n| Duck typing | any object with the right method works |\n\n### Duck Typing\n> *\"If it walks like a duck and quacks like a duck, it's a duck.\"*\n\nPython doesn't care what class an object is — only whether it has the method being called.\n\n```python\ndef make_sound(animal):\n    print(animal.speak())  # works for Dog, Cat, any class with .speak()\n```\n\n> **Advantage:** Duck typing means you write flexible code that works with classes you haven't even written yet — as long as they follow the same interface.\n\n### Abstract Base Classes\nFor enforcing an interface, use `abc.ABC` and `@abstractmethod` to require subclasses to implement certain methods."
+    "en": "## The Universal Remote\n\nA **universal remote** has a single PLAY button. Press it on your TV and it plays a show. Press it on your music player and it plays a song. Same button, different behaviour.\n\nThis is **polymorphism**: one interface, many implementations.\n\n### Two Faces of Polymorphism\n\n| Type | How |\n|------|-----|\n| Subtype | child class overrides parent method |\n| Duck typing | any object with the right method works |\n\n### Duck Typing\n> *\"If it walks like a duck and quacks like a duck, it's a duck.\"*\n\nPython doesn't care what class an object is — only whether it has the method being called.\n\n```python\ndef make_sound(animal):\n    print(animal.speak())  # works for Dog, Cat, any class with .speak()\n```\n\n> **Advantage:** Duck typing means you write flexible code that works with classes you haven't even written yet — as long as they follow the same interface.\n\n### Abstract Base Classes\nFor enforcing an interface, use `abc.ABC` and `@abstractmethod` to require subclasses to implement certain methods.",
+    "ta": "## பொதுவான ரிமோட்\n\nஒரு **பொதுவான ரிமோட்**வில் ஒரே ஒரு PLAY பட்டன் மட்டுமே உள்ளது. அதை உங்கள் டிவி மீது அழுத்தினால் ஒரு நிகழ்ச்சியை ஓட்டுகிறது. அதை உங்கள் இசை வாசிப்பியில் அழுத்தினால் ஒரு பாடலை வாசிக்கிறது. ஒரே பட்டன், வெவ்வேறு நடத்தை.\n\nஇது **பலவடிவமாக்கம் (polymorphism)**: ஒரே இடைமுகம், பல செயலாக்கங்கள்.\n\n### பலவடிவமாக்கத்தின் இரண்டு முகங்கள்\n\n| வகை | எப்படி |\n|------|-----|\n| துணை வகை (Subtype) | குழந்தை வகுப்பு பெற்றோர் முறையை மாற்றுகிறது |\n| டக் டைப்பிங் (Duck typing) | சரியான முறையைக் கொண்ட எந்தப் பொருளும் வேலை செய்கிறது |\n\n### டக் டைப்பிங்\n> *\"அது ஒரு ஆட்டின் போல் நடக்கிறது மற்றும் ஆட்டின் போல் கத்துகிறது என்றால், அது ஒரு ஆடு தான்.\"*\n\nPython-க்கு ஒரு பொருளின் வகுப்பு என்ன என்பதைப் பற்றி கவலைப்படுவதில்லை — அது அழைக்கப்படும் முறையைக் கொண்டிருந்தால் மட்டுமே முக்கியம்.\n\n```python\ndef make_sound(animal):\n    print(animal.speak())  # works for Dog, Cat, any class with .speak()\n```\n\n> **நன்மை:** டக் டைப்பிங் என்பது நீங்கள் எழுதாத வரை வரை வரும் வகுப்புகளுடன் வேலை செய்யும் வசதியான குறியீட்டை உருவாக்க உதவுகிறது — அவை அதே இடைமுகத்தைப் பின்பற்றுவதாக இருந்தால்.\n\n### பொதுவான அடிப்படை வகுப்புகள் (Abstract Base Classes)\nஇடைமுகத்தை நிலைநிறுத்த, `abc.ABC` மற்றும் `@abstractmethod` ஐப் பயன்படுத்தவும், துணை வகுப்புகள் சில முறைகளைச் செயல்படுத்த வேண்டும் என்பதை வலியுறுத்த வேண்டும்."
   },
   "animation_sequence": [
     {
@@ -47,36 +49,133 @@
       "type": "ExecutionVisualizer",
       "code": "class Dog:\n    def speak(self): return 'Woof!'\nclass Cat:\n    def speak(self): return 'Meow!'\nclass Duck:\n    def speak(self): return 'Quack!'\nanimals = [Dog(), Cat(), Duck()]\nfor a in animals:\n    print(a.speak())",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define Dog with speak() returning 'Woof!'" },
-        { "line": 3, "variables": {}, "output": "", "description": "Define Cat with speak() returning 'Meow!'" },
-        { "line": 5, "variables": {}, "output": "", "description": "Define Duck with speak() returning 'Quack!'" },
-        { "line": 7, "variables": { "animals": ["Dog()", "Cat()", "Duck()"] }, "output": "", "description": "Create a list of different animal objects" },
-        { "line": 8, "variables": { "a": "Dog()" }, "output": "Woof!", "description": "Polymorphism: a.speak() calls Dog.speak()" },
-        { "line": 8, "variables": { "a": "Cat()" }, "output": "Woof!\nMeow!", "description": "Same interface, different class: Cat.speak()" },
-        { "line": 8, "variables": { "a": "Duck()" }, "output": "Woof!\nMeow!\nQuack!", "description": "Duck typing: any object with speak() works" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Dog with speak() returning 'Woof!'"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Define Cat with speak() returning 'Meow!'"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "description": "Define Duck with speak() returning 'Quack!'"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "animals": [
+              "Dog()",
+              "Cat()",
+              "Duck()"
+            ]
+          },
+          "output": "",
+          "description": "Create a list of different animal objects"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "a": "Dog()"
+          },
+          "output": "Woof!",
+          "description": "Polymorphism: a.speak() calls Dog.speak()"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "a": "Cat()"
+          },
+          "output": "Woof!\nMeow!",
+          "description": "Same interface, different class: Cat.speak()"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "a": "Duck()"
+          },
+          "output": "Woof!\nMeow!\nQuack!",
+          "description": "Duck typing: any object with speak() works"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "start", "label": "for a in animals", "type": "start" },
-        { "id": "check", "label": "a.speak() -- which class?", "type": "decision" },
-        { "id": "dog", "label": "Dog.speak() -> Woof!", "type": "process" },
-        { "id": "cat", "label": "Cat.speak() -> Meow!", "type": "process" },
-        { "id": "duck", "label": "Duck.speak() -> Quack!", "type": "process" },
-        { "id": "end", "label": "Same interface, different behavior", "type": "end" }
+        {
+          "id": "start",
+          "label": "for a in animals",
+          "type": "start"
+        },
+        {
+          "id": "check",
+          "label": "a.speak() -- which class?",
+          "type": "decision"
+        },
+        {
+          "id": "dog",
+          "label": "Dog.speak() -> Woof!",
+          "type": "process"
+        },
+        {
+          "id": "cat",
+          "label": "Cat.speak() -> Meow!",
+          "type": "process"
+        },
+        {
+          "id": "duck",
+          "label": "Duck.speak() -> Quack!",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Same interface, different behavior",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "start", "to": "check" },
-        { "from": "check", "to": "dog" },
-        { "from": "check", "to": "cat" },
-        { "from": "check", "to": "duck" },
-        { "from": "dog", "to": "end" },
-        { "from": "cat", "to": "end" },
-        { "from": "duck", "to": "end" }
+        {
+          "from": "start",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "dog"
+        },
+        {
+          "from": "check",
+          "to": "cat"
+        },
+        {
+          "from": "check",
+          "to": "duck"
+        },
+        {
+          "from": "dog",
+          "to": "end"
+        },
+        {
+          "from": "cat",
+          "to": "end"
+        },
+        {
+          "from": "duck",
+          "to": "end"
+        }
       ],
-      "executionPath": ["start", "check", "dog", "end"],
+      "executionPath": [
+        "start",
+        "check",
+        "dog",
+        "end"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -90,7 +189,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create classes 'Circle' and 'Rectangle', each with an 'area()' method. Write a function 'total_area(shapes)' that sums all areas."
+        "en": "Create classes 'Circle' and 'Rectangle', each with an 'area()' method. Write a function 'total_area(shapes)' that sums all areas.",
+        "ta": "'Circle' மற்றும் 'Rectangle' என்ற வகுப்புகளை உருவாக்கவும், ஒவ்வொரு வகுப்பிற்கும் 'area()' முறையைச் சேர்க்கவும். 'total_area(shapes)' என்ற செயல்பாட்டை எழுதவும் அது அனைத்து பரப்பளவுகளையும் கூட்டும்."
       },
       "expected_output": "96.0",
       "hints": [

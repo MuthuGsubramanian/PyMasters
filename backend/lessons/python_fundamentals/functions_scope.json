@@ -5,7 +5,8 @@
   "module": "functions",
   "order": 2,
   "title": {
-    "en": "Scope: The Russian Nesting Dolls"
+    "en": "Scope: The Russian Nesting Dolls",
+    "ta": "விரிவு: ரஷ்ய மரபு பூக்கள்"
   },
   "description": {
     "en": "Understand local vs global scope and the LEGB rule — how Python searches for variable names layer by layer."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "functions_args",
   "story_variants": {
-    "en": "## The Russian Nesting Dolls (Matryoshka)\n\nImagine **nested dolls** — each doll lives inside a bigger one. When Python looks for a name, it starts from the **innermost** doll and works outward until it finds it.\n\nThis is the **LEGB rule**:\n\n| Letter | Scope | Where |\n|--------|-------|-------|\n| **L** | Local | Inside the current function |\n| **E** | Enclosing | Outer function (closures) |\n| **G** | Global | Module-level variables |\n| **B** | Built-in | Python builtins: `len`, `print` |\n\n> **Rule:** Python checks L → E → G → B in order and uses the first match it finds.\n\n### Key Points\n- Variables created inside a function are **local** — invisible outside\n- `global x` lets you modify a global variable inside a function\n- Avoid global state when possible — use parameters and return values instead\n- Each function call gets its **own** local scope (frame on the call stack)"
+    "en": "## The Russian Nesting Dolls (Matryoshka)\n\nImagine **nested dolls** — each doll lives inside a bigger one. When Python looks for a name, it starts from the **innermost** doll and works outward until it finds it.\n\nThis is the **LEGB rule**:\n\n| Letter | Scope | Where |\n|--------|-------|-------|\n| **L** | Local | Inside the current function |\n| **E** | Enclosing | Outer function (closures) |\n| **G** | Global | Module-level variables |\n| **B** | Built-in | Python builtins: `len`, `print` |\n\n> **Rule:** Python checks L → E → G → B in order and uses the first match it finds.\n\n### Key Points\n- Variables created inside a function are **local** — invisible outside\n- `global x` lets you modify a global variable inside a function\n- Avoid global state when possible — use parameters and return values instead\n- Each function call gets its **own** local scope (frame on the call stack)",
+    "ta": "## ரஷ்ய மட்ரோஷ்கா புட்டிகள் (Matryoshka)\n\n**மட்ரோஷ்கா புட்டிகளை** நினைவூட்டுங்கள் — ஒவ்வொரு புட்டியும் ஒரு பெரிய புட்டியின் உள்ளே வாழ்கிறது. Python ஒரு பெயரைத் தேடும்போது, அது **உள்ளே உள்ள** (innermost) புட்டியிலிருந்து தொடங்கி அதைக் கண்டுபிடிக்கும் வரை வெளியேறும் வரை வேலை செய்கிறது.\n\nஇது **LEGB விதி**:\n\n| எழுத்து | வரம்பு | இருப்பிடம் |\n|--------|-------|-------|\n| **L** | உள்ளமை (Local) | தற்போதைய செயல்பாட்டிற்குள் |\n| **E** | சூழ்ந்துள்ள (Enclosing) | வெளிப்புற செயல்பாடு (closures) |\n| **G** | உலகளாவிய (Global) | மாதிரி மட்ட மாறிகள் |\n| **B** | உள்ளமைந்த (Built-in) | Python builtins: `len`, `print` |\n\n> **விதி:** Python L → E → G → B வரிசையில் சரிபார்க்கிறது மற்றும் முதல் பொருத்தம் கிடைக்கும் வரை அதைப் பயன்படுத்துகிறது.\n\n### முக்கிய புள்ளிகள்\n- செயல்பாட்டிற்குள் உருவாக்கப்பட்ட மாறிகள் **உள்ளமை** (local) — வெளியே காணப்படுவதில்லை\n- `global x` செயல்பாட்டிற்குள் உள்ளே ஒரு உலகளாவிய மாறியைத் திருத்த உதவுகிறது\n- இதர வழிகளில் உலகளாவிய நிலையைத் தவிர்க்கவும் — பதில்களைப் பயன்படுத்தவும்\n- ஒவ்வொரு செயல்பாட்டு அழைப்புக்கும் அதன் **சொந்த** உள்ளமை வரம்பு (அழைப்பு ஸ்டாக்கில் சட்டம்) கிடைக்கிறது"
   },
   "animation_sequence": [
     {
@@ -66,34 +68,139 @@
       "type": "ExecutionVisualizer",
       "code": "x = 'global'\ndef outer():\n    x = 'enclosing'\n    def inner():\n        x = 'local'\n        print(x)\n    inner()\n    print(x)\nouter()\nprint(x)",
       "executionSteps": [
-        { "line": 1, "variables": { "x": "global" }, "output": "", "description": "Assign 'global' to x in global scope" },
-        { "line": 9, "variables": { "x": "global" }, "output": "", "description": "Call outer() -- enters outer function scope" },
-        { "line": 3, "variables": { "x": "global", "outer.x": "enclosing" }, "output": "", "description": "Create local x = 'enclosing' in outer scope" },
-        { "line": 7, "variables": { "x": "global", "outer.x": "enclosing" }, "output": "", "description": "Call inner() -- enters inner function scope" },
-        { "line": 5, "variables": { "x": "global", "outer.x": "enclosing", "inner.x": "local" }, "output": "", "description": "Create local x = 'local' in inner scope" },
-        { "line": 6, "variables": { "x": "global", "outer.x": "enclosing", "inner.x": "local" }, "output": "local", "description": "Print inner's local x: 'local'" },
-        { "line": 8, "variables": { "x": "global", "outer.x": "enclosing" }, "output": "local\nenclosing", "description": "Back in outer -- print outer's x: 'enclosing'" },
-        { "line": 10, "variables": { "x": "global" }, "output": "local\nenclosing\nglobal", "description": "Back in global -- print global x: 'global'" }
+        {
+          "line": 1,
+          "variables": {
+            "x": "global"
+          },
+          "output": "",
+          "description": "Assign 'global' to x in global scope"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "x": "global"
+          },
+          "output": "",
+          "description": "Call outer() -- enters outer function scope"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "x": "global",
+            "outer.x": "enclosing"
+          },
+          "output": "",
+          "description": "Create local x = 'enclosing' in outer scope"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "x": "global",
+            "outer.x": "enclosing"
+          },
+          "output": "",
+          "description": "Call inner() -- enters inner function scope"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "x": "global",
+            "outer.x": "enclosing",
+            "inner.x": "local"
+          },
+          "output": "",
+          "description": "Create local x = 'local' in inner scope"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "x": "global",
+            "outer.x": "enclosing",
+            "inner.x": "local"
+          },
+          "output": "local",
+          "description": "Print inner's local x: 'local'"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "x": "global",
+            "outer.x": "enclosing"
+          },
+          "output": "local\nenclosing",
+          "description": "Back in outer -- print outer's x: 'enclosing'"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "x": "global"
+          },
+          "output": "local\nenclosing\nglobal",
+          "description": "Back in global -- print global x: 'global'"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "global", "label": "Global scope: x = 'global'", "type": "start" },
-        { "id": "outer", "label": "outer(): x = 'enclosing'", "type": "process" },
-        { "id": "inner", "label": "inner(): x = 'local'", "type": "process" },
-        { "id": "lookup", "label": "LEGB lookup: Local -> Enclosing -> Global -> Built-in", "type": "process" },
-        { "id": "end", "label": "End", "type": "end" }
+        {
+          "id": "global",
+          "label": "Global scope: x = 'global'",
+          "type": "start"
+        },
+        {
+          "id": "outer",
+          "label": "outer(): x = 'enclosing'",
+          "type": "process"
+        },
+        {
+          "id": "inner",
+          "label": "inner(): x = 'local'",
+          "type": "process"
+        },
+        {
+          "id": "lookup",
+          "label": "LEGB lookup: Local -> Enclosing -> Global -> Built-in",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "End",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "global", "to": "outer" },
-        { "from": "outer", "to": "inner" },
-        { "from": "inner", "to": "lookup" },
-        { "from": "lookup", "to": "end" }
+        {
+          "from": "global",
+          "to": "outer"
+        },
+        {
+          "from": "outer",
+          "to": "inner"
+        },
+        {
+          "from": "inner",
+          "to": "lookup"
+        },
+        {
+          "from": "lookup",
+          "to": "end"
+        }
       ],
-      "executionPath": ["global", "outer", "inner", "lookup", "end"],
-      "variables": { "x (global)": "global", "x (outer)": "enclosing", "x (inner)": "local" },
+      "executionPath": [
+        "global",
+        "outer",
+        "inner",
+        "lookup",
+        "end"
+      ],
+      "variables": {
+        "x (global)": "global",
+        "x (outer)": "enclosing",
+        "x (inner)": "local"
+      },
       "speed": "normal"
     },
     {
@@ -106,7 +213,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Predict the output: x = 10; def f(): x = 99; f(); print(x) — what does print(x) show?"
+        "en": "Predict the output: x = 10; def f(): x = 99; f(); print(x) — what does print(x) show?",
+        "ta": "வரும் வெளியீட்டை முன்னறிவிக்கவும்: x = 10; def f(): x = 99; f(); print(x) — print(x) என்ன காட்டுகிறது?"
       },
       "expected_output": "10",
       "hints": [

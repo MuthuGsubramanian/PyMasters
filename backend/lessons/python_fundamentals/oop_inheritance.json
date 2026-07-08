@@ -5,7 +5,8 @@
   "module": "oop",
   "order": 2,
   "title": {
-    "en": "Inheritance: The Family Tree"
+    "en": "Inheritance: The Family Tree",
+    "ta": "மரபு வழி: குடும்ப மரம்"
   },
   "description": {
     "en": "Learn inheritance and super() — how child classes reuse and extend parent class behaviour, like inheriting traits in a family."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "oop_polymorphism",
   "story_variants": {
-    "en": "## The Family Tree\n\nChildren **inherit** traits from parents — eye colour, height, personality — but they also add their own unique characteristics.\n\nIn Python, a **child class** inherits all methods and attributes of its **parent class**, and can add or override them.\n\n### Inheritance Syntax\n```python\nclass Child(Parent):\n    ...\n```\n\n### super() — Calling the Parent\n\n| Use | Code |\n|-----|------|\n| Call parent `__init__` | `super().__init__(args)` |\n| Call parent method | `super().method()` |\n\n### Method Resolution Order (MRO)\n- Python searches the class hierarchy from child → parent → grandparent\n- `ClassName.__mro__` shows the full order\n\n> **Rule of thumb:** Use inheritance for **is-a** relationships. A `Dog` is an `Animal`. A `Manager` is an `Employee`.\n\n### Override vs Extend\n- **Override:** replace parent's method entirely\n- **Extend:** call `super().method()` then add more logic"
+    "en": "## The Family Tree\n\nChildren **inherit** traits from parents — eye colour, height, personality — but they also add their own unique characteristics.\n\nIn Python, a **child class** inherits all methods and attributes of its **parent class**, and can add or override them.\n\n### Inheritance Syntax\n```python\nclass Child(Parent):\n    ...\n```\n\n### super() — Calling the Parent\n\n| Use | Code |\n|-----|------|\n| Call parent `__init__` | `super().__init__(args)` |\n| Call parent method | `super().method()` |\n\n### Method Resolution Order (MRO)\n- Python searches the class hierarchy from child → parent → grandparent\n- `ClassName.__mro__` shows the full order\n\n> **Rule of thumb:** Use inheritance for **is-a** relationships. A `Dog` is an `Animal`. A `Manager` is an `Employee`.\n\n### Override vs Extend\n- **Override:** replace parent's method entirely\n- **Extend:** call `super().method()` then add more logic",
+    "ta": "## குடும்ப மரம்\n\nகுழந்தைகள் பெற்றோர்களிடமிருந்து பண்புகளை **வாரிசுதார்** செய்கின்றனர் — கண்ணின் நிறம், உயரம், நடத்தை — ஆனால் அவர்கள் தங்களுக்கென தனித்துவமான பண்புகளையும் சேர்த்துக்கொள்கின்றனர்.\n\nPython-ல், ஒரு **குழந்தை வகுப்பு** தனது **பெற்றோர் வகுப்பின்** அனைத்து முறைகளையும் பண்புகளையும் வாரிசுதார் செய்கிறது, மேலும் அவற்றைச் சேர்க்கலாம் அல்லது மாற்றலாம்.\n\n### வாரிசுதார் தொகுத்தல் தொடரியல்\n```python\nclass Child(Parent):\n    ...\n```\n\n### super() — பெற்றோரை அழைப்பது\n\n| பயன்படுத்தல் | குறியீடு |\n|-----|------|\n| பெற்றோர் `__init__`-ஐ அழைப்பது | `super().__init__(args)` |\n| பெற்றோர் முறையை அழைப்பது | `super().method()` |\n\n### முறை தீர்வு வரிசை (MRO)\n- Python-ல் குழந்தை → பெற்றோர் → பாட்டன் வரை வகுப்பு மரத்தைத் தேடுகிறது\n- `ClassName.__mro__` முழு வரிசையைக் காட்டுகிறது\n\n> **வழக்குவழிக் கொள்கை:** **is-a** உறவுகளுக்கு வாரிசுதார் தொகுத்தலைப் பயன்படுத்தவும். ஒரு `Dog` என்பது ஒரு `Animal`. ஒரு `Manager` என்பது ஒரு `Employee`.\n\n### மாற்றம் vs நீட்டிப்பு\n- **மாற்றம் (Override):** பெற்றோரின் முறையை முழுமையாக மாற்றுதல்\n- **நீட்டிப்பு (Extend):** `super().method()`-ஐ அழைத்து பிறகு கூடுதல் தர்க்கத்தைச் சேர்த்தல்"
   },
   "animation_sequence": [
     {
@@ -46,34 +48,116 @@
       "type": "ExecutionVisualizer",
       "code": "class Animal:\n    def __init__(self, name):\n        self.name = name\n    def speak(self):\n        return f'{self.name} makes a sound'\nclass Dog(Animal):\n    def speak(self):\n        return f'{self.name} says Woof!'\nd = Dog('Rex')\nprint(d.speak())\nprint(d.name)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define parent class Animal with name and speak()" },
-        { "line": 6, "variables": {}, "output": "", "description": "Define Dog that inherits from Animal" },
-        { "line": 9, "variables": { "d": "Dog(name='Rex')" }, "output": "", "description": "Create Dog instance -- inherits __init__ from Animal" },
-        { "line": 10, "variables": { "d": "Dog(name='Rex')" }, "output": "Rex says Woof!", "description": "Dog.speak() overrides Animal.speak()" },
-        { "line": 11, "variables": { "d": "Dog(name='Rex')" }, "output": "Rex says Woof!\nRex", "description": "d.name inherited from Animal.__init__" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define parent class Animal with name and speak()"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "description": "Define Dog that inherits from Animal"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "d": "Dog(name='Rex')"
+          },
+          "output": "",
+          "description": "Create Dog instance -- inherits __init__ from Animal"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "d": "Dog(name='Rex')"
+          },
+          "output": "Rex says Woof!",
+          "description": "Dog.speak() overrides Animal.speak()"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "d": "Dog(name='Rex')"
+          },
+          "output": "Rex says Woof!\nRex",
+          "description": "d.name inherited from Animal.__init__"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "animal", "label": "Animal (parent)", "type": "start" },
-        { "id": "init", "label": "__init__(name)", "type": "process" },
-        { "id": "dog", "label": "Dog(Animal) inherits", "type": "process" },
-        { "id": "override", "label": "Dog.speak() overrides", "type": "process" },
-        { "id": "super", "label": "super().__init__(name)", "type": "process" },
-        { "id": "end", "label": "Instance ready", "type": "end" }
+        {
+          "id": "animal",
+          "label": "Animal (parent)",
+          "type": "start"
+        },
+        {
+          "id": "init",
+          "label": "__init__(name)",
+          "type": "process"
+        },
+        {
+          "id": "dog",
+          "label": "Dog(Animal) inherits",
+          "type": "process"
+        },
+        {
+          "id": "override",
+          "label": "Dog.speak() overrides",
+          "type": "process"
+        },
+        {
+          "id": "super",
+          "label": "super().__init__(name)",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Instance ready",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "animal", "to": "init" },
-        { "from": "init", "to": "dog" },
-        { "from": "dog", "to": "override" },
-        { "from": "dog", "to": "super" },
-        { "from": "override", "to": "end" },
-        { "from": "super", "to": "end" }
+        {
+          "from": "animal",
+          "to": "init"
+        },
+        {
+          "from": "init",
+          "to": "dog"
+        },
+        {
+          "from": "dog",
+          "to": "override"
+        },
+        {
+          "from": "dog",
+          "to": "super"
+        },
+        {
+          "from": "override",
+          "to": "end"
+        },
+        {
+          "from": "super",
+          "to": "end"
+        }
       ],
-      "executionPath": ["animal", "init", "dog", "super", "override", "end"],
-      "variables": { "self.name": "Rex" },
+      "executionPath": [
+        "animal",
+        "init",
+        "dog",
+        "super",
+        "override",
+        "end"
+      ],
+      "variables": {
+        "self.name": "Rex"
+      },
       "speed": "normal"
     },
     {
@@ -86,7 +170,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a class 'Vehicle' with attribute 'speed'. Then create 'Car(Vehicle)' that adds attribute 'brand'. Both set up via __init__ using super()."
+        "en": "Create a class 'Vehicle' with attribute 'speed'. Then create 'Car(Vehicle)' that adds attribute 'brand'. Both set up via __init__ using super().",
+        "ta": "'Vehicle' என்ற வகுப்பை உருவாக்கி 'speed' என்ற பண்பைச் சேர்க்கவும். பின்னர் 'Car(Vehicle)' ஐ உருவாக்கி 'brand' என்ற பண்பைச் சேர்க்கவும். இரண்டும் 'super()' ஐப் பயன்படுத்தி __init__ மூலம் அமைக்கவும்."
       },
       "expected_output": "Tesla 120",
       "hints": [

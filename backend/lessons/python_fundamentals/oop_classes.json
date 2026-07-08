@@ -5,7 +5,8 @@
   "module": "oop",
   "order": 1,
   "title": {
-    "en": "Classes: The Cookie Cutter"
+    "en": "Classes: The Cookie Cutter",
+    "ta": "வகுப்புகள்: குக்கி வடிவமைப்பான்"
   },
   "description": {
     "en": "Learn to define classes with __init__ and self — blueprints that stamp out objects with their own attributes and methods."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "oop_inheritance",
   "story_variants": {
-    "en": "## The Cookie Cutter\n\nA **cookie cutter** is a blueprint — use it to stamp out as many cookies as you want. Each cookie is its own object: same shape, but different toppings.\n\nIn Python, a **class** is the cookie cutter; each **instance** is a cookie.\n\n### Anatomy of a Class\n\n| Part | Role | Example |\n|------|------|---------|\n| `class` | define blueprint | `class Dog:` |\n| `__init__` | constructor | sets up attributes |\n| `self` | this instance | `self.name = name` |\n| method | function on instance | `def bark(self):` |\n| attribute | data on instance | `self.name` |\n\n> **self** is always the first parameter of every method. Python passes the instance automatically — you never pass it explicitly.\n\n### Instance vs Class Variables\n- **Instance variable:** `self.name` — unique per object\n- **Class variable:** `Dog.species` — shared by all dogs\n\n### Benefits of OOP\n- Bundle related data + behaviour together\n- Create many independent objects from one template\n- Model real-world entities naturally"
+    "en": "## The Cookie Cutter\n\nA **cookie cutter** is a blueprint — use it to stamp out as many cookies as you want. Each cookie is its own object: same shape, but different toppings.\n\nIn Python, a **class** is the cookie cutter; each **instance** is a cookie.\n\n### Anatomy of a Class\n\n| Part | Role | Example |\n|------|------|---------|\n| `class` | define blueprint | `class Dog:` |\n| `__init__` | constructor | sets up attributes |\n| `self` | this instance | `self.name = name` |\n| method | function on instance | `def bark(self):` |\n| attribute | data on instance | `self.name` |\n\n> **self** is always the first parameter of every method. Python passes the instance automatically — you never pass it explicitly.\n\n### Instance vs Class Variables\n- **Instance variable:** `self.name` — unique per object\n- **Class variable:** `Dog.species` — shared by all dogs\n\n### Benefits of OOP\n- Bundle related data + behaviour together\n- Create many independent objects from one template\n- Model real-world entities naturally",
+    "ta": "## குக்கி கட்டர் (The Cookie Cutter)\n\nஒரு **குக்கி கட்டர்** என்பது ஒரு வடிவமைப்புத் திட்டம் — நீங்கள் விரும்பியவாறு அதிக எண்ணிக்கையிலான குக்கிகளை அச்சிட இதைப் பயன்படுத்தலாம். ஒவ்வொரு குக்கியும் தனித்துவமான பொருள்: ஒரே வடிவம், ஆனால் வெவ்வேறு மேலோடுகள்.\n\nPython-ல், ஒரு **class** (வகுப்பு) என்பது குக்கி கட்டர்; ஒவ்வொரு **instance** (நிகழ்வு) என்பது ஒரு குக்கி.\n\n### ஒரு Class-ன் அமைப்பு (Anatomy of a Class)\n\n| Part | Role | Example |\n|------|------|---------|\n| `class` | வடிவமைப்புத் திட்டத்தை வரையறுக்க | `class Dog:` |\n| `__init__` | கட்டமைப்பாளர் (constructor) | பண்புகளை அமைக்கிறது |\n| `self` | இந்த நிகழ்வு | `self.name = name` |\n| method | நிகழ்வின் மீது உள்ள செயல்பாடு | `def bark(self):` |\n| attribute | நிகழ்வில் உள்ள தரவு | `self.name` |\n\n> **self** என்பது ஒவ்வொரு செயல்பாட்டின் முதல் அளவுரும். Python இந்த நிகழ்வை தானாகவே கடந்து செல்கிறது — நீங்கள் அதை வெளிப்படையாகச் சொல்ல வேண்டியதில்லை.\n\n### Instance vs Class Variables\n- **Instance variable:** `self.name` — ஒவ்வொரு பொருளுக்கும் தனித்துவமானது\n- **Class variable:** `Dog.species` — அனைத்து நாய்களாலும் பகிர்ந்து கொள்ளப்படும்\n\n### OOP-ன் நன்மைகள் (Benefits of OOP)\n- தொடர்புடைய தரவு + நடத்தையை ஒன்றாகச் சேர்க்க\n- ஒரே வார்ப்புருவிலிருந்து பல சுதந்திரமான பொருட்களை உருவாக்க\n- உண்மையான உலக நிகழ்வுகளை இயல்பாக மாதிரியாக்க"
   },
   "animation_sequence": [
     {
@@ -49,32 +51,117 @@
       "type": "ExecutionVisualizer",
       "code": "class Dog:\n    species = 'Canis familiaris'\n    def __init__(self, name, breed):\n        self.name = name\n        self.breed = breed\n    def bark(self):\n        return f'{self.name} says: Woof!'\nrex = Dog('Rex', 'Labrador')\nbella = Dog('Bella', 'Poodle')\nprint(rex.bark())\nprint(bella.name)\nprint(Dog.species)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define the Dog class blueprint" },
-        { "line": 8, "variables": { "rex": "Dog(name='Rex', breed='Labrador')" }, "output": "", "description": "Create rex instance -- __init__ sets name and breed" },
-        { "line": 9, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "", "description": "Create bella instance -- separate object, own attributes" },
-        { "line": 10, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "Rex says: Woof!", "description": "Call rex.bark() -- self refers to rex" },
-        { "line": 11, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "Rex says: Woof!\nBella", "description": "Access bella.name instance attribute" },
-        { "line": 12, "variables": { "rex": "Dog(name='Rex', breed='Labrador')", "bella": "Dog(name='Bella', breed='Poodle')" }, "output": "Rex says: Woof!\nBella\nCanis familiaris", "description": "Access class variable shared by all Dog instances" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define the Dog class blueprint"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "rex": "Dog(name='Rex', breed='Labrador')"
+          },
+          "output": "",
+          "description": "Create rex instance -- __init__ sets name and breed"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "rex": "Dog(name='Rex', breed='Labrador')",
+            "bella": "Dog(name='Bella', breed='Poodle')"
+          },
+          "output": "",
+          "description": "Create bella instance -- separate object, own attributes"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "rex": "Dog(name='Rex', breed='Labrador')",
+            "bella": "Dog(name='Bella', breed='Poodle')"
+          },
+          "output": "Rex says: Woof!",
+          "description": "Call rex.bark() -- self refers to rex"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "rex": "Dog(name='Rex', breed='Labrador')",
+            "bella": "Dog(name='Bella', breed='Poodle')"
+          },
+          "output": "Rex says: Woof!\nBella",
+          "description": "Access bella.name instance attribute"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "rex": "Dog(name='Rex', breed='Labrador')",
+            "bella": "Dog(name='Bella', breed='Poodle')"
+          },
+          "output": "Rex says: Woof!\nBella\nCanis familiaris",
+          "description": "Access class variable shared by all Dog instances"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "class_def", "label": "class Dog (blueprint)", "type": "start" },
-        { "id": "init", "label": "__init__(self, name, breed)", "type": "process" },
-        { "id": "instance", "label": "rex = Dog('Rex', 'Lab')", "type": "process" },
-        { "id": "method", "label": "rex.bark() calls method", "type": "process" },
-        { "id": "result", "label": "Returns 'Rex says: Woof!'", "type": "end" }
+        {
+          "id": "class_def",
+          "label": "class Dog (blueprint)",
+          "type": "start"
+        },
+        {
+          "id": "init",
+          "label": "__init__(self, name, breed)",
+          "type": "process"
+        },
+        {
+          "id": "instance",
+          "label": "rex = Dog('Rex', 'Lab')",
+          "type": "process"
+        },
+        {
+          "id": "method",
+          "label": "rex.bark() calls method",
+          "type": "process"
+        },
+        {
+          "id": "result",
+          "label": "Returns 'Rex says: Woof!'",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "class_def", "to": "init" },
-        { "from": "init", "to": "instance" },
-        { "from": "instance", "to": "method" },
-        { "from": "method", "to": "result" }
+        {
+          "from": "class_def",
+          "to": "init"
+        },
+        {
+          "from": "init",
+          "to": "instance"
+        },
+        {
+          "from": "instance",
+          "to": "method"
+        },
+        {
+          "from": "method",
+          "to": "result"
+        }
       ],
-      "executionPath": ["class_def", "init", "instance", "method", "result"],
-      "variables": { "self.name": "Rex", "self.breed": "Labrador" },
+      "executionPath": [
+        "class_def",
+        "init",
+        "instance",
+        "method",
+        "result"
+      ],
+      "variables": {
+        "self.name": "Rex",
+        "self.breed": "Labrador"
+      },
       "speed": "normal"
     },
     {
@@ -87,7 +174,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a class 'Circle' with an __init__ that takes radius. Add a method 'area' that returns pi * r^2 (use 3.14159 for pi)."
+        "en": "Create a class 'Circle' with an __init__ that takes radius. Add a method 'area' that returns pi * r^2 (use 3.14159 for pi).",
+        "ta": "'Circle' என்ற வகையை உருவாக்கவும், அதற்கு 'radius' என்ற பரிமாணத்தைக் கொண்ட __init__ ஐச் சேர்க்கவும். 'area' என்ற முறையைச் சேர்க்கவும், அது pi * r^2 ஐப் பின்வருமாறு வழங்குகிறது (pi க்கு 3.14159 ஐப் பயன்படுத்தவும்)."
       },
       "expected_output": "78.53975",
       "hints": [

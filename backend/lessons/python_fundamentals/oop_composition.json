@@ -5,7 +5,8 @@
   "module": "oop",
   "order": 5,
   "title": {
-    "en": "Composition: Building with LEGO Bricks"
+    "en": "Composition: Building with LEGO Bricks",
+    "ta": "ஆக்கம்: LEGO செம்பால்களைப் பயன்படுத்தி கட்டுதல்"
   },
   "description": {
     "en": "Learn composition vs inheritance — how to build complex objects by combining simpler ones, like snapping LEGO bricks together."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "fileio_reading",
   "story_variants": {
-    "en": "## Building with LEGO Bricks\n\n**Inheritance** is like buying a pre-assembled kit — you get everything the parent has. **Composition** is like LEGO — you snap together the exact bricks you need.\n\n### The Golden Rule\n> **Favour composition over inheritance**\n\nUse inheritance for strict **is-a** relationships. Use composition for **has-a** relationships.\n\n### Is-a vs Has-a\n\n| Relationship | Approach | Example |\n|--------------|----------|---------|\n| Car **is-a** Vehicle | Inheritance | `class Car(Vehicle)` |\n| Car **has-a** Engine | Composition | `self.engine = Engine()` |\n| Car **has-a** GPS | Composition | `self.gps = GPS()` |\n\n### Why Composition Wins\n- More flexible — swap components at runtime\n- Avoids fragile base class problem\n- Easier to test components in isolation\n- Deep inheritance chains are hard to follow\n\n> **Pattern:** Dependency injection — pass components into `__init__` rather than creating them inside. This makes testing easy and components swappable."
+    "en": "## Building with LEGO Bricks\n\n**Inheritance** is like buying a pre-assembled kit — you get everything the parent has. **Composition** is like LEGO — you snap together the exact bricks you need.\n\n### The Golden Rule\n> **Favour composition over inheritance**\n\nUse inheritance for strict **is-a** relationships. Use composition for **has-a** relationships.\n\n### Is-a vs Has-a\n\n| Relationship | Approach | Example |\n|--------------|----------|---------|\n| Car **is-a** Vehicle | Inheritance | `class Car(Vehicle)` |\n| Car **has-a** Engine | Composition | `self.engine = Engine()` |\n| Car **has-a** GPS | Composition | `self.gps = GPS()` |\n\n### Why Composition Wins\n- More flexible — swap components at runtime\n- Avoids fragile base class problem\n- Easier to test components in isolation\n- Deep inheritance chains are hard to follow\n\n> **Pattern:** Dependency injection — pass components into `__init__` rather than creating them inside. This makes testing easy and components swappable.",
+    "ta": "## லீகோ சிறுகற்களால் கட்டுதல்\n\n**இரசமான்சம் (Inheritance)** என்பது முன்பே அமைக்கப்பட்ட கட்டமைப்பை வாங்குவது போல — நீங்கள் பெற்றோரிடமிருந்து அனைத்தையும் பெறுகிறீர்கள். **கூறமைப்பு (Composition)** என்பது லீகோ போல — நீங்கள் தேவையான சிறுகற்களைச் சேர்த்து இணைக்கிறீர்கள்.\n\n### முக்கிய விதி\n> **கூறமைப்பை இரசமான்சத்திற்கு முன்னுரிமை அளிக்கவும்**\n\nகடுமையான **is-a** உறவுகளுக்கு இரசமான்சத்தைப் பயன்படுத்தவும். **has-a** உறவுகளுக்கு கூறமைப்பைப் பயன்படுத்தவும்.\n\n### Is-a vs Has-a\n\n| உறவு | அணுகுமுறை | எடுத்துக்காட்டு |\n|--------------|----------|---------|\n| Car **is-a** Vehicle | Inheritance | `class Car(Vehicle)` |\n| Car **has-a** Engine | Composition | `self.engine = Engine()` |\n| Car **has-a** GPS | Composition | `self.gps = GPS()` |\n\n### கூறமைப்பு வெற்றி என்ன வெற்றி\n- அதிக வளமானது — இயக்க நேரத்தில் கூறுகளை மாற்றலாம்\n- பலவீனமான அடிப்படை வகுப்பு சிக்கலைத் தவிர்க்கிறது\n- தனித்தனியாக சோதிக்க கூறுகளை எளிதாகச் சோதிக்கலாம்\n- ஆழமான இரசமான்ச வரிசைகள் பின்பற்ற கடினமாக உள்ளன\n\n> **பாட்டின் (Pattern):** சார்பு ஊட்டமளிப்பு (Dependency injection) — `__init__` க்குள் அவற்றை உருவாக்காமல் கூறுகளைச் செலுத்துவது. இது சோதனையை எளிதாக்குகிறது மற்றும் கூறுகளை மாற்றக்கூடியதாக ஆக்குகிறது."
   },
   "animation_sequence": [
     {
@@ -46,34 +48,117 @@
       "type": "ExecutionVisualizer",
       "code": "class Engine:\n    def __init__(self, hp):\n        self.hp = hp\n    def start(self):\n        return f'Engine ({self.hp}hp) started'\nclass GPS:\n    def navigate(self, dest):\n        return f'Navigating to {dest}'\nclass Car:\n    def __init__(self, brand, engine, gps):\n        self.brand = brand\n        self.engine = engine\n        self.gps = gps\nmy_car = Car('Tesla', Engine(300), GPS())\nprint(my_car.engine.start())\nprint(my_car.gps.navigate('Airport'))",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define Engine class with hp attribute" },
-        { "line": 6, "variables": {}, "output": "", "description": "Define GPS class with navigate method" },
-        { "line": 9, "variables": {}, "output": "", "description": "Define Car class using composition (has-a Engine, has-a GPS)" },
-        { "line": 14, "variables": { "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())" }, "output": "", "description": "Create Car by passing composed objects" },
-        { "line": 15, "variables": { "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())" }, "output": "Engine (300hp) started", "description": "Delegate to engine.start() -- composition in action" },
-        { "line": 16, "variables": { "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())" }, "output": "Engine (300hp) started\nNavigating to Airport", "description": "Delegate to gps.navigate() -- components are independent" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Engine class with hp attribute"
+        },
+        {
+          "line": 6,
+          "variables": {},
+          "output": "",
+          "description": "Define GPS class with navigate method"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "",
+          "description": "Define Car class using composition (has-a Engine, has-a GPS)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())"
+          },
+          "output": "",
+          "description": "Create Car by passing composed objects"
+        },
+        {
+          "line": 15,
+          "variables": {
+            "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())"
+          },
+          "output": "Engine (300hp) started",
+          "description": "Delegate to engine.start() -- composition in action"
+        },
+        {
+          "line": 16,
+          "variables": {
+            "my_car": "Car(brand='Tesla', engine=Engine(300), gps=GPS())"
+          },
+          "output": "Engine (300hp) started\nNavigating to Airport",
+          "description": "Delegate to gps.navigate() -- components are independent"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "car", "label": "Car (composed object)", "type": "start" },
-        { "id": "engine", "label": "self.engine = Engine(300)", "type": "process" },
-        { "id": "gps", "label": "self.gps = GPS()", "type": "process" },
-        { "id": "delegate_e", "label": "car.engine.start()", "type": "process" },
-        { "id": "delegate_g", "label": "car.gps.navigate()", "type": "process" },
-        { "id": "end", "label": "Flexible: swap components anytime", "type": "end" }
+        {
+          "id": "car",
+          "label": "Car (composed object)",
+          "type": "start"
+        },
+        {
+          "id": "engine",
+          "label": "self.engine = Engine(300)",
+          "type": "process"
+        },
+        {
+          "id": "gps",
+          "label": "self.gps = GPS()",
+          "type": "process"
+        },
+        {
+          "id": "delegate_e",
+          "label": "car.engine.start()",
+          "type": "process"
+        },
+        {
+          "id": "delegate_g",
+          "label": "car.gps.navigate()",
+          "type": "process"
+        },
+        {
+          "id": "end",
+          "label": "Flexible: swap components anytime",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "car", "to": "engine" },
-        { "from": "car", "to": "gps" },
-        { "from": "engine", "to": "delegate_e" },
-        { "from": "gps", "to": "delegate_g" },
-        { "from": "delegate_e", "to": "end" },
-        { "from": "delegate_g", "to": "end" }
+        {
+          "from": "car",
+          "to": "engine"
+        },
+        {
+          "from": "car",
+          "to": "gps"
+        },
+        {
+          "from": "engine",
+          "to": "delegate_e"
+        },
+        {
+          "from": "gps",
+          "to": "delegate_g"
+        },
+        {
+          "from": "delegate_e",
+          "to": "end"
+        },
+        {
+          "from": "delegate_g",
+          "to": "end"
+        }
       ],
-      "executionPath": ["car", "engine", "delegate_e", "end"],
+      "executionPath": [
+        "car",
+        "engine",
+        "delegate_e",
+        "end"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -87,7 +172,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create classes 'Battery' (with capacity) and 'Phone' (with brand) where Phone HAS-A Battery. Phone.info() returns 'Brand: X, Battery: Ymah'."
+        "en": "Create classes 'Battery' (with capacity) and 'Phone' (with brand) where Phone HAS-A Battery. Phone.info() returns 'Brand: X, Battery: Ymah'.",
+        "ta": "'Battery' (capacity உடன்) மற்றும் 'Phone' (brand உடன்) வகுப்புகளை உருவாக்கவும் இங்கே 'Phone' ஒரு 'Battery' ஐ கொண்டுள்ளது. 'Phone.info()' 'Brand: X, Battery: Ymah' ஐ திரும்பப் பெறும்."
       },
       "expected_output": "Brand: Apple, Battery: 3000mah",
       "hints": [
