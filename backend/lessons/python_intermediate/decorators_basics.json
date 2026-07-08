@@ -322,7 +322,7 @@
         "ta": "'logger' என்ற decorator உருவாக்குங்கள் — செயல்பாடு இயங்கும் முன் 'Calling <function_name>' அச்சிடும், பின் 'Done with <function_name>' அச்சிடும்."
       },
       "starter_code": "import functools\n\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        # print Calling message\n        # call original function\n        # print Done message\n        # return result\n        pass\n    return wrapper\n\n@logger\ndef greet(name):\n    return f'Hello, {name}!'\n\nresult = greet('Vaathiyaar')\nprint(result)",
-      "expected_output": "Calling greet\nDone with greet\nHello, Vaathiyaar!",
+      "expected_output": "Calling greet\nHello, Vaathiyaar!\nDone with greet",
       "hints": {
         "en": [
           "print(f'Calling {func.__name__}')",
