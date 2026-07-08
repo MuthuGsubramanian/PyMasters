@@ -283,7 +283,8 @@
         "en": "Create a list of 3 product dictionaries with 'name' and 'price' keys. Write them to a JSON file, then read back and print the most expensive product.",
         "ta": "'name' மற்றும் 'price' keys உடன் 3 product dictionaries பட்டியல் உருவாக்குங்கள். JSON file-ல் எழுதி, மீண்டும் படித்து மிகவும் விலையுயர்ந்த product-ஐ அச்சிடுங்கள்.",
         "te": "'పేరు' మరియు 'ధర' కీలతో 3 ఉత్పత్తి నిఘంటువుల జాబితాను సృష్టించండి. వాటిని JSON ఫైల్కు వ్రాసి, తరువాత చదవడం మరియు ఖరీదైన ఉత్పత్తిని ముద్రించడం.",
-        "ml": "'നാമം' ഉം 'വില' കീകളും ഉപയോഗിച്ച് 3 ഉൽപ്പന്ന നിഘണ്ടുക്കളുടെ ഒരു ലിസ്റ്റ് സൃഷ്ടിക്കുക. അവയെ ഒരു JSON ഫയലിലേക്ക് എഴുതുക, തുടർന്ന് ഏറ്റവും ചെലവേറിയ ഉൽപ്പന്നം വായിച്ച് അച്ചടിക്കുക."
+        "ml": "'നാമം' ഉം 'വില' കീകളും ഉപയോഗിച്ച് 3 ഉൽപ്പന്ന നിഘണ്ടുക്കളുടെ ഒരു ലിസ്റ്റ് സൃഷ്ടിക്കുക. അവയെ ഒരു JSON ഫയലിലേക്ക് എഴുതുക, തുടർന്ന് ഏറ്റവും ചെലവേറിയ ഉൽപ്പന്നം വായിച്ച് അച്ചടിക്കുക.",
+        "fr": "Créez une liste de 3 dictionnaires de produits avec les clés \"nom\" et \"prix\". Écrivez-les dans un fichier JSON, puis lisez-le et imprimez le produit le plus cher."
       },
       "starter_code": "import json\n\nproducts = [\n    {'name': 'Laptop', 'price': 999},\n    {'name': 'Mouse', 'price': 29},\n    {'name': 'Keyboard', 'price': 79}\n]\n\nwith open('products.json', 'w') as f:\n    json.dump(products, f, indent=2)\n\nwith open('products.json') as f:\n    loaded = json.load(f)\n\nexpensive = max(loaded, key=lambda p: p['price'])\nprint(f'Most expensive: {expensive[\"name\"]} (${expensive[\"price\"]})')",
       "expected_output": "Most expensive: Laptop ($999)",
