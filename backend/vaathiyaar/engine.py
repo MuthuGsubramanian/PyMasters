@@ -195,7 +195,10 @@ def _qubrid_payload(messages: list, options: dict, stream: bool) -> dict:
         "temperature": options.get("temperature", 0.7),
         "top_p": 1,
         "stream": stream,
-        "enable_thinking": True,
+        # False on purpose (2026-07-08): GLM-4.7-Flash reasoning consumed the
+        # entire max_tokens budget on long Vaathiyaar prompts, returning empty
+        # content and failing every qubrid call. We need the JSON answer only.
+        "enable_thinking": False,
     }
 
 
