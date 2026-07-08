@@ -78,15 +78,25 @@ def translate_text(text: str, target_lang: str, kind: str = "story") -> str:
         return text
     if target_lang == "en":
         return text
-    if kind != "story" or "```" not in text:
+    if kind != "story":
         return _translate_chunk(text, target_lang, kind)
+    # Always route stories through the fence-split loop — with no fences it's a
+    # single prose chunk, which still gets the hallucinated-fence guard below.
     parts = _FENCE.split(text)
     out = []
     for part in parts:
         if part.startswith("```"):
             out.append(part)                       # code block verbatim
         elif part.strip():
-            out.append(_translate_chunk(part, target_lang, kind))
+            translated = _translate_chunk(part, target_lang, kind)
+            # Prose chunks sit BETWEEN code fences, so they contain no ``` by
+            # construction. GLM occasionally hallucinates a burst of stray ```
+            # fences into translated prose (one lesson came back with 81 of them,
+            # 2026-07-08), which corrupts the Markdown. Strip fences the source
+            # chunk never had.
+            if "```" in translated and "```" not in part:
+                translated = translated.replace("```", "")
+            out.append(translated)
         else:
             out.append(part)                       # whitespace between segments
     return "".join(out)
