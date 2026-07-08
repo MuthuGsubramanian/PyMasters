@@ -121,3 +121,15 @@ def test_complete_falls_back_to_qubrid_when_earlier_providers_fail(monkeypatch):
     monkeypatch.setattr(engine, "QUBRID_API_KEY", "test-key")
     monkeypatch.setattr(requests, "post", lambda *a, **k: _FakeResp(_openai_body("RESCUED")))
     assert engine.complete([{"role": "user", "content": "x"}], {}) == "RESCUED"
+
+
+def test_qubrid_payload_disables_thinking():
+    """Regression (2026-07-08 live outage): with enable_thinking=True,
+    GLM-4.7-Flash spent the whole 1500-token budget on reasoning_content and
+    returned empty content for real Vaathiyaar prompts, so _qubrid_complete
+    raised 'empty completion content' on every call and the chain failed over.
+    Vaathiyaar needs the JSON answer, not the model's reasoning."""
+    payload = engine._qubrid_payload([{"role": "user", "content": "hi"}], {}, stream=False)
+    assert payload["enable_thinking"] is False
+    payload_s = engine._qubrid_payload([{"role": "user", "content": "hi"}], {}, stream=True)
+    assert payload_s["enable_thinking"] is False
