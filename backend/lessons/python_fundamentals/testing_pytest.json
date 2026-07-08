@@ -5,7 +5,8 @@
   "module": "testing",
   "order": 1,
   "title": {
-    "en": "pytest: The Quality Inspector"
+    "en": "pytest: The Quality Inspector",
+    "ta": "pytest: தரப்பாதுகாவலர்"
   },
   "description": {
     "en": "Learn pytest basics — writing test functions, assertions, fixtures, and running your test suite with confidence."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "testing_tdd",
   "story_variants": {
-    "en": "## The Quality Inspector\n\nA factory **quality inspector** checks every product on the line: does it meet spec? If one fails, the alarm rings immediately — no broken products reach customers.\n\n**pytest** is your code's quality inspector: run it, and failing code is caught before it ships.\n\n### Writing Tests\n\n```python\n# test_math.py\ndef test_addition():\n    assert 1 + 1 == 2\n\ndef test_division():\n    assert 10 / 2 == 5.0\n```\n\nRun with: `pytest test_math.py`\n\n### pytest Rules\n\n| Rule | Example |\n|------|---------|\n| File name | `test_*.py` or `*_test.py` |\n| Function name | `def test_*():` |\n| Assertion | plain `assert` |\n| Expected error | `pytest.raises(ValueError)` |\n\n### Fixtures — Shared Setup\n```python\n@pytest.fixture\ndef sample_list():\n    return [1, 2, 3]\n\ndef test_len(sample_list):\n    assert len(sample_list) == 3\n```\n\n> **Power of pytest:** When an assertion fails, pytest shows you *exactly* what the left and right sides were — far more useful than a bare `AssertionError`."
+    "en": "## The Quality Inspector\n\nA factory **quality inspector** checks every product on the line: does it meet spec? If one fails, the alarm rings immediately — no broken products reach customers.\n\n**pytest** is your code's quality inspector: run it, and failing code is caught before it ships.\n\n### Writing Tests\n\n```python\n# test_math.py\ndef test_addition():\n    assert 1 + 1 == 2\n\ndef test_division():\n    assert 10 / 2 == 5.0\n```\n\nRun with: `pytest test_math.py`\n\n### pytest Rules\n\n| Rule | Example |\n|------|---------|\n| File name | `test_*.py` or `*_test.py` |\n| Function name | `def test_*():` |\n| Assertion | plain `assert` |\n| Expected error | `pytest.raises(ValueError)` |\n\n### Fixtures — Shared Setup\n```python\n@pytest.fixture\ndef sample_list():\n    return [1, 2, 3]\n\ndef test_len(sample_list):\n    assert len(sample_list) == 3\n```\n\n> **Power of pytest:** When an assertion fails, pytest shows you *exactly* what the left and right sides were — far more useful than a bare `AssertionError`.",
+    "ta": "## தரப் பரிசோதகர்\n\nஒரு தொழிற்சாலை **தரப் பரிசோதகர்** வரிசையில் உள்ள ஒவ்வொரு தயாரிப்பையும் சரிபார்க்கிறார்: அது தரக்குறிப்புடன் இருக்கிறதா? ஒன்று தோல்வியடைந்தால், அலாரம் உடனடியாக ஒலிக்கும் — வாடிக்கையாளர்களுக்கு சிதைந்த தயாரிப்புகள் எதுவும் செல்லாது.\n\n**pytest** உங்கள் குறியீட்டின் தரப் பரிசோதகர்: அதை இயக்குங்கள், மற்றும் அது வெளியேறுவதற்கு முன்பு தோல்வியடைந்த குறியீடுகள் பிடிக்கப்படும்.\n\n### சோதனைகளை எழுதுதல்\n\n```python\n# test_math.py\ndef test_addition():\n    assert 1 + 1 == 2\n\ndef test_division():\n    assert 10 / 2 == 5.0\n```\n\nஇதை இயக்க: `pytest test_math.py`\n\n### pytest விதிமுறைகள்\n\n| விதி | எடுத்துக்காட்டு |\n|------|---------|\n| கோப்பு பெயர் | `test_*.py` அல்லது `*_test.py` |\n| செயல்பாட்டு பெயர் | `def test_*():` |\n| கூற்று | எளிய `assert` |\n| எதிர்பார்க்கப்படும் பிழை | `pytest.raises(ValueError)` |\n\n### சாதனங்கள் — பகிரப்பட்ட அமைப்பு\n```python\n@pytest.fixture\ndef sample_list():\n    return [1, 2, 3]\n\ndef test_len(sample_list):\n    assert len(sample_list) == 3\n```\n\n> **pytest ஆற்றல்:** ஒரு கூற்று தோல்வியடைந்தால், pytest உங்களுக்கு *துல்லியமாக* இடது மற்றும் வலது பக்கங்கள் என்ன என்பதைக் காட்டுகிறது — ஒரு தனிப்பட்ட `AssertionError` க்கு விட மிகவும் பயனுள்ளது."
   },
   "animation_sequence": [
     {
@@ -42,12 +44,42 @@
       "type": "ExecutionVisualizer",
       "code": "def add(a, b):\n    return a + b\ndef test_add_positive():\n    assert add(2, 3) == 5\ndef test_add_negative():\n    assert add(-1, 1) == 0\ntest_add_positive()\ntest_add_negative()\nprint('All tests passed!')",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define the add function" },
-        { "line": 3, "variables": {}, "output": "", "description": "Define test for positive numbers" },
-        { "line": 5, "variables": {}, "output": "", "description": "Define test for negative numbers" },
-        { "line": 7, "variables": {}, "output": "", "description": "Run test_add_positive: add(2,3)=5, assert 5==5 passes" },
-        { "line": 8, "variables": {}, "output": "", "description": "Run test_add_negative: add(-1,1)=0, assert 0==0 passes" },
-        { "line": 9, "variables": {}, "output": "All tests passed!", "description": "Both assertions passed -- no errors raised" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define the add function"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "description": "Define test for positive numbers"
+        },
+        {
+          "line": 5,
+          "variables": {},
+          "output": "",
+          "description": "Define test for negative numbers"
+        },
+        {
+          "line": 7,
+          "variables": {},
+          "output": "",
+          "description": "Run test_add_positive: add(2,3)=5, assert 5==5 passes"
+        },
+        {
+          "line": 8,
+          "variables": {},
+          "output": "",
+          "description": "Run test_add_negative: add(-1,1)=0, assert 0==0 passes"
+        },
+        {
+          "line": 9,
+          "variables": {},
+          "output": "All tests passed!",
+          "description": "Both assertions passed -- no errors raised"
+        }
       ],
       "speed": "normal"
     },
@@ -61,7 +93,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write three test functions for a 'multiply(a, b)' function: test positive, test zero, and test negative numbers."
+        "en": "Write three test functions for a 'multiply(a, b)' function: test positive, test zero, and test negative numbers.",
+        "ta": "ஒரு 'multiply(a, b)' செயல்பாட்டிற்கு மூன்று சோதனை செயல்பாடுகளை எழுதுங்கள்: சோதனை நேர்மறை, சோதனை பூஜ்யம், மற்றும் சோதனை எதிர்மறை எண்கள்."
       },
       "expected_output": "All 3 tests pass",
       "hints": [
