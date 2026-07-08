@@ -196,11 +196,19 @@ def save_and_create_pr(lesson: dict, source_item: dict) -> str | None:
             run(["git", "checkout", "main"])
             return None
 
-        # Push
-        result = run(["git", "push", "-u", "origin", branch_name])
+        # Push WITHOUT -u/--set-upstream. `-u` writes a persistent
+        # [branch "pipeline/lesson-<id>"] tracking section into .git/config on
+        # every run; across 100+ generated lessons that bloated the config and
+        # — when one non-atomic config write collided with the concurrent
+        # auto-push git process — left the file truncated mid-section, which
+        # broke `git config` parsing and stalled the whole deploy pipeline
+        # (2026-07-02). The PR is created from the pushed REMOTE branch, so no
+        # local upstream tracking is needed.
+        result = run(["git", "push", "origin", branch_name])
         if result.returncode != 0:
             log.error(f"Push failed: {result.stderr}")
             run(["git", "checkout", "main"])
+            run(["git", "branch", "-D", branch_name])  # don't leave a dangling local branch
             return None
 
         # Create PR
@@ -248,8 +256,12 @@ def save_and_create_pr(lesson: dict, source_item: dict) -> str | None:
             capture_output=True, text=True, timeout=30,
         )
 
-        # Return to main
+        # Return to main and delete the now-pushed local branch. The PR lives
+        # on the remote (--head branch_name), so the local branch is disposable;
+        # deleting it keeps .git/refs/heads and .git/config from accumulating one
+        # entry per generated lesson.
         run(["git", "checkout", "main"])
+        run(["git", "branch", "-D", branch_name])
 
         if result.returncode == 0:
             pr_url = result.stdout.strip()
@@ -261,10 +273,15 @@ def save_and_create_pr(lesson: dict, source_item: dict) -> str | None:
 
     except Exception as e:
         log.error(f"Git/PR workflow failed: {e}")
-        # Try to return to main
+        # Try to return to main and drop any half-created local branch so a
+        # mid-flow failure doesn't leave refs/config accumulating.
         try:
             subprocess.run(
                 ["git", "checkout", "main"],
+                capture_output=True, text=True, timeout=10, cwd=repo_root,
+            )
+            subprocess.run(
+                ["git", "branch", "-D", branch_name],
                 capture_output=True, text=True, timeout=10, cwd=repo_root,
             )
         except Exception:
