@@ -308,7 +308,8 @@
         "ml": "'abc' എന്ന പ്രതീകവും '123' എന്ന അക്കവും ഉപയോഗിച്ച് സാധ്യമായ എല്ലാ 2 പ്രതീക പാസ്വേഡുകളും സൃഷ്ടിക്കാൻ itertools.product ഉപയോഗിക്കുക. ആകെ എണ്ണം, ആദ്യ 5 പാസ്വേഡുകൾ എന്നിവ പ്രിന്റ് ചെയ്യുക.",
         "fr": "Utilisez itertools.product pour générer tous les mots de passe de 2 caractères possibles à partir des caractères \"abc\" et des chiffres \"123\". Imprimez le nombre total et les 5 premiers mots de passe.",
         "es": "Utilice itertools.product para generar todas las posibles contraseñas de 2 caracteres a partir de los caracteres 'abc' y los dígitos '123'. Imprime el recuento total y las primeras 5 contraseñas.",
-        "it": "Utilizzare itertools.product per generare tutte le possibili password a 2 caratteri dai caratteri 'abc' e dai numeri '123'."
+        "it": "Utilizzare itertools.product per generare tutte le possibili password a 2 caratteri dai caratteri 'abc' e dai numeri '123'.",
+        "ko": "itertools.product을 사용하여 가능한 2자 암호를 abc와 123자에서 생성합니다. 전체 수와 첫 5개의 암호를 인쇄합니다."
       },
       "starter_code": "from itertools import product, islice\n\nchars = 'abc'\ndigits = '123'\npasswords = [''.join(p) for p in product(chars, digits)]\nprint(f'Total: {len(passwords)}')\nprint(f'First 5: {passwords[:5]}')",
       "expected_output": "Total: 9\nFirst 5: ['a1', 'a2', 'a3', 'b1', 'b2']",

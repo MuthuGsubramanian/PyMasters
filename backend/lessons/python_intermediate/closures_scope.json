@@ -408,7 +408,8 @@
         "ml": "ഒരു ഫംഗ്ഷൻ മടക്കിനൽകുന്ന ഒരു അടയ്ക്കൽ make_accumulator ((initial) സൃഷ്ടിക്കുക. മടക്കിനൽകിയ ഫംഗ്ഷനിലേക്ക് ഓരോ കോൾ നൽകിയിട്ടുള്ള മൂല്യം ഒരു പ്രവർത്തിക്കുന്ന മൊത്തം മൂല്യം ചേർക്കുന്നു. 100 ൽ ആരംഭിച്ച് 10, 20, 30 ചേർക്കുക.",
         "fr": "Créer un clôture make_accumulator(initial) qui renvoie une fonction. Chaque appel à la fonction renvoyé ajoute la valeur donnée à un total en cours d'exécution. Commencez par 100 et ajoutez 10, 20, 30.",
         "es": "Crear un cierre make_accumulator(initial) que devuelve una función. Cada llamada a la función devuelta añade el valor dado a un total en ejecución. Comience con 100 y agregue 10, 20, 30.",
-        "it": "Crea un chiusura make_accumulator(initial) che restituisce una funzione. Ogni chiamata alla funzione restituita aggiunge il valore dato a un totale in esecuzione. Inizia con 100 e aggiungi 10, 20, 30."
+        "it": "Crea un chiusura make_accumulator(initial) che restituisce una funzione. Ogni chiamata alla funzione restituita aggiunge il valore dato a un totale in esecuzione. Inizia con 100 e aggiungi 10, 20, 30.",
+        "ko": "함수를 반환하는 종료 make_accumulator (start) 를 생성합니다. 반환 함수에 대한 각 호출은 주어진 값을 실행 총에 추가합니다. 100에서 시작하여 10, 20, 30을 추가합니다."
       },
       "starter_code": "def make_accumulator(initial):\n    total = initial\n    def add(value):\n        nonlocal total\n        total += value\n        return total\n    return add\n\nacc = make_accumulator(100)\nprint(acc(10))   # 110\nprint(acc(20))   # 130\nprint(acc(30))   # 160",
       "expected_output": "110\n130\n160",

@@ -280,7 +280,8 @@
         "ml": "'2025-01-01' എന്നും '2025-12-31' എന്നും രണ്ടു തീയതികൾക്കിടയിൽ എത്ര ദിവസം ഉണ്ടെന്ന് കണക്കാക്കുക. രണ്ട് സ്ട്രിംഗുകളും strptime ഉപയോഗിച്ച് വിശകലനം ചെയ്ത് ദിവസങ്ങളിലെ വ്യത്യാസം പ്രിന്റ് ചെയ്യുക.",
         "fr": "Calculer le nombre de jours entre deux dates: '2025-01-01' et '2025-12-31'. Parser les deux chaînes avec strptime et imprimer la différence de jours.",
         "es": "Calcule cuántos días hay entre dos fechas: '2025-01-01' y '2025-12-31'.",
-        "it": "Calcolare quanti giorni sono tra due date: '2025-01-01' e '2025-12-31'. Parare entrambe le stringhe con strptime e stampare la differenza di giorni."
+        "it": "Calcolare quanti giorni sono tra due date: '2025-01-01' e '2025-12-31'. Parare entrambe le stringhe con strptime e stampare la differenza di giorni.",
+        "ko": "'2025-01-01'와 '2025-12-31' 두 날짜 사이에 몇 날인지 계산한다. 두 문자열을 strptime로 분석하고 일차를 인쇄한다."
       },
       "starter_code": "from datetime import datetime\n\ndate1 = datetime.strptime('2025-01-01', '%Y-%m-%d')\ndate2 = datetime.strptime('2025-12-31', '%Y-%m-%d')\n\ndiff = date2 - date1\nprint(f'Days between: {diff.days}')",
       "expected_output": "Days between: 364",

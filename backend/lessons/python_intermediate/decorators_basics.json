@@ -330,7 +330,8 @@
         "ml": "ഫംഗ്ഷൻ പ്രവർത്തിക്കുന്നതിന് മുമ്പ് 'Calling <function_name>' പ്രിന്റ് ചെയ്യുന്നതും അതിനുശേഷം 'Done with <function_name>' പ്രിന്റ് ചെയ്യുന്നതും 'logger' എന്ന് വിളിക്കുന്ന ഒരു ഡെക്കറേറ്റർ സൃഷ്ടിക്കുക. @functools.wraps ഉപയോഗിക്കുക. ഒരു greet(name) ഫംഗ്ഷനിൽ പ്രയോഗിക്കുക.",
         "fr": "Créer un décorateur appelé \"logger\" qui imprime \"Calling <function_name>\" avant l'exécution de la fonction et \"Done with <function_name>\" après. Utilisez @functools.wraps. Appliquez-le à une fonction greet(nom).",
         "es": "Crear un decorador llamado 'logger' que imprime 'Calling <function_name>' antes de que la función se ejecute y 'Done with <function_name>' después. Utilice @functools.wraps. Aplique en una función de saludos(nombre).",
-        "it": "Crea un decoratore chiamato 'logger' che stampa 'Calling <function_name>' prima che la funzione esegui e 'Done with <function_name>' dopo. Utilizzare @functools.wraps. Applicarlo a una funzione greet(name)."
+        "it": "Crea un decoratore chiamato 'logger' che stampa 'Calling <function_name>' prima che la funzione esegui e 'Done with <function_name>' dopo. Utilizzare @functools.wraps. Applicarlo a una funzione greet(name).",
+        "ko": "'logger'라는 디코레이터를 생성하여 함수가 실행되기 전에 'Calling <function_name>'를 인쇄하고 'Done with <function_name>'를 종료합니다. @functools.wraps를 사용하십시오. greet(name) 함수에 적용하십시오."
       },
       "starter_code": "import functools\n\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        # print Calling message\n        # call original function\n        # print Done message\n        # return result\n        pass\n    return wrapper\n\n@logger\ndef greet(name):\n    return f'Hello, {name}!'\n\nresult = greet('Vaathiyaar')\nprint(result)",
       "expected_output": "Calling greet\nHello, Vaathiyaar!\nDone with greet",
