@@ -355,3 +355,15 @@ class TestParsePlainTextFallback:
         result = parse_vaathiyaar_response("   \n   ")
         assert isinstance(result, dict)
         assert "message" in result
+
+
+def test_prompt_never_leaks_name_placeholder():
+    """Regression (2026-07-08 live E2E): VAATHIYAAR_IDENTITY's example phrases
+    contain literal {name} tokens; the assembled prompt shipped them verbatim,
+    so the model greeted real users with "Good morning, {name}!". The builder
+    must substitute the resolved display name everywhere."""
+    named = build_system_prompt(student_profile={"name": "Muthu"})
+    assert "{name}" not in named
+    assert "Muthu" in named
+    anonymous = build_system_prompt(student_profile={})
+    assert "{name}" not in anonymous
