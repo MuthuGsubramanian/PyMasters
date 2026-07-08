@@ -303,7 +303,8 @@
     {
       "instruction": {
         "en": "Use itertools.product to generate all possible 2-character passwords from the characters 'abc' and digits '123'. Print the total count and first 5 passwords.",
-        "ta": "'abc' எழுத்துகள் மற்றும் '123' இலக்கங்களிலிருந்து itertools.product பயன்படுத்தி அனைத்து 2-எழுத்து கடவுச்சொற்களையும் உருவாக்குங்கள்."
+        "ta": "'abc' எழுத்துகள் மற்றும் '123' இலக்கங்களிலிருந்து itertools.product பயன்படுத்தி அனைத்து 2-எழுத்து கடவுச்சொற்களையும் உருவாக்குங்கள்.",
+        "te": "'abc' అక్షరాలు మరియు '123' అంకెల నుండి సాధ్యమైన అన్ని 2-అక్షర పాస్వర్డ్లను ఉత్పత్తి చేయడానికి itertools.product ను ఉపయోగించండి. మొత్తం సంఖ్య మరియు మొదటి 5 పాస్వర్డ్లను ప్రింట్ చేయండి."
       },
       "starter_code": "from itertools import product, islice\n\nchars = 'abc'\ndigits = '123'\npasswords = [''.join(p) for p in product(chars, digits)]\nprint(f'Total: {len(passwords)}')\nprint(f'First 5: {passwords[:5]}')",
       "expected_output": "Total: 9\nFirst 5: ['a1', 'a2', 'a3', 'b1', 'b2']",

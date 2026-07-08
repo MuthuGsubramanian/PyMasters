@@ -331,7 +331,8 @@
     {
       "instruction": {
         "en": "Create a @dataclass called Book with title (str), author (str), pages (int), and price (float). Add a __post_init__ that sets a 'reading_time' field (pages / 30 hours). Create two books and print them.",
-        "ta": "title, author, pages, price உடன் Book @dataclass உருவாக்குங்கள். __post_init__-ல் 'reading_time' (pages / 30 hours) field அமையுங்கள்."
+        "ta": "title, author, pages, price உடன் Book @dataclass உருவாக்குங்கள். __post_init__-ல் 'reading_time' (pages / 30 hours) field அமையுங்கள்.",
+        "te": "పేరు (str), రచయిత (str), పేజీలు (int), మరియు ధర (float) తో పుస్తకం అని పిలువబడే @dataclass ను సృష్టించండి. 'రీడింగ్_టైమ్' ఫీల్డ్ (పేజీలు / 30 గంటలు) ను సెట్ చేసే __post_init__ ను జోడించండి. రెండు పుస్తకాలను సృష్టించండి మరియు వాటిని ముద్రించండి."
       },
       "starter_code": "from dataclasses import dataclass, field\n\n@dataclass\nclass Book:\n    title: str\n    author: str\n    pages: int\n    price: float\n    reading_time: float = field(init=False)\n\n    def __post_init__(self):\n        self.reading_time = round(self.pages / 30, 1)\n\nb1 = Book('Python Mastery', 'Vaathiyaar', 450, 29.99)\nb2 = Book('Short Stories', 'Author B', 90, 9.99)\nprint(b1)\nprint(f'{b2.title}: ~{b2.reading_time}h to read')",
       "expected_output": "Book(title='Python Mastery', author='Vaathiyaar', pages=450, price=29.99, reading_time=15.0)\nShort Stories: ~3.0h to read",
