@@ -5,7 +5,8 @@
   "module": "data_structures",
   "order": 5,
   "title": {
-    "en": "Nested Structures: The Organization Chart"
+    "en": "Nested Structures: The Organization Chart",
+    "ta": "உள்ளமைக்கப்பட்ட அமைப்புகள்: அமைப்பு வரைபடம்"
   },
   "description": {
     "en": "Work with nested lists, dicts, and mixed structures to represent real-world data like JSON records and hierarchical data."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "oop_classes",
   "story_variants": {
-    "en": "## The Organization Chart\n\nA company org chart is **nested**: the CEO has departments, each department has teams, each team has employees. Real data is rarely flat.\n\nPython lets you nest any data structures inside each other.\n\n### Common Nested Patterns\n\n| Structure | Example |\n|-----------|---------|\n| List of dicts | `[{'name': 'Alice'}, {'name': 'Bob'}]` |\n| Dict of lists | `{'math': [90, 85], 'english': [78, 92]}` |\n| Dict of dicts | `{'user1': {'age': 25, 'city': 'NYC'}}` |\n| Mixed | JSON API responses |\n\n### Accessing Nested Data\n```python\ndata['users'][0]['name']   # chain indexing\n```\n\n> **Tip:** Use `.get()` at each level to avoid KeyErrors when navigating uncertain structures: `data.get('users', [])` before indexing.\n\n### Real-World Example\nJSON from a web API is nested dicts and lists. Understanding nested structures means you can parse any API response or config file."
+    "en": "## The Organization Chart\n\nA company org chart is **nested**: the CEO has departments, each department has teams, each team has employees. Real data is rarely flat.\n\nPython lets you nest any data structures inside each other.\n\n### Common Nested Patterns\n\n| Structure | Example |\n|-----------|---------|\n| List of dicts | `[{'name': 'Alice'}, {'name': 'Bob'}]` |\n| Dict of lists | `{'math': [90, 85], 'english': [78, 92]}` |\n| Dict of dicts | `{'user1': {'age': 25, 'city': 'NYC'}}` |\n| Mixed | JSON API responses |\n\n### Accessing Nested Data\n```python\ndata['users'][0]['name']   # chain indexing\n```\n\n> **Tip:** Use `.get()` at each level to avoid KeyErrors when navigating uncertain structures: `data.get('users', [])` before indexing.\n\n### Real-World Example\nJSON from a web API is nested dicts and lists. Understanding nested structures means you can parse any API response or config file.",
+    "ta": "## நிறுவன அமைப்பு வரைபடம்\n\nஒரு நிறுவன அமைப்பு வரைபடம் **உள்ளடக்கப்பட்டது (nested)**: தலைமை நிர்வாகிக்கு (CEO) துறைகள் உள்ளன, ஒவ்வொரு துறைக்கும் குழுக்கள் உள்ளன, ஒவ்வொரு குழுவுக்கும் ஊழியர்கள் உள்ளன. உண்மையான தரவு அரிதாகவே சமதளமானது (flat).\n\nPython எந்த தரவு அமைப்பையும் ஒன்றிற்குள் உள்ளடக்கப்படுத்த அனுமதிக்கிறது.\n\n### பொதுவான உள்ளடக்கப்பட்ட (Nested) வடிவங்கள்\n\n| அமைப்பு | எடுத்துக்காட்டு |\n|-----------|---------|\n| வரிசையிலான அகராதிகள் (List of dicts) | `[{'name': 'Alice'}, {'name': 'Bob'}]` |\n| அகராதிகளின் வரிசைகள் (Dict of lists) | `{'math': [90, 85], 'english': [78, 92]}` |\n| அகராதிகளின் அகராதிகள் (Dict of dicts) | `{'user1': {'age': 25, 'city': 'NYC'}}` |\n| கலவை (Mixed) | JSON API பதில்கள் |\n\n### உள்ளடக்கப்பட்ட தரவை அணுகுதல்\n```python\ndata['users'][0]['name']   # சங்கிலி அட்டவணைப்படுத்தல் (chain indexing)\n```\n\n> **குறிப்பு:** தெளிவற்ற அமைப்புகளை ஆராயும்போது KeyErrors ஐத் தவிர்க்க, ஒவ்வொரு நிலையிலும் `.get()` ஐப் பயன்படுத்தவும்: அட்டவணைப்படுத்துவதற்கு முன் `data.get('users', [])`.\n\n### உண்மையான உலக எடுத்துக்காட்டு\nவலை API இலிருந்து வரும் JSON உள்ளடக்கப்பட்ட அகராதிகள் மற்றும் வரிசைகள். உள்ளடக்கப்பட்ட அமைப்புகளைப் புரிந்துகொள்வது எந்த API பதிலையும் அல்லது கட்டமைப்பு கோப்பையும் பாகுபடுத்த (parse) உதவுகிறது."
   },
   "animation_sequence": [
     {
@@ -48,12 +50,140 @@
       "type": "ExecutionVisualizer",
       "code": "students = [\n    {'name': 'Alice', 'grade': 90},\n    {'name': 'Bob', 'grade': 85}\n]\nprint(students[0]['name'])\nprint(students[1]['grade'])\nscores = {'math': [90, 85], 'eng': [78, 92]}\navg = sum(scores['eng']) / len(scores['eng'])\nprint(avg)",
       "executionSteps": [
-        { "line": 1, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}] }, "output": "", "description": "Create a list of two student dicts" },
-        { "line": 5, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}] }, "output": "Alice", "description": "Chain indexing: students[0] gets first dict, ['name'] gets 'Alice'" },
-        { "line": 6, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}] }, "output": "Alice\n85", "description": "Access Bob's grade via students[1]['grade']" },
-        { "line": 7, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}], "scores": {"math": [90, 85], "eng": [78, 92]} }, "output": "Alice\n85", "description": "Create a dict of lists -- scores by subject" },
-        { "line": 8, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}], "scores": {"math": [90, 85], "eng": [78, 92]}, "avg": 85.0 }, "output": "Alice\n85", "description": "Calculate average of eng scores: (78+92)/2 = 85.0" },
-        { "line": 9, "variables": { "students": [{"name": "Alice", "grade": 90}, {"name": "Bob", "grade": 85}], "scores": {"math": [90, 85], "eng": [78, 92]}, "avg": 85.0 }, "output": "Alice\n85\n85.0", "description": "Print the average" }
+        {
+          "line": 1,
+          "variables": {
+            "students": [
+              {
+                "name": "Alice",
+                "grade": 90
+              },
+              {
+                "name": "Bob",
+                "grade": 85
+              }
+            ]
+          },
+          "output": "",
+          "description": "Create a list of two student dicts"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "students": [
+              {
+                "name": "Alice",
+                "grade": 90
+              },
+              {
+                "name": "Bob",
+                "grade": 85
+              }
+            ]
+          },
+          "output": "Alice",
+          "description": "Chain indexing: students[0] gets first dict, ['name'] gets 'Alice'"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "students": [
+              {
+                "name": "Alice",
+                "grade": 90
+              },
+              {
+                "name": "Bob",
+                "grade": 85
+              }
+            ]
+          },
+          "output": "Alice\n85",
+          "description": "Access Bob's grade via students[1]['grade']"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "students": [
+              {
+                "name": "Alice",
+                "grade": 90
+              },
+              {
+                "name": "Bob",
+                "grade": 85
+              }
+            ],
+            "scores": {
+              "math": [
+                90,
+                85
+              ],
+              "eng": [
+                78,
+                92
+              ]
+            }
+          },
+          "output": "Alice\n85",
+          "description": "Create a dict of lists -- scores by subject"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "students": [
+              {
+                "name": "Alice",
+                "grade": 90
+              },
+              {
+                "name": "Bob",
+                "grade": 85
+              }
+            ],
+            "scores": {
+              "math": [
+                90,
+                85
+              ],
+              "eng": [
+                78,
+                92
+              ]
+            },
+            "avg": 85.0
+          },
+          "output": "Alice\n85",
+          "description": "Calculate average of eng scores: (78+92)/2 = 85.0"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "students": [
+              {
+                "name": "Alice",
+                "grade": 90
+              },
+              {
+                "name": "Bob",
+                "grade": 85
+              }
+            ],
+            "scores": {
+              "math": [
+                90,
+                85
+              ],
+              "eng": [
+                78,
+                92
+              ]
+            },
+            "avg": 85.0
+          },
+          "output": "Alice\n85\n85.0",
+          "description": "Print the average"
+        }
       ],
       "speed": "normal"
     },
@@ -67,7 +197,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Given a list of product dicts with 'name' and 'price', find the most expensive product's name."
+        "en": "Given a list of product dicts with 'name' and 'price', find the most expensive product's name.",
+        "ta": "ஒரு தயாரிப்பு தரவுத்தொகுப்பில் 'name' மற்றும் 'price' உள்ளவை, மிக விலை உயர்ந்த தயாரிப்பின் பெயரைக் கண்டறியவும்."
       },
       "expected_output": "Laptop",
       "hints": [

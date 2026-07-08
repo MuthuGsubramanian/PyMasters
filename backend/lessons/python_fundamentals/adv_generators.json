@@ -5,7 +5,8 @@
   "module": "advanced",
   "order": 2,
   "title": {
-    "en": "Generators: The On-Demand Vending Machine"
+    "en": "Generators: The On-Demand Vending Machine",
+    "ta": "Generators: The On-Demand Vending Machine"
   },
   "description": {
     "en": "Learn yield and generator expressions — lazy sequences that produce values on demand, saving memory for large datasets."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "adv_iterators",
   "story_variants": {
-    "en": "## The On-Demand Vending Machine\n\nA regular list is like **buying all snacks at once** — you pay upfront, carry them all, even if you only eat one.\n\nA **generator** is a vending machine: it produces one item *on demand*, and only makes the next one when you ask.\n\n### yield vs return\n\n| Feature | `return` | `yield` |\n|---------|----------|---------|\n| Behaviour | exit function | pause, resume later |\n| Memory | all at once | one at a time |\n| Call | returns value | returns generator |\n| Reusable | yes | exhausted after one pass |\n\n### Generator Expression\n```python\n# List comprehension (eager — all in memory)\n[x**2 for x in range(1_000_000)]\n\n# Generator expression (lazy — one at a time)\n(x**2 for x in range(1_000_000))\n```\n\n> **Key insight:** Generators are perfect for large files, infinite sequences, or pipelines — anything too big to hold in memory at once.\n\n### next() and StopIteration\nCall `next(gen)` to get the next value. When exhausted, it raises `StopIteration`. A `for` loop handles this automatically."
+    "en": "## The On-Demand Vending Machine\n\nA regular list is like **buying all snacks at once** — you pay upfront, carry them all, even if you only eat one.\n\nA **generator** is a vending machine: it produces one item *on demand*, and only makes the next one when you ask.\n\n### yield vs return\n\n| Feature | `return` | `yield` |\n|---------|----------|---------|\n| Behaviour | exit function | pause, resume later |\n| Memory | all at once | one at a time |\n| Call | returns value | returns generator |\n| Reusable | yes | exhausted after one pass |\n\n### Generator Expression\n```python\n# List comprehension (eager — all in memory)\n[x**2 for x in range(1_000_000)]\n\n# Generator expression (lazy — one at a time)\n(x**2 for x in range(1_000_000))\n```\n\n> **Key insight:** Generators are perfect for large files, infinite sequences, or pipelines — anything too big to hold in memory at once.\n\n### next() and StopIteration\nCall `next(gen)` to get the next value. When exhausted, it raises `StopIteration`. A `for` loop handles this automatically.",
+    "ta": "## ஆன்டெமாண்ட் வெண்டிங் மெஷின்\n\nஒரு சாதாரண பட்டியல் போல் **ஒரே நேரத்தில் அனைத்து சிற்றுண்டிகளையும் வாங்குவது** — நீங்கள் முன்பணம் செலுத்துகிறீர்கள், அனைத்தையும் கையில் எடுத்துக்கொள்கிறீர்கள், அதில் ஒன்றைத் தான் உண்பதற்காக.\n\nஒரு **ஜெனரேட்டர்** என்பது ஒரு வெண்டிங் மெஷின்: அது ஒரு உருப்படியை ஒருமுறை ஒருவருக்கு வேண்டுமென்றே உருவாக்குகிறது, மற்றும் அடுத்ததை உருவாக்க வேண்டுமென்றால் மட்டுமே அதைச் செய்கிறது.\n\n### yield vs return\n\n| அம்சம் | `return` | `yield` |\n|---------|----------|---------|\n| நடத்தை | செயல்பாட்டை வெளியேற்றுதல் | இடைநிறுத்துதல், பிறகு மீண்டும் தொடருதல் |\n| நினைவகம் | ஒரே நேரத்தில் அனைத்தும் | ஒன்று ஒன்றாக |\n| அழைப்பு | மதிப்பைத் திருப்பித்தருதல் | ஜெனரேட்டரைத் திருப்பித்தருதல் |\n| மீண்டும் பயன்படுத்தக்கூடியது | ஆம் | ஒரு பயணத்திற்குப் பிறகு காலாவதியாகிறது |\n\n### ஜெனரேட்டர் வெளிப்பாடு\n```python\n# List comprehension (eager — all in memory)\n[x**2 for x in range(1_000_000)]\n\n# Generator expression (lazy — one at a time)\n(x**2 for x in range(1_000_000))\n```\n\n> **முக்கிய உணர்வு:** ஜெனரேட்டர்கள் பெரிய கோப்புகள், முடிவற்ற வரிசைகள் அல்லது பைப்லைன்களுக்கு சிறந்தவை — எதையும் ஒரே நேரத்தில் நினைவகத்தில் வைத்திருக்க முடியாத அனைத்திற்கும்.\n\n### next() and StopIteration\n`next(gen)` ஐ அழைப்பதன் மூலம் அடுத்த மதிப்பைப் பெறலாம். காலாவதியானபோது, அது `StopIteration` ஐ ஏற்றுக்கொள்கிறது. ஒரு `for` லூப் இதைத் தானாகவே கையாளுகிறது."
   },
   "animation_sequence": [
     {
@@ -54,24 +56,100 @@
       "type": "ExecutionVisualizer",
       "code": "def countdown(n):\n    while n > 0:\n        yield n\n        n -= 1\ngen = countdown(3)\nprint(next(gen))\nprint(next(gen))\nprint(next(gen))\nfor val in countdown(5):\n    print(val, end=' ')",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define generator function with yield" },
-        { "line": 5, "variables": { "gen": "generator(countdown, n=3)" }, "output": "", "description": "countdown(3) returns a generator object (no code runs yet)" },
-        { "line": 6, "variables": { "gen": "paused at yield, n=2" }, "output": "3", "description": "next(gen) runs until yield, returns 3, pauses" },
-        { "line": 7, "variables": { "gen": "paused at yield, n=1" }, "output": "3\n2", "description": "next(gen) resumes, n decrements to 1, yields 2" },
-        { "line": 8, "variables": { "gen": "paused at yield, n=0" }, "output": "3\n2\n1", "description": "next(gen) resumes, yields 1, n becomes 0" },
-        { "line": 9, "variables": { "val": 5 }, "output": "3\n2\n1\n5 ", "description": "for loop auto-calls next() on new generator" },
-        { "line": 9, "variables": { "val": 4 }, "output": "3\n2\n1\n5 4 ", "description": "Loop continues: yields 4" },
-        { "line": 9, "variables": { "val": 3 }, "output": "3\n2\n1\n5 4 3 ", "description": "Yields 3" },
-        { "line": 9, "variables": { "val": 2 }, "output": "3\n2\n1\n5 4 3 2 ", "description": "Yields 2" },
-        { "line": 9, "variables": { "val": 1 }, "output": "3\n2\n1\n5 4 3 2 1 ", "description": "Yields 1, then StopIteration ends the loop" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define generator function with yield"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "gen": "generator(countdown, n=3)"
+          },
+          "output": "",
+          "description": "countdown(3) returns a generator object (no code runs yet)"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "gen": "paused at yield, n=2"
+          },
+          "output": "3",
+          "description": "next(gen) runs until yield, returns 3, pauses"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "gen": "paused at yield, n=1"
+          },
+          "output": "3\n2",
+          "description": "next(gen) resumes, n decrements to 1, yields 2"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "gen": "paused at yield, n=0"
+          },
+          "output": "3\n2\n1",
+          "description": "next(gen) resumes, yields 1, n becomes 0"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "val": 5
+          },
+          "output": "3\n2\n1\n5 ",
+          "description": "for loop auto-calls next() on new generator"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "val": 4
+          },
+          "output": "3\n2\n1\n5 4 ",
+          "description": "Loop continues: yields 4"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "val": 3
+          },
+          "output": "3\n2\n1\n5 4 3 ",
+          "description": "Yields 3"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "val": 2
+          },
+          "output": "3\n2\n1\n5 4 3 2 ",
+          "description": "Yields 2"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "val": 1
+          },
+          "output": "3\n2\n1\n5 4 3 2 1 ",
+          "description": "Yields 1, then StopIteration ends the loop"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "LoopVisualizer",
-      "iterable": [3, 2, 1],
+      "iterable": [
+        3,
+        2,
+        1
+      ],
       "expression": "yield n",
-      "result": [3, 2, 1],
+      "result": [
+        3,
+        2,
+        1
+      ],
       "label": "countdown(3) yields values on demand",
       "speed": "normal"
     },
@@ -85,7 +163,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a generator function 'evens_up_to(n)' that yields even numbers from 0 to n (inclusive)."
+        "en": "Write a generator function 'evens_up_to(n)' that yields even numbers from 0 to n (inclusive).",
+        "ta": "'evens_up_to(n)' என்ற ஜெனரேட்டர் செயல்பாட்டை எழுதுங்கள், இது 0 முதல் n (உள்ளமைக்கப்பட்டது) வரையிலான இரட்டை எண்களை வழங்குகிறது."
       },
       "expected_output": "[0, 2, 4, 6, 8, 10]",
       "hints": [
