@@ -12,9 +12,15 @@ Translation goes through the same provider chain as Vaathiyaar (engine.complete)
 so it inherits qubrid/ollama failover.
 """
 import hashlib
+import re
 import sqlite3
 
 from vaathiyaar.modelfile import LANG_NAMES
+
+# Fenced code blocks must survive translation byte-for-byte. GLM sometimes drops
+# them when asked to translate a whole story, so we split them out and translate
+# only the prose between them (see translate_text).
+_FENCE = re.compile(r"(```.*?```)", re.DOTALL)
 
 # Fields we translate + cache. Values are short labels used in the cache key.
 TRANSLATABLE_FIELDS = ("story", "title", "instruction")
@@ -51,18 +57,39 @@ def build_translation_messages(text: str, target_lang: str, kind: str = "story")
     ]
 
 
+def _translate_chunk(text: str, target_lang: str, kind: str) -> str:
+    """One LLM translation call for a prose chunk (no fenced code inside)."""
+    from vaathiyaar.engine import complete
+    messages = build_translation_messages(text, target_lang, kind)
+    # Low temperature for faithful translation; generous budget for long prose.
+    out = complete(messages, {"temperature": 0.2, "num_predict": 6000})
+    return (out or "").strip()
+
+
 def translate_text(text: str, target_lang: str, kind: str = "story") -> str:
     """Translate `text` into `target_lang`. Raises on provider failure so callers
-    can decide whether to fall back (on-demand path) or abort (backfill)."""
+    can decide whether to fall back (on-demand path) or abort (backfill).
+
+    For story bodies, fenced ``` code blocks are pulled out and preserved
+    byte-for-byte; only the prose between them is translated. This structurally
+    guarantees code fidelity instead of trusting the model to leave code alone
+    (which it didn't for ~20% of lessons on the first backfill, 2026-07-08)."""
     if not text or not text.strip():
         return text
     if target_lang == "en":
         return text
-    from vaathiyaar.engine import complete
-    messages = build_translation_messages(text, target_lang, kind)
-    # Low temperature for faithful translation; generous token budget for long stories.
-    out = complete(messages, {"temperature": 0.2, "num_predict": 6000})
-    return (out or "").strip()
+    if kind != "story" or "```" not in text:
+        return _translate_chunk(text, target_lang, kind)
+    parts = _FENCE.split(text)
+    out = []
+    for part in parts:
+        if part.startswith("```"):
+            out.append(part)                       # code block verbatim
+        elif part.strip():
+            out.append(_translate_chunk(part, target_lang, kind))
+        else:
+            out.append(part)                       # whitespace between segments
+    return "".join(out)
 
 
 def source_hash(text: str) -> str:
