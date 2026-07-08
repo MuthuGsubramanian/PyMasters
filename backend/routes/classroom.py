@@ -113,6 +113,21 @@ def _get_db_path() -> str:
     return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
+def _ondemand_translate(db_path: str, lesson_id: str, lang: str, field: str, en_text: str):
+    """Cache-first on-demand translation of a lesson field. Returns the
+    translated text or None (caller falls back to English). Guarded by
+    LESSON_TRANSLATION_ONDEMAND (default on) so the whole feature can be killed
+    via env without a deploy if provider latency/cost becomes a problem. Never
+    raises — lesson loading must not depend on the translation provider."""
+    if os.getenv("LESSON_TRANSLATION_ONDEMAND", "1") != "1":
+        return None
+    try:
+        from vaathiyaar.translator import translate_and_cache
+        return translate_and_cache(db_path, lesson_id, lang, field, en_text)
+    except Exception:
+        return None
+
+
 def _require_self(user_id: str, caller: str) -> None:
     """Refuse cross-user access: the acting user is derived from the verified JWT
     (`caller`), never from the client-supplied body `user_id`. Mirrors the guard
@@ -767,17 +782,32 @@ def get_lesson(
     skill_level = profile.get("skill_level") or "beginner"
     mastery_map = profile.get("mastery", {})
 
-    # Swap story_variants to preferred language
+    # Swap story_variants to preferred language. Precedence:
+    #   1. Pre-authored static variant (fast, ships in the lesson JSON).
+    #   2. On-demand translation of the English source, cached in
+    #      lesson_translations so only the first view per (lesson, lang) pays
+    #      the LLM cost (2026-07-08). Best-effort: any failure falls back to
+    #      English, exactly as before, so lesson loading never breaks.
     story_variants = lesson.get("story_variants", {})
+    en_story = story_variants.get("en") if isinstance(story_variants, dict) else None
     if story_variants and preferred_lang in story_variants:
         lesson["active_story"] = story_variants[preferred_lang]
-    elif story_variants and "en" in story_variants:
-        lesson["active_story"] = story_variants["en"]
+    elif preferred_lang != "en" and en_story:
+        translated = _ondemand_translate(db_path, lesson_id, preferred_lang, "story", en_story)
+        lesson["active_story"] = translated if translated is not None else en_story
+    elif en_story:
+        lesson["active_story"] = en_story
 
-    # Set active_title if title is a dict of variants
+    # Set active_title if title is a dict of variants (same cache-first path).
     title = lesson.get("title", "")
     if isinstance(title, dict):
-        lesson["active_title"] = title.get(preferred_lang, title.get("en", ""))
+        if title.get(preferred_lang):
+            lesson["active_title"] = title[preferred_lang]
+        elif preferred_lang != "en" and title.get("en"):
+            t = _ondemand_translate(db_path, lesson_id, preferred_lang, "title", title["en"])
+            lesson["active_title"] = t if t is not None else title.get("en", "")
+        else:
+            lesson["active_title"] = title.get("en", "")
     else:
         lesson["active_title"] = title
 

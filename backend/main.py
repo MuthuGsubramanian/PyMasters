@@ -246,6 +246,21 @@ def init_db():
             )
         """)
 
+        # Cache of on-demand lesson translations (see vaathiyaar/translator.py).
+        # Keyed by (lesson_id, lang, field); source_hash lets us invalidate a
+        # cached translation when the English source lesson changes.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lesson_translations (
+                lesson_id TEXT,
+                lang TEXT,
+                field TEXT,
+                content TEXT,
+                source_hash TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (lesson_id, lang, field)
+            )
+        """)
+
         # Create training_data table for fine-tuning pipeline
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS training_data (

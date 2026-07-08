@@ -5,7 +5,8 @@
   "module": "advanced",
   "order": 1,
   "title": {
-    "en": "Decorators: The Gift Wrapper"
+    "en": "Decorators: The Gift Wrapper",
+    "ta": "டெக்கோரேட்டர்கள்: வார்ப்புரு செய்யும் பொதி"
   },
   "description": {
     "en": "Learn to write decorators that wrap functions with extra behaviour — logging, timing, caching — without changing the original code."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "adv_generators",
   "story_variants": {
-    "en": "## The Gift Wrapper\n\nA **gift wrapper** takes any present and wraps it — adding a bow, paper, and ribbon — without changing what's inside. The gift remains the same; the presentation is enhanced.\n\nPython **decorators** wrap functions: add logging, timing, authentication — without touching the original function.\n\n### How Decorators Work\n```python\n@my_decorator\ndef my_function():\n    ...\n# Equivalent to:\nmy_function = my_decorator(my_function)\n```\n\n### Anatomy of a Decorator\n\n| Part | Role |\n|------|------|\n| outer function | takes function as argument |\n| `wrapper` inner function | the wrapping logic |\n| `*args, **kwargs` | pass through any arguments |\n| `functools.wraps` | preserve original function metadata |\n\n> **Always use `functools.wraps(func)`** on your wrapper — it preserves `__name__`, `__doc__`, and other metadata that tools and debuggers rely on.\n\n### Common Use Cases\n- `@timer` — measure execution time\n- `@retry` — retry on failure\n- `@login_required` — check auth before executing\n- `@cache` / `@lru_cache` — memoize results"
+    "en": "## The Gift Wrapper\n\nA **gift wrapper** takes any present and wraps it — adding a bow, paper, and ribbon — without changing what's inside. The gift remains the same; the presentation is enhanced.\n\nPython **decorators** wrap functions: add logging, timing, authentication — without touching the original function.\n\n### How Decorators Work\n```python\n@my_decorator\ndef my_function():\n    ...\n# Equivalent to:\nmy_function = my_decorator(my_function)\n```\n\n### Anatomy of a Decorator\n\n| Part | Role |\n|------|------|\n| outer function | takes function as argument |\n| `wrapper` inner function | the wrapping logic |\n| `*args, **kwargs` | pass through any arguments |\n| `functools.wraps` | preserve original function metadata |\n\n> **Always use `functools.wraps(func)`** on your wrapper — it preserves `__name__`, `__doc__`, and other metadata that tools and debuggers rely on.\n\n### Common Use Cases\n- `@timer` — measure execution time\n- `@retry` — retry on failure\n- `@login_required` — check auth before executing\n- `@cache` / `@lru_cache` — memoize results",
+    "ta": "## பரிசு மூட்டி\n\nஒரு **பரிசு மூட்டி** எந்தப் பரிசையும் எடுத்து, அதை மூடுகிறது — ஒரு பூவைச் சேர்த்து, காகிதத்தைச் சேர்த்து, ஒரு கழுத்துப் பூவைச் சேர்த்து — உள்ளே உள்ளதை மாற்றாமல். பரிசு அதே போலவே இருக்கும்; அதன் காட்சி அழகை மேம்படுத்துகிறது.\n\nPython **decorators** செயல்பாடுகளை மூடுகின்றன: பதிவுப்படுத்தல், நேரம் அளவிடுதல், அங்கீகாரம் — அசல் செயல்பாட்டைத் தொடர்புபடுத்தாமல்.\n\n### Decorators எவ்வாறு செயல்படுகின்றன\n```python\n@my_decorator\ndef my_function():\n    ...\n# இதற்கு சமமானது:\nmy_function = my_decorator(my_function)\n```\n\n### Decorator இயல்புகள்\n\n| பகுதி | பங்கு |\n|------|------|\n| outer function | செயல்பாட்டை வாதமாகப் பெறுகிறது |\n| `wrapper` inner function | மூடுதல் தர்க்கம் |\n| `*args, **kwargs` | எந்தவொரு வாதங்களையும் கடந்து செல்கிறது |\n| `functools.wraps` | அசல் செயல்பாட்டு மெட்டாடாடாவைப் பாதுகாக்கிறது |\n\n> **எப்போதும் `functools.wraps(func)` ஐ உங்கள் wrapper-இல் பயன்படுத்துங்கள்** — அது `__name__`, `__doc__`, மற்றும் கருவிகள் மற்றும் பிழைத்திருத்தம் செய்யும் கருவிகள் நம்பும் மற்ற மெட்டாடாடாவைப் பாதுகாக்கிறது.\n\n### பொதுவான பயன்பாடுகள்\n- `@timer` — செயலாக்க நேரத்தை அளவிடுதல்\n- `@retry` — தோல்வியின் போது மீண்டும் முயற்சிக்குதல்\n- `@login_required` — செயல்படுத்துவதற்கு முன் அங்கீகாரத்தைச் சரிபார்த்தல்\n- `@cache` / `@lru_cache` — மெமோயிஸேஷன் முடிவுகள்"
   },
   "animation_sequence": [
     {
@@ -48,35 +50,131 @@
       "type": "ExecutionVisualizer",
       "code": "import functools\ndef timer(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f'Calling {func.__name__}')\n        result = func(*args, **kwargs)\n        print(f'Done {func.__name__}')\n        return result\n    return wrapper\n@timer\ndef add(a, b):\n    return a + b\nresult = add(3, 5)\nprint(result)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Import functools for wraps decorator" },
-        { "line": 2, "variables": {}, "output": "", "description": "Define timer decorator function" },
-        { "line": 10, "variables": {}, "output": "", "description": "@timer wraps add: add = timer(add)" },
-        { "line": 13, "variables": {}, "output": "", "description": "Call add(3, 5) -- actually calls wrapper(3, 5)" },
-        { "line": 5, "variables": { "args": "(3, 5)" }, "output": "Calling add", "description": "wrapper prints 'Calling add' before original" },
-        { "line": 6, "variables": { "args": "(3, 5)", "result": 8 }, "output": "Calling add", "description": "Call original add(3, 5) = 8" },
-        { "line": 7, "variables": { "args": "(3, 5)", "result": 8 }, "output": "Calling add\nDone add", "description": "wrapper prints 'Done add' after original" },
-        { "line": 14, "variables": { "result": 8 }, "output": "Calling add\nDone add\n8", "description": "Print the returned result: 8" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import functools for wraps decorator"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "",
+          "description": "Define timer decorator function"
+        },
+        {
+          "line": 10,
+          "variables": {},
+          "output": "",
+          "description": "@timer wraps add: add = timer(add)"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "",
+          "description": "Call add(3, 5) -- actually calls wrapper(3, 5)"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "args": "(3, 5)"
+          },
+          "output": "Calling add",
+          "description": "wrapper prints 'Calling add' before original"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "args": "(3, 5)",
+            "result": 8
+          },
+          "output": "Calling add",
+          "description": "Call original add(3, 5) = 8"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "args": "(3, 5)",
+            "result": 8
+          },
+          "output": "Calling add\nDone add",
+          "description": "wrapper prints 'Done add' after original"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "result": 8
+          },
+          "output": "Calling add\nDone add\n8",
+          "description": "Print the returned result: 8"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "call", "label": "add(3, 5) called", "type": "start" },
-        { "id": "wrapper", "label": "wrapper() runs (decorator)", "type": "process" },
-        { "id": "before", "label": "Pre-logic: print 'Calling'", "type": "process" },
-        { "id": "original", "label": "Call original add()", "type": "process" },
-        { "id": "after", "label": "Post-logic: print 'Done'", "type": "process" },
-        { "id": "return", "label": "Return result to caller", "type": "end" }
+        {
+          "id": "call",
+          "label": "add(3, 5) called",
+          "type": "start"
+        },
+        {
+          "id": "wrapper",
+          "label": "wrapper() runs (decorator)",
+          "type": "process"
+        },
+        {
+          "id": "before",
+          "label": "Pre-logic: print 'Calling'",
+          "type": "process"
+        },
+        {
+          "id": "original",
+          "label": "Call original add()",
+          "type": "process"
+        },
+        {
+          "id": "after",
+          "label": "Post-logic: print 'Done'",
+          "type": "process"
+        },
+        {
+          "id": "return",
+          "label": "Return result to caller",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "call", "to": "wrapper" },
-        { "from": "wrapper", "to": "before" },
-        { "from": "before", "to": "original" },
-        { "from": "original", "to": "after" },
-        { "from": "after", "to": "return" }
+        {
+          "from": "call",
+          "to": "wrapper"
+        },
+        {
+          "from": "wrapper",
+          "to": "before"
+        },
+        {
+          "from": "before",
+          "to": "original"
+        },
+        {
+          "from": "original",
+          "to": "after"
+        },
+        {
+          "from": "after",
+          "to": "return"
+        }
       ],
-      "executionPath": ["call", "wrapper", "before", "original", "after", "return"],
+      "executionPath": [
+        "call",
+        "wrapper",
+        "before",
+        "original",
+        "after",
+        "return"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -90,7 +188,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a decorator 'logger' that prints 'Calling: <function_name>' before calling the function and 'Done: <function_name>' after."
+        "en": "Write a decorator 'logger' that prints 'Calling: <function_name>' before calling the function and 'Done: <function_name>' after.",
+        "ta": "'logger' என்ற டெக்கோரேட்டரை எழுதுங்கள், அது செயல்பாட்டை அழைப்பதற்கு முன் 'Calling: <function_name>' ஐ அச்சிடுகிறது மற்றும் அதற்குப் பிறகு 'Done: <function_name>' ஐ அச்சிடுகிறது."
       },
       "expected_output": "Calling: greet\nHello!\nDone: greet",
       "hints": [
