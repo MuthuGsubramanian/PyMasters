@@ -494,7 +494,7 @@ def chat_stream(request: ChatRequest, caller: str = Depends(get_current_user_id)
 
 
 @router.get("/lessons")
-async def list_lessons(user_id: str = None):
+async def list_lessons(user_id: str = None, authorization: str = Header(None)):
     """
     List all available lessons, personalized to the user's onboarding profile.
 
@@ -518,8 +518,17 @@ async def list_lessons(user_id: str = None):
         # Enterprise-only tracks (Azure/AWS/GCP/Foundry/cross-cloud) are hidden
         # from individual accounts — org members, org accounts, enterprise-plan
         # users and super admins see them. Fails closed for anonymous callers.
+        #
+        # IDOR guard (2026-07-08): the enterprise gate MUST key off the JWT-verified
+        # identity, never the client-supplied user_id query param. The param is fine
+        # for non-sensitive personalization (track ordering below), but trusting it
+        # for access control let an anonymous caller pass ?user_id=<any org user's id>
+        # and receive the full paid B2B catalog. Derive the acting user from the
+        # token (optional_user_id → None when absent/invalid, which fails closed).
+        from auth import optional_user_id
         from access import ENTERPRISE_TRACKS, has_enterprise_access
-        if not has_enterprise_access(_get_db_path(), user_id):
+        verified_user_id = optional_user_id(authorization)
+        if not has_enterprise_access(_get_db_path(), verified_user_id):
             lessons = [l for l in lessons if l.get("track") not in ENTERPRISE_TRACKS]
 
         if user_id:
@@ -716,6 +725,7 @@ async def list_lessons(user_id: str = None):
 def get_lesson(
     lesson_id: str,
     user_id: Optional[str] = Query(default=None),
+    authorization: str = Header(None),
 ):
     """
     Load a lesson by ID.
@@ -731,8 +741,14 @@ def get_lesson(
 
     # Enterprise-only tracks: same gate as the catalog listing. 403 (not 404)
     # so org admins debugging a member's access see an explicit signal.
+    #
+    # IDOR guard (2026-07-08): key the gate off the JWT-verified identity, not the
+    # client-supplied user_id query param — trusting the param let an anonymous
+    # caller pass ?user_id=<org user's id> and open any paid enterprise lesson.
+    from auth import optional_user_id
     from access import ENTERPRISE_TRACKS, has_enterprise_access
-    if lesson.get("track") in ENTERPRISE_TRACKS and not has_enterprise_access(_get_db_path(), user_id):
+    verified_user_id = optional_user_id(authorization)
+    if lesson.get("track") in ENTERPRISE_TRACKS and not has_enterprise_access(_get_db_path(), verified_user_id):
         raise HTTPException(
             status_code=403,
             detail="This lesson is part of the enterprise curriculum, available on organization plans.",
