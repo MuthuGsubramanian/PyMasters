@@ -36,6 +36,25 @@ def test_translate_text_english_is_identity(monkeypatch):
     assert translator.translate_text("hello", "en") == "hello"
 
 
+def test_story_preserves_code_fences_verbatim(monkeypatch):
+    # Only prose chunks reach the model; code fences pass through untouched.
+    monkeypatch.setattr(translator, "_translate_chunk",
+                        lambda text, lang, kind: "TRANSLATED")
+    src = "Intro prose.\n\n```python\nname = 'PyMaster'\nage = 25\n```\n\nMore prose."
+    out = translator.translate_text(src, "ta", kind="story")
+    assert "```python\nname = 'PyMaster'\nage = 25\n```" in out
+    assert out.count("```") == 2
+    assert "TRANSLATED" in out
+
+
+def test_story_multiple_code_blocks_all_preserved(monkeypatch):
+    monkeypatch.setattr(translator, "_translate_chunk", lambda t, l, k: "X")
+    src = "a\n```\nc1\n```\nb\n```\nc2\n```\nd"
+    out = translator.translate_text(src, "ta", kind="story")
+    assert out.count("```") == 4
+    assert "c1" in out and "c2" in out
+
+
 def test_source_hash_changes_with_content():
     assert translator.source_hash("a") != translator.source_hash("b")
     assert translator.source_hash("a") == translator.source_hash("a")

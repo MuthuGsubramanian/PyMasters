@@ -16,7 +16,7 @@
   "next_unlock": "adv_generators",
   "story_variants": {
     "en": "## Vaathiyaar's Gift Wrapper\n\nVaathiyaar holds up a plain box. \"This box contains a function — it does its job perfectly. Now watch.\" He wraps it with colorful paper, adds a bow, and attaches a timer. \"The function inside hasn't changed at all, but now it's **gift-wrapped** with extra powers — it logs when it's opened, measures how long it takes, and remembers what was inside.\"\n\n### What Is a Decorator?\n\nA decorator is a function that takes another function and returns a new, enhanced version of it — **without modifying the original**.\n\n```python\n@timer\ndef slow_function():\n    ...\n\n# This is syntactic sugar for:\nslow_function = timer(slow_function)\n```\n\n### The Building Blocks\n\n| Concept | Role in Decorators |\n|---------|-------------------|\n| First-class functions | Functions can be passed as arguments |\n| Closures | Inner function remembers outer scope |\n| `*args, **kwargs` | Accept any arguments |\n| `functools.wraps` | Preserve original function metadata |\n\n### Common Decorators You'll Build\n\n- `@timer` — Measure execution time\n- `@logger` — Log function calls\n- `@cache` — Remember previous results\n- `@retry` — Retry on failure\n- `@validate` — Check inputs before running\n\n> **Key Insight:** Decorators are one of Python's most powerful patterns. Once you understand them, you'll see them everywhere — in Flask routes (`@app.route`), pytest (`@pytest.fixture`), and dataclasses (`@dataclass`).",
-    "ta": "## வாத்தியாரின் பரிசு போர்வை\n\nவாத்தியார் ஒரு சாதாரண பெட்டியை உயர்த்திக் காட்டுகிறார். \"இந்த பெட்டியில் ஒரு function இருக்கிறது — அது தன் வேலையை சரியாக செய்கிறது. இப்போது பாருங்கள்.\" அவர் அதை வண்ண காகிதத்தால் சுற்றி, bow கட்டி, timer இணைக்கிறார். \"உள்ளே உள்ள function மாறவே இல்லை, ஆனால் இப்போது அது கூடுதல் சக்திகளுடன் **gift-wrapped** — எப்போது திறக்கப்படுகிறது என்று log செய்கிறது, எவ்வளவு நேரம் ஆகிறது என்று அளக்கிறது.\"\n\n### Decorator என்றால் என்ன?\n\nDecorator என்பது ஒரு function-ஐ எடுத்து, அதன் புதிய, மேம்படுத்தப்பட்ட version-ஐ return செய்யும் function — **original-ஐ மாற்றாமல்**."
+    "ta": "## Vaathiyaar's Gift Wrapper\n\nVaathiyaar ஒரு எளிய பெட்டியை நிமிர்ந்து காட்டுகிறார். \"இந்த பெட்டியில் ஒரு செயல்பாடு உள்ளது — அது தனது வேலையை சரியாகச் செய்கிறது. இப்போது பாருங்கள்.\" அவர் வண்ணமயமான காகிதத்தால் அதை மூடி, ஒரு பூவைச் சேர்த்து, ஒரு டைமரைப் பிணைக்கிறார். \"அந்த செயல்பாடு உள்ளே எதுவும் மாறவில்லை, ஆனால் இப்போது அது **gift-wrapped** (பரிசுப் பொதி) ஆகி கூடுதல் சக்திகளுடன் உள்ளது — அது திறக்கப்படும்போது பதிவு செய்கிறது, எவ்வளவு நேரம் எடுக்கிறது என்பதை அளக்கிறது, மேலும் அதில் என்ன இருந்தது என்பதை நினைவில் கொள்கிறது.\"\n\n### What Is a Decorator?\n\nஒரு டெக்கரேட்டர் என்பது மற்றொரு செயல்பாட்டை எடுத்து, அதன் புதிய, மேம்படுத்தப்பட்ட பதிப்பை வழங்கும் ஒரு செயல்பாடு — **அசல் செயல்பாட்டை மாற்றாமல்**.```python\n@timer\ndef slow_function():\n    ...\n\n# This is syntactic sugar for:\nslow_function = timer(slow_function)\n```### கட்டமைப்பு உறுப்புகள்\n\n| கருத்து | டெக்கோரேட்டர்களில் பங்கு |\n|---------|-------------------|\n| First-class functions | செயல்படுத்தல்களை வாதங்களாகக் கொடுக்கலாம் |\n| Closures | உள்ளமைந்த செயல்படுத்தல் வெளிப்புற வரம்பை நினைவில் கொள்கிறது |\n| `*args, **kwargs` | எந்த வாதங்களையும் ஏற்றுக்கொள்கிறது |\n| `functools.wraps` | அசல் செயல்படுத்தல் மெட்டாடேட்டாவைப் பாதுகாக்கிறது |\n\n### உருவாக்குவதற்கான பொதுவான டெக்கோரேட்டர்கள்\n\n- `@timer` — செயலாற்றும் நேரத்தை அளவிடுதல்\n- `@logger` — செயல்படுத்தல் அழைப்புகளைப் பதிவு செய்தல்\n- `@cache` — முந்தைய முடிவுகளை நினைவில் கொள்ளுதல்\n- `@retry` — தோல்வியில் மீண்டும் முயற்சித்தல்\n- `@validate` — இயக்குவதற்கு முன் உள்ளீடுகளைச் சரிபார்த்தல்\n\n> **முக்கிய கருத்து:** டெக்கோரேட்டர்கள் பைதானின் மிகவும் சக்திவாய்ந்த வடிவமைப்புகளில் ஒன்று. அவற்றைப் புரிந்துகொண்டால், அவற்றை எங்கும் காண்பீர்கள் — Flask வழிச்செலுத்தல்களில் (`@app.route`), pytest (`@pytest.fixture`), மற்றும் dataclasses (`@dataclass`) ஆகியவற்றில்."
   },
   "animation_sequence": [
     {
@@ -209,13 +209,56 @@
       "id": "exec_viz_decorator",
       "code": "import functools\n\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f'Calling: {func.__name__}({args})')\n        result = func(*args, **kwargs)\n        print(f'Returned: {result}')\n        return result\n    return wrapper\n\n@logger\ndef add(a, b):\n    return a + b\n\nresult = add(3, 5)\nprint(f'Final: {result}')",
       "executionSteps": [
-        { "line": 3, "variables": {}, "output": "", "explanation": "Define the logger decorator" },
-        { "line": 12, "variables": {}, "output": "", "explanation": "@logger wraps add: add = logger(add)" },
-        { "line": 16, "variables": {}, "output": "", "explanation": "Call add(3, 5) — actually calls wrapper(3, 5)" },
-        { "line": 6, "variables": { "args": "(3, 5)" }, "output": "Calling: add((3, 5))", "explanation": "Wrapper prints the call info BEFORE running add" },
-        { "line": 7, "variables": { "result": 8 }, "output": "Calling: add((3, 5))", "explanation": "Original add(3, 5) runs and returns 8" },
-        { "line": 8, "variables": { "result": 8 }, "output": "Calling: add((3, 5))\nReturned: 8", "explanation": "Wrapper prints the return value AFTER running add" },
-        { "line": 17, "variables": { "result": 8 }, "output": "Calling: add((3, 5))\nReturned: 8\nFinal: 8", "explanation": "The original result 8 is returned to the caller" }
+        {
+          "line": 3,
+          "variables": {},
+          "output": "",
+          "explanation": "Define the logger decorator"
+        },
+        {
+          "line": 12,
+          "variables": {},
+          "output": "",
+          "explanation": "@logger wraps add: add = logger(add)"
+        },
+        {
+          "line": 16,
+          "variables": {},
+          "output": "",
+          "explanation": "Call add(3, 5) — actually calls wrapper(3, 5)"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "args": "(3, 5)"
+          },
+          "output": "Calling: add((3, 5))",
+          "explanation": "Wrapper prints the call info BEFORE running add"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "result": 8
+          },
+          "output": "Calling: add((3, 5))",
+          "explanation": "Original add(3, 5) runs and returns 8"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "result": 8
+          },
+          "output": "Calling: add((3, 5))\nReturned: 8",
+          "explanation": "Wrapper prints the return value AFTER running add"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "result": 8
+          },
+          "output": "Calling: add((3, 5))\nReturned: 8\nFinal: 8",
+          "explanation": "The original result 8 is returned to the caller"
+        }
       ],
       "speed": "normal"
     },
@@ -223,21 +266,67 @@
       "type": "FlowDiagram",
       "id": "decorator_flow",
       "nodes": [
-        { "id": "call", "label": "add(3, 5) called", "type": "start" },
-        { "id": "wrapper", "label": "wrapper() intercepts", "type": "process" },
-        { "id": "pre", "label": "Pre-logic: log call info", "type": "process" },
-        { "id": "original", "label": "Call original add(3, 5)", "type": "process" },
-        { "id": "post", "label": "Post-logic: log result", "type": "process" },
-        { "id": "return", "label": "Return 8 to caller", "type": "end" }
+        {
+          "id": "call",
+          "label": "add(3, 5) called",
+          "type": "start"
+        },
+        {
+          "id": "wrapper",
+          "label": "wrapper() intercepts",
+          "type": "process"
+        },
+        {
+          "id": "pre",
+          "label": "Pre-logic: log call info",
+          "type": "process"
+        },
+        {
+          "id": "original",
+          "label": "Call original add(3, 5)",
+          "type": "process"
+        },
+        {
+          "id": "post",
+          "label": "Post-logic: log result",
+          "type": "process"
+        },
+        {
+          "id": "return",
+          "label": "Return 8 to caller",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "call", "to": "wrapper" },
-        { "from": "wrapper", "to": "pre" },
-        { "from": "pre", "to": "original" },
-        { "from": "original", "to": "post" },
-        { "from": "post", "to": "return" }
+        {
+          "from": "call",
+          "to": "wrapper"
+        },
+        {
+          "from": "wrapper",
+          "to": "pre"
+        },
+        {
+          "from": "pre",
+          "to": "original"
+        },
+        {
+          "from": "original",
+          "to": "post"
+        },
+        {
+          "from": "post",
+          "to": "return"
+        }
       ],
-      "executionPath": ["call", "wrapper", "pre", "original", "post", "return"],
+      "executionPath": [
+        "call",
+        "wrapper",
+        "pre",
+        "original",
+        "post",
+        "return"
+      ],
       "speed": "normal"
     },
     {
