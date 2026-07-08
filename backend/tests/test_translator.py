@@ -55,6 +55,26 @@ def test_story_multiple_code_blocks_all_preserved(monkeypatch):
     assert "c1" in out and "c2" in out
 
 
+def test_story_strips_hallucinated_fences_from_prose(monkeypatch):
+    # GLM sometimes injects stray ``` bursts into translated prose; since prose
+    # chunks have no code by construction, those fences must be stripped.
+    monkeypatch.setattr(translator, "_translate_chunk",
+                        lambda text, lang, kind: "நல்ல ``` உரை ``` இங்கே")
+    src = "Plain prose with no code."
+    out = translator.translate_text(src, "ta", kind="story")
+    assert "```" not in out
+
+
+def test_story_keeps_real_code_but_strips_prose_fences(monkeypatch):
+    monkeypatch.setattr(translator, "_translate_chunk",
+                        lambda text, lang, kind: "prose ``` junk")
+    src = "before\n```python\nx = 1\n```\nafter"
+    out = translator.translate_text(src, "ta", kind="story")
+    # the ONE real code block survives; the hallucinated prose fences are gone
+    assert "```python\nx = 1\n```" in out
+    assert out.count("```") == 2
+
+
 def test_source_hash_changes_with_content():
     assert translator.source_hash("a") != translator.source_hash("b")
     assert translator.source_hash("a") == translator.source_hash("a")
