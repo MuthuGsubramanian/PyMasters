@@ -17,7 +17,12 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-insecure-secret-change-me")
 JWT_ALG = "HS256"
 JWT_TTL_SECONDS = 60 * 60 * 24 * 30  # 30 days
 
-DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+def _get_db_path():
+    """Resolved at call time, not import time (same pattern as
+    routes/notifications.py): tests repoint DB_PATH to a temp DB after this
+    module is imported, and an import-time binding would validate token
+    versions against the stale path."""
+    return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 _INSECURE_DEFAULT = "dev-insecure-secret-change-me"
 _MIN_SECRET_LEN = 16
@@ -52,7 +57,7 @@ assert_secret_is_safe(JWT_SECRET, is_production())
 def _current_token_version(user_id: str):
     """Returns the user's current token_version, or None if the user row is missing."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(_get_db_path())
         try:
             row = conn.execute(
                 "SELECT COALESCE(token_version, 0) FROM users WHERE id = ?", [user_id]

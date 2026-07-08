@@ -12,7 +12,12 @@ from auth import get_current_user_id
 
 router = APIRouter(prefix="/api/messages", tags=["messages"])
 
-DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+def _get_db_path():
+    """Resolved at request time, not import time (same pattern as
+    routes/notifications.py): the test fixtures repoint DB_PATH to a temp DB
+    after this module is first imported, and an import-time binding would keep
+    queries on the stale path."""
+    return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
 
 def _require_self(user_id, caller) -> None:
@@ -30,7 +35,7 @@ def _require_self(user_id, caller) -> None:
 def get_pending_messages(user_id: str, caller: str = Depends(get_current_user_id)):
     """Get all undelivered, undismissed proactive messages for a user."""
     _require_self(user_id, caller)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         """
@@ -57,7 +62,7 @@ def get_pending_messages(user_id: str, caller: str = Depends(get_current_user_id
 @router.post("/{message_id}/dismiss")
 def dismiss_message(message_id: int, caller: str = Depends(get_current_user_id)):
     """Mark a proactive message as dismissed."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(_get_db_path())
     owner = conn.execute(
         "SELECT user_id FROM pending_vaathiyaar_messages WHERE id = ?", [message_id]
     ).fetchone()
@@ -82,7 +87,7 @@ class MessageAction(BaseModel):
 @router.post("/{message_id}/action")
 def message_action(message_id: int, body: MessageAction, caller: str = Depends(get_current_user_id)):
     """Record that user took an action on a proactive message."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     msg = conn.execute(
         "SELECT * FROM pending_vaathiyaar_messages WHERE id = ?", [message_id]
