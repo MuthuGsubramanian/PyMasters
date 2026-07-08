@@ -5,7 +5,8 @@
   "module": "testing",
   "order": 2,
   "title": {
-    "en": "TDD: Write the Test First"
+    "en": "TDD: Write the Test First",
+    "ta": "TDD: முன்பாக சோதனை எழுதுங்கள்"
   },
   "description": {
     "en": "Master Test-Driven Development — the red-green-refactor cycle that drives cleaner design and higher confidence in your code."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": "pkg_imports",
   "story_variants": {
-    "en": "## Write the Test First\n\nMost programmers write code first, then tests (if at all). **TDD flips this**: write a failing test first, then write just enough code to make it pass, then clean up.\n\n### The Red-Green-Refactor Cycle\n\n| Phase | Action | Status |\n|-------|--------|--------|\n| Red | Write failing test | test fails (red) |\n| Green | Write minimal code | test passes (green) |\n| Refactor | Clean up code | tests still green |\n\n> **Why write failing tests first?** It forces you to think about the interface before the implementation. You design from the user's perspective.\n\n### TDD Benefits\n- Tests document intended behaviour\n- Prevents over-engineering (only write what tests require)\n- Regression safety — refactor freely\n- Catches bugs at the moment they're introduced\n\n### TDD in Practice\n1. `pytest` runs — 1 test FAILS (red)\n2. Write the simplest code to pass it\n3. `pytest` runs — all tests PASS (green)\n4. Refactor for clarity\n5. Repeat for next feature\n\n> **Rule:** Never write production code without a failing test that requires it."
+    "en": "## Write the Test First\n\nMost programmers write code first, then tests (if at all). **TDD flips this**: write a failing test first, then write just enough code to make it pass, then clean up.\n\n### The Red-Green-Refactor Cycle\n\n| Phase | Action | Status |\n|-------|--------|--------|\n| Red | Write failing test | test fails (red) |\n| Green | Write minimal code | test passes (green) |\n| Refactor | Clean up code | tests still green |\n\n> **Why write failing tests first?** It forces you to think about the interface before the implementation. You design from the user's perspective.\n\n### TDD Benefits\n- Tests document intended behaviour\n- Prevents over-engineering (only write what tests require)\n- Regression safety — refactor freely\n- Catches bugs at the moment they're introduced\n\n### TDD in Practice\n1. `pytest` runs — 1 test FAILS (red)\n2. Write the simplest code to pass it\n3. `pytest` runs — all tests PASS (green)\n4. Refactor for clarity\n5. Repeat for next feature\n\n> **Rule:** Never write production code without a failing test that requires it.",
+    "ta": "## முன்பாக சோதனை எழுதுங்கள்\n\nபெரும்பாலான நிரலாளர்கள் முதலில் நிரலை எழுதி, பிறகு சோதனைகளை (இருந்தாலும்) எழுதுவார்கள். **TDD இதை மாற்றுகிறது**: முன்பாக தோல்வியடையும் சோதனையை எழுதி, பின்னர் அதை செயல்படுத்த தேவையான நிரலை எழுதி, பின்னர் சுத்தம் செய்கிறது.\n\n### செம்மை-நீலம்-மறுசீரமைப்பு சுழற்சி\n\n| கட்டம் | செயல் | நிலை |\n|-------|--------|--------|\n| செம்மை (Red) | தோல்வியடையும் சோதனையை எழுதுங்கள் | சோதனை தோல்வியடைகிறது (செம்மை) |\n| நீலம் (Green) | குறைந்தபட்ச நிரலை எழுதுங்கள் | சோதனை வெற்றியடைகிறது (நீலம்) |\n| மறுசீரமைப்பு (Refactor) | நிரலை சுத்தம் செய்யுங்கள் | சோதனைகள் இன்னும் வெற்றியடைகின்றன |\n\n> **ஏன் முன்பாக தோல்வியடையும் சோதனைகளை எழுத வேண்டும்?** இது உருவாக்கத்திற்கு முன்பு இடைமுகத்தைப் பற்றி சிந்திக்க வலியுறுத்துகிறது. நீங்கள் பயனரின் பார்வையிலிருந்து வடிவமைக்கிறீர்கள்.\n\n### TDD நன்மைகள்\n- சோதனைகள் நோக்கமான நடத்தையை ஆவணப்படுத்துகின்றன\n- அதிகப்படியான வடிவமைப்பைத் தடுக்கிறது (சோதனைகள் தேவைப்படும் அளவுக்கு மட்டும் எழுதுங்கள்)\n- பின்னரீட்டு பாதுகாப்பு — எளிதாக மறுசீரமைக்கலாம்\n- பிழைகளை அவை உருவாக்கப்படும் கணத்திலேயே கண்டறிகிறது\n\n### TDD பயன்பாட்டில்\n1. `pytest` இயக்கப்படுகிறது — 1 சோதனை தோல்வியடைகிறது (செம்மை)\n2. அதை வெற்றிக்கு மிகச் சுலபமான நிரலை எழுதுங்கள்\n3. `pytest` இயக்கப்படுகிறது — அனைத்து சோதனைகளும் வெற்றியடைகின்றன (நீலம்)\n4. தெளிவுக்காக மறுசீரமைக்கவும்\n5. அடுத்த அம்சத்திற்கு மீண்டும் செய்யவும்\n\n> **விதி:** அதைத் தேவைப்படும் தோல்வியடையும் சோதனையின்றி உற்பத்தி நிரலை எழுத வேண்டாம்."
   },
   "animation_sequence": [
     {
@@ -42,31 +44,111 @@
       "type": "ExecutionVisualizer",
       "code": "class Stack:\n    def __init__(self):\n        self._data = []\n    def push(self, item):\n        self._data.append(item)\n    def pop(self):\n        return self._data.pop()\n    def __len__(self):\n        return len(self._data)\ns = Stack()\ns.push(1)\ns.push(2)\nprint(len(s))\nprint(s.pop())\nprint(len(s))",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Define Stack class (TDD: written to pass tests)" },
-        { "line": 9, "variables": { "s": "Stack([])" }, "output": "", "description": "Create empty Stack instance" },
-        { "line": 10, "variables": { "s": "Stack([1])" }, "output": "", "description": "Push 1 onto the stack" },
-        { "line": 11, "variables": { "s": "Stack([1, 2])" }, "output": "", "description": "Push 2 onto the stack" },
-        { "line": 12, "variables": { "s": "Stack([1, 2])" }, "output": "2", "description": "len(s) returns 2 -- two items on stack" },
-        { "line": 13, "variables": { "s": "Stack([1])" }, "output": "2\n2", "description": "pop() removes and returns 2 (last in, first out)" },
-        { "line": 14, "variables": { "s": "Stack([1])" }, "output": "2\n2\n1", "description": "len(s) is now 1 after popping" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Define Stack class (TDD: written to pass tests)"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "s": "Stack([])"
+          },
+          "output": "",
+          "description": "Create empty Stack instance"
+        },
+        {
+          "line": 10,
+          "variables": {
+            "s": "Stack([1])"
+          },
+          "output": "",
+          "description": "Push 1 onto the stack"
+        },
+        {
+          "line": 11,
+          "variables": {
+            "s": "Stack([1, 2])"
+          },
+          "output": "",
+          "description": "Push 2 onto the stack"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "s": "Stack([1, 2])"
+          },
+          "output": "2",
+          "description": "len(s) returns 2 -- two items on stack"
+        },
+        {
+          "line": 13,
+          "variables": {
+            "s": "Stack([1])"
+          },
+          "output": "2\n2",
+          "description": "pop() removes and returns 2 (last in, first out)"
+        },
+        {
+          "line": 14,
+          "variables": {
+            "s": "Stack([1])"
+          },
+          "output": "2\n2\n1",
+          "description": "len(s) is now 1 after popping"
+        }
       ],
       "speed": "normal"
     },
     {
       "type": "FlowDiagram",
       "nodes": [
-        { "id": "red", "label": "RED: Write failing test", "type": "process" },
-        { "id": "green", "label": "GREEN: Write code to pass", "type": "process" },
-        { "id": "refactor", "label": "REFACTOR: Clean up", "type": "process" },
-        { "id": "repeat", "label": "Repeat", "type": "end" }
+        {
+          "id": "red",
+          "label": "RED: Write failing test",
+          "type": "process"
+        },
+        {
+          "id": "green",
+          "label": "GREEN: Write code to pass",
+          "type": "process"
+        },
+        {
+          "id": "refactor",
+          "label": "REFACTOR: Clean up",
+          "type": "process"
+        },
+        {
+          "id": "repeat",
+          "label": "Repeat",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "red", "to": "green" },
-        { "from": "green", "to": "refactor" },
-        { "from": "refactor", "to": "repeat" },
-        { "from": "repeat", "to": "red" }
+        {
+          "from": "red",
+          "to": "green"
+        },
+        {
+          "from": "green",
+          "to": "refactor"
+        },
+        {
+          "from": "refactor",
+          "to": "repeat"
+        },
+        {
+          "from": "repeat",
+          "to": "red"
+        }
       ],
-      "executionPath": ["red", "green", "refactor", "repeat"],
+      "executionPath": [
+        "red",
+        "green",
+        "refactor",
+        "repeat"
+      ],
       "variables": {},
       "speed": "normal"
     },
@@ -80,7 +162,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Using TDD, implement a 'Queue' class with enqueue and dequeue methods. Write and pass tests for both operations."
+        "en": "Using TDD, implement a 'Queue' class with enqueue and dequeue methods. Write and pass tests for both operations.",
+        "ta": "TDD பயன்படுத்தி, ஒரு 'Queue' வகுப்பை செயல்படுத்தவும். enqueue மற்றும் dequeue முறைகளை உருவாக்கவும். இரண்டு செயல்பாடுகளுக்கும் சோதனைகளை எழுதி வெற்றியடையச் செய்யவும்."
       },
       "expected_output": "All tests pass",
       "hints": [

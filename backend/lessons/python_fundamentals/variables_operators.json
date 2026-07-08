@@ -144,14 +144,87 @@
       "type": "ExecutionVisualizer",
       "code": "width = 8\nheight = 5\narea = width * height\nprint('Area:', area)\nis_large = area > 30\nprint('Large?', is_large)\narea += 10\nprint('Updated:', area)",
       "executionSteps": [
-        { "line": 1, "variables": { "width": 8 }, "output": "", "description": "Assign 8 to width" },
-        { "line": 2, "variables": { "width": 8, "height": 5 }, "output": "", "description": "Assign 5 to height" },
-        { "line": 3, "variables": { "width": 8, "height": 5, "area": 40 }, "output": "", "description": "Multiply width * height = 40" },
-        { "line": 4, "variables": { "width": 8, "height": 5, "area": 40 }, "output": "Area: 40", "description": "Print the area" },
-        { "line": 5, "variables": { "width": 8, "height": 5, "area": 40, "is_large": true }, "output": "Area: 40", "description": "Compare area > 30, result is True" },
-        { "line": 6, "variables": { "width": 8, "height": 5, "area": 40, "is_large": true }, "output": "Area: 40\nLarge? True", "description": "Print the comparison result" },
-        { "line": 7, "variables": { "width": 8, "height": 5, "area": 50, "is_large": true }, "output": "Area: 40\nLarge? True", "description": "Augmented assignment: area = 40 + 10 = 50" },
-        { "line": 8, "variables": { "width": 8, "height": 5, "area": 50, "is_large": true }, "output": "Area: 40\nLarge? True\nUpdated: 50", "description": "Print the updated area" }
+        {
+          "line": 1,
+          "variables": {
+            "width": 8
+          },
+          "output": "",
+          "description": "Assign 8 to width"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "width": 8,
+            "height": 5
+          },
+          "output": "",
+          "description": "Assign 5 to height"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "width": 8,
+            "height": 5,
+            "area": 40
+          },
+          "output": "",
+          "description": "Multiply width * height = 40"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "width": 8,
+            "height": 5,
+            "area": 40
+          },
+          "output": "Area: 40",
+          "description": "Print the area"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "width": 8,
+            "height": 5,
+            "area": 40,
+            "is_large": true
+          },
+          "output": "Area: 40",
+          "description": "Compare area > 30, result is True"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "width": 8,
+            "height": 5,
+            "area": 40,
+            "is_large": true
+          },
+          "output": "Area: 40\nLarge? True",
+          "description": "Print the comparison result"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "width": 8,
+            "height": 5,
+            "area": 50,
+            "is_large": true
+          },
+          "output": "Area: 40\nLarge? True",
+          "description": "Augmented assignment: area = 40 + 10 = 50"
+        },
+        {
+          "line": 8,
+          "variables": {
+            "width": 8,
+            "height": 5,
+            "area": 50,
+            "is_large": true
+          },
+          "output": "Area: 40\nLarge? True\nUpdated: 50",
+          "description": "Print the updated area"
+        }
       ],
       "speed": "normal"
     }
@@ -159,7 +232,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Given a circle with `radius = 7`, calculate its area using `area = 3.14159 * radius ** 2`. Print the area. Then check if the area is greater than 100 and print the result of that comparison."
+        "en": "Given a circle with `radius = 7`, calculate its area using `area = 3.14159 * radius ** 2`. Print the area. Then check if the area is greater than 100 and print the result of that comparison.",
+        "ta": "`radius = 7` என்ற விட்டம் கொண்ட வட்டத்தின் பரப்பளவை கணக்கிட வருகிறோம்: `area = 3.14159 * radius ** 2`. பரப்பளவை அச்சிடவும். பின்னர், பரப்பளவு 100 க்கு மேல் உள்ளதா என சரிபார்க்கவும், அந்த ஒப்பீட்டின் முடிவை அச்சிடவும்."
       },
       "expected_output": "153.93791\nTrue",
       "hints": [

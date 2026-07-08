@@ -5,7 +5,8 @@
   "module": "packaging",
   "order": 2,
   "title": {
-    "en": "Virtual Environments: The Isolated Lab"
+    "en": "Virtual Environments: The Isolated Lab",
+    "ta": "மெய்நிகர் சூழல்கள்: தனிப்பட்ட ஆய்வகம்"
   },
   "description": {
     "en": "Master virtual environments, pip, and requirements.txt — keep project dependencies isolated and reproducible across machines."
@@ -13,7 +14,8 @@
   "xp_reward": 50,
   "next_unlock": null,
   "story_variants": {
-    "en": "## The Isolated Lab\n\nA **chemistry lab** keeps experiments isolated — you wouldn't want chemicals from Experiment A contaminating Experiment B. Each project gets its own contained workspace.\n\nPython **virtual environments** do the same for dependencies.\n\n### Why Virtual Environments?\n\n| Problem | Solution |\n|---------|----------|\n| Project A needs Django 3.2 | separate venv for A |\n| Project B needs Django 4.2 | separate venv for B |\n| \"Works on my machine\" | requirements.txt |\n\n### Creating and Using a venv\n\n```bash\npython -m venv venv          # create\nsource venv/bin/activate     # activate (Unix)\nvenv\\Scripts\\activate        # activate (Windows)\npip install requests         # install package\npip freeze > requirements.txt  # save deps\npip install -r requirements.txt  # restore on new machine\ndeactivate                   # leave venv\n```\n\n### pip Commands\n\n| Command | Action |\n|---------|--------|\n| `pip install pkg` | install latest |\n| `pip install pkg==1.2.3` | pin version |\n| `pip list` | show installed |\n| `pip show pkg` | info about pkg |\n| `pip uninstall pkg` | remove |\n\n> **Always** commit `requirements.txt` (or `pyproject.toml`) to version control. **Never** commit the `venv/` folder itself — it's machine-specific and huge."
+    "en": "## The Isolated Lab\n\nA **chemistry lab** keeps experiments isolated — you wouldn't want chemicals from Experiment A contaminating Experiment B. Each project gets its own contained workspace.\n\nPython **virtual environments** do the same for dependencies.\n\n### Why Virtual Environments?\n\n| Problem | Solution |\n|---------|----------|\n| Project A needs Django 3.2 | separate venv for A |\n| Project B needs Django 4.2 | separate venv for B |\n| \"Works on my machine\" | requirements.txt |\n\n### Creating and Using a venv\n\n```bash\npython -m venv venv          # create\nsource venv/bin/activate     # activate (Unix)\nvenv\\Scripts\\activate        # activate (Windows)\npip install requests         # install package\npip freeze > requirements.txt  # save deps\npip install -r requirements.txt  # restore on new machine\ndeactivate                   # leave venv\n```\n\n### pip Commands\n\n| Command | Action |\n|---------|--------|\n| `pip install pkg` | install latest |\n| `pip install pkg==1.2.3` | pin version |\n| `pip list` | show installed |\n| `pip show pkg` | info about pkg |\n| `pip uninstall pkg` | remove |\n\n> **Always** commit `requirements.txt` (or `pyproject.toml`) to version control. **Never** commit the `venv/` folder itself — it's machine-specific and huge.",
+    "ta": "## தனிப்பட்ட ஆய்வகம்\n\nஒரு **வேதியியல் ஆய்வகம்** பரிசோதனைகளைத் தனிமைப்படுத்துகிறது — நீங்கள் ஆய்வு A இலிருந்து வரும் வேதிப்பொருட்கள் ஆய்வு B ஐப் பாதிக்க வேண்டாம். ஒவ்வொரு திட்டத்திற்கும் தனி குறிப்பிட்ட வேலை இடம் கிடைக்கும்.\n\nPython **மெய்நிகர் சூழல்கள்** (virtual environments) அதே வேலையை சார்ந்த தொகுப்புகளுக்குச் செய்கின்றன.\n\n### மெய்நிகர் சூழல்கள் ஏன் தேவை?\n\n| பிரச்சனை | தீர்வு |\n|---------|----------|\n| திட்டம் A க்கு Django 3.2 தேவை | A க்கு தனி venv |\n| திட்டம் B க்கு Django 4.2 தேவை | B க்கு தனி venv |\n| \"என் கணினியில் வேலை செய்கிறது\" | requirements.txt |\n\n### ஒரு venv ஐ உருவாக்குதல் மற்றும் பயன்படுத்துதல்\n\n```bash\npython -m venv venv          # உருவாக்கு\nsource venv/bin/activate     # செயலுக்குரியது (Unix)\nvenv\\Scripts\\activate        # செயலுக்குரியது (Windows)\npip install requests         # தொகுப்பை நிறுவு\npip freeze > requirements.txt  # தொகுப்புகளைச் சேமி\npip install -r requirements.txt  # புதிய கணினியில் மீண்டும் மீட்டெடு\ndeactivate                   # venv இலிருந்து வெளியேறு\n```\n\n### pip கட்டளைகள்\n\n| கட்டளை | செயல் |\n|---------|--------|\n| `pip install pkg` | சமீபத்தியதை நிறுவு |\n| `pip install pkg==1.2.3` | பதிப்பைப் பிடிக்க |\n| `pip list` | நிறுவப்பட்டவற்றைக் காட்டு |\n| `pip show pkg` | pkg பற்றிய விவரம் |\n| `pip uninstall pkg` | அகற்று |\n\n> **எப்போதும்** `requirements.txt` (அல்லது `pyproject.toml`) ஐ குறியீடு கட்டுப்பாட்டிற்கு (version control) சமர்ப்பிக்கவும். **எப்போதும்** `venv/` கோப்பகத்தையே சமர்ப்பிக்க வேண்டாம் — அது கணினி சார்ந்தது மற்றும் பெரியது."
   },
   "animation_sequence": [
     {
@@ -43,12 +45,46 @@
       "type": "ExecutionVisualizer",
       "code": "import sys\nprint(sys.prefix)\nprint(sys.executable)\nimport os\nvenv_active = hasattr(sys, 'real_prefix') or sys.base_prefix != sys.prefix\nprint('In venv:', venv_active)",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "description": "Import sys module to inspect the environment" },
-        { "line": 2, "variables": {}, "output": "/home/user/myproject/venv", "description": "sys.prefix shows the active venv path" },
-        { "line": 3, "variables": {}, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python", "description": "sys.executable shows which Python binary is running" },
-        { "line": 4, "variables": {}, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python", "description": "Import os for operating system utilities" },
-        { "line": 5, "variables": { "venv_active": true }, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python", "description": "Check if we are inside a virtual environment" },
-        { "line": 6, "variables": { "venv_active": true }, "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python\nIn venv: True", "description": "Confirm we are in a venv" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "description": "Import sys module to inspect the environment"
+        },
+        {
+          "line": 2,
+          "variables": {},
+          "output": "/home/user/myproject/venv",
+          "description": "sys.prefix shows the active venv path"
+        },
+        {
+          "line": 3,
+          "variables": {},
+          "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python",
+          "description": "sys.executable shows which Python binary is running"
+        },
+        {
+          "line": 4,
+          "variables": {},
+          "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python",
+          "description": "Import os for operating system utilities"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "venv_active": true
+          },
+          "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python",
+          "description": "Check if we are inside a virtual environment"
+        },
+        {
+          "line": 6,
+          "variables": {
+            "venv_active": true
+          },
+          "output": "/home/user/myproject/venv\n/home/user/myproject/venv/bin/python\nIn venv: True",
+          "description": "Confirm we are in a venv"
+        }
       ],
       "speed": "normal"
     },
@@ -62,7 +98,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write the terminal commands (as a string) to create a venv called 'env', activate it on Linux/Mac, and install 'pytest'."
+        "en": "Write the terminal commands (as a string) to create a venv called 'env', activate it on Linux/Mac, and install 'pytest'.",
+        "ta": "'python3 -m venv env' என்ற கட்டளையைப் பயன்படுத்தி 'env' என்ற பெயரில் ஒரு venv ஐ உருவாக்கவும், பின்னர் Linux/Mac இல் 'source env/bin/activate' என்ற கட்டளையைப் பயன்படுத்தி அதை செயலில் கொணரவும், மேலும் 'pip install pytest' என்ற கட்டளையைப் பயன்படுத்தி 'pytest' ஐ நிறுவவும்."
       },
       "expected_output": "correct venv workflow",
       "hints": [
