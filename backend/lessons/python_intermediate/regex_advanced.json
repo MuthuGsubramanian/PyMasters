@@ -300,7 +300,8 @@
         "te": "$XX.XX వంటి అన్ని ధరలను యూరోలకు మార్చడానికి ఒక ఫంక్షన్తో re.sub ను ఉపయోగించండి.",
         "ml": "$XX.XX പോലുള്ള എല്ലാ വിലകളും 0.92 കൊണ്ട് ഗുണിച്ചുകൊണ്ട് യൂറോയിലേക്ക് പരിവർത്തനം ചെയ്യുന്നതിനുള്ള ഒരു ഫംഗ്ഷനുള്ള re.sub ഉപയോഗിക്കുക. ഉദാഹരണത്തിന്, '$10.00' 'EUR9.20' ആയി മാറുന്നു.",
         "fr": "Utilisez re.sub avec une fonction pour convertir tous les prix comme $XX.XX en euros en multipliant par 0,92.",
-        "es": "Utilice re.sub con una función para convertir todos los precios como $XX.XX a euros multiplicando por 0,92. Por ejemplo, '$10.00' se convierte en 'EUR9.20'."
+        "es": "Utilice re.sub con una función para convertir todos los precios como $XX.XX a euros multiplicando por 0,92. Por ejemplo, '$10.00' se convierte en 'EUR9.20'.",
+        "it": "Utilizzare re.sub con funzione per convertire tutti i prezzi come $XX.XX in euro moltiplicando per 0,92."
       },
       "starter_code": "import re\n\ndef to_euros(match):\n    usd = float(match.group(1))\n    eur = usd * 0.92\n    return f'EUR {eur:.2f}'\n\ntext = 'Laptop $999.99, Mouse $29.99, Keyboard $79.99'\nresult = re.sub(r'\\$(\\d+\\.\\d{2})', to_euros, text)\nprint(result)",
       "expected_output": "Laptop EUR 919.99, Mouse EUR 27.59, Keyboard EUR 73.59",
