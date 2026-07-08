@@ -352,7 +352,8 @@
     {
       "instruction": {
         "en": "Create a context manager class called FileLogger that opens a file in __enter__ and closes it in __exit__. It should have a log(message) method that writes to the file. Use it to write 3 log messages.",
-        "ta": "FileLogger என்ற context manager வகுப்பை உருவாக்குங்கள் — __enter__-ல் கோப்பைத் திறந்து __exit__-ல் மூடும். log(message) முறை கோப்பில் எழுதும்."
+        "ta": "FileLogger என்ற context manager வகுப்பை உருவாக்குங்கள் — __enter__-ல் கோப்பைத் திறந்து __exit__-ல் மூடும். log(message) முறை கோப்பில் எழுதும்.",
+        "te": "__enter__ లో ఫైల్ను తెరిచి __exit__ లో మూసివేసే ఫైల్ లాగర్ అని పిలువబడే సందర్భ నిర్వాహక తరగతిని సృష్టించండి. ఇది ఫైల్కు వ్రాసే లాగ్(సందేశం) పద్ధతిని కలిగి ఉండాలి. 3 లాగ్ సందేశాలను వ్రాయడానికి ఉపయోగించండి."
       },
       "starter_code": "class FileLogger:\n    def __init__(self, filename):\n        self.filename = filename\n\n    def __enter__(self):\n        self.file = open(self.filename, 'w')\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.file.close()\n        print(f'{self.filename} closed safely')\n        return False\n\n    def log(self, message):\n        self.file.write(message + '\\n')\n\nwith FileLogger('app.log') as logger:\n    logger.log('App started')\n    logger.log('Processing data')\n    logger.log('App finished')\n\nwith open('app.log') as f:\n    print(f.read())",
       "expected_output": "app.log closed safely\nApp started\nProcessing data\nApp finished\n",

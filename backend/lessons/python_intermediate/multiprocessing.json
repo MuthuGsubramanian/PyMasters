@@ -295,7 +295,8 @@
     {
       "instruction": {
         "en": "Use Pool.map to compute factorials of [10, 15, 20, 25] in parallel. Create a factorial function and print the results.",
-        "ta": "Pool.map பயன்படுத்தி [10, 15, 20, 25] factorials-ஐ இணையாக கணக்கிடுங்கள். factorial function உருவாக்கி results அச்சிடுங்கள்."
+        "ta": "Pool.map பயன்படுத்தி [10, 15, 20, 25] factorials-ஐ இணையாக கணக்கிடுங்கள். factorial function உருவாக்கி results அச்சிடுங்கள்.",
+        "te": "[10, 15, 20, 25] యొక్క ఫాక్టరీలను సమాంతరంగా లెక్కించడానికి Pool.map ఉపయోగించండి. ఫాక్టరీ ఫంక్షన్ సృష్టించండి మరియు ఫలితాలను ముద్రించండి."
       },
       "starter_code": "from multiprocessing import Pool\nimport math\n\ndef factorial(n):\n    result = math.factorial(n)\n    print(f'{n}! = {result}')\n    return result\n\nif __name__ == '__main__':\n    numbers = [10, 15, 20, 25]\n    with Pool(4) as pool:\n        results = pool.map(factorial, numbers)\n    print(f'Results: {results}')",
       "expected_output": "10! = 3628800\n15! = 1307674368000\n20! = 2432902008176640000\n25! = 15511210043330985984000000\nResults: [3628800, 1307674368000, 2432902008176640000, 15511210043330985984000000]",

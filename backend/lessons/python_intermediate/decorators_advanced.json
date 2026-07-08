@@ -365,7 +365,8 @@
     {
       "instruction": {
         "en": "Create a parameterized decorator @validate_type(expected_type) that checks if the first argument to the decorated function matches the expected type. If not, raise TypeError. Test with a function that expects an int.",
-        "ta": "@validate_type(expected_type) என்ற parameterized decorator உருவாக்குங்கள். decorated செயல்பாட்டின் முதல் argument எதிர்பார்க்கும் type-உடன் பொருந்துகிறதா சரிபார்க்கவும்."
+        "ta": "@validate_type(expected_type) என்ற parameterized decorator உருவாக்குங்கள். decorated செயல்பாட்டின் முதல் argument எதிர்பார்க்கும் type-உடன் பொருந்துகிறதா சரிபார்க்கவும்.",
+        "te": "ఒక పారామితి డెకరేటర్ @validate_type(expected_type) ను సృష్టించండి, ఇది డెకరేటెడ్ ఫంక్షన్కు మొదటి వాదన ఊహించిన రకానికి సరిపోతుందో లేదో తనిఖీ చేస్తుంది. లేకపోతే, టైప్ఎరర్ను పెంచండి. int ని ఆశించే ఫంక్షన్తో పరీక్షించండి."
       },
       "starter_code": "import functools\n\ndef validate_type(expected_type):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            if not isinstance(args[0], expected_type):\n                raise TypeError(f'Expected {expected_type.__name__}')\n            return func(*args, **kwargs)\n        return wrapper\n    return decorator\n\n@validate_type(int)\ndef double(x):\n    return x * 2\n\nprint(double(5))\ntry:\n    print(double('hello'))\nexcept TypeError as e:\n    print(f'Error: {e}')",
       "expected_output": "10\nError: Expected int",

@@ -403,7 +403,8 @@
     {
       "instruction": {
         "en": "Create a closure make_accumulator(initial) that returns a function. Each call to the returned function adds the given value to a running total. Start with 100 and add 10, 20, 30.",
-        "ta": "make_accumulator(initial) closure உருவாக்குங்கள். திருப்பப்படும் function ஒவ்வொரு அழைப்பிலும் running total-க்கு value சேர்க்கும். 100-ல் தொடங்கி 10, 20, 30 சேர்க்கவும்."
+        "ta": "make_accumulator(initial) closure உருவாக்குங்கள். திருப்பப்படும் function ஒவ்வொரு அழைப்பிலும் running total-க்கு value சேர்க்கும். 100-ல் தொடங்கி 10, 20, 30 சேர்க்கவும்.",
+        "te": "ఒక ఫంక్షన్ తిరిగి ఇచ్చే మూసివేత make_accumulator ((initial) ను సృష్టించండి. తిరిగి ఇచ్చే ఫంక్షన్కు ప్రతి కాల్ ఇచ్చిన విలువను నడుస్తున్న మొత్తంకి జోడిస్తుంది. 100 తో ప్రారంభించి 10, 20, 30 ను జోడించండి."
       },
       "starter_code": "def make_accumulator(initial):\n    total = initial\n    def add(value):\n        nonlocal total\n        total += value\n        return total\n    return add\n\nacc = make_accumulator(100)\nprint(acc(10))   # 110\nprint(acc(20))   # 130\nprint(acc(30))   # 160",
       "expected_output": "110\n130\n160",
