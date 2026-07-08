@@ -16,7 +16,7 @@
   "next_unlock": "adv_iterators",
   "story_variants": {
     "en": "## Vaathiyaar's Lazy Farmer\n\nVaathiyaar tells a story. \"There are two types of farmers. The **eager farmer** harvests ALL vegetables at once, fills a massive truck, and delivers everything — even if the customer only needs 3 tomatoes. The **lazy farmer** picks one vegetable at a time, only when asked. Less waste, less fuel, less storage needed.\"\n\n\"Python generators are like the lazy farmer — they produce values **one at a time, on demand**, using the magic word `yield`.\"\n\n### List vs Generator\n\n| Feature | List | Generator |\n|---------|------|----------|\n| Memory | Stores ALL items in RAM | One item at a time |\n| Creation | `[x**2 for x in range(1M)]` | `(x**2 for x in range(1M))` |\n| Size in memory | ~8 MB for 1M ints | ~120 bytes always |\n| Reusable | Yes, iterate many times | No — exhausted after one pass |\n| Speed | Instant index access | Must iterate sequentially |\n\n### The yield Keyword\n\n```python\ndef countdown(n):\n    while n > 0:\n        yield n    # Pause here, give n, resume later\n        n -= 1\n\nfor num in countdown(3):\n    print(num)  # 3, 2, 1\n```\n\n> **Key Insight:** `yield` is like a bookmark. The function pauses, hands you a value, and when you ask for the next one, it resumes exactly where it left off — with all local variables intact!",
-    "ta": "## வாத்தியாரின் சோம்பல் விவசாயி\n\nவாத்தியார் ஒரு கதை சொல்கிறார். \"இரண்டு வகை விவசாயிகள் உள்ளனர். **ஆர்வமுள்ள விவசாயி** அனைத்து காய்கறிகளையும் ஒரே நேரத்தில் அறுவடை செய்கிறார். **சோம்பல் விவசாயி** கேட்கும்போது மட்டும் ஒரு காய்கறியை பறிக்கிறார்.\"\n\n\"Python generators சோம்பல் விவசாயி போல — `yield` என்ற மாயா வார்த்தை மூலம் **ஒரே நேரத்தில் ஒரு மதிப்பை, தேவைக்கேற்ப** உருவாக்குகின்றன.\"\n\n### yield Keyword\n\nyield ஒரு bookmark போல. Function நிறுத்தி, ஒரு மதிப்பை கொடுத்து, அடுத்ததைக் கேட்கும்போது நிறுத்திய இடத்திலிருந்து தொடரும்!"
+    "ta": "## Vaathiyaar's Lazy Farmer\n\nVaathiyaar ஒரு கதையைச் சொல்கிறார். \"இரண்டு வகையான விவசாயிகள் உள்ளனர். **ஆவலான விவசாயி** ஒரே நேரத்தில் அனைத்து காய்கறிகளையும் அறுத்து, ஒரு பெரிய டிரக்கை நிரப்பி, அனைத்தையும் கொண்டு செல்கிறார் — அந்த வாடிக்கையாளருக்கு தேவையில்லை என்றாலும். **தூங்கும் விவசாயி** ஒரு காய்கறியை ஒருவொரு முறையாக, கேட்கப்படும் போது மட்டுமே எடுக்கிறார். குறைந்த மிகையான கழிவு, குறைந்த எரிபொருள், குறைந்த சேமிப்பு தேவை.\"\n\n\"Python ஜெனரேட்டர்கள் தூங்கும் விவசாயியைப் போலவே — அவை `yield` என்ற மாய வார்த்தையைப் பயன்படுத்தி, **ஒருவொரு முறையாக, தேவைப்படும் போது** மதிப்புகளை உருவாக்குகின்றன.\"\n\n### List vs Generator\n\n| Feature | List | Generator |\n|---------|------|----------|\n| Memory | RAM-இல் அனைத்து உருப்படிகளையும் சேமிக்கிறது | ஒரு உருப்படி ஒருவொரு முறையாக |\n| Creation | `[x**2 for x in range(1M)]` | `(x**2 for x in range(1M))` |\n| Size in memory | 1M ints-க்கு ~8 MB | எப்போதும் ~120 bytes |\n| Reusable | ஆம், பல முறை மீண்டும் மீண்டும் சுழற்றலாம் | இல்லை — ஒரு முறை சுழற்றிய பிறகு முடிந்துவிடும் |\n| Speed | உடனடி இணைப்பு அணுகல் | தொடர்ச்சியாக மட்டுமே சுழற்ற வேண்டும் |\n\n### The yield Keyword```python\ndef countdown(n):\n    while n > 0:\n        yield n    # Pause here, give n, resume later\n        n -= 1\n\nfor num in countdown(3):\n    print(num)  # 3, 2, 1\n```> **முக்கிய உணர்வு:** `yield` என்பது ஒரு புத்தகக்குறிப்பு போலத் தான். செயல்படுத்தல் நிறுத்தப்படுகிறது, நிச்சயமாக ஒரு மதிப்பை உங்களுக்குக் கொடுக்கிறது, மேலும் அடுத்ததைக் கேட்கும்போது, அது அதே இடத்தில் தொடர்கிறது — அனைத்து உள்ளூர் மாறிகளுடனும்!"
   },
   "animation_sequence": [
     {
@@ -188,23 +188,38 @@
       "frames": [
         {
           "label": "Generator created",
-          "variables": { "gen": "<generator countdown at 0x...>", "n": "not started" }
+          "variables": {
+            "gen": "<generator countdown at 0x...>",
+            "n": "not started"
+          }
         },
         {
           "label": "After first next()",
-          "variables": { "gen": "paused at yield", "n": 3 }
+          "variables": {
+            "gen": "paused at yield",
+            "n": 3
+          }
         },
         {
           "label": "After second next()",
-          "variables": { "gen": "paused at yield", "n": 2 }
+          "variables": {
+            "gen": "paused at yield",
+            "n": 2
+          }
         },
         {
           "label": "After third next()",
-          "variables": { "gen": "paused at yield", "n": 1 }
+          "variables": {
+            "gen": "paused at yield",
+            "n": 1
+          }
         },
         {
           "label": "Generator exhausted",
-          "variables": { "gen": "StopIteration", "n": 0 }
+          "variables": {
+            "gen": "StopIteration",
+            "n": 0
+          }
         }
       ]
     },
@@ -213,16 +228,87 @@
       "id": "exec_viz_generator",
       "code": "def fibonacci(limit):\n    a, b = 0, 1\n    while a < limit:\n        yield a\n        a, b = b, a + b\n\nfib_gen = fibonacci(50)\nfor num in fib_gen:\n    print(num, end=' ')",
       "executionSteps": [
-        { "line": 1, "variables": {}, "output": "", "explanation": "Define a Fibonacci generator with a limit" },
-        { "line": 2, "variables": { "a": 0, "b": 1 }, "output": "", "explanation": "Initialize first two Fibonacci numbers" },
-        { "line": 4, "variables": { "a": 0 }, "output": "0 ", "explanation": "yield 0 — generator pauses" },
-        { "line": 5, "variables": { "a": 1, "b": 1 }, "output": "0 ", "explanation": "Resume: a becomes 1, b becomes 1" },
-        { "line": 4, "variables": { "a": 1 }, "output": "0 1 ", "explanation": "yield 1 — generator pauses again" },
-        { "line": 5, "variables": { "a": 1, "b": 2 }, "output": "0 1 ", "explanation": "Resume: a becomes 1, b becomes 2" },
-        { "line": 4, "variables": { "a": 1 }, "output": "0 1 1 ", "explanation": "yield 1" },
-        { "line": 4, "variables": { "a": 2 }, "output": "0 1 1 2 ", "explanation": "yield 2" },
-        { "line": 4, "variables": { "a": 3 }, "output": "0 1 1 2 3 ", "explanation": "yield 3" },
-        { "line": 4, "variables": { "a": 5 }, "output": "0 1 1 2 3 5 8 13 21 34 ", "explanation": "Continues until a >= 50, then StopIteration" }
+        {
+          "line": 1,
+          "variables": {},
+          "output": "",
+          "explanation": "Define a Fibonacci generator with a limit"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "a": 0,
+            "b": 1
+          },
+          "output": "",
+          "explanation": "Initialize first two Fibonacci numbers"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 0
+          },
+          "output": "0 ",
+          "explanation": "yield 0 — generator pauses"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "a": 1,
+            "b": 1
+          },
+          "output": "0 ",
+          "explanation": "Resume: a becomes 1, b becomes 1"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 1
+          },
+          "output": "0 1 ",
+          "explanation": "yield 1 — generator pauses again"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "a": 1,
+            "b": 2
+          },
+          "output": "0 1 ",
+          "explanation": "Resume: a becomes 1, b becomes 2"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 1
+          },
+          "output": "0 1 1 ",
+          "explanation": "yield 1"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 2
+          },
+          "output": "0 1 1 2 ",
+          "explanation": "yield 2"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 3
+          },
+          "output": "0 1 1 2 3 ",
+          "explanation": "yield 3"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "a": 5
+          },
+          "output": "0 1 1 2 3 5 8 13 21 34 ",
+          "explanation": "Continues until a >= 50, then StopIteration"
+        }
       ],
       "speed": "normal"
     },
