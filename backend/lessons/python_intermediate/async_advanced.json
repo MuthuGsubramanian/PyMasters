@@ -402,7 +402,8 @@
         "ml": "ഒരു അസ്യ്ക് ജനറേറ്റർ സൃഷ്ടിക്കുക, അത് 1-5 എന്ന സംഖ്യകളുടെ സ്ക്വയറുകളെ ഓരോന്നിനും 0.5 സെന്റർ കാലതാമസം വരുത്തുന്നു. 'അസിൻക് ഫോർ' ഉപയോഗിച്ച് അത് ഉപയോഗിക്കുക, ഓരോ സ്ക്വയറുകളും പ്രിന്റ് ചെയ്യുക.",
         "fr": "Créer un générateur d'async qui donne les carrés des nombres 1 à 5 avec un retard de 0,5s entre chacun. Consommez-le avec \"async pour\" et imprimer chaque carré.",
         "es": "Crear un generador de sincronización que genere los cuadrados de números 1-5 con un retraso de 0.5s entre cada uno. Consumir con 'asíncronización para' e imprimir cada cuadrado.",
-        "it": "Crea un generatore di assincronizzazione che rende i quadrati dei numeri 1-5 con un ritardo di 0,5 secondi tra ciascuno."
+        "it": "Crea un generatore di assincronizzazione che rende i quadrati dei numeri 1-5 con un ritardo di 0,5 secondi tra ciascuno.",
+        "ko": "1-5의 제곱을 각각 0.5s의 지연으로 생성하는 비동시 생성기를 만들십시오. 'async for'로 소비하고 각 제곱을 인쇄하십시오."
       },
       "starter_code": "import asyncio\n\nasync def square_stream(n):\n    for i in range(1, n + 1):\n        await asyncio.sleep(0.5)\n        yield i ** 2\n\nasync def main():\n    async for square in square_stream(5):\n        print(f'Square: {square}')\n\nasyncio.run(main())",
       "expected_output": "Square: 1\nSquare: 4\nSquare: 9\nSquare: 16\nSquare: 25",

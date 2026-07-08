@@ -286,7 +286,8 @@
         "ml": "'നാമം' ഉം 'വില' കീകളും ഉപയോഗിച്ച് 3 ഉൽപ്പന്ന നിഘണ്ടുക്കളുടെ ഒരു ലിസ്റ്റ് സൃഷ്ടിക്കുക. അവയെ ഒരു JSON ഫയലിലേക്ക് എഴുതുക, തുടർന്ന് ഏറ്റവും ചെലവേറിയ ഉൽപ്പന്നം വായിച്ച് അച്ചടിക്കുക.",
         "fr": "Créez une liste de 3 dictionnaires de produits avec les clés \"nom\" et \"prix\". Écrivez-les dans un fichier JSON, puis lisez-le et imprimez le produit le plus cher.",
         "es": "Crea una lista de 3 diccionarios de productos con las teclas 'nombre' y 'precio'. Escribalas en un archivo JSON, luego lea y imprima el producto más caro.",
-        "it": "Crea un elenco di 3 dizionari di prodotti con chiavi \"nome\" e \"prezzo\". Scrivili in un file JSON, poi leggi e stampa il prodotto più costoso."
+        "it": "Crea un elenco di 3 dizionari di prodotti con chiavi \"nome\" e \"prezzo\". Scrivili in un file JSON, poi leggi e stampa il prodotto più costoso.",
+        "ko": "'명'과 '가격' 키를 가진 3개의 제품 사전의 목록을 작성하고 JSON 파일로 작성하고 가장 비싼 제품을 다시 읽어 인쇄하십시오."
       },
       "starter_code": "import json\n\nproducts = [\n    {'name': 'Laptop', 'price': 999},\n    {'name': 'Mouse', 'price': 29},\n    {'name': 'Keyboard', 'price': 79}\n]\n\nwith open('products.json', 'w') as f:\n    json.dump(products, f, indent=2)\n\nwith open('products.json') as f:\n    loaded = json.load(f)\n\nexpensive = max(loaded, key=lambda p: p['price'])\nprint(f'Most expensive: {expensive[\"name\"]} (${expensive[\"price\"]})')",
       "expected_output": "Most expensive: Laptop ($999)",
