@@ -270,7 +270,8 @@
       "instruction": {
         "en": "Create a directory 'notes', write 3 text files into it ('note1.txt', 'note2.txt', 'note3.txt'), then use glob to find all .txt files and print their contents.",
         "ta": "'notes' directory உருவாக்கி, 3 text files எழுதி, glob பயன்படுத்தி அனைத்து .txt files கண்டுபிடித்து contents அச்சிடுங்கள்.",
-        "te": "నోట్స్ డైరెక్టరీని సృష్టించండి, దానిలో 3 టెక్స్ట్ ఫైళ్ళను వ్రాయండి (\"note1.txt\", \"note2.txt\", \"note3.txt\"), ఆపై అన్ని .txt ఫైళ్ళను కనుగొనడానికి మరియు వాటి కంటెంట్ను ముద్రించడానికి glob ను ఉపయోగించండి."
+        "te": "నోట్స్ డైరెక్టరీని సృష్టించండి, దానిలో 3 టెక్స్ట్ ఫైళ్ళను వ్రాయండి (\"note1.txt\", \"note2.txt\", \"note3.txt\"), ఆపై అన్ని .txt ఫైళ్ళను కనుగొనడానికి మరియు వాటి కంటెంట్ను ముద్రించడానికి glob ను ఉపయోగించండి.",
+        "ml": "ഒരു ഡയറക്ടറി 'നോട്ടുകൾ' സൃഷ്ടിക്കുക, അതിൽ 3 ടെക്സ്റ്റ് ഫയലുകൾ എഴുതുക ('note1.txt', 'note2.txt', 'note3.txt'), തുടർന്ന് എല്ലാ .txt ഫയലുകളും കണ്ടെത്താനും അവയുടെ ഉള്ളടക്കം അച്ചടിക്കാനും glob ഉപയോഗിക്കുക."
       },
       "starter_code": "from pathlib import Path\n\nnotes_dir = Path('notes')\nnotes_dir.mkdir(exist_ok=True)\n\nfor i in range(1, 4):\n    (notes_dir / f'note{i}.txt').write_text(f'This is note {i}')\n\nfor f in notes_dir.glob('*.txt'):\n    print(f'{f.name}: {f.read_text()}')",
       "expected_output": "note1.txt: This is note 1\nnote2.txt: This is note 2\nnote3.txt: This is note 3",
