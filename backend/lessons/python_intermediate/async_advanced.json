@@ -401,7 +401,8 @@
         "te": "ఒక అసింక్రోనస్ జనరేటర్‌ను సృష్టించండి, దీనిలో ప్రతి సంఖ్య వర్గాలను అందిస్తుంది, 1 నుండి 5 వరకు, ప్రతి దానికి మధ్య 0.5 సెకన్ల వేర్పాటు విరామంతో. 'async for'తో దానిని వినియోగించండి మరియు ప్రతి వర్గాన్ని ముద్రించండి.",
         "ml": "ഒരു അസ്യ്ക് ജനറേറ്റർ സൃഷ്ടിക്കുക, അത് 1-5 എന്ന സംഖ്യകളുടെ സ്ക്വയറുകളെ ഓരോന്നിനും 0.5 സെന്റർ കാലതാമസം വരുത്തുന്നു. 'അസിൻക് ഫോർ' ഉപയോഗിച്ച് അത് ഉപയോഗിക്കുക, ഓരോ സ്ക്വയറുകളും പ്രിന്റ് ചെയ്യുക.",
         "fr": "Créer un générateur d'async qui donne les carrés des nombres 1 à 5 avec un retard de 0,5s entre chacun. Consommez-le avec \"async pour\" et imprimer chaque carré.",
-        "es": "Crear un generador de sincronización que genere los cuadrados de números 1-5 con un retraso de 0.5s entre cada uno. Consumir con 'asíncronización para' e imprimir cada cuadrado."
+        "es": "Crear un generador de sincronización que genere los cuadrados de números 1-5 con un retraso de 0.5s entre cada uno. Consumir con 'asíncronización para' e imprimir cada cuadrado.",
+        "it": "Crea un generatore di assincronizzazione che rende i quadrati dei numeri 1-5 con un ritardo di 0,5 secondi tra ciascuno."
       },
       "starter_code": "import asyncio\n\nasync def square_stream(n):\n    for i in range(1, n + 1):\n        await asyncio.sleep(0.5)\n        yield i ** 2\n\nasync def main():\n    async for square in square_stream(5):\n        print(f'Square: {square}')\n\nasyncio.run(main())",
       "expected_output": "Square: 1\nSquare: 4\nSquare: 9\nSquare: 16\nSquare: 25",
