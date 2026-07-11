@@ -28,7 +28,7 @@ PATH_DEFINITIONS = [
         "foundation",
         40,
         [
-            "variables_intro", "variables", "variables_types", "variables_operators", "variables_conversion",
+            "variables_intro", "variables_types", "variables_operators", "variables_conversion",
             "conditionals", "for_loops", "while_loops", "lists", "ds_tuples",
             "ds_dicts", "ds_sets", "ds_nested", "comprehensions",
             "functions_basics", "functions_args", "functions_scope", "functions_lambda",
@@ -136,7 +136,7 @@ PATH_DEFINITIONS = [
         "ml",
         40,
         [
-            "variables_intro", "variables", "lists", "ds_dicts", "functions_basics",
+            "variables_intro", "lists", "ds_dicts", "functions_basics",
             "ml_what_is_it", "ml_workflow",
             "numpy_foundations", "pandas_foundations",
             "data_cleaning", "feature_engineering", "train_test_split",
@@ -184,7 +184,7 @@ PATH_DEFINITIONS = [
         "automation",
         20,
         [
-            "variables_intro", "variables", "conditionals", "for_loops", "lists",
+            "variables_intro", "conditionals", "for_loops", "lists",
             "functions_basics", "fileio_reading", "fileio_writing",
             "auto_file_organizer", "auto_web_scraper",
             "auto_email_sender", "auto_pdf_merger",
@@ -289,7 +289,7 @@ PATH_DEFINITIONS = [
         "projects",
         18,
         [
-            "variables_intro", "variables", "conditionals", "for_loops", "while_loops",
+            "variables_intro", "conditionals", "for_loops", "while_loops",
             "lists", "functions_basics",
             "fun_quiz_game", "fun_password_generator",
             "auto_file_organizer", "auto_web_scraper",
@@ -332,7 +332,7 @@ PATH_DEFINITIONS = [
         80,
         [
             # Python essentials (~8)
-            "variables_intro", "variables", "lists", "ds_dicts",
+            "variables_intro", "lists", "ds_dicts",
             "functions_basics", "functions_args", "comprehensions", "oop_classes",
             # AI fundamentals (~10)
             "what_is_ai", "llm_how_they_work",

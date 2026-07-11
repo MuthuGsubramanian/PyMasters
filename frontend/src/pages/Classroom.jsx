@@ -12,7 +12,7 @@ import PodcastPlayer from '../components/PodcastPlayer';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import {
-    BookOpen, ChevronRight, Play, RotateCcw, Lock,
+    BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
     MessageCircle, X, Cloud, Building2, Network
