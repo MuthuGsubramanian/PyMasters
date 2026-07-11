@@ -160,6 +160,14 @@ class SemanticIndex:
     # -- lifecycle ----------------------------------------------------------
 
     def ensure_started(self):
+        # Ops kill switch — honored HERE (not just at app startup) because the
+        # /api/semantic endpoints also call ensure_started(): during the
+        # 2026-07-12 incident the index build crashed gen1 Cloud Run instances,
+        # and with only the lifespan gated every status poll re-triggered the
+        # build and re-crashed the process.
+        if os.environ.get("SEMANTIC_AUTOSTART") == "0":
+            self.error = "disabled via SEMANTIC_AUTOSTART=0"
+            return
         with self._lock:
             if self.ready or self.building:
                 return

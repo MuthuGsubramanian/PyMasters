@@ -97,10 +97,11 @@ jobs:
             --port 8080 \
             --allow-unauthenticated \
             --service-account pymasters-runtime@pymasters-app.iam.gserviceaccount.com \
-            --set-env-vars "OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db,FROM_NAME=PyMasters,APP_BASE_URL=https://pymasters.net,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_BACKUP_HOST=smtp-relay.brevo.com,SMTP_BACKUP_PORT=587,VAATHIYAAR_PROVIDERS=qubrid+ollama,GOOGLE_CLOUD_PROJECT=pymasters-app,GOOGLE_CLOUD_LOCATION=us-central1,FRONTEND_URL=https://pymasters.net,GITHUB_REDIRECT_URI=https://pymasters.net/api/auth/github/callback,LINKEDIN_REDIRECT_URI=https://pymasters.net/api/auth/linkedin/callback" \
+            --set-env-vars "SEMANTIC_AUTOSTART=0,OLLAMA_MODEL=qwen3.5,DB_PATH=/app/data/pymasters.db,FROM_NAME=PyMasters,APP_BASE_URL=https://pymasters.net,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_BACKUP_HOST=smtp-relay.brevo.com,SMTP_BACKUP_PORT=587,VAATHIYAAR_PROVIDERS=qubrid+ollama,GOOGLE_CLOUD_PROJECT=pymasters-app,GOOGLE_CLOUD_LOCATION=us-central1,FRONTEND_URL=https://pymasters.net,GITHUB_REDIRECT_URI=https://pymasters.net/api/auth/github/callback,LINKEDIN_REDIRECT_URI=https://pymasters.net/api/auth/linkedin/callback" \
             --set-secrets "OLLAMA_API_KEY=ollama-api-key:latest,QUBRID_API_KEY=qubrid-api-key:latest,SMTP_PASS=smtp-pass:latest,SMTP_USER=smtp-user:latest,FROM_EMAIL=smtp-user:latest,SMTP_BACKUP_USER=smtp-backup-user:latest,SMTP_BACKUP_PASS=smtp-backup-pass:latest,JWT_SECRET=jwt-secret:latest,EXPORT_TOKEN=export-token:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,LINKEDIN_CLIENT_ID=LINKEDIN_CLIENT_ID:latest,LINKEDIN_CLIENT_SECRET=LINKEDIN_CLIENT_SECRET:latest" \
             --memory 2Gi \
             --cpu 1 \
+            --execution-environment gen2 \
             --no-cpu-throttling \
             --concurrency 80 \
             --min-instances 1 \
