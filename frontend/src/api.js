@@ -291,6 +291,10 @@ export const getGitHubConfig = () => api.get('/auth/github/config');
 export const startGitHub = () => api.get('/auth/github/start');
 
 // Payments (Razorpay Standard Checkout)
+// Semantic curriculum index (vector search over all lessons)
+export const semanticSearch = (q, k = 6) => api.get('/semantic/search', { params: { q, k } });
+export const semanticRelated = (lessonId, k = 6) => api.get(`/semantic/related/${encodeURIComponent(lessonId)}`, { params: { k } });
+
 export const getPaymentConfig = () => api.get('/payments/config');
 export const createPaymentOrder = (plan) => api.post('/payments/create-order', { plan });
 export const verifyPayment = (payload) => api.post('/payments/verify', payload);
