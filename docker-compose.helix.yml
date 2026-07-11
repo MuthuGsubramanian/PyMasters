@@ -1,0 +1,12 @@
+# Local HelixDB instance for the semantic curriculum index (see docs/helixdb.md).
+# Dev-only: the engine image is proprietary and in-memory — data resets on restart.
+services:
+  helixdb:
+    image: ghcr.io/helixdb/enterprise-dev:v0.11.0
+    container_name: pymasters-helix
+    ports:
+      - "6969:8080"
+    environment:
+      S3_BUCKET: IN_MEMORY
+      RUST_LOG: gateway=warn,hyperscale=warn
+    restart: unless-stopped
