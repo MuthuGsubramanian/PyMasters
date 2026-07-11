@@ -123,9 +123,9 @@ export default function Layout() {
     const points = liveXp != null ? liveXp : (user.points || 0);
     const rank = points > 1000 ? 'ARCHITECT' : points > 500 ? 'ENGINEER' : 'CADET';
     const rankColors = {
-        CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-600 dark:text-cyan-300', border: 'border-cyan-500/30' },
-        ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-600 dark:text-purple-300', border: 'border-purple-500/30' },
-        ARCHITECT: { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-300', border: 'border-amber-500/30' },
+        CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-700 dark:text-cyan-300', border: 'border-cyan-500/30' },
+        ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-500/30' },
+        ARCHITECT: { bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-500/30' },
     };
     const rc = rankColors[rank];
 
@@ -195,7 +195,7 @@ export default function Layout() {
                             type="button"
                             onClick={() => navigate('/dashboard/upgrade')}
                             className={clsx(
-                                "mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-500 hover:bg-amber-400/20 transition-colors",
+                                "mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 hover:bg-amber-400/20 transition-colors",
                                 collapsed && "lg:hidden"
                             )}
                         >

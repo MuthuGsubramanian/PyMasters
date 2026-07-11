@@ -415,8 +415,8 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                 isLocked
                                                                     ? 'opacity-40 cursor-not-allowed bg-bg-elevated'
                                                                     : isDone
-                                                                    ? 'bg-bg-surface border border-green-200 hover:shadow-md cursor-pointer'
-                                                                    : 'bg-bg-surface border border-border-default hover:shadow-md hover:border-purple-300 cursor-pointer'
+                                                                    ? 'bg-bg-surface border border-green-200 dark:border-green-500/30 hover:shadow-md cursor-pointer'
+                                                                    : 'bg-bg-surface border border-border-default hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500/40 cursor-pointer'
                                                             }`}
                                                         >
                                                             {/* Top: number + XP */}
@@ -433,14 +433,14 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                     {lesson.generated && <Badge variant="primary">Custom</Badge>}
                                                                     {lesson.xp_reward != null && (
                                                                         <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
-                                                                            isLocked ? 'text-text-muted bg-bg-elevated' : 'text-amber-600 bg-amber-50'
+                                                                            isLocked ? 'text-text-muted bg-bg-elevated' : 'text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/10'
                                                                         }`}>+{lesson.xp_reward} XP</span>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                             {/* Title */}
                                                             <h4 className={`font-bold text-[15px] leading-snug mb-1 transition-colors ${
-                                                                isLocked ? 'text-text-disabled' : 'text-text-primary group-hover:text-purple-600'
+                                                                isLocked ? 'text-text-disabled' : 'text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300'
                                                             }`}>
                                                                 {resolveText(lesson.title, language)}
                                                             </h4>
