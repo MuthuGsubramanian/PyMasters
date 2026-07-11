@@ -3,10 +3,10 @@ import { cn } from '../../lib/cn';
 const VARIANTS = {
   neutral: 'bg-bg-inset text-text-muted border-border-default',
   primary: 'bg-accent-subtle text-accent-primary border-accent-primary/30',
-  success: 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 border-emerald-500/25',
-  warning: 'bg-amber-500/12 text-amber-600 dark:text-amber-300 border-amber-500/25',
-  danger: 'bg-red-500/12 text-red-600 dark:text-red-300 border-red-500/25',
-  info: 'bg-secondary/12 text-secondary border-secondary/25',
+  success: 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25',
+  warning: 'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/25',
+  danger: 'bg-red-500/12 text-red-700 dark:text-red-300 border-red-500/25',
+  info: 'bg-secondary/12 text-cyan-700 dark:text-secondary border-secondary/25',
 };
 
 /** Small status/role/plan/tag pill. */
