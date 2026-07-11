@@ -32,7 +32,19 @@ _DEFAULT_CACHE = Path(
     or ("/app/data" if Path("/app/data").is_dir() else Path(__file__).resolve().parent.parent / "data")
 )
 MODEL_NAME = os.environ.get("SEMANTIC_MODEL", "BAAI/bge-small-en-v1.5")
-FAKE_EMBED = os.environ.get("SEMANTIC_FAKE_EMBED") == "1"  # deterministic, for tests/CI
+
+
+def _fake_embed():
+    """Deterministic hash embeddings for tests/CI (no model download).
+
+    Read dynamically (not at import) so pytest can flip it per-test; also
+    defaults ON under pytest so unrelated TestClient tests can never trigger
+    a real model download in CI.
+    """
+    v = os.environ.get("SEMANTIC_FAKE_EMBED")
+    if v is not None:
+        return v == "1"
+    return "PYTEST_CURRENT_TEST" in os.environ
 
 
 def _txt(v, lang="en"):
@@ -167,14 +179,14 @@ class SemanticIndex:
         self.by_id = {l["id"]: i for i, l in enumerate(self.lessons)}
         texts = [l["text"] for l in self.lessons]
         corpus_key = hashlib.sha256(
-            (MODEL_NAME + ("|fake" if FAKE_EMBED else "") + "\x00".join(texts)).encode()
+            (MODEL_NAME + ("|fake" if _fake_embed() else "") + "\x00".join(texts)).encode()
         ).hexdigest()
 
         cached = self._load_cache(corpus_key, len(texts))
         if cached is not None:
             self.matrix = cached
         else:
-            self._embedder = _FakeEmbedder() if FAKE_EMBED else _FastEmbedder()
+            self._embedder = _FakeEmbedder() if _fake_embed() else _FastEmbedder()
             self.matrix = _normalize(self._embedder.embed(texts))
             self._save_cache(corpus_key)
 
@@ -273,7 +285,7 @@ class SemanticIndex:
 
     def _embed_query(self, text):
         if self._embedder is None:
-            self._embedder = _FakeEmbedder() if FAKE_EMBED else _FastEmbedder()
+            self._embedder = _FakeEmbedder() if _fake_embed() else _FastEmbedder()
         v = self._embedder.embed([text])[0]
         n = np.linalg.norm(v)
         return v / (n or 1.0)

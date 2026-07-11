@@ -42,6 +42,7 @@ from routes.github_oauth import router as github_oauth_router
 from routes.discovery import router as discovery_router
 from routes.payments import router as payments_router, ensure_payments_table
 from routes.telemetry import router as telemetry_router, ensure_telemetry_tables, record_login
+from routes.semantic import router as semantic_router
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -716,6 +717,16 @@ async def lifespan(app: FastAPI):
     import threading
     t = threading.Thread(target=init_db, daemon=True)
     t.start()
+    # Semantic curriculum index (vector search / related lessons) builds in
+    # its own daemon thread; endpoints report ready:false until it finishes.
+    # Auto-start only where the real model should load (Cloud Run sets
+    # K_SERVICE) or when explicitly asked — never implicitly under pytest.
+    if os.environ.get("K_SERVICE") or os.environ.get("SEMANTIC_AUTOSTART") == "1":
+        try:
+            from semantic.store import get_index
+            get_index().ensure_started()
+        except Exception as e:
+            print(f"Semantic index startup skipped: {e}")
     yield
 
 app = FastAPI(title="PyMasters API", lifespan=lifespan)
@@ -741,6 +752,7 @@ app.include_router(voice_router)
 app.include_router(social_router)
 app.include_router(org_challenges_router)
 app.include_router(telemetry_router)
+app.include_router(semantic_router)
 app.include_router(oauth_router)
 app.include_router(github_oauth_router)
 app.include_router(discovery_router)
