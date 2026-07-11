@@ -104,13 +104,20 @@ def load_lessons():
 # ── Embedders ───────────────────────────────────────────────────────────────
 
 class _FakeEmbedder:
-    """Deterministic hash-based embedding — CI/tests only (no model download)."""
-    dim = 64
+    """Deterministic hash-based embedding — CI/tests only (no model download).
+
+    Wide enough (2048 dims) that token collisions don't swamp ranking, so
+    exact-token queries behave like a crude but usable lexical search.
+    """
+    dim = 2048
 
     def embed(self, texts):
         vecs = np.zeros((len(texts), self.dim), dtype=np.float32)
         for i, t in enumerate(texts):
             for tok in t.lower().split():
+                tok = tok.strip(".,:;!?()[]{}'\"`")
+                if len(tok) < 3:
+                    continue
                 h = int(hashlib.md5(tok.encode()).hexdigest(), 16)
                 vecs[i, h % self.dim] += 1.0
         return vecs
@@ -178,8 +185,9 @@ class SemanticIndex:
         self.lessons = load_lessons()
         self.by_id = {l["id"]: i for i, l in enumerate(self.lessons)}
         texts = [l["text"] for l in self.lessons]
+        embed_tag = f"|fake{_FakeEmbedder.dim}" if _fake_embed() else ""
         corpus_key = hashlib.sha256(
-            (MODEL_NAME + ("|fake" if _fake_embed() else "") + "\x00".join(texts)).encode()
+            (MODEL_NAME + embed_tag + "\x00".join(texts)).encode()
         ).hexdigest()
 
         cached = self._load_cache(corpus_key, len(texts))
