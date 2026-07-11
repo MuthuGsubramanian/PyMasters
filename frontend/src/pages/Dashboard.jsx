@@ -696,7 +696,7 @@ export function Overview() {
                                     to: '/dashboard/classroom',
                                     colors: 'from-cyan-500 to-blue-500',
                                     bg: 'bg-cyan-500/10 hover:bg-cyan-500/20',
-                                    text: 'text-cyan-600 dark:text-cyan-300',
+                                    text: 'text-cyan-700 dark:text-cyan-300',
                                 },
                                 {
                                     label: 'Practice Mode',
@@ -704,7 +704,7 @@ export function Overview() {
                                     to: '/dashboard/classroom',
                                     colors: 'from-purple-500 to-violet-500',
                                     bg: 'bg-purple-500/10 hover:bg-purple-500/20',
-                                    text: 'text-purple-600 dark:text-purple-300',
+                                    text: 'text-purple-700 dark:text-purple-300',
                                 },
                                 {
                                     label: 'Ask Vaathiyaar',
@@ -712,7 +712,7 @@ export function Overview() {
                                     to: '/dashboard/classroom',
                                     colors: 'from-amber-500 to-orange-500',
                                     bg: 'bg-amber-500/10 hover:bg-amber-500/20',
-                                    text: 'text-amber-600 dark:text-amber-300',
+                                    text: 'text-amber-700 dark:text-amber-300',
                                 },
                                 {
                                     label: 'View Profile',
@@ -720,7 +720,7 @@ export function Overview() {
                                     to: '/dashboard/profile',
                                     colors: 'from-emerald-500 to-green-500',
                                     bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
-                                    text: 'text-emerald-600 dark:text-emerald-300',
+                                    text: 'text-emerald-700 dark:text-emerald-300',
                                 },
                             ].map((action, idx) => (
                                 <motion.button
