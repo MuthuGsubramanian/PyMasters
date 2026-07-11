@@ -404,7 +404,7 @@ export function Overview() {
                             <span>{formatDate()}</span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
-                            {getGreeting()}, <span className="text-gradient">{user.username}</span>!
+                            {getGreeting()}, <span className="text-gradient">{user.name || user.username}</span>!
                         </h1>
                         <p className="text-sm text-text-secondary italic max-w-lg">
                             &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
@@ -430,7 +430,7 @@ export function Overview() {
                         </div>
                         <div>
                             <div className="text-xl font-bold font-display text-orange-600 dark:text-orange-300">{streak}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-500/80 dark:text-orange-400">day streak</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-700 dark:text-orange-400">day streak</div>
                         </div>
                     </motion.div>
                 </div>
