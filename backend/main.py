@@ -721,7 +721,12 @@ async def lifespan(app: FastAPI):
     # its own daemon thread; endpoints report ready:false until it finishes.
     # Auto-start only where the real model should load (Cloud Run sets
     # K_SERVICE) or when explicitly asked — never implicitly under pytest.
-    if os.environ.get("K_SERVICE") or os.environ.get("SEMANTIC_AUTOSTART") == "1":
+    # SEMANTIC_AUTOSTART=0 is the ops kill switch (gcloud run services update
+    # --set-env-vars SEMANTIC_AUTOSTART=0) in case the model build ever
+    # destabilizes an instance — the endpoints then stay ready:false forever,
+    # which every consumer already treats as "feature absent".
+    if os.environ.get("SEMANTIC_AUTOSTART") != "0" and (
+            os.environ.get("K_SERVICE") or os.environ.get("SEMANTIC_AUTOSTART") == "1"):
         try:
             from semantic.store import get_index
             get_index().ensure_started()
