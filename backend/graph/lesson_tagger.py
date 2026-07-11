@@ -56,10 +56,6 @@ TRACK_DEFAULTS = {
 LESSON_CONCEPT_MAP = {
     # ── python_fundamentals ───────────────────────────────────────────────
     # variables & types module
-    "variables": {
-        "teaches": ["variables"],
-        "requires": [],
-    },
     "variables_intro": {
         "teaches": ["variables"],
         "requires": [],

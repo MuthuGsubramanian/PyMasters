@@ -5,8 +5,8 @@
   "module": "ai_foundations",
   "order": 3,
   "title": {
-    "en": "How Large Language Models Work",
-    "ta": "பெரிய மொழி மாதிரிகள் எவ்வாறு செயல்படுகின்றன"
+    "en": "LLM Basics: What They Are & What They Can Do",
+    "ta": "LLM அடிப்படைகள்: அவை என்ன, என்ன செய்ய முடியும்"
   },
   "description": {
     "en": "Understand the inner workings of Large Language Models — tokenization, attention, and next-token prediction — and learn to use LLM APIs in Python.",
@@ -166,23 +166,77 @@
       "type": "FlowDiagram",
       "id": "llm_flow",
       "nodes": [
-        { "id": "input", "label": "User types prompt", "type": "start" },
-        { "id": "tokenize", "label": "Text tokenized into tokens", "type": "process" },
-        { "id": "embed", "label": "Tokens converted to embeddings", "type": "process" },
-        { "id": "attention", "label": "Attention layers process context", "type": "process" },
-        { "id": "predict", "label": "Predict next token probabilities", "type": "process" },
-        { "id": "sample", "label": "Sample token (temperature controls randomness)", "type": "process" },
-        { "id": "output", "label": "Generated text returned", "type": "end" }
+        {
+          "id": "input",
+          "label": "User types prompt",
+          "type": "start"
+        },
+        {
+          "id": "tokenize",
+          "label": "Text tokenized into tokens",
+          "type": "process"
+        },
+        {
+          "id": "embed",
+          "label": "Tokens converted to embeddings",
+          "type": "process"
+        },
+        {
+          "id": "attention",
+          "label": "Attention layers process context",
+          "type": "process"
+        },
+        {
+          "id": "predict",
+          "label": "Predict next token probabilities",
+          "type": "process"
+        },
+        {
+          "id": "sample",
+          "label": "Sample token (temperature controls randomness)",
+          "type": "process"
+        },
+        {
+          "id": "output",
+          "label": "Generated text returned",
+          "type": "end"
+        }
       ],
       "edges": [
-        { "from": "input", "to": "tokenize" },
-        { "from": "tokenize", "to": "embed" },
-        { "from": "embed", "to": "attention" },
-        { "from": "attention", "to": "predict" },
-        { "from": "predict", "to": "sample" },
-        { "from": "sample", "to": "output" }
+        {
+          "from": "input",
+          "to": "tokenize"
+        },
+        {
+          "from": "tokenize",
+          "to": "embed"
+        },
+        {
+          "from": "embed",
+          "to": "attention"
+        },
+        {
+          "from": "attention",
+          "to": "predict"
+        },
+        {
+          "from": "predict",
+          "to": "sample"
+        },
+        {
+          "from": "sample",
+          "to": "output"
+        }
       ],
-      "executionPath": ["input", "tokenize", "embed", "attention", "predict", "sample", "output"],
+      "executionPath": [
+        "input",
+        "tokenize",
+        "embed",
+        "attention",
+        "predict",
+        "sample",
+        "output"
+      ],
       "speed": "normal"
     },
     {
@@ -192,13 +246,24 @@
       "executionSteps": [
         {
           "line": 2,
-          "variables": { "text": "The cat sat on the mat" },
+          "variables": {
+            "text": "The cat sat on the mat"
+          },
           "output": "",
           "explanation": "Input text that will be processed by the model"
         },
         {
           "line": 3,
-          "variables": { "tokens": ["The", "cat", "sat", "on", "the", "mat"] },
+          "variables": {
+            "tokens": [
+              "The",
+              "cat",
+              "sat",
+              "on",
+              "the",
+              "mat"
+            ]
+          },
           "output": "",
           "explanation": "Split text into tokens — real LLMs use sub-word tokenization"
         },
@@ -222,7 +287,14 @@
         },
         {
           "line": 10,
-          "variables": { "next_words": {"mat": 0.7, "floor": 0.15, "table": 0.1, "roof": 0.05} },
+          "variables": {
+            "next_words": {
+              "mat": 0.7,
+              "floor": 0.15,
+              "table": 0.1,
+              "roof": 0.05
+            }
+          },
           "output": "Prediction probabilities: {'mat': 0.7, 'floor': 0.15, 'table': 0.1, 'roof': 0.05}",
           "explanation": "The model assigns probabilities to possible next tokens"
         },
