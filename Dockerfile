@@ -40,6 +40,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # cold starts). Must match VOICE_WHISPER_MODEL (default "tiny").
 RUN python -c "from faster_whisper import WhisperModel; WhisperModel('tiny', device='cpu', compute_type='int8')"
 
+# Pre-download the semantic-search embedding model (fastembed) for the same
+# reason. Must match SEMANTIC_MODEL (default BAAI/bge-small-en-v1.5).
+# Retried because HF occasionally 429s Cloud Build egress IPs.
+RUN for i in 1 2 3; do \
+      python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')" && break; \
+      echo "fastembed model download retry $i" && sleep 20; \
+    done
+
 # Backend code
 COPY backend/ .
 
