@@ -152,7 +152,7 @@ const TRACK_META = {
         gradient: 'from-purple-500/10 to-violet-500/5',
     },
     deep_learning: {
-        name: 'Deep Learning & Neural Networks',
+        name: 'Deep Learning Foundations',
         icon: <Layers size={16} />,
         accent: '#f59e0b',
         gradient: 'from-amber-500/10 to-orange-500/5',
@@ -194,16 +194,94 @@ const TRACK_META = {
         gradient: 'from-purple-500/10 to-violet-500/5',
     },
     deep_learning_complete: {
-        name: 'Deep Learning & Neural Networks',
-        icon: <Layers size={16} />,
-        accent: '#f59e0b',
-        gradient: 'from-amber-500/10 to-orange-500/5',
+        name: 'Deep Learning Masterclass',
+        icon: <Brain size={16} />,
+        accent: '#d946ef',
+        gradient: 'from-fuchsia-500/10 to-purple-500/5',
     },
     testing_devops: {
         name: 'Testing & DevOps',
         icon: <Zap size={16} />,
         accent: '#10b981',
         gradient: 'from-emerald-500/10 to-green-500/5',
+    },
+    vibe_coding: {
+        name: 'Vibe Coding',
+        icon: <Sparkles size={16} />,
+        accent: '#8b5cf6',
+        gradient: 'from-violet-500/10 to-fuchsia-500/5',
+    },
+    ai_agents: {
+        name: 'AI Agents',
+        icon: <Bot size={16} />,
+        accent: '#6366f1',
+        gradient: 'from-indigo-500/10 to-violet-500/5',
+    },
+    ai_engineering: {
+        name: 'AI Engineering',
+        icon: <Cpu size={16} />,
+        accent: '#0ea5e9',
+        gradient: 'from-sky-500/10 to-cyan-500/5',
+    },
+    python_modern: {
+        name: 'Modern Python',
+        icon: <Zap size={16} />,
+        accent: '#3b82f6',
+        gradient: 'from-blue-500/10 to-indigo-500/5',
+    },
+    python_internals: {
+        name: 'Python Internals',
+        icon: <Cpu size={16} />,
+        accent: '#a855f7',
+        gradient: 'from-purple-500/10 to-violet-500/5',
+    },
+    async_concurrency: {
+        name: 'Async & Concurrency',
+        icon: <Network size={16} />,
+        accent: '#06b6d4',
+        gradient: 'from-cyan-500/10 to-blue-500/5',
+    },
+    debugging_mastery: {
+        name: 'Debugging Mastery',
+        icon: <Wrench size={16} />,
+        accent: '#ef4444',
+        gradient: 'from-red-500/10 to-rose-500/5',
+    },
+    error_handling: {
+        name: 'Error Handling',
+        icon: <Zap size={16} />,
+        accent: '#f43f5e',
+        gradient: 'from-rose-500/10 to-red-500/5',
+    },
+    functional_python: {
+        name: 'Functional Python',
+        icon: <Code2 size={16} />,
+        accent: '#10b981',
+        gradient: 'from-emerald-500/10 to-teal-500/5',
+    },
+    performance_optimization: {
+        name: 'Performance Optimization',
+        icon: <Zap size={16} />,
+        accent: '#f59e0b',
+        gradient: 'from-amber-500/10 to-yellow-500/5',
+    },
+    regex_mastery: {
+        name: 'Regex Mastery',
+        icon: <Code2 size={16} />,
+        accent: '#ec4899',
+        gradient: 'from-pink-500/10 to-fuchsia-500/5',
+    },
+    transformers_scratch: {
+        name: 'Transformers from Scratch',
+        icon: <Layers size={16} />,
+        accent: '#f97316',
+        gradient: 'from-orange-500/10 to-amber-500/5',
+    },
+    working_with_data: {
+        name: 'Working with Data',
+        icon: <BookOpen size={16} />,
+        accent: '#14b8a6',
+        gradient: 'from-teal-500/10 to-emerald-500/5',
     },
     generated: {
         name: 'Custom Modules',
@@ -401,7 +479,14 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                         >
                                             <div className="px-3 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {lessonsInTrack.map((lesson, idx) => {
-                                                    const isLocked = lesson.recommended === false;
+                                                    // `recommended:false` is soft personalization from the
+                                                    // backend (profile-based track ordering), NOT a completion
+                                                    // gate — nothing a learner does ever flips it. Rendering it
+                                                    // as a hard lock stranded 14 whole tracks behind a
+                                                    // "Complete earlier modules first" tooltip that could never
+                                                    // be satisfied. Off-path lessons stay fully clickable and
+                                                    // are only visually de-emphasized.
+                                                    const isOffPath = lesson.recommended === false;
                                                     const isDone = completedLessons.has(lesson.id);
                                                     return (
                                                         <motion.button
@@ -409,39 +494,34 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                             initial={{ opacity: 0, y: 8 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ delay: idx * 0.02 }}
-                                                            onClick={() => !isLocked && onSelectLesson(lesson)}
-                                                            title={isLocked ? 'Complete earlier modules first' : undefined}
-                                                            className={`text-left rounded-xl p-3 group transition-all duration-200 relative ${
-                                                                isLocked
-                                                                    ? 'opacity-40 cursor-not-allowed bg-bg-elevated'
+                                                            onClick={() => onSelectLesson(lesson)}
+                                                            title={isOffPath ? 'Not on your personalized path — open anyway' : undefined}
+                                                            className={`text-left rounded-xl p-3 group transition-all duration-200 relative cursor-pointer ${
+                                                                isOffPath
+                                                                    ? 'opacity-75 hover:opacity-100 bg-bg-surface border border-border-default border-dashed hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500/40'
                                                                     : isDone
-                                                                    ? 'bg-bg-surface border border-green-200 dark:border-green-500/30 hover:shadow-md cursor-pointer'
-                                                                    : 'bg-bg-surface border border-border-default hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500/40 cursor-pointer'
+                                                                    ? 'bg-bg-surface border border-green-200 dark:border-green-500/30 hover:shadow-md'
+                                                                    : 'bg-bg-surface border border-border-default hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500/40'
                                                             }`}
                                                         >
                                                             {/* Top: number + XP */}
                                                             <div className="flex items-center gap-2 mb-2">
                                                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                                                                    isLocked ? 'bg-bg-elevated text-text-muted'
-                                                                    : isDone ? 'bg-green-500 text-white'
-                                                                    : 'text-white'
-                                                                }`} style={!isLocked && !isDone ? { background: meta.accent } : {}}>
-                                                                    {isLocked ? <Lock size={12} /> : isDone ? '✓' : idx + 1}
+                                                                    isDone ? 'bg-green-500 text-white' : 'text-white'
+                                                                }`} style={!isDone ? { background: meta.accent, opacity: isOffPath ? 0.7 : 1 } : {}}>
+                                                                    {isDone ? '✓' : idx + 1}
                                                                 </div>
                                                                 <div className="ml-auto flex items-center gap-1.5">
                                                                     {isDone && <Badge variant="success">Done</Badge>}
+                                                                    {!isDone && isOffPath && <Badge variant="neutral">Off your path</Badge>}
                                                                     {lesson.generated && <Badge variant="primary">Custom</Badge>}
                                                                     {lesson.xp_reward != null && (
-                                                                        <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
-                                                                            isLocked ? 'text-text-muted bg-bg-elevated' : 'text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/10'
-                                                                        }`}>+{lesson.xp_reward} XP</span>
+                                                                        <span className="text-[10px] font-bold rounded-full px-2 py-0.5 text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/10">+{lesson.xp_reward} XP</span>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                             {/* Title */}
-                                                            <h4 className={`font-bold text-[15px] leading-snug mb-1 transition-colors ${
-                                                                isLocked ? 'text-text-disabled' : 'text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300'
-                                                            }`}>
+                                                            <h4 className="font-bold text-[15px] leading-snug mb-1 transition-colors text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300">
                                                                 {resolveText(lesson.title, language)}
                                                             </h4>
                                                             {/* Description */}
@@ -451,11 +531,9 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                 </p>
                                                             )}
                                                             {/* Play hint */}
-                                                            {!isLocked && (
-                                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <Play size={12} className="text-purple-400" fill="currentColor" />
-                                                                </div>
-                                                            )}
+                                                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <Play size={12} className="text-purple-400" fill="currentColor" />
+                                                            </div>
                                                         </motion.button>
                                                     );
                                                 })}

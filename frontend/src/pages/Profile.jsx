@@ -1212,7 +1212,7 @@ export default function Profile() {
                                 confirmLabel: 'Reset Everything',
                                 onConfirm: handleResetProgress,
                             })}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/12 text-sm font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-500/20 transition-all duration-200"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/12 text-sm font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-all duration-200"
                         >
                             <RotateCcw size={16} />
                             Reset Progress
