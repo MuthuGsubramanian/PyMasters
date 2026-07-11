@@ -961,7 +961,42 @@ function PracticePhase({
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: feedback — evaluation result with celebration
 // ──────────────────────────────────────────────────────────────────────────────
-function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0 }) {
+// Compact "keep the momentum" strip on the success panel: curriculum-graph
+// neighbours (next step / prerequisites / module peers) plus semantic
+// look-alikes from /api/semantic/related. Absent until the index is ready;
+// any fetch error simply renders nothing.
+function RelatedLessons({ lessonId, language, onOpen }) {
+    const [items, setItems] = useState([]);
+    useEffect(() => {
+        let alive = true;
+        import('../api').then(({ semanticRelated }) => semanticRelated(lessonId, 4))
+            .then((r) => { if (alive) setItems(r.data?.ready ? (r.data.results || []) : []); })
+            .catch(() => { if (alive) setItems([]); });
+        return () => { alive = false; };
+    }, [lessonId]);
+    if (!items.length) return null;
+    const REASON = { next_step: 'Next step', prerequisite: 'Builds on this', same_module: 'Same module', similar: 'Similar' };
+    return (
+        <div className="pt-3 border-t border-border-default">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-2">Where to go next</p>
+            <div className="flex flex-wrap gap-2">
+                {items.map((m) => (
+                    <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => onOpen(m)}
+                        className="group/rel flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-bg-elevated border border-border-default hover:border-purple-300 dark:hover:border-purple-500/40 text-text-secondary hover:text-text-primary transition-colors"
+                    >
+                        <span className="text-[9px] font-bold uppercase tracking-wide text-purple-600 dark:text-purple-300">{REASON[m.reason] || 'Related'}</span>
+                        {resolveText(m.title, language)}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated }) {
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
     // count so the supportive UI still appears even without the signal.
@@ -1102,6 +1137,10 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
                             </button>
                         )}
                     </div>
+
+                    {success && lessonId && onOpenRelated && (
+                        <RelatedLessons lessonId={lessonId} language={language} onOpen={onOpenRelated} />
+                    )}
                 </div>
             </motion.div>
         </div>
@@ -1393,6 +1432,13 @@ export default function Classroom() {
                     prev.has(currentLesson.id) ? prev : new Set(prev).add(currentLesson.id)
                 );
             }
+            // Tell the app shell XP changed so the sidebar chip refreshes NOW —
+            // Layout's liveXp only refetched when navigating AWAY from an
+            // XP-earning route, so the badge sat stale for the rest of the
+            // lesson session (live-QA 2026-07-12).
+            if (result?.xp_earned > 0) {
+                window.dispatchEvent(new CustomEvent('pm:xp-earned', { detail: { xp: result.xp_earned } }));
+            }
             // Show output in the terminal
             const out = result?.output || '';
             const err = result?.error || '';
@@ -1680,6 +1726,8 @@ export default function Classroom() {
                                 attemptCount={attemptCount}
                                 onContinue={handleContinue}
                                 onRetry={handleRetry}
+                                lessonId={currentLesson?.id}
+                                onOpenRelated={handleSelectLesson}
                             /></ErrorBoundary>
                         </motion.div>
                     )}

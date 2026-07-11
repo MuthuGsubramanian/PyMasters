@@ -69,6 +69,21 @@ export default function Layout() {
         }
     }, [user?.id, location.pathname]);
 
+    // Instant badge update on XP award — Classroom dispatches pm:xp-earned when
+    // /evaluate returns xp_earned, so the chip no longer waits for the learner
+    // to navigate away before reflecting the new total. Refetches (rather than
+    // adds) so the badge always shows the server truth.
+    useEffect(() => {
+        if (!user?.id) return;
+        const onXp = () => {
+            getProfileStats(user.id)
+                .then((r) => { const xp = r.data?.total_xp; if (Number.isFinite(xp)) setLiveXp(xp); })
+                .catch(() => {});
+        };
+        window.addEventListener('pm:xp-earned', onXp);
+        return () => window.removeEventListener('pm:xp-earned', onXp);
+    }, [user?.id]);
+
     // Trial/plan access (2026-07-02): individual users get a 7-day trial from
     // signup. During the trial show a countdown chip; once expired, route to
     // the upgrade page (backend also enforces via 402 on learning endpoints).
