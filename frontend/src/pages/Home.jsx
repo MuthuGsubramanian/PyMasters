@@ -577,8 +577,8 @@ export default function Home() {
                             </div>
                             <div className="relative grid grid-cols-2 gap-3">
                                 {[
-                                    { v: '380+', l: 'Lessons' },
-                                    { v: '15', l: 'Tracks' },
+                                    { v: '425+', l: 'Lessons' },
+                                    { v: '24', l: 'Tracks' },
                                     { v: '∞', l: 'AI Modules' },
                                     { v: 'EN/TA', l: 'Languages' },
                                 ].map(s => (
