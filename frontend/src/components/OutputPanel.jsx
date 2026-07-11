@@ -99,7 +99,7 @@ export default function OutputPanel({
                         )}
                     </>
                 ) : (
-                    <span className="text-slate-600 italic">Run your code to see output here...</span>
+                    <span className="text-slate-400 italic">Run your code to see output here...</span>
                 )}
             </div>
         </div>
