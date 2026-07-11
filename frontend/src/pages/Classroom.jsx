@@ -1596,7 +1596,7 @@ export default function Classroom() {
                         >
                             {user?.id && (
                                 <div id="learn-anything-panel" className="max-w-5xl mx-auto mb-5">
-                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} initialTopic={deepLinkTopic} autoStart={autoLearnTopic} />
+                                    <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} onOpenLesson={handleSelectLesson} initialTopic={deepLinkTopic} autoStart={autoLearnTopic} />
                                 </div>
                             )}
                             <LessonSelect

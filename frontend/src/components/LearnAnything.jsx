@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Loader2, Wand2, AlertCircle } from 'lucide-react';
-import { requestModule, getModuleStatus } from '../api';
+import { requestModule, getModuleStatus, semanticSearch } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
+
+// Lesson titles arrive as locale maps ({en, ta, …}) — resolve to English for
+// this compact suggestion strip (full localization happens in the Classroom).
+const en = (v) => (typeof v === 'string' ? v : (v && (v.en || Object.values(v).find((x) => typeof x === 'string'))) || '');
 
 // Friendly labels for each generation stage (maps to backend status values).
 const STAGE_LABELS = {
@@ -24,15 +28,33 @@ const SUGGESTIONS = ['Web scraping with Python', 'Decorators explained', 'How re
 // ──────────────────────────────────────────────────────────────────────────
 // "Learn anything" — type a topic, Vaathiyaar generates a tailor-made lesson.
 // ──────────────────────────────────────────────────────────────────────────
-export default function LearnAnything({ userId, onLessonReady, initialTopic = '', autoStart = false }) {
+export default function LearnAnything({ userId, onLessonReady, onOpenLesson, initialTopic = '', autoStart = false }) {
     const [topic, setTopic] = useState(initialTopic);
     const [busy, setBusy] = useState(false);
     const [status, setStatus] = useState(null);   // { status, progress_pct }
     const [err, setErr] = useState('');
+    const [matches, setMatches] = useState([]);   // semantic catalogue hits for the typed topic
     const pollRef = useRef(null);
+    const searchRef = useRef(null);
     const autoStartedRef = useRef('');
 
     useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+    // Before generating a brand-new lesson, surface catalogue lessons that
+    // already cover the typed topic (semantic search, debounced). Saves the
+    // learner 1-3 minutes of generation — and the platform an AI call — when
+    // the curriculum already teaches it. Fails silent: no matches, no strip.
+    useEffect(() => {
+        if (searchRef.current) clearTimeout(searchRef.current);
+        const q = topic.trim();
+        if (busy || q.length < 3 || !onOpenLesson) { setMatches([]); return; }
+        searchRef.current = setTimeout(() => {
+            semanticSearch(q, 4)
+                .then((r) => setMatches(r.data?.ready ? (r.data.results || []) : []))
+                .catch(() => setMatches([]));
+        }, 350);
+        return () => { if (searchRef.current) clearTimeout(searchRef.current); };
+    }, [topic, busy, onOpenLesson]);
 
     // Seed the input when a topic arrives via prop after mount — e.g. the Trending
     // "Explore Topic" deep-link (/dashboard/classroom?topic=<title>). Optional and
@@ -142,6 +164,23 @@ export default function LearnAnything({ userId, onLessonReady, initialTopic = ''
                         {err && (
                             <div className="mt-2 flex items-start gap-1.5 text-xs text-red-600">
                                 <AlertCircle size={13} className="mt-0.5 flex-shrink-0" /> {err}
+                            </div>
+                        )}
+                        {matches.length > 0 && (
+                            <div className="mt-2.5">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-text-muted mb-1.5">Already in the curriculum — open instead:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {matches.map((m) => (
+                                        <button
+                                            key={m.id}
+                                            type="button"
+                                            onClick={() => onOpenLesson(m)}
+                                            className="text-[11px] px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/25 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors"
+                                        >
+                                            {en(m.title)}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
                         <div className="mt-2 flex flex-wrap gap-1.5">
