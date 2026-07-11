@@ -99,9 +99,9 @@ function ProgressRing({ progress, size = 80, strokeWidth = 6, color = '#06b6d4' 
 // ─── Difficulty badge ───────────────────────────────────────────────────────
 function DifficultyBadge({ level }) {
     const config = {
-        beginner: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' },
-        intermediate: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
-        advanced: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
+        beginner: { bg: 'bg-green-50 dark:bg-green-500/10', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-500/25' },
+        intermediate: { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-500/25' },
+        advanced: { bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-500/25' },
     };
     const c = config[level] || config.beginner;
     return (
@@ -136,18 +136,18 @@ function PathCard({ path, index, onClick, isRecommended }) {
                     onClick?.(e);
                 }
             }}
-            className="group relative rounded-2xl border border-border-default bg-bg-surface backdrop-blur-sm overflow-hidden hover:border-cyan-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+            className="group relative rounded-2xl border border-border-default bg-bg-surface backdrop-blur-sm overflow-hidden hover:border-cyan-200 dark:hover:border-cyan-500/30 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
         >
             <div className="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="p-5">
                 {isRecommended && (
-                    <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
+                    <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-300">
                         <Sparkles size={12} className="text-amber-500 flex-shrink-0" />
                         <span className="text-[10px] font-bold tracking-wide">Vaathiyaar recommends this for you!</span>
                     </div>
                 )}
                 <div className="flex items-start justify-between mb-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100 flex items-center justify-center text-xl select-none group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-500/10 dark:to-blue-500/10 border border-cyan-100 dark:border-cyan-500/20 flex items-center justify-center text-xl select-none group-hover:scale-110 transition-transform duration-300">
                         {icon}
                     </div>
                     {started && (
@@ -160,7 +160,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
                     )}
                 </div>
 
-                <h3 className="text-sm font-bold text-text-primary group-hover:text-cyan-600 transition-colors font-display mb-1 line-clamp-1">
+                <h3 className="text-sm font-bold text-text-primary group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors font-display mb-1 line-clamp-1">
                     {path.name || path.title}
                 </h3>
 
@@ -177,7 +177,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
 
                 <div className="flex items-center justify-between">
                     <DifficultyBadge level={path.difficulty_start || 'beginner'} />
-                    <button className="text-xs font-bold text-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                    <button className="text-xs font-bold text-cyan-600 dark:text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
                         {started ? 'Continue' : 'Start'} <ChevronRight size={12} />
                     </button>
                 </div>
@@ -243,7 +243,7 @@ function PathList() {
             {/* Header */}
             <header className="flex items-center justify-between">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-600 text-xs font-bold tracking-wider uppercase mb-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/25 dark:bg-cyan-500/10 dark:text-cyan-300 text-xs font-bold tracking-wider uppercase mb-3">
                         <Map size={12} />
                         Evolution
                     </div>
@@ -338,7 +338,7 @@ function PathList() {
                                 className={clsx(
                                     'text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200',
                                     filter === f
-                                        ? 'bg-cyan-50 text-cyan-700 border border-cyan-200'
+                                        ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/30'
                                         : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated border border-transparent'
                                 )}
                             >
@@ -499,19 +499,19 @@ function PathDetail() {
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm mb-8"
             >
-                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 border-b border-border-default p-8 flex items-end overflow-hidden">
-                    <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 dark:from-cyan-500/10 dark:via-blue-500/10 dark:to-purple-500/10 border-b border-border-default p-8 flex items-end overflow-hidden">
+                    <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 dark:from-cyan-500/10 dark:to-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                     <div className="relative z-10 flex-1">
-                        <h1 className="text-3xl font-bold text-slate-900 font-display">{path.name || path.title}</h1>
-                        <p className="text-sm text-slate-600 mt-1 max-w-2xl line-clamp-2">{path.description}</p>
+                        <h1 className="text-3xl font-bold text-text-primary font-display">{path.name || path.title}</h1>
+                        <p className="text-sm text-text-secondary mt-1 max-w-2xl line-clamp-2">{path.description}</p>
                         <div className="flex items-center gap-3 mt-2">
                             <DifficultyBadge level={path.difficulty_start || 'beginner'} />
-                            <span className="text-xs font-mono text-slate-500 flex items-center gap-1">
+                            <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                 <BookOpen size={12} />
                                 {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
                             </span>
                             {path.estimated_hours && (
-                                <span className="text-xs font-mono text-slate-500 flex items-center gap-1">
+                                <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                     <Clock size={12} />
                                     {path.estimated_hours}h total
                                 </span>
@@ -521,7 +521,7 @@ function PathDetail() {
                     <div className="relative hidden sm:block">
                         <ProgressRing progress={progressPct} size={90} strokeWidth={7} />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg font-bold text-slate-700 font-display">{progressPct}%</span>
+                            <span className="text-lg font-bold text-text-primary font-display">{progressPct}%</span>
                         </div>
                     </div>
                 </div>
@@ -580,9 +580,9 @@ function PathDetail() {
                                 className={clsx(
                                     'group relative flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300',
                                     isCompleted
-                                        ? 'bg-green-50/50 border-green-200/60'
+                                        ? 'bg-green-50/50 border-green-200/60 dark:bg-green-500/5 dark:border-green-500/20'
                                         : isNext
-                                        ? 'bg-bg-surface border-cyan-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5'
+                                        ? 'bg-bg-surface border-cyan-200 dark:border-cyan-500/30 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5'
                                         : 'bg-bg-elevated/50 border-transparent opacity-60'
                                 )}
                                 onClick={isNext ? () => navigate(`/dashboard/classroom?lesson=${encodeURIComponent(lesson.id)}`) : undefined}
@@ -591,9 +591,9 @@ function PathDetail() {
                                 <div className={clsx(
                                     'relative z-10 w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border transition-all duration-300',
                                     isCompleted
-                                        ? 'bg-green-500 border-green-500 text-white shadow-md shadow-green-200'
+                                        ? 'bg-green-500 border-green-500 text-white shadow-md shadow-green-200 dark:shadow-green-500/20'
                                         : isNext
-                                        ? 'bg-cyan-50 border-cyan-300 text-cyan-600 group-hover:bg-cyan-500 group-hover:text-white group-hover:border-cyan-500 group-hover:shadow-md group-hover:shadow-cyan-200'
+                                        ? 'bg-cyan-50 border-cyan-300 text-cyan-600 dark:bg-cyan-500/10 dark:border-cyan-500/40 dark:text-cyan-300 group-hover:bg-cyan-500 group-hover:text-white group-hover:border-cyan-500 group-hover:shadow-md group-hover:shadow-cyan-200 dark:group-hover:shadow-cyan-500/20'
                                         : 'bg-bg-inset border-border-default text-text-muted'
                                 )}>
                                     {isCompleted ? <CheckCircle2 size={18} /> :
@@ -606,14 +606,14 @@ function PathDetail() {
                                     <div className="flex items-center gap-2">
                                         <h3 className={clsx(
                                             'text-sm font-bold font-display transition-colors',
-                                            isCompleted ? 'text-green-700' :
-                                            isNext ? 'text-text-primary group-hover:text-cyan-600' :
+                                            isCompleted ? 'text-green-700 dark:text-green-300' :
+                                            isNext ? 'text-text-primary group-hover:text-cyan-600 dark:group-hover:text-cyan-300' :
                                             'text-text-secondary'
                                         )}>
                                             {lesson.title || lesson.name || `Lesson ${idx + 1}`}
                                         </h3>
                                         {isInserted && (
-                                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-1.5 py-0.5">
+                                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-200 dark:text-purple-300 dark:bg-purple-500/10 dark:border-purple-500/30 rounded-full px-1.5 py-0.5">
                                                 <Sparkles size={8} /> Personalized
                                             </span>
                                         )}
@@ -629,8 +629,8 @@ function PathDetail() {
                                         <span className={clsx(
                                             'text-[10px] font-bold rounded-full px-2.5 py-1 border',
                                             isCompleted
-                                                ? 'text-green-600 bg-green-50 border-green-200'
-                                                : 'text-amber-600 bg-amber-50 border-amber-200'
+                                                ? 'text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-500/10 dark:border-green-500/25'
+                                                : 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/25'
                                         )}>
                                             +{lesson.xp_reward} XP
                                         </span>
