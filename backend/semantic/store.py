@@ -129,7 +129,12 @@ class _FastEmbedder:
         self._model = TextEmbedding(model_name)
 
     def embed(self, texts):
-        return np.array(list(self._model.embed(list(texts))), dtype=np.float32)
+        # Small batches are load-bearing: fastembed's default (256 docs ×
+        # up-to-512 tokens) materializes multi-GB attention buffers in
+        # onnxruntime — that OOM-killed the 2Gi Cloud Run instance on every
+        # boot (incident 2026-07-12). 8 docs/batch peaks well under 200 MB.
+        bs = int(os.environ.get("SEMANTIC_EMBED_BATCH", "8"))
+        return np.array(list(self._model.embed(list(texts), batch_size=bs)), dtype=np.float32)
 
 
 def _normalize(m):

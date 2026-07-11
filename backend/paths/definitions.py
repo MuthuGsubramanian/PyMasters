@@ -455,11 +455,22 @@ def seed_paths(db_path: str):
     conn.execute("PRAGMA journal_mode=WAL")
     cursor = conn.cursor()
     for p in PATH_DEFINITIONS:
+        # Upsert (was INSERT OR IGNORE) so edits to a path definition —
+        # renames, lesson-sequence changes like the 2026-07-12 duplicate-lesson
+        # removal — actually reach existing databases instead of leaving stale
+        # rows (e.g. a lesson count that includes deleted lessons) forever.
         cursor.execute(
-            """INSERT OR IGNORE INTO learning_paths
+            """INSERT INTO learning_paths
                (id, name, description, icon, difficulty_start, difficulty_end,
                 category, estimated_hours, lesson_sequence, concepts_covered)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 name=excluded.name, description=excluded.description,
+                 icon=excluded.icon, difficulty_start=excluded.difficulty_start,
+                 difficulty_end=excluded.difficulty_end, category=excluded.category,
+                 estimated_hours=excluded.estimated_hours,
+                 lesson_sequence=excluded.lesson_sequence,
+                 concepts_covered=excluded.concepts_covered""",
             p,
         )
     conn.commit()
