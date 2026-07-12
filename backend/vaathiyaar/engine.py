@@ -34,6 +34,14 @@ QUBRID_API_KEY = os.getenv("QUBRID_API_KEY", "")
 QUBRID_BASE_URL = os.getenv("QUBRID_BASE_URL", "https://platform.qubrid.com/v1")
 QUBRID_MODEL = os.getenv("QUBRID_MODEL", "zai-org/GLM-4.7-Flash")
 
+# Anthropic Claude fallback provider (official `anthropic` SDK, added 2026-07-12
+# at MSG's direction — "upgrades from Claude to PyMasters"). Activated by adding
+# "claude" to VAATHIYAAR_PROVIDERS once an ANTHROPIC_API_KEY secret is wired
+# (Secret Manager → env, like the other keys — never hard-code). CLAUDE_MODEL
+# can be set to claude-haiku-4-5 for a cheaper tier; default is Opus.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-opus-4-8")
+
 # Initialize Ollama client using the official SDK
 _ollama_client = None
 
@@ -259,9 +267,76 @@ def _qubrid_stream(messages: list, options: dict):
             yield token
 
 
+_claude_client_obj = None
+
+
+def _claude_client():
+    """Lazily build the Anthropic client. Import is deferred so the module
+    loads fine when the SDK isn't installed / the provider isn't active."""
+    global _claude_client_obj
+    if _claude_client_obj is None:
+        if not ANTHROPIC_API_KEY:
+            raise RuntimeError("ANTHROPIC_API_KEY not set")
+        import anthropic
+        _claude_client_obj = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY, timeout=90.0)
+    return _claude_client_obj
+
+
+def _split_messages_for_claude(messages: list):
+    """Map OpenAI-style messages → Anthropic Messages API (system, messages).
+    'system' turns concatenate into the top-level system param; the first
+    message must be 'user', so a leading assistant turn gets a stub user turn."""
+    system_parts = []
+    out = []
+    for m in messages:
+        role = m.get("role")
+        content = m.get("content", "")
+        if role == "system":
+            system_parts.append(content)
+        else:
+            out.append({"role": "assistant" if role == "assistant" else "user", "content": content})
+    if out and out[0]["role"] == "assistant":
+        out.insert(0, {"role": "user", "content": "(continue)"})
+    if not out:
+        out = [{"role": "user", "content": "(continue)"}]
+    return "\n\n".join(system_parts), out
+
+
+def _claude_complete(messages: list, options: dict) -> str:
+    """Non-streaming Claude call → assistant text. No temperature/top_p — those
+    are removed on Opus 4.8 (400 if sent); thinking omitted for tutor latency."""
+    client = _claude_client()
+    system, msgs = _split_messages_for_claude(messages)
+    resp = client.messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=options.get("num_predict", 1500),
+        system=system or None,
+        messages=msgs,
+    )
+    text = "".join(b.text for b in resp.content if b.type == "text")
+    if not text:
+        raise ValueError(f"claude: empty completion (stop_reason={resp.stop_reason})")
+    return text
+
+
+def _claude_stream(messages: list, options: dict):
+    """Streaming Claude call → yields assistant text tokens."""
+    client = _claude_client()
+    system, msgs = _split_messages_for_claude(messages)
+    with client.messages.stream(
+        model=CLAUDE_MODEL,
+        max_tokens=options.get("num_predict", 1500),
+        system=system or None,
+        messages=msgs,
+    ) as s:
+        for token in s.text_stream:
+            if token:
+                yield token
+
+
 # Registries: provider name → callable. Extend to add fallback providers.
-_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete, "qubrid": _qubrid_complete}
-_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream, "qubrid": _qubrid_stream}
+_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete, "qubrid": _qubrid_complete, "claude": _claude_complete}
+_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream, "qubrid": _qubrid_stream, "claude": _claude_stream}
 
 
 def complete(messages: list, options: Optional[dict] = None) -> str:
