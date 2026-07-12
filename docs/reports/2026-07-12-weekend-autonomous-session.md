@@ -85,3 +85,14 @@ What you have instead: the graph+vector feature fully live on an in-process stor
 - `frontend/src/components/RunnableCode.jsx` + 3-line wiring in Classroom.jsx. Live-verified end-to-end; zero console errors; QA account cleaned up.
 
 Follow-up idea worth your call: the same one-click-run treatment could extend to the Reference cards and Trending topic snippets for a consistent "everything is runnable" identity.
+
+## Addendum 4 (Sat ~14:10 IST) — runnable code extended to Reference + Trending
+
+Per your request, the runnable-code treatment now covers **Reference cards** and **Trending snippets** too, so "everything is runnable" is a consistent identity across the product. Generalized `RunnableCode` to accept a raw code string (+ language + copy button) in addition to markdown blocks; wired into Reference's `CodeBlock` and markdown renderer, and Trending's code-example modal. Removed Reference's now-dead `CopyButton`.
+
+The interesting part was making it **honest**, since Reference/Trending content is much messier than curated lessons. Three guards were added and unit-tested against the real source before shipping (learned from the earlier regex incident):
+1. **Cheatsheet guard** — Reference cards show operator/keyword listings (`+ - * / // % **`, `and or not`) that aren't valid programs. Blocks containing an operator-only or keyword-only line are read-only. ✅ Live: the "Operators" card is read-only; "Variables & Assignment" runs.
+2. **Import whitelist** (replaced a leaky blacklist) — only offer Run if every imported module is actually in the sandbox (stdlib + numpy/requests/httpx). ✅ Live-verified across 12 Trending snippets: diffusers, torch_geometric, flwr, optuna, darts, polars, bs4, hypothesis, typer, argon2 → all correctly read-only+copy; stdlib `asyncio` → runnable.
+3. **Dockerfile/config guard** — Trending tags every snippet "python", so a Dockerfile (`FROM python:3.13-slim …`) slipped through with a Run button. `FROM/RUN/COPY/…`-directive blocks are now read-only.
+
+Non-runnable blocks keep a **copy** button (preserving Reference's original affordance). Net: genuinely runnable Python runs; everything else is a clean read-only-with-copy block — no misleading Run that's guaranteed to fail. All three QA accounts from this feature work cleaned up.
