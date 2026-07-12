@@ -767,7 +767,10 @@ export default function Profile() {
                             {/* Rank badge overlay — centered under the avatar, above it in
                                 stacking order (was -bottom-1 -right-1 without a z-index and
                                 rendered half-hidden behind the avatar ring; live-QA 2026-07-02) */}
-                            <Badge variant="primary" className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap shadow-md">
+                            {/* Solid surface bg: the primary variant's translucent
+                                bg-accent-subtle blended into the avatar's gradient ring
+                                underneath, making the rank text look half-hidden. */}
+                            <Badge variant="primary" className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap shadow-md bg-bg-surface">
                                 {rankInfo.rank}
                             </Badge>
                         </div>
