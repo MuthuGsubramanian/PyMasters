@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Play, Loader2, Check, X } from 'lucide-react';
+import { Play, Loader2, Check, X, Copy } from 'lucide-react';
 import api from '../api';
 
 // Flatten ReactMarkdown's `children` (string | node | node[]) to raw code text.
@@ -34,14 +34,29 @@ function isRunnablePython(code, className) {
  *
  * `dark` picks the palette so it reads on both the Vaathiyaar story card
  * (dark) and the light content sections.
+ *
+ * Two entry points:
+ *  - markdown: pass `children` + `className` (fenced ```python blocks).
+ *  - raw string: pass `code` + optional `language` (Reference `CodeBlock`,
+ *    Trending snippet modal). `label` overrides the shown language; `copy`
+ *    adds a copy-to-clipboard button (preserves Reference's affordance).
  */
-export default function RunnableCode({ children, className, dark = false }) {
-    const code = flattenText(children).replace(/\n$/, '');
-    const runnable = isRunnablePython(code, className);
+export default function RunnableCode({ children, className, code: rawCode, language, dark = false, copy = false }) {
+    const code = (rawCode != null ? rawCode : flattenText(children)).replace(/\n$/, '');
+    const runnable = isRunnablePython(code, className || (language ? `language-${language}` : ''));
 
     const rootRef = useRef(null);
     const [state, setState] = useState('idle'); // idle | running | done | error
     const [output, setOutput] = useState('');
+    const [copied, setCopied] = useState(false);
+
+    const doCopy = useCallback(() => {
+        try {
+            navigator.clipboard?.writeText(code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch { /* clipboard unavailable — no-op */ }
+    }, [code]);
 
     // Lesson code blocks are usually CUMULATIVE — a later `print(b.shape)`
     // depends on `b = np.array(...)` defined in an earlier block. Running a
@@ -87,34 +102,65 @@ export default function RunnableCode({ children, className, dark = false }) {
         ? 'surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto border border-white/[0.06]'
         : 'surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto';
 
+    const codeBody = rawCode != null
+        ? <code className="whitespace-pre">{code}</code>
+        : <code>{children}</code>;
+
+    const copyBtn = copy ? (
+        <button
+            type="button"
+            onClick={doCopy}
+            aria-label="Copy code"
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
+        >
+            {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
+        </button>
+    ) : null;
+
     if (!runnable) {
-        return <pre className={`${preCls} my-2`}><code>{children}</code></pre>;
+        // Non-Python / shell / output — keep it read-only, but still offer copy
+        // when a raw snippet asked for it (Reference/Trending affordance parity).
+        if (copy) {
+            return (
+                <div className={`my-3 rounded-lg overflow-hidden border border-white/[0.08] shadow-sm`}>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 border-b border-white/[0.06]">
+                        <span className="text-[10px] font-mono text-slate-400">{language || 'code'}</span>
+                        <span className="ml-auto">{copyBtn}</span>
+                    </div>
+                    <pre className={`${preCls} rounded-none border-0 my-0`}>{codeBody}</pre>
+                </div>
+            );
+        }
+        return <pre className={`${preCls} my-2`}>{codeBody}</pre>;
     }
 
     return (
         <div ref={rootRef} data-runnable-code className="my-3 rounded-lg overflow-hidden border border-white/[0.08] shadow-sm">
-            {/* Header: filename dots + Run button */}
+            {/* Header: filename dots + copy + Run button */}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 border-b border-white/[0.06]">
                 <div className="flex gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400/70" />
                     <span className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
                 </div>
-                <span className="text-[10px] font-mono text-slate-400 ml-1">python</span>
-                <button
-                    type="button"
-                    onClick={run}
-                    disabled={state === 'running'}
-                    className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-green-500/90 hover:bg-green-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                >
-                    {state === 'running'
-                        ? <><Loader2 size={12} className="animate-spin" /> Running…</>
-                        : <><Play size={12} fill="currentColor" /> Run</>}
-                </button>
+                <span className="text-[10px] font-mono text-slate-400 ml-1">{language || 'python'}</span>
+                <div className="ml-auto flex items-center gap-1">
+                    {copyBtn}
+                    <button
+                        type="button"
+                        onClick={run}
+                        disabled={state === 'running'}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-green-500/90 hover:bg-green-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    >
+                        {state === 'running'
+                            ? <><Loader2 size={12} className="animate-spin" /> Running…</>
+                            : <><Play size={12} fill="currentColor" /> Run</>}
+                    </button>
+                </div>
             </div>
 
             {/* Code */}
-            <pre className={`${preCls} rounded-none border-0 my-0`}><code>{children}</code></pre>
+            <pre className={`${preCls} rounded-none border-0 my-0`}>{codeBody}</pre>
 
             {/* Output */}
             {state !== 'idle' && (
