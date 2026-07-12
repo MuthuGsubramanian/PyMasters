@@ -18,8 +18,25 @@ function flattenText(node) {
 // pandas, requests etc. remain runnable.
 const UNAVAILABLE_IMPORTS = /\b(?:import|from)\s+(torch|tensorflow|keras|transformers|langchain\w*|openai|anthropic|sklearn|scipy|matplotlib|seaborn|sentence_transformers|chromadb|faiss|pinecone|llama_index|ollama|fastapi|flask|django|uvicorn|streamlit|gradio|boto3|google\.cloud|selenium|playwright|bs4|beautifulsoup4|scrapy|cv2|PIL|pytesseract|spacy|nltk|xgboost|lightgbm|polars|duckdb|sqlalchemy|redis|pymongo|psycopg2|websockets?)\b/;
 
+// Reference cards frequently show *cheatsheets* — bare operator or keyword
+// listings (`+ - * / // % **`, `== != < >`, `and or not`) that aren't valid
+// programs. Running them SyntaxErrors, so treat any block containing such a
+// line as read-only.
+const _OP = '[+\\-*/%@<>=!&|^~.]';
+const OPERATOR_ONLY_LINE = new RegExp(`^${_OP}+(\\s+${_OP}+)+$`);
+const KEYWORD = '(?:and|or|not|is|in|True|False|None|pass|break|continue|del|global|nonlocal)';
+const KEYWORD_ONLY_LINE = new RegExp(`^${KEYWORD}(\\s+${KEYWORD})+$`);
+function looksLikeCheatsheet(code) {
+    for (const raw of code.split('\n')) {
+        const line = raw.replace(/#.*$/, '').trim();
+        if (!line) continue;
+        if (OPERATOR_ONLY_LINE.test(line) || KEYWORD_ONLY_LINE.test(line)) return true;
+    }
+    return false;
+}
+
 // Heuristic: is this fenced block Python we can meaningfully run in the sandbox?
-// Skip shell/output/pip transcripts, heavy-dep imports, and trivial snippets.
+// Skip shell/output/pip transcripts, cheatsheets, heavy-dep imports, trivial.
 function isRunnablePython(code, className) {
     const cls = (className || '').toLowerCase();
     if (/language-(bash|sh|shell|text|json|html|css|js|javascript|sql|output|console)/.test(cls)) return false;
@@ -29,6 +46,8 @@ function isRunnablePython(code, className) {
     if (/^(\$|>>>|\.\.\.|pip |python |# output|# =>)/m.test(trimmed) && !/\bprint\s*\(/.test(trimmed)) return false;
     // Needs a library the sandbox doesn't have → read-only
     if (UNAVAILABLE_IMPORTS.test(trimmed)) return false;
+    // Operator/keyword cheatsheet → read-only
+    if (looksLikeCheatsheet(trimmed)) return false;
     // Looks Pythonic: explicit tag, or common Python constructs
     if (/language-(python|py)/.test(cls)) return true;
     return /\b(print|def|import|for|while|if|class|lambda|return|=)\b/.test(trimmed);
