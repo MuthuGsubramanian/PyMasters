@@ -72,3 +72,16 @@ What you have instead: the graph+vector feature fully live on an in-process stor
 **ai_engineering cleaned up: 127 → 43 lessons.** 84 near-duplicate model-variant lessons removed (8-9 retellings each of all-MiniLM, BGE-M3, chronos2, CLIP, Qwen3-VL, RoBERTa, mpnet, paraphrase-multilingual, ColBERT, ms-marco, MTEB, ELECTRA, Open-LLM-Leaderboard…). Keep policy: 1-3 per model family, each with a distinct angle (intro / build-project / fine-tune / evaluate), richest canonical version preferred, "Homie"-internal spinoffs dropped. Verified safe first: zero path/tagger references, all inbound next_unlock chains point at kept lessons. Root cause (the daily content pipeline generating without a similarity check) is worth a follow-up: the semantic index can now gate new lessons — reject if cosine > ~0.85 against an existing lesson in the same track.
 
 **Claude-as-Vaathiyaar-provider — REVERTED (2026-07-12).** Was implemented then reverted the same day: the product direction is lowest-possible cost, and a paid Claude fallback runs counter to that. The provider seam is unchanged and still trivially extensible if that ever changes. The enhancement effort refocused on UI/UX and content features instead (see Addendum 3).
+
+## Addendum 3 (Sat ~12:45 IST) — Claude-provider revert + the distinctive feature
+
+**Reverted the Claude Vaathiyaar provider** per your call — product direction is lowest-possible cost, and a paid fallback runs against that. engine.py, requirements, and the test are back to the free-tier chain (qubrid+ollama); the provider seam is untouched and still one function away from any future provider.
+
+**Shipped instead — Runnable code blocks in lessons (the distinctive feature).** Every Python code block a learner reads now has a **Run** button that executes the *exact* snippet in the existing sandbox and shows output inline — no context-switch to the Playground. This is the differentiator: most portals show code as static text; PyMasters lets you run and tinker with any example the moment you read it, right in the story. Why it fits the brief:
+- **Unique + pedagogical**: turns passive reading into active experimentation at zero friction. Verified live: `print(b.shape)` in the NumPy lesson outputs the real `(2, 2) / int64 / 2 / 4`.
+- **Cheap**: reuses `/playground/execute` (the existing hardened, rate-limited sandbox). No new backend, no LLM cost, no new infra.
+- **Robust**: lesson code is cumulative, so a later block that uses `b` would NameError in isolation — the component prepends every earlier runnable block in the same lesson section as setup (scoped via `data-runcode-scope`; chat answers run standalone). Non-Python / shell / output-transcript blocks fall back to a plain read-only block.
+- Applies everywhere lesson markdown renders: the Vaathiyaar story card, content sections, and Vaathiyaar chat answers (ask "show me a loop" → get a runnable example).
+- `frontend/src/components/RunnableCode.jsx` + 3-line wiring in Classroom.jsx. Live-verified end-to-end; zero console errors; QA account cleaned up.
+
+Follow-up idea worth your call: the same one-click-run treatment could extend to the Reference cards and Trending topic snippets for a consistent "everything is runnable" identity.
