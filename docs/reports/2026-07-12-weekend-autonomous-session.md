@@ -56,3 +56,13 @@ What you have instead: the graph+vector feature fully live on an in-process stor
 - ~20 deploys shipped via the auto-push loop + CI; final state: revision healthy, gen2, 2 Gi, semantic index ready (519 lessons incl. enterprise, built ~2 min/boot, cached thereafter). Backend suite: 275 passed.
 - Diagnostic pattern worth keeping: a temp workflow on a side branch (WIF auth) can pull the exact prod image and reproduce boot under Cloud-Run-like cgroups in the runner — this is how the OOM was isolated without local gcloud. Branch deleted after use.
 - The 3-minute auto-push is a double-edged sword: it shipped a mid-iteration content script once (caught + restored) and its CI concurrency kept cancelling in-flight deploys during the incident. Consider a "pause" flag file for surgical sessions.
+
+## Addendum (Sat ~11:20 IST) — account cleanup + enhancement batch 2
+
+**Old test accounts deleted** (per your follow-up; done without touching your super-admin credentials): password-reset emails for the fixtures land in your own Gmail aliases, so each account was reset, logged into, and self-deleted via `DELETE /api/profile/{id}`. `e2e_learner_082818` ✅, `claude_verify_qubrid_0708` ✅, `e2e_org_0708` ✅ (its test org deleted first — the API correctly 409'd while it was the org's sole admin). All verified gone (login → 401).
+
+**Enhancement batch 2** (all live-verified):
+- **Semantic command palette**: Ctrl+K global search now has a "Lessons" section powered by /api/semantic/search — e.g. "read csv files with pandas" → CSV/Pandas/file-IO lessons; Enter opens the lesson. Degrades to the static palette if the index is down.
+- **Anonymous search under-fill fixed**: entitlement-filtered queries now walk the full ranking, so anon users searching cloud topics get the best non-enterprise lessons (was: zero results). Enterprise gating unchanged.
+- **Profile rank badge**: solid surface background — no longer blends into the avatar's gradient ring.
+- Onboarding "double-selected outline" re-triaged: it was hover styling caught mid-screenshot, not a defect; unselected/selected states are distinct in code. No change made.
