@@ -11,12 +11,35 @@ function flattenText(node) {
     return String(node);
 }
 
-// Libraries the hardened sandbox doesn't ship (heavy ML / web / cloud SDKs) or
-// that need network/GPU. A snippet importing these would only ModuleNotFoundError
-// or hang, so it stays read-only (still copy-able) rather than offering a Run
-// that's guaranteed to fail. Kept deliberately conservative — stdlib, numpy,
-// pandas, requests etc. remain runnable.
-const UNAVAILABLE_IMPORTS = /\b(?:import|from)\s+(torch|tensorflow|keras|transformers|langchain\w*|openai|anthropic|sklearn|scipy|matplotlib|seaborn|sentence_transformers|chromadb|faiss|pinecone|llama_index|ollama|fastapi|flask|django|uvicorn|streamlit|gradio|boto3|google\.cloud|selenium|playwright|bs4|beautifulsoup4|scrapy|cv2|PIL|pytesseract|spacy|nltk|xgboost|lightgbm|polars|duckdb|sqlalchemy|redis|pymongo|psycopg2|websockets?)\b/;
+// Modules the hardened sandbox can actually import: Python stdlib commons plus
+// the few third-party packages baked into the image (numpy, requests, httpx).
+// We WHITELIST rather than blacklist because Trending/AI snippets pull an
+// open-ended set of exotic libs (torch, diffusers, flwr, langchain, pandas…)
+// that aren't installed — running them would ModuleNotFoundError. Any import
+// outside this set makes the block read-only (still copy-able).
+const SANDBOX_MODULES = new Set([
+    // stdlib
+    'os', 'sys', 'math', 'cmath', 'random', 'json', 're', 'collections', 'itertools',
+    'functools', 'datetime', 'time', 'string', 'typing', 'dataclasses', 'enum',
+    'pathlib', 'csv', 'io', 'abc', 'copy', 'heapq', 'bisect', 'decimal', 'fractions',
+    'statistics', 'threading', 'asyncio', 'multiprocessing', 'queue', 'socket',
+    'struct', 'hashlib', 'hmac', 'base64', 'uuid', 'secrets', 'textwrap', 'pprint',
+    'operator', 'contextlib', 'warnings', 'traceback', 'unittest', 'argparse',
+    'logging', 'subprocess', 'sqlite3', 'urllib', 'http', 'xml', 'html', 'glob',
+    'shutil', 'tempfile', 'zipfile', 'tarfile', 'gzip', 'array', 'types', 'weakref',
+    'inspect', 'importlib', '__future__', 'numbers', 'calendar', 'zoneinfo', 'difflib',
+    // installed in the image
+    'numpy', 'np', 'requests', 'httpx',
+]);
+function importsAllAvailable(code) {
+    const re = /^\s*(?:import\s+([\w.]+)|from\s+([\w.]+)\s+import)/gm;
+    let m;
+    while ((m = re.exec(code))) {
+        const root = (m[1] || m[2]).split('.')[0];
+        if (!SANDBOX_MODULES.has(root)) return false;
+    }
+    return true;
+}
 
 // Reference cards frequently show *cheatsheets* — bare operator or keyword
 // listings (`+ - * / // % **`, `== != < >`, `and or not`) that aren't valid
@@ -44,8 +67,8 @@ function isRunnablePython(code, className) {
     if (!trimmed || trimmed.length < 6 || !trimmed.includes('\n') && !/[=(:]/.test(trimmed)) return false;
     // Transcript / REPL / shell lines we shouldn't execute verbatim
     if (/^(\$|>>>|\.\.\.|pip |python |# output|# =>)/m.test(trimmed) && !/\bprint\s*\(/.test(trimmed)) return false;
-    // Needs a library the sandbox doesn't have → read-only
-    if (UNAVAILABLE_IMPORTS.test(trimmed)) return false;
+    // Imports a module the sandbox doesn't have → read-only
+    if (!importsAllAvailable(trimmed)) return false;
     // Operator/keyword cheatsheet → read-only
     if (looksLikeCheatsheet(trimmed)) return false;
     // Looks Pythonic: explicit tag, or common Python constructs
