@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Play, Loader2, Check, X } from 'lucide-react';
 import api from '../api';
 
@@ -39,15 +39,36 @@ export default function RunnableCode({ children, className, dark = false }) {
     const code = flattenText(children).replace(/\n$/, '');
     const runnable = isRunnablePython(code, className);
 
+    const rootRef = useRef(null);
     const [state, setState] = useState('idle'); // idle | running | done | error
     const [output, setOutput] = useState('');
+
+    // Lesson code blocks are usually CUMULATIVE — a later `print(b.shape)`
+    // depends on `b = np.array(...)` defined in an earlier block. Running a
+    // block in isolation would NameError. So we prepend the code of every
+    // earlier runnable block within the same lesson section (marked with
+    // data-runcode-scope) as setup. Redefinition is harmless in Python, and
+    // chat answers (no scope wrapper) run standalone, which is what we want.
+    const buildFullCode = useCallback(() => {
+        const scope = rootRef.current?.closest('[data-runcode-scope]');
+        if (!scope) return code;
+        const roots = [...scope.querySelectorAll('[data-runnable-code]')];
+        const idx = roots.indexOf(rootRef.current);
+        if (idx <= 0) return code;
+        const prelude = roots
+            .slice(0, idx)
+            .map((r) => r.querySelector('pre')?.textContent || '')
+            .filter(Boolean)
+            .join('\n');
+        return prelude ? `${prelude}\n${code}` : code;
+    }, [code]);
 
     const run = useCallback(async () => {
         if (state === 'running') return;
         setState('running');
         setOutput('');
         try {
-            const res = await api.post('/playground/execute', { code });
+            const res = await api.post('/playground/execute', { code: buildFullCode() });
             const data = res.data || {};
             setOutput(data.output || '(No output)');
             setState(data.exit_code === 0 ? 'done' : 'error');
@@ -60,7 +81,7 @@ export default function RunnableCode({ children, className, dark = false }) {
             setOutput(msg);
             setState('error');
         }
-    }, [code, state]);
+    }, [buildFullCode, state]);
 
     const preCls = dark
         ? 'surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto border border-white/[0.06]'
@@ -71,7 +92,7 @@ export default function RunnableCode({ children, className, dark = false }) {
     }
 
     return (
-        <div className="my-3 rounded-lg overflow-hidden border border-white/[0.08] shadow-sm">
+        <div ref={rootRef} data-runnable-code className="my-3 rounded-lg overflow-hidden border border-white/[0.08] shadow-sm">
             {/* Header: filename dots + Run button */}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 border-b border-white/[0.06]">
                 <div className="flex gap-1.5">
