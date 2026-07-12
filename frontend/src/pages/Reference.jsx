@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorState } from '../components/StateViews';
 import {
   Search, BookOpen, ChevronRight, ArrowLeft, Code2,
-  Cpu, Brain, Zap, Star, Copy, Check, Sparkles,
+  Cpu, Brain, Zap, Star, Sparkles,
   FileText, Layers, GitBranch, Database, Terminal, Box
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -69,39 +69,12 @@ function getTopicIcon(slug) {
   return TOPIC_ICONS[slug] || BookOpen;
 }
 
-// ─── Copy button ────────────────────────────────────────────────────────────
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-  return (
-    <button
-      onClick={handleCopy}
-      className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-text-muted hover:text-text-secondary transition-all duration-200"
-      title="Copy code"
-    >
-      {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
-    </button>
-  );
-}
-
-// ─── Code block with syntax highlighting (simple) ───────────────────────────
+// ─── Code block: runnable in the sandbox, with copy ──────────────────────────
+// Reference `section.code` / `section.example` are self-contained snippets, so
+// they run standalone (no lesson-scope prelude). RunnableCode falls back to a
+// read-only copy-able block for non-Python content.
 function CodeBlock({ code, language = 'python' }) {
-  return (
-    <div className="relative group rounded-xl overflow-hidden surface-code border border-border-default">
-      <div className="flex items-center justify-between px-4 py-2 bg-white/[0.03] border-b border-white/5">
-        <span className="text-xs text-text-muted font-mono">{language}</span>
-        <CopyButton text={code} />
-      </div>
-      <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
-        <code className="text-green-300 font-mono whitespace-pre">{code}</code>
-      </pre>
-    </div>
-  );
+  return <RunnableCode code={code} language={language} dark copy />;
 }
 
 // ─── Loading skeleton ───────────────────────────────────────────────────────
