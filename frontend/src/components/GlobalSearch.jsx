@@ -11,7 +11,12 @@ import {
   BookOpen,
   TrendingUp,
   Settings,
+  GraduationCap,
 } from 'lucide-react';
+import { semanticSearch } from '../api';
+
+// Lesson titles arrive as locale maps ({en, ta, …}); the palette shows English.
+const en = (v) => (typeof v === 'string' ? v : (v && (v.en || Object.values(v).find((x) => typeof x === 'string'))) || '');
 
 // ---------------------------------------------------------------------------
 // Static search catalogue — every navigable page / topic in PyMasters
@@ -55,6 +60,7 @@ const SEARCH_ITEMS = [
 
 /** Icon map per category */
 const CATEGORY_ICONS = {
+  Lessons: GraduationCap,
   Pages: BookOpen,
   Trending: TrendingUp,
   Settings: Settings,
@@ -111,9 +117,34 @@ export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [lessonHits, setLessonHits] = useState([]);
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const debounceRef = useRef(null);
   const navigate = useNavigate();
+
+  // ---- Semantic lesson search (meaning-based, whole catalogue) ----
+  // Debounced against /api/semantic/search; silently absent until the
+  // backend index is ready, so the palette still works purely statically.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = query.trim();
+    if (!open || q.length < 3) { setLessonHits([]); return; }
+    debounceRef.current = setTimeout(() => {
+      semanticSearch(q, 5)
+        .then((r) => {
+          const hits = (r.data?.ready ? r.data.results : []) || [];
+          setLessonHits(hits.map((m) => ({
+            id: `lesson-${m.id}`,
+            title: en(m.title),
+            path: `/dashboard/classroom?lesson=${encodeURIComponent(m.id)}`,
+            category: 'Lessons',
+          })));
+        })
+        .catch(() => setLessonHits([]));
+    }, 250);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, open]);
 
   // ---- Global shortcut listener ----
   useEffect(() => {
@@ -146,7 +177,10 @@ export default function GlobalSearch() {
 
   const results = trimmed.length === 0
     ? []
-    : SEARCH_ITEMS.filter((item) => item.title.toLowerCase().includes(trimmed));
+    : [
+        ...lessonHits,
+        ...SEARCH_ITEMS.filter((item) => item.title.toLowerCase().includes(trimmed)),
+      ];
 
   // Build recent-searches section when query is empty
   const recentQueries = trimmed.length === 0 ? readRecent() : [];

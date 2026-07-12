@@ -335,9 +335,14 @@ class SemanticIndex:
             except Exception as exc:
                 print(f"[semantic] helix search failed, local fallback: {str(exc)[:120]}")
         if pairs is None:
+            # Full ranking (cheap at catalog scale): a fixed over-fetch
+            # under-filled results for entitlement-restricted callers whose
+            # top matches were all enterprise lessons (e.g. anonymous users
+            # searching cloud topics got zero results instead of the best
+            # non-enterprise ones).
             scores = self.matrix @ qvec
-            top = np.argsort(-scores)[: k * 3]
-            pairs = [(self.lessons[i]["id"], float(scores[i])) for i in top]
+            order = np.argsort(-scores)
+            pairs = [(self.lessons[i]["id"], float(scores[i])) for i in order]
         out = []
         for lid, score in pairs:
             if lid not in self.by_id:
