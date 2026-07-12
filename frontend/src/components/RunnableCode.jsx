@@ -11,8 +11,15 @@ function flattenText(node) {
     return String(node);
 }
 
+// Libraries the hardened sandbox doesn't ship (heavy ML / web / cloud SDKs) or
+// that need network/GPU. A snippet importing these would only ModuleNotFoundError
+// or hang, so it stays read-only (still copy-able) rather than offering a Run
+// that's guaranteed to fail. Kept deliberately conservative — stdlib, numpy,
+// pandas, requests etc. remain runnable.
+const UNAVAILABLE_IMPORTS = /\b(?:import|from)\s+(torch|tensorflow|keras|transformers|langchain\w*|openai|anthropic|sklearn|scipy|matplotlib|seaborn|sentence_transformers|chromadb|faiss|pinecone|llama_index|ollama|fastapi|flask|django|uvicorn|streamlit|gradio|boto3|google\.cloud|selenium|playwright|bs4|beautifulsoup4|scrapy|cv2|PIL|pytesseract|spacy|nltk|xgboost|lightgbm|polars|duckdb|sqlalchemy|redis|pymongo|psycopg2|websockets?)\b/;
+
 // Heuristic: is this fenced block Python we can meaningfully run in the sandbox?
-// Skip shell/output/pip transcripts and trivial one-token snippets.
+// Skip shell/output/pip transcripts, heavy-dep imports, and trivial snippets.
 function isRunnablePython(code, className) {
     const cls = (className || '').toLowerCase();
     if (/language-(bash|sh|shell|text|json|html|css|js|javascript|sql|output|console)/.test(cls)) return false;
@@ -20,6 +27,8 @@ function isRunnablePython(code, className) {
     if (!trimmed || trimmed.length < 6 || !trimmed.includes('\n') && !/[=(:]/.test(trimmed)) return false;
     // Transcript / REPL / shell lines we shouldn't execute verbatim
     if (/^(\$|>>>|\.\.\.|pip |python |# output|# =>)/m.test(trimmed) && !/\bprint\s*\(/.test(trimmed)) return false;
+    // Needs a library the sandbox doesn't have → read-only
+    if (UNAVAILABLE_IMPORTS.test(trimmed)) return false;
     // Looks Pythonic: explicit tag, or common Python constructs
     if (/language-(python|py)/.test(cls)) return true;
     return /\b(print|def|import|for|while|if|class|lambda|return|=)\b/.test(trimmed);

@@ -7,6 +7,7 @@ import {
   Cpu, BarChart3, Star, TrendingUp
 } from 'lucide-react';
 import { Card, Button, Badge, Modal } from '../components/ui';
+import RunnableCode from '../components/RunnableCode';
 
 const CATEGORIES = [
   'All', 'AI Agents', 'LLMs', 'Computer Vision', 'NLP',
@@ -1112,9 +1113,9 @@ export default function Trending() {
                 {codeTopic.difficulty}
               </Badge>
             </div>
-            <pre className="p-4 rounded-xl surface-code border border-border-default text-xs text-green-300 overflow-x-auto leading-relaxed max-h-[60vh] overflow-y-auto">
-              <code>{codeTopic.codeExample}</code>
-            </pre>
+            <div className="max-h-[60vh] overflow-y-auto">
+              <RunnableCode code={codeTopic.codeExample} language="python" dark copy />
+            </div>
             <Button
               onClick={() => navigate(`/dashboard/classroom?topic=${encodeURIComponent(codeTopic.title)}`)}
               className="w-full mt-4 bg-gradient-primary text-white border-transparent"
