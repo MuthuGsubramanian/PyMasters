@@ -639,7 +639,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                             <span className="text-white font-bold text-sm">Vaathiyaar</span>
                             <span className="text-emerald-400 text-[10px] font-medium">Teaching</span>
                         </div>
-                        <div className="text-sm text-slate-200 leading-relaxed">
+                        <div className="text-sm text-slate-200 leading-relaxed" data-runcode-scope>
                             {storyContent ? (
                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={storyMarkdownComponents}>{storyContent}</ReactMarkdown>
                             ) : null}
