@@ -66,3 +66,14 @@ What you have instead: the graph+vector feature fully live on an in-process stor
 - **Anonymous search under-fill fixed**: entitlement-filtered queries now walk the full ranking, so anon users searching cloud topics get the best non-enterprise lessons (was: zero results). Enterprise gating unchanged.
 - **Profile rank badge**: solid surface background — no longer blends into the avatar's gradient ring.
 - Onboarding "double-selected outline" re-triaged: it was hover styling caught mid-screenshot, not a defect; unselected/selected states are distinct in code. No change made.
+
+## Addendum 2 (Sat ~12:15 IST) — ai_engineering dedupe + Claude provider
+
+**ai_engineering cleaned up: 127 → 43 lessons.** 84 near-duplicate model-variant lessons removed (8-9 retellings each of all-MiniLM, BGE-M3, chronos2, CLIP, Qwen3-VL, RoBERTa, mpnet, paraphrase-multilingual, ColBERT, ms-marco, MTEB, ELECTRA, Open-LLM-Leaderboard…). Keep policy: 1-3 per model family, each with a distinct angle (intro / build-project / fine-tune / evaluate), richest canonical version preferred, "Homie"-internal spinoffs dropped. Verified safe first: zero path/tagger references, all inbound next_unlock chains point at kept lessons. Root cause (the daily content pipeline generating without a similarity check) is worth a follow-up: the semantic index can now gate new lessons — reject if cosine > ~0.85 against an existing lesson in the same track.
+
+**Claude is now a Vaathiyaar provider** ("upgrades from Claude to PyMasters"): `_claude_complete`/`_claude_stream` in engine.py via the official `anthropic` SDK — Messages API, streaming, system-prompt mapping, no sampling params (removed on Opus 4.8), thinking omitted for tutor latency. Registered in the provider chain seam with the same graceful-degradation guarantees (6 new tests; suite 281 green). **Dormant until you add a key** — activation is config-only:
+1. `gcloud secrets create anthropic-api-key` with your key from console.anthropic.com
+2. deploy.yml: add `ANTHROPIC_API_KEY=anthropic-api-key:latest` to `--set-secrets`
+3. Set `VAATHIYAAR_PROVIDERS=qubrid+claude+ollama` (or any order you prefer)
+4. Optional: `CLAUDE_MODEL=claude-haiku-4-5` (~$1/$5 per MTok) instead of the default `claude-opus-4-8` ($5/$25) for cost control — Haiku is the price-comparable swap for the current free-tier chain.
+This kills the recurring "Ollama weekly cap" fragility with a paid, reliable fallback the moment you want it.
