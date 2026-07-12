@@ -11,6 +11,7 @@ import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendV
 import PodcastPlayer from '../components/PodcastPlayer';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
+import RunnableCode from '../components/RunnableCode';
 import {
     BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
@@ -73,7 +74,7 @@ const markdownComponents = {
     ul: ({children}) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
     ol: ({children}) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
     code: ({children, className}) => className
-        ? <pre className="surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>
+        ? <RunnableCode className={className}>{children}</RunnableCode>
         : <code className="bg-bg-inset text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
     table: ({children}) => (
         <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
@@ -111,7 +112,7 @@ const storyMarkdownComponents = {
     th: ({children}) => <th className="px-3 py-2 text-left text-xs font-bold text-purple-300 uppercase tracking-wider">{children}</th>,
     td: ({children}) => <td className="px-3 py-2 text-sm text-slate-100">{children}</td>,
     code: ({children, className}) => className
-        ? <pre className="surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto my-2 border border-white/[0.06]"><code>{children}</code></pre>
+        ? <RunnableCode className={className} dark>{children}</RunnableCode>
         : <code className="bg-purple-500/15 text-purple-200 px-1.5 py-0.5 rounded text-xs font-mono border border-purple-500/20">{children}</code>,
     strong: ({children}) => <strong className="font-bold text-white">{children}</strong>,
     blockquote: ({children}) => (
