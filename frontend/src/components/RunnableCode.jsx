@@ -67,6 +67,9 @@ function isRunnablePython(code, className) {
     if (!trimmed || trimmed.length < 6 || !trimmed.includes('\n') && !/[=(:]/.test(trimmed)) return false;
     // Transcript / REPL / shell lines we shouldn't execute verbatim
     if (/^(\$|>>>|\.\.\.|pip |python |# output|# =>)/m.test(trimmed) && !/\bprint\s*\(/.test(trimmed)) return false;
+    // Dockerfile / config directives mislabeled as python (Trending snippets
+    // are all tagged python in the modal, so FROM/RUN/COPY etc. slip through)
+    if (/^(FROM|WORKDIR|COPY|RUN|CMD|ENTRYPOINT|EXPOSE|ENV|ADD|ARG|LABEL|VOLUME|USER|HEALTHCHECK|version:|services:|apiVersion:)\s/m.test(trimmed)) return false;
     // Imports a module the sandbox doesn't have → read-only
     if (!importsAllAvailable(trimmed)) return false;
     // Operator/keyword cheatsheet → read-only
