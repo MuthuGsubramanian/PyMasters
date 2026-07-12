@@ -1,0 +1,150 @@
+{
+  "id": "bge_small_embeddings",
+  "topic": "bge_small_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "BGE-Small: Big Embeddings, Tiny Footprint"
+  },
+  "description": {
+    "en": "Learn how BAAI/bge-small-en-v1.5 packs state-of-the-art English embeddings into a 33M-parameter model, and benchmark it against MiniLM for semantic search."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Little Model That Beats the Giants\n\nVanakkam, nanba! Vaathiyaar here. Today I want to tell you about a David-versus-Goliath story in the embedding world. Everyone assumes bigger models mean better search results. Then BAAI (Beijing Academy of Artificial Intelligence) released **bge-small-en-v1.5** â€” a 33-million-parameter BERT-based model that outperforms embedders ten times its size on retrieval benchmarks. It runs happily on a CPU, exports to ONNX for even faster inference, and has become the default choice for local semantic search in countless production apps.\n\n### What Is an Embedding Model, Really?\n\nAn embedding model converts text into a fixed-length vector of numbers â€” bge-small produces **384 dimensions**. Texts with similar meaning land close together in that vector space, so \"How do I sort a list?\" and \"sorting arrays in Python\" end up as near neighbors even though they share almost no words. That is the engine behind semantic search, RAG pipelines, deduplication, and clustering.\n\n### BGE-Small vs MiniLM: The Benchmark\n\nThe long-time community favorite is `all-MiniLM-L6-v2`. How does bge-small stack up?\n\n| Feature | bge-small-en-v1.5 | all-MiniLM-L6-v2 |\n|---|---|---|\n| Parameters | 33M | 22M |\n| Dimensions | 384 | 384 |\n| MTEB avg score | ~62.2 | ~56.3 |\n| Query prefix needed | Yes (for retrieval) | No |\n| ONNX export | First-class | Community |\n\nSame dimension count, nearly six points better on MTEB â€” that is a serious jump for a model you can load in under a second.\n\n### Using It in Python\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")\n\ndocs = [\n    \"Python lists are mutable sequences.\",\n    \"Tuples cannot be changed after creation.\",\n    \"The Eiffel Tower is in Paris.\",\n]\n\n# bge models recommend a prefix for retrieval QUERIES only\nquery = \"Represent this sentence for searching relevant passages: which collection is immutable?\"\n\ndoc_vecs = model.encode(docs, normalize_embeddings=True)\nquery_vec = model.encode(query, normalize_embeddings=True)\n\nscores = doc_vecs @ query_vec  # cosine similarity via dot product\nbest = scores.argmax()\nprint(docs[best])  # Tuples cannot be changed after creation.\n```\n\nTwo details matter here. First, `normalize_embeddings=True` scales every vector to length 1, so a plain dot product *is* cosine similarity â€” fast and simple. Second, bge-v1.5 models were trained with an instruction prefix for retrieval queries; adding it nudges the query into the right region of the vector space. Documents never get the prefix.\n\n### Why ONNX Matters\n\nBecause bge-small ships with ONNX weights, you can run it through `onnxruntime` with no PyTorch installed at all â€” smaller Docker images, faster cold starts, and 2-3x quicker CPU inference. That is exactly why it is a top candidate for a default local embedding model in lightweight apps.\n\n> **Key Insight:** Model quality is not proportional to model size. bge-small-en-v1.5 proves that careful training data and contrastive fine-tuning beat raw parameter count â€” always check MTEB before assuming you need a bigger embedder.\n"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "content": {
+        "en": "Meet bge-small-en-v1.5 â€” a 33M-parameter embedding model from BAAI that beats models 10x its size on retrieval benchmarks. Vaathiyaar will show you how to turn sentences into 384-dimensional vectors and build semantic search that runs on any laptop."
+      },
+      "duration": 5000
+    },
+    {
+      "type": "CodeStepper",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "explanation": {
+            "en": "Import the sentence-transformers library â€” the standard way to load embedding models from the Hugging Face Hub."
+          }
+        },
+        {
+          "code": "model = SentenceTransformer(\"BAAI/bge-small-en-v1.5\")",
+          "explanation": {
+            "en": "Load bge-small. At 33M parameters it downloads fast and fits comfortably in CPU memory â€” no GPU required."
+          }
+        },
+        {
+          "code": "docs = [\"Python lists are mutable.\", \"Tuples are immutable.\", \"Paris is in France.\"]",
+          "explanation": {
+            "en": "Our tiny document corpus. In a real app this could be thousands of lesson paragraphs or support articles."
+          }
+        },
+        {
+          "code": "doc_vecs = model.encode(docs, normalize_embeddings=True)",
+          "explanation": {
+            "en": "Encode all documents at once. normalize_embeddings=True scales each vector to unit length â€” crucial for the next step."
+          }
+        },
+        {
+          "code": "prefix = \"Represent this sentence for searching relevant passages: \"",
+          "explanation": {
+            "en": "bge-v1.5 was trained with this instruction prefix on retrieval QUERIES. Documents never get it â€” only the query does."
+          }
+        },
+        {
+          "code": "query_vec = model.encode(prefix + \"which type cannot change?\", normalize_embeddings=True)",
+          "explanation": {
+            "en": "Encode the user's question with the prefix. It now lives in the same 384-dimensional space as the documents."
+          }
+        },
+        {
+          "code": "scores = doc_vecs @ query_vec",
+          "explanation": {
+            "en": "Because every vector has length 1, the dot product equals cosine similarity â€” one fast matrix operation scores all documents."
+          }
+        },
+        {
+          "code": "best = scores.argmax()",
+          "explanation": {
+            "en": "argmax picks the index of the highest-scoring document â€” our best semantic match."
+          }
+        },
+        {
+          "code": "print(docs[best])  # Tuples are immutable.",
+          "explanation": {
+            "en": "The model matched 'cannot change' to 'immutable' with zero shared keywords. That is semantic search in nine lines."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "confetti",
+      "message": {
+        "en": "You just built semantic search with a state-of-the-art local embedder!"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Embedding models like bge-small return normalized vectors, where cosine similarity is just a dot product. Implement `cosine_similarity(a, b)` that takes two equal-length lists of floats, normalizes each to unit length, and returns their dot product rounded to 4 decimal places. Then print the similarity of the two given vectors."
+      },
+      "starter_code": "import math\n\ndef cosine_similarity(a, b):\n    # 1. Compute the L2 norm (length) of each vector\n    # 2. Divide each element by its vector's norm\n    # 3. Return the dot product, rounded to 4 decimals\n    pass\n\nvec_lists = [0.6, 0.8, 0.0]\nvec_tuples = [0.8, 0.6, 0.0]\nprint(cosine_similarity(vec_lists, vec_tuples))",
+      "expected_output": "0.96",
+      "hints": {
+        "en": [
+          "The L2 norm is math.sqrt(sum(x * x for x in vec)).",
+          "After normalizing both vectors, the dot product is sum(x * y for x, y in zip(a, b)).",
+          "round(value, 4) gives 0.96 for these inputs â€” trailing zeros are dropped when printing."
+        ]
+      },
+      "test_code": "import math\nassert abs(cosine_similarity([0.6, 0.8, 0.0], [0.8, 0.6, 0.0]) - 0.96) < 1e-6, 'similarity of the sample vectors should be 0.96'\nassert abs(cosine_similarity([1.0, 0.0], [1.0, 0.0]) - 1.0) < 1e-6, 'identical directions must score 1.0'\nassert abs(cosine_similarity([1.0, 0.0], [0.0, 1.0])) < 1e-6, 'orthogonal vectors must score 0.0'\nassert abs(cosine_similarity([2.0, 0.0], [1.0, 0.0]) - 1.0) < 1e-6, 'normalization must ignore magnitude'\nprint('All tests passed!')"
+    },
+    {
+      "instruction": {
+        "en": "Build the ranking half of a semantic search engine. Implement `top_k(query_vec, doc_vecs, k)` where `doc_vecs` is a list of already-normalized document vectors and `query_vec` is a normalized query vector. Return a list of the indices of the k most similar documents, highest score first. Print the result of the sample call."
+      },
+      "starter_code": "def dot(a, b):\n    return sum(x * y for x, y in zip(a, b))\n\ndef top_k(query_vec, doc_vecs, k):\n    # 1. Score every document with dot(query_vec, doc)\n    # 2. Pair each score with its index\n    # 3. Sort by score descending and return the first k indices\n    pass\n\ndocs = [\n    [1.0, 0.0, 0.0],\n    [0.0, 1.0, 0.0],\n    [0.9486832980505138, 0.31622776601683794, 0.0],\n]\nquery = [1.0, 0.0, 0.0]\nprint(top_k(query, docs, 2))",
+      "expected_output": "[0, 2]",
+      "hints": {
+        "en": [
+          "Use enumerate(doc_vecs) to keep track of each document's index while scoring.",
+          "sorted(scores, key=lambda pair: pair[1], reverse=True) sorts (index, score) pairs by score descending.",
+          "Slice the sorted list with [:k] and extract just the indices."
+        ]
+      },
+      "test_code": "docs = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.9486832980505138, 0.31622776601683794, 0.0]]\nassert top_k([1.0, 0.0, 0.0], docs, 2) == [0, 2], 'doc 0 is an exact match, doc 2 is second closest'\nassert top_k([0.0, 1.0, 0.0], docs, 1) == [1], 'doc 1 should win for the y-axis query'\nassert top_k([1.0, 0.0, 0.0], docs, 3) == [0, 2, 1], 'full ranking should order all three docs'\nprint('All tests passed!')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "text_embeddings",
+      "cosine_similarity",
+      "semantic_search",
+      "sentence_transformers",
+      "vector_normalization",
+      "model_benchmarking"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "list_comprehensions",
+      "basic_math"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
