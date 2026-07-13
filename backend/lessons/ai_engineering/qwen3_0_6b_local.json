@@ -1,0 +1,270 @@
+{
+  "id": "qwen3_0_6b_local",
+  "topic": "qwen3_0_6b_local",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: A Full LLM in Under a Gigabyte"
+  },
+  "description": {
+    "en": "Run Alibaba's 600-million-parameter Qwen3-0.6B entirely on CPU with Hugging Face transformers â€” no GPU, no API key â€” and learn to parse its thinking-mode output for ultra-light assistants on old laptops and Android phones."
+  },
+  "xp_reward": 62,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Smallest Brain That Still Thinks\n\nVaathiyaar holds up a ten-year-old laptop with a cracked lid. \"No GPU. Four gigabytes of RAM. And yet this machine is about to chat with a real large language model â€” locally, offline, for free. Meet `Qwen/Qwen3-0.6B`: six hundred million parameters, the featherweight of the Qwen3 family. It is the model I'd hand to Homie when the hardware budget is zero â€” an old netbook, a Raspberry Pi, or an Android phone.\"\n\n### Why Bother With a Sub-1B Model?\n\nBig models are smarter, but small models are *everywhere*. A 0.6B model in fp16 needs only ~1.2 GB for its weights â€” small enough to load on machines where a 4B model won't even start. And Qwen3-0.6B keeps the family's signature trick: **hybrid thinking mode**, where the model reasons inside `<think>...</think>` tags before answering.\n\n| Property | Qwen3-0.6B | Qwen3-4B | Cloud 70B |\n|---|---|---|---|\n| Parameters | 0.6 billion | 4 billion | 70 billion |\n| Weights (fp16) | ~1.2 GB | ~8 GB | ~140 GB |\n| Runs on CPU only | Yes, comfortably | Slowly | No |\n| Runs on a phone | Yes (quantized) | Barely | No |\n| Thinking mode | Yes | Yes | Varies |\n| Cost per token | $0 | $0 | Metered |\n\n### Loading It â€” No GPU Required\n\nBecause the model is tiny, we skip `device_map=\"auto\"` and quantization configs entirely. Plain CPU works:\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nname = \"Qwen/Qwen3-0.6B\"\ntok = AutoTokenizer.from_pretrained(name)\nmodel = AutoModelForCausalLM.from_pretrained(name, torch_dtype=\"auto\")\n```\n\nThe `safetensors` weights download once (about 1.5 GB) and cache locally. On a modest CPU this model generates several tokens per second â€” genuinely usable for short answers, classification, and routing.\n\n### Thinking Mode on a Tiny Model\n\nSmall models benefit *most* from thinking mode: the extra reasoning tokens compensate for fewer parameters. But you rarely want to show the `<think>` block to users, so learn to split it off:\n\n```python\ntext = tok.apply_chat_template(\n    [{\"role\": \"user\", \"content\": \"Is 51 prime?\"}],\n    tokenize=False, add_generation_prompt=True, enable_thinking=True,\n)\n```\n\nAfter generation, everything before `</think>` is scratch-work; everything after is the answer you display.\n\n### Where a 0.6B Model Shines\n\nDon't ask it to write your thesis. Do ask it to: classify intents, extract fields, answer short factual questions, power an offline command parser, or act as the always-on first responder that escalates hard questions to a bigger model. That tiered pattern â€” tiny local model first, big model only when needed â€” is how real edge assistants stay fast and cheap.\n\n> **Key Insight:** Model choice is a deployment decision, not just a quality decision. Qwen3-0.6B trades raw intelligence for the ability to run *anywhere* â€” CPU-only laptops, single-board computers, Android phones. Load it with three lines of transformers code, enable thinking mode to squeeze out extra reasoning, strip the `<think>` block before display, and route anything too hard to a bigger sibling."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "featherweight_llm_edge",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "qwen3_0_6b_overview",
+      "nodes": [
+        {
+          "label": "Qwen3-0.6B (edge LLM)",
+          "children": [
+            "0.6B params â€” ~1.2 GB fp16",
+            "CPU-only inference, no GPU",
+            "Thinking mode <think>...</think>",
+            "Runs on old laptops & Android",
+            "Tiered routing: tiny first, big on escalation"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cpu_llm_demo",
+      "steps": [
+        {
+          "line": "from transformers import AutoModelForCausalLM, AutoTokenizer",
+          "highlight": "transformers",
+          "explanation": {
+            "en": "The standard Hugging Face imports â€” no quantization helpers needed for a 0.6B model"
+          }
+        },
+        {
+          "line": "name = \"Qwen/Qwen3-0.6B\"",
+          "highlight": "Qwen/Qwen3-0.6B",
+          "explanation": {
+            "en": "The Hub repo id â€” safetensors weights (~1.5 GB) download once and cache locally"
+          }
+        },
+        {
+          "line": "tok = AutoTokenizer.from_pretrained(name)",
+          "highlight": "AutoTokenizer",
+          "explanation": {
+            "en": "The tokenizer converts text to token ids and carries Qwen3's chat template"
+          }
+        },
+        {
+          "line": "model = AutoModelForCausalLM.from_pretrained(name, torch_dtype=\"auto\")",
+          "highlight": "torch_dtype=\"auto\"",
+          "explanation": {
+            "en": "Load onto plain CPU â€” at 0.6B parameters there's no need for a GPU or device_map"
+          }
+        },
+        {
+          "line": "messages = [{\"role\": \"user\", \"content\": \"Is 51 a prime number?\"}]",
+          "highlight": "messages",
+          "explanation": {
+            "en": "Conversations are role/content dicts â€” the same format every chat model uses"
+          }
+        },
+        {
+          "line": "text = tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=True)",
+          "highlight": "enable_thinking=True",
+          "explanation": {
+            "en": "Thinking mode matters most on small models â€” extra reasoning tokens offset fewer parameters"
+          }
+        },
+        {
+          "line": "inputs = tok(text, return_tensors=\"pt\")",
+          "highlight": "return_tensors=\"pt\"",
+          "explanation": {
+            "en": "Tokenize the formatted prompt into PyTorch tensors (already on CPU)"
+          }
+        },
+        {
+          "line": "out = model.generate(**inputs, max_new_tokens=200)",
+          "highlight": "generate",
+          "explanation": {
+            "en": "Generate up to 200 new tokens â€” a few tokens per second even on a modest CPU"
+          }
+        },
+        {
+          "line": "reply = tok.decode(out[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)",
+          "highlight": "skip_special_tokens=True",
+          "explanation": {
+            "en": "Decode only the newly generated tokens â€” this still contains the <think> block"
+          }
+        },
+        {
+          "line": "answer = reply.split(\"</think>\")[-1].strip()",
+          "highlight": "split(\"</think>\")",
+          "explanation": {
+            "en": "Everything before </think> is private scratch-work; show the user only what comes after"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_params",
+      "variable": "parameters",
+      "value": "600,000,000",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_weights",
+      "variable": "weights_fp16_gb",
+      "value": "~1.2 (fits in 4 GB RAM)",
+      "data_type": "float",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ pip install transformers torch",
+        "Successfully installed transformers torch",
+        "",
+        "$ python qwen_tiny.py",
+        "Loading Qwen/Qwen3-0.6B on cpu ...",
+        "Model loaded (RAM used: 1.4 GB)",
+        "Prompt: 'Is 51 a prime number?'",
+        "<think> 51 = 3 * 17, so it has divisors other than 1 and itself. </think>",
+        "No â€” 51 is not prime, because 51 = 3 x 17."
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_edge_routing",
+      "title": "Tiered Edge Assistant Routing",
+      "nodes": [
+        {
+          "id": "user",
+          "label": "User question",
+          "type": "start"
+        },
+        {
+          "id": "tiny",
+          "label": "Qwen3-0.6B\n(local, CPU)",
+          "type": "process"
+        },
+        {
+          "id": "confident",
+          "label": "Confident\nanswer?",
+          "type": "decision"
+        },
+        {
+          "id": "reply",
+          "label": "Reply instantly\n($0, offline)",
+          "type": "end"
+        },
+        {
+          "id": "big",
+          "label": "Escalate to\nbigger model",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "user",
+          "to": "tiny",
+          "label": "prompt"
+        },
+        {
+          "from": "tiny",
+          "to": "confident",
+          "label": "draft"
+        },
+        {
+          "from": "confident",
+          "to": "reply",
+          "label": "yes"
+        },
+        {
+          "from": "confident",
+          "to": "big",
+          "label": "no"
+        }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "vector_burst",
+      "message": "A real LLM running on a potato â€” you just unlocked edge AI!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Qwen3's thinking mode wraps its reasoning in <think>...</think> before the final answer. Complete `split_thinking` so it takes the raw generated text and returns a (thinking, answer) tuple: the scratch-work without the tags, and the clean answer to display. If there is no </think> tag, thinking should be an empty string and the whole text is the answer."
+      },
+      "starter_code": "def split_thinking(raw: str) -> tuple:\n    \"\"\"Split model output into (thinking, answer).\"\"\"\n    # 1. If '</think>' is not in raw, return ('', raw.strip())\n    # 2. Otherwise split on '</think>' once\n    # 3. Strip a leading '<think>' from the first part and whitespace from both\n    pass\n\nraw = \"<think> 51 = 3 * 17 </think> No, 51 is not prime.\"\nthinking, answer = split_thinking(raw)\nprint(answer)",
+      "expected_output": "No, 51 is not prime.",
+      "hints": {
+        "en": [
+          "Use raw.split('</think>', 1) to get the two halves",
+          "Remove the opening tag with .replace('<think>', '') on the first half",
+          "Call .strip() on both parts before returning them"
+        ]
+      },
+      "test_code": "def split_thinking(raw):\n    if \"</think>\" not in raw:\n        return (\"\", raw.strip())\n    head, tail = raw.split(\"</think>\", 1)\n    thinking = head.replace(\"<think>\", \"\").strip()\n    return (thinking, tail.strip())\n\nt, a = split_thinking(\"<think> 51 = 3 * 17 </think> No, 51 is not prime.\")\nassert a == \"No, 51 is not prime.\"\nassert \"51 = 3 * 17\" in t\nassert \"<think>\" not in t and \"</think>\" not in t\n# no thinking block at all\nt2, a2 = split_thinking(\"Just a direct answer.\")\nassert t2 == \"\" and a2 == \"Just a direct answer.\"\nprint(\"Thinking-parser tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Build the device-fit checker an edge assistant needs before downloading a model. Complete `can_run` so it returns True when the model's weights fit in the device's free RAM with a safety margin: weights need params * (bits / 8) bytes, and you should leave at least 1.5x that amount available (weights plus activation overhead). Then confirm Qwen3-0.6B fits on a 4 GB-free laptop in fp16, while Qwen3-4B does not."
+      },
+      "starter_code": "def can_run(num_params: int, bits_per_weight: int, free_ram_gb: float) -> bool:\n    \"\"\"True if weights * 1.5 safety margin fit in free RAM.\"\"\"\n    # weights_gb = num_params * (bits_per_weight / 8) / 1e9\n    # required = weights_gb * 1.5\n    pass\n\nprint(can_run(600_000_000, 16, 4.0))    # Qwen3-0.6B fp16 on old laptop\nprint(can_run(4_000_000_000, 16, 4.0))  # Qwen3-4B fp16 on the same laptop",
+      "expected_output": "True\nFalse",
+      "hints": {
+        "en": [
+          "bytes_per_weight = bits_per_weight / 8, then divide total bytes by 1e9 for GB",
+          "Multiply the weight size by 1.5 to account for activations and KV cache",
+          "Return the boolean comparison required <= free_ram_gb"
+        ]
+      },
+      "test_code": "def can_run(num_params, bits_per_weight, free_ram_gb):\n    weights_gb = num_params * (bits_per_weight / 8) / 1e9\n    return weights_gb * 1.5 <= free_ram_gb\n\nassert can_run(600_000_000, 16, 4.0) is True\nassert can_run(4_000_000_000, 16, 4.0) is False\n# 4-bit quantization rescues the 4B model on an 8 GB device\nassert can_run(4_000_000_000, 4, 8.0) is True\n# a phone with 2 GB free still runs 0.6B at 4-bit\nassert can_run(600_000_000, 4, 2.0) is True\nprint(\"Device-fit tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "edge_llm",
+      "qwen3_0_6b",
+      "cpu_inference",
+      "huggingface_transformers",
+      "thinking_mode_parsing",
+      "tiered_model_routing"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "strings",
+      "dictionaries",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
