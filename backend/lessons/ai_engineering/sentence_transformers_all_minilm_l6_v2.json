@@ -1,0 +1,151 @@
+{
+  "id": "sentence_transformers_all_minilm_l6_v2",
+  "topic": "sentence_transformers_all_minilm_l6_v2",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Semantic Search with all-MiniLM-L6-v2: Tiny Model, Giant Leap"
+  },
+  "description": {
+    "en": "Learn how sentence embeddings turn text into vectors of meaning, and build a semantic search engine using sentence-transformers' lightweight all-MiniLM-L6-v2 model."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Librarian Who Reads Minds\n\nVanakkam, thambi! Vaathiyaar here. Imagine a librarian who finds the book you need even when you describe it all wrong. You say 'that story about the whale-hunting captain' and she hands you *Moby Dick* â€” no title match, no keyword match, pure *meaning* match. Today we build that librarian in 5 lines of Python, using a model so small it runs on your laptop's CPU: **all-MiniLM-L6-v2**.\n\n### What Is a Sentence Embedding?\n\nAn embedding is a list of numbers â€” a *vector* â€” that captures the meaning of text. all-MiniLM-L6-v2 maps any sentence to a 384-dimensional vector. Sentences with similar meaning land close together in that space; unrelated sentences land far apart. Once text becomes geometry, search becomes math.\n\n### Why all-MiniLM-L6-v2?\n\nThis model is the default answer to 'what embedder should I start with?' â€” and for good reason:\n\n| Property | all-MiniLM-L6-v2 | Typical large embedder |\n|----------|------------------|------------------------|\n| Dimensions | 384 | 1024â€“4096 |\n| Size on disk | ~80 MB | 1â€“14 GB |\n| Speed (CPU) | Thousands of sentences/sec | Tens/sec |\n| Quality | Great for most tasks | Marginally better |\n| Cost | Free, local | Often API-metered |\n\nSix transformer layers (that's the 'L6'), distilled from a bigger teacher model, trained on over 1 billion sentence pairs. It is the Maruti 800 of embedders â€” humble, everywhere, and it *always starts*.\n\n### From Vectors to Search\n\nThe workhorse is **cosine similarity** â€” the cosine of the angle between two vectors. Score near 1.0 means 'same meaning', near 0 means 'unrelated'.\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndocs = [\n    \"How to reset my password\",\n    \"Best biryani recipe in Chennai\",\n    \"Steps to recover a forgotten login\",\n]\ndoc_embeddings = model.encode(docs)\n\nquery = \"I can't sign in to my account\"\nquery_embedding = model.encode(query)\n\nscores = model.similarity(query_embedding, doc_embeddings)\nprint(scores)  # login recovery scores highest â€” zero shared keywords!\n```\n\nNotice the magic: the query says *sign in*, the winning document says *forgotten login*. A keyword search returns nothing; semantic search nails it.\n\n### The RAG Connection\n\nThis exact pattern â€” embed documents, embed query, rank by cosine similarity â€” is the **retrieval** step in Retrieval-Augmented Generation (RAG). Every chatbot that 'knows your documents' does this before the LLM ever sees a prompt. Master this and you hold the front door key to modern AI applications.\n\n### Normalize, Then Trust the Dot Product\n\nOne pro tip: all-MiniLM-L6-v2 works best with normalized embeddings (`normalize_embeddings=True`). Once vectors have length 1, cosine similarity becomes a plain dot product â€” faster, simpler, and exactly what vector databases like FAISS or Chroma expect.\n\n> **Key Insight:** Semantic search doesn't match words â€” it matches *meaning as geometry*. all-MiniLM-L6-v2 proves you don't need a giant model for that: 384 well-trained dimensions running free on your CPU beat a keyword index every single time the user phrases things their own way."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "content": {
+        "en": "Meet the librarian who reads minds: all-MiniLM-L6-v2 turns every sentence into a 384-number 'meaning fingerprint'. Similar meanings â†’ nearby vectors. Let's build semantic search from scratch."
+      },
+      "duration": 5000
+    },
+    {
+      "type": "CodeStepper",
+      "language": "python",
+      "steps": [
+        {
+          "code": "from sentence_transformers import SentenceTransformer",
+          "explanation": {
+            "en": "Import the SentenceTransformer class â€” the high-level API around the model."
+          }
+        },
+        {
+          "code": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "explanation": {
+            "en": "Download (~80 MB, cached after first run) and load the model. L6 = six transformer layers; output = 384 dimensions."
+          }
+        },
+        {
+          "code": "docs = [\n    \"How to reset my password\",\n    \"Best biryani recipe in Chennai\",\n    \"Steps to recover a forgotten login\",\n]",
+          "explanation": {
+            "en": "Our tiny document corpus. Note: doc 0 and doc 2 mean similar things but share almost no words."
+          }
+        },
+        {
+          "code": "doc_embeddings = model.encode(docs, normalize_embeddings=True)",
+          "explanation": {
+            "en": "Encode all documents at once into a (3, 384) array. Normalizing to unit length lets us use a plain dot product as cosine similarity."
+          }
+        },
+        {
+          "code": "query = \"I can't sign in to my account\"",
+          "explanation": {
+            "en": "A real user query â€” no keyword overlap with any document. This is where keyword search fails."
+          }
+        },
+        {
+          "code": "query_embedding = model.encode(query, normalize_embeddings=True)",
+          "explanation": {
+            "en": "The query gets embedded into the SAME 384-dimensional space as the documents."
+          }
+        },
+        {
+          "code": "scores = model.similarity(query_embedding, doc_embeddings)",
+          "explanation": {
+            "en": "Compute cosine similarity between the query and every document in one call. Higher = closer in meaning."
+          }
+        },
+        {
+          "code": "best = scores.argmax()\nprint(docs[best])",
+          "explanation": {
+            "en": "Pick the highest-scoring document: 'Steps to recover a forgotten login'. Meaning matched, not words!"
+          }
+        },
+        {
+          "code": "# This is the R in RAG:\n# embed corpus â†’ embed query â†’ rank â†’ feed top hits to an LLM",
+          "explanation": {
+            "en": "You just built the retrieval step every RAG system uses. Swap the list for a vector DB and you scale to millions of docs."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "effect": "confetti",
+      "content": {
+        "en": "You turned meaning into math! Semantic search unlocked. ðŸŽ‰"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Embedding models compare vectors using cosine similarity. Implement `cosine_similarity(a, b)` from scratch: the dot product of the two vectors divided by the product of their magnitudes. Then use it to check which of the two candidate vectors is closer in meaning to the query vector."
+      },
+      "starter_code": "import math\n\ndef cosine_similarity(a, b):\n    # 1. Compute the dot product of a and b\n    # 2. Compute the magnitude (Euclidean norm) of each vector\n    # 3. Return dot / (norm_a * norm_b)\n    pass\n\n# Toy 4-dimensional 'embeddings'\nquery = [0.9, 0.1, 0.0, 0.4]\ndoc_login = [0.8, 0.2, 0.1, 0.5]   # 'recover a forgotten login'\ndoc_biryani = [0.0, 0.9, 0.8, 0.1] # 'best biryani recipe'\n\nsim_login = cosine_similarity(query, doc_login)\nsim_biryani = cosine_similarity(query, doc_biryani)\nprint(f\"login: {sim_login:.3f}\")\nprint(f\"biryani: {sim_biryani:.3f}\")\nprint(\"closest:\", \"login\" if sim_login > sim_biryani else \"biryani\")",
+      "expected_output": "login: 0.982\nbiryani: 0.278\nclosest: login",
+      "hints": {
+        "en": [
+          "The dot product is the sum of element-wise products: sum(x * y for x, y in zip(a, b)).",
+          "A vector's magnitude is math.sqrt(sum(x * x for x in a)).",
+          "Cosine similarity = dot_product / (magnitude_a * magnitude_b). Watch the parentheses in the denominator!"
+        ]
+      },
+      "test_code": "import math\nassert abs(cosine_similarity([1, 0], [1, 0]) - 1.0) < 1e-9, \"Identical vectors must score 1.0\"\nassert abs(cosine_similarity([1, 0], [0, 1])) < 1e-9, \"Orthogonal vectors must score 0.0\"\nassert abs(cosine_similarity([1, 2, 3], [2, 4, 6]) - 1.0) < 1e-9, \"Parallel vectors must score 1.0\"\nq = [0.9, 0.1, 0.0, 0.4]\nassert cosine_similarity(q, [0.8, 0.2, 0.1, 0.5]) > cosine_similarity(q, [0.0, 0.9, 0.8, 0.1]), \"Login doc must rank above biryani doc\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Build the core of a semantic search engine. Implement `semantic_search(query_embedding, doc_embeddings, docs, top_k)` that ranks documents by cosine similarity to the query and returns the top_k document strings, best match first. This is exactly what a RAG retriever does before handing context to an LLM."
+      },
+      "starter_code": "import math\n\ndef cosine_similarity(a, b):\n    dot = sum(x * y for x, y in zip(a, b))\n    norm_a = math.sqrt(sum(x * x for x in a))\n    norm_b = math.sqrt(sum(x * x for x in b))\n    return dot / (norm_a * norm_b)\n\ndef semantic_search(query_embedding, doc_embeddings, docs, top_k=2):\n    # 1. Score every document embedding against the query embedding\n    # 2. Sort documents by score, highest first\n    # 3. Return the top_k document strings as a list\n    pass\n\ndocs = [\n    \"How to reset my password\",\n    \"Best biryani recipe in Chennai\",\n    \"Steps to recover a forgotten login\",\n    \"Upcoming cricket match schedule\",\n]\ndoc_embeddings = [\n    [0.7, 0.3, 0.1, 0.2],\n    [0.1, 0.9, 0.7, 0.0],\n    [0.8, 0.2, 0.1, 0.4],\n    [0.1, 0.2, 0.9, 0.6],\n]\nquery_embedding = [0.9, 0.1, 0.0, 0.4]  # \"I can't sign in to my account\"\n\nfor doc in semantic_search(query_embedding, doc_embeddings, docs, top_k=2):\n    print(doc)",
+      "expected_output": "Steps to recover a forgotten login\nHow to reset my password",
+      "hints": {
+        "en": [
+          "Pair each doc with its score: scores = [(cosine_similarity(query_embedding, emb), doc) for emb, doc in zip(doc_embeddings, docs)].",
+          "Sort with sorted(scores, key=lambda pair: pair[0], reverse=True) to get highest similarity first.",
+          "Slice the sorted list with [:top_k] and return only the document strings, not the scores."
+        ]
+      },
+      "test_code": "docs_t = [\"a\", \"b\", \"c\"]\nembs_t = [[1.0, 0.0], [0.0, 1.0], [0.9, 0.1]]\nresult = semantic_search([1.0, 0.0], embs_t, docs_t, top_k=2)\nassert isinstance(result, list), \"Must return a list\"\nassert result == [\"a\", \"c\"], f\"Expected ['a', 'c'], got {result}\"\nassert len(semantic_search([1.0, 0.0], embs_t, docs_t, top_k=1)) == 1, \"Must respect top_k\"\nfull = semantic_search([0.9, 0.1, 0.0, 0.4], [[0.7, 0.3, 0.1, 0.2], [0.1, 0.9, 0.7, 0.0], [0.8, 0.2, 0.1, 0.4], [0.1, 0.2, 0.9, 0.6]], [\"How to reset my password\", \"Best biryani recipe in Chennai\", \"Steps to recover a forgotten login\", \"Upcoming cricket match schedule\"], top_k=2)\nassert full[0] == \"Steps to recover a forgotten login\", \"Best match must come first\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_embeddings",
+      "semantic_search",
+      "cosine_similarity",
+      "sentence_transformers",
+      "vector_similarity",
+      "rag_retrieval"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "loops",
+      "basic_math"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "trending_ai",
+    "path_memberships": [
+      "ai_engineering",
+      "rag_fundamentals"
+    ]
+  },
+  "generated": true
+}
