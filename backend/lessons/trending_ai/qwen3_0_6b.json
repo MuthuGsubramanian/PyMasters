@@ -1,0 +1,234 @@
+{
+  "id": "qwen3_0_6b",
+  "topic": "qwen3_0_6b",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B: Run a Modern LLM on Any Laptop"
+  },
+  "description": {
+    "en": "Load Alibaba's 0.6-billion-parameter Qwen3 model with Hugging Face transformers, chat with it through proper chat templates, toggle its hybrid thinking mode, and learn the memory math that tells you which LLM fits on which device."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Genius That Fits in Your Pocket\n\nVaathiyaar slides a battered old laptop across the desk. \"No GPU. 8 GB of RAM. Five years old. And it can run a real, modern LLM — locally, offline, for free. Meet **Qwen3-0.6B**: six hundred million parameters of 2025-era training squeezed into a model small enough for this machine, a Raspberry Pi, or an Android phone. Today you stop renting intelligence through an API and start *owning* it.\"\n\n### Why Sub-1B Models Matter\n\nFor years the rule was: small model = toy. Qwen3 broke that rule. Trained on ~36 trillion tokens with the same recipe as its 235B big sibling, the 0.6B variant handles chat, summarization, structured extraction, and even basic reasoning — while fitting where GPT-class models never could.\n\n| Model | Parameters | RAM (bf16) | RAM (4-bit) | Runs on |\n|---|---|---|---|---|\n| Qwen3-0.6B | 0.6B | ~1.2 GB | ~0.4 GB | Any laptop, phone, Pi |\n| Qwen3-8B | 8B | ~16 GB | ~4.5 GB | Gaming laptop, M-series Mac |\n| GPT-class frontier | 100B+ | data center | data center | Cloud API only |\n\nThe memory formula is simple: **parameters × bytes per parameter**. At bf16 (2 bytes), 0.6B params ≈ 1.2 GB. Quantize to 4-bit and it drops to ~0.4 GB — smaller than a phone photo album.\n\n### Loading It in Four Lines\n\n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-0.6B\"\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=\"auto\", device_map=\"auto\")\n```\n\n`device_map=\"auto\"` picks GPU if you have one, CPU if you don't. Either way, it runs.\n\n### Chat Templates: Speak the Model's Language\n\nInstruction-tuned models expect conversations in a precise format. Qwen3 uses ChatML-style tags, and `apply_chat_template` builds them for you:\n\n```python\nmessages = [{\"role\": \"user\", \"content\": \"Explain recursion in one sentence.\"}]\ntext = tokenizer.apply_chat_template(\n    messages, tokenize=False,\n    add_generation_prompt=True,\n    enable_thinking=False,  # True = show step-by-step reasoning first\n)\n```\n\nThat `enable_thinking` flag is Qwen3's signature trick: one model, two modes. `True` makes it reason inside `<think>` tags before answering (better for math and logic, slower); `False` gives fast direct answers for everyday chat.\n\n### Generate\n\n```python\ninputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\noutput = model.generate(**inputs, max_new_tokens=100)\nprint(tokenizer.decode(output[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True))\n```\n\nSlicing off the prompt tokens (`inputs.input_ids.shape[-1]:`) leaves only the newly generated reply. On a plain CPU this streams out at readable speed — no API key, no rate limit, no data leaving your machine.\n\n> **Key Insight:** Model size is a *deployment decision*, not just a quality dial. Parameters × bytes-per-parameter tells you instantly what fits where: Qwen3-0.6B at 4-bit needs ~0.4 GB, so a modern LLM can live on literally any device you own. Master the small models and you can ship AI anywhere — offline, private, and free."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "pocket_genius_laptop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "qwen3_overview",
+      "nodes": [
+        {
+          "label": "Qwen3-0.6B",
+          "children": [
+            "0.6B params (~1.2 GB bf16)",
+            "Chat templates (ChatML)",
+            "Thinking mode on/off",
+            "Runs on CPU / phone / Pi",
+            "Offline, private, free"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "qwen3_chat_demo",
+      "steps": [
+        {
+          "line": "from transformers import AutoModelForCausalLM, AutoTokenizer",
+          "highlight": "AutoModelForCausalLM",
+          "explanation": {
+            "en": "Two imports run any causal LLM on the Hugging Face Hub — the model and its tokenizer"
+          }
+        },
+        {
+          "line": "model_name = \"Qwen/Qwen3-0.6B\"",
+          "highlight": "Qwen/Qwen3-0.6B",
+          "explanation": {
+            "en": "The Hub ID: organization/model. At 0.6B parameters this is one of the smallest modern LLMs"
+          }
+        },
+        {
+          "line": "tokenizer = AutoTokenizer.from_pretrained(model_name)",
+          "highlight": "AutoTokenizer",
+          "explanation": {
+            "en": "The tokenizer converts text to token IDs and knows Qwen3's chat format"
+          }
+        },
+        {
+          "line": "model = AutoModelForCausalLM.from_pretrained(\n    model_name, torch_dtype=\"auto\", device_map=\"auto\"\n)",
+          "highlight": "device_map=\"auto\"",
+          "explanation": {
+            "en": "Downloads ~1.2 GB once, then caches. device_map='auto' uses GPU if present, CPU otherwise"
+          }
+        },
+        {
+          "line": "messages = [\n    {\"role\": \"user\", \"content\": \"Explain recursion in one sentence.\"}\n]",
+          "highlight": "role",
+          "explanation": {
+            "en": "Conversations are lists of role/content dicts — the same shape as the OpenAI/Anthropic APIs"
+          }
+        },
+        {
+          "line": "text = tokenizer.apply_chat_template(\n    messages, tokenize=False,\n    add_generation_prompt=True,\n    enable_thinking=False,\n)",
+          "highlight": "enable_thinking",
+          "explanation": {
+            "en": "Wraps messages in Qwen's ChatML tags. enable_thinking=True would add step-by-step reasoning"
+          }
+        },
+        {
+          "line": "inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)",
+          "highlight": "return_tensors",
+          "explanation": {
+            "en": "Tokenize the formatted prompt into PyTorch tensors on the same device as the model"
+          }
+        },
+        {
+          "line": "output = model.generate(**inputs, max_new_tokens=100)",
+          "highlight": "generate",
+          "explanation": {
+            "en": "Autoregressive generation — the model predicts one token at a time, up to 100 new ones"
+          }
+        },
+        {
+          "line": "reply = tokenizer.decode(\n    output[0][inputs.input_ids.shape[-1]:],\n    skip_special_tokens=True,\n)",
+          "highlight": "inputs.input_ids.shape[-1]:",
+          "explanation": {
+            "en": "output contains prompt + reply; slicing past the prompt length keeps only the new tokens"
+          }
+        },
+        {
+          "line": "print(reply)\n# Recursion is when a function solves a problem by\n# calling itself on smaller pieces of the same problem.",
+          "highlight": "print(reply)",
+          "explanation": {
+            "en": "A coherent answer from a model running entirely on your own hardware — no API, no internet"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_params",
+      "variable": "parameters",
+      "value": "0.6 billion",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_memory",
+      "variable": "ram_needed_4bit",
+      "value": "~0.4 GB",
+      "data_type": "float",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ pip install transformers torch accelerate",
+        "Successfully installed transformers torch accelerate",
+        "",
+        "$ python qwen3_chat.py",
+        "Loading Qwen/Qwen3-0.6B (bf16, ~1.2 GB)...",
+        "Device: cpu",
+        "User: Explain recursion in one sentence.",
+        "Qwen3: Recursion is when a function solves a problem by",
+        "calling itself on smaller pieces of the same problem."
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_local_llm_flow",
+      "title": "Local LLM Inference Flow",
+      "nodes": [
+        { "id": "msgs", "label": "messages\n(role + content)", "type": "start" },
+        { "id": "template", "label": "apply_chat_template\n(ChatML tags)", "type": "process" },
+        { "id": "tokenize", "label": "Tokenizer\n(text -> IDs)", "type": "process" },
+        { "id": "generate", "label": "model.generate\n(token by token)", "type": "decision" },
+        { "id": "decode", "label": "decode new tokens", "type": "process" },
+        { "id": "reply", "label": "Reply", "type": "end" }
+      ],
+      "edges": [
+        { "from": "msgs", "to": "template", "label": "list[dict]" },
+        { "from": "template", "to": "tokenize", "label": "prompt text" },
+        { "from": "tokenize", "to": "generate", "label": "tensors" },
+        { "from": "generate", "to": "decode", "label": "token IDs" },
+        { "from": "decode", "to": "reply", "label": "text" }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "chip_spark",
+      "message": "You just ran a modern LLM on plain hardware. Local AI unlocked!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Qwen3 (like most chat models) expects conversations wrapped in ChatML tags: each message becomes `<|im_start|>role\\ncontent<|im_end|>\\n`, and the prompt ends with `<|im_start|>assistant\\n` so the model knows it is its turn to speak. Complete `format_chat` so it converts a list of message dicts into this exact prompt string — this is what `apply_chat_template` builds for you under the hood."
+      },
+      "starter_code": "def format_chat(messages: list[dict]) -> str:\n    \"\"\"Convert [{'role': ..., 'content': ...}, ...] into a ChatML prompt string.\n\n    Each message -> '<|im_start|>ROLE\\nCONTENT<|im_end|>\\n'\n    Then append the generation prompt: '<|im_start|>assistant\\n'\n    \"\"\"\n    # 1. Build one tagged block per message\n    # 2. Join them in order\n    # 3. Append the assistant generation prompt at the end\n    pass\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful tutor.\"},\n    {\"role\": \"user\", \"content\": \"What is Python?\"},\n]\nprint(format_chat(messages))",
+      "expected_output": "<|im_start|>system\nYou are a helpful tutor.<|im_end|>\n<|im_start|>user\nWhat is Python?<|im_end|>\n<|im_start|>assistant\n",
+      "hints": {
+        "en": [
+          "Use an f-string per message: f\"<|im_start|>{m['role']}\\n{m['content']}<|im_end|>\\n\"",
+          "''.join(...) over a generator keeps the messages in their original order",
+          "Do not forget the final '<|im_start|>assistant\\n' — without it the model would not know to reply"
+        ]
+      },
+      "test_code": "def format_chat(messages):\n    blocks = \"\".join(\n        f\"<|im_start|>{m['role']}\\n{m['content']}<|im_end|>\\n\" for m in messages\n    )\n    return blocks + \"<|im_start|>assistant\\n\"\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful tutor.\"},\n    {\"role\": \"user\", \"content\": \"What is Python?\"},\n]\nresult = format_chat(messages)\nassert result == (\n    \"<|im_start|>system\\nYou are a helpful tutor.<|im_end|>\\n\"\n    \"<|im_start|>user\\nWhat is Python?<|im_end|>\\n\"\n    \"<|im_start|>assistant\\n\"\n), \"Prompt must match Qwen's ChatML format exactly\"\nassert format_chat([]) == \"<|im_start|>assistant\\n\", \"Empty history still needs the generation prompt\"\nsingle = format_chat([{\"role\": \"user\", \"content\": \"hi\"}])\nassert single == \"<|im_start|>user\\nhi<|im_end|>\\n<|im_start|>assistant\\n\"\nprint(\"All chat template tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Which LLM fits on which device? The rule: memory = parameters x bits-per-parameter / 8 bytes. Complete `model_memory_gb(params_billions, bits)` so it returns the weight memory in GiB (divide bytes by 1024**3), rounded to 2 decimal places. Then use it to check that Qwen3-0.6B at 4-bit fits in half a gigabyte while an 8B model does not."
+      },
+      "starter_code": "def model_memory_gb(params_billions: float, bits: int) -> float:\n    \"\"\"Return the memory needed for model weights, in GiB, rounded to 2 dp.\n\n    params_billions: model size in billions of parameters (e.g. 0.6)\n    bits: precision per parameter (16 for bf16, 8, or 4 for quantized)\n    \"\"\"\n    # bytes = params * (bits / 8); GiB = bytes / 1024**3\n    pass\n\nprint(model_memory_gb(0.6, 16))  # Qwen3-0.6B in bf16\nprint(model_memory_gb(0.6, 4))   # Qwen3-0.6B quantized to 4-bit\nprint(model_memory_gb(8, 4))     # Qwen3-8B quantized to 4-bit",
+      "expected_output": "1.12\n0.28\n3.73",
+      "hints": {
+        "en": [
+          "Convert billions to a raw count first: params_billions * 1_000_000_000",
+          "Each parameter takes bits / 8 bytes; multiply, then divide by 1024**3 for GiB",
+          "Wrap the whole expression in round(..., 2) before returning"
+        ]
+      },
+      "test_code": "def model_memory_gb(params_billions, bits):\n    bytes_needed = params_billions * 1_000_000_000 * (bits / 8)\n    return round(bytes_needed / 1024**3, 2)\n\nassert model_memory_gb(0.6, 16) == 1.12, \"Qwen3-0.6B in bf16 should need ~1.12 GiB\"\nassert model_memory_gb(0.6, 4) == 0.28, \"Qwen3-0.6B at 4-bit should need ~0.28 GiB\"\nassert model_memory_gb(8, 4) == 3.73, \"Qwen3-8B at 4-bit should need ~3.73 GiB\"\nassert model_memory_gb(0.6, 4) < 0.5, \"Sub-1B at 4-bit fits on any phone\"\nassert model_memory_gb(8, 16) > 8, \"8B at bf16 does not fit in 8 GB RAM\"\nprint(\"All memory math tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "local_llm_inference",
+      "transformers_library",
+      "chat_templates",
+      "thinking_mode",
+      "quantization_memory_math"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "dictionaries",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
