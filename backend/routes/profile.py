@@ -512,6 +512,56 @@ def reset_progress(user_id: str, caller: str = Depends(get_current_user_id)):
         conn.close()
 
 
+def purge_user_data(cursor, user_id: str) -> None:
+    """Remove a user and every row keyed to them. Shared by the self-serve
+    delete endpoint below and the inactive-account lifecycle sweep
+    (backend/lifecycle.py). Caller commits.
+
+    Deletes playground messages FIRST (child rows keyed by conversation_id,
+    not user_id): the subquery resolves conversation ids from
+    playground_conversations, and FKs are not enforced (no PRAGMA
+    foreign_keys=ON), so deleting parents first orphaned messages forever.
+    """
+    try:
+        cursor.execute(
+            "DELETE FROM playground_messages WHERE conversation_id IN "
+            "(SELECT id FROM playground_conversations WHERE user_id = ?)",
+            [user_id]
+        )
+    except Exception:
+        pass
+
+    # All remaining related tables are keyed directly by a user-id column.
+    related_tables = [
+        ("user_profiles", "user_id"),
+        ("user_settings", "user_id"),
+        ("user_streaks", "user_id"),
+        ("user_mastery", "user_id"),
+        ("learning_signals", "user_id"),
+        ("lesson_completions", "user_id"),
+        ("notifications", "user_id"),
+        ("notification_deliveries", "user_id"),
+        ("notification_preferences", "user_id"),
+        ("module_generation_jobs", "user_id"),
+        ("generated_lessons", "user_id"),
+        ("playground_conversations", "user_id"),
+        ("user_learning_paths", "user_id"),
+        ("pending_vaathiyaar_messages", "user_id"),
+        ("challenge_submissions", "user_id"),
+        ("path_adaptation_log", "user_id"),
+        ("org_members", "user_id"),
+        ("org_invites", "invited_by"),
+        ("training_data", "user_id"),
+    ]
+    for table, column in related_tables:
+        try:
+            cursor.execute(f"DELETE FROM {table} WHERE {column} = ?", [user_id])
+        except Exception:
+            pass  # Table may not exist in all environments
+
+    cursor.execute("DELETE FROM users WHERE id = ?", [user_id])
+
+
 @router.delete("/{user_id}")
 def delete_account(user_id: str, caller: str = Depends(get_current_user_id)):
     """
@@ -549,52 +599,7 @@ def delete_account(user_id: str, caller: str = Depends(get_current_user_id)):
                     detail=f"You are the only super admin of '{org['name']}'. Transfer ownership or delete the organization first."
                 )
 
-        # Delete playground messages FIRST (child rows keyed by conversation_id,
-        # not user_id). This must run BEFORE the related_tables loop below
-        # deletes playground_conversations, because the subquery resolves the
-        # user's conversation ids from that table — deleting parents first
-        # left the messages orphaned forever (FKs are not enforced: _get_conn
-        # never sets PRAGMA foreign_keys=ON).
-        try:
-            cursor.execute(
-                "DELETE FROM playground_messages WHERE conversation_id IN "
-                "(SELECT id FROM playground_conversations WHERE user_id = ?)",
-                [user_id]
-            )
-        except Exception:
-            pass
-
-        # Delete from all related tables (all keyed directly by a user-id column)
-        related_tables = [
-            ("user_profiles", "user_id"),
-            ("user_settings", "user_id"),
-            ("user_streaks", "user_id"),
-            ("user_mastery", "user_id"),
-            ("learning_signals", "user_id"),
-            ("lesson_completions", "user_id"),
-            ("notifications", "user_id"),
-            ("notification_deliveries", "user_id"),
-            ("notification_preferences", "user_id"),
-            ("module_generation_jobs", "user_id"),
-            ("generated_lessons", "user_id"),
-            ("playground_conversations", "user_id"),
-            ("user_learning_paths", "user_id"),
-            ("pending_vaathiyaar_messages", "user_id"),
-            ("challenge_submissions", "user_id"),
-            ("path_adaptation_log", "user_id"),
-            ("org_members", "user_id"),
-            ("org_invites", "invited_by"),
-            ("training_data", "user_id"),
-        ]
-
-        for table, column in related_tables:
-            try:
-                cursor.execute(f"DELETE FROM {table} WHERE {column} = ?", [user_id])
-            except Exception:
-                pass  # Table may not exist in all environments
-
-        # Finally delete the user record
-        cursor.execute("DELETE FROM users WHERE id = ?", [user_id])
+        purge_user_data(cursor, user_id)
         conn.commit()
 
         return {"deleted": True, "user_id": user_id}
