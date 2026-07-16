@@ -11,7 +11,7 @@ import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import OutputPanel from '../components/OutputPanel';
 import VoiceTutor from '../components/VoiceTutor';
-import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2, Mic } from 'lucide-react';
+import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2, Mic, Lock } from 'lucide-react';
 import { Button, Badge } from '../components/ui';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -473,14 +473,16 @@ export default function Playground() {
     const mdComponents = buildMarkdownComponents(handleInjectCode, hasExistingCode);
 
     return (
-        <div className="h-[100dvh] flex flex-col overflow-hidden">
+        // Height = viewport minus Layout's shell (p-6 container = 3rem; mobile adds
+        // the fixed 3.5rem header) — avoids page-level double scroll.
+        <div className="h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-3rem)] flex flex-col overflow-hidden">
             <VaathiyaarMessage />
 
             {/* ── Header ────────────────────────────────────────────────────── */}
             <header className="flex-shrink-0 px-6 pt-4 pb-3 space-y-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-400/20">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white shadow-glow">
                             <Sparkles size={20} />
                         </div>
                         <div>
@@ -618,8 +620,8 @@ export default function Playground() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mx-6 rounded-2xl p-4 bg-amber-500/10 border border-amber-500/30 mb-2 flex items-start gap-4 flex-shrink-0"
                 >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-lg select-none">
-                        {'🔒'}
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center select-none">
+                        <Lock size={18} className="text-amber-500" aria-hidden="true" />
                     </div>
                     <div>
                         <p className="font-bold text-amber-600 dark:text-amber-300 text-sm">No prompts remaining</p>
@@ -632,7 +634,7 @@ export default function Playground() {
             )}
 
             {/* ── Main Content: 2-column layout ───────────────────────────── */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 px-6 pb-2 min-h-0 overflow-hidden">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 grid-rows-[minmax(0,1fr)_minmax(0,1.2fr)] lg:grid-rows-[minmax(0,1fr)] gap-4 px-6 pb-2 min-h-0 overflow-hidden">
 
                 {/* ── Left Panel: Vaathiyaar Chat ────────────────────────── */}
                 <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 rounded-2xl border border-border-default bg-bg-surface/60 backdrop-blur-sm shadow-sm overflow-hidden">
@@ -644,7 +646,10 @@ export default function Playground() {
                             <div className="w-3 h-3 rounded-full bg-green-400" />
                         </div>
                         <span className="text-xs font-semibold text-text-muted ml-2 flex items-center gap-1.5">
-                            {'🧑‍🏫'} Vaathiyaar Chat
+                            <span className="w-4 h-4 rounded-md bg-gradient-primary flex items-center justify-center">
+                                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
+                            </span>
+                            Vaathiyaar Chat
                         </span>
                     </div>
 
