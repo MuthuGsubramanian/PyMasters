@@ -166,6 +166,10 @@ def run_sweep(db_path: str, dry_run: bool = True, now: datetime = None) -> dict:
             conn.execute(
                 "DELETE FROM account_lifecycle WHERE user_id NOT IN (SELECT id FROM users)"
             )
+        # Release our write lock before _send_notice: create_notification
+        # opens its OWN connection to this DB, and an uncommitted write here
+        # makes that insert fail with "database is locked".
+        conn.commit()
 
         # 2) Notify newly-inactive users (never super admins, never twice).
         candidates = conn.execute(
@@ -191,6 +195,7 @@ def run_sweep(db_path: str, dry_run: bool = True, now: datetime = None) -> dict:
             )
             _log(conn, u["id"], u["username"], u["email"], "notice_sent",
                  f"last_activity={u['last_activity']} delete_after={delete_after} {channels}")
+            conn.commit()  # keep the lock window closed for the next notice
 
         # 3) Remove accounts whose grace period lapsed and are still inactive.
         due = conn.execute(

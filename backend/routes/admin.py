@@ -132,6 +132,43 @@ def check(caller: str = Depends(optional_user_id)):
         return {"is_super_admin": False}
 
 
+class LifecycleRunBody(BaseModel):
+    # Dry-run by default: reports what WOULD happen without sending notices,
+    # mutating lifecycle state, or deleting anything.
+    dry_run: bool = True
+
+
+@router.post("/lifecycle/run")
+def lifecycle_run(body: LifecycleRunBody = LifecycleRunBody(), caller: str = Depends(get_current_user_id)):
+    """Run one inactive-account lifecycle sweep (see backend/lifecycle.py).
+
+    dry_run=true (default) only reports candidates. A live run sends notices
+    and cancels/queues removals; actual deletion additionally requires the
+    LIFECYCLE_DELETE_ENABLED=1 env switch on the service.
+    """
+    require_super_admin(caller)
+    from lifecycle import run_sweep
+    return run_sweep(DB_PATH, dry_run=body.dry_run)
+
+
+@router.get("/lifecycle/log")
+def lifecycle_log(limit: int = 200, caller: str = Depends(get_current_user_id)):
+    """Recent lifecycle audit entries (notices, cancellations, deletions)."""
+    require_super_admin(caller)
+    from lifecycle import ensure_tables
+    conn = _conn()
+    try:
+        ensure_tables(conn)
+        rows = conn.execute(
+            "SELECT id, user_id, username, email, action, detail, created_at "
+            "FROM lifecycle_log ORDER BY id DESC LIMIT ?",
+            [max(1, min(int(limit), 1000))],
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
 @router.get("/overview")
 def overview(caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
