@@ -1,0 +1,288 @@
+{
+  "id": "clip_vit_base_patch32",
+  "topic": "clip_vit_base_patch32",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Zero-Shot Image Classification with CLIP: Vision That Understands Language"
+  },
+  "description": {
+    "en": "Use OpenAI's clip-vit-base-patch32 to classify images with nothing but plain-English labels â€” no training data, no fine-tuning â€” then apply the same trick to build text-to-image search over a photo library."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Model That Sees With Words\n\nVaathiyaar slides a photograph across the desk. \"Classic image classifiers are like students who memorized exactly one exam. Train a model on 1,000 ImageNet categories and it recognizes those 1,000 â€” ask about anything else and it shrugs. **CLIP** broke that ceiling. OpenAI trained it on 400 million imageâ€“caption pairs from the internet, teaching it one skill: *match pictures to text*. The result? Describe any category in plain English and CLIP can recognize it â€” with **zero** training examples. That's zero-shot classification.\"\n\n### Two Encoders, One Shared Space\n\nCLIP is really two models glued together. A **Vision Transformer** (the `vit-base-patch32` part â€” it slices images into 32Ã—32 patches) encodes images into 512-dimensional vectors. A **text transformer** encodes sentences into the *same* 512-dimensional space. During training, matching imageâ€“caption pairs were pulled close together and mismatched pairs pushed apart. So classification becomes geometry: encode the image, encode each candidate label, and the closest label wins.\n\n### Zero-Shot vs. Traditional Classification\n\n| Property | Traditional classifier | CLIP zero-shot |\n|---|---|---|\n| Training data needed | Thousands of labeled images | None |\n| Classes | Fixed at training time | Any text, changeable at runtime |\n| Add a new class | Retrain the model | Just add a string |\n| Size | Varies | ~600 MB, runs on CPU |\n| Best accuracy | Higher on its exact classes | Strong across open-ended classes |\n\n### Classification in a Few Lines\n\n```python\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-base-patch32\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-base-patch32\")\n\nimage = Image.open(\"mystery.jpg\")\nlabels = [\"a photo of a dog\", \"a photo of a pizza\", \"a photo of a mountain\"]\n\ninputs = processor(text=labels, images=image, return_tensors=\"pt\", padding=True)\nprobs = model(**inputs).logits_per_image.softmax(dim=1)\n```\n\nNotice the labels aren't bare words â€” they're phrased as **\"a photo of a ...\"**. CLIP saw captions during training, so prompts that read like captions score better. This *prompt engineering for vision* is free accuracy.\n\n### From Classification to Photo Search\n\nFlip the direction and you get search. Encode every photo in a folder once with `get_image_features`, store the vectors, then encode a query like *\"birthday cake on the beach\"* with `get_text_features` and rank photos by cosine similarity:\n\n```python\nimg_vecs = model.get_image_features(**processor(images=photos, return_tensors=\"pt\"))\nquery_vec = model.get_text_features(**processor(text=[\"birthday cake on the beach\"], return_tensors=\"pt\", padding=True))\n```\n\nThat's the entire engine behind text-to-image search â€” the same one Homie uses to search your local photo library without sending a single pixel to the cloud.\n\n> **Key Insight:** CLIP puts images and text into one shared 512-dimensional vector space, turning classification into a similarity lookup. Your \"classes\" are just strings you can change at runtime â€” and the same embeddings that classify an image also power text-to-image search. One model, two superpowers, no training data."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "vision_meets_language",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "clip_overview",
+      "nodes": [
+        {
+          "label": "CLIP (clip-vit-base-patch32)",
+          "children": [
+            "ViT image encoder (32px patches)",
+            "Text encoder (captions)",
+            "Shared 512-dim space",
+            "Zero-shot classification",
+            "Text-to-image search"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "zero_shot_demo",
+      "steps": [
+        {
+          "line": "from transformers import CLIPModel, CLIPProcessor",
+          "highlight": "CLIPModel",
+          "explanation": {
+            "en": "CLIPModel holds both encoders; CLIPProcessor prepares images and text for them"
+          }
+        },
+        {
+          "line": "from PIL import Image",
+          "highlight": "Image",
+          "explanation": {
+            "en": "PIL loads image files â€” CLIP accepts plain PIL images"
+          }
+        },
+        {
+          "line": "model = CLIPModel.from_pretrained(\"openai/clip-vit-base-patch32\")",
+          "highlight": "openai/clip-vit-base-patch32",
+          "explanation": {
+            "en": "Download the model once (~600 MB), then it's cached locally. Runs fine on CPU."
+          }
+        },
+        {
+          "line": "processor = CLIPProcessor.from_pretrained(\"openai/clip-vit-base-patch32\")",
+          "highlight": "CLIPProcessor",
+          "explanation": {
+            "en": "The processor resizes images to 224Ã—224 and tokenizes text â€” both inputs, one helper"
+          }
+        },
+        {
+          "line": "image = Image.open(\"beach_day.jpg\")",
+          "highlight": "beach_day.jpg",
+          "explanation": {
+            "en": "Any photo works â€” CLIP has never seen it and needs no training on it"
+          }
+        },
+        {
+          "line": "labels = [\n    \"a photo of a beach\",\n    \"a photo of a city street\",\n    \"a photo of a forest\",\n    \"a photo of a kitchen\",\n]",
+          "highlight": "a photo of a",
+          "explanation": {
+            "en": "Classes are just strings! The 'a photo of a ...' template matches CLIP's caption-style training data"
+          }
+        },
+        {
+          "line": "inputs = processor(text=labels, images=image, return_tensors=\"pt\", padding=True)",
+          "highlight": "processor",
+          "explanation": {
+            "en": "Preprocess the image and tokenize all four labels into PyTorch tensors in one call"
+          }
+        },
+        {
+          "line": "outputs = model(**inputs)",
+          "highlight": "model(**inputs)",
+          "explanation": {
+            "en": "Both encoders run: the image and every label land in the same 512-dim space"
+          }
+        },
+        {
+          "line": "probs = outputs.logits_per_image.softmax(dim=1)",
+          "highlight": "softmax",
+          "explanation": {
+            "en": "logits_per_image holds imageâ†”text similarity scores; softmax turns them into probabilities"
+          }
+        },
+        {
+          "line": "for label, p in zip(labels, probs[0]):\n    print(f\"{p:.1%}  {label}\")",
+          "highlight": "probs[0]",
+          "explanation": {
+            "en": "The beach label dominates â€” classified with zero training examples"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_embedding_dim",
+      "variable": "embedding_dim",
+      "value": "512 (shared by image & text)",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_top_prob",
+      "variable": "top_probability",
+      "value": "0.947 â†’ 'a photo of a beach'",
+      "data_type": "float",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ pip install transformers torch pillow",
+        "Successfully installed transformers torch pillow",
+        "",
+        "$ python clip_zero_shot.py",
+        "Loaded openai/clip-vit-base-patch32 (512-dim shared space)",
+        "94.7%  a photo of a beach",
+        " 3.1%  a photo of a city street",
+        " 1.5%  a photo of a forest",
+        " 0.7%  a photo of a kitchen"
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_clip_flow",
+      "title": "CLIP Zero-Shot Classification Flow",
+      "nodes": [
+        {
+          "id": "img",
+          "label": "Image",
+          "type": "start"
+        },
+        {
+          "id": "vit",
+          "label": "ViT Encoder\n(512-dim)",
+          "type": "process"
+        },
+        {
+          "id": "labels",
+          "label": "Text Labels\n('a photo of a ...')",
+          "type": "start"
+        },
+        {
+          "id": "txt",
+          "label": "Text Encoder\n(512-dim)",
+          "type": "process"
+        },
+        {
+          "id": "sim",
+          "label": "Cosine\nSimilarity",
+          "type": "decision"
+        },
+        {
+          "id": "softmax",
+          "label": "Softmax",
+          "type": "process"
+        },
+        {
+          "id": "winner",
+          "label": "Best Label",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "img",
+          "to": "vit",
+          "label": "pixels"
+        },
+        {
+          "from": "labels",
+          "to": "txt",
+          "label": "tokens"
+        },
+        {
+          "from": "vit",
+          "to": "sim",
+          "label": "vector"
+        },
+        {
+          "from": "txt",
+          "to": "sim",
+          "label": "vectors"
+        },
+        {
+          "from": "sim",
+          "to": "softmax",
+          "label": "logits"
+        },
+        {
+          "from": "softmax",
+          "to": "winner",
+          "label": "probs"
+        }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "photon_burst",
+      "message": "You just classified an image with nothing but words. Zero-shot vision unlocked!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a zero-shot image classifier. Complete `classify` so it takes a PIL image and a list of text labels, runs CLIP, and returns a dict mapping each label to its probability. The demo creates a solid red image â€” CLIP should confidently pick the red label over the blue one."
+      },
+      "starter_code": "import torch\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-base-patch32\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-base-patch32\")\n\ndef classify(image, labels: list[str]) -> dict[str, float]:\n    \"\"\"Return {label: probability} for the image, probabilities summing to 1.\"\"\"\n    # 1. Preprocess: processor(text=labels, images=image, return_tensors=\"pt\", padding=True)\n    # 2. Run the model inside torch.no_grad()\n    # 3. Softmax outputs.logits_per_image along dim=1\n    # 4. Zip labels with the probabilities (use .item() for floats)\n    pass\n\nimg = Image.new(\"RGB\", (224, 224), color=(220, 30, 30))\nresult = classify(img, [\"a photo of a red square\", \"a photo of a blue square\"])\nprint(max(result, key=result.get))",
+      "expected_output": "a photo of a red square",
+      "hints": {
+        "en": [
+          "processor(text=labels, images=image, return_tensors=\"pt\", padding=True) prepares both inputs at once",
+          "outputs.logits_per_image has shape (1, num_labels) â€” apply .softmax(dim=1) and read row [0]",
+          "Build the dict with {label: prob.item() for label, prob in zip(labels, probs[0])}"
+        ]
+      },
+      "test_code": "import torch\nfrom transformers import CLIPModel, CLIPProcessor\nfrom PIL import Image\n\n_model = CLIPModel.from_pretrained(\"openai/clip-vit-base-patch32\")\n_processor = CLIPProcessor.from_pretrained(\"openai/clip-vit-base-patch32\")\n\ndef classify(image, labels):\n    inputs = _processor(text=labels, images=image, return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        outputs = _model(**inputs)\n    probs = outputs.logits_per_image.softmax(dim=1)[0]\n    return {label: p.item() for label, p in zip(labels, probs)}\n\nimg = Image.new(\"RGB\", (224, 224), color=(220, 30, 30))\nlabels = [\"a photo of a red square\", \"a photo of a blue square\"]\nresult = classify(img, labels)\n\nassert set(result.keys()) == set(labels), \"Must return one probability per label\"\nassert abs(sum(result.values()) - 1.0) < 1e-4, \"Probabilities must sum to 1 (use softmax)\"\nassert all(0.0 <= p <= 1.0 for p in result.values()), \"Each value must be a probability\"\nassert max(result, key=result.get) == \"a photo of a red square\", \"CLIP should pick the red label for a red image\"\nprint(\"Zero-shot classification tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Power the search side of a CLIP photo library. Complete `embed_texts` so it encodes a list of strings with CLIP's text encoder into unit-normalized vectors, and `similarity` so it returns the cosine similarity between two texts. Related captions must score higher than unrelated ones â€” the exact ranking logic Homie uses for text-to-image search."
+      },
+      "starter_code": "import torch\nfrom transformers import CLIPModel, CLIPProcessor\n\nmodel = CLIPModel.from_pretrained(\"openai/clip-vit-base-patch32\")\nprocessor = CLIPProcessor.from_pretrained(\"openai/clip-vit-base-patch32\")\n\ndef embed_texts(texts: list[str]) -> torch.Tensor:\n    \"\"\"Return an (N, 512) tensor of unit-normalized CLIP text embeddings.\"\"\"\n    # 1. Tokenize: processor(text=texts, return_tensors=\"pt\", padding=True)\n    # 2. Encode with model.get_text_features(**inputs) inside torch.no_grad()\n    # 3. Normalize each row: vecs / vecs.norm(dim=-1, keepdim=True)\n    pass\n\ndef similarity(a: str, b: str) -> float:\n    \"\"\"Cosine similarity between two texts (dot product of normalized vectors).\"\"\"\n    pass\n\nclose = similarity(\"a dog playing on the beach\", \"a puppy running in the sand\")\nfar = similarity(\"a dog playing on the beach\", \"a spreadsheet of tax records\")\nprint(round(close, 3), round(far, 3))",
+      "expected_output": "close > far (related captions score higher)",
+      "hints": {
+        "en": [
+          "model.get_text_features(**inputs) returns raw (N, 512) embeddings â€” the text-only half of CLIP",
+          "After normalizing rows to unit length, cosine similarity is just a dot product",
+          "In similarity(), embed both texts together and return float(vecs[0] @ vecs[1])"
+        ]
+      },
+      "test_code": "import torch\nfrom transformers import CLIPModel, CLIPProcessor\n\n_model = CLIPModel.from_pretrained(\"openai/clip-vit-base-patch32\")\n_processor = CLIPProcessor.from_pretrained(\"openai/clip-vit-base-patch32\")\n\ndef embed_texts(texts):\n    inputs = _processor(text=texts, return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        vecs = _model.get_text_features(**inputs)\n    return vecs / vecs.norm(dim=-1, keepdim=True)\n\ndef similarity(a, b):\n    vecs = embed_texts([a, b])\n    return float(vecs[0] @ vecs[1])\n\nvecs = embed_texts([\"hello world\"])\nassert vecs.shape == (1, 512), \"CLIP text embeddings must be 512-dimensional\"\nassert abs(vecs[0].norm().item() - 1.0) < 1e-4, \"Embeddings must be unit-normalized\"\n\nclose = similarity(\"a dog playing on the beach\", \"a puppy running in the sand\")\nfar = similarity(\"a dog playing on the beach\", \"a spreadsheet of tax records\")\nassert close > far, \"Related captions must score higher than unrelated ones\"\nprint(\"Text embedding search tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "clip",
+      "zero_shot_classification",
+      "multimodal_embeddings",
+      "vision_transformers",
+      "text_to_image_search"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "dictionaries",
+      "pip_install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
