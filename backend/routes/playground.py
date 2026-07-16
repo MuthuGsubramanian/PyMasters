@@ -79,6 +79,11 @@ class PlaygroundChatRequest(BaseModel):
     # "Good morning" in the afternoon. Optional → when omitted, behaviour is
     # unchanged from before.
     time_of_day: Optional[str] = None
+    # Which page/module of the app the learner is on (e.g. "Challenges —
+    # weekly coding battles"). Sent by the global Vaathiyaar side panel so
+    # answers can reference what the learner is currently looking at.
+    # Optional → omitted by the full Playground page, behaviour unchanged.
+    page_context: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -486,6 +491,8 @@ def playground_chat_stream(request: PlaygroundChatRequest, caller: str = Depends
         "mode": "playground",
         "language": request.language or "en",
     }
+    if request.page_context:
+        lesson_context["page_context"] = request.page_context[:200]
 
     # Pass the username explicitly so the greeting/empathy tokens use the
     # learner's name rather than the generic "the student" fallback when the

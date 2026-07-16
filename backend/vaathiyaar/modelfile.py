@@ -558,6 +558,13 @@ def build_system_prompt(
     attempt_count = context.get("attempt_count", 0)
 
     context_parts = []
+    # Where in the app the student currently is (global side-panel chat).
+    page_context = context.get("page_context", "")
+    if page_context:
+        context_parts.append(
+            f"- **Student's current page in PyMasters**: {page_context}. "
+            "When relevant, relate your answer to what this page offers."
+        )
     if module_title:
         context_parts.append(f"- **Current module**: {module_title} (ID: {module_id})")
     if topic:

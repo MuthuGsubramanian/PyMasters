@@ -25,15 +25,15 @@ export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loa
     return (
         <form
             onSubmit={handleSubmit}
-            className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-300 bg-white/90 backdrop-blur-xl border ${
+            className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-300 bg-bg-surface backdrop-blur-xl border ${
                 focused
-                    ? 'border-purple-300 shadow-lg shadow-purple-100/30 ring-1 ring-purple-200/50'
-                    : 'border-slate-200 shadow-sm'
+                    ? 'border-border-focus ring-1 ring-border-focus shadow-md'
+                    : 'border-border-default shadow-sm'
             }`}
         >
             {/* Vaathiyaar Avatar */}
-            <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center select-none transition-all duration-300 bg-gradient-to-br from-purple-500 to-cyan-500 ${
-                focused ? 'scale-105 shadow-md shadow-purple-300/30' : ''
+            <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center select-none transition-all duration-300 bg-gradient-primary ${
+                focused ? 'scale-105 shadow-glow' : ''
             }`}>
                 <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[55%] h-[55%]" />
             </div>
@@ -48,12 +48,13 @@ export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loa
                 onBlur={() => setFocused(false)}
                 placeholder={placeholder}
                 disabled={loading}
-                className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                aria-label="Message Vaathiyaar"
+                className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-muted outline-none disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             />
 
             {/* Keyboard hint */}
             {value.trim() && !loading && (
-                <span className="hidden sm:inline text-[10px] text-slate-400 font-mono flex-shrink-0">
+                <span className="hidden sm:inline text-[10px] text-text-muted font-mono flex-shrink-0">
                     Enter ↵
                 </span>
             )}
@@ -64,10 +65,10 @@ export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loa
                 disabled={loading || !value.trim()}
                 className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${
                     loading
-                        ? 'bg-purple-100 text-purple-500'
+                        ? 'bg-accent-subtle text-accent-primary'
                         : value.trim()
-                        ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white shadow-md shadow-purple-300/30 hover:scale-105 active:scale-95'
-                        : 'bg-slate-100 text-slate-400'
+                        ? 'bg-gradient-primary text-white shadow-glow hover:scale-105 active:scale-95'
+                        : 'bg-bg-elevated text-text-disabled'
                 } disabled:cursor-not-allowed`}
                 aria-label="Send message"
             >
