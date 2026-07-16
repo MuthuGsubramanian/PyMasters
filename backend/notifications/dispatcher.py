@@ -18,6 +18,15 @@ def create_notification(
 ) -> int:
     """Create an in-app notification and queue external deliveries."""
     conn = sqlite3.connect(_get_db_path())
+    try:
+        return _create_notification(conn, user_id, notif_type, title, message, link, metadata)
+    finally:
+        # Always release the connection: an exception mid-way otherwise leaks
+        # an open write transaction that locks the DB for every other writer.
+        conn.close()
+
+
+def _create_notification(conn, user_id, notif_type, title, message, link, metadata) -> int:
     cursor = conn.execute(
         """INSERT INTO notifications (user_id, type, title, message, link, metadata)
            VALUES (?, ?, ?, ?, ?, ?)""",
@@ -58,7 +67,6 @@ def create_notification(
                 )
 
     conn.commit()
-    conn.close()
     return notif_id
 
 
