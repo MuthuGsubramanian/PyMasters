@@ -26,6 +26,7 @@ import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
+import VaathiyaarPanel from './VaathiyaarPanel';
 import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
 
 export default function Layout() {
@@ -305,6 +306,7 @@ export default function Layout() {
 
             <GlobalSearch />
             <ReleaseNotes />
+            <VaathiyaarPanel />
         </div>
     );
 }
