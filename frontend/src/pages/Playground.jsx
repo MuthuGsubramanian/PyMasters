@@ -760,9 +760,12 @@ export default function Playground() {
                         </div>
                     </div>
 
-                    {/* Code editor area */}
-                    <div className="flex-1 flex flex-col min-h-0">
-                        <div className="flex-1 flex min-h-0 overflow-hidden">
+                    {/* Code editor area. Scrolls internally when the viewport is
+                        too short (≈<600px) so the editor never collapses to a
+                        sliver — the min-h on the editor row guarantees a usable
+                        typing surface at any window height. */}
+                    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto dark-scrollbar">
+                        <div className="flex-1 flex min-h-[160px] overflow-hidden">
                             <PythonEditor
                                 value={code}
                                 onChange={setCode}
