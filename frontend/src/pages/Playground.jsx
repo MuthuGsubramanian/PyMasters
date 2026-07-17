@@ -1,194 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import ChatBar from '../components/ChatBar';
 import PythonEditor from '../components/PythonEditor';
-import api, { getAuthHeaders } from '../api';
-import { safeErrorMsg } from '../utils/errorUtils';
-import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import OutputPanel from '../components/OutputPanel';
 import VoiceTutor from '../components/VoiceTutor';
-import { Sparkles, Zap, Plus, MessageSquare, ChevronLeft, Clock, Copy, Check, Play, Trash2, Send, Terminal, ArrowRight, Loader2, Mic, Lock } from 'lucide-react';
+import VaathiyaarMessage from '../components/VaathiyaarMessage';
+import api from '../api';
+import { safeErrorMsg } from '../utils/errorUtils';
+import { Sparkles, Zap, Play, Trash2, Send, Terminal, Loader2, Mic } from 'lucide-react';
 import { Button, Badge } from '../components/ui';
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Enhanced thinking bubble with waveform
-// ──────────────────────────────────────────────────────────────────────────────
-function ThinkingBubble() {
-    return (
-        <div className="flex items-start gap-3 max-w-[85%]">
-            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center select-none mt-1 shadow-glow">
-                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
-            </div>
-            <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-accent-primary/40">
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                        {[0, 1, 2, 3, 4].map(i => (
-                            <div
-                                key={i}
-                                className="w-1 bg-accent-primary rounded-full"
-                                style={{
-                                    height: `${8 + Math.sin(i * 1.2) * 6}px`,
-                                    animation: `waveform 1.2s ease-in-out ${i * 0.1}s infinite alternate`,
-                                }}
-                            />
-                        ))}
-                    </div>
-                    <span className="text-xs text-accent-primary ml-1">Vaathiyaar is thinking...</span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Copy button for code blocks
-// ──────────────────────────────────────────────────────────────────────────────
-function CopyButton({ text }) {
-    const [copied, setCopied] = useState(false);
-    const handleCopy = () => {
-        navigator.clipboard.writeText(text).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
-    return (
-        <button
-            onClick={handleCopy}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-code-foreground/70 hover:text-code-foreground transition-all duration-200"
-            title="Copy code"
-        >
-            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-        </button>
-    );
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// "Copy to Terminal" button for injecting code into the editor
-// ──────────────────────────────────────────────────────────────────────────────
-function CopyToTerminalButton({ text, onInject }) {
-    const [injected, setInjected] = useState(false);
-    const handleInject = () => {
-        onInject(text);
-        setInjected(true);
-        setTimeout(() => setInjected(false), 2000);
-    };
-    return (
-        <button
-            onClick={handleInject}
-            className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-all duration-200 flex items-center gap-1"
-            title="Copy to Terminal"
-        >
-            {injected ? <Check size={12} /> : <><Terminal size={12} /><span className="text-[10px] font-medium">Terminal</span></>}
-        </button>
-    );
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// "Apply Fix" button — replaces editor content with the suggested code
-// ──────────────────────────────────────────────────────────────────────────────
-function ApplyFixButton({ text, onInject }) {
-    const [applied, setApplied] = useState(false);
-    const handleApply = () => {
-        onInject(text);
-        setApplied(true);
-        setTimeout(() => setApplied(false), 2000);
-    };
-    return (
-        <button
-            onClick={handleApply}
-            className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 hover:text-amber-300 transition-all duration-200 flex items-center gap-1"
-            title="Apply Fix to Terminal"
-        >
-            {applied ? <Check size={12} /> : <><ArrowRight size={12} /><span className="text-[10px] font-medium">Apply Fix</span></>}
-        </button>
-    );
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Build markdown components with code injection support
-// ──────────────────────────────────────────────────────────────────────────────
-function buildMarkdownComponents(onInjectCode, hasExistingCode) {
-    return {
-        h2: ({children}) => <h2 className="text-base font-bold text-text-primary mt-3 mb-1">{children}</h2>,
-        h3: ({children}) => <h3 className="text-sm font-bold text-text-primary mt-2 mb-1">{children}</h3>,
-        p: ({children}) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
-        ul: ({children}) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
-        ol: ({children}) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
-        code: ({children, className}) => {
-            const isPythonBlock = className && (className.includes('python') || className.includes('language-python') || className.includes('language-py'));
-            const isCodeBlock = !!className;
-
-            if (isCodeBlock) {
-                const codeText = String(children).replace(/\n$/, '');
-                return (
-                    <div className="relative group my-3">
-                        <pre className="surface-code p-4 rounded-xl text-xs font-mono overflow-x-auto border border-border-default shadow-lg">
-                            <code>{children}</code>
-                        </pre>
-                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <CopyButton text={codeText} />
-                            {isPythonBlock && (
-                                <>
-                                    <CopyToTerminalButton text={codeText} onInject={onInjectCode} />
-                                    {hasExistingCode && (
-                                        <ApplyFixButton text={codeText} onInject={onInjectCode} />
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                );
-            }
-            return <code className="bg-accent-subtle text-accent-primary px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
-        },
-        table: ({children}) => (
-            <div className="overflow-x-auto my-3 rounded-xl border border-border-default shadow-sm">
-                <table className="text-sm w-full">{children}</table>
-            </div>
-        ),
-        thead: ({children}) => <thead className="bg-accent-subtle">{children}</thead>,
-        tbody: ({children}) => <tbody className="divide-y divide-border-default">{children}</tbody>,
-        tr: ({children}) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
-        th: ({children}) => (
-            <th className="px-3 py-2 text-left text-xs font-bold text-accent-primary uppercase tracking-wider">{children}</th>
-        ),
-        td: ({children}) => (
-            <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>
-        ),
-        strong: ({children}) => <strong className="font-bold text-text-primary">{children}</strong>,
-    };
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Main Playground page
+// Playground — focused live Python terminal.
+//
+// Vaathiyaar chat is NOT embedded here: it lives in the global slide-out panel
+// (components/VaathiyaarPanel.jsx) exactly like on every other page. This page
+// talks to the panel through two window events:
+//   pm:vaathiyaar-ask    → panel opens and sends the given message
+//   pm:vaathiyaar-inject → panel's "To editor" button replaces the editor code
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Playground() {
     const { user } = useAuth();
     const [voiceOpen, setVoiceOpen] = useState(false);
-    const chatEndRef = useRef(null);
-    const editorRef = useRef(null);
-    const streamControllerRef = useRef(null);
 
     useEffect(() => { document.title = 'Playground — PyMasters'; }, []);
-
-    useEffect(() => {
-        return () => {
-            if (streamControllerRef.current) streamControllerRef.current.abort();
-        };
-    }, []);
-
-    // Chat state
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [credits, setCredits] = useState(null);
-    const [creditsLoading, setCreditsLoading] = useState(true);
-    const [conversationId, setConversationId] = useState(null);
-    const [conversations, setConversations] = useState([]);
-    const [showSidebar, setShowSidebar] = useState(false);
 
     // Code terminal state
     const [code, setCode] = useState('');
@@ -196,192 +30,33 @@ export default function Playground() {
     const [running, setRunning] = useState(false);
     const [executionTime, setExecutionTime] = useState(null);
 
+    // Prompt-credit meter (credits are burned by Vaathiyaar chat, incl. the panel)
+    const [credits, setCredits] = useState(null);
+    const [creditsLoading, setCreditsLoading] = useState(true);
     useEffect(() => {
         if (user?.id) {
             api.get(`/playground/credits/${user.id}`)
                 .then((r) => setCredits(r.data))
-                .catch(() => setCredits({ xp: 0, total_prompts: 0, used_prompts: 0, remaining_prompts: 0 }))
+                .catch(() => setCredits(null))
                 .finally(() => setCreditsLoading(false));
-
-            api.get(`/playground/conversations/${user.id}`)
-                .then((r) => {
-                    setConversations(r.data);
-                    if (r.data.length > 0) {
-                        loadConversation(r.data[0].id);
-                    }
-                })
-                .catch(() => {});
         }
     }, [user]);
 
+    // Code injected from the Vaathiyaar panel ("To editor" on python blocks)
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, loading]);
+        const onInject = (e) => {
+            const injected = e?.detail?.code;
+            if (injected) setCode(injected);
+        };
+        window.addEventListener('pm:vaathiyaar-inject', onInject);
+        return () => window.removeEventListener('pm:vaathiyaar-inject', onInject);
+    }, []);
 
-    const loadConversation = async (convId) => {
-        if (!user?.id) return;
-        try {
-            const r = await api.get(`/playground/conversations/${user.id}/${convId}`);
-            setMessages(r.data.map((m) => ({ role: m.role, content: m.content })));
-            setConversationId(convId);
-            setShowSidebar(false);
-        } catch {
-            setMessages([]);
-            setConversationId(null);
-        }
+    const askVaathiyaar = (message) => {
+        window.dispatchEvent(new CustomEvent('pm:vaathiyaar-ask', { detail: { message } }));
     };
 
-    const startNewChat = () => {
-        setMessages([]);
-        setConversationId(null);
-        setShowSidebar(false);
-    };
-
-    const refreshConversations = () => {
-        if (user?.id) {
-            api.get(`/playground/conversations/${user.id}`)
-                .then((r) => setConversations(r.data))
-                .catch(() => {});
-        }
-    };
-
-    const handleSend = async (message) => {
-        if (!message.trim() || loading) return;
-        if (credits && credits.remaining_prompts <= 0) return;
-
-        const userMsg = { role: 'user', content: message };
-        setMessages((prev) => [...prev, userMsg]);
-        setLoading(true);
-
-        const streamMsg = { role: 'assistant', content: '', _isStreaming: true };
-        setMessages((prev) => [...prev, streamMsg]);
-
-        try {
-            if (streamControllerRef.current) streamControllerRef.current.abort();
-            streamControllerRef.current = new AbortController();
-
-            const { parseSSELine, extractMessageFromJSON } = await import('../utils/streaming');
-
-            const response = await fetch(`${api.defaults.baseURL}/playground/chat/stream`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                body: JSON.stringify({
-                    user_id: user?.id,
-                    message,
-                    // Send the display/username so Vaathiyaar greets the learner by
-                    // name instead of the generic "the student" fallback (the
-                    // profile.name can be empty even when a username exists).
-                    username: user?.name || user?.username || '',
-                    // Part-of-day from the learner's LOCAL clock so Vaathiyaar's
-                    // greeting matches their real time (server runs in UTC and
-                    // can't infer this). Thresholds mirror the backend.
-                    time_of_day: (() => { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'; })(),
-                    language: user?.preferred_language || 'en',
-                    conversation_id: conversationId,
-                }),
-                signal: streamControllerRef.current.signal,
-            });
-
-            if (response.status === 403) {
-                setMessages((prev) => {
-                    const filtered = prev.filter((m) => !m._isStreaming);
-                    return [...filtered, { role: 'assistant', content: "You've used all your prompts! Complete more lessons to earn XP and unlock more." }];
-                });
-                return;
-            }
-
-            if (response.status === 402) {
-                // Trial lapsed mid-session (backend access.py gates the stream
-                // with 402). This raw fetch bypasses the axios interceptor's
-                // global 402 → upgrade redirect (api.js), so without this the
-                // learner saw a misleading generic "try again in a moment"
-                // error. Mirror the interceptor exactly, incl. its loop guard.
-                setMessages((prev) => prev.filter((m) => !m._isStreaming));
-                if (window.location.pathname !== '/dashboard/upgrade') {
-                    window.location.href = '/dashboard/upgrade';
-                }
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-
-            if (!response.body) {
-                throw new Error('Response body is empty');
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let rawText = '';
-            let buffer = '';
-
-            // Process one complete SSE line (a `data: {...}` frame).
-            const processLine = (line) => {
-                const data = parseSSELine(line);
-                if (!data) return;
-
-                if (data.token) {
-                    rawText += data.token;
-                    const display = extractMessageFromJSON(rawText) || '';
-                    if (display) {
-                        setMessages((prev) =>
-                            prev.map((m) => m._isStreaming ? { ...m, content: display } : m)
-                        );
-                    }
-                }
-                if (data.done) {
-                    const finalMsg = data.message || extractMessageFromJSON(rawText) || rawText;
-                    setMessages((prev) =>
-                        prev.map((m) => m._isStreaming ? { role: 'assistant', content: finalMsg } : m)
-                    );
-                    if (data.conversation_id) {
-                        setConversationId(data.conversation_id);
-                        refreshConversations();
-                    }
-                }
-                if (data.error) {
-                    setMessages((prev) =>
-                        prev.map((m) => m._isStreaming ? { role: 'assistant', content: `Error: ${data.error}` } : m)
-                    );
-                }
-            };
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                // Buffer across reads: an SSE frame can be split across chunk
-                // boundaries (especially the large final `done` frame). Only
-                // lines terminated by '\n' are complete; keep the trailing
-                // partial line for the next read so no frame is dropped.
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop();  // last element is an incomplete line (or '')
-                for (const line of lines) {
-                    processLine(line);
-                }
-            }
-            // Flush any complete frame left in the buffer at stream end.
-            if (buffer) processLine(buffer);
-
-            if (user?.id) {
-                api.get(`/playground/credits/${user.id}`)
-                    .then((r) => setCredits(r.data))
-                    .catch(() => {});
-            }
-        } catch (err) {
-            if (err.name === 'AbortError') return;
-            setMessages((prev) => {
-                const filtered = prev.filter((m) => !m._isStreaming);
-                return [...filtered, { role: 'assistant', content: `Sorry, something went wrong. (${err.message}). Try again in a moment.` }];
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ── Code terminal actions ──────────────────────────────────────────────
+    // ── Terminal actions ───────────────────────────────────────────────────
     const handleRunCode = async () => {
         if (!code.trim() || running) return;
         setRunning(true);
@@ -414,8 +89,15 @@ export default function Playground() {
     };
 
     const handleAskAIForHelp = (failedCode, errorText) => {
-        const helpMsg = `My code produced this error. Help me fix it:\n\n\`\`\`python\n${failedCode}\n\`\`\`\n\nError:\n\`\`\`\n${errorText}\n\`\`\``;
-        handleSend(helpMsg);
+        askVaathiyaar(
+            `My code produced this error. Help me fix it:\n\n\`\`\`python\n${failedCode}\n\`\`\`\n\nError:\n\`\`\`\n${errorText}\n\`\`\``
+        );
+    };
+
+    const handleSendToVaathiyaar = () => {
+        const codeContent = code.trim();
+        if (!codeContent) return;
+        askVaathiyaar(`Can you review this code?\n\`\`\`python\n${codeContent}\n\`\`\``);
     };
 
     const handleClearTerminal = () => {
@@ -449,28 +131,9 @@ export default function Playground() {
         }
     };
 
-    const handleSendToVaathiyaar = () => {
-        const codeContent = code.trim();
-        if (!codeContent) return;
-        const message = `Can you review this code?\n\`\`\`python\n${codeContent}\n\`\`\``;
-        handleSend(message);
-    };
-
-    const handleInjectCode = useCallback((newCode) => {
-        setCode(newCode);
-        if (editorRef.current) {
-            editorRef.current.focus();
-        }
-    }, []);
-
     const remaining = credits?.remaining_prompts ?? 0;
     const total = credits?.total_prompts ?? 0;
     const remainingPct = total > 0 ? Math.min((remaining / total) * 100, 100) : 0;
-    const exhausted = credits && remaining <= 0 && !creditsLoading;
-
-    const hasExistingCode = code.trim() !== '' && code.trim() !== '# Write Python code here...';
-
-    const mdComponents = buildMarkdownComponents(handleInjectCode, hasExistingCode);
 
     return (
         // Height = viewport minus Layout's shell (p-6 container = 3rem; mobile adds
@@ -478,271 +141,55 @@ export default function Playground() {
         <div className="h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-3rem)] flex flex-col overflow-hidden">
             <VaathiyaarMessage />
 
-            {/* ── Toolbar header: title, inline credits meter, actions — one row ── */}
-            <header className="flex-shrink-0 px-6 py-2.5 border-b border-border-default bg-bg-surface/60 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow flex-shrink-0">
-                        <Sparkles size={16} />
-                    </div>
-                    <h1 className="text-lg font-bold font-display text-text-primary leading-tight">Playground</h1>
-                    <div className="flex-1" />
-                    {!creditsLoading && credits && (
-                        <div
-                            className="hidden md:flex items-center gap-2.5 mr-1"
-                            title={`${remaining} of ${total} prompts remaining`}
-                        >
-                            <Badge variant="warning" className="text-xs px-2 py-0.5">
-                                <Zap size={11} />
-                                {credits.xp} XP
-                            </Badge>
-                            <div className="w-24 bg-bg-elevated h-1.5 rounded-full overflow-hidden" role="progressbar" aria-label="Prompts remaining" aria-valuenow={remaining} aria-valuemax={total}>
-                                <div
-                                    className={`h-full rounded-full transition-all duration-500 ${
-                                        remainingPct > 50 ? 'bg-gradient-to-r from-emerald-400 to-green-500' :
-                                        remainingPct > 20 ? 'bg-gradient-to-r from-amber-400 to-orange-500' :
-                                        'bg-gradient-to-r from-red-400 to-red-500'
-                                    }`}
-                                    style={{ width: `${remainingPct}%` }}
-                                />
-                            </div>
-                            <span className="text-[11px] font-mono text-text-muted tabular-nums">
-                                {remaining}/{total}
-                            </span>
-                        </div>
-                    )}
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setVoiceOpen(true)}
-                        title="Talk to Vaathiyaar (voice)"
-                    >
-                        <Mic size={14} />
-                        Voice
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={startNewChat}
-                    >
-                        <Plus size={14} />
-                        New Chat
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSidebar(!showSidebar)}
-                    >
-                        <MessageSquare size={14} />
-                        History
-                    </Button>
+            {/* ── Toolbar: title, credits meter, voice — one compact row ──── */}
+            <header className="flex-shrink-0 flex items-center gap-3 rounded-xl border border-border-default bg-bg-surface/60 backdrop-blur-sm px-4 py-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow flex-shrink-0">
+                    <Sparkles size={16} />
                 </div>
+                <div className="min-w-0">
+                    <h1 className="text-lg font-bold font-display text-text-primary leading-tight">Playground</h1>
+                </div>
+                <span className="hidden sm:inline text-xs text-text-muted">Live Python terminal</span>
+                <div className="flex-1" />
+                {!creditsLoading && credits && (
+                    <div
+                        className="hidden md:flex items-center gap-2.5 mr-1"
+                        title={`${remaining} of ${total} Vaathiyaar prompts remaining`}
+                    >
+                        <Badge variant="warning" className="text-xs px-2 py-0.5">
+                            <Zap size={11} />
+                            {credits.xp} XP
+                        </Badge>
+                        <div className="w-24 bg-bg-elevated h-1.5 rounded-full overflow-hidden" role="progressbar" aria-label="Vaathiyaar prompts remaining" aria-valuenow={remaining} aria-valuemax={total}>
+                            <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                    remainingPct > 50 ? 'bg-gradient-to-r from-emerald-400 to-green-500' :
+                                    remainingPct > 20 ? 'bg-gradient-to-r from-amber-400 to-orange-500' :
+                                    'bg-gradient-to-r from-red-400 to-red-500'
+                                }`}
+                                style={{ width: `${remainingPct}%` }}
+                            />
+                        </div>
+                        <span className="text-[11px] font-mono text-text-muted tabular-nums">
+                            {remaining}/{total}
+                        </span>
+                    </div>
+                )}
+                <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setVoiceOpen(true)}
+                    title="Talk to Vaathiyaar (voice)"
+                >
+                    <Mic size={14} />
+                    Voice
+                </Button>
             </header>
 
-            {/* ── Conversation History Sidebar ─────────────────────────────── */}
-            <AnimatePresence>
-                {showSidebar && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-50 flex"
-                    >
-                        <motion.div
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -20, opacity: 0 }}
-                            transition={{ duration: 0.25 }}
-                            className="w-80 bg-bg-surface/95 backdrop-blur-xl shadow-2xl border-r border-border-default flex flex-col h-full"
-                        >
-                            <div className="flex items-center justify-between p-4 border-b border-border-default">
-                                <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
-                                    <Clock size={14} className="text-text-muted" />
-                                    Chat History
-                                </h2>
-                                <button
-                                    onClick={() => setShowSidebar(false)}
-                                    className="text-text-muted hover:text-text-secondary transition-colors p-1 rounded-lg hover:bg-bg-elevated"
-                                >
-                                    <ChevronLeft size={18} />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                                {conversations.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <MessageSquare size={24} className="text-text-muted mx-auto mb-3" />
-                                        <p className="text-sm text-text-muted">No conversations yet</p>
-                                        <p className="text-xs text-text-muted mt-1">Start chatting to see history here</p>
-                                    </div>
-                                ) : (
-                                    conversations.map((conv, idx) => (
-                                        <motion.button
-                                            key={conv.id}
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: idx * 0.03 }}
-                                            onClick={() => loadConversation(conv.id)}
-                                            className={`w-full text-left px-3 py-3 rounded-xl text-sm transition-all duration-200 ${
-                                                conversationId === conv.id
-                                                    ? 'bg-accent-subtle text-accent-primary border border-accent-primary/30 shadow-sm'
-                                                    : 'text-text-secondary hover:bg-bg-elevated border border-transparent'
-                                            }`}
-                                        >
-                                            <p className="font-medium truncate">{conv.title}</p>
-                                            <p className="text-[10px] text-text-muted mt-0.5 flex items-center gap-1">
-                                                <Clock size={10} />
-                                                {new Date(conv.updated_at).toLocaleDateString()}
-                                            </p>
-                                        </motion.button>
-                                    ))
-                                )}
-                            </div>
-                        </motion.div>
-                        <div className="flex-1 bg-black/10 backdrop-blur-sm" onClick={() => setShowSidebar(false)} />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* ── Exhausted banner ─────────────────────────────────────────── */}
-            {exhausted && (
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mx-6 rounded-2xl p-4 bg-amber-500/10 border border-amber-500/30 mb-2 flex items-start gap-4 flex-shrink-0"
-                >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center select-none">
-                        <Lock size={18} className="text-amber-500" aria-hidden="true" />
-                    </div>
-                    <div>
-                        <p className="font-bold text-amber-600 dark:text-amber-300 text-sm">No prompts remaining</p>
-                        <p className="text-text-secondary text-sm mt-1 leading-relaxed">
-                            You've used all your prompts! Complete more lessons to earn XP and unlock more.
-                            Each 100 XP gives you more prompts.
-                        </p>
-                    </div>
-                </motion.div>
-            )}
-
-            {/* ── Main Content: 2-column layout ───────────────────────────── */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 grid-rows-[minmax(0,1fr)_minmax(0,1.2fr)] lg:grid-rows-[minmax(0,1fr)] gap-4 px-6 py-4 min-h-0 overflow-hidden">
-
-                {/* ── Left Panel: Vaathiyaar Chat ────────────────────────── */}
-                <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 rounded-2xl border border-border-default bg-bg-surface/60 backdrop-blur-sm shadow-sm overflow-hidden">
-                    {/* Panel header */}
-                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-default bg-bg-elevated/80 flex-shrink-0">
-                        <span className="w-5 h-5 rounded-md bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                            <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
-                        </span>
-                        <span className="text-xs font-semibold text-text-primary">Vaathiyaar Chat</span>
-                        <span className="hidden sm:inline text-[10px] text-text-muted ml-auto">Explains, debugs & reviews code</span>
-                    </div>
-
-                    {/* Chat messages area */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 dark-scrollbar">
-                        {messages.length === 0 && !loading && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-center py-12"
-                            >
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4 select-none shadow-glow">
-                                    <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
-                                </div>
-                                <h2 className="text-lg font-bold text-text-primary mb-2 font-display">
-                                    {user?.name || user?.username
-                                        ? `Hey ${user.name || user.username}!`
-                                        : 'Ask Vaathiyaar anything!'}
-                                </h2>
-                                <p className="text-xs text-text-muted max-w-xs mx-auto mb-5 leading-relaxed">
-                                    Ask about Python concepts, debug code, explore ideas, or send your code for review.
-                                </p>
-                                {/* Quick start suggestions */}
-                                <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
-                                    {[
-                                        'Explain list comprehensions',
-                                        'How do decorators work?',
-                                        'Debug my code',
-                                        'Python vs JavaScript',
-                                    ].map(suggestion => (
-                                        <button
-                                            key={suggestion}
-                                            onClick={() => handleSend(suggestion)}
-                                            className="text-xs font-medium text-accent-primary bg-accent-subtle border border-accent-primary/30 rounded-full px-3 py-1.5 hover:bg-accent-subtle/70 transition-all duration-200 hover:scale-[1.02]"
-                                        >
-                                            {suggestion}
-                                        </button>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-
-                        <AnimatePresence initial={false}>
-                            {messages.map((msg, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                                >
-                                    {msg.role === 'assistant' ? (
-                                        <div className="flex items-start gap-2.5 max-w-[90%]">
-                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center select-none mt-1 shadow-glow">
-                                                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
-                                            </div>
-                                            <div className="panel rounded-2xl rounded-tl-sm px-4 py-3 border-l-2 border-accent-primary/40 text-text-primary text-sm leading-relaxed min-w-0">
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                                                    {msg.content}
-                                                </ReactMarkdown>
-                                                {msg._isStreaming && (
-                                                    <span className="inline-block w-[2px] h-4 bg-accent-primary ml-0.5 align-middle"
-                                                        style={{ animation: 'blink 0.8s steps(2) infinite' }}
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="max-w-[80%] bg-gradient-primary text-white rounded-2xl rounded-br-none px-4 py-2.5 text-sm leading-relaxed shadow-glow">
-                                            {msg.content}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            ))}
-
-                            {loading && !messages.some(m => m._isStreaming) && (
-                                <motion.div
-                                    key="thinking"
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                >
-                                    <ThinkingBubble />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div ref={chatEndRef} />
-                    </div>
-
-                    {/* Input — anchored to the chat panel so it's unambiguous
-                        which pane the message goes to */}
-                    <div className="flex-shrink-0 p-3 border-t border-border-default">
-                        {exhausted ? (
-                            <div className="rounded-xl px-4 py-3 border border-amber-500/30 bg-amber-500/10 text-center text-xs text-amber-600 dark:text-amber-300 font-medium">
-                                No prompts remaining. Earn more XP in the Classroom!
-                            </div>
-                        ) : (
-                            <ChatBar
-                                onSend={handleSend}
-                                loading={loading}
-                                placeholder="Ask Vaathiyaar anything..."
-                            />
-                        )}
-                    </div>
-                </div>
-
-                {/* ── Right Panel: Live Code Terminal ─────────────────────── */}
-                <div className="col-span-1 lg:col-span-3 flex flex-col min-h-0 rounded-2xl border border-border-strong surface-code shadow-xl overflow-hidden">
-                    {/* Panel header with macOS dots */}
+            {/* ── Terminal workspace — full width ─────────────────────────── */}
+            <div className="flex-1 min-h-0 pt-4">
+                <div className="h-full flex flex-col min-h-0 rounded-2xl border border-border-strong surface-code shadow-xl overflow-hidden">
+                    {/* Terminal header */}
                     <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-strong surface-code flex-shrink-0">
                         <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1.5">
@@ -813,7 +260,8 @@ export default function Playground() {
                             <div className="flex-1" />
                             <button
                                 onClick={handleSendToVaathiyaar}
-                                disabled={!code.trim() || loading}
+                                disabled={!code.trim()}
+                                title="Open Vaathiyaar and ask for a review of this code"
                                 className="flex items-center gap-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2 hover:bg-accent-primary/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <Send size={13} />
@@ -830,6 +278,7 @@ export default function Playground() {
                                 onChange={(e) => setInstallPkg(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleInstallPackage()}
                                 placeholder="package-name"
+                                aria-label="Package name to install"
                                 className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-code-foreground placeholder-code-foreground/40 font-mono focus:outline-none focus:border-green-500/40"
                             />
                             <button
@@ -843,18 +292,6 @@ export default function Playground() {
                     </div>
                 </div>
             </div>
-
-            <style>{`
-                @keyframes waveform {
-                    0% { height: 4px; opacity: 0.4; }
-                    50% { height: 16px; opacity: 1; }
-                    100% { height: 4px; opacity: 0.4; }
-                }
-                @keyframes blink {
-                    0%, 49% { opacity: 1; }
-                    50%, 100% { opacity: 0; }
-                }
-            `}</style>
 
             <VoiceTutor
                 open={voiceOpen}

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { X, MessageCircle, Eraser } from 'lucide-react';
+import { X, MessageCircle, Eraser, Terminal, Play } from 'lucide-react';
 import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import { useAuth } from '../context/AuthContext';
 import api, { getAuthHeaders } from '../api';
@@ -13,6 +13,7 @@ import { parseSSELine, extractMessageFromJSON } from '../utils/streaming';
 // Friendly page descriptions keyed by route — sent to Vaathiyaar as context so
 // answers can reference what the learner is currently looking at.
 const PAGE_LABELS = [
+    ['/dashboard/playground', 'Playground — a live Python code terminal. You can DEMONSTRATE concepts here: include short, runnable Python code blocks in your answers and the student can run them in the terminal with one click'],
     ['/dashboard/paths', 'Evolution — the AI-personalised learning path'],
     ['/dashboard/knowledge', 'Knowledge Map — a live map of topics the student has mastered'],
     ['/dashboard/classroom', 'Classroom — AI-guided interactive Python lessons'],
@@ -35,20 +36,53 @@ function pageLabelFor(pathname) {
 const OPEN_KEY = 'pm:vaathiyaar-panel-open';
 const CONV_KEY = 'pm:vaathiyaar-panel-conv';
 
-const mdComponents = {
-    p: ({ children }) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
-    ul: ({ children }) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
-    ol: ({ children }) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
-    strong: ({ children }) => <strong className="font-bold text-text-primary">{children}</strong>,
-    code: ({ children, className }) =>
-        className ? (
-            <pre className="surface-code p-3 rounded-xl text-xs font-mono overflow-x-auto border border-border-default my-2">
-                <code>{children}</code>
-            </pre>
-        ) : (
-            <code className="bg-accent-subtle text-accent-primary px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
-        ),
-};
+// On the Playground page python blocks get demo affordances: "Insert" loads the
+// code into the live terminal, "Run demo" loads AND executes it — this is how
+// Vaathiyaar demonstrates examples with the actual playground.
+function buildMdComponents(onPlayground) {
+    const inject = (codeText, run) =>
+        window.dispatchEvent(new CustomEvent('pm:vaathiyaar-inject', { detail: { code: codeText, run } }));
+    return {
+        p: ({ children }) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
+        ul: ({ children }) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
+        strong: ({ children }) => <strong className="font-bold text-text-primary">{children}</strong>,
+        code: ({ children, className }) => {
+            if (!className) {
+                return <code className="bg-accent-subtle text-accent-primary px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
+            }
+            const codeText = String(children).replace(/\n$/, '');
+            const isPython = /python|language-py/.test(className);
+            return (
+                <div className="my-2">
+                    <pre className="surface-code p-3 rounded-xl text-xs font-mono overflow-x-auto border border-border-default">
+                        <code>{children}</code>
+                    </pre>
+                    {onPlayground && isPython && (
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                            <button
+                                onClick={() => inject(codeText, false)}
+                                title="Insert this example into the terminal"
+                                className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all cursor-pointer"
+                            >
+                                <Terminal size={10} />
+                                Insert
+                            </button>
+                            <button
+                                onClick={() => inject(codeText, true)}
+                                title="Insert into the terminal and run it now"
+                                className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-green-500/15 text-green-600 dark:text-green-300 border border-green-500/30 hover:bg-green-500/25 transition-all cursor-pointer"
+                            >
+                                <Play size={10} />
+                                Run demo
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        },
+    };
+}
 
 export default function VaathiyaarPanel() {
     const { user } = useAuth();
@@ -60,9 +94,11 @@ export default function VaathiyaarPanel() {
     const endRef = useRef(null);
     const controllerRef = useRef(null);
 
-    // The Playground page hosts the full chat experience — hide the panel there.
+    // On Playground python blocks get "Insert"/"Run demo" affordances so
+    // Vaathiyaar can demonstrate examples with the live terminal.
     const onPlayground = location.pathname.startsWith('/dashboard/playground');
     const pageLabel = pageLabelFor(location.pathname);
+    const mdComponents = useMemo(() => buildMdComponents(onPlayground), [onPlayground]);
 
     useEffect(() => { localStorage.setItem(OPEN_KEY, open ? '1' : '0'); }, [open]);
     useEffect(() => {
@@ -155,7 +191,7 @@ export default function VaathiyaarPanel() {
         }
     }, [loading, user, conversationId, pageLabel]);
 
-    if (!user || onPlayground) return null;
+    if (!user) return null;
 
     return (
         <>
