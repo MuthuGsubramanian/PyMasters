@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import {
+import api, {
     getAdminOverview, getAdminUsers, getAdminOrgs, getAdminUsage,
     adminBlockUser, adminSetPlan, getAdminUserViewAs, adminSetSuperAdmin, getAdminAudit,
     getAdminOpsActivity,
@@ -16,7 +16,7 @@ import {
 import {
     Shield, Users, Building2, GraduationCap, Activity, Sparkles, TrendingUp,
     Search, Ban, CheckCircle2, Loader2, School, Briefcase, BookOpen, Lock,
-    Radio, Globe2, Rocket, MapPin,
+    Radio, Globe2, Rocket, MapPin, Clapperboard, Send, RefreshCw,
 } from 'lucide-react';
 
 // Matches the public pricing tiers (2026-07-02): Free 7-day trial,
@@ -286,7 +286,7 @@ export default function SuperAdmin() {
         );
     }
 
-    const TABS = [{ key: 'overview', label: 'Overview', icon: TrendingUp }, { key: 'users', label: 'Users', icon: Users }, { key: 'orgs', label: 'Organizations', icon: Building2 }, { key: 'admins', label: 'Admins', icon: Shield }, { key: 'audit', label: 'Audit', icon: Activity }];
+    const TABS = [{ key: 'overview', label: 'Overview', icon: TrendingUp }, { key: 'users', label: 'Users', icon: Users }, { key: 'orgs', label: 'Organizations', icon: Building2 }, { key: 'social', label: 'Social Studio', icon: Clapperboard }, { key: 'admins', label: 'Admins', icon: Shield }, { key: 'audit', label: 'Audit', icon: Activity }];
 
     return (
         <div className="space-y-5">
@@ -301,6 +301,9 @@ export default function SuperAdmin() {
             </div>
 
             <Tabs tabs={TABS} active={tab} onChange={setTab} />
+
+            {/* SOCIAL STUDIO */}
+            {tab === 'social' && <SocialStudioTab />}
 
             {/* OVERVIEW */}
             {tab === 'overview' && (
