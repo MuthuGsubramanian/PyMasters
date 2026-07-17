@@ -32,6 +32,7 @@ from routes.organizations import router as org_router
 from routes.challenges import router as challenges_router
 from routes.reference import router as reference_router
 from routes.admin import router as admin_router
+from routes.social_studio import router as social_studio_router
 from routes.podcasts import router as podcasts_router
 from routes.review import router as review_router
 from routes.voice import router as voice_router
@@ -751,6 +752,7 @@ app.include_router(org_router)
 app.include_router(challenges_router)
 app.include_router(reference_router)
 app.include_router(admin_router)
+app.include_router(social_studio_router)
 app.include_router(podcasts_router)
 app.include_router(review_router)
 app.include_router(voice_router)
