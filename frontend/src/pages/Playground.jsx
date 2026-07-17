@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
@@ -42,11 +42,16 @@ export default function Playground() {
         }
     }, [user]);
 
-    // Code injected from the Vaathiyaar panel ("To editor" on python blocks)
+    // Code injected from the Vaathiyaar panel ("Insert" / "Run demo" on python
+    // blocks). run:true executes the demo immediately — that's Vaathiyaar
+    // demonstrating an example with the live terminal.
+    const executeRef = useRef(null);
     useEffect(() => {
         const onInject = (e) => {
             const injected = e?.detail?.code;
-            if (injected) setCode(injected);
+            if (!injected) return;
+            setCode(injected);
+            if (e?.detail?.run) executeRef.current?.(injected);
         };
         window.addEventListener('pm:vaathiyaar-inject', onInject);
         return () => window.removeEventListener('pm:vaathiyaar-inject', onInject);
@@ -57,8 +62,8 @@ export default function Playground() {
     };
 
     // ── Terminal actions ───────────────────────────────────────────────────
-    const handleRunCode = async () => {
-        if (!code.trim() || running) return;
+    const executeCode = async (codeText) => {
+        if (!codeText.trim() || running) return;
         setRunning(true);
         setOutput('');
         setExecutionTime(null);
@@ -66,7 +71,7 @@ export default function Playground() {
         try {
             const res = await api.post('/playground/execute', {
                 user_id: user?.id,
-                code: code,
+                code: codeText,
             });
             const elapsed = Math.round(performance.now() - startTime);
             setExecutionTime(elapsed);
@@ -87,6 +92,8 @@ export default function Playground() {
             setRunning(false);
         }
     };
+    executeRef.current = executeCode;
+    const handleRunCode = () => executeCode(code);
 
     const handleAskAIForHelp = (failedCode, errorText) => {
         askVaathiyaar(

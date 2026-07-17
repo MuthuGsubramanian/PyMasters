@@ -117,6 +117,20 @@ export default function VaathiyaarPanel() {
         return () => window.removeEventListener('keydown', onKey);
     }, [open]);
 
+    // Other surfaces (Playground "Send to Vaathiyaar" / "Ask AI for help")
+    // hand a message to the panel via this event: open and send it.
+    const handleSendRef = useRef(null);
+    useEffect(() => {
+        const onAsk = (e) => {
+            const msg = e?.detail?.message;
+            if (!msg) return;
+            setOpen(true);
+            handleSendRef.current?.(msg);
+        };
+        window.addEventListener('pm:vaathiyaar-ask', onAsk);
+        return () => window.removeEventListener('pm:vaathiyaar-ask', onAsk);
+    }, []);
+
     const handleSend = useCallback(async (message) => {
         if (!message.trim() || loading || !user?.id) return;
         setMessages((prev) => [...prev, { role: 'user', content: message }, { role: 'assistant', content: '', _isStreaming: true }]);
@@ -190,6 +204,9 @@ export default function VaathiyaarPanel() {
             setLoading(false);
         }
     }, [loading, user, conversationId, pageLabel]);
+
+    // Keep the ask-event listener pointed at the latest handleSend closure.
+    useEffect(() => { handleSendRef.current = handleSend; }, [handleSend]);
 
     if (!user) return null;
 
