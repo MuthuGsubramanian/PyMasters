@@ -18,7 +18,8 @@ import {
     Swords,
     BookOpen,
     Shield,
-    Brain
+    Brain,
+    Lightbulb
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -118,6 +119,7 @@ export default function Layout() {
             { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
             { icon: Swords, label: 'Challenges', path: '/dashboard/challenges', desc: 'Weekly coding battles' },
             { icon: BookOpen, label: 'Reference', path: '/dashboard/reference', desc: 'Quick cheat sheets' },
+            { icon: Lightbulb, label: 'Explains', path: '/dashboard/explains', desc: 'Visual concept essays' },
             { icon: Trophy, label: 'Community', path: '/dashboard/community', desc: 'Rankings & members' },
         ];
         if (activeOrg) {
