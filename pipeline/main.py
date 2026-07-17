@@ -144,17 +144,56 @@ def run_daily_pipeline():
     except Exception as e:
         log.error(f"HF publishing failed: {e}")
 
-    # 4b. Social content generation (always, from top items)
+    # 4b. Daily video generation + optional YouTube upload (before social content,
+    # so the LinkedIn post can reference today's video)
+    video_result = {}
+    if os.environ.get("VIDEO_GENERATION", "1") == "0":
+        log.info("Video generation disabled (VIDEO_GENERATION=0) — skipping.")
+    else:
+        log.info("Generating daily videos...")
+        try:
+            from pipeline.video.generate_videos import generate_daily_videos
+            video_result = generate_daily_videos(scored_items)
+            log.info(f"  Video generation: {video_result.get('status', 'unknown')} "
+                     f"(TTS: {video_result.get('tts_engine', 'n/a')})")
+            if video_result.get("short_path"):
+                log.info(f"  Short:     {video_result['short_path']}")
+            if video_result.get("explainer_path"):
+                log.info(f"  Explainer: {video_result['explainer_path']}")
+        except Exception as e:
+            log.error(f"Video generation failed: {e}")
+            video_result = {}
+
+        # Upload to YouTube only when explicitly enabled and creds are present
+        if (os.environ.get("YOUTUBE_UPLOAD") == "1"
+                and video_result.get("status") == "generated"):
+            try:
+                from pipeline.video.upload_youtube import (upload_daily_videos,
+                                                           credentials_available)
+                if credentials_available():
+                    log.info("Uploading daily videos to YouTube...")
+                    upload_result = upload_daily_videos(video_result.get("video_dir"))
+                    log.info(f"  YouTube upload: {upload_result.get('status', 'unknown')}")
+                    if upload_result.get("metadata"):
+                        video_result["metadata"] = upload_result["metadata"]
+                else:
+                    log.warning("YOUTUBE_UPLOAD=1 but credentials missing — see "
+                                "pipeline/video/README.md")
+            except Exception as e:
+                log.error(f"YouTube upload failed: {e}")
+
+    # 4c. Social content generation (always, from top items)
     social_result = {}
     log.info("Generating social content drafts...")
     try:
-        social_result = generate_social_content(scored_items)
+        social_result = generate_social_content(scored_items,
+                                                video_meta=video_result.get("metadata"))
         log.info(f"  Tweets: {social_result.get('tweets_path', 'N/A')}")
         log.info(f"  Blog:   {social_result.get('blog_path', 'N/A')}")
     except Exception as e:
         log.error(f"Social content generation failed: {e}")
 
-    # 4c. Innovation backlog update (always)
+    # 4d. Innovation backlog update (always)
     backlog_results = []
     log.info("Updating innovation backlogs...")
     try:
@@ -186,6 +225,7 @@ def run_daily_pipeline():
     log.info(f"  Homie evolution actions: {len(evolution_results)}")
     log.info(f"  Cross-pollination issues: {len(cross_results)}")
     log.info(f"  HF Space published: {'Yes' if hf_published and hf_published.get('status') == 'published' else 'No'}")
+    log.info(f"  Videos: {video_result.get('status', 'disabled') if video_result else 'disabled/failed'}")
     log.info(f"  Social content: {social_result.get('status', 'N/A')}")
     log.info(f"  Backlog updates: {sum(r.get('items_added', 0) for r in backlog_results)} items across {len(backlog_results)} repos")
     log.info("=" * 60)

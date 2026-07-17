@@ -167,40 +167,94 @@ def _fallback_blog(items: list[dict], today: str) -> str:
     return "\n".join(lines)
 
 
-def generate_linkedin_post(top_items: list[dict]) -> str:
-    """Generate one ready-to-publish LinkedIn post from the day's top discoveries."""
+def _clean_linkedin_post(raw: str) -> str:
+    """Extract the publishable post from a raw Claude CLI reply.
+
+    Live drafts (2026-07-17) showed two problems that would be published
+    verbatim once LINKEDIN_AUTOPOST is enabled:
+      1. Preamble/afterword commentary ("Here's today's post ... ---" and a
+         closing "That's 178 words, ..." analysis) wrapped around the post.
+      2. UTF-8-as-cp1252 mojibake from Windows subprocess capture ('â€"').
+    """
+    from pipeline.video.generate_videos import _fix_text
+    text = _fix_text(raw).strip()
+    # If the reply contains --- delimiters, the post is between the first pair.
+    parts = [p.strip() for p in text.split("\n---") if p.strip()]
+    if len(parts) >= 2:
+        # parts[0] is preamble iff it reads like commentary (short, no hashtags)
+        candidate = parts[1] if ("#" not in parts[0] and len(parts[0]) < 400) else parts[0]
+        if "#" in candidate or len(candidate) > 200:
+            text = candidate
+    # Drop a leading commentary line that survived (no-delimiters case).
+    lines = text.split("\n")
+    if lines and lines[0].lower().startswith(("here's", "here is")) and len(lines) > 2:
+        text = "\n".join(lines[1:]).strip()
+    return text.strip("- \n")
+
+
+def _video_url_from_meta(video_meta: dict | None) -> str | None:
+    """Pull the first non-null youtube_url out of the video metadata (or None)."""
+    if not isinstance(video_meta, dict):
+        return None
+    for key in ("explainer", "short"):
+        url = (video_meta.get(key) or {}).get("youtube_url")
+        if url:
+            return url
+    return None
+
+
+def generate_linkedin_post(top_items: list[dict], video_meta: dict | None = None,
+                           style_notes: str | None = None) -> str:
+    """Generate one ready-to-publish LinkedIn post from the day's top discoveries.
+
+    When video_meta contains an uploaded video's youtube_url, the post also
+    references "today's video" with the link; otherwise behavior is unchanged.
+    style_notes carries the super-admin's editorial direction (Social Studio).
+    """
     items_for_prompt = [_prepare_item_summary(item) for item in top_items[:3]]
+    video_url = _video_url_from_meta(video_meta)
     today = datetime.now().strftime("%Y-%m-%d")
     prompt = f"""Today is {today}. Write the LinkedIn post using these top discoveries:
 
 {json.dumps(items_for_prompt, indent=2)}
 """
+    if style_notes:
+        prompt += f"\nEditor's style direction — follow it: {style_notes.strip()}\n"
+    if video_url:
+        prompt += f"""
+We also published today's video on this topic: {video_url}
+Naturally reference "today's video" in the post and include that exact link
+(plain URL on its own line is fine — LinkedIn auto-links it)."""
     try:
-        return ask_claude(LINKEDIN_SYSTEM_PROMPT + "\n\n" + prompt).strip()
+        return _clean_linkedin_post(ask_claude(LINKEDIN_SYSTEM_PROMPT + "\n\n" + prompt))
     except Exception as e:
         log.error(f"Claude CLI call failed for LinkedIn post: {e}")
-        return _fallback_linkedin(items_for_prompt)
+        return _fallback_linkedin(items_for_prompt, video_url)
 
 
-def _fallback_linkedin(items: list[dict]) -> str:
+def _fallback_linkedin(items: list[dict], video_url: str | None = None) -> str:
     """A safe, decent LinkedIn post without an AI call."""
     lead = items[0] if items else {"title": "Python & AI", "opportunity": ""}
     body = lead.get("opportunity") or lead.get("description") or (
         "A new idea worth exploring in the Python & AI world today.")
+    video_line = f"Watch today's video: {video_url}\n\n" if video_url else ""
     return (
         f"Today in Python & AI: {lead.get('title', 'a discovery worth your time')}.\n\n"
         f"{body}\n\n"
+        f"{video_line}"
         "We break concepts like this into hands-on, sandbox-graded lessons at PyMasters — "
         "learn by building, with an AI tutor that adapts to you: pymasters.net\n\n"
         "#Python #AI #MachineLearning #LearnToCode"
     )
 
 
-def generate_social_content(scored_items: list[dict]) -> dict:
+def generate_social_content(scored_items: list[dict], video_meta: dict | None = None) -> dict:
     """Main entry point: generate all social content drafts and save to disk.
 
     Args:
         scored_items: List of scored items from the pipeline (already sorted by score).
+        video_meta: Optional video metadata dict from generate_daily_videos; when a
+            video has a non-null youtube_url, the LinkedIn post references it.
 
     Returns:
         dict with keys: tweets_path, blog_path, status.
@@ -243,7 +297,7 @@ def generate_social_content(scored_items: list[dict]) -> dict:
     linkedin_path = os.path.join(day_dir, "linkedin.txt")
     linkedin_status = "skipped"
     try:
-        linkedin_text = generate_linkedin_post(top_items)
+        linkedin_text = generate_linkedin_post(top_items, video_meta=video_meta)
         with open(linkedin_path, "w", encoding="utf-8") as f:
             f.write(linkedin_text)
         log.info(f"LinkedIn post saved: {linkedin_path}")
