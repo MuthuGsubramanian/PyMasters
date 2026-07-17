@@ -478,74 +478,64 @@ export default function Playground() {
         <div className="h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-3rem)] flex flex-col overflow-hidden">
             <VaathiyaarMessage />
 
-            {/* ── Header ────────────────────────────────────────────────────── */}
-            <header className="flex-shrink-0 px-6 pt-4 pb-3 space-y-3">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white shadow-glow">
-                            <Sparkles size={20} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold font-display text-text-primary">Playground</h1>
-                            <p className="text-xs text-text-muted">Chat with Vaathiyaar + Live Code Terminal</p>
-                        </div>
+            {/* ── Toolbar header: title, inline credits meter, actions — one row ── */}
+            <header className="flex-shrink-0 px-6 py-2.5 border-b border-border-default bg-bg-surface/60 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow flex-shrink-0">
+                        <Sparkles size={16} />
                     </div>
-
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setVoiceOpen(true)}
-                            title="Talk to Vaathiyaar (voice)"
+                    <h1 className="text-lg font-bold font-display text-text-primary leading-tight">Playground</h1>
+                    <div className="flex-1" />
+                    {!creditsLoading && credits && (
+                        <div
+                            className="hidden md:flex items-center gap-2.5 mr-1"
+                            title={`${remaining} of ${total} prompts remaining`}
                         >
-                            <Mic size={14} />
-                            Voice
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={startNewChat}
-                        >
-                            <Plus size={14} />
-                            New Chat
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowSidebar(!showSidebar)}
-                        >
-                            <MessageSquare size={14} />
-                            History
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Credits bar */}
-                {!creditsLoading && credits && (
-                    <div className="flex items-center gap-4">
-                        <div className="flex-1 bg-bg-elevated h-2 rounded-full overflow-hidden">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${remainingPct}%` }}
-                                transition={{ duration: 1, ease: 'easeOut' }}
-                                className={`h-full rounded-full transition-colors duration-500 ${
-                                    remainingPct > 50 ? 'bg-gradient-to-r from-emerald-400 to-green-500' :
-                                    remainingPct > 20 ? 'bg-gradient-to-r from-amber-400 to-orange-500' :
-                                    'bg-gradient-to-r from-red-400 to-red-500'
-                                }`}
-                            />
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                            <Badge variant="warning" className="text-xs px-2.5 py-1">
-                                <Zap size={12} />
+                            <Badge variant="warning" className="text-xs px-2 py-0.5">
+                                <Zap size={11} />
                                 {credits.xp} XP
                             </Badge>
-                            <span className="text-xs font-mono text-text-muted">
-                                {remaining}/{total} prompts
+                            <div className="w-24 bg-bg-elevated h-1.5 rounded-full overflow-hidden" role="progressbar" aria-label="Prompts remaining" aria-valuenow={remaining} aria-valuemax={total}>
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                        remainingPct > 50 ? 'bg-gradient-to-r from-emerald-400 to-green-500' :
+                                        remainingPct > 20 ? 'bg-gradient-to-r from-amber-400 to-orange-500' :
+                                        'bg-gradient-to-r from-red-400 to-red-500'
+                                    }`}
+                                    style={{ width: `${remainingPct}%` }}
+                                />
+                            </div>
+                            <span className="text-[11px] font-mono text-text-muted tabular-nums">
+                                {remaining}/{total}
                             </span>
                         </div>
-                    </div>
-                )}
+                    )}
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setVoiceOpen(true)}
+                        title="Talk to Vaathiyaar (voice)"
+                    >
+                        <Mic size={14} />
+                        Voice
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={startNewChat}
+                    >
+                        <Plus size={14} />
+                        New Chat
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSidebar(!showSidebar)}
+                    >
+                        <MessageSquare size={14} />
+                        History
+                    </Button>
+                </div>
             </header>
 
             {/* ── Conversation History Sidebar ─────────────────────────────── */}
