@@ -23,6 +23,164 @@ import {
 // Beginner ₹299/mo, Pro ₹999/mo, enterprise = custom org deals.
 const PLANS = ['free', 'beginner', 'pro', 'enterprise'];
 
+const JOB_STATUS_STYLE = {
+    pending: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+    running: 'bg-sky-500/10 text-sky-600 border-sky-500/30',
+    done: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+    error: 'bg-red-500/10 text-red-600 border-red-500/30',
+};
+
+// Social Studio — queue on-demand YouTube/LinkedIn content with a topic and
+// editorial style direction. Jobs are executed by the ops-machine worker
+// (pipeline/social_worker.py, 5-min cadence) which reports results back here.
+function SocialStudioTab() {
+    const [topic, setTopic] = useState('');
+    const [style, setStyle] = useState('');
+    const [channels, setChannels] = useState({ youtube: true, linkedin: true });
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
+    const [jobs, setJobs] = useState(null);
+
+    const loadJobs = useCallback(() => {
+        api.get('/admin/social/jobs')
+            .then((r) => setJobs(r.data))
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        loadJobs();
+        const t = setInterval(loadJobs, 10000); // jobs run on a 5-min worker; keep it light
+        return () => clearInterval(t);
+    }, [loadJobs]);
+
+    const submit = async (e) => {
+        e.preventDefault();
+        const picked = Object.keys(channels).filter((c) => channels[c]);
+        if (topic.trim().length < 3 || submitting || picked.length === 0) return;
+        setSubmitting(true);
+        setError('');
+        try {
+            await api.post('/admin/social/jobs', {
+                topic: topic.trim(),
+                style_notes: style.trim() || null,
+                channels: picked,
+            });
+            setTopic('');
+            setStyle('');
+            loadJobs();
+        } catch (err) {
+            setError(safeErrorMsg(err, 'Failed to queue the job'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <Card className="p-4">
+                <h2 className="text-sm font-bold text-text-primary mb-1 flex items-center gap-2">
+                    <Clapperboard size={15} className="text-accent-primary" />
+                    Publish on demand
+                </h2>
+                <p className="text-xs text-text-muted mb-3 leading-relaxed">
+                    Queues a job for the ops machine (picked up within ~5 minutes): it generates the
+                    YouTube Short + explainer and/or the LinkedIn post on your topic, follows your style
+                    direction, publishes where credentials are configured, and reports back below.
+                </p>
+                <form onSubmit={submit} className="space-y-3">
+                    <div>
+                        <label htmlFor="ss-topic" className="block text-xs font-bold text-text-secondary mb-1">
+                            Topic <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            id="ss-topic" type="text" value={topic}
+                            onChange={(e) => setTopic(e.target.value)}
+                            placeholder="e.g. Why Python 3.13's free-threaded mode matters for AI workloads"
+                            maxLength={300}
+                            className="input-neo"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="ss-style" className="block text-xs font-bold text-text-secondary mb-1">
+                            Style direction <span className="text-text-muted font-normal">(optional — tone, framing, audience, must-mentions)</span>
+                        </label>
+                        <textarea
+                            id="ss-style" value={style}
+                            onChange={(e) => setStyle(e.target.value)}
+                            placeholder="e.g. Practical and non-hypey; aim at working backend devs; include one runnable code idea; end with a question to drive comments"
+                            rows={2} maxLength={1000}
+                            className="input-neo resize-y"
+                        />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4">
+                        {['youtube', 'linkedin'].map((c) => (
+                            <label key={c} className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+                                <input
+                                    type="checkbox" checked={channels[c]}
+                                    onChange={(e) => setChannels((prev) => ({ ...prev, [c]: e.target.checked }))}
+                                    className="accent-[var(--accent-primary)] w-4 h-4 cursor-pointer"
+                                />
+                                {c === 'youtube' ? 'YouTube (Short + explainer)' : 'LinkedIn post'}
+                            </label>
+                        ))}
+                        <div className="flex-1" />
+                        <Button type="submit" variant="primary" size="sm"
+                            disabled={submitting || topic.trim().length < 3 || (!channels.youtube && !channels.linkedin)}>
+                            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            Queue job
+                        </Button>
+                    </div>
+                    {error && <p className="text-xs text-red-500" role="alert">{error}</p>}
+                </form>
+            </Card>
+
+            <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-text-primary">Recent jobs</h2>
+                    <button onClick={loadJobs} title="Refresh"
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors cursor-pointer">
+                        <RefreshCw size={13} />
+                    </button>
+                </div>
+                {jobs === null ? (
+                    <div className="flex justify-center py-8"><Loader2 className="animate-spin text-accent-primary" size={18} /></div>
+                ) : jobs.length === 0 ? (
+                    <p className="text-sm text-text-muted text-center py-8">No jobs yet — queue the first one above.</p>
+                ) : (
+                    <div className="space-y-2">
+                        {jobs.map((j) => (
+                            <div key={j.id} className="rounded-xl border border-border-default bg-bg-elevated/50 px-3.5 py-2.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${JOB_STATUS_STYLE[j.status] || ''}`}>
+                                        {j.status}
+                                    </span>
+                                    <span className="text-sm font-medium text-text-primary truncate flex-1 min-w-0" title={j.topic}>{j.topic}</span>
+                                    <span className="text-[10px] text-text-muted">{j.channels.join(' + ')}</span>
+                                    <span className="text-[10px] text-text-muted">{relMinutes(j.created_at)}</span>
+                                </div>
+                                {j.style_notes && (
+                                    <p className="text-[11px] text-text-muted mt-1 truncate" title={j.style_notes}>Style: {j.style_notes}</p>
+                                )}
+                                {j.result && (
+                                    <div className="text-[11px] text-text-secondary mt-1.5 space-y-0.5">
+                                        {j.result.youtube_urls && Object.entries(j.result.youtube_urls).map(([k, u]) => u && (
+                                            <a key={k} href={u} target="_blank" rel="noreferrer" className="block text-accent-primary hover:underline">▶ {k}: {u}</a>
+                                        ))}
+                                        {j.result.upload_note && <p className="text-amber-600">{j.result.upload_note}</p>}
+                                        {j.result.linkedin_status && <p>LinkedIn: {j.result.linkedin_status}</p>}
+                                        {j.result.linkedin_preview && <p className="text-text-muted italic truncate" title={j.result.linkedin_preview}>"{j.result.linkedin_preview}"</p>}
+                                        {j.result.error && <p className="text-red-500">{j.result.error}</p>}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Card>
+        </div>
+    );
+}
+
 function relTimeSA(ts) {
   if (!ts) return '—';
   let iso = String(ts).replace(' ', 'T');
