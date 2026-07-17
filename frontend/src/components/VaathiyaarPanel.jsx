@@ -20,6 +20,7 @@ const PAGE_LABELS = [
     ['/dashboard/trending', 'Trending — daily AI & Python news and trends'],
     ['/dashboard/challenges', 'Challenges — weekly coding battles'],
     ['/dashboard/reference', 'Reference — quick Python cheat sheets'],
+    ['/dashboard/explains', 'Explains — visual, scroll-driven essays that build one concept step by step (currently: Gradient Descent)'],
     ['/dashboard/community', 'Community — rankings and member leaderboard'],
     ['/dashboard/org-compete', 'Compete — organization challenges and leaderboard'],
     ['/dashboard/org', 'Admin Console — organization members, invites and analytics'],

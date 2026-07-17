@@ -59,6 +59,7 @@ const OrgDashboard = lazyRetry(() => import('./pages/OrgDashboard'), 'OrgDashboa
 const JoinOrg = lazyRetry(() => import('./pages/JoinOrg'), 'JoinOrg');
 const Challenges = lazyRetry(() => import('./pages/Challenges'), 'Challenges');
 const Reference = lazyRetry(() => import('./pages/Reference'), 'Reference');
+const Explains = lazyRetry(() => import('./pages/Explains'), 'Explains');
 const SuperAdmin = lazyRetry(() => import('./pages/SuperAdmin'), 'SuperAdmin');
 const ForgotPassword = lazyRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
 const ResetPassword = lazyRetry(() => import('./pages/ResetPassword'), 'ResetPassword');
@@ -166,6 +167,8 @@ export default function App() {
                 <Route path="community" element={<ErrorBoundary><Community /></ErrorBoundary>} />
                 <Route path="org-compete" element={<ErrorBoundary><OrgCompete /></ErrorBoundary>} />
                 <Route path="reference" element={<ErrorBoundary><Reference /></ErrorBoundary>} />
+                <Route path="explains" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
+                <Route path="explains/:slug" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
                 <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
                 <Route path="org/setup" element={<ErrorBoundary><OrgSetup /></ErrorBoundary>} />
                 <Route path="org" element={<ErrorBoundary><OrgDashboard /></ErrorBoundary>} />
