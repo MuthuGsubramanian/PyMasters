@@ -624,23 +624,17 @@ export default function Playground() {
             )}
 
             {/* ── Main Content: 2-column layout ───────────────────────────── */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 grid-rows-[minmax(0,1fr)_minmax(0,1.2fr)] lg:grid-rows-[minmax(0,1fr)] gap-4 px-6 pb-2 min-h-0 overflow-hidden">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 grid-rows-[minmax(0,1fr)_minmax(0,1.2fr)] lg:grid-rows-[minmax(0,1fr)] gap-4 px-6 py-4 min-h-0 overflow-hidden">
 
                 {/* ── Left Panel: Vaathiyaar Chat ────────────────────────── */}
                 <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 rounded-2xl border border-border-default bg-bg-surface/60 backdrop-blur-sm shadow-sm overflow-hidden">
-                    {/* Panel header with macOS dots */}
+                    {/* Panel header */}
                     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-default bg-bg-elevated/80 flex-shrink-0">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-3 h-3 rounded-full bg-red-400" />
-                            <div className="w-3 h-3 rounded-full bg-amber-400" />
-                            <div className="w-3 h-3 rounded-full bg-green-400" />
-                        </div>
-                        <span className="text-xs font-semibold text-text-muted ml-2 flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded-md bg-gradient-primary flex items-center justify-center">
-                                <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
-                            </span>
-                            Vaathiyaar Chat
+                        <span className="w-5 h-5 rounded-md bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                            <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
                         </span>
+                        <span className="text-xs font-semibold text-text-primary">Vaathiyaar Chat</span>
+                        <span className="hidden sm:inline text-[10px] text-text-muted ml-auto">Explains, debugs & reviews code</span>
                     </div>
 
                     {/* Chat messages area */}
@@ -727,6 +721,22 @@ export default function Playground() {
                         </AnimatePresence>
 
                         <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Input — anchored to the chat panel so it's unambiguous
+                        which pane the message goes to */}
+                    <div className="flex-shrink-0 p-3 border-t border-border-default">
+                        {exhausted ? (
+                            <div className="rounded-xl px-4 py-3 border border-amber-500/30 bg-amber-500/10 text-center text-xs text-amber-600 dark:text-amber-300 font-medium">
+                                No prompts remaining. Earn more XP in the Classroom!
+                            </div>
+                        ) : (
+                            <ChatBar
+                                onSend={handleSend}
+                                loading={loading}
+                                placeholder="Ask Vaathiyaar anything..."
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -832,21 +842,6 @@ export default function Playground() {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* ── Chat Input Bar (full width) ─────────────────────────────── */}
-            <div className="flex-shrink-0 px-6 py-3 bg-gradient-to-t from-bg-base to-transparent">
-                {exhausted ? (
-                    <div className="panel rounded-2xl px-5 py-3.5 border border-amber-500/30 bg-amber-500/10 text-center text-sm text-amber-600 dark:text-amber-300 font-medium">
-                        No prompts remaining. Earn more XP in the Classroom!
-                    </div>
-                ) : (
-                    <ChatBar
-                        onSend={handleSend}
-                        loading={loading}
-                        placeholder="Ask Vaathiyaar anything..."
-                    />
-                )}
             </div>
 
             <style>{`
