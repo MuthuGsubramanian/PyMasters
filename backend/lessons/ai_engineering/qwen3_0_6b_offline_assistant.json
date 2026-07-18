@@ -1,0 +1,283 @@
+{
+  "id": "qwen3_0_6b_offline_assistant",
+  "topic": "qwen3_0_6b_offline_assistant",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Qwen3-0.6B Offline Assistant: Multi-Turn Chat With Memory"
+  },
+  "description": {
+    "en": "Turn the tiny Qwen3-0.6B model into a real offline assistant: keep multi-turn conversation history, stream replies token by token, tune Qwen3's recommended sampling settings per mode, and trim history so the chat never outgrows your RAM."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From One-Shot to Assistant\n\nVaathiyaar taps the laptop from last lesson â€” Qwen3-0.6B still humming along on plain CPU. \"You made it answer *one* question. But ask a follow-up and it stares blankly: LLMs are **stateless**. They remember nothing between calls. Today we wrap this 0.6-billion-parameter brain in the three loops every real assistant needs â€” memory, streaming, and sampling â€” and turn it into a genuine offline companion. This exact pattern is what powers Homie on hardware with no GPU and no internet.\"\n\n### Memory Is Just a List\n\nThere is no magic 'session' inside the model. An assistant remembers because *you* replay the whole conversation every turn:\n\n```python\nhistory = [{\"role\": \"system\", \"content\": \"You are Homie, a concise offline assistant.\"}]\n\nhistory.append({\"role\": \"user\", \"content\": \"What is a tuple?\"})\n# ...generate reply...\nhistory.append({\"role\": \"assistant\", \"content\": reply})\n```\n\nEvery `generate` call receives the full `history` through `apply_chat_template`. The follow-up \"and how is it different from a list?\" works only because the previous turns ride along in the prompt.\n\n### The Catch: Memory Costs Tokens\n\nReplaying everything means the prompt grows every turn â€” and on a small device, tokens are RAM and latency. The fix is **history trimming**: always keep the system message (it defines the assistant's personality), then keep only the most recent turns.\n\n```python\nMAX_MSGS = 8\nif len(history) > MAX_MSGS + 1:\n    history = history[:1] + history[-MAX_MSGS:]\n```\n\nOne line of list slicing is the difference between an assistant that runs for five minutes and one that runs all day.\n\n### Sampling: Qwen3's Two Personalities, Two Recipes\n\nQwen3's hybrid thinking mode is not just a toggle â€” each mode has *official* recommended sampling settings, and using the wrong ones causes rambling or repetition. Never use greedy decoding in thinking mode.\n\n| Mode | temperature | top_p | max_new_tokens | Best for |\n|---|---|---|---|---|\n| Thinking (`enable_thinking=True`) | 0.6 | 0.95 | 512+ | math, logic, code |\n| Fast chat (`enable_thinking=False`) | 0.7 | 0.8 | 256 | everyday Q&A |\n\n### Streaming: Feel Fast on Slow Hardware\n\nOn CPU, a 100-token reply might take several seconds. Waiting silently feels broken; printing tokens *as they are generated* feels alive. `TextStreamer` does it in one line:\n\n```python\nfrom transformers import TextStreamer\n\nstreamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)\noutput = model.generate(\n    **inputs, max_new_tokens=256,\n    do_sample=True, temperature=0.7, top_p=0.8,\n    streamer=streamer,\n)\n```\n\nSame total time â€” completely different experience. Perceived latency is a design problem, not just a hardware problem.\n\n### The Full Loop\n\nPut it together: append the user message, apply the chat template over the *whole* history, stream the generation, append the assistant reply, trim. Five steps, repeated forever, entirely offline. No API key ever expires, no rate limit ever hits, and no conversation ever leaves the machine.\n\n> **Key Insight:** An 'assistant' is not a bigger model â€” it is a small loop around any model: replay history, stream output, sample with the right settings, trim to fit. Master this loop once and you can wrap it around Qwen3-0.6B on a Raspberry Pi or a frontier model in the cloud; only the model name changes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "offline_companion_loop",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "assistant_loop_overview",
+      "nodes": [
+        {
+          "label": "Offline Assistant Loop",
+          "children": [
+            "History = list of role/content dicts",
+            "Replay full history every turn",
+            "Stream tokens (TextStreamer)",
+            "Sampling per mode (0.6/0.95 vs 0.7/0.8)",
+            "Trim: keep system + last N"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "qwen3_assistant_demo",
+      "steps": [
+        {
+          "line": "from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer",
+          "highlight": "TextStreamer",
+          "explanation": {
+            "en": "One new import versus last lesson: TextStreamer prints tokens the moment they are generated"
+          }
+        },
+        {
+          "line": "tokenizer = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-0.6B\")\nmodel = AutoModelForCausalLM.from_pretrained(\n    \"Qwen/Qwen3-0.6B\", torch_dtype=\"auto\", device_map=\"auto\"\n)",
+          "highlight": "Qwen/Qwen3-0.6B",
+          "explanation": {
+            "en": "Same ~1.2 GB model as before â€” already cached on disk, so this loads in seconds"
+          }
+        },
+        {
+          "line": "history = [\n    {\"role\": \"system\", \"content\": \"You are Homie, a concise offline assistant.\"}\n]",
+          "highlight": "system",
+          "explanation": {
+            "en": "The system message defines the assistant's personality â€” we will protect it when trimming"
+          }
+        },
+        {
+          "line": "while True:\n    user_msg = input(\"You: \")\n    history.append({\"role\": \"user\", \"content\": user_msg})",
+          "highlight": "history.append",
+          "explanation": {
+            "en": "The model is stateless â€” 'memory' is just this list growing one message at a time"
+          }
+        },
+        {
+          "line": "    text = tokenizer.apply_chat_template(\n        history, tokenize=False,\n        add_generation_prompt=True,\n        enable_thinking=False,\n    )",
+          "highlight": "history",
+          "explanation": {
+            "en": "The WHOLE history is templated every turn â€” that replay is what makes follow-ups work"
+          }
+        },
+        {
+          "line": "    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n    streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)",
+          "highlight": "skip_prompt=True",
+          "explanation": {
+            "en": "skip_prompt hides the replayed conversation so only the new reply streams to the screen"
+          }
+        },
+        {
+          "line": "    output = model.generate(\n        **inputs, max_new_tokens=256,\n        do_sample=True, temperature=0.7, top_p=0.8,\n        streamer=streamer,\n    )",
+          "highlight": "temperature=0.7, top_p=0.8",
+          "explanation": {
+            "en": "Qwen3's official non-thinking settings â€” thinking mode would use 0.6 / 0.95 instead"
+          }
+        },
+        {
+          "line": "    reply = tokenizer.decode(\n        output[0][inputs.input_ids.shape[-1]:],\n        skip_special_tokens=True,\n    )\n    history.append({\"role\": \"assistant\", \"content\": reply})",
+          "highlight": "history.append",
+          "explanation": {
+            "en": "Store the reply too â€” forget this line and the model never remembers its own answers"
+          }
+        },
+        {
+          "line": "    if len(history) > 9:\n        history = history[:1] + history[-8:]",
+          "highlight": "history[:1] + history[-8:]",
+          "explanation": {
+            "en": "Trim: slot 0 keeps the system message, the slice keeps the 8 most recent messages"
+          }
+        },
+        {
+          "line": "# You: what is a tuple?\n# Homie: An immutable ordered sequence...\n# You: how is it different from a list?\n# Homie: Unlike the list we just discussed, a tuple cannot change...",
+          "highlight": "we just discussed",
+          "explanation": {
+            "en": "The follow-up works â€” the model 'remembers' only because we replayed the history"
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_history_len",
+      "variable": "len(history)",
+      "value": "9 (1 system + 8 recent)",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_sampling",
+      "variable": "sampling (fast chat)",
+      "value": "temp 0.7 / top_p 0.8",
+      "data_type": "dict",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ python homie_offline.py",
+        "Loading Qwen/Qwen3-0.6B (cached)... device: cpu",
+        "You: what is a tuple?",
+        "Homie: An immutable, ordered sequence â€” like a list you cannot edit.",
+        "You: how is it different from a list?",
+        "Homie: Unlike the list we just discussed, a tuple cannot be changed",
+        "after creation, so it is hashable and safe to use as a dict key.",
+        "[history: 5 messages | trimmed at 9]"
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_assistant_loop",
+      "title": "Offline Assistant Loop",
+      "nodes": [
+        {
+          "id": "user",
+          "label": "user input",
+          "type": "start"
+        },
+        {
+          "id": "append_u",
+          "label": "append to history",
+          "type": "process"
+        },
+        {
+          "id": "template",
+          "label": "apply_chat_template\n(full history)",
+          "type": "process"
+        },
+        {
+          "id": "generate",
+          "label": "generate + stream\n(temp/top_p per mode)",
+          "type": "decision"
+        },
+        {
+          "id": "append_a",
+          "label": "append reply\nto history",
+          "type": "process"
+        },
+        {
+          "id": "trim",
+          "label": "trim: system + last N",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "user",
+          "to": "append_u",
+          "label": "text"
+        },
+        {
+          "from": "append_u",
+          "to": "template",
+          "label": "list[dict]"
+        },
+        {
+          "from": "template",
+          "to": "generate",
+          "label": "prompt"
+        },
+        {
+          "from": "generate",
+          "to": "append_a",
+          "label": "reply"
+        },
+        {
+          "from": "append_a",
+          "to": "trim",
+          "label": "history"
+        },
+        {
+          "from": "trim",
+          "to": "user",
+          "label": "next turn"
+        }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "chip_spark",
+      "message": "Your laptop just became an offline AI assistant. Loop mastered!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "An assistant that never forgets eventually overflows its context window â€” and on a Raspberry Pi, long prompts mean slow replies. Complete `trim_history` so it keeps the system message (when it is the first message) plus only the `keep_last` most recent other messages, preserving order. This is the exact trimming step from the assistant loop."
+      },
+      "starter_code": "def trim_history(messages: list[dict], keep_last: int) -> list[dict]:\n    \"\"\"Keep the leading system message (if any) + the last keep_last other messages.\n\n    messages: [{'role': ..., 'content': ...}, ...]\n    keep_last: how many non-system messages to keep from the end\n    \"\"\"\n    # 1. If messages[0] has role 'system', split it off as the head\n    # 2. Keep only the last keep_last of the remaining messages\n    # 3. Return head + recent messages, order preserved\n    pass\n\nhistory = [\n    {\"role\": \"system\", \"content\": \"You are Homie.\"},\n    {\"role\": \"user\", \"content\": \"hi\"},\n    {\"role\": \"assistant\", \"content\": \"hello!\"},\n    {\"role\": \"user\", \"content\": \"what is python?\"},\n    {\"role\": \"assistant\", \"content\": \"a language\"},\n    {\"role\": \"user\", \"content\": \"and pip?\"},\n    {\"role\": \"assistant\", \"content\": \"its installer\"},\n]\ntrimmed = trim_history(history, 4)\nprint([m[\"role\"] for m in trimmed])\nprint(len(trimmed))",
+      "expected_output": "['system', 'user', 'assistant', 'user', 'assistant']\n5",
+      "hints": {
+        "en": [
+          "Check messages and messages[0]['role'] == 'system' to decide if there is a head to protect",
+          "Negative slicing does the heavy lifting: tail[-keep_last:] keeps the most recent messages",
+          "Return head + tail[-keep_last:] â€” list concatenation preserves order automatically"
+        ]
+      },
+      "test_code": "def trim_history(messages, keep_last):\n    if messages and messages[0][\"role\"] == \"system\":\n        head, tail = messages[:1], messages[1:]\n    else:\n        head, tail = [], messages\n    return head + tail[-keep_last:]\n\nhistory = [\n    {\"role\": \"system\", \"content\": \"You are Homie.\"},\n    {\"role\": \"user\", \"content\": \"hi\"},\n    {\"role\": \"assistant\", \"content\": \"hello!\"},\n    {\"role\": \"user\", \"content\": \"what is python?\"},\n    {\"role\": \"assistant\", \"content\": \"a language\"},\n    {\"role\": \"user\", \"content\": \"and pip?\"},\n    {\"role\": \"assistant\", \"content\": \"its installer\"},\n]\ntrimmed = trim_history(history, 4)\nassert [m[\"role\"] for m in trimmed] == [\"system\", \"user\", \"assistant\", \"user\", \"assistant\"], \"System + last 4 expected\"\nassert trimmed[0][\"content\"] == \"You are Homie.\", \"System message must survive trimming\"\nassert trimmed[-1][\"content\"] == \"its installer\", \"Most recent message must be kept\"\nno_system = [\n    {\"role\": \"user\", \"content\": \"a\"},\n    {\"role\": \"assistant\", \"content\": \"b\"},\n    {\"role\": \"user\", \"content\": \"c\"},\n]\nassert trim_history(no_system, 2) == no_system[-2:], \"Without a system message, just keep the tail\"\nassert trim_history(history, 100) == history, \"keep_last larger than history keeps everything\"\nprint(\"All trimming tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Qwen3 ships official sampling recipes and they differ by mode: thinking mode wants temperature 0.6 and top_p 0.95 with room for 512 new tokens; fast chat wants temperature 0.7, top_p 0.8, and 256 tokens. Complete `generation_config(thinking)` so it returns the right settings dict for each mode â€” using the wrong recipe causes rambling or repetitive output."
+      },
+      "starter_code": "def generation_config(thinking: bool) -> dict:\n    \"\"\"Return Qwen3's recommended sampling settings for the given mode.\n\n    thinking=True  -> temperature 0.6, top_p 0.95, max_new_tokens 512\n    thinking=False -> temperature 0.7, top_p 0.8,  max_new_tokens 256\n    Keys in this order: temperature, top_p, max_new_tokens\n    \"\"\"\n    pass\n\nprint(generation_config(True))\nprint(generation_config(False))",
+      "expected_output": "{'temperature': 0.6, 'top_p': 0.95, 'max_new_tokens': 512}\n{'temperature': 0.7, 'top_p': 0.8, 'max_new_tokens': 256}",
+      "hints": {
+        "en": [
+          "Return a dict literal per branch â€” an if/else on the thinking flag is all you need",
+          "Thinking mode reasons inside <think> tags first, so it needs the larger max_new_tokens (512)",
+          "Python dicts preserve insertion order, so build keys as temperature, top_p, max_new_tokens"
+        ]
+      },
+      "test_code": "def generation_config(thinking):\n    if thinking:\n        return {\"temperature\": 0.6, \"top_p\": 0.95, \"max_new_tokens\": 512}\n    return {\"temperature\": 0.7, \"top_p\": 0.8, \"max_new_tokens\": 256}\n\nthink = generation_config(True)\nfast = generation_config(False)\nassert think == {\"temperature\": 0.6, \"top_p\": 0.95, \"max_new_tokens\": 512}, \"Thinking mode: 0.6 / 0.95 / 512\"\nassert fast == {\"temperature\": 0.7, \"top_p\": 0.8, \"max_new_tokens\": 256}, \"Fast chat: 0.7 / 0.8 / 256\"\nassert think[\"max_new_tokens\"] > fast[\"max_new_tokens\"], \"Thinking mode needs room for <think> reasoning tokens\"\nassert think[\"temperature\"] < fast[\"temperature\"], \"Thinking mode samples slightly cooler\"\nprint(\"All sampling config tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "conversation_history_management",
+      "streaming_generation",
+      "sampling_parameters",
+      "context_window_trimming",
+      "offline_assistant_loop"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "dictionaries",
+      "list_slicing",
+      "local_llm_inference"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
