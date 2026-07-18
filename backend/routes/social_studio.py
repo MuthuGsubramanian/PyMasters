@@ -56,10 +56,16 @@ def _ensure_table(conn):
 
 
 def _require_worker(x_worker_token: Optional[str]):
-    expected = os.getenv("SOCIAL_WORKER_TOKEN", "")
+    # strip + bytes comparison: the env value can carry stray whitespace/BOM
+    # from the secret-setting pipeline, and str compare_digest RAISES on
+    # non-ASCII (surfaced live 2026-07-18 as a 500 on every claim).
+    expected = os.getenv("SOCIAL_WORKER_TOKEN", "").strip()
     if not expected:
         raise HTTPException(status_code=503, detail="Social worker not configured")
-    if not x_worker_token or not hmac.compare_digest(x_worker_token, expected):
+    supplied = (x_worker_token or "").strip()
+    if not supplied or not hmac.compare_digest(
+        supplied.encode("utf-8", "ignore"), expected.encode("utf-8", "ignore")
+    ):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
