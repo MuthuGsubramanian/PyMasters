@@ -1,0 +1,140 @@
+{
+  "id": "rag_policy_learning_nn_matching",
+  "topic": "rag_policy_learning_nn_matching",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The Matchmaker's Ledger: Vector Search as Nearest-Neighbor Matching for Policy Learning"
+  },
+  "description": {
+    "en": "Discover why RAG retrieval is secretly a causal-inference tool: action-specific vector search is nearest-neighbor matching under the potential outcome framework, and a plug-in rule turns retrieved evidence into a decision policy."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Matchmaker's Ledger\n\nVaathiyaar opens a thick, worn ledger. \"Students, a village matchmaker never predicts the future from theory. She asks: *who else, similar to you, made each choice â€” and how did it go for them?* Today's lesson is that your RAG pipeline does exactly this. When vector search retrieves neighbors from an embedding space, it is performing **nearest-neighbor matching** â€” one of the oldest tools in causal inference. Frame it right, and retrieval stops being mere context-stuffing and becomes **policy learning**: choosing the best *action*, not just the best paragraph.\"\n\n### Potential Outcomes: The 'What If' Framework\n\nFor a user with context `x` and candidate actions `a` (send a hint, show the full solution, do nothing), each action has a **potential outcome** `Y(a)` â€” what *would* happen if we took it. We only ever observe the outcome of the action actually taken; the rest are counterfactuals. The classic estimator: find past cases whose contexts are *close* to `x` **and** who received action `a`, then average their outcomes to estimate `E[Y(a) | x]`.\n\n### The Two-Step RAG Policy\n\n1. **Retrieve (match):** embed the current context, then run vector search *separately per action* â€” each action gets its own neighborhood of historical evidence.\n2. **Estimate + decide:** a generator (or a plain average) estimates the expected outcome per action, and a **plug-in rule** selects the argmax.\n\n### Same Machine, Two Vocabularies\n\n| Causal inference says | RAG says |\n|---|---|\n| Covariates `x` | Query embedding |\n| Matched control/treated units | Retrieved top-k neighbors |\n| Distance metric on covariates | Cosine similarity in embedding space |\n| Estimate of `E[Y(a) \\| x]` | Generator's outcome summary |\n| Plug-in decision rule | Argmax over candidate actions |\n\n### A Minimal Policy in Python\n\n```python\nimport numpy as np\n\ndef estimate_value(query_vec, bank, action, k=3):\n    # keep only historical cases where this action was taken\n    subset = [c for c in bank if c[\"action\"] == action]\n    sims = [query_vec @ c[\"vec\"] for c in subset]  # normalized vecs\n    top = np.argsort(sims)[-k:]                     # k nearest matches\n    return np.mean([subset[i][\"outcome\"] for i in top])\n\ndef plug_in_policy(query_vec, bank, actions, k=3):\n    values = {a: estimate_value(query_vec, bank, a, k) for a in actions}\n    return max(values, key=values.get)\n```\n\n\"Notice the discipline,\" Vaathiyaar taps the ledger. \"We do **not** search one shared index and hope. We match *within each action arm*, exactly as a statistician matches treated units to controls. That per-arm retrieval is what makes the comparison fair.\"\n\n### Why This Refines Real RAG Systems\n\nThis lens gives you causal-inference upgrades for free: if an action's neighbors are all *far* from the query, its estimate is untrustworthy (poor overlap â€” abstain instead of guessing). If one action dominates the history, its arm is oversampled (confounding by past policy). For a local assistant like Homie, this means retrieval can drive *decisions* â€” which tool to call, which fix to suggest â€” backed by matched evidence, not vibes.\n\n> **Key Insight:** Vector search is nearest-neighbor matching wearing a new jacket. Retrieve neighbors per action, average their outcomes, take the argmax â€” and your RAG system graduates from answering questions to learning policies under the potential outcome framework."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "title": "The Matchmaker's Ledger",
+      "body": "RAG retrieval is nearest-neighbor matching from causal inference: retrieve similar past cases per action, estimate each action's expected outcome, and let a plug-in rule decide.",
+      "emoji": "ðŸ“–"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "two_step_policy",
+      "language": "python",
+      "steps": [
+        {
+          "code": "import numpy as np",
+          "explanation": "NumPy handles the vector math â€” dot products for similarity and means for outcome estimates."
+        },
+        {
+          "code": "bank = [{\"vec\": v, \"action\": a, \"outcome\": y}, ...]",
+          "explanation": "The evidence bank: past cases, each with a normalized context embedding, the action taken, and the observed outcome (e.g. 1 = learner succeeded)."
+        },
+        {
+          "code": "query_vec = embed(current_context)",
+          "explanation": "Step one of the two-step method begins: embed the current situation into the same space as the historical cases."
+        },
+        {
+          "code": "subset = [c for c in bank if c[\"action\"] == \"tutor_hint\"]",
+          "explanation": "The crucial move â€” filter to cases that received THIS action. Matching happens within each action arm, like matching treated units to treated units."
+        },
+        {
+          "code": "sims = [query_vec @ c[\"vec\"] for c in subset]",
+          "explanation": "Dot product of normalized vectors = cosine similarity. In causal terms, this is the distance metric over covariates."
+        },
+        {
+          "code": "top = np.argsort(sims)[-3:]",
+          "explanation": "Take the k=3 nearest neighbors â€” the matched evidence for this action. This IS nearest-neighbor matching, done by a vector index."
+        },
+        {
+          "code": "value = np.mean([subset[i][\"outcome\"] for i in top])",
+          "explanation": "Average the neighbors' outcomes to estimate E[Y(a) | x] â€” the conditional expected outcome if we take this action here."
+        },
+        {
+          "code": "values = {a: estimate_value(query_vec, bank, a) for a in actions}",
+          "explanation": "Repeat retrieval + estimation for every candidate action. Each action gets its own matched neighborhood and its own value estimate."
+        },
+        {
+          "code": "best_action = max(values, key=values.get)",
+          "explanation": "The plug-in rule: simply act greedily on the estimates. Retrieval â†’ estimation â†’ argmax is the whole two-step policy."
+        },
+        {
+          "code": "if max(sims) < 0.5: best_action = \"abstain\"",
+          "explanation": "Causal bonus: if even the nearest neighbors are far away, there's no overlap â€” the honest policy abstains rather than guessing."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "title": "Policy Learned!",
+      "body": "You just turned vector search into a causal decision engine â€” matching, estimating, and acting on evidence."
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Nearest-neighbor matching starts with finding neighbors. Write a function `k_nearest(query, contexts, k)` that takes a query vector (list of floats), a list of context vectors, and k, and returns the indices of the k closest contexts by Euclidean distance, ordered nearest first. Break distance ties by preferring the lower index. Then print the result for the data in the starter code."
+      },
+      "starter_code": "import math\n\ndef k_nearest(query, contexts, k):\n    # return indices of the k closest contexts (Euclidean distance),\n    # nearest first; break ties by lower index\n    pass\n\nquery = [0.0, 0.0]\ncontexts = [[1.0, 1.0], [0.1, 0.2], [3.0, 3.0], [0.2, 0.1], [5.0, 0.0]]\nprint(k_nearest(query, contexts, 2))\n",
+      "expected_output": "[1, 3]",
+      "hints": {
+        "en": [
+          "Euclidean distance: math.sqrt(sum((q - c) ** 2 for q, c in zip(query, ctx))).",
+          "Build a list of (distance, index) pairs â€” sorting tuples handles the tie-break automatically, since equal distances fall back to comparing the index.",
+          "Sort the pairs, slice the first k, and return just the indices in that order."
+        ]
+      },
+      "test_code": "q = [0.0, 0.0]\ncs = [[1.0, 1.0], [0.1, 0.2], [3.0, 3.0], [0.2, 0.1], [5.0, 0.0]]\nassert k_nearest(q, cs, 2) == [1, 3], f'Got {k_nearest(q, cs, 2)}'\nassert k_nearest(q, cs, 1) == [1], 'k=1 must return only the single nearest index'\nassert k_nearest([3.0, 3.0], cs, 2) == [2, 0], f'Got {k_nearest([3.0, 3.0], cs, 2)}'\nprint('PASS')"
+    },
+    {
+      "instruction": {
+        "en": "Now build the plug-in rule. Write a function `select_action(neighbors)` that takes a dict mapping each action name to the list of outcomes observed among its retrieved nearest neighbors. Compute the mean outcome per action (the estimate of E[Y(a) | x]) and return a tuple `(best_action, best_mean)` with the mean rounded to 4 decimal places. If two actions tie on the mean, return the alphabetically first action name. Print the chosen action and its value for the starter data."
+      },
+      "starter_code": "def select_action(neighbors):\n    # mean outcome per action; return (best_action, round(mean, 4));\n    # ties go to the alphabetically first action\n    pass\n\nneighbors = {\n    \"tutor_hint\": [1, 0, 1, 1],\n    \"full_solution\": [1, 1, 0, 0],\n    \"no_help\": [0, 0, 1, 0],\n}\naction, value = select_action(neighbors)\nprint(action, value)\n",
+      "expected_output": "tutor_hint 0.75",
+      "hints": {
+        "en": [
+          "The mean of an outcome list is sum(outcomes) / len(outcomes).",
+          "Iterate over sorted(neighbors.items()) so that when a later action merely TIES the best mean, the earlier (alphabetical) one is kept â€” only a strictly greater mean should replace the current best.",
+          "Round only the returned value: round(best_mean, 4)."
+        ]
+      },
+      "test_code": "data = {\"tutor_hint\": [1, 0, 1, 1], \"full_solution\": [1, 1, 0, 0], \"no_help\": [0, 0, 1, 0]}\nassert select_action(data) == (\"tutor_hint\", 0.75), f'Got {select_action(data)}'\nassert select_action({\"b\": [1, 0], \"a\": [0, 1]}) == (\"a\", 0.5), 'Ties must go to the alphabetically first action'\nassert select_action({\"only\": [0, 0, 0, 1]}) == (\"only\", 0.25), f'Got {select_action({\"only\": [0, 0, 0, 1]})}'\nprint('PASS')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "vector search",
+      "nearest-neighbor matching",
+      "potential outcomes framework",
+      "RAG-based policy learning",
+      "plug-in decision rules",
+      "cosine similarity",
+      "overlap and abstention"
+    ],
+    "concepts_required": [
+      "python functions",
+      "lists",
+      "dictionaries",
+      "embeddings basics",
+      "cosine similarity"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "guided_code",
+    "estimated_minutes": 25,
+    "category": "generative_ai",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
