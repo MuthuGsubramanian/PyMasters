@@ -67,6 +67,10 @@ export default function ExecutionVisualizer({
   executionSteps = [],
   speed = 'normal',
   onComplete,
+  // When a number is provided the auto-play timeline is disabled and the
+  // visualizer renders exactly this step — used by the scroll-synced lesson
+  // layout, where scroll position (not time) drives execution.
+  controlledStep = null,
 }) {
   const containerRef = useRef(null);
   const onCompleteRef = useRef(onComplete);
@@ -96,8 +100,20 @@ export default function ExecutionVisualizer({
     );
   }, []);
 
+  const isControlled = typeof controlledStep === 'number';
+
+  // Controlled mode: scroll position picks the step; output shows everything
+  // produced up to and including it.
+  useEffect(() => {
+    if (!isControlled || stableSteps.length === 0) return;
+    const idx = Math.max(-1, Math.min(controlledStep, stableSteps.length - 1));
+    setActiveStep(idx);
+    setOutputLines(stableSteps.slice(0, idx + 1).filter(s => s.output).map(s => s.output));
+  }, [isControlled, controlledStep, stableSteps]);
+
   // Auto-play timeline
   useEffect(() => {
+    if (isControlled) return;
     if (stableSteps.length === 0) return;
     completedRef.current = false;
     setActiveStep(-1);
@@ -133,7 +149,7 @@ export default function ExecutionVisualizer({
     tl.to({}, { duration: stepDuration + 0.5 });
 
     return () => { tl.kill(); };
-  }, [stableSteps, stepDuration]);
+  }, [stableSteps, stepDuration, isControlled]);
 
   const currentStep = activeStep >= 0 ? stableSteps[activeStep] : null;
   const activeLine = currentStep?.line ?? -1;

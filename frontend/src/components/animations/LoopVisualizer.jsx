@@ -73,6 +73,9 @@ export default function LoopVisualizer({
   code = '',
   speed = 'normal',
   onComplete,
+  // When a number is provided the auto-play timeline is disabled and the
+  // visualizer renders exactly this iteration (scroll-synced lesson layout).
+  controlledStep = null,
 }) {
   const containerRef = useRef(null);
   const onCompleteRef = useRef(onComplete);
@@ -110,8 +113,21 @@ export default function LoopVisualizer({
     );
   }, []);
 
+  const isControlled = typeof controlledStep === 'number';
+
+  // Controlled mode: scroll position picks the iteration.
+  useEffect(() => {
+    if (!isControlled) return;
+    const stepCount = stableIterations.length > 0 ? stableIterations.length : items.length;
+    if (stepCount === 0) return;
+    const idx = Math.max(-1, Math.min(controlledStep, stepCount - 1));
+    setActiveIndex(idx);
+    setOutputLines(stableIterations.slice(0, idx + 1).filter(it => it?.output).map(it => it.output));
+  }, [isControlled, controlledStep, stableIterations, items]);
+
   // Auto-play timeline
   useEffect(() => {
+    if (isControlled) return;
     const stepCount = stableIterations.length > 0 ? stableIterations.length : items.length;
     if (stepCount === 0) return;
     completedRef.current = false;
@@ -149,7 +165,7 @@ export default function LoopVisualizer({
     tl.to({}, { duration: stepDuration + 0.5 });
 
     return () => { tl.kill(); };
-  }, [stableIterations, items, stepDuration]);
+  }, [stableIterations, items, stepDuration, isControlled]);
 
   const currentIter = activeIndex >= 0 ? stableIterations[activeIndex] : null;
   const currentValue = currentIter?.value ?? (activeIndex >= 0 ? items[activeIndex] : undefined);

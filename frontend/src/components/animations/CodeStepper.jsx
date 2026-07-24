@@ -132,6 +132,9 @@ export default function CodeStepper({
   stepDescriptions = [],
   onStep,
   onComplete,
+  // When a number is provided the auto-play timeline is disabled and the
+  // stepper renders exactly this step (scroll-synced lesson layout).
+  controlledStep = null,
 }) {
   const containerRef = useRef(null);
   const descBubbleRef = useRef(null);
@@ -184,8 +187,19 @@ export default function CodeStepper({
     );
   }, []);
 
+  const isControlled = typeof controlledStep === 'number';
+
+  // Controlled mode: scroll position picks the step.
+  useEffect(() => {
+    if (!isControlled || stableSequence.length === 0) return;
+    const idx = Math.max(-1, Math.min(controlledStep, stableSequence.length - 1));
+    setActiveStepIndex(idx);
+    setIsPlaying(false);
+  }, [isControlled, controlledStep, stableSequence]);
+
   // Auto-play timeline
   useEffect(() => {
+    if (isControlled) return;
     if (stableSequence.length === 0) return;
     completedRef.current = false;
 
@@ -239,7 +253,7 @@ export default function CodeStepper({
     return () => {
       tl.kill();
     };
-  }, [stableSequence, stepDuration]);
+  }, [stableSequence, stepDuration, isControlled]);
 
   const activeLineNum = stableSequence[activeStepIndex] ?? -1;
   const currentDesc = activeStepIndex >= 0 ? descriptions[activeStepIndex] : null;
