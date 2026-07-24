@@ -754,8 +754,20 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                 </h2>
             </header>
 
-            {/* ── Main layout: explanation only. Code execution + flow open in a
-                popup from the launcher card below, keeping the lesson clean. ── */}
+            {/* ── Main layout ──
+                Scroll-synced (Explain-style): prose sections left, flow visual
+                pinned right advancing with the section in view. Fallback:
+                original single dark story card (stories without headings). ── */}
+            {useScrolly ? (
+                <>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-text-primary">Vaathiyaar</span>
+                        <span className="text-emerald-500 text-[10px] font-medium">Teaching</span>
+                        <span className="text-[11px] text-text-muted">· scroll — the flow follows you</span>
+                    </div>
+                    <ScrollyBody steps={scrollySteps} Visual={SyncedVisual} />
+                </>
+            ) : (
             <div className="rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-6 py-5 shadow-lg">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
@@ -774,6 +786,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* ── Launcher card: opens the code execution + flow popup ── */}
             {hasVisuals && (
