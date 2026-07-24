@@ -100,8 +100,10 @@ function resolveProps(props, language, storyContent) {
 
 /**
  * Normalize lesson JSON props to match component prop signatures.
+ * Exported so the scroll-synced lesson layout (Classroom IntroPhase) can
+ * normalize a single primitive without going through the full renderer.
  */
-function normalizeProps(type, raw, language) {
+export function normalizeProps(type, raw, language) {
   const p = { ...raw };
   delete p.id;
 
