@@ -72,6 +72,10 @@ export default function FlowDiagram({
   variables = {},
   speed = 'normal',
   onComplete,
+  // When a number is provided the auto-play timeline is disabled and the
+  // diagram highlights exactly this position in the execution path
+  // (scroll-synced lesson layout).
+  controlledStep = null,
 }) {
   const containerRef = useRef(null);
   const onCompleteRef = useRef(onComplete);
@@ -112,8 +116,17 @@ export default function FlowDiagram({
     );
   }, []);
 
+  const isControlled = typeof controlledStep === 'number';
+
+  // Controlled mode: scroll position picks the path position.
+  useEffect(() => {
+    if (!isControlled || stablePath.length === 0) return;
+    setActivePathIndex(Math.max(-1, Math.min(controlledStep, stablePath.length - 1)));
+  }, [isControlled, controlledStep, stablePath]);
+
   // Auto-play timeline
   useEffect(() => {
+    if (isControlled) return;
     if (stablePath.length === 0) return;
     completedRef.current = false;
     setActivePathIndex(-1);
@@ -143,7 +156,7 @@ export default function FlowDiagram({
     tl.to({}, { duration: stepDuration + 0.5 });
 
     return () => { tl.kill(); };
-  }, [stablePath, stepDuration]);
+  }, [stablePath, stepDuration, isControlled]);
 
   // Build a lookup for which edge connects consecutive path nodes
   const pathEdgePairs = useMemo(() => {
