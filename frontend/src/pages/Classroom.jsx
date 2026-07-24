@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import AnimationRenderer from '../components/animations/AnimationRenderer';
+import AnimationRenderer, { normalizeProps } from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
 import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendVaathiyaarFeedback, getPodcastManifest } from '../api';
 import PodcastPlayer from '../components/PodcastPlayer';
@@ -24,6 +24,9 @@ import TTSControls from '../components/TTSControls';
 import ExecutionVisualizer from '../components/animations/ExecutionVisualizer';
 import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
+import CodeStepper from '../components/animations/CodeStepper';
+import ConceptMap from '../components/animations/ConceptMap';
+import { ScrollyBody } from '../components/ScrollyExplain';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
 import LearnAnything from '../components/LearnAnything';
@@ -75,17 +78,17 @@ const markdownComponents = {
     ol: ({children}) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
     code: ({children, className}) => className
         ? <RunnableCode className={className}>{children}</RunnableCode>
-        : <code className="bg-bg-inset text-purple-700 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+        : <code className="bg-accent-subtle text-accent-primary px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
     table: ({children}) => (
         <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
             <table className="text-sm w-full">{children}</table>
         </div>
     ),
-    thead: ({children}) => <thead className="bg-purple-50">{children}</thead>,
+    thead: ({children}) => <thead className="bg-accent-subtle">{children}</thead>,
     tbody: ({children}) => <tbody className="divide-y divide-border-default">{children}</tbody>,
     tr: ({children}) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
     th: ({children}) => (
-        <th className="px-3 py-2 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">{children}</th>
+        <th className="px-3 py-2 text-left text-xs font-bold text-accent-primary uppercase tracking-wider">{children}</th>
     ),
     td: ({children}) => (
         <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>
@@ -554,6 +557,94 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: intro — animated story sequence (DARK CINEMA MODE)
 // ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
+// Scroll-synced lesson intro (Explain-style scrollytelling)
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Split a lesson story (markdown) into scroll sections at `## ` headings.
+// The chunk before the first heading (if any) becomes an untitled lead section.
+function splitStorySections(md) {
+    if (!md || typeof md !== 'string') return [];
+    const out = [];
+    let cur = { title: null, body: [] };
+    for (const line of md.split('\n')) {
+        const m = /^##\s+(.+)/.exec(line);
+        if (m && !line.startsWith('###')) {
+            if (cur.title || cur.body.join('').trim()) out.push(cur);
+            cur = { title: m[1].trim(), body: [] };
+        } else {
+            cur.body.push(line);
+        }
+    }
+    if (cur.title || cur.body.join('').trim()) out.push(cur);
+    return out.map((s) => ({ title: s.title, body: s.body.join('\n').trim() }));
+}
+
+// The sticky visual for a lesson: picks the richest available flow primitive
+// and drives it from the scroll position (section in view → execution step).
+// Priority: step-by-step execution > loop > flow diagram > code walkthrough >
+// concept map (static). Every catalogue lesson has at least one of these.
+function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, stepper, flowDiagram, conceptMap, language }) {
+    const frac = totalSections > 1 ? Math.min(1, Math.max(0, stepIndex / (totalSections - 1))) : 1;
+    const mapTo = (count) => (count > 0 ? Math.round(frac * (count - 1)) : -1);
+
+    let inner = null;
+    if (executionViz) {
+        const p = normalizeProps('ExecutionVisualizer', executionViz, language);
+        inner = (
+            <ExecutionVisualizer
+                code={p.code || ''}
+                executionSteps={p.executionSteps || []}
+                controlledStep={mapTo((p.executionSteps || []).length)}
+            />
+        );
+    } else if (loopViz) {
+        const p = normalizeProps('LoopVisualizer', loopViz, language);
+        const count = (p.iterations || []).length || (p.collection || []).length
+            || Math.max(0, Math.ceil(((p.rangeEnd ?? 5) - (p.rangeStart ?? 0)) / (p.rangeStep || 1)));
+        inner = (
+            <LoopVisualizer
+                loopType={p.loopType || 'for'}
+                collection={p.collection || []}
+                variable={p.variable || 'i'}
+                rangeStart={p.rangeStart ?? 0}
+                rangeEnd={p.rangeEnd ?? 5}
+                rangeStep={p.rangeStep ?? 1}
+                iterations={p.iterations || []}
+                code={p.code || ''}
+                controlledStep={mapTo(count)}
+            />
+        );
+    } else if (flowDiagram) {
+        const p = normalizeProps('FlowDiagram', flowDiagram, language);
+        inner = (
+            <FlowDiagram
+                nodes={p.nodes || []}
+                edges={p.edges || []}
+                executionPath={p.executionPath || []}
+                variables={p.variables || {}}
+                controlledStep={mapTo((p.executionPath || []).length)}
+            />
+        );
+    } else if (stepper) {
+        const p = normalizeProps('CodeStepper', stepper, language);
+        inner = (
+            <CodeStepper
+                code={p.code || ''}
+                highlightSequence={p.highlightSequence || []}
+                stepDescriptions={p.stepDescriptions || []}
+                controlledStep={mapTo((p.highlightSequence || []).length)}
+            />
+        );
+    } else if (conceptMap) {
+        const p = normalizeProps('ConceptMap', conceptMap, language);
+        inner = <ConceptMap nodes={p.nodes || []} edges={p.edges || []} />;
+    }
+
+    if (!inner) return null;
+    return <div className="h-full overflow-y-auto dark-scrollbar pr-1">{inner}</div>;
+}
+
 function IntroPhase({ lesson, language, onComplete, username }) {
     const storyContent =
         lesson.active_story || resolveText(lesson.story_variants, language);
@@ -607,8 +698,44 @@ function IntroPhase({ lesson, language, onComplete, username }) {
             ? `${loopViz.loopType || 'for'} loop · ${(loopViz.iterations || []).length} iterations`
             : 'Animated walkthrough';
 
+    // ── Scroll-synced layout (Explain-style) ──
+    // Story splits into sections at `## ` headings; the flow visual sits in a
+    // sticky panel and advances with the section in view. Falls back to the
+    // single-card layout for stories without headings (e.g. some translations).
+    const stepper = legacyAnimPrimitives.find(s => s.type === 'CodeStepper' || s.type === 'code_stepper');
+    const conceptMap = storyPrimitives.find(s => s.type === 'ConceptMap');
+    const sections = splitStorySections(storyContent);
+    const useScrolly = sections.length >= 2;
+    const scrollySteps = useMemo(() => sections.map(sec => ({
+        title: sec.title,
+        body: (
+            <div data-runcode-scope>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{sec.body}</ReactMarkdown>
+            </div>
+        ),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    })), [storyContent]);
+    // Stable component identity per lesson so ScrollyBody doesn't remount the
+    // visual (and replay its entrance animation) on every scroll step.
+    const SyncedVisual = useMemo(() => {
+        const V = ({ stepIndex }) => (
+            <LessonFlowVisual
+                stepIndex={stepIndex}
+                totalSections={sections.length}
+                executionViz={executionViz}
+                loopViz={loopViz}
+                stepper={stepper}
+                flowDiagram={flowDiagram}
+                conceptMap={conceptMap}
+                language={language}
+            />
+        );
+        return V;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lesson?.id, sections.length, language]);
+
     return (
-        <div className="animate-fade-in flex flex-col gap-4 max-w-4xl mx-auto">
+        <div className={`animate-fade-in flex flex-col gap-4 mx-auto ${useScrolly ? 'max-w-6xl w-full' : 'max-w-4xl'}`}>
             {/* ── Header (compact, fixed) ── */}
             <header className="flex-shrink-0">
                 <div className="flex items-center gap-2 mb-1">
