@@ -561,15 +561,18 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
 // Scroll-synced lesson intro (Explain-style scrollytelling)
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Split a lesson story (markdown) into scroll sections at `## ` headings.
-// The chunk before the first heading (if any) becomes an untitled lead section.
+// Split a lesson story (markdown) into scroll sections at `## `/`### `
+// headings. Lesson stories typically open with one h2 title followed by h3
+// subsections, so both levels are section boundaries (146/436 stories have
+// 2+ h2s but all 436 have 2+ headings at level 2-or-3). The chunk before the
+// first heading (if any) becomes an untitled lead section.
 function splitStorySections(md) {
     if (!md || typeof md !== 'string') return [];
     const out = [];
     let cur = { title: null, body: [] };
     for (const line of md.split('\n')) {
-        const m = /^##\s+(.+)/.exec(line);
-        if (m && !line.startsWith('###')) {
+        const m = /^#{2,3}\s+(.+)/.exec(line);
+        if (m) {
             if (cur.title || cur.body.join('').trim()) out.push(cur);
             cur = { title: m[1].trim(), body: [] };
         } else {
